@@ -15,6 +15,7 @@ version     = "2.6.5"
 codec       = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 log         = { version = "0.4.14", default-features = false }
 num-traits  = { version = "0.2", default-features = false }
+bitvec = { version = "0.20", default-features = false, features = ["alloc"] }
 # darwinia-network
 darwinia-support = { default-features = false, path = "../support" }
 # paritytech
@@ -27,6 +28,7 @@ sp-io         = { default-features = false, git = "https://github.com/darwinia-n
 sp-std         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 # parity-bridges-common
 bp-messages            = { default-features = false, path = "../../../parity-bridges-common/primitives/messages" }
+bp-runtime             = { default-features = false, path = "../../../parity-bridges-common/primitives/runtime" }
 pallet-bridge-messages = { default-features = false, path = "../../../parity-bridges-common/modules/messages" }
 
 [dev-dependencies]
@@ -51,4 +53,5 @@ std = [
 	"sp-std/std",
 	"sp-runtime/std",
 	"pallet-bridge-messages/std",
+	"bp-runtime/std",
 ]

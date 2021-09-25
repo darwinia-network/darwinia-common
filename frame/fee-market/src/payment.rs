@@ -87,13 +87,21 @@ where
 		let mut confirm_total_reward = RingBalance::<T>::zero();
 		let mut assigned_total_reward = BTreeMap::<T::AccountId, RingBalance<T>>::new();
 		let mut treasury_total_reward = RingBalance::<T>::zero();
-		for order_hash in ConfirmedMessagesThisBlock::<T>::get() {
+		for (lane_id, message_nonce) in ConfirmedMessagesThisBlock::<T>::get() {
 			// Get order info
-			let order = <Orders<T>>::get(&order_hash);
+			let order = <Orders<T>>::get(&(lane_id, message_nonce));
 			let order_confirm_time = order
 				.confirm_time
 				.expect("The message confirm_time already set in OnDeliveryConfirmed");
 			let (p1, p2, p3) = order.order_relayers.clone().unwrap();
+
+			// Get message relayer of this message
+			let mut message_relayer = T::AccountId::default();
+			for unreward_relayer in messages_relayers.iter() {
+				if unreward_relayer.messages.contains_message(message_nonce) {
+					message_relayer = unreward_relayer.relayer.clone();
+				}
+			}
 
 			// Calculate reward
 			let mut message_reward = RingBalance::<T>::zero();
@@ -141,9 +149,8 @@ where
 
 			confirm_total_reward = confirm_total_reward.saturating_add(confirm_reward);
 
-			// TODO:
 			// Pay message relayer reward
-			// pay_reward::<T>(relayer_fund_account, &relayer, message_reward);
+			pay_reward::<T>(relayer_fund_account, &message_relayer, message_reward);
 		}
 		// Pay confirmation relayer reward
 		pay_reward::<T>(

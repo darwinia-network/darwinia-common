@@ -16,8 +16,21 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- std ---
 // --- substrate ---
+use bitvec::prelude::*;
+use bp_messages::{
+	source_chain::{
+		LaneMessageVerifier, MessageDeliveryAndDispatchPayment, OnDeliveryConfirmed,
+		OnMessageAccepted, RelayersRewards, Sender, TargetHeaderChain,
+	},
+	target_chain::{
+		DispatchMessage, MessageDispatch, ProvedLaneMessages, ProvedMessages, SourceHeaderChain,
+	},
+	DeliveredMessages, InboundLaneData, LaneId, Message, MessageData, MessageKey, MessageNonce,
+	OutboundLaneData, Parameter as MessagesParameter, UnrewardedRelayer,
+};
+use bp_runtime::{messages::MessageDispatchResult, Size};
+use frame_support::weights::{RuntimeDbWeight, Weight};
 use frame_support::{
 	assert_err, assert_ok,
 	traits::{GenesisBuild, LockIdentifier},
@@ -29,30 +42,37 @@ use sp_runtime::Permill;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32, RuntimeDebug,
+	AccountId32, FixedU128, RuntimeDebug,
 };
 // --- darwinia ---
 use crate::{self as darwinia_fee_market, *};
-use darwinia_support::s2s::to_bytes32;
+use std::{
+	collections::{BTreeMap, VecDeque},
+	ops::RangeInclusive,
+};
 
-type Block = MockBlock<Test>;
-type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
-type Balance = u64;
+pub type Block = MockBlock<Test>;
+pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+pub type Balance = u64;
+pub type AccountId = u64;
 
 darwinia_support::impl_test_account_data! {}
 
+frame_support::parameter_types! {
+	pub const DbWeight: RuntimeDbWeight = RuntimeDbWeight { read: 1, write: 2 };
+}
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type BlockWeights = ();
 	type BlockLength = ();
-	type DbWeight = ();
+	type DbWeight = DbWeight;
 	type Origin = Origin;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
 	type Call = Call;
 	type Hashing = BlakeTwo256;
-	type AccountId = u64;
+	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
@@ -92,10 +112,334 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+// >>> Start mock pallet-bridges-message config data
+
+pub type TestMessageFee = u64;
+pub type TestRelayer = u64;
+/// Error that is returned by all test implementations.
+pub const TEST_ERROR: &str = "Test error";
+/// Payload that is rejected by `TestTargetHeaderChain`.
+pub const PAYLOAD_REJECTED_BY_TARGET_CHAIN: TestPayload = message_payload(1, 50);
+/// Regular message payload.
+pub const REGULAR_PAYLOAD: TestPayload = message_payload(0, 50);
+/// Vec of proved messages, grouped by lane.
+pub type MessagesByLaneVec = Vec<(LaneId, ProvedLaneMessages<Message<TestMessageFee>>)>;
+
+#[derive(Decode, Encode, Clone, Debug, PartialEq, Eq)]
+pub struct TestPayload {
+	/// Field that may be used to identify messages.
+	pub id: u64,
+	/// Dispatch weight that is declared by the message sender.
+	pub declared_weight: Weight,
+	/// Message dispatch result.
+	///
+	/// Note: in correct code `dispatch_result.unspent_weight` will always be <= `declared_weight`,
+	/// but for test purposes we'll be making it larger than `declared_weight` sometimes.
+	pub dispatch_result: MessageDispatchResult,
+	/// Extra bytes that affect payload size.
+	pub extra: Vec<u8>,
+}
+impl Size for TestPayload {
+	fn size_hint(&self) -> u32 {
+		16 + self.extra.len() as u32
+	}
+}
+/// Constructs message payload using given arguments and zero unspent weight.
+pub const fn message_payload(id: u64, declared_weight: Weight) -> TestPayload {
+	TestPayload {
+		id,
+		declared_weight,
+		dispatch_result: dispatch_result(0),
+		extra: Vec::new(),
+	}
+}
+
+/// Test messages proof.
+#[derive(Debug, Encode, Decode, Clone, PartialEq, Eq)]
+pub struct TestMessagesProof {
+	pub result: Result<MessagesByLaneVec, ()>,
+}
+impl Size for TestMessagesProof {
+	fn size_hint(&self) -> u32 {
+		0
+	}
+}
+
+/// Messages delivery proof used in tests.
+#[derive(Debug, Encode, Decode, Eq, Clone, PartialEq)]
+pub struct TestMessagesDeliveryProof(pub Result<(LaneId, InboundLaneData<TestRelayer>), ()>);
+impl Size for TestMessagesDeliveryProof {
+	fn size_hint(&self) -> u32 {
+		0
+	}
+}
+
+#[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
+pub enum TestMessagesParameter {
+	TokenConversionRate(FixedU128),
+}
+impl MessagesParameter for TestMessagesParameter {
+	fn save(&self) {
+		match *self {
+			TestMessagesParameter::TokenConversionRate(conversion_rate) => {
+				TokenConversionRate::set(&conversion_rate)
+			}
+		}
+	}
+}
+
+/// Target header chain that is used in tests.
+#[derive(Debug, Default)]
+pub struct TestTargetHeaderChain;
+impl TargetHeaderChain<TestPayload, TestRelayer> for TestTargetHeaderChain {
+	type Error = &'static str;
+
+	type MessagesDeliveryProof = TestMessagesDeliveryProof;
+
+	fn verify_message(payload: &TestPayload) -> Result<(), Self::Error> {
+		if *payload == PAYLOAD_REJECTED_BY_TARGET_CHAIN {
+			Err(TEST_ERROR)
+		} else {
+			Ok(())
+		}
+	}
+
+	fn verify_messages_delivery_proof(
+		proof: Self::MessagesDeliveryProof,
+	) -> Result<(LaneId, InboundLaneData<TestRelayer>), Self::Error> {
+		proof.0.map_err(|_| TEST_ERROR)
+	}
+}
+
+/// Lane message verifier that is used in tests.
+#[derive(Debug, Default)]
+pub struct TestLaneMessageVerifier;
+impl LaneMessageVerifier<AccountId, TestPayload, TestMessageFee> for TestLaneMessageVerifier {
+	type Error = &'static str;
+
+	fn verify_message(
+		_submitter: &Sender<AccountId>,
+		delivery_and_dispatch_fee: &TestMessageFee,
+		_lane: &LaneId,
+		_lane_outbound_data: &OutboundLaneData,
+		_payload: &TestPayload,
+	) -> Result<(), Self::Error> {
+		if *delivery_and_dispatch_fee != 0 {
+			Ok(())
+		} else {
+			Err(TEST_ERROR)
+		}
+	}
+}
+
+/// Message fee payment system that is used in tests.
+#[derive(Debug, Default)]
+pub struct TestMessageDeliveryAndDispatchPayment;
+impl TestMessageDeliveryAndDispatchPayment {
+	/// Reject all payments.
+	pub fn reject_payments() {
+		frame_support::storage::unhashed::put(b":reject-message-fee:", &true);
+	}
+
+	/// Returns true if given fee has been paid by given submitter.
+	pub fn is_fee_paid(submitter: AccountId, fee: TestMessageFee) -> bool {
+		frame_support::storage::unhashed::get(b":message-fee:")
+			== Some((Sender::Signed(submitter), fee))
+	}
+
+	/// Returns true if given relayer has been rewarded with given balance. The reward-paid flag is
+	/// cleared after the call.
+	pub fn is_reward_paid(relayer: AccountId, fee: TestMessageFee) -> bool {
+		let key = (b":relayer-reward:", relayer, fee).encode();
+		frame_support::storage::unhashed::take::<bool>(&key).is_some()
+	}
+}
+impl MessageDeliveryAndDispatchPayment<AccountId, TestMessageFee>
+	for TestMessageDeliveryAndDispatchPayment
+{
+	type Error = &'static str;
+
+	fn pay_delivery_and_dispatch_fee(
+		submitter: &Sender<AccountId>,
+		fee: &TestMessageFee,
+		_relayer_fund_account: &AccountId,
+	) -> Result<(), Self::Error> {
+		if frame_support::storage::unhashed::get(b":reject-message-fee:") == Some(true) {
+			return Err(TEST_ERROR);
+		}
+
+		frame_support::storage::unhashed::put(b":message-fee:", &(submitter, fee));
+		Ok(())
+	}
+
+	fn pay_relayers_rewards(
+		_lane_id: LaneId,
+		_message_relayers: VecDeque<UnrewardedRelayer<AccountId>>,
+		_confirmation_relayer: &AccountId,
+		_received_range: &RangeInclusive<MessageNonce>,
+		_relayer_fund_account: &AccountId,
+	) {
+		todo!()
+		// let relayers_rewards =
+		// 	cal_relayers_rewards::<Test, ()>(lane_id, message_relayers, received_range);
+		// for (relayer, reward) in &relayers_rewards {
+		// 	let key = (b":relayer-reward:", relayer, reward.reward).encode();
+		// 	frame_support::storage::unhashed::put(&key, &true);
+		// }
+	}
+}
+
+#[derive(Debug)]
+pub struct TestOnMessageAccepted;
+impl TestOnMessageAccepted {
+	/// Verify that the callback has been called when the message is accepted.
+	pub fn ensure_called(lane: &LaneId, message: &MessageNonce) {
+		let key = (b"TestOnMessageAccepted", lane, message).encode();
+		assert_eq!(frame_support::storage::unhashed::get(&key), Some(true));
+	}
+
+	/// Set consumed weight returned by the callback.
+	pub fn set_consumed_weight_per_message(weight: Weight) {
+		frame_support::storage::unhashed::put(b"TestOnMessageAccepted_Weight", &weight);
+	}
+
+	/// Get consumed weight returned by the callback.
+	pub fn get_consumed_weight_per_message() -> Option<Weight> {
+		frame_support::storage::unhashed::get(b"TestOnMessageAccepted_Weight")
+	}
+}
+impl OnMessageAccepted for TestOnMessageAccepted {
+	fn on_messages_accepted(lane: &LaneId, message: &MessageNonce) -> Weight {
+		let key = (b"TestOnMessageAccepted", lane, message).encode();
+		frame_support::storage::unhashed::put(&key, &true);
+		Self::get_consumed_weight_per_message()
+			.unwrap_or_else(|| DbWeight::get().reads_writes(1, 1))
+	}
+}
+
+/// First on-messages-delivered callback.
+#[derive(Debug)]
+pub struct TestOnDeliveryConfirmed;
+impl TestOnDeliveryConfirmed {
+	/// Verify that the callback has been called with given delivered messages.
+	pub fn ensure_called(lane: &LaneId, messages: &DeliveredMessages) {
+		let key = (b"TestOnDeliveryConfirmed", lane, messages).encode();
+		assert_eq!(frame_support::storage::unhashed::get(&key), Some(true));
+	}
+
+	/// Set consumed weight returned by the callback.
+	pub fn set_consumed_weight_per_message(weight: Weight) {
+		frame_support::storage::unhashed::put(b"TestOnDeliveryConfirmed_Weight", &weight);
+	}
+
+	/// Get consumed weight returned by the callback.
+	pub fn get_consumed_weight_per_message() -> Option<Weight> {
+		frame_support::storage::unhashed::get(b"TestOnDeliveryConfirmed_Weight")
+	}
+}
+impl OnDeliveryConfirmed for TestOnDeliveryConfirmed {
+	fn on_messages_delivered(lane: &LaneId, messages: &DeliveredMessages) -> Weight {
+		let key = (b"TestOnDeliveryConfirmed", lane, messages).encode();
+		frame_support::storage::unhashed::put(&key, &true);
+		Self::get_consumed_weight_per_message()
+			.unwrap_or_else(|| DbWeight::get().reads_writes(1, 1))
+			.saturating_mul(messages.total_messages())
+	}
+}
+
+/// Source header chain that is used in tests.
+#[derive(Debug)]
+pub struct TestSourceHeaderChain;
+impl SourceHeaderChain<TestMessageFee> for TestSourceHeaderChain {
+	type Error = &'static str;
+
+	type MessagesProof = TestMessagesProof;
+
+	fn verify_messages_proof(
+		proof: Self::MessagesProof,
+		_messages_count: u32,
+	) -> Result<ProvedMessages<Message<TestMessageFee>>, Self::Error> {
+		proof
+			.result
+			.map(|proof| proof.into_iter().collect())
+			.map_err(|_| TEST_ERROR)
+	}
+}
+
+/// Source header chain that is used in tests.
+#[derive(Debug)]
+pub struct TestMessageDispatch;
+impl MessageDispatch<AccountId, TestMessageFee> for TestMessageDispatch {
+	type DispatchPayload = TestPayload;
+
+	fn dispatch_weight(message: &DispatchMessage<TestPayload, TestMessageFee>) -> Weight {
+		match message.data.payload.as_ref() {
+			Ok(payload) => payload.declared_weight,
+			Err(_) => 0,
+		}
+	}
+
+	fn dispatch(
+		_relayer_account: &AccountId,
+		message: DispatchMessage<TestPayload, TestMessageFee>,
+	) -> MessageDispatchResult {
+		match message.data.payload.as_ref() {
+			Ok(payload) => payload.dispatch_result.clone(),
+			Err(_) => dispatch_result(0),
+		}
+	}
+}
+
+pub struct AccountIdConverter;
+impl sp_runtime::traits::Convert<H256, AccountId> for AccountIdConverter {
+	fn convert(hash: H256) -> AccountId {
+		hash.to_low_u64_ne()
+	}
+}
+
+// >>> End mock pallet-bridges-message config data
+
+frame_support::parameter_types! {
+	pub const MaxMessagesToPruneAtOnce: u64 = 10;
+	pub const MaxUnrewardedRelayerEntriesAtInboundLane: u64 = 16;
+	pub const MaxUnconfirmedMessagesAtInboundLane: u64 = 32;
+	pub storage TokenConversionRate: FixedU128 = 1.into();
+	pub const TestBridgedChainId: bp_runtime::ChainId = *b"test";
+}
+
+impl pallet_bridge_messages::Config for Test {
+	type Event = Event;
+	type WeightInfo = ();
+	type Parameter = TestMessagesParameter;
+	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
+	type MaxUnrewardedRelayerEntriesAtInboundLane = MaxUnrewardedRelayerEntriesAtInboundLane;
+	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
+
+	type OutboundPayload = TestPayload;
+	type OutboundMessageFee = TestMessageFee;
+
+	type InboundPayload = TestPayload;
+	type InboundMessageFee = TestMessageFee;
+	type InboundRelayer = TestRelayer;
+
+	type AccountIdConverter = AccountIdConverter;
+
+	type TargetHeaderChain = TestTargetHeaderChain;
+	type LaneMessageVerifier = TestLaneMessageVerifier;
+	type MessageDeliveryAndDispatchPayment = TestMessageDeliveryAndDispatchPayment;
+	type OnMessageAccepted = TestOnMessageAccepted;
+	type OnDeliveryConfirmed = TestOnDeliveryConfirmed;
+
+	type SourceHeaderChain = TestSourceHeaderChain;
+	type MessageDispatch = TestMessageDispatch;
+	type BridgedChainId = TestBridgedChainId;
+}
+
 frame_support::parameter_types! {
 	pub const FeeMarketPalletId: PalletId = PalletId(*b"da/feemk");
-	pub const MiniumLockValue: Balance = 2;
-	pub const MinimumFee: Balance = 2;
+	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
+	pub const MiniumLockValue: Balance = 100;
+	pub const MinimumFee: Balance = 30;
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 	pub const SlotTimes: (u64, u64, u64) = (50, 50, 50);
 
@@ -105,9 +449,9 @@ frame_support::parameter_types! {
 	pub const SlashAssignRelayer: Balance = 2;
 	pub const TreasuryPalletAccount: u64 = 666;
 }
-
 impl Config for Test {
 	type PalletId = FeeMarketPalletId;
+	type TreasuryPalletId = TreasuryPalletId;
 	type MiniumLockValue = MiniumLockValue;
 	type MinimumFee = MinimumFee;
 	type LockId = FeeMarketLockId;
@@ -118,7 +462,6 @@ impl Config for Test {
 	type ForConfirmRelayer = ForConfirmRelayer;
 	type SlashAssignRelayer = SlashAssignRelayer;
 
-	type TreasuryPalletAccount = TreasuryPalletAccount;
 	type RingCurrency = Ring;
 	type Event = Event;
 	type WeightInfo = ();
@@ -133,7 +476,8 @@ frame_support::construct_runtime! {
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Config, Event<T>},
+		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>},
+		Messages: pallet_bridge_messages::{Pallet, Call, Event<T>},
 	}
 }
 pub fn new_test_ext() -> sp_io::TestExternalities {
@@ -141,7 +485,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		.build_storage::<Test>()
 		.unwrap();
 	darwinia_balances::GenesisConfig::<Test, RingInstance> {
-		balances: vec![(1, 10), (2, 20), (3, 30), (4, 40), (5, 50), (12, 10)],
+		balances: vec![(1, 150), (2, 200), (3, 350), (4, 300), (5, 350), (12, 400)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
@@ -151,265 +495,244 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	ext
 }
 
-// #[test]
-// fn test_register_workflow_works() {
-// 	new_test_ext().execute_with(|| {
-// 		assert_eq!(Ring::free_balance(1), 10);
-// 		assert_err!(
-// 			FeeMarket::register(Origin::signed(1), 1, None),
-// 			<Error<Test>>::TooLowLockValue
-// 		);
-// 		assert_err!(
-// 			FeeMarket::register(Origin::signed(1), 50, None),
-// 			<Error<Test>>::InsufficientBalance
-// 		);
+/// Return message data with valid fee for given payload.
+pub fn message_data(payload: TestPayload) -> MessageData<TestMessageFee> {
+	MessageData {
+		payload: payload.encode(),
+		fee: 1,
+	}
+}
 
-// 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
-// 		assert!(FeeMarket::is_registered(&1));
-// 		assert_eq!(FeeMarket::relayers().len(), 1);
-// 		assert_eq!(Ring::usable_balance(&1), 5);
-// 		assert_eq!(FeeMarket::relayer_locked_balance(&1), 5);
-// 		assert_eq!(FeeMarket::best_relayer(), (1, 2));
+/// Returns message dispatch result with given unspent weight.
+pub const fn dispatch_result(unspent_weight: Weight) -> MessageDispatchResult {
+	MessageDispatchResult {
+		dispatch_result: true,
+		unspent_weight,
+		dispatch_fee_paid_during_dispatch: true,
+	}
+}
 
-// 		assert_err!(
-// 			FeeMarket::register(Origin::signed(1), 5, None),
-// 			<Error<Test>>::AlreadyRegistered
-// 		);
-// 	});
-// }
+/// Constructs unrewarded relayer entry from nonces range and relayer id.
+pub fn unrewarded_relayer(
+	begin: MessageNonce,
+	end: MessageNonce,
+	relayer: TestRelayer,
+) -> UnrewardedRelayer<TestRelayer> {
+	UnrewardedRelayer {
+		relayer,
+		messages: DeliveredMessages {
+			begin,
+			end,
+			dispatch_results: if end >= begin {
+				bitvec![Msb0, u8; 1; (end - begin + 1) as _]
+			} else {
+				Default::default()
+			},
+		},
+	}
+}
 
-// #[test]
-// fn test_relayer_register_update_price() {
-// 	new_test_ext().execute_with(|| {
-// 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, Some(10)));
-// 		assert_ok!(FeeMarket::register(Origin::signed(2), 5, Some(11)));
-// 		assert_ok!(FeeMarket::register(Origin::signed(3), 5, Some(12)));
-// 		assert_ok!(FeeMarket::register(Origin::signed(4), 5, Some(13)));
+#[test]
+fn test_single_relayer_registration_workflow_works() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(Ring::free_balance(1), 150);
+		assert_err!(
+			FeeMarket::register(Origin::signed(1), 1, None),
+			<Error<Test>>::TooLowLockValue
+		);
+		assert_err!(
+			FeeMarket::register(Origin::signed(1), 200, None),
+			<Error<Test>>::InsufficientBalance
+		);
 
-// 		assert_eq!(FeeMarket::relayers(), vec![1, 2, 3, 4]);
-// 		assert_eq!(FeeMarket::prior_relayers().len(), 3);
-// 		assert_eq!(FeeMarket::best_relayer(), (3, 12));
-// 	});
-// }
+		assert_ok!(FeeMarket::register(Origin::signed(1), 100, None));
+		assert!(FeeMarket::is_registered(&1));
+		assert_eq!(FeeMarket::relayers().len(), 1);
+		assert_eq!(Ring::usable_balance(&1), 50);
+		assert_eq!(FeeMarket::relayer_locked_balance(&1), 100);
+		assert_eq!(FeeMarket::best_relayer(), (0, 0));
 
-// #[test]
-// fn test_update_locked_balance_success() {
-// 	new_test_ext().execute_with(|| {
-// 		assert_err!(
-// 			FeeMarket::update_locked_balance(Origin::signed(1), 5),
-// 			<Error::<Test>>::RegisterBeforeUpdateLock
-// 		);
-// 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
-// 		assert!(FeeMarket::is_registered(&1));
+		assert_err!(
+			FeeMarket::register(Origin::signed(1), 100, None),
+			<Error<Test>>::AlreadyRegistered
+		);
+	});
+}
+#[test]
+fn test_single_relayer_update_locked_balance() {
+	new_test_ext().execute_with(|| {
+		assert_err!(
+			FeeMarket::update_locked_balance(Origin::signed(1), 120),
+			<Error::<Test>>::NotRegistered
+		);
+		assert_ok!(FeeMarket::register(Origin::signed(1), 100, None));
+		assert_eq!(FeeMarket::relayer_locked_balance(&1), 100);
 
-// 		// update lock balance from 5 to 8
-// 		assert_ok!(FeeMarket::update_locked_balance(Origin::signed(1), 8));
-// 		assert_eq!(Ring::usable_balance(&1), 2);
-// 		assert_eq!(FeeMarket::relayer_locked_balance(&1), 8);
-// 		assert_eq!(FeeMarket::best_relayer(), (1, 2));
-// 	});
-// }
+		// Increase locked balance
+		assert_ok!(FeeMarket::update_locked_balance(Origin::signed(1), 120));
+		assert_eq!(FeeMarket::relayer_locked_balance(&1), 120);
+		// Decrease locked balance
+		assert_err!(
+			FeeMarket::update_locked_balance(Origin::signed(1), 100),
+			<Error<Test>>::OnlyIncreaseLockAmountAllowed
+		);
+	});
+}
 
-// #[test]
-// fn test_update_locked_balance_failed() {
-// 	new_test_ext().execute_with(|| {
-// 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
+#[test]
+fn test_single_relayer_cancel_registration() {
+	new_test_ext().execute_with(|| {
+		assert_err!(
+			FeeMarket::unregister(Origin::signed(1)),
+			<Error<Test>>::NotRegistered
+		);
 
-// 		// update lock balance from 5 to 8
-// 		assert_ok!(FeeMarket::update_locked_balance(Origin::signed(1), 8));
-// 		// update lock balance from 8 to 8
-// 		assert_err!(
-// 			FeeMarket::update_locked_balance(Origin::signed(1), 3),
-// 			<Error<Test>>::InvalidNewLockValue
-// 		);
-// 		// update lock balance from 8 to 3
-// 		assert_err!(
-// 			FeeMarket::update_locked_balance(Origin::signed(1), 3),
-// 			<Error<Test>>::InvalidNewLockValue
-// 		);
-// 		assert_eq!(Ring::usable_balance(&1), 2);
-// 		assert_eq!(FeeMarket::relayer_locked_balance(&1), 8);
-// 	});
-// }
+		assert_ok!(FeeMarket::register(Origin::signed(1), 100, None));
+		assert!(FeeMarket::is_registered(&1));
+		assert_err!(
+			FeeMarket::unregister(Origin::signed(1)),
+			<Error<Test>>::TooFewRegisteredRelayers
+		);
+		assert!(FeeMarket::is_registered(&1));
+	});
+}
 
-// #[test]
-// fn test_cancel_register() {
-// 	new_test_ext().execute_with(|| {
-// 		assert_err!(
-// 			FeeMarket::cancel_register(Origin::signed(1)),
-// 			<Error<Test>>::RegisterBeforeUpdateLock
-// 		);
+#[test]
+fn test_single_relayer_update_fee_works() {
+	new_test_ext().execute_with(|| {
+		assert_err!(
+			FeeMarket::update_fee(Origin::signed(1), 1),
+			<Error<Test>>::NotRegistered
+		);
+		assert_ok!(FeeMarket::register(Origin::signed(1), 100, None));
+		assert_err!(
+			FeeMarket::update_fee(Origin::signed(1), 1),
+			<Error<Test>>::TooLowFee
+		);
 
-// 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
-// 		assert!(FeeMarket::is_registered(&1));
-// 		assert_eq!(Ring::usable_balance(&1), 5);
-// 		assert_eq!(FeeMarket::relayer_locked_balance(&1), 5);
+		assert_eq!(FeeMarket::relayer_price(&1), 30);
+		assert_ok!(FeeMarket::update_fee(Origin::signed(1), 40));
+		assert_eq!(FeeMarket::relayer_price(&1), 40);
+	});
+}
 
-// 		assert_ok!(FeeMarket::cancel_register(Origin::signed(1)));
-// 		assert_eq!(FeeMarket::relayer_locked_balance(&1), 0);
-// 		assert!(!FeeMarket::is_registered(&1));
-// 	});
-// }
+#[test]
+fn test_multiple_relayers_registration_with_same_lock_value_and_default_fee() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(FeeMarket::register(Origin::signed(1), 100, None));
+		assert_ok!(FeeMarket::register(Origin::signed(2), 100, None));
+		assert_ok!(FeeMarket::register(Origin::signed(3), 100, None));
+		assert_ok!(FeeMarket::register(Origin::signed(4), 100, None));
 
-// #[test]
-// fn test_cancel_register_and_update_price() {
-// 	new_test_ext().execute_with(|| {
-// 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
-// 		assert_ok!(FeeMarket::register(Origin::signed(2), 5, None));
-// 		assert_ok!(FeeMarket::register(Origin::signed(3), 5, None));
-// 		assert_ok!(FeeMarket::register(Origin::signed(4), 5, None));
-// 		assert_ok!(FeeMarket::register(Origin::signed(5), 5, None));
-// 		assert_eq!(FeeMarket::relayers(), vec![1, 2, 3, 4, 5]);
-// 		assert_eq!(FeeMarket::prior_relayers()[0], (1, 2));
-// 		assert_eq!(FeeMarket::prior_relayers()[1], (2, 2));
-// 		assert_eq!(FeeMarket::prior_relayers()[2], (3, 2));
-// 		assert_eq!(FeeMarket::best_relayer(), (3, 2));
+		assert_eq!(FeeMarket::relayers(), vec![1, 2, 3, 4]);
+		assert_eq!(FeeMarket::best_relayer(), (3, 30));
+	});
+}
 
-// 		assert_ok!(FeeMarket::cancel_register(Origin::signed(1)));
-// 		assert_ok!(FeeMarket::cancel_register(Origin::signed(5)));
-// 		assert!(!FeeMarket::is_registered(&1));
-// 		assert!(!FeeMarket::is_registered(&5));
-// 		assert_eq!(FeeMarket::relayers(), vec![2, 3, 4]);
-// 		assert_eq!(FeeMarket::prior_relayers()[0], (2, 2));
-// 		assert_eq!(FeeMarket::prior_relayers()[1], (3, 2));
-// 		assert_eq!(FeeMarket::prior_relayers()[2], (4, 2));
-// 		assert_eq!(FeeMarket::best_relayer(), (4, 2));
-// 	});
-// }
+#[test]
+fn test_multiple_relayers_cancel_registration() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(FeeMarket::register(Origin::signed(1), 100, None));
+		assert_ok!(FeeMarket::register(Origin::signed(2), 100, None));
+		assert_ok!(FeeMarket::register(Origin::signed(3), 100, None));
+		assert_ok!(FeeMarket::register(Origin::signed(4), 100, None));
+		assert_ok!(FeeMarket::register(Origin::signed(5), 100, None));
+		assert_eq!(FeeMarket::relayers(), vec![1, 2, 3, 4, 5]);
+		assert_eq!(FeeMarket::relayer_locked_balance(&1), 100);
+		assert_eq!(FeeMarket::relayer_locked_balance(&2), 100);
+		assert_eq!(FeeMarket::best_relayer(), (3, 30));
 
-// #[test]
-// fn test_locked_ring_list_works() {
-// 	new_test_ext().execute_with(|| {
-// 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
-// 		assert_ok!(FeeMarket::register(Origin::signed(2), 10, None));
-// 		assert_ok!(FeeMarket::register(Origin::signed(3), 15, None));
-// 		assert_ok!(FeeMarket::register(Origin::signed(4), 20, None));
+		assert_ok!(FeeMarket::unregister(Origin::signed(1)));
+		assert_ok!(FeeMarket::unregister(Origin::signed(5)));
+		assert!(!FeeMarket::is_registered(&1));
+		assert!(!FeeMarket::is_registered(&5));
+		assert_eq!(FeeMarket::relayer_locked_balance(&1), 0);
+		assert_eq!(FeeMarket::relayer_locked_balance(&5), 0);
+		assert_eq!(FeeMarket::relayers(), vec![2, 3, 4]);
+		assert_eq!(FeeMarket::best_relayer(), (4, 30));
 
-// 		assert_eq!(FeeMarket::relayer_locked_balance(&1), 5);
-// 		assert_eq!(FeeMarket::relayer_locked_balance(&2), 10);
-// 		assert_eq!(FeeMarket::relayer_locked_balance(&3), 15);
-// 		assert_eq!(FeeMarket::relayer_locked_balance(&4), 20);
+		assert_err!(
+			FeeMarket::unregister(Origin::signed(2)),
+			<Error<Test>>::TooFewRegisteredRelayers
+		);
+	});
+}
 
-// 		assert_ok!(FeeMarket::update_locked_balance(Origin::signed(1), 6));
-// 		assert_ok!(FeeMarket::update_locked_balance(Origin::signed(2), 11));
-// 		assert_ok!(FeeMarket::update_locked_balance(Origin::signed(3), 16));
-// 		assert_ok!(FeeMarket::update_locked_balance(Origin::signed(4), 21));
+#[test]
+fn test_multiple_relayers_sort() {
+	new_test_ext().execute_with(|| {
+		let r1 = Relayer::<Test>::new(1, 100, 30);
+		let r2 = Relayer::<Test>::new(2, 100, 40);
+		assert!(r1 < r2);
 
-// 		assert_eq!(FeeMarket::relayer_locked_balance(&1), 6);
-// 		assert_eq!(FeeMarket::relayer_locked_balance(&2), 11);
-// 		assert_eq!(FeeMarket::relayer_locked_balance(&3), 16);
-// 		assert_eq!(FeeMarket::relayer_locked_balance(&4), 21);
+		let r3 = Relayer::<Test>::new(3, 150, 30);
+		let r4 = Relayer::<Test>::new(4, 100, 30);
+		assert!(r3 > r4);
+	});
+}
 
-// 		assert_ok!(FeeMarket::cancel_register(Origin::signed(1)));
-// 		assert_ok!(FeeMarket::cancel_register(Origin::signed(2)));
-// 		assert_ok!(FeeMarket::cancel_register(Origin::signed(3)));
-// 		assert_ok!(FeeMarket::cancel_register(Origin::signed(4)));
+#[test]
+fn test_multiple_relayers_choose_assigned_relayers_with_same_default_fee() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(FeeMarket::register(Origin::signed(1), 100, None));
+		assert_ok!(FeeMarket::register(Origin::signed(2), 110, None));
+		assert_ok!(FeeMarket::register(Origin::signed(3), 120, None));
+		assert_ok!(FeeMarket::register(Origin::signed(4), 130, None));
+		assert_ok!(FeeMarket::register(Origin::signed(5), 140, None));
 
-// 		assert_eq!(FeeMarket::relayer_locked_balance(&1), 0);
-// 		assert_eq!(FeeMarket::relayer_locked_balance(&2), 0);
-// 		assert_eq!(FeeMarket::relayer_locked_balance(&3), 0);
-// 		assert_eq!(FeeMarket::relayer_locked_balance(&4), 0);
-// 	});
-// }
+		assert_eq!(FeeMarket::relayers().len(), 5);
+		assert_eq!(
+			FeeMarket::assigned_relayers(),
+			(
+				Relayer::<Test>::new(1, 100, 30),
+				Relayer::<Test>::new(2, 110, 30),
+				Relayer::<Test>::new(3, 120, 30),
+			)
+		);
+		assert_eq!(FeeMarket::best_relayer(), (3, 30));
+	});
+}
 
-// #[test]
-// fn test_update_price_basic_storage_works() {
-// 	new_test_ext().execute_with(|| {
-// 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
-// 		assert_err!(
-// 			FeeMarket::update_fee(Origin::signed(1), 1),
-// 			<Error<Test>>::TooLowFee
-// 		);
+#[test]
+fn test_multiple_relayers_choose_assigned_relayers_with_same_lock_balance() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(FeeMarket::register(Origin::signed(1), 100, Some(30)));
+		assert_ok!(FeeMarket::register(Origin::signed(2), 100, Some(40)));
+		assert_ok!(FeeMarket::register(Origin::signed(3), 100, Some(50)));
+		assert_ok!(FeeMarket::register(Origin::signed(4), 100, Some(60)));
+		assert_ok!(FeeMarket::register(Origin::signed(5), 100, Some(70)));
 
-// 		assert_ok!(FeeMarket::update_fee(Origin::signed(1), 2));
-// 		assert_eq!(FeeMarket::relayer_price(&1), 2);
-// 		assert_eq!(FeeMarket::relayers(), vec![1]);
-// 	});
-// }
+		assert_eq!(FeeMarket::relayers().len(), 5);
+		assert_eq!(
+			FeeMarket::assigned_relayers(),
+			(
+				Relayer::<Test>::new(1, 100, 30),
+				Relayer::<Test>::new(2, 100, 40),
+				Relayer::<Test>::new(3, 100, 50),
+			)
+		);
+		assert_eq!(FeeMarket::best_relayer(), (3, 50));
+	});
+}
 
-// #[test]
-// fn test_few_relayer_duplicate_update_one_price() {
-// 	new_test_ext().execute_with(|| {
-// 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
-// 		assert_ok!(FeeMarket::update_fee(Origin::signed(1), 2));
-// 		assert_ok!(FeeMarket::update_fee(Origin::signed(1), 2));
+#[test]
+#[test]
+fn test_multiple_relayers_choose_assigned_relayers_with_diff_lock_and_fee() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(FeeMarket::register(Origin::signed(1), 100, Some(30)));
+		assert_ok!(FeeMarket::register(Origin::signed(2), 100, Some(40)));
+		assert_ok!(FeeMarket::register(Origin::signed(3), 120, Some(50)));
+		assert_ok!(FeeMarket::register(Origin::signed(4), 100, Some(50)));
 
-// 		assert_eq!(FeeMarket::relayers(), vec![1]);
-// 		assert_eq!(FeeMarket::prior_relayers()[0], (1, 2));
-// 		assert_eq!(FeeMarket::prior_relayers().len(), 1);
-// 		assert_eq!(FeeMarket::best_relayer(), (1, 2));
-// 	});
-// }
-
-// #[test]
-// fn test_few_relayer_update_one_price() {
-// 	new_test_ext().execute_with(|| {
-// 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
-// 		assert_ok!(FeeMarket::register(Origin::signed(2), 5, None));
-// 		assert_ok!(FeeMarket::update_fee(Origin::signed(1), 4));
-// 		assert_ok!(FeeMarket::update_fee(Origin::signed(2), 4));
-
-// 		assert_eq!(FeeMarket::prior_relayers()[0], (1, 4));
-// 		assert_eq!(FeeMarket::prior_relayers()[1], (2, 4));
-// 		assert_eq!(FeeMarket::prior_relayers().len(), 2);
-// 		assert_eq!(FeeMarket::best_relayer(), (2, 4));
-// 	});
-// }
-
-// #[test]
-// fn test_few_relayer_update_more_price() {
-// 	new_test_ext().execute_with(|| {
-// 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
-// 		assert_ok!(FeeMarket::register(Origin::signed(2), 5, None));
-// 		assert_ok!(FeeMarket::update_fee(Origin::signed(1), 2));
-// 		assert_ok!(FeeMarket::update_fee(Origin::signed(2), 3));
-
-// 		assert_eq!(FeeMarket::relayers(), vec![1, 2]);
-// 		assert_eq!(FeeMarket::prior_relayers()[0], (1, 2));
-// 		assert_eq!(FeeMarket::prior_relayers()[1], (2, 3));
-// 		assert_eq!(FeeMarket::prior_relayers().len(), 2);
-// 		assert_eq!(FeeMarket::best_relayer(), (2, 3));
-// 	});
-// }
-
-// #[test]
-// fn test_mul_relayer_update_one_price() {
-// 	new_test_ext().execute_with(|| {
-// 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
-// 		assert_ok!(FeeMarket::register(Origin::signed(2), 5, None));
-// 		assert_ok!(FeeMarket::register(Origin::signed(3), 5, None));
-// 		assert_ok!(FeeMarket::register(Origin::signed(4), 5, None));
-// 		assert_ok!(FeeMarket::update_fee(Origin::signed(1), 10));
-// 		assert_ok!(FeeMarket::update_fee(Origin::signed(2), 10));
-// 		assert_ok!(FeeMarket::update_fee(Origin::signed(3), 10));
-// 		assert_ok!(FeeMarket::update_fee(Origin::signed(4), 10));
-
-// 		assert_eq!(FeeMarket::relayers(), vec![1, 2, 3, 4]);
-// 		assert_eq!(FeeMarket::prior_relayers().len(), 3);
-// 		assert_eq!(FeeMarket::prior_relayers()[0], (1, 10));
-// 		assert_eq!(FeeMarket::prior_relayers()[1], (2, 10));
-// 		assert_eq!(FeeMarket::prior_relayers()[2], (3, 10));
-// 		assert_eq!(FeeMarket::best_relayer(), (3, 10));
-// 	});
-// }
-
-// #[test]
-// fn test_mul_relayer_update_diff_price() {
-// 	new_test_ext().execute_with(|| {
-// 		assert_ok!(FeeMarket::register(Origin::signed(1), 5, None));
-// 		assert_ok!(FeeMarket::register(Origin::signed(2), 5, None));
-// 		assert_ok!(FeeMarket::register(Origin::signed(3), 5, None));
-// 		assert_ok!(FeeMarket::register(Origin::signed(4), 5, None));
-// 		assert_ok!(FeeMarket::update_fee(Origin::signed(1), 10));
-// 		assert_ok!(FeeMarket::update_fee(Origin::signed(2), 20));
-// 		assert_ok!(FeeMarket::update_fee(Origin::signed(3), 30));
-// 		assert_ok!(FeeMarket::update_fee(Origin::signed(4), 40));
-
-// 		assert_eq!(FeeMarket::relayers(), vec![1, 2, 3, 4]);
-// 		assert_eq!(FeeMarket::prior_relayers().len(), 3);
-// 		assert_eq!(FeeMarket::prior_relayers()[0], (1, 10));
-// 		assert_eq!(FeeMarket::prior_relayers()[1], (2, 20));
-// 		assert_eq!(FeeMarket::prior_relayers()[2], (3, 30));
-// 		assert_eq!(FeeMarket::best_relayer(), (3, 30));
-// 	});
-// }
+		assert_eq!(FeeMarket::relayers().len(), 4);
+		assert_eq!(
+			FeeMarket::assigned_relayers(),
+			(
+				Relayer::<Test>::new(1, 100, 30),
+				Relayer::<Test>::new(2, 100, 40),
+				Relayer::<Test>::new(4, 100, 50),
+			)
+		);
+		assert_eq!(FeeMarket::best_relayer(), (4, 50));
+	});
+}

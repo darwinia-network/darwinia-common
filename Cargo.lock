@@ -1711,7 +1711,9 @@ dependencies = [
 name = "darwinia-fee-market"
 version = "2.6.5"
 dependencies = [
+ "bitvec 0.20.4",
  "bp-messages",
+ "bp-runtime",
  "darwinia-balances",
  "darwinia-support",
  "frame-support",

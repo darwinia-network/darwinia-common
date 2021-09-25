@@ -280,7 +280,6 @@ pub fn genesis_config() -> ChainSpec {
 			darwinia_claims: Default::default(),
 			darwinia_vesting: Default::default(),
 			pallet_sudo: SudoConfig { key: root.clone() },
-			darwinia_fee_market: Default::default(),
 			darwinia_bridge_ethereum: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
@@ -500,7 +499,6 @@ pub fn development_config() -> ChainSpec {
 			},
 			darwinia_vesting: Default::default(),
 			pallet_sudo: SudoConfig { key: root.clone() },
-			darwinia_fee_market: Default::default(),
 			darwinia_bridge_ethereum: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
@@ -722,7 +720,6 @@ pub fn local_testnet_config() -> ChainSpec {
 			},
 			darwinia_vesting: Default::default(),
 			pallet_sudo: SudoConfig { key: root.clone() },
-			darwinia_fee_market: Default::default(),
 			darwinia_bridge_ethereum: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {

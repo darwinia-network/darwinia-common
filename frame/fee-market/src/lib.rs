@@ -120,16 +120,14 @@ pub mod pallet {
 		TooLowLockValue,
 		/// The relayer has been registered
 		AlreadyRegistered,
-		/// Register before update lock value
-		RegisterBeforeUpdateLock,
-		/// Invalid new lock value
-		InvalidNewLockValue,
-		/// Only Relayer can submit fee
-		InvalidSubmitPriceOrigin,
+		/// This relayer didn't relayer ever
+		NotRegistered,
+		/// Only increase lock balance is allowed when update_locked_balance
+		OnlyIncreaseLockAmountAllowed,
 		/// The fee is lower than MinimumFee
 		TooLowFee,
-		/// The registered relayer less than MIN_REGISTERED_RELAYERS_NUMBER
-		TooLowRelayers,
+		/// The registered relayer number less than MIN_REGISTERED_RELAYERS_NUMBER
+		TooFewRegisteredRelayers,
 	}
 
 	// Registered relayers storage
@@ -144,8 +142,8 @@ pub mod pallet {
 
 	// Priority relayers storage
 	#[pallet::storage]
-	#[pallet::getter(fn prior_relayers)]
-	pub type SortedRelayers<T: Config> =
+	#[pallet::getter(fn assigned_relayers)]
+	pub type AssignedRelayers<T: Config> =
 		StorageValue<_, (Relayer<T>, Relayer<T>, Relayer<T>), ValueQuery>;
 
 	#[pallet::storage]
@@ -157,25 +155,13 @@ pub mod pallet {
 	pub type Orders<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
-		H256,
+		(LaneId, MessageNonce),
 		Order<T::AccountId, T::BlockNumber, Fee<T>>,
 		ValueQuery,
 	>;
 	#[pallet::storage]
-	pub type ConfirmedMessagesThisBlock<T: Config> = StorageValue<_, Vec<H256>, ValueQuery>;
-
-	#[pallet::genesis_config]
-	pub struct GenesisConfig {}
-	#[cfg(feature = "std")]
-	impl Default for GenesisConfig {
-		fn default() -> Self {
-			Self {}
-		}
-	}
-	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig {
-		fn build(&self) {}
-	}
+	pub type ConfirmedMessagesThisBlock<T: Config> =
+		StorageValue<_, Vec<(LaneId, MessageNonce)>, ValueQuery>;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -189,7 +175,9 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Register to be a relayer
+		/// Any account can register to be a relayer by lock values. The fee is optional, the default value
+		/// is MinimumFee in runtime.
+		/// Note: One account can register only once.
 		#[pallet::weight(10000)]
 		#[transactional]
 		pub fn register(
@@ -227,7 +215,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Relayer update locked balance
+		/// Update locked balance for registered relayer, only support increase deposit balance.
 		#[pallet::weight(10000)]
 		#[transactional]
 		pub fn update_locked_balance(
@@ -235,17 +223,14 @@ pub mod pallet {
 			new_lock: RingBalance<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			ensure!(
-				Self::is_registered(&who),
-				<Error<T>>::RegisterBeforeUpdateLock
-			);
+			ensure!(Self::is_registered(&who), <Error<T>>::NotRegistered);
 			ensure!(
 				T::RingCurrency::free_balance(&who) >= new_lock,
 				<Error<T>>::InsufficientBalance
 			);
 			ensure!(
 				new_lock > Self::get_relayer(&who).lock_balance,
-				<Error<T>>::InvalidNewLockValue
+				<Error<T>>::OnlyIncreaseLockAmountAllowed
 			);
 
 			T::RingCurrency::extend_lock(T::LockId::get(), &who, new_lock, WithdrawReasons::all())?;
@@ -256,18 +241,15 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Relayer cancel register
+		/// Cancel registration for registered relayer
 		#[pallet::weight(10000)]
 		#[transactional]
-		pub fn cancel_register(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+		pub fn unregister(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			ensure!(
-				Self::is_registered(&who),
-				<Error<T>>::RegisterBeforeUpdateLock
-			);
+			ensure!(Self::is_registered(&who), <Error<T>>::NotRegistered);
 			ensure!(
 				<Relayers<T>>::get().len() - 1 >= MIN_REGISTERED_RELAYERS_NUMBER,
-				<Error<T>>::TooLowRelayers
+				<Error<T>>::TooFewRegisteredRelayers
 			);
 
 			T::RingCurrency::remove_lock(T::LockId::get(), &who);
@@ -279,15 +261,12 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Relayer update fee
+		/// Update fee for registered relayer
 		#[pallet::weight(10000)]
 		#[transactional]
 		pub fn update_fee(origin: OriginFor<T>, p: Fee<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			ensure!(
-				Self::is_registered(&who),
-				<Error<T>>::InvalidSubmitPriceOrigin
-			);
+			ensure!(Self::is_registered(&who), <Error<T>>::NotRegistered);
 			ensure!(p >= T::MinimumFee::get(), <Error<T>>::TooLowFee);
 
 			<RelayersMap<T>>::mutate(who.clone(), |relayer| {
@@ -303,7 +282,7 @@ pub mod pallet {
 
 impl<T: Config> Pallet<T> {
 	/// Update fees in the following cases:
-	/// 1. New relayer register
+	/// 1. New relayers register
 	/// 2. Already registered relayer update fee
 	/// 3. Cancel registered relayer
 	pub fn update_market_fee() -> Result<(), DispatchError> {
@@ -313,13 +292,13 @@ impl<T: Config> Pallet<T> {
 			.collect();
 		relayers.sort();
 		if relayers.len() >= MIN_REGISTERED_RELAYERS_NUMBER {
-			<SortedRelayers<T>>::kill();
+			<AssignedRelayers<T>>::kill();
 			let prior_relayers = (
 				relayers[0].clone(),
 				relayers[1].clone(),
 				relayers[2].clone(),
 			);
-			<SortedRelayers<T>>::put(prior_relayers);
+			<AssignedRelayers<T>>::put(prior_relayers);
 			<BestRelayer<T>>::put((relayers[2].id.clone(), relayers.clone()[2].fee));
 		}
 		Ok(())
@@ -345,6 +324,8 @@ impl<T: Config> Pallet<T> {
 		Self::best_relayer().1
 	}
 }
+
+// TODO: These things goes to primitive crate later
 #[derive(Encode, Decode, Clone, Eq, Debug, Copy)]
 pub struct Relayer<T: Config> {
 	id: T::AccountId,
@@ -364,12 +345,18 @@ impl<T: Config> Relayer<T> {
 
 impl<T: Config> PartialOrd for Relayer<T> {
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+		if self.fee == other.fee {
+			return self.lock_balance.partial_cmp(&other.lock_balance);
+		}
 		self.fee.partial_cmp(&other.fee)
 	}
 }
 
 impl<T: Config> Ord for Relayer<T> {
 	fn cmp(&self, other: &Self) -> Ordering {
+		if self.fee == other.fee {
+			return self.lock_balance.cmp(&other.lock_balance);
+		}
 		self.fee.cmp(&other.fee)
 	}
 }
@@ -389,6 +376,7 @@ impl<T: Config> Default for Relayer<T> {
 		}
 	}
 }
+
 #[derive(Clone, RuntimeDebug, Encode, Decode, Default)]
 pub struct Order<AccountId, BlockNumber, Balance> {
 	lane: LaneId,
@@ -490,7 +478,7 @@ impl<T: Config> OnMessageAccepted for MessageAcceptedHandler<T> {
 		let (t1, t2, t3) = T::SlotTimes::get();
 		let mut order: Order<T::AccountId, T::BlockNumber, Fee<T>> =
 			Order::new(*lane, *message, now);
-		let (r1, r2, r3) = Pallet::<T>::prior_relayers();
+		let (r1, r2, r3) = Pallet::<T>::assigned_relayers();
 		let order_relayers = (
 			PriorRelayer::new(r1.id, Priority::P1, r1.fee, now, t1),
 			PriorRelayer::new(r2.id, Priority::P2, r2.fee, now + t1, now + t1 + t2),
@@ -505,8 +493,7 @@ impl<T: Config> OnMessageAccepted for MessageAcceptedHandler<T> {
 		order.set_prior_relayers(order_relayers);
 
 		// store the create order
-		let order_hash: H256 = (order.lane, order.message).using_encoded(blake2_256).into();
-		<Orders<T>>::insert(order_hash, order);
+		<Orders<T>>::insert((order.lane, order.message), order);
 		10000 // todo: update the weight
 	}
 }
@@ -522,11 +509,10 @@ impl<T: Config> OnDeliveryConfirmed for MessageConfirmedHandler<T> {
 	fn on_messages_delivered(lane: &LaneId, delivered_messages: &DeliveredMessages) -> Weight {
 		let now = frame_system::Pallet::<T>::block_number();
 		for message_nonce in delivered_messages.begin..=delivered_messages.end {
-			let order_hash: H256 = (lane, message_nonce).using_encoded(blake2_256).into();
-			<Orders<T>>::mutate(order_hash, |order| {
+			<Orders<T>>::mutate((lane, message_nonce), |order| {
 				order.set_confirm_time(Some(now));
 			});
-			<ConfirmedMessagesThisBlock<T>>::append(order_hash);
+			<ConfirmedMessagesThisBlock<T>>::append((lane, message_nonce));
 		}
 
 		10000 // todo: update the weight
