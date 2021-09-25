@@ -36,7 +36,7 @@ use frame_support::{
 	traits::{GenesisBuild, LockIdentifier},
 	PalletId,
 };
-use frame_system::mocking::*;
+use frame_system::{mocking::*, EventRecord, Phase};
 use sp_core::H256;
 use sp_runtime::Permill;
 use sp_runtime::{
@@ -116,6 +116,8 @@ impl pallet_timestamp::Config for Test {
 
 pub type TestMessageFee = u64;
 pub type TestRelayer = u64;
+/// Lane that we're using in tests.
+pub const TEST_LANE_ID: LaneId = [0, 0, 0, 1];
 /// Error that is returned by all test implementations.
 pub const TEST_ERROR: &str = "Test error";
 /// Payload that is rejected by `TestTargetHeaderChain`.
@@ -288,65 +290,6 @@ impl MessageDeliveryAndDispatchPayment<AccountId, TestMessageFee>
 		// }
 	}
 }
-
-#[derive(Debug)]
-pub struct TestOnMessageAccepted;
-impl TestOnMessageAccepted {
-	/// Verify that the callback has been called when the message is accepted.
-	pub fn ensure_called(lane: &LaneId, message: &MessageNonce) {
-		let key = (b"TestOnMessageAccepted", lane, message).encode();
-		assert_eq!(frame_support::storage::unhashed::get(&key), Some(true));
-	}
-
-	/// Set consumed weight returned by the callback.
-	pub fn set_consumed_weight_per_message(weight: Weight) {
-		frame_support::storage::unhashed::put(b"TestOnMessageAccepted_Weight", &weight);
-	}
-
-	/// Get consumed weight returned by the callback.
-	pub fn get_consumed_weight_per_message() -> Option<Weight> {
-		frame_support::storage::unhashed::get(b"TestOnMessageAccepted_Weight")
-	}
-}
-impl OnMessageAccepted for TestOnMessageAccepted {
-	fn on_messages_accepted(lane: &LaneId, message: &MessageNonce) -> Weight {
-		let key = (b"TestOnMessageAccepted", lane, message).encode();
-		frame_support::storage::unhashed::put(&key, &true);
-		Self::get_consumed_weight_per_message()
-			.unwrap_or_else(|| DbWeight::get().reads_writes(1, 1))
-	}
-}
-
-/// First on-messages-delivered callback.
-#[derive(Debug)]
-pub struct TestOnDeliveryConfirmed;
-impl TestOnDeliveryConfirmed {
-	/// Verify that the callback has been called with given delivered messages.
-	pub fn ensure_called(lane: &LaneId, messages: &DeliveredMessages) {
-		let key = (b"TestOnDeliveryConfirmed", lane, messages).encode();
-		assert_eq!(frame_support::storage::unhashed::get(&key), Some(true));
-	}
-
-	/// Set consumed weight returned by the callback.
-	pub fn set_consumed_weight_per_message(weight: Weight) {
-		frame_support::storage::unhashed::put(b"TestOnDeliveryConfirmed_Weight", &weight);
-	}
-
-	/// Get consumed weight returned by the callback.
-	pub fn get_consumed_weight_per_message() -> Option<Weight> {
-		frame_support::storage::unhashed::get(b"TestOnDeliveryConfirmed_Weight")
-	}
-}
-impl OnDeliveryConfirmed for TestOnDeliveryConfirmed {
-	fn on_messages_delivered(lane: &LaneId, messages: &DeliveredMessages) -> Weight {
-		let key = (b"TestOnDeliveryConfirmed", lane, messages).encode();
-		frame_support::storage::unhashed::put(&key, &true);
-		Self::get_consumed_weight_per_message()
-			.unwrap_or_else(|| DbWeight::get().reads_writes(1, 1))
-			.saturating_mul(messages.total_messages())
-	}
-}
-
 /// Source header chain that is used in tests.
 #[derive(Debug)]
 pub struct TestSourceHeaderChain;
@@ -427,8 +370,8 @@ impl pallet_bridge_messages::Config for Test {
 	type TargetHeaderChain = TestTargetHeaderChain;
 	type LaneMessageVerifier = TestLaneMessageVerifier;
 	type MessageDeliveryAndDispatchPayment = TestMessageDeliveryAndDispatchPayment;
-	type OnMessageAccepted = TestOnMessageAccepted;
-	type OnDeliveryConfirmed = TestOnDeliveryConfirmed;
+	type OnMessageAccepted = MessageAcceptedHandler<Self>;
+	type OnDeliveryConfirmed = MessageConfirmedHandler<Self>;
 
 	type SourceHeaderChain = TestSourceHeaderChain;
 	type MessageDispatch = TestMessageDispatch;
@@ -734,5 +677,44 @@ fn test_multiple_relayers_choose_assigned_relayers_with_diff_lock_and_fee() {
 			)
 		);
 		assert_eq!(FeeMarket::best_relayer(), (4, 50));
+	});
+}
+
+fn get_ready_for_events() {
+	System::set_block_number(1);
+	System::reset_events();
+}
+
+fn get_ready_for_provide_market_fee() {
+	FeeMarket::register(Origin::signed(1), 100, Some(30));
+	FeeMarket::register(Origin::signed(2), 110, Some(40));
+	FeeMarket::register(Origin::signed(3), 120, Some(50));
+}
+
+fn send_regular_message(fee: Balance) -> (LaneId, u64) {
+	let message_nonce = Messages::outbound_latest_generated_nonce(TEST_LANE_ID) + 1;
+	let weight = Messages::send_message(Origin::signed(1), TEST_LANE_ID, REGULAR_PAYLOAD, fee)
+		.expect("send_message has failed")
+		.actual_weight
+		.expect("send_message always returns Some");
+
+	(TEST_LANE_ID, message_nonce)
+}
+
+#[test]
+fn test_order_creation_when_bridged_pallet_accept_message() {
+	new_test_ext().execute_with(|| {
+		get_ready_for_provide_market_fee();
+		System::set_block_number(2);
+
+		let assigned_relayers = FeeMarket::assigned_relayers();
+		let market_fee = FeeMarket::market_fee();
+		let (lane, message_nonce) = send_regular_message(market_fee);
+		let order = FeeMarket::order(&lane, &message_nonce);
+		let (relayer1, relayer2, relayer3) = order.assigned_relayers().unwrap();
+		assert_eq!(relayer1.id, assigned_relayers.0.id);
+		assert_eq!(relayer2.id, assigned_relayers.1.id);
+		assert_eq!(relayer3.id, assigned_relayers.2.id);
+		assert_eq!(order.sent_time, 2);
 	});
 }

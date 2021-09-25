@@ -29,7 +29,10 @@ use crate::weights::WeightInfo;
 
 mod payment;
 
-use bp_messages::{DeliveredMessages, LaneId, MessageNonce};
+use bp_messages::{
+	source_chain::{OnDeliveryConfirmed, OnMessageAccepted},
+	DeliveredMessages, LaneId, MessageNonce,
+};
 use codec::{Decode, Encode};
 use darwinia_support::balance::{LockFor, LockableCurrency};
 use frame_support::{
@@ -53,7 +56,7 @@ use sp_std::{
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 pub type Fee<T> = RingBalance<T>;
-pub type OrderRelayers<AccountId, BlockNumber, Balance> = (
+pub type AssignedRelayers<AccountId, BlockNumber, Balance> = (
 	PriorRelayer<AccountId, BlockNumber, Balance>,
 	PriorRelayer<AccountId, BlockNumber, Balance>,
 	PriorRelayer<AccountId, BlockNumber, Balance>,
@@ -143,7 +146,7 @@ pub mod pallet {
 	// Priority relayers storage
 	#[pallet::storage]
 	#[pallet::getter(fn assigned_relayers)]
-	pub type AssignedRelayers<T: Config> =
+	pub type AssignedRelayersStorage<T: Config> =
 		StorageValue<_, (Relayer<T>, Relayer<T>, Relayer<T>), ValueQuery>;
 
 	#[pallet::storage]
@@ -292,13 +295,13 @@ impl<T: Config> Pallet<T> {
 			.collect();
 		relayers.sort();
 		if relayers.len() >= MIN_REGISTERED_RELAYERS_NUMBER {
-			<AssignedRelayers<T>>::kill();
+			<AssignedRelayersStorage<T>>::kill();
 			let prior_relayers = (
 				relayers[0].clone(),
 				relayers[1].clone(),
 				relayers[2].clone(),
 			);
-			<AssignedRelayers<T>>::put(prior_relayers);
+			<AssignedRelayersStorage<T>>::put(prior_relayers);
 			<BestRelayer<T>>::put((relayers[2].id.clone(), relayers.clone()[2].fee));
 		}
 		Ok(())
@@ -322,6 +325,13 @@ impl<T: Config> Pallet<T> {
 	// Get market best fee(P3)
 	pub fn market_fee() -> Fee<T> {
 		Self::best_relayer().1
+	}
+
+	pub fn order(
+		lane_id: &LaneId,
+		message: &MessageNonce,
+	) -> Order<T::AccountId, T::BlockNumber, Fee<T>> {
+		<Orders<T>>::get((lane_id, message))
 	}
 }
 
@@ -383,7 +393,7 @@ pub struct Order<AccountId, BlockNumber, Balance> {
 	message: MessageNonce,
 	sent_time: BlockNumber,
 	confirm_time: Option<BlockNumber>,
-	order_relayers: Option<OrderRelayers<AccountId, BlockNumber, Balance>>,
+	assigned_relayers: Option<AssignedRelayers<AccountId, BlockNumber, Balance>>,
 }
 
 impl<AccountId, BlockNumber, Balance> Order<AccountId, BlockNumber, Balance> {
@@ -393,15 +403,15 @@ impl<AccountId, BlockNumber, Balance> Order<AccountId, BlockNumber, Balance> {
 			message,
 			sent_time,
 			confirm_time: None,
-			order_relayers: None,
+			assigned_relayers: None,
 		}
 	}
 
-	pub fn set_prior_relayers(
+	pub fn set_assigned_relayers(
 		&mut self,
-		order_relayers: OrderRelayers<AccountId, BlockNumber, Balance>,
+		assigned_relayers: AssignedRelayers<AccountId, BlockNumber, Balance>,
 	) {
-		self.order_relayers = Some(order_relayers);
+		self.assigned_relayers = Some(assigned_relayers);
 	}
 
 	pub fn set_confirm_time(&mut self, confirm_time: Option<BlockNumber>) {
@@ -412,8 +422,8 @@ impl<AccountId, BlockNumber, Balance> Order<AccountId, BlockNumber, Balance> {
 		(self.lane, self.message).using_encoded(blake2_256).into()
 	}
 
-	pub fn order_relayers(&self) -> Option<&OrderRelayers<AccountId, BlockNumber, Balance>> {
-		self.order_relayers.as_ref()
+	pub fn assigned_relayers(&self) -> Option<&AssignedRelayers<AccountId, BlockNumber, Balance>> {
+		self.assigned_relayers.as_ref()
 	}
 }
 
@@ -434,7 +444,7 @@ where
 		priority: Priority,
 		fee: Balance,
 		start_time: BlockNumber,
-		last_time: BlockNumber,
+		slot_time: BlockNumber,
 	) -> Self {
 		Self {
 			id,
@@ -442,7 +452,7 @@ where
 			fee,
 			valid_range: Range {
 				start: start_time.clone(),
-				end: start_time + last_time,
+				end: start_time + slot_time,
 			},
 		}
 	}
@@ -462,45 +472,34 @@ impl Default for Priority {
 	}
 }
 
-/// Handler for messages have been accepted
-pub trait OnMessageAccepted {
-	/// Called when a message has been accepted by message pallet.
-	fn on_messages_accepted(lane: &LaneId, message: &MessageNonce) -> Weight;
-}
-
 pub struct MessageAcceptedHandler<T>(PhantomData<T>);
-
 impl<T: Config> OnMessageAccepted for MessageAcceptedHandler<T> {
 	// Called when the message is accepted by message pallet
 	fn on_messages_accepted(lane: &LaneId, message: &MessageNonce) -> Weight {
-		// create an order
+		let mut reads = 0;
+		let mut writes = 0;
+
+		// Create a new order based on the latest block, assign 3 relayers which have priority to relaying
 		let now = frame_system::Pallet::<T>::block_number();
+		println!("now {:?}", now);
 		let (t1, t2, t3) = T::SlotTimes::get();
 		let mut order: Order<T::AccountId, T::BlockNumber, Fee<T>> =
 			Order::new(*lane, *message, now);
 		let (r1, r2, r3) = Pallet::<T>::assigned_relayers();
-		let order_relayers = (
+		reads += 1;
+		let assigned_relayers = (
 			PriorRelayer::new(r1.id, Priority::P1, r1.fee, now, t1),
-			PriorRelayer::new(r2.id, Priority::P2, r2.fee, now + t1, now + t1 + t2),
-			PriorRelayer::new(
-				r3.id,
-				Priority::P3,
-				r3.fee,
-				now + t1 + t2,
-				now + t1 + t2 + t3,
-			),
+			PriorRelayer::new(r2.id, Priority::P2, r2.fee, now + t1, t2),
+			PriorRelayer::new(r3.id, Priority::P3, r3.fee, now + t1 + t2, t3),
 		);
-		order.set_prior_relayers(order_relayers);
+		order.set_assigned_relayers(assigned_relayers);
 
-		// store the create order
+		// Store the create order
 		<Orders<T>>::insert((order.lane, order.message), order);
-		10000 // todo: update the weight
-	}
-}
+		writes += 1;
 
-/// Handler for messages delivery confirmation.
-pub trait OnDeliveryConfirmed {
-	fn on_messages_delivered(_lane: &LaneId, _messages: &DeliveredMessages) -> Weight;
+		<T as frame_system::Config>::DbWeight::get().reads_writes(reads, writes)
+	}
 }
 
 pub struct MessageConfirmedHandler<T>(PhantomData<T>);

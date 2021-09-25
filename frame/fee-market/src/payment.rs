@@ -93,7 +93,7 @@ where
 			let order_confirm_time = order
 				.confirm_time
 				.expect("The message confirm_time already set in OnDeliveryConfirmed");
-			let (p1, p2, p3) = order.order_relayers.clone().unwrap();
+			let (p1, p2, p3) = order.assigned_relayers.clone().unwrap();
 
 			// Get message relayer of this message
 			let mut message_relayer = T::AccountId::default();
@@ -140,7 +140,7 @@ where
 				let slash_reward = slash_assign_relayers::<T>(
 					p3.valid_range.end,
 					order_confirm_time,
-					order.order_relayers.unwrap(),
+					order.assigned_relayers.unwrap(),
 					relayer_fund_account,
 				);
 				message_reward = T::ForMessageRelayer::get() * slash_reward;
@@ -209,7 +209,7 @@ fn pay_reward<T: Config>(
 pub fn slash_assign_relayers<T: Config>(
 	_p3_end_time: T::BlockNumber,
 	_confirm_time: T::BlockNumber,
-	assign_relayers: OrderRelayers<T::AccountId, T::BlockNumber, RingBalance<T>>,
+	assign_relayers: AssignedRelayers<T::AccountId, T::BlockNumber, RingBalance<T>>,
 	relayer_fund_account: &T::AccountId,
 ) -> RingBalance<T> {
 	let (p1, p2, p3) = assign_relayers;
