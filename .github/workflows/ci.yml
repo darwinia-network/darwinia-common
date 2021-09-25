@@ -11,13 +11,13 @@ on:
 
 jobs:
   build_kit:
-    name: Build kit
+    name: Build subalfred
     runs-on: ubuntu-latest
     steps:
       - name: Fetch latest code
         uses: actions/checkout@v2
         with:
-          repository: darwinia-network/darwinia-kit
+          repository: l2ust/subalfred
           ref: main
       - name: Install Rust nightly-2021-09-01 toolchain
         uses: actions-rs/toolchain@v1
@@ -28,17 +28,14 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --manifest-path ci-bot/Cargo.toml
-      - name: Compress kit
-        run: |
-          mv ci-bot avoid-same-name
-          cp target/release/ci-bot .
-          tar cf kit.tar.zst ci-bot -I pzstd
-      - name: Upload kit
+          args: --release
+      - name: Compress subalfred
+        run: cp target/release/subalfred . && tar cf subalfred.tar.zst subalfred -I pzstd
+      - name: Upload subalfred
         uses: actions/upload-artifact@v2
         with:
-          name: kit
-          path: kit.tar.zst
+          name: subalfred
+          path: subalfred.tar.zst
 
   build_node_and_internal_test:
     name: Build node and internal test
@@ -79,14 +76,14 @@ jobs:
     steps:
       - name: Fetch latest code
         uses: actions/checkout@v2
-      - name: Download kit
+      - name: Download subalfred
         uses: actions/download-artifact@v2
         with:
-          name: kit
-      - name: Uncompress kit
-        run: tar xf kit.tar.zst -I pzstd
+          name: subalfred
+      - name: Uncompress subalfred
+        run: tar xf subalfred.tar.zst -I pzstd
       - name: Run checker
-        run: ./ci-bot default-features --project-dir ../darwinia-common
+        run: ./subalfred ci default-features -p ../darwinia-common
 
   check_rust_code:
     name: Check Rust code
@@ -113,20 +110,20 @@ jobs:
     outputs:
       result: ${{ steps.run_checker.outputs.result }}
     steps:
-      - name: Download kit
+      - name: Download subalfred
         uses: actions/download-artifact@v2
         with:
-          name: kit
+          name: subalfred
       - name: Download node
         uses: actions/download-artifact@v2
         with:
           name: node
-      - name: Uncompress kit and node
-        run: tar xf kit.tar.zst -I pzstd && tar xf node.tar.zst -I pzstd
+      - name: Uncompress subalfred and node
+        run: tar xf subalfred.tar.zst -I pzstd && tar xf node.tar.zst -I pzstd
       - id: run_checker
         name: Run checker
         run: |
-          OUTPUT=$(./ci-bot storage-prefix --chain pangolin --exec ./drml)
+          OUTPUT=$(./subalfred ci storage-prefix -c Pangolin -e ./drml)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
@@ -150,7 +147,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: node
-      - name: Uncompress kit and node
+      - name: Uncompress subalfred and node
         run: tar xf node.tar.zst -I pzstd
       - name: Launch node
         run: ./drml --dev --tmp &
@@ -172,5 +169,5 @@ jobs:
       - uses: geekyeggo/delete-artifact@v1
         with:
           name: |
-            kit
+            subalfred
             node
