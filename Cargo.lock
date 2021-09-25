@@ -1709,7 +1709,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-fee-market"
-version = "2.6.1"
+version = "2.6.5"
 dependencies = [
  "bp-messages",
  "darwinia-balances",
@@ -1718,22 +1718,11 @@ dependencies = [
  "frame-system",
  "log",
  "num-traits",
+ "pallet-bridge-messages",
  "pallet-timestamp",
  "parity-scale-codec",
  "sp-core",
  "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "darwinia-fee-market-runtime-api"
-version = "2.6.1"
-dependencies = [
- "darwinia-support",
- "parity-scale-codec",
- "serde",
- "sp-api",
  "sp-runtime",
  "sp-std",
 ]
@@ -5951,7 +5940,6 @@ dependencies = [
  "darwinia-evm-precompile-simple",
  "darwinia-evm-precompile-transfer",
  "darwinia-fee-market",
- "darwinia-fee-market-runtime-api",
  "darwinia-header-mmr",
  "darwinia-header-mmr-rpc-runtime-api",
  "darwinia-relay-authorities",

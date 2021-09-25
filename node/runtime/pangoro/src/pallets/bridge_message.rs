@@ -18,6 +18,7 @@ use bridge_primitives::{
 	PANGOLIN_CHAIN_ID, PANGORO_PANGOLIN_LANE,
 };
 use darwinia_support::s2s::{self, nonce_to_message_id, MessageConfirmer};
+use pallet_bridge_messages::Instance1;
 use pangolin_messages::{
 	FromPangolinMessageDispatch, FromPangolinMessagePayload, Pangolin,
 	PangoroToPangolinMessagesParameter, ToPangolinMessagePayload, ToPangolinMessageVerifier,
@@ -58,6 +59,7 @@ impl Config<WithPangolinMessages> for Runtime {
 	type LaneMessageVerifier = ToPangolinMessageVerifier;
 	type MessageDeliveryAndDispatchPayment = InstantCurrencyPayments<
 		Runtime,
+		Instance1,
 		darwinia_balances::Pallet<Runtime, RingInstance>,
 		GetDeliveryConfirmationTransactionFee,
 		RootAccountForPayments,

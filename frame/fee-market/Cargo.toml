@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "darwinia-fee-market"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.6.1"
+version     = "2.6.5"
 
 
 [dependencies]
@@ -26,7 +26,8 @@ sp-runtime    = { default-features = false, git = "https://github.com/darwinia-n
 sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-std         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 # parity-bridges-common
-bp-messages   = { default-features = false, path = "../../../parity-bridges-common/primitives/messages" }
+bp-messages            = { default-features = false, path = "../../../parity-bridges-common/primitives/messages" }
+pallet-bridge-messages = { default-features = false, path = "../../../parity-bridges-common/modules/messages" }
 
 [dev-dependencies]
 darwinia-balances = { default-features = false, path = "../balances" }
@@ -49,4 +50,5 @@ std = [
 	"sp-io/std",
 	"sp-std/std",
 	"sp-runtime/std",
+	"pallet-bridge-messages/std",
 ]

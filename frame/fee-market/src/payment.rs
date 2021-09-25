@@ -23,6 +23,7 @@ use bp_messages::{
 
 use crate::*;
 use crate::{Config, ConfirmedMessagesThisBlock, Orders};
+use bp_messages::UnrewardedRelayer;
 use codec::Encode;
 use frame_support::traits::{Currency as CurrencyT, ExistenceRequirement, Get};
 use num_traits::Zero;
@@ -30,18 +31,20 @@ use sp_runtime::traits::AccountIdConversion;
 use sp_runtime::traits::Saturating;
 use sp_runtime::Permill;
 use sp_std::collections::btree_map::BTreeMap;
-use sp_std::fmt::Debug;
 use sp_std::ops::Range;
+use sp_std::{collections::vec_deque::VecDeque, fmt::Debug, ops::RangeInclusive};
 
-pub struct FeeMarketPayment<T, GetConfirmationFee, RootAccount> {
-	_phantom: sp_std::marker::PhantomData<(T, GetConfirmationFee, RootAccount)>,
+pub struct FeeMarketPayment<T, I, Currency, GetConfirmationFee, RootAccount> {
+	_phantom: sp_std::marker::PhantomData<(T, I, Currency, GetConfirmationFee, RootAccount)>,
 }
 
-impl<T, GetConfirmationFee, RootAccount>
+impl<T, I, Currency, GetConfirmationFee, RootAccount>
 	MessageDeliveryAndDispatchPayment<T::AccountId, RingBalance<T>>
-	for FeeMarketPayment<T, GetConfirmationFee, RootAccount>
+	for FeeMarketPayment<T, I, Currency, GetConfirmationFee, RootAccount>
 where
-	T: Config,
+	T: frame_system::Config + pallet_bridge_messages::Config<I> + Config,
+	I: 'static,
+	Currency: CurrencyT<T::AccountId, Balance = T::OutboundMessageFee>,
 	GetConfirmationFee: Get<RingBalance<T>>,
 	RootAccount: Get<Option<T::AccountId>>,
 {
@@ -75,8 +78,10 @@ where
 	}
 
 	fn pay_relayers_rewards(
+		lane_id: LaneId,
+		messages_relayers: VecDeque<UnrewardedRelayer<T::AccountId>>,
 		confirmation_relayer: &T::AccountId,
-		relayers_rewards: RelayersRewards<T::AccountId, RingBalance<T>>,
+		received_range: &RangeInclusive<MessageNonce>,
 		relayer_fund_account: &T::AccountId,
 	) {
 		let mut confirm_total_reward = RingBalance::<T>::zero();
