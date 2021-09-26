@@ -24,10 +24,9 @@
 #[cfg(test)]
 mod tests;
 
+pub mod payment;
 pub mod weights;
 use crate::weights::WeightInfo;
-
-mod payment;
 
 use bp_messages::{
 	source_chain::{OnDeliveryConfirmed, OnMessageAccepted},
@@ -45,6 +44,7 @@ use frame_support::{
 use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_core::H256;
 use sp_io::hashing::blake2_256;
+use sp_runtime::traits::Saturating;
 use sp_runtime::Permill;
 use sp_std::{
 	cmp::{Ord, Ordering},
@@ -76,6 +76,8 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 		#[pallet::constant]
 		type TreasuryPalletId: Get<PalletId>;
+		/// The minimum locked value for a fee market relayer, also represented as
+		/// the maximum of slash value
 		#[pallet::constant]
 		type MiniumLockValue: Get<RingBalance<Self>>;
 		#[pallet::constant]
@@ -92,9 +94,8 @@ pub mod pallet {
 		type ForMessageRelayer: Get<Permill>; // default 80%
 		#[pallet::constant]
 		type ForConfirmRelayer: Get<Permill>; // default 20%
-		#[pallet::constant]
-		type SlashAssignRelayer: Get<RingBalance<Self>>;
 
+		type AssignedRelayersAbsentSlash: AssignedRelayersAbsentSlash<Self>;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 			+ Currency<Self::AccountId>;
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -209,6 +210,15 @@ pub mod pallet {
 				LockFor::Common { amount: lock_value },
 				WithdrawReasons::all(),
 			);
+
+			// Alice 100, lock 70, usable 30
+			// case1: slash 10,  lock 60, usable 20
+			// T::RingCurrency::slash(10);
+			// T::RingCurrency::set_lock(60);
+			// case2: slash 10,  lock 70, usable 20
+
+			// Alice 100, lock 70, usable 30
+			// case3: slash 50, lock 50
 
 			<RelayersMap<T>>::insert(&who, Relayer::new(who.clone(), lock_value, fee));
 			<Relayers<T>>::append(who.clone());
@@ -482,7 +492,6 @@ impl<T: Config> OnMessageAccepted for MessageAcceptedHandler<T> {
 
 		// Create a new order based on the latest block, assign 3 relayers which have priority to relaying
 		let now = frame_system::Pallet::<T>::block_number();
-		println!("now {:?}", now);
 		let (t1, t2, t3) = T::SlotTimes::get();
 		let mut order: Order<T::AccountId, T::BlockNumber, Fee<T>> =
 			Order::new(*lane, *message, now);
@@ -516,5 +525,24 @@ impl<T: Config> OnDeliveryConfirmed for MessageConfirmedHandler<T> {
 		}
 
 		<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
+	}
+}
+
+pub trait AssignedRelayersAbsentSlash<T: Config> {
+	fn slash(base: RingBalance<T>, _timeout: T::BlockNumber) -> RingBalance<T>;
+}
+
+use sp_runtime::traits::UniqueSaturatedInto;
+impl<T: Config> AssignedRelayersAbsentSlash<T> for () {
+	// slash result = base(p3 fee) + 2 * timeout
+	fn slash(base: RingBalance<T>, timeout: T::BlockNumber) -> RingBalance<T> {
+		let mut slash_result = base;
+		let timeout_u128: u128 = timeout.unique_saturated_into();
+		slash_result.saturating_add(timeout_u128.saturating_mul(2u128).unique_saturated_into());
+
+		if slash_result >= T::MiniumLockValue::get() {
+			slash_result = T::MiniumLockValue::get();
+		}
+		slash_result
 	}
 }

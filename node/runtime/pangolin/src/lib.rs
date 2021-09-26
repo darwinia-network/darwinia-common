@@ -720,20 +720,6 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	// impl darwinia_fee_market_runtime_api::FeeMarketApi<Block, AccountId, Balance> for RuntimeApi {
-	// 	fn is_registered(who: &AccountId) -> bool {
-	// 		FeeMarket::is_registered(who)
-	// 	}
-
-	// 	fn best_relayer() -> (AccountId, Balance) {
-	// 		FeeMarket::best_relayer()
-	// 	}
-
-	// 	fn prior_relayers() -> Vec<(AccountId, Balance)> {
-	// 		FeeMarket::prior_relayers()
-	// 	}
-	// }
-
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade() -> Result<

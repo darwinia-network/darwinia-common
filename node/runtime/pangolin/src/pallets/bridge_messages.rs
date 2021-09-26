@@ -22,6 +22,7 @@ use bridge_primitives::{
 	MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE, MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
 	PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE,
 };
+use darwinia_fee_market::payment::FeeMarketPayment;
 use darwinia_support::s2s::{nonce_to_message_id, to_bytes32, MessageConfirmer};
 use pallet_bridge_messages::Instance1;
 
@@ -58,7 +59,14 @@ impl Config<WithPangoroMessages> for Runtime {
 
 	type TargetHeaderChain = Pangoro;
 	type LaneMessageVerifier = ToPangoroMessageVerifier;
-	type MessageDeliveryAndDispatchPayment = InstantCurrencyPayments<
+	// type MessageDeliveryAndDispatchPayment = InstantCurrencyPayments<
+	// 	Runtime,
+	// 	Instance1,
+	// 	darwinia_balances::Pallet<Runtime, RingInstance>,
+	// 	GetDeliveryConfirmationTransactionFee,
+	// 	RootAccountForPayments,
+	// >;
+	type MessageDeliveryAndDispatchPayment = FeeMarketPayment<
 		Runtime,
 		Instance1,
 		darwinia_balances::Pallet<Runtime, RingInstance>,

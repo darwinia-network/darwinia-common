@@ -16,7 +16,6 @@ frame_support::parameter_types! {
 	pub const ForAssignedRelayers: Permill = Permill::from_percent(60);
 	pub const ForMessageRelayer: Permill = Permill::from_percent(80);
 	pub const ForConfirmRelayer: Permill = Permill::from_percent(20);
-	pub const SlashAssignRelayer: Balance = 2;
 }
 
 impl Config for Runtime {
@@ -30,7 +29,7 @@ impl Config for Runtime {
 	type ForAssignedRelayers = ForAssignedRelayers;
 	type ForMessageRelayer = ForMessageRelayer;
 	type ForConfirmRelayer = ForConfirmRelayer;
-	type SlashAssignRelayer = SlashAssignRelayer;
+	type AssignedRelayersAbsentSlash = ();
 
 	type RingCurrency = Ring;
 	type Event = Event;

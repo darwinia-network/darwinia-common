@@ -45,6 +45,7 @@ where
 	T: frame_system::Config + pallet_bridge_messages::Config<I> + Config,
 	I: 'static,
 	Currency: CurrencyT<T::AccountId, Balance = T::OutboundMessageFee>,
+	Currency::Balance: From<MessageNonce>,
 	GetConfirmationFee: Get<RingBalance<T>>,
 	RootAccount: Get<Option<T::AccountId>>,
 {
@@ -193,8 +194,12 @@ where
 		} else {
 			// In the case of the message is delivered by common relayer instead of p1, p2, p3, we slash all
 			// assigned relayers of this order.
-			let slashed_reward =
-				slash_order_assigned_relayers::<T>(order.assigned_relayers, relayer_fund_account);
+			let timeout = p3.valid_range.end - order_confirm_time;
+			let slashed_reward = slash_order_assigned_relayers::<T>(
+				timeout,
+				order.assigned_relayers,
+				relayer_fund_account,
+			);
 			message_reward = T::ForMessageRelayer::get() * slashed_reward;
 			confirm_reward = T::ForConfirmRelayer::get() * slashed_reward;
 		}
@@ -218,11 +223,12 @@ where
 
 /// Slash order assigned relayers
 pub fn slash_order_assigned_relayers<T: Config>(
+	timeout: T::BlockNumber,
 	assign_relayers: Option<AssignedRelayers<T::AccountId, T::BlockNumber, RingBalance<T>>>,
 	relayer_fund_account: &T::AccountId,
 ) -> RingBalance<T> {
 	let (p1, p2, p3) = assign_relayers.unwrap_or_default();
-	let total_slash = p3.fee.saturating_add(T::SlashAssignRelayer::get());
+	let total_slash = T::AssignedRelayersAbsentSlash::slash(p3.fee, timeout);
 
 	// Slash assign relayers and transfer the value to refund_fund_account
 	// TODO:  Slash relayers from deposit balance or tranferable value
