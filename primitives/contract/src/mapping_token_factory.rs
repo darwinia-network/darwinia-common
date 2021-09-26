@@ -35,7 +35,7 @@ impl MappingTokenFactory {
 	fn cross_receive() -> Function {
 		let inputs = vec![
 			Param {
-				name: "token".into(),
+				name: "mapping_token".into(),
 				kind: ParamType::Address,
 			},
 			Param {
@@ -79,11 +79,11 @@ impl MappingTokenFactory {
 				kind: ParamType::Uint(8),
 			},
 			Param {
-				name: "backing".into(),
+				name: "backing_address".into(),
 				kind: ParamType::Address,
 			},
 			Param {
-				name: "source".into(),
+				name: "original_token".into(),
 				kind: ParamType::Address,
 			},
 			Param {
@@ -93,7 +93,7 @@ impl MappingTokenFactory {
 		];
 
 		let outputs = vec![Param {
-			name: "token".into(),
+			name: "mapping_token".into(),
 			kind: ParamType::Address,
 		}];
 
@@ -182,11 +182,11 @@ impl MappingTokenFactory {
 	pub fn mapping_token() -> Function {
 		let inputs = vec![
 			Param {
-				name: "backing".into(),
+				name: "backing_address".into(),
 				kind: ParamType::Address,
 			},
 			Param {
-				name: "source".into(),
+				name: "original_token".into(),
 				kind: ParamType::Address,
 			},
 		];
