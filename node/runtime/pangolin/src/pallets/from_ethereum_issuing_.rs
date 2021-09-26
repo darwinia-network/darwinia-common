@@ -18,5 +18,5 @@ impl Config for Runtime {
 	type EcdsaAuthorities = EthereumRelayAuthorities;
 	type WeightInfo = ();
 	type InternalTransactHandler = Ethereum;
-	type BridgeChainName = RopstenName;
+	type BackingChainName = RopstenName;
 }

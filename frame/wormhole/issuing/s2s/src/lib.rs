@@ -84,7 +84,7 @@ pub mod pallet {
 		type MessageSender: RelayMessageCaller<Self::OutboundPayload, RingBalance<Self>>;
 		type InternalTransactHandler: InternalTransactHandler;
 
-		type BridgeChainName: Get<[u8; 32]>;
+		type BackingChainName: Get<[u8; 32]>;
 	}
 
 	#[pallet::pallet]
@@ -172,7 +172,7 @@ pub mod pallet {
 						option.decimal,
 						backing,
 						token_info.address,
-						&str::from_utf8(&T::BridgeChainName::get())
+						&str::from_utf8(&T::BackingChainName::get())
 							.map_err(|_| Error::<T>::StringCF)?,
 					)
 					.map_err(|_| Error::<T>::InvalidEncodeERC20)?;

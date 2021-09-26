@@ -107,5 +107,5 @@ impl Config for Runtime {
 	type CallEncoder = PangoroCallEncoder;
 	type MessageSender = ToPangoroMessageRelayCaller;
 	type InternalTransactHandler = Ethereum;
-	type BridgeChainName = PangoroName;
+	type BackingChainName = PangoroName;
 }
