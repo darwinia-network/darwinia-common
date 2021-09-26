@@ -17,6 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- substrate ---
+use crate::payment::RewardBook;
 use bitvec::prelude::*;
 use bp_messages::{
 	source_chain::{
@@ -46,6 +47,7 @@ use sp_runtime::{
 };
 // --- darwinia ---
 use crate::{self as darwinia_fee_market, *};
+use sp_runtime::traits::AccountIdConversion;
 use std::{
 	collections::{BTreeMap, VecDeque},
 	ops::RangeInclusive,
@@ -120,6 +122,10 @@ pub type TestRelayer = u64;
 pub const TEST_LANE_ID: LaneId = [0, 0, 0, 1];
 /// Error that is returned by all test implementations.
 pub const TEST_ERROR: &str = "Test error";
+/// Account id of test relayer.
+pub const TEST_RELAYER_A: AccountId = 100;
+/// Account id of additional test relayer - B.
+pub const TEST_RELAYER_B: AccountId = 101;
 /// Payload that is rejected by `TestTargetHeaderChain`.
 pub const PAYLOAD_REJECTED_BY_TARGET_CHAIN: TestPayload = message_payload(1, 50);
 /// Regular message payload.
@@ -276,18 +282,60 @@ impl MessageDeliveryAndDispatchPayment<AccountId, TestMessageFee>
 
 	fn pay_relayers_rewards(
 		_lane_id: LaneId,
-		_message_relayers: VecDeque<UnrewardedRelayer<AccountId>>,
-		_confirmation_relayer: &AccountId,
+		message_relayers: VecDeque<UnrewardedRelayer<AccountId>>,
+		confirmation_relayer: &AccountId,
 		_received_range: &RangeInclusive<MessageNonce>,
-		_relayer_fund_account: &AccountId,
+		relayer_fund_account: &AccountId,
 	) {
-		// todo!()
-		// let relayers_rewards =
-		// 	cal_relayers_rewards::<Test, ()>(lane_id, message_relayers, received_range);
-		// for (relayer, reward) in &relayers_rewards {
-		// 	let key = (b":relayer-reward:", relayer, reward.reward).encode();
-		// 	frame_support::storage::unhashed::put(&key, &true);
-		// }
+		let RewardBook {
+			messages_relayers_rewards,
+			confirmation_relayer_rewards,
+			assigned_relayers_rewards,
+			treasury_total_rewards,
+		} = crate::payment::cal_rewards::<Test, ()>(message_relayers, relayer_fund_account);
+		println!(
+			"bear: --- messages_relayers_rewards {:?}",
+			messages_relayers_rewards
+		);
+		println!(
+			"bear: --- confirmation_relayer_rewards, relayer {:?}, reward {:?}",
+			confirmation_relayer, confirmation_relayer_rewards
+		);
+		println!(
+			"bear: --- assigned_relayers_rewards {:?}",
+			assigned_relayers_rewards
+		);
+		println!(
+			"bear: --- treasury_total_rewards {:?}",
+			treasury_total_rewards
+		);
+
+		let confimation_key = (
+			b":relayer-reward:",
+			confirmation_relayer,
+			confirmation_relayer_rewards,
+		)
+			.encode();
+		frame_support::storage::unhashed::put(&confimation_key, &true);
+
+		for (relayer, reward) in &messages_relayers_rewards {
+			let key = (b":relayer-reward:", relayer, reward).encode();
+			frame_support::storage::unhashed::put(&key, &true);
+		}
+
+		for (relayer, reward) in &assigned_relayers_rewards {
+			let key = (b":relayer-reward:", relayer, reward).encode();
+			frame_support::storage::unhashed::put(&key, &true);
+		}
+
+		let treasury_account: AccountId = <Test as Config>::TreasuryPalletId::get().into_account();
+		let treasury_key = (
+			b":relayer-reward:",
+			&treasury_account,
+			treasury_total_rewards,
+		)
+			.encode();
+		frame_support::storage::unhashed::put(&treasury_key, &true);
 	}
 }
 /// Source header chain that is used in tests.
@@ -680,9 +728,9 @@ fn test_multiple_relayers_choose_assigned_relayers_with_diff_lock_and_fee() {
 }
 
 fn get_ready_for_provide_market_fee() {
-	FeeMarket::register(Origin::signed(1), 100, Some(30));
-	FeeMarket::register(Origin::signed(2), 110, Some(40));
-	FeeMarket::register(Origin::signed(3), 120, Some(50));
+	assert_ok!(FeeMarket::register(Origin::signed(1), 100, Some(30)));
+	assert_ok!(FeeMarket::register(Origin::signed(2), 110, Some(50)));
+	assert_ok!(FeeMarket::register(Origin::signed(3), 120, Some(100)));
 }
 
 fn send_regular_message(fee: Balance) -> (LaneId, u64) {
@@ -753,3 +801,110 @@ fn test_order_confirm_time_set_when_bridged_pallet_confirmed_message() {
 		assert_eq!(<ConfirmedMessagesThisBlock<Test>>::get().len(), 1);
 	});
 }
+
+#[test]
+fn test_payment_reward_calculation_assigned_relayer_finish_delivery_single_message() {
+	new_test_ext().execute_with(|| {
+		// Send message
+		System::set_block_number(2);
+		assert_ok!(FeeMarket::register(Origin::signed(1), 100, Some(30)));
+		assert_ok!(FeeMarket::register(Origin::signed(2), 110, Some(50)));
+		assert_ok!(FeeMarket::register(Origin::signed(3), 120, Some(100)));
+		let market_fee = FeeMarket::market_fee();
+		let (lane, message_nonce) = send_regular_message(market_fee);
+
+		// Receive delivery message proof
+		System::set_block_number(4);
+		assert_ok!(Messages::receive_messages_delivery_proof(
+			Origin::signed(5),
+			TestMessagesDeliveryProof(Ok((
+				TEST_LANE_ID,
+				InboundLaneData {
+					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
+						.into_iter()
+						.collect(),
+					..Default::default()
+				}
+			))),
+			UnrewardedRelayersState {
+				unrewarded_relayer_entries: 1,
+				total_messages: 1,
+				..Default::default()
+			},
+		));
+		let order = FeeMarket::order(&lane, &message_nonce);
+		println!("bear: --- {:?}", order);
+
+		// Analysis:
+		// 1. assigned_relayers [(1, 30, 2-52),(2, 50, 52-102),(3, 100, 102-152)] -> id: 1, reward = 60% * 30 = 18
+		// 2. message relayer -> id: 100, reward = 40% * 30 * 80% = 9.6 ~ 10
+		// 3. confirmation relayer -> id: 5, reward = 40% * 30 * 20% = 2.4 ~ 2
+		// 4. treasury reward -> reward: 100 - 30 = 70
+		let t: AccountId = <Test as Config>::TreasuryPalletId::get().into_account();
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(t, 70));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(1, 18));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 2));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
+			TEST_RELAYER_A,
+			10
+		));
+	});
+}
+
+#[test]
+fn test_payment_reward_calculation_assigned_relayer_finish_delivery_with_multiple_messages() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(2);
+		assert_ok!(FeeMarket::register(Origin::signed(1), 100, Some(300)));
+		assert_ok!(FeeMarket::register(Origin::signed(2), 110, Some(500)));
+		assert_ok!(FeeMarket::register(Origin::signed(3), 120, Some(1000)));
+
+		// Send message
+		let market_fee = FeeMarket::market_fee();
+		let (_, message_nonce1) = send_regular_message(market_fee);
+		let (_, message_nonce2) = send_regular_message(market_fee);
+		assert_eq!(message_nonce1 + 1, message_nonce2);
+
+		// Receive delivery message proof
+		assert_ok!(Messages::receive_messages_delivery_proof(
+			Origin::signed(5),
+			TestMessagesDeliveryProof(Ok((
+				TEST_LANE_ID,
+				InboundLaneData {
+					relayers: vec![
+						unrewarded_relayer(1, 1, TEST_RELAYER_A),
+						unrewarded_relayer(2, 2, TEST_RELAYER_B)
+					]
+					.into_iter()
+					.collect(),
+					..Default::default()
+				}
+			))),
+			UnrewardedRelayersState {
+				unrewarded_relayer_entries: 2,
+				total_messages: 2,
+				..Default::default()
+			},
+		));
+
+		let t: AccountId = <Test as Config>::TreasuryPalletId::get().into_account();
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
+			t, 1400
+		));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
+			1, 360
+		));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 48));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
+			TEST_RELAYER_A,
+			96
+		));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
+			TEST_RELAYER_B,
+			96
+		));
+	});
+}
+
+#[test]
+fn test_payment_reward_calculation_assigned_relayers_absent() {}

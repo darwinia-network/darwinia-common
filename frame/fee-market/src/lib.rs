@@ -45,6 +45,7 @@ use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_core::H256;
 use sp_io::hashing::blake2_256;
 use sp_runtime::traits::Saturating;
+use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::Permill;
 use sp_std::{
 	cmp::{Ord, Ordering},
@@ -532,7 +533,6 @@ pub trait AssignedRelayersAbsentSlash<T: Config> {
 	fn slash(base: RingBalance<T>, _timeout: T::BlockNumber) -> RingBalance<T>;
 }
 
-use sp_runtime::traits::UniqueSaturatedInto;
 impl<T: Config> AssignedRelayersAbsentSlash<T> for () {
 	// slash result = base(p3 fee) + 2 * timeout
 	fn slash(base: RingBalance<T>, timeout: T::BlockNumber) -> RingBalance<T> {
