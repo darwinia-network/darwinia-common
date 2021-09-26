@@ -46,9 +46,7 @@ use bp_runtime::{ChainId, Size};
 use darwinia_evm::AddressMapping;
 use darwinia_support::{
 	evm::POW_9,
-	s2s::{
-		ensure_source_root, TokenMessageId, MessageConfirmer, RelayMessageCaller, ToEthAddress,
-	},
+	s2s::{ensure_source_root, MessageConfirmer, RelayMessageCaller, ToEthAddress, TokenMessageId},
 	PalletDigest,
 };
 use dp_asset::{
@@ -85,6 +83,8 @@ pub mod pallet {
 		type FeeAccount: Get<Option<Self::AccountId>>;
 		type MessageSender: RelayMessageCaller<Self::OutboundPayload, RingBalance<Self>>;
 		type InternalTransactHandler: InternalTransactHandler;
+
+		type BridgeChainName: Get<[u8; 32]>;
 	}
 
 	#[pallet::pallet]
@@ -172,6 +172,8 @@ pub mod pallet {
 						option.decimal,
 						backing,
 						token_info.address,
+						&str::from_utf8(&T::BridgeChainName::get())
+							.map_err(|_| Error::<T>::StringCF)?,
 					)
 					.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 

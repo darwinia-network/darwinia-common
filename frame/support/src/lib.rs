@@ -30,13 +30,13 @@ pub mod balance {
 	};
 	pub use crate::traits::{BalanceInfo, DustCollector, LockableCurrency};
 }
+use ethabi::{encode, Token};
 
 // TODO: Should we move this to `s2s-primitives`?
 pub mod s2s {
 	pub use crate::TokenMessageId;
 	// --- crates.io ---
 	use codec::Encode;
-	use ethabi::{encode, Token};
 	// --- darwinia-network ---
 	use ethereum_primitives::{H160, H256};
 	// --- paritytech ---
@@ -84,19 +84,19 @@ pub mod s2s {
 		Ok(())
 	}
 
-	pub fn to_bytes32(raw: &[u8]) -> [u8; 32] {
-		let mut result = [0u8; 32];
-		let encoded = encode(&[Token::FixedBytes(raw.to_vec())]);
-		result.copy_from_slice(&encoded);
-		result
-	}
-
 	pub fn nonce_to_message_id(lane_id: &[u8], nonce: u64) -> TokenMessageId {
 		let mut message_id: TokenMessageId = Default::default();
 		message_id[4..8].copy_from_slice(&lane_id[..4]);
 		message_id[8..].copy_from_slice(&nonce.to_be_bytes());
 		message_id
 	}
+}
+
+pub fn to_bytes32(raw: &[u8]) -> [u8; 32] {
+	let mut result = [0u8; 32];
+	let encoded = encode(&[Token::FixedBytes(raw.to_vec())]);
+	result.copy_from_slice(&encoded);
+	result
 }
 
 pub type PalletDigest = [u8; 4];

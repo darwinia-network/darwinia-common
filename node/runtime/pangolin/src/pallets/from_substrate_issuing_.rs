@@ -7,8 +7,9 @@ use sp_runtime::{AccountId32, DispatchErrorWithPostInfo};
 // --- darwinia-network ---
 use crate::*;
 use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE};
-use darwinia_support::s2s::{
-	nonce_to_message_id, TokenMessageId, RelayMessageCaller, ToEthAddress,
+use darwinia_support::{
+	s2s::{nonce_to_message_id, RelayMessageCaller, ToEthAddress, TokenMessageId},
+	to_bytes32,
 };
 use dp_asset::{token::Token, RecipientAccount};
 use from_substrate_issuing::{Config, EncodeCall};
@@ -89,6 +90,7 @@ impl ToEthAddress<AccountId32> for TruncateToEthAddress {
 frame_support::parameter_types! {
 	pub const S2sIssuingPalletId: PalletId = PalletId(*b"da/s2sis");
 	pub const PangoroChainId: ChainId = PANGORO_CHAIN_ID;
+	pub PangoroName: [u8; 32] = to_bytes32(b"Pangoro").into();
 }
 
 impl Config for Runtime {
@@ -105,4 +107,5 @@ impl Config for Runtime {
 	type CallEncoder = PangoroCallEncoder;
 	type MessageSender = ToPangoroMessageRelayCaller;
 	type InternalTransactHandler = Ethereum;
+	type BridgeChainName = PangoroName;
 }

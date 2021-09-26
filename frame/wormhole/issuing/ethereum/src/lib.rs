@@ -86,6 +86,7 @@ pub mod pallet {
 		type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
 		type WeightInfo: WeightInfo;
 		type InternalTransactHandler: InternalTransactHandler;
+		type BridgeChainName: Get<[u8; 32]>;
 	}
 
 	#[pallet::error]
@@ -238,6 +239,7 @@ pub mod pallet {
 				register_info.decimals.as_u32() as u8,
 				backing_address,
 				register_info.token_address,
+				&str::from_utf8(&T::BridgeChainName::get()).map_err(|_| Error::<T>::StringCF)?,
 			)
 			.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 			Self::transact_mapping_factory(input)?;

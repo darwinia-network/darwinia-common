@@ -11,7 +11,7 @@ use sp_runtime::DispatchErrorWithPostInfo;
 // --- darwinia-network ---
 use crate::*;
 use bridge_primitives::{AccountIdConverter, PANGORO_PANGOLIN_LANE};
-use darwinia_support::s2s::{nonce_to_message_id, TokenMessageId, RelayMessageCaller};
+use darwinia_support::s2s::{nonce_to_message_id, RelayMessageCaller, TokenMessageId};
 use dp_asset::{token::Token, RecipientAccount};
 use to_substrate_backing::{Config, EncodeCall};
 

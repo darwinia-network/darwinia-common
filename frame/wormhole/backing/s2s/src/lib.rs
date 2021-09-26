@@ -51,9 +51,10 @@ use sp_std::prelude::*;
 use darwinia_support::{
 	evm::IntoDvmAddress,
 	s2s::{
-		ensure_source_root, to_bytes32, TokenMessageId, MessageConfirmer, RelayMessageCaller,
-		RING_DECIMAL, RING_NAME, RING_SYMBOL,
+		ensure_source_root, MessageConfirmer, RelayMessageCaller, TokenMessageId, RING_DECIMAL,
+		RING_NAME, RING_SYMBOL,
 	},
+	to_bytes32,
 };
 use dp_asset::{
 	token::{Token, TokenInfo, TokenOption},
