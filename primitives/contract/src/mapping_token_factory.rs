@@ -87,7 +87,7 @@ impl MappingTokenFactory {
 				kind: ParamType::Address,
 			},
 			Param {
-				name: "source_chain".into(),
+				name: "backing_chain_name".into(),
 				kind: ParamType::String,
 			},
 		];
@@ -151,7 +151,7 @@ impl MappingTokenFactory {
 		decimals: u8,
 		backing: EthereumAddress,
 		source: EthereumAddress,
-		source_chain: &str,
+		backing_chain_name: &str,
 	) -> AbiResult<Bytes> {
 		let create = Self::create_erc20();
 		create.encode_input(
@@ -163,7 +163,7 @@ impl MappingTokenFactory {
 				Token::Uint(U256::from(decimals)),
 				Token::Address(backing),
 				Token::Address(source),
-				Token::String(source_chain.into()),
+				Token::String(backing_chain_name.into()),
 			]
 			.as_slice(),
 		)
