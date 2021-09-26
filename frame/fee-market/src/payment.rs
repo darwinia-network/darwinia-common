@@ -16,23 +16,21 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+// --- substrate ---
 use bp_messages::{
-	source_chain::{MessageDeliveryAndDispatchPayment, RelayersRewards, Sender},
-	MessageNonce,
+	source_chain::{MessageDeliveryAndDispatchPayment, Sender},
+	MessageNonce, UnrewardedRelayer,
 };
-
-use crate::*;
-use crate::{Config, ConfirmedMessagesThisBlock, Orders};
-use bp_messages::UnrewardedRelayer;
-use codec::Encode;
 use frame_support::traits::{Currency as CurrencyT, ExistenceRequirement, Get};
+use sp_runtime::traits::{AccountIdConversion, Saturating};
+use sp_std::{
+	collections::{btree_map::BTreeMap, vec_deque::VecDeque},
+	ops::RangeInclusive,
+};
+// --- darwinia-network ---
+use crate::{Config, ConfirmedMessagesThisBlock, Orders, *};
+// --- std ---
 use num_traits::Zero;
-use sp_runtime::traits::AccountIdConversion;
-use sp_runtime::traits::Saturating;
-use sp_runtime::Permill;
-use sp_std::collections::btree_map::BTreeMap;
-use sp_std::ops::Range;
-use sp_std::{collections::vec_deque::VecDeque, fmt::Debug, ops::RangeInclusive};
 
 pub struct FeeMarketPayment<T, I, Currency, GetConfirmationFee, RootAccount> {
 	_phantom: sp_std::marker::PhantomData<(T, I, Currency, GetConfirmationFee, RootAccount)>,
@@ -148,9 +146,9 @@ where
 			}
 		}
 
-		// Calculate message relayer's reward, confimation_relayer's reward, treasury's reward, assigned_relayer's reward
-		let mut message_reward = RingBalance::<T>::zero();
-		let mut confirm_reward = RingBalance::<T>::zero();
+		// Calculate message relayer's reward, confirmation_relayer's reward, treasury's reward, assigned_relayer's reward
+		let message_reward;
+		let confirm_reward;
 		if p1.valid_range.contains(&order_confirm_time)
 			|| p2.valid_range.contains(&order_confirm_time)
 			|| p3.valid_range.contains(&order_confirm_time)

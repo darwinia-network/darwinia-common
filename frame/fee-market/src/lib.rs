@@ -26,14 +26,13 @@ mod tests;
 
 pub mod payment;
 pub mod weights;
-use crate::weights::WeightInfo;
 
+// --- substrate ---
 use bp_messages::{
 	source_chain::{OnDeliveryConfirmed, OnMessageAccepted},
 	DeliveredMessages, LaneId, MessageNonce,
 };
 use codec::{Decode, Encode};
-use darwinia_support::balance::{LockFor, LockableCurrency};
 use frame_support::{
 	dispatch::DispatchError,
 	ensure,
@@ -44,15 +43,19 @@ use frame_support::{
 use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_core::H256;
 use sp_io::hashing::blake2_256;
-use sp_runtime::traits::Saturating;
-use sp_runtime::traits::UniqueSaturatedInto;
-use sp_runtime::Permill;
+use sp_runtime::{
+	traits::{Saturating, UniqueSaturatedInto},
+	Permill,
+};
 use sp_std::{
 	cmp::{Ord, Ordering},
 	default::Default,
 	ops::Range,
 	vec::Vec,
 };
+// --- darwinia-network ---
+use crate::weights::WeightInfo;
+use darwinia_support::balance::{LockFor, LockableCurrency};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
@@ -262,7 +265,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_registered(&who), <Error<T>>::NotRegistered);
 			ensure!(
-				<Relayers<T>>::get().len() - 1 >= MIN_REGISTERED_RELAYERS_NUMBER,
+				<Relayers<T>>::get().len() > MIN_REGISTERED_RELAYERS_NUMBER,
 				<Error<T>>::TooFewRegisteredRelayers
 			);
 
