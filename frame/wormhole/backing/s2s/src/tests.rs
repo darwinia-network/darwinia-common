@@ -22,7 +22,7 @@ use std::str::FromStr;
 // darwinia
 use crate::*;
 use crate::{self as s2s_backing};
-use darwinia_support::s2s::{TokenMessageId, RelayMessageCaller};
+use darwinia_support::s2s::{RelayMessageCaller, TokenMessageId};
 // substrate
 use frame_support::{weights::PostDispatchInfo, PalletId};
 use frame_system::mocking::*;

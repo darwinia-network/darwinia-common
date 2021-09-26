@@ -63,7 +63,7 @@ benchmarks! {
 		let token = Token::Native(TokenInfo::new(register_token_address, Some(100.into()), Some(token_option)));
 	}:_(RawOrigin::Signed(caller), token, recipient)
 
-    update_ring_daily_limited {
-        let limited: RingBalance<T> = 0u128.unique_saturated_into();
-    }:_(RawOrigin::Root, limited)
+	update_ring_daily_limited {
+		let limited: RingBalance<T> = 0u128.unique_saturated_into();
+	}:_(RawOrigin::Root, limited)
 }

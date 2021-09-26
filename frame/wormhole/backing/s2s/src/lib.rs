@@ -50,7 +50,7 @@ use sp_std::prelude::*;
 use darwinia_support::{
 	evm::IntoDvmAddress,
 	s2s::{
-		ensure_source_root, to_bytes32, TokenMessageId, MessageConfirmer, RelayMessageCaller,
+		ensure_source_root, to_bytes32, MessageConfirmer, RelayMessageCaller, TokenMessageId,
 		RING_DECIMAL, RING_NAME, RING_SYMBOL,
 	},
 };
@@ -152,9 +152,13 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
-			let latest_daily_record = DailyUnlocked::<T>::get().0;
-			if latest_daily_record > Zero::zero()
-				&& latest_daily_record < now - now % T::BlocksPerDay::get()
+			let time_of_last_record = DailyUnlocked::<T>::get().0;
+			// this time is indicated by blocknumber
+			// it's an integer multiple of `T::BlocksPerDay`
+			// if it is the default value zero, we know there are no locked event from last day
+			// or else if current time is in another day, we should reset the unlocked record
+			if time_of_last_record > Zero::zero()
+				&& time_of_last_record < now - now % T::BlocksPerDay::get()
 			{
 				<DailyUnlocked<T>>::kill();
 			}
