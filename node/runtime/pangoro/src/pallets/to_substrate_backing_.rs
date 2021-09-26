@@ -107,7 +107,7 @@ frame_support::parameter_types! {
 	pub const RingPalletId: PalletId = PalletId(*b"da/bring");
 	pub const S2sBackingPalletId: PalletId = PalletId(*b"da/s2sba");
 	pub const RingLockLimit: Balance = 1_000_000 * 1_000_000_000;
-	pub const BlocksPerDay: BlockNumber = 14_400;
+	pub const BlocksPerDay: BlockNumber = DAYS;
 }
 
 impl Config for Runtime {
