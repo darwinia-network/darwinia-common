@@ -27,7 +27,7 @@ use bp_messages::{
 		DispatchMessage, MessageDispatch, ProvedLaneMessages, ProvedMessages, SourceHeaderChain,
 	},
 	DeliveredMessages, InboundLaneData, LaneId, Message, MessageData, MessageKey, MessageNonce,
-	OutboundLaneData, Parameter as MessagesParameter, UnrewardedRelayer,
+	OutboundLaneData, Parameter as MessagesParameter, UnrewardedRelayer, UnrewardedRelayersState,
 };
 use bp_runtime::{messages::MessageDispatchResult, Size};
 use frame_support::weights::{RuntimeDbWeight, Weight};
@@ -281,7 +281,7 @@ impl MessageDeliveryAndDispatchPayment<AccountId, TestMessageFee>
 		_received_range: &RangeInclusive<MessageNonce>,
 		_relayer_fund_account: &AccountId,
 	) {
-		todo!()
+		// todo!()
 		// let relayers_rewards =
 		// 	cal_relayers_rewards::<Test, ()>(lane_id, message_relayers, received_range);
 		// for (relayer, reward) in &relayers_rewards {
@@ -386,7 +386,7 @@ frame_support::parameter_types! {
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 	pub const SlotTimes: (u64, u64, u64) = (50, 50, 50);
 
-	pub const ForAssignedRelayer: Permill = Permill::from_percent(60);
+	pub const ForAssignedRelayers: Permill = Permill::from_percent(60);
 	pub const ForMessageRelayer: Permill = Permill::from_percent(80);
 	pub const ForConfirmRelayer: Permill = Permill::from_percent(20);
 	pub const SlashAssignRelayer: Balance = 2;
@@ -400,7 +400,7 @@ impl Config for Test {
 	type LockId = FeeMarketLockId;
 	type SlotTimes = SlotTimes;
 
-	type ForAssignedRelayer = ForAssignedRelayer;
+	type ForAssignedRelayers = ForAssignedRelayers;
 	type ForMessageRelayer = ForMessageRelayer;
 	type ForConfirmRelayer = ForConfirmRelayer;
 	type SlashAssignRelayer = SlashAssignRelayer;
@@ -553,9 +553,9 @@ fn test_single_relayer_update_fee_works() {
 			<Error<Test>>::TooLowFee
 		);
 
-		assert_eq!(FeeMarket::relayer_price(&1), 30);
+		assert_eq!(FeeMarket::relayer_fee(&1), 30);
 		assert_ok!(FeeMarket::update_fee(Origin::signed(1), 40));
-		assert_eq!(FeeMarket::relayer_price(&1), 40);
+		assert_eq!(FeeMarket::relayer_fee(&1), 40);
 	});
 }
 
@@ -680,11 +680,6 @@ fn test_multiple_relayers_choose_assigned_relayers_with_diff_lock_and_fee() {
 	});
 }
 
-fn get_ready_for_events() {
-	System::set_block_number(1);
-	System::reset_events();
-}
-
 fn get_ready_for_provide_market_fee() {
 	FeeMarket::register(Origin::signed(1), 100, Some(30));
 	FeeMarket::register(Origin::signed(2), 110, Some(40));
@@ -699,6 +694,29 @@ fn send_regular_message(fee: Balance) -> (LaneId, u64) {
 		.expect("send_message always returns Some");
 
 	(TEST_LANE_ID, message_nonce)
+}
+
+fn receive_messages_delivery_proof() {
+	assert_ok!(Messages::receive_messages_delivery_proof(
+		Origin::signed(1),
+		TestMessagesDeliveryProof(Ok((
+			TEST_LANE_ID,
+			InboundLaneData {
+				last_confirmed_nonce: 1,
+				relayers: vec![UnrewardedRelayer {
+					relayer: 0,
+					messages: DeliveredMessages::new(1, true),
+				}]
+				.into_iter()
+				.collect(),
+			},
+		))),
+		UnrewardedRelayersState {
+			unrewarded_relayer_entries: 1,
+			total_messages: 1,
+			..Default::default()
+		},
+	));
 }
 
 #[test]
@@ -716,5 +734,23 @@ fn test_order_creation_when_bridged_pallet_accept_message() {
 		assert_eq!(relayer2.id, assigned_relayers.1.id);
 		assert_eq!(relayer3.id, assigned_relayers.2.id);
 		assert_eq!(order.sent_time, 2);
+	});
+}
+
+#[test]
+fn test_order_confirm_time_set_when_bridged_pallet_confirmed_message() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(2);
+		get_ready_for_provide_market_fee();
+		let market_fee = FeeMarket::market_fee();
+		let (lane, message_nonce) = send_regular_message(market_fee);
+		let order = FeeMarket::order(&lane, &message_nonce);
+		assert_eq!(order.confirm_time, None);
+
+		System::set_block_number(4);
+		receive_messages_delivery_proof();
+		let order = FeeMarket::order(&lane, &message_nonce);
+		assert_eq!(order.confirm_time, Some(4));
+		assert_eq!(<ConfirmedMessagesThisBlock<Test>>::get().len(), 1);
 	});
 }

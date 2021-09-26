@@ -87,7 +87,7 @@ pub mod pallet {
 
 		// Reward parameters
 		#[pallet::constant]
-		type ForAssignedRelayer: Get<Permill>; // default 60%
+		type ForAssignedRelayers: Get<Permill>; // default 60%
 		#[pallet::constant]
 		type ForMessageRelayer: Get<Permill>; // default 80%
 		#[pallet::constant]
@@ -312,21 +312,22 @@ impl<T: Config> Pallet<T> {
 		<Relayers<T>>::get().iter().any(|r| *r == *who)
 	}
 
-	// Get relayer fee
-	pub fn relayer_price(who: &T::AccountId) -> Fee<T> {
+	/// Get relayer fee
+	pub fn relayer_fee(who: &T::AccountId) -> Fee<T> {
 		Self::get_relayer(who).fee
 	}
 
-	// Get relayer locked balance
+	/// Get relayer locked balance
 	pub fn relayer_locked_balance(who: &T::AccountId) -> RingBalance<T> {
 		Self::get_relayer(who).lock_balance
 	}
 
-	// Get market best fee(P3)
+	/// Get market best fee(P3)
 	pub fn market_fee() -> Fee<T> {
 		Self::best_relayer().1
 	}
 
+	/// Get order info
 	pub fn order(
 		lane_id: &LaneId,
 		message: &MessageNonce,
@@ -514,6 +515,6 @@ impl<T: Config> OnDeliveryConfirmed for MessageConfirmedHandler<T> {
 			<ConfirmedMessagesThisBlock<T>>::append((lane, message_nonce));
 		}
 
-		10000 // todo: update the weight
+		<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
 	}
 }
