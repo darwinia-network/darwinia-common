@@ -267,7 +267,7 @@ pub mod pallet {
 				EthereumBacking::parse_locking_event(&verified_receipt, &backing_address)
 					.map_err(|_| Error::<T>::DecodeEventFailed)?;
 			let input = mtf::encode_cross_receive(
-				lock_info.mapped_address,
+				lock_info.mapping_token,
 				lock_info.recipient,
 				lock_info.amount,
 			)
@@ -368,12 +368,12 @@ impl<T: Config> Pallet<T> {
 		let factory_address = MappingFactoryAddress::<T>::get();
 		let bytes = mtf::encode_mapping_token(backing_address, original_token)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let mapped_address = T::InternalTransactHandler::read_only_call(factory_address, bytes)?;
-		if mapped_address.len() != 32 {
+		let mapping_token = T::InternalTransactHandler::read_only_call(factory_address, bytes)?;
+		if mapping_token.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
 		Ok(EthereumAddress::from_slice(
-			&mapped_address.as_slice()[12..],
+			&mapping_token.as_slice()[12..],
 		))
 	}
 
@@ -401,7 +401,7 @@ impl<T: Config> Pallet<T> {
 		recipient: EthereumAddress,
 		amount: U256,
 	) -> DispatchResultWithPostInfo {
-		let mapped_address = Self::mapped_token_address(backing_address, original_token).map_err(|e| {
+		let mapping_token = Self::mapped_token_address(backing_address, original_token).map_err(|e| {
 			log::debug!("mapped token address error {:?} ", e);
 			e
 		})?;
@@ -412,7 +412,7 @@ impl<T: Config> Pallet<T> {
 			sender,
 			recipient,
 			original_token,
-			mapped_address,
+			mapping_token,
 			amount,
 		);
 		let module_event: <T as Config>::Event = raw_event.clone().into();
