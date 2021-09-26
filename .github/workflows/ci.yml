@@ -85,6 +85,41 @@ jobs:
       - name: Run checker
         run: ./subalfred ci default-features -p ../darwinia-common
 
+  check_runtime_version:
+    name: Check runtime version
+    runs-on: ubuntu-latest
+    needs: [build_kit, build_node_and_internal_test]
+    outputs:
+      result: ${{ steps.run_checker.outputs.result }}
+    steps:
+      - name: Download subalfred
+        uses: actions/download-artifact@v2
+        with:
+          name: subalfred
+      - name: Download node
+        uses: actions/download-artifact@v2
+        with:
+          name: node
+      - name: Uncompress subalfred and node
+        run: tar xf subalfred.tar.zst -I pzstd && tar xf node.tar.zst -I pzstd
+      - id: run_checker
+        name: Run checker
+        run: |
+          OUTPUT=$(./subalfred ci runtime-version -c Pangolin -e ./drml)
+          OUTPUT="${OUTPUT//'%'/'%25'}​"
+          OUTPUT="${OUTPUT//$'\n'/'%0A'}"
+          OUTPUT="${OUTPUT//$'\r'/'%0D'}"
+          echo "::set-output name=result::$OUTPUT"
+      - if: github.ref != 'refs/heads/master'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          append: true
+          message: |
+            Check runtime version with ${{ github.sha }}.
+            ```diff
+            ${{ steps.run_checker.outputs.result }}
+            ```
+
   check_rust_code:
     name: Check Rust code
     runs-on: ubuntu-latest
