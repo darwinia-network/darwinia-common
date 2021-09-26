@@ -622,7 +622,7 @@ decl_storage! {
 		HistoryDepth get(fn history_depth) config(): u32 = 336;
 
 		/// The ideal number of staking participants.
-		pub ValidatorCount get(fn validator_count) config(): u32;
+		pub ModifiedValidatorCount get(fn validator_count) config(): u32;
 
 		/// Minimum number of staking participants before emergency conditions are imposed.
 		pub MinimumValidatorCount get(fn minimum_validator_count) config(): u32;
@@ -1582,7 +1582,7 @@ decl_module! {
 		#[weight = T::WeightInfo::set_validator_count()]
 		fn set_validator_count(origin, #[compact] new: u32) {
 			ensure_root(origin)?;
-			ValidatorCount::put(new);
+			ModifiedValidatorCount::put(new);
 		}
 
 		/// Increments the ideal number of validators.
@@ -1595,7 +1595,7 @@ decl_module! {
 		#[weight = T::WeightInfo::set_validator_count()]
 		fn increase_validator_count(origin, #[compact] additional: u32) {
 			ensure_root(origin)?;
-			ValidatorCount::mutate(|n| *n += additional);
+			ModifiedValidatorCount::mutate(|n| *n += additional);
 		}
 
 		/// Scale up the ideal number of validators by a factor.
@@ -1608,7 +1608,7 @@ decl_module! {
 		#[weight = T::WeightInfo::set_validator_count()]
 		fn scale_validator_count(origin, factor: Percent) {
 			ensure_root(origin)?;
-			ValidatorCount::mutate(|n| *n += factor * *n);
+			ModifiedValidatorCount::mutate(|n| *n += factor * *n);
 		}
 
 		/// Force there to be no new eras indefinitely.
