@@ -155,8 +155,8 @@ pub mod pallet {
 			let (token_type, token_info) = token
 				.token_info()
 				.map_err(|_| Error::<T>::InvalidTokenType)?;
-			let mut mapping_address = Self::mapped_token_address(backing_address, token_info.address)?;
-			ensure!(mapping_address == H160::zero(), "asset has been registered");
+			let mut mapping_token = Self::mapped_token_address(backing_address, token_info.address)?;
+			ensure!(mapping_token == H160::zero(), "asset has been registered");
 
 			match token_info.option {
 				Some(option) => {
@@ -178,12 +178,12 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 
 					Self::transact_mapping_factory(input)?;
-					mapping_address = Self::mapped_token_address(backing_address, token_info.address)?;
+					mapping_token = Self::mapped_token_address(backing_address, token_info.address)?;
 					Self::deposit_event(Event::TokenRegistered(
 						user,
 						backing_address,
 						token_info.address,
-						mapping_address,
+						mapping_token,
 					));
 				}
 				_ => return Err(Error::<T>::InvalidTokenOption.into()),
@@ -216,20 +216,20 @@ pub mod pallet {
 				.token_info()
 				.map_err(|_| Error::<T>::InvalidTokenType)?;
 
-			let mapping_address = Self::mapped_token_address(backing_address, token_info.address)?;
+			let mapping_token = Self::mapped_token_address(backing_address, token_info.address)?;
 			ensure!(
-				mapping_address != H160::zero(),
+				mapping_token != H160::zero(),
 				"asset has not been registered"
 			);
 
 			// Redeem process
 			if let Some(value) = token_info.value {
-				let input = mtf::encode_cross_receive(mapping_address, recipient, value)
+				let input = mtf::encode_cross_receive(mapping_token, recipient, value)
 					.map_err(|_| Error::<T>::InvalidMintEncoding)?;
 				Self::transact_mapping_factory(input)?;
 				Self::deposit_event(Event::TokenIssued(
 					backing_address,
-					mapping_address,
+					mapping_token,
 					recipient,
 					value,
 				));
@@ -351,11 +351,11 @@ impl<T: Config> Pallet<T> {
 		let factory_address = <MappingFactoryAddress<T>>::get();
 		let bytes = mtf::encode_mapping_token(backing_address, original_token)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let mapping_address = T::InternalTransactHandler::read_only_call(factory_address, bytes)?;
-		if mapping_address.len() != 32 {
+		let mapping_token = T::InternalTransactHandler::read_only_call(factory_address, bytes)?;
+		if mapping_token.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
-		Ok(H160::from_slice(&mapping_address.as_slice()[12..]))
+		Ok(H160::from_slice(&mapping_token.as_slice()[12..]))
 	}
 
 	/// Make a transaction call to mapping token factory sol contract
