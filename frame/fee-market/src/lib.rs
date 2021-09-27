@@ -32,7 +32,6 @@ use bp_messages::{
 	source_chain::{OnDeliveryConfirmed, OnMessageAccepted},
 	DeliveredMessages, LaneId, MessageNonce,
 };
-use codec::{Decode, Encode};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -44,24 +43,20 @@ use sp_runtime::{
 	traits::{Saturating, UniqueSaturatedInto},
 	Permill,
 };
-use sp_std::{
-	cmp::{Ord, Ordering},
-	default::Default,
-	ops::Range,
-	vec::Vec,
-};
+use sp_std::{default::Default, vec::Vec};
 // --- darwinia-network ---
 use crate::weights::WeightInfo;
 use darwinia_support::balance::{LockFor, LockableCurrency};
+use dp_fee::{AssignedRelayers, Order, PriorRelayer, Priority, Relayer};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 pub type Fee<T> = RingBalance<T>;
-pub type AssignedRelayers<AccountId, BlockNumber, Balance> = (
-	PriorRelayer<AccountId, BlockNumber, Balance>,
-	PriorRelayer<AccountId, BlockNumber, Balance>,
-	PriorRelayer<AccountId, BlockNumber, Balance>,
-);
+// pub type AssignedRelayers<AccountId, BlockNumber, Balance> = (
+// 	PriorRelayer<AccountId, BlockNumber, Balance>,
+// 	PriorRelayer<AccountId, BlockNumber, Balance>,
+// 	PriorRelayer<AccountId, BlockNumber, Balance>,
+// );
 
 pub use pallet::*;
 
@@ -141,8 +136,13 @@ pub mod pallet {
 	// Enrolled relayers storage
 	#[pallet::storage]
 	#[pallet::getter(fn get_relayer)]
-	pub type RelayersMap<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, Relayer<T>, ValueQuery>;
+	pub type RelayersMap<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId,
+		Relayer<T::AccountId, RingBalance<T>>,
+		ValueQuery,
+	>;
 	#[pallet::storage]
 	#[pallet::getter(fn relayers)]
 	pub type Relayers<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
@@ -150,8 +150,15 @@ pub mod pallet {
 	// Priority relayers storage
 	#[pallet::storage]
 	#[pallet::getter(fn assigned_relayers)]
-	pub type AssignedRelayersStorage<T: Config> =
-		StorageValue<_, (Relayer<T>, Relayer<T>, Relayer<T>), ValueQuery>;
+	pub type AssignedRelayersStorage<T: Config> = StorageValue<
+		_,
+		(
+			Relayer<T::AccountId, RingBalance<T>>,
+			Relayer<T::AccountId, RingBalance<T>>,
+			Relayer<T::AccountId, RingBalance<T>>,
+		),
+		ValueQuery,
+	>;
 	#[pallet::storage]
 	#[pallet::getter(fn best_relayer)]
 	pub type BestRelayer<T: Config> = StorageValue<_, (T::AccountId, Fee<T>), ValueQuery>;
@@ -300,7 +307,7 @@ impl<T: Config> Pallet<T> {
 	/// 2. Already enrolled relayer update relay fee
 	/// 3. Cancel enrolled relayer
 	pub fn update_market() {
-		let mut relayers: Vec<Relayer<T>> = <Relayers<T>>::get()
+		let mut relayers: Vec<Relayer<T::AccountId, RingBalance<T>>> = <Relayers<T>>::get()
 			.iter()
 			.map(RelayersMap::<T>::get)
 			.collect();
@@ -371,138 +378,6 @@ impl<T: Config> Pallet<T> {
 		message: &MessageNonce,
 	) -> Order<T::AccountId, T::BlockNumber, Fee<T>> {
 		<Orders<T>>::get((lane_id, message))
-	}
-}
-
-#[derive(Encode, Decode, Clone, Eq, Debug, Copy)]
-pub struct Relayer<T: Config> {
-	id: T::AccountId,
-	collateral: RingBalance<T>,
-	fee: Fee<T>,
-}
-
-impl<T: Config> Relayer<T> {
-	pub fn new(id: T::AccountId, collateral: RingBalance<T>, fee: Fee<T>) -> Relayer<T> {
-		Relayer {
-			id,
-			collateral,
-			fee,
-		}
-	}
-}
-
-impl<T: Config> PartialOrd for Relayer<T> {
-	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-		if self.fee == other.fee {
-			return other.collateral.partial_cmp(&self.collateral);
-		}
-		self.fee.partial_cmp(&other.fee)
-	}
-}
-
-impl<T: Config> Ord for Relayer<T> {
-	fn cmp(&self, other: &Self) -> Ordering {
-		if self.fee == other.fee {
-			return self.collateral.cmp(&other.collateral);
-		}
-		self.fee.cmp(&other.fee)
-	}
-}
-
-impl<T: Config> PartialEq for Relayer<T> {
-	fn eq(&self, other: &Self) -> bool {
-		self.fee == other.fee && self.id == other.id && self.collateral == other.collateral
-	}
-}
-
-impl<T: Config> Default for Relayer<T> {
-	fn default() -> Self {
-		Relayer {
-			id: T::AccountId::default(),
-			collateral: RingBalance::<T>::default(),
-			fee: Fee::<T>::default(),
-		}
-	}
-}
-
-#[derive(Clone, RuntimeDebug, Encode, Decode, Default)]
-pub struct Order<AccountId, BlockNumber, Balance> {
-	lane: LaneId,
-	message: MessageNonce,
-	sent_time: BlockNumber,
-	confirm_time: Option<BlockNumber>,
-	assigned_relayers: Option<AssignedRelayers<AccountId, BlockNumber, Balance>>,
-}
-
-impl<AccountId, BlockNumber, Balance> Order<AccountId, BlockNumber, Balance> {
-	pub fn new(lane: LaneId, message: MessageNonce, sent_time: BlockNumber) -> Self {
-		Self {
-			lane,
-			message,
-			sent_time,
-			confirm_time: None,
-			assigned_relayers: None,
-		}
-	}
-
-	pub fn set_assigned_relayers(
-		&mut self,
-		assigned_relayers: AssignedRelayers<AccountId, BlockNumber, Balance>,
-	) {
-		self.assigned_relayers = Some(assigned_relayers);
-	}
-
-	pub fn set_confirm_time(&mut self, confirm_time: Option<BlockNumber>) {
-		self.confirm_time = confirm_time;
-	}
-
-	pub fn assigned_relayers(&self) -> Option<&AssignedRelayers<AccountId, BlockNumber, Balance>> {
-		self.assigned_relayers.as_ref()
-	}
-}
-
-#[derive(Clone, RuntimeDebug, Encode, Decode, Default)]
-pub struct PriorRelayer<AccountId, BlockNumber, Balance> {
-	id: AccountId,
-	priority: Priority,
-	fee: Balance,
-	valid_range: Range<BlockNumber>,
-}
-
-impl<AccountId, BlockNumber, Balance> PriorRelayer<AccountId, BlockNumber, Balance>
-where
-	BlockNumber: sp_std::ops::Add<Output = BlockNumber> + Clone,
-{
-	pub fn new(
-		id: AccountId,
-		priority: Priority,
-		fee: Balance,
-		start_time: BlockNumber,
-		slot_time: BlockNumber,
-	) -> Self {
-		Self {
-			id,
-			priority,
-			fee,
-			valid_range: Range {
-				start: start_time.clone(),
-				end: start_time + slot_time,
-			},
-		}
-	}
-}
-
-#[derive(Clone, RuntimeDebug, Encode, Decode, Copy)]
-pub enum Priority {
-	NoPriority,
-	P1,
-	P2,
-	P3,
-}
-
-impl Default for Priority {
-	fn default() -> Self {
-		Priority::NoPriority
 	}
 }
 

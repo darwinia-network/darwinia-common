@@ -1,0 +1,28 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Primitives for the fee market"
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "dp-fee"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "2.6.5"
+
+[dependencies]
+codec    = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+bp-messages  = { default-features = false, path = "../../../parity-bridges-common/primitives/messages" }
+
+[features]
+default = ["std"]
+
+std = [
+	"codec/std",
+	"sp-std/std",
+	"bp-messages/std",
+	"frame-support/std",
+	"sp-runtime/std",
+]

@@ -1716,6 +1716,7 @@ dependencies = [
  "bp-runtime",
  "darwinia-balances",
  "darwinia-support",
+ "dp-fee",
  "frame-support",
  "frame-system",
  "log",
@@ -2137,6 +2138,17 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-core",
+ "sp-std",
+]
+
+[[package]]
+name = "dp-fee"
+version = "2.6.5"
+dependencies = [
+ "bp-messages",
+ "frame-support",
+ "parity-scale-codec",
+ "sp-runtime",
  "sp-std",
 ]
 
