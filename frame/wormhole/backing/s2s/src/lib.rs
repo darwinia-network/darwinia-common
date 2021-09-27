@@ -51,7 +51,7 @@ use sp_std::prelude::*;
 use darwinia_support::{
 	evm::IntoDvmAddress,
 	s2s::{
-		ensure_source_root, to_bytes32, TokenMessageId, MessageConfirmer, RelayMessageCaller,
+		ensure_source_root, to_bytes32, MessageConfirmer, RelayMessageCaller, TokenMessageId,
 		RING_DECIMAL, RING_NAME, RING_SYMBOL,
 	},
 };

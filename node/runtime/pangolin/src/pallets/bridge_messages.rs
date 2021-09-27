@@ -57,13 +57,6 @@ impl Config<WithPangoroMessages> for Runtime {
 
 	type TargetHeaderChain = Pangoro;
 	type LaneMessageVerifier = ToPangoroMessageVerifier;
-	// type MessageDeliveryAndDispatchPayment = InstantCurrencyPayments<
-	// 	Runtime,
-	// 	Instance1,
-	// 	darwinia_balances::Pallet<Runtime, RingInstance>,
-	// 	GetDeliveryConfirmationTransactionFee,
-	// 	RootAccountForPayments,
-	// >;
 	type MessageDeliveryAndDispatchPayment = FeeMarketPayment<
 		Runtime,
 		Instance1,

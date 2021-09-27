@@ -12,21 +12,21 @@ version     = "2.6.5"
 
 [dependencies]
 # crates.io
+bitvec      = { version = "0.20", default-features = false, features = ["alloc"] }
 codec       = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 log         = { version = "0.4.14", default-features = false }
 num-traits  = { version = "0.2", default-features = false }
-bitvec = { version = "0.20", default-features = false, features = ["alloc"] }
 # darwinia-network
 darwinia-support = { default-features = false, path = "../support" }
-dp-fee = { default-features = false, path = "../../primitives/fee-market"}
+dp-fee           = { default-features = false, path = "../../primitives/fee-market"}
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-std         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 # parity-bridges-common
 bp-messages            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
 bp-runtime             = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
@@ -40,20 +40,24 @@ default = ["std"]
 
 std = [
 	# crates.io
+	"bitvec/std",
 	"codec/std",
 	"log/std",
 	"num-traits/std",
 	# darwinia-network
 	"darwinia-balances/std",
 	"darwinia-support/std",
+	"dp-fee/std",
 	# paritytech
 	"frame-support/std",
 	"frame-system/std",
+	"pallet-timestamp/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-std/std",
 	"sp-runtime/std",
-	"pallet-bridge-messages/std",
+	# parity-bridges-common
+	"bp-messages/std",
 	"bp-runtime/std",
-	"dp-fee/std",
+	"pallet-bridge-messages/std",
 ]

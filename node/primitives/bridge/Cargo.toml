@@ -13,7 +13,7 @@ version     = "2.6.5"
 # darwinia-network
 common-primitives = { default-features = false, path = "../common" }
 # paritytech
-bp-messages   = { default-features = false,git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
+bp-messages   = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
 bp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-api        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }

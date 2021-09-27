@@ -47,21 +47,15 @@ use sp_std::{default::Default, vec::Vec};
 // --- darwinia-network ---
 use crate::weights::WeightInfo;
 use darwinia_support::balance::{LockFor, LockableCurrency};
-use dp_fee::{AssignedRelayers, Order, PriorRelayer, Priority, Relayer};
+use dp_fee::{
+	AssignedRelayers, Order, PriorRelayer, Priority, Relayer, MIN_ENROLLED_RELAYERS_NUMBER,
+};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 pub type Fee<T> = RingBalance<T>;
-// pub type AssignedRelayers<AccountId, BlockNumber, Balance> = (
-// 	PriorRelayer<AccountId, BlockNumber, Balance>,
-// 	PriorRelayer<AccountId, BlockNumber, Balance>,
-// 	PriorRelayer<AccountId, BlockNumber, Balance>,
-// );
 
 pub use pallet::*;
-
-const MIN_ENROLLED_RELAYERS_NUMBER: usize = 3;
-
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;

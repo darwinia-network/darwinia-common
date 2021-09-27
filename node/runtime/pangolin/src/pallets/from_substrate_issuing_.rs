@@ -8,7 +8,7 @@ use sp_runtime::{AccountId32, DispatchErrorWithPostInfo};
 use crate::*;
 use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE};
 use darwinia_support::s2s::{
-	nonce_to_message_id, TokenMessageId, RelayMessageCaller, ToEthAddress,
+	nonce_to_message_id, RelayMessageCaller, ToEthAddress, TokenMessageId,
 };
 use dp_asset::{token::Token, RecipientAccount};
 use from_substrate_issuing::{Config, EncodeCall};

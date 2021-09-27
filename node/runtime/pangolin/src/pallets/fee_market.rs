@@ -8,10 +8,10 @@ use sp_runtime::Permill;
 frame_support::parameter_types! {
 	pub const FeeMarketPalletId: PalletId = PalletId(*b"da/feemk");
 	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
-	pub const MiniumLockCollateral: Balance = 2;
-	pub const MinimumRelayFee: Balance = 2;
+	pub const MiniumLockCollateral: Balance = 3000;
+	pub const MinimumRelayFee: Balance = 15;
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
-	pub const SlotTimes: (BlockNumber, BlockNumber, BlockNumber) = (50, 50, 50);
+	pub const SlotTimes: (BlockNumber, BlockNumber, BlockNumber) = (20, 20, 20);
 
 	pub const ForAssignedRelayers: Permill = Permill::from_percent(60);
 	pub const ForMessageRelayer: Permill = Permill::from_percent(80);

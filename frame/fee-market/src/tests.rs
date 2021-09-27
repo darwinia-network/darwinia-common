@@ -637,12 +637,12 @@ fn test_multiple_relayers_cancel_registration() {
 #[test]
 fn test_multiple_relayers_sort() {
 	new_test_ext().execute_with(|| {
-		let r1 = Relayer::<Test>::new(1, 100, 30);
-		let r2 = Relayer::<Test>::new(2, 100, 40);
+		let r1 = Relayer::<AccountId, Balance>::new(1, 100, 30);
+		let r2 = Relayer::<AccountId, Balance>::new(2, 100, 40);
 		assert!(r1 < r2);
 
-		let r3 = Relayer::<Test>::new(3, 150, 30);
-		let r4 = Relayer::<Test>::new(4, 100, 30);
+		let r3 = Relayer::<AccountId, Balance>::new(3, 150, 30);
+		let r4 = Relayer::<AccountId, Balance>::new(4, 100, 30);
 		assert!(r3 < r4);
 	});
 }
@@ -660,9 +660,9 @@ fn test_multiple_relayers_choose_assigned_relayers_with_same_default_fee() {
 		assert_eq!(
 			FeeMarket::assigned_relayers(),
 			(
-				Relayer::<Test>::new(5, 140, 30),
-				Relayer::<Test>::new(4, 130, 30),
-				Relayer::<Test>::new(3, 120, 30),
+				Relayer::<AccountId, Balance>::new(5, 140, 30),
+				Relayer::<AccountId, Balance>::new(4, 130, 30),
+				Relayer::<AccountId, Balance>::new(3, 120, 30),
 			)
 		);
 		assert_eq!(FeeMarket::best_relayer(), (3, 30));
@@ -682,9 +682,9 @@ fn test_multiple_relayers_choose_assigned_relayers_with_same_lock_balance() {
 		assert_eq!(
 			FeeMarket::assigned_relayers(),
 			(
-				Relayer::<Test>::new(1, 100, 30),
-				Relayer::<Test>::new(2, 100, 40),
-				Relayer::<Test>::new(3, 100, 50),
+				Relayer::<AccountId, Balance>::new(1, 100, 30),
+				Relayer::<AccountId, Balance>::new(2, 100, 40),
+				Relayer::<AccountId, Balance>::new(3, 100, 50),
 			)
 		);
 		assert_eq!(FeeMarket::best_relayer(), (3, 50));
@@ -704,9 +704,9 @@ fn test_multiple_relayers_choose_assigned_relayers_with_diff_lock_and_fee() {
 		assert_eq!(
 			FeeMarket::assigned_relayers(),
 			(
-				Relayer::<Test>::new(1, 100, 30),
-				Relayer::<Test>::new(2, 100, 40),
-				Relayer::<Test>::new(3, 120, 50),
+				Relayer::<AccountId, Balance>::new(1, 100, 30),
+				Relayer::<AccountId, Balance>::new(2, 100, 40),
+				Relayer::<AccountId, Balance>::new(3, 120, 50),
 			)
 		);
 		assert_eq!(FeeMarket::best_relayer(), (3, 50));
@@ -1098,9 +1098,9 @@ fn test_payment_reward_calculation_assigned_relayers_absent_update_assigned_rela
 		assert_eq!(
 			FeeMarket::assigned_relayers(),
 			(
-				Relayer::<Test>::new(2, 150, 30),
-				Relayer::<Test>::new(1, 100, 30),
-				Relayer::<Test>::new(4, 150, 100),
+				Relayer::<AccountId, Balance>::new(2, 150, 30),
+				Relayer::<AccountId, Balance>::new(1, 100, 30),
+				Relayer::<AccountId, Balance>::new(4, 150, 100),
 			)
 		);
 		assert_eq!(FeeMarket::best_relayer(), (4, 100));
@@ -1150,9 +1150,9 @@ fn test_payment_reward_calculation_assigned_relayers_absent_update_assigned_rela
 		assert_eq!(
 			FeeMarket::assigned_relayers(),
 			(
-				Relayer::<Test>::new(2, 100, 30),
-				Relayer::<Test>::new(3, 130, 100),
-				Relayer::<Test>::new(4, 120, 100),
+				Relayer::<AccountId, Balance>::new(2, 100, 30),
+				Relayer::<AccountId, Balance>::new(3, 130, 100),
+				Relayer::<AccountId, Balance>::new(4, 120, 100),
 			)
 		);
 		assert_eq!(FeeMarket::best_relayer(), (4, 100));

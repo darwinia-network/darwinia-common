@@ -25,6 +25,8 @@ use sp_std::{
 	ops::Range,
 };
 
+pub const MIN_ENROLLED_RELAYERS_NUMBER: usize = 3;
+
 #[derive(Encode, Decode, Clone, Eq, Debug, Copy)]
 pub struct Relayer<AccountId, Balance> {
 	pub id: AccountId,

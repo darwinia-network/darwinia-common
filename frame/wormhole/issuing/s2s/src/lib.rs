@@ -46,9 +46,7 @@ use bp_runtime::{ChainId, Size};
 use darwinia_evm::AddressMapping;
 use darwinia_support::{
 	evm::POW_9,
-	s2s::{
-		ensure_source_root, TokenMessageId, MessageConfirmer, RelayMessageCaller, ToEthAddress,
-	},
+	s2s::{ensure_source_root, MessageConfirmer, RelayMessageCaller, ToEthAddress, TokenMessageId},
 	PalletDigest,
 };
 use dp_asset::{
