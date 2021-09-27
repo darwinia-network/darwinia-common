@@ -192,9 +192,10 @@ where
 					.or_insert(assigned_relayers_reward);
 			}
 		} else {
+			println!("bear: --- enter slash logic");
 			// In the case of the message is delivered by common relayer instead of p1, p2, p3, we slash all
 			// assigned relayers of this order.
-			let timeout = p3.valid_range.end - order_confirm_time;
+			let timeout = order_confirm_time - p3.valid_range.end;
 			let slashed_reward = slash_order_assigned_relayers::<T>(
 				timeout,
 				order.assigned_relayers,
@@ -202,6 +203,8 @@ where
 			);
 			message_reward = T::ForMessageRelayer::get() * slashed_reward;
 			confirm_reward = T::ForConfirmRelayer::get() * slashed_reward;
+			println!("bear: --- message_reward {:?}", message_reward);
+			println!("bear: --- confirm_reward {:?}", confirm_reward);
 		}
 
 		// Update confirmation relayer total rewards
@@ -228,67 +231,90 @@ pub fn slash_order_assigned_relayers<T: Config>(
 	assign_relayers: Option<AssignedRelayers<T::AccountId, T::BlockNumber, RingBalance<T>>>,
 	relayer_fund_account: &T::AccountId,
 ) -> RingBalance<T> {
+	println!("bear: --- slash_order_assigned_relayers");
+	let mut total_slash = RingBalance::<T>::zero();
 	let (p1, p2, p3) = assign_relayers.unwrap_or_default();
-	let total_slash = T::AssignedRelayersAbsentSlash::slash(p3.fee, timeout);
+	let slash_result = T::AssignedRelayersAbsentSlash::slash(p3.fee, timeout);
 
 	// Slash assign relayers and transfer the value to refund_fund_account
-	// TODO:  Slash relayers from deposit balance or tranferable value
-	let _ = <T as Config>::RingCurrency::transfer(
-		&p1.id,
-		relayer_fund_account,
-		total_slash,
-		ExistenceRequirement::KeepAlive,
-	);
-	let _ = <T as Config>::RingCurrency::transfer(
-		&p2.id,
-		relayer_fund_account,
-		total_slash,
-		ExistenceRequirement::KeepAlive,
-	);
-	let _ = <T as Config>::RingCurrency::transfer(
-		&p3.id,
-		relayer_fund_account,
-		total_slash,
-		ExistenceRequirement::KeepAlive,
-	);
+	slash_and_update_market::<T>(&p1.id, relayer_fund_account, slash_result);
+	slash_and_update_market::<T>(&p2.id, relayer_fund_account, slash_result);
+	slash_and_update_market::<T>(&p3.id, relayer_fund_account, slash_result);
+	println!("bear: --- pay reward");
 
+	total_slash = total_slash
+		.saturating_add(slash_result)
+		.saturating_add(slash_result)
+		.saturating_add(slash_result);
 	total_slash
-		.saturating_add(total_slash)
-		.saturating_sub(total_slash)
 }
 
-/// Transfer funds from relayers fund account to given relayer.
-fn pay_reward<T: Config>(
-	relayer_fund_account: &T::AccountId,
-	relayer_account: &T::AccountId,
-	reward: RingBalance<T>,
+/// Pay slash value for absent assigned relayers
+pub fn slash_and_update_market<T: Config>(
+	slash_account: &T::AccountId,
+	fund_account: &T::AccountId,
+	slash_value: RingBalance<T>,
 ) {
+	debug_assert!(
+		slash_value <= T::MiniumLockValue::get(),
+		"The maximum slash value returned from AssignedRelayersAbsentSlash is MiniumLockValue"
+	);
+	// If usable_balance is enough to pay slash, no need to update lock.
+	if slash_value <= T::RingCurrency::usable_balance(&slash_account) {
+		pay_reward::<T>(slash_account, fund_account, slash_value);
+		return;
+	}
+
+	// Otherwise, unlock and pay for slash, then lock the remaining usable balance
+	T::RingCurrency::remove_lock(T::LockId::get(), &slash_account);
+	pay_reward::<T>(slash_account, fund_account, slash_value);
+	// Important: It's necessary to update fee market, since the slash account's lock balance changes
+	crate::Pallet::<T>::new_locked_balance(
+		&slash_account,
+		T::RingCurrency::usable_balance(&slash_account),
+	);
+}
+
+/// Pay reward to a specific account
+fn pay_reward<T: Config>(from: &T::AccountId, to: &T::AccountId, reward: RingBalance<T>) {
 	if reward.is_zero() {
 		return;
 	}
 
 	let pay_result = <T as Config>::RingCurrency::transfer(
-		relayer_fund_account,
-		relayer_account,
+		from,
+		to,
 		reward,
 		// the relayer fund account must stay above ED (needs to be pre-funded)
 		ExistenceRequirement::KeepAlive,
 	);
 
 	match pay_result {
-		Ok(_) => log::trace!(
-			target: "runtime::bridge-messages",
-			"Rewarded relayer {:?} with {:?}",
-			relayer_account,
-			reward,
-		),
-		Err(error) => log::trace!(
-			target: "runtime::bridge-messages",
-			"Failed to pay relayer {:?} reward {:?}: {:?}",
-			relayer_account,
-			reward,
-			error,
-		),
+		Ok(_) => {
+			log::trace!(
+				"Pay reward, from {:?} to {:?} reward: {:?}",
+				from,
+				to,
+				reward,
+			);
+			println!(
+				"bear: --- Pay reward, from {:?} to {:?} reward: {:?}",
+				from, to, reward,
+			);
+		}
+		Err(error) => {
+			log::error!(
+				"Failed to pay reward, from {:?} to {:?} reward {:?}: {:?}",
+				from,
+				to,
+				reward,
+				error,
+			);
+			println!(
+				"bear: --- Failed to pay reward, from {:?} to {:?} reward {:?}: {:?}",
+				from, to, reward, error,
+			);
+		}
 	}
 }
 

@@ -24,8 +24,8 @@ use bp_messages::{
 	target_chain::{
 		DispatchMessage, MessageDispatch, ProvedLaneMessages, ProvedMessages, SourceHeaderChain,
 	},
-	DeliveredMessages, InboundLaneData, LaneId, Message, MessageData, MessageNonce,
-	OutboundLaneData, Parameter as MessagesParameter, UnrewardedRelayer, UnrewardedRelayersState,
+	DeliveredMessages, InboundLaneData, LaneId, Message, MessageNonce, OutboundLaneData,
+	Parameter as MessagesParameter, UnrewardedRelayer, UnrewardedRelayersState,
 };
 use bp_runtime::{messages::MessageDispatchResult, Size};
 use frame_support::{
@@ -45,7 +45,7 @@ use sp_runtime::{
 use bitvec::prelude::*;
 use std::{collections::VecDeque, ops::RangeInclusive};
 // --- darwinia-network ---
-use crate::payment::RewardBook;
+use crate::payment::{slash_order_assigned_relayers, RewardBook};
 use crate::{self as darwinia_fee_market, *};
 
 pub type Block = MockBlock<Test>;
@@ -480,14 +480,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	ext
 }
 
-/// Return message data with valid fee for given payload.
-pub fn message_data(payload: TestPayload) -> MessageData<TestMessageFee> {
-	MessageData {
-		payload: payload.encode(),
-		fee: 1,
-	}
-}
-
 /// Returns message dispatch result with given unspent weight.
 pub const fn dispatch_result(unspent_weight: Weight) -> MessageDispatchResult {
 	MessageDispatchResult {
@@ -652,7 +644,7 @@ fn test_multiple_relayers_sort() {
 
 		let r3 = Relayer::<Test>::new(3, 150, 30);
 		let r4 = Relayer::<Test>::new(4, 100, 30);
-		assert!(r3 > r4);
+		assert!(r3 < r4);
 	});
 }
 
@@ -669,8 +661,8 @@ fn test_multiple_relayers_choose_assigned_relayers_with_same_default_fee() {
 		assert_eq!(
 			FeeMarket::assigned_relayers(),
 			(
-				Relayer::<Test>::new(1, 100, 30),
-				Relayer::<Test>::new(2, 110, 30),
+				Relayer::<Test>::new(5, 140, 30),
+				Relayer::<Test>::new(4, 130, 30),
 				Relayer::<Test>::new(3, 120, 30),
 			)
 		);
@@ -715,10 +707,10 @@ fn test_multiple_relayers_choose_assigned_relayers_with_diff_lock_and_fee() {
 			(
 				Relayer::<Test>::new(1, 100, 30),
 				Relayer::<Test>::new(2, 100, 40),
-				Relayer::<Test>::new(4, 100, 50),
+				Relayer::<Test>::new(3, 120, 50),
 			)
 		);
-		assert_eq!(FeeMarket::best_relayer(), (4, 50));
+		assert_eq!(FeeMarket::best_relayer(), (3, 50));
 	});
 }
 
@@ -730,10 +722,12 @@ fn get_ready_for_provide_market_fee() {
 
 fn send_regular_message(fee: Balance) -> (LaneId, u64) {
 	let message_nonce = Messages::outbound_latest_generated_nonce(TEST_LANE_ID) + 1;
-	let weight = Messages::send_message(Origin::signed(1), TEST_LANE_ID, REGULAR_PAYLOAD, fee)
-		.expect("send_message has failed")
-		.actual_weight
-		.expect("send_message always returns Some");
+	assert_ok!(Messages::send_message(
+		Origin::signed(1),
+		TEST_LANE_ID,
+		REGULAR_PAYLOAD,
+		fee
+	));
 
 	(TEST_LANE_ID, message_nonce)
 }
@@ -861,6 +855,7 @@ fn test_payment_reward_calculation_assigned_relayer_finish_delivery_with_multipl
 		assert_eq!(message_nonce1 + 1, message_nonce2);
 
 		// Receive delivery message proof
+		System::set_block_number(4);
 		assert_ok!(Messages::receive_messages_delivery_proof(
 			Origin::signed(5),
 			TestMessagesDeliveryProof(Ok((
@@ -902,4 +897,260 @@ fn test_payment_reward_calculation_assigned_relayer_finish_delivery_with_multipl
 }
 
 #[test]
-fn test_payment_reward_calculation_assigned_relayers_absent() {}
+fn test_assigned_relayers_absent_slash_calculation_below_min_lock_value() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(2);
+		assert_ok!(FeeMarket::register(Origin::signed(1), 100, Some(30)));
+		assert_ok!(FeeMarket::register(Origin::signed(2), 110, Some(50)));
+		assert_ok!(FeeMarket::register(Origin::signed(3), 120, Some(70)));
+		let market_fee = FeeMarket::market_fee();
+		let (lane, message_nonce) = send_regular_message(market_fee);
+		let order = FeeMarket::order(&lane, &message_nonce);
+
+		assert_eq!(
+			slash_order_assigned_relayers::<Test>(0, order.assigned_relayers.clone(), &0),
+			210
+		);
+		assert_eq!(
+			slash_order_assigned_relayers::<Test>(5, order.assigned_relayers, &0),
+			240
+		);
+	});
+}
+
+#[test]
+fn test_assigned_relayers_absent_slash_calculation_exceed_min_lock_value() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(2);
+		assert_ok!(FeeMarket::register(Origin::signed(1), 100, Some(30)));
+		assert_ok!(FeeMarket::register(Origin::signed(2), 110, Some(50)));
+		assert_ok!(FeeMarket::register(Origin::signed(3), 120, Some(70)));
+		let market_fee = FeeMarket::market_fee();
+		let (lane, message_nonce) = send_regular_message(market_fee);
+		let order = FeeMarket::order(&lane, &message_nonce);
+
+		assert_eq!(
+			slash_order_assigned_relayers::<Test>(14, order.assigned_relayers.clone(), &0),
+			98 * 3
+		);
+		assert_eq!(
+			slash_order_assigned_relayers::<Test>(15, order.assigned_relayers.clone(), &0),
+			300
+		);
+		assert_eq!(
+			slash_order_assigned_relayers::<Test>(50, order.assigned_relayers, &0),
+			300
+		);
+	});
+}
+
+#[test]
+fn test_payment_reward_calculation_assigned_relayers_absent_with_single_message() {
+	new_test_ext().execute_with(|| {
+		// Send message
+		System::set_block_number(2);
+		assert_ok!(FeeMarket::register(Origin::signed(1), 100, Some(30)));
+		assert_ok!(FeeMarket::register(Origin::signed(2), 110, Some(50)));
+		assert_ok!(FeeMarket::register(Origin::signed(3), 120, Some(100)));
+		let market_fee = FeeMarket::market_fee();
+		let (lane, message_nonce) = send_regular_message(market_fee);
+
+		// Receive delivery message proof
+		System::set_block_number(200);
+		assert_ok!(Messages::receive_messages_delivery_proof(
+			Origin::signed(5),
+			TestMessagesDeliveryProof(Ok((
+				TEST_LANE_ID,
+				InboundLaneData {
+					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
+						.into_iter()
+						.collect(),
+					..Default::default()
+				}
+			))),
+			UnrewardedRelayersState {
+				unrewarded_relayer_entries: 1,
+				total_messages: 1,
+				..Default::default()
+			},
+		));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 60));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
+			TEST_RELAYER_A,
+			240
+		));
+	});
+}
+
+#[test]
+fn test_payment_reward_calculation_assigned_relayers_absent_with_multiple_message() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(2);
+		assert_ok!(FeeMarket::register(Origin::signed(1), 100, Some(300)));
+		assert_ok!(FeeMarket::register(Origin::signed(2), 110, Some(500)));
+		assert_ok!(FeeMarket::register(Origin::signed(3), 120, Some(1000)));
+
+		// Send message
+		let market_fee = FeeMarket::market_fee();
+		let (_, message_nonce1) = send_regular_message(market_fee);
+		let (_, message_nonce2) = send_regular_message(market_fee);
+		assert_eq!(message_nonce1 + 1, message_nonce2);
+
+		// Receive delivery message proof
+		System::set_block_number(200);
+		assert_ok!(Messages::receive_messages_delivery_proof(
+			Origin::signed(5),
+			TestMessagesDeliveryProof(Ok((
+				TEST_LANE_ID,
+				InboundLaneData {
+					relayers: vec![
+						unrewarded_relayer(1, 1, TEST_RELAYER_A),
+						unrewarded_relayer(2, 2, TEST_RELAYER_B)
+					]
+					.into_iter()
+					.collect(),
+					..Default::default()
+				}
+			))),
+			UnrewardedRelayersState {
+				unrewarded_relayer_entries: 2,
+				total_messages: 2,
+				..Default::default()
+			},
+		));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
+			5, 120
+		));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
+			TEST_RELAYER_A,
+			240
+		));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
+			TEST_RELAYER_B,
+			240
+		));
+	});
+}
+
+#[test]
+fn test_payment_reward_calculation_assigned_relayers_absent_update_lock_balance() {
+	new_test_ext().execute_with(|| {
+		// Send message
+		System::set_block_number(2);
+		assert_ok!(FeeMarket::register(Origin::signed(1), 100, Some(30)));
+		assert_ok!(FeeMarket::register(Origin::signed(2), 150, Some(50)));
+		assert_ok!(FeeMarket::register(Origin::signed(3), 200, Some(100)));
+		let market_fee = FeeMarket::market_fee();
+		let (lane, message_nonce) = send_regular_message(market_fee);
+		// The original (account-balance) map in genesis: [(1, 150), (2, 200), (3, 350)]
+		assert_eq!(FeeMarket::relayer_locked_balance(&1), 100);
+		assert_eq!(FeeMarket::relayer_locked_balance(&2), 150);
+		assert_eq!(FeeMarket::relayer_locked_balance(&3), 200);
+		assert_eq!(Ring::usable_balance(&1), 50);
+		assert_eq!(Ring::usable_balance(&2), 50);
+		assert_eq!(Ring::usable_balance(&3), 150);
+		assert_eq!(FeeMarket::relayers().len(), 3);
+		assert_eq!(FeeMarket::best_relayer(), (3, 100));
+
+		// Receive delivery message proof
+		System::set_block_number(200);
+		assert_ok!(Messages::receive_messages_delivery_proof(
+			Origin::signed(5),
+			TestMessagesDeliveryProof(Ok((
+				TEST_LANE_ID,
+				InboundLaneData {
+					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
+						.into_iter()
+						.collect(),
+					..Default::default()
+				}
+			))),
+			UnrewardedRelayersState {
+				unrewarded_relayer_entries: 1,
+				total_messages: 1,
+				..Default::default()
+			},
+		));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 60));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
+			TEST_RELAYER_A,
+			240
+		));
+		// The p1, p2, p3 slash value is 100
+		assert_eq!(FeeMarket::relayer_locked_balance(&1), 50);
+		assert_eq!(FeeMarket::relayer_locked_balance(&2), 100);
+		assert_eq!(FeeMarket::relayer_locked_balance(&3), 200);
+		assert_eq!(Ring::usable_balance(&1), 0);
+		assert_eq!(Ring::usable_balance(&2), 0);
+		assert_eq!(Ring::usable_balance(&3), 50);
+		assert_eq!(FeeMarket::relayers().len(), 3);
+		assert_eq!(FeeMarket::best_relayer(), (3, 100));
+	});
+}
+
+#[test]
+fn test_payment_reward_calculation_assigned_relayers_absent_update_assigned_relayers_list() {
+	new_test_ext().execute_with(|| {
+		// Send message
+		System::set_block_number(2);
+		assert_ok!(FeeMarket::register(Origin::signed(1), 100, Some(30)));
+		assert_ok!(FeeMarket::register(Origin::signed(2), 150, Some(30)));
+		assert_ok!(FeeMarket::register(Origin::signed(3), 100, Some(100)));
+		assert_ok!(FeeMarket::register(Origin::signed(4), 150, Some(100)));
+		assert_ok!(FeeMarket::register(Origin::signed(5), 100, Some(200)));
+		assert_ok!(FeeMarket::register(Origin::signed(12), 150, Some(200)));
+		assert_eq!(FeeMarket::relayers().len(), 6);
+		assert_eq!(
+			FeeMarket::assigned_relayers(),
+			(
+				Relayer::<Test>::new(2, 150, 30),
+				Relayer::<Test>::new(1, 100, 30),
+				Relayer::<Test>::new(4, 150, 100),
+			)
+		);
+		assert_eq!(FeeMarket::best_relayer(), (4, 100));
+		let market_fee = FeeMarket::market_fee();
+		let (lane, message_nonce) = send_regular_message(market_fee);
+		// The original (account-balance) map in genesis: [(1, 150), (2, 200), (3, 350)]
+		// assert_eq!(FeeMarket::relayer_locked_balance(&1), 100);
+		// assert_eq!(FeeMarket::relayer_locked_balance(&2), 150);
+		// assert_eq!(FeeMarket::relayer_locked_balance(&3), 200);
+		// assert_eq!(Ring::usable_balance(&1), 50);
+		// assert_eq!(Ring::usable_balance(&2), 50);
+		// assert_eq!(Ring::usable_balance(&3), 150);
+
+		// Receive delivery message proof
+		// System::set_block_number(200);
+		// assert_ok!(Messages::receive_messages_delivery_proof(
+		// 	Origin::signed(5),
+		// 	TestMessagesDeliveryProof(Ok((
+		// 		TEST_LANE_ID,
+		// 		InboundLaneData {
+		// 			relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
+		// 				.into_iter()
+		// 				.collect(),
+		// 			..Default::default()
+		// 		}
+		// 	))),
+		// 	UnrewardedRelayersState {
+		// 		unrewarded_relayer_entries: 1,
+		// 		total_messages: 1,
+		// 		..Default::default()
+		// 	},
+		// ));
+		// assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 60));
+		// assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
+		// 	TEST_RELAYER_A,
+		// 	240
+		// ));
+		// // The p1, p2, p3 slash value is 100
+		// assert_eq!(FeeMarket::relayer_locked_balance(&1), 50);
+		// assert_eq!(FeeMarket::relayer_locked_balance(&2), 100);
+		// assert_eq!(FeeMarket::relayer_locked_balance(&3), 200);
+		// assert_eq!(Ring::usable_balance(&1), 0);
+		// assert_eq!(Ring::usable_balance(&2), 0);
+		// assert_eq!(Ring::usable_balance(&3), 50);
+		// assert_eq!(FeeMarket::relayers().len(), 3);
+		// assert_eq!(FeeMarket::best_relayer(), (3, 100));
+	});
+}

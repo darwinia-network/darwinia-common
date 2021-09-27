@@ -34,7 +34,6 @@ use bp_messages::{
 };
 use codec::{Decode, Encode};
 use frame_support::{
-	dispatch::DispatchError,
 	ensure,
 	pallet_prelude::*,
 	traits::{Currency, Get, LockIdentifier, WithdrawReasons},
@@ -215,19 +214,10 @@ pub mod pallet {
 				WithdrawReasons::all(),
 			);
 
-			// Alice 100, lock 70, usable 30
-			// case1: slash 10,  lock 60, usable 20
-			// T::RingCurrency::slash(10);
-			// T::RingCurrency::set_lock(60);
-			// case2: slash 10,  lock 70, usable 20
-
-			// Alice 100, lock 70, usable 30
-			// case3: slash 50, lock 50
-
 			<RelayersMap<T>>::insert(&who, Relayer::new(who.clone(), lock_value, fee));
 			<Relayers<T>>::append(who.clone());
 
-			Self::update_market_fee()?;
+			Self::update_market_fee();
 			Self::deposit_event(Event::<T>::Register(who, lock_value, fee));
 			Ok(().into())
 		}
@@ -250,10 +240,7 @@ pub mod pallet {
 				<Error<T>>::OnlyIncreaseLockAmountAllowed
 			);
 
-			T::RingCurrency::extend_lock(T::LockId::get(), &who, new_lock, WithdrawReasons::all())?;
-			<RelayersMap<T>>::mutate(who.clone(), |relayer| {
-				relayer.lock_balance = new_lock;
-			});
+			Self::new_locked_balance(&who, new_lock);
 			Self::deposit_event(Event::<T>::UpdateLockedBalance(who, new_lock));
 			Ok(().into())
 		}
@@ -273,7 +260,7 @@ pub mod pallet {
 			RelayersMap::<T>::remove(who.clone());
 			Relayers::<T>::mutate(|relayers| relayers.retain(|x| x != &who));
 
-			Self::update_market_fee()?;
+			Self::update_market_fee();
 			Self::deposit_event(Event::<T>::CancelRelayerRegister(who));
 			Ok(().into())
 		}
@@ -290,7 +277,7 @@ pub mod pallet {
 				relayer.fee = p;
 			});
 
-			Self::update_market_fee()?;
+			Self::update_market_fee();
 			Self::deposit_event(Event::<T>::UpdateFee(who, p));
 			Ok(().into())
 		}
@@ -302,7 +289,7 @@ impl<T: Config> Pallet<T> {
 	/// 1. New relayers register
 	/// 2. Already registered relayer update fee
 	/// 3. Cancel registered relayer
-	pub fn update_market_fee() -> Result<(), DispatchError> {
+	pub fn update_market_fee() {
 		let mut relayers: Vec<Relayer<T>> = <Relayers<T>>::get()
 			.iter()
 			.map(RelayersMap::<T>::get)
@@ -318,7 +305,16 @@ impl<T: Config> Pallet<T> {
 			<AssignedRelayersStorage<T>>::put(prior_relayers);
 			<BestRelayer<T>>::put((relayers[2].id.clone(), relayers.clone()[2].fee));
 		}
-		Ok(())
+	}
+
+	/// Update relayers lock balance, it will changes the item in RelayersMap storage
+	pub fn new_locked_balance(who: &T::AccountId, new_lock: RingBalance<T>) {
+		let _ =
+			T::RingCurrency::extend_lock(T::LockId::get(), &who, new_lock, WithdrawReasons::all());
+		<RelayersMap<T>>::mutate(who.clone(), |relayer| {
+			relayer.lock_balance = new_lock;
+		});
+		Self::update_market_fee();
 	}
 
 	/// Whether the relayer has registered
@@ -371,7 +367,7 @@ impl<T: Config> Relayer<T> {
 impl<T: Config> PartialOrd for Relayer<T> {
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
 		if self.fee == other.fee {
-			return self.lock_balance.partial_cmp(&other.lock_balance);
+			return other.lock_balance.partial_cmp(&self.lock_balance);
 		}
 		self.fee.partial_cmp(&other.fee)
 	}
@@ -537,11 +533,13 @@ pub trait AssignedRelayersAbsentSlash<T: Config> {
 }
 
 impl<T: Config> AssignedRelayersAbsentSlash<T> for () {
-	// slash result = base(p3 fee) + 2 * timeout
+	// The slash result = base(p3 fee) + 2 * timeout
+	// Note: The maximum slash result is the MiniumLockValue. We mush ensures that all registered
+	// relayers have ability to pay this slash result.
 	fn slash(base: RingBalance<T>, timeout: T::BlockNumber) -> RingBalance<T> {
-		let mut slash_result = base;
 		let timeout_u128: u128 = timeout.unique_saturated_into();
-		slash_result.saturating_add(timeout_u128.saturating_mul(2u128).unique_saturated_into());
+		let mut slash_result =
+			base.saturating_add(timeout_u128.saturating_mul(2u128).unique_saturated_into());
 
 		if slash_result >= T::MiniumLockValue::get() {
 			slash_result = T::MiniumLockValue::get();
