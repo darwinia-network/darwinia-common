@@ -128,7 +128,7 @@ pub type ChainName = Vec<u8>;
 
 #[cfg(test)]
 mod test {
-	use crate::s2s::{to_bytes32, RING_NAME, RING_SYMBOL};
+	use crate::{to_bytes32, s2s::{RING_NAME, RING_SYMBOL}};
 	use array_bytes::{hex2array, hex2bytes};
 
 	#[test]
