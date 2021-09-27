@@ -56,7 +56,8 @@ pub trait WeightInfo {
 	fn register_and_remote_create() -> Weight;
 	fn lock_and_remote_issue() -> Weight;
 	fn unlock_from_remote() -> Weight;
-	fn update_ring_daily_limited() -> Weight;
+	fn set_secure_limited_period() -> Weight;
+	fn set_security_limitation_ring_amount() -> Weight;
 }
 
 /// Weights for to_substrate_backing using the Substrate node and recommended hardware.
@@ -77,7 +78,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
-	fn update_ring_daily_limited() -> Weight {
+	fn set_secure_limited_period() -> Weight {
+		(4_000_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
+	fn set_security_limitation_ring_amount() -> Weight {
 		(4_000_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 }
@@ -99,7 +103,10 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
-	fn update_ring_daily_limited() -> Weight {
+	fn set_secure_limited_period() -> Weight {
+		(4_000_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
+	}
+	fn set_security_limitation_ring_amount() -> Weight {
 		(4_000_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 }
