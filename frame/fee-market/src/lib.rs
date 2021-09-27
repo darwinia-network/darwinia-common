@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-//! # Fee Market Module
+//! # Fee Market Pallet
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
@@ -40,8 +40,6 @@ use frame_support::{
 	transactional, PalletId,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use sp_core::H256;
-use sp_io::hashing::blake2_256;
 use sp_runtime::{
 	traits::{Saturating, UniqueSaturatedInto},
 	Permill,
@@ -67,7 +65,7 @@ pub type AssignedRelayers<AccountId, BlockNumber, Balance> = (
 
 pub use pallet::*;
 
-const MIN_REGISTERED_RELAYERS_NUMBER: usize = 3;
+const MIN_ENROLLED_RELAYERS_NUMBER: usize = 3;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -77,27 +75,30 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
+		/// Some reward goes to Treasury.
 		#[pallet::constant]
 		type TreasuryPalletId: Get<PalletId>;
-		/// The minimum locked value for a fee market relayer, also represented as
-		/// the maximum of slash value
-		#[pallet::constant]
-		type MiniumLockValue: Get<RingBalance<Self>>;
-		#[pallet::constant]
-		type MinimumFee: Get<Fee<Self>>;
 		#[pallet::constant]
 		type LockId: Get<LockIdentifier>;
+		/// The minimum locked collateral for a fee market relayer, also represented as the maximum value for slash.
+		#[pallet::constant]
+		type MiniumLockCollateral: Get<RingBalance<Self>>;
+		/// The minimum fee for relaying.
+		#[pallet::constant]
+		type MinimumRelayFee: Get<Fee<Self>>;
+		/// The slot times set
 		#[pallet::constant]
 		type SlotTimes: Get<(Self::BlockNumber, Self::BlockNumber, Self::BlockNumber)>;
 
-		// Reward parameters
+		/// Reward parameters
 		#[pallet::constant]
-		type ForAssignedRelayers: Get<Permill>; // default 60%
+		type ForAssignedRelayers: Get<Permill>;
 		#[pallet::constant]
-		type ForMessageRelayer: Get<Permill>; // default 80%
+		type ForMessageRelayer: Get<Permill>;
 		#[pallet::constant]
-		type ForConfirmRelayer: Get<Permill>; // default 20%
+		type ForConfirmRelayer: Get<Permill>;
 
+		/// The slash rule
 		type AssignedRelayersAbsentSlash: AssignedRelayersAbsentSlash<Self>;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 			+ Currency<Self::AccountId>;
@@ -109,40 +110,39 @@ pub mod pallet {
 	#[pallet::generate_deposit(fn deposit_event)]
 	#[pallet::metadata(T::AccountId = "AccountId")]
 	pub enum Event<T: Config> {
-		/// Relayer register
-		Register(T::AccountId, RingBalance<T>, Fee<T>),
-		/// Update relayer lock balance
-		UpdateLockedBalance(T::AccountId, RingBalance<T>),
+		/// Relayer enrollment
+		EnrollAndLockCollateral(T::AccountId, RingBalance<T>, Fee<T>),
+		/// Update relayer locked collateral
+		UpdateLockedCollateral(T::AccountId, RingBalance<T>),
 		/// Update relayer fee
-		UpdateFee(T::AccountId, Fee<T>),
-		/// Cancel relayer register
-		CancelRelayerRegister(T::AccountId),
+		UpdateRelayFee(T::AccountId, Fee<T>),
+		/// Relayer cancel enrollment
+		CancelEnrollment(T::AccountId),
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Insufficient balance
 		InsufficientBalance,
-		/// The lock value is lower than MiniumLockLimit
-		TooLowLockValue,
-		/// The relayer has been registered
-		AlreadyRegistered,
-		/// This relayer didn't relayer ever
-		NotRegistered,
-		/// Only increase lock balance is allowed when update_locked_balance
-		OnlyIncreaseLockAmountAllowed,
-		/// The fee is lower than MinimumFee
-		TooLowFee,
-		/// The registered relayer number less than MIN_REGISTERED_RELAYERS_NUMBER
-		TooFewRegisteredRelayers,
+		/// The locked collateral is lower than MiniumLockLimit
+		LockCollateralTooLow,
+		/// The relayer has been enrolled
+		AlreadyEnrolled,
+		/// This relayer didn't enroll ever
+		NotEnrolled,
+		/// Only increase lock collateral is allowed when update_locked_balance
+		OnlyIncreaseLockedCollateralAllowed,
+		/// The fee is lower than MinimumRelayFee
+		RelayFeeTooLow,
+		/// The enrolled relayers less than MIN_ENROLLED_RELAYERS_NUMBER
+		TooFewEnrolledRelayers,
 	}
 
-	// Registered relayers storage
+	// Enrolled relayers storage
 	#[pallet::storage]
 	#[pallet::getter(fn get_relayer)]
 	pub type RelayersMap<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, Relayer<T>, ValueQuery>;
-
 	#[pallet::storage]
 	#[pallet::getter(fn relayers)]
 	pub type Relayers<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
@@ -152,7 +152,6 @@ pub mod pallet {
 	#[pallet::getter(fn assigned_relayers)]
 	pub type AssignedRelayersStorage<T: Config> =
 		StorageValue<_, (Relayer<T>, Relayer<T>, Relayer<T>), ValueQuery>;
-
 	#[pallet::storage]
 	#[pallet::getter(fn best_relayer)]
 	pub type BestRelayer<T: Config> = StorageValue<_, (T::AccountId, Fee<T>), ValueQuery>;
@@ -175,7 +174,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_: BlockNumberFor<T>) {
-			// Clean the order's which reward has been paid off
+			// Clean the order's storage when the rewards has been paid off
 			for (lane_id, message_nonce) in <ConfirmedMessagesThisBlock<T>>::get() {
 				<Orders<T>>::remove((lane_id, message_nonce));
 			}
@@ -185,116 +184,128 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Any account can register to be a relayer by lock values. The fee is optional, the default value
-		/// is MinimumFee in runtime.
-		/// Note: One account can register only once.
+		/// Any accounts can enroll to be a relayer by lock collateral. The relay fee is optional,
+		/// the default value is MinimumRelayFee in runtime.
+		/// Note: One account can enroll only once.
 		#[pallet::weight(10000)]
 		#[transactional]
-		pub fn register(
+		pub fn enroll_and_lock_collateral(
 			origin: OriginFor<T>,
-			lock_value: RingBalance<T>,
-			fee: Option<Fee<T>>,
+			lock_collateral: RingBalance<T>,
+			relay_fee: Option<Fee<T>>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(
-				lock_value >= T::MiniumLockValue::get(),
-				<Error<T>>::TooLowLockValue
+				lock_collateral >= T::MiniumLockCollateral::get(),
+				<Error<T>>::LockCollateralTooLow
 			);
 			ensure!(
-				T::RingCurrency::free_balance(&who) >= lock_value,
+				T::RingCurrency::free_balance(&who) >= lock_collateral,
 				<Error<T>>::InsufficientBalance
 			);
-			ensure!(!Self::is_registered(&who), <Error<T>>::AlreadyRegistered);
-			if let Some(p) = fee {
-				ensure!(p >= T::MinimumFee::get(), <Error<T>>::TooLowFee);
+			ensure!(!Self::is_enrolled(&who), <Error<T>>::AlreadyEnrolled);
+			if let Some(fee) = relay_fee {
+				ensure!(fee >= T::MinimumRelayFee::get(), <Error<T>>::RelayFeeTooLow);
 			}
 
-			let fee = fee.unwrap_or_else(T::MinimumFee::get);
+			let fee = relay_fee.unwrap_or_else(T::MinimumRelayFee::get);
 			T::RingCurrency::set_lock(
 				T::LockId::get(),
 				&who,
-				LockFor::Common { amount: lock_value },
+				LockFor::Common {
+					amount: lock_collateral,
+				},
 				WithdrawReasons::all(),
 			);
 
-			<RelayersMap<T>>::insert(&who, Relayer::new(who.clone(), lock_value, fee));
+			<RelayersMap<T>>::insert(&who, Relayer::new(who.clone(), lock_collateral, fee));
 			<Relayers<T>>::append(who.clone());
 
-			Self::update_market_fee();
-			Self::deposit_event(Event::<T>::Register(who, lock_value, fee));
+			Self::update_market();
+			Self::deposit_event(Event::<T>::EnrollAndLockCollateral(
+				who,
+				lock_collateral,
+				fee,
+			));
 			Ok(().into())
 		}
 
-		/// Update locked balance for registered relayer, only support increase deposit balance.
+		/// Update locked collateral for enrolled relayer, only supporting lock more.
 		#[pallet::weight(10000)]
 		#[transactional]
-		pub fn update_locked_balance(
+		pub fn update_locked_collateral(
 			origin: OriginFor<T>,
-			new_lock: RingBalance<T>,
+			new_collateral: RingBalance<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			ensure!(Self::is_registered(&who), <Error<T>>::NotRegistered);
+			ensure!(Self::is_enrolled(&who), <Error<T>>::NotEnrolled);
 			ensure!(
-				T::RingCurrency::free_balance(&who) >= new_lock,
+				T::RingCurrency::free_balance(&who) >= new_collateral,
 				<Error<T>>::InsufficientBalance
 			);
 			ensure!(
-				new_lock > Self::get_relayer(&who).lock_balance,
-				<Error<T>>::OnlyIncreaseLockAmountAllowed
+				new_collateral > Self::get_relayer(&who).collateral,
+				<Error<T>>::OnlyIncreaseLockedCollateralAllowed
 			);
 
-			Self::new_locked_balance(&who, new_lock);
-			Self::deposit_event(Event::<T>::UpdateLockedBalance(who, new_lock));
+			Self::update_collateral(&who, new_collateral);
+			Self::deposit_event(Event::<T>::UpdateLockedCollateral(who, new_collateral));
 			Ok(().into())
 		}
 
-		/// Cancel registration for registered relayer
+		/// Cancel enrolled relayer
 		#[pallet::weight(10000)]
 		#[transactional]
-		pub fn unregister(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+		pub fn cancel_enrollment(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			ensure!(Self::is_registered(&who), <Error<T>>::NotRegistered);
+			ensure!(Self::is_enrolled(&who), <Error<T>>::NotEnrolled);
 			ensure!(
-				<Relayers<T>>::get().len() > MIN_REGISTERED_RELAYERS_NUMBER,
-				<Error<T>>::TooFewRegisteredRelayers
+				<Relayers<T>>::get().len() > MIN_ENROLLED_RELAYERS_NUMBER,
+				<Error<T>>::TooFewEnrolledRelayers
 			);
 
-			Self::remove_registered_relayer(&who);
-			Self::deposit_event(Event::<T>::CancelRelayerRegister(who));
+			Self::remove_enrolled_relayer(&who);
+			Self::deposit_event(Event::<T>::CancelEnrollment(who));
 			Ok(().into())
 		}
 
-		/// Update fee for registered relayer
+		/// Update relay fee for enrolled relayer
 		#[pallet::weight(10000)]
 		#[transactional]
-		pub fn update_fee(origin: OriginFor<T>, p: Fee<T>) -> DispatchResultWithPostInfo {
+		pub fn update_relay_fee(
+			origin: OriginFor<T>,
+			relay_fee: Fee<T>,
+		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			ensure!(Self::is_registered(&who), <Error<T>>::NotRegistered);
-			ensure!(p >= T::MinimumFee::get(), <Error<T>>::TooLowFee);
+			ensure!(Self::is_enrolled(&who), <Error<T>>::NotEnrolled);
+			ensure!(
+				relay_fee >= T::MinimumRelayFee::get(),
+				<Error<T>>::RelayFeeTooLow
+			);
 
 			<RelayersMap<T>>::mutate(who.clone(), |relayer| {
-				relayer.fee = p;
+				relayer.fee = relay_fee;
 			});
 
-			Self::update_market_fee();
-			Self::deposit_event(Event::<T>::UpdateFee(who, p));
+			Self::update_market();
+			Self::deposit_event(Event::<T>::UpdateRelayFee(who, relay_fee));
 			Ok(().into())
 		}
 	}
 }
 
 impl<T: Config> Pallet<T> {
-	/// Update fees in the following cases:
-	/// 1. New relayers register
-	/// 2. Already registered relayer update fee
-	/// 3. Cancel registered relayer
-	pub fn update_market_fee() {
+	/// Update market in the following cases:
+	/// 1. New relayers enroll
+	/// 2. Already enrolled relayer update relay fee
+	/// 3. Cancel enrolled relayer
+	pub fn update_market() {
 		let mut relayers: Vec<Relayer<T>> = <Relayers<T>>::get()
 			.iter()
 			.map(RelayersMap::<T>::get)
 			.collect();
 		relayers.sort();
-		if relayers.len() >= MIN_REGISTERED_RELAYERS_NUMBER {
+		if relayers.len() >= MIN_ENROLLED_RELAYERS_NUMBER {
 			<AssignedRelayersStorage<T>>::kill();
 			let prior_relayers = (
 				relayers[0].clone(),
@@ -306,32 +317,36 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	/// Update relayers lock balance, it will changes the item in RelayersMap storage
-	pub fn new_locked_balance(who: &T::AccountId, new_lock: RingBalance<T>) {
-		if new_lock < T::MiniumLockValue::get()
-			&& <Relayers<T>>::get().len() > MIN_REGISTERED_RELAYERS_NUMBER
+	/// Update relayer locked collateral, it will changes RelayersMap storage
+	pub fn update_collateral(who: &T::AccountId, new_collateral: RingBalance<T>) {
+		if new_collateral < T::MiniumLockCollateral::get()
+			&& <Relayers<T>>::get().len() > MIN_ENROLLED_RELAYERS_NUMBER
 		{
-			Self::remove_registered_relayer(&who);
+			Self::remove_enrolled_relayer(&who);
 			return;
 		}
-		let _ =
-			T::RingCurrency::extend_lock(T::LockId::get(), &who, new_lock, WithdrawReasons::all());
+		let _ = T::RingCurrency::extend_lock(
+			T::LockId::get(),
+			&who,
+			new_collateral,
+			WithdrawReasons::all(),
+		);
 		<RelayersMap<T>>::mutate(who.clone(), |relayer| {
-			relayer.lock_balance = new_lock;
+			relayer.collateral = new_collateral;
 		});
-		Self::update_market_fee();
+		Self::update_market();
 	}
 
-	/// Remove registered relayer
-	pub fn remove_registered_relayer(who: &T::AccountId) {
+	/// Remove enrolled relayer
+	pub fn remove_enrolled_relayer(who: &T::AccountId) {
 		T::RingCurrency::remove_lock(T::LockId::get(), &who);
 		RelayersMap::<T>::remove(who.clone());
 		Relayers::<T>::mutate(|relayers| relayers.retain(|x| x != who));
-		Self::update_market_fee();
+		Self::update_market();
 	}
 
-	/// Whether the relayer has registered
-	pub fn is_registered(who: &T::AccountId) -> bool {
+	/// Whether the relayer has enrolled
+	pub fn is_enrolled(who: &T::AccountId) -> bool {
 		<Relayers<T>>::get().iter().any(|r| *r == *who)
 	}
 
@@ -340,9 +355,9 @@ impl<T: Config> Pallet<T> {
 		Self::get_relayer(who).fee
 	}
 
-	/// Get relayer locked balance
-	pub fn relayer_locked_balance(who: &T::AccountId) -> RingBalance<T> {
-		Self::get_relayer(who).lock_balance
+	/// Get relayer locked collateral
+	pub fn relayer_locked_collateral(who: &T::AccountId) -> RingBalance<T> {
+		Self::get_relayer(who).collateral
 	}
 
 	/// Get market best fee(P3)
@@ -359,19 +374,18 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-// TODO: These things goes to primitive crate later
 #[derive(Encode, Decode, Clone, Eq, Debug, Copy)]
 pub struct Relayer<T: Config> {
 	id: T::AccountId,
-	lock_balance: RingBalance<T>,
+	collateral: RingBalance<T>,
 	fee: Fee<T>,
 }
 
 impl<T: Config> Relayer<T> {
-	pub fn new(id: T::AccountId, lock_balance: RingBalance<T>, fee: Fee<T>) -> Relayer<T> {
+	pub fn new(id: T::AccountId, collateral: RingBalance<T>, fee: Fee<T>) -> Relayer<T> {
 		Relayer {
 			id,
-			lock_balance,
+			collateral,
 			fee,
 		}
 	}
@@ -380,7 +394,7 @@ impl<T: Config> Relayer<T> {
 impl<T: Config> PartialOrd for Relayer<T> {
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
 		if self.fee == other.fee {
-			return other.lock_balance.partial_cmp(&self.lock_balance);
+			return other.collateral.partial_cmp(&self.collateral);
 		}
 		self.fee.partial_cmp(&other.fee)
 	}
@@ -389,7 +403,7 @@ impl<T: Config> PartialOrd for Relayer<T> {
 impl<T: Config> Ord for Relayer<T> {
 	fn cmp(&self, other: &Self) -> Ordering {
 		if self.fee == other.fee {
-			return self.lock_balance.cmp(&other.lock_balance);
+			return self.collateral.cmp(&other.collateral);
 		}
 		self.fee.cmp(&other.fee)
 	}
@@ -397,7 +411,7 @@ impl<T: Config> Ord for Relayer<T> {
 
 impl<T: Config> PartialEq for Relayer<T> {
 	fn eq(&self, other: &Self) -> bool {
-		self.fee == other.fee && self.id == other.id && self.lock_balance == other.lock_balance
+		self.fee == other.fee && self.id == other.id && self.collateral == other.collateral
 	}
 }
 
@@ -405,7 +419,7 @@ impl<T: Config> Default for Relayer<T> {
 	fn default() -> Self {
 		Relayer {
 			id: T::AccountId::default(),
-			lock_balance: RingBalance::<T>::default(),
+			collateral: RingBalance::<T>::default(),
 			fee: Fee::<T>::default(),
 		}
 	}
@@ -440,10 +454,6 @@ impl<AccountId, BlockNumber, Balance> Order<AccountId, BlockNumber, Balance> {
 
 	pub fn set_confirm_time(&mut self, confirm_time: Option<BlockNumber>) {
 		self.confirm_time = confirm_time;
-	}
-
-	pub fn key(&self) -> H256 {
-		(self.lane, self.message).using_encoded(blake2_256).into()
 	}
 
 	pub fn assigned_relayers(&self) -> Option<&AssignedRelayers<AccountId, BlockNumber, Balance>> {
@@ -547,16 +557,16 @@ pub trait AssignedRelayersAbsentSlash<T: Config> {
 
 impl<T: Config> AssignedRelayersAbsentSlash<T> for () {
 	// The slash result = base(p3 fee) + 2 * timeout
-	// Note: The maximum slash result is the MiniumLockValue. We mush ensures that all registered
+	// Note: The maximum slash result is the MiniumLockCollateral. We mush ensures that all enrolled
 	// relayers have ability to pay this slash result.
-	fn slash(base: RingBalance<T>, timeout: T::BlockNumber) -> RingBalance<T> {
+	fn slash(base: Fee<T>, timeout: T::BlockNumber) -> RingBalance<T> {
 		let timeout_u128: u128 = timeout.unique_saturated_into();
-		let mut slash_result =
+		let mut slash =
 			base.saturating_add(timeout_u128.saturating_mul(2u128).unique_saturated_into());
 
-		if slash_result >= T::MiniumLockValue::get() {
-			slash_result = T::MiniumLockValue::get();
+		if slash >= T::MiniumLockCollateral::get() {
+			slash = T::MiniumLockCollateral::get();
 		}
-		slash_result
+		slash
 	}
 }

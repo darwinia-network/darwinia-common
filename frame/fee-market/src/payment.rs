@@ -113,6 +113,7 @@ where
 	}
 }
 
+/// Calculate rewards for messages_relayers, confirmation relayers, treasury, assigned_relayers
 pub fn cal_rewards<T, I>(
 	messages_relayers: VecDeque<UnrewardedRelayer<T::AccountId>>,
 	relayer_fund_account: &T::AccountId,
@@ -237,8 +238,8 @@ pub fn slash_and_update_market<T: Config>(
 	slash_value: RingBalance<T>,
 ) {
 	debug_assert!(
-		slash_value <= T::MiniumLockValue::get(),
-		"The maximum slash value returned from AssignedRelayersAbsentSlash is MiniumLockValue"
+		slash_value <= T::MiniumLockCollateral::get(),
+		"The maximum slash value returned from AssignedRelayersAbsentSlash is MiniumLockCollateral"
 	);
 	// If usable_balance is enough to pay slash, no need to update lock.
 	if slash_value <= T::RingCurrency::usable_balance(&slash_account) {
@@ -251,7 +252,7 @@ pub fn slash_and_update_market<T: Config>(
 	if T::RingCurrency::usable_balance(&slash_account) >= slash_value {
 		pay_reward::<T>(slash_account, fund_account, slash_value);
 		// Important: It's necessary to update fee market, since the slash account's lock balance changes
-		crate::Pallet::<T>::new_locked_balance(
+		crate::Pallet::<T>::update_collateral(
 			&slash_account,
 			T::RingCurrency::usable_balance(&slash_account),
 		);

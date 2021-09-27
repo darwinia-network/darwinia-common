@@ -8,8 +8,8 @@ use sp_runtime::Permill;
 frame_support::parameter_types! {
 	pub const FeeMarketPalletId: PalletId = PalletId(*b"da/feemk");
 	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
-	pub const MiniumLockValue: Balance = 2;
-	pub const MinimumFee: Balance = 2;
+	pub const MiniumLockCollateral: Balance = 2;
+	pub const MinimumRelayFee: Balance = 2;
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 	pub const SlotTimes: (BlockNumber, BlockNumber, BlockNumber) = (50, 50, 50);
 
@@ -21,8 +21,8 @@ frame_support::parameter_types! {
 impl Config for Runtime {
 	type PalletId = FeeMarketPalletId;
 	type TreasuryPalletId = TreasuryPalletId;
-	type MiniumLockValue = MiniumLockValue;
-	type MinimumFee = MinimumFee;
+	type MiniumLockCollateral = MiniumLockCollateral;
+	type MinimumRelayFee = MinimumRelayFee;
 	type LockId = FeeMarketLockId;
 	type SlotTimes = SlotTimes;
 

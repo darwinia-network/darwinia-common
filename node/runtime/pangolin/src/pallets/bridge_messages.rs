@@ -6,9 +6,7 @@ use sp_std::marker::PhantomData;
 // --- paritytech ---
 use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId, MessageNonce};
 
-use pallet_bridge_messages::{
-	instant_payments::InstantCurrencyPayments, weights::RialtoWeight, Config,
-};
+use pallet_bridge_messages::{weights::RialtoWeight, Config};
 // --- darwinia-network ---
 use crate::{
 	pangoro_messages::{
