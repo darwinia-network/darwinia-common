@@ -80,9 +80,9 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type RingPalletId: Get<PalletId>;
-		/// The maximum lock amount each transaction for security.
+		/// The max lock amount per transaction for security.
 		#[pallet::constant]
-		type RingLockMaxLimit: Get<RingBalance<Self>>;
+		type MaxLockRingAmountPerTx: Get<RingBalance<Self>>;
 		type RingCurrency: Currency<AccountId<Self>>;
 
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
@@ -241,7 +241,7 @@ pub mod pallet {
 
 			// Make sure the locked value is less than the max lock limited
 			ensure!(
-				value < T::RingLockMaxLimit::get() && !value.is_zero(),
+				value < T::MaxLockRingAmountPerTx::get() && !value.is_zero(),
 				<Error<T>>::RingLockLimited
 			);
 			// Make sure the user's balance is enough to lock

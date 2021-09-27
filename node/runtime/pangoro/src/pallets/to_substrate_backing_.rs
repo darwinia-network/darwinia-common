@@ -11,7 +11,7 @@ use sp_runtime::DispatchErrorWithPostInfo;
 // --- darwinia-network ---
 use crate::*;
 use bridge_primitives::{AccountIdConverter, PANGORO_PANGOLIN_LANE};
-use darwinia_support::s2s::{nonce_to_message_id, TokenMessageId, RelayMessageCaller};
+use darwinia_support::s2s::{nonce_to_message_id, RelayMessageCaller, TokenMessageId};
 use dp_asset::{token::Token, RecipientAccount};
 use to_substrate_backing::{Config, EncodeCall};
 
@@ -106,17 +106,17 @@ frame_support::parameter_types! {
 	pub const PangolinChainId: ChainId = PANGOLIN_CHAIN_ID;
 	pub const RingPalletId: PalletId = PalletId(*b"da/bring");
 	pub const S2sBackingPalletId: PalletId = PalletId(*b"da/s2sba");
-	pub const RingLockLimit: Balance = 1_000_000 * 1_000_000_000;
-	pub const BlocksPerDay: BlockNumber = DAYS;
+	pub const MaxLockRingAmountPerTx: Balance = 10_000 * COIN;
 }
 
 impl Config for Runtime {
-	type PalletId = S2sBackingPalletId;
-	type RingPalletId = RingPalletId;
 	type Event = Event;
 	type WeightInfo = ();
-	type RingLockMaxLimit = RingLockLimit;
-	type BlocksPerDay = BlocksPerDay;
+
+	type PalletId = S2sBackingPalletId;
+
+	type RingPalletId = RingPalletId;
+	type MaxLockRingAmountPerTx = MaxLockRingAmountPerTx;
 	type RingCurrency = Ring;
 
 	type BridgedAccountIdConverter = AccountIdConverter;
