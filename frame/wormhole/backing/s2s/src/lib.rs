@@ -186,7 +186,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
-			if (now % <SecureLimitedPeriod<T>>::get()).is_zero() {
+			if (now % <SecureLimitedPeriod<T>>::get().max(1u32.into())).is_zero() {
 				<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = Zero::zero());
 
 				T::DbWeight::get().reads_writes(2, 1)
