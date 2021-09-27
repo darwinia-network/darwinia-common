@@ -10,7 +10,7 @@ on:
       - master
 
 jobs:
-  build_kit:
+  build-subalfred:
     name: Build subalfred
     runs-on: ubuntu-latest
     steps:
@@ -37,7 +37,25 @@ jobs:
           name: subalfred
           path: subalfred.tar.zst
 
-  build_node_and_internal_test:
+  check-rust-code:
+    name: Check Rust code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch latest code
+        uses: actions/checkout@v2
+      - name: Install Rust nightly-2021-09-01 toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly-2021-09-01
+          target: wasm32-unknown-unknown
+          default: true
+      - name: Run checker
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --locked
+
+  build-node-and-internal-test:
     name: Build node and internal test
     runs-on: ubuntu-latest
     steps:
@@ -69,10 +87,10 @@ jobs:
           name: node
           path: node.tar.zst
 
-  check_default_features:
+  check-default-features:
     name: Check default features
     runs-on: ubuntu-latest
-    needs: [build_kit]
+    needs: [build-subalfred]
     steps:
       - name: Fetch latest code
         uses: actions/checkout@v2
@@ -85,12 +103,10 @@ jobs:
       - name: Run checker
         run: ./subalfred ci default-features -p ../darwinia-common
 
-  check_runtime_version:
-    name: Check runtime version
+  check-with-node:
+    name: Check with node
     runs-on: ubuntu-latest
-    needs: [build_kit, build_node_and_internal_test]
-    outputs:
-      result: ${{ steps.run_checker.outputs.result }}
+    needs: [build-subalfred, build-node-and-internal-test]
     steps:
       - name: Download subalfred
         uses: actions/download-artifact@v2
@@ -102,81 +118,41 @@ jobs:
           name: node
       - name: Uncompress subalfred and node
         run: tar xf subalfred.tar.zst -I pzstd && tar xf node.tar.zst -I pzstd
-      - id: run_checker
-        name: Run checker
+      - id: check-runtime-version
+        name: Check runtime version
         run: |
           OUTPUT=$(./subalfred ci runtime-version -c Pangolin -e ./drml)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
-          echo "::set-output name=result::$OUTPUT"
-      - if: github.ref != 'refs/heads/master'
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          append: true
-          message: |
-            Check runtime version with ${{ github.sha }}.
-            ```diff
-            ${{ steps.run_checker.outputs.result }}
-            ```
-
-  check_rust_code:
-    name: Check Rust code
-    runs-on: ubuntu-latest
-    steps:
-      - name: Fetch latest code
-        uses: actions/checkout@v2
-      - name: Install Rust nightly-2021-09-01 toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly-2021-09-01
-          target: wasm32-unknown-unknown
-          default: true
-      - name: Run checker
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --locked
-
-  check_storage_prefix:
-    name: Check storage prefix
-    runs-on: ubuntu-latest
-    needs: [build_kit, build_node_and_internal_test]
-    outputs:
-      result: ${{ steps.run_checker.outputs.result }}
-    steps:
-      - name: Download subalfred
-        uses: actions/download-artifact@v2
-        with:
-          name: subalfred
-      - name: Download node
-        uses: actions/download-artifact@v2
-        with:
-          name: node
-      - name: Uncompress subalfred and node
-        run: tar xf subalfred.tar.zst -I pzstd && tar xf node.tar.zst -I pzstd
-      - id: run_checker
-        name: Run checker
+          echo "::set-output name=check-runtime-version::$OUTPUT"
+      - id: check-storage-prefix
+        name: Check storage prefix
         run: |
           OUTPUT=$(./subalfred ci storage-prefix -c Pangolin -e ./drml)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
-          echo "::set-output name=result::$OUTPUT"
+          echo "::set-output name=check-storage-prefix::$OUTPUT"
       - if: github.ref != 'refs/heads/master'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           append: true
           message: |
-            Check storage prefix with ${{ github.sha }}.
+            > SHA ${{ github.sha }}
+            **Check Runtime Version**
             ```diff
-            ${{ steps.run_checker.outputs.result }}
+            ${{ steps.check-runtime-version.outputs.check-runtime-version }}
+            ```
+            **Check Storage Prefix**
+            ```diff
+            ${{ steps.check-storage-prefix.outputs.check-storage-prefix }}
             ```
 
-  external_test:
+  external-test:
     name: External test
     runs-on: ubuntu-latest
-    needs: [build_node_and_internal_test]
+    needs: [build-node-and-internal-test]
     steps:
       - name: Download node
         uses: actions/download-artifact@v2
@@ -195,11 +171,11 @@ jobs:
       - name: DVM test
         run: cd tests/dvm && npm install && npm test
 
-  clean_artifacts:
+  clean-artifacts:
     name: Clean artifacts
     runs-on: ubuntu-latest
     if: always()
-    needs: [check_storage_prefix, external_test]
+    needs: [check-with-node, external-test]
     steps:
       - uses: geekyeggo/delete-artifact@v1
         with:
