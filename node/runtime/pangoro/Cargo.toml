@@ -26,11 +26,11 @@ pangoro-constants              = { default-features = false, path = "src/constan
 pangoro-runtime-system-params  = { default-features = false, path = "src/pallets/system/params" }
 to-substrate-backing           = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 # paritytech
-bp-header-chain                            = { default-features = false, path = "../../../../parity-bridges-common/primitives/header-chain" }
-bp-message-dispatch                        = { default-features = false, path = "../../../../parity-bridges-common/primitives/message-dispatch" }
-bp-messages                                = { default-features = false, path = "../../../../parity-bridges-common/primitives/messages" }
-bp-runtime                                 = { default-features = false, path = "../../../../parity-bridges-common/primitives/runtime" }
-bridge-runtime-common                      = { default-features = false, path = "../../../../parity-bridges-common/bin/runtime-common" }
+bp-header-chain                            = { default-features = false,git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
+bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
+bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
+bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
+bridge-runtime-common                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
 frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-support                              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-system                               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
@@ -38,9 +38,9 @@ frame-system-rpc-runtime-api               = { default-features = false, git = "
 pallet-authority-discovery                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-authorship                          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-babe                                = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-pallet-bridge-dispatch                     = { default-features = false, path = "../../../../parity-bridges-common/modules/dispatch" }
-pallet-bridge-grandpa                      = { default-features = false, path = "../../../../parity-bridges-common/modules/grandpa" }
-pallet-bridge-messages                     = { default-features = false, path = "../../../../parity-bridges-common/modules/messages" }
+pallet-bridge-dispatch                     = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
+pallet-bridge-grandpa                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
+pallet-bridge-messages                     = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
 pallet-election-provider-multi-phase       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-grandpa                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-im-online                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }

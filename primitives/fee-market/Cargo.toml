@@ -14,7 +14,7 @@ codec    = { package = "parity-scale-codec", version = "2.1.1", default-features
 sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 sp-runtime     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-bp-messages  = { default-features = false, path = "../../../parity-bridges-common/primitives/messages" }
+bp-messages  = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
 
 [features]
 default = ["std"]

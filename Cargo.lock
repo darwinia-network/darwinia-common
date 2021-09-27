@@ -639,10 +639,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "bp-header-chain"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market#40fd67772c53d18606c4055a7dd0ecd7fdffaefe"
+dependencies = [
+ "finality-grandpa",
+ "frame-support",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-finality-grandpa",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "bp-message-dispatch"
 version = "0.1.0"
 dependencies = [
- "bp-runtime",
+ "bp-runtime 0.1.0",
+ "frame-support",
+ "parity-scale-codec",
+ "sp-std",
+]
+
+[[package]]
+name = "bp-message-dispatch"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market#40fd67772c53d18606c4055a7dd0ecd7fdffaefe"
+dependencies = [
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "frame-support",
  "parity-scale-codec",
  "sp-std",
@@ -653,7 +679,22 @@ name = "bp-messages"
 version = "0.1.0"
 dependencies = [
  "bitvec 0.20.4",
- "bp-runtime",
+ "bp-runtime 0.1.0",
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "parity-scale-codec",
+ "serde",
+ "sp-std",
+]
+
+[[package]]
+name = "bp-messages"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market#40fd67772c53d18606c4055a7dd0ecd7fdffaefe"
+dependencies = [
+ "bitvec 0.20.4",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples",
@@ -679,10 +720,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "bp-runtime"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market#40fd67772c53d18606c4055a7dd0ecd7fdffaefe"
+dependencies = [
+ "frame-support",
+ "hash-db",
+ "num-traits",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
+ "sp-trie",
+]
+
+[[package]]
 name = "bp-test-utils"
 version = "0.1.0"
 dependencies = [
- "bp-header-chain",
+ "bp-header-chain 0.1.0",
+ "ed25519-dalek",
+ "finality-grandpa",
+ "parity-scale-codec",
+ "sp-application-crypto",
+ "sp-finality-grandpa",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "bp-test-utils"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market#40fd67772c53d18606c4055a7dd0ecd7fdffaefe"
+dependencies = [
+ "bp-header-chain 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "ed25519-dalek",
  "finality-grandpa",
  "parity-scale-codec",
@@ -696,8 +769,8 @@ dependencies = [
 name = "bridge-primitives"
 version = "2.6.5"
 dependencies = [
- "bp-messages",
- "bp-runtime",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "common-primitives",
  "frame-support",
  "sp-api",
@@ -709,15 +782,16 @@ dependencies = [
 [[package]]
 name = "bridge-runtime-common"
 version = "0.1.0"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market#40fd67772c53d18606c4055a7dd0ecd7fdffaefe"
 dependencies = [
- "bp-message-dispatch",
- "bp-messages",
- "bp-runtime",
+ "bp-message-dispatch 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "frame-support",
  "hash-db",
- "pallet-bridge-dispatch",
- "pallet-bridge-grandpa",
- "pallet-bridge-messages",
+ "pallet-bridge-dispatch 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "pallet-bridge-grandpa 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "pallet-bridge-messages 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "pallet-transaction-payment",
  "parity-scale-codec",
  "sp-core",
@@ -1712,8 +1786,8 @@ name = "darwinia-fee-market"
 version = "2.6.5"
 dependencies = [
  "bitvec 0.20.4",
- "bp-messages",
- "bp-runtime",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "darwinia-balances",
  "darwinia-support",
  "dp-fee",
@@ -1721,7 +1795,7 @@ dependencies = [
  "frame-system",
  "log",
  "num-traits",
- "pallet-bridge-messages",
+ "pallet-bridge-messages 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "pallet-timestamp",
  "parity-scale-codec",
  "sp-core",
@@ -1887,7 +1961,7 @@ name = "darwinia-support"
 version = "2.6.5"
 dependencies = [
  "array-bytes",
- "bp-runtime",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "ethabi",
  "ethereum",
  "ethereum-primitives",
@@ -2145,7 +2219,7 @@ dependencies = [
 name = "dp-fee"
 version = "2.6.5"
 dependencies = [
- "bp-messages",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "frame-support",
  "parity-scale-codec",
  "sp-runtime",
@@ -3091,7 +3165,7 @@ name = "from-substrate-issuing"
 version = "2.6.5"
 dependencies = [
  "array-bytes",
- "bp-runtime",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "darwinia-balances",
  "darwinia-evm",
  "darwinia-support",
@@ -5533,8 +5607,24 @@ dependencies = [
 name = "pallet-bridge-dispatch"
 version = "0.1.0"
 dependencies = [
- "bp-message-dispatch",
- "bp-runtime",
+ "bp-message-dispatch 0.1.0",
+ "bp-runtime 0.1.0",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-bridge-dispatch"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market#40fd67772c53d18606c4055a7dd0ecd7fdffaefe"
+dependencies = [
+ "bp-message-dispatch 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "frame-support",
  "frame-system",
  "log",
@@ -5548,9 +5638,30 @@ dependencies = [
 name = "pallet-bridge-grandpa"
 version = "0.1.0"
 dependencies = [
- "bp-header-chain",
- "bp-runtime",
- "bp-test-utils",
+ "bp-header-chain 0.1.0",
+ "bp-runtime 0.1.0",
+ "bp-test-utils 0.1.0",
+ "finality-grandpa",
+ "frame-support",
+ "frame-system",
+ "log",
+ "num-traits",
+ "parity-scale-codec",
+ "serde",
+ "sp-finality-grandpa",
+ "sp-runtime",
+ "sp-std",
+ "sp-trie",
+]
+
+[[package]]
+name = "pallet-bridge-grandpa"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market#40fd67772c53d18606c4055a7dd0ecd7fdffaefe"
+dependencies = [
+ "bp-header-chain 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "bp-test-utils 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "finality-grandpa",
  "frame-support",
  "frame-system",
@@ -5569,9 +5680,29 @@ name = "pallet-bridge-messages"
 version = "0.1.0"
 dependencies = [
  "bitvec 0.20.4",
- "bp-message-dispatch",
- "bp-messages",
- "bp-runtime",
+ "bp-message-dispatch 0.1.0",
+ "bp-messages 0.1.0",
+ "bp-runtime 0.1.0",
+ "frame-support",
+ "frame-system",
+ "log",
+ "num-traits",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-bridge-messages"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market#40fd67772c53d18606c4055a7dd0ecd7fdffaefe"
+dependencies = [
+ "bitvec 0.20.4",
+ "bp-message-dispatch 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "frame-support",
  "frame-system",
  "log",
@@ -5935,9 +6066,9 @@ name = "pangolin-runtime"
 version = "2.6.5"
 dependencies = [
  "array-bytes",
- "bp-message-dispatch",
- "bp-messages",
- "bp-runtime",
+ "bp-message-dispatch 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "bridge-primitives",
  "bridge-runtime-common",
  "common-primitives",
@@ -5984,9 +6115,9 @@ dependencies = [
  "pallet-authorship",
  "pallet-babe",
  "pallet-bounties",
- "pallet-bridge-dispatch",
- "pallet-bridge-grandpa",
- "pallet-bridge-messages",
+ "pallet-bridge-dispatch 0.1.0",
+ "pallet-bridge-grandpa 0.1.0",
+ "pallet-bridge-messages 0.1.0",
  "pallet-collective",
  "pallet-election-provider-multi-phase",
  "pallet-grandpa",
@@ -6060,10 +6191,10 @@ name = "pangoro-runtime"
 version = "0.1.0"
 dependencies = [
  "array-bytes",
- "bp-header-chain",
- "bp-message-dispatch",
- "bp-messages",
- "bp-runtime",
+ "bp-header-chain 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "bp-message-dispatch 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "bridge-primitives",
  "bridge-runtime-common",
  "common-primitives",
@@ -6079,9 +6210,9 @@ dependencies = [
  "pallet-authority-discovery",
  "pallet-authorship",
  "pallet-babe",
- "pallet-bridge-dispatch",
- "pallet-bridge-grandpa",
- "pallet-bridge-messages",
+ "pallet-bridge-dispatch 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "pallet-bridge-grandpa 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
+ "pallet-bridge-messages 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "pallet-election-provider-multi-phase",
  "pallet-grandpa",
  "pallet-im-online",
@@ -9863,7 +9994,7 @@ name = "to-substrate-backing"
 version = "2.6.5"
 dependencies = [
  "array-bytes",
- "bp-runtime",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/parity-bridges-common?branch=test-fee-market)",
  "darwinia-balances",
  "darwinia-support",
  "dp-asset",

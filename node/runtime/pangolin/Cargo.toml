@@ -58,10 +58,10 @@ pangoro-runtime-system-params       = { default-features = false, path = "../pan
 to-ethereum-backing                 = { default-features = false, path = "../../../frame/wormhole/backing/ethereum" }
 to-tron-backing                     = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
 # paritytech
-bp-message-dispatch                        = { default-features = false, path = "../../../../parity-bridges-common/primitives/message-dispatch" }
-bp-messages                                = { default-features = false, path = "../../../../parity-bridges-common/primitives/messages" }
-bp-runtime                                 = { default-features = false, path = "../../../../parity-bridges-common/primitives/runtime" }
-bridge-runtime-common                      = { default-features = false, path = "../../../../parity-bridges-common/bin/runtime-common" }
+bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
+bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
+bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
+bridge-runtime-common                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
 frame-benchmarking                         = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 frame-support                              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
