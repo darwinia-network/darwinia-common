@@ -259,11 +259,7 @@ pub mod pallet {
 				<Error<T>>::TooFewRegisteredRelayers
 			);
 
-			T::RingCurrency::remove_lock(T::LockId::get(), &who);
-			RelayersMap::<T>::remove(who.clone());
-			Relayers::<T>::mutate(|relayers| relayers.retain(|x| x != &who));
-
-			Self::update_market_fee();
+			Self::remove_registered_relayer(&who);
 			Self::deposit_event(Event::<T>::CancelRelayerRegister(who));
 			Ok(().into())
 		}
@@ -312,11 +308,25 @@ impl<T: Config> Pallet<T> {
 
 	/// Update relayers lock balance, it will changes the item in RelayersMap storage
 	pub fn new_locked_balance(who: &T::AccountId, new_lock: RingBalance<T>) {
+		if new_lock < T::MiniumLockValue::get()
+			&& <Relayers<T>>::get().len() > MIN_REGISTERED_RELAYERS_NUMBER
+		{
+			Self::remove_registered_relayer(&who);
+			return;
+		}
 		let _ =
 			T::RingCurrency::extend_lock(T::LockId::get(), &who, new_lock, WithdrawReasons::all());
 		<RelayersMap<T>>::mutate(who.clone(), |relayer| {
 			relayer.lock_balance = new_lock;
 		});
+		Self::update_market_fee();
+	}
+
+	/// Remove registered relayer
+	pub fn remove_registered_relayer(who: &T::AccountId) {
+		T::RingCurrency::remove_lock(T::LockId::get(), &who);
+		RelayersMap::<T>::remove(who.clone());
+		Relayers::<T>::mutate(|relayers| relayers.retain(|x| x != who));
 		Self::update_market_fee();
 	}
 

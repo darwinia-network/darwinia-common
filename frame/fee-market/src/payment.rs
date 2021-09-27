@@ -83,7 +83,7 @@ where
 		_received_range: &RangeInclusive<MessageNonce>,
 		relayer_fund_account: &T::AccountId,
 	) {
-		let RewardBook {
+		let RewardsBook {
 			messages_relayers_rewards,
 			confirmation_relayer_rewards,
 			assigned_relayers_rewards,
@@ -116,7 +116,7 @@ where
 pub fn cal_rewards<T, I>(
 	messages_relayers: VecDeque<UnrewardedRelayer<T::AccountId>>,
 	relayer_fund_account: &T::AccountId,
-) -> RewardBook<T::AccountId, RingBalance<T>>
+) -> RewardsBook<T::AccountId, RingBalance<T>>
 where
 	T: frame_system::Config + pallet_bridge_messages::Config<I> + Config,
 	I: 'static,
@@ -127,7 +127,6 @@ where
 	let mut treasury_total_rewards = RingBalance::<T>::zero();
 
 	for (lane_id, message_nonce) in <ConfirmedMessagesThisBlock<T>>::get() {
-		println!("bear: --- lane_id {:?}, nonce {:?}", lane_id, message_nonce);
 		// The order created when message was accepted, so we can always get the order info below.
 		let order = <Orders<T>>::get(&(lane_id, message_nonce));
 		// The confirm_time of the order is set in the `OnDeliveryConfirmed` callback. And the callback function
@@ -154,23 +153,11 @@ where
 			|| p3.valid_range.contains(&order_confirm_time)
 		{
 			let message_fee = p3.fee;
-			println!("bear: --- cal: message_fee {:?}", message_fee);
 			let treasury_reward = message_fee.saturating_sub(p1.fee);
-			println!("bear: --- cal: treasury_reward {:?}", treasury_reward);
 			let assigned_relayers_reward = T::ForAssignedRelayers::get() * p1.fee;
-			println!(
-				"bear: --- cal: assigned_relayers_reward {:?}",
-				assigned_relayers_reward
-			);
 			let bridger_relayers_reward = p1.fee.saturating_sub(assigned_relayers_reward);
-			println!(
-				"bear: --- cal: bridger_relayers_reward {:?}",
-				bridger_relayers_reward
-			);
 			message_reward = T::ForMessageRelayer::get() * bridger_relayers_reward;
-			println!("bear: --- cal: message_reward {:?}", message_reward);
 			confirm_reward = T::ForConfirmRelayer::get() * bridger_relayers_reward;
-			println!("bear: --- cal: confirm_reward {:?}", confirm_reward);
 
 			// Update treasury total rewards
 			treasury_total_rewards = treasury_total_rewards.saturating_add(treasury_reward);
@@ -192,7 +179,6 @@ where
 					.or_insert(assigned_relayers_reward);
 			}
 		} else {
-			println!("bear: --- enter slash logic");
 			// In the case of the message is delivered by common relayer instead of p1, p2, p3, we slash all
 			// assigned relayers of this order.
 			let timeout = order_confirm_time - p3.valid_range.end;
@@ -203,8 +189,6 @@ where
 			);
 			message_reward = T::ForMessageRelayer::get() * slashed_reward;
 			confirm_reward = T::ForConfirmRelayer::get() * slashed_reward;
-			println!("bear: --- message_reward {:?}", message_reward);
-			println!("bear: --- confirm_reward {:?}", confirm_reward);
 		}
 
 		// Update confirmation relayer total rewards
@@ -214,10 +198,9 @@ where
 			.entry(message_relayer)
 			.and_modify(|r| *r = r.saturating_add(message_reward))
 			.or_insert(message_reward);
-		println!("bear: ----------------")
 	}
 
-	RewardBook {
+	RewardsBook {
 		messages_relayers_rewards,
 		confirmation_relayer_rewards,
 		assigned_relayers_rewards,
@@ -231,7 +214,6 @@ pub fn slash_order_assigned_relayers<T: Config>(
 	assign_relayers: Option<AssignedRelayers<T::AccountId, T::BlockNumber, RingBalance<T>>>,
 	relayer_fund_account: &T::AccountId,
 ) -> RingBalance<T> {
-	println!("bear: --- slash_order_assigned_relayers");
 	let mut total_slash = RingBalance::<T>::zero();
 	let (p1, p2, p3) = assign_relayers.unwrap_or_default();
 	let slash_result = T::AssignedRelayersAbsentSlash::slash(p3.fee, timeout);
@@ -240,7 +222,6 @@ pub fn slash_order_assigned_relayers<T: Config>(
 	slash_and_update_market::<T>(&p1.id, relayer_fund_account, slash_result);
 	slash_and_update_market::<T>(&p2.id, relayer_fund_account, slash_result);
 	slash_and_update_market::<T>(&p3.id, relayer_fund_account, slash_result);
-	println!("bear: --- pay reward");
 
 	total_slash = total_slash
 		.saturating_add(slash_result)
@@ -267,12 +248,20 @@ pub fn slash_and_update_market<T: Config>(
 
 	// Otherwise, unlock and pay for slash, then lock the remaining usable balance
 	T::RingCurrency::remove_lock(T::LockId::get(), &slash_account);
-	pay_reward::<T>(slash_account, fund_account, slash_value);
-	// Important: It's necessary to update fee market, since the slash account's lock balance changes
-	crate::Pallet::<T>::new_locked_balance(
-		&slash_account,
-		T::RingCurrency::usable_balance(&slash_account),
-	);
+	if T::RingCurrency::usable_balance(&slash_account) >= slash_value {
+		pay_reward::<T>(slash_account, fund_account, slash_value);
+		// Important: It's necessary to update fee market, since the slash account's lock balance changes
+		crate::Pallet::<T>::new_locked_balance(
+			&slash_account,
+			T::RingCurrency::usable_balance(&slash_account),
+		);
+	} else {
+		log::error!(
+			"The usable balance is not enough to pay slash value, the usable balance {:?} slash value {:?}",
+			T::RingCurrency::usable_balance(&slash_account),
+			slash_value,
+		)
+	}
 }
 
 /// Pay reward to a specific account
@@ -290,35 +279,25 @@ fn pay_reward<T: Config>(from: &T::AccountId, to: &T::AccountId, reward: RingBal
 	);
 
 	match pay_result {
-		Ok(_) => {
-			log::trace!(
-				"Pay reward, from {:?} to {:?} reward: {:?}",
-				from,
-				to,
-				reward,
-			);
-			println!(
-				"bear: --- Pay reward, from {:?} to {:?} reward: {:?}",
-				from, to, reward,
-			);
-		}
-		Err(error) => {
-			log::error!(
-				"Failed to pay reward, from {:?} to {:?} reward {:?}: {:?}",
-				from,
-				to,
-				reward,
-				error,
-			);
-			println!(
-				"bear: --- Failed to pay reward, from {:?} to {:?} reward {:?}: {:?}",
-				from, to, reward, error,
-			);
-		}
+		Ok(_) => log::trace!(
+			"Pay reward, from {:?} to {:?} reward: {:?}",
+			from,
+			to,
+			reward,
+		),
+
+		Err(error) => log::error!(
+			"Failed to pay reward, from {:?} to {:?} reward {:?}: {:?}",
+			from,
+			to,
+			reward,
+			error,
+		),
 	}
 }
 
-pub struct RewardBook<AccountId, Balance> {
+/// Record the calculation rewards result
+pub struct RewardsBook<AccountId, Balance> {
 	pub messages_relayers_rewards: BTreeMap<AccountId, Balance>,
 	pub confirmation_relayer_rewards: Balance,
 	pub assigned_relayers_rewards: BTreeMap<AccountId, Balance>,
