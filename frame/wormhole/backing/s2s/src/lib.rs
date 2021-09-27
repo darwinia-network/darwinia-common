@@ -54,7 +54,6 @@ use darwinia_support::{
 		ensure_source_root, MessageConfirmer, RelayMessageCaller, TokenMessageId, RING_DECIMAL,
 		RING_NAME, RING_SYMBOL,
 	},
-	to_bytes32,
 };
 use dp_asset::{
 	token::{Token, TokenInfo, TokenOption},
@@ -157,8 +156,8 @@ pub mod pallet {
 				address: T::RingPalletId::get().into_dvm_address(),
 				value: None,
 				option: Some(TokenOption {
-					name: to_bytes32(RING_NAME),
-					symbol: to_bytes32(RING_SYMBOL),
+					name: RING_NAME.to_vec(),
+					symbol: RING_SYMBOL.to_vec(),
 					decimal: RING_DECIMAL,
 				}),
 			});

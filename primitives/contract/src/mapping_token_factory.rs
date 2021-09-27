@@ -86,10 +86,6 @@ impl MappingTokenFactory {
 				name: "original_token".into(),
 				kind: ParamType::Address,
 			},
-			Param {
-				name: "backing_chain_name".into(),
-				kind: ParamType::String,
-			},
 		];
 
 		let outputs = vec![Param {
@@ -151,7 +147,6 @@ impl MappingTokenFactory {
 		decimals: u8,
 		backing_address: EthereumAddress,
 		original_token: EthereumAddress,
-		backing_chain_name: &str,
 	) -> AbiResult<Bytes> {
 		let create = Self::create_erc20();
 		create.encode_input(
@@ -163,7 +158,6 @@ impl MappingTokenFactory {
 				Token::Uint(U256::from(decimals)),
 				Token::Address(backing_address),
 				Token::Address(original_token),
-				Token::String(backing_chain_name.into()),
 			]
 			.as_slice(),
 		)
@@ -210,7 +204,13 @@ impl MappingTokenFactory {
 		original_token: EthereumAddress,
 	) -> AbiResult<Bytes> {
 		let mapping = Self::mapping_token();
-		mapping.encode_input(vec![Token::Address(backing_address), Token::Address(original_token)].as_slice())
+		mapping.encode_input(
+			vec![
+				Token::Address(backing_address),
+				Token::Address(original_token),
+			]
+			.as_slice(),
+		)
 	}
 }
 
@@ -227,9 +227,15 @@ impl TokenRegisterInfo {
 			&data,
 		)?;
 		match (tokens[0].clone(), tokens[1].clone(), tokens[2].clone()) {
-			(Token::Address(backing_address), Token::Address(original_token), Token::Address(mapping_token)) => {
-				Ok(TokenRegisterInfo(backing_address, original_token, mapping_token))
-			}
+			(
+				Token::Address(backing_address),
+				Token::Address(original_token),
+				Token::Address(mapping_token),
+			) => Ok(TokenRegisterInfo(
+				backing_address,
+				original_token,
+				mapping_token,
+			)),
 			_ => Err(Error::InvalidData),
 		}
 	}

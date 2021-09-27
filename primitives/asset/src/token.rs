@@ -23,16 +23,13 @@ use codec::{Decode, Encode};
 // --- darwinia-network ---
 // TODO: Use ethereum-types? In https://github.com/darwinia-network/darwinia-common/pull/708
 use ethereum_primitives::{EthereumAddress, U256};
-
-// TODO: Are this type necessary?
-/// used by token name and symbol
-pub type Bytes32 = [u8; 32];
+use sp_std::vec::Vec;
 
 /// the token extra options
 #[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
 pub struct TokenOption {
-	pub name: Bytes32,
-	pub symbol: Bytes32,
+	pub name: Vec<u8>,
+	pub symbol: Vec<u8>,
 	pub decimal: u8,
 }
 

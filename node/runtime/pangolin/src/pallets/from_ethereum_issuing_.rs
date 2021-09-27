@@ -2,12 +2,12 @@
 use frame_support::PalletId;
 // --- darwinia-network ---
 use crate::*;
-use darwinia_support::to_bytes32;
+use darwinia_support::ChainName;
 use from_ethereum_issuing::Config;
 
 frame_support::parameter_types! {
 	pub const EthereumIssuingPalletId: PalletId = PalletId(*b"da/ethis");
-	pub RopstenName: [u8; 32] = to_bytes32(b"Ropsten").into();
+	pub RopstenName: ChainName = (b"Ropsten").to_vec();
 }
 
 impl Config for Runtime {

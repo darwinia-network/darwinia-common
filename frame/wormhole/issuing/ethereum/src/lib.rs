@@ -49,7 +49,9 @@ use sp_std::{str, vec::Vec};
 // --- darwinia-network ---
 use darwinia_evm::{AddressMapping, GasWeightMapping};
 use darwinia_relay_primitives::relay_authorities::*;
-use darwinia_support::{balance::*, traits::EthereumReceipt, PalletDigest};
+use darwinia_support::{
+	balance::*, mapping_token::*, traits::EthereumReceipt, ChainName, PalletDigest,
+};
 use dp_contract::{
 	ethereum_backing::{EthereumBacking, EthereumLockEvent, EthereumRegisterEvent},
 	mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo, TokenRegisterInfo},
@@ -86,7 +88,7 @@ pub mod pallet {
 		type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
 		type WeightInfo: WeightInfo;
 		type InternalTransactHandler: InternalTransactHandler;
-		type BackingChainName: Get<[u8; 32]>;
+		type BackingChainName: Get<ChainName>;
 	}
 
 	#[pallet::error]
@@ -231,15 +233,16 @@ pub mod pallet {
 			let register_info =
 				EthereumBacking::parse_register_event(&verified_receipt, &backing_address)
 					.map_err(|_| Error::<T>::DecodeEventFailed)?;
+			let name = mapping_token_name(register_info.name, T::BackingChainName::get());
+			let symbol = mapping_token_symbol(register_info.symbol);
 			let input = mtf::encode_create_erc20(
 				Self::digest(),
 				0,
-				str::from_utf8(&register_info.name[..]).map_err(|_| Error::<T>::StringCF)?,
-				str::from_utf8(&register_info.symbol[..]).map_err(|_| Error::<T>::StringCF)?,
+				str::from_utf8(&name.as_slice()).map_err(|_| Error::<T>::StringCF)?,
+				str::from_utf8(&symbol.as_slice()).map_err(|_| Error::<T>::StringCF)?,
 				register_info.decimals.as_u32() as u8,
 				backing_address,
 				register_info.token_address,
-				&str::from_utf8(&T::BackingChainName::get()).map_err(|_| Error::<T>::StringCF)?,
 			)
 			.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 			Self::transact_mapping_factory(input)?;
@@ -372,9 +375,7 @@ impl<T: Config> Pallet<T> {
 		if mapping_token.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
-		Ok(EthereumAddress::from_slice(
-			&mapping_token.as_slice()[12..],
-		))
+		Ok(EthereumAddress::from_slice(&mapping_token.as_slice()[12..]))
 	}
 
 	pub fn finish_token_registered(
@@ -382,7 +383,12 @@ impl<T: Config> Pallet<T> {
 		original_token: EthereumAddress,
 		mapping_token: EthereumAddress,
 	) -> DispatchResult {
-		let raw_event = Event::TokenRegisterFinished(REGISTER_TYPE, backing_address, original_token, mapping_token);
+		let raw_event = Event::TokenRegisterFinished(
+			REGISTER_TYPE,
+			backing_address,
+			original_token,
+			mapping_token,
+		);
 		let module_event: <T as Config>::Event = raw_event.clone().into();
 		let system_event: <T as frame_system::Config>::Event = module_event.into();
 		<BurnTokenEvents<T>>::append(system_event);
@@ -401,10 +407,11 @@ impl<T: Config> Pallet<T> {
 		recipient: EthereumAddress,
 		amount: U256,
 	) -> DispatchResultWithPostInfo {
-		let mapping_token = Self::mapped_token_address(backing_address, original_token).map_err(|e| {
-			log::debug!("mapped token address error {:?} ", e);
-			e
-		})?;
+		let mapping_token =
+			Self::mapped_token_address(backing_address, original_token).map_err(|e| {
+				log::debug!("mapped token address error {:?} ", e);
+				e
+			})?;
 
 		let raw_event = Event::BurnToken(
 			BURN_TYPE,

@@ -31,6 +31,7 @@ pub mod balance {
 	pub use crate::traits::{BalanceInfo, DustCollector, LockableCurrency};
 }
 use ethabi::{encode, Token};
+use sp_std::{vec, vec::Vec};
 
 // TODO: Should we move this to `s2s-primitives`?
 pub mod s2s {
@@ -92,6 +93,23 @@ pub mod s2s {
 	}
 }
 
+pub mod mapping_token {
+	use super::*;
+	pub fn mapping_token_name(original_name: Vec<u8>, backing_chain_name: Vec<u8>) -> Vec<u8> {
+		let mut mapping_name = original_name.clone();
+		mapping_name.push(b'[');
+		mapping_name.extend(backing_chain_name);
+		mapping_name.push(b'>');
+		mapping_name
+	}
+
+	pub fn mapping_token_symbol(original_symbol: Vec<u8>) -> Vec<u8> {
+		let mut mapping_symbol = vec![b'x'];
+		mapping_symbol.extend(original_symbol);
+		mapping_symbol
+	}
+}
+
 pub fn to_bytes32(raw: &[u8]) -> [u8; 32] {
 	let mut result = [0u8; 32];
 	let encoded = encode(&[Token::FixedBytes(raw.to_vec())]);
@@ -105,6 +123,8 @@ pub type PalletDigest = [u8; 4];
 /// [4..8]  bytes ---- laneID
 /// [8..16] bytes ---- message nonce
 pub type TokenMessageId = [u8; 16];
+
+pub type ChainName = Vec<u8>;
 
 #[cfg(test)]
 mod test {
