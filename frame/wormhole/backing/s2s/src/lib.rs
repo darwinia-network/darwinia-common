@@ -77,12 +77,12 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
+
 		#[pallet::constant]
 		type RingPalletId: Get<PalletId>;
+		/// The maximum lock amount each transaction for security.
 		#[pallet::constant]
 		type RingLockMaxLimit: Get<RingBalance<Self>>;
-		#[pallet::constant]
-		type BlocksPerDay: Get<BlockNumberFor<Self>>;
 		type RingCurrency: Currency<AccountId<Self>>;
 
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
@@ -133,19 +133,46 @@ pub mod pallet {
 		NonceDuplicated,
 	}
 
+	/// Period between security limitation.
 	#[pallet::storage]
-	#[pallet::getter(fn daily_unlocked)]
-	pub type DailyUnlocked<T: Config> =
-		StorageValue<_, (BlockNumberFor<T>, RingBalance<T>), ValueQuery>;
+	#[pallet::getter(fn secure_limited_period)]
+	pub type SecureLimitedPeriod<T> = StorageValue<_, BlockNumberFor<T>, ValueQuery>;
 
+	/// `(Spent, Maximum)` amount of *RING* security limitation each [`LimitedPeriod`].
 	#[pallet::storage]
-	#[pallet::getter(fn daily_limited)]
-	pub type DailyLimited<T: Config> = StorageValue<_, RingBalance<T>, ValueQuery>;
+	#[pallet::getter(fn secure_limited_ring_amount)]
+	pub type SecureLimitedRingAmount<T> =
+		StorageValue<_, (RingBalance<T>, RingBalance<T>), ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn locked_queue)]
 	pub type LockedQueue<T: Config> =
 		StorageMap<_, Identity, TokenMessageId, (AccountId<T>, Token), ValueQuery>;
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub secure_limited_period: BlockNumberFor<T>,
+		pub secure_limited_ring_amount: RingBalance<T>,
+	}
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self {
+				secure_limited_period: Zero::zero(),
+				secure_limited_ring_amount: Zero::zero(),
+			}
+		}
+	}
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			<SecureLimitedPeriod<T>>::put(self.secure_limited_period);
+			<SecureLimitedRingAmount<T>>::put((
+				<RingBalance<T>>::zero(),
+				self.secure_limited_ring_amount,
+			));
+		}
+	}
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -153,18 +180,13 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
-			let time_of_last_record = DailyUnlocked::<T>::get().0;
-			// this time is indicated by blocknumber
-			// it's an integer multiple of `T::BlocksPerDay`
-			// if it is the default value zero, we know there are no locked event from last day
-			// or else if current time is in another day, we should reset the unlocked record
-			if time_of_last_record > Zero::zero()
-				&& time_of_last_record < now - now % T::BlocksPerDay::get()
-			{
-				<DailyUnlocked<T>>::kill();
-			}
+			if (now % <SecureLimitedPeriod<T>>::get()).is_zero() {
+				<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = Zero::zero());
 
-			T::DbWeight::get().writes(1)
+				T::DbWeight::get().reads_writes(2, 1)
+			} else {
+				T::DbWeight::get().reads(1)
+			}
 		}
 	}
 
@@ -290,13 +312,15 @@ pub mod pallet {
 			};
 			let amount = token_info.value.ok_or(<Error<T>>::InvalidTokenAmount)?;
 
-			// Make sure the total transfer is less than daily limited
-			let unlocked = Self::get_daily_unlocked();
-			let limited = <DailyLimited<T>>::get();
-			ensure!(
-				limited.saturating_sub(unlocked) >= amount.low_u128().unique_saturated_into(),
-				<Error<T>>::RingDailyLimited
-			);
+			// Make sure the total transfer is less than the security limitation
+			{
+				let (spent, limitation) = <SecureLimitedRingAmount<T>>::get();
+
+				ensure!(
+					spent.saturating_add(amount.low_u128().saturated_into()) >= limitation,
+					<Error<T>>::RingDailyLimited
+				);
+			}
 
 			// Make sure the user's balance is enough to lock
 			ensure!(
@@ -304,6 +328,7 @@ pub mod pallet {
 					> amount.low_u128().unique_saturated_into(),
 				<Error<T>>::InsufficientBalance
 			);
+
 			T::RingCurrency::transfer(
 				&Self::pallet_account_id(),
 				&recipient,
@@ -311,20 +336,32 @@ pub mod pallet {
 				KeepAlive,
 			)?;
 
-			Self::update_daily_unlocked(
-				unlocked.saturating_add(amount.low_u128().unique_saturated_into()),
-			);
 			Self::deposit_event(Event::TokenUnlocked(token.clone(), recipient, amount));
+
 			Ok(().into())
 		}
 
-		#[pallet::weight(<T as Config>::WeightInfo::update_ring_daily_limited())]
-		pub fn update_ring_daily_limited(
+		#[pallet::weight(<T as Config>::WeightInfo::set_secure_limited_period())]
+		pub fn set_secure_limited_period(
 			origin: OriginFor<T>,
-			limited: RingBalance<T>,
+			period: BlockNumberFor<T>,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			<DailyLimited<T>>::put(limited);
+
+			<SecureLimitedPeriod<T>>::put(period);
+
+			Ok(().into())
+		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::set_security_limitation_ring_amount())]
+		pub fn set_security_limitation_ring_amount(
+			origin: OriginFor<T>,
+			limitation: RingBalance<T>,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			<SecureLimitedRingAmount<T>>::mutate(|(_, limitation_)| *limitation_ = limitation);
+
 			Ok(().into())
 		}
 	}
@@ -332,15 +369,6 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn pallet_account_id() -> T::AccountId {
 			T::PalletId::get().into_account()
-		}
-
-		fn get_daily_unlocked() -> RingBalance<T> {
-			DailyUnlocked::<T>::get().1
-		}
-
-		fn update_daily_unlocked(balance: RingBalance<T>) {
-			let now = frame_system::Pallet::<T>::block_number();
-			<DailyUnlocked<T>>::put((now - now % T::BlocksPerDay::get(), balance));
 		}
 	}
 
