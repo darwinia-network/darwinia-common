@@ -43,7 +43,7 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_runtime::{
-	traits::{AccountIdConversion, Convert, Saturating, UniqueSaturatedInto, Zero},
+	traits::{AccountIdConversion, Convert, Saturating, Zero},
 	SaturatedConversion,
 };
 use sp_std::prelude::*;
@@ -97,14 +97,20 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(fn deposit_event)]
-	#[pallet::metadata(AccountId<T> = "AccountId")]
+	#[pallet::metadata(AccountId<T> = "AccountId", RingBalance<T> = "RingBalance")]
 	pub enum Event<T: Config> {
 		/// Token registered \[token address, sender\]
 		TokenRegistered(Token, AccountId<T>),
 		/// Token locked \[message_id, token address, sender, recipient, amount\]
-		TokenLocked(TokenMessageId, Token, AccountId<T>, EthereumAddress, U256),
+		TokenLocked(
+			TokenMessageId,
+			Token,
+			AccountId<T>,
+			EthereumAddress,
+			RingBalance<T>,
+		),
 		/// Token unlocked \[token, recipient, value\]
-		TokenUnlocked(Token, AccountId<T>, U256),
+		TokenUnlocked(Token, AccountId<T>, RingBalance<T>),
 		/// Token locked confirmed from remote \[message_id, token, user, result\]
 		TokenLockedConfirmed(TokenMessageId, Token, AccountId<T>, bool),
 	}
@@ -277,7 +283,7 @@ pub mod pallet {
 			);
 			<LockedQueue<T>>::insert(message_id, (user.clone(), token.clone()));
 			Self::deposit_event(Event::TokenLocked(
-				message_id, token, user, recipient, amount,
+				message_id, token, user, recipient, value,
 			));
 			Ok(().into())
 		}
@@ -310,31 +316,31 @@ pub mod pallet {
 				}
 				_ => return Err(Error::<T>::InvalidTokenType.into()),
 			};
-			let amount = token_info.value.ok_or(<Error<T>>::InvalidTokenAmount)?;
+			let amount = token_info
+				.value
+				.ok_or(<Error<T>>::InvalidTokenAmount)?
+				.low_u128()
+				.saturated_into();
 
 			// Make sure the total transfer is less than the security limitation
 			{
 				let (spent, limitation) = <SecureLimitedRingAmount<T>>::get();
 
 				ensure!(
-					spent.saturating_add(amount.low_u128().saturated_into()) >= limitation,
+					spent.saturating_add(amount) >= limitation,
 					<Error<T>>::RingDailyLimited
 				);
 			}
 
 			// Make sure the user's balance is enough to lock
 			ensure!(
-				T::RingCurrency::free_balance(&Self::pallet_account_id())
-					> amount.low_u128().unique_saturated_into(),
+				T::RingCurrency::free_balance(&Self::pallet_account_id()) > amount,
 				<Error<T>>::InsufficientBalance
 			);
 
-			T::RingCurrency::transfer(
-				&Self::pallet_account_id(),
-				&recipient,
-				amount.low_u128().unique_saturated_into(),
-				KeepAlive,
-			)?;
+			T::RingCurrency::transfer(&Self::pallet_account_id(), &recipient, amount, KeepAlive)?;
+
+			<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = used.saturating_add(amount));
 
 			Self::deposit_event(Event::TokenUnlocked(token.clone(), recipient, amount));
 
@@ -399,7 +405,7 @@ pub mod pallet {
 					let _ = T::RingCurrency::transfer(
 						&Self::pallet_account_id(),
 						&user,
-						value.low_u128().unique_saturated_into(),
+						value.low_u128().saturated_into(),
 						AllowDeath,
 					);
 				}
