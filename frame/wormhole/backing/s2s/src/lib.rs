@@ -324,10 +324,10 @@ pub mod pallet {
 
 			// Make sure the total transfer is less than the security limitation
 			{
-				let (spent, limitation) = <SecureLimitedRingAmount<T>>::get();
+				let (used, limitation) = <SecureLimitedRingAmount<T>>::get();
 
 				ensure!(
-					spent.saturating_add(amount) >= limitation,
+					used.saturating_add(amount) <= limitation,
 					<Error<T>>::RingDailyLimited
 				);
 			}
