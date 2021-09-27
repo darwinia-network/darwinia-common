@@ -185,9 +185,11 @@ pub mod pallet {
 		/// Pre-log is present, therefore transact is not allowed.
 		PreLogExists,
 		/// The internal transaction failed.
-		FailedInternalTx,
+		InternalTransactionExitError,
+		InternalTransactionRevertError,
+		InternalTransactionFatalError,
 		/// The internal call failed.
-		InvalidCall,
+		ReadyOnlyCall,
 	}
 
 	#[pallet::validate_unsigned]
@@ -595,10 +597,9 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 				)),
 				pays_fee: Pays::No,
 			}),
-			_ => {
-				log::error!("Executing internal transaction error happened");
-				Err(Error::<T>::FailedInternalTx.into())
-			}
+			ExitReason::Error(_) => Err(<Error<T>>::InternalTransactionExitError.into()),
+			ExitReason::Revert(_) => Err(<Error<T>>::InternalTransactionRevertError.into()),
+			ExitReason::Fatal(_) => Err(<Error<T>>::InternalTransactionFatalError.into()),
 		})?
 	}
 
@@ -620,12 +621,11 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 		match info {
 			CallOrCreateInfo::Call(info) => match info.exit_reason {
 				ExitReason::Succeed(_) => Ok(info.value),
-				_ => {
-					log::error!("Executing internal transaction error happened");
-					Err(Error::<T>::FailedInternalTx.into())
-				}
+				ExitReason::Error(_) => Err(<Error<T>>::InternalTransactionExitError.into()),
+				ExitReason::Revert(_) => Err(<Error<T>>::InternalTransactionRevertError.into()),
+				ExitReason::Fatal(_) => Err(<Error<T>>::InternalTransactionFatalError.into()),
 			},
-			_ => Err(Error::<T>::InvalidCall.into()),
+			_ => Err(<Error<T>>::ReadyOnlyCall.into()),
 		}
 	}
 }

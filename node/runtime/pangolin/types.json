@@ -181,7 +181,7 @@
 			"Erc20": "TokenInfo"
 		}
 	},
-	"BridgeMessageId": "[u8; 16; BridgeMessageId]",
+	"TokenMessageId": "[u8; 16; TokenMessageId]",
 	"__[TODO.Generalize]__": "",
 	"RelayAuthoritySigner": "EthereumAddress",
 	"RelayAuthorityMessage": "EcdsaMessage",

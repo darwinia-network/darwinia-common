@@ -647,7 +647,7 @@ fn root_transact_invalid_data_should_fail() {
 
 		assert_err!(
 			Ethereum::root_transact(Origin::root(), contract_address, wrong_add),
-			<Error<Test>>::FailedInternalTx
+			<Error<Test>>::InternalTransactionRevertError
 		);
 	});
 }
@@ -894,7 +894,7 @@ fn internal_transact_dispatch_error() {
 		// Call foo use internal transaction
 		assert_err!(
 			Ethereum::internal_transact(contract_address, mock_foo),
-			<Error<Test>>::FailedInternalTx
+			<Error<Test>>::InternalTransactionRevertError
 		);
 		assert_eq!(
 			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce,
