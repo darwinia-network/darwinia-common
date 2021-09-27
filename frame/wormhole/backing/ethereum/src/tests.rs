@@ -645,7 +645,7 @@ fn lock_should_work() {
 		let account = Default::default();
 		let e_account = Default::default();
 		let init_balance = 100;
-		let collateral = 10;
+		let lock_balance = 10;
 		let _ = Ring::deposit_creating(&account, init_balance);
 		let _ = Kton::deposit_creating(&account, init_balance);
 		let fee_account_id = EthereumBacking::fee_account_id();
@@ -657,26 +657,26 @@ fn lock_should_work() {
 
 		assert_ok!(EthereumBacking::lock(
 			Origin::signed(account.clone()),
-			collateral,
-			collateral,
+			lock_balance,
+			lock_balance,
 			e_account
 		));
 		assert_eq!(
 			Ring::free_balance(&account),
-			init_balance - collateral - advanced_fee
+			init_balance - lock_balance - advanced_fee
 		);
-		assert_eq!(Kton::free_balance(&account), init_balance - collateral);
+		assert_eq!(Kton::free_balance(&account), init_balance - lock_balance);
 		assert_eq!(
 			Ring::free_balance(&fee_account_id),
 			fee_account_balance + advanced_fee
 		);
 		assert_eq!(
 			Ring::free_balance(&module_account_id),
-			module_account_ring + collateral
+			module_account_ring + lock_balance
 		);
 		assert_eq!(
 			Kton::free_balance(&module_account_id),
-			module_account_kton + collateral
+			module_account_kton + lock_balance
 		);
 	});
 }
@@ -719,14 +719,14 @@ fn lock_failed_rollback_transaction_should_work() {
 fn lock_limit_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		let account = Default::default();
-		let collateral = 10_000;
-		let _ = Ring::deposit_creating(&account, collateral);
-		let _ = Kton::deposit_creating(&account, collateral);
+		let lock_balance = 10_000;
+		let _ = Ring::deposit_creating(&account, lock_balance);
+		let _ = Kton::deposit_creating(&account, lock_balance);
 
 		assert_err!(
 			EthereumBacking::lock(
 				Origin::signed(account.clone()),
-				collateral,
+				lock_balance,
 				0,
 				Default::default()
 			),
@@ -736,7 +736,7 @@ fn lock_limit_should_work() {
 			EthereumBacking::lock(
 				Origin::signed(account.clone()),
 				0,
-				collateral,
+				lock_balance,
 				Default::default()
 			),
 			<Error<Test>>::KtonLockLim

@@ -73,9 +73,9 @@ pallet-authority-discovery                 = { default-features = false, git = "
 pallet-authorship                          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-babe                                = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-bounties                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-pallet-bridge-dispatch                     = { default-features = false, path = "../../../../parity-bridges-common/modules/dispatch" }
-pallet-bridge-grandpa                      = { default-features = false, path = "../../../../parity-bridges-common/modules/grandpa" }
-pallet-bridge-messages                     = { default-features = false, path = "../../../../parity-bridges-common/modules/messages" }
+pallet-bridge-dispatch                     = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
+pallet-bridge-grandpa                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
+pallet-bridge-messages                     = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
 pallet-collective                          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-election-provider-multi-phase       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
 pallet-grandpa                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
