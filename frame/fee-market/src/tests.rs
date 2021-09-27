@@ -470,7 +470,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		.build_storage::<Test>()
 		.unwrap();
 	darwinia_balances::GenesisConfig::<Test, RingInstance> {
-		balances: vec![(1, 150), (2, 200), (3, 350), (4, 300), (5, 350), (12, 400)],
+		balances: vec![(1, 150), (2, 200), (3, 350), (4, 220), (5, 350), (12, 400)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
@@ -1095,7 +1095,7 @@ fn test_payment_reward_calculation_assigned_relayers_absent_update_assigned_rela
 		System::set_block_number(2);
 		assert_ok!(FeeMarket::register(Origin::signed(1), 100, Some(30)));
 		assert_ok!(FeeMarket::register(Origin::signed(2), 150, Some(30)));
-		assert_ok!(FeeMarket::register(Origin::signed(3), 100, Some(100)));
+		assert_ok!(FeeMarket::register(Origin::signed(3), 130, Some(100)));
 		assert_ok!(FeeMarket::register(Origin::signed(4), 150, Some(100)));
 		assert_ok!(FeeMarket::register(Origin::signed(5), 100, Some(200)));
 		assert_ok!(FeeMarket::register(Origin::signed(12), 150, Some(200)));
@@ -1111,46 +1111,55 @@ fn test_payment_reward_calculation_assigned_relayers_absent_update_assigned_rela
 		assert_eq!(FeeMarket::best_relayer(), (4, 100));
 		let market_fee = FeeMarket::market_fee();
 		let (lane, message_nonce) = send_regular_message(market_fee);
-		// The original (account-balance) map in genesis: [(1, 150), (2, 200), (3, 350)]
-		// assert_eq!(FeeMarket::relayer_locked_balance(&1), 100);
-		// assert_eq!(FeeMarket::relayer_locked_balance(&2), 150);
-		// assert_eq!(FeeMarket::relayer_locked_balance(&3), 200);
-		// assert_eq!(Ring::usable_balance(&1), 50);
-		// assert_eq!(Ring::usable_balance(&2), 50);
-		// assert_eq!(Ring::usable_balance(&3), 150);
+		// The original (account-balance) map in genesis: [(1, 150), (2, 200), (3, 350), (4, 300), (5, 350), (12, 400)]
+		assert_eq!(FeeMarket::relayer_locked_balance(&2), 150);
+		assert_eq!(FeeMarket::relayer_locked_balance(&1), 100);
+		assert_eq!(FeeMarket::relayer_locked_balance(&4), 150);
+		assert_eq!(Ring::usable_balance(&2), 50);
+		assert_eq!(Ring::usable_balance(&1), 50);
+		assert_eq!(Ring::usable_balance(&4), 70);
 
 		// Receive delivery message proof
-		// System::set_block_number(200);
-		// assert_ok!(Messages::receive_messages_delivery_proof(
-		// 	Origin::signed(5),
-		// 	TestMessagesDeliveryProof(Ok((
-		// 		TEST_LANE_ID,
-		// 		InboundLaneData {
-		// 			relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
-		// 				.into_iter()
-		// 				.collect(),
-		// 			..Default::default()
-		// 		}
-		// 	))),
-		// 	UnrewardedRelayersState {
-		// 		unrewarded_relayer_entries: 1,
-		// 		total_messages: 1,
-		// 		..Default::default()
-		// 	},
-		// ));
-		// assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 60));
-		// assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
-		// 	TEST_RELAYER_A,
-		// 	240
-		// ));
-		// // The p1, p2, p3 slash value is 100
-		// assert_eq!(FeeMarket::relayer_locked_balance(&1), 50);
-		// assert_eq!(FeeMarket::relayer_locked_balance(&2), 100);
-		// assert_eq!(FeeMarket::relayer_locked_balance(&3), 200);
-		// assert_eq!(Ring::usable_balance(&1), 0);
-		// assert_eq!(Ring::usable_balance(&2), 0);
-		// assert_eq!(Ring::usable_balance(&3), 50);
-		// assert_eq!(FeeMarket::relayers().len(), 3);
-		// assert_eq!(FeeMarket::best_relayer(), (3, 100));
+		System::set_block_number(200);
+		assert_ok!(Messages::receive_messages_delivery_proof(
+			Origin::signed(5),
+			TestMessagesDeliveryProof(Ok((
+				TEST_LANE_ID,
+				InboundLaneData {
+					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
+						.into_iter()
+						.collect(),
+					..Default::default()
+				}
+			))),
+			UnrewardedRelayersState {
+				unrewarded_relayer_entries: 1,
+				total_messages: 1,
+				..Default::default()
+			},
+		));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 60));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
+			TEST_RELAYER_A,
+			240
+		));
+
+		// The p1, p2, p3 slash value is 100
+		assert_eq!(FeeMarket::relayer_locked_balance(&2), 100);
+		assert_eq!(FeeMarket::relayer_locked_balance(&1), 50);
+		assert_eq!(FeeMarket::relayer_locked_balance(&4), 120);
+		assert_eq!(Ring::usable_balance(&2), 0);
+		assert_eq!(Ring::usable_balance(&1), 0);
+		assert_eq!(Ring::usable_balance(&4), 0);
+		assert_eq!(FeeMarket::relayers().len(), 6);
+		assert_eq!(
+			FeeMarket::assigned_relayers(),
+			(
+				Relayer::<Test>::new(2, 100, 30),
+				Relayer::<Test>::new(1, 50, 30),
+				Relayer::<Test>::new(3, 130, 100),
+			)
+		);
+		assert_eq!(FeeMarket::best_relayer(), (3, 100));
 	});
 }

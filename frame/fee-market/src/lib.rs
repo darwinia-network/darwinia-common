@@ -174,9 +174,12 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(_: BlockNumberFor<T>) -> Weight {
+		fn on_finalize(_: BlockNumberFor<T>) {
+			// Clean the order's which reward has been paid off
+			for (lane_id, message_nonce) in <ConfirmedMessagesThisBlock<T>>::get() {
+				<Orders<T>>::remove((lane_id, message_nonce));
+			}
 			<ConfirmedMessagesThisBlock<T>>::kill();
-			T::DbWeight::get().writes(1)
 		}
 	}
 
