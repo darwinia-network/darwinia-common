@@ -16,18 +16,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg(feature = "runtime-benchmarks")]
-
-use super::*;
-
+// --- crates.io ---
 use array_bytes::{hex2bytes_unchecked, hex_into_unchecked};
-use dp_asset::token::{Token, TokenOption};
+// --- paritytech ---
 use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_system::RawOrigin;
-use sp_runtime::traits::UniqueSaturatedInto;
+use sp_runtime::traits::Zero;
+// --- darwinia-network ---
+use crate::*;
+use dp_asset::token::{Token, TokenOption};
 
 const SPEC_VERSION: u32 = 123;
-const INIT_COIN: u128 = 5000_000_000_000_000_000;
+const INIT_COIN: u128 = 5_000_000_000_000_000_000;
 
 benchmarks! {
 	register_and_remote_create {
@@ -63,7 +63,11 @@ benchmarks! {
 		let token = Token::Native(TokenInfo::new(register_token_address, Some(100.into()), Some(token_option)));
 	}:_(RawOrigin::Signed(caller), token, recipient)
 
-	update_ring_daily_limited {
-		let limited: RingBalance<T> = 0u128.unique_saturated_into();
-	}:_(RawOrigin::Root, limited)
+	set_secure_limited_period {
+		let period: RingBalance<T> = Zero::zero();
+	}:_(RawOrigin::Root, period)
+
+	set_security_limitation_ring_amount {
+		let limitation: RingBalance<T> = Zero::zero();
+	}:_(RawOrigin::Root, limitation)
 }
