@@ -109,7 +109,7 @@ pub mod pallet {
 			EthereumAddress,
 			RingBalance<T>,
 		),
-		/// Token unlocked \[token, recipient, value\]
+		/// Token unlocked \[token, recipient, amount\]
 		TokenUnlocked(Token, AccountId<T>, RingBalance<T>),
 		/// Token locked confirmed from remote \[message_id, token, user, result\]
 		TokenLockedConfirmed(TokenMessageId, Token, AccountId<T>, bool),
@@ -121,7 +121,7 @@ pub mod pallet {
 		Erc20NotSupported,
 		/// Invalid token type.
 		InvalidTokenType,
-		/// Invalid token value.
+		/// Invalid token amount.
 		InvalidTokenAmount,
 		/// Insufficient balance.
 		InsufficientBalance,
