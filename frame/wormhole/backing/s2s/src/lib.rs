@@ -289,7 +289,7 @@ pub mod pallet {
 			};
 			let amount = token_info.value.ok_or(<Error<T>>::InvalidTokenAmount)?;
 
-			// Make sure the total transfered is less than daily limited
+			// Make sure the total transfer is less than daily limited
 			let unlocked = Self::get_daily_unlocked();
 			let limited = <DailyLimited<T>>::get();
 			ensure!(
