@@ -163,4 +163,8 @@ impl<AccountId, BlockNumber, Balance> Order<AccountId, BlockNumber, Balance> {
 	pub fn assigned_relayers(&self) -> Option<&AssignedRelayers<AccountId, BlockNumber, Balance>> {
 		self.assigned_relayers.as_ref()
 	}
+
+	pub fn is_confirmed(&self) -> bool {
+		self.confirm_time.is_some()
+	}
 }

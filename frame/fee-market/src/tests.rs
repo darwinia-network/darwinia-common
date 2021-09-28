@@ -839,9 +839,9 @@ fn test_payment_reward_calculation_assigned_relayer_finish_delivery_single_messa
 fn test_payment_reward_calculation_assigned_relayer_finish_delivery_with_multiple_messages() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(2);
-		FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, Some(300));
-		FeeMarket::enroll_and_lock_collateral(Origin::signed(2), 110, Some(500));
-		FeeMarket::enroll_and_lock_collateral(Origin::signed(3), 120, Some(1000));
+		FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, Some(30));
+		FeeMarket::enroll_and_lock_collateral(Origin::signed(2), 110, Some(50));
+		FeeMarket::enroll_and_lock_collateral(Origin::signed(3), 120, Some(100));
 
 		// Send message
 		let market_fee = FeeMarket::market_fee();
@@ -887,6 +887,69 @@ fn test_payment_reward_calculation_assigned_relayer_finish_delivery_with_multipl
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
 			TEST_RELAYER_B,
 			96
+		));
+	});
+}
+
+#[test]
+fn test_payment_reward_calculation_assigned_relayer_single_message_with_multiple_duplicated_delivery_proof(
+) {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(2);
+		FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, Some(30));
+		FeeMarket::enroll_and_lock_collateral(Origin::signed(2), 110, Some(50));
+		FeeMarket::enroll_and_lock_collateral(Origin::signed(3), 120, Some(100));
+
+		// Send message
+		let market_fee = FeeMarket::market_fee();
+		let (lane_id, message_nonce1) = send_regular_message(market_fee);
+
+		// The first time receive delivery message proof
+		System::set_block_number(4);
+		assert_ok!(Messages::receive_messages_delivery_proof(
+			Origin::signed(5),
+			TestMessagesDeliveryProof(Ok((
+				TEST_LANE_ID,
+				InboundLaneData {
+					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
+						.into_iter()
+						.collect(),
+					..Default::default()
+				}
+			))),
+			UnrewardedRelayersState {
+				unrewarded_relayer_entries: 1,
+				total_messages: 1,
+				..Default::default()
+			},
+		));
+		// The second time receive delivery message proof
+		assert_ok!(Messages::receive_messages_delivery_proof(
+			Origin::signed(6),
+			TestMessagesDeliveryProof(Ok((
+				TEST_LANE_ID,
+				InboundLaneData {
+					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
+						.into_iter()
+						.collect(),
+					..Default::default()
+				}
+			))),
+			UnrewardedRelayersState {
+				unrewarded_relayer_entries: 1,
+				total_messages: 1,
+				..Default::default()
+			},
+		));
+
+		assert_eq!(ConfirmedMessagesThisBlock::<Test>::get().len(), 1);
+		let t: AccountId = <Test as Config>::TreasuryPalletId::get().into_account();
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(t, 70));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(1, 18));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 2));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
+			TEST_RELAYER_A,
+			10
 		));
 	});
 }

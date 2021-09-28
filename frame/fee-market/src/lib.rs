@@ -410,10 +410,13 @@ impl<T: Config> OnDeliveryConfirmed for MessageConfirmedHandler<T> {
 	fn on_messages_delivered(lane: &LaneId, delivered_messages: &DeliveredMessages) -> Weight {
 		let now = frame_system::Pallet::<T>::block_number();
 		for message_nonce in delivered_messages.begin..=delivered_messages.end {
-			<Orders<T>>::mutate((lane, message_nonce), |order| {
-				order.set_confirm_time(Some(now));
-			});
-			<ConfirmedMessagesThisBlock<T>>::append((lane, message_nonce));
+			let order = <Orders<T>>::get((lane, message_nonce));
+			if !order.is_confirmed() {
+				<Orders<T>>::mutate((lane, message_nonce), |order| {
+					order.set_confirm_time(Some(now));
+				});
+				<ConfirmedMessagesThisBlock<T>>::append((lane, message_nonce));
+			}
 		}
 
 		<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
