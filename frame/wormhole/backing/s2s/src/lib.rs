@@ -21,6 +21,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
 
+// FIXME: https://github.com/darwinia-network/darwinia-common/issues/845
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 #[cfg(test)]
@@ -42,8 +43,7 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use sp_runtime::{
-	traits::UniqueSaturatedInto,
-	traits::{AccountIdConversion, Convert, Zero},
+	traits::{AccountIdConversion, Convert, Saturating, Zero},
 	SaturatedConversion,
 };
 use sp_std::prelude::*;
@@ -51,8 +51,8 @@ use sp_std::prelude::*;
 use darwinia_support::{
 	evm::IntoDvmAddress,
 	s2s::{
-		ensure_source_root, MessageConfirmer, RelayMessageCaller, TokenMessageId, RING_DECIMAL,
-		RING_NAME, RING_SYMBOL,
+		ensure_source_root, MessageConfirmer, RelayMessageCaller, TokenMessageId,
+		RING_DECIMAL, RING_NAME, RING_SYMBOL,
 	},
 };
 use dp_asset::{
@@ -77,10 +77,12 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
+
 		#[pallet::constant]
 		type RingPalletId: Get<PalletId>;
+		/// The max lock amount per transaction for security.
 		#[pallet::constant]
-		type RingLockMaxLimit: Get<RingBalance<Self>>;
+		type MaxLockRingAmountPerTx: Get<RingBalance<Self>>;
 		type RingCurrency: Currency<AccountId<Self>>;
 
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
@@ -95,14 +97,20 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(fn deposit_event)]
-	#[pallet::metadata(AccountId<T> = "AccountId")]
+	#[pallet::metadata(AccountId<T> = "AccountId", RingBalance<T> = "RingBalance")]
 	pub enum Event<T: Config> {
 		/// Token registered \[token address, sender\]
 		TokenRegistered(Token, AccountId<T>),
 		/// Token locked \[message_id, token address, sender, recipient, amount\]
-		TokenLocked(TokenMessageId, Token, AccountId<T>, EthereumAddress, U256),
-		/// Token unlocked \[token, recipient, value\]
-		TokenUnlocked(Token, AccountId<T>, U256),
+		TokenLocked(
+			TokenMessageId,
+			Token,
+			AccountId<T>,
+			EthereumAddress,
+			RingBalance<T>,
+		),
+		/// Token unlocked \[token, recipient, amount\]
+		TokenUnlocked(Token, AccountId<T>, RingBalance<T>),
 		/// Token locked confirmed from remote \[message_id, token, user, result\]
 		TokenLockedConfirmed(TokenMessageId, Token, AccountId<T>, bool),
 	}
@@ -114,11 +122,13 @@ pub mod pallet {
 		/// Invalid token type.
 		InvalidTokenType,
 		/// Invalid token value.
-		InvalidTokenAmount,
+		InvalidTokenValue,
 		/// Insufficient balance.
 		InsufficientBalance,
 		/// Ring Lock LIMITED.
 		RingLockLimited,
+		/// Redeem Daily Limited
+		RingDailyLimited,
 		/// Invalid source origin.
 		InvalidOrigin,
 		/// Encode dispatch call failed.
@@ -129,13 +139,64 @@ pub mod pallet {
 		NonceDuplicated,
 	}
 
+	/// Period between security limitation. Zero means there is no period limitation.
+	#[pallet::storage]
+	#[pallet::getter(fn secure_limited_period)]
+	pub type SecureLimitedPeriod<T> = StorageValue<_, BlockNumberFor<T>, ValueQuery>;
+
+	/// `(Spent, Maximum)` amount of *RING* security limitation each [`LimitedPeriod`].
+	#[pallet::storage]
+	#[pallet::getter(fn secure_limited_ring_amount)]
+	pub type SecureLimitedRingAmount<T> =
+		StorageValue<_, (RingBalance<T>, RingBalance<T>), ValueQuery>;
+
 	#[pallet::storage]
 	#[pallet::getter(fn locked_queue)]
 	pub type LockedQueue<T: Config> =
 		StorageMap<_, Identity, TokenMessageId, (AccountId<T>, Token), ValueQuery>;
 
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub secure_limited_period: BlockNumberFor<T>,
+		pub secure_limited_ring_amount: RingBalance<T>,
+	}
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self {
+				secure_limited_period: Zero::zero(),
+				secure_limited_ring_amount: Zero::zero(),
+			}
+		}
+	}
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			<SecureLimitedPeriod<T>>::put(self.secure_limited_period);
+			<SecureLimitedRingAmount<T>>::put((
+				<RingBalance<T>>::zero(),
+				self.secure_limited_ring_amount,
+			));
+		}
+	}
+
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
+			let secure_limited_period = <SecureLimitedPeriod<T>>::get();
+
+			if !secure_limited_period.is_zero() && (now % secure_limited_period).is_zero() {
+				<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = Zero::zero());
+
+				T::DbWeight::get().reads_writes(2, 1)
+			} else {
+				T::DbWeight::get().reads(1)
+			}
+		}
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -188,7 +249,7 @@ pub mod pallet {
 
 			// Make sure the locked value is less than the max lock limited
 			ensure!(
-				value < T::RingLockMaxLimit::get() && !value.is_zero(),
+				value < T::MaxLockRingAmountPerTx::get() && !value.is_zero(),
 				<Error<T>>::RingLockLimited
 			);
 			// Make sure the user's balance is enough to lock
@@ -224,7 +285,7 @@ pub mod pallet {
 			);
 			<LockedQueue<T>>::insert(message_id, (user.clone(), token.clone()));
 			Self::deposit_event(Event::TokenLocked(
-				message_id, token, user, recipient, amount,
+				message_id, token, user, recipient, value,
 			));
 			Ok(().into())
 		}
@@ -257,22 +318,58 @@ pub mod pallet {
 				}
 				_ => return Err(Error::<T>::InvalidTokenType.into()),
 			};
-			let amount = token_info.value.ok_or(<Error<T>>::InvalidTokenAmount)?;
+			let amount = token_info
+				.value
+				.ok_or(<Error<T>>::InvalidTokenValue)?
+				.low_u128()
+				.saturated_into();
+
+			// Make sure the total transfer is less than the security limitation
+			{
+				let (used, limitation) = <SecureLimitedRingAmount<T>>::get();
+
+				ensure!(
+					<SecureLimitedPeriod<T>>::get().is_zero() || used.saturating_add(amount) <= limitation,
+					<Error<T>>::RingDailyLimited
+				);
+			}
 
 			// Make sure the user's balance is enough to lock
 			ensure!(
-				T::RingCurrency::free_balance(&Self::pallet_account_id())
-					> amount.low_u128().unique_saturated_into(),
+				T::RingCurrency::free_balance(&Self::pallet_account_id()) > amount,
 				<Error<T>>::InsufficientBalance
 			);
-			T::RingCurrency::transfer(
-				&Self::pallet_account_id(),
-				&recipient,
-				amount.low_u128().unique_saturated_into(),
-				KeepAlive,
-			)?;
+
+			T::RingCurrency::transfer(&Self::pallet_account_id(), &recipient, amount, KeepAlive)?;
+
+			<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = used.saturating_add(amount));
 
 			Self::deposit_event(Event::TokenUnlocked(token.clone(), recipient, amount));
+
+			Ok(().into())
+		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::set_secure_limited_period())]
+		pub fn set_secure_limited_period(
+			origin: OriginFor<T>,
+			period: BlockNumberFor<T>,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			<SecureLimitedPeriod<T>>::put(period);
+
+			Ok(().into())
+		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::set_security_limitation_ring_amount())]
+		pub fn set_security_limitation_ring_amount(
+			origin: OriginFor<T>,
+			limitation: RingBalance<T>,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			<SecureLimitedRingAmount<T>>::mutate(|(_, limitation_)| *limitation_ = limitation);
+
 			Ok(().into())
 		}
 	}
@@ -310,7 +407,7 @@ pub mod pallet {
 					let _ = T::RingCurrency::transfer(
 						&Self::pallet_account_id(),
 						&user,
-						value.low_u128().unique_saturated_into(),
+						value.low_u128().saturated_into(),
 						AllowDeath,
 					);
 				}

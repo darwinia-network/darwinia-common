@@ -16,14 +16,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// crates
-use codec::{Decode, Encode};
+// --- std ---
 use std::str::FromStr;
-// darwinia
-use crate::*;
-use crate::{self as s2s_backing};
-use darwinia_support::s2s::{RelayMessageCaller, TokenMessageId};
-// substrate
+// --- crates.io ---
+use codec::{Decode, Encode};
+// --- paritytech ---
 use frame_support::{weights::PostDispatchInfo, PalletId};
 use frame_system::mocking::*;
 use sp_runtime::{
@@ -31,6 +28,9 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32, DispatchErrorWithPostInfo, RuntimeDebug,
 };
+// --- darwinia-network ---
+use crate::{self as s2s_backing, *};
+use darwinia_support::s2s::{RelayMessageCaller, TokenMessageId};
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
@@ -90,13 +90,6 @@ impl frame_system::Config for Test {
 	type OnSetCode = ();
 }
 
-frame_support::parameter_types! {
-	pub const MockChainId: [u8; 4] = [0; 4];
-	pub const MockId: PalletId = PalletId(*b"da/s2sba");
-	pub const RingPalletId: PalletId = PalletId(*b"da/bring");
-	pub const RingLockMaxLimit: Balance = 1_000_000_000;
-}
-
 pub struct MockRelayCaller;
 impl RelayMessageCaller<(), Balance> for MockRelayCaller {
 	fn send_message(
@@ -127,17 +120,28 @@ impl EncodeCall<AccountId<Test>, ()> for MockCallEncoder {
 	}
 }
 
+frame_support::parameter_types! {
+	pub const MockChainId: [u8; 4] = [0; 4];
+	pub const MockId: PalletId = PalletId(*b"da/s2sba");
+	pub const RingPalletId: PalletId = PalletId(*b"da/bring");
+	pub const MaxLockRingAmountPerTx: Balance = 100;
+}
 impl Config for Test {
 	type Event = ();
 	type WeightInfo = ();
+
 	type PalletId = MockId;
+
 	type RingPalletId = RingPalletId;
-	type RingLockMaxLimit = RingLockMaxLimit;
+	type MaxLockRingAmountPerTx = MaxLockRingAmountPerTx;
 	type RingCurrency = Ring;
+
 	type BridgedAccountIdConverter = ();
 	type BridgedChainId = MockChainId;
+
 	type OutboundPayload = ();
 	type CallEncoder = MockCallEncoder;
+
 	type FeeAccount = ();
 	type MessageSender = MockRelayCaller;
 }
@@ -150,15 +154,23 @@ frame_support::construct_runtime! {
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Backing: s2s_backing::{Pallet, Call, Storage, Event<T>},
+		Backing: s2s_backing::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let t = frame_system::GenesisConfig::default()
+	let mut storage = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap();
-	t.into()
+
+	s2s_backing::GenesisConfig::<Test> {
+		secure_limited_period: 10,
+		secure_limited_ring_amount: 1_000_000,
+	}
+	.assimilate_storage(&mut storage)
+	.unwrap();
+
+	storage.into()
 }
 
 #[test]
