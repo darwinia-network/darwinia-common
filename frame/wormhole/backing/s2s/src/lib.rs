@@ -139,7 +139,7 @@ pub mod pallet {
 		NonceDuplicated,
 	}
 
-	/// Period between security limitation.
+	/// Period between security limitation. Zero means there is no period limitation.
 	#[pallet::storage]
 	#[pallet::getter(fn secure_limited_period)]
 	pub type SecureLimitedPeriod<T> = StorageValue<_, BlockNumberFor<T>, ValueQuery>;
@@ -186,7 +186,9 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
-			if (now % <SecureLimitedPeriod<T>>::get().max(1u32.into())).is_zero() {
+			let secure_limited_period = <SecureLimitedPeriod<T>>::get();
+
+			if !secure_limited_period.is_zero() && (now % secure_limited_period).is_zero() {
 				<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = Zero::zero());
 
 				T::DbWeight::get().reads_writes(2, 1)
@@ -327,7 +329,7 @@ pub mod pallet {
 				let (used, limitation) = <SecureLimitedRingAmount<T>>::get();
 
 				ensure!(
-					used.saturating_add(amount) <= limitation,
+					<SecureLimitedPeriod<T>>::get().is_zero() || used.saturating_add(amount) <= limitation,
 					<Error<T>>::RingDailyLimited
 				);
 			}
