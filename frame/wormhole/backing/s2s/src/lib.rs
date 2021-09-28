@@ -121,8 +121,8 @@ pub mod pallet {
 		Erc20NotSupported,
 		/// Invalid token type.
 		InvalidTokenType,
-		/// Invalid token amount.
-		InvalidTokenAmount,
+		/// Invalid token value.
+		InvalidTokenValue,
 		/// Insufficient balance.
 		InsufficientBalance,
 		/// Ring Lock LIMITED.
@@ -318,7 +318,7 @@ pub mod pallet {
 			};
 			let amount = token_info
 				.value
-				.ok_or(<Error<T>>::InvalidTokenAmount)?
+				.ok_or(<Error<T>>::InvalidTokenValue)?
 				.low_u128()
 				.saturated_into();
 
