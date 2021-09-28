@@ -35,7 +35,7 @@ impl MappingTokenFactory {
 	fn cross_receive() -> Function {
 		let inputs = vec![
 			Param {
-				name: "token".into(),
+				name: "mapping_token".into(),
 				kind: ParamType::Address,
 			},
 			Param {
@@ -79,17 +79,17 @@ impl MappingTokenFactory {
 				kind: ParamType::Uint(8),
 			},
 			Param {
-				name: "backing".into(),
+				name: "backing_address".into(),
 				kind: ParamType::Address,
 			},
 			Param {
-				name: "source".into(),
+				name: "original_token".into(),
 				kind: ParamType::Address,
 			},
 		];
 
 		let outputs = vec![Param {
-			name: "token".into(),
+			name: "mapping_token".into(),
 			kind: ParamType::Address,
 		}];
 
@@ -123,14 +123,14 @@ impl MappingTokenFactory {
 
 	/// encode mint function for erc20
 	pub fn encode_cross_receive(
-		token: EthereumAddress,
+		mapping_token: EthereumAddress,
 		recipient: EthereumAddress,
 		amount: U256,
 	) -> AbiResult<Bytes> {
 		let receive = Self::cross_receive();
 		receive.encode_input(
 			vec![
-				Token::Address(token),
+				Token::Address(mapping_token),
 				Token::Address(recipient),
 				Token::Uint(amount),
 			]
@@ -145,8 +145,8 @@ impl MappingTokenFactory {
 		name: &str,
 		symbol: &str,
 		decimals: u8,
-		backing: EthereumAddress,
-		source: EthereumAddress,
+		backing_address: EthereumAddress,
+		original_token: EthereumAddress,
 	) -> AbiResult<Bytes> {
 		let create = Self::create_erc20();
 		create.encode_input(
@@ -156,8 +156,8 @@ impl MappingTokenFactory {
 				Token::String(name.into()),
 				Token::String(symbol.into()),
 				Token::Uint(U256::from(decimals)),
-				Token::Address(backing),
-				Token::Address(source),
+				Token::Address(backing_address),
+				Token::Address(original_token),
 			]
 			.as_slice(),
 		)
@@ -172,21 +172,21 @@ impl MappingTokenFactory {
 		confirm.encode_input(vec![Token::Bytes(message_id), Token::Bool(result)].as_slice())
 	}
 
-	/// get mapped token from source
+	/// get mapped token from original_token
 	pub fn mapping_token() -> Function {
 		let inputs = vec![
 			Param {
-				name: "backing".into(),
+				name: "backing_address".into(),
 				kind: ParamType::Address,
 			},
 			Param {
-				name: "source".into(),
+				name: "original_token".into(),
 				kind: ParamType::Address,
 			},
 		];
 
 		let outputs = vec![Param {
-			name: "target".into(),
+			name: "mapping_token".into(),
 			kind: ParamType::Address,
 		}];
 
@@ -200,11 +200,17 @@ impl MappingTokenFactory {
 
 	/// encode get mapping token info function
 	pub fn encode_mapping_token(
-		backing: EthereumAddress,
-		source: EthereumAddress,
+		backing_address: EthereumAddress,
+		original_token: EthereumAddress,
 	) -> AbiResult<Bytes> {
 		let mapping = Self::mapping_token();
-		mapping.encode_input(vec![Token::Address(backing), Token::Address(source)].as_slice())
+		mapping.encode_input(
+			vec![
+				Token::Address(backing_address),
+				Token::Address(original_token),
+			]
+			.as_slice(),
+		)
 	}
 }
 
@@ -221,9 +227,15 @@ impl TokenRegisterInfo {
 			&data,
 		)?;
 		match (tokens[0].clone(), tokens[1].clone(), tokens[2].clone()) {
-			(Token::Address(backing), Token::Address(source), Token::Address(target)) => {
-				Ok(TokenRegisterInfo(backing, source, target))
-			}
+			(
+				Token::Address(backing_address),
+				Token::Address(original_token),
+				Token::Address(mapping_token),
+			) => Ok(TokenRegisterInfo(
+				backing_address,
+				original_token,
+				mapping_token,
+			)),
 			_ => Err(Error::InvalidData),
 		}
 	}
@@ -232,8 +244,8 @@ impl TokenRegisterInfo {
 /// token burn info
 /// this is the event proof from darwinia after some user burn their mapped token
 /// and would be sent to the outer chain to unlock the source token
-/// @backing: the backing address on the source chain
-/// @source: the source token address
+/// @backing_address: the backing address on the source chain
+/// @original_token: the original token address
 /// @recipient: the final receiver of the token to be unlocked on the source chain
 /// @amount: the amount of the burned token
 #[derive(Debug, PartialEq, Eq)]
@@ -241,9 +253,9 @@ pub struct TokenBurnInfo {
 	pub spec_version: u32,
 	pub weight: u64,
 	pub token_type: u32,
-	pub backing: H160,
+	pub backing_address: H160,
 	pub sender: H160,
-	pub source: H160,
+	pub original_token: H160,
 	pub recipient: Vec<u8>,
 	pub amount: U256,
 	pub fee: U256,
@@ -254,9 +266,9 @@ impl TokenBurnInfo {
 		spec_version: u32,
 		weight: u64,
 		token_type: u32,
-		backing: H160,
+		backing_address: H160,
 		sender: H160,
-		source: H160,
+		original_token: H160,
 		recipient: Vec<u8>,
 		amount: U256,
 		fee: U256,
@@ -265,9 +277,9 @@ impl TokenBurnInfo {
 			Token::Uint(spec_version.into()),
 			Token::Uint(weight.into()),
 			Token::Uint(token_type.into()),
-			Token::Address(backing),
+			Token::Address(backing_address),
 			Token::Address(sender),
-			Token::Address(source),
+			Token::Address(original_token),
 			Token::Bytes(recipient),
 			Token::Uint(amount),
 			Token::Uint(fee),
@@ -304,9 +316,9 @@ impl TokenBurnInfo {
 				Token::Uint(spec_version),
 				Token::Uint(weight),
 				Token::Uint(token_type),
-				Token::Address(backing),
+				Token::Address(backing_address),
 				Token::Address(sender),
-				Token::Address(source),
+				Token::Address(original_token),
 				Token::Bytes(recipient),
 				Token::Uint(amount),
 				Token::Uint(fee),
@@ -314,9 +326,9 @@ impl TokenBurnInfo {
 				spec_version: spec_version.low_u32(),
 				weight: weight.low_u64(),
 				token_type: token_type.low_u32(),
-				backing,
+				backing_address,
 				sender,
-				source,
+				original_token,
 				recipient,
 				amount,
 				fee,
