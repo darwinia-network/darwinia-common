@@ -46,8 +46,9 @@ use bp_runtime::{ChainId, Size};
 use darwinia_evm::AddressMapping;
 use darwinia_support::{
 	evm::POW_9,
+	mapping_token::*,
 	s2s::{ensure_source_root, MessageConfirmer, RelayMessageCaller, ToEthAddress, TokenMessageId},
-	PalletDigest,
+	ChainName, PalletDigest,
 };
 use dp_asset::{
 	token::{Token, TokenInfo},
@@ -83,6 +84,7 @@ pub mod pallet {
 		type FeeAccount: Get<Option<Self::AccountId>>;
 		type MessageSender: RelayMessageCaller<Self::OutboundPayload, RingBalance<Self>>;
 		type InternalTransactHandler: InternalTransactHandler;
+		type BackingChainName: Get<ChainName>;
 	}
 
 	#[pallet::pallet]
@@ -149,37 +151,37 @@ pub mod pallet {
 				&user,
 			)?;
 
-			let backing = T::ToEthAddressT::into_ethereum_id(&user);
+			let backing_address = T::ToEthAddressT::into_ethereum_id(&user);
 			let (token_type, token_info) = token
 				.token_info()
 				.map_err(|_| Error::<T>::InvalidTokenType)?;
-			let mut mapped_address = Self::mapped_token_address(backing, token_info.address)?;
-			ensure!(mapped_address == H160::zero(), "asset has been registered");
+			let mut mapping_token =
+				Self::mapped_token_address(backing_address, token_info.address)?;
+			ensure!(mapping_token == H160::zero(), "asset has been registered");
 
 			match token_info.option {
 				Some(option) => {
-					let name =
-						str::from_utf8(&option.name[..]).map_err(|_| Error::<T>::StringCF)?;
-					let symbol =
-						str::from_utf8(&option.symbol[..]).map_err(|_| Error::<T>::StringCF)?;
+					let name = mapping_token_name(option.name, T::BackingChainName::get());
+					let symbol = mapping_token_symbol(option.symbol);
 					let input = mtf::encode_create_erc20(
 						Self::digest(),
 						token_type,
-						&name,
-						&symbol,
+						&str::from_utf8(name.as_slice()).map_err(|_| Error::<T>::StringCF)?,
+						&str::from_utf8(symbol.as_slice()).map_err(|_| Error::<T>::StringCF)?,
 						option.decimal,
-						backing,
+						backing_address,
 						token_info.address,
 					)
 					.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 
 					Self::transact_mapping_factory(input)?;
-					mapped_address = Self::mapped_token_address(backing, token_info.address)?;
+					mapping_token =
+						Self::mapped_token_address(backing_address, token_info.address)?;
 					Self::deposit_event(Event::TokenRegistered(
 						user,
-						backing,
+						backing_address,
 						token_info.address,
-						mapped_address,
+						mapping_token,
 					));
 				}
 				_ => return Err(Error::<T>::InvalidTokenOption.into()),
@@ -207,25 +209,25 @@ pub mod pallet {
 				&user,
 			)?;
 
-			let backing = T::ToEthAddressT::into_ethereum_id(&user);
+			let backing_address = T::ToEthAddressT::into_ethereum_id(&user);
 			let (_, token_info) = token
 				.token_info()
 				.map_err(|_| Error::<T>::InvalidTokenType)?;
 
-			let mapped_address = Self::mapped_token_address(backing, token_info.address)?;
+			let mapping_token = Self::mapped_token_address(backing_address, token_info.address)?;
 			ensure!(
-				mapped_address != H160::zero(),
+				mapping_token != H160::zero(),
 				"asset has not been registered"
 			);
 
 			// Redeem process
 			if let Some(value) = token_info.value {
-				let input = mtf::encode_cross_receive(mapped_address, recipient, value)
+				let input = mtf::encode_cross_receive(mapping_token, recipient, value)
 					.map_err(|_| Error::<T>::InvalidMintEncoding)?;
 				Self::transact_mapping_factory(input)?;
 				Self::deposit_event(Event::TokenIssued(
-					backing,
-					mapped_address,
+					backing_address,
+					mapping_token,
 					recipient,
 					value,
 				));
@@ -254,13 +256,13 @@ pub mod pallet {
 	#[pallet::metadata(AccountId<T> = "AccountId")]
 	pub enum Event<T: Config> {
 		/// Create new token
-		/// [user, backing, source_address, mapping_address]
+		/// [user, backing_address, original_token, mapping_token]
 		TokenRegistered(AccountId<T>, H160, H160, H160),
 		/// Redeem Token
-		/// [backing, mapping_address, recipient, amount]
+		/// [backing_address, mapping_token, recipient, amount]
 		TokenIssued(H160, H160, H160, U256),
 		/// Token Burned and request Remote unlock
-		/// [spec_version, weight, tokenType, source, amount, recipient, fee]
+		/// [spec_version, weight, tokenType, original_token, amount, recipient, fee]
 		TokenBurned(u32, u64, u32, H160, U256, AccountId<T>, U256),
 		/// Set mapping token factory address
 		/// [old, new]
@@ -343,15 +345,18 @@ impl<T: Config> Pallet<T> {
 		digest
 	}
 
-	pub fn mapped_token_address(backing: H160, source: H160) -> Result<H160, DispatchError> {
+	pub fn mapped_token_address(
+		backing_address: H160,
+		original_token: H160,
+	) -> Result<H160, DispatchError> {
 		let factory_address = <MappingFactoryAddress<T>>::get();
-		let bytes = mtf::encode_mapping_token(backing, source)
+		let bytes = mtf::encode_mapping_token(backing_address, original_token)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
-		let mapped_address = T::InternalTransactHandler::read_only_call(factory_address, bytes)?;
-		if mapped_address.len() != 32 {
+		let mapping_token = T::InternalTransactHandler::read_only_call(factory_address, bytes)?;
+		if mapping_token.len() != 32 {
 			return Err(Error::<T>::InvalidAddressLen.into());
 		}
-		Ok(H160::from_slice(&mapped_address.as_slice()[12..]))
+		Ok(H160::from_slice(&mapping_token.as_slice()[12..]))
 	}
 
 	/// Make a transaction call to mapping token factory sol contract
@@ -372,16 +377,20 @@ impl<T: Config> Pallet<T> {
 		fee: RingBalance<T>,
 		burn_info: TokenBurnInfo,
 	) -> Result<(), DispatchError> {
-		let (spec_version, weight, token_type, address, amount) = (
+		let (spec_version, weight, token_type, original_token, amount) = (
 			burn_info.spec_version,
 			burn_info.weight,
 			burn_info.token_type,
-			burn_info.source,
+			burn_info.original_token,
 			burn_info.amount,
 		);
 		let account_id: T::ReceiverAccountId =
 			array_bytes::dyn_into!(burn_info.recipient.as_slice(), 32);
-		let token: Token = (token_type, TokenInfo::new(address, Some(amount), None)).into();
+		let token: Token = (
+			token_type,
+			TokenInfo::new(original_token, Some(amount), None),
+		)
+			.into();
 		let account = RecipientAccount::DarwiniaAccount(account_id.clone().into());
 
 		let payload = T::CallEncoder::encode_remote_unlock(spec_version, weight, token, account)
@@ -391,7 +400,7 @@ impl<T: Config> Pallet<T> {
 			spec_version,
 			weight,
 			token_type,
-			address,
+			original_token,
 			amount,
 			account_id.into(),
 			burn_info.fee,

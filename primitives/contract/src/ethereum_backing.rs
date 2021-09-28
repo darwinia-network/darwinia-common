@@ -41,7 +41,7 @@ pub struct EthereumRegisterEvent {
 pub struct EthereumLockEvent {
 	pub sender: EthereumAddress,
 	pub source: EthereumAddress,
-	pub mapped_address: EthereumAddress,
+	pub mapping_token: EthereumAddress,
 	pub amount: U256,
 	pub recipient: EthereumAddress,
 	pub fee: U256,
@@ -203,7 +203,7 @@ impl EthereumBacking {
 		Ok(EthereumLockEvent {
 			sender: Self::log_params2address(&ethlog, 0)?,
 			source: Self::log_params2address(&ethlog, 1)?,
-			mapped_address: Self::log_params2address(&ethlog, 2)?,
+			mapping_token: Self::log_params2address(&ethlog, 2)?,
 			amount: Self::log_params2uint(&ethlog, 3)?,
 			recipient: Self::log_params2address(&ethlog, 4)?,
 			fee: Self::log_params2uint(&ethlog, 5)?,
