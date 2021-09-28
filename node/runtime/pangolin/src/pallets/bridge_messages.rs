@@ -21,11 +21,11 @@ use bridge_primitives::{
 	PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE,
 };
 use darwinia_fee_market::payment::FeeMarketPayment;
-use pallet_bridge_messages::Instance1;
 use darwinia_support::{
 	s2s::{nonce_to_message_id, MessageConfirmer},
 	to_bytes32,
 };
+use pallet_bridge_messages::Instance1;
 
 frame_support::parameter_types! {
 	pub const MaxMessagesToPruneAtOnce: MessageNonce = 8;

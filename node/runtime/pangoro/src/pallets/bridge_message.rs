@@ -17,11 +17,11 @@ use bridge_primitives::{
 	MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE, MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
 	PANGOLIN_CHAIN_ID, PANGORO_PANGOLIN_LANE,
 };
-use pallet_bridge_messages::Instance1;
 use darwinia_support::{
 	s2s::{nonce_to_message_id, MessageConfirmer},
 	to_bytes32,
 };
+use pallet_bridge_messages::Instance1;
 use pangolin_messages::{
 	FromPangolinMessageDispatch, FromPangolinMessagePayload, Pangolin,
 	PangoroToPangolinMessagesParameter, ToPangolinMessagePayload, ToPangolinMessageVerifier,
