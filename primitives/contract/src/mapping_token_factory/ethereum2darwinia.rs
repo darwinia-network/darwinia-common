@@ -21,10 +21,10 @@
 pub use ethabi::{Event, Log};
 
 // --- crates.io ---
-use ethereum_types::{Address as EthereumAddress, H160, U256};
+use ethereum_types::{H160, U256};
 // --- darwinia-network ---
 use ethabi::{
-	param_type::ParamType, token::Token, Bytes, Error, Function, Param, Result as AbiResult,
+	param_type::ParamType, token::Token, Error, Result as AbiResult,
 };
 // --- paritytech ---
 use sp_std::prelude::*;
@@ -113,9 +113,9 @@ impl E2dRemoteUnlockInfo {
 				Token::Address(backing_address),
 				Token::Address(sender),
 				Token::Address(original_token),
-				Token::Bytes(recipient),
+				Token::Address(recipient),
 				Token::Uint(amount),
-			) => Ok(TokenBurnInfo {
+			) => Ok(Self {
 				token_type: token_type.low_u32(),
 				backing_address,
 				sender,

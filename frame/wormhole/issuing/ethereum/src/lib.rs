@@ -54,7 +54,13 @@ use darwinia_support::{
 };
 use dp_contract::{
 	ethereum_backing::{EthereumBacking, EthereumLockEvent, EthereumRegisterEvent},
-	mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo, TokenRegisterInfo},
+	mapping_token_factory::{
+        basic::BasicMappingTokenFactory as bmtf,
+        ethereum2darwinia::{
+            E2dRemoteUnlockInfo,
+            TokenRegisterInfo,
+        },
+    },
 };
 use dvm_ethereum::InternalTransactHandler;
 use ethereum_primitives::{
@@ -235,8 +241,7 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::DecodeEventFailed)?;
 			let name = mapping_token_name(register_info.name, T::BackingChainName::get());
 			let symbol = mapping_token_symbol(register_info.symbol);
-			let input = mtf::encode_create_erc20(
-				Self::digest(),
+			let input = bmtf::encode_create_erc20(
 				0,
 				str::from_utf8(&name.as_slice()).map_err(|_| Error::<T>::StringCF)?,
 				str::from_utf8(&symbol.as_slice()).map_err(|_| Error::<T>::StringCF)?,
@@ -269,7 +274,7 @@ pub mod pallet {
 			let lock_info =
 				EthereumBacking::parse_locking_event(&verified_receipt, &backing_address)
 					.map_err(|_| Error::<T>::DecodeEventFailed)?;
-			let input = mtf::encode_cross_receive(
+			let input = bmtf::encode_issue_erc20(
 				lock_info.mapping_token,
 				lock_info.recipient,
 				lock_info.amount,
@@ -314,16 +319,12 @@ pub mod pallet {
 			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
 			ensure!(factory_id == caller, <Error<T>>::NoAuthority);
 			let burn_info =
-				TokenBurnInfo::decode(&input).map_err(|_| Error::<T>::InvalidInputData)?;
-			ensure!(
-				burn_info.recipient.len() == 20,
-				<Error<T>>::InvalidAddressLen
-			);
+				E2dRemoteUnlockInfo::decode(&input).map_err(|_| Error::<T>::InvalidInputData)?;
 			Self::deposit_burn_token_event(
 				burn_info.backing_address,
 				burn_info.sender,
 				burn_info.original_token,
-				EthereumAddress::from_slice(burn_info.recipient.as_slice()),
+				burn_info.recipient,
 				burn_info.amount,
 			)?;
 
@@ -369,7 +370,7 @@ impl<T: Config> Pallet<T> {
 		original_token: EthereumAddress,
 	) -> Result<EthereumAddress, DispatchError> {
 		let factory_address = MappingFactoryAddress::<T>::get();
-		let bytes = mtf::encode_mapping_token(backing_address, original_token)
+		let bytes = bmtf::encode_mapping_token(backing_address, original_token)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
 		let mapping_token = T::InternalTransactHandler::read_only_call(factory_address, bytes)?;
 		if mapping_token.len() != 32 {

@@ -21,7 +21,7 @@
 pub use ethabi::{Event, Log};
 
 // --- crates.io ---
-use ethereum_types::{Address as EthereumAddress, H160, U256};
+use ethereum_types::{H160, U256};
 // --- darwinia-network ---
 use ethabi::{
 	param_type::ParamType, token::Token, Bytes, Error, Function, Param, Result as AbiResult,
@@ -127,7 +127,7 @@ impl S2sRemoteUnlockInfo {
 				Token::Address(original_token),
 				Token::Bytes(recipient),
 				Token::Uint(amount),
-			) => Ok(TokenBurnInfo {
+			) => Ok(Self {
 				spec_version: spec_version.low_u32(),
 				weight: weight.low_u64(),
 				token_type: token_type.low_u32(),

@@ -21,13 +21,12 @@
 pub use ethabi::{Event, Log};
 
 // --- crates.io ---
-use ethereum_types::{Address as EthereumAddress, H160, U256};
+use ethereum_types::{Address as EthereumAddress, U256};
 // --- darwinia-network ---
 use ethabi::{
-	param_type::ParamType, token::Token, Bytes, Error, Function, Param, Result as AbiResult,
+	param_type::ParamType, token::Token, Bytes, Function, Param, Result as AbiResult,
 };
-// --- paritytech ---
-use sp_std::prelude::*;
+use sp_std::vec;
 
 pub struct BasicMappingTokenFactory;
 
@@ -113,13 +112,12 @@ impl BasicMappingTokenFactory {
 			constant: false,
 		}.encode_input(
 			vec![
-				Token::FixedBytes(event_receiver.to_vec()),
 				Token::Uint(U256::from(token_type)),
 				Token::String(name.into()),
 				Token::String(symbol.into()),
 				Token::Uint(U256::from(decimals)),
-				Token::Address(backing),
-				Token::Address(source),
+				Token::Address(backing_address),
+				Token::Address(original_token),
 			]
 			.as_slice(),
         )

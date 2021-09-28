@@ -35,7 +35,7 @@ use sha3::Digest;
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
-	traits::{Currency, ExistenceRequirement::*, Get},
+	traits::{Currency, Get},
 	transactional, PalletId,
 };
 use frame_system::ensure_signed;
@@ -54,7 +54,10 @@ use dp_asset::{
 	token::{Token, TokenInfo},
 	RecipientAccount,
 };
-use dp_contract::mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo};
+use dp_contract::mapping_token_factory::{
+	basic::BasicMappingTokenFactory as bmtf,
+	s2s::{S2sRemoteUnlockInfo, Sub2SubMappingTokenFactory as smtf},
+};
 use dvm_ethereum::InternalTransactHandler;
 
 pub use pallet::*;
@@ -115,22 +118,22 @@ pub mod pallet {
 			ensure!(caller == factory_id, <Error<T>>::NotFactoryContract);
 
 			let burn_info =
-				TokenBurnInfo::decode(&input).map_err(|_| Error::<T>::InvalidDecoding)?;
+				S2sRemoteUnlockInfo::decode(&input).map_err(|_| Error::<T>::InvalidDecoding)?;
 			// Ensure the recipient is valid
 			ensure!(
 				burn_info.recipient.len() == 32,
 				<Error<T>>::InvalidAddressLen
 			);
 
-			let fee = Self::transform_dvm_balance(burn_info.fee);
-			if let Some(fee_account) = T::FeeAccount::get() {
-				// Since fee account will represent use to make a cross chain call, give fee to fee account here.
-				// the fee transfer path
-				// user -> mapping_token_factory(caller) -> fee_account -> fee_fund -> relayers
-				<T as Config>::RingCurrency::transfer(&caller, &fee_account, fee, KeepAlive)?;
-			}
+			//let fee = Self::transform_dvm_balance(burn_info.fee);
+			//if let Some(fee_account) = T::FeeAccount::get() {
+				//// Since fee account will represent use to make a cross chain call, give fee to fee account here.
+				//// the fee transfer path
+				//// user -> mapping_token_factory(caller) -> fee_account -> fee_fund -> relayers
+				//<T as Config>::RingCurrency::transfer(&caller, &fee_account, fee, KeepAlive)?;
+			//}
 
-			Self::burn_and_remote_unlock(fee, burn_info)?;
+			//Self::burn_and_remote_unlock(fee, burn_info)?;
 			Ok(().into())
 		}
 
@@ -163,8 +166,7 @@ pub mod pallet {
 				Some(option) => {
 					let name = mapping_token_name(option.name, T::BackingChainName::get());
 					let symbol = mapping_token_symbol(option.symbol);
-					let input = mtf::encode_create_erc20(
-						Self::digest(),
+					let input = bmtf::encode_create_erc20(
 						token_type,
 						&str::from_utf8(name.as_slice()).map_err(|_| Error::<T>::StringCF)?,
 						&str::from_utf8(symbol.as_slice()).map_err(|_| Error::<T>::StringCF)?,
@@ -222,7 +224,7 @@ pub mod pallet {
 
 			// Redeem process
 			if let Some(value) = token_info.value {
-				let input = mtf::encode_cross_receive(mapping_token, recipient, value)
+				let input = bmtf::encode_issue_erc20(mapping_token, recipient, value)
 					.map_err(|_| Error::<T>::InvalidMintEncoding)?;
 				Self::transact_mapping_factory(input)?;
 				Self::deposit_event(Event::TokenIssued(
@@ -328,7 +330,7 @@ pub mod pallet {
 	impl<T: Config> MessageConfirmer for Pallet<T> {
 		fn on_messages_confirmed(message_id: TokenMessageId, result: bool) -> Weight {
 			if let Ok(input) =
-				mtf::encode_confirm_burn_and_remote_unlock(message_id.to_vec(), result)
+				smtf::encode_confirm_burn_and_remote_unlock(message_id.to_vec(), result)
 			{
 				let _ = Self::transact_mapping_factory(input);
 			}
@@ -350,7 +352,7 @@ impl<T: Config> Pallet<T> {
 		original_token: H160,
 	) -> Result<H160, DispatchError> {
 		let factory_address = <MappingFactoryAddress<T>>::get();
-		let bytes = mtf::encode_mapping_token(backing_address, original_token)
+		let bytes = bmtf::encode_mapping_token(backing_address, original_token)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
 		let mapping_token = T::InternalTransactHandler::read_only_call(factory_address, bytes)?;
 		if mapping_token.len() != 32 {
@@ -375,7 +377,7 @@ impl<T: Config> Pallet<T> {
 	/// Burn and send message to bridged chain
 	pub fn burn_and_remote_unlock(
 		fee: RingBalance<T>,
-		burn_info: TokenBurnInfo,
+		burn_info: S2sRemoteUnlockInfo,
 	) -> Result<(), DispatchError> {
 		let (spec_version, weight, token_type, original_token, amount) = (
 			burn_info.spec_version,
@@ -396,15 +398,6 @@ impl<T: Config> Pallet<T> {
 		let payload = T::CallEncoder::encode_remote_unlock(spec_version, weight, token, account)
 			.map_err(|_| Error::<T>::EncodeInvalid)?;
 		T::MessageSender::send_message(payload, fee).map_err(|_| Error::<T>::SendMessageFailed)?;
-		Self::deposit_event(Event::TokenBurned(
-			spec_version,
-			weight,
-			token_type,
-			original_token,
-			amount,
-			account_id.into(),
-			burn_info.fee,
-		));
 		Ok(())
 	}
 }
