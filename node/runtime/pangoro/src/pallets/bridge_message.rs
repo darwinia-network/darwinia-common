@@ -17,7 +17,10 @@ use bridge_primitives::{
 	MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE, MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
 	PANGOLIN_CHAIN_ID, PANGORO_PANGOLIN_LANE,
 };
-use darwinia_support::s2s::{self, nonce_to_message_id, MessageConfirmer};
+use darwinia_support::{
+	s2s::{nonce_to_message_id, MessageConfirmer},
+	to_bytes32,
+};
 use pangolin_messages::{
 	FromPangolinMessageDispatch, FromPangolinMessagePayload, Pangolin,
 	PangoroToPangolinMessagesParameter, ToPangolinMessagePayload, ToPangolinMessageVerifier,
@@ -32,7 +35,7 @@ frame_support::parameter_types! {
 	// `IdentityFee` is used by Pangoro => we may use weight directly
 	pub const GetDeliveryConfirmationTransactionFee: Balance =
 		MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT as _;
-	pub RootAccountForPayments: Option<AccountId> = Some(s2s::to_bytes32(b"root").into());
+	pub RootAccountForPayments: Option<AccountId> = Some(to_bytes32(b"root").into());
 	pub const BridgedChainId: ChainId = PANGOLIN_CHAIN_ID;
 }
 
