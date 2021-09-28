@@ -514,7 +514,7 @@ fn test_single_relayer_registration_workflow_works() {
 		assert_eq!(FeeMarket::relayers().len(), 1);
 		assert_eq!(Ring::usable_balance(&1), 50);
 		assert_eq!(FeeMarket::relayer_locked_collateral(&1), 100);
-		assert_eq!(FeeMarket::best_relayer(), (0, 0));
+		assert_eq!(FeeMarket::best_relayer(), None);
 
 		assert_err!(
 			FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, None),
@@ -601,7 +601,7 @@ fn test_multiple_relayers_registration_with_same_lock_value_and_default_fee() {
 		FeeMarket::enroll_and_lock_collateral(Origin::signed(4), 100, None);
 
 		assert_eq!(FeeMarket::relayers(), vec![1, 2, 3, 4]);
-		assert_eq!(FeeMarket::best_relayer(), (3, 30));
+		assert_eq!(FeeMarket::best_relayer().unwrap(), (3, 30));
 	});
 }
 
@@ -616,7 +616,7 @@ fn test_multiple_relayers_cancel_registration() {
 		assert_eq!(FeeMarket::relayers(), vec![1, 2, 3, 4, 5]);
 		assert_eq!(FeeMarket::relayer_locked_collateral(&1), 100);
 		assert_eq!(FeeMarket::relayer_locked_collateral(&2), 100);
-		assert_eq!(FeeMarket::best_relayer(), (3, 30));
+		assert_eq!(FeeMarket::best_relayer().unwrap(), (3, 30));
 
 		assert_ok!(FeeMarket::cancel_enrollment(Origin::signed(1)));
 		assert_ok!(FeeMarket::cancel_enrollment(Origin::signed(5)));
@@ -625,7 +625,7 @@ fn test_multiple_relayers_cancel_registration() {
 		assert_eq!(FeeMarket::relayer_locked_collateral(&1), 0);
 		assert_eq!(FeeMarket::relayer_locked_collateral(&5), 0);
 		assert_eq!(FeeMarket::relayers(), vec![2, 3, 4]);
-		assert_eq!(FeeMarket::best_relayer(), (4, 30));
+		assert_eq!(FeeMarket::best_relayer().unwrap(), (4, 30));
 
 		assert_err!(
 			FeeMarket::cancel_enrollment(Origin::signed(2)),
@@ -665,7 +665,7 @@ fn test_multiple_relayers_choose_assigned_relayers_with_same_default_fee() {
 				Relayer::<AccountId, Balance>::new(3, 120, 30),
 			)
 		);
-		assert_eq!(FeeMarket::best_relayer(), (3, 30));
+		assert_eq!(FeeMarket::best_relayer().unwrap(), (3, 30));
 	});
 }
 
@@ -687,7 +687,7 @@ fn test_multiple_relayers_choose_assigned_relayers_with_same_lock_balance() {
 				Relayer::<AccountId, Balance>::new(3, 100, 50),
 			)
 		);
-		assert_eq!(FeeMarket::best_relayer(), (3, 50));
+		assert_eq!(FeeMarket::best_relayer().unwrap(), (3, 50));
 	});
 }
 
@@ -709,7 +709,7 @@ fn test_multiple_relayers_choose_assigned_relayers_with_diff_lock_and_fee() {
 				Relayer::<AccountId, Balance>::new(3, 120, 50),
 			)
 		);
-		assert_eq!(FeeMarket::best_relayer(), (3, 50));
+		assert_eq!(FeeMarket::best_relayer().unwrap(), (3, 50));
 	});
 }
 
@@ -1108,7 +1108,7 @@ fn test_payment_reward_calculation_assigned_relayers_absent_update_lock_balance(
 		assert_eq!(Ring::usable_balance(&2), 50);
 		assert_eq!(Ring::usable_balance(&3), 150);
 		assert_eq!(FeeMarket::relayers().len(), 3);
-		assert_eq!(FeeMarket::best_relayer(), (3, 100));
+		assert_eq!(FeeMarket::best_relayer().unwrap(), (3, 100));
 
 		// Receive delivery message proof
 		System::set_block_number(200);
@@ -1142,7 +1142,7 @@ fn test_payment_reward_calculation_assigned_relayers_absent_update_lock_balance(
 		assert_eq!(Ring::usable_balance(&2), 0);
 		assert_eq!(Ring::usable_balance(&3), 50);
 		assert_eq!(FeeMarket::relayers().len(), 3);
-		assert_eq!(FeeMarket::best_relayer(), (3, 100));
+		assert_eq!(FeeMarket::best_relayer().unwrap(), (3, 100));
 	});
 }
 
@@ -1166,7 +1166,7 @@ fn test_payment_reward_calculation_assigned_relayers_absent_update_assigned_rela
 				Relayer::<AccountId, Balance>::new(4, 150, 100),
 			)
 		);
-		assert_eq!(FeeMarket::best_relayer(), (4, 100));
+		assert_eq!(FeeMarket::best_relayer().unwrap(), (4, 100));
 		let market_fee = FeeMarket::market_fee().unwrap();
 		let (_, _) = send_regular_message(market_fee);
 		// The original (account-balance) map in genesis: [(1, 150), (2, 200), (3, 350), (4, 300), (5, 350), (12, 400)]
@@ -1218,7 +1218,7 @@ fn test_payment_reward_calculation_assigned_relayers_absent_update_assigned_rela
 				Relayer::<AccountId, Balance>::new(4, 120, 100),
 			)
 		);
-		assert_eq!(FeeMarket::best_relayer(), (4, 100));
+		assert_eq!(FeeMarket::best_relayer().unwrap(), (4, 100));
 		assert!(!FeeMarket::is_enrolled(&1));
 	});
 }

@@ -155,7 +155,7 @@ pub mod pallet {
 	>;
 	#[pallet::storage]
 	#[pallet::getter(fn best_relayer)]
-	pub type BestRelayer<T: Config> = StorageValue<_, (T::AccountId, Fee<T>), ValueQuery>;
+	pub type BestRelayer<T: Config> = StorageValue<_, (T::AccountId, Fee<T>), OptionQuery>;
 
 	// Order storage
 	#[pallet::storage]
@@ -364,10 +364,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Get market fee(P3), If the enrolled relayers less then MIN_ENROLLED_RELAYERS_NUMBER, return NONE.
 	pub fn market_fee() -> Option<Fee<T>> {
-		if <Relayers<T>>::get().len() >= MIN_ENROLLED_RELAYERS_NUMBER {
-			return Some(Self::best_relayer().1);
-		}
-		None
+		Self::best_relayer().map_or(None, |r| Some(r.1))
 	}
 
 	/// Get order info
