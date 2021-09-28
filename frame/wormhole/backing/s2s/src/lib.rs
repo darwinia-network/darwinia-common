@@ -51,8 +51,8 @@ use sp_std::prelude::*;
 use darwinia_support::{
 	evm::IntoDvmAddress,
 	s2s::{
-		ensure_source_root, to_bytes32, TokenMessageId, MessageConfirmer, RelayMessageCaller,
-		RING_DECIMAL, RING_NAME, RING_SYMBOL,
+		ensure_source_root, MessageConfirmer, RelayMessageCaller, TokenMessageId, RING_DECIMAL,
+		RING_NAME, RING_SYMBOL,
 	},
 };
 use dp_asset::{
@@ -156,8 +156,8 @@ pub mod pallet {
 				address: T::RingPalletId::get().into_dvm_address(),
 				value: None,
 				option: Some(TokenOption {
-					name: to_bytes32(RING_NAME),
-					symbol: to_bytes32(RING_SYMBOL),
+					name: RING_NAME.to_vec(),
+					symbol: RING_SYMBOL.to_vec(),
 					decimal: RING_DECIMAL,
 				}),
 			});

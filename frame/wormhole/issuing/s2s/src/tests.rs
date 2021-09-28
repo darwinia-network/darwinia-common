@@ -25,7 +25,7 @@ use crate::{self as s2s_issuing};
 use darwinia_evm::{
 	AddressMapping, EnsureAddressTruncated, FeeCalculator, SubstrateBlockHashMapping,
 };
-use darwinia_support::s2s::{TokenMessageId, RelayMessageCaller};
+use darwinia_support::s2s::{RelayMessageCaller, TokenMessageId};
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
@@ -159,6 +159,7 @@ frame_support::parameter_types! {
 	pub const S2sRelayPalletId: PalletId = PalletId(*b"da/s2sre");
 	pub const PangoroChainId: bp_runtime::ChainId = *b"pcid";
 	pub RootAccountForPayments: Option<AccountId32> = Some([1;32].into());
+	pub PangoroName: Vec<u8> = (b"Pangoro").to_vec();
 }
 
 pub struct AccountIdConverter;
@@ -236,6 +237,7 @@ impl Config for Test {
 	type FeeAccount = RootAccountForPayments;
 	type MessageSender = ToPangoroMessageRelayCaller;
 	type InternalTransactHandler = Ethereum;
+	type BackingChainName = PangoroName;
 }
 
 frame_support::construct_runtime! {
@@ -276,9 +278,9 @@ fn burn_and_remote_unlock_success() {
 			spec_version: 0,
 			weight: 100,
 			token_type: 1,
-			backing: H160::from_str("1000000000000000000000000000000000000001").unwrap(),
+			backing_address: H160::from_str("1000000000000000000000000000000000000001").unwrap(),
 			sender: H160::from_str("1000000000000000000000000000000000000001").unwrap(),
-			source: H160::from_str("1000000000000000000000000000000000000001").unwrap(),
+			original_token: H160::from_str("1000000000000000000000000000000000000001").unwrap(),
 			recipient: [1; 32].to_vec(),
 			amount: U256::from(1),
 			fee: U256::from(1),
