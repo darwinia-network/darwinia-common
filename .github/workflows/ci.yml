@@ -140,11 +140,11 @@ jobs:
           append: true
           message: |
             > SHA ${{ github.sha }}
-            **Check Runtime Version**
+            > **Check Runtime Version**
             ```diff
             ${{ steps.check-runtime-version.outputs.check-runtime-version }}
             ```
-            **Check Storage Prefix**
+            > **Check Storage Prefix**
             ```diff
             ${{ steps.check-storage-prefix.outputs.check-storage-prefix }}
             ```
