@@ -300,6 +300,7 @@ impl<T: Config> Pallet<T> {
 	/// 1. New relayers enroll
 	/// 2. Already enrolled relayer update relay fee
 	/// 3. Cancel enrolled relayer
+	/// 4. When some enrolled relayer's collateral below MiniumLockCollateral, might trigger market update
 	pub fn update_market() {
 		let mut relayers: Vec<Relayer<T::AccountId, RingBalance<T>>> = <Relayers<T>>::get()
 			.iter()
@@ -341,8 +342,8 @@ impl<T: Config> Pallet<T> {
 	/// Remove enrolled relayer
 	pub fn remove_enrolled_relayer(who: &T::AccountId) {
 		T::RingCurrency::remove_lock(T::LockId::get(), &who);
-		RelayersMap::<T>::remove(who.clone());
-		Relayers::<T>::mutate(|relayers| relayers.retain(|x| x != who));
+		<RelayersMap<T>>::remove(who.clone());
+		<Relayers<T>>::mutate(|relayers| relayers.retain(|x| x != who));
 		Self::update_market();
 	}
 
@@ -361,9 +362,12 @@ impl<T: Config> Pallet<T> {
 		Self::get_relayer(who).collateral
 	}
 
-	/// Get market best fee(P3)
-	pub fn market_fee() -> Fee<T> {
-		Self::best_relayer().1
+	/// Get market fee(P3), If the enrolled relayers less then MIN_ENROLLED_RELAYERS_NUMBER, return NONE.
+	pub fn market_fee() -> Option<Fee<T>> {
+		if <Relayers<T>>::get().len() >= MIN_ENROLLED_RELAYERS_NUMBER {
+			return Some(Self::best_relayer().1);
+		}
+		None
 	}
 
 	/// Get order info
