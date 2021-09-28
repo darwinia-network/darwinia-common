@@ -228,6 +228,10 @@ pub fn genesis_config() -> ChainSpec {
 			pallet_im_online: Default::default(),
 			pallet_authority_discovery: Default::default(),
 			pallet_sudo: SudoConfig { key: root.clone() },
+			to_substrate_backing: Substrate2SubstrateBackingConfig {
+				secure_limited_period: DAYS,
+				secure_limited_ring_amount: 1_000_000 * COIN,
+			},
 		}
 	}
 
@@ -323,6 +327,10 @@ pub fn development_config() -> ChainSpec {
 			pallet_im_online: Default::default(),
 			pallet_authority_discovery: Default::default(),
 			pallet_sudo: SudoConfig { key: root.clone() },
+			to_substrate_backing: Substrate2SubstrateBackingConfig {
+				secure_limited_period: DAYS,
+				secure_limited_ring_amount: 100_000 * COIN,
+			},
 		}
 	}
 

@@ -185,7 +185,7 @@ frame_support::construct_runtime!(
 		BridgeDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 18,
 		BridgePangolinGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 19,
 
-		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Event<T>} = 20,
+		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Config<T>, Event<T>} = 20,
 	}
 );
 

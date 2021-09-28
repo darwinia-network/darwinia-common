@@ -49,9 +49,9 @@ std = [
 	"ethereum-primitives/std",
 	"darwinia-support/std",
 	# paritytech
+	"bp-runtime/std",
 	"frame-support/std",
 	"frame-system/std",
 	"sp-runtime/std",
 	"sp-std/std",
-	"bp-runtime/std",
 ]
