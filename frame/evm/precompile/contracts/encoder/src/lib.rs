@@ -25,13 +25,13 @@ use codec::{Decode, Encode};
 use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 use sha3::Digest;
 // --- darwinia-network ---
-use darwinia_support::s2s::RelayMessageCaller;
+use darwinia_support::{evm::POW_9, s2s::RelayMessageCaller};
 use dp_evm::Precompile;
 use from_substrate_issuing::EncodeCall;
 // --- paritytech ---
 use frame_support::{
-    dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
-    sp_runtime::SaturatedConversion,
+	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+	sp_runtime::SaturatedConversion,
 };
 
 use dp_contract::mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams};
@@ -111,7 +111,7 @@ where
 				.map_err(|_| ExitError::Other("decode send message info failed".into()))?;
 				let call: T::Call = from_substrate_issuing::Call::<T>::send_message(
 					payload,
-					params.fee.saturated_into(),
+					(params.fee / POW_9).low_u128().saturated_into(),
 				)
 				.into();
 				call.encode()

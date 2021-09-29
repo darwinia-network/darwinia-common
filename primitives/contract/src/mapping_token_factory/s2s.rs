@@ -140,7 +140,7 @@ impl S2sRemoteUnlockInfo {
 #[derive(Debug, PartialEq, Eq)]
 pub struct S2sSendMessageParams {
 	pub payload: Vec<u8>,
-	pub fee: u128,
+	pub fee: U256,
 }
 
 impl S2sSendMessageParams {
@@ -149,7 +149,7 @@ impl S2sSendMessageParams {
 		match (tokens[0].clone(), tokens[1].clone()) {
 			(Token::Bytes(payload), Token::Uint(fee)) => Ok(Self {
 				payload,
-				fee: fee.low_u128(),
+				fee,
 			}),
 			_ => Err(Error::InvalidData),
 		}
