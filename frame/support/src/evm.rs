@@ -44,6 +44,15 @@ impl IntoDvmAddress for PalletId {
 	}
 }
 
+impl IntoDvmAddress for &[u8] {
+	fn into_dvm_address(&self) -> H160 {
+		let mut address: [u8; 20] = Default::default();
+		let size = sp_std::cmp::min(self.len(), 20);
+		address[..size].copy_from_slice(&self[..size]);
+		H160::from_slice(&address[0..20])
+	}
+}
+
 pub fn recover_signer(transaction: &ethereum::Transaction) -> Option<H160> {
 	let mut sig = [0u8; 65];
 	let mut msg = [0u8; 32];

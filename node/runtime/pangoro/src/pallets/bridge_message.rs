@@ -2,7 +2,6 @@ pub use pallet_bridge_messages::Instance1 as WithPangolinMessages;
 
 // --- substrate ---
 use frame_support::pallet_prelude::Weight;
-use sp_core::H160;
 use sp_std::marker::PhantomData;
 // --- paritytech ---
 use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId, MessageNonce};
@@ -20,6 +19,7 @@ use bridge_primitives::{
 };
 use darwinia_evm::{AddressMapping, ConcatAddressMapping};
 use darwinia_support::{
+	evm::IntoDvmAddress,
 	s2s::{nonce_to_message_id, MessageConfirmer},
 };
 use pangolin_messages::{
@@ -36,7 +36,7 @@ frame_support::parameter_types! {
 	// `IdentityFee` is used by Pangoro => we may use weight directly
 	pub const GetDeliveryConfirmationTransactionFee: Balance =
 		MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT as _;
-	pub RootAccountForPayments: Option<AccountId> = Some(ConcatAddressMapping::<AccountId>::into_account_id(H160::from_slice(b"root")));
+	pub RootAccountForPayments: Option<AccountId> = Some(ConcatAddressMapping::<AccountId>::into_account_id((&b"root"[..]).into_dvm_address()));
 	pub const BridgedChainId: ChainId = PANGOLIN_CHAIN_ID;
 }
 

@@ -2106,6 +2106,7 @@ dependencies = [
 name = "dp-contract"
 version = "2.6.5"
 dependencies = [
+ "dp-asset",
  "ethabi",
  "ethereum-primitives",
  "ethereum-types",
@@ -5938,6 +5939,7 @@ dependencies = [
  "darwinia-support",
  "darwinia-vesting",
  "dp-asset",
+ "dp-contract",
  "dp-evm",
  "dvm-dynamic-fee",
  "dvm-ethereum",
@@ -6042,6 +6044,7 @@ dependencies = [
  "bridge-runtime-common",
  "common-primitives",
  "darwinia-balances",
+ "darwinia-evm",
  "darwinia-staking",
  "darwinia-support",
  "dp-asset",

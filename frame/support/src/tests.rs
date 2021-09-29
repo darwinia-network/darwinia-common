@@ -17,14 +17,24 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- paritytech ---
-use sp_core::U256;
+use sp_core::{H160, U256};
 // --- darwinia-network ---
+use crate::evm::IntoDvmAddress;
 use crate::*;
+use std::str::FromStr;
 
 #[test]
 fn const_pow_9_should_work() {
 	assert_eq!(
 		U256::from(10).checked_pow(U256::from(9)).unwrap(),
 		evm::POW_9.into()
+	)
+}
+
+#[test]
+fn test_into_dvm_account() {
+	assert_eq!(
+		H160::from_str("726f6f7400000000000000000000000000000000").unwrap(),
+		(&b"root"[..]).into_dvm_address()
 	)
 }
