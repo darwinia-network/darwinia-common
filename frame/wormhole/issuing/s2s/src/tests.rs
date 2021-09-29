@@ -31,7 +31,8 @@ use dvm_ethereum::{
 	IntermediateStateRoot,
 };
 // substrate
-use frame_support::{assert_ok, traits::GenesisBuild, weights::PostDispatchInfo, PalletId};
+use dp_asset::token::TokenInfo;
+use frame_support::{traits::GenesisBuild, weights::PostDispatchInfo, PalletId};
 use frame_system::mocking::*;
 use sp_runtime::{
 	testing::Header,
@@ -185,14 +186,11 @@ impl Size for MockMessagePayload {
 pub struct PangoroCallEncoder;
 impl EncodeCall<AccountId32, MockMessagePayload> for PangoroCallEncoder {
 	fn encode_remote_unlock(
-		spec_version: u32,
-		weight: u64,
-		_token: Token,
-		_recipient: RecipientAccount<AccountId32>,
+		_remote_unlock_info: S2sRemoteUnlockInfo,
 	) -> Result<MockMessagePayload, ()> {
 		return Ok(MockMessagePayload {
-			spec_version,
-			weight,
+			spec_version: _remote_unlock_info.spec_version,
+			weight: _remote_unlock_info.weight,
 			call: vec![],
 		});
 	}
@@ -274,18 +272,15 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 #[test]
 fn burn_and_remote_unlock_success() {
 	new_test_ext().execute_with(|| {
-		let burn_info = TokenBurnInfo {
+		let original_token = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+		let token: Token = (1, TokenInfo::new(original_token, Some(U256::from(1)), None)).into();
+		let burn_info = S2sRemoteUnlockInfo {
 			spec_version: 0,
 			weight: 100,
-			token_type: 1,
-			backing_address: H160::from_str("1000000000000000000000000000000000000001").unwrap(),
-			sender: H160::from_str("1000000000000000000000000000000000000001").unwrap(),
-			original_token: H160::from_str("1000000000000000000000000000000000000001").unwrap(),
+			token,
 			recipient: [1; 32].to_vec(),
-			amount: U256::from(1),
-			fee: U256::from(1),
 		};
-		assert_ok!(S2sIssuing::burn_and_remote_unlock(0, burn_info,));
+		<Test as s2s_issuing::Config>::CallEncoder::encode_remote_unlock(burn_info).unwrap();
 	});
 }
 
