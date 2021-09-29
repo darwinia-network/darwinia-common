@@ -24,9 +24,7 @@ use bridge_primitives::{
 	PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE,
 };
 use darwinia_evm::{AddressMapping, ConcatAddressMapping};
-use darwinia_support::{
-	s2s::{nonce_to_message_id, MessageConfirmer},
-};
+use darwinia_support::s2s::{nonce_to_message_id, MessageConfirmer};
 
 frame_support::parameter_types! {
 	pub const MaxMessagesToPruneAtOnce: MessageNonce = 8;

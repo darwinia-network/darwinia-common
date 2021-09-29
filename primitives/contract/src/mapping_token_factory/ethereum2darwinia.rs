@@ -23,9 +23,7 @@ pub use ethabi::{Event, Log};
 // --- crates.io ---
 use ethereum_types::{H160, U256};
 // --- darwinia-network ---
-use ethabi::{
-	param_type::ParamType, token::Token, Error, Result as AbiResult,
-};
+use ethabi::{param_type::ParamType, token::Token, Error, Result as AbiResult};
 // --- paritytech ---
 use sp_std::prelude::*;
 

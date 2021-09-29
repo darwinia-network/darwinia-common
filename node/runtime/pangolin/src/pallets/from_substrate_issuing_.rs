@@ -11,7 +11,8 @@ use darwinia_support::{
 	s2s::{nonce_to_message_id, RelayMessageCaller, ToEthAddress, TokenMessageId},
 	ChainName,
 };
-use dp_asset::{token::Token, RecipientAccount};
+use dp_asset::token::Token;
+use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
 use from_substrate_issuing::{Config, EncodeCall};
 
 // remote chain pangoro's dispatch info
@@ -55,26 +56,26 @@ impl RelayMessageCaller<ToPangoroMessagePayload, Balance> for ToPangoroMessageRe
 pub struct PangoroCallEncoder;
 impl EncodeCall<AccountId, ToPangoroMessagePayload> for PangoroCallEncoder {
 	fn encode_remote_unlock(
-		spec_version: u32,
-		weight: u64,
-		token: Token,
-		recipient: RecipientAccount<AccountId>,
+		remote_unlock_info: S2sRemoteUnlockInfo,
 	) -> Result<ToPangoroMessagePayload, ()> {
-		match recipient {
-			RecipientAccount::<AccountId>::DarwiniaAccount(r) => {
-				let call = PangoroRuntime::Sub2SubBacking(
-					PangoroSub2SubBackingCall::unlock_from_remote(token, r),
-				)
+		if remote_unlock_info.recipient.len() != 32 {
+			return Err(());
+		} else {
+			let recipient_id: AccountId =
+				array_bytes::dyn_into!(remote_unlock_info.recipient.as_slice(), 32);
+			let call =
+				PangoroRuntime::Sub2SubBacking(PangoroSub2SubBackingCall::unlock_from_remote(
+					remote_unlock_info.token,
+					recipient_id,
+				))
 				.encode();
-				return Ok(ToPangoroMessagePayload {
-					spec_version,
-					weight,
-					origin: bp_message_dispatch::CallOrigin::SourceRoot,
-					call,
-					dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
-				});
-			}
-			_ => Err(()),
+			return Ok(ToPangoroMessagePayload {
+				spec_version: remote_unlock_info.spec_version,
+				weight: remote_unlock_info.weight,
+				origin: bp_message_dispatch::CallOrigin::SourceRoot,
+				call,
+				dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
+			});
 		}
 	}
 }

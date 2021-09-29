@@ -50,10 +50,7 @@ use darwinia_support::{
 	s2s::{ensure_source_root, MessageConfirmer, RelayMessageCaller, ToEthAddress, TokenMessageId},
 	ChainName, PalletDigest,
 };
-use dp_asset::{
-	token::{Token, TokenInfo},
-	RecipientAccount,
-};
+use dp_asset::token::Token;
 use dp_contract::mapping_token_factory::{
 	basic::BasicMappingTokenFactory as bmtf,
 	s2s::{S2sRemoteUnlockInfo, Sub2SubMappingTokenFactory as smtf},
@@ -96,44 +93,22 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Handle dispatch call from dispatch precompile contract
-		///
-		/// When user burn their mapped tokens, the mapping-token-factory contract will call this
-		/// function through dispatch precompile contract. And the parameters will be encoded into
-		/// input, here we need decode it to get the burn event.
-		/// Then the event will be sent to the remote backing module as burn proof to unlock origin asset.
 		#[pallet::weight(
 			<T as Config>::WeightInfo::asset_burn_event_handle()
 		)]
 		#[transactional]
-		pub fn asset_burn_event_handle(
+		pub fn send_message(
 			origin: OriginFor<T>,
-			input: Vec<u8>,
+			payload: T::OutboundPayload,
+			fee: RingBalance<T>,
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
-
 			// Ensure that the user is mapping token factory contract
 			let factory = MappingFactoryAddress::<T>::get();
 			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
 			ensure!(caller == factory_id, <Error<T>>::NotFactoryContract);
-
-			let burn_info =
-				S2sRemoteUnlockInfo::decode(&input).map_err(|_| Error::<T>::InvalidDecoding)?;
-			// Ensure the recipient is valid
-			ensure!(
-				burn_info.recipient.len() == 32,
-				<Error<T>>::InvalidAddressLen
-			);
-
-			//let fee = Self::transform_dvm_balance(burn_info.fee);
-			//if let Some(fee_account) = T::FeeAccount::get() {
-				//// Since fee account will represent use to make a cross chain call, give fee to fee account here.
-				//// the fee transfer path
-				//// user -> mapping_token_factory(caller) -> fee_account -> fee_fund -> relayers
-				//<T as Config>::RingCurrency::transfer(&caller, &fee_account, fee, KeepAlive)?;
-			//}
-
-			//Self::burn_and_remote_unlock(fee, burn_info)?;
+			T::MessageSender::send_message(payload, fee)
+				.map_err(|_| Error::<T>::SendMessageFailed)?;
 			Ok(().into())
 		}
 
@@ -373,40 +348,8 @@ impl<T: Config> Pallet<T> {
 	pub fn transform_dvm_balance(value: U256) -> RingBalance<T> {
 		(value / POW_9).low_u128().saturated_into()
 	}
-
-	/// Burn and send message to bridged chain
-	pub fn burn_and_remote_unlock(
-		fee: RingBalance<T>,
-		burn_info: S2sRemoteUnlockInfo,
-	) -> Result<(), DispatchError> {
-		let (spec_version, weight, token_type, original_token, amount) = (
-			burn_info.spec_version,
-			burn_info.weight,
-			burn_info.token_type,
-			burn_info.original_token,
-			burn_info.amount,
-		);
-		let account_id: T::ReceiverAccountId =
-			array_bytes::dyn_into!(burn_info.recipient.as_slice(), 32);
-		let token: Token = (
-			token_type,
-			TokenInfo::new(original_token, Some(amount), None),
-		)
-			.into();
-		let account = RecipientAccount::DarwiniaAccount(account_id.clone().into());
-
-		let payload = T::CallEncoder::encode_remote_unlock(spec_version, weight, token, account)
-			.map_err(|_| Error::<T>::EncodeInvalid)?;
-		T::MessageSender::send_message(payload, fee).map_err(|_| Error::<T>::SendMessageFailed)?;
-		Ok(())
-	}
 }
 
 pub trait EncodeCall<AccountId, Payload> {
-	fn encode_remote_unlock(
-		spec_version: u32,
-		weight: u64,
-		token: Token,
-		recipient: RecipientAccount<AccountId>,
-	) -> Result<Payload, ()>;
+	fn encode_remote_unlock(remote_unlock_info: S2sRemoteUnlockInfo) -> Result<Payload, ()>;
 }

@@ -27,6 +27,7 @@ use ethabi::{
 	param_type::ParamType, token::Token, Bytes, Error, Function, Param, Result as AbiResult,
 };
 // --- paritytech ---
+use dp_asset::token::{Token as Erc20Token, TokenInfo};
 use sp_std::prelude::*;
 
 pub struct Sub2SubMappingTokenFactory;
@@ -53,12 +54,8 @@ impl Sub2SubMappingTokenFactory {
 			inputs,
 			outputs: vec![],
 			constant: false,
-		}.encode_input(
-            vec![
-                Token::Bytes(message_id),
-                Token::Bool(result)
-            ].as_slice(),
-        )
+		}
+		.encode_input(vec![Token::Bytes(message_id), Token::Bool(result)].as_slice())
 	}
 }
 
@@ -75,10 +72,8 @@ impl Sub2SubMappingTokenFactory {
 pub struct S2sRemoteUnlockInfo {
 	pub spec_version: u32,
 	pub weight: u64,
-	pub token_type: u32,
-	pub original_token: H160,
 	pub recipient: Vec<u8>,
-	pub amount: U256,
+	pub token: Erc20Token,
 }
 
 impl S2sRemoteUnlockInfo {
@@ -130,10 +125,31 @@ impl S2sRemoteUnlockInfo {
 			) => Ok(Self {
 				spec_version: spec_version.low_u32(),
 				weight: weight.low_u64(),
-				token_type: token_type.low_u32(),
-				original_token,
+				token: (
+					token_type.low_u32(),
+					TokenInfo::new(original_token, Some(amount), None),
+				)
+					.into(),
 				recipient,
-				amount,
+			}),
+			_ => Err(Error::InvalidData),
+		}
+	}
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct S2sSendMessageParams {
+	pub payload: Vec<u8>,
+	pub fee: u128,
+}
+
+impl S2sSendMessageParams {
+	pub fn decode(data: &[u8]) -> AbiResult<Self> {
+		let tokens = ethabi::decode(&[ParamType::Bytes, ParamType::Uint(256)], &data)?;
+		match (tokens[0].clone(), tokens[1].clone()) {
+			(Token::Bytes(payload), Token::Uint(fee)) => Ok(Self {
+				payload,
+				fee: fee.low_u128(),
 			}),
 			_ => Err(Error::InvalidData),
 		}

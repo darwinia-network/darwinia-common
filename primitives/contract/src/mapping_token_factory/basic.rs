@@ -23,9 +23,7 @@ pub use ethabi::{Event, Log};
 // --- crates.io ---
 use ethereum_types::{Address as EthereumAddress, U256};
 // --- darwinia-network ---
-use ethabi::{
-	param_type::ParamType, token::Token, Bytes, Function, Param, Result as AbiResult,
-};
+use ethabi::{param_type::ParamType, token::Token, Bytes, Function, Param, Result as AbiResult};
 use sp_std::vec;
 
 pub struct BasicMappingTokenFactory;
@@ -57,14 +55,17 @@ impl BasicMappingTokenFactory {
 			inputs,
 			outputs,
 			constant: true,
-		}.encode_input(
-            vec![
-            Token::Address(backing_address),
-            Token::Address(original_token)
-            ].as_slice())
+		}
+		.encode_input(
+			vec![
+				Token::Address(backing_address),
+				Token::Address(original_token),
+			]
+			.as_slice(),
+		)
 	}
 
-    /// encode create new erc20 function
+	/// encode create new erc20 function
 	pub fn encode_create_erc20(
 		token_type: u32,
 		name: &str,
@@ -110,7 +111,8 @@ impl BasicMappingTokenFactory {
 			inputs,
 			outputs,
 			constant: false,
-		}.encode_input(
+		}
+		.encode_input(
 			vec![
 				Token::Uint(U256::from(token_type)),
 				Token::String(name.into()),
@@ -120,10 +122,10 @@ impl BasicMappingTokenFactory {
 				Token::Address(original_token),
 			]
 			.as_slice(),
-        )
+		)
 	}
 
-    /// encode issuing function for erc20
+	/// encode issuing function for erc20
 	pub fn encode_issue_erc20(
 		token: EthereumAddress,
 		recipient: EthereumAddress,
@@ -149,7 +151,8 @@ impl BasicMappingTokenFactory {
 			inputs,
 			outputs: vec![],
 			constant: false,
-		}.encode_input(
+		}
+		.encode_input(
 			vec![
 				Token::Address(token),
 				Token::Address(recipient),

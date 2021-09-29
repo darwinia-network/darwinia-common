@@ -21,22 +21,31 @@
 // --- core ---
 use core::marker::PhantomData;
 // --- crates.io ---
-use codec::Encode;
+use codec::{Decode, Encode};
 use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 use sha3::Digest;
 // --- darwinia-network ---
 use darwinia_support::s2s::RelayMessageCaller;
 use dp_evm::Precompile;
+use from_substrate_issuing::EncodeCall;
 // --- paritytech ---
-use frame_support::dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo};
-use sp_std::prelude::Vec;
+use frame_support::{
+    dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+    sp_runtime::SaturatedConversion,
+};
 
-const PALLET_DIG_LEN: usize = 4;
-const METHOD_DIG_LEN: usize = 4;
-const ACTION_LEN: usize = PALLET_DIG_LEN + METHOD_DIG_LEN;
-const BURN_AND_REMOTE_UNLOCK_METHOD: &[u8] = b"burn_and_remote_unlock()";
-const TOKEN_REGISTER_RESPONSE_METHOD: &[u8] = b"token_register_response()";
-const READ_LATEST_MESSAGE_ID_METHOD: &[u8] = b"read_latest_message_id()";
+use dp_contract::mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams};
+
+const ACTION_LEN: usize = 4;
+
+// ethereum<>darwinia actions
+const E2D_BURN_ADN_REMOTE_UNLOCK: &[u8] = b"e2d_burn_and_remote_unlock()";
+const E2D_TOKEN_REGISTER_RESPONSE: &[u8] = b"e2d_token_register_response()";
+
+// substrate<>substrate actions
+const S2S_READ_LATEST_MESSAGE_ID_METHOD: &[u8] = b"s2s_read_latest_message_id()";
+const S2S_REMOTE_DISPATCH_CALL_PAYLOAD: &[u8] = b"s2s_encode_remote_unlock_payload()";
+const S2S_SEND_REMOTE_DISPATCH_CALL: &[u8] = b"s2s_encode_send_message_call()";
 
 // TODO rename this precompile contract
 /// The contract address: 0000000000000000000000000000000000000018
@@ -60,62 +69,52 @@ where
 		if input.len() < ACTION_LEN {
 			return Err(ExitError::Other("input length less than 4 bytes".into()));
 		}
-		let pallet_digest = &input[0..PALLET_DIG_LEN];
-		let method_digest = &input[PALLET_DIG_LEN..ACTION_LEN];
-		let output = match pallet_digest {
-			_ if pallet_digest == <from_substrate_issuing::Pallet<T>>::digest() => {
-				match method_digest {
-					_ if Self::match_digest(method_digest, BURN_AND_REMOTE_UNLOCK_METHOD) => {
-						let call: T::Call =
-							from_substrate_issuing::Call::<T>::asset_burn_event_handle(
-								input[ACTION_LEN..].to_vec(),
-							)
-							.into();
-						call.encode()
-					}
-					// this method comes from mapping-token-factory, we ignore it by a empty method
-					_ if Self::match_digest(method_digest, TOKEN_REGISTER_RESPONSE_METHOD) => {
-						Vec::new()
-					}
-					_ if Self::match_digest(method_digest, READ_LATEST_MESSAGE_ID_METHOD) => {
-						<T as from_substrate_issuing::Config>::MessageSender::latest_token_message_id()
-							.to_vec()
-					}
-					_ => {
-						return Err(ExitError::Other(
-							"No such method in pallet substrate issuing".into(),
-						));
-					}
-				}
+		let action_digest = &input[0..ACTION_LEN];
+		let action_params = &input[ACTION_LEN..];
+		let output = match action_digest {
+			_ if Self::match_digest(action_digest, E2D_BURN_ADN_REMOTE_UNLOCK) => {
+				let call: T::Call =
+					from_ethereum_issuing::Call::<T>::deposit_burn_token_event_from_precompile(
+						action_params.to_vec(),
+					)
+					.into();
+				call.encode()
 			}
-			_ if pallet_digest == <from_ethereum_issuing::Pallet<T>>::digest() => {
-				match method_digest {
-					_ if Self::match_digest(method_digest, TOKEN_REGISTER_RESPONSE_METHOD) => {
-						let call: T::Call =
-							from_ethereum_issuing::Call::<T>::register_response_from_contract(
-								input[ACTION_LEN..].to_vec(),
-							)
-							.into();
-						call.encode()
-					}
-					_ if Self::match_digest(method_digest, BURN_AND_REMOTE_UNLOCK_METHOD) => {
-						let call: T::Call =
-							from_ethereum_issuing::Call::<T>::deposit_burn_token_event_from_precompile(
-								input[ACTION_LEN..].to_vec(),
-							)
-							.into();
-						call.encode()
-					}
-					// todo, when ethereum support message confirm, we need give this message id
-					_ if Self::match_digest(method_digest, READ_LATEST_MESSAGE_ID_METHOD) => {
-						Vec::new()
-					}
-					_ => {
-						return Err(ExitError::Other(
-							"No such method in pallet ethereum issuing".into(),
-						));
-					}
-				}
+			_ if Self::match_digest(action_digest, E2D_TOKEN_REGISTER_RESPONSE) => {
+				let call: T::Call =
+					from_ethereum_issuing::Call::<T>::register_response_from_contract(
+						action_params.to_vec(),
+					)
+					.into();
+				call.encode()
+			}
+			_ if Self::match_digest(action_digest, S2S_READ_LATEST_MESSAGE_ID_METHOD) => {
+				<T as from_substrate_issuing::Config>::MessageSender::latest_token_message_id()
+					.to_vec()
+			}
+			_ if Self::match_digest(action_digest, S2S_REMOTE_DISPATCH_CALL_PAYLOAD) => {
+				let unlock_info = S2sRemoteUnlockInfo::decode(&action_params)
+					.map_err(|_| ExitError::Other("decode unlock info failed".into()))?;
+				let payload =
+					<T as from_substrate_issuing::Config>::CallEncoder::encode_remote_unlock(
+						unlock_info,
+					)
+					.map_err(|_| ExitError::Other("encode remote unlock failed".into()))?;
+				payload.encode()
+			}
+			_ if Self::match_digest(action_digest, S2S_SEND_REMOTE_DISPATCH_CALL) => {
+				let params = S2sSendMessageParams::decode(&action_params)
+					.map_err(|_| ExitError::Other("decode send message info failed".into()))?;
+				let payload = <T as from_substrate_issuing::Config>::OutboundPayload::decode(
+					&mut params.payload.as_slice(),
+				)
+				.map_err(|_| ExitError::Other("decode send message info failed".into()))?;
+				let call: T::Call = from_substrate_issuing::Call::<T>::send_message(
+					payload,
+					params.fee.saturated_into(),
+				)
+				.into();
+				call.encode()
 			}
 			_ => {
 				return Err(ExitError::Other("No valid pallet digest found".into()));
@@ -133,6 +132,6 @@ where
 
 impl<T> DispatchCallEncoder<T> {
 	fn match_digest(digest: &[u8], expected_method: &[u8]) -> bool {
-		&sha3::Keccak256::digest(expected_method)[..METHOD_DIG_LEN] == digest
+		&sha3::Keccak256::digest(expected_method)[..ACTION_LEN] == digest
 	}
 }
