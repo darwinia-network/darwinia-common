@@ -233,6 +233,7 @@ runtime-benchmarks = [
 	"from-ethereum-issuing/runtime-benchmarks",
 	"darwinia-evm/runtime-benchmarks",
 	"from-substrate-issuing/runtime-benchmarks",
+	"darwinia-fee-market/runtime-benchmarks",
 ]
 
 try-runtime = [

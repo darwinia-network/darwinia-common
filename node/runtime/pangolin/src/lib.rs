@@ -749,6 +749,7 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, darwinia_evm, EVM);
 			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
 			add_benchmark!(params, batches, from_ethereum_issuing, EthereumIssuing);
+			add_benchmark!(params, batches, darwinia_fee_market, FeeMarket);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

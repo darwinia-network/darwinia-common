@@ -1723,6 +1723,7 @@ dependencies = [
  "darwinia-balances",
  "darwinia-support",
  "dp-fee",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",

@@ -21,11 +21,14 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 #[cfg(test)]
 mod tests;
 
 pub mod payment;
-pub mod weights;
+pub mod weight;
+pub use weight::WeightInfo;
 
 // --- substrate ---
 use bp_messages::{
@@ -45,7 +48,6 @@ use sp_runtime::{
 };
 use sp_std::{default::Default, vec::Vec};
 // --- darwinia-network ---
-use crate::weights::WeightInfo;
 use darwinia_support::balance::{LockFor, LockableCurrency};
 use dp_fee::{
 	AssignedRelayers, Order, PriorRelayer, Priority, Relayer, MIN_ENROLLED_RELAYERS_NUMBER,
@@ -188,7 +190,7 @@ pub mod pallet {
 		/// Any accounts can enroll to be a relayer by lock collateral. The relay fee is optional,
 		/// the default value is MinimumRelayFee in runtime.
 		/// Note: One account can enroll only once.
-		#[pallet::weight(10000)]
+		#[pallet::weight(<T as Config>::WeightInfo::enroll_and_lock_collateral())]
 		#[transactional]
 		pub fn enroll_and_lock_collateral(
 			origin: OriginFor<T>,
@@ -232,7 +234,7 @@ pub mod pallet {
 		}
 
 		/// Update locked collateral for enrolled relayer, only supporting lock more.
-		#[pallet::weight(10000)]
+		#[pallet::weight(<T as Config>::WeightInfo::update_locked_collateral())]
 		#[transactional]
 		pub fn update_locked_collateral(
 			origin: OriginFor<T>,
@@ -255,7 +257,7 @@ pub mod pallet {
 		}
 
 		/// Cancel enrolled relayer
-		#[pallet::weight(10000)]
+		#[pallet::weight(<T as Config>::WeightInfo::cancel_enrollment())]
 		#[transactional]
 		pub fn cancel_enrollment(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -271,7 +273,7 @@ pub mod pallet {
 		}
 
 		/// Update relay fee for enrolled relayer
-		#[pallet::weight(10000)]
+		#[pallet::weight(<T as Config>::WeightInfo::update_relay_fee())]
 		#[transactional]
 		pub fn update_relay_fee(
 			origin: OriginFor<T>,
