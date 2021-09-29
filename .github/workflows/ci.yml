@@ -139,6 +139,7 @@ jobs:
         with:
           append: true
           message: |
+            ---
             > SHA ${{ github.sha }}
             > **Check Runtime Version**
             ```diff
