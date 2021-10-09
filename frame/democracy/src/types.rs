@@ -19,10 +19,10 @@
 
 use crate::{AccountVote, Conviction, Vote, VoteThreshold};
 use codec::{Decode, Encode};
-use sp_runtime::traits::{
-	Bounded, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Saturating, Zero,
+use sp_runtime::{
+	traits::{Bounded, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Saturating, Zero},
+	RuntimeDebug,
 };
-use sp_runtime::RuntimeDebug;
 
 /// Info regarding an ongoing referendum.
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, RuntimeDebug)]

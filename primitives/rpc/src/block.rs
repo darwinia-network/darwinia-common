@@ -14,13 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Open Ethereum. If not, see <http://www.gnu.org/licenses/>.
 
-use std::collections::BTreeMap;
-use std::ops::Deref;
+use std::{collections::BTreeMap, ops::Deref};
 
 use crate::{Bytes, Transaction};
 use ethereum_types::{Bloom as H2048, H160, H256, U256};
-use serde::ser::Error;
-use serde::{Serialize, Serializer};
+use serde::{ser::Error, Serialize, Serializer};
 
 /// Block Transactions
 #[derive(Debug)]

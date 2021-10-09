@@ -31,18 +31,20 @@ pub mod weights;
 
 use codec::{Decode, Encode};
 use darwinia_support::balance::*;
-use frame_support::traits::{
-	Currency, ExistenceRequirement, Get, LockIdentifier, VestingSchedule, WithdrawReasons,
+use frame_support::{
+	ensure,
+	pallet_prelude::*,
+	traits::{
+		Currency, ExistenceRequirement, Get, LockIdentifier, VestingSchedule, WithdrawReasons,
+	},
 };
-use frame_support::{ensure, pallet_prelude::*};
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::*};
 pub use pallet::*;
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, Convert, MaybeSerializeDeserialize, StaticLookup, Zero},
 	RuntimeDebug,
 };
-use sp_std::fmt::Debug;
-use sp_std::prelude::*;
+use sp_std::{fmt::Debug, prelude::*};
 pub use weights::WeightInfo;
 
 type BalanceOf<T> =
