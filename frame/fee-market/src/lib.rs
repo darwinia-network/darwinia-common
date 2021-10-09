@@ -430,13 +430,18 @@ pub trait AssignedRelayersAbsentSlash<T: Config> {
 }
 
 impl<T: Config> AssignedRelayersAbsentSlash<T> for () {
-	// The slash result = base(p3 fee) + 2 * timeout
+	// The slash result = base(p3 fee) + slash_each_block * timeout
 	// Note: The maximum slash result is the MiniumLockCollateral. We mush ensures that all enrolled
 	// relayers have ability to pay this slash result.
 	fn slash(base: Fee<T>, timeout: T::BlockNumber) -> RingBalance<T> {
+		// Slash 20 RING for each delay block until the maximum slash value
+		let slash_each_block = 20_000_000_000u128;
 		let timeout_u128: u128 = timeout.unique_saturated_into();
-		let mut slash =
-			base.saturating_add(timeout_u128.saturating_mul(2u128).unique_saturated_into());
+		let mut slash = base.saturating_add(
+			timeout_u128
+				.saturating_mul(slash_each_block)
+				.unique_saturated_into(),
+		);
 
 		if slash >= T::MiniumLockCollateral::get() {
 			slash = T::MiniumLockCollateral::get();

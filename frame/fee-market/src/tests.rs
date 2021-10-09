@@ -417,6 +417,25 @@ frame_support::parameter_types! {
 	pub const ForConfirmRelayer: Permill = Permill::from_percent(20);
 	pub const TreasuryPalletAccount: u64 = 666;
 }
+
+pub struct MockAssignedRelayersAbsentSlash;
+impl<T: Config> AssignedRelayersAbsentSlash<T> for MockAssignedRelayersAbsentSlash {
+	fn slash(base: Fee<T>, timeout: T::BlockNumber) -> RingBalance<T> {
+		let slash_each_block = 2u128;
+		let timeout_u128: u128 = timeout.unique_saturated_into();
+		let mut slash = base.saturating_add(
+			timeout_u128
+				.saturating_mul(slash_each_block)
+				.unique_saturated_into(),
+		);
+
+		if slash >= T::MiniumLockCollateral::get() {
+			slash = T::MiniumLockCollateral::get();
+		}
+		slash
+	}
+}
+
 impl Config for Test {
 	type PalletId = FeeMarketPalletId;
 	type TreasuryPalletId = TreasuryPalletId;
@@ -428,7 +447,7 @@ impl Config for Test {
 	type ForAssignedRelayers = ForAssignedRelayers;
 	type ForMessageRelayer = ForMessageRelayer;
 	type ForConfirmRelayer = ForConfirmRelayer;
-	type AssignedRelayersAbsentSlash = ();
+	type AssignedRelayersAbsentSlash = MockAssignedRelayersAbsentSlash;
 
 	type RingCurrency = Ring;
 	type Event = Event;
