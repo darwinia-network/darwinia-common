@@ -163,7 +163,7 @@ pub mod pallet {
 		Blake2_128Concat,
 		(LaneId, MessageNonce),
 		Order<T::AccountId, T::BlockNumber, Fee<T>>,
-		ValueQuery,
+		OptionQuery,
 	>;
 	#[pallet::storage]
 	pub type ConfirmedMessagesThisBlock<T: Config> =
@@ -369,7 +369,7 @@ impl<T: Config> Pallet<T> {
 	pub fn order(
 		lane_id: &LaneId,
 		message: &MessageNonce,
-	) -> Order<T::AccountId, T::BlockNumber, Fee<T>> {
+	) -> Option<Order<T::AccountId, T::BlockNumber, Fee<T>>> {
 		<Orders<T>>::get((lane_id, message))
 	}
 }
@@ -410,12 +410,14 @@ impl<T: Config> OnDeliveryConfirmed for MessageConfirmedHandler<T> {
 	fn on_messages_delivered(lane: &LaneId, delivered_messages: &DeliveredMessages) -> Weight {
 		let now = frame_system::Pallet::<T>::block_number();
 		for message_nonce in delivered_messages.begin..=delivered_messages.end {
-			let order = <Orders<T>>::get((lane, message_nonce));
-			if !order.is_confirmed() {
-				<Orders<T>>::mutate((lane, message_nonce), |order| {
-					order.set_confirm_time(Some(now));
-				});
-				<ConfirmedMessagesThisBlock<T>>::append((lane, message_nonce));
+			if let Some(order) = <Orders<T>>::get((lane, message_nonce)) {
+				if !order.is_confirmed() {
+					<Orders<T>>::mutate((lane, message_nonce), |order| match order {
+						Some(order) => order.set_confirm_time(Some(now)),
+						None => unreachable!(),
+					});
+					<ConfirmedMessagesThisBlock<T>>::append((lane, message_nonce));
+				}
 			}
 		}
 

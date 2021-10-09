@@ -759,7 +759,7 @@ fn test_order_creation_when_bridged_pallet_accept_message() {
 		let assigned_relayers = FeeMarket::assigned_relayers().unwrap();
 		let market_fee = FeeMarket::market_relayer_fee().unwrap().1;
 		let (lane, message_nonce) = send_regular_message(market_fee);
-		let order = FeeMarket::order(&lane, &message_nonce);
+		let order = FeeMarket::order(&lane, &message_nonce).unwrap();
 		let (relayer1, relayer2, relayer3) = order.assigned_relayers().unwrap();
 		assert_eq!(relayer1.id, assigned_relayers.0.id);
 		assert_eq!(relayer2.id, assigned_relayers.1.id);
@@ -778,7 +778,7 @@ fn test_no_order_created_after_send_message_when_fee_market_not_ready() {
 
 		assert!(FeeMarket::assigned_relayers().is_none());
 		let (lane, message_nonce) = send_regular_message(80);
-		let order = FeeMarket::order(&lane, &message_nonce);
+		assert!(FeeMarket::order(&lane, &message_nonce).is_none());
 	});
 }
 
@@ -791,12 +791,12 @@ fn test_order_confirm_time_set_when_bridged_pallet_confirmed_message() {
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(3), 120, Some(100));
 		let market_fee = FeeMarket::market_relayer_fee().unwrap().1;
 		let (lane, message_nonce) = send_regular_message(market_fee);
-		let order = FeeMarket::order(&lane, &message_nonce);
+		let order = FeeMarket::order(&lane, &message_nonce).unwrap();
 		assert_eq!(order.confirm_time, None);
 
 		System::set_block_number(4);
 		receive_messages_delivery_proof();
-		let order = FeeMarket::order(&lane, &message_nonce);
+		let order = FeeMarket::order(&lane, &message_nonce).unwrap();
 		assert_eq!(order.confirm_time, Some(4));
 		assert_eq!(<ConfirmedMessagesThisBlock<Test>>::get().len(), 1);
 	});
@@ -977,7 +977,7 @@ fn test_assigned_relayers_absent_slash_calculation_below_min_lock_value() {
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(3), 120, Some(70));
 		let market_fee = FeeMarket::market_relayer_fee().unwrap().1;
 		let (lane, message_nonce) = send_regular_message(market_fee);
-		let order = FeeMarket::order(&lane, &message_nonce);
+		let order = FeeMarket::order(&lane, &message_nonce).unwrap();
 
 		assert_eq!(
 			slash_order_assigned_relayers::<Test>(0, order.assigned_relayers.clone(), &0),
@@ -999,7 +999,7 @@ fn test_assigned_relayers_absent_slash_calculation_exceed_min_lock_value() {
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(3), 120, Some(70));
 		let market_fee = FeeMarket::market_relayer_fee().unwrap().1;
 		let (lane, message_nonce) = send_regular_message(market_fee);
-		let order = FeeMarket::order(&lane, &message_nonce);
+		let order = FeeMarket::order(&lane, &message_nonce).unwrap();
 
 		assert_eq!(
 			slash_order_assigned_relayers::<Test>(14, order.assigned_relayers.clone(), &0),
@@ -1273,18 +1273,18 @@ fn test_clean_order_state_at_the_end_of_block() {
 			},
 		));
 		assert_eq!(ConfirmedMessagesThisBlock::<Test>::get().len(), 4);
-		assert!(FeeMarket::order(&lane1, &nonce1).confirm_time.is_some());
-		assert!(FeeMarket::order(&lane2, &nonce2).confirm_time.is_some());
-		assert!(FeeMarket::order(&lane3, &nonce3).confirm_time.is_some());
-		assert!(FeeMarket::order(&lane4, &nonce4).confirm_time.is_some());
+		assert!(FeeMarket::order(&lane1, &nonce1).is_some());
+		assert!(FeeMarket::order(&lane2, &nonce2).is_some());
+		assert!(FeeMarket::order(&lane3, &nonce3).is_some());
+		assert!(FeeMarket::order(&lane4, &nonce4).is_some());
 
 		// Check in next block
 		FeeMarket::on_finalize(10);
 		System::set_block_number(1);
 		assert_eq!(ConfirmedMessagesThisBlock::<Test>::get().len(), 0);
-		assert!(FeeMarket::order(&lane1, &nonce1).confirm_time.is_none());
-		assert!(FeeMarket::order(&lane2, &nonce2).confirm_time.is_none());
-		assert!(FeeMarket::order(&lane3, &nonce3).confirm_time.is_none());
-		assert!(FeeMarket::order(&lane4, &nonce4).confirm_time.is_none());
+		assert!(FeeMarket::order(&lane1, &nonce1).is_none());
+		assert!(FeeMarket::order(&lane2, &nonce2).is_none());
+		assert!(FeeMarket::order(&lane3, &nonce3).is_none());
+		assert!(FeeMarket::order(&lane4, &nonce4).is_none());
 	});
 }
