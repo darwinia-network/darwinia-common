@@ -51,8 +51,8 @@ use sp_std::prelude::*;
 use darwinia_support::{
 	evm::IntoDvmAddress,
 	s2s::{
-		ensure_source_root, MessageConfirmer, RelayMessageCaller, TokenMessageId,
-		RING_DECIMAL, RING_NAME, RING_SYMBOL,
+		ensure_source_root, MessageConfirmer, RelayMessageCaller, TokenMessageId, RING_DECIMAL,
+		RING_NAME, RING_SYMBOL,
 	},
 };
 use dp_asset::{
@@ -329,7 +329,8 @@ pub mod pallet {
 				let (used, limitation) = <SecureLimitedRingAmount<T>>::get();
 
 				ensure!(
-					<SecureLimitedPeriod<T>>::get().is_zero() || used.saturating_add(amount) <= limitation,
+					<SecureLimitedPeriod<T>>::get().is_zero()
+						|| used.saturating_add(amount) <= limitation,
 					<Error<T>>::RingDailyLimited
 				);
 			}

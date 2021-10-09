@@ -5,3 +5,4 @@ reorder_imports          = true
 reorder_modules          = true
 tab_spaces               = 4
 use_field_init_shorthand = true
+imports_granularity      = "Crate"
