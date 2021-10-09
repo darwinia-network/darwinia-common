@@ -30,7 +30,6 @@ pub use weight::WeightInfo;
 
 // --- crates.io ---
 use ethereum_types::{H160, H256, U256};
-use sha3::Digest;
 // --- paritytech ---
 use frame_support::{
 	ensure,
@@ -39,16 +38,15 @@ use frame_support::{
 	transactional, PalletId,
 };
 use frame_system::ensure_signed;
-use sp_runtime::{traits::Convert, DispatchError, SaturatedConversion};
+use sp_runtime::{traits::Convert, DispatchError};
 use sp_std::{str, vec::Vec};
 // --- darwinia-network ---
 use bp_runtime::{ChainId, Size};
 use darwinia_evm::AddressMapping;
 use darwinia_support::{
-	evm::POW_9,
 	mapping_token::*,
 	s2s::{ensure_source_root, MessageConfirmer, RelayMessageCaller, ToEthAddress, TokenMessageId},
-	ChainName, PalletDigest,
+	ChainName,
 };
 use dp_asset::token::Token;
 use dp_contract::mapping_token_factory::{
@@ -75,13 +73,11 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 		type RingCurrency: Currency<AccountId<Self>>;
 
-		type ReceiverAccountId: From<[u8; 32]> + Into<Self::AccountId> + Clone;
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
 		type BridgedChainId: Get<ChainId>;
 		type ToEthAddressT: ToEthAddress<Self::AccountId>;
 		type OutboundPayload: Parameter + Size;
 		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
-		type FeeAccount: Get<Option<Self::AccountId>>;
 		type MessageSender: RelayMessageCaller<Self::OutboundPayload, RingBalance<Self>>;
 		type InternalTransactHandler: InternalTransactHandler;
 		type BackingChainName: Get<ChainName>;
@@ -315,13 +311,6 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn digest() -> PalletDigest {
-		let mut digest: PalletDigest = Default::default();
-		let pallet_digest = sha3::Keccak256::digest(T::PalletId::get().encode().as_slice());
-		digest.copy_from_slice(&pallet_digest[..4]);
-		digest
-	}
-
 	pub fn mapped_token_address(
 		backing_address: H160,
 		original_token: H160,
@@ -342,11 +331,6 @@ impl<T: Config> Pallet<T> {
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResultWithPostInfo {
 		let contract = MappingFactoryAddress::<T>::get();
 		T::InternalTransactHandler::internal_transact(contract, input)
-	}
-
-	/// Do decimals between DVM balance and RING balance
-	pub fn transform_dvm_balance(value: U256) -> RingBalance<T> {
-		(value / POW_9).low_u128().saturated_into()
 	}
 }
 

@@ -99,8 +99,6 @@ impl Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
 	type RingCurrency = Ring;
-	type FeeAccount = RootAccountForPayments;
-	type ReceiverAccountId = AccountId;
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangoroChainId;
 	type ToEthAddressT = TruncateToEthAddress;
