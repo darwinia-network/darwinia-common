@@ -25,6 +25,7 @@ use dp_asset::token::{Token, TokenOption};
 use frame_benchmarking::benchmarks;
 use frame_system::RawOrigin;
 use sp_runtime::traits::UniqueSaturatedInto;
+use sp_runtime::SaturatedConversion;
 use sp_std::vec;
 
 const SPEC_VERSION: u32 = 123;
@@ -80,6 +81,22 @@ benchmarks! {
 		let token = Token::Native(TokenInfo::new(register_token_address, None, Some(token_option)));
 		let recipient = hex_into_unchecked("0000000000000000000000000000000000000001");
 	}: _(RawOrigin::Signed(caller), token, recipient)
+
+	send_message {
+		let caller = <T as darwinia_evm::Config>::AddressMapping::into_account_id(
+			hex_into_unchecked(FACTORY_ADDR)
+		);
+		// spec_version: 2650
+		// weight: 690133000
+		// token: 0x0582437990D0726b718A84C8e4abF8A5ca2DBCDb
+		// recipient: 0x64766d3a00000000000000726f6f740000000000000000000000000000000043
+		// amount: 10000
+		let payload = array_bytes::hex2bytes_unchecked("0x5a0a00000898222900000000000065011402016d6f646c64612f6272696e6700000000000000000110270000000000000000000000000000000000000000000000000000000000000064766d3a00000000000000726f6f740000000000000000000000000000000043");
+		let outbound_payload = <T as Config>::OutboundPayload::decode(
+			&mut payload.as_slice(),
+			).unwrap();
+		let fee: RingBalance<T> = 1_000_000_000u128.saturated_into();
+	}: _(RawOrigin::Signed(caller), outbound_payload, fee)
 
 	set_mapping_factory_address {
 		let address = hex_into_unchecked("0000000000000000000000000000000000000001");

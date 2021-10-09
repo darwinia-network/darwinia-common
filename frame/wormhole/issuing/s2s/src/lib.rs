@@ -90,7 +90,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(
-			<T as Config>::WeightInfo::asset_burn_event_handle()
+			<T as Config>::WeightInfo::send_message()
 		)]
 		#[transactional]
 		pub fn send_message(
