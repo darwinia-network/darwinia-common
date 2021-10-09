@@ -381,25 +381,24 @@ impl<T: Config> OnMessageAccepted for MessageAcceptedHandler<T> {
 		let mut reads = 0;
 		let mut writes = 0;
 
-		// Make sure the fee market have enough priority relayer enrolled, If not, no order created.
-		if let Some((r1, r2, r3)) = <Pallet<T>>::assigned_relayers() {
-			// Create a new order based on the latest block, assign relayers which have priority to relaying
-			let now = frame_system::Pallet::<T>::block_number();
-			let (t1, t2, t3) = T::SlotTimes::get();
-			let mut order: Order<T::AccountId, T::BlockNumber, Fee<T>> =
-				Order::new(*lane, *message, now);
-			reads += 1;
-			let assigned_relayers = (
-				PriorRelayer::new(r1.id, Priority::P1, r1.fee, now, t1),
-				PriorRelayer::new(r2.id, Priority::P2, r2.fee, now + t1, t2),
-				PriorRelayer::new(r3.id, Priority::P3, r3.fee, now + t1 + t2, t3),
-			);
-			order.set_assigned_relayers(assigned_relayers);
+		// Create a new order based on the latest block, assign relayers which have priority to relaying
+		let now = frame_system::Pallet::<T>::block_number();
+		let (t1, t2, t3) = T::SlotTimes::get();
+		let mut order: Order<T::AccountId, T::BlockNumber, Fee<T>> =
+			Order::new(*lane, *message, now);
+		let (r1, r2, r3) = <Pallet<T>>::assigned_relayers()
+			.expect("Fee market is not ready for accepting message");
+		reads += 1;
+		let assigned_relayers = (
+			PriorRelayer::new(r1.id, Priority::P1, r1.fee, now, t1),
+			PriorRelayer::new(r2.id, Priority::P2, r2.fee, now + t1, t2),
+			PriorRelayer::new(r3.id, Priority::P3, r3.fee, now + t1 + t2, t3),
+		);
+		order.set_assigned_relayers(assigned_relayers);
 
-			// Store the create order
-			<Orders<T>>::insert((order.lane, order.message), order);
-			writes += 1;
-		}
+		// Store the create order
+		<Orders<T>>::insert((order.lane, order.message), order);
+		writes += 1;
 
 		<T as frame_system::Config>::DbWeight::get().reads_writes(reads, writes)
 	}

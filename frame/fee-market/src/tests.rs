@@ -769,6 +769,20 @@ fn test_order_creation_when_bridged_pallet_accept_message() {
 }
 
 #[test]
+#[should_panic]
+fn test_no_order_created_after_send_message_when_fee_market_not_ready() {
+	new_test_ext().execute_with(|| {
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, Some(30));
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(2), 110, Some(50));
+		System::set_block_number(2);
+
+		assert!(FeeMarket::assigned_relayers().is_none());
+		let (lane, message_nonce) = send_regular_message(80);
+		let order = FeeMarket::order(&lane, &message_nonce);
+	});
+}
+
+#[test]
 fn test_order_confirm_time_set_when_bridged_pallet_confirmed_message() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(2);
