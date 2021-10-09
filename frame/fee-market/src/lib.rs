@@ -153,11 +153,8 @@ pub mod pallet {
 			Relayer<T::AccountId, RingBalance<T>>,
 			Relayer<T::AccountId, RingBalance<T>>,
 		),
-		ValueQuery,
+		OptionQuery,
 	>;
-	#[pallet::storage]
-	#[pallet::getter(fn best_relayer)]
-	pub type BestRelayer<T: Config> = StorageValue<_, (T::AccountId, Fee<T>), OptionQuery>;
 
 	// Order storage
 	#[pallet::storage]
@@ -317,7 +314,6 @@ impl<T: Config> Pallet<T> {
 				relayers[2].clone(),
 			);
 			<AssignedRelayersStorage<T>>::put(prior_relayers);
-			<BestRelayer<T>>::put((relayers[2].id.clone(), relayers.clone()[2].fee));
 		}
 	}
 
@@ -365,8 +361,8 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get market fee(P3), If the enrolled relayers less then MIN_ENROLLED_RELAYERS_NUMBER, return NONE.
-	pub fn market_fee() -> Option<Fee<T>> {
-		Self::best_relayer().map_or(None, |r| Some(r.1))
+	pub fn market_relayer_fee() -> Option<(T::AccountId, Fee<T>)> {
+		Self::assigned_relayers().map_or(None, |(_, _, r3)| Some((r3.id, r3.fee)))
 	}
 
 	/// Get order info
@@ -385,23 +381,25 @@ impl<T: Config> OnMessageAccepted for MessageAcceptedHandler<T> {
 		let mut reads = 0;
 		let mut writes = 0;
 
-		// Create a new order based on the latest block, assign 3 relayers which have priority to relaying
-		let now = frame_system::Pallet::<T>::block_number();
-		let (t1, t2, t3) = T::SlotTimes::get();
-		let mut order: Order<T::AccountId, T::BlockNumber, Fee<T>> =
-			Order::new(*lane, *message, now);
-		let (r1, r2, r3) = Pallet::<T>::assigned_relayers();
-		reads += 1;
-		let assigned_relayers = (
-			PriorRelayer::new(r1.id, Priority::P1, r1.fee, now, t1),
-			PriorRelayer::new(r2.id, Priority::P2, r2.fee, now + t1, t2),
-			PriorRelayer::new(r3.id, Priority::P3, r3.fee, now + t1 + t2, t3),
-		);
-		order.set_assigned_relayers(assigned_relayers);
+		// Make sure the fee market have enough priority relayer enrolled, If not, no order created.
+		if let Some((r1, r2, r3)) = <Pallet<T>>::assigned_relayers() {
+			// Create a new order based on the latest block, assign relayers which have priority to relaying
+			let now = frame_system::Pallet::<T>::block_number();
+			let (t1, t2, t3) = T::SlotTimes::get();
+			let mut order: Order<T::AccountId, T::BlockNumber, Fee<T>> =
+				Order::new(*lane, *message, now);
+			reads += 1;
+			let assigned_relayers = (
+				PriorRelayer::new(r1.id, Priority::P1, r1.fee, now, t1),
+				PriorRelayer::new(r2.id, Priority::P2, r2.fee, now + t1, t2),
+				PriorRelayer::new(r3.id, Priority::P3, r3.fee, now + t1 + t2, t3),
+			);
+			order.set_assigned_relayers(assigned_relayers);
 
-		// Store the create order
-		<Orders<T>>::insert((order.lane, order.message), order);
-		writes += 1;
+			// Store the create order
+			<Orders<T>>::insert((order.lane, order.message), order);
+			writes += 1;
+		}
 
 		<T as frame_system::Config>::DbWeight::get().reads_writes(reads, writes)
 	}

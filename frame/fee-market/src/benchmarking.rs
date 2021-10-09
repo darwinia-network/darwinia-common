@@ -60,7 +60,7 @@ fn fee_market_ready<T: Config>() {
 		collateral,
 		None
 	));
-	assert!(<FeeMarket<T>>::market_fee().is_some());
+	assert!(<FeeMarket<T>>::market_relayer_fee().is_some());
 	assert_eq!(<FeeMarket<T>>::relayers().len(), 4);
 }
 
