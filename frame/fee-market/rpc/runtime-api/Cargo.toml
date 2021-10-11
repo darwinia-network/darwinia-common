@@ -1,0 +1,30 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Runtime API definition required by fee-market RPC extensions."
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "darwinia-fee-market-rpc-runtime-api"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "2.6.5"
+
+[dependencies]
+# crates.io
+codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
+serde = { version = "1.0.127", optional = true, features = ["derive"] }
+# paritytech
+sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+
+[features]
+default = ["std"]
+
+std = [
+	# crates.io
+	"codec/std",
+	"serde",
+	# paritytech
+	"sp-api/std",
+	"sp-runtime/std",
+]

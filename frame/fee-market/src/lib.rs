@@ -364,8 +364,8 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get market fee(P3), If the enrolled relayers less then MIN_ENROLLED_RELAYERS_NUMBER, return NONE.
-	pub fn market_relayer_fee() -> Option<(T::AccountId, Fee<T>)> {
-		Self::assigned_relayers().map_or(None, |(_, _, r3)| Some((r3.id, r3.fee)))
+	pub fn market_fee() -> Option<Fee<T>> {
+		Self::assigned_relayers().map_or(None, |(_, _, r3)| Some(r3.fee))
 	}
 
 	/// Get order info

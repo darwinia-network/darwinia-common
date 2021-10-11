@@ -1,0 +1,23 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Node-specific RPC methods for interaction with fee-market"
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "darwinia-fee-market-rpc"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "2.6.5"
+
+[dependencies]
+# crates.io
+codec               = { package = "parity-scale-codec", version = "2.1.1" }
+jsonrpc-core        = { version = "15.1.0" }
+jsonrpc-core-client = { version = "15.1.0" }
+jsonrpc-derive      = { version = "15.1.0" }
+# darwinia-network
+darwinia-fee-market-rpc-runtime-api = { path = "./runtime-api" }
+# paritytech
+sp-api        = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-blockchain = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-runtime    = { git = "https://github.com/darwinia-network/substrate", branch = "main" }

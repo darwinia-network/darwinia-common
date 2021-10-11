@@ -541,6 +541,12 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
+		fn market_fee() -> Option<Balance> {
+			FeeMarket::market_fee()
+		}
+	}
+
 	impl dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block> for Runtime {
 		fn chain_id() -> u64 {
 			<Runtime as darwinia_evm::Config>::ChainId::get()
