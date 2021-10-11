@@ -135,7 +135,10 @@ where
 			let order_confirm_time = order
 				.confirm_time
 				.expect("The message confirm_time already set in OnDeliveryConfirmed");
-			let (p1, p2, p3) = order.assigned_relayers.clone().unwrap();
+			let (p1, p2, p3) = order
+				.assigned_relayers
+				.clone()
+				.expect("The order assigned_relayers already set in OnMessageAccepted");
 
 			// Look up the unrewarded relayer list to get message relayer of this message
 			let mut message_relayer = T::AccountId::default();

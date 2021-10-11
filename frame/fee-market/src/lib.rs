@@ -127,6 +127,8 @@ pub mod pallet {
 		RelayFeeTooLow,
 		/// The enrolled relayers less than MIN_ENROLLED_RELAYERS_NUMBER
 		TooFewEnrolledRelayers,
+		/// The relayer is occupied, and can't cancel enrollment now.
+		OccupiedRelayer,
 	}
 
 	// Enrolled relayers storage
@@ -263,6 +265,7 @@ pub mod pallet {
 				<Relayers<T>>::get().len() > MIN_ENROLLED_RELAYERS_NUMBER,
 				<Error<T>>::TooFewEnrolledRelayers
 			);
+			ensure!(!Self::is_occupied(&who), <Error<T>>::OccupiedRelayer);
 
 			Self::remove_enrolled_relayer(&who);
 			Self::deposit_event(Event::<T>::CancelEnrollment(who));
@@ -371,6 +374,18 @@ impl<T: Config> Pallet<T> {
 		message: &MessageNonce,
 	) -> Option<Order<T::AccountId, T::BlockNumber, Fee<T>>> {
 		<Orders<T>>::get((lane_id, message))
+	}
+
+	/// Whether the enrolled relayer is occupied(Responsible for order relaying)
+	pub fn is_occupied(who: &T::AccountId) -> bool {
+		for (_, order) in <Orders<T>>::iter() {
+			if let Some((r1, r2, r3)) = order.assigned_relayers() {
+				if (r1.id == *who || r2.id == *who || r3.id == *who) && !order.is_confirmed() {
+					return true;
+				}
+			}
+		}
+		false
 	}
 }
 

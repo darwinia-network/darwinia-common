@@ -636,16 +636,38 @@ fn test_multiple_relayers_cancel_registration() {
 		assert_eq!(FeeMarket::relayer_locked_collateral(&1), 100);
 		assert_eq!(FeeMarket::relayer_locked_collateral(&2), 100);
 		assert_eq!(FeeMarket::market_relayer_fee().unwrap(), (3, 30));
+		assert_eq!(
+			FeeMarket::assigned_relayers().unwrap(),
+			(
+				Relayer::<AccountId, Balance>::new(1, 100, 30),
+				Relayer::<AccountId, Balance>::new(2, 100, 30),
+				Relayer::<AccountId, Balance>::new(3, 100, 30),
+			)
+		);
 
-		assert_ok!(FeeMarket::cancel_enrollment(Origin::signed(1)));
+		// Test enrolled relayer not allowed to cancel cancel_enrollment when occupied
+		let market_fee = FeeMarket::market_relayer_fee().unwrap().1;
+		let (_, _) = send_regular_message(market_fee);
+		assert_err!(
+			FeeMarket::cancel_enrollment(Origin::signed(1)),
+			<Error<Test>>::OccupiedRelayer
+		);
+		assert_err!(
+			FeeMarket::cancel_enrollment(Origin::signed(2)),
+			<Error<Test>>::OccupiedRelayer
+		);
+		assert_err!(
+			FeeMarket::cancel_enrollment(Origin::signed(3)),
+			<Error<Test>>::OccupiedRelayer
+		);
+
 		assert_ok!(FeeMarket::cancel_enrollment(Origin::signed(5)));
-		assert!(!FeeMarket::is_enrolled(&1));
 		assert!(!FeeMarket::is_enrolled(&5));
-		assert_eq!(FeeMarket::relayer_locked_collateral(&1), 0);
 		assert_eq!(FeeMarket::relayer_locked_collateral(&5), 0);
-		assert_eq!(FeeMarket::relayers(), vec![2, 3, 4]);
-		assert_eq!(FeeMarket::market_relayer_fee().unwrap(), (4, 30));
+		assert_eq!(FeeMarket::relayers(), vec![1, 2, 3, 4]);
+		assert_eq!(FeeMarket::market_relayer_fee().unwrap(), (3, 30));
 
+		assert_ok!(FeeMarket::cancel_enrollment(Origin::signed(4)));
 		assert_err!(
 			FeeMarket::cancel_enrollment(Origin::signed(2)),
 			<Error<Test>>::TooFewEnrolledRelayers
