@@ -16,13 +16,13 @@ log   = { version = "0.4.14" }
 # darwinia-network
 darwinia-support = { default-features = false, path = "../support" }
 # paritytech
-frame-support     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-frame-system      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-core           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-io             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-npos-elections = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-runtime        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-std            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-support     = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+frame-system      = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-core           = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-io             = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-npos-elections = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-runtime        = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-std            = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
 
 [dev-dependencies]
 # crates.io
@@ -31,7 +31,7 @@ hex-literal = { version = "0.3.1" }
 darwinia-balances = { path = "../balances" }
 darwinia-support  = { path = "../support", features = ["easy-testing"] }
 # paritytech
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate", branch = "main" }
+substrate-test-utils = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
 
 [features]
 default = ["std"]

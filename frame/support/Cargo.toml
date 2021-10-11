@@ -21,12 +21,12 @@ sha3                  = { version = "0.9.1", default-features = false }
 ethabi              = { default-features = false, git = "https://github.com/darwinia-network/ethabi", tag = "v13.0.0-no-std" }
 ethereum-primitives = { default-features = false, path = "../../primitives/ethereum" }
 # paritytech
-bp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "main" }
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+bp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "xavier-test" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
 
 [features]
 default = ["std"]
