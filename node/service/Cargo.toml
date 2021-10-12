@@ -31,9 +31,9 @@ dc-mapping-sync                     = { path = "../../client/dvm/mapping-sync" }
 dc-rpc                              = { path = "../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }
 dp-rpc                              = { path = "../../primitives/rpc" }
 drml-rpc                            = { path = "../rpc" }
+dvm-dynamic-fee                     = { path = "../../frame/dvm-dynamic-fee" }
 dvm-rpc-runtime-api                 = { path = "../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
-dvm-dynamic-fee                     = { path = "../../frame/dvm-dynamic-fee" }
 pangoro-runtime                     = { path = "../runtime/pangoro" }
 # paritytech
 frame-benchmarking                         = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
