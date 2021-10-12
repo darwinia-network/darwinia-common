@@ -20,8 +20,9 @@
 use codec::{Decode, Encode};
 use std::str::FromStr;
 // darwinia
-use crate::*;
-use crate::{self as s2s_issuing};
+use crate::{
+	*, {self as s2s_issuing},
+};
 use darwinia_evm::{
 	AddressMapping, EnsureAddressTruncated, FeeCalculator, SubstrateBlockHashMapping,
 };

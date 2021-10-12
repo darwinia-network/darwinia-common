@@ -45,8 +45,11 @@ use sp_runtime::{
 use bitvec::prelude::*;
 use std::{collections::VecDeque, ops::RangeInclusive};
 // --- darwinia-network ---
-use crate::payment::{slash_order_assigned_relayers, RewardsBook};
-use crate::{self as darwinia_fee_market, *};
+use crate::{
+	self as darwinia_fee_market,
+	payment::{slash_order_assigned_relayers, RewardsBook},
+	*,
+};
 
 pub type Block = MockBlock<Test>;
 pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;

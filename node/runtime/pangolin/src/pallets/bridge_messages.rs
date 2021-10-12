@@ -1,12 +1,12 @@
 pub use pallet_bridge_messages::Instance1 as WithPangoroMessages;
 
-// --- substrate ---
-use frame_support::pallet_prelude::Weight;
-use sp_std::marker::PhantomData;
 // --- paritytech ---
 use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId, MessageNonce};
-
-use pallet_bridge_messages::{weights::RialtoWeight, Config};
+use frame_support::pallet_prelude::Weight;
+use pallet_bridge_messages::{
+	instant_payments::InstantCurrencyPayments, weights::RialtoWeight, Config,
+};
+use sp_std::marker::PhantomData;
 // --- darwinia-network ---
 use crate::{
 	pangoro_messages::{
@@ -62,8 +62,8 @@ impl Config<WithPangoroMessages> for Runtime {
 	type LaneMessageVerifier = ToPangoroMessageVerifier;
 	type MessageDeliveryAndDispatchPayment = FeeMarketPayment<
 		Runtime,
-		Instance1,
-		darwinia_balances::Pallet<Runtime, RingInstance>,
+		WithPangoroMessages,
+		Ring,
 		GetDeliveryConfirmationTransactionFee,
 		RootAccountForPayments,
 	>;

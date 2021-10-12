@@ -61,8 +61,7 @@ use sp_runtime::{
 	},
 	DispatchError,
 };
-use sp_std::marker::PhantomData;
-use sp_std::prelude::*;
+use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use darwinia_evm::{AccountBasic, BlockHashMapping, FeeCalculator, GasWeightMapping, Runner};
 use darwinia_support::evm::{

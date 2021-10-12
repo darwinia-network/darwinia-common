@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "darwinia-fee-market"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.6.5"
+version     = "2.6.6"
 
 
 [dependencies]
@@ -20,18 +20,18 @@ num-traits  = { version = "0.2", default-features = false }
 darwinia-support = { default-features = false, path = "../support" }
 dp-fee           = { default-features = false, path = "../../primitives/fee-market"}
 # paritytech
-frame-benchmarking  = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-frame-support       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-frame-system        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-pallet-timestamp    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-core             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-io               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
-sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+frame-benchmarking  = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+frame-support       = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+frame-system        = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+pallet-timestamp    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-core             = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-io               = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
 # parity-bridges-common
-bp-messages            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
-bp-runtime             = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
-pallet-bridge-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "test-fee-market" }
+bp-messages            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5-rc1" }
+bp-runtime             = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5-rc1" }
+pallet-bridge-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5-rc1" }
 
 [dev-dependencies]
 darwinia-balances = { default-features = false, path = "../balances" }

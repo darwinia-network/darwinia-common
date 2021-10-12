@@ -310,6 +310,5 @@
 		"power": "Power"
 	},
 	"__[might be removed later]__": null,
-	"MessageId": "(LaneId, MessageNonce)",
 	"SpecVersion": "u32"
 }

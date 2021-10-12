@@ -31,11 +31,9 @@ use jsonrpc_pubsub::{
 	SubscriptionId,
 };
 use log::warn;
-use rand::distributions::Alphanumeric;
-use rand::{thread_rng, Rng};
+use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use sha3::{Digest, Keccak256};
-use std::collections::BTreeMap;
-use std::{iter, marker::PhantomData, sync::Arc};
+use std::{collections::BTreeMap, iter, marker::PhantomData, sync::Arc};
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub struct HexEncodedIdProvider {

@@ -795,13 +795,13 @@ impl<'a> Iterator for TrieIterator<'a> {
 
 #[cfg(test)]
 mod tests {
-	use std::collections::{HashMap, HashSet};
-	use std::rc::Rc;
+	use std::{
+		collections::{HashMap, HashSet},
+		rc::Rc,
+	};
 
 	use ethereum_types;
-	use rand::distributions::Alphanumeric;
-	use rand::seq::SliceRandom;
-	use rand::{thread_rng, Rng};
+	use rand::{distributions::Alphanumeric, seq::SliceRandom, thread_rng, Rng};
 
 	use super::*;
 	use crate::db::MemoryDB;

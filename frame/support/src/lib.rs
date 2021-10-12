@@ -25,10 +25,10 @@ pub mod testing;
 pub mod traits;
 
 pub mod balance {
-	pub use crate::structs::{
-		BalanceLock, FrozenBalance, LockFor, LockReasons, StakingLock, Unbonding,
+	pub use crate::{
+		structs::{BalanceLock, FrozenBalance, LockFor, LockReasons, StakingLock, Unbonding},
+		traits::{BalanceInfo, DustCollector, LockableCurrency},
 	};
-	pub use crate::traits::{BalanceInfo, DustCollector, LockableCurrency};
 }
 use ethabi::{encode, Token};
 use sp_std::{vec, vec::Vec};

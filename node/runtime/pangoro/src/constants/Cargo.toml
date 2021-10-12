@@ -6,13 +6,13 @@ license    = "GPL-3.0"
 name       = "pangoro-constants"
 readme     = "README.md"
 repository = "https://github.com/darwinia-network/darwinia-common/"
-version    = "2.6.5"
+version    = "2.6.6"
 
 [dependencies]
 # darwinia-network
 common-primitives = { default-features = false, path = "../../../../primitives/common" }
 # paritytech
-sp-staking = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-staking = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
 
 [features]
 default = ["std"]

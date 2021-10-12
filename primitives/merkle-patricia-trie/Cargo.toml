@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "merkle-patricia-trie"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.6.5"
+version     = "2.6.6"
 
 [[bench]]
 harness = false
@@ -19,7 +19,7 @@ hash      = { package = "keccak-hash", version = "0.7.0", default-features = fal
 hashbrown = { version = "0.9.1" }
 rlp       = { version = "0.5.0", default-features = false }
 # paritytech
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "main" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
 
 [dev-dependencies]
 # crates.io
