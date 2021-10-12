@@ -627,7 +627,7 @@ dependencies = [
 [[package]]
 name = "bp-header-chain"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=xavier-test#00cc32de7c208c07cd16441ea7df33be92209a56"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.5-rc1#00cc32de7c208c07cd16441ea7df33be92209a56"
 dependencies = [
  "finality-grandpa",
  "frame-support",
@@ -642,7 +642,7 @@ dependencies = [
 [[package]]
 name = "bp-message-dispatch"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=xavier-test#00cc32de7c208c07cd16441ea7df33be92209a56"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.5-rc1#00cc32de7c208c07cd16441ea7df33be92209a56"
 dependencies = [
  "bp-runtime",
  "frame-support",
@@ -653,7 +653,7 @@ dependencies = [
 [[package]]
 name = "bp-messages"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=xavier-test#00cc32de7c208c07cd16441ea7df33be92209a56"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.5-rc1#00cc32de7c208c07cd16441ea7df33be92209a56"
 dependencies = [
  "bitvec 0.20.4",
  "bp-runtime",
@@ -668,7 +668,7 @@ dependencies = [
 [[package]]
 name = "bp-runtime"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=xavier-test#00cc32de7c208c07cd16441ea7df33be92209a56"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.5-rc1#00cc32de7c208c07cd16441ea7df33be92209a56"
 dependencies = [
  "frame-support",
  "hash-db",
@@ -685,7 +685,7 @@ dependencies = [
 [[package]]
 name = "bp-test-utils"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=xavier-test#00cc32de7c208c07cd16441ea7df33be92209a56"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.5-rc1#00cc32de7c208c07cd16441ea7df33be92209a56"
 dependencies = [
  "bp-header-chain",
  "ed25519-dalek",
@@ -714,7 +714,7 @@ dependencies = [
 [[package]]
 name = "bridge-runtime-common"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=xavier-test#00cc32de7c208c07cd16441ea7df33be92209a56"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.5-rc1#00cc32de7c208c07cd16441ea7df33be92209a56"
 dependencies = [
  "bp-message-dispatch",
  "bp-messages",
@@ -5504,7 +5504,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-dispatch"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=xavier-test#00cc32de7c208c07cd16441ea7df33be92209a56"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.5-rc1#00cc32de7c208c07cd16441ea7df33be92209a56"
 dependencies = [
  "bp-message-dispatch",
  "bp-runtime",
@@ -5520,7 +5520,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=xavier-test#00cc32de7c208c07cd16441ea7df33be92209a56"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.5-rc1#00cc32de7c208c07cd16441ea7df33be92209a56"
 dependencies = [
  "bp-header-chain",
  "bp-runtime",
@@ -5541,7 +5541,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-messages"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=xavier-test#00cc32de7c208c07cd16441ea7df33be92209a56"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.5-rc1#00cc32de7c208c07cd16441ea7df33be92209a56"
 dependencies = [
  "bitvec 0.20.4",
  "bp-message-dispatch",
