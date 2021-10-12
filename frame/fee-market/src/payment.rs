@@ -222,7 +222,7 @@ pub fn slash_order_assigned_relayers<T: Config>(
 ) -> RingBalance<T> {
 	let mut total_slash = RingBalance::<T>::zero();
 	let (p1, p2, p3) = assign_relayers.unwrap_or_default();
-	let slash_result = T::AssignedRelayersAbsentSlash::slash(p3.fee, timeout);
+	let slash_result = T::Slasher::slash(p3.fee, timeout);
 
 	// Slash assign relayers and transfer the value to refund_fund_account
 	slash_and_update_market::<T>(&p1.id, relayer_fund_account, slash_result);
@@ -244,7 +244,7 @@ pub fn slash_and_update_market<T: Config>(
 ) {
 	debug_assert!(
 		slash_value <= T::MiniumLockCollateral::get(),
-		"The maximum slash value returned from AssignedRelayersAbsentSlash is MiniumLockCollateral"
+		"The maximum slash value returned from Slasher is MiniumLockCollateral"
 	);
 	// If usable_balance is enough to pay slash, no need to update lock.
 	if slash_value <= T::RingCurrency::usable_balance(&slash_account) {

@@ -421,8 +421,8 @@ frame_support::parameter_types! {
 	pub const TreasuryPalletAccount: u64 = 666;
 }
 
-pub struct MockAssignedRelayersAbsentSlash;
-impl<T: Config> AssignedRelayersAbsentSlash<T> for MockAssignedRelayersAbsentSlash {
+pub struct MockSlasher;
+impl<T: Config> Slasher<T> for MockSlasher {
 	fn slash(base: Fee<T>, timeout: T::BlockNumber) -> RingBalance<T> {
 		let slash_each_block = 2u128;
 		let timeout_u128: u128 = timeout.unique_saturated_into();
@@ -450,7 +450,7 @@ impl Config for Test {
 	type ForAssignedRelayers = ForAssignedRelayers;
 	type ForMessageRelayer = ForMessageRelayer;
 	type ForConfirmRelayer = ForConfirmRelayer;
-	type AssignedRelayersAbsentSlash = MockAssignedRelayersAbsentSlash;
+	type Slasher = MockSlasher;
 
 	type RingCurrency = Ring;
 	type Event = Event;

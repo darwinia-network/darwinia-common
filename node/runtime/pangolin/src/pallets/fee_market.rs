@@ -11,7 +11,7 @@ frame_support::parameter_types! {
 	pub const MiniumLockCollateral: Balance = 3000;
 	pub const MinimumRelayFee: Balance = 15;
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
-	pub const SlotTimes: (BlockNumber, BlockNumber, BlockNumber) = (20, 20, 20);
+	pub const SlotTimes: (BlockNumber, BlockNumber, BlockNumber) = (50, 50, 50);
 
 	pub const ForAssignedRelayers: Permill = Permill::from_percent(60);
 	pub const ForMessageRelayer: Permill = Permill::from_percent(80);
@@ -29,7 +29,7 @@ impl Config for Runtime {
 	type ForAssignedRelayers = ForAssignedRelayers;
 	type ForMessageRelayer = ForMessageRelayer;
 	type ForConfirmRelayer = ForConfirmRelayer;
-	type AssignedRelayersAbsentSlash = ();
+	type Slasher = ();
 
 	type RingCurrency = Ring;
 	type Event = Event;

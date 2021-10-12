@@ -90,7 +90,7 @@ pub mod pallet {
 		type ForConfirmRelayer: Get<Permill>;
 
 		/// The slash rule
-		type AssignedRelayersAbsentSlash: AssignedRelayersAbsentSlash<Self>;
+		type Slasher: Slasher<Self>;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 			+ Currency<Self::AccountId>;
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -440,11 +440,11 @@ impl<T: Config> OnDeliveryConfirmed for MessageConfirmedHandler<T> {
 	}
 }
 
-pub trait AssignedRelayersAbsentSlash<T: Config> {
+pub trait Slasher<T: Config> {
 	fn slash(base: RingBalance<T>, _timeout: T::BlockNumber) -> RingBalance<T>;
 }
 
-impl<T: Config> AssignedRelayersAbsentSlash<T> for () {
+impl<T: Config> Slasher<T> for () {
 	// The slash result = base(p3 fee) + slash_each_block * timeout
 	// Note: The maximum slash result is the MiniumLockCollateral. We mush ensures that all enrolled
 	// relayers have ability to pay this slash result.
