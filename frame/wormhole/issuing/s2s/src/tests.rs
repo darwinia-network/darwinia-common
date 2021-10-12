@@ -224,7 +224,6 @@ impl Config for Test {
 	type Event = ();
 	type PalletId = S2sRelayPalletId;
 	type WeightInfo = ();
-	type ReceiverAccountId = AccountId32;
 
 	type RingCurrency = Ring;
 	type BridgedAccountIdConverter = AccountIdConverter;
@@ -232,7 +231,6 @@ impl Config for Test {
 	type ToEthAddressT = TruncateToEthAddress;
 	type OutboundPayload = MockMessagePayload;
 	type CallEncoder = PangoroCallEncoder;
-	type FeeAccount = RootAccountForPayments;
 	type MessageSender = ToPangoroMessageRelayCaller;
 	type InternalTransactHandler = Ethereum;
 	type BackingChainName = PangoroName;
@@ -284,12 +282,3 @@ fn burn_and_remote_unlock_success() {
 	});
 }
 
-#[test]
-fn check_digest() {
-	new_test_ext().execute_with(|| {
-		assert_eq!(
-			S2sIssuing::digest(),
-			array_bytes::hex2bytes_unchecked("0xd184c5bd").as_slice()
-		);
-	});
-}
