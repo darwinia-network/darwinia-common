@@ -186,6 +186,7 @@ frame_support::construct_runtime!(
 		BridgePangolinGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 19,
 
 		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Config<T>, Event<T>} = 20,
+		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 22,
 	}
 );
 
@@ -472,6 +473,12 @@ sp_api::impl_runtime_apis! {
 
 		fn unrewarded_relayers_state(lane: bp_messages::LaneId) -> bp_messages::UnrewardedRelayersState {
 			BridgePangolinMessages::inbound_unrewarded_relayers_state(lane)
+		}
+	}
+
+	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
+		fn market_fee() -> Option<Balance> {
+			FeeMarket::market_fee()
 		}
 	}
 
