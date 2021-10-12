@@ -1806,7 +1806,7 @@ pub mod pallet {
 										// Not allow to extend other combination/type lock
 										//
 										// And the lock is always with lock id
-										// it's impossiable to match a (other lock, common lock)
+										// it's impossible to match a (other lock, common lock)
 										// under this if condition
 										_ => {
 											poisoned = true;
