@@ -525,9 +525,11 @@ pub mod pallet {
 		pallet_prelude::*,
 		traits::{
 			tokens::{DepositConsequence, WithdrawConsequence},
-			BalanceStatus, Currency, ExistenceRequirement, Imbalance, LockIdentifier, OnUnbalanced,
-			ReservableCurrency, SignedImbalance, StoredMap, TryDrop, WithdrawReasons,
+			BalanceStatus, Currency, ExistenceRequirement, Imbalance, LockIdentifier,
+			MaxEncodedLen, OnUnbalanced, ReservableCurrency, SignedImbalance, StoredMap, TryDrop,
+			WithdrawReasons,
 		},
+		WeakBoundedVec,
 	};
 	use frame_system::pallet_prelude::*;
 	// --- paritytech ---
@@ -554,7 +556,8 @@ pub mod pallet {
 			+ Default
 			+ Copy
 			+ MaybeSerializeDeserialize
-			+ Debug;
+			+ Debug
+			+ MaxEncodedLen;
 
 		/// Handler for the unbalanced reduction when removing a dust account.
 		type DustRemoval: OnUnbalanced<NegativeImbalance<Self, I>>;
@@ -644,8 +647,15 @@ pub mod pallet {
 	///
 	/// NOTE: This is only used in the case that this pallet is used to store balances.
 	#[pallet::storage]
-	pub type Account<T: Config<I>, I: 'static = ()> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, T::BalanceInfo, ValueQuery>;
+	pub type Account<T: Config<I>, I: 'static = ()> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId,
+		T::BalanceInfo,
+		ValueQuery,
+		GetDefault,
+		ConstU32<300_000>,
+	>;
 
 	/// Any liquidity locks on some account balances.
 	/// NOTE: Should only be accessed when setting, changing and freeing a lock.
@@ -655,8 +665,10 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::AccountId,
-		Vec<BalanceLock<T::Balance, T::BlockNumber>>,
+		WeakBoundedVec<BalanceLock<T::Balance, T::BlockNumber>, T::MaxLocks>,
 		ValueQuery,
+		GetDefault,
+		ConstU32<300_000>,
 	>;
 
 	/// Storage version of the pallet.
@@ -721,6 +733,7 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::generate_storage_info]
 	pub struct Pallet<T, I = ()>(PhantomData<(T, I)>);
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
@@ -1096,6 +1109,11 @@ pub mod pallet {
 
 		/// Update the account entry for `who`, given the locks.
 		fn update_locks(who: &T::AccountId, locks: &[BalanceLock<T::Balance, T::BlockNumber>]) {
+			let bounded_locks = WeakBoundedVec::<_, T::MaxLocks>::force_from(
+				locks.to_vec(),
+				Some("Balances Update Locks"),
+			);
+
 			if locks.len() as u32 > T::MaxLocks::get() {
 				log::warn!(
 					target: "runtime::balances",
@@ -1113,7 +1131,7 @@ pub mod pallet {
 					<frame_system::Pallet<T>>::dec_consumers(who);
 				}
 			} else {
-				Locks::<T, I>::insert(who, locks);
+				Locks::<T, I>::insert(who, bounded_locks);
 				if !existed {
 					if <frame_system::Pallet<T>>::inc_consumers(who).is_err() {
 						// No providers for the locks. This is impossible under normal circumstances
@@ -1887,7 +1905,7 @@ pub mod pallet {
 	// A value placed in storage that represents the current version of the Balances storage.
 	// This value is used by the `on_runtime_upgrade` logic to determine whether we run
 	// storage migration logic. This should match directly with the semantic versions of the Rust crate.
-	#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug)]
+	#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, MaxEncodedLen)]
 	pub enum Releases {
 		V1_0_0,
 		V2_0_0,
