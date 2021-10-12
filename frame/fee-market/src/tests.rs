@@ -47,7 +47,10 @@ use std::{collections::VecDeque, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::{
 	self as darwinia_fee_market,
-	payment::{slash_order_assigned_relayers, RewardsBook},
+	s2s::{
+		payment::{cal_rewards, slash_order_assigned_relayers, RewardsBook},
+		FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler,
+	},
 	*,
 };
 
@@ -290,7 +293,7 @@ impl MessageDeliveryAndDispatchPayment<AccountId, TestMessageFee>
 			confirmation_relayer_rewards,
 			assigned_relayers_rewards,
 			treasury_total_rewards,
-		} = crate::payment::cal_rewards::<Test, ()>(message_relayers, relayer_fund_account);
+		} = cal_rewards::<Test, ()>(message_relayers, relayer_fund_account);
 		let confimation_key = (
 			b":relayer-reward:",
 			confirmation_relayer,
@@ -399,8 +402,8 @@ impl pallet_bridge_messages::Config for Test {
 	type TargetHeaderChain = TestTargetHeaderChain;
 	type LaneMessageVerifier = TestLaneMessageVerifier;
 	type MessageDeliveryAndDispatchPayment = TestMessageDeliveryAndDispatchPayment;
-	type OnMessageAccepted = MessageAcceptedHandler<Self>;
-	type OnDeliveryConfirmed = MessageConfirmedHandler<Self>;
+	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self>;
+	type OnDeliveryConfirmed = FeeMarketMessageConfirmedHandler<Self>;
 
 	type SourceHeaderChain = TestSourceHeaderChain;
 	type MessageDispatch = TestMessageDispatch;

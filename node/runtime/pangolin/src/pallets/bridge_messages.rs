@@ -2,7 +2,7 @@ pub use pallet_bridge_messages::Instance1 as WithPangoroMessages;
 
 // --- paritytech ---
 use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId, MessageNonce};
-use frame_support::pallet_prelude::Weight;
+use frame_support::pallet_prelude::*;
 use pallet_bridge_messages::{weights::RialtoWeight, Config};
 use sp_std::marker::PhantomData;
 // --- darwinia-network ---
@@ -18,7 +18,9 @@ use bridge_primitives::{
 	MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE, MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
 	PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE,
 };
-use darwinia_fee_market::payment::FeeMarketPayment;
+use darwinia_fee_market::s2s::{
+	FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler, FeeMarketPayment,
+};
 use darwinia_support::{
 	s2s::{nonce_to_message_id, MessageConfirmer},
 	to_bytes32,
@@ -65,8 +67,11 @@ impl Config<WithPangoroMessages> for Runtime {
 		RootAccountForPayments,
 	>;
 
-	type OnMessageAccepted = ();
-	type OnDeliveryConfirmed = PangolinDeliveryConfirmer<Substrate2SubstrateIssuing>;
+	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self>;
+	type OnDeliveryConfirmed = (
+		PangolinDeliveryConfirmer<Substrate2SubstrateIssuing>,
+		FeeMarketMessageConfirmedHandler<Self>,
+	);
 
 	type SourceHeaderChain = Pangoro;
 	type MessageDispatch = FromPangoroMessageDispatch;

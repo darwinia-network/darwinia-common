@@ -13,7 +13,9 @@ use bridge_primitives::{
 	MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE, MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
 	PANGOLIN_CHAIN_ID, PANGORO_PANGOLIN_LANE,
 };
-use darwinia_fee_market::payment::FeeMarketPayment;
+use darwinia_fee_market::s2s::{
+	FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler, FeeMarketPayment,
+};
 use darwinia_support::{
 	s2s::{nonce_to_message_id, MessageConfirmer},
 	to_bytes32,
@@ -64,8 +66,11 @@ impl Config<WithPangolinMessages> for Runtime {
 		RootAccountForPayments,
 	>;
 
-	type OnMessageAccepted = ();
-	type OnDeliveryConfirmed = PangoroDeliveryConfirmer<Substrate2SubstrateBacking>;
+	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self>;
+	type OnDeliveryConfirmed = (
+		PangoroDeliveryConfirmer<Substrate2SubstrateBacking>,
+		FeeMarketMessageConfirmedHandler<Self>,
+	);
 
 	type SourceHeaderChain = Pangolin;
 	type MessageDispatch = FromPangolinMessageDispatch;

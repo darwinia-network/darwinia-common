@@ -6002,6 +6002,7 @@ dependencies = [
  "darwinia-vesting",
  "dp-asset",
  "dp-evm",
+ "dp-fee",
  "dvm-dynamic-fee",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",

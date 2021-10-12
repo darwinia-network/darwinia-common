@@ -26,15 +26,12 @@ mod benchmarking;
 #[cfg(test)]
 mod tests;
 
-pub mod payment;
+pub mod s2s;
 pub mod weight;
 pub use weight::WeightInfo;
 
 // --- substrate ---
-use bp_messages::{
-	source_chain::{OnDeliveryConfirmed, OnMessageAccepted},
-	DeliveredMessages, LaneId, MessageNonce,
-};
+use bp_messages::{LaneId, MessageNonce};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -49,9 +46,7 @@ use sp_runtime::{
 use sp_std::{default::Default, vec::Vec};
 // --- darwinia-network ---
 use darwinia_support::balance::{LockFor, LockableCurrency};
-use dp_fee::{
-	AssignedRelayers, Order, PriorRelayer, Priority, Relayer, MIN_ENROLLED_RELAYERS_NUMBER,
-};
+use dp_fee::{AssignedRelayers, Order, Relayer, MIN_ENROLLED_RELAYERS_NUMBER};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
@@ -386,57 +381,6 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 		false
-	}
-}
-
-pub struct MessageAcceptedHandler<T>(PhantomData<T>);
-impl<T: Config> OnMessageAccepted for MessageAcceptedHandler<T> {
-	// Called when the message is accepted by message pallet
-	fn on_messages_accepted(lane: &LaneId, message: &MessageNonce) -> Weight {
-		let mut reads = 0;
-		let mut writes = 0;
-
-		// Create a new order based on the latest block, assign relayers which have priority to relaying
-		let now = frame_system::Pallet::<T>::block_number();
-		let (t1, t2, t3) = T::SlotTimes::get();
-		let mut order: Order<T::AccountId, T::BlockNumber, Fee<T>> =
-			Order::new(*lane, *message, now);
-		let (r1, r2, r3) = <Pallet<T>>::assigned_relayers()
-			.expect("Fee market is not ready for accepting message");
-		reads += 1;
-		let assigned_relayers = (
-			PriorRelayer::new(r1.id, Priority::P1, r1.fee, now, t1),
-			PriorRelayer::new(r2.id, Priority::P2, r2.fee, now + t1, t2),
-			PriorRelayer::new(r3.id, Priority::P3, r3.fee, now + t1 + t2, t3),
-		);
-		order.set_assigned_relayers(assigned_relayers);
-
-		// Store the create order
-		<Orders<T>>::insert((order.lane, order.message), order);
-		writes += 1;
-
-		<T as frame_system::Config>::DbWeight::get().reads_writes(reads, writes)
-	}
-}
-
-pub struct MessageConfirmedHandler<T>(PhantomData<T>);
-
-impl<T: Config> OnDeliveryConfirmed for MessageConfirmedHandler<T> {
-	fn on_messages_delivered(lane: &LaneId, delivered_messages: &DeliveredMessages) -> Weight {
-		let now = frame_system::Pallet::<T>::block_number();
-		for message_nonce in delivered_messages.begin..=delivered_messages.end {
-			if let Some(order) = <Orders<T>>::get((lane, message_nonce)) {
-				if !order.is_confirmed() {
-					<Orders<T>>::mutate((lane, message_nonce), |order| match order {
-						Some(order) => order.set_confirm_time(Some(now)),
-						None => unreachable!(),
-					});
-					<ConfirmedMessagesThisBlock<T>>::append((lane, message_nonce));
-				}
-			}
-		}
-
-		<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
 	}
 }
 

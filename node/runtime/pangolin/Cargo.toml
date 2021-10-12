@@ -46,6 +46,7 @@ darwinia-support                    = { default-features = false, path = "../../
 darwinia-vesting                    = { default-features = false, path = "../../../frame/vesting" }
 dp-asset                            = { default-features = false, path = "../../../primitives/asset" }
 dp-evm                              = { default-features = false, path = "../../../primitives/evm" }
+dp-fee                              = { default-features = false, path = "../../../primitives/fee-market" }
 dvm-dynamic-fee                     = { default-features = false, path = "../../../frame/dvm-dynamic-fee" }
 dvm-ethereum                        = { default-features = false, path = "../../../frame/dvm" }
 dvm-rpc-runtime-api                 = { default-features = false, path = "../../../frame/dvm/rpc/runtime-api" }
@@ -157,6 +158,7 @@ std = [
 	"darwinia-vesting/std",
 	"dp-asset/std",
 	"dp-evm/std",
+	"dp-fee/std",
 	"common-primitives/std",
 	"dvm-ethereum/std",
 	"dvm-dynamic-fee/std",
