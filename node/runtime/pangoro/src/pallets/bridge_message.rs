@@ -1,15 +1,13 @@
 pub use pallet_bridge_messages::Instance1 as WithPangolinMessages;
 
-// --- substrate ---
-use frame_support::pallet_prelude::Weight;
-use sp_std::marker::PhantomData;
 // --- paritytech ---
 use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId, MessageNonce};
-
 use bp_runtime::ChainId;
+use frame_support::pallet_prelude::Weight;
 use pallet_bridge_messages::{
 	instant_payments::InstantCurrencyPayments, weights::RialtoWeight, Config,
 };
+use sp_std::marker::PhantomData;
 // --- darwinia-network ---
 use crate::*;
 use bridge_primitives::{
