@@ -145,34 +145,28 @@ impl Convert<H256, AccountId> for AccountIdConverter {
 #[derive(RuntimeDebug)]
 pub struct Pangoro;
 impl Chain for Pangoro {
-	// --- try --- cc @xiaoch05
-	type AccountId = AccountId;
-	type Balance = Balance;
-	type Index = Nonce;
-	type Signature = Signature;
-	// --- try --- cc @xiaoch05
-
 	type BlockNumber = BlockNumber;
 	type Hash = Hash;
 	type Hasher = Hashing;
 	type Header = Header;
+	type AccountId = AccountId;
+	type Balance = Balance;
+	type Index = Nonce;
+	type Signature = Signature;
 }
 
 /// Pangolin chain.
 #[derive(RuntimeDebug)]
 pub struct Pangolin;
 impl Chain for Pangolin {
-	// --- try --- cc @xiaoch05
-	type AccountId = AccountId;
-	type Balance = Balance;
-	type Index = Nonce;
-	type Signature = Signature;
-	// --- try --- cc @xiaoch05
-
 	type BlockNumber = BlockNumber;
 	type Hash = Hash;
 	type Hasher = Hashing;
 	type Header = Header;
+	type AccountId = AccountId;
+	type Balance = Balance;
+	type Index = Nonce;
+	type Signature = Signature;
 }
 
 /// todo: Reserved for other chains, don't forget change bridge_id

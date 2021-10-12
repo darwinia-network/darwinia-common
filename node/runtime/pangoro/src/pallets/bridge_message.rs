@@ -59,17 +59,15 @@ impl Config<WithPangolinMessages> for Runtime {
 
 	type TargetHeaderChain = Pangolin;
 	type LaneMessageVerifier = ToPangolinMessageVerifier;
-	// --- try --- cc @AsceticBear
 	type MessageDeliveryAndDispatchPayment = InstantCurrencyPayments<
 		Runtime,
 		WithPangolinMessages,
-		darwinia_balances::Pallet<Runtime, RingInstance>,
+		Ring,
 		GetDeliveryConfirmationTransactionFee,
 		RootAccountForPayments,
 	>;
 
 	type OnMessageAccepted = ();
-	// --- try --- cc @AsceticBear
 	type OnDeliveryConfirmed = PangoroDeliveryConfirmer<Substrate2SubstrateBacking>;
 
 	type SourceHeaderChain = Pangolin;
