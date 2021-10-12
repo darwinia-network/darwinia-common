@@ -387,6 +387,7 @@ macro_rules! log {
 	};
 }
 
+// TODO: Limited in frame/support/src/lib.rs `StakingLock`
 pub const MAX_UNLOCKING_CHUNKS: usize = 32;
 
 const MONTH_IN_MINUTES: TsInMs = 30 * 24 * 60;
