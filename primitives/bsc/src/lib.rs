@@ -101,23 +101,23 @@ pub struct BSCHeader {
 	/// Block difficulty.
 	pub difficulty: U256,
 	/// Block number.
-	#[cfg_attr(feature = "std", serde(deserialize_with = "array_bytes::hexd2num"))]
+	#[cfg_attr(feature = "std", serde(deserialize_with = "array_bytes::de_hex2num"))]
 	pub number: u64,
 	/// Block gas limit.
 	pub gas_limit: U256,
 	/// Gas used for contracts execution.
 	pub gas_used: U256,
 	/// Block timestamp.
-	#[cfg_attr(feature = "std", serde(deserialize_with = "array_bytes::hexd2num"))]
+	#[cfg_attr(feature = "std", serde(deserialize_with = "array_bytes::de_hex2num"))]
 	pub timestamp: u64,
 	/// Block extra data.
-	#[cfg_attr(feature = "std", serde(deserialize_with = "array_bytes::hexd2bytes"))]
+	#[cfg_attr(feature = "std", serde(deserialize_with = "array_bytes::de_hex2bytes"))]
 	pub extra_data: Bytes,
 	/// MixDigest
 	#[cfg_attr(feature = "std", serde(rename = "mixHash"))]
 	pub mix_digest: Hash,
 	/// Nonce(64 bit in ethereum)
-	#[cfg_attr(feature = "std", serde(deserialize_with = "array_bytes::hexd2bytes"))]
+	#[cfg_attr(feature = "std", serde(deserialize_with = "array_bytes::de_hex2bytes"))]
 	pub nonce: Bytes,
 }
 impl BSCHeader {
