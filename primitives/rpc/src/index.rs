@@ -14,8 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Open Ethereum. If not, see <http://www.gnu.org/licenses/>.
 
-use serde::de::{Error, Visitor};
-use serde::{Deserialize, Deserializer};
+use serde::{
+	de::{Error, Visitor},
+	Deserialize, Deserializer,
+};
 use std::fmt;
 
 /// Represents usize.

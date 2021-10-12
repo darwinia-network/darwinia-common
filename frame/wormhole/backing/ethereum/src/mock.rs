@@ -22,14 +22,16 @@
 use codec::{Decode, Encode};
 // --- paritytech ---
 use frame_election_provider_support::onchain;
-use frame_support::traits::SortedMembers;
-use frame_support::{traits::GenesisBuild, PalletId};
+use frame_support::{
+	traits::{GenesisBuild, SortedMembers},
+	PalletId,
+};
 use frame_system::{mocking::*, EnsureRoot};
 use sp_core::crypto::key_types;
 use sp_runtime::{
 	testing::{Header, TestXt, UintAuthorityId},
 	traits::{IdentifyAccount, IdentityLookup, OpaqueKeys, Verify},
-	DispatchError, DispatchResult, RuntimeDebug, {KeyTypeId, MultiSignature, Perbill},
+	DispatchError, DispatchResult, KeyTypeId, MultiSignature, Perbill, RuntimeDebug,
 };
 // --- darwinia-network ---
 use crate::{self as to_ethereum_backing, pallet::*};

@@ -49,12 +49,8 @@ type FromPangolinMessagesProof = FromBridgedChainMessagesProof<pangolin_primitiv
 type ToPangolinMessagesDeliveryProof =
 	FromBridgedChainMessagesDeliveryProof<pangolin_primitives::Hash>;
 /// Call-dispatch based message dispatch for Pangolin -> Pangoro messages.
-pub type FromPangolinMessageDispatch = FromBridgedChainMessageDispatch<
-	WithPangolinMessageBridge,
-	Runtime,
-	darwinia_balances::Pallet<Runtime, RingInstance>,
-	WithPangolinDispatch,
->;
+pub type FromPangolinMessageDispatch =
+	FromBridgedChainMessageDispatch<WithPangolinMessageBridge, Runtime, Ring, WithPangolinDispatch>;
 
 /// Initial value of `PangolinToPangoroConversionRate` parameter.
 pub const INITIAL_PANGOLIN_TO_PANGORO_CONVERSION_RATE: FixedU128 =

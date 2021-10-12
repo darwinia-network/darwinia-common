@@ -43,10 +43,10 @@ use codec::{Decode, Encode};
 #[cfg(feature = "std")]
 use frame_support::traits::WithdrawReasons;
 use frame_support::{
-	ensure,
+	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get},
 	weights::{DispatchClass, Pays},
-	PalletId, {decl_error, decl_event, decl_module, decl_storage},
+	PalletId,
 };
 use frame_system::{ensure_none, ensure_root};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
