@@ -9,7 +9,7 @@ use bridge_primitives::AccountIdConverter;
 
 impl Config for Runtime {
 	type Event = Event;
-	type MessageId = (LaneId, MessageNonce);
+	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
 	type CallFilter = ();
 	type EncodedCall = FromPangoroEncodedCall;

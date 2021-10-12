@@ -149,6 +149,10 @@ impl Chain for Pangoro {
 	type Hash = Hash;
 	type Hasher = Hashing;
 	type Header = Header;
+	type AccountId = AccountId;
+	type Balance = Balance;
+	type Index = Nonce;
+	type Signature = Signature;
 }
 
 /// Pangolin chain.
@@ -159,6 +163,10 @@ impl Chain for Pangolin {
 	type Hash = Hash;
 	type Hasher = Hashing;
 	type Header = Header;
+	type AccountId = AccountId;
+	type Balance = Balance;
+	type Index = Nonce;
+	type Signature = Signature;
 }
 
 /// todo: Reserved for other chains, don't forget change bridge_id
