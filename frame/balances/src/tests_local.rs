@@ -24,8 +24,9 @@ use codec::{Decode, Encode};
 use frame_support::{
 	assert_err, assert_noop, assert_ok, assert_storage_noop, parameter_types,
 	traits::{
-		BalanceStatus, Currency, ExistenceRequirement, GenesisBuild, LockIdentifier, MaxEncodedLen,
-		ReservableCurrency, StorageMapShim, WithdrawReasons,
+		BalanceStatus, Currency, ExistenceRequirement, GenesisBuild, Imbalance, LockIdentifier,
+		MaxEncodedLen, NamedReservableCurrency, ReservableCurrency, StorageMapShim,
+		WithdrawReasons,
 	},
 	weights::{DispatchInfo, IdentityFee, Weight},
 	StorageValue,
@@ -248,9 +249,7 @@ fn dust_collector_should_work() {
 				[
 					Event::System(frame_system::Event::NewAccount(1)),
 					Event::Ring(darwinia_balances::Event::Endowed(1, 100)),
-					Event::Ring(darwinia_balances::Event::BalanceSet(
-						1, 100, 0
-					)),
+					Event::Ring(darwinia_balances::Event::BalanceSet(1, 100, 0)),
 				]
 			);
 
@@ -274,13 +273,9 @@ fn dust_collector_should_work() {
 				[
 					Event::System(frame_system::Event::NewAccount(1)),
 					Event::Ring(darwinia_balances::Event::Endowed(1, 100)),
-					Event::Ring(darwinia_balances::Event::BalanceSet(
-						1, 100, 0
-					)),
+					Event::Ring(darwinia_balances::Event::BalanceSet(1, 100, 0)),
 					Event::Kton(darwinia_balances::Event::Endowed(1, 100)),
-					Event::Kton(darwinia_balances::Event::BalanceSet(
-						1, 100, 0
-					)),
+					Event::Kton(darwinia_balances::Event::BalanceSet(1, 100, 0)),
 				]
 			);
 

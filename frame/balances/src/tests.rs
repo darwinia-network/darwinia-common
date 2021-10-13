@@ -1058,5 +1058,196 @@ macro_rules! decl_tests {
 					assert_eq!(Ring::total_balance(&2), 100);
 				});
 		}
+
+		#[test]
+		fn named_reserve_should_work() {
+			<$ext_builder>::default().build().execute_with(|| {
+				let _ = Ring::deposit_creating(&1, 111);
+
+				let id_1 = [1u8; 8];
+				let id_2 = [2u8; 8];
+				let id_3 = [3u8; 8];
+
+				// reserve
+
+				assert_noop!(Ring::reserve_named(&id_1, &1, 112), RingError::InsufficientBalance);
+
+				assert_ok!(Ring::reserve_named(&id_1, &1, 12));
+
+				assert_eq!(Ring::reserved_balance(1), 12);
+				assert_eq!(Ring::reserved_balance_named(&id_1, &1), 12);
+				assert_eq!(Ring::reserved_balance_named(&id_2, &1), 0);
+
+				assert_ok!(Ring::reserve_named(&id_1, &1, 2));
+
+				assert_eq!(Ring::reserved_balance(1), 14);
+				assert_eq!(Ring::reserved_balance_named(&id_1, &1), 14);
+				assert_eq!(Ring::reserved_balance_named(&id_2, &1), 0);
+
+				assert_ok!(Ring::reserve_named(&id_2, &1, 23));
+
+				assert_eq!(Ring::reserved_balance(1), 37);
+				assert_eq!(Ring::reserved_balance_named(&id_1, &1), 14);
+				assert_eq!(Ring::reserved_balance_named(&id_2, &1), 23);
+
+				assert_ok!(Ring::reserve(&1, 34));
+
+				assert_eq!(Ring::reserved_balance(1), 71);
+				assert_eq!(Ring::reserved_balance_named(&id_1, &1), 14);
+				assert_eq!(Ring::reserved_balance_named(&id_2, &1), 23);
+
+				assert_eq!(Ring::total_balance(&1), 111);
+				assert_eq!(Ring::free_balance(1), 40);
+
+				assert_noop!(Ring::reserve_named(&id_3, &1, 2), RingError::TooManyReserves);
+
+				// unreserve
+
+				assert_eq!(Ring::unreserve_named(&id_1, &1, 10), 0);
+
+				assert_eq!(Ring::reserved_balance(1), 61);
+				assert_eq!(Ring::reserved_balance_named(&id_1, &1), 4);
+				assert_eq!(Ring::reserved_balance_named(&id_2, &1), 23);
+
+				assert_eq!(Ring::unreserve_named(&id_1, &1, 5), 1);
+
+				assert_eq!(Ring::reserved_balance(1), 57);
+				assert_eq!(Ring::reserved_balance_named(&id_1, &1), 0);
+				assert_eq!(Ring::reserved_balance_named(&id_2, &1), 23);
+
+				assert_eq!(Ring::unreserve_named(&id_2, &1, 3), 0);
+
+				assert_eq!(Ring::reserved_balance(1), 54);
+				assert_eq!(Ring::reserved_balance_named(&id_1, &1), 0);
+				assert_eq!(Ring::reserved_balance_named(&id_2, &1), 20);
+
+				assert_eq!(Ring::total_balance(&1), 111);
+				assert_eq!(Ring::free_balance(1), 57);
+
+				// slash_reserved_named
+
+				assert_ok!(Ring::reserve_named(&id_1, &1, 10));
+
+				assert_eq!(Ring::slash_reserved_named(&id_1, &1, 25).1, 15);
+
+				assert_eq!(Ring::reserved_balance(1), 54);
+				assert_eq!(Ring::reserved_balance_named(&id_1, &1), 0);
+				assert_eq!(Ring::reserved_balance_named(&id_2, &1), 20);
+				assert_eq!(Ring::total_balance(&1), 101);
+
+				assert_eq!(Ring::slash_reserved_named(&id_2, &1, 5).1, 0);
+
+				assert_eq!(Ring::reserved_balance(1), 49);
+				assert_eq!(Ring::reserved_balance_named(&id_1, &1), 0);
+				assert_eq!(Ring::reserved_balance_named(&id_2, &1), 15);
+				assert_eq!(Ring::total_balance(&1), 96);
+
+				// repatriate_reserved_named
+
+				let _ = Ring::deposit_creating(&2, 100);
+
+				assert_eq!(Ring::repatriate_reserved_named(&id_2, &1, &2, 10, BalanceStatus::Reserved).unwrap(), 0);
+
+				assert_eq!(Ring::reserved_balance_named(&id_2, &1), 5);
+				assert_eq!(Ring::reserved_balance_named(&id_2, &2), 10);
+				assert_eq!(Ring::reserved_balance(&2), 10);
+
+				assert_eq!(Ring::repatriate_reserved_named(&id_2, &2, &1, 11, BalanceStatus::Reserved).unwrap(), 1);
+
+				assert_eq!(Ring::reserved_balance_named(&id_2, &1), 15);
+				assert_eq!(Ring::reserved_balance_named(&id_2, &2), 0);
+				assert_eq!(Ring::reserved_balance(&2), 0);
+
+				assert_eq!(Ring::repatriate_reserved_named(&id_2, &1, &2, 10, BalanceStatus::Free).unwrap(), 0);
+				assert_eq!(Ring::reserved_balance_named(&id_2, &1), 5);
+				assert_eq!(Ring::reserved_balance_named(&id_2, &2), 0);
+				assert_eq!(Ring::free_balance(&2), 110);
+
+				// repatriate_reserved_named to self
+
+				assert_eq!(Ring::repatriate_reserved_named(&id_2, &1, &1, 10, BalanceStatus::Reserved).unwrap(), 5);
+				assert_eq!(Ring::reserved_balance_named(&id_2, &1), 5);
+
+				assert_eq!(Ring::free_balance(&1), 47);
+
+				assert_eq!(Ring::repatriate_reserved_named(&id_2, &1, &1, 15, BalanceStatus::Free).unwrap(), 10);
+				assert_eq!(Ring::reserved_balance_named(&id_2, &1), 0);
+
+				assert_eq!(Ring::free_balance(&1), 52);
+			});
+		}
+
+		#[test]
+		fn ensure_reserved_named_should_work() {
+			<$ext_builder>::default().build().execute_with(|| {
+				let _ = Ring::deposit_creating(&1, 111);
+
+				let id = [1u8; 8];
+
+				assert_ok!(Ring::ensure_reserved_named(&id, &1, 15));
+				assert_eq!(Ring::reserved_balance_named(&id, &1), 15);
+
+				assert_ok!(Ring::ensure_reserved_named(&id, &1, 10));
+				assert_eq!(Ring::reserved_balance_named(&id, &1), 10);
+
+				assert_ok!(Ring::ensure_reserved_named(&id, &1, 20));
+				assert_eq!(Ring::reserved_balance_named(&id, &1), 20);
+			});
+		}
+
+		#[test]
+		fn unreserve_all_named_should_work() {
+			<$ext_builder>::default().build().execute_with(|| {
+				let _ = Ring::deposit_creating(&1, 111);
+
+				let id = [1u8; 8];
+
+				assert_ok!(Ring::reserve_named(&id, &1, 15));
+
+				assert_eq!(Ring::unreserve_all_named(&id, &1), 15);
+				assert_eq!(Ring::reserved_balance_named(&id, &1), 0);
+				assert_eq!(Ring::free_balance(&1), 111);
+
+				assert_eq!(Ring::unreserve_all_named(&id, &1), 0);
+			});
+		}
+
+		#[test]
+		fn slash_all_reserved_named_should_work() {
+			<$ext_builder>::default().build().execute_with(|| {
+				let _ = Ring::deposit_creating(&1, 111);
+
+				let id = [1u8; 8];
+
+				assert_ok!(Ring::reserve_named(&id, &1, 15));
+
+				assert_eq!(Ring::slash_all_reserved_named(&id, &1).peek(), 15);
+				assert_eq!(Ring::reserved_balance_named(&id, &1), 0);
+				assert_eq!(Ring::free_balance(&1), 96);
+
+				assert_eq!(Ring::slash_all_reserved_named(&id, &1).peek(), 0);
+			});
+		}
+
+		#[test]
+		fn repatriate_all_reserved_named_should_work() {
+			<$ext_builder>::default().build().execute_with(|| {
+				let _ = Ring::deposit_creating(&1, 111);
+				let _ = Ring::deposit_creating(&2, 10);
+				let _ = Ring::deposit_creating(&3, 10);
+
+				let id = [1u8; 8];
+
+				assert_ok!(Ring::reserve_named(&id, &1, 15));
+
+				assert_ok!(Ring::repatriate_all_reserved_named(&id, &1, &2, BalanceStatus::Reserved));
+				assert_eq!(Ring::reserved_balance_named(&id, &1), 0);
+				assert_eq!(Ring::reserved_balance_named(&id, &2), 15);
+
+				assert_ok!(Ring::repatriate_all_reserved_named(&id, &2, &3, BalanceStatus::Free));
+				assert_eq!(Ring::reserved_balance_named(&id, &2), 0);
+				assert_eq!(Ring::free_balance(&3), 25);
+			});
+		}
 	};
 }
