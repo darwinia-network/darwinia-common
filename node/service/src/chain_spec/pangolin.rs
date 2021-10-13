@@ -168,15 +168,15 @@ pub fn genesis_config() -> ChainSpec {
 		};
 
 		GenesisConfig {
-			frame_system: SystemConfig {
+			system: SystemConfig {
 				code: wasm_binary_unwrap().to_vec(),
 				changes_trie_config: Default::default(),
 			},
-			pallet_babe: BabeConfig {
+			babe: BabeConfig {
 				authorities: vec![],
 				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG)
 			},
-			darwinia_balances_Instance1: BalancesConfig {
+			balances: BalancesConfig {
 				balances: vec![
 					(root.clone(), BUNCH_OF_COINS),
 					(super::get_account_id_from_seed::<sr25519::Public>("Alice"), A_FEW_COINS),
@@ -199,7 +199,7 @@ pub fn genesis_config() -> ChainSpec {
 				)
 				.collect()
 			},
-			darwinia_balances_Instance2: KtonConfig {
+			kton: KtonConfig {
 				balances: vec![(root.clone(), BUNCH_OF_COINS), (s2s_relayer, BUNCH_OF_COINS)]
 					.into_iter()
 					.chain(
@@ -219,7 +219,7 @@ pub fn genesis_config() -> ChainSpec {
 					)
 					.collect()
 			},
-			darwinia_staking: StakingConfig {
+			staking: StakingConfig {
 				minimum_validator_count: 6,
 				validator_count: 6,
 				stakers: initial_authorities
@@ -248,7 +248,7 @@ pub fn genesis_config() -> ChainSpec {
 				payout_fraction: Perbill::from_percent(50),
 				..Default::default()
 			},
-			pallet_session: SessionConfig {
+			session: SessionConfig {
 				keys: initial_authorities
 					.iter()
 					.map(|Keys { stash, session }| (
@@ -258,29 +258,29 @@ pub fn genesis_config() -> ChainSpec {
 					))
 					.collect(),
 			},
-			pallet_grandpa: Default::default(),
-			pallet_im_online: Default::default(),
-			pallet_authority_discovery: Default::default(),
-			darwinia_democracy: Default::default(),
-			pallet_collective_Instance1: Default::default(),
-			pallet_collective_Instance2: Default::default(),
-			darwinia_elections_phragmen: PhragmenElectionConfig {
+			grandpa: Default::default(),
+			im_online: Default::default(),
+			authority_discovery: Default::default(),
+			democracy: Default::default(),
+			council: Default::default(),
+			technical_committee: Default::default(),
+			phragmen_election: PhragmenElectionConfig {
 				members: collective_members
 					.iter()
 					.cloned()
 					.map(|a| (a, A_FEW_COINS))
 					.collect(),
 			},
-			pallet_membership_Instance1: TechnicalMembershipConfig {
+			technical_membership: TechnicalMembershipConfig {
 				phantom: PhantomData::<TechnicalMembershipInstance>,
 				members: collective_members.clone(),
 			},
-			pallet_treasury: Default::default(),
-			pallet_treasury_Instance2: Default::default(),
-			darwinia_claims: Default::default(),
-			darwinia_vesting: Default::default(),
-			pallet_sudo: SudoConfig { key: root.clone() },
-			darwinia_bridge_ethereum: EthereumRelayConfig {
+			treasury: Default::default(),
+			kton_treasury: Default::default(),
+			claims: Default::default(),
+			vesting: Default::default(),
+			sudo: SudoConfig { key: root.clone() },
+			ethereum_relay: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
 						"baseFeePerGas": "0xeb",
@@ -313,7 +313,7 @@ pub fn genesis_config() -> ChainSpec {
 				),
 				..Default::default()
 			},
-			to_ethereum_backing: EthereumBackingConfig {
+			ethereum_backing: EthereumBackingConfig {
 				token_redeem_address: array_bytes::hex_into_unchecked(TOKEN_REDEEM_ADDRESS),
 				deposit_redeem_address: array_bytes::hex_into_unchecked(DEPOSIT_REDEEM_ADDRESS),
 				set_authorities_address: array_bytes::hex_into_unchecked(SET_AUTHORITIES_ADDRESS),
@@ -322,27 +322,27 @@ pub fn genesis_config() -> ChainSpec {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			from_ethereum_issuing: EthereumIssuingConfig {
+			ethereum_issuing: EthereumIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 				ethereum_backing_address: array_bytes::hex_into_unchecked(ETHEREUM_BACKING_ADDRESS),
 			},
-			darwinia_relay_authorities_Instance1: EthereumRelayAuthoritiesConfig {
+			ethereum_relay_authorities: EthereumRelayAuthoritiesConfig {
 				authorities: vec![(
 					super::get_account_id_from_seed::<sr25519::Public>("Alice"),
 					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
 					1
 				)]
 			},
-			to_tron_backing: TronBackingConfig {
+			tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			darwinia_evm: EVMConfig { accounts: evm_accounts },
-			dvm_ethereum: Default::default(),
-			from_substrate_issuing: Substrate2SubstrateIssuingConfig {
+			evm: EVMConfig { accounts: evm_accounts },
+			ethereum: Default::default(),
+			substrate_2_substrate_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
-			darwinia_bridge_bsc: BSCConfig {
+			bsc: BSCConfig {
 				genesis_header: serde_json::from_str(r#"{
 					"difficulty": "0x2",
 					"extraData": "0xd883010100846765746888676f312e31352e35856c696e7578000000fc3ca6b72465176c461afb316ebc773c61faee85a6515daa295e26495cef6f69dfa69911d9d8e4f3bbadb89b29a97c6effb8a411dabc6adeefaa84f5067c8bbe2d4c407bbe49438ed859fe965b140dcf1aab71a93f349bbafec1551819b8be1efea2fc46ca749aa14430b3230294d12c6ab2aac5c2cd68e80b16b581685b1ded8013785d6623cc18d214320b6bb6475970f657164e5b75689b64b7fd1fa275f334f28e1872b61c6014342d914470ec7ac2975be345796c2b7ae2f5b9e386cd1b50a4550696d957cb4900f03a8b6c8fd93d6f4cea42bbb345dbc6f0dfdb5bec739bb832254baf4e8b4cc26bd2b52b31389b56e98b9f8ccdafcc39f3c7d6ebf637c9151673cbc36b88a6f79b60359f141df90a0c745125b131caaffd12b8f7166496996a7da21cf1f1b04d9b3e26a3d077be807dddb074639cd9fa61b47676c064fc50d62cce2fd7544e0b2cc94692d4a704debef7bcb61328e2d3a739effcd3a99387d015e260eefac72ebea1e9ae3261a475a27bb1028f140bc2a7c843318afdea0a6e3c511bbd10f4519ece37dc24887e11b55dee226379db83cffc681495730c11fdde79ba4c0c0670403d7dfc4c816a313885fe04b850f96f27b2e9fd88b147c882ad7caf9b964abfe6543625fcca73b56fe29d3046831574b0681d52bf5383d6f2187b6276c100",
@@ -429,29 +429,29 @@ pub fn development_config() -> ChainSpec {
 		};
 
 		GenesisConfig {
-			frame_system: SystemConfig {
+			system: SystemConfig {
 				code: wasm_binary_unwrap().to_vec(),
 				changes_trie_config: Default::default(),
 			},
-			pallet_babe: BabeConfig {
+			babe: BabeConfig {
 				authorities: vec![],
 				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG)
 			},
-			darwinia_balances_Instance1: BalancesConfig {
+			balances: BalancesConfig {
 				balances: endowed_accounts
 					.clone()
 					.into_iter()
 					.map(|a| (a, MANY_COINS))
 					.collect()
 			},
-			darwinia_balances_Instance2: KtonConfig {
+			kton: KtonConfig {
 				balances: endowed_accounts
 					.clone()
 					.into_iter()
 					.map(|a| (a, A_FEW_COINS))
 					.collect()
 			},
-			darwinia_staking: StakingConfig {
+			staking: StakingConfig {
 				minimum_validator_count: 1,
 				validator_count: 2,
 				stakers: initial_authorities
@@ -465,41 +465,41 @@ pub fn development_config() -> ChainSpec {
 				payout_fraction: Perbill::from_percent(50),
 				..Default::default()
 			},
-			pallet_session: SessionConfig {
+			session: SessionConfig {
 				keys: initial_authorities
 					.iter()
 					.cloned()
 					.map(|x| (x.0.clone(), x.0, session_keys(x.2, x.3, x.4, x.5)))
 					.collect(),
 			},
-			pallet_grandpa: Default::default(),
-			pallet_im_online: Default::default(),
-			pallet_authority_discovery: Default::default(),
-			darwinia_democracy: Default::default(),
-			pallet_collective_Instance1: Default::default(),
-			pallet_collective_Instance2: Default::default(),
-			darwinia_elections_phragmen: PhragmenElectionConfig {
+			grandpa: Default::default(),
+			im_online: Default::default(),
+			authority_discovery: Default::default(),
+			democracy: Default::default(),
+			council: Default::default(),
+			technical_committee: Default::default(),
+			phragmen_election: PhragmenElectionConfig {
 				members: collective_members
 					.iter()
 					.cloned()
 					.map(|a| (a, A_FEW_COINS))
 					.collect(),
 			},
-			pallet_membership_Instance1: TechnicalMembershipConfig {
+			technical_membership: TechnicalMembershipConfig {
 				phantom: PhantomData::<TechnicalMembershipInstance>,
 				members: collective_members.clone(),
 			},
-			pallet_treasury: Default::default(),
-			pallet_treasury_Instance2: Default::default(),
-			darwinia_claims: ClaimsConfig {
+			treasury: Default::default(),
+			kton_treasury: Default::default(),
+			claims: ClaimsConfig {
 				claims_list: ClaimsList::from_file(
 					"bin/res/claims-list.json",
 					"CLAIMS_LIST_PATH",
 				),
 			},
-			darwinia_vesting: Default::default(),
-			pallet_sudo: SudoConfig { key: root.clone() },
-			darwinia_bridge_ethereum: EthereumRelayConfig {
+			vesting: Default::default(),
+			sudo: SudoConfig { key: root.clone() },
+			ethereum_relay: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
 						"baseFeePerGas": "0xeb",
@@ -532,7 +532,7 @@ pub fn development_config() -> ChainSpec {
 				),
 				..Default::default()
 			},
-			to_ethereum_backing: EthereumBackingConfig {
+			ethereum_backing: EthereumBackingConfig {
 				token_redeem_address: array_bytes::hex_into_unchecked(TOKEN_REDEEM_ADDRESS),
 				deposit_redeem_address: array_bytes::hex_into_unchecked(DEPOSIT_REDEEM_ADDRESS),
 				set_authorities_address: array_bytes::hex_into_unchecked(SET_AUTHORITIES_ADDRESS),
@@ -541,27 +541,27 @@ pub fn development_config() -> ChainSpec {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			from_ethereum_issuing: EthereumIssuingConfig {
+			ethereum_issuing: EthereumIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 				ethereum_backing_address: array_bytes::hex_into_unchecked(ETHEREUM_BACKING_ADDRESS),
 			},
-			darwinia_relay_authorities_Instance1: EthereumRelayAuthoritiesConfig {
+			ethereum_relay_authorities: EthereumRelayAuthoritiesConfig {
 				authorities: vec![(
 					super::get_account_id_from_seed::<sr25519::Public>("Alice"),
 					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
 					1
 				)]
 			},
-			to_tron_backing: TronBackingConfig {
+			tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			darwinia_evm: EVMConfig { accounts: evm_accounts },
-			dvm_ethereum: Default::default(),
-			from_substrate_issuing: Substrate2SubstrateIssuingConfig {
+			evm: EVMConfig { accounts: evm_accounts },
+			ethereum: Default::default(),
+			substrate_2_substrate_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
-			darwinia_bridge_bsc: BSCConfig {
+			bsc: BSCConfig {
 				genesis_header: serde_json::from_str(r#"{
 					"difficulty": "0x2",
 					"extraData": "0xd883010100846765746888676f312e31352e35856c696e7578000000fc3ca6b72465176c461afb316ebc773c61faee85a6515daa295e26495cef6f69dfa69911d9d8e4f3bbadb89b29a97c6effb8a411dabc6adeefaa84f5067c8bbe2d4c407bbe49438ed859fe965b140dcf1aab71a93f349bbafec1551819b8be1efea2fc46ca749aa14430b3230294d12c6ab2aac5c2cd68e80b16b581685b1ded8013785d6623cc18d214320b6bb6475970f657164e5b75689b64b7fd1fa275f334f28e1872b61c6014342d914470ec7ac2975be345796c2b7ae2f5b9e386cd1b50a4550696d957cb4900f03a8b6c8fd93d6f4cea42bbb345dbc6f0dfdb5bec739bb832254baf4e8b4cc26bd2b52b31389b56e98b9f8ccdafcc39f3c7d6ebf637c9151673cbc36b88a6f79b60359f141df90a0c745125b131caaffd12b8f7166496996a7da21cf1f1b04d9b3e26a3d077be807dddb074639cd9fa61b47676c064fc50d62cce2fd7544e0b2cc94692d4a704debef7bcb61328e2d3a739effcd3a99387d015e260eefac72ebea1e9ae3261a475a27bb1028f140bc2a7c843318afdea0a6e3c511bbd10f4519ece37dc24887e11b55dee226379db83cffc681495730c11fdde79ba4c0c0670403d7dfc4c816a313885fe04b850f96f27b2e9fd88b147c882ad7caf9b964abfe6543625fcca73b56fe29d3046831574b0681d52bf5383d6f2187b6276c100",
@@ -650,29 +650,29 @@ pub fn local_testnet_config() -> ChainSpec {
 		};
 
 		GenesisConfig {
-			frame_system: SystemConfig {
+			system: SystemConfig {
 				code: wasm_binary_unwrap().to_vec(),
 				changes_trie_config: Default::default(),
 			},
-			pallet_babe: BabeConfig {
+			babe: BabeConfig {
 				authorities: vec![],
 				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG)
 			},
-			darwinia_balances_Instance1: BalancesConfig {
+			balances: BalancesConfig {
 				balances: endowed_accounts
 					.clone()
 					.into_iter()
 					.map(|a| (a, MANY_COINS))
 					.collect()
 			},
-			darwinia_balances_Instance2: KtonConfig {
+			kton: KtonConfig {
 				balances: endowed_accounts
 					.clone()
 					.into_iter()
 					.map(|a| (a, A_FEW_COINS))
 					.collect()
 			},
-			darwinia_staking: StakingConfig {
+			staking: StakingConfig {
 				minimum_validator_count: 6,
 				validator_count: 6,
 				stakers: initial_authorities
@@ -686,41 +686,41 @@ pub fn local_testnet_config() -> ChainSpec {
 				payout_fraction: Perbill::from_percent(50),
 				..Default::default()
 			},
-			pallet_session: SessionConfig {
+			session: SessionConfig {
 				keys: initial_authorities
 					.iter()
 					.cloned()
 					.map(|x| (x.0.clone(), x.0, session_keys(x.2, x.3, x.4, x.5)))
 					.collect(),
 			},
-			pallet_grandpa: Default::default(),
-			pallet_im_online: Default::default(),
-			pallet_authority_discovery: Default::default(),
-			darwinia_democracy: Default::default(),
-			pallet_collective_Instance1: Default::default(),
-			pallet_collective_Instance2: Default::default(),
-			darwinia_elections_phragmen: PhragmenElectionConfig {
+			grandpa: Default::default(),
+			im_online: Default::default(),
+			authority_discovery: Default::default(),
+			democracy: Default::default(),
+			council: Default::default(),
+			technical_committee: Default::default(),
+			phragmen_election: PhragmenElectionConfig {
 				members: collective_members
 					.iter()
 					.cloned()
 					.map(|a| (a, A_FEW_COINS))
 					.collect(),
 			},
-			pallet_membership_Instance1: TechnicalMembershipConfig {
+			technical_membership: TechnicalMembershipConfig {
 				phantom: PhantomData::<TechnicalMembershipInstance>,
 				members: collective_members.clone(),
 			},
-			pallet_treasury: Default::default(),
-			pallet_treasury_Instance2: Default::default(),
-			darwinia_claims: ClaimsConfig {
+			treasury: Default::default(),
+			kton_treasury: Default::default(),
+			claims: ClaimsConfig {
 				claims_list: ClaimsList::from_file(
 					"bin/res/claims-list.json",
 					"CLAIMS_LIST_PATH",
 				),
 			},
-			darwinia_vesting: Default::default(),
-			pallet_sudo: SudoConfig { key: root.clone() },
-			darwinia_bridge_ethereum: EthereumRelayConfig {
+			vesting: Default::default(),
+			sudo: SudoConfig { key: root.clone() },
+			ethereum_relay: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
 						"baseFeePerGas": "0xeb",
@@ -753,7 +753,7 @@ pub fn local_testnet_config() -> ChainSpec {
 				),
 				..Default::default()
 			},
-			to_ethereum_backing: EthereumBackingConfig {
+			ethereum_backing: EthereumBackingConfig {
 				token_redeem_address: array_bytes::hex_into_unchecked(TOKEN_REDEEM_ADDRESS),
 				deposit_redeem_address: array_bytes::hex_into_unchecked(DEPOSIT_REDEEM_ADDRESS),
 				set_authorities_address: array_bytes::hex_into_unchecked(SET_AUTHORITIES_ADDRESS),
@@ -762,27 +762,27 @@ pub fn local_testnet_config() -> ChainSpec {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			from_ethereum_issuing: EthereumIssuingConfig {
+			ethereum_issuing: EthereumIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 				ethereum_backing_address: array_bytes::hex_into_unchecked(ETHEREUM_BACKING_ADDRESS),
 			},
-			darwinia_relay_authorities_Instance1: EthereumRelayAuthoritiesConfig {
+			ethereum_relay_authorities: EthereumRelayAuthoritiesConfig {
 				authorities: vec![(
 					super::get_account_id_from_seed::<sr25519::Public>("Alice"),
 					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
 					1
 				)]
 			},
-			to_tron_backing: TronBackingConfig {
+			tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			darwinia_evm: EVMConfig { accounts: evm_accounts },
-			dvm_ethereum: Default::default(),
-			from_substrate_issuing: Substrate2SubstrateIssuingConfig {
+			evm: EVMConfig { accounts: evm_accounts },
+			ethereum: Default::default(),
+			substrate_2_substrate_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
-			darwinia_bridge_bsc: BSCConfig {
+			bsc: BSCConfig {
 				genesis_header: serde_json::from_str(r#"{
 					"difficulty": "0x2",
 					"extraData": "0xd883010100846765746888676f312e31352e35856c696e7578000000fc3ca6b72465176c461afb316ebc773c61faee85a6515daa295e26495cef6f69dfa69911d9d8e4f3bbadb89b29a97c6effb8a411dabc6adeefaa84f5067c8bbe2d4c407bbe49438ed859fe965b140dcf1aab71a93f349bbafec1551819b8be1efea2fc46ca749aa14430b3230294d12c6ab2aac5c2cd68e80b16b581685b1ded8013785d6623cc18d214320b6bb6475970f657164e5b75689b64b7fd1fa275f334f28e1872b61c6014342d914470ec7ac2975be345796c2b7ae2f5b9e386cd1b50a4550696d957cb4900f03a8b6c8fd93d6f4cea42bbb345dbc6f0dfdb5bec739bb832254baf4e8b4cc26bd2b52b31389b56e98b9f8ccdafcc39f3c7d6ebf637c9151673cbc36b88a6f79b60359f141df90a0c745125b131caaffd12b8f7166496996a7da21cf1f1b04d9b3e26a3d077be807dddb074639cd9fa61b47676c064fc50d62cce2fd7544e0b2cc94692d4a704debef7bcb61328e2d3a739effcd3a99387d015e260eefac72ebea1e9ae3261a475a27bb1028f140bc2a7c843318afdea0a6e3c511bbd10f4519ece37dc24887e11b55dee226379db83cffc681495730c11fdde79ba4c0c0670403d7dfc4c816a313885fe04b850f96f27b2e9fd88b147c882ad7caf9b964abfe6543625fcca73b56fe29d3046831574b0681d52bf5383d6f2187b6276c100",
