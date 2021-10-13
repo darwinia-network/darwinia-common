@@ -28,7 +28,8 @@ use frame_support::{
 	assert_ok, parameter_types,
 	storage::IterableStorageMap,
 	traits::{
-		Currency, FindAuthor, GenesisBuild, Get, OnFinalize, OnInitialize, OneSessionHandler,
+		Currency, FindAuthor, GenesisBuild, Get, MaxEncodedLen, OnFinalize, OnInitialize,
+		OneSessionHandler,
 	},
 	weights::constants::RocksDbWeight,
 	StorageValue,
@@ -907,7 +908,7 @@ pub(crate) fn staking_events() -> Vec<darwinia_staking::Event<Test>> {
 		.into_iter()
 		.map(|r| r.event)
 		.filter_map(|e| {
-			if let Event::darwinia_staking(inner) = e {
+			if let Event::Staking(inner) = e {
 				Some(inner)
 			} else {
 				None

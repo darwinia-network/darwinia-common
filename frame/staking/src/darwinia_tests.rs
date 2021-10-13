@@ -162,7 +162,7 @@ fn slash_ledger_should_work() {
 						}],
 						ring_staking_lock: StakingLock {
 							staking_amount: deposit - deposit_slashed,
-							unbondings: vec![],
+							unbondings: WeakBoundedVec::force_from(vec![], None),
 						},
 						..Default::default()
 					},
@@ -254,7 +254,7 @@ fn normal_kton_should_work() {
 					active_kton: 10 * COIN,
 					kton_staking_lock: StakingLock {
 						staking_amount: 10 * COIN,
-						unbondings: vec![],
+						unbondings: WeakBoundedVec::force_from(vec![], None),
 					},
 					..Default::default()
 				}
@@ -265,7 +265,7 @@ fn normal_kton_should_work() {
 					id: STAKING_ID,
 					lock_for: LockFor::Staking(StakingLock {
 						staking_amount: 10 * COIN,
-						unbondings: vec![],
+						unbondings: WeakBoundedVec::force_from(vec![], None),
 					}),
 					lock_reasons: LockReasons::All
 				}]
@@ -291,7 +291,7 @@ fn normal_kton_should_work() {
 					active_kton: 10 * COIN,
 					kton_staking_lock: StakingLock {
 						staking_amount: 10 * COIN,
-						unbondings: vec![],
+						unbondings: WeakBoundedVec::force_from(vec![], None),
 					},
 					..Default::default()
 				}
@@ -317,17 +317,23 @@ fn time_deposit_ring_unbond_and_withdraw_automatically_should_work() {
 		// check the lock
 		assert_eq!(
 			Ring::locks(stash),
-			vec![BalanceLock {
-				id: STAKING_ID,
-				lock_for: LockFor::Staking(StakingLock {
-					staking_amount: 1000 - unbond_value,
-					unbondings: vec![Unbonding {
-						amount: unbond_value,
-						until: BondingDurationInBlockNumber::get() + start,
-					}],
-				}),
-				lock_reasons: LockReasons::All,
-			}],
+			WeakBoundedVec::force_from(
+				vec![BalanceLock {
+					id: STAKING_ID,
+					lock_for: LockFor::Staking(StakingLock {
+						staking_amount: 1000 - unbond_value,
+						unbondings: WeakBoundedVec::force_from(
+							vec![Unbonding {
+								amount: unbond_value,
+								until: BondingDurationInBlockNumber::get() + start,
+							}],
+							None,
+						),
+					}),
+					lock_reasons: LockReasons::All,
+				}],
+				None
+			),
 		);
 
 		// check the ledger
@@ -341,10 +347,13 @@ fn time_deposit_ring_unbond_and_withdraw_automatically_should_work() {
 				deposit_items: vec![],
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000 - unbond_value,
-					unbondings: vec![Unbonding {
-						amount: unbond_value,
-						until: BondingDurationInBlockNumber::get() + start,
-					}],
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding {
+							amount: unbond_value,
+							until: BondingDurationInBlockNumber::get() + start,
+						}],
+						None
+					),
 				},
 				kton_staking_lock: Default::default(),
 				claimed_rewards: vec![]
@@ -367,16 +376,19 @@ fn time_deposit_ring_unbond_and_withdraw_automatically_should_work() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 900,
-					unbondings: vec![
-						Unbonding {
-							amount: unbond_value,
-							until: BondingDurationInBlockNumber::get() + start,
-						},
-						Unbonding {
-							amount: 90,
-							until: BondingDurationInBlockNumber::get() + unbond_start,
-						},
-					],
+					unbondings: WeakBoundedVec::force_from(
+						vec![
+							Unbonding {
+								amount: unbond_value,
+								until: BondingDurationInBlockNumber::get() + start,
+							},
+							Unbonding {
+								amount: 90,
+								until: BondingDurationInBlockNumber::get() + unbond_start,
+							},
+						],
+						None
+					),
 				}),
 				lock_reasons: LockReasons::All,
 			}],
@@ -400,16 +412,19 @@ fn time_deposit_ring_unbond_and_withdraw_automatically_should_work() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 900,
-					unbondings: vec![
-						Unbonding {
-							amount: unbond_value,
-							until: BondingDurationInBlockNumber::get() + start,
-						},
-						Unbonding {
-							amount: 90,
-							until: BondingDurationInBlockNumber::get() + unbond_start,
-						},
-					],
+					unbondings: WeakBoundedVec::force_from(
+						vec![
+							Unbonding {
+								amount: unbond_value,
+								until: BondingDurationInBlockNumber::get() + start,
+							},
+							Unbonding {
+								amount: 90,
+								until: BondingDurationInBlockNumber::get() + unbond_start,
+							},
+						],
+						None
+					),
 				}),
 				lock_reasons: LockReasons::All,
 			}],
@@ -492,10 +507,14 @@ fn normal_unbond_should_work() {
 			));
 			ledger.active_kton = 0;
 			ledger.kton_staking_lock.staking_amount = 0;
-			ledger.kton_staking_lock.unbondings.push(Unbonding {
-				amount: kton_free_balance,
-				until: BondingDurationInBlockNumber::get() + start,
-			});
+			ledger
+				.kton_staking_lock
+				.unbondings
+				.try_push(Unbonding {
+					amount: kton_free_balance,
+					until: BondingDurationInBlockNumber::get() + start,
+				})
+				.unwrap();
 
 			assert_eq!(Staking::ledger(controller).unwrap(), ledger);
 		}
@@ -520,7 +539,7 @@ fn punished_claim_should_work() {
 			}],
 			ring_staking_lock: StakingLock {
 				staking_amount: bond_value,
-				unbondings: vec![],
+				unbondings: WeakBoundedVec::force_from(vec![], None),
 			},
 			..Default::default()
 		};
@@ -570,7 +589,7 @@ fn punished_claim_should_work() {
 			}],
 			ring_staking_lock: StakingLock {
 				staking_amount: bond_value,
-				unbondings: vec![],
+				unbondings: WeakBoundedVec::force_from(vec![], None),
 			},
 			..Default::default()
 		};
@@ -805,7 +824,7 @@ fn slash_also_slash_unbondings() {
 			);
 
 			ring_staking_lock.staking_amount = 0;
-			ring_staking_lock.unbondings.clear();
+			ring_staking_lock.unbondings = WeakBoundedVec::force_from(vec![], None);
 
 			assert_eq!(
 				Staking::ledger(account_id).unwrap().ring_staking_lock,
@@ -1086,7 +1105,7 @@ fn on_deposit_redeem_should_work() {
 					id: STAKING_ID,
 					lock_for: LockFor::Staking(StakingLock {
 						staking_amount: deposit_amount,
-						unbondings: vec![],
+						unbondings: WeakBoundedVec::force_from(vec![], None),
 					}),
 					lock_reasons: LockReasons::All,
 				}]
@@ -1102,7 +1121,7 @@ fn on_deposit_redeem_should_work() {
 					deposit_items: vec![deposit_item.clone()],
 					ring_staking_lock: StakingLock {
 						staking_amount: deposit_amount,
-						unbondings: vec![]
+						unbondings: WeakBoundedVec::force_from(vec![], None)
 					},
 					..Default::default()
 				}
@@ -1145,7 +1164,7 @@ fn on_deposit_redeem_should_work() {
 					id: STAKING_ID,
 					lock_for: LockFor::Staking(StakingLock {
 						staking_amount: 50 * COIN + deposit_amount,
-						unbondings: vec![],
+						unbondings: WeakBoundedVec::force_from(vec![], None),
 					}),
 					lock_reasons: LockReasons::All,
 				}]
@@ -1243,7 +1262,7 @@ fn staking_with_kton_with_unbondings() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 5,
-					unbondings: vec![],
+					unbondings: WeakBoundedVec::force_from(vec![], None),
 				}),
 				lock_reasons: LockReasons::All,
 			}],
@@ -1261,7 +1280,7 @@ fn staking_with_kton_with_unbondings() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 10,
-					unbondings: vec![],
+					unbondings: WeakBoundedVec::force_from(vec![], None),
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1279,10 +1298,13 @@ fn staking_with_kton_with_unbondings() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
-					unbondings: vec![Unbonding {
-						amount: 9,
-						until: BondingDurationInBlockNumber::get() + unbond_start,
-					},],
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding {
+							amount: 9,
+							until: BondingDurationInBlockNumber::get() + unbond_start,
+						}],
+						None
+					),
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1306,10 +1328,13 @@ fn staking_with_kton_with_unbondings() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
-					unbondings: vec![Unbonding {
-						amount: 9,
-						until: BondingDurationInBlockNumber::get() + unbond_start,
-					},],
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding {
+							amount: 9,
+							until: BondingDurationInBlockNumber::get() + unbond_start,
+						}],
+						None
+					),
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1328,10 +1353,13 @@ fn staking_with_kton_with_unbondings() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 20,
-					unbondings: vec![Unbonding {
-						amount: 9,
-						until: BondingDurationInBlockNumber::get() + unbond_start,
-					},],
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding {
+							amount: 9,
+							until: BondingDurationInBlockNumber::get() + unbond_start,
+						}],
+						None
+					),
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1343,10 +1371,13 @@ fn staking_with_kton_with_unbondings() {
 				active_kton: 20,
 				kton_staking_lock: StakingLock {
 					staking_amount: 20,
-					unbondings: vec![Unbonding {
-						amount: 9,
-						until: BondingDurationInBlockNumber::get() + unbond_start,
-					}],
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding {
+							amount: 9,
+							until: BondingDurationInBlockNumber::get() + unbond_start,
+						}],
+						None
+					),
 				},
 				..Default::default()
 			}
@@ -1372,7 +1403,7 @@ fn staking_with_kton_with_unbondings() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 5,
-					unbondings: vec![],
+					unbondings: WeakBoundedVec::force_from(vec![], None),
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1390,7 +1421,7 @@ fn staking_with_kton_with_unbondings() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 10,
-					unbondings: vec![],
+					unbondings: WeakBoundedVec::force_from(vec![], None),
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1408,10 +1439,13 @@ fn staking_with_kton_with_unbondings() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
-					unbondings: vec![Unbonding {
-						amount: 9,
-						until: BondingDurationInBlockNumber::get() + unbond_start,
-					},],
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding {
+							amount: 9,
+							until: BondingDurationInBlockNumber::get() + unbond_start,
+						}],
+						None
+					)
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1435,10 +1469,13 @@ fn staking_with_kton_with_unbondings() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
-					unbondings: vec![Unbonding {
-						amount: 9,
-						until: BondingDurationInBlockNumber::get() + unbond_start,
-					},],
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding {
+							amount: 9,
+							until: BondingDurationInBlockNumber::get() + unbond_start,
+						}],
+						None
+					)
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1457,10 +1494,13 @@ fn staking_with_kton_with_unbondings() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 20,
-					unbondings: vec![Unbonding {
-						amount: 9,
-						until: BondingDurationInBlockNumber::get() + unbond_start,
-					}],
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding {
+							amount: 9,
+							until: BondingDurationInBlockNumber::get() + unbond_start,
+						}],
+						None
+					)
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1472,10 +1512,13 @@ fn staking_with_kton_with_unbondings() {
 				active_ring: 20,
 				ring_staking_lock: StakingLock {
 					staking_amount: 20,
-					unbondings: vec![Unbonding {
-						amount: 9,
-						until: BondingDurationInBlockNumber::get() + unbond_start,
-					}],
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding {
+							amount: 9,
+							until: BondingDurationInBlockNumber::get() + unbond_start,
+						}],
+						None
+					)
 				},
 				..Default::default()
 			}
@@ -1504,7 +1547,7 @@ fn unbound_values_in_twice() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 5,
-					unbondings: vec![],
+					unbondings: WeakBoundedVec::force_from(vec![], None),
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1522,7 +1565,7 @@ fn unbound_values_in_twice() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 9,
-					unbondings: vec![],
+					unbondings: WeakBoundedVec::force_from(vec![], None),
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1540,10 +1583,13 @@ fn unbound_values_in_twice() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 7,
-					unbondings: vec![Unbonding {
-						amount: 2,
-						until: BondingDurationInBlockNumber::get() + unbond_start_1,
-					}],
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding {
+							amount: 2,
+							until: BondingDurationInBlockNumber::get() + unbond_start_1,
+						}],
+						None
+					),
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1561,16 +1607,19 @@ fn unbound_values_in_twice() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
-					unbondings: vec![
-						Unbonding {
-							amount: 2,
-							until: BondingDurationInBlockNumber::get() + unbond_start_1,
-						},
-						Unbonding {
-							amount: 6,
-							until: BondingDurationInBlockNumber::get() + unbond_start_2,
-						}
-					],
+					unbondings: WeakBoundedVec::force_from(
+						vec![
+							Unbonding {
+								amount: 2,
+								until: BondingDurationInBlockNumber::get() + unbond_start_1,
+							},
+							Unbonding {
+								amount: 6,
+								until: BondingDurationInBlockNumber::get() + unbond_start_2,
+							}
+						],
+						None
+					)
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1608,16 +1657,19 @@ fn unbound_values_in_twice() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
-					unbondings: vec![
-						Unbonding {
-							amount: 2,
-							until: BondingDurationInBlockNumber::get() + unbond_start_1,
-						},
-						Unbonding {
-							amount: 6,
-							until: BondingDurationInBlockNumber::get() + unbond_start_2,
-						}
-					],
+					unbondings: WeakBoundedVec::force_from(
+						vec![
+							Unbonding {
+								amount: 2,
+								until: BondingDurationInBlockNumber::get() + unbond_start_1,
+							},
+							Unbonding {
+								amount: 6,
+								until: BondingDurationInBlockNumber::get() + unbond_start_2,
+							}
+						],
+						None
+					)
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1635,16 +1687,19 @@ fn unbound_values_in_twice() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
-					unbondings: vec![
-						Unbonding {
-							amount: 2,
-							until: BondingDurationInBlockNumber::get() + unbond_start_1,
-						},
-						Unbonding {
-							amount: 6,
-							until: BondingDurationInBlockNumber::get() + unbond_start_2,
-						}
-					],
+					unbondings: WeakBoundedVec::force_from(
+						vec![
+							Unbonding {
+								amount: 2,
+								until: BondingDurationInBlockNumber::get() + unbond_start_1,
+							},
+							Unbonding {
+								amount: 6,
+								until: BondingDurationInBlockNumber::get() + unbond_start_2,
+							}
+						],
+						None
+					)
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1663,16 +1718,19 @@ fn unbound_values_in_twice() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 2,
-					unbondings: vec![
-						Unbonding {
-							amount: 2,
-							until: BondingDurationInBlockNumber::get() + unbond_start_1,
-						},
-						Unbonding {
-							amount: 6,
-							until: BondingDurationInBlockNumber::get() + unbond_start_2,
-						}
-					],
+					unbondings: WeakBoundedVec::force_from(
+						vec![
+							Unbonding {
+								amount: 2,
+								until: BondingDurationInBlockNumber::get() + unbond_start_1,
+							},
+							Unbonding {
+								amount: 6,
+								until: BondingDurationInBlockNumber::get() + unbond_start_2,
+							}
+						],
+						None
+					)
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1699,7 +1757,7 @@ fn unbound_values_in_twice() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 5,
-					unbondings: vec![],
+					unbondings: WeakBoundedVec::force_from(vec![], None),
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1717,7 +1775,7 @@ fn unbound_values_in_twice() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 9,
-					unbondings: vec![],
+					unbondings: WeakBoundedVec::force_from(vec![], None),
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1736,10 +1794,13 @@ fn unbound_values_in_twice() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 7,
-					unbondings: vec![Unbonding {
-						amount: 2,
-						until: BondingDurationInBlockNumber::get() + unbond_start_1,
-					}],
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding {
+							amount: 2,
+							until: BondingDurationInBlockNumber::get() + unbond_start_1,
+						}],
+						None
+					)
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1758,16 +1819,19 @@ fn unbound_values_in_twice() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
-					unbondings: vec![
-						Unbonding {
-							amount: 2,
-							until: BondingDurationInBlockNumber::get() + unbond_start_1,
-						},
-						Unbonding {
-							amount: 6,
-							until: BondingDurationInBlockNumber::get() + unbond_start_2,
-						}
-					],
+					unbondings: WeakBoundedVec::force_from(
+						vec![
+							Unbonding {
+								amount: 2,
+								until: BondingDurationInBlockNumber::get() + unbond_start_1,
+							},
+							Unbonding {
+								amount: 6,
+								until: BondingDurationInBlockNumber::get() + unbond_start_2,
+							}
+						],
+						None
+					)
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1805,16 +1869,19 @@ fn unbound_values_in_twice() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
-					unbondings: vec![
-						Unbonding {
-							amount: 2,
-							until: BondingDurationInBlockNumber::get() + unbond_start_1,
-						},
-						Unbonding {
-							amount: 6,
-							until: BondingDurationInBlockNumber::get() + unbond_start_2,
-						}
-					],
+					unbondings: WeakBoundedVec::force_from(
+						vec![
+							Unbonding {
+								amount: 2,
+								until: BondingDurationInBlockNumber::get() + unbond_start_1,
+							},
+							Unbonding {
+								amount: 6,
+								until: BondingDurationInBlockNumber::get() + unbond_start_2,
+							}
+						],
+						None
+					)
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1835,16 +1902,19 @@ fn unbound_values_in_twice() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
-					unbondings: vec![
-						Unbonding {
-							amount: 2,
-							until: BondingDurationInBlockNumber::get() + unbond_start_1,
-						},
-						Unbonding {
-							amount: 6,
-							until: BondingDurationInBlockNumber::get() + unbond_start_2,
-						}
-					],
+					unbondings: WeakBoundedVec::force_from(
+						vec![
+							Unbonding {
+								amount: 2,
+								until: BondingDurationInBlockNumber::get() + unbond_start_1,
+							},
+							Unbonding {
+								amount: 6,
+								until: BondingDurationInBlockNumber::get() + unbond_start_2,
+							}
+						],
+						None
+					)
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1864,16 +1934,19 @@ fn unbound_values_in_twice() {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 2,
-					unbondings: vec![
-						Unbonding {
-							amount: 2,
-							until: BondingDurationInBlockNumber::get() + unbond_start_1,
-						},
-						Unbonding {
-							amount: 6,
-							until: BondingDurationInBlockNumber::get() + unbond_start_2,
-						}
-					],
+					unbondings: WeakBoundedVec::force_from(
+						vec![
+							Unbonding {
+								amount: 2,
+								until: BondingDurationInBlockNumber::get() + unbond_start_1,
+							},
+							Unbonding {
+								amount: 6,
+								until: BondingDurationInBlockNumber::get() + unbond_start_2,
+							}
+						],
+						None
+					)
 				}),
 				lock_reasons: LockReasons::All,
 			}]
@@ -1908,7 +1981,7 @@ fn bond_values_when_some_value_unbonding() {
 				active_kton: 5,
 				kton_staking_lock: StakingLock {
 					staking_amount: 5,
-					unbondings: vec![],
+					unbondings: WeakBoundedVec::force_from(vec![], None),
 				},
 				..Default::default()
 			},
@@ -1925,10 +1998,13 @@ fn bond_values_when_some_value_unbonding() {
 				stash: 123,
 				kton_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: vec![Unbonding {
-						amount: 5,
-						until: start + BondingDurationInBlockNumber::get(),
-					}],
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding {
+							amount: 5,
+							until: start + BondingDurationInBlockNumber::get(),
+						}],
+						None
+					)
 				},
 				..Default::default()
 			},
@@ -1961,7 +2037,7 @@ fn bond_values_when_some_value_unbonding() {
 				active_kton: 1,
 				kton_staking_lock: StakingLock {
 					staking_amount: 1,
-					unbondings: vec![],
+					unbondings: WeakBoundedVec::force_from(vec![], None),
 				},
 				..Default::default()
 			},
@@ -1990,7 +2066,7 @@ fn bond_values_when_some_value_unbonding() {
 				active_ring: 5,
 				ring_staking_lock: StakingLock {
 					staking_amount: 5,
-					unbondings: vec![],
+					unbondings: WeakBoundedVec::force_from(vec![], None),
 				},
 				..Default::default()
 			},
@@ -2007,10 +2083,13 @@ fn bond_values_when_some_value_unbonding() {
 				stash: 123,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: vec![Unbonding {
-						amount: 5,
-						until: start + BondingDurationInBlockNumber::get(),
-					}],
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding {
+							amount: 5,
+							until: start + BondingDurationInBlockNumber::get(),
+						}],
+						None
+					)
 				},
 				..Default::default()
 			},
@@ -2043,7 +2122,7 @@ fn bond_values_when_some_value_unbonding() {
 				active_ring: 1,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1,
-					unbondings: vec![],
+					unbondings: WeakBoundedVec::force_from(vec![], None),
 				},
 				..Default::default()
 			}
@@ -2073,7 +2152,7 @@ fn rebond_event_should_work() {
 					active_ring: 1000,
 					ring_staking_lock: StakingLock {
 						staking_amount: 1000,
-						unbondings: vec![]
+						unbondings: WeakBoundedVec::force_from(vec![], None)
 					},
 					..Default::default()
 				})
@@ -2089,10 +2168,13 @@ fn rebond_event_should_work() {
 					active_ring: 600,
 					ring_staking_lock: StakingLock {
 						staking_amount: 600,
-						unbondings: vec![Unbonding {
-							amount: 400,
-							until: 6 + bonding_duration_in_blocks(),
-						}]
+						unbondings: WeakBoundedVec::force_from(
+							vec![Unbonding {
+								amount: 400,
+								until: 6 + bonding_duration_in_blocks(),
+							}],
+							None
+						)
 					},
 					..Default::default()
 				})
@@ -2109,10 +2191,13 @@ fn rebond_event_should_work() {
 					active_ring: 800,
 					ring_staking_lock: StakingLock {
 						staking_amount: 800,
-						unbondings: vec![Unbonding {
-							amount: 200,
-							until: 6 + BondingDurationInBlockNumber::get(),
-						},]
+						unbondings: WeakBoundedVec::force_from(
+							vec![Unbonding {
+								amount: 200,
+								until: 6 + BondingDurationInBlockNumber::get(),
+							}],
+							None
+						)
 					},
 					..Default::default()
 				})

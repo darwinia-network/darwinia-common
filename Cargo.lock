@@ -1836,6 +1836,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
+ "max-encoded-len",
  "pallet-authorship",
  "pallet-session",
  "pallet-timestamp",
