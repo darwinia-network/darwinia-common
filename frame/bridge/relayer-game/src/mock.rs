@@ -297,6 +297,9 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
 	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }

@@ -90,23 +90,29 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
-	type MaxLocks = ();
-	type OtherCurrencies = ();
-	type WeightInfo = ();
 	type Balance = Balance;
 	type Event = Event;
+	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	type MaxLocks = MaxLocks;
 	type BalanceInfo = AccountData<Balance>;
+	type OtherCurrencies = ();
+	type WeightInfo = ();
 }
 impl darwinia_balances::Config<KtonInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
-	type MaxLocks = ();
-	type OtherCurrencies = ();
-	type WeightInfo = ();
 	type Balance = Balance;
 	type Event = Event;
+	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	type MaxLocks = MaxLocks;
 	type BalanceInfo = AccountData<Balance>;
+	type OtherCurrencies = ();
+	type WeightInfo = ();
 }
 
 frame_support::parameter_types! {

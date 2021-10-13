@@ -638,11 +638,13 @@ mod tests {
 		type DustRemoval = ();
 		type Event = ();
 		type ExistentialDeposit = ExistentialDeposit;
-		type BalanceInfo = AccountData<Balance>;
 		type AccountStore = System;
 		type MaxLocks = ();
-		type WeightInfo = ();
+		type MaxReserves = ();
+		type ReserveIdentifier = [u8; 8];
+		type BalanceInfo = AccountData<Balance>;
 		type OtherCurrencies = ();
+		type WeightInfo = ();
 	}
 
 	parameter_types! {

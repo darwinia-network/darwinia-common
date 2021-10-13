@@ -46,12 +46,14 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
-	type MaxLocks = ();
 	type OtherCurrencies = ();
-	type WeightInfo = ();
 	type Balance = Balance;
 	type Event = ();
+	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
 	type BalanceInfo = AccountData<Balance>;
+	type WeightInfo = ();
 }
 
 frame_support::parameter_types! {

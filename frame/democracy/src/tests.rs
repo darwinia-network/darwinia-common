@@ -124,17 +124,17 @@ parameter_types! {
 	pub const MaxLocks: u32 = 10;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
-	// type MaxReserves = ();
-	// type ReserveIdentifier = [u8; 8];
-	type MaxLocks = MaxLocks;
 	type Balance = u64;
 	type Event = Event;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
-	type WeightInfo = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	type MaxLocks = MaxLocks;
 	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
+	type WeightInfo = ();
 }
 parameter_types! {
 	pub const LaunchPeriod: u64 = 2;
