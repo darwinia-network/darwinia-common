@@ -274,9 +274,8 @@
 		"message": "MessageNonce",
 		"sent_time": "BlockNumber",
 		"confirm_time": "BlockNumber",
-		"assigned_relayers": "Option<AssignedRelayers>"
+		"assigned_relayers": "Vec<PriorRelayer>"
 	},
-	"AssignedRelayers": "(PriorRelayer, PriorRelayer, PriorRelayer)",
 	"PriorRelayer": {
 		"id": "AccountId",
 		"priority": "Priority",
