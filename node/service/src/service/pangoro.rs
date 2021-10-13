@@ -359,6 +359,7 @@ where
 			block_import,
 			env: proposer,
 			sync_oracle: network.clone(),
+			justification_sync_link: network.clone(),
 			create_inherent_data_providers: move |parent, ()| {
 				let client_clone = client_clone.clone();
 				async move {
@@ -568,7 +569,7 @@ where
 	if enable_grandpa {
 		let name = config.network.node_name.clone();
 
-		let config = grandpa::Config {
+		let config = sc_finality_grandpa::Config {
 			gossip_duration: Duration::from_millis(1000),
 			justification_period: 512,
 			name: Some(name),
@@ -580,7 +581,7 @@ where
 
 		task_manager.spawn_handle().spawn_blocking(
 			"grandpa-observer",
-			grandpa::run_grandpa_observer(config, grandpa_link, network.clone())?,
+			sc_finality_grandpa::run_grandpa_observer(config, grandpa_link, network.clone())?,
 		);
 	}
 
