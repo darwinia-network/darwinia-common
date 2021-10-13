@@ -178,7 +178,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Issue an EVM call operation. This is similar to a message call transaction in Ethereum.
 		#[pallet::weight(T::GasWeightMapping::gas_to_weight(*gas_limit))]
-		pub(super) fn call(
+		pub fn call(
 			origin: OriginFor<T>,
 			source: H160,
 			target: H160,
@@ -221,7 +221,7 @@ pub mod pallet {
 		/// Issue an EVM create operation. This is similar to a contract creation transaction in
 		/// Ethereum.
 		#[pallet::weight(T::GasWeightMapping::gas_to_weight(*gas_limit))]
-		fn create(
+		pub fn create(
 			origin: OriginFor<T>,
 			source: H160,
 			init: Vec<u8>,
@@ -268,7 +268,7 @@ pub mod pallet {
 
 		/// Issue an EVM create2 operation.
 		#[pallet::weight(T::GasWeightMapping::gas_to_weight(*gas_limit))]
-		fn create2(
+		pub fn create2(
 			origin: OriginFor<T>,
 			source: H160,
 			init: Vec<u8>,
