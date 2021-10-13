@@ -26,6 +26,7 @@ sp-std          = { default-features = false, git = "https://github.com/darwinia
 
 [dev-dependencies]
 # paritytech
+max-encoded-len            = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 sp-core                    = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 sp-io                      = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
