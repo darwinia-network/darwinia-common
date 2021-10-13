@@ -30,8 +30,6 @@ mod mock_header;
 pub mod weight;
 pub use weight::WeightInfo;
 
-// --- crates.io ---
-use sha3::Digest;
 // --- paritytech ---
 use frame_support::{
 	ensure,
@@ -50,7 +48,7 @@ use sp_std::{str, vec::Vec};
 use darwinia_evm::{AddressMapping, GasWeightMapping};
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{
-	balance::*, mapping_token::*, traits::EthereumReceipt, ChainName, PalletDigest,
+	balance::*, mapping_token::*, traits::EthereumReceipt, ChainName,
 };
 use dp_contract::{
 	ethereum_backing::{EthereumBacking, EthereumLockEvent, EthereumRegisterEvent},
@@ -358,13 +356,6 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn digest() -> PalletDigest {
-		let mut digest: PalletDigest = Default::default();
-		let pallet_digest = sha3::Keccak256::digest(T::PalletId::get().encode().as_slice());
-		digest.copy_from_slice(&pallet_digest[..4]);
-		digest
-	}
-
 	pub fn mapped_token_address(
 		backing_address: EthereumAddress,
 		original_token: EthereumAddress,

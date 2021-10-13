@@ -282,4 +282,3 @@ fn burn_and_remote_unlock_success() {
 		<Test as s2s_issuing::Config>::CallEncoder::encode_remote_unlock(burn_info).unwrap();
 	});
 }
-

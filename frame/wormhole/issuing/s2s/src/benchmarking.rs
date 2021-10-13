@@ -24,8 +24,7 @@ use array_bytes::{hex2bytes_unchecked, hex_into_unchecked};
 use dp_asset::token::{Token, TokenOption};
 use frame_benchmarking::benchmarks;
 use frame_system::RawOrigin;
-use sp_runtime::traits::UniqueSaturatedInto;
-use sp_runtime::SaturatedConversion;
+use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
 use sp_std::vec;
 
 const SPEC_VERSION: u32 = 123;
