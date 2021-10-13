@@ -89,6 +89,8 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// send s2s message to remote backing module
+		/// this only can be called by mapping-token-factory
 		#[pallet::weight(
 			<T as Config>::WeightInfo::send_message()
 		)]
