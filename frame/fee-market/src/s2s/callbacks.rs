@@ -21,7 +21,7 @@ use bp_messages::{
 	source_chain::{OnDeliveryConfirmed, OnMessageAccepted},
 	DeliveredMessages, LaneId, MessageNonce,
 };
-use dp_fee::{Order, PriorRelayer, Priority};
+use dp_fee::Order;
 
 pub struct FeeMarketMessageAcceptedHandler<T>(PhantomData<T>);
 impl<T: Config> OnMessageAccepted for FeeMarketMessageAcceptedHandler<T> {
@@ -33,17 +33,10 @@ impl<T: Config> OnMessageAccepted for FeeMarketMessageAcceptedHandler<T> {
 		// Create a new order based on the latest block, assign relayers which have priority to relaying
 		let now = frame_system::Pallet::<T>::block_number();
 		let (t1, t2, t3) = T::SlotTimes::get();
-		let mut order: Order<T::AccountId, T::BlockNumber, Fee<T>> =
-			Order::new(*lane, *message, now);
-		let (r1, r2, r3) = <Pallet<T>>::assigned_relayers()
+		let assigned_relayers = <Pallet<T>>::assigned_relayers()
 			.expect("Fee market is not ready for accepting message");
 		reads += 1;
-		let assigned_relayers = (
-			PriorRelayer::new(r1.id, Priority::P1, r1.fee, now, t1),
-			PriorRelayer::new(r2.id, Priority::P2, r2.fee, now + t1, t2),
-			PriorRelayer::new(r3.id, Priority::P3, r3.fee, now + t1 + t2, t3),
-		);
-		order.set_assigned_relayers(assigned_relayers);
+		let order = Order::new(*lane, *message, now, assigned_relayers, (t1, t2, t3));
 
 		// Store the create order
 		<Orders<T>>::insert((order.lane, order.message), order);

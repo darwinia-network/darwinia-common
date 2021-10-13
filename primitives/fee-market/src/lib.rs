@@ -23,9 +23,12 @@ use sp_std::{
 	cmp::{Ord, Ordering, PartialEq},
 	default::Default,
 	ops::Range,
+	vec::Vec,
 };
 
-pub const MIN_ENROLLED_RELAYERS_NUMBER: usize = 3;
+// Fee market's order relayers assign has tightly relationship with this value.
+// Changing this number should be much carefully to avoid unexpected runtime behavior.
+pub const MIN_RELAYERS_NUMBER: usize = 3;
 
 #[derive(Encode, Decode, Clone, Eq, Debug, Copy)]
 pub struct Relayer<AccountId, Balance> {
@@ -77,7 +80,85 @@ impl<AccountId: Default, Balance: Default> Default for Relayer<AccountId, Balanc
 		}
 	}
 }
+#[derive(Clone, Encode, Decode, Default)]
+pub struct Order<AccountId, BlockNumber, Balance> {
+	pub lane: LaneId,
+	pub message: MessageNonce,
+	pub sent_time: BlockNumber,
+	pub confirm_time: Option<BlockNumber>,
+	pub relayers: Vec<PriorRelayer<AccountId, BlockNumber, Balance>>,
+}
 
+impl<AccountId, BlockNumber, Balance> Order<AccountId, BlockNumber, Balance>
+where
+	BlockNumber: sp_std::ops::Add<Output = BlockNumber> + Copy,
+	Balance: Copy,
+	AccountId: Clone,
+{
+	pub fn new(
+		lane: LaneId,
+		message: MessageNonce,
+		sent_time: BlockNumber,
+		assigned_relayers: Vec<Relayer<AccountId, Balance>>,
+		slot_times: (BlockNumber, BlockNumber, BlockNumber),
+	) -> Self {
+		let mut relayers = Vec::with_capacity(MIN_RELAYERS_NUMBER);
+		if assigned_relayers.len() == MIN_RELAYERS_NUMBER {
+			let (t1, t2, t3) = slot_times;
+			let r1 = assigned_relayers
+				.get(0)
+				.expect("At least MIN_RELAYERS_NUMBER(3) items exists");
+			let r2 = assigned_relayers
+				.get(1)
+				.expect("At least MIN_RELAYERS_NUMBER(3) items exists");
+			let r3 = assigned_relayers
+				.get(2)
+				.expect("At least MIN_RELAYERS_NUMBER(3) items exists");
+
+			let p1 = PriorRelayer::new(r1.id.clone(), Priority::P1, r1.fee, sent_time, t1);
+			let p2 = PriorRelayer::new(r2.id.clone(), Priority::P2, r2.fee, sent_time + t1, t2);
+			let p3 =
+				PriorRelayer::new(r3.id.clone(), Priority::P3, r3.fee, sent_time + t1 + t2, t3);
+			relayers.push(p1);
+			relayers.push(p2);
+			relayers.push(p3);
+		}
+
+		Self {
+			lane,
+			message,
+			sent_time,
+			confirm_time: None,
+			relayers,
+		}
+	}
+
+	pub fn set_confirm_time(&mut self, confirm_time: Option<BlockNumber>) {
+		self.confirm_time = confirm_time;
+	}
+
+	pub fn relayers_slice(&self) -> &[PriorRelayer<AccountId, BlockNumber, Balance>] {
+		self.relayers.as_ref()
+	}
+
+	pub fn relayers(
+		&self,
+	) -> (
+		Option<&PriorRelayer<AccountId, BlockNumber, Balance>>,
+		Option<&PriorRelayer<AccountId, BlockNumber, Balance>>,
+		Option<&PriorRelayer<AccountId, BlockNumber, Balance>>,
+	) {
+		(
+			self.relayers.get(0),
+			self.relayers.get(1),
+			self.relayers.get(2),
+		)
+	}
+
+	pub fn is_confirmed(&self) -> bool {
+		self.confirm_time.is_some()
+	}
+}
 #[derive(Clone, Encode, Decode, Default)]
 pub struct PriorRelayer<AccountId, BlockNumber, Balance> {
 	pub id: AccountId,
@@ -86,7 +167,7 @@ pub struct PriorRelayer<AccountId, BlockNumber, Balance> {
 	pub valid_range: Range<BlockNumber>,
 }
 
-impl<AccountId, BlockNumber, Balance> PriorRelayer<AccountId, BlockNumber, Balance>
+impl<'a, AccountId, BlockNumber, Balance> PriorRelayer<AccountId, BlockNumber, Balance>
 where
 	BlockNumber: sp_std::ops::Add<Output = BlockNumber> + Clone,
 {
@@ -120,51 +201,5 @@ pub enum Priority {
 impl Default for Priority {
 	fn default() -> Self {
 		Priority::NoPriority
-	}
-}
-
-pub type AssignedRelayers<AccountId, BlockNumber, Balance> = (
-	PriorRelayer<AccountId, BlockNumber, Balance>,
-	PriorRelayer<AccountId, BlockNumber, Balance>,
-	PriorRelayer<AccountId, BlockNumber, Balance>,
-);
-
-#[derive(Clone, Encode, Decode, Default)]
-pub struct Order<AccountId, BlockNumber, Balance> {
-	pub lane: LaneId,
-	pub message: MessageNonce,
-	pub sent_time: BlockNumber,
-	pub confirm_time: Option<BlockNumber>,
-	pub assigned_relayers: Option<AssignedRelayers<AccountId, BlockNumber, Balance>>,
-}
-
-impl<AccountId, BlockNumber, Balance> Order<AccountId, BlockNumber, Balance> {
-	pub fn new(lane: LaneId, message: MessageNonce, sent_time: BlockNumber) -> Self {
-		Self {
-			lane,
-			message,
-			sent_time,
-			confirm_time: None,
-			assigned_relayers: None,
-		}
-	}
-
-	pub fn set_assigned_relayers(
-		&mut self,
-		assigned_relayers: AssignedRelayers<AccountId, BlockNumber, Balance>,
-	) {
-		self.assigned_relayers = Some(assigned_relayers);
-	}
-
-	pub fn set_confirm_time(&mut self, confirm_time: Option<BlockNumber>) {
-		self.confirm_time = confirm_time;
-	}
-
-	pub fn assigned_relayers(&self) -> Option<&AssignedRelayers<AccountId, BlockNumber, Balance>> {
-		self.assigned_relayers.as_ref()
-	}
-
-	pub fn is_confirmed(&self) -> bool {
-		self.confirm_time.is_some()
 	}
 }

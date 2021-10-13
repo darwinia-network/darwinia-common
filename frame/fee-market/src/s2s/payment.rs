@@ -135,74 +135,75 @@ where
 			let order_confirm_time = order
 				.confirm_time
 				.expect("The message confirm_time already set in OnDeliveryConfirmed");
-			let (p1, p2, p3) = order
-				.assigned_relayers
-				.clone()
-				.expect("The order assigned_relayers already set in OnMessageAccepted");
+			match order.relayers() {
+				(Some(p1), Some(p2), Some(p3)) => {
+					// Look up the unrewarded relayer list to get message relayer of this message
+					let mut message_relayer = T::AccountId::default();
+					for unrewarded_relayer in messages_relayers.iter() {
+						if unrewarded_relayer.messages.contains_message(message_nonce) {
+							message_relayer = unrewarded_relayer.relayer.clone();
+							break;
+						}
+					}
 
-			// Look up the unrewarded relayer list to get message relayer of this message
-			let mut message_relayer = T::AccountId::default();
-			for unrewarded_relayer in messages_relayers.iter() {
-				if unrewarded_relayer.messages.contains_message(message_nonce) {
-					message_relayer = unrewarded_relayer.relayer.clone();
-					break;
+					// Calculate message relayer's reward, confirmation_relayer's reward, treasury's reward, assigned_relayer's reward
+					let message_reward;
+					let confirm_reward;
+					if p1.valid_range.contains(&order_confirm_time)
+						|| p2.valid_range.contains(&order_confirm_time)
+						|| p3.valid_range.contains(&order_confirm_time)
+					{
+						let message_fee = p3.fee;
+						let treasury_reward = message_fee.saturating_sub(p1.fee);
+						let assigned_relayers_reward = T::ForAssignedRelayers::get() * p1.fee;
+						let bridger_relayers_reward =
+							p1.fee.saturating_sub(assigned_relayers_reward);
+						message_reward = T::ForMessageRelayer::get() * bridger_relayers_reward;
+						confirm_reward = T::ForConfirmRelayer::get() * bridger_relayers_reward;
+
+						// Update treasury total rewards
+						treasury_total_rewards =
+							treasury_total_rewards.saturating_add(treasury_reward);
+						// Update assigned relayers total rewards
+						if p1.valid_range.contains(&order_confirm_time) {
+							assigned_relayers_rewards
+								.entry(p1.clone().id)
+								.and_modify(|r| *r = r.saturating_add(assigned_relayers_reward))
+								.or_insert(assigned_relayers_reward);
+						} else if p2.valid_range.contains(&order_confirm_time) {
+							assigned_relayers_rewards
+								.entry(p2.clone().id)
+								.and_modify(|r| *r = r.saturating_add(assigned_relayers_reward))
+								.or_insert(assigned_relayers_reward);
+						} else if p3.valid_range.contains(&order_confirm_time) {
+							assigned_relayers_rewards
+								.entry(p3.clone().id)
+								.and_modify(|r| *r = r.saturating_add(assigned_relayers_reward))
+								.or_insert(assigned_relayers_reward);
+						}
+					} else {
+						// In the case of the message is delivered by common relayer instead of p1, p2, p3, we slash all
+						// assigned relayers of this order.
+						let timeout = order_confirm_time - p3.valid_range.end;
+						let slashed_reward = slash_order_assigned_relayers::<T>(
+							timeout,
+							order,
+							relayer_fund_account,
+						);
+						message_reward = T::ForMessageRelayer::get() * slashed_reward;
+						confirm_reward = T::ForConfirmRelayer::get() * slashed_reward;
+					}
+					// Update confirmation relayer total rewards
+					confirmation_relayer_rewards =
+						confirmation_relayer_rewards.saturating_add(confirm_reward);
+					// Update message relayers total rewards
+					messages_relayers_rewards
+						.entry(message_relayer)
+						.and_modify(|r| *r = r.saturating_add(message_reward))
+						.or_insert(message_reward);
 				}
+				_ => unreachable!(),
 			}
-
-			// Calculate message relayer's reward, confirmation_relayer's reward, treasury's reward, assigned_relayer's reward
-			let message_reward;
-			let confirm_reward;
-			if p1.valid_range.contains(&order_confirm_time)
-				|| p2.valid_range.contains(&order_confirm_time)
-				|| p3.valid_range.contains(&order_confirm_time)
-			{
-				let message_fee = p3.fee;
-				let treasury_reward = message_fee.saturating_sub(p1.fee);
-				let assigned_relayers_reward = T::ForAssignedRelayers::get() * p1.fee;
-				let bridger_relayers_reward = p1.fee.saturating_sub(assigned_relayers_reward);
-				message_reward = T::ForMessageRelayer::get() * bridger_relayers_reward;
-				confirm_reward = T::ForConfirmRelayer::get() * bridger_relayers_reward;
-
-				// Update treasury total rewards
-				treasury_total_rewards = treasury_total_rewards.saturating_add(treasury_reward);
-				// Update assigned relayers total rewards
-				if p1.valid_range.contains(&order_confirm_time) {
-					assigned_relayers_rewards
-						.entry(p1.id)
-						.and_modify(|r| *r = r.saturating_add(assigned_relayers_reward))
-						.or_insert(assigned_relayers_reward);
-				} else if p2.valid_range.contains(&order_confirm_time) {
-					assigned_relayers_rewards
-						.entry(p2.id)
-						.and_modify(|r| *r = r.saturating_add(assigned_relayers_reward))
-						.or_insert(assigned_relayers_reward);
-				} else if p3.valid_range.contains(&order_confirm_time) {
-					assigned_relayers_rewards
-						.entry(p3.id)
-						.and_modify(|r| *r = r.saturating_add(assigned_relayers_reward))
-						.or_insert(assigned_relayers_reward);
-				}
-			} else {
-				// In the case of the message is delivered by common relayer instead of p1, p2, p3, we slash all
-				// assigned relayers of this order.
-				let timeout = order_confirm_time - p3.valid_range.end;
-				let slashed_reward = slash_order_assigned_relayers::<T>(
-					timeout,
-					order.assigned_relayers,
-					relayer_fund_account,
-				);
-				message_reward = T::ForMessageRelayer::get() * slashed_reward;
-				confirm_reward = T::ForConfirmRelayer::get() * slashed_reward;
-			}
-
-			// Update confirmation relayer total rewards
-			confirmation_relayer_rewards =
-				confirmation_relayer_rewards.saturating_add(confirm_reward);
-			// Update message relayers total rewards
-			messages_relayers_rewards
-				.entry(message_relayer)
-				.and_modify(|r| *r = r.saturating_add(message_reward))
-				.or_insert(message_reward);
 		}
 	}
 
@@ -217,22 +218,25 @@ where
 /// Slash order assigned relayers
 pub fn slash_order_assigned_relayers<T: Config>(
 	timeout: T::BlockNumber,
-	assign_relayers: Option<AssignedRelayers<T::AccountId, T::BlockNumber, RingBalance<T>>>,
+	order: Order<T::AccountId, T::BlockNumber, RingBalance<T>>,
 	relayer_fund_account: &T::AccountId,
 ) -> RingBalance<T> {
 	let mut total_slash = RingBalance::<T>::zero();
-	let (p1, p2, p3) = assign_relayers.unwrap_or_default();
-	let slash_result = T::Slasher::slash(p3.fee, timeout);
+	match order.relayers() {
+		(Some(p1), Some(p2), Some(p3)) => {
+			let slash_result = T::Slasher::slash(p3.fee, timeout);
 
-	// Slash assign relayers and transfer the value to refund_fund_account
-	slash_and_update_market::<T>(&p1.id, relayer_fund_account, slash_result);
-	slash_and_update_market::<T>(&p2.id, relayer_fund_account, slash_result);
-	slash_and_update_market::<T>(&p3.id, relayer_fund_account, slash_result);
-
-	total_slash = total_slash
-		.saturating_add(slash_result)
-		.saturating_add(slash_result)
-		.saturating_add(slash_result);
+			// Slash assign relayers and transfer the value to refund_fund_account
+			slash_and_update_market::<T>(&p1.id, relayer_fund_account, slash_result);
+			slash_and_update_market::<T>(&p2.id, relayer_fund_account, slash_result);
+			slash_and_update_market::<T>(&p3.id, relayer_fund_account, slash_result);
+			total_slash = total_slash
+				.saturating_add(slash_result)
+				.saturating_add(slash_result)
+				.saturating_add(slash_result);
+		}
+		_ => unreachable!(),
+	}
 	total_slash
 }
 

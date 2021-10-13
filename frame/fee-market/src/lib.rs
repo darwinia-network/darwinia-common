@@ -46,7 +46,7 @@ use sp_runtime::{
 use sp_std::{default::Default, vec::Vec};
 // --- darwinia-network ---
 use darwinia_support::balance::{LockFor, LockableCurrency};
-use dp_fee::{AssignedRelayers, Order, Relayer, MIN_ENROLLED_RELAYERS_NUMBER};
+use dp_fee::{Order, Relayer, MIN_RELAYERS_NUMBER};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
@@ -120,7 +120,7 @@ pub mod pallet {
 		OnlyIncreaseLockedCollateralAllowed,
 		/// The fee is lower than MinimumRelayFee
 		RelayFeeTooLow,
-		/// The enrolled relayers less than MIN_ENROLLED_RELAYERS_NUMBER
+		/// The enrolled relayers less than MIN_RELAYERS_NUMBER
 		TooFewEnrolledRelayers,
 		/// The relayer is occupied, and can't cancel enrollment now.
 		OccupiedRelayer,
@@ -143,15 +143,8 @@ pub mod pallet {
 	// Priority relayers storage
 	#[pallet::storage]
 	#[pallet::getter(fn assigned_relayers)]
-	pub type AssignedRelayersStorage<T: Config> = StorageValue<
-		_,
-		(
-			Relayer<T::AccountId, RingBalance<T>>,
-			Relayer<T::AccountId, RingBalance<T>>,
-			Relayer<T::AccountId, RingBalance<T>>,
-		),
-		OptionQuery,
-	>;
+	pub type AssignedRelayersStorage<T: Config> =
+		StorageValue<_, Vec<Relayer<T::AccountId, RingBalance<T>>>, OptionQuery>;
 
 	// Order storage
 	#[pallet::storage]
@@ -257,7 +250,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_enrolled(&who), <Error<T>>::NotEnrolled);
 			ensure!(
-				<Relayers<T>>::get().len() > MIN_ENROLLED_RELAYERS_NUMBER,
+				<Relayers<T>>::get().len() > MIN_RELAYERS_NUMBER,
 				<Error<T>>::TooFewEnrolledRelayers
 			);
 			ensure!(!Self::is_occupied(&who), <Error<T>>::OccupiedRelayer);
@@ -293,24 +286,30 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	/// Update market in the following cases:
-	/// 1. New relayers enroll
-	/// 2. Already enrolled relayer update relay fee
-	/// 3. Cancel enrolled relayer
-	/// 4. When some enrolled relayer's collateral below MiniumLockCollateral, might trigger market update
+	/// An important update in this pallet, need to update market information in the following cases:
+	///
+	/// - When new relayer enroll
+	/// - When enrolled relayer wants to update relaying fee
+	/// - When enrolled relayer wants to cancel enrollment
+	/// - When some enrolled relayer's collateral below MiniumLockCollateral, might trigger market update
 	pub fn update_market() {
 		let mut relayers: Vec<Relayer<T::AccountId, RingBalance<T>>> = <Relayers<T>>::get()
 			.iter()
 			.map(RelayersMap::<T>::get)
 			.collect();
 		relayers.sort();
-		if relayers.len() >= MIN_ENROLLED_RELAYERS_NUMBER {
+
+		if relayers.len() >= MIN_RELAYERS_NUMBER {
 			<AssignedRelayersStorage<T>>::kill();
-			let prior_relayers = (
-				relayers[0].clone(),
-				relayers[1].clone(),
-				relayers[2].clone(),
-			);
+
+			let mut prior_relayers = Vec::with_capacity(MIN_RELAYERS_NUMBER);
+			for i in 0..MIN_RELAYERS_NUMBER {
+				prior_relayers.push(
+					relayers
+						.get(i)
+						.expect("Get relayer from the sorted vec, So the item must exists"),
+				);
+			}
 			<AssignedRelayersStorage<T>>::put(prior_relayers);
 		}
 	}
@@ -318,7 +317,7 @@ impl<T: Config> Pallet<T> {
 	/// Update relayer locked collateral, it will changes RelayersMap storage
 	pub fn update_collateral(who: &T::AccountId, new_collateral: RingBalance<T>) {
 		if new_collateral < T::MiniumLockCollateral::get()
-			&& <Relayers<T>>::get().len() > MIN_ENROLLED_RELAYERS_NUMBER
+			&& <Relayers<T>>::get().len() > MIN_RELAYERS_NUMBER
 		{
 			Self::remove_enrolled_relayer(&who);
 			return;
@@ -358,9 +357,9 @@ impl<T: Config> Pallet<T> {
 		Self::get_relayer(who).collateral
 	}
 
-	/// Get market fee(P3), If the enrolled relayers less then MIN_ENROLLED_RELAYERS_NUMBER, return NONE.
+	/// Get market fee(P3), If the enrolled relayers less then MIN_RELAYERS_NUMBER, return NONE.
 	pub fn market_fee() -> Option<Fee<T>> {
-		Self::assigned_relayers().map_or(None, |(_, _, r3)| Some(r3.fee))
+		Self::assigned_relayers().and_then(|relayers| relayers.last().map_or(None, |r| Some(r.fee)))
 	}
 
 	/// Get order info
@@ -374,10 +373,13 @@ impl<T: Config> Pallet<T> {
 	/// Whether the enrolled relayer is occupied(Responsible for order relaying)
 	pub fn is_occupied(who: &T::AccountId) -> bool {
 		for (_, order) in <Orders<T>>::iter() {
-			if let Some((r1, r2, r3)) = order.assigned_relayers() {
-				if (r1.id == *who || r2.id == *who || r3.id == *who) && !order.is_confirmed() {
-					return true;
-				}
+			if order
+				.relayers_slice()
+				.iter()
+				.find(|r| r.id == *who)
+				.is_some() && !order.is_confirmed()
+			{
+				return true;
 			}
 		}
 		false
