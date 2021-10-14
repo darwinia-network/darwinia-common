@@ -19,10 +19,8 @@
 //! Node-specific RPC methods for interaction with fee-market.
 
 // --- darwinia-network ---
-pub use darwinia_fee_market_rpc_runtime_api::FeeMarketApi as FeeMarketRuntimeApi;
+pub use darwinia_fee_market_rpc_runtime_api::{Fee, FeeMarketApi as FeeMarketRuntimeApi};
 
-// --- core ---
-use core::fmt::Debug;
 // --- std ---
 use std::sync::Arc;
 // --- crates.io ---
@@ -41,16 +39,16 @@ const RUNTIME_ERROR: i64 = -1;
 
 #[rpc]
 pub trait FeeMarketApi<Response> {
-	#[rpc(name = "feeMarket_marketFee")]
+	#[rpc(name = "fee_marketFee")]
 	fn market_fee(&self) -> Result<Response>;
 }
 
-pub struct FeeMarket<Client, Block> {
+pub struct FeeMarket<Client, Block, Balance> {
 	client: Arc<Client>,
-	_marker: std::marker::PhantomData<Block>,
+	_marker: std::marker::PhantomData<(Block, Balance)>,
 }
 
-impl<Client, Block> FeeMarket<Client, Block> {
+impl<Client, Block, Balance> FeeMarket<Client, Block, Balance> {
 	pub fn new(client: Arc<Client>) -> Self {
 		Self {
 			client,
@@ -59,14 +57,15 @@ impl<Client, Block> FeeMarket<Client, Block> {
 	}
 }
 
-impl<Client, Block, Fee> FeeMarketApi<Option<Fee>> for FeeMarket<Client, Block>
+impl<Client, Block, Balance> FeeMarketApi<Option<Fee<Balance>>>
+	for FeeMarket<Client, Block, Balance>
 where
 	Client: 'static + Send + Sync + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
-	Client::Api: FeeMarketRuntimeApi<Block, Fee>,
+	Client::Api: FeeMarketRuntimeApi<Block, Balance>,
 	Block: BlockT,
-	Fee: Debug + Codec + MaybeDisplay + MaybeFromStr,
+	Balance: 'static + Sync + Send + Codec + MaybeDisplay + MaybeFromStr,
 {
-	fn market_fee(&self) -> Result<Option<Fee>> {
+	fn market_fee(&self) -> Result<Option<Fee<Balance>>> {
 		let api = self.client.runtime_api();
 		let best = self.client.info().best_hash;
 		let at = BlockId::hash(best);

@@ -101,6 +101,7 @@ use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use common_primitives::*;
+use darwinia_fee_market_rpc_runtime_api::Fee;
 
 pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
@@ -477,8 +478,13 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
-		fn market_fee() -> Option<Balance> {
-			FeeMarket::market_fee()
+		fn market_fee() -> Option<Fee<Balance>> {
+			if let Some(fee) = FeeMarket::market_fee() {
+				return Some(Fee {
+					amount: fee,
+				});
+			}
+			None
 		}
 	}
 
