@@ -2852,8 +2852,8 @@ impl<T: Config> ElectionDataProvider<T::AccountId, T::BlockNumber> for Module<T>
 
 		let slashing_span_count = <SlashingSpans<T>>::iter().count();
 		let weight = T::WeightInfo::get_npos_voters(
-			nominator_count as u32,
 			validator_count as u32,
+			nominator_count as u32,
 			slashing_span_count as u32,
 		);
 		Ok((Self::get_npos_voters(), weight))
