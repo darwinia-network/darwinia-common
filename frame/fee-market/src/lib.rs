@@ -304,11 +304,9 @@ impl<T: Config> Pallet<T> {
 
 			let mut prior_relayers = Vec::with_capacity(MIN_RELAYERS_NUMBER);
 			for i in 0..MIN_RELAYERS_NUMBER {
-				prior_relayers.push(
-					relayers
-						.get(i)
-						.expect("Get relayer from the sorted vec, So the item must exists"),
-				);
+				if let Some(r) = relayers.get(i) {
+					prior_relayers.push(r);
+				}
 			}
 			<AssignedRelayersStorage<T>>::put(prior_relayers);
 		}
@@ -319,12 +317,12 @@ impl<T: Config> Pallet<T> {
 		if new_collateral < T::MiniumLockCollateral::get()
 			&& <Relayers<T>>::get().len() > MIN_RELAYERS_NUMBER
 		{
-			Self::remove_enrolled_relayer(&who);
+			Self::remove_enrolled_relayer(who);
 			return;
 		}
 		let _ = T::RingCurrency::extend_lock(
 			T::LockId::get(),
-			&who,
+			who,
 			new_collateral,
 			WithdrawReasons::all(),
 		);
@@ -336,7 +334,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Remove enrolled relayer
 	pub fn remove_enrolled_relayer(who: &T::AccountId) {
-		T::RingCurrency::remove_lock(T::LockId::get(), &who);
+		T::RingCurrency::remove_lock(T::LockId::get(), who);
 		<RelayersMap<T>>::remove(who.clone());
 		<Relayers<T>>::mutate(|relayers| relayers.retain(|x| x != who));
 		Self::update_market();
@@ -359,7 +357,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Get market fee(P3), If the enrolled relayers less then MIN_RELAYERS_NUMBER, return NONE.
 	pub fn market_fee() -> Option<Fee<T>> {
-		Self::assigned_relayers().and_then(|relayers| relayers.last().map_or(None, |r| Some(r.fee)))
+		Self::assigned_relayers().and_then(|relayers| relayers.last().map(|r| r.fee))
 	}
 
 	/// Get order info
@@ -373,12 +371,7 @@ impl<T: Config> Pallet<T> {
 	/// Whether the enrolled relayer is occupied(Responsible for order relaying)
 	pub fn is_occupied(who: &T::AccountId) -> bool {
 		for (_, order) in <Orders<T>>::iter() {
-			if order
-				.relayers_slice()
-				.iter()
-				.find(|r| r.id == *who)
-				.is_some() && !order.is_confirmed()
-			{
+			if order.relayers_slice().iter().any(|r| r.id == *who) && !order.is_confirmed() {
 				return true;
 			}
 		}

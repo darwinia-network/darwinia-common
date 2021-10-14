@@ -105,23 +105,19 @@ where
 		let mut relayers = Vec::with_capacity(MIN_RELAYERS_NUMBER);
 		if assigned_relayers.len() == MIN_RELAYERS_NUMBER {
 			let (t1, t2, t3) = slot_times;
-			let r1 = assigned_relayers
-				.get(0)
-				.expect("At least MIN_RELAYERS_NUMBER(3) items exists");
-			let r2 = assigned_relayers
-				.get(1)
-				.expect("At least MIN_RELAYERS_NUMBER(3) items exists");
-			let r3 = assigned_relayers
-				.get(2)
-				.expect("At least MIN_RELAYERS_NUMBER(3) items exists");
-
-			let p1 = PriorRelayer::new(r1.id.clone(), Priority::P1, r1.fee, sent_time, t1);
-			let p2 = PriorRelayer::new(r2.id.clone(), Priority::P2, r2.fee, sent_time + t1, t2);
-			let p3 =
-				PriorRelayer::new(r3.id.clone(), Priority::P3, r3.fee, sent_time + t1 + t2, t3);
-			relayers.push(p1);
-			relayers.push(p2);
-			relayers.push(p3);
+			if let (Some(r1), Some(r2), Some(r3)) = (
+				assigned_relayers.get(0),
+				assigned_relayers.get(1),
+				assigned_relayers.get(2),
+			) {
+				let p1 = PriorRelayer::new(r1.id.clone(), Priority::P1, r1.fee, sent_time, t1);
+				let p2 = PriorRelayer::new(r2.id.clone(), Priority::P2, r2.fee, sent_time + t1, t2);
+				let p3 =
+					PriorRelayer::new(r3.id.clone(), Priority::P3, r3.fee, sent_time + t1 + t2, t3);
+				relayers.push(p1);
+				relayers.push(p2);
+				relayers.push(p3);
+			}
 		}
 
 		Self {

@@ -134,7 +134,8 @@ where
 			// was called as source chain received message delivery proof, before the reward payment.
 			let order_confirm_time = order
 				.confirm_time
-				.expect("The message confirm_time already set in OnDeliveryConfirmed");
+				.unwrap_or_else(|| frame_system::Pallet::<T>::block_number());
+
 			match order.relayers() {
 				(Some(p1), Some(p2), Some(p3)) => {
 					// Look up the unrewarded relayer list to get message relayer of this message
@@ -202,7 +203,7 @@ where
 						.and_modify(|r| *r = r.saturating_add(message_reward))
 						.or_insert(message_reward);
 				}
-				_ => unreachable!(),
+				_ => {}
 			}
 		}
 	}
@@ -235,7 +236,7 @@ pub fn slash_order_assigned_relayers<T: Config>(
 				.saturating_add(slash_result)
 				.saturating_add(slash_result);
 		}
-		_ => unreachable!(),
+		_ => {}
 	}
 	total_slash
 }

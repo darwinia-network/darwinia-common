@@ -33,14 +33,14 @@ impl<T: Config> OnMessageAccepted for FeeMarketMessageAcceptedHandler<T> {
 		// Create a new order based on the latest block, assign relayers which have priority to relaying
 		let now = frame_system::Pallet::<T>::block_number();
 		let (t1, t2, t3) = T::SlotTimes::get();
-		let assigned_relayers = <Pallet<T>>::assigned_relayers()
-			.expect("Fee market is not ready for accepting message");
-		reads += 1;
-		let order = Order::new(*lane, *message, now, assigned_relayers, (t1, t2, t3));
+		if let Some(assigned_relayers) = <Pallet<T>>::assigned_relayers() {
+			reads += 1;
+			let order = Order::new(*lane, *message, now, assigned_relayers, (t1, t2, t3));
 
-		// Store the create order
-		<Orders<T>>::insert((order.lane, order.message), order);
-		writes += 1;
+			// Store the create order
+			<Orders<T>>::insert((order.lane, order.message), order);
+			writes += 1;
+		}
 
 		<T as frame_system::Config>::DbWeight::get().reads_writes(reads, writes)
 	}
@@ -56,7 +56,7 @@ impl<T: Config> OnDeliveryConfirmed for FeeMarketMessageConfirmedHandler<T> {
 				if !order.is_confirmed() {
 					<Orders<T>>::mutate((lane, message_nonce), |order| match order {
 						Some(order) => order.set_confirm_time(Some(now)),
-						None => unreachable!(),
+						None => {}
 					});
 					<ConfirmedMessagesThisBlock<T>>::append((lane, message_nonce));
 				}
