@@ -156,11 +156,14 @@ where
 					{
 						let message_fee = p3.fee;
 						let treasury_reward = message_fee.saturating_sub(p1.fee);
-						let assigned_relayers_reward = T::ForAssignedRelayers::get() * p1.fee;
+						let assigned_relayers_reward =
+							T::AssignedRelayersRewardRatio::get() * p1.fee;
 						let bridger_relayers_reward =
 							p1.fee.saturating_sub(assigned_relayers_reward);
-						message_reward = T::ForMessageRelayer::get() * bridger_relayers_reward;
-						confirm_reward = T::ForConfirmRelayer::get() * bridger_relayers_reward;
+						message_reward =
+							T::MessageRelayersRewardRatio::get() * bridger_relayers_reward;
+						confirm_reward =
+							T::ConfirmRelayersRewardRatio::get() * bridger_relayers_reward;
 
 						// Update treasury total rewards
 						treasury_total_rewards =
@@ -191,8 +194,8 @@ where
 							order,
 							relayer_fund_account,
 						);
-						message_reward = T::ForMessageRelayer::get() * slashed_reward;
-						confirm_reward = T::ForConfirmRelayer::get() * slashed_reward;
+						message_reward = T::MessageRelayersRewardRatio::get() * slashed_reward;
+						confirm_reward = T::ConfirmRelayersRewardRatio::get() * slashed_reward;
 					}
 					// Update confirmation relayer total rewards
 					confirmation_relayer_rewards =

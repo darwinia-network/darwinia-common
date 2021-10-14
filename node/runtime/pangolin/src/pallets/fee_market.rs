@@ -13,9 +13,9 @@ frame_support::parameter_types! {
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 	pub const SlotTimes: (BlockNumber, BlockNumber, BlockNumber) = (50, 50, 50);
 
-	pub const ForAssignedRelayers: Permill = Permill::from_percent(60);
-	pub const ForMessageRelayer: Permill = Permill::from_percent(80);
-	pub const ForConfirmRelayer: Permill = Permill::from_percent(20);
+	pub const AssignedRelayersRewardRatio: Permill = Permill::from_percent(60);
+	pub const MessageRelayersRewardRatio: Permill = Permill::from_percent(80);
+	pub const ConfirmRelayersRewardRatio: Permill = Permill::from_percent(20);
 }
 
 impl Config for Runtime {
@@ -26,9 +26,9 @@ impl Config for Runtime {
 	type LockId = FeeMarketLockId;
 	type SlotTimes = SlotTimes;
 
-	type ForAssignedRelayers = ForAssignedRelayers;
-	type ForMessageRelayer = ForMessageRelayer;
-	type ForConfirmRelayer = ForConfirmRelayer;
+	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
+	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
+	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
 	type Slasher = ();
 
 	type RingCurrency = Ring;

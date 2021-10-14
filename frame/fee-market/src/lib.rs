@@ -78,11 +78,11 @@ pub mod pallet {
 
 		/// Reward parameters
 		#[pallet::constant]
-		type ForAssignedRelayers: Get<Permill>;
+		type AssignedRelayersRewardRatio: Get<Permill>;
 		#[pallet::constant]
-		type ForMessageRelayer: Get<Permill>;
+		type MessageRelayersRewardRatio: Get<Permill>;
 		#[pallet::constant]
-		type ForConfirmRelayer: Get<Permill>;
+		type ConfirmRelayersRewardRatio: Get<Permill>;
 
 		/// The slash rule
 		type Slasher: Slasher<Self>;
