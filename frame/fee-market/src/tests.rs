@@ -537,6 +537,7 @@ fn test_single_relayer_registration_workflow_works() {
 		));
 		assert!(FeeMarket::is_enrolled(&1));
 		assert_eq!(FeeMarket::relayers().len(), 1);
+		assert_eq!(Ring::free_balance(1), 150);
 		assert_eq!(Ring::usable_balance(&1), 50);
 		assert_eq!(FeeMarket::relayer_locked_collateral(&1), 100);
 		assert_eq!(FeeMarket::market_fee(), None);
