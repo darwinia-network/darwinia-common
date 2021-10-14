@@ -816,7 +816,6 @@ fn test_order_creation_when_bridged_pallet_accept_message() {
 }
 
 #[test]
-#[should_panic]
 fn test_no_order_created_after_send_message_when_fee_market_not_ready() {
 	new_test_ext().execute_with(|| {
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, Some(30));
@@ -824,8 +823,7 @@ fn test_no_order_created_after_send_message_when_fee_market_not_ready() {
 		System::set_block_number(2);
 
 		assert!(FeeMarket::assigned_relayers().is_none());
-		let (lane, message_nonce) = send_regular_message(80);
-		assert!(FeeMarket::order(&lane, &message_nonce).is_none());
+		let (_, _) = send_regular_message(80);
 	});
 }
 
