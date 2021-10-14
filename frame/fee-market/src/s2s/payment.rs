@@ -54,10 +54,6 @@ where
 		fee: &RingBalance<T>, // P3
 		relayer_fund_account: &T::AccountId,
 	) -> Result<(), Self::Error> {
-		if !frame_system::Pallet::<T>::account_exists(relayer_fund_account) {
-			return Err("The relayer fund account must exist for the message lanes pallet to work correctly.");
-		}
-
 		let root_account = RootAccount::get();
 		let account = match submitter {
 			Sender::Signed(submitter) => submitter,
