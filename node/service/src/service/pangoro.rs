@@ -341,7 +341,7 @@ where
 
 	let (block_import, link_half, babe_link) = import_setup;
 
-	if role.is_authority() {
+	if is_authority {
 		let can_author_with = CanAuthorWithNativeVersion::new(client.executor().clone());
 		let proposer = ProposerFactory::new(
 			task_manager.spawn_handle(),
@@ -393,6 +393,37 @@ where
 			.spawn_blocking("babe", babe);
 	}
 
+	if is_authority && !authority_discovery_disabled {
+		let authority_discovery_role =
+			sc_authority_discovery::Role::PublishAndDiscover(keystore_container.keystore());
+		let dht_event_stream =
+			network
+				.event_stream("authority-discovery")
+				.filter_map(|e| async move {
+					match e {
+						Event::Dht(e) => Some(e),
+						_ => None,
+					}
+				});
+		let (authority_discovery_worker, _service) =
+			sc_authority_discovery::new_worker_and_service_with_config(
+				WorkerConfig {
+					publish_non_global_ips: auth_disc_publish_non_global_ips,
+					..Default::default()
+				},
+				client.clone(),
+				network.clone(),
+				Box::pin(dht_event_stream),
+				authority_discovery_role,
+				prometheus_registry.clone(),
+			);
+
+		task_manager.spawn_handle().spawn(
+			"authority-discovery-worker",
+			authority_discovery_worker.run(),
+		);
+	}
+
 	let keystore = if is_authority {
 		Some(keystore_container.sync_keystore())
 	} else {
@@ -414,47 +445,16 @@ where
 		let grandpa_config = GrandpaParams {
 			config: grandpa_config,
 			link: link_half,
-			network: network.clone(),
+			network,
 			telemetry: telemetry.as_ref().map(|x| x.handle()),
 			voting_rule: GrandpaVotingRulesBuilder::default().build(),
-			prometheus_registry: prometheus_registry.clone(),
+			prometheus_registry,
 			shared_voter_state,
 		};
 
 		task_manager.spawn_essential_handle().spawn_blocking(
 			"grandpa-voter",
 			sc_finality_grandpa::run_grandpa_voter(grandpa_config)?,
-		);
-	}
-
-	if role.is_authority() && !authority_discovery_disabled {
-		let authority_discovery_role =
-			sc_authority_discovery::Role::PublishAndDiscover(keystore_container.keystore());
-		let dht_event_stream =
-			network
-				.event_stream("authority-discovery")
-				.filter_map(|e| async move {
-					match e {
-						Event::Dht(e) => Some(e),
-						_ => None,
-					}
-				});
-		let (authority_discovery_worker, _service) =
-			sc_authority_discovery::new_worker_and_service_with_config(
-				WorkerConfig {
-					publish_non_global_ips: auth_disc_publish_non_global_ips,
-					..Default::default()
-				},
-				client.clone(),
-				network,
-				Box::pin(dht_event_stream),
-				authority_discovery_role,
-				prometheus_registry,
-			);
-
-		task_manager.spawn_handle().spawn(
-			"authority-discovery-worker",
-			authority_discovery_worker.run(),
 		);
 	}
 
