@@ -582,8 +582,10 @@ mod tests {
 	use codec::Encode;
 	// --- paritytech ---
 	use frame_support::{
-		assert_err, assert_noop, assert_ok, dispatch::DispatchError::BadOrigin,
-		ord_parameter_types, parameter_types, traits::GenesisBuild,
+		assert_err, assert_noop, assert_ok,
+		dispatch::DispatchError::BadOrigin,
+		ord_parameter_types, parameter_types,
+		traits::{GenesisBuild, MaxEncodedLen},
 	};
 	use frame_system::mocking::*;
 	use sp_core::H256;

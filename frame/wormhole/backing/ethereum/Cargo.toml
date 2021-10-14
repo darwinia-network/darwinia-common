@@ -40,6 +40,7 @@ darwinia-staking          = { path = "../../../../frame/staking" }
 ethereum-primitives       = { features = ["full-serde"], path = "../../../../primitives/ethereum" }
 # paritytech
 frame-election-provider-support = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+max-encoded-len                 = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 pallet-session                  = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 pallet-timestamp                = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 sp-core                         = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }

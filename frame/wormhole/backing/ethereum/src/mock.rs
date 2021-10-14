@@ -23,7 +23,7 @@ use codec::{Decode, Encode};
 // --- paritytech ---
 use frame_election_provider_support::onchain;
 use frame_support::{
-	traits::{GenesisBuild, SortedMembers},
+	traits::{GenesisBuild, MaxEncodedLen, SortedMembers},
 	PalletId,
 };
 use frame_system::{mocking::*, EnsureRoot};

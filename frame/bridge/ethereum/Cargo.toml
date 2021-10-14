@@ -37,8 +37,9 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 darwinia-balances   = { path = "../../balances" }
 ethereum-primitives = { features = ["full-serde"], path = "../../../primitives/ethereum" }
 # paritytech
-sp-core = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-io   = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+max-encoded-len = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-core         = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-io           = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 
 [features]
 default = ["std"]

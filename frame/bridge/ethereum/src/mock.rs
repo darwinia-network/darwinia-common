@@ -19,7 +19,7 @@
 //! Mock file for ethereum-relay.
 
 // --- paritytech ---
-use frame_support::traits::OnInitialize;
+use frame_support::traits::{MaxEncodedLen, OnInitialize};
 use frame_system::{mocking::*, EnsureRoot};
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, RuntimeDebug};

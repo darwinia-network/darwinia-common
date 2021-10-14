@@ -31,7 +31,8 @@ libsecp256k1 = { version = "0.3.5" }
 # darwinia-network
 darwinia-balances = { path = "../balances" }
 # paritytech
-sp-core = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+max-encoded-len = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-core         = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 
 [features]
 default = ["std"]

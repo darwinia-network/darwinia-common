@@ -25,7 +25,7 @@ use evm::{executor::PrecompileOutput, Context, ExitError};
 use rlp::RlpStream;
 // --- paritytech ---
 use frame_support::{
-	traits::{FindAuthor, GenesisBuild},
+	traits::{FindAuthor, GenesisBuild, MaxEncodedLen},
 	ConsensusEngineId, PalletId,
 };
 use frame_system::mocking::*;
@@ -46,6 +46,7 @@ use dp_evm::{Precompile, PrecompileSet};
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 type Balance = u64;
+
 darwinia_support::impl_test_account_data! {}
 
 frame_support::parameter_types! {
@@ -92,7 +93,6 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type AccountStore = System;
 	type Balance = Balance;
 	type Event = Event;
-	type MaxLocks = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type MaxLocks = MaxLocks;
@@ -106,7 +106,6 @@ impl darwinia_balances::Config<KtonInstance> for Test {
 	type AccountStore = System;
 	type Balance = Balance;
 	type Event = Event;
-	type MaxLocks = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type MaxLocks = MaxLocks;

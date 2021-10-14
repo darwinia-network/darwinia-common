@@ -30,7 +30,9 @@ sp-runtime    = { default-features = false, git = "https://github.com/darwinia-n
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 
 [dev-dependencies]
+# paritytech
 darwinia-balances = { path = "../../../balances" }
+max-encoded-len   = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 pallet-timestamp  = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 sp-io             = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 

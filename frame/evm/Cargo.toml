@@ -35,7 +35,10 @@ sp-runtime         = { default-features = false, git = "https://github.com/darwi
 sp-std             = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 
 [dev-dependencies]
+# darwinia-network
 darwinia-support = { features = ["easy-testing"], path = "../support" }
+# paritytech
+max-encoded-len = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 
 [features]
 default = ["std"]

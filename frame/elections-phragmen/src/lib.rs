@@ -1161,7 +1161,9 @@ mod tests {
 	use super::*;
 	use crate as elections_phragmen;
 	use frame_support::{
-		assert_noop, assert_ok, dispatch::DispatchResultWithPostInfo, traits::OnInitialize,
+		assert_noop, assert_ok,
+		dispatch::DispatchResultWithPostInfo,
+		traits::{MaxEncodedLen, OnInitialize},
 	};
 	use frame_system::ensure_signed;
 	use sp_core::H256;
@@ -1376,7 +1378,7 @@ mod tests {
 					.collect::<Vec<_>>()
 			});
 			let mut ext: sp_io::TestExternalities = GenesisConfig {
-				darwinia_balances_Instance1: darwinia_balances::GenesisConfig::<Test, RingInstance> {
+				balances: darwinia_balances::GenesisConfig::<Test, RingInstance> {
 					balances: vec![
 						(1, 10 * self.balance_factor),
 						(2, 20 * self.balance_factor),
@@ -1386,7 +1388,7 @@ mod tests {
 						(6, 60 * self.balance_factor),
 					],
 				},
-				elections_phragmen: elections_phragmen::GenesisConfig::<Test> {
+				elections: elections_phragmen::GenesisConfig::<Test> {
 					members: self.genesis_members,
 				},
 			}
@@ -2297,7 +2299,7 @@ mod tests {
 			System::set_block_number(5);
 			Elections::on_initialize(System::block_number());
 
-			System::assert_last_event(Event::elections_phragmen(super::Event::EmptyTerm))
+			System::assert_last_event(Event::Elections(super::Event::EmptyTerm))
 		})
 	}
 
@@ -2313,7 +2315,7 @@ mod tests {
 			System::set_block_number(5);
 			Elections::on_initialize(System::block_number());
 
-			System::assert_last_event(Event::elections_phragmen(super::Event::NewTerm(vec![
+			System::assert_last_event(Event::Elections(super::Event::NewTerm(vec![
 				(4, 40),
 				(5, 50),
 			])));
@@ -2327,7 +2329,7 @@ mod tests {
 			System::set_block_number(10);
 			Elections::on_initialize(System::block_number());
 
-			System::assert_last_event(Event::elections_phragmen(super::Event::NewTerm(vec![])));
+			System::assert_last_event(Event::Elections(super::Event::NewTerm(vec![])));
 
 			// outgoing have lost their bond.
 			assert_eq!(balances(&4), (37, 0));
@@ -2397,7 +2399,7 @@ mod tests {
 			assert_eq!(Elections::election_rounds(), 1);
 			assert!(members_ids().is_empty());
 
-			System::assert_last_event(Event::elections_phragmen(super::Event::NewTerm(vec![])))
+			System::assert_last_event(Event::Elections(super::Event::NewTerm(vec![])))
 		});
 	}
 
@@ -2766,7 +2768,7 @@ mod tests {
 			// 5 is an outgoing loser. will also get slashed.
 			assert_eq!(balances(&5), (45, 2));
 
-			System::assert_has_event(Event::elections_phragmen(super::Event::NewTerm(vec![
+			System::assert_has_event(Event::Elections(super::Event::NewTerm(vec![
 				(4, 40),
 				(5, 50),
 			])));
