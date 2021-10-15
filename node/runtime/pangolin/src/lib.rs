@@ -90,6 +90,8 @@ use codec::{Decode, Encode};
 use bridge_runtime_common::messages::{
 	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
 };
+#[allow(unused)]
+use frame_support::migration;
 use frame_support::{
 	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade},
 	weights::Weight,
@@ -774,29 +776,42 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 }
 
 fn migrate() -> Weight {
-	// --- paritytech ---
-	#[allow(unused)]
-	use frame_support::migration;
-
 	// TODO: Move to S2S
 	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
 	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
 
-	0
-	// RuntimeBlockWeights::get().max_block
+	migration::remove_storage_prefix(b"DynamicFee", b"MinGasPrice", &[]);
+	log::info!("DynamicFee MinGasPrice item removed");
+
+	// 0
+	RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		migrate();
+		assert!(migration::have_storage_value(
+			b"DynamicFee",
+			b"MinGasPrice",
+			&[]
+		));
 
 		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> Weight {
 		migrate()
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade() -> Result<(), &'static str> {
+		assert!(!migration::have_storage_value(
+			b"DynamicFee",
+			b"MinGasPrice",
+			&[]
+		));
+		Ok(())
 	}
 }
 
