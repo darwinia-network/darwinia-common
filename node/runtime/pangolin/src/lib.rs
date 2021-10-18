@@ -125,7 +125,7 @@ use bridges::substrate::pangoro_messages::{ToPangoroMessagePayload, WithPangoroM
 use common_primitives::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
-use darwinia_evm::{Account as EVMAccount, Runner, FeeCalculator};
+use darwinia_evm::{Account as EVMAccount, FeeCalculator, Runner};
 use darwinia_fee_market_rpc_runtime_api::Fee;
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
@@ -815,10 +815,6 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 		Ok(())
 	}
 
-	fn on_runtime_upgrade() -> Weight {
-		migrate()
-	}
-
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
 		assert!(!migration::have_storage_value(
@@ -826,7 +822,12 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 			b"MinGasPrice",
 			&[]
 		));
+
 		Ok(())
+	}
+
+	fn on_runtime_upgrade() -> Weight {
+		migrate()
 	}
 }
 
