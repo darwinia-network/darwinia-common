@@ -12,7 +12,7 @@ version    = "0.1.0"
 array-bytes = { version = "1.3.3" }
 codec       = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
 log         = { version = "0.4.14" }
-serde       = { version = "1.0.126", features = ["derive"], optional = true }
+serde       = { version = "1.0.127", features = ["derive"], optional = true }
 # darwinia-network
 bridge-primitives                   = { default-features = false, path = "../../primitives/bridge" }
 common-primitives                   = { default-features = false, path = "../../primitives/common" }
@@ -88,7 +88,6 @@ std = [
 	"darwinia-balances/std",
 	"darwinia-fee-market/std",
 	"darwinia-fee-market-rpc-runtime-api/std",
-	"to-substrate-backing/std",
 	"darwinia-staking/std",
 	"darwinia-support/std",
 	"dp-asset/std",
@@ -96,6 +95,7 @@ std = [
 	"pangolin-runtime-system-params/std",
 	"pangoro-constants/std",
 	"pangoro-runtime-system-params/std",
+	"to-substrate-backing/std",
 	# paritytech
 	"bp-header-chain/std",
 	"bp-message-dispatch/std",

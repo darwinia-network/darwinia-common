@@ -130,14 +130,14 @@ std = [
 	"evm/std",
 	"serde",
 	# darwinia-network
+	"bridge-primitives/std",
+	"common-primitives/std",
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
 	"darwinia-bridge-bsc/std",
 	"darwinia-claims/std",
 	"darwinia-democracy/std",
 	"darwinia-elections-phragmen/std",
-	"to-ethereum-backing/std",
-	"from-ethereum-issuing/std",
 	"darwinia-bridge-ethereum/std",
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-dispatch/std",
@@ -151,25 +151,25 @@ std = [
 	"darwinia-relay-authorities/std",
 	"darwinia-relay-primitives/std",
 	"darwinia-relayer-game/std",
-	"from-substrate-issuing/std",
 	"darwinia-staking/std",
 	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",
-	"to-tron-backing/std",
 	"darwinia-vesting/std",
 	"dp-asset/std",
 	"dp-evm/std",
 	"dp-fee/std",
-	"common-primitives/std",
 	"dvm-ethereum/std",
 	"dvm-dynamic-fee/std",
 	"dvm-rpc-runtime-api/std",
 	"ethereum-primitives/std",
-	"bridge-primitives/std",
+	"from-ethereum-issuing/std",
+	"from-substrate-issuing/std",
 	"pangolin-constants/std",
 	"pangolin-runtime-system-params/std",
 	"pangoro-constants/std",
 	"pangoro-runtime-system-params/std",
+	"to-ethereum-backing/std",
+	"to-tron-backing/std",
 	# paritytech
 	"bp-message-dispatch/std",
 	"bp-messages/std",
@@ -230,25 +230,29 @@ std = [
 ]
 
 runtime-benchmarks = [
+	# paritytech
 	"frame-benchmarking",
 	"frame-system-benchmarking",
 	"frame-system/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
 	"pallet-society/runtime-benchmarks",
-	"from-ethereum-issuing/runtime-benchmarks",
+	# darwinia-network
 	"darwinia-evm/runtime-benchmarks",
-	"from-substrate-issuing/runtime-benchmarks",
 	"darwinia-fee-market/runtime-benchmarks",
+	"from-ethereum-issuing/runtime-benchmarks",
+	"from-substrate-issuing/runtime-benchmarks",
 ]
 
 try-runtime = [
+	# paritytech
 	"frame-executive/try-runtime",
 	"frame-try-runtime",
+	# darwinia-network
 	"darwinia-balances/try-runtime",
 	"darwinia-elections-phragmen/try-runtime",
-	"to-ethereum-backing/try-runtime",
 	"darwinia-header-mmr/try-runtime",
 	"darwinia-staking/try-runtime",
 	"dvm-ethereum/try-runtime",
+	"to-ethereum-backing/try-runtime",
 ]
