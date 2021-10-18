@@ -6113,6 +6113,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
  "log",
  "pallet-authority-discovery",
  "pallet-authorship",
