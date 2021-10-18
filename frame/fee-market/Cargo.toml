@@ -33,7 +33,8 @@ bp-runtime             = { default-features = false, git = "https://github.com/d
 pallet-bridge-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
 
 [dev-dependencies]
-darwinia-balances = { default-features = false, path = "../balances" }
+darwinia-balances = { path = "../balances" }
+max-encoded-len   = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 
 [features]
 default = ["std"]
@@ -45,7 +46,6 @@ std = [
 	"log/std",
 	"num-traits/std",
 	# darwinia-network
-	"darwinia-balances/std",
 	"darwinia-support/std",
 	"dp-fee/std",
 	# paritytech
