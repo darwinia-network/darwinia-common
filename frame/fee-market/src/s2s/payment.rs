@@ -62,6 +62,15 @@ where
 				.ok_or("Sending messages using Root or None origin is disallowed.")?,
 		};
 
+		// The message fee should greater than market fee
+		if let Some(market_fee) = crate::Pallet::<T>::market_fee() {
+			if *fee < market_fee {
+				return Err("Provided fee is below market fee");
+			}
+		} else {
+			return Err("The fee market is not ready");
+		}
+
 		<T as Config>::RingCurrency::transfer(
 			account,
 			relayer_fund_account,
@@ -305,7 +314,6 @@ fn pay_reward<T: Config>(from: &T::AccountId, to: &T::AccountId, reward: RingBal
 		),
 	}
 }
-
 /// Record the calculation rewards result
 pub struct RewardsBook<AccountId, Balance> {
 	pub messages_relayers_rewards: BTreeMap<AccountId, Balance>,
