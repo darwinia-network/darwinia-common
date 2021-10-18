@@ -19,10 +19,10 @@ jobs:
         with:
           repository: l2ust/subalfred
           ref: main
-      - name: Install Rust nightly toolchain
+      - name: Install Rust nightly-2021-09-01 toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: nightly-2021-09-01
           default: true
       - name: Build
         uses: actions-rs/cargo@v1
