@@ -6197,6 +6197,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
  "log",
  "max-encoded-len",
  "pallet-authority-discovery",
