@@ -14,17 +14,19 @@ codec       = { package = "parity-scale-codec", version = "2.1.1", default-featu
 log         = { version = "0.4.14" }
 serde       = { version = "1.0.126", features = ["derive"], optional = true }
 # darwinia-network
-bridge-primitives              = { default-features = false, path = "../../primitives/bridge" }
-common-primitives              = { default-features = false, path = "../../primitives/common" }
-darwinia-balances              = { default-features = false, path = "../../../frame/balances" }
-darwinia-staking               = { default-features = false, path = "../../../frame/staking" }
-darwinia-support               = { default-features = false, path = "../../../frame/support" }
-dp-asset                       = { default-features = false, path = "../../../primitives/asset" }
-pangolin-constants             = { default-features = false, path = "../pangolin/src/constants" }
-pangolin-runtime-system-params = { default-features = false, path = "../pangolin/src/pallets/system/params" }
-pangoro-constants              = { default-features = false, path = "src/constants" }
-pangoro-runtime-system-params  = { default-features = false, path = "src/pallets/system/params" }
-to-substrate-backing           = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
+bridge-primitives                   = { default-features = false, path = "../../primitives/bridge" }
+common-primitives                   = { default-features = false, path = "../../primitives/common" }
+darwinia-balances                   = { default-features = false, path = "../../../frame/balances" }
+darwinia-fee-market                 = { default-features = false, path = "../../../frame/fee-market" }
+darwinia-fee-market-rpc-runtime-api = { default-features = false, path = "../../../frame/fee-market/rpc/runtime-api" }
+darwinia-staking                    = { default-features = false, path = "../../../frame/staking" }
+darwinia-support                    = { default-features = false, path = "../../../frame/support" }
+dp-asset                            = { default-features = false, path = "../../../primitives/asset" }
+pangolin-constants                  = { default-features = false, path = "../pangolin/src/constants" }
+pangolin-runtime-system-params      = { default-features = false, path = "../pangolin/src/pallets/system/params" }
+pangoro-constants                   = { default-features = false, path = "src/constants" }
+pangoro-runtime-system-params       = { default-features = false, path = "src/pallets/system/params" }
+to-substrate-backing                = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 # paritytech
 bp-header-chain                            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5-rc1" }
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5-rc1" }
@@ -83,6 +85,8 @@ std = [
 	"bridge-primitives/std",
 	"common-primitives/std",
 	"darwinia-balances/std",
+	"darwinia-fee-market/std",
+	"darwinia-fee-market-rpc-runtime-api/std",
 	"to-substrate-backing/std",
 	"darwinia-staking/std",
 	"darwinia-support/std",

@@ -16,6 +16,7 @@ jsonrpc-pubsub = { version = "15.1.0" }
 # darwinia-network
 common-primitives       = { path = "../primitives/common" }
 darwinia-balances-rpc   = { path = "../../frame/balances/rpc" }
+darwinia-fee-market-rpc = { path = "../../frame/fee-market/rpc" }
 darwinia-header-mmr-rpc = { path = "../../frame/header-mmr/rpc" }
 darwinia-staking-rpc    = { path = "../../frame/staking/rpc" }
 dc-db                   = { path = "../../client/dvm/db" }

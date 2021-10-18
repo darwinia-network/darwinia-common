@@ -262,6 +262,34 @@
 		"mix_digest": "H256",
 		"nonce": "Bytes"
 	},
+	"__[pallet.fee_market]__": null,
+	"Relayer": {
+		"id": "AccountId",
+		"collateral": "Balance",
+		"fee": "Balance"
+	},
+	"Fee": "Balance",
+	"Order": {
+		"lane": "LaneId",
+		"message": "MessageNonce",
+		"sent_time": "BlockNumber",
+		"confirm_time": "BlockNumber",
+		"assigned_relayers": "Vec<PriorRelayer>"
+	},
+	"PriorRelayer": {
+		"id": "AccountId",
+		"priority": "Priority",
+		"fee": "Balance",
+		"valid_range": "BlockNumber"
+	},
+	"Priority": {
+		"_enum": {
+			"NoPriority": "null",
+			"P1": "null",
+			"P2": "null",
+			"P3": "null"
+		}
+	},
 	"__[pangolin.runtime]__": {
 		"ProxyType": {
 			"_enum": {

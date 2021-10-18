@@ -57,3 +57,6 @@ pub use bridge_grandpa::*;
 
 pub mod to_substrate_backing_;
 pub use to_substrate_backing_::*;
+
+pub mod fee_market;
+pub use fee_market::*;

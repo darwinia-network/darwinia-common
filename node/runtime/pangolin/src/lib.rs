@@ -124,6 +124,7 @@ use common_primitives::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
 use darwinia_evm::{Account as EVMAccount, Runner};
+use darwinia_fee_market_rpc_runtime_api::Fee;
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use dvm_ethereum::{Call::transact, Transaction as EthereumTransaction};
@@ -281,6 +282,8 @@ frame_support::construct_runtime! {
 		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 
 		BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
+
+		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 53
 	}
 }
 
@@ -539,6 +542,17 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
+		fn market_fee() -> Option<Fee<Balance>> {
+			if let Some(fee) = FeeMarket::market_fee() {
+				return Some(Fee {
+					amount: fee,
+				});
+			}
+			None
+		}
+	}
+
 	impl dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block> for Runtime {
 		fn chain_id() -> u64 {
 			<Runtime as darwinia_evm::Config>::ChainId::get()
@@ -747,6 +761,7 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, darwinia_evm, EVM);
 			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
 			add_benchmark!(params, batches, from_ethereum_issuing, EthereumIssuing);
+			add_benchmark!(params, batches, darwinia_fee_market, FeeMarket);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

@@ -135,3 +135,6 @@ pub use from_substrate_issuing_::*;
 
 pub mod bridge_bsc;
 pub use bridge_bsc::*;
+
+pub mod fee_market;
+pub use fee_market::*;
