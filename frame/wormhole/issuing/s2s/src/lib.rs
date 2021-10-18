@@ -314,5 +314,8 @@ impl<T: Config> Pallet<T> {
 }
 
 pub trait EncodeCall<AccountId, Payload> {
-	fn encode_remote_unlock(remote_unlock_info: S2sRemoteUnlockInfo) -> Result<Payload, ()>;
+	fn encode_remote_unlock(
+		submitter: AccountId,
+		remote_unlock_info: S2sRemoteUnlockInfo,
+	) -> Result<Payload, ()>;
 }

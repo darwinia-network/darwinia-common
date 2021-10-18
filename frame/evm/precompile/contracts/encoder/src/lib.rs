@@ -25,6 +25,7 @@ use codec::Encode;
 use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 use sha3::Digest;
 // --- darwinia-network ---
+use darwinia_evm::AddressMapping;
 use darwinia_support::s2s::RelayMessageSender;
 use dp_evm::Precompile;
 use from_substrate_issuing::EncodeCall;
@@ -66,7 +67,7 @@ where
 	fn execute(
 		input: &[u8],
 		_target_gas: Option<u64>,
-		_context: &Context,
+		context: &Context,
 	) -> core::result::Result<PrecompileOutput, ExitError> {
 		if input.len() < ACTION_LEN {
 			return Err(ExitError::Other("input length less than 4 bytes".into()));
@@ -98,6 +99,7 @@ where
 					.map_err(|_| ExitError::Other("decode unlock info failed".into()))?;
 				let payload =
 					<T as from_substrate_issuing::Config>::CallEncoder::encode_remote_unlock(
+						T::AddressMapping::into_account_id(context.caller),
 						unlock_info,
 					)
 					.map_err(|_| ExitError::Other("encode remote unlock failed".into()))?;

@@ -51,7 +51,7 @@ use sp_std::prelude::*;
 use darwinia_support::{
 	evm::IntoDvmAddress,
 	s2s::{
-		ensure_source_root, MessageConfirmer, RelayMessageSender, TokenMessageId, RING_DECIMAL,
+		ensure_source_account, MessageConfirmer, RelayMessageSender, TokenMessageId, RING_DECIMAL,
 		RING_NAME, RING_SYMBOL,
 	},
 };
@@ -157,10 +157,16 @@ pub mod pallet {
 	pub type LockedQueue<T: Config> =
 		StorageMap<_, Identity, TokenMessageId, (AccountId<T>, Token), ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn remote_mapping_token_factory_account)]
+	pub type RemoteMappingTokenFactoryAccount<T: Config> =
+		StorageValue<_, AccountId<T>, ValueQuery>;
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub secure_limited_period: BlockNumberFor<T>,
 		pub secure_limited_ring_amount: RingBalance<T>,
+		pub remote_mapping_token_factory_account: AccountId<T>,
 	}
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
@@ -168,6 +174,7 @@ pub mod pallet {
 			Self {
 				secure_limited_period: Zero::zero(),
 				secure_limited_ring_amount: Zero::zero(),
+				remote_mapping_token_factory_account: Default::default(),
 			}
 		}
 	}
@@ -179,6 +186,9 @@ pub mod pallet {
 				<RingBalance<T>>::zero(),
 				self.secure_limited_ring_amount,
 			));
+			<RemoteMappingTokenFactoryAccount<T>>::put(
+				self.remote_mapping_token_factory_account.clone(),
+			);
 		}
 	}
 
@@ -316,8 +326,9 @@ pub mod pallet {
 			// the s2s message relay has been verified the message comes from the issuing pallet with the
 			// chainID and issuing sender address.
 			// here only we need is to check the sender is root account
-			ensure_source_root::<T::AccountId, T::BridgedAccountIdConverter>(
+			ensure_source_account::<T::AccountId, T::BridgedAccountIdConverter>(
 				T::BridgedChainId::get(),
+				<RemoteMappingTokenFactoryAccount<T>>::get(),
 				&user,
 			)?;
 
@@ -384,6 +395,18 @@ pub mod pallet {
 			ensure_root(origin)?;
 
 			<SecureLimitedRingAmount<T>>::mutate(|(_, limitation_)| *limitation_ = limitation);
+
+			Ok(().into())
+		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::set_remote_mapping_token_factory_account())]
+		pub fn set_remote_mapping_token_factory_account(
+			origin: OriginFor<T>,
+			account: AccountId<T>,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			<RemoteMappingTokenFactoryAccount<T>>::put(account);
 
 			Ok(().into())
 		}

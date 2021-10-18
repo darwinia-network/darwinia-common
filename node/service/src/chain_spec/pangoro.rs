@@ -231,6 +231,7 @@ pub fn genesis_config() -> ChainSpec {
 			to_substrate_backing: Substrate2SubstrateBackingConfig {
 				secure_limited_period: DAYS,
 				secure_limited_ring_amount: 1_000_000 * COIN,
+				remote_mapping_token_factory_account: Default::default(),
 			},
 		}
 	}
@@ -330,6 +331,7 @@ pub fn development_config() -> ChainSpec {
 			to_substrate_backing: Substrate2SubstrateBackingConfig {
 				secure_limited_period: DAYS,
 				secure_limited_ring_amount: 100_000 * COIN,
+				remote_mapping_token_factory_account: Default::default(),
 			},
 		}
 	}

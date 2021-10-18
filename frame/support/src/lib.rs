@@ -97,6 +97,22 @@ pub mod s2s {
 		Ok(())
 	}
 
+	pub fn ensure_source_account<AccountId, Converter>(
+		chain_id: ChainId,
+		source_account: AccountId,
+		derived_account: &AccountId,
+	) -> Result<(), DispatchError>
+	where
+		AccountId: PartialEq + Encode,
+		Converter: Convert<H256, AccountId>,
+	{
+		let hex_id =
+			derive_account_id::<AccountId>(chain_id, SourceAccount::Account(source_account));
+		let target_id = Converter::convert(hex_id);
+		ensure!(&target_id == derived_account, BadOrigin);
+		Ok(())
+	}
+
 	pub fn nonce_to_message_id(lane_id: &[u8], nonce: u64) -> TokenMessageId {
 		let mut message_id: TokenMessageId = Default::default();
 		message_id[4..8].copy_from_slice(&lane_id[..4]);

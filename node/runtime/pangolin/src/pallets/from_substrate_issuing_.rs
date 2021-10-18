@@ -29,6 +29,7 @@ pub enum PangoroSub2SubBackingCall {
 pub struct PangoroCallEncoder;
 impl EncodeCall<AccountId, ToPangoroMessagePayload> for PangoroCallEncoder {
 	fn encode_remote_unlock(
+		submitter: AccountId,
 		remote_unlock_info: S2sRemoteUnlockInfo,
 	) -> Result<ToPangoroMessagePayload, ()> {
 		if remote_unlock_info.recipient.len() != 32 {
@@ -45,7 +46,7 @@ impl EncodeCall<AccountId, ToPangoroMessagePayload> for PangoroCallEncoder {
 			return Ok(ToPangoroMessagePayload {
 				spec_version: remote_unlock_info.spec_version,
 				weight: remote_unlock_info.weight,
-				origin: bp_message_dispatch::CallOrigin::SourceRoot,
+				origin: bp_message_dispatch::CallOrigin::SourceAccount(submitter),
 				call,
 				dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
 			});
