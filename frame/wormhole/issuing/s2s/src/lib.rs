@@ -42,10 +42,9 @@ use sp_runtime::{traits::Convert, DispatchError};
 use sp_std::{str, vec::Vec};
 // --- darwinia-network ---
 use bp_runtime::{ChainId, Size};
-use darwinia_evm::AddressMapping;
 use darwinia_support::{
 	mapping_token::*,
-	s2s::{ensure_source_root, MessageConfirmer, RelayMessageCaller, ToEthAddress, TokenMessageId},
+	s2s::{ensure_source_root, MessageConfirmer, ToEthAddress, TokenMessageId},
 	ChainName,
 };
 use dp_asset::token::Token;
@@ -78,7 +77,6 @@ pub mod pallet {
 		type ToEthAddressT: ToEthAddress<Self::AccountId>;
 		type OutboundPayload: Parameter + Size;
 		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
-		type MessageSender: RelayMessageCaller<Self::OutboundPayload, RingBalance<Self>>;
 		type InternalTransactHandler: InternalTransactHandler;
 		type BackingChainName: Get<ChainName>;
 	}
@@ -89,27 +87,6 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// send s2s message to remote backing module
-		/// this only can be called by mapping-token-factory
-		#[pallet::weight(
-			<T as Config>::WeightInfo::send_message()
-		)]
-		#[transactional]
-		pub fn send_message(
-			origin: OriginFor<T>,
-			payload: T::OutboundPayload,
-			fee: RingBalance<T>,
-		) -> DispatchResultWithPostInfo {
-			let caller = ensure_signed(origin)?;
-			// Ensure that the user is mapping token factory contract
-			let factory = MappingFactoryAddress::<T>::get();
-			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
-			ensure!(caller == factory_id, <Error<T>>::NotFactoryContract);
-			T::MessageSender::send_message(payload, fee)
-				.map_err(|_| Error::<T>::SendMessageFailed)?;
-			Ok(().into())
-		}
-
 		/// Handle remote register relay message
 		/// Before the token transfer, token should be created first
 		#[pallet::weight(

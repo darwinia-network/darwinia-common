@@ -2,16 +2,17 @@ pub use pallet_bridge_messages::Instance1 as Pangolin;
 
 // --- paritytech ---
 use bp_message_dispatch::CallOrigin;
+use bp_messages::LaneId;
 use bp_runtime::{messages::DispatchFeePayment, ChainId};
 use bridge_runtime_common::messages::source::FromThisChainMessagePayload;
-use frame_support::{weights::PostDispatchInfo, PalletId};
+use frame_support::{traits::PalletInfoAccess, weights::PostDispatchInfo, PalletId};
 use frame_system::RawOrigin;
 use sp_core::H160;
 use sp_runtime::DispatchErrorWithPostInfo;
 // --- darwinia-network ---
 use crate::*;
 use bridge_primitives::{AccountIdConverter, PANGORO_PANGOLIN_LANE};
-use darwinia_support::s2s::{nonce_to_message_id, RelayMessageCaller, TokenMessageId};
+use darwinia_support::s2s::{nonce_to_message_id, RelayMessageSender, TokenMessageId};
 use dp_asset::{token::Token, RecipientAccount};
 use to_substrate_backing::{Config, EncodeCall};
 
@@ -81,24 +82,57 @@ impl EncodeCall<AccountId, ToPangolinMessagePayload> for PangolinCallEncoder {
 }
 
 pub struct ToPangolinMessageRelayCaller;
-impl RelayMessageCaller<ToPangolinMessagePayload, Balance> for ToPangolinMessageRelayCaller {
-	fn send_message(
-		payload: ToPangolinMessagePayload,
-		fee: Balance,
+
+impl ToPangolinMessageRelayCaller {
+	fn send_message_call(
+		pallet_index: u32,
+		lane_id: [u8; 4],
+		payload: Vec<u8>,
+		fee: u128,
+	) -> Result<Call, &'static str> {
+		let payload = ToPangolinMessagePayload::decode(&mut payload.as_slice())
+			.map_err(|_| "decode pangolin payload failed")?;
+		let call: Call = match pallet_index {
+			_ if pallet_index as usize == <BridgePangolinMessages as PalletInfoAccess>::index() => {
+				BridgeMessagesCall::<Runtime, Pangolin>::send_message(
+					lane_id,
+					payload,
+					fee.saturated_into(),
+				)
+				.into()
+			}
+			_ => {
+				return Err("invalid pallet index".into());
+			}
+		};
+		Ok(call)
+	}
+}
+
+impl RelayMessageSender for ToPangolinMessageRelayCaller {
+	fn encode_send_message(
+		pallet_index: u32,
+		lane_id: [u8; 4],
+		payload: Vec<u8>,
+		fee: u128,
+	) -> Result<Vec<u8>, &'static str> {
+		let call = Self::send_message_call(pallet_index, lane_id, payload, fee)?;
+		Ok(call.encode())
+	}
+
+	fn send_message_by_root(
+		pallet_index: u32,
+		lane_id: [u8; 4],
+		payload: Vec<u8>,
+		fee: u128,
 	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
-		let call: Call = BridgeMessagesCall::<Runtime, Pangolin>::send_message(
-			PANGORO_PANGOLIN_LANE,
-			payload,
-			fee,
-		)
-		.into();
+		let call = Self::send_message_call(pallet_index, lane_id, payload, fee)?;
 		call.dispatch(RawOrigin::Root.into())
 	}
 
-	fn latest_token_message_id() -> TokenMessageId {
-		let nonce: u64 =
-			BridgePangolinMessages::outbound_latest_generated_nonce(PANGORO_PANGOLIN_LANE).into();
-		nonce_to_message_id(&PANGORO_PANGOLIN_LANE, nonce)
+	fn latest_token_message_id(lane_id: [u8; 4]) -> TokenMessageId {
+		let nonce: u64 = BridgePangolinMessages::outbound_latest_generated_nonce(lane_id).into();
+		nonce_to_message_id(&lane_id, nonce)
 	}
 }
 
@@ -107,6 +141,8 @@ frame_support::parameter_types! {
 	pub const RingPalletId: PalletId = PalletId(*b"da/bring");
 	pub const S2sBackingPalletId: PalletId = PalletId(*b"da/s2sba");
 	pub const MaxLockRingAmountPerTx: Balance = 10_000 * COIN;
+	pub BridgePangolinIndex: u32 = <BridgePangolinMessages as PalletInfoAccess>::index() as u32;
+	pub const BridgePangolinLaneId: LaneId = PANGORO_PANGOLIN_LANE;
 }
 
 impl Config for Runtime {
@@ -127,4 +163,7 @@ impl Config for Runtime {
 
 	type FeeAccount = RootAccountForPayments;
 	type MessageSender = ToPangolinMessageRelayCaller;
+
+	type MessageSendPalletIndex = BridgePangolinIndex;
+	type MessageLaneId = BridgePangolinLaneId;
 }

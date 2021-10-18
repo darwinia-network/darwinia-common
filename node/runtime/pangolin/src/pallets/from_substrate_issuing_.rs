@@ -1,16 +1,11 @@
 // --- paritytech ---
 use bp_runtime::{messages::DispatchFeePayment, ChainId};
-use frame_support::{dispatch::Dispatchable, weights::PostDispatchInfo, PalletId};
-use frame_system::RawOrigin;
-use pallet_bridge_messages::Instance1 as Pangoro;
-use sp_runtime::{AccountId32, DispatchErrorWithPostInfo};
+use frame_support::PalletId;
+use sp_runtime::AccountId32;
 // --- darwinia-network ---
 use crate::*;
-use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE};
-use darwinia_support::{
-	s2s::{nonce_to_message_id, RelayMessageCaller, ToEthAddress, TokenMessageId},
-	ChainName,
-};
+use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID};
+use darwinia_support::{s2s::ToEthAddress, ChainName};
 use dp_asset::token::Token;
 use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
 use from_substrate_issuing::{Config, EncodeCall};
@@ -29,28 +24,6 @@ pub enum PangoroRuntime {
 pub enum PangoroSub2SubBackingCall {
 	#[codec(index = 2)]
 	unlock_from_remote(Token, AccountId),
-}
-
-pub struct ToPangoroMessageRelayCaller;
-impl RelayMessageCaller<ToPangoroMessagePayload, Balance> for ToPangoroMessageRelayCaller {
-	fn send_message(
-		payload: ToPangoroMessagePayload,
-		fee: Balance,
-	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
-		let call: Call = BridgeMessagesCall::<Runtime, Pangoro>::send_message(
-			PANGORO_PANGOLIN_LANE,
-			payload,
-			fee,
-		)
-		.into();
-		call.dispatch(RawOrigin::Root.into())
-	}
-
-	fn latest_token_message_id() -> TokenMessageId {
-		let nonce: u64 =
-			BridgePangoroMessages::outbound_latest_generated_nonce(PANGORO_PANGOLIN_LANE).into();
-		nonce_to_message_id(&PANGORO_PANGOLIN_LANE, nonce)
-	}
 }
 
 pub struct PangoroCallEncoder;
@@ -104,7 +77,6 @@ impl Config for Runtime {
 	type ToEthAddressT = TruncateToEthAddress;
 	type OutboundPayload = ToPangoroMessagePayload;
 	type CallEncoder = PangoroCallEncoder;
-	type MessageSender = ToPangoroMessageRelayCaller;
 	type InternalTransactHandler = Ethereum;
 	type BackingChainName = PangoroName;
 }

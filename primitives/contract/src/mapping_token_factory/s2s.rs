@@ -28,7 +28,7 @@ use ethabi::{
 };
 // --- paritytech ---
 use dp_asset::token::{Token as Erc20Token, TokenInfo};
-use sp_std::prelude::*;
+use sp_std::{convert::TryInto, prelude::*};
 
 pub struct Sub2SubMappingTokenFactory;
 
@@ -139,18 +139,43 @@ impl S2sRemoteUnlockInfo {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct S2sSendMessageParams {
+	pub pallet_index: u32,
+	pub lane_id: [u8; 4],
 	pub payload: Vec<u8>,
 	pub fee: U256,
 }
 
 impl S2sSendMessageParams {
 	pub fn decode(data: &[u8]) -> AbiResult<Self> {
-		let tokens = ethabi::decode(&[ParamType::Bytes, ParamType::Uint(256)], &data)?;
-		match (tokens[0].clone(), tokens[1].clone()) {
-			(Token::Bytes(payload), Token::Uint(fee)) => Ok(Self {
-				payload,
-				fee,
-			}),
+		let tokens = ethabi::decode(
+			&[
+				ParamType::Uint(32),
+				ParamType::FixedBytes(4),
+				ParamType::Bytes,
+				ParamType::Uint(256),
+			],
+			&data,
+		)?;
+		match (
+			tokens[0].clone(),
+			tokens[1].clone(),
+			tokens[2].clone(),
+			tokens[3].clone(),
+		) {
+			(
+				Token::Uint(pallet_index),
+				Token::FixedBytes(lane_id),
+				Token::Bytes(payload),
+				Token::Uint(fee),
+			) => {
+				let lane_id: [u8; 4] = lane_id.try_into().map_err(|_| Error::InvalidData)?;
+				Ok(Self {
+					pallet_index: pallet_index.low_u32(),
+					lane_id,
+					payload,
+					fee,
+				})
+			}
 			_ => Err(Error::InvalidData),
 		}
 	}

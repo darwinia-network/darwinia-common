@@ -21,11 +21,11 @@
 // --- core ---
 use core::marker::PhantomData;
 // --- crates.io ---
-use codec::{Decode, Encode};
+use codec::Encode;
 use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 use sha3::Digest;
 // --- darwinia-network ---
-use darwinia_support::{evm::POW_9, s2s::RelayMessageCaller};
+use darwinia_support::s2s::RelayMessageSender;
 use dp_evm::Precompile;
 use from_substrate_issuing::EncodeCall;
 // --- paritytech ---
@@ -49,10 +49,11 @@ const S2S_SEND_REMOTE_DISPATCH_CALL: &[u8] = b"s2s_encode_send_message_call()";
 
 // TODO rename this precompile contract
 /// The contract address: 0000000000000000000000000000000000000018
-pub struct DispatchCallEncoder<T> {
-	_marker: PhantomData<T>,
+pub struct DispatchCallEncoder<T, S> {
+	_marker: PhantomData<(T, S)>,
 }
-impl<T> Precompile for DispatchCallEncoder<T>
+
+impl<T, S> Precompile for DispatchCallEncoder<T, S>
 where
 	T: from_ethereum_issuing::Config,
 	T: from_substrate_issuing::Config,
@@ -60,6 +61,7 @@ where
 	<T::Call as Dispatchable>::Origin: From<Option<T::AccountId>>,
 	T::Call: From<from_substrate_issuing::Call<T>>,
 	T::Call: From<from_ethereum_issuing::Call<T>>,
+	S: RelayMessageSender,
 {
 	fn execute(
 		input: &[u8],
@@ -89,8 +91,7 @@ where
 				call.encode()
 			}
 			_ if Self::match_digest(action_digest, S2S_READ_LATEST_MESSAGE_ID_METHOD) => {
-				<T as from_substrate_issuing::Config>::MessageSender::latest_token_message_id()
-					.to_vec()
+				<S as RelayMessageSender>::latest_token_message_id([0; 4]).to_vec()
 			}
 			_ if Self::match_digest(action_digest, S2S_REMOTE_DISPATCH_CALL_PAYLOAD) => {
 				let unlock_info = S2sRemoteUnlockInfo::decode(&action_params)
@@ -105,16 +106,13 @@ where
 			_ if Self::match_digest(action_digest, S2S_SEND_REMOTE_DISPATCH_CALL) => {
 				let params = S2sSendMessageParams::decode(&action_params)
 					.map_err(|_| ExitError::Other("decode send message info failed".into()))?;
-				let payload = <T as from_substrate_issuing::Config>::OutboundPayload::decode(
-					&mut params.payload.as_slice(),
+				<S as RelayMessageSender>::encode_send_message(
+					params.pallet_index,
+					params.lane_id,
+					params.payload,
+					params.fee.low_u128().saturated_into(),
 				)
-				.map_err(|_| ExitError::Other("decode send message info failed".into()))?;
-				let call: T::Call = from_substrate_issuing::Call::<T>::send_message(
-					payload,
-					(params.fee / POW_9).low_u128().saturated_into(),
-				)
-				.into();
-				call.encode()
+				.map_err(|_| ExitError::Other("decode send message info failed".into()))?
 			}
 			_ => {
 				return Err(ExitError::Other("No valid pallet digest found".into()));
@@ -130,7 +128,7 @@ where
 	}
 }
 
-impl<T> DispatchCallEncoder<T> {
+impl<T, S> DispatchCallEncoder<T, S> {
 	fn match_digest(digest: &[u8], expected_method: &[u8]) -> bool {
 		&sha3::Keccak256::digest(expected_method)[..ACTION_LEN] == digest
 	}

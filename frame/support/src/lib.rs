@@ -50,7 +50,7 @@ pub mod s2s {
 		traits::{BadOrigin, Convert},
 		DispatchError, DispatchErrorWithPostInfo,
 	};
-	use sp_std::cmp::PartialEq;
+	use sp_std::{cmp::PartialEq, vec::Vec};
 
 	pub const RING_NAME: &[u8] = b"Darwinia Network Native Token";
 	pub const RING_SYMBOL: &[u8] = b"RING";
@@ -61,13 +61,22 @@ pub mod s2s {
 	}
 
 	// RelayMessageCaller send message to pallet-messages
-	pub trait RelayMessageCaller<P, F> {
-		fn send_message(
-			payload: P,
-			fee: F,
+	pub trait RelayMessageSender {
+		fn encode_send_message(
+			pallet_index: u32,
+			lane_id: [u8; 4],
+			payload: Vec<u8>,
+			fee: u128,
+		) -> Result<Vec<u8>, &'static str>;
+
+		fn send_message_by_root(
+			pallet_index: u32,
+			lane_id: [u8; 4],
+			payload: Vec<u8>,
+			fee: u128,
 		) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>;
 
-		fn latest_token_message_id() -> TokenMessageId;
+		fn latest_token_message_id(lane_id: [u8; 4]) -> TokenMessageId;
 	}
 
 	pub trait MessageConfirmer {

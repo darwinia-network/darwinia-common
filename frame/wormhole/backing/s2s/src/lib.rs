@@ -51,7 +51,7 @@ use sp_std::prelude::*;
 use darwinia_support::{
 	evm::IntoDvmAddress,
 	s2s::{
-		ensure_source_root, MessageConfirmer, RelayMessageCaller, TokenMessageId, RING_DECIMAL,
+		ensure_source_root, MessageConfirmer, RelayMessageSender, TokenMessageId, RING_DECIMAL,
 		RING_NAME, RING_SYMBOL,
 	},
 };
@@ -92,7 +92,9 @@ pub mod pallet {
 		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
 
 		type FeeAccount: Get<Option<Self::AccountId>>;
-		type MessageSender: RelayMessageCaller<Self::OutboundPayload, RingBalance<Self>>;
+		type MessageSender: RelayMessageSender;
+		type MessageSendPalletIndex: Get<u32>;
+		type MessageLaneId: Get<[u8; 4]>;
 	}
 
 	#[pallet::event]
@@ -224,10 +226,17 @@ pub mod pallet {
 			});
 			let payload =
 				T::CallEncoder::encode_remote_register(spec_version, weight, token.clone());
-			T::MessageSender::send_message(payload, fee).map_err(|e| {
+			T::MessageSender::send_message_by_root(
+				T::MessageSendPalletIndex::get(),
+				T::MessageLaneId::get(),
+				payload.encode(),
+				fee.saturated_into::<u128>().into(),
+			)
+			.map_err(|e| {
 				log::info!("s2s-backing: register token failed {:?}", e);
 				Error::<T>::SendMessageFailed
 			})?;
+
 			Self::deposit_event(Event::TokenRegistered(token, user));
 			Ok(().into())
 		}
@@ -276,9 +285,14 @@ pub mod pallet {
 			let payload =
 				T::CallEncoder::encode_remote_issue(spec_version, weight, token.clone(), account)
 					.map_err(|_| Error::<T>::EncodeInvalid)?;
-			T::MessageSender::send_message(payload, fee)
-				.map_err(|_| Error::<T>::SendMessageFailed)?;
-			let message_id = T::MessageSender::latest_token_message_id();
+			T::MessageSender::send_message_by_root(
+				T::MessageSendPalletIndex::get(),
+				T::MessageLaneId::get(),
+				payload.encode(),
+				fee.saturated_into::<u128>().into(),
+			)
+			.map_err(|_| Error::<T>::SendMessageFailed)?;
+			let message_id = T::MessageSender::latest_token_message_id(T::MessageLaneId::get());
 			ensure!(
 				!<LockedQueue<T>>::contains_key(message_id),
 				Error::<T>::NonceDuplicated

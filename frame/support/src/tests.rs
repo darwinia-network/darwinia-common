@@ -19,8 +19,7 @@
 // --- paritytech ---
 use sp_core::{H160, U256};
 // --- darwinia-network ---
-use crate::evm::IntoDvmAddress;
-use crate::*;
+use crate::{evm::IntoDvmAddress, *};
 use std::str::FromStr;
 
 #[test]

@@ -2,6 +2,9 @@ pub use darwinia_evm_precompile_dispatch::Dispatch;
 pub use darwinia_evm_precompile_encoder::DispatchCallEncoder as CallEncoder;
 pub use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 pub use darwinia_evm_precompile_transfer::Transfer;
+use darwinia_support::s2s::{nonce_to_message_id, RelayMessageSender, TokenMessageId};
+use frame_system::RawOrigin;
+use pallet_bridge_messages::Instance1 as Pangoro;
 
 // --- crates.io ---
 use evm::{executor::PrecompileOutput, Context, ExitError};
@@ -9,10 +12,11 @@ use evm::{executor::PrecompileOutput, Context, ExitError};
 use codec::{Decode, Encode};
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
-	traits::FindAuthor,
+	traits::{FindAuthor, PalletInfoAccess},
 	ConsensusEngineId,
 };
 use sp_core::{crypto::Public, H160, U256};
+use sp_runtime::DispatchErrorWithPostInfo;
 use sp_std::marker::PhantomData;
 // --- darwinia-network ---
 use crate::*;
@@ -34,6 +38,62 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 			return Some(H160::from_slice(&authority_id.0.to_raw_vec()[4..24]));
 		}
 		None
+	}
+}
+
+pub struct ToPangoroMessageSender;
+
+impl ToPangoroMessageSender {
+	fn send_message_call(
+		pallet_index: u32,
+		lane_id: [u8; 4],
+		payload: Vec<u8>,
+		fee: u128,
+	) -> Result<Call, &'static str> {
+		let payload = ToPangoroMessagePayload::decode(&mut payload.as_slice())
+			.map_err(|_| "decode pangoro payload failed")?;
+
+		let call: Call = match pallet_index {
+			_ if pallet_index as usize == <BridgePangoroMessages as PalletInfoAccess>::index() => {
+				BridgeMessagesCall::<Runtime, Pangoro>::send_message(
+					lane_id,
+					payload,
+					fee.saturated_into(),
+				)
+				.into()
+			}
+			_ => {
+				return Err("invalid pallet index".into());
+			}
+		};
+		Ok(call)
+	}
+}
+
+impl RelayMessageSender for ToPangoroMessageSender {
+	fn encode_send_message(
+		pallet_index: u32,
+		lane_id: [u8; 4],
+		payload: Vec<u8>,
+		fee: u128,
+	) -> Result<Vec<u8>, &'static str> {
+		let call = Self::send_message_call(pallet_index, lane_id, payload, fee)?;
+		Ok(call.encode())
+	}
+
+	fn send_message_by_root(
+		pallet_index: u32,
+		lane_id: [u8; 4],
+		payload: Vec<u8>,
+		fee: u128,
+	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
+		let call = Self::send_message_call(pallet_index, lane_id, payload, fee)?;
+		call.dispatch(RawOrigin::Root.into())
+	}
+
+	fn latest_token_message_id(lane_id: [u8; 4]) -> TokenMessageId {
+		let nonce: u64 = BridgePangoroMessages::outbound_latest_generated_nonce(lane_id).into();
+		nonce_to_message_id(&lane_id, nonce)
 	}
 }
 
@@ -62,7 +122,9 @@ where
 			_ if address == addr(4) => Some(Identity::execute(input, target_gas, context)),
 			// Darwinia precompiles
 			_ if address == addr(21) => Some(<Transfer<R>>::execute(input, target_gas, context)),
-			_ if address == addr(24) => Some(<CallEncoder<R>>::execute(input, target_gas, context)),
+			_ if address == addr(24) => Some(<CallEncoder<R, ToPangoroMessageSender>>::execute(
+				input, target_gas, context,
+			)),
 			_ if address == addr(25) => Some(<Dispatch<R>>::execute(input, target_gas, context)),
 			_ => None,
 		}
