@@ -115,7 +115,6 @@ fn open_dvm_backend(config: &Configuration) -> Result<Arc<Backend<Block>>, Strin
 fn new_partial<RuntimeApi, Executor>(
 	config: &mut Configuration,
 	max_past_logs: u32,
-	target_gas_price: u64,
 ) -> Result<
 	PartialComponents<
 		FullClient<RuntimeApi, Executor>,
@@ -223,11 +222,7 @@ where
 			let uncles =
 				sp_authorship::InherentDataProvider::<<Block as BlockT>::Header>::check_inherents();
 
-			let dynamic_fee = dvm_dynamic_fee::InherentDataProvider::from_target_gas_price(
-				target_gas_price.into(),
-			);
-
-			Ok((timestamp, slot, uncles, dynamic_fee))
+			Ok((timestamp, slot, uncles))
 		},
 		&task_manager.spawn_essential_handle(),
 		config.prometheus_registry(),
@@ -315,7 +310,6 @@ fn new_full<RuntimeApi, Executor>(
 	mut config: Configuration,
 	authority_discovery_disabled: bool,
 	max_past_logs: u32,
-	target_gas_price: u64,
 ) -> Result<
 	(
 		TaskManager,
@@ -357,7 +351,7 @@ where
 				dvm_backend,
 				filter_pool,
 			),
-	} = new_partial::<RuntimeApi, Executor>(&mut config, max_past_logs, target_gas_price)?;
+	} = new_partial::<RuntimeApi, Executor>(&mut config, max_past_logs)?;
 
 	if let Some(url) = &config.keystore_remote {
 		match service::remote_keystore(url) {
@@ -473,11 +467,7 @@ where
 							slot_duration,
 						);
 
-					let dynamic_fee = dvm_dynamic_fee::InherentDataProvider::from_target_gas_price(
-						target_gas_price.into(),
-					);
-
-					Ok((timestamp, slot, uncles, dynamic_fee))
+					Ok((timestamp, slot, uncles))
 				}
 			},
 			force_authoring,
@@ -748,7 +738,6 @@ where
 pub fn new_chain_ops<Runtime, Dispatch>(
 	config: &mut Configuration,
 	max_past_logs: u32,
-	target_gas_price: u64,
 ) -> Result<
 	(
 		Arc<FullClient<Runtime, Dispatch>>,
@@ -771,7 +760,7 @@ where
 		import_queue,
 		task_manager,
 		..
-	} = new_partial::<Runtime, Dispatch>(config, max_past_logs, target_gas_price)?;
+	} = new_partial::<Runtime, Dispatch>(config, max_past_logs)?;
 
 	Ok((client, backend, import_queue, task_manager))
 }
@@ -782,7 +771,6 @@ pub fn pangolin_new_full(
 	config: Configuration,
 	authority_discovery_disabled: bool,
 	max_past_logs: u32,
-	target_gas_price: u64,
 ) -> Result<
 	(
 		TaskManager,
@@ -791,13 +779,10 @@ pub fn pangolin_new_full(
 	),
 	ServiceError,
 > {
-	let (components, client, rpc_handlers) =
-		new_full::<pangolin_runtime::RuntimeApi, PangolinExecutor>(
-			config,
-			authority_discovery_disabled,
-			max_past_logs,
-			target_gas_price,
-		)?;
+	let (components, client, rpc_handlers) = new_full::<
+		pangolin_runtime::RuntimeApi,
+		PangolinExecutor,
+	>(config, authority_discovery_disabled, max_past_logs)?;
 
 	Ok((components, client, rpc_handlers))
 }

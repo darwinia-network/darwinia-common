@@ -118,9 +118,6 @@ pub use evm_::*;
 pub mod dvm;
 pub use dvm::*;
 
-pub mod dynamic_fee;
-pub use dynamic_fee::*;
-
 pub mod bridge_messages;
 pub use bridge_messages::*;
 
