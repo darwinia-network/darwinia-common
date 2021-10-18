@@ -34,6 +34,7 @@ use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::SaturatedConversion,
 };
+use sp_std::convert::TryInto;
 
 use dp_contract::mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams};
 
@@ -92,7 +93,10 @@ where
 				call.encode()
 			}
 			_ if Self::match_digest(action_digest, S2S_READ_LATEST_MESSAGE_ID_METHOD) => {
-				<S as RelayMessageSender>::latest_token_message_id([0; 4]).to_vec()
+				let lane_id: [u8; 4] = action_params
+					.try_into()
+					.map_err(|_| ExitError::Other("decode lane id failed".into()))?;
+				<S as RelayMessageSender>::latest_token_message_id(lane_id).to_vec()
 			}
 			_ if Self::match_digest(action_digest, S2S_REMOTE_DISPATCH_CALL_PAYLOAD) => {
 				let unlock_info = S2sRemoteUnlockInfo::decode(&action_params)
