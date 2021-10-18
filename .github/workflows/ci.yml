@@ -176,7 +176,7 @@ jobs:
     name: Clean artifacts
     runs-on: ubuntu-latest
     if: always()
-    needs: [check-with-node, external-test]
+    needs: [check-default-features, check-with-node, external-test]
     steps:
       - uses: geekyeggo/delete-artifact@v1
         with:
