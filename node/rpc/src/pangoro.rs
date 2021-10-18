@@ -72,6 +72,7 @@ where
 		+ sp_blockchain::HeaderMetadata<Block, Error = sp_blockchain::Error>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
+	C::Api: darwinia_fee_market_rpc::FeeMarketRuntimeApi<Block, Balance>,
 	C::Api: sc_consensus_babe::BabeApi<Block>,
 	C::Api: sp_block_builder::BlockBuilder<Block>,
 	P: 'static + sp_transaction_pool::TransactionPool,
@@ -79,6 +80,8 @@ where
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<sp_runtime::traits::HashFor<Block>>,
 {
+	// --- darwinia-network ---
+	use darwinia_fee_market_rpc::{FeeMarket, FeeMarketApi};
 	// --- paritytech ---
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use sc_consensus_babe_rpc::{BabeApi, BabeRpcHandler};
@@ -139,6 +142,8 @@ where
 		shared_epoch_changes,
 		deny_unsafe,
 	)));
+
+	io.extend_with(FeeMarketApi::to_delegate(FeeMarket::new(client.clone())));
 
 	io
 }

@@ -86,6 +86,7 @@ impl_runtime_apis![
 	darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>,
 	darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>,
 	darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>,
+	darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance>,
 	dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>
 ];
 
