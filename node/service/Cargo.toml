@@ -1,7 +1,7 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "DRML Node Service"
 edition     = "2018"
+description = "DRML Node Service"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
 name        = "drml-service"
@@ -22,6 +22,7 @@ darwinia-balances-rpc-runtime-api   = { path = "../../frame/balances/rpc/runtime
 darwinia-bridge-ethereum            = { path = "../../frame/bridge/ethereum" }
 darwinia-claims                     = { path = "../../frame/claims" }
 darwinia-evm                        = { path = "../../frame/evm" }
+darwinia-fee-market-rpc-runtime-api = { path = "../../frame/fee-market/rpc/runtime-api" }
 darwinia-header-mmr-rpc-runtime-api = { path = "../../frame/header-mmr/rpc/runtime-api" }
 darwinia-staking                    = { path = "../../frame/staking" }
 darwinia-staking-rpc-runtime-api    = { path = "../../frame/staking/rpc/runtime-api" }

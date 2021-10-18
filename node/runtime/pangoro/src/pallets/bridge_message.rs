@@ -4,9 +4,7 @@ pub use pallet_bridge_messages::Instance1 as WithPangolinMessages;
 use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId, MessageNonce};
 use bp_runtime::ChainId;
 use frame_support::pallet_prelude::Weight;
-use pallet_bridge_messages::{
-	instant_payments::InstantCurrencyPayments, weights::RialtoWeight, Config,
-};
+use pallet_bridge_messages::{weights::RialtoWeight, Config};
 use sp_std::marker::PhantomData;
 // --- darwinia-network ---
 use crate::*;
@@ -14,6 +12,9 @@ use bridge_primitives::{
 	AccountIdConverter, MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
 	MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE, MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
 	PANGOLIN_CHAIN_ID, PANGORO_PANGOLIN_LANE,
+};
+use darwinia_fee_market::s2s::{
+	FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler, FeeMarketPayment,
 };
 use darwinia_support::{
 	s2s::{nonce_to_message_id, MessageConfirmer},
@@ -57,7 +58,7 @@ impl Config<WithPangolinMessages> for Runtime {
 
 	type TargetHeaderChain = Pangolin;
 	type LaneMessageVerifier = ToPangolinMessageVerifier;
-	type MessageDeliveryAndDispatchPayment = InstantCurrencyPayments<
+	type MessageDeliveryAndDispatchPayment = FeeMarketPayment<
 		Runtime,
 		WithPangolinMessages,
 		Ring,
@@ -65,8 +66,11 @@ impl Config<WithPangolinMessages> for Runtime {
 		RootAccountForPayments,
 	>;
 
-	type OnMessageAccepted = ();
-	type OnDeliveryConfirmed = PangoroDeliveryConfirmer<Substrate2SubstrateBacking>;
+	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self>;
+	type OnDeliveryConfirmed = (
+		PangoroDeliveryConfirmer<Substrate2SubstrateBacking>,
+		FeeMarketMessageConfirmedHandler<Self>,
+	);
 
 	type SourceHeaderChain = Pangolin;
 	type MessageDispatch = FromPangolinMessageDispatch;
