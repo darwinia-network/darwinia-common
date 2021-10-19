@@ -707,7 +707,6 @@ dependencies = [
  "common-primitives",
  "darwinia-fee-market",
  "frame-support",
- "frame-system",
  "pallet-bridge-dispatch",
  "sp-api",
  "sp-core",
