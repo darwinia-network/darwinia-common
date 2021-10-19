@@ -5,7 +5,7 @@ use sp_runtime::AccountId32;
 // --- darwinia-network ---
 use crate::*;
 use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID};
-use darwinia_support::{s2s::ToEthAddress, ChainName};
+use darwinia_support::{s2s::ToEthAddress, to_bytes32, ChainName};
 use dp_asset::token::Token;
 use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
 use from_substrate_issuing::{Config, EncodeCall};
@@ -36,7 +36,7 @@ impl EncodeCall<AccountId, ToPangoroMessagePayload> for PangoroCallEncoder {
 			return Err(());
 		} else {
 			let recipient_id: AccountId =
-				array_bytes::dyn_into!(remote_unlock_info.recipient.as_slice(), 32);
+				to_bytes32(remote_unlock_info.recipient.as_slice()).into();
 			let call =
 				PangoroRuntime::Sub2SubBacking(PangoroSub2SubBackingCall::unlock_from_remote(
 					remote_unlock_info.token,
