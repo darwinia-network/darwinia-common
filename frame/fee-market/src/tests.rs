@@ -233,11 +233,14 @@ impl LaneMessageVerifier<AccountId, TestPayload, TestMessageFee> for TestLaneMes
 		_lane_outbound_data: &OutboundLaneData,
 		_payload: &TestPayload,
 	) -> Result<(), Self::Error> {
-		if *delivery_and_dispatch_fee != 0 {
-			Ok(())
+		if let Some(market_fee) = FeeMarket::market_fee() {
+			if *delivery_and_dispatch_fee < market_fee {
+				return Err(TEST_ERROR);
+			}
 		} else {
-			Err(TEST_ERROR)
+			return Err(TEST_ERROR);
 		}
+		Ok(())
 	}
 }
 
@@ -276,14 +279,6 @@ impl MessageDeliveryAndDispatchPayment<AccountId, TestMessageFee>
 		if frame_support::storage::unhashed::get(b":reject-message-fee:") == Some(true) {
 			return Err(TEST_ERROR);
 		}
-
-		// if let Some(market_fee) = FeeMarket::market_fee() {
-		// 	if *fee < market_fee {
-		// 		return Err("Provided fee is below market fee");
-		// 	}
-		// } else {
-		// 	return Err("The fee market is not ready");
-		// }
 
 		frame_support::storage::unhashed::put(b":message-fee:", &(submitter, fee));
 		Ok(())
@@ -836,8 +831,8 @@ fn test_no_order_created_after_send_message_when_fee_market_not_ready() {
 			Messages::send_message(Origin::signed(1), TEST_LANE_ID, REGULAR_PAYLOAD, 200),
 			DispatchError::Module {
 				index: 4,
-				error: 3,
-				message: Some("FailedToWithdrawMessageFee")
+				error: 2,
+				message: Some("MessageRejectedByLaneVerifier")
 			}
 		);
 	});
@@ -1356,8 +1351,8 @@ fn test_check_submitted_fee_with_fee_market() {
 			Messages::send_message(Origin::signed(1), TEST_LANE_ID, REGULAR_PAYLOAD, 200),
 			DispatchError::Module {
 				index: 4,
-				error: 3,
-				message: Some("FailedToWithdrawMessageFee")
+				error: 2,
+				message: Some("MessageRejectedByLaneVerifier")
 			}
 		);
 
@@ -1367,8 +1362,8 @@ fn test_check_submitted_fee_with_fee_market() {
 			Messages::send_message(Origin::signed(1), TEST_LANE_ID, REGULAR_PAYLOAD, 49),
 			DispatchError::Module {
 				index: 4,
-				error: 3,
-				message: Some("FailedToWithdrawMessageFee")
+				error: 2,
+				message: Some("MessageRejectedByLaneVerifier")
 			}
 		);
 
