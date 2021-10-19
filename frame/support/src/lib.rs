@@ -152,33 +152,3 @@ pub fn to_bytes32(raw: &[u8]) -> [u8; 32] {
 pub type TokenMessageId = [u8; 16];
 
 pub type ChainName = Vec<u8>;
-
-#[cfg(test)]
-mod test {
-	use crate::{
-		s2s::{RING_NAME, RING_SYMBOL},
-		to_bytes32,
-	};
-	use array_bytes::{hex2array, hex2bytes};
-
-	#[test]
-	fn test_ring_symbol_encode() {
-		// Get this info: https://etherscan.io/address/0x9469d013805bffb7d3debe5e7839237e535ec483#readContract
-		let target_symbol = "0x52494e4700000000000000000000000000000000000000000000000000000000";
-		assert_eq!(to_bytes32(RING_SYMBOL), hex2array(target_symbol).unwrap());
-	}
-
-	#[test]
-	fn test_ring_name_encode() {
-		// Get this info: https://etherscan.io/address/0x9469d013805bffb7d3debe5e7839237e535ec483#readContract
-		let target_name = "0x44617277696e6961204e6574776f726b204e617469766520546f6b656e000000";
-		assert_eq!(to_bytes32(RING_NAME), hex2array(target_name).unwrap());
-	}
-
-	#[test]
-	fn test_ring_name_decode() {
-		let name = "0x44617277696e6961204e6574776f726b204e617469766520546f6b656e000000";
-		let raw = hex2bytes(name).unwrap();
-		assert_eq!(RING_NAME, &raw[..29]);
-	}
-}

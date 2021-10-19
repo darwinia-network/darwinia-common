@@ -27,6 +27,7 @@ use sha3::Digest;
 // --- darwinia-network ---
 use darwinia_evm::AddressMapping;
 use darwinia_support::s2s::RelayMessageSender;
+use dp_contract::mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams};
 use dp_evm::Precompile;
 use from_substrate_issuing::EncodeCall;
 // --- paritytech ---
@@ -35,8 +36,6 @@ use frame_support::{
 	sp_runtime::SaturatedConversion,
 };
 use sp_std::convert::TryInto;
-
-use dp_contract::mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams};
 
 const ACTION_LEN: usize = 4;
 
