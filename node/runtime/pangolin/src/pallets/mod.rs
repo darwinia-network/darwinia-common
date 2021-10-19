@@ -1,6 +1,9 @@
 pub mod system;
 pub use system::*;
 
+pub mod randomness_collective_flip;
+pub use randomness_collective_flip::*;
+
 pub mod babe;
 pub use babe::*;
 
@@ -118,9 +121,6 @@ pub use evm_::*;
 pub mod dvm;
 pub use dvm::*;
 
-pub mod dynamic_fee;
-pub use dynamic_fee::*;
-
 pub mod bridge_messages;
 pub use bridge_messages::*;
 
@@ -135,3 +135,6 @@ pub use from_substrate_issuing_::*;
 
 pub mod bridge_bsc;
 pub use bridge_bsc::*;
+
+pub mod fee_market;
+pub use fee_market::*;

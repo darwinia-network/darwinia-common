@@ -126,15 +126,15 @@ pub fn genesis_config() -> ChainSpec {
 		let initial_nominators = <Vec<AccountId>>::new();
 
 		GenesisConfig {
-			frame_system: SystemConfig {
+			system: SystemConfig {
 				code: wasm_binary_unwrap().to_vec(),
 				changes_trie_config: Default::default(),
 			},
-			pallet_babe: BabeConfig {
+			babe: BabeConfig {
 				authorities: vec![],
 				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG),
 			},
-			darwinia_balances_Instance1: BalancesConfig {
+			balances: BalancesConfig {
 				balances: vec![
 					(root.clone(), BUNCH_OF_COINS),
 					(
@@ -160,7 +160,7 @@ pub fn genesis_config() -> ChainSpec {
 				)
 				.collect(),
 			},
-			darwinia_balances_Instance2: KtonConfig {
+			kton: KtonConfig {
 				balances: vec![(root.clone(), BUNCH_OF_COINS)]
 					.into_iter()
 					.chain(
@@ -180,7 +180,7 @@ pub fn genesis_config() -> ChainSpec {
 					)
 					.collect(),
 			},
-			darwinia_staking: StakingConfig {
+			staking: StakingConfig {
 				minimum_validator_count: 6,
 				validator_count: 6,
 				stakers: initial_authorities
@@ -216,7 +216,7 @@ pub fn genesis_config() -> ChainSpec {
 				payout_fraction: Perbill::from_percent(50),
 				..Default::default()
 			},
-			pallet_session: SessionConfig {
+			session: SessionConfig {
 				keys: initial_authorities
 					.iter()
 					.map(|Keys { stash, session }| {
@@ -224,11 +224,11 @@ pub fn genesis_config() -> ChainSpec {
 					})
 					.collect(),
 			},
-			pallet_grandpa: Default::default(),
-			pallet_im_online: Default::default(),
-			pallet_authority_discovery: Default::default(),
-			pallet_sudo: SudoConfig { key: root.clone() },
-			to_substrate_backing: Substrate2SubstrateBackingConfig {
+			grandpa: Default::default(),
+			im_online: Default::default(),
+			authority_discovery: Default::default(),
+			sudo: SudoConfig { key: root.clone() },
+			substrate_2_substrate_backing: Substrate2SubstrateBackingConfig {
 				secure_limited_period: DAYS,
 				secure_limited_ring_amount: 1_000_000 * COIN,
 				remote_mapping_token_factory_account: Default::default(),
@@ -281,29 +281,29 @@ pub fn development_config() -> ChainSpec {
 		.collect::<Vec<_>>();
 
 		GenesisConfig {
-			frame_system: SystemConfig {
+			system: SystemConfig {
 				code: wasm_binary_unwrap().to_vec(),
 				changes_trie_config: Default::default(),
 			},
-			pallet_babe: BabeConfig {
+			babe: BabeConfig {
 				authorities: vec![],
 				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG),
 			},
-			darwinia_balances_Instance1: BalancesConfig {
+			balances: BalancesConfig {
 				balances: endowed_accounts
 					.clone()
 					.into_iter()
 					.map(|a| (a, MANY_COINS))
 					.collect(),
 			},
-			darwinia_balances_Instance2: KtonConfig {
+			kton: KtonConfig {
 				balances: endowed_accounts
 					.clone()
 					.into_iter()
 					.map(|a| (a, A_FEW_COINS))
 					.collect(),
 			},
-			darwinia_staking: StakingConfig {
+			staking: StakingConfig {
 				minimum_validator_count: 1,
 				validator_count: 2,
 				stakers: initial_authorities
@@ -317,18 +317,18 @@ pub fn development_config() -> ChainSpec {
 				payout_fraction: Perbill::from_percent(50),
 				..Default::default()
 			},
-			pallet_session: SessionConfig {
+			session: SessionConfig {
 				keys: initial_authorities
 					.iter()
 					.cloned()
 					.map(|x| (x.0.clone(), x.0, session_keys(x.2, x.3, x.4, x.5)))
 					.collect(),
 			},
-			pallet_grandpa: Default::default(),
-			pallet_im_online: Default::default(),
-			pallet_authority_discovery: Default::default(),
-			pallet_sudo: SudoConfig { key: root.clone() },
-			to_substrate_backing: Substrate2SubstrateBackingConfig {
+			grandpa: Default::default(),
+			im_online: Default::default(),
+			authority_discovery: Default::default(),
+			sudo: SudoConfig { key: root.clone() },
+			substrate_2_substrate_backing: Substrate2SubstrateBackingConfig {
 				secure_limited_period: DAYS,
 				secure_limited_ring_amount: 100_000 * COIN,
 				remote_mapping_token_factory_account: Default::default(),

@@ -38,6 +38,9 @@ members = [
 	"frame/evm/precompile/contracts/simple",
 	"frame/evm/precompile/contracts/transfer",
 	"frame/evm/precompile/contracts/sha3fips",
+	"frame/fee-market",
+	"frame/fee-market/rpc",
+	"frame/fee-market/rpc/runtime-api",
 	"frame/header-mmr",
 	"frame/header-mmr/rpc",
 	"frame/header-mmr/rpc/runtime-api",
@@ -57,6 +60,7 @@ members = [
 	"primitives/contract",
 	"primitives/ethereum",
 	"primitives/evm",
+	"primitives/fee-market",
 	"primitives/merkle-patricia-trie",
 	"primitives/relay",
 	"primitives/rpc",
@@ -83,49 +87,48 @@ exclude = [
 #
 # This list is ordered alphabetically.
 [profile.dev.package]
-aes-soft         = { opt-level = 3 }
-aesni            = { opt-level = 3 }
-blake2           = { opt-level = 3 }
-blake2-rfc       = { opt-level = 3 }
-blake2b_simd     = { opt-level = 3 }
-crc32fast        = { opt-level = 3 }
-crossbeam-deque  = { opt-level = 3 }
-crossbeam-queue  = { opt-level = 3 }
-crypto-mac       = { opt-level = 3 }
-curve25519-dalek = { opt-level = 3 }
-ed25519-dalek    = { opt-level = 3 }
-flate2           = { opt-level = 3 }
-futures-channel  = { opt-level = 3 }
-h2               = { opt-level = 3 }
-hash-db          = { opt-level = 3 }
-hashbrown        = { opt-level = 3 }
-hmac             = { opt-level = 3 }
-httparse         = { opt-level = 3 }
-integer-sqrt     = { opt-level = 3 }
-keccak           = { opt-level = 3 }
-libm             = { opt-level = 3 }
-librocksdb-sys   = { opt-level = 3 }
-libsecp256k1     = { opt-level = 3 }
-libz-sys         = { opt-level = 3 }
-mio              = { opt-level = 3 }
-nalgebra         = { opt-level = 3 }
-num-bigint       = { opt-level = 3 }
-parking_lot      = { opt-level = 3 }
-parking_lot_core = { opt-level = 3 }
-percent-encoding = { opt-level = 3 }
-primitive-types  = { opt-level = 3 }
-ring             = { opt-level = 3 }
-rustls           = { opt-level = 3 }
-sha2             = { opt-level = 3 }
-sha3             = { opt-level = 3 }
-smallvec         = { opt-level = 3 }
-snow             = { opt-level = 3 }
-twox-hash        = { opt-level = 3 }
-uint             = { opt-level = 3 }
-wasmi            = { opt-level = 3 }
-x25519-dalek     = { opt-level = 3 }
-yamux            = { opt-level = 3 }
-zeroize          = { opt-level = 3 }
+blake2            = { opt-level = 3 }
+blake2-rfc        = { opt-level = 3 }
+blake2b_simd      = { opt-level = 3 }
+chacha20poly1305  = { opt-level = 3 }
+cranelift-codegen = { opt-level = 3 }
+cranelift-wasm    = { opt-level = 3 }
+crc32fast         = { opt-level = 3 }
+crossbeam-deque   = { opt-level = 3 }
+crypto-mac        = { opt-level = 3 }
+curve25519-dalek  = { opt-level = 3 }
+ed25519-dalek     = { opt-level = 3 }
+flate2            = { opt-level = 3 }
+futures-channel   = { opt-level = 3 }
+hash-db           = { opt-level = 3 }
+hashbrown         = { opt-level = 3 }
+hmac              = { opt-level = 3 }
+httparse          = { opt-level = 3 }
+integer-sqrt      = { opt-level = 3 }
+keccak            = { opt-level = 3 }
+libm              = { opt-level = 3 }
+librocksdb-sys    = { opt-level = 3 }
+libsecp256k1      = { opt-level = 3 }
+libz-sys          = { opt-level = 3 }
+mio               = { opt-level = 3 }
+nalgebra          = { opt-level = 3 }
+num-bigint        = { opt-level = 3 }
+parking_lot       = { opt-level = 3 }
+parking_lot_core  = { opt-level = 3 }
+percent-encoding  = { opt-level = 3 }
+primitive-types   = { opt-level = 3 }
+ring              = { opt-level = 3 }
+rustls            = { opt-level = 3 }
+sha2              = { opt-level = 3 }
+sha3              = { opt-level = 3 }
+smallvec          = { opt-level = 3 }
+snow              = { opt-level = 3 }
+twox-hash         = { opt-level = 3 }
+uint              = { opt-level = 3 }
+wasmi             = { opt-level = 3 }
+x25519-dalek      = { opt-level = 3 }
+yamux             = { opt-level = 3 }
+zeroize           = { opt-level = 3 }
 
 [profile.release]
 # Darwinia runtime requires unwinding.

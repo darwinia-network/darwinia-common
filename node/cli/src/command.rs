@@ -125,7 +125,6 @@ fn set_default_ss58_version(spec: &Box<dyn ChainSpec>) {
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
 	let max_past_logs = cli.run.dvm_args.max_past_logs;
-	let target_gas_price = cli.run.dvm_args.target_gas_price;
 
 	match &cli.subcommand {
 		None => {
@@ -156,7 +155,6 @@ pub fn run() -> sc_cli::Result<()> {
 							config,
 							authority_discovery_disabled,
 							max_past_logs,
-							target_gas_price,
 						)
 						.map(|(task_manager, _, _)| task_manager),
 					}
@@ -186,11 +184,10 @@ pub fn run() -> sc_cli::Result<()> {
 				})
 			} else {
 				runner.async_run(|mut config| {
-					let (client, _, import_queue, task_manager) =
-						pangolin_service::new_chain_ops::<
-							pangolin_runtime::RuntimeApi,
-							PangolinExecutor,
-						>(&mut config, max_past_logs, target_gas_price)?;
+					let (client, _, import_queue, task_manager) = pangolin_service::new_chain_ops::<
+						pangolin_runtime::RuntimeApi,
+						PangolinExecutor,
+					>(&mut config, max_past_logs)?;
 
 					Ok((cmd.run(client, import_queue), task_manager))
 				})
@@ -213,11 +210,10 @@ pub fn run() -> sc_cli::Result<()> {
 				})
 			} else {
 				runner.async_run(|mut config| {
-					let (client, _, _, task_manager) =
-						pangolin_service::new_chain_ops::<
-							pangolin_runtime::RuntimeApi,
-							PangolinExecutor,
-						>(&mut config, max_past_logs, target_gas_price)?;
+					let (client, _, _, task_manager) = pangolin_service::new_chain_ops::<
+						pangolin_runtime::RuntimeApi,
+						PangolinExecutor,
+					>(&mut config, max_past_logs)?;
 
 					Ok((cmd.run(client, config.database), task_manager))
 				})
@@ -240,11 +236,10 @@ pub fn run() -> sc_cli::Result<()> {
 				})
 			} else {
 				runner.async_run(|mut config| {
-					let (client, _, _, task_manager) =
-						pangolin_service::new_chain_ops::<
-							pangolin_runtime::RuntimeApi,
-							PangolinExecutor,
-						>(&mut config, max_past_logs, target_gas_price)?;
+					let (client, _, _, task_manager) = pangolin_service::new_chain_ops::<
+						pangolin_runtime::RuntimeApi,
+						PangolinExecutor,
+					>(&mut config, max_past_logs)?;
 
 					Ok((cmd.run(client, config.chain_spec), task_manager))
 				})
@@ -267,11 +262,10 @@ pub fn run() -> sc_cli::Result<()> {
 				})
 			} else {
 				runner.async_run(|mut config| {
-					let (client, _, import_queue, task_manager) =
-						pangolin_service::new_chain_ops::<
-							pangolin_runtime::RuntimeApi,
-							PangolinExecutor,
-						>(&mut config, max_past_logs, target_gas_price)?;
+					let (client, _, import_queue, task_manager) = pangolin_service::new_chain_ops::<
+						pangolin_runtime::RuntimeApi,
+						PangolinExecutor,
+					>(&mut config, max_past_logs)?;
 
 					Ok((cmd.run(client, import_queue), task_manager))
 				})
@@ -315,11 +309,10 @@ pub fn run() -> sc_cli::Result<()> {
 				})
 			} else {
 				runner.async_run(|mut config| {
-					let (client, backend, _, task_manager) =
-						pangolin_service::new_chain_ops::<
-							pangolin_runtime::RuntimeApi,
-							PangolinExecutor,
-						>(&mut config, max_past_logs, target_gas_price)?;
+					let (client, backend, _, task_manager) = pangolin_service::new_chain_ops::<
+						pangolin_runtime::RuntimeApi,
+						PangolinExecutor,
+					>(&mut config, max_past_logs)?;
 
 					Ok((cmd.run(client, backend), task_manager))
 				})

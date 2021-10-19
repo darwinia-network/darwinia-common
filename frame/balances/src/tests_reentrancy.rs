@@ -24,7 +24,8 @@ use codec::{Decode, Encode};
 use frame_support::{
 	assert_ok,
 	traits::{
-		BalanceStatus, Currency, GenesisBuild, OnUnbalanced, ReservableCurrency, StorageMapShim,
+		BalanceStatus, Currency, GenesisBuild, MaxEncodedLen, OnUnbalanced, ReservableCurrency,
+		StorageMapShim,
 	},
 	weights::IdentityFee,
 };
@@ -92,6 +93,7 @@ impl OnUnbalanced<NegativeImbalance<Test, RingInstance>> for OnDustRemoval {
 }
 frame_support::parameter_types! {
 	pub const MaxLocks: u32 = 50;
+	pub const MaxReserves: u32 = 2;
 }
 impl Config<RingInstance> for Test {
 	type Balance = Balance;
@@ -106,6 +108,8 @@ impl Config<RingInstance> for Test {
 		AccountData<Balance>,
 	>;
 	type MaxLocks = MaxLocks;
+	type MaxReserves = MaxReserves;
+	type ReserveIdentifier = [u8; 8];
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
@@ -185,12 +189,8 @@ fn transfer_dust_removal_tst1_should_work() {
 			// Number of events expected is 8
 			assert_eq!(System::events().len(), 11);
 
-			System::assert_has_event(Event::darwinia_balances_Instance1(crate::Event::Transfer(
-				2, 3, 450,
-			)));
-			System::assert_has_event(Event::darwinia_balances_Instance1(crate::Event::DustLost(
-				2, 50,
-			)));
+			System::assert_has_event(Event::Ring(crate::Event::Transfer(2, 3, 450)));
+			System::assert_has_event(Event::Ring(crate::Event::DustLost(2, 50)));
 		});
 }
 
@@ -220,12 +220,8 @@ fn transfer_dust_removal_tst2_should_work() {
 			// Number of events expected is 8
 			assert_eq!(System::events().len(), 9);
 
-			System::assert_has_event(Event::darwinia_balances_Instance1(crate::Event::Transfer(
-				2, 1, 450,
-			)));
-			System::assert_has_event(Event::darwinia_balances_Instance1(crate::Event::DustLost(
-				2, 50,
-			)));
+			System::assert_has_event(Event::Ring(crate::Event::Transfer(2, 1, 450)));
+			System::assert_has_event(Event::Ring(crate::Event::DustLost(2, 50)));
 		});
 }
 
@@ -267,11 +263,12 @@ fn repatriating_reserved_balance_dust_removal_should_work() {
 			// Number of events expected is 10
 			assert_eq!(System::events().len(), 10);
 
-			System::assert_has_event(Event::darwinia_balances_Instance1(
-				crate::Event::ReserveRepatriated(2, 1, 450, BalanceStatus::Free),
-			));
-			System::assert_last_event(Event::darwinia_balances_Instance1(crate::Event::DustLost(
-				2, 50,
+			System::assert_has_event(Event::Ring(crate::Event::ReserveRepatriated(
+				2,
+				1,
+				450,
+				BalanceStatus::Free,
 			)));
+			System::assert_last_event(Event::Ring(crate::Event::DustLost(2, 50)));
 		});
 }

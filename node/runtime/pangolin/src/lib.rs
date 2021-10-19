@@ -90,6 +90,8 @@ use codec::{Decode, Encode};
 use bridge_runtime_common::messages::{
 	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
 };
+#[allow(unused)]
+use frame_support::migration;
 use frame_support::{
 	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade},
 	weights::Weight,
@@ -123,7 +125,8 @@ use bridges::substrate::pangoro_messages::{ToPangoroMessagePayload, WithPangoroM
 use common_primitives::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
-use darwinia_evm::{Account as EVMAccount, Runner};
+use darwinia_evm::{Account as EVMAccount, FeeCalculator, Runner};
+use darwinia_fee_market_rpc_runtime_api::Fee;
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use dvm_ethereum::{Call::transact, Transaction as EthereumTransaction};
@@ -221,7 +224,7 @@ frame_support::construct_runtime! {
 		HeaderMMR: darwinia_header_mmr::{Pallet, Call, Storage} = 16,
 
 		// Governance stuff; uncallable initially.
-		Democracy: darwinia_democracy::{Pallet, Call, Storage, Config, Event<T>} = 17,
+		Democracy: darwinia_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 17,
 		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 18,
 		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 19,
 		PhragmenElection: darwinia_elections_phragmen::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
@@ -273,7 +276,7 @@ frame_support::construct_runtime! {
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
-		DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Inherent} = 47,
+		// DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Inherent} = 47,
 
 		BridgePangoroMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
 		BridgeDispatch: pallet_bridge_dispatch::{Pallet, Event<T>} = 44,
@@ -281,6 +284,8 @@ frame_support::construct_runtime! {
 		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 
 		BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
+
+		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 53
 	}
 }
 
@@ -539,6 +544,17 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
+		fn market_fee() -> Option<Fee<Balance>> {
+			if let Some(fee) = FeeMarket::market_fee() {
+				return Some(Fee {
+					amount: fee,
+				});
+			}
+			None
+		}
+	}
+
 	impl dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block> for Runtime {
 		fn chain_id() -> u64 {
 			<Runtime as darwinia_evm::Config>::ChainId::get()
@@ -747,6 +763,7 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, darwinia_evm, EVM);
 			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
 			add_benchmark!(params, batches, from_ethereum_issuing, EthereumIssuing);
+			add_benchmark!(params, batches, darwinia_fee_market, FeeMarket);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
@@ -773,29 +790,61 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 	}
 }
 
+#[allow(unused)]
 fn migrate() -> Weight {
-	// --- paritytech ---
-	#[allow(unused)]
-	use frame_support::migration;
-
 	// TODO: Move to S2S
 	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
 	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
 
-	0
-	// RuntimeBlockWeights::get().max_block
+	migration::remove_storage_prefix(b"DynamicFee", b"MinGasPrice", &[]);
+	log::info!("DynamicFee MinGasPrice item removed");
+
+	// 0
+	RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		migrate();
+		// --- paritytech ---
+		use frame_support::traits::PalletInfo;
+
+		let name = <Runtime as frame_system::Config>::PalletInfo::name::<Grandpa>()
+			.expect("grandpa is part of pallets in construct_runtime, so it has a name; qed");
+		pallet_grandpa::migrations::v3_1::pre_migration::<Runtime, Grandpa, _>(name);
+
+		assert!(migration::have_storage_value(
+			b"DynamicFee",
+			b"MinGasPrice",
+			&[]
+		));
+
+		Ok(())
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade() -> Result<(), &'static str> {
+		pallet_grandpa::migrations::v3_1::post_migration::<Grandpa>();
+
+		assert!(!migration::have_storage_value(
+			b"DynamicFee",
+			b"MinGasPrice",
+			&[]
+		));
 
 		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> Weight {
+		// --- paritytech ---
+		use frame_support::traits::PalletInfo;
+
+		let name = <Runtime as frame_system::Config>::PalletInfo::name::<Grandpa>()
+			.expect("grandpa is part of pallets in construct_runtime, so it has a name; qed");
+
+		pallet_grandpa::migrations::v3_1::migrate::<Runtime, Grandpa, _>(name);
+
 		migrate()
 	}
 }

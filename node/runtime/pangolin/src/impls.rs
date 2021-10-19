@@ -54,7 +54,7 @@ pub mod relay {
 use smallvec::smallvec;
 // --- paritytech ---
 use frame_support::{
-	traits::{Currency, Imbalance, OnUnbalanced},
+	traits::{Currency, Imbalance, MaxEncodedLen, OnUnbalanced},
 	weights::{
 		constants::ExtrinsicBaseWeight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,

@@ -47,6 +47,9 @@
 /frame/elections-phragmen/ @AurevoirXavier
 /frame/evm/ @AsceticBear @HackFisher
 /frame/evm/precompile/ @AsceticBear @HackFisher @xiaoch05
+/frame/fee-market/ @AsceticBear @HackFisher
+/frame/fee-market/rpc/ @AsceticBear
+/frame/fee-market/rpc/runtime-api/ @AsceticBear
 /frame/header-mmr/ @AurevoirXavier @HackFisher
 /frame/staking/ @AurevoirXavier @HackFisher
 /frame/staking/rpc/ @AurevoirXavier
@@ -57,6 +60,7 @@
 /primitives/consensus/ @AsceticBear
 /primitives/ethereum/ @AurevoirXavier @HackFisher
 /primitives/evm/ @AsceticBear
+/primitives/fee-market/ @AsceticBear
 /primitives/merkle-patricia-trie/ @AurevoirXavier @HackFisher
 /primitives/relay/ @AurevoirXavier
 /primitives/rpc/ @AsceticBear

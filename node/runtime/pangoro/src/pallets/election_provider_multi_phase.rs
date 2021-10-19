@@ -1,5 +1,6 @@
 // --- paritytech ---
 use frame_support::weights::{constants::BlockExecutionWeight, DispatchClass, Weight};
+use frame_system::EnsureRoot;
 use pallet_election_provider_multi_phase::Config;
 use sp_runtime::{transaction_validity::TransactionPriority, PerU16, Perbill};
 // --- darwinia-network ---
@@ -57,5 +58,6 @@ impl Config for Runtime {
 	type CompactSolution = NposCompactSolution16;
 	type Fallback = Fallback;
 	type WeightInfo = ();
+	type ForceOrigin = EnsureRoot<AccountId>;
 	type BenchmarkingConfig = ();
 }

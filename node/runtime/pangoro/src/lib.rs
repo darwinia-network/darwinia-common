@@ -101,6 +101,7 @@ use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use common_primitives::*;
+use darwinia_fee_market_rpc_runtime_api::Fee;
 
 pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
@@ -186,6 +187,7 @@ frame_support::construct_runtime!(
 		BridgePangolinGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 19,
 
 		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Config<T>, Event<T>} = 20,
+		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 22,
 	}
 );
 
@@ -475,10 +477,23 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
+		fn market_fee() -> Option<Fee<Balance>> {
+			if let Some(fee) = FeeMarket::market_fee() {
+				return Some(Fee {
+					amount: fee,
+				});
+			}
+			None
+		}
+	}
+
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
-		fn on_runtime_upgrade() -> Result<(Weight, Weight), sp_runtime::RuntimeString> {
-			log::info!("try-runtime::on_runtime_upgrade Darwinia.");
+		fn on_runtime_upgrade() -> Result<
+			(Weight, Weight),
+			sp_runtime::RuntimeString
+		> {
 			let weight = Executive::try_runtime_upgrade()?;
 			Ok((weight, RuntimeBlockWeights::get().max_block))
 		}
@@ -506,6 +521,7 @@ sp_api::impl_runtime_apis! {
 	}
 }
 
+#[allow(unused)]
 fn migrate() -> Weight {
 	// --- paritytech ---
 	#[allow(unused)]
@@ -519,13 +535,33 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		migrate();
+		// --- paritytech ---
+		use frame_support::traits::PalletInfo;
+
+		let name = <Runtime as frame_system::Config>::PalletInfo::name::<Grandpa>()
+			.expect("grandpa is part of pallets in construct_runtime, so it has a name; qed");
+		pallet_grandpa::migrations::v3_1::pre_migration::<Runtime, Grandpa, _>(name);
+
+		Ok(())
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade() -> Result<(), &'static str> {
+		pallet_grandpa::migrations::v3_1::post_migration::<Grandpa>();
 
 		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		migrate()
+		// --- paritytech ---
+		use frame_support::traits::PalletInfo;
+
+		let name = <Runtime as frame_system::Config>::PalletInfo::name::<Grandpa>()
+			.expect("grandpa is part of pallets in construct_runtime, so it has a name; qed");
+
+		pallet_grandpa::migrations::v3_1::migrate::<Runtime, Grandpa, _>(name)
+
+		// migrate()
 	}
 }
 

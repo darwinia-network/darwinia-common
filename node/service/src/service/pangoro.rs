@@ -72,7 +72,9 @@ sc_executor::native_executor_instance!(
 	frame_benchmarking::benchmarking::HostFunctions,
 );
 
-impl_runtime_apis!();
+impl_runtime_apis![
+	darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance>
+];
 
 #[cfg(feature = "full-node")]
 fn new_partial<RuntimeApi, Executor>(
@@ -141,7 +143,7 @@ where
 		config.transaction_pool.clone(),
 		config.role.is_authority().into(),
 		config.prometheus_registry(),
-		task_manager.spawn_handle(),
+		task_manager.spawn_essential_handle(),
 		client.clone(),
 	);
 	let grandpa_hard_forks = vec![];
@@ -303,7 +305,7 @@ where
 		),
 	);
 
-	let (network, network_status_sinks, system_rpc_tx, network_starter) =
+	let (network, system_rpc_tx, network_starter) =
 		sc_service::build_network(BuildNetworkParams {
 			config: &config,
 			client: client.clone(),
@@ -334,14 +336,14 @@ where
 		task_manager: &mut task_manager,
 		on_demand: None,
 		remote_blockchain: None,
-		network_status_sinks,
+
 		system_rpc_tx,
 		telemetry: telemetry.as_mut(),
 	})?;
 
 	let (block_import, link_half, babe_link) = import_setup;
 
-	if role.is_authority() {
+	if is_authority {
 		let can_author_with = CanAuthorWithNativeVersion::new(client.executor().clone());
 		let proposer = ProposerFactory::new(
 			task_manager.spawn_handle(),
@@ -359,6 +361,7 @@ where
 			block_import,
 			env: proposer,
 			sync_oracle: network.clone(),
+			justification_sync_link: network.clone(),
 			create_inherent_data_providers: move |parent, ()| {
 				let client_clone = client_clone.clone();
 				async move {
@@ -392,41 +395,7 @@ where
 			.spawn_blocking("babe", babe);
 	}
 
-	let keystore = if is_authority {
-		Some(keystore_container.sync_keystore())
-	} else {
-		None
-	};
-	let grandpa_config = GrandpaConfig {
-		// FIXME substrate#1578 make this available through chainspec
-		gossip_duration: Duration::from_millis(1000),
-		justification_period: 512,
-		name: Some(name),
-		observer_enabled: false,
-		keystore,
-		is_authority: role.is_authority(),
-		telemetry: telemetry.as_ref().map(|x| x.handle()),
-	};
-	let enable_grandpa = !disable_grandpa;
-
-	if enable_grandpa {
-		let grandpa_config = GrandpaParams {
-			config: grandpa_config,
-			link: link_half,
-			network: network.clone(),
-			telemetry: telemetry.as_ref().map(|x| x.handle()),
-			voting_rule: GrandpaVotingRulesBuilder::default().build(),
-			prometheus_registry: prometheus_registry.clone(),
-			shared_voter_state,
-		};
-
-		task_manager.spawn_essential_handle().spawn_blocking(
-			"grandpa-voter",
-			sc_finality_grandpa::run_grandpa_voter(grandpa_config)?,
-		);
-	}
-
-	if role.is_authority() && !authority_discovery_disabled {
+	if is_authority && !authority_discovery_disabled {
 		let authority_discovery_role =
 			sc_authority_discovery::Role::PublishAndDiscover(keystore_container.keystore());
 		let dht_event_stream =
@@ -445,15 +414,49 @@ where
 					..Default::default()
 				},
 				client.clone(),
-				network,
+				network.clone(),
 				Box::pin(dht_event_stream),
 				authority_discovery_role,
-				prometheus_registry,
+				prometheus_registry.clone(),
 			);
 
 		task_manager.spawn_handle().spawn(
 			"authority-discovery-worker",
 			authority_discovery_worker.run(),
+		);
+	}
+
+	let keystore = if is_authority {
+		Some(keystore_container.sync_keystore())
+	} else {
+		None
+	};
+	let grandpa_config = GrandpaConfig {
+		// FIXME substrate#1578 make this available through chainspec
+		gossip_duration: Duration::from_millis(1000),
+		justification_period: 512,
+		name: Some(name),
+		observer_enabled: false,
+		keystore,
+		local_role: role,
+		telemetry: telemetry.as_ref().map(|x| x.handle()),
+	};
+	let enable_grandpa = !disable_grandpa;
+
+	if enable_grandpa {
+		let grandpa_config = GrandpaParams {
+			config: grandpa_config,
+			link: link_half,
+			network,
+			telemetry: telemetry.as_ref().map(|x| x.handle()),
+			voting_rule: GrandpaVotingRulesBuilder::default().build(),
+			prometheus_registry,
+			shared_voter_state,
+		};
+
+		task_manager.spawn_essential_handle().spawn_blocking(
+			"grandpa-voter",
+			sc_finality_grandpa::run_grandpa_voter(grandpa_config)?,
 		);
 	}
 
@@ -510,11 +513,11 @@ where
 	let transaction_pool = Arc::new(BasicPool::new_light(
 		config.transaction_pool.clone(),
 		config.prometheus_registry(),
-		task_manager.spawn_handle(),
+		task_manager.spawn_essential_handle(),
 		client.clone(),
 		on_demand.clone(),
 	));
-	let (grandpa_block_import, _) = sc_finality_grandpa::block_import(
+	let (grandpa_block_import, grandpa_link) = sc_finality_grandpa::block_import(
 		client.clone(),
 		&(client.clone() as Arc<_>),
 		select_chain.clone(),
@@ -553,7 +556,7 @@ where
 		NeverCanAuthor,
 		telemetry.as_ref().map(|x| x.handle()),
 	)?;
-	let (network, network_status_sinks, system_rpc_tx, network_starter) =
+	let (network, system_rpc_tx, network_starter) =
 		sc_service::build_network(BuildNetworkParams {
 			config: &config,
 			client: client.clone(),
@@ -563,6 +566,26 @@ where
 			on_demand: Some(on_demand.clone()),
 			block_announce_validator_builder: None,
 		})?;
+	let enable_grandpa = !config.disable_grandpa;
+
+	if enable_grandpa {
+		let name = config.network.node_name.clone();
+
+		let config = sc_finality_grandpa::Config {
+			gossip_duration: Duration::from_millis(1000),
+			justification_period: 512,
+			name: Some(name),
+			observer_enabled: false,
+			keystore: None,
+			local_role: config.role.clone(),
+			telemetry: telemetry.as_ref().map(|x| x.handle()),
+		};
+
+		task_manager.spawn_handle().spawn_blocking(
+			"grandpa-observer",
+			sc_finality_grandpa::run_grandpa_observer(config, grandpa_link, network.clone())?,
+		);
+	}
 
 	if config.offchain_worker.enabled {
 		sc_service::build_offchain_workers(
@@ -592,7 +615,6 @@ where
 		transaction_pool,
 		client,
 		network,
-		network_status_sinks,
 		system_rpc_tx,
 		telemetry: telemetry.as_mut(),
 	})?;

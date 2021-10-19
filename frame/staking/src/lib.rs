@@ -277,7 +277,6 @@ mod mock;
 mod substrate_tests;
 
 pub mod weights;
-// --- darwinia-network ---
 pub use weights::WeightInfo;
 
 pub mod inflation;
@@ -327,7 +326,6 @@ mod types {
 	type KtonCurrency<T> = <T as Config>::KtonCurrency;
 }
 
-// --- darwinia-network ---
 pub use types::EraIndex;
 
 // --- crates.io ---
@@ -349,7 +347,7 @@ use frame_support::{
 		constants::{WEIGHT_PER_MICROS, WEIGHT_PER_NANOS},
 		Weight, WithPostDispatchInfo,
 	},
-	PalletId,
+	PalletId, WeakBoundedVec,
 };
 use frame_system::{ensure_root, ensure_signed, offchain::SendTransactionTypes, pallet_prelude::*};
 use sp_runtime::{
@@ -368,7 +366,9 @@ use sp_staking::{
 };
 #[cfg(not(feature = "std"))]
 use sp_std::borrow::ToOwned;
-use sp_std::{collections::btree_map::BTreeMap, convert::TryInto, marker::PhantomData, prelude::*};
+use sp_std::{
+	collections::btree_map::BTreeMap, convert::TryInto, marker::PhantomData, mem, prelude::*,
+};
 // --- darwinia-network ---
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo;
 use darwinia_support::{balance::*, impl_rpc, traits::OnDepositRedeem};
@@ -387,6 +387,7 @@ macro_rules! log {
 	};
 }
 
+// TODO: Limited in frame/support/src/lib.rs `StakingLock`
 pub const MAX_UNLOCKING_CHUNKS: usize = 32;
 
 const MONTH_IN_MINUTES: TsInMs = 30 * 24 * 60;
@@ -1207,18 +1208,18 @@ decl_module! {
 							*active_kton = Zero::zero();
 						}
 
-						ring_staking_lock.unbondings.push(Unbonding {
+						ring_staking_lock.unbondings.try_push(Unbonding {
 							amount: unbond_ring,
 							until: now + T::BondingDurationInBlockNumber::get(),
-						});
+						}).expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
 						Self::deposit_event(RawEvent::UnbondRing(unbond_ring, now));
 
 						if !unbond_kton.is_zero() {
-							kton_staking_lock.unbondings.push(Unbonding {
+							kton_staking_lock.unbondings.try_push(Unbonding {
 								amount: unbond_kton,
 								until: now + T::BondingDurationInBlockNumber::get(),
-							});
+							}).expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
 							Self::deposit_event(RawEvent::UnbondKton(unbond_kton, now));
 						}
@@ -1240,19 +1241,19 @@ decl_module! {
 							*active_ring = Zero::zero();
 						}
 
-						kton_staking_lock.unbondings.push(Unbonding {
+						kton_staking_lock.unbondings.try_push(Unbonding {
 							amount: unbond_kton,
 							until: now + T::BondingDurationInBlockNumber::get(),
-						});
+						}).expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
 
 						Self::deposit_event(RawEvent::UnbondKton(unbond_kton, now));
 
 						if !unbond_ring.is_zero() {
-							ring_staking_lock.unbondings.push(Unbonding {
+							ring_staking_lock.unbondings.try_push(Unbonding {
 								amount: unbond_ring,
 								until: now + T::BondingDurationInBlockNumber::get(),
-							});
+							}).expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
 							Self::deposit_event(RawEvent::UnbondRing(unbond_ring, now));
 						}
@@ -1753,7 +1754,7 @@ decl_module! {
 		///   Paying even a dead controller is cheaper weight-wise. We don't do any refunds here.
 		/// # </weight>
 		#[weight = T::WeightInfo::payout_stakers_alive_staked(T::MaxNominatorRewardedPerValidator::get())]
-		fn payout_stakers(origin, validator_stash: T::AccountId, era: EraIndex) -> DispatchResultWithPostInfo {
+		pub fn payout_stakers(origin, validator_stash: T::AccountId, era: EraIndex) -> DispatchResultWithPostInfo {
 			ensure_signed(origin)?;
 			Self::do_payout_stakers(validator_stash, era)
 		}
@@ -2811,8 +2812,10 @@ impl<T: Config> Module<T> {
 					.map_or(true, |spans| submitted_in >= spans.last_nonzero_slash())
 			});
 
-			let vote_weight = weight_of(&nominator);
-			all_voters.push((nominator, vote_weight, targets))
+			if !targets.is_empty() {
+				let vote_weight = weight_of(&nominator);
+				all_voters.push((nominator, vote_weight, targets))
+			}
 		}
 
 		all_voters
@@ -2849,8 +2852,8 @@ impl<T: Config> ElectionDataProvider<T::AccountId, T::BlockNumber> for Module<T>
 
 		let slashing_span_count = <SlashingSpans<T>>::iter().count();
 		let weight = T::WeightInfo::get_npos_voters(
-			nominator_count as u32,
 			validator_count as u32,
+			nominator_count as u32,
 			slashing_span_count as u32,
 		);
 		Ok((Self::get_npos_voters(), weight))
@@ -3486,14 +3489,14 @@ where
 		{
 			let mut rebonded = Balance::zero();
 
-			while let Some(Unbonding { amount, .. }) = lock.unbondings.last_mut() {
+			while let Some(Unbonding { amount, .. }) = lock.unbondings.as_mut().last_mut() {
 				let new_rebonded = rebonded.saturating_add(*amount);
 
 				if new_rebonded <= plan_to_rebond {
 					rebonded = new_rebonded;
 					*bonded = bonded.saturating_add(*amount);
 
-					lock.unbondings.pop();
+					lock.unbondings.remove(lock.unbondings.len() - 1);
 				} else {
 					let diff = plan_to_rebond.saturating_sub(rebonded);
 
@@ -3562,10 +3565,8 @@ where
 									slashable_deposit_ring = new_slashable_deposit_ring;
 									true
 								} else {
-									item.value -= sp_std::mem::replace(
-										&mut slashable_deposit_ring,
-										Zero::zero(),
-									);
+									item.value -=
+										mem::replace(&mut slashable_deposit_ring, Zero::zero());
 									false
 								}
 							}
@@ -3604,7 +3605,10 @@ where
 		);
 
 		if !apply_slash_ring.is_zero() {
-			ring_staking_lock.unbondings.drain_filter(|lock| {
+			// `WeakBoundedVec` not support `drain_filter` yet
+			let mut unbondings = mem::take(&mut ring_staking_lock.unbondings).into_inner();
+
+			unbondings.drain_filter(|lock| {
 				if bn >= lock.until {
 					true
 				} else {
@@ -3615,16 +3619,21 @@ where
 							apply_slash_ring -= lock.amount;
 							true
 						} else {
-							lock.amount -=
-								sp_std::mem::replace(&mut apply_slash_ring, Zero::zero());
+							lock.amount -= mem::replace(&mut apply_slash_ring, Zero::zero());
 							false
 						}
 					}
 				}
 			});
+
+			ring_staking_lock.unbondings =
+				WeakBoundedVec::force_from(unbondings, Some("Staking Update Locks"));
 		}
 		if !apply_slash_kton.is_zero() {
-			kton_staking_lock.unbondings.drain_filter(|lock| {
+			// `WeakBoundedVec` not support `drain_filter` yet
+			let mut unbondings = mem::take(&mut kton_staking_lock.unbondings).into_inner();
+
+			unbondings.drain_filter(|lock| {
 				if bn >= lock.until {
 					true
 				} else {
@@ -3636,13 +3645,15 @@ where
 
 							true
 						} else {
-							lock.amount -=
-								sp_std::mem::replace(&mut apply_slash_kton, Zero::zero());
+							lock.amount -= mem::replace(&mut apply_slash_kton, Zero::zero());
 							false
 						}
 					}
 				}
 			});
+
+			kton_staking_lock.unbondings =
+				WeakBoundedVec::force_from(unbondings, Some("Staking Update Locks"));
 		}
 
 		(slash_ring - apply_slash_ring, slash_kton - apply_slash_kton)
