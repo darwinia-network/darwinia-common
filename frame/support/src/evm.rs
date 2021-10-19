@@ -24,7 +24,7 @@ use ethereum_primitives::{H160, H256, U256};
 // --- paritytech ---
 use frame_support::PalletId;
 use sp_runtime::{traits::AccountIdConversion, AccountId32};
-use sp_std::vec::Vec;
+use sp_std::{marker::PhantomData, vec::Vec};
 
 pub const POW_9: u32 = 1_000_000_000;
 pub const INTERNAL_TX_GAS_LIMIT: u32 = 300_000_000;
@@ -48,6 +48,34 @@ impl IntoDvmAddress for PalletId {
 /// A trait for converting from H160 to `AccountId`.
 pub trait AddressMapping<AccountId> {
 	fn into_account_id(address: H160) -> AccountId;
+}
+
+/// Darwinia network address mapping.
+pub struct ConcatAddressMapping<AccountId>(PhantomData<AccountId>);
+
+/// The ConcatAddressMapping used for transfer from evm 20-length to substrate 32-length address
+/// The concat rule inclued three parts:
+/// 1. AccountId Prefix: concat("dvm", "0x00000000000000"), length: 11 byetes
+/// 2. EVM address: the original evm address, length: 20 bytes
+/// 3. CheckSum:  byte_xor(AccountId Prefix + EVM address), length: 1 bytes
+impl<AccountId> AddressMapping<AccountId> for ConcatAddressMapping<AccountId>
+where
+	AccountId: From<[u8; 32]>,
+{
+	fn into_account_id(address: H160) -> AccountId {
+		let mut raw_account = [0u8; 32];
+
+		raw_account[0..4].copy_from_slice(b"dvm:");
+		raw_account[11..31].copy_from_slice(&address[..]);
+
+		let checksum: u8 = raw_account[1..31]
+			.iter()
+			.fold(raw_account[0], |sum, &byte| sum ^ byte);
+
+		raw_account[31] = checksum;
+
+		raw_account.into()
+	}
 }
 
 pub fn recover_signer(transaction: &ethereum::Transaction) -> Option<H160> {
