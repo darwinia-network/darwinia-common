@@ -11,19 +11,19 @@ version     = "2.6.6"
 
 [dependencies]
 # darwinia-network
-common-primitives = { default-features = false, path = "../common" }
+common-primitives   = { default-features = false, path = "../common" }
 darwinia-fee-market = {default-features = false, path = "../../../frame/fee-market"}
 # paritytech
-bp-messages           = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5-rc1" }
-bp-runtime            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5-rc1" }
-bridge-runtime-common = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5-rc1" }
-pallet-bridge-dispatch= { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5-rc1" }
-frame-support         = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
-frame-system         = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
-sp-api                = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
-sp-core               = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
-sp-runtime            = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
-sp-std                = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+bp-messages            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5-rc1" }
+bp-runtime             = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5-rc1" }
+bridge-runtime-common  = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5-rc1" }
+pallet-bridge-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5-rc1" }
+frame-support          = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+frame-system           = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-api                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-core                = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-runtime             = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
+sp-std                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.4" }
 
 [features]
 default = ["std"]

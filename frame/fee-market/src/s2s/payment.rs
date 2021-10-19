@@ -305,6 +305,7 @@ fn pay_reward<T: Config>(from: &T::AccountId, to: &T::AccountId, reward: RingBal
 		),
 	}
 }
+
 /// Record the calculation rewards result
 pub struct RewardsBook<AccountId, Balance> {
 	pub messages_relayers_rewards: BTreeMap<AccountId, Balance>,

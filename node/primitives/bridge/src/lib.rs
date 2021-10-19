@@ -212,13 +212,13 @@ pub fn derive_account_from_pangoro_id(id: SourceAccount<AccountId>) -> AccountId
 #[derive(RuntimeDebug)]
 pub struct DarwiniaFromThisChainMessageVerifier<B, R>(PhantomData<(B, R)>);
 
+// TODO: These types already defined in upstream repo, reuse them would be better.
 pub(crate) const OUTBOUND_LANE_DISABLED: &str = "The outbound message lane is disabled.";
 pub(crate) const TOO_MANY_PENDING_MESSAGES: &str = "Too many pending messages at the lane.";
 pub(crate) const BAD_ORIGIN: &str = "Unable to match the source origin to expected target origin.";
 pub(crate) const TOO_LOW_FEE: &str =
 	"Provided fee is below minimal threshold required by the lane.";
 pub(crate) const NO_MARKET_FEE: &str = "The fee market are not ready for accepting messages.";
-
 pub(crate) type ThisChain<B> = <B as MessageBridge>::ThisChain;
 pub(crate) type AccountIdOf<C> = <C as ChainWithMessages>::AccountId;
 pub(crate) type BalanceOf<C> = <C as ChainWithMessages>::Balance;
