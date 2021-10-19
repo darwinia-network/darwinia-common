@@ -47,7 +47,7 @@ use darwinia_support::{
 	evm::{IntoAccountId, POW_9},
 	mapping_token::*,
 	s2s::{ensure_source_root, MessageConfirmer, RelayMessageCaller, ToEthAddress, TokenMessageId},
-	ChainName, PalletDigest,
+	AccountId, ChainName, PalletDigest,
 };
 use dp_asset::{
 	token::{Token, TokenInfo},
@@ -57,7 +57,6 @@ use dp_contract::mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnIn
 use dvm_ethereum::InternalTransactHandler;
 
 pub use pallet::*;
-pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 
 #[frame_support::pallet]

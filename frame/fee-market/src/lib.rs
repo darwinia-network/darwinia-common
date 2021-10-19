@@ -45,10 +45,12 @@ use sp_runtime::{
 };
 use sp_std::{default::Default, vec::Vec};
 // --- darwinia-network ---
-use darwinia_support::balance::{LockFor, LockableCurrency};
+use darwinia_support::{
+	balance::{LockFor, LockableCurrency},
+	AccountId,
+};
 use dp_fee::{Order, Relayer, MIN_RELAYERS_NUMBER};
 
-pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 pub type Fee<T> = RingBalance<T>;
 

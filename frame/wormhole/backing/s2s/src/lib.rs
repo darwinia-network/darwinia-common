@@ -54,13 +54,13 @@ use darwinia_support::{
 		ensure_source_root, MessageConfirmer, RelayMessageCaller, TokenMessageId, RING_DECIMAL,
 		RING_NAME, RING_SYMBOL,
 	},
+	AccountId,
 };
 use dp_asset::{
 	token::{Token, TokenInfo, TokenOption},
 	RecipientAccount,
 };
 
-pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type Balance = u128;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 

@@ -16,6 +16,8 @@ codec = { package = "parity-scale-codec", version = "2.1.1", default-features = 
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+# darwinia-network
+darwinia-support    = { default-features = false, path = "../../../support" }
 
 [features]
 default = ["std"]
@@ -27,4 +29,6 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"sp-runtime/std",
+	# darwinia-network
+	"darwinia-support/std",
 ]

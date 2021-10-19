@@ -23,9 +23,7 @@ use std::str::FromStr;
 use crate::{
 	*, {self as s2s_issuing},
 };
-use darwinia_evm::{
-	EnsureAddressTruncated, FeeCalculator, SubstrateBlockHashMapping,
-};
+use darwinia_evm::{EnsureAddressTruncated, FeeCalculator, SubstrateBlockHashMapping};
 use darwinia_support::s2s::{RelayMessageCaller, TokenMessageId};
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},

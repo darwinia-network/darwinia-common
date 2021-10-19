@@ -33,6 +33,8 @@ pub mod balance {
 use ethabi::{encode, Token};
 use sp_std::{vec, vec::Vec};
 
+pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+
 // TODO: Should we move this to `s2s-primitives`?
 pub mod s2s {
 	pub use crate::TokenMessageId;
