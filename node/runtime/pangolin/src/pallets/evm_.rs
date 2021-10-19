@@ -1,5 +1,5 @@
 pub use darwinia_evm_precompile_dispatch::Dispatch;
-pub use darwinia_evm_precompile_encoder::DispatchCallEncoder as CallEncoder;
+pub use darwinia_evm_precompile_misc::Misc;
 pub use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 pub use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::s2s::{nonce_to_message_id, RelayMessageSender, TokenMessageId};
@@ -122,7 +122,7 @@ where
 			_ if address == addr(4) => Some(Identity::execute(input, target_gas, context)),
 			// Darwinia precompiles
 			_ if address == addr(21) => Some(<Transfer<R>>::execute(input, target_gas, context)),
-			_ if address == addr(24) => Some(<CallEncoder<R, ToPangoroMessageSender>>::execute(
+			_ if address == addr(24) => Some(<Misc<R, ToPangoroMessageSender>>::execute(
 				input, target_gas, context,
 			)),
 			_ if address == addr(25) => Some(<Dispatch<R>>::execute(input, target_gas, context)),

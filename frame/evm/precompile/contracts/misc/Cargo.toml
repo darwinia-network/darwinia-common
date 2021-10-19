@@ -1,10 +1,10 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "Encoder precompiles for EVM pallet."
+description = "Misc precompiles for EVM pallet."
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
-name        = "darwinia-evm-precompile-encoder"
+name        = "darwinia-evm-precompile-misc"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.6.6"

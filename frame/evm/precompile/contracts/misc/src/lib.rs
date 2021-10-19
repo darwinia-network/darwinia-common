@@ -49,13 +49,12 @@ const S2S_READ_LATEST_MESSAGE_ID_METHOD: &[u8] = b"s2s_read_latest_message_id()"
 const S2S_REMOTE_DISPATCH_CALL_PAYLOAD: &[u8] = b"s2s_encode_remote_unlock_payload()";
 const S2S_SEND_REMOTE_DISPATCH_CALL: &[u8] = b"s2s_encode_send_message_call()";
 
-// TODO rename this precompile contract
 /// The contract address: 0000000000000000000000000000000000000018
-pub struct DispatchCallEncoder<T, S> {
+pub struct Misc<T, S> {
 	_marker: PhantomData<(T, S)>,
 }
 
-impl<T, S> Precompile for DispatchCallEncoder<T, S>
+impl<T, S> Precompile for Misc<T, S>
 where
 	T: from_ethereum_issuing::Config,
 	T: from_substrate_issuing::Config,
@@ -134,7 +133,7 @@ where
 	}
 }
 
-impl<T, S> DispatchCallEncoder<T, S> {
+impl<T, S> Misc<T, S> {
 	fn match_digest(digest: &[u8], expected_method: &[u8]) -> bool {
 		&sha3::Keccak256::digest(expected_method)[..ACTION_LEN] == digest
 	}

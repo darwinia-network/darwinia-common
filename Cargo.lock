@@ -1636,7 +1636,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-evm-precompile-encoder"
+name = "darwinia-evm-precompile-misc"
 version = "2.6.6"
 dependencies = [
  "darwinia-evm",
@@ -5926,7 +5926,7 @@ dependencies = [
  "darwinia-elections-phragmen",
  "darwinia-evm",
  "darwinia-evm-precompile-dispatch",
- "darwinia-evm-precompile-encoder",
+ "darwinia-evm-precompile-misc",
  "darwinia-evm-precompile-simple",
  "darwinia-evm-precompile-transfer",
  "darwinia-header-mmr",
