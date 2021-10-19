@@ -111,8 +111,8 @@ pub mod pallet {
 			EthereumAddress,
 			RingBalance<T>,
 		),
-		/// Token unlocked \[token, recipient, amount\]
-		TokenUnlocked(Token, AccountId<T>, RingBalance<T>),
+		/// Token unlocked \[message_id, token, recipient, amount\]
+		TokenUnlocked(TokenMessageId, Token, AccountId<T>, RingBalance<T>),
 		/// Token locked confirmed from remote \[message_id, token, user, result\]
 		TokenLockedConfirmed(TokenMessageId, Token, AccountId<T>, bool),
 	}
@@ -370,7 +370,14 @@ pub mod pallet {
 
 			<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = used.saturating_add(amount));
 
-			Self::deposit_event(Event::TokenUnlocked(token.clone(), recipient, amount));
+			let message_id =
+				T::MessageSender::latest_received_token_message_id(T::MessageLaneId::get());
+			Self::deposit_event(Event::TokenUnlocked(
+				message_id,
+				token.clone(),
+				recipient,
+				amount,
+			));
 
 			Ok(().into())
 		}

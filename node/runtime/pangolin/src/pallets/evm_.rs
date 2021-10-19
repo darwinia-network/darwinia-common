@@ -95,6 +95,11 @@ impl RelayMessageSender for ToPangoroMessageSender {
 		let nonce: u64 = BridgePangoroMessages::outbound_latest_generated_nonce(lane_id).into();
 		nonce_to_message_id(&lane_id, nonce)
 	}
+
+	fn latest_received_token_message_id(lane_id: [u8; 4]) -> TokenMessageId {
+		let nonce: u64 = BridgePangoroMessages::inbound_latest_received_nonce(lane_id).into();
+		nonce_to_message_id(&lane_id, nonce)
+	}
 }
 
 pub struct PangolinPrecompiles<R>(PhantomData<R>);

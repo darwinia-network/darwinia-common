@@ -77,6 +77,7 @@ pub mod s2s {
 		) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>;
 
 		fn latest_token_message_id(lane_id: [u8; 4]) -> TokenMessageId;
+		fn latest_received_token_message_id(lane_id: [u8; 4]) -> TokenMessageId;
 	}
 
 	pub trait MessageConfirmer {
