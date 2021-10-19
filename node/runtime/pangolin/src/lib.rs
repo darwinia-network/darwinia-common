@@ -843,9 +843,9 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 		let name = <Runtime as frame_system::Config>::PalletInfo::name::<Grandpa>()
 			.expect("grandpa is part of pallets in construct_runtime, so it has a name; qed");
 
-		pallet_grandpa::migrations::v3_1::migrate::<Runtime, Grandpa, _>(name)
+		pallet_grandpa::migrations::v3_1::migrate::<Runtime, Grandpa, _>(name);
 
-		// migrate()
+		migrate()
 	}
 }
 
