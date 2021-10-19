@@ -58,7 +58,7 @@ impl Config<WithPangoroMessages> for Runtime {
 	type AccountIdConverter = AccountIdConverter;
 
 	type TargetHeaderChain = Pangoro;
-	type LaneMessageVerifier = ToPangoroMessageVerifier;
+	type LaneMessageVerifier = ToPangoroMessageVerifier<Self>;
 	type MessageDeliveryAndDispatchPayment = FeeMarketPayment<
 		Runtime,
 		WithPangoroMessages,

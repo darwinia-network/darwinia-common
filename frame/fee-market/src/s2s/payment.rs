@@ -62,14 +62,14 @@ where
 				.ok_or("Sending messages using Root or None origin is disallowed.")?,
 		};
 
-		// The message fee should greater than market fee
-		if let Some(market_fee) = crate::Pallet::<T>::market_fee() {
-			if *fee < market_fee {
-				return Err("Provided fee is below market fee");
-			}
-		} else {
-			return Err("The fee market is not ready");
-		}
+		// // The message fee should greater than market fee
+		// if let Some(market_fee) = crate::Pallet::<T>::market_fee() {
+		// 	if *fee < market_fee {
+		// 		return Err("Provided fee is below market fee");
+		// 	}
+		// } else {
+		// 	return Err("The fee market is not ready");
+		// }
 
 		<T as Config>::RingCurrency::transfer(
 			account,

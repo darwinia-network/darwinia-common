@@ -57,7 +57,7 @@ impl Config<WithPangolinMessages> for Runtime {
 	type AccountIdConverter = AccountIdConverter;
 
 	type TargetHeaderChain = Pangolin;
-	type LaneMessageVerifier = ToPangolinMessageVerifier;
+	type LaneMessageVerifier = ToPangolinMessageVerifier<Self>;
 	type MessageDeliveryAndDispatchPayment = FeeMarketPayment<
 		Runtime,
 		WithPangolinMessages,

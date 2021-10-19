@@ -277,13 +277,13 @@ impl MessageDeliveryAndDispatchPayment<AccountId, TestMessageFee>
 			return Err(TEST_ERROR);
 		}
 
-		if let Some(market_fee) = FeeMarket::market_fee() {
-			if *fee < market_fee {
-				return Err("Provided fee is below market fee");
-			}
-		} else {
-			return Err("The fee market is not ready");
-		}
+		// if let Some(market_fee) = FeeMarket::market_fee() {
+		// 	if *fee < market_fee {
+		// 		return Err("Provided fee is below market fee");
+		// 	}
+		// } else {
+		// 	return Err("The fee market is not ready");
+		// }
 
 		frame_support::storage::unhashed::put(b":message-fee:", &(submitter, fee));
 		Ok(())
