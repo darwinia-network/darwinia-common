@@ -1,23 +1,21 @@
 //! The crate's tests.
 
-// --- crates.io ---
+use super::*;
+use crate as pallet_democracy;
 use codec::Encode;
-// --- paritytech ---
+use darwinia_balances::Error as BalancesError;
 use frame_support::{
-	assert_noop, assert_ok, ord_parameter_types,
-	traits::{Filter, GenesisBuild, OnInitialize, SortedMembers},
+	assert_noop, assert_ok, ord_parameter_types, parameter_types,
+	traits::{Filter, GenesisBuild, MaxEncodedLen, OnInitialize, SortedMembers},
 	weights::Weight,
 };
-use frame_system::{mocking::*, EnsureRoot, EnsureSignedBy};
+use frame_system::{EnsureRoot, EnsureSignedBy};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BadOrigin, BlakeTwo256, IdentityLookup},
 	Perbill,
 };
-// --- darwinia-network ---
-use crate::{self as darwinia_democracy, *};
-use darwinia_balances::Error as BalancesError;
 
 mod cancellation;
 mod decoders;
@@ -29,12 +27,6 @@ mod preimage;
 mod public_proposals;
 mod scheduling;
 mod voting;
-
-type Block = MockBlock<Test>;
-type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
-
-type BlockNumber = u64;
-type Balance = u64;
 
 const AYE: Vote = Vote {
 	aye: true,
@@ -55,7 +47,21 @@ const BIG_NAY: Vote = Vote {
 
 const MAX_PROPOSALS: u32 = 100;
 
-darwinia_support::impl_test_account_data! {}
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+type Block = frame_system::mocking::MockBlock<Test>;
+
+frame_support::construct_runtime!(
+	pub enum Test where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic,
+	{
+		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		Balances: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Config, Event<T>},
+		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
+	}
+);
 
 // Test that a fitlered call can be dispatched.
 pub struct BaseFilter;
@@ -63,17 +69,21 @@ impl Filter<Call> for BaseFilter {
 	fn filter(call: &Call) -> bool {
 		!matches!(
 			call,
-			&Call::Balances(darwinia_balances::Call::set_balance(..))
+			&Call::Balances(darwinia_balances::Call::<_, RingInstance>::set_balance(..))
 		)
 	}
 }
-frame_support::parameter_types! {
+
+type Balance = u64;
+darwinia_support::impl_test_account_data! {}
+parameter_types! {
+	pub const BlockHashCount: u64 = 250;
 	pub BlockWeights: frame_system::limits::BlockWeights =
 		frame_system::limits::BlockWeights::simple_max(1_000_000);
 }
 impl frame_system::Config for Test {
 	type BaseCallFilter = BaseFilter;
-	type BlockWeights = BlockWeights;
+	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
 	type Origin = Origin;
@@ -86,17 +96,17 @@ impl frame_system::Config for Test {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
-	type BlockHashCount = ();
+	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = AccountData<Balance>;
+	type AccountData = AccountData<u64>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
 }
-frame_support::parameter_types! {
+parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * BlockWeights::get().max_block;
 }
 impl pallet_scheduler::Config for Test {
@@ -109,22 +119,24 @@ impl pallet_scheduler::Config for Test {
 	type MaxScheduledPerBlock = ();
 	type WeightInfo = ();
 }
-frame_support::parameter_types! {
+parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 	pub const MaxLocks: u32 = 10;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
-	type Balance = Balance;
-	type DustRemoval = ();
+	type Balance = u64;
 	type Event = Event;
+	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
 	type MaxLocks = MaxLocks;
+	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
-frame_support::parameter_types! {
+parameter_types! {
 	pub const LaunchPeriod: u64 = 2;
 	pub const VotingPeriod: u64 = 2;
 	pub const FastTrackVotingPeriod: u64 = 2;
@@ -153,7 +165,7 @@ impl SortedMembers<u64> for OneToFive {
 	fn add(_m: &u64) {}
 }
 
-impl super::Config for Test {
+impl Config for Test {
 	type Proposal = Call;
 	type Event = Event;
 	type Currency = Balances;
@@ -183,19 +195,6 @@ impl super::Config for Test {
 	type MaxProposals = MaxProposals;
 }
 
-frame_support::construct_runtime! {
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
-	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Config, Event<T>},
-		Democracy: darwinia_democracy::{Pallet, Call, Storage, Config, Event<T>},
-	}
-}
-
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
@@ -205,7 +204,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	darwinia_democracy::GenesisConfig::default()
+	pallet_democracy::GenesisConfig::<Test>::default()
 		.assimilate_storage(&mut t)
 		.unwrap();
 	let mut ext = sp_io::TestExternalities::new(t);

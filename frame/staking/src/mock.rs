@@ -28,7 +28,8 @@ use frame_support::{
 	assert_ok, parameter_types,
 	storage::IterableStorageMap,
 	traits::{
-		Currency, FindAuthor, GenesisBuild, Get, OnFinalize, OnInitialize, OneSessionHandler,
+		Currency, FindAuthor, GenesisBuild, Get, MaxEncodedLen, OnFinalize, OnInitialize,
+		OneSessionHandler,
 	},
 	weights::constants::RocksDbWeight,
 	StorageValue,
@@ -200,9 +201,11 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
 	type MaxLocks = MaxLocks;
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
@@ -211,9 +214,11 @@ impl darwinia_balances::Config<KtonInstance> for Test {
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
 	type MaxLocks = MaxLocks;
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
@@ -907,7 +912,7 @@ pub(crate) fn staking_events() -> Vec<darwinia_staking::Event<Test>> {
 		.into_iter()
 		.map(|r| r.event)
 		.filter_map(|e| {
-			if let Event::darwinia_staking(inner) = e {
+			if let Event::Staking(inner) = e {
 				Some(inner)
 			} else {
 				None

@@ -193,12 +193,12 @@ pub enum TransactionOutcome {
 pub struct ReceiptProof {
 	#[cfg_attr(
 		any(feature = "full-serde", test),
-		serde(deserialize_with = "array_bytes::hexd2num")
+		serde(deserialize_with = "array_bytes::de_hex2num")
 	)]
 	pub index: u64,
 	#[cfg_attr(
 		any(feature = "full-serde", test),
-		serde(deserialize_with = "array_bytes::hexd2bytes")
+		serde(deserialize_with = "array_bytes::de_hex2bytes")
 	)]
 	pub proof: Bytes,
 	pub header_hash: H256,

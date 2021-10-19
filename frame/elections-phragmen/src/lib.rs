@@ -267,7 +267,7 @@ pub mod pallet {
 			.max(T::WeightInfo::vote_less(votes.len() as u32))
 			.max(T::WeightInfo::vote_equal(votes.len() as u32))
 		)]
-		pub(crate) fn vote(
+		pub fn vote(
 			origin: OriginFor<T>,
 			votes: Vec<T::AccountId>,
 			#[pallet::compact] value: BalanceOf<T>,
@@ -349,7 +349,7 @@ pub mod pallet {
 		///
 		/// The dispatch origin of this call must be signed and be a voter.
 		#[pallet::weight(T::WeightInfo::remove_voter())]
-		pub(crate) fn remove_voter(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+		pub fn remove_voter(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_voter(&who), Error::<T>::MustBeVoter);
 			Self::do_remove_voter(&who);
@@ -372,7 +372,7 @@ pub mod pallet {
 		/// The number of current candidates must be provided as witness data.
 		/// # </weight>
 		#[pallet::weight(T::WeightInfo::submit_candidacy(*candidate_count))]
-		pub(crate) fn submit_candidacy(
+		pub fn submit_candidacy(
 			origin: OriginFor<T>,
 			#[pallet::compact] candidate_count: u32,
 		) -> DispatchResultWithPostInfo {
@@ -420,7 +420,7 @@ pub mod pallet {
 			Renouncing::Member => T::WeightInfo::renounce_candidacy_members(),
 			Renouncing::RunnerUp => T::WeightInfo::renounce_candidacy_runners_up(),
 		})]
-		pub(crate) fn renounce_candidacy(
+		pub fn renounce_candidacy(
 			origin: OriginFor<T>,
 			renouncing: Renouncing,
 		) -> DispatchResultWithPostInfo {
@@ -484,7 +484,7 @@ pub mod pallet {
 		} else {
 			T::BlockWeights::get().max_block
 		})]
-		pub(crate) fn remove_member(
+		pub fn remove_member(
 			origin: OriginFor<T>,
 			who: <T::Lookup as StaticLookup>::Source,
 			has_replacement: bool,
@@ -524,7 +524,7 @@ pub mod pallet {
 		/// The total number of voters and those that are defunct must be provided as witness data.
 		/// # </weight>
 		#[pallet::weight(T::WeightInfo::clean_defunct_voters(*_num_voters, *_num_defunct))]
-		pub(crate) fn clean_defunct_voters(
+		pub fn clean_defunct_voters(
 			origin: OriginFor<T>,
 			_num_voters: u32,
 			_num_defunct: u32,
@@ -1161,7 +1161,9 @@ mod tests {
 	use super::*;
 	use crate as elections_phragmen;
 	use frame_support::{
-		assert_noop, assert_ok, dispatch::DispatchResultWithPostInfo, traits::OnInitialize,
+		assert_noop, assert_ok,
+		dispatch::DispatchResultWithPostInfo,
+		traits::{MaxEncodedLen, OnInitialize},
 	};
 	use frame_system::ensure_signed;
 	use sp_core::H256;
@@ -1185,9 +1187,11 @@ mod tests {
 		type DustRemoval = ();
 		type Event = Event;
 		type ExistentialDeposit = ExistentialDeposit;
-		type BalanceInfo = AccountData<Balance>;
 		type AccountStore = System;
 		type MaxLocks = MaxLocks;
+		type MaxReserves = ();
+		type ReserveIdentifier = [u8; 8];
+		type BalanceInfo = AccountData<Balance>;
 		type OtherCurrencies = ();
 		type WeightInfo = ();
 	}
@@ -1374,7 +1378,7 @@ mod tests {
 					.collect::<Vec<_>>()
 			});
 			let mut ext: sp_io::TestExternalities = GenesisConfig {
-				darwinia_balances_Instance1: darwinia_balances::GenesisConfig::<Test, RingInstance> {
+				balances: darwinia_balances::GenesisConfig::<Test, RingInstance> {
 					balances: vec![
 						(1, 10 * self.balance_factor),
 						(2, 20 * self.balance_factor),
@@ -1384,7 +1388,7 @@ mod tests {
 						(6, 60 * self.balance_factor),
 					],
 				},
-				elections_phragmen: elections_phragmen::GenesisConfig::<Test> {
+				elections: elections_phragmen::GenesisConfig::<Test> {
 					members: self.genesis_members,
 				},
 			}
@@ -2295,7 +2299,7 @@ mod tests {
 			System::set_block_number(5);
 			Elections::on_initialize(System::block_number());
 
-			System::assert_last_event(Event::elections_phragmen(super::Event::EmptyTerm))
+			System::assert_last_event(Event::Elections(super::Event::EmptyTerm))
 		})
 	}
 
@@ -2311,7 +2315,7 @@ mod tests {
 			System::set_block_number(5);
 			Elections::on_initialize(System::block_number());
 
-			System::assert_last_event(Event::elections_phragmen(super::Event::NewTerm(vec![
+			System::assert_last_event(Event::Elections(super::Event::NewTerm(vec![
 				(4, 40),
 				(5, 50),
 			])));
@@ -2325,7 +2329,7 @@ mod tests {
 			System::set_block_number(10);
 			Elections::on_initialize(System::block_number());
 
-			System::assert_last_event(Event::elections_phragmen(super::Event::NewTerm(vec![])));
+			System::assert_last_event(Event::Elections(super::Event::NewTerm(vec![])));
 
 			// outgoing have lost their bond.
 			assert_eq!(balances(&4), (37, 0));
@@ -2395,7 +2399,7 @@ mod tests {
 			assert_eq!(Elections::election_rounds(), 1);
 			assert!(members_ids().is_empty());
 
-			System::assert_last_event(Event::elections_phragmen(super::Event::NewTerm(vec![])))
+			System::assert_last_event(Event::Elections(super::Event::NewTerm(vec![])))
 		});
 	}
 
@@ -2764,7 +2768,7 @@ mod tests {
 			// 5 is an outgoing loser. will also get slashed.
 			assert_eq!(balances(&5), (45, 2));
 
-			System::assert_has_event(Event::elections_phragmen(super::Event::NewTerm(vec![
+			System::assert_has_event(Event::Elections(super::Event::NewTerm(vec![
 				(4, 40),
 				(5, 50),
 			])));

@@ -19,7 +19,7 @@
 //! Mock file for ethereum-relay.
 
 // --- paritytech ---
-use frame_support::traits::OnInitialize;
+use frame_support::traits::{MaxEncodedLen, OnInitialize};
 use frame_system::{mocking::*, EnsureRoot};
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, RuntimeDebug};
@@ -66,9 +66,11 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ();
-	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
 	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }

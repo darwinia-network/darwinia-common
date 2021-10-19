@@ -19,7 +19,7 @@
 //! Tests for ethereum-backing.
 
 // --- paritytech ---
-use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency};
+use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency, WeakBoundedVec};
 use sp_runtime::{traits::Dispatchable, AccountId32};
 // --- darwinia-network ---
 use crate::{
@@ -479,7 +479,7 @@ fn verify_redeem_deposit() {
 					start_time: 1599125470000,
 					expire_time: 1630229470000,
 				}],
-				ring_staking_lock: StakingLock { staking_amount: 1001000000001, unbondings: vec![] },
+				ring_staking_lock: StakingLock { staking_amount: 1001000000001, unbondings: WeakBoundedVec::force_from(vec![], None) },
 				..Default::default()
 			}));
 

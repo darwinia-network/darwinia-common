@@ -19,7 +19,11 @@
 // --- std ---
 use std::{collections::BTreeMap, str::FromStr};
 // --- paritytech ---
-use frame_support::{assert_ok, traits::GenesisBuild, ConsensusEngineId};
+use frame_support::{
+	assert_ok,
+	traits::{GenesisBuild, MaxEncodedLen},
+	ConsensusEngineId,
+};
 use frame_system::mocking::*;
 use sp_core::H256;
 use sp_runtime::{
@@ -71,9 +75,11 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
 	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
@@ -82,9 +88,11 @@ impl darwinia_balances::Config<KtonInstance> for Test {
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
 	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }

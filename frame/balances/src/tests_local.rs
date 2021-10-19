@@ -24,8 +24,9 @@ use codec::{Decode, Encode};
 use frame_support::{
 	assert_err, assert_noop, assert_ok, assert_storage_noop, parameter_types,
 	traits::{
-		BalanceStatus, Currency, ExistenceRequirement, GenesisBuild, LockIdentifier,
-		ReservableCurrency, StorageMapShim, WithdrawReasons,
+		BalanceStatus, Currency, ExistenceRequirement, GenesisBuild, Imbalance, LockIdentifier,
+		MaxEncodedLen, NamedReservableCurrency, ReservableCurrency, StorageMapShim,
+		WithdrawReasons,
 	},
 	weights::{DispatchInfo, IdentityFee, Weight},
 	StorageValue,
@@ -91,13 +92,13 @@ impl pallet_transaction_payment::Config for Test {
 
 parameter_types! {
 	pub static ExistentialDeposit: u64 = 0;
+	pub const MaxReserves: u32 = 2;
 }
 impl Config<RingInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = StorageMapShim<
 		Account<Test, RingInstance>,
 		frame_system::Provider<Test>,
@@ -105,6 +106,9 @@ impl Config<RingInstance> for Test {
 		AccountData<Balance>,
 	>;
 	type MaxLocks = ();
+	type MaxReserves = MaxReserves;
+	type ReserveIdentifier = [u8; 8];
+	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = (Kton,);
 	type WeightInfo = ();
 }
@@ -113,7 +117,6 @@ impl Config<KtonInstance> for Test {
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = StorageMapShim<
 		Account<Test, KtonInstance>,
 		frame_system::Provider<Test>,
@@ -121,6 +124,9 @@ impl Config<KtonInstance> for Test {
 		AccountData<Balance>,
 	>;
 	type MaxLocks = ();
+	type MaxReserves = MaxReserves;
+	type ReserveIdentifier = [u8; 8];
+	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = (Ring,);
 	type WeightInfo = ();
 }
@@ -205,11 +211,9 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 			assert_eq!(
 				events(),
 				[
-					Event::frame_system(frame_system::Event::NewAccount(1)),
-					Event::darwinia_balances_Instance1(darwinia_balances::Event::Endowed(1, 100)),
-					Event::darwinia_balances_Instance1(darwinia_balances::Event::BalanceSet(
-						1, 100, 0
-					)),
+					Event::System(frame_system::Event::NewAccount(1)),
+					Event::Ring(darwinia_balances::Event::Endowed(1, 100)),
+					Event::Ring(darwinia_balances::Event::BalanceSet(1, 100, 0)),
 				]
 			);
 
@@ -225,8 +229,8 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 			assert_eq!(
 				events(),
 				[
-					Event::frame_system(frame_system::Event::KilledAccount(1)),
-					Event::darwinia_balances_Instance1(darwinia_balances::Event::DustLost(1, 1))
+					Event::System(frame_system::Event::KilledAccount(1)),
+					Event::Ring(darwinia_balances::Event::DustLost(1, 1))
 				]
 			);
 		});
@@ -243,11 +247,9 @@ fn dust_collector_should_work() {
 			assert_eq!(
 				events(),
 				[
-					Event::frame_system(frame_system::Event::NewAccount(1)),
-					Event::darwinia_balances_Instance1(darwinia_balances::Event::Endowed(1, 100)),
-					Event::darwinia_balances_Instance1(darwinia_balances::Event::BalanceSet(
-						1, 100, 0
-					)),
+					Event::System(frame_system::Event::NewAccount(1)),
+					Event::Ring(darwinia_balances::Event::Endowed(1, 100)),
+					Event::Ring(darwinia_balances::Event::BalanceSet(1, 100, 0)),
 				]
 			);
 
@@ -256,8 +258,8 @@ fn dust_collector_should_work() {
 			assert_eq!(
 				events(),
 				[
-					Event::frame_system(frame_system::Event::KilledAccount(1)),
-					Event::darwinia_balances_Instance1(darwinia_balances::Event::DustLost(1, 99))
+					Event::System(frame_system::Event::KilledAccount(1)),
+					Event::Ring(darwinia_balances::Event::DustLost(1, 99))
 				]
 			);
 
@@ -269,15 +271,11 @@ fn dust_collector_should_work() {
 			assert_eq!(
 				events(),
 				[
-					Event::frame_system(frame_system::Event::NewAccount(1)),
-					Event::darwinia_balances_Instance1(darwinia_balances::Event::Endowed(1, 100)),
-					Event::darwinia_balances_Instance1(darwinia_balances::Event::BalanceSet(
-						1, 100, 0
-					)),
-					Event::darwinia_balances_Instance2(darwinia_balances::Event::Endowed(1, 100)),
-					Event::darwinia_balances_Instance2(darwinia_balances::Event::BalanceSet(
-						1, 100, 0
-					)),
+					Event::System(frame_system::Event::NewAccount(1)),
+					Event::Ring(darwinia_balances::Event::Endowed(1, 100)),
+					Event::Ring(darwinia_balances::Event::BalanceSet(1, 100, 0)),
+					Event::Kton(darwinia_balances::Event::Endowed(1, 100)),
+					Event::Kton(darwinia_balances::Event::BalanceSet(1, 100, 0)),
 				]
 			);
 
@@ -290,9 +288,9 @@ fn dust_collector_should_work() {
 			assert_eq!(
 				events(),
 				[
-					Event::frame_system(frame_system::Event::KilledAccount(1)),
-					Event::darwinia_balances_Instance1(darwinia_balances::Event::DustLost(1, 99)),
-					Event::darwinia_balances_Instance2(darwinia_balances::Event::DustLost(1, 99)),
+					Event::System(frame_system::Event::KilledAccount(1)),
+					Event::Ring(darwinia_balances::Event::DustLost(1, 99)),
+					Event::Kton(darwinia_balances::Event::DustLost(1, 99)),
 				]
 			);
 		});
