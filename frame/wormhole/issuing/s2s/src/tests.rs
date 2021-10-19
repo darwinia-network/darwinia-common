@@ -26,7 +26,7 @@ use crate::{
 use darwinia_evm::{
 	AddressMapping, EnsureAddressTruncated, FeeCalculator, SubstrateBlockHashMapping,
 };
-use darwinia_support::s2s::{RelayMessageCaller, TokenMessageId};
+use darwinia_support::s2s::{RelayMessageSender, TokenMessageId};
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
@@ -34,7 +34,6 @@ use dvm_ethereum::{
 // substrate
 use dp_asset::token::TokenInfo;
 use frame_support::{
-	assert_ok,
 	traits::{GenesisBuild, MaxEncodedLen},
 	weights::PostDispatchInfo,
 	PalletId,
@@ -196,28 +195,42 @@ impl Size for MockMessagePayload {
 pub struct PangoroCallEncoder;
 impl EncodeCall<AccountId32, MockMessagePayload> for PangoroCallEncoder {
 	fn encode_remote_unlock(
-		_remote_unlock_info: S2sRemoteUnlockInfo,
+		_submitter: AccountId32,
+		remote_unlock_info: S2sRemoteUnlockInfo,
 	) -> Result<MockMessagePayload, ()> {
 		return Ok(MockMessagePayload {
-			spec_version: _remote_unlock_info.spec_version,
-			weight: _remote_unlock_info.weight,
+			spec_version: remote_unlock_info.spec_version,
+			weight: remote_unlock_info.weight,
 			call: vec![],
 		});
 	}
 }
 
 pub struct ToPangoroMessageRelayCaller;
-impl RelayMessageCaller<MockMessagePayload, Balance> for ToPangoroMessageRelayCaller {
-	fn send_message(
-		_payload: MockMessagePayload,
-		_fee: Balance,
+impl RelayMessageSender for ToPangoroMessageRelayCaller {
+	fn encode_send_message(
+		_pallet_index: u32,
+		_lane_id: [u8; 4],
+		_payload: Vec<u8>,
+		_fee: u128,
+	) -> Result<Vec<u8>, &'static str> {
+		Ok(Vec::new())
+	}
+    fn send_message_by_root(
+		_pallet_index: u32,
+		_lane_id: [u8; 4],
+		_payload: Vec<u8>,
+		_fee: u128,
 	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
 		Ok(PostDispatchInfo {
 			actual_weight: None,
 			pays_fee: Pays::No,
 		})
 	}
-	fn latest_token_message_id() -> TokenMessageId {
+	fn latest_token_message_id(_lane_id: [u8; 4]) -> TokenMessageId {
+		[0u8; 16]
+	}
+	fn latest_received_token_message_id(_lane_id: [u8; 4]) -> TokenMessageId {
 		[0u8; 16]
 	}
 }
@@ -241,7 +254,6 @@ impl Config for Test {
 	type ToEthAddressT = TruncateToEthAddress;
 	type OutboundPayload = MockMessagePayload;
 	type CallEncoder = PangoroCallEncoder;
-	type MessageSender = ToPangoroMessageRelayCaller;
 	type InternalTransactHandler = Ethereum;
 	type BackingChainName = PangoroName;
 }
@@ -288,6 +300,7 @@ fn burn_and_remote_unlock_success() {
 			token,
 			recipient: [1; 32].to_vec(),
 		};
-		<Test as s2s_issuing::Config>::CallEncoder::encode_remote_unlock(burn_info).unwrap();
+        let submitter = HashedAddressMapping::into_account_id(H160::from_str("1000000000000000000000000000000000000002").unwrap());
+		<Test as s2s_issuing::Config>::CallEncoder::encode_remote_unlock(submitter, burn_info).unwrap();
 	});
 }
