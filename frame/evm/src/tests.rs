@@ -165,7 +165,7 @@ impl Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressRoot<Self::AccountId>;
-	type AddressMapping = ConcatAddressMapping<Self::AccountId>;
+	type IntoAccountId = ConcatAddressMapping<Self::AccountId>;
 	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
 	type FindAuthor = FindAuthorTruncated;
 	type Event = Event;

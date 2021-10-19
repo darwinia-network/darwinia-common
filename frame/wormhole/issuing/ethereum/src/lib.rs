@@ -50,7 +50,7 @@ use sp_std::{str, vec::Vec};
 use darwinia_evm::GasWeightMapping;
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{
-	balance::*, evm::AddressMapping, mapping_token::*, traits::EthereumReceipt, ChainName,
+	balance::*, evm::IntoAccountId, mapping_token::*, traits::EthereumReceipt, ChainName,
 	PalletDigest,
 };
 use dp_contract::{
@@ -292,7 +292,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 			let factory = MappingFactoryAddress::<T>::get();
-			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
+			let factory_id = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(factory);
 			ensure!(factory_id == caller, <Error<T>>::NoAuthority);
 			let register_info =
 				TokenRegisterInfo::decode(&input).map_err(|_| Error::<T>::InvalidInputData)?;
@@ -312,7 +312,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 			let factory = MappingFactoryAddress::<T>::get();
-			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
+			let factory_id = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(factory);
 			ensure!(factory_id == caller, <Error<T>>::NoAuthority);
 			let burn_info =
 				TokenBurnInfo::decode(&input).map_err(|_| Error::<T>::InvalidInputData)?;

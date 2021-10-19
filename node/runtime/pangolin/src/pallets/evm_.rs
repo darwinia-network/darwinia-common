@@ -86,7 +86,7 @@ impl Config for Runtime {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
-	type AddressMapping = ConcatAddressMapping<Self::AccountId>;
+	type IntoAccountId = ConcatAddressMapping<Self::AccountId>;
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type BlockHashMapping = EthereumBlockHashMapping<Self>;
 	type Event = Event;

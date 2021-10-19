@@ -51,7 +51,7 @@ use sp_core::{H160, H256, U256};
 use sp_runtime::traits::{BadOrigin, UniqueSaturatedInto};
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
-use darwinia_support::evm::AddressMapping;
+use darwinia_support::evm::IntoAccountId;
 
 static ISTANBUL_CONFIG: EvmConfig = EvmConfig::istanbul();
 
@@ -80,7 +80,7 @@ pub mod pallet {
 		type ChainId: Get<u64>;
 
 		/// Mapping from address to account id.
-		type AddressMapping: AddressMapping<Self::AccountId>;
+		type IntoAccountId: IntoAccountId<Self::AccountId>;
 		/// Block number to block hash.
 		type BlockHashMapping: BlockHashMapping;
 		/// Find author for the current block.
@@ -320,7 +320,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn remove_account(address: &H160) {
 			if AccountCodes::<T>::contains_key(address) {
-				let account_id = T::AddressMapping::into_account_id(*address);
+				let account_id = T::IntoAccountId::into_account_id(*address);
 				let _ = <frame_system::Pallet<T>>::dec_consumers(&account_id);
 			}
 
@@ -335,7 +335,7 @@ pub mod pallet {
 			}
 
 			if !AccountCodes::<T>::contains_key(&address) {
-				let account_id = T::AddressMapping::into_account_id(address);
+				let account_id = T::IntoAccountId::into_account_id(address);
 				let _ = <frame_system::Pallet<T>>::inc_consumers(&account_id);
 			}
 

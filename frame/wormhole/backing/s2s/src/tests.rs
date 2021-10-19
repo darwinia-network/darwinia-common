@@ -179,7 +179,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 fn test_back_erc20_dvm_address() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(
-			<Test as s2s_backing::Config>::RingPalletId::get().into_dvm_address(),
+			<Test as s2s_backing::Config>::RingPalletId::get().into_h160(),
 			EthereumAddress::from_str("0x6d6f646c64612f6272696e670000000000000000").unwrap()
 		);
 	});
@@ -189,7 +189,7 @@ fn test_back_erc20_dvm_address() {
 fn test_pallet_id_to_dvm_address() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(
-			<Test as s2s_backing::Config>::PalletId::get().into_dvm_address(),
+			<Test as s2s_backing::Config>::PalletId::get().into_h160(),
 			EthereumAddress::from_str("0x6d6f646c64612f73327362610000000000000000").unwrap()
 		);
 	});

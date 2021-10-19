@@ -24,7 +24,7 @@ use crate::{
 	*, {self as s2s_issuing},
 };
 use darwinia_evm::{
-	AddressMapping, EnsureAddressTruncated, FeeCalculator, SubstrateBlockHashMapping,
+	EnsureAddressTruncated, FeeCalculator, IntoAccountId, SubstrateBlockHashMapping,
 };
 use darwinia_support::s2s::{RelayMessageCaller, TokenMessageId};
 use dvm_ethereum::{
@@ -137,7 +137,7 @@ impl FeeCalculator for FixedGasPrice {
 }
 
 pub struct HashedAddressMapping;
-impl AddressMapping<AccountId32> for HashedAddressMapping {
+impl IntoAccountId<AccountId32> for HashedAddressMapping {
 	fn into_account_id(address: H160) -> AccountId32 {
 		let mut data = [0u8; 32];
 		data[0..20].copy_from_slice(&address[..]);
@@ -153,7 +153,7 @@ impl darwinia_evm::Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
-	type AddressMapping = HashedAddressMapping;
+	type IntoAccountId = HashedAddressMapping;
 	type Event = ();
 	type Precompiles = ();
 	type FindAuthor = ();

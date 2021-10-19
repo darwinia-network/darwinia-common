@@ -44,7 +44,7 @@ use sp_std::{str, vec::Vec};
 // --- darwinia-network ---
 use bp_runtime::{ChainId, Size};
 use darwinia_support::{
-	evm::{AddressMapping, POW_9},
+	evm::{IntoAccountId, POW_9},
 	mapping_token::*,
 	s2s::{ensure_source_root, MessageConfirmer, RelayMessageCaller, ToEthAddress, TokenMessageId},
 	ChainName, PalletDigest,
@@ -110,7 +110,7 @@ pub mod pallet {
 
 			// Ensure that the user is mapping token factory contract
 			let factory = MappingFactoryAddress::<T>::get();
-			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
+			let factory_id = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(factory);
 			ensure!(caller == factory_id, <Error<T>>::NotFactoryContract);
 
 			let burn_info =

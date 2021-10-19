@@ -35,7 +35,7 @@ use crate::{
 	runner::Runner as RunnerT, AccountBasic, AccountCodes, AccountStorages, BlockHashMapping,
 	Config, Error, Event, FeeCalculator, Pallet, PrecompileSet,
 };
-use darwinia_support::evm::AddressMapping;
+use darwinia_support::evm::IntoAccountId;
 use dp_evm::{CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
 
 #[derive(Default)]
@@ -444,7 +444,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	}
 
 	fn inc_nonce(&mut self, address: H160) {
-		let account_id = T::AddressMapping::into_account_id(address);
+		let account_id = T::IntoAccountId::into_account_id(address);
 		<frame_system::Pallet<T>>::inc_account_nonce(&account_id);
 	}
 

@@ -35,13 +35,13 @@ pub const SELECTOR: usize = 4;
 pub const TRANSFER_ADDR: &'static str = "0x0000000000000000000000000000000000000015";
 
 /// A trait for converting from `AccountId` to H160.
-pub trait IntoDvmAddress {
-	fn into_dvm_address(&self) -> H160;
+pub trait IntoH160 {
+	fn into_h160(&self) -> H160;
 }
 
 // Convert palletId to H160
-impl IntoDvmAddress for PalletId {
-	fn into_dvm_address(&self) -> H160 {
+impl IntoH160 for PalletId {
+	fn into_h160(&self) -> H160 {
 		let account_id: AccountId32 = self.into_account();
 		let bytes: &[u8] = account_id.as_ref();
 		H160::from_slice(&bytes[0..20])
@@ -49,7 +49,7 @@ impl IntoDvmAddress for PalletId {
 }
 
 /// A trait for converting from H160 to `AccountId`.
-pub trait AddressMapping<AccountId> {
+pub trait IntoAccountId<AccountId> {
 	fn into_account_id(address: H160) -> AccountId;
 }
 
@@ -61,7 +61,7 @@ pub struct ConcatAddressMapping<AccountId>(PhantomData<AccountId>);
 /// 1. AccountId Prefix: concat("dvm", "0x00000000000000"), length: 11 byetes
 /// 2. EVM address: the original evm address, length: 20 bytes
 /// 3. CheckSum:  byte_xor(AccountId Prefix + EVM address), length: 1 bytes
-impl<AccountId> AddressMapping<AccountId> for ConcatAddressMapping<AccountId>
+impl<AccountId> IntoAccountId<AccountId> for ConcatAddressMapping<AccountId>
 where
 	AccountId: From<[u8; 32]>,
 {
