@@ -32,9 +32,10 @@ use sp_runtime::{traits::UniqueSaturatedInto, ArithmeticError, DispatchError};
 use sp_std::{collections::btree_set::BTreeSet, marker::PhantomData, mem, prelude::*};
 // --- darwinia-network ---
 use crate::{
-	runner::Runner as RunnerT, AccountBasic, AccountCodes, AccountStorages, AddressMapping,
-	BlockHashMapping, Config, Error, Event, FeeCalculator, Pallet, PrecompileSet,
+	runner::Runner as RunnerT, AccountBasic, AccountCodes, AccountStorages, BlockHashMapping,
+	Config, Error, Event, FeeCalculator, Pallet, PrecompileSet,
 };
+use darwinia_support::evm::AddressMapping;
 use dp_evm::{CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
 
 #[derive(Default)]

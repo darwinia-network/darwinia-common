@@ -47,10 +47,11 @@ use sp_runtime::{
 };
 use sp_std::{str, vec::Vec};
 // --- darwinia-network ---
-use darwinia_evm::{AddressMapping, GasWeightMapping};
+use darwinia_evm::GasWeightMapping;
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{
-	balance::*, mapping_token::*, traits::EthereumReceipt, ChainName, PalletDigest,
+	balance::*, evm::AddressMapping, mapping_token::*, traits::EthereumReceipt, ChainName,
+	PalletDigest,
 };
 use dp_contract::{
 	ethereum_backing::{EthereumBacking, EthereumLockEvent, EthereumRegisterEvent},

@@ -31,17 +31,23 @@ pub const INTERNAL_TX_GAS_LIMIT: u32 = 300_000_000;
 pub const SELECTOR: usize = 4;
 pub const TRANSFER_ADDR: &'static str = "0x0000000000000000000000000000000000000015";
 
+/// A trait for converting from `AccountId` to H160.
 pub trait IntoDvmAddress {
 	fn into_dvm_address(&self) -> H160;
 }
 
-// Convert pallet id to dvm address
+// Convert palletId to H160
 impl IntoDvmAddress for PalletId {
 	fn into_dvm_address(&self) -> H160 {
 		let account_id: AccountId32 = self.into_account();
 		let bytes: &[u8] = account_id.as_ref();
 		H160::from_slice(&bytes[0..20])
 	}
+}
+
+/// A trait for converting from H160 to `AccountId`.
+pub trait AddressMapping<AccountId> {
+	fn into_account_id(address: H160) -> AccountId;
 }
 
 pub fn recover_signer(transaction: &ethereum::Transaction) -> Option<H160> {

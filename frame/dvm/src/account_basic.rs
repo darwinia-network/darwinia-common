@@ -29,8 +29,8 @@ use sp_runtime::{
 };
 // --- darwinia-network ---
 use crate::{Config, KtonBalance, RemainingKtonBalance, RemainingRingBalance, RingBalance};
-use darwinia_evm::{Account as EVMAccount, AccountBasic, AddressMapping};
-use darwinia_support::evm::POW_9;
+use darwinia_evm::{Account as EVMAccount, AccountBasic};
+use darwinia_support::evm::{AddressMapping, POW_9};
 
 /// The operations for the remaining balance.
 pub trait RemainBalanceOp<T: Config, B> {

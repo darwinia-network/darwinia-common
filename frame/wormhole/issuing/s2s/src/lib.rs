@@ -43,9 +43,8 @@ use sp_runtime::{traits::Convert, DispatchError, SaturatedConversion};
 use sp_std::{str, vec::Vec};
 // --- darwinia-network ---
 use bp_runtime::{ChainId, Size};
-use darwinia_evm::AddressMapping;
 use darwinia_support::{
-	evm::POW_9,
+	evm::{AddressMapping, POW_9},
 	mapping_token::*,
 	s2s::{ensure_source_root, MessageConfirmer, RelayMessageCaller, ToEthAddress, TokenMessageId},
 	ChainName, PalletDigest,

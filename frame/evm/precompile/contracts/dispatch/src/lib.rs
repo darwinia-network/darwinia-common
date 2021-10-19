@@ -17,11 +17,15 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::Decode;
+// --- crates.io ---
 use core::marker::PhantomData;
-use darwinia_evm::{AddressMapping, GasWeightMapping};
-use dp_evm::Precompile;
 use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
+// --- darwinia-network ---
+use darwinia_evm::GasWeightMapping;
+use darwinia_support::evm::AddressMapping;
+use dp_evm::Precompile;
+// --- paritytech ---
+use codec::Decode;
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	weights::{DispatchClass, Pays},

@@ -1639,6 +1639,7 @@ name = "darwinia-evm-precompile-dispatch"
 version = "2.6.6"
 dependencies = [
  "darwinia-evm",
+ "darwinia-support",
  "dp-evm",
  "evm 0.27.0",
  "frame-support",

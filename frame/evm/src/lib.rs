@@ -50,6 +50,8 @@ use frame_system::RawOrigin;
 use sp_core::{H160, H256, U256};
 use sp_runtime::traits::{BadOrigin, UniqueSaturatedInto};
 use sp_std::{marker::PhantomData, prelude::*};
+// --- darwinia-network ---
+use darwinia_support::evm::AddressMapping;
 
 static ISTANBUL_CONFIG: EvmConfig = EvmConfig::istanbul();
 
@@ -405,11 +407,6 @@ pub trait EnsureAddressOrigin<OuterOrigin> {
 		address: &H160,
 		origin: OuterOrigin,
 	) -> Result<Self::Success, OuterOrigin>;
-}
-
-/// A trait for converting from H160 to `AccountId`.
-pub trait AddressMapping<AccountId> {
-	fn into_account_id(address: H160) -> AccountId;
 }
 
 /// A trait for operating account basic info.
