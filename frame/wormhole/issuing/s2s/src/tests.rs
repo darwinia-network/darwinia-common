@@ -32,7 +32,12 @@ use dvm_ethereum::{
 	IntermediateStateRoot,
 };
 // substrate
-use frame_support::{assert_ok, traits::{GenesisBuild, MaxEncodedLen}, weights::PostDispatchInfo, PalletId};
+use frame_support::{
+	assert_ok,
+	traits::{GenesisBuild, MaxEncodedLen},
+	weights::PostDispatchInfo,
+	PalletId,
+};
 use frame_system::mocking::*;
 use sp_runtime::{
 	testing::Header,

@@ -21,7 +21,7 @@ use std::str::FromStr;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
-use frame_support::{weights::PostDispatchInfo, PalletId, traits::MaxEncodedLen};
+use frame_support::{traits::MaxEncodedLen, weights::PostDispatchInfo, PalletId};
 use frame_system::mocking::*;
 use sp_runtime::{
 	testing::Header,

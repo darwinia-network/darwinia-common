@@ -16,7 +16,9 @@ use sp_core::{crypto::Public, H160, U256};
 use sp_std::marker::PhantomData;
 // --- darwinia-network ---
 use crate::*;
-use darwinia_evm::{runner::stack::Runner, ConcatAddressMapping, Config, EnsureAddressTruncated, FeeCalculator};
+use darwinia_evm::{
+	runner::stack::Runner, ConcatAddressMapping, Config, EnsureAddressTruncated, FeeCalculator,
+};
 use dp_evm::{Precompile, PrecompileSet};
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},

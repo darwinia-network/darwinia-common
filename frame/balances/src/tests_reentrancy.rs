@@ -189,12 +189,8 @@ fn transfer_dust_removal_tst1_should_work() {
 			// Number of events expected is 8
 			assert_eq!(System::events().len(), 11);
 
-			System::assert_has_event(Event::Ring(crate::Event::Transfer(
-				2, 3, 450,
-			)));
-			System::assert_has_event(Event::Ring(crate::Event::DustLost(
-				2, 50,
-			)));
+			System::assert_has_event(Event::Ring(crate::Event::Transfer(2, 3, 450)));
+			System::assert_has_event(Event::Ring(crate::Event::DustLost(2, 50)));
 		});
 }
 
@@ -224,12 +220,8 @@ fn transfer_dust_removal_tst2_should_work() {
 			// Number of events expected is 8
 			assert_eq!(System::events().len(), 9);
 
-			System::assert_has_event(Event::Ring(crate::Event::Transfer(
-				2, 1, 450,
-			)));
-			System::assert_has_event(Event::Ring(crate::Event::DustLost(
-				2, 50,
-			)));
+			System::assert_has_event(Event::Ring(crate::Event::Transfer(2, 1, 450)));
+			System::assert_has_event(Event::Ring(crate::Event::DustLost(2, 50)));
 		});
 }
 
