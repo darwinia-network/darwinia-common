@@ -21,7 +21,7 @@
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
-use frame_support::traits::{GenesisBuild, OnFinalize, OnInitialize};
+use frame_support::traits::{GenesisBuild, MaxEncodedLen, OnFinalize, OnInitialize};
 use frame_system::{mocking::*, EnsureRoot};
 use sp_core::H256;
 use sp_io::{hashing, TestExternalities};
@@ -83,9 +83,11 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ();
-	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
-	type MaxLocks = MaxLocks;
+	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
+	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
@@ -214,7 +216,7 @@ pub fn events() -> Vec<Event> {
 pub fn relay_authorities_events() -> Vec<Event> {
 	events()
 		.into_iter()
-		.filter(|e| matches!(e, Event::darwinia_relay_authorities(_)))
+		.filter(|e| matches!(e, Event::RelayAuthorities(_)))
 		.collect()
 }
 

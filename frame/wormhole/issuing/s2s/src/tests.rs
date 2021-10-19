@@ -32,7 +32,7 @@ use dvm_ethereum::{
 	IntermediateStateRoot,
 };
 // substrate
-use frame_support::{assert_ok, traits::GenesisBuild, weights::PostDispatchInfo, PalletId};
+use frame_support::{assert_ok, traits::{GenesisBuild, MaxEncodedLen}, weights::PostDispatchInfo, PalletId};
 use frame_system::mocking::*;
 use sp_runtime::{
 	testing::Header,
@@ -53,23 +53,27 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
-	type MaxLocks = ();
 	type OtherCurrencies = ();
-	type WeightInfo = ();
 	type Balance = Balance;
 	type Event = ();
+	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
 	type BalanceInfo = AccountData<Balance>;
+	type WeightInfo = ();
 }
 impl darwinia_balances::Config<KtonInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
-	type MaxLocks = ();
 	type OtherCurrencies = ();
-	type WeightInfo = ();
 	type Balance = Balance;
 	type Event = ();
+	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
 	type BalanceInfo = AccountData<Balance>;
+	type WeightInfo = ();
 }
 
 frame_support::parameter_types! {

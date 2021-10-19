@@ -16,7 +16,7 @@ use sp_core::{crypto::Public, H160, U256};
 use sp_std::marker::PhantomData;
 // --- darwinia-network ---
 use crate::*;
-use darwinia_evm::{runner::stack::Runner, ConcatAddressMapping, Config, EnsureAddressTruncated};
+use darwinia_evm::{runner::stack::Runner, ConcatAddressMapping, Config, EnsureAddressTruncated, FeeCalculator};
 use dp_evm::{Precompile, PrecompileSet};
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
@@ -69,13 +69,20 @@ where
 	}
 }
 
+pub struct FixedGasPrice;
+impl FeeCalculator for FixedGasPrice {
+	fn min_gas_price() -> U256 {
+		U256::from(1 * COIN)
+	}
+}
+
 frame_support::parameter_types! {
 	pub const ChainId: u64 = 43;
 	pub BlockGasLimit: U256 = u32::max_value().into();
 }
 
 impl Config for Runtime {
-	type FeeCalculator = DynamicFee;
+	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type AddressMapping = ConcatAddressMapping<Self::AccountId>;

@@ -118,36 +118,62 @@ jobs:
           name: node
       - name: Uncompress subalfred and node
         run: tar xf subalfred.tar.zst -I pzstd && tar xf node.tar.zst -I pzstd
-      - id: check-runtime-version
-        name: Check runtime version
+      - id: check-pangolin-runtime-version
+        name: Check Pangolin runtime version
         run: |
           OUTPUT=$(./subalfred ci runtime-version -c Pangolin -e ./drml)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
-          echo "::set-output name=check-runtime-version::$OUTPUT"
-      - id: check-storage-prefix
-        name: Check storage prefix
+          echo "::set-output name=check-pangolin-runtime-version::$OUTPUT"
+      - id: check-pangolin-storage-prefix
+        name: Check Pangolin storage prefix
         run: |
           OUTPUT=$(./subalfred ci storage-prefix -c Pangolin -e ./drml)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
-          echo "::set-output name=check-storage-prefix::$OUTPUT"
+          echo "::set-output name=check-pangolin-storage-prefix::$OUTPUT"
+      - id: check-pangoro-runtime-version
+        name: Check Pangoro runtime version
+        run: |
+          OUTPUT=$(./subalfred ci runtime-version -c Pangoro -e ./drml)
+          OUTPUT="${OUTPUT//'%'/'%25'}​"
+          OUTPUT="${OUTPUT//$'\n'/'%0A'}"
+          OUTPUT="${OUTPUT//$'\r'/'%0D'}"
+          echo "::set-output name=check-pangoro-runtime-version::$OUTPUT"
+      - id: check-pangoro-storage-prefix
+        name: Check Pangoro storage prefix
+        run: |
+          OUTPUT=$(./subalfred ci storage-prefix -c Pangoro -e ./drml)
+          OUTPUT="${OUTPUT//'%'/'%25'}​"
+          OUTPUT="${OUTPUT//$'\n'/'%0A'}"
+          OUTPUT="${OUTPUT//$'\r'/'%0D'}"
+          echo "::set-output name=check-pangoro-storage-prefix::$OUTPUT"
       - if: github.ref != 'refs/heads/master'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           append: true
           message: |
             ---
-            > SHA ${{ github.sha }}
-            > **Check Runtime Version**
+            ## SHA ${{ github.event.pull_request.head.sha }}
+            ### Pangolin
+            #### Check Runtime Version
             ```diff
-            ${{ steps.check-runtime-version.outputs.check-runtime-version }}
+            ${{ steps.check-pangolin-runtime-version.outputs.check-pangolin-runtime-version }}
             ```
-            > **Check Storage Prefix**
+            #### Check Storage Prefix
             ```diff
-            ${{ steps.check-storage-prefix.outputs.check-storage-prefix }}
+            ${{ steps.check-pangolin-storage-prefix.outputs.check-pangolin-storage-prefix }}
+            ```
+            ### Pangoro
+            #### Check Runtime Version
+            ```diff
+            ${{ steps.check-pangoro-runtime-version.outputs.check-pangoro-runtime-version }}
+            ```
+            #### Check Storage Prefix
+            ```diff
+            ${{ steps.check-pangoro-storage-prefix.outputs.check-pangoro-storage-prefix }}
             ```
 
   external-test:
@@ -176,7 +202,7 @@ jobs:
     name: Clean artifacts
     runs-on: ubuntu-latest
     if: always()
-    needs: [check-with-node, external-test]
+    needs: [check-default-features, check-with-node, external-test]
     steps:
       - uses: geekyeggo/delete-artifact@v1
         with:

@@ -35,7 +35,7 @@ macro_rules! impl_account_data {
 		use darwinia_support::balance::BalanceInfo;
 
 		$(#[$attr])*
-		#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+		#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, MaxEncodedLen)]
 		pub struct $sname<Balance$(, $($gtype)*)?>
 		$(
 		where

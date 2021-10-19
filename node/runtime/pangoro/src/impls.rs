@@ -1,7 +1,7 @@
 //! Some configurable implementations as associated type for the substrate runtime.
 
 // --- paritytech ---
-use frame_support::weights::IdentityFee;
+use frame_support::{traits::MaxEncodedLen, weights::IdentityFee};
 use sp_runtime::RuntimeDebug;
 // --- darwinia-network ---
 use crate::*;

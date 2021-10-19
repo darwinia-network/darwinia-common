@@ -21,7 +21,7 @@ use std::str::FromStr;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
-use frame_support::{weights::PostDispatchInfo, PalletId};
+use frame_support::{weights::PostDispatchInfo, PalletId, traits::MaxEncodedLen};
 use frame_system::mocking::*;
 use sp_runtime::{
 	testing::Header,
@@ -46,12 +46,14 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
-	type MaxLocks = ();
 	type OtherCurrencies = ();
-	type WeightInfo = ();
 	type Balance = Balance;
 	type Event = ();
+	type MaxLocks = ();
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
 	type BalanceInfo = AccountData<Balance>;
+	type WeightInfo = ();
 }
 
 frame_support::parameter_types! {

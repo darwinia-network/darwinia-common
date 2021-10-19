@@ -22,14 +22,14 @@ use core::fmt::Debug;
 use codec::FullCodec;
 use impl_trait_for_tuples::impl_for_tuples;
 // --- paritytech ---
-use frame_support::traits::{Currency, Get, LockIdentifier, WithdrawReasons};
+use frame_support::traits::{Currency, Get, LockIdentifier, MaxEncodedLen, WithdrawReasons};
 use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::structs::{FrozenBalance, LockFor, LockReasons};
 use ethereum_primitives::receipt::EthereumTransactionIndex;
 
-pub trait BalanceInfo<Balance, Module> {
+pub trait BalanceInfo<Balance, Module>: MaxEncodedLen {
 	fn free(&self) -> Balance;
 	fn set_free(&mut self, new_free: Balance);
 
