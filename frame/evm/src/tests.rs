@@ -33,6 +33,7 @@ use sp_runtime::{
 };
 // --- darwinia-network ---
 use crate::{self as darwinia_evm, runner::stack::Runner, *};
+use darwinia_support::evm::ConcatAddressMapping;
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;

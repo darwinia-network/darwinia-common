@@ -38,9 +38,10 @@ use sp_runtime::{
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::{self as dvm_ethereum, account_basic::*, *};
-use darwinia_evm::{runner::stack::Runner, EnsureAddressTruncated, FeeCalculator, IntoAccountId};
+use darwinia_evm::{runner::stack::Runner, EnsureAddressTruncated, FeeCalculator};
 use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use darwinia_evm_precompile_transfer::Transfer;
+use darwinia_support::evm::IntoAccountId;
 use dp_evm::{Precompile, PrecompileSet};
 
 type Block = MockBlock<Test>;
