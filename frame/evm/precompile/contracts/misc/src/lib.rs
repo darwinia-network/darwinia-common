@@ -46,7 +46,7 @@ const E2D_TOKEN_REGISTER_RESPONSE: &[u8] = b"e2d_token_register_response()";
 
 // substrate<>substrate actions
 const S2S_READ_LATEST_MESSAGE_ID_METHOD: &[u8] = b"s2s_read_latest_message_id()";
-const S2S_REMOTE_DISPATCH_CALL_PAYLOAD: &[u8] = b"s2s_encode_remote_unlock_payload()";
+const S2S_ENCODE_REMOTE_UNLOCK_PAYLOAD: &[u8] = b"s2s_encode_remote_unlock_payload()";
 const S2S_SEND_REMOTE_DISPATCH_CALL: &[u8] = b"s2s_encode_send_message_call()";
 
 /// The contract address: 0000000000000000000000000000000000000018
@@ -97,7 +97,7 @@ where
 					.map_err(|_| ExitError::Other("decode lane id failed".into()))?;
 				<S as RelayMessageSender>::latest_token_message_id(lane_id).to_vec()
 			}
-			_ if Self::match_digest(action_digest, S2S_REMOTE_DISPATCH_CALL_PAYLOAD) => {
+			_ if Self::match_digest(action_digest, S2S_ENCODE_REMOTE_UNLOCK_PAYLOAD) => {
 				let unlock_info = S2sRemoteUnlockInfo::decode(&action_params)
 					.map_err(|_| ExitError::Other("decode unlock info failed".into()))?;
 				let payload =

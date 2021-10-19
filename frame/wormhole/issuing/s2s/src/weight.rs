@@ -55,16 +55,12 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn register_from_remote() -> Weight;
 	fn issue_from_remote() -> Weight;
-	fn send_message() -> Weight;
 	fn set_mapping_factory_address() -> Weight;
 }
 
 /// Weights for from_substrate_issuing using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-	fn send_message() -> Weight {
-		(67_000_000 as Weight).saturating_add(T::DbWeight::get().reads(6 as Weight))
-	}
 	fn register_from_remote() -> Weight {
 		(34_544_000 as Weight)
 	}
@@ -80,9 +76,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	fn send_message() -> Weight {
-		(67_000_000 as Weight).saturating_add(RocksDbWeight::get().reads(6 as Weight))
-	}
 	fn register_from_remote() -> Weight {
 		(34_544_000 as Weight)
 	}
