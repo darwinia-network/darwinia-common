@@ -9,10 +9,7 @@ use bp_messages::{
 use bp_runtime::ChainId;
 use bridge_runtime_common::messages::{
 	self,
-	source::{
-		self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload,
-		FromThisChainMessageVerifier,
-	},
+	source::{self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload},
 	target::{
 		self, FromBridgedChainEncodedMessageCall, FromBridgedChainMessageDispatch,
 		FromBridgedChainMessagePayload, FromBridgedChainMessagesProof,
@@ -29,13 +26,15 @@ use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
 use bridge_primitives::{
-	PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE, WITH_PANGOLIN_MESSAGES_PALLET_NAME,
+	DarwiniaFromThisChainMessageVerifier, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID,
+	PANGORO_PANGOLIN_LANE, WITH_PANGOLIN_MESSAGES_PALLET_NAME,
 };
 
 /// Message payload for Pangolin -> Pangoro messages.
 pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessageBridge>;
 /// Message verifier for Pangolin -> Pangoro messages.
-pub type ToPangoroMessageVerifier = FromThisChainMessageVerifier<WithPangoroMessageBridge>;
+pub type ToPangoroMessageVerifier<R> =
+	DarwiniaFromThisChainMessageVerifier<WithPangoroMessageBridge, R>;
 /// Message payload for Pangoro -> Pangolin messages.
 pub type FromPangoroMessagePayload = FromBridgedChainMessagePayload<WithPangoroMessageBridge>;
 /// Encoded Pangolin Call as it comes from Pangoro.

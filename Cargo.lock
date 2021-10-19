@@ -706,8 +706,11 @@ version = "2.6.6"
 dependencies = [
  "bp-messages",
  "bp-runtime",
+ "bridge-runtime-common",
  "common-primitives",
+ "darwinia-fee-market",
  "frame-support",
+ "pallet-bridge-dispatch",
  "sp-api",
  "sp-core",
  "sp-runtime",
