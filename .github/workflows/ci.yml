@@ -140,7 +140,7 @@ jobs:
           append: true
           message: |
             ---
-            ## SHA ${{ github.sha }}
+            ## SHA ${{ github.event.pull_request.head.sha }}
             ### Pangoro
             #### Check Runtime Version
             ```diff
