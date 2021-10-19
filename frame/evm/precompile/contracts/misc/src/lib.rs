@@ -47,7 +47,7 @@ const E2D_TOKEN_REGISTER_RESPONSE: &[u8] = b"e2d_token_register_response()";
 const S2S_READ_LATEST_MESSAGE_ID: &[u8] = b"s2s_read_latest_message_id()";
 const S2S_READ_LATEST_RECV_MESSAGE_ID: &[u8] = b"s2s_read_latest_recv_message_id()";
 const S2S_ENCODE_REMOTE_UNLOCK_PAYLOAD: &[u8] = b"s2s_encode_remote_unlock_payload()";
-const S2S_SEND_REMOTE_DISPATCH_CALL: &[u8] = b"s2s_encode_send_message_call()";
+const S2S_ENCODE_SEND_MESSAGE_CALL: &[u8] = b"s2s_encode_send_message_call()";
 
 /// The contract address: 0000000000000000000000000000000000000018
 pub struct Misc<T, S> {
@@ -114,7 +114,7 @@ where
 					.map_err(|_| ExitError::Other("encode remote unlock failed".into()))?;
 				payload.encode()
 			}
-			_ if Self::match_digest(action_digest, S2S_SEND_REMOTE_DISPATCH_CALL) => {
+			_ if Self::match_digest(action_digest, S2S_ENCODE_SEND_MESSAGE_CALL) => {
 				let params = S2sSendMessageParams::decode(&action_params)
 					.map_err(|_| ExitError::Other("decode send message info failed".into()))?;
 				<S as RelayMessageSender>::encode_send_message(
@@ -123,7 +123,7 @@ where
 					params.payload,
 					params.fee.low_u128().saturated_into(),
 				)
-				.map_err(|_| ExitError::Other("decode send message info failed".into()))?
+				.map_err(|_| ExitError::Other("encode send message call failed".into()))?
 			}
 			_ => {
 				return Err(ExitError::Other("No valid pallet digest found".into()));

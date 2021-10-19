@@ -216,7 +216,7 @@ impl RelayMessageSender for ToPangoroMessageRelayCaller {
 	) -> Result<Vec<u8>, &'static str> {
 		Ok(Vec::new())
 	}
-    fn send_message_by_root(
+	fn send_message_by_root(
 		_pallet_index: u32,
 		_lane_id: [u8; 4],
 		_payload: Vec<u8>,
@@ -300,7 +300,10 @@ fn burn_and_remote_unlock_success() {
 			token,
 			recipient: [1; 32].to_vec(),
 		};
-        let submitter = HashedAddressMapping::into_account_id(H160::from_str("1000000000000000000000000000000000000002").unwrap());
-		<Test as s2s_issuing::Config>::CallEncoder::encode_remote_unlock(submitter, burn_info).unwrap();
+		let submitter = HashedAddressMapping::into_account_id(
+			H160::from_str("1000000000000000000000000000000000000002").unwrap(),
+		);
+		<Test as s2s_issuing::Config>::CallEncoder::encode_remote_unlock(submitter, burn_info)
+			.unwrap();
 	});
 }
