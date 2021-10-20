@@ -17,7 +17,7 @@ frame-support = { default-features = false, git = "https://github.com/darwinia-n
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 # darwinia-network
-darwinia-support    = { default-features = false, path = "../../../support" }
+darwinia-support = { default-features = false, path = "../../../support" }
 
 [features]
 default = ["std"]

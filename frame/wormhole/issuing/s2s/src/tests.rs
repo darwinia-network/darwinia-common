@@ -134,8 +134,8 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
-pub struct HashedAddressMapping;
-impl IntoAccountId<AccountId32> for HashedAddressMapping {
+pub struct HashedConverter;
+impl IntoAccountId<AccountId32> for HashedConverter {
 	fn into_account_id(address: H160) -> AccountId32 {
 		let mut data = [0u8; 32];
 		data[0..20].copy_from_slice(&address[..]);
@@ -151,7 +151,7 @@ impl darwinia_evm::Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
-	type IntoAccountId = HashedAddressMapping;
+	type IntoAccountId = HashedConverter;
 	type Event = ();
 	type Precompiles = ();
 	type FindAuthor = ();

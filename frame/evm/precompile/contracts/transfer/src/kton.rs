@@ -99,7 +99,7 @@ impl<T: Config> Kton<T> {
 				})
 			}
 			Kton::Withdraw(wd) => {
-				let (source, to, value) = (context.caller, wd.into_account_id, wd.kton_value);
+				let (source, to, value) = (context.caller, wd.to_account_id, wd.kton_value);
 				// Ensure wkton is a contract
 				ensure!(
 					!<Pallet<T>>::is_contract_code_empty(&source),
@@ -198,7 +198,7 @@ impl CallData {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct WithdrawData<T: frame_system::Config> {
-	pub into_account_id: AccountId<T>,
+	pub to_account_id: AccountId<T>,
 	pub kton_value: U256,
 }
 
@@ -208,7 +208,7 @@ impl<T: frame_system::Config> WithdrawData<T> {
 			.map_err(|_| ExitError::Other("ethabi decoded error".into()))?;
 		match (tokens[0].clone(), tokens[1].clone()) {
 			(Token::FixedBytes(address), Token::Uint(eth_value)) => Ok(WithdrawData {
-				into_account_id: <T as frame_system::Config>::AccountId::decode(
+				to_account_id: <T as frame_system::Config>::AccountId::decode(
 					&mut address.as_ref(),
 				)
 				.map_err(|_| ExitError::Other("Invalid destination address".into()))?,

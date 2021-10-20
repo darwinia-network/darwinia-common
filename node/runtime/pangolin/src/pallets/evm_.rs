@@ -17,7 +17,7 @@ use sp_std::marker::PhantomData;
 // --- darwinia-network ---
 use crate::*;
 use darwinia_evm::{runner::stack::Runner, Config, EnsureAddressTruncated, FeeCalculator};
-use darwinia_support::evm::ConcatAddressMapping;
+use darwinia_support::evm::ConcatConverter;
 use dp_evm::{Precompile, PrecompileSet};
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
@@ -86,7 +86,7 @@ impl Config for Runtime {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
-	type IntoAccountId = ConcatAddressMapping<Self::AccountId>;
+	type IntoAccountId = ConcatConverter<Self::AccountId>;
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type BlockHashMapping = EthereumBlockHashMapping<Self>;
 	type Event = Event;

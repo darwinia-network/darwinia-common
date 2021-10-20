@@ -49,7 +49,6 @@ mod types {
 use core::fmt::{Debug, Formatter, Result as FmtResult};
 // --- crates.io ---
 use codec::{Decode, Encode};
-// --- github ---
 use ethereum_types::H128;
 // --- paritytech ---
 use frame_support::{

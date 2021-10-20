@@ -79,7 +79,7 @@ pub mod pallet {
 		/// Chain ID of EVM.
 		type ChainId: Get<u64>;
 
-		/// Mapping from address to account id.
+		/// Convert from H160 to account id.
 		type IntoAccountId: IntoAccountId<Self::AccountId>;
 		/// Block number to block hash.
 		type BlockHashMapping: BlockHashMapping;

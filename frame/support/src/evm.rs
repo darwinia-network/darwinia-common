@@ -54,14 +54,14 @@ pub trait IntoAccountId<AccountId> {
 }
 
 /// Darwinia network address mapping.
-pub struct ConcatAddressMapping<AccountId>(PhantomData<AccountId>);
+pub struct ConcatConverter<AccountId>(PhantomData<AccountId>);
 
-/// The ConcatAddressMapping used for transfer from evm 20-length to substrate 32-length address
+/// The ConcatConverter used for transfer from evm 20-length to substrate 32-length address
 /// The concat rule inclued three parts:
 /// 1. AccountId Prefix: concat("dvm", "0x00000000000000"), length: 11 byetes
 /// 2. EVM address: the original evm address, length: 20 bytes
 /// 3. CheckSum:  byte_xor(AccountId Prefix + EVM address), length: 1 bytes
-impl<AccountId> IntoAccountId<AccountId> for ConcatAddressMapping<AccountId>
+impl<AccountId> IntoAccountId<AccountId> for ConcatConverter<AccountId>
 where
 	AccountId: From<[u8; 32]>,
 {

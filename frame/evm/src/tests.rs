@@ -33,7 +33,7 @@ use sp_runtime::{
 };
 // --- darwinia-network ---
 use crate::{self as darwinia_evm, runner::stack::Runner, *};
-use darwinia_support::evm::ConcatAddressMapping;
+use darwinia_support::evm::ConcatConverter;
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
@@ -166,7 +166,7 @@ impl Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressRoot<Self::AccountId>;
-	type IntoAccountId = ConcatAddressMapping<Self::AccountId>;
+	type IntoAccountId = ConcatConverter<Self::AccountId>;
 	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
 	type FindAuthor = FindAuthorTruncated;
 	type Event = Event;
