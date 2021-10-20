@@ -414,7 +414,7 @@ pub mod pallet {
 			account: AccountId<T>,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			<RemoteMappingTokenFactoryAccount<T>>::put(account);
+			<RemoteMappingTokenFactoryAccount<T>>::put(account.clone());
 			Self::deposit_event(Event::RemoteMappingFactoryAddressUpdated(account));
 
 			Ok(().into())
