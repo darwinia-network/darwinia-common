@@ -115,6 +115,8 @@ pub mod pallet {
 		TokenUnlocked(TokenMessageId, Token, AccountId<T>, RingBalance<T>),
 		/// Token locked confirmed from remote \[message_id, token, user, result\]
 		TokenLockedConfirmed(TokenMessageId, Token, AccountId<T>, bool),
+		/// Update remote mapping token factory address \[account\]
+		RemoteMappingFactoryAddressUpdated(AccountId<T>),
 	}
 
 	#[pallet::error]
@@ -412,8 +414,8 @@ pub mod pallet {
 			account: AccountId<T>,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-
 			<RemoteMappingTokenFactoryAccount<T>>::put(account);
+			Self::deposit_event(Event::RemoteMappingFactoryAddressUpdated(account));
 
 			Ok(().into())
 		}
