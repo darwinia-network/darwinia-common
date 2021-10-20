@@ -30,8 +30,6 @@ mod mock_header;
 pub mod weight;
 pub use weight::WeightInfo;
 
-// --- crates.io ---
-use sha3::Digest;
 // --- paritytech ---
 use frame_support::{
 	ensure,
@@ -50,11 +48,17 @@ use sp_std::{str, vec::Vec};
 use darwinia_evm::{AddressMapping, GasWeightMapping};
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{
-	balance::*, mapping_token::*, traits::EthereumReceipt, ChainName, PalletDigest,
+	balance::*, mapping_token::*, traits::EthereumReceipt, ChainName,
 };
 use dp_contract::{
 	ethereum_backing::{EthereumBacking, EthereumLockEvent, EthereumRegisterEvent},
-	mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo, TokenRegisterInfo},
+	mapping_token_factory::{
+        basic::BasicMappingTokenFactory as bmtf,
+        ethereum2darwinia::{
+            E2dRemoteUnlockInfo,
+            TokenRegisterInfo,
+        },
+    },
 };
 use dvm_ethereum::InternalTransactHandler;
 use ethereum_primitives::{
@@ -235,8 +239,7 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::DecodeEventFailed)?;
 			let name = mapping_token_name(register_info.name, T::BackingChainName::get());
 			let symbol = mapping_token_symbol(register_info.symbol);
-			let input = mtf::encode_create_erc20(
-				Self::digest(),
+			let input = bmtf::encode_create_erc20(
 				0,
 				str::from_utf8(&name.as_slice()).map_err(|_| Error::<T>::StringCF)?,
 				str::from_utf8(&symbol.as_slice()).map_err(|_| Error::<T>::StringCF)?,
@@ -269,7 +272,7 @@ pub mod pallet {
 			let lock_info =
 				EthereumBacking::parse_locking_event(&verified_receipt, &backing_address)
 					.map_err(|_| Error::<T>::DecodeEventFailed)?;
-			let input = mtf::encode_cross_receive(
+			let input = bmtf::encode_issue_erc20(
 				lock_info.mapping_token,
 				lock_info.recipient,
 				lock_info.amount,
@@ -314,16 +317,12 @@ pub mod pallet {
 			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
 			ensure!(factory_id == caller, <Error<T>>::NoAuthority);
 			let burn_info =
-				TokenBurnInfo::decode(&input).map_err(|_| Error::<T>::InvalidInputData)?;
-			ensure!(
-				burn_info.recipient.len() == 20,
-				<Error<T>>::InvalidAddressLen
-			);
+				E2dRemoteUnlockInfo::decode(&input).map_err(|_| Error::<T>::InvalidInputData)?;
 			Self::deposit_burn_token_event(
 				burn_info.backing_address,
 				burn_info.sender,
 				burn_info.original_token,
-				EthereumAddress::from_slice(burn_info.recipient.as_slice()),
+				burn_info.recipient,
 				burn_info.amount,
 			)?;
 
@@ -357,19 +356,12 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn digest() -> PalletDigest {
-		let mut digest: PalletDigest = Default::default();
-		let pallet_digest = sha3::Keccak256::digest(T::PalletId::get().encode().as_slice());
-		digest.copy_from_slice(&pallet_digest[..4]);
-		digest
-	}
-
 	pub fn mapped_token_address(
 		backing_address: EthereumAddress,
 		original_token: EthereumAddress,
 	) -> Result<EthereumAddress, DispatchError> {
 		let factory_address = MappingFactoryAddress::<T>::get();
-		let bytes = mtf::encode_mapping_token(backing_address, original_token)
+		let bytes = bmtf::encode_mapping_token(backing_address, original_token)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
 		let mapping_token = T::InternalTransactHandler::read_only_call(factory_address, bytes)?;
 		if mapping_token.len() != 32 {
