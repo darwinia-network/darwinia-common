@@ -421,7 +421,7 @@ frame_support::parameter_types! {
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 	pub const MinimumRelayFee: Balance = 30;
 	pub const MiniumLockCollateral: Balance = 100;
-	pub const MinRelayersNumber: u64 = 3;
+	pub const AssignedRelayersNumber: u64 = 3;
 	pub const SlotTime: u64 = 50;
 
 	pub const AssignedRelayersRewardRatio: Permill = Permill::from_percent(60);
@@ -454,7 +454,7 @@ impl Config for Test {
 	type LockId = FeeMarketLockId;
 	type MiniumLockCollateral = MiniumLockCollateral;
 	type MinimumRelayFee = MinimumRelayFee;
-	type MinRelayersNumber = MinRelayersNumber;
+	type AssignedRelayersNumber = AssignedRelayersNumber;
 	type SlotTime = SlotTime;
 
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
