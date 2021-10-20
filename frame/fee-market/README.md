@@ -1,10 +1,10 @@
-# A MVP Design of a Relayer Fee Market
+# Design of Relayer Fee Market
 
 ## Requirements
 
 1. Users use native tokens of the source chain as the only method of payment;
 2. The estimated fee of the message to be transferred is supported by a pricing system on the source chain which is connected to a Relayer Fee Market;
-3. The cost on the target chain is at the expense of the relayer who claims the handling fee on the source chain with the proof of delivery after delivery is completed successfully. To incentivize relayers, the pricing system should ensure the gain is greater than the cost in long term. If an automatic pricing mechanism is infeasible, relayers should be able to give their offers manually and shoulder the cost of offering. The relayers should be pushed if they fail to relay the message as expected.
+3. The cost on the target chain is at the expense of the relayer who claims the handling fee on the source chain with the proof of delivery after delivery is completed successfully. To incentivize relayers, the pricing system should ensure the gain is greater than the cost in long term. If an automatic pricing mechanism is infeasible, relayers should be able to give their offers manually and shoulder the cost of offering. The relayers should be punished if they fail to relay the message as expected.
 4. Relayers and Users constitute a secondary supply-and-demand market, where prices rise when supply is low and fall when supply is abundant. There are no access restrictions for relayers, and anyone can enter. Relayer should evaluate and quote at their own discretion as an economically rational person. An incomplete list of risks that relayers should take into account is as follows:
     1. Fluctuation in token prices and exchange ratios;
     2. Time delay between quoting and claiming;
