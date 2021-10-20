@@ -688,19 +688,6 @@ fn test_multiple_relayers_cancel_registration() {
 }
 
 #[test]
-fn test_multiple_relayers_sort() {
-	new_test_ext().execute_with(|| {
-		let r1 = Relayer::<AccountId, Balance>::new(1, 100, 30);
-		let r2 = Relayer::<AccountId, Balance>::new(2, 100, 40);
-		assert!(r1 < r2);
-
-		let r3 = Relayer::<AccountId, Balance>::new(3, 150, 30);
-		let r4 = Relayer::<AccountId, Balance>::new(4, 100, 30);
-		assert!(r3 < r4);
-	});
-}
-
-#[test]
 fn test_multiple_relayers_choose_assigned_relayers_with_same_default_fee() {
 	new_test_ext().execute_with(|| {
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, None);

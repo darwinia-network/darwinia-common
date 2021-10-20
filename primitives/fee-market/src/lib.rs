@@ -30,6 +30,7 @@ use sp_std::{
 // Changing this number should be much carefully to avoid unexpected runtime behavior.
 pub const MIN_RELAYERS_NUMBER: usize = 3;
 
+/// Relayer who has enrolled the fee market
 #[derive(Encode, Decode, Clone, Eq, Debug, Copy)]
 pub struct Relayer<AccountId, Balance> {
 	pub id: AccountId,
@@ -80,6 +81,8 @@ impl<AccountId: Default, Balance: Default> Default for Relayer<AccountId, Balanc
 		}
 	}
 }
+
+/// Order represent cross-chain message relay task. Only support sub-sub message for now.
 #[derive(Clone, Encode, Decode, Default)]
 pub struct Order<AccountId, BlockNumber, Balance> {
 	pub lane: LaneId,
@@ -93,25 +96,26 @@ impl<AccountId, BlockNumber, Balance> Order<AccountId, BlockNumber, Balance>
 where
 	BlockNumber: sp_std::ops::Add<Output = BlockNumber> + Copy + std::ops::AddAssign,
 	Balance: Copy,
-	AccountId: Clone,
+	AccountId: Clone + std::cmp::PartialEq,
 {
 	pub fn new(
 		lane: LaneId,
 		message: MessageNonce,
 		sent_time: BlockNumber,
 		assigned_relayers: Vec<Relayer<AccountId, Balance>>,
-		slot_time: BlockNumber,
+		slot: BlockNumber,
 	) -> Self {
-		let mut relayers = Vec::with_capacity(MIN_RELAYERS_NUMBER);
-		if assigned_relayers.len() == MIN_RELAYERS_NUMBER {
-			let mut start_time = sent_time;
-			for i in 0..MIN_RELAYERS_NUMBER {
-				if let Some(r) = assigned_relayers.get(i) {
-					let p = PriorRelayer::new(r.id.clone(), r.fee, start_time, slot_time);
+		let prior_relayers_len = assigned_relayers.len();
+		let mut relayers = Vec::with_capacity(prior_relayers_len);
+		let mut start_time = sent_time;
 
-					start_time += slot_time;
-					relayers.push(p);
-				}
+		// PriorRelayer has a duty time zone
+		for i in 0..prior_relayers_len {
+			if let Some(r) = assigned_relayers.get(i) {
+				let p = PriorRelayer::new(r.id.clone(), r.fee, start_time, slot);
+
+				start_time += slot;
+				relayers.push(p);
 			}
 		}
 
@@ -149,7 +153,20 @@ where
 	pub fn is_confirmed(&self) -> bool {
 		self.confirm_time.is_some()
 	}
+
+	#[cfg(test)]
+	pub fn relayer_valid_range(&self, id: AccountId) -> Option<Range<BlockNumber>> {
+		for prior_relayer in self.relayers.iter() {
+			if prior_relayer.id == id {
+				return Some(prior_relayer.valid_range.clone());
+			}
+		}
+		None
+	}
 }
+
+/// Relayers selected by the fee market. Each prior relayer has a valid slot, if the order can finished in time,
+/// will be rewarded with more percentage. PriorRelayer are responsible for the messages relay in most time.
 #[derive(Clone, Encode, Decode, Default)]
 pub struct PriorRelayer<AccountId, BlockNumber, Balance> {
 	pub id: AccountId,
@@ -175,5 +192,70 @@ where
 				end: start_time + slot_time,
 			},
 		}
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use super::*;
+
+	pub type AccountId = u64;
+	pub type Balance = u64;
+	pub const TEST_LANE_ID: LaneId = [0, 0, 0, 1];
+	pub const TEST_MESSAGE_NONCE: MessageNonce = 0;
+
+	#[test]
+	fn test_multi_relayers_sort() {
+		let r1 = Relayer::<AccountId, Balance>::new(1, 100, 30);
+		let r2 = Relayer::<AccountId, Balance>::new(2, 100, 40);
+		assert!(r1 < r2);
+
+		let r3 = Relayer::<AccountId, Balance>::new(3, 150, 30);
+		let r4 = Relayer::<AccountId, Balance>::new(4, 100, 30);
+		assert!(r3 < r4);
+	}
+
+	#[test]
+	fn test_assign_order_relayers_one() {
+		let mut assigned_relayers = Vec::new();
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30));
+		let order = Order::new(TEST_LANE_ID, TEST_MESSAGE_NONCE, 100, assigned_relayers, 50);
+		assert_eq!(order.relayer_valid_range(1).unwrap(), (100..150));
+	}
+
+	#[test]
+	fn test_assign_order_relayers_two() {
+		let mut assigned_relayers = Vec::new();
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(2, 100, 30));
+		let order = Order::new(TEST_LANE_ID, TEST_MESSAGE_NONCE, 100, assigned_relayers, 50);
+		assert_eq!(order.relayer_valid_range(1).unwrap(), (100..150));
+		assert_eq!(order.relayer_valid_range(2).unwrap(), (150..200));
+	}
+
+	#[test]
+	fn test_assign_order_relayers_three() {
+		let mut assigned_relayers = Vec::new();
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(2, 100, 30));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(3, 100, 30));
+		let order = Order::new(TEST_LANE_ID, TEST_MESSAGE_NONCE, 100, assigned_relayers, 50);
+		assert_eq!(order.relayer_valid_range(1).unwrap(), (100..150));
+		assert_eq!(order.relayer_valid_range(2).unwrap(), (150..200));
+		assert_eq!(order.relayer_valid_range(3).unwrap(), (200..250));
+	}
+
+	#[test]
+	fn test_assign_order_relayers_four() {
+		let mut assigned_relayers = Vec::new();
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(2, 100, 30));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(3, 100, 30));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(4, 100, 30));
+		let order = Order::new(TEST_LANE_ID, TEST_MESSAGE_NONCE, 100, assigned_relayers, 50);
+		assert_eq!(order.relayer_valid_range(1).unwrap(), (100..150));
+		assert_eq!(order.relayer_valid_range(2).unwrap(), (150..200));
+		assert_eq!(order.relayer_valid_range(3).unwrap(), (200..250));
+		assert_eq!(order.relayer_valid_range(4).unwrap(), (250..300));
 	}
 }
