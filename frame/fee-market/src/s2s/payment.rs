@@ -118,9 +118,9 @@ where
 	T: frame_system::Config + pallet_bridge_messages::Config<I> + Config,
 	I: 'static,
 {
-	let mut confirmation_relayer_rewards = RingBalance::<T>::zero();
+	let mut confirmation_rewards = RingBalance::<T>::zero();
+	let mut messages_rewards = BTreeMap::<T::AccountId, RingBalance<T>>::new();
 	let mut assigned_relayers_rewards = BTreeMap::<T::AccountId, RingBalance<T>>::new();
-	let mut messages_relayers_rewards = BTreeMap::<T::AccountId, RingBalance<T>>::new();
 	let mut treasury_total_rewards = RingBalance::<T>::zero();
 
 	for (lane_id, message_nonce) in <ConfirmedMessagesThisBlock<T>>::get() {
@@ -143,146 +143,57 @@ where
 			let message_reward;
 			let confirm_reward;
 			if let Some(who) = order.slash_or_not(order_confirm_time) {
-				let (first, last) = order.order_fee();
-				let message_fee = last.unwrap_or_default();
-				let treasury_reward = message_fee.saturating_sub(first.unwrap_or_default());
-				let assigned_relayers_reward =
-					T::AssignedRelayersRewardRatio::get() * first.unwrap_or_default();
-				let bridger_relayers_reward = first
-					.unwrap_or_default()
-					.saturating_sub(assigned_relayers_reward);
-				message_reward = T::MessageRelayersRewardRatio::get() * bridger_relayers_reward;
-				confirm_reward = T::ConfirmRelayersRewardRatio::get() * bridger_relayers_reward;
+				let lowest_fee = order.first_and_last_fee().0.unwrap_or_default();
+				let message_fee = order.first_and_last_fee().1.unwrap_or_default();
 
+				// message fee - lowest fee => treasury
+				let treasury_reward = message_fee.saturating_sub(lowest_fee);
 				treasury_total_rewards = treasury_total_rewards.saturating_add(treasury_reward);
+
+				// 60% * lowest fee => assigned_relayers_rewards
+				let assigned_relayers_reward = T::AssignedRelayersRewardRatio::get() * lowest_fee;
 				assigned_relayers_rewards
 					.entry(who)
 					.and_modify(|r| *r = r.saturating_add(assigned_relayers_reward))
 					.or_insert(assigned_relayers_reward);
+
+				let bridger_relayers_reward = lowest_fee.saturating_sub(assigned_relayers_reward);
+				// 80% * (1 - 60%) * lowest_fee => message relayer
+				message_reward = T::MessageRelayersRewardRatio::get() * bridger_relayers_reward;
+				// 20% * (1 - 60%) * lowest_fee => confirm relayer
+				confirm_reward = T::ConfirmRelayersRewardRatio::get() * bridger_relayers_reward;
 			} else {
 				// The message is delivered by common relayer instead of order assigned relayers, all assigned relayers of this order should be punished.
 				let timeout = order_confirm_time - order.range_end().unwrap_or_default();
 				let slashed_reward =
-					slash_order_assigned_relayers::<T>(timeout, order, relayer_fund_account);
+					slash_assigned_relayers::<T>(timeout, order, relayer_fund_account);
+
+				// 80% total slash => confirm relayer
 				message_reward = T::MessageRelayersRewardRatio::get() * slashed_reward;
+				// 20% total slash => confirm relayer
 				confirm_reward = T::ConfirmRelayersRewardRatio::get() * slashed_reward;
 			}
 
 			// Update confirmation relayer total rewards
-			confirmation_relayer_rewards =
-				confirmation_relayer_rewards.saturating_add(confirm_reward);
+			confirmation_rewards = confirmation_rewards.saturating_add(confirm_reward);
 			// Update message relayers total rewards
-			messages_relayers_rewards
+			messages_rewards
 				.entry(message_relayer)
 				.and_modify(|r| *r = r.saturating_add(message_reward))
 				.or_insert(message_reward);
-
-			// match order.relayers() {
-			// 	(Some(p1), Some(p2), Some(p3)) => {
-			// 		// Calculate message relayer's reward, confirmation_relayer's reward, treasury's reward, assigned_relayer's reward
-			// 		let message_reward;
-			// 		let confirm_reward;
-			// 		if p1.valid_range.contains(&order_confirm_time)
-			// 			|| p2.valid_range.contains(&order_confirm_time)
-			// 			|| p3.valid_range.contains(&order_confirm_time)
-			// 		{
-			// 			let message_fee = p3.fee;
-			// 			let treasury_reward = message_fee.saturating_sub(p1.fee);
-			// 			let assigned_relayers_reward =
-			// 				T::AssignedRelayersRewardRatio::get() * p1.fee;
-			// 			let bridger_relayers_reward =
-			// 				p1.fee.saturating_sub(assigned_relayers_reward);
-			// 			message_reward =
-			// 				T::MessageRelayersRewardRatio::get() * bridger_relayers_reward;
-			// 			confirm_reward =
-			// 				T::ConfirmRelayersRewardRatio::get() * bridger_relayers_reward;
-			// 			// let (
-			// 			// 	treasury_reward,
-			// 			// 	assigned_relayers_reward,
-			// 			// 	message_reward,
-			// 			// 	confirm_reward,
-			// 			// ) = cal_rewards_this_message(p3.fee, p1.fee);
-
-			// 			// Update treasury total rewards
-			// 			treasury_total_rewards =
-			// 				treasury_total_rewards.saturating_add(treasury_reward);
-			// 			// Update assigned relayers total rewards
-			// 			if p1.valid_range.contains(&order_confirm_time) {
-			// 				assigned_relayers_rewards
-			// 					.entry(p1.clone().id)
-			// 					.and_modify(|r| *r = r.saturating_add(assigned_relayers_reward))
-			// 					.or_insert(assigned_relayers_reward);
-			// 			} else if p2.valid_range.contains(&order_confirm_time) {
-			// 				assigned_relayers_rewards
-			// 					.entry(p2.clone().id)
-			// 					.and_modify(|r| *r = r.saturating_add(assigned_relayers_reward))
-			// 					.or_insert(assigned_relayers_reward);
-			// 			} else if p3.valid_range.contains(&order_confirm_time) {
-			// 				assigned_relayers_rewards
-			// 					.entry(p3.clone().id)
-			// 					.and_modify(|r| *r = r.saturating_add(assigned_relayers_reward))
-			// 					.or_insert(assigned_relayers_reward);
-			// 			}
-			// 		} else {
-			// 			// In the case of the message is delivered by common relayer instead of p1, p2, p3, we slash all
-			// 			// assigned relayers of this order.
-			// 			let timeout = order_confirm_time - p3.valid_range.end;
-			// 			let slashed_reward = slash_order_assigned_relayers::<T>(
-			// 				timeout,
-			// 				order,
-			// 				relayer_fund_account,
-			// 			);
-			// 			message_reward = T::MessageRelayersRewardRatio::get() * slashed_reward;
-			// 			confirm_reward = T::ConfirmRelayersRewardRatio::get() * slashed_reward;
-			// 		}
-			// 		// Update confirmation relayer total rewards
-			// 		confirmation_relayer_rewards =
-			// 			confirmation_relayer_rewards.saturating_add(confirm_reward);
-			// 		// Update message relayers total rewards
-			// 		messages_relayers_rewards
-			// 			.entry(message_relayer)
-			// 			.and_modify(|r| *r = r.saturating_add(message_reward))
-			// 			.or_insert(message_reward);
-			// 	}
-			// 	_ => {}
-			// }
 		}
 	}
 
 	RewardsBook {
-		messages_relayers_rewards,
-		confirmation_relayer_rewards,
+		messages_relayers_rewards: messages_rewards,
+		confirmation_relayer_rewards: confirmation_rewards,
 		assigned_relayers_rewards,
 		treasury_total_rewards,
 	}
 }
 
-// pub fn cal_rewards_this_message<T: Config>(
-// 	message_fee: RingBalance<T>,
-// 	p1_fee: RingBalance<T>,
-// ) -> (
-// 	RingBalance<T>, //treasury_reward,
-// 	RingBalance<T>, // assigned_relayers_reward,
-// 	RingBalance<T>, // message_reward,
-// 	RingBalance<T>, //confirm_reward,
-// ) {
-// 	let treasury_reward = message_fee.saturating_sub(p1_fee);
-// 	let assigned_relayers_reward = T::AssignedRelayersRewardRatio::get() * p1_fee;
-// 	let bridger_relayers_reward = p1_fee.saturating_sub(assigned_relayers_reward);
-
-// 	let message_reward = T::MessageRelayersRewardRatio::get() * bridger_relayers_reward;
-// 	let confirm_reward = T::ConfirmRelayersRewardRatio::get() * bridger_relayers_reward;
-
-// 	(
-// 		treasury_reward,
-// 		assigned_relayers_reward,
-// 		message_reward,
-// 		confirm_reward,
-// 	)
-// }
-
 /// Slash order assigned relayers
-pub fn slash_order_assigned_relayers<T: Config>(
+pub fn slash_assigned_relayers<T: Config>(
 	timeout: T::BlockNumber,
 	order: Order<T::AccountId, T::BlockNumber, RingBalance<T>>,
 	relayer_fund_account: &T::AccountId,

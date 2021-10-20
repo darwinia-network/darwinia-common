@@ -48,7 +48,7 @@ use std::{collections::VecDeque, ops::RangeInclusive};
 use crate::{
 	self as darwinia_fee_market,
 	s2s::{
-		payment::{cal_rewards, slash_order_assigned_relayers, RewardsBook},
+		payment::{cal_rewards, slash_assigned_relayers, RewardsBook},
 		FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler,
 	},
 	*,
@@ -1026,11 +1026,8 @@ fn test_assigned_relayers_absent_slash_calculation_below_min_lock_value() {
 		let (lane, message_nonce) = send_regular_message(market_fee);
 		let order = FeeMarket::order(&lane, &message_nonce).unwrap();
 
-		assert_eq!(
-			slash_order_assigned_relayers::<Test>(0, order.clone(), &0),
-			210
-		);
-		assert_eq!(slash_order_assigned_relayers::<Test>(5, order, &0), 240);
+		assert_eq!(slash_assigned_relayers::<Test>(0, order.clone(), &0), 210);
+		assert_eq!(slash_assigned_relayers::<Test>(5, order, &0), 240);
 	});
 }
 
@@ -1046,14 +1043,11 @@ fn test_assigned_relayers_absent_slash_calculation_exceed_min_lock_value() {
 		let order = FeeMarket::order(&lane, &message_nonce).unwrap();
 
 		assert_eq!(
-			slash_order_assigned_relayers::<Test>(14, order.clone(), &0),
+			slash_assigned_relayers::<Test>(14, order.clone(), &0),
 			98 * 3
 		);
-		assert_eq!(
-			slash_order_assigned_relayers::<Test>(15, order.clone(), &0),
-			300
-		);
-		assert_eq!(slash_order_assigned_relayers::<Test>(50, order, &0), 300);
+		assert_eq!(slash_assigned_relayers::<Test>(15, order.clone(), &0), 300);
+		assert_eq!(slash_assigned_relayers::<Test>(50, order, &0), 300);
 	});
 }
 

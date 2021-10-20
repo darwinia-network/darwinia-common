@@ -145,7 +145,7 @@ where
 		)
 	}
 
-	pub fn order_fee(&self) -> (Option<Balance>, Option<Balance>) {
+	pub fn first_and_last_fee(&self) -> (Option<Balance>, Option<Balance>) {
 		let first = self.relayers.iter().nth(0).map(|r| r.fee);
 		let last = self.relayers.iter().last().map(|r| r.fee);
 		(first, last)
