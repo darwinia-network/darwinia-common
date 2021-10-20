@@ -22,7 +22,7 @@ use frame_support::Parameter;
 use sp_std::{
 	cmp::{Ord, Ordering, PartialEq},
 	default::Default,
-	ops::Range,
+	ops::{Add, AddAssign, Range},
 	vec::Vec,
 };
 /// Relayer who has enrolled the fee market
@@ -89,8 +89,8 @@ pub struct Order<AccountId, BlockNumber, Balance> {
 
 impl<AccountId, BlockNumber, Balance> Order<AccountId, BlockNumber, Balance>
 where
-	BlockNumber: sp_std::ops::Add<Output = BlockNumber> + Copy + std::ops::AddAssign,
-	Balance: Copy,
+	BlockNumber: Add<Output = BlockNumber> + Copy + AddAssign + PartialOrd,
+	Balance: Copy + PartialOrd,
 	AccountId: Clone + std::cmp::PartialEq,
 {
 	pub fn new(
@@ -145,8 +145,27 @@ where
 		)
 	}
 
+	pub fn order_fee(&self) -> (Option<Balance>, Option<Balance>) {
+		let first = self.relayers.iter().nth(0).map(|r| r.fee);
+		let last = self.relayers.iter().last().map(|r| r.fee);
+		(first, last)
+	}
+
 	pub fn is_confirmed(&self) -> bool {
 		self.confirm_time.is_some()
+	}
+
+	pub fn range_end(&self) -> Option<BlockNumber> {
+		self.relayers.iter().last().map(|r| r.valid_range.end)
+	}
+
+	pub fn slash_or_not(&self, message_confirm_time: BlockNumber) -> Option<AccountId> {
+		for prior_relayer in self.relayers.iter() {
+			if prior_relayer.valid_range.contains(&message_confirm_time) {
+				return Some(prior_relayer.id.clone());
+			}
+		}
+		None
 	}
 
 	#[cfg(test)]
