@@ -25,11 +25,6 @@ use sp_std::{
 	ops::Range,
 	vec::Vec,
 };
-
-// Fee market's order relayers assign has tightly relationship with this value.
-// Changing this number should be much carefully to avoid unexpected runtime behavior.
-pub const MIN_RELAYERS_NUMBER: usize = 3;
-
 /// Relayer who has enrolled the fee market
 #[derive(Encode, Decode, Clone, Eq, Debug, Copy)]
 pub struct Relayer<AccountId, Balance> {

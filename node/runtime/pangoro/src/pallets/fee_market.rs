@@ -11,7 +11,7 @@ frame_support::parameter_types! {
 	pub const MiniumLockCollateral: Balance = 3000 * COIN;
 	pub const MinimumRelayFee: Balance = 15 * COIN;
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
-	pub const SlotTimes: (BlockNumber, BlockNumber, BlockNumber) = (50, 50, 50);
+	pub const SlotTime: (BlockNumber, BlockNumber, BlockNumber) = (50, 50, 50);
 
 	pub const AssignedRelayersRewardRatio: Permill = Permill::from_percent(60);
 	pub const MessageRelayersRewardRatio: Permill = Permill::from_percent(80);
@@ -24,7 +24,7 @@ impl Config for Runtime {
 	type MiniumLockCollateral = MiniumLockCollateral;
 	type MinimumRelayFee = MinimumRelayFee;
 	type LockId = FeeMarketLockId;
-	type SlotTimes = SlotTimes;
+	type SlotTime = SlotTime;
 
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;

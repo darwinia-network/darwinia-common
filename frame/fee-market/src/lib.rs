@@ -46,7 +46,7 @@ use sp_runtime::{
 use sp_std::{default::Default, vec::Vec};
 // --- darwinia-network ---
 use darwinia_support::balance::{LockFor, LockableCurrency};
-use dp_fee::{Order, Relayer, MIN_RELAYERS_NUMBER};
+use dp_fee::{Order, Relayer};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
@@ -72,9 +72,11 @@ pub mod pallet {
 		/// The minimum fee for relaying.
 		#[pallet::constant]
 		type MinimumRelayFee: Get<Fee<Self>>;
+		#[pallet::constant]
+		type MinRelayersNumber: Get<u64>;
 		/// The slot times set
 		#[pallet::constant]
-		type SlotTimes: Get<Self::BlockNumber>;
+		type SlotTime: Get<Self::BlockNumber>;
 
 		/// Reward parameters
 		#[pallet::constant]
@@ -114,7 +116,7 @@ pub mod pallet {
 		LockCollateralTooLow,
 		/// The relayer has been enrolled
 		AlreadyEnrolled,
-		/// This relayer didn't enroll ever
+		/// This relayer doesn't enroll ever
 		NotEnrolled,
 		/// Only increase lock collateral is allowed when update_locked_balance
 		OnlyIncreaseLockedCollateralAllowed,
@@ -250,7 +252,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_enrolled(&who), <Error<T>>::NotEnrolled);
 			ensure!(
-				<Relayers<T>>::get().len() > MIN_RELAYERS_NUMBER,
+				<Relayers<T>>::get().len() > T::MinRelayersNumber::get() as usize,
 				<Error<T>>::TooFewEnrolledRelayers
 			);
 			ensure!(!Self::is_occupied(&who), <Error<T>>::OccupiedRelayer);
@@ -299,11 +301,12 @@ impl<T: Config> Pallet<T> {
 			.collect();
 		relayers.sort();
 
-		if relayers.len() >= MIN_RELAYERS_NUMBER {
+		let prior_relayers_len = T::MinRelayersNumber::get() as usize;
+		if relayers.len() >= prior_relayers_len {
 			<AssignedRelayersStorage<T>>::kill();
 
-			let mut prior_relayers = Vec::with_capacity(MIN_RELAYERS_NUMBER);
-			for i in 0..MIN_RELAYERS_NUMBER {
+			let mut prior_relayers = Vec::with_capacity(prior_relayers_len);
+			for i in 0..prior_relayers_len {
 				if let Some(r) = relayers.get(i) {
 					prior_relayers.push(r);
 				}
@@ -315,7 +318,7 @@ impl<T: Config> Pallet<T> {
 	/// Update relayer locked collateral, it will changes RelayersMap storage
 	pub fn update_collateral(who: &T::AccountId, new_collateral: RingBalance<T>) {
 		if new_collateral < T::MiniumLockCollateral::get()
-			&& <Relayers<T>>::get().len() > MIN_RELAYERS_NUMBER
+			&& <Relayers<T>>::get().len() > T::MinRelayersNumber::get() as usize
 		{
 			Self::remove_enrolled_relayer(who);
 			return;

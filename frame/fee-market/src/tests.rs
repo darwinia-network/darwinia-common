@@ -418,10 +418,11 @@ impl pallet_bridge_messages::Config for Test {
 frame_support::parameter_types! {
 	pub const FeeMarketPalletId: PalletId = PalletId(*b"da/feemk");
 	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
-	pub const MiniumLockCollateral: Balance = 100;
-	pub const MinimumRelayFee: Balance = 30;
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
-	pub const SlotTimes: u64 = 50;
+	pub const MinimumRelayFee: Balance = 30;
+	pub const MiniumLockCollateral: Balance = 100;
+	pub const MinRelayersNumber: u64 = 3;
+	pub const SlotTime: u64 = 50;
 
 	pub const AssignedRelayersRewardRatio: Permill = Permill::from_percent(60);
 	pub const MessageRelayersRewardRatio: Permill = Permill::from_percent(80);
@@ -450,10 +451,11 @@ impl<T: Config> Slasher<T> for MockSlasher {
 impl Config for Test {
 	type PalletId = FeeMarketPalletId;
 	type TreasuryPalletId = TreasuryPalletId;
+	type LockId = FeeMarketLockId;
 	type MiniumLockCollateral = MiniumLockCollateral;
 	type MinimumRelayFee = MinimumRelayFee;
-	type LockId = FeeMarketLockId;
-	type SlotTimes = SlotTimes;
+	type MinRelayersNumber = MinRelayersNumber;
+	type SlotTime = SlotTime;
 
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
