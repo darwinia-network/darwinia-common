@@ -32,10 +32,9 @@ impl<T: Config> OnMessageAccepted for FeeMarketMessageAcceptedHandler<T> {
 
 		// Create a new order based on the latest block, assign relayers which have priority to relaying
 		let now = frame_system::Pallet::<T>::block_number();
-		let (t1, t2, t3) = T::SlotTimes::get();
 		if let Some(assigned_relayers) = <Pallet<T>>::assigned_relayers() {
 			reads += 1;
-			let order = Order::new(*lane, *message, now, assigned_relayers, (t1, t2, t3));
+			let order = Order::new(*lane, *message, now, assigned_relayers, T::SlotTimes::get());
 
 			// Store the create order
 			<Orders<T>>::insert((order.lane, order.message), order);

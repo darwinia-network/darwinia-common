@@ -74,7 +74,7 @@ pub mod pallet {
 		type MinimumRelayFee: Get<Fee<Self>>;
 		/// The slot times set
 		#[pallet::constant]
-		type SlotTimes: Get<(Self::BlockNumber, Self::BlockNumber, Self::BlockNumber)>;
+		type SlotTimes: Get<Self::BlockNumber>;
 
 		/// Reward parameters
 		#[pallet::constant]

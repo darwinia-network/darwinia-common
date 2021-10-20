@@ -421,7 +421,7 @@ frame_support::parameter_types! {
 	pub const MiniumLockCollateral: Balance = 100;
 	pub const MinimumRelayFee: Balance = 30;
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
-	pub const SlotTimes: (u64, u64, u64) = (50, 50, 50);
+	pub const SlotTimes: u64 = 50;
 
 	pub const AssignedRelayersRewardRatio: Permill = Permill::from_percent(60);
 	pub const MessageRelayersRewardRatio: Permill = Permill::from_percent(80);
