@@ -81,9 +81,9 @@ impl EncodeCall<AccountId, ToPangolinMessagePayload> for PangolinCallEncoder {
 	}
 }
 
-pub struct ToPangolinMessageRelayCaller;
+pub struct ToPangolinMessageSender;
 
-impl ToPangolinMessageRelayCaller {
+impl ToPangolinMessageSender {
 	fn send_message_call(
 		pallet_index: u32,
 		lane_id: [u8; 4],
@@ -109,7 +109,7 @@ impl ToPangolinMessageRelayCaller {
 	}
 }
 
-impl RelayMessageSender for ToPangolinMessageRelayCaller {
+impl RelayMessageSender for ToPangolinMessageSender {
 	fn encode_send_message(
 		pallet_index: u32,
 		lane_id: [u8; 4],
@@ -167,7 +167,7 @@ impl Config for Runtime {
 	type CallEncoder = PangolinCallEncoder;
 
 	type FeeAccount = RootAccountForPayments;
-	type MessageSender = ToPangolinMessageRelayCaller;
+	type MessageSender = ToPangolinMessageSender;
 
 	type MessageSendPalletIndex = BridgePangolinIndex;
 	type MessageLaneId = BridgePangolinLaneId;
