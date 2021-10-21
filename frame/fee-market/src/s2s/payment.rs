@@ -180,7 +180,6 @@ where
 				.or_insert(message_reward);
 		}
 	}
-
 	RewardsBook {
 		messages_relayers_rewards: messages_rewards,
 		confirmation_relayer_rewards: confirmation_rewards,

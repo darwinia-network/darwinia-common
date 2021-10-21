@@ -131,20 +131,6 @@ where
 		self.relayers.as_ref()
 	}
 
-	pub fn relayers(
-		&self,
-	) -> (
-		Option<&PriorRelayer<AccountId, BlockNumber, Balance>>,
-		Option<&PriorRelayer<AccountId, BlockNumber, Balance>>,
-		Option<&PriorRelayer<AccountId, BlockNumber, Balance>>,
-	) {
-		(
-			self.relayers.get(0),
-			self.relayers.get(1),
-			self.relayers.get(2),
-		)
-	}
-
 	pub fn first_and_last_fee(&self) -> (Option<Balance>, Option<Balance>) {
 		let first = self.relayers.iter().nth(0).map(|r| r.fee);
 		let last = self.relayers.iter().last().map(|r| r.fee);

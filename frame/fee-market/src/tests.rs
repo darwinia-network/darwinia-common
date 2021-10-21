@@ -1168,150 +1168,15 @@ fn test_payment_reward_calculation_assigned_relayers_absent_with_multiple_messag
 				..Default::default()
 			},
 		));
-		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
-			5, 120
-		));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 66));
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
 			TEST_RELAYER_A,
 			240
 		));
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
 			TEST_RELAYER_B,
-			240
+			24
 		));
-	});
-}
-
-#[test]
-fn test_payment_reward_calculation_assigned_relayers_absent_update_lock_balance() {
-	new_test_ext().execute_with(|| {
-		// Send message
-		System::set_block_number(2);
-		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, Some(30));
-		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(2), 150, Some(50));
-		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(3), 200, Some(100));
-		let market_fee = FeeMarket::market_fee().unwrap();
-		let (_, _) = send_regular_message(market_fee);
-		// The original (account-balance) map in genesis: [(1, 150), (2, 200), (3, 350)]
-		assert_eq!(FeeMarket::relayer_locked_collateral(&1), 100);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&2), 150);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&3), 200);
-		assert_eq!(Ring::usable_balance(&1), 50);
-		assert_eq!(Ring::usable_balance(&2), 50);
-		assert_eq!(Ring::usable_balance(&3), 150);
-		assert_eq!(FeeMarket::relayers().len(), 3);
-		assert_eq!(FeeMarket::market_fee().unwrap(), 100);
-
-		// Receive delivery message proof
-		System::set_block_number(200);
-		assert_ok!(Messages::receive_messages_delivery_proof(
-			Origin::signed(5),
-			TestMessagesDeliveryProof(Ok((
-				TEST_LANE_ID,
-				InboundLaneData {
-					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
-						.into_iter()
-						.collect(),
-					..Default::default()
-				}
-			))),
-			UnrewardedRelayersState {
-				unrewarded_relayer_entries: 1,
-				total_messages: 1,
-				..Default::default()
-			},
-		));
-		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 60));
-		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
-			TEST_RELAYER_A,
-			240
-		));
-		// The p1, p2, p3 slash value is 100
-		assert_eq!(FeeMarket::relayer_locked_collateral(&1), 50);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&2), 100);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&3), 200);
-		assert_eq!(Ring::usable_balance(&1), 0);
-		assert_eq!(Ring::usable_balance(&2), 0);
-		assert_eq!(Ring::usable_balance(&3), 50);
-		assert_eq!(FeeMarket::relayers().len(), 3);
-		assert_eq!(FeeMarket::market_fee().unwrap(), 100);
-	});
-}
-
-#[test]
-fn test_payment_reward_calculation_assigned_relayers_absent_update_assigned_relayers_list() {
-	new_test_ext().execute_with(|| {
-		// Send message
-		System::set_block_number(2);
-		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, Some(30));
-		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(2), 150, Some(30));
-		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(3), 130, Some(100));
-		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(4), 150, Some(100));
-		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(5), 100, Some(200));
-		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(12), 150, Some(200));
-		assert_eq!(FeeMarket::relayers().len(), 6);
-		assert_eq!(
-			FeeMarket::assigned_relayers().unwrap(),
-			vec![
-				Relayer::<AccountId, Balance>::new(2, 150, 30),
-				Relayer::<AccountId, Balance>::new(1, 100, 30),
-				Relayer::<AccountId, Balance>::new(4, 150, 100),
-			]
-		);
-		assert_eq!(FeeMarket::market_fee().unwrap(), 100);
-		let market_fee = FeeMarket::market_fee().unwrap();
-		let (_, _) = send_regular_message(market_fee);
-		// The original (account-balance) map in genesis: [(1, 150), (2, 200), (3, 350), (4, 300), (5, 350), (12, 400)]
-		assert_eq!(FeeMarket::relayer_locked_collateral(&2), 150);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&1), 100);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&4), 150);
-		assert_eq!(Ring::usable_balance(&2), 50);
-		assert_eq!(Ring::usable_balance(&1), 50);
-		assert_eq!(Ring::usable_balance(&4), 70);
-
-		// Receive delivery message proof
-		System::set_block_number(200);
-		assert_ok!(Messages::receive_messages_delivery_proof(
-			Origin::signed(5),
-			TestMessagesDeliveryProof(Ok((
-				TEST_LANE_ID,
-				InboundLaneData {
-					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
-						.into_iter()
-						.collect(),
-					..Default::default()
-				}
-			))),
-			UnrewardedRelayersState {
-				unrewarded_relayer_entries: 1,
-				total_messages: 1,
-				..Default::default()
-			},
-		));
-		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 60));
-		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
-			TEST_RELAYER_A,
-			240
-		));
-
-		// The p1, p2, p3 slash value is 100
-		assert_eq!(FeeMarket::relayer_locked_collateral(&2), 100);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&1), 0);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&4), 120);
-		assert_eq!(Ring::usable_balance(&2), 0);
-		assert_eq!(Ring::usable_balance(&1), 50);
-		assert_eq!(Ring::usable_balance(&4), 0);
-		assert_eq!(FeeMarket::relayers().len(), 5);
-		assert_eq!(
-			FeeMarket::assigned_relayers().unwrap(),
-			vec![
-				Relayer::<AccountId, Balance>::new(2, 100, 30),
-				Relayer::<AccountId, Balance>::new(3, 130, 100),
-				Relayer::<AccountId, Balance>::new(4, 120, 100),
-			]
-		);
-		assert_eq!(FeeMarket::market_fee().unwrap(), 100);
-		assert!(!FeeMarket::is_enrolled(&1));
 	});
 }
 
