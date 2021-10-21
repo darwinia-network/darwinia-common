@@ -18,12 +18,11 @@ use bridge_primitives::{
 	MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE, MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
 	PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE,
 };
-use darwinia_evm::{AddressMapping, ConcatAddressMapping};
 use darwinia_fee_market::s2s::{
 	FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler, FeeMarketPayment,
 };
 use darwinia_support::{
-	evm::IntoDvmAddress,
+	evm::{ConcatConverter, IntoAccountId, IntoH160},
 	s2s::{nonce_to_message_id, MessageConfirmer},
 };
 
@@ -36,7 +35,7 @@ frame_support::parameter_types! {
 	// `IdentityFee` is used by Pangoro => we may use weight directly
 	pub const GetDeliveryConfirmationTransactionFee: Balance =
 		MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT as _;
-	pub RootAccountForPayments: Option<AccountId> = Some(ConcatAddressMapping::<_>::into_account_id((&b"root"[..]).into_dvm_address()));
+	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::into_account_id((&b"root"[..]).into_h160()));
 	pub const BridgedChainId: bp_runtime::ChainId = PANGORO_CHAIN_ID;
 }
 

@@ -43,9 +43,8 @@ use sp_std::{str, vec::Vec};
 // --- darwinia-network ---
 use bp_runtime::{ChainId, Size};
 use darwinia_support::{
-	evm::{IntoAccountId, POW_9},
 	mapping_token::*,
-	s2s::{ensure_source_root, MessageConfirmer, RelayMessageCaller, ToEthAddress, TokenMessageId},
+	s2s::{ensure_source_root, MessageConfirmer, ToEthAddress, TokenMessageId},
 	AccountId, ChainName,
 };
 use dp_asset::token::Token;
