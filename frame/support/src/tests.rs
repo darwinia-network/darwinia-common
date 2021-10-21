@@ -20,7 +20,7 @@
 use sp_core::{H160, U256};
 // --- darwinia-network ---
 use crate::{
-	evm::IntoDvmAddress,
+	evm::IntoH160,
 	s2s::{RING_NAME, RING_SYMBOL},
 	*,
 };
@@ -39,11 +39,11 @@ fn const_pow_9_should_work() {
 fn test_into_dvm_account() {
 	assert_eq!(
 		H160::from_str("726f6f7400000000000000000000000000000000").unwrap(),
-		(&b"root"[..]).into_dvm_address()
+		(&b"root"[..]).into_h160()
 	);
 	assert_eq!(
-		(&b"longbytes..longbytes..longbytes..longbytes"[..]).into_dvm_address(),
-		(&b"longbytes..longbytes"[..]).into_dvm_address()
+		(&b"longbytes..longbytes..longbytes..longbytes"[..]).into_h160(),
+		(&b"longbytes..longbytes"[..]).into_h160()
 	);
 }
 

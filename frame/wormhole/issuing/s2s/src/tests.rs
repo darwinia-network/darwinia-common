@@ -24,7 +24,11 @@ use crate::{
 	*, {self as s2s_issuing},
 };
 use darwinia_evm::{EnsureAddressTruncated, FeeCalculator, SubstrateBlockHashMapping};
-use darwinia_support::s2s::{RelayMessageSender, TokenMessageId};
+use darwinia_support::{
+	evm::IntoAccountId,
+	s2s::{RelayMessageSender, TokenMessageId},
+};
+use dp_asset::token::TokenInfo;
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
@@ -297,7 +301,7 @@ fn burn_and_remote_unlock_success() {
 			token,
 			recipient: [1; 32].to_vec(),
 		};
-		let submitter = HashedAddressMapping::into_account_id(
+		let submitter = HashedConverter::into_account_id(
 			H160::from_str("1000000000000000000000000000000000000002").unwrap(),
 		);
 		<Test as s2s_issuing::Config>::CallEncoder::encode_remote_unlock(submitter, burn_info)
