@@ -139,13 +139,12 @@ where
 					break;
 				}
 			}
+			let lowest_fee = order.first_and_last_fee().0.unwrap_or_default();
+			let message_fee = order.first_and_last_fee().1.unwrap_or_default();
 
 			let message_reward;
 			let confirm_reward;
 			if let Some(who) = order.slash_or_not(order_confirm_time) {
-				let lowest_fee = order.first_and_last_fee().0.unwrap_or_default();
-				let message_fee = order.first_and_last_fee().1.unwrap_or_default();
-
 				// message fee - lowest fee => treasury
 				let treasury_reward = message_fee.saturating_sub(lowest_fee);
 				treasury_total_rewards = treasury_total_rewards.saturating_add(treasury_reward);
@@ -164,9 +163,7 @@ where
 				confirm_reward = T::ConfirmRelayersRewardRatio::get() * bridger_relayers_reward;
 			} else {
 				// The message is delivered by common relayer instead of order assigned relayers, all assigned relayers of this order should be punished.
-				let timeout = order_confirm_time - order.range_end().unwrap_or_default();
-				let slashed_reward =
-					slash_assigned_relayers::<T>(timeout, order, relayer_fund_account);
+				let slashed_reward = slash_assigned_relayers::<T>(order, relayer_fund_account);
 
 				// 80% total slash => confirm relayer
 				message_reward = T::MessageRelayersRewardRatio::get() * slashed_reward;
@@ -194,61 +191,51 @@ where
 
 /// Slash order assigned relayers
 pub fn slash_assigned_relayers<T: Config>(
-	timeout: T::BlockNumber,
 	order: Order<T::AccountId, T::BlockNumber, RingBalance<T>>,
 	relayer_fund_account: &T::AccountId,
 ) -> RingBalance<T> {
 	let mut total_slash = RingBalance::<T>::zero();
-	match order.relayers() {
-		(Some(p1), Some(p2), Some(p3)) => {
-			let slash_result = T::Slasher::slash(p3.fee, timeout);
+	match (order.confirm_time, order.range_end()) {
+		(Some(confirm_time), Some(end_time)) if confirm_time >= end_time => {
+			let timeout = confirm_time - end_time;
+			let message_fee = order.first_and_last_fee().1.unwrap_or_default();
+			let slash_max = T::Slasher::slash(message_fee, timeout);
+			debug_assert!(
+				slash_max <= T::MiniumLockCollateral::get(),
+				"The maximum slash value returned from Slasher is MiniumLockCollateral"
+			);
 
-			// Slash assign relayers and transfer the value to refund_fund_account
-			slash_and_update_market::<T>(&p1.id, relayer_fund_account, slash_result);
-			slash_and_update_market::<T>(&p2.id, relayer_fund_account, slash_result);
-			slash_and_update_market::<T>(&p3.id, relayer_fund_account, slash_result);
-			total_slash = total_slash
-				.saturating_add(slash_result)
-				.saturating_add(slash_result)
-				.saturating_add(slash_result);
+			for assigned_relayer in order.relayers_slice() {
+				let slashed_asset =
+					pay_slash::<T>(&assigned_relayer.id, relayer_fund_account, slash_max);
+				total_slash += slashed_asset;
+			}
 		}
 		_ => {}
 	}
 	total_slash
 }
 
-/// Pay slash value for absent assigned relayers
-pub fn slash_and_update_market<T: Config>(
+/// Pay slash for absent assigned relayers
+pub fn pay_slash<T: Config>(
 	slash_account: &T::AccountId,
 	fund_account: &T::AccountId,
-	slash_value: RingBalance<T>,
-) {
-	debug_assert!(
-		slash_value <= T::MiniumLockCollateral::get(),
-		"The maximum slash value returned from Slasher is MiniumLockCollateral"
-	);
-	// If usable_balance is enough to pay slash, no need to update lock.
-	if slash_value <= T::RingCurrency::usable_balance(&slash_account) {
-		pay_reward::<T>(slash_account, fund_account, slash_value);
-		return;
-	}
-
-	// Otherwise, unlock and pay for slash, then lock the remaining usable balance
+	slash_max: RingBalance<T>,
+) -> RingBalance<T> {
+	let slashed;
+	let locked_collateral = crate::Pallet::<T>::relayer_locked_collateral(&slash_account);
 	T::RingCurrency::remove_lock(T::LockId::get(), &slash_account);
-	if T::RingCurrency::usable_balance(&slash_account) >= slash_value {
-		pay_reward::<T>(slash_account, fund_account, slash_value);
-		// Important: It's necessary to update fee market, since the slash account's lock balance changes
-		crate::Pallet::<T>::update_collateral(
-			&slash_account,
-			T::RingCurrency::usable_balance(&slash_account),
-		);
+	if locked_collateral >= slash_max {
+		slashed = slash_max;
+		let locked_reserved = locked_collateral - slashed;
+		pay_reward::<T>(slash_account, fund_account, slashed);
+		crate::Pallet::<T>::update_collateral(&slash_account, locked_reserved);
 	} else {
-		log::error!(
-			"The usable balance is not enough to pay slash value, the usable balance {:?} slash value {:?}",
-			T::RingCurrency::usable_balance(&slash_account),
-			slash_value,
-		)
+		slashed = locked_collateral;
+		pay_reward::<T>(slash_account, fund_account, slashed);
+		crate::Pallet::<T>::update_collateral(&slash_account, RingBalance::<T>::zero());
 	}
+	slashed
 }
 
 /// Pay reward to a specific account

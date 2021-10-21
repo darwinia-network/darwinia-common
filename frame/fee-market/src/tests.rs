@@ -1016,7 +1016,7 @@ fn test_payment_reward_calculation_assigned_relayer_single_message_with_multiple
 }
 
 #[test]
-fn test_assigned_relayers_absent_slash_calculation_below_min_lock_value() {
+fn test_assigned_relayers_slash_calculation() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(2);
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, Some(30));
@@ -1024,30 +1024,73 @@ fn test_assigned_relayers_absent_slash_calculation_below_min_lock_value() {
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(3), 120, Some(70));
 		let market_fee = FeeMarket::market_fee().unwrap();
 		let (lane, message_nonce) = send_regular_message(market_fee);
-		let order = FeeMarket::order(&lane, &message_nonce).unwrap();
+		let mut order = FeeMarket::order(&lane, &message_nonce).unwrap();
+		assert_eq!(Ring::usable_balance(&1), 50);
+		assert_eq!(Ring::usable_balance(&2), 90);
+		assert_eq!(Ring::usable_balance(&3), 230);
 
-		assert_eq!(slash_assigned_relayers::<Test>(0, order.clone(), &0), 210);
-		assert_eq!(slash_assigned_relayers::<Test>(5, order, &0), 240);
+		order.confirm_time = order.range_end();
+		assert_eq!(slash_assigned_relayers::<Test>(order.clone(), &0), 210);
+		assert_eq!(Ring::usable_balance(&1), 50);
+		assert_eq!(Ring::usable_balance(&2), 90);
+		assert_eq!(Ring::usable_balance(&3), 230);
+		assert_eq!(FeeMarket::relayer_locked_collateral(&1), 30);
+		assert_eq!(FeeMarket::relayer_locked_collateral(&2), 40);
+		assert_eq!(FeeMarket::relayer_locked_collateral(&3), 50);
+		assert_eq!(FeeMarket::assigned_relayers().unwrap().len(), 3);
+
+		order.confirm_time = Some(order.range_end().unwrap() + 5);
+		assert_eq!(slash_assigned_relayers::<Test>(order, &0), 120);
+		assert_eq!(Ring::usable_balance(&1), 50);
+		assert_eq!(Ring::usable_balance(&2), 90);
+		assert_eq!(Ring::usable_balance(&3), 230);
+		assert_eq!(FeeMarket::relayer_locked_collateral(&1), 0);
+		assert_eq!(FeeMarket::relayer_locked_collateral(&2), 0);
+		assert_eq!(FeeMarket::relayer_locked_collateral(&3), 0);
+		assert_eq!(FeeMarket::assigned_relayers().unwrap().len(), 3);
 	});
 }
 
 #[test]
-fn test_assigned_relayers_absent_slash_calculation_exceed_min_lock_value() {
+fn test_assigned_relayers_slash_kick_out() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(2);
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, Some(30));
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(2), 110, Some(50));
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(3), 120, Some(70));
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(4), 120, Some(80));
 		let market_fee = FeeMarket::market_fee().unwrap();
 		let (lane, message_nonce) = send_regular_message(market_fee);
-		let order = FeeMarket::order(&lane, &message_nonce).unwrap();
-
+		let mut order = FeeMarket::order(&lane, &message_nonce).unwrap();
+		assert_eq!(Ring::usable_balance(&1), 50);
+		assert_eq!(Ring::usable_balance(&2), 90);
+		assert_eq!(Ring::usable_balance(&3), 230);
 		assert_eq!(
-			slash_assigned_relayers::<Test>(14, order.clone(), &0),
-			98 * 3
+			FeeMarket::assigned_relayers().unwrap(),
+			vec![
+				Relayer::<AccountId, Balance>::new(1, 100, 30),
+				Relayer::<AccountId, Balance>::new(2, 110, 50),
+				Relayer::<AccountId, Balance>::new(3, 120, 70),
+			]
 		);
-		assert_eq!(slash_assigned_relayers::<Test>(15, order.clone(), &0), 300);
-		assert_eq!(slash_assigned_relayers::<Test>(50, order, &0), 300);
+
+		order.confirm_time = Some(order.range_end().unwrap() + 50);
+		assert_eq!(slash_assigned_relayers::<Test>(order.clone(), &0), 300);
+		assert_eq!(Ring::usable_balance(&1), 50);
+		assert_eq!(Ring::usable_balance(&2), 90);
+		assert_eq!(Ring::usable_balance(&3), 230);
+		assert_eq!(FeeMarket::relayer_locked_collateral(&1), 0);
+		assert_eq!(FeeMarket::relayer_locked_collateral(&2), 10);
+		assert_eq!(FeeMarket::relayer_locked_collateral(&3), 20);
+		assert_eq!(
+			FeeMarket::assigned_relayers().unwrap(),
+			vec![
+				Relayer::<AccountId, Balance>::new(2, 10, 50),
+				Relayer::<AccountId, Balance>::new(3, 20, 70),
+				Relayer::<AccountId, Balance>::new(4, 120, 80),
+			]
+		);
+		assert!(!FeeMarket::is_enrolled(&1));
 	});
 }
 
