@@ -237,12 +237,14 @@ mod test {
 	fn test_assign_order_relayers_three() {
 		let mut assigned_relayers = Vec::new();
 		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30));
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(2, 100, 30));
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(3, 100, 30));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(2, 100, 40));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(3, 100, 80));
 		let order = Order::new(TEST_LANE_ID, TEST_MESSAGE_NONCE, 100, assigned_relayers, 50);
 		assert_eq!(order.relayer_valid_range(1).unwrap(), (100..150));
 		assert_eq!(order.relayer_valid_range(2).unwrap(), (150..200));
 		assert_eq!(order.relayer_valid_range(3).unwrap(), (200..250));
+		assert_eq!(order.range_end(), Some(250));
+		assert_eq!(order.first_and_last_fee(), (Some(30), Some(80)));
 	}
 
 	#[test]
