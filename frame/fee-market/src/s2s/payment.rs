@@ -226,7 +226,7 @@ pub fn pay_slash<T: Config>(
 	T::RingCurrency::remove_lock(T::LockId::get(), &slash_account);
 	if locked_collateral >= slash_max {
 		slashed = slash_max;
-		let locked_reserved = locked_collateral - slashed;
+		let locked_reserved = locked_collateral.saturating_sub(slashed);
 		pay_reward::<T>(slash_account, fund_account, slashed);
 		crate::Pallet::<T>::update_collateral(&slash_account, locked_reserved);
 	} else {
