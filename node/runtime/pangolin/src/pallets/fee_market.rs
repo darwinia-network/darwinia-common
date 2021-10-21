@@ -8,7 +8,7 @@ use sp_runtime::Permill;
 frame_support::parameter_types! {
 	pub const FeeMarketPalletId: PalletId = PalletId(*b"da/feemk");
 	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
-	pub const AssignedRelayersNumber: u64 = 3;
+	pub const AssignedRelayersNumber: u64 = 1;
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 
 	pub const MiniumLockCollateral: Balance = 3000 * COIN;
