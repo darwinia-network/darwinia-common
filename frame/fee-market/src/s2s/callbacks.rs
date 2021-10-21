@@ -34,7 +34,7 @@ impl<T: Config> OnMessageAccepted for FeeMarketMessageAcceptedHandler<T> {
 		let now = frame_system::Pallet::<T>::block_number();
 		if let Some(assigned_relayers) = <Pallet<T>>::assigned_relayers() {
 			reads += 1;
-			let order = Order::new(*lane, *message, now, assigned_relayers, T::SlotTime::get());
+			let order = Order::new(*lane, *message, now, assigned_relayers, T::Slot::get());
 
 			// Store the create order
 			<Orders<T>>::insert((order.lane, order.message), order);

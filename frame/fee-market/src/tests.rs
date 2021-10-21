@@ -422,7 +422,7 @@ frame_support::parameter_types! {
 	pub const MinimumRelayFee: Balance = 30;
 	pub const MiniumLockCollateral: Balance = 100;
 	pub const AssignedRelayersNumber: u64 = 3;
-	pub const SlotTime: u64 = 50;
+	pub const Slot: u64 = 50;
 
 	pub const AssignedRelayersRewardRatio: Permill = Permill::from_percent(60);
 	pub const MessageRelayersRewardRatio: Permill = Permill::from_percent(80);
@@ -455,7 +455,7 @@ impl Config for Test {
 	type MiniumLockCollateral = MiniumLockCollateral;
 	type MinimumRelayFee = MinimumRelayFee;
 	type AssignedRelayersNumber = AssignedRelayersNumber;
-	type SlotTime = SlotTime;
+	type Slot = Slot;
 
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;

@@ -91,7 +91,7 @@ impl<AccountId, BlockNumber, Balance> Order<AccountId, BlockNumber, Balance>
 where
 	BlockNumber: Add<Output = BlockNumber> + Copy + AddAssign + PartialOrd,
 	Balance: Copy + PartialOrd,
-	AccountId: Clone + std::cmp::PartialEq,
+	AccountId: Clone + PartialEq,
 {
 	pub fn new(
 		lane: LaneId,

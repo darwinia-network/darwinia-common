@@ -8,10 +8,12 @@ use sp_runtime::Permill;
 frame_support::parameter_types! {
 	pub const FeeMarketPalletId: PalletId = PalletId(*b"da/feemk");
 	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
+	pub const AssignedRelayersNumber: u64 = 3;
+	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
+
 	pub const MiniumLockCollateral: Balance = 3000 * COIN;
 	pub const MinimumRelayFee: Balance = 15 * COIN;
-	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
-	pub const SlotTime: (BlockNumber, BlockNumber, BlockNumber) = (50, 50, 50);
+	pub const Slot: BlockNumber = 50;
 
 	pub const AssignedRelayersRewardRatio: Permill = Permill::from_percent(60);
 	pub const MessageRelayersRewardRatio: Permill = Permill::from_percent(80);
@@ -21,10 +23,12 @@ frame_support::parameter_types! {
 impl Config for Runtime {
 	type PalletId = FeeMarketPalletId;
 	type TreasuryPalletId = TreasuryPalletId;
+	type LockId = FeeMarketLockId;
+
+	type AssignedRelayersNumber = AssignedRelayersNumber;
 	type MiniumLockCollateral = MiniumLockCollateral;
 	type MinimumRelayFee = MinimumRelayFee;
-	type LockId = FeeMarketLockId;
-	type SlotTime = SlotTime;
+	type Slot = Slot;
 
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;

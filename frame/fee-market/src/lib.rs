@@ -76,7 +76,7 @@ pub mod pallet {
 		type AssignedRelayersNumber: Get<u64>;
 		/// The slot times set
 		#[pallet::constant]
-		type SlotTime: Get<Self::BlockNumber>;
+		type Slot: Get<Self::BlockNumber>;
 
 		/// Reward parameters
 		#[pallet::constant]
