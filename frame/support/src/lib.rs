@@ -18,6 +18,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(all(feature = "std", test))]
+pub mod tests;
+
 pub mod evm;
 pub mod macros;
 pub mod structs;
@@ -49,7 +52,7 @@ pub mod s2s {
 		traits::{BadOrigin, Convert},
 		DispatchError, DispatchErrorWithPostInfo,
 	};
-	use sp_std::cmp::PartialEq;
+	use sp_std::{cmp::PartialEq, vec::Vec};
 
 	pub const RING_NAME: &[u8] = b"Darwinia Network Native Token";
 	pub const RING_SYMBOL: &[u8] = b"RING";
@@ -60,13 +63,23 @@ pub mod s2s {
 	}
 
 	// RelayMessageCaller send message to pallet-messages
-	pub trait RelayMessageCaller<P, F> {
-		fn send_message(
-			payload: P,
-			fee: F,
+	pub trait RelayMessageSender {
+		fn encode_send_message(
+			pallet_index: u32,
+			lane_id: [u8; 4],
+			payload: Vec<u8>,
+			fee: u128,
+		) -> Result<Vec<u8>, &'static str>;
+
+		fn send_message_by_root(
+			pallet_index: u32,
+			lane_id: [u8; 4],
+			payload: Vec<u8>,
+			fee: u128,
 		) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>;
 
-		fn latest_token_message_id() -> TokenMessageId;
+		fn latest_token_message_id(lane_id: [u8; 4]) -> TokenMessageId;
+		fn latest_received_token_message_id(lane_id: [u8; 4]) -> TokenMessageId;
 	}
 
 	pub trait MessageConfirmer {
@@ -84,6 +97,22 @@ pub mod s2s {
 		let hex_id = derive_account_id::<AccountId>(chain_id, SourceAccount::Root);
 		let target_id = Converter::convert(hex_id);
 		ensure!(&target_id == account, BadOrigin);
+		Ok(())
+	}
+
+	pub fn ensure_source_account<AccountId, Converter>(
+		chain_id: ChainId,
+		source_account: AccountId,
+		derived_account: &AccountId,
+	) -> Result<(), DispatchError>
+	where
+		AccountId: PartialEq + Encode,
+		Converter: Convert<H256, AccountId>,
+	{
+		let hex_id =
+			derive_account_id::<AccountId>(chain_id, SourceAccount::Account(source_account));
+		let target_id = Converter::convert(hex_id);
+		ensure!(&target_id == derived_account, BadOrigin);
 		Ok(())
 	}
 
@@ -119,7 +148,6 @@ pub fn to_bytes32(raw: &[u8]) -> [u8; 32] {
 	result
 }
 
-pub type PalletDigest = [u8; 4];
 /// 128 bit or 16 bytes to identify an unique s2s message
 /// [0..4]  bytes ---- reserved
 /// [4..8]  bytes ---- laneID
@@ -127,33 +155,3 @@ pub type PalletDigest = [u8; 4];
 pub type TokenMessageId = [u8; 16];
 
 pub type ChainName = Vec<u8>;
-
-#[cfg(test)]
-mod test {
-	use crate::{
-		s2s::{RING_NAME, RING_SYMBOL},
-		to_bytes32,
-	};
-	use array_bytes::{hex2array, hex2bytes};
-
-	#[test]
-	fn test_ring_symbol_encode() {
-		// Get this info: https://etherscan.io/address/0x9469d013805bffb7d3debe5e7839237e535ec483#readContract
-		let target_symbol = "0x52494e4700000000000000000000000000000000000000000000000000000000";
-		assert_eq!(to_bytes32(RING_SYMBOL), hex2array(target_symbol).unwrap());
-	}
-
-	#[test]
-	fn test_ring_name_encode() {
-		// Get this info: https://etherscan.io/address/0x9469d013805bffb7d3debe5e7839237e535ec483#readContract
-		let target_name = "0x44617277696e6961204e6574776f726b204e617469766520546f6b656e000000";
-		assert_eq!(to_bytes32(RING_NAME), hex2array(target_name).unwrap());
-	}
-
-	#[test]
-	fn test_ring_name_decode() {
-		let name = "0x44617277696e6961204e6574776f726b204e617469766520546f6b656e000000";
-		let raw = hex2bytes(name).unwrap();
-		assert_eq!(RING_NAME, &raw[..29]);
-	}
-}

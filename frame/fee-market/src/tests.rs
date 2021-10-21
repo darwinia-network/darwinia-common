@@ -235,11 +235,14 @@ impl LaneMessageVerifier<AccountId, TestPayload, TestMessageFee> for TestLaneMes
 		_lane_outbound_data: &OutboundLaneData,
 		_payload: &TestPayload,
 	) -> Result<(), Self::Error> {
-		if *delivery_and_dispatch_fee != 0 {
-			Ok(())
+		if let Some(market_fee) = FeeMarket::market_fee() {
+			if *delivery_and_dispatch_fee < market_fee {
+				return Err(TEST_ERROR);
+			}
 		} else {
-			Err(TEST_ERROR)
+			return Err(TEST_ERROR);
 		}
+		Ok(())
 	}
 }
 
@@ -826,7 +829,14 @@ fn test_no_order_created_after_send_message_when_fee_market_not_ready() {
 		System::set_block_number(2);
 
 		assert!(FeeMarket::assigned_relayers().is_none());
-		let (_, _) = send_regular_message(80);
+		assert_err!(
+			Messages::send_message(Origin::signed(1), TEST_LANE_ID, REGULAR_PAYLOAD, 200),
+			DispatchError::Module {
+				index: 4,
+				error: 2,
+				message: Some("MessageRejectedByLaneVerifier")
+			}
+		);
 	});
 }
 
@@ -1328,5 +1338,43 @@ fn test_clean_order_state_at_the_end_of_block() {
 		assert!(FeeMarket::order(&lane2, &nonce2).is_none());
 		assert!(FeeMarket::order(&lane3, &nonce3).is_none());
 		assert!(FeeMarket::order(&lane4, &nonce4).is_none());
+	});
+}
+
+#[test]
+fn test_check_submitted_fee_with_fee_market() {
+	new_test_ext().execute_with(|| {
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, Some(30));
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(2), 100, Some(40));
+		assert!(FeeMarket::market_fee().is_none());
+
+		// Case 1: When fee market are not ready, but somebody send messages
+		assert_err!(
+			Messages::send_message(Origin::signed(1), TEST_LANE_ID, REGULAR_PAYLOAD, 200),
+			DispatchError::Module {
+				index: 4,
+				error: 2,
+				message: Some("MessageRejectedByLaneVerifier")
+			}
+		);
+
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(3), 100, Some(50));
+		// Case 2: The fee market is ready, but the order fee is too low
+		assert_err!(
+			Messages::send_message(Origin::signed(1), TEST_LANE_ID, REGULAR_PAYLOAD, 49),
+			DispatchError::Module {
+				index: 4,
+				error: 2,
+				message: Some("MessageRejectedByLaneVerifier")
+			}
+		);
+
+		// Case 3: Normal workflow
+		assert_ok!(Messages::send_message(
+			Origin::signed(1),
+			TEST_LANE_ID,
+			REGULAR_PAYLOAD,
+			50
+		),);
 	});
 }

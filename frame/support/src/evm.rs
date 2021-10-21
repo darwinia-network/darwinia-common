@@ -48,6 +48,14 @@ impl IntoH160 for PalletId {
 	}
 }
 
+impl IntoH160 for &[u8] {
+	fn into_h160(&self) -> H160 {
+		let mut address: [u8; 20] = Default::default();
+		let size = sp_std::cmp::min(self.len(), 20);
+		address[..size].copy_from_slice(&self[..size]);
+		H160::from_slice(&address[0..20])
+	}
+}
 /// A trait for converting from H160 to `AccountId`.
 pub trait IntoAccountId<AccountId> {
 	fn into_account_id(address: H160) -> AccountId;

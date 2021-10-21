@@ -58,6 +58,7 @@ pub trait WeightInfo {
 	fn unlock_from_remote() -> Weight;
 	fn set_secure_limited_period() -> Weight;
 	fn set_security_limitation_ring_amount() -> Weight;
+	fn set_remote_mapping_token_factory_account() -> Weight;
 }
 
 /// Weights for to_substrate_backing using the Substrate node and recommended hardware.
@@ -84,6 +85,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn set_security_limitation_ring_amount() -> Weight {
 		(4_000_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	fn set_remote_mapping_token_factory_account() -> Weight {
+		(4_000_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
 }
 
 // For backwards compatibility and tests
@@ -107,6 +111,9 @@ impl WeightInfo for () {
 		(4_000_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	fn set_security_limitation_ring_amount() -> Weight {
+		(4_000_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
+	}
+	fn set_remote_mapping_token_factory_account() -> Weight {
 		(4_000_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 }

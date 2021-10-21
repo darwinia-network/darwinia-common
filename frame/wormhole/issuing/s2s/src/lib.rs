@@ -30,16 +30,15 @@ pub use weight::WeightInfo;
 
 // --- crates.io ---
 use ethereum_types::{H160, H256, U256};
-use sha3::Digest;
 // --- paritytech ---
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
-	traits::{Currency, ExistenceRequirement::*, Get},
+	traits::{Currency, Get},
 	transactional, PalletId,
 };
 use frame_system::ensure_signed;
-use sp_runtime::{traits::Convert, DispatchError, SaturatedConversion};
+use sp_runtime::{traits::Convert, DispatchError};
 use sp_std::{str, vec::Vec};
 // --- darwinia-network ---
 use bp_runtime::{ChainId, Size};
@@ -47,13 +46,13 @@ use darwinia_support::{
 	evm::{IntoAccountId, POW_9},
 	mapping_token::*,
 	s2s::{ensure_source_root, MessageConfirmer, RelayMessageCaller, ToEthAddress, TokenMessageId},
-	AccountId, ChainName, PalletDigest,
+	AccountId, ChainName,
 };
-use dp_asset::{
-	token::{Token, TokenInfo},
-	RecipientAccount,
+use dp_asset::token::Token;
+use dp_contract::mapping_token_factory::{
+	basic::BasicMappingTokenFactory as bmtf,
+	s2s::{S2sRemoteUnlockInfo, Sub2SubMappingTokenFactory as smtf},
 };
-use dp_contract::mapping_token_factory::{MappingTokenFactory as mtf, TokenBurnInfo};
 use dvm_ethereum::InternalTransactHandler;
 
 pub use pallet::*;
@@ -73,14 +72,11 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 		type RingCurrency: Currency<AccountId<Self>>;
 
-		type ReceiverAccountId: From<[u8; 32]> + Into<Self::AccountId> + Clone;
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
 		type BridgedChainId: Get<ChainId>;
 		type ToEthAddressT: ToEthAddress<Self::AccountId>;
 		type OutboundPayload: Parameter + Size;
 		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
-		type FeeAccount: Get<Option<Self::AccountId>>;
-		type MessageSender: RelayMessageCaller<Self::OutboundPayload, RingBalance<Self>>;
 		type InternalTransactHandler: InternalTransactHandler;
 		type BackingChainName: Get<ChainName>;
 	}
@@ -91,47 +87,6 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Handle dispatch call from dispatch precompile contract
-		///
-		/// When user burn their mapped tokens, the mapping-token-factory contract will call this
-		/// function through dispatch precompile contract. And the parameters will be encoded into
-		/// input, here we need decode it to get the burn event.
-		/// Then the event will be sent to the remote backing module as burn proof to unlock origin asset.
-		#[pallet::weight(
-			<T as Config>::WeightInfo::asset_burn_event_handle()
-		)]
-		#[transactional]
-		pub fn asset_burn_event_handle(
-			origin: OriginFor<T>,
-			input: Vec<u8>,
-		) -> DispatchResultWithPostInfo {
-			let caller = ensure_signed(origin)?;
-
-			// Ensure that the user is mapping token factory contract
-			let factory = MappingFactoryAddress::<T>::get();
-			let factory_id = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(factory);
-			ensure!(caller == factory_id, <Error<T>>::NotFactoryContract);
-
-			let burn_info =
-				TokenBurnInfo::decode(&input).map_err(|_| Error::<T>::InvalidDecoding)?;
-			// Ensure the recipient is valid
-			ensure!(
-				burn_info.recipient.len() == 32,
-				<Error<T>>::InvalidAddressLen
-			);
-
-			let fee = Self::transform_dvm_balance(burn_info.fee);
-			if let Some(fee_account) = T::FeeAccount::get() {
-				// Since fee account will represent use to make a cross chain call, give fee to fee account here.
-				// the fee transfer path
-				// user -> mapping_token_factory(caller) -> fee_account -> fee_fund -> relayers
-				<T as Config>::RingCurrency::transfer(&caller, &fee_account, fee, KeepAlive)?;
-			}
-
-			Self::burn_and_remote_unlock(fee, burn_info)?;
-			Ok(().into())
-		}
-
 		/// Handle remote register relay message
 		/// Before the token transfer, token should be created first
 		#[pallet::weight(
@@ -161,8 +116,7 @@ pub mod pallet {
 				Some(option) => {
 					let name = mapping_token_name(option.name, T::BackingChainName::get());
 					let symbol = mapping_token_symbol(option.symbol);
-					let input = mtf::encode_create_erc20(
-						Self::digest(),
+					let input = bmtf::encode_create_erc20(
 						token_type,
 						&str::from_utf8(name.as_slice()).map_err(|_| Error::<T>::StringCF)?,
 						&str::from_utf8(symbol.as_slice()).map_err(|_| Error::<T>::StringCF)?,
@@ -220,7 +174,7 @@ pub mod pallet {
 
 			// Redeem process
 			if let Some(value) = token_info.value {
-				let input = mtf::encode_cross_receive(mapping_token, recipient, value)
+				let input = bmtf::encode_issue_erc20(mapping_token, recipient, value)
 					.map_err(|_| Error::<T>::InvalidMintEncoding)?;
 				Self::transact_mapping_factory(input)?;
 				Self::deposit_event(Event::TokenIssued(
@@ -326,7 +280,7 @@ pub mod pallet {
 	impl<T: Config> MessageConfirmer for Pallet<T> {
 		fn on_messages_confirmed(message_id: TokenMessageId, result: bool) -> Weight {
 			if let Ok(input) =
-				mtf::encode_confirm_burn_and_remote_unlock(message_id.to_vec(), result)
+				smtf::encode_confirm_burn_and_remote_unlock(message_id.to_vec(), result)
 			{
 				let _ = Self::transact_mapping_factory(input);
 			}
@@ -336,19 +290,12 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn digest() -> PalletDigest {
-		let mut digest: PalletDigest = Default::default();
-		let pallet_digest = sha3::Keccak256::digest(T::PalletId::get().encode().as_slice());
-		digest.copy_from_slice(&pallet_digest[..4]);
-		digest
-	}
-
 	pub fn mapped_token_address(
 		backing_address: H160,
 		original_token: H160,
 	) -> Result<H160, DispatchError> {
 		let factory_address = <MappingFactoryAddress<T>>::get();
-		let bytes = mtf::encode_mapping_token(backing_address, original_token)
+		let bytes = bmtf::encode_mapping_token(backing_address, original_token)
 			.map_err(|_| Error::<T>::InvalidIssuingAccount)?;
 		let mapping_token = T::InternalTransactHandler::read_only_call(factory_address, bytes)?;
 		if mapping_token.len() != 32 {
@@ -364,54 +311,11 @@ impl<T: Config> Pallet<T> {
 		let contract = MappingFactoryAddress::<T>::get();
 		T::InternalTransactHandler::internal_transact(contract, input)
 	}
-
-	/// Do decimals between DVM balance and RING balance
-	pub fn transform_dvm_balance(value: U256) -> RingBalance<T> {
-		(value / POW_9).low_u128().saturated_into()
-	}
-
-	/// Burn and send message to bridged chain
-	pub fn burn_and_remote_unlock(
-		fee: RingBalance<T>,
-		burn_info: TokenBurnInfo,
-	) -> Result<(), DispatchError> {
-		let (spec_version, weight, token_type, original_token, amount) = (
-			burn_info.spec_version,
-			burn_info.weight,
-			burn_info.token_type,
-			burn_info.original_token,
-			burn_info.amount,
-		);
-		let account_id: T::ReceiverAccountId =
-			array_bytes::dyn_into!(burn_info.recipient.as_slice(), 32);
-		let token: Token = (
-			token_type,
-			TokenInfo::new(original_token, Some(amount), None),
-		)
-			.into();
-		let account = RecipientAccount::DarwiniaAccount(account_id.clone().into());
-
-		let payload = T::CallEncoder::encode_remote_unlock(spec_version, weight, token, account)
-			.map_err(|_| Error::<T>::EncodeInvalid)?;
-		T::MessageSender::send_message(payload, fee).map_err(|_| Error::<T>::SendMessageFailed)?;
-		Self::deposit_event(Event::TokenBurned(
-			spec_version,
-			weight,
-			token_type,
-			original_token,
-			amount,
-			account_id.into(),
-			burn_info.fee,
-		));
-		Ok(())
-	}
 }
 
 pub trait EncodeCall<AccountId, Payload> {
 	fn encode_remote_unlock(
-		spec_version: u32,
-		weight: u64,
-		token: Token,
-		recipient: RecipientAccount<AccountId>,
+		submitter: AccountId,
+		remote_unlock_info: S2sRemoteUnlockInfo,
 	) -> Result<Payload, ()>;
 }
