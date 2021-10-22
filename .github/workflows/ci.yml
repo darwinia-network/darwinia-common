@@ -38,7 +38,7 @@ jobs:
         env:
           SCCACHE_GCS_RW_MODE: READ_WRITE
           SCCACHE_GCS_BUCKET: darwinia-build-cache
-          SCCACHE_GCS_KEY_PATH: ~/.gcs
+          SCCACHE_GCS_KEY_PATH: /home/runner/.gsc
           RUSTC_WRAPPER: sccache
         # uses: actions-rs/cargo@v1
         # with:
