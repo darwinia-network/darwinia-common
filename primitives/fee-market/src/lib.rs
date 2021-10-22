@@ -145,7 +145,7 @@ where
 		self.relayers.iter().last().map(|r| r.valid_range.end)
 	}
 
-	pub fn deliver_and_confirmed_timely(
+	pub fn required_delivery_relayer_for_time(
 		&self,
 		message_confirm_time: BlockNumber,
 	) -> Option<AccountId> {
