@@ -49,18 +49,18 @@ use sp_runtime::{
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use darwinia_support::{
-	evm::IntoDvmAddress,
+	evm::IntoH160,
 	s2s::{
 		ensure_source_account, MessageConfirmer, RelayMessageSender, TokenMessageId, RING_DECIMAL,
 		RING_NAME, RING_SYMBOL,
 	},
+	AccountId,
 };
 use dp_asset::{
 	token::{Token, TokenInfo, TokenOption},
 	RecipientAccount,
 };
 
-pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type Balance = u128;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 
@@ -228,7 +228,7 @@ pub mod pallet {
 				T::RingCurrency::transfer(&user, &fee_account, fee, KeepAlive)?;
 			}
 			let token = Token::Native(TokenInfo {
-				address: T::RingPalletId::get().into_dvm_address(),
+				address: T::RingPalletId::get().into_h160(),
 				value: None,
 				option: Some(TokenOption {
 					name: RING_NAME.to_vec(),
@@ -288,7 +288,7 @@ pub mod pallet {
 			let amount: U256 = value.saturated_into::<u128>().into();
 			let token = Token::Native(TokenInfo {
 				// The native mapped RING token as a special ERC20 address
-				address: T::RingPalletId::get().into_dvm_address(),
+				address: T::RingPalletId::get().into_h160(),
 				value: Some(amount),
 				option: None,
 			});

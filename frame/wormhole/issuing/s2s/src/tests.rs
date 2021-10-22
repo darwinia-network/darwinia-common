@@ -16,23 +16,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// crates
+// --- crates.io ---
 use codec::{Decode, Encode};
 use std::str::FromStr;
-// darwinia
+// --- darwinia-network ---
 use crate::{
 	*, {self as s2s_issuing},
 };
-use darwinia_evm::{
-	AddressMapping, EnsureAddressTruncated, FeeCalculator, SubstrateBlockHashMapping,
+use darwinia_evm::{EnsureAddressTruncated, FeeCalculator, SubstrateBlockHashMapping};
+use darwinia_support::{
+	evm::IntoAccountId,
+	s2s::{RelayMessageSender, TokenMessageId},
 };
-use darwinia_support::s2s::{RelayMessageSender, TokenMessageId};
+use dp_asset::token::TokenInfo;
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
 };
-// substrate
-use dp_asset::token::TokenInfo;
+// --- paritytech ---
 use frame_support::{
 	traits::{GenesisBuild, MaxEncodedLen},
 	weights::PostDispatchInfo,
@@ -136,8 +137,8 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
-pub struct HashedAddressMapping;
-impl AddressMapping<AccountId32> for HashedAddressMapping {
+pub struct HashedConverter;
+impl IntoAccountId<AccountId32> for HashedConverter {
 	fn into_account_id(address: H160) -> AccountId32 {
 		let mut data = [0u8; 32];
 		data[0..20].copy_from_slice(&address[..]);
@@ -153,7 +154,7 @@ impl darwinia_evm::Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
-	type AddressMapping = HashedAddressMapping;
+	type IntoAccountId = HashedConverter;
 	type Event = ();
 	type Precompiles = ();
 	type FindAuthor = ();
@@ -300,7 +301,7 @@ fn burn_and_remote_unlock_success() {
 			token,
 			recipient: [1; 32].to_vec(),
 		};
-		let submitter = HashedAddressMapping::into_account_id(
+		let submitter = HashedConverter::into_account_id(
 			H160::from_str("1000000000000000000000000000000000000002").unwrap(),
 		);
 		<Test as s2s_issuing::Config>::CallEncoder::encode_remote_unlock(submitter, burn_info)

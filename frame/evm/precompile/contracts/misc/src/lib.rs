@@ -25,8 +25,7 @@ use codec::Encode;
 use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 use sha3::Digest;
 // --- darwinia-network ---
-use darwinia_evm::AddressMapping;
-use darwinia_support::s2s::RelayMessageSender;
+use darwinia_support::{evm::IntoAccountId, s2s::RelayMessageSender};
 use dp_contract::mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams};
 use dp_evm::Precompile;
 use from_substrate_issuing::EncodeCall;
@@ -108,7 +107,7 @@ where
 					.map_err(|_| ExitError::Other("decode unlock info failed".into()))?;
 				let payload =
 					<T as from_substrate_issuing::Config>::CallEncoder::encode_remote_unlock(
-						T::AddressMapping::into_account_id(context.caller),
+						T::IntoAccountId::into_account_id(context.caller),
 						unlock_info,
 					)
 					.map_err(|_| ExitError::Other("encode remote unlock failed".into()))?;

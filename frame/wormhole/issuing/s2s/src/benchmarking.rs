@@ -33,7 +33,7 @@ const INIT_COIN: u128 = 5000_000_000_000_000_000;
 
 benchmarks! {
 	asset_burn_event_handle {
-		let caller = <T as darwinia_evm::Config>::AddressMapping::into_account_id(
+		let caller = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(
 			hex_into_unchecked(FACTORY_ADDR)
 		);
 		<T as Config>::RingCurrency::deposit_creating(&caller, INIT_COIN.unique_saturated_into());

@@ -300,8 +300,6 @@ mod types {
 	/// time scale is milliseconds.
 	pub type TsInMs = u64;
 
-	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-
 	/// The balance type of this module.
 	pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
 	pub type RingPositiveImbalance<T> =
@@ -371,7 +369,7 @@ use sp_std::{
 };
 // --- darwinia-network ---
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo;
-use darwinia_support::{balance::*, impl_rpc, traits::OnDepositRedeem};
+use darwinia_support::{balance::*, impl_rpc, traits::OnDepositRedeem, AccountId};
 use types::*;
 
 pub(crate) const LOG_TARGET: &'static str = "runtime::staking";

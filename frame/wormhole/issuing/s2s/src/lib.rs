@@ -45,7 +45,7 @@ use bp_runtime::{ChainId, Size};
 use darwinia_support::{
 	mapping_token::*,
 	s2s::{ensure_source_root, MessageConfirmer, ToEthAddress, TokenMessageId},
-	ChainName,
+	AccountId, ChainName,
 };
 use dp_asset::token::Token;
 use dp_contract::mapping_token_factory::{
@@ -55,7 +55,6 @@ use dp_contract::mapping_token_factory::{
 use dvm_ethereum::InternalTransactHandler;
 
 pub use pallet::*;
-pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 
 #[frame_support::pallet]

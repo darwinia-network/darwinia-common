@@ -44,14 +44,12 @@ pub mod util;
 use sp_std::marker::PhantomData;
 // --- darwinia-network ---
 use darwinia_evm::Config;
-use darwinia_support::evm::SELECTOR;
+use darwinia_support::{evm::SELECTOR, AccountId};
 use dp_evm::Precompile;
 use kton::Kton;
 use ring::RingBack;
 // --- crates.io ---
 use evm::{executor::PrecompileOutput, Context, ExitError};
-
-pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 
 /// Transfer Precompile Contract, used to support the exchange of KTON and RING transfer.
 pub enum Transfer<T> {

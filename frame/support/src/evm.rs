@@ -24,32 +24,68 @@ use ethereum_primitives::{H160, H256, U256};
 // --- paritytech ---
 use frame_support::PalletId;
 use sp_runtime::{traits::AccountIdConversion, AccountId32};
-use sp_std::vec::Vec;
+use sp_std::{marker::PhantomData, vec::Vec};
 
 pub const POW_9: u32 = 1_000_000_000;
+/// The default gas price for the internal transaction
 pub const INTERNAL_TX_GAS_LIMIT: u32 = 300_000_000;
+/// The action selector used in transfer pre-compile
 pub const SELECTOR: usize = 4;
+/// The transfer pre-compile address, also as the sender in the when KTON transfer to WKTON.
 pub const TRANSFER_ADDR: &'static str = "0x0000000000000000000000000000000000000015";
 
-pub trait IntoDvmAddress {
-	fn into_dvm_address(&self) -> H160;
+/// A trait for converting from `AccountId` to H160.
+pub trait IntoH160 {
+	fn into_h160(&self) -> H160;
 }
 
-// Convert pallet id to dvm address
-impl IntoDvmAddress for PalletId {
-	fn into_dvm_address(&self) -> H160 {
+// Convert palletId to H160
+impl IntoH160 for PalletId {
+	fn into_h160(&self) -> H160 {
 		let account_id: AccountId32 = self.into_account();
 		let bytes: &[u8] = account_id.as_ref();
 		H160::from_slice(&bytes[0..20])
 	}
 }
 
-impl IntoDvmAddress for &[u8] {
-	fn into_dvm_address(&self) -> H160 {
+impl IntoH160 for &[u8] {
+	fn into_h160(&self) -> H160 {
 		let mut address: [u8; 20] = Default::default();
 		let size = sp_std::cmp::min(self.len(), 20);
 		address[..size].copy_from_slice(&self[..size]);
 		H160::from_slice(&address[0..20])
+	}
+}
+/// A trait for converting from H160 to `AccountId`.
+pub trait IntoAccountId<AccountId> {
+	fn into_account_id(address: H160) -> AccountId;
+}
+
+/// Darwinia network address mapping.
+pub struct ConcatConverter<AccountId>(PhantomData<AccountId>);
+
+/// The ConcatConverter used for transfer from evm 20-length to substrate 32-length address
+/// The concat rule inclued three parts:
+/// 1. AccountId Prefix: concat("dvm", "0x00000000000000"), length: 11 byetes
+/// 2. EVM address: the original evm address, length: 20 bytes
+/// 3. CheckSum:  byte_xor(AccountId Prefix + EVM address), length: 1 bytes
+impl<AccountId> IntoAccountId<AccountId> for ConcatConverter<AccountId>
+where
+	AccountId: From<[u8; 32]>,
+{
+	fn into_account_id(address: H160) -> AccountId {
+		let mut raw_account = [0u8; 32];
+
+		raw_account[0..4].copy_from_slice(b"dvm:");
+		raw_account[11..31].copy_from_slice(&address[..]);
+
+		let checksum: u8 = raw_account[1..31]
+			.iter()
+			.fold(raw_account[0], |sum, &byte| sum ^ byte);
+
+		raw_account[31] = checksum;
+
+		raw_account.into()
 	}
 }
 

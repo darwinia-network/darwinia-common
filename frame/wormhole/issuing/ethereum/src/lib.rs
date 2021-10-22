@@ -45,20 +45,17 @@ use sp_runtime::{
 };
 use sp_std::{str, vec::Vec};
 // --- darwinia-network ---
-use darwinia_evm::{AddressMapping, GasWeightMapping};
+use darwinia_evm::GasWeightMapping;
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{
-	balance::*, mapping_token::*, traits::EthereumReceipt, ChainName,
+	balance::*, evm::IntoAccountId, mapping_token::*, traits::EthereumReceipt, AccountId, ChainName,
 };
 use dp_contract::{
 	ethereum_backing::{EthereumBacking, EthereumLockEvent, EthereumRegisterEvent},
 	mapping_token_factory::{
-        basic::BasicMappingTokenFactory as bmtf,
-        ethereum2darwinia::{
-            E2dRemoteUnlockInfo,
-            TokenRegisterInfo,
-        },
-    },
+		basic::BasicMappingTokenFactory as bmtf,
+		ethereum2darwinia::{E2dRemoteUnlockInfo, TokenRegisterInfo},
+	},
 };
 use dvm_ethereum::InternalTransactHandler;
 use ethereum_primitives::{
@@ -69,7 +66,6 @@ pub use pallet::*;
 const REGISTER_TYPE: u8 = 0;
 const BURN_TYPE: u8 = 1;
 
-pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 pub type EthereumReceiptProofThing<T> = <<T as Config>::EthereumRelay as EthereumReceipt<
 	AccountId<T>,
@@ -294,7 +290,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 			let factory = MappingFactoryAddress::<T>::get();
-			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
+			let factory_id = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(factory);
 			ensure!(factory_id == caller, <Error<T>>::NoAuthority);
 			let register_info =
 				TokenRegisterInfo::decode(&input).map_err(|_| Error::<T>::InvalidInputData)?;
@@ -314,7 +310,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 			let factory = MappingFactoryAddress::<T>::get();
-			let factory_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(factory);
+			let factory_id = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(factory);
 			ensure!(factory_id == caller, <Error<T>>::NoAuthority);
 			let burn_info =
 				E2dRemoteUnlockInfo::decode(&input).map_err(|_| Error::<T>::InvalidInputData)?;

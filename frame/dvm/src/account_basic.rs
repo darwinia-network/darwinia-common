@@ -29,8 +29,8 @@ use sp_runtime::{
 };
 // --- darwinia-network ---
 use crate::{Config, KtonBalance, RemainingKtonBalance, RemainingRingBalance, RingBalance};
-use darwinia_evm::{Account as EVMAccount, AccountBasic, AddressMapping};
-use darwinia_support::evm::POW_9;
+use darwinia_evm::{Account as EVMAccount, AccountBasic};
+use darwinia_support::evm::{IntoAccountId, POW_9};
 
 /// The operations for the remaining balance.
 pub trait RemainBalanceOp<T: Config, B> {
@@ -117,7 +117,7 @@ where
 {
 	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> EVMAccount {
-		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
+		let account_id = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(*address);
 		let nonce = <frame_system::Pallet<T>>::account_nonce(&account_id);
 
 		EVMAccount {
@@ -128,7 +128,7 @@ where
 
 	/// Mutate the basic account.
 	fn mutate_account_basic_balance(address: &H160, new_balance: U256) {
-		let account_id = <T as darwinia_evm::Config>::AddressMapping::into_account_id(*address);
+		let account_id = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(*address);
 		Self::mutate_account_balance(&account_id, new_balance)
 	}
 
