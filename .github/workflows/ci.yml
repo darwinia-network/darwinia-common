@@ -20,7 +20,7 @@ jobs:
           repository: l2ust/subalfred
           ref: main
       - name: Install sccache
-        run: apt install sccache
+        run: sudo apt install sccache
         # env:
         #   LINK: https://github.com/mozilla/sccache/releases/download
         #   SCCACHE_VERSION: v0.2.15
