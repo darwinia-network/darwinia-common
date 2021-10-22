@@ -31,9 +31,9 @@ pub enum PangolinRuntime {
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 #[allow(non_camel_case_types)]
 pub enum PangolinSub2SubIssuingCall {
-	#[codec(index = 1)]
+	#[codec(index = 0)]
 	register_from_remote(Token),
-	#[codec(index = 2)]
+	#[codec(index = 1)]
 	issue_from_remote(Token, H160),
 }
 
