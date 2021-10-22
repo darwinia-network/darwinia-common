@@ -45,11 +45,7 @@ jobs:
         #   command: build
         #   args: --release
         run: |
-          ls -al $HOME
-          echo 111
-          echo $SCCACHE_GCS_KEY
-          echo 222
-          cat $HOME/.gcs
+          cat $SCCACHE_GCS_KEY_PATH
           sccache --show-stats
           cargo b --release
           sccache --show-stats
