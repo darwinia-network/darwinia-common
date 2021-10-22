@@ -145,7 +145,10 @@ where
 		self.relayers.iter().last().map(|r| r.valid_range.end)
 	}
 
-	pub fn slash_or_not(&self, message_confirm_time: BlockNumber) -> Option<AccountId> {
+	pub fn deliver_and_confirmed_timely(
+		&self,
+		message_confirm_time: BlockNumber,
+	) -> Option<AccountId> {
 		for prior_relayer in self.relayers.iter() {
 			if prior_relayer.valid_range.contains(&message_confirm_time) {
 				return Some(prior_relayer.id.clone());

@@ -144,7 +144,7 @@ where
 
 			let message_reward;
 			let confirm_reward;
-			if let Some(who) = order.slash_or_not(order_confirm_time) {
+			if let Some(who) = order.deliver_and_confirmed_timely(order_confirm_time) {
 				// message fee - lowest fee => treasury
 				let treasury_reward = message_fee.saturating_sub(lowest_fee);
 				treasury_total_rewards = treasury_total_rewards.saturating_add(treasury_reward);
