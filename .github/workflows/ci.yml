@@ -32,7 +32,7 @@ jobs:
           curl -L https://github.com/mozilla/sccache/releases/download/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz | tar xz
           sudo mv -f $SCCACHE_FILE/sccache /usr/bin/sccache
           sudo chmod +x /usr/bin/sccache
-          echo $SCCACHE_GCS_KEY > .gsc
+          echo "$SCCACHE_GCS_KEY" > .gsc
       - name: Build
         env:
           SCCACHE_GCS_RW_MODE: READ_WRITE
@@ -46,7 +46,7 @@ jobs:
         run: |
           ls -al
           cat $SCCACHE_GCS_KEY_PATH
-          cat $HOME/.gsc
+          cat "$HOME/.gsc"
           sccache --show-stats
           cargo b --release
           sccache --show-stats
@@ -78,7 +78,7 @@ jobs:
           curl -L https://github.com/mozilla/sccache/releases/download/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz | tar xz
           sudo mv -f $SCCACHE_FILE/sccache /usr/bin/sccache
           sudo chmod +x /usr/bin/sccache
-          echo $SCCACHE_GCS_KEY > .gsc
+          echo "$SCCACHE_GCS_KEY" > .gsc
       - name: Run checker
         env:
           SCCACHE_GCS_RW_MODE: READ_WRITE
@@ -110,7 +110,7 @@ jobs:
           curl -L https://github.com/mozilla/sccache/releases/download/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz | tar xz
           sudo mv -f $SCCACHE_FILE/sccache /usr/bin/sccache
           sudo chmod +x /usr/bin/sccache
-          echo $SCCACHE_GCS_KEY > .gsc
+          echo "$SCCACHE_GCS_KEY" > .gsc
       - name: Build
         env:
           SCCACHE_GCS_RW_MODE: READ_WRITE
