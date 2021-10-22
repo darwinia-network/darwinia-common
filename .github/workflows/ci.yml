@@ -32,12 +32,12 @@ jobs:
           curl -L https://github.com/mozilla/sccache/releases/download/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz | tar xz
           sudo mv -f $SCCACHE_FILE/sccache /usr/bin/sccache
           sudo chmod +x /usr/bin/sccache
-          echo "$SCCACHE_GCS_KEY" > .gsc
+          echo $SCCACHE_GCS_KEY > sccache-gcs-key
       - name: Build
         env:
           SCCACHE_GCS_RW_MODE: READ_WRITE
           SCCACHE_GCS_BUCKET: darwinia-build-cache
-          SCCACHE_GCS_KEY_PATH: $HOME/.gsc
+          SCCACHE_GCS_KEY_PATH: $HOME/sccache-gcs-key
           RUSTC_WRAPPER: sccache
         # uses: actions-rs/cargo@v1
         # with:
@@ -45,8 +45,7 @@ jobs:
         #   args: --release
         run: |
           ls -al
-          cat $SCCACHE_GCS_KEY_PATH
-          cat "$HOME/.gsc"
+          cat $HOME/sccache-gcs-key
           sccache --show-stats
           cargo b --release
           sccache --show-stats
