@@ -25,6 +25,7 @@ jobs:
           echo $SCCACHE_GCS_KEY > .gsc
   build-subalfred:
     name: Build subalfred
+    needs: [install-sccache]
     runs-on: ubuntu-latest
     steps:
       - name: Fetch latest code
@@ -43,7 +44,6 @@ jobs:
           SCCACHE_GCS_BUCKET: darwinia-build-cache
           SCCACHE_GCS_KEY_PATH: $HOME/.gsc
           RUST_WRAPPER: sccache
-        run: sccache --show-stats
         uses: actions-rs/cargo@v1
         with:
           command: build
