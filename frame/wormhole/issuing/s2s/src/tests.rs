@@ -16,24 +16,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// crates
+// --- crates.io ---
 use codec::{Decode, Encode};
 use std::str::FromStr;
-// darwinia
+// --- darwinia-network ---
 use crate::{
 	*, {self as s2s_issuing},
 };
-use darwinia_evm::{
-	AddressMapping, EnsureAddressTruncated, FeeCalculator, SubstrateBlockHashMapping,
+use darwinia_evm::{EnsureAddressTruncated, FeeCalculator, SubstrateBlockHashMapping};
+use darwinia_support::{
+	evm::IntoAccountId,
+	s2s::{RelayMessageSender, TokenMessageId},
 };
-use darwinia_support::s2s::{RelayMessageCaller, TokenMessageId};
+use dp_asset::token::TokenInfo;
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
 };
-// substrate
+// --- paritytech ---
 use frame_support::{
-	assert_ok,
 	traits::{GenesisBuild, MaxEncodedLen},
 	weights::PostDispatchInfo,
 	PalletId,
@@ -136,8 +137,8 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
-pub struct HashedAddressMapping;
-impl AddressMapping<AccountId32> for HashedAddressMapping {
+pub struct HashedConverter;
+impl IntoAccountId<AccountId32> for HashedConverter {
 	fn into_account_id(address: H160) -> AccountId32 {
 		let mut data = [0u8; 32];
 		data[0..20].copy_from_slice(&address[..]);
@@ -153,7 +154,7 @@ impl darwinia_evm::Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
-	type AddressMapping = HashedAddressMapping;
+	type IntoAccountId = HashedConverter;
 	type Event = ();
 	type Precompiles = ();
 	type FindAuthor = ();
@@ -195,31 +196,42 @@ impl Size for MockMessagePayload {
 pub struct PangoroCallEncoder;
 impl EncodeCall<AccountId32, MockMessagePayload> for PangoroCallEncoder {
 	fn encode_remote_unlock(
-		spec_version: u32,
-		weight: u64,
-		_token: Token,
-		_recipient: RecipientAccount<AccountId32>,
+		_submitter: AccountId32,
+		remote_unlock_info: S2sRemoteUnlockInfo,
 	) -> Result<MockMessagePayload, ()> {
 		return Ok(MockMessagePayload {
-			spec_version,
-			weight,
+			spec_version: remote_unlock_info.spec_version,
+			weight: remote_unlock_info.weight,
 			call: vec![],
 		});
 	}
 }
 
 pub struct ToPangoroMessageRelayCaller;
-impl RelayMessageCaller<MockMessagePayload, Balance> for ToPangoroMessageRelayCaller {
-	fn send_message(
-		_payload: MockMessagePayload,
-		_fee: Balance,
+impl RelayMessageSender for ToPangoroMessageRelayCaller {
+	fn encode_send_message(
+		_pallet_index: u32,
+		_lane_id: [u8; 4],
+		_payload: Vec<u8>,
+		_fee: u128,
+	) -> Result<Vec<u8>, &'static str> {
+		Ok(Vec::new())
+	}
+	fn send_message_by_root(
+		_pallet_index: u32,
+		_lane_id: [u8; 4],
+		_payload: Vec<u8>,
+		_fee: u128,
 	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
 		Ok(PostDispatchInfo {
 			actual_weight: None,
 			pays_fee: Pays::No,
 		})
 	}
-	fn latest_token_message_id() -> TokenMessageId {
+	fn latest_token_message_id(_lane_id: [u8; 4]) -> TokenMessageId {
+		[0u8; 16]
+	}
+	fn latest_received_token_message_id(_lane_id: [u8; 4]) -> TokenMessageId {
 		[0u8; 16]
 	}
 }
@@ -236,7 +248,6 @@ impl Config for Test {
 	type Event = ();
 	type PalletId = S2sRelayPalletId;
 	type WeightInfo = ();
-	type ReceiverAccountId = AccountId32;
 
 	type RingCurrency = Ring;
 	type BridgedAccountIdConverter = AccountIdConverter;
@@ -244,8 +255,6 @@ impl Config for Test {
 	type ToEthAddressT = TruncateToEthAddress;
 	type OutboundPayload = MockMessagePayload;
 	type CallEncoder = PangoroCallEncoder;
-	type FeeAccount = RootAccountForPayments;
-	type MessageSender = ToPangoroMessageRelayCaller;
 	type InternalTransactHandler = Ethereum;
 	type BackingChainName = PangoroName;
 }
@@ -284,27 +293,18 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 #[test]
 fn burn_and_remote_unlock_success() {
 	new_test_ext().execute_with(|| {
-		let burn_info = TokenBurnInfo {
+		let original_token = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+		let token: Token = (1, TokenInfo::new(original_token, Some(U256::from(1)), None)).into();
+		let burn_info = S2sRemoteUnlockInfo {
 			spec_version: 0,
 			weight: 100,
-			token_type: 1,
-			backing_address: H160::from_str("1000000000000000000000000000000000000001").unwrap(),
-			sender: H160::from_str("1000000000000000000000000000000000000001").unwrap(),
-			original_token: H160::from_str("1000000000000000000000000000000000000001").unwrap(),
+			token,
 			recipient: [1; 32].to_vec(),
-			amount: U256::from(1),
-			fee: U256::from(1),
 		};
-		assert_ok!(S2sIssuing::burn_and_remote_unlock(0, burn_info,));
-	});
-}
-
-#[test]
-fn check_digest() {
-	new_test_ext().execute_with(|| {
-		assert_eq!(
-			S2sIssuing::digest(),
-			array_bytes::hex2bytes_unchecked("0xd184c5bd").as_slice()
+		let submitter = HashedConverter::into_account_id(
+			H160::from_str("1000000000000000000000000000000000000002").unwrap(),
 		);
+		<Test as s2s_issuing::Config>::CallEncoder::encode_remote_unlock(submitter, burn_info)
+			.unwrap();
 	});
 }

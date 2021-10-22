@@ -17,8 +17,8 @@ use darwinia_fee_market::s2s::{
 	FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler, FeeMarketPayment,
 };
 use darwinia_support::{
+	evm::{ConcatConverter, IntoAccountId, IntoH160},
 	s2s::{nonce_to_message_id, MessageConfirmer},
-	to_bytes32,
 };
 use pangolin_messages::{
 	FromPangolinMessageDispatch, FromPangolinMessagePayload, Pangolin,
@@ -34,7 +34,7 @@ frame_support::parameter_types! {
 	// `IdentityFee` is used by Pangoro => we may use weight directly
 	pub const GetDeliveryConfirmationTransactionFee: Balance =
 		MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT as _;
-	pub RootAccountForPayments: Option<AccountId> = Some(to_bytes32(b"root").into());
+	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::into_account_id((&b"root"[..]).into_h160()));
 	pub const BridgedChainId: ChainId = PANGOLIN_CHAIN_ID;
 }
 

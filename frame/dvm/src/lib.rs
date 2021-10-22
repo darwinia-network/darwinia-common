@@ -64,9 +64,7 @@ use sp_runtime::{
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use darwinia_evm::{AccountBasic, BlockHashMapping, FeeCalculator, GasWeightMapping, Runner};
-use darwinia_support::evm::{
-	recover_signer, DVMTransaction, IntoDvmAddress, INTERNAL_TX_GAS_LIMIT,
-};
+use darwinia_support::evm::{recover_signer, DVMTransaction, IntoH160, INTERNAL_TX_GAS_LIMIT};
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use dp_evm::CallOrCreateInfo;
 #[cfg(feature = "std")]
@@ -585,7 +583,7 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 			Error::<T>::PreLogExists,
 		);
 
-		let source = T::PalletId::get().into_dvm_address();
+		let source = T::PalletId::get().into_h160();
 		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
 		let transaction = DVMTransaction::new_internal_transaction(source, nonce, target, input);
 		Self::raw_transact(transaction).map(|(reason, used_gas)| match reason {
@@ -607,7 +605,7 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 	fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
 		sp_io::storage::start_transaction();
 		let (_, _, info) = Self::execute(
-			T::PalletId::get().into_dvm_address(),
+			T::PalletId::get().into_h160(),
 			input,
 			U256::zero(),
 			U256::from(INTERNAL_TX_GAS_LIMIT),

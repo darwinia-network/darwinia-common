@@ -1,17 +1,13 @@
 // --- paritytech ---
 use bp_runtime::{messages::DispatchFeePayment, ChainId};
-use frame_support::{dispatch::Dispatchable, weights::PostDispatchInfo, PalletId};
-use frame_system::RawOrigin;
-use pallet_bridge_messages::Instance1 as Pangoro;
-use sp_runtime::{AccountId32, DispatchErrorWithPostInfo};
+use frame_support::PalletId;
+use sp_runtime::AccountId32;
 // --- darwinia-network ---
 use crate::*;
-use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE};
-use darwinia_support::{
-	s2s::{nonce_to_message_id, RelayMessageCaller, ToEthAddress, TokenMessageId},
-	ChainName,
-};
-use dp_asset::{token::Token, RecipientAccount};
+use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID};
+use darwinia_support::{s2s::ToEthAddress, to_bytes32, ChainName};
+use dp_asset::token::Token;
+use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
 use from_substrate_issuing::{Config, EncodeCall};
 
 // remote chain pangoro's dispatch info
@@ -30,51 +26,30 @@ pub enum PangoroSub2SubBackingCall {
 	unlock_from_remote(Token, AccountId),
 }
 
-pub struct ToPangoroMessageRelayCaller;
-impl RelayMessageCaller<ToPangoroMessagePayload, Balance> for ToPangoroMessageRelayCaller {
-	fn send_message(
-		payload: ToPangoroMessagePayload,
-		fee: Balance,
-	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
-		let call: Call = BridgeMessagesCall::<Runtime, Pangoro>::send_message(
-			PANGORO_PANGOLIN_LANE,
-			payload,
-			fee,
-		)
-		.into();
-		call.dispatch(RawOrigin::Root.into())
-	}
-
-	fn latest_token_message_id() -> TokenMessageId {
-		let nonce: u64 =
-			BridgePangoroMessages::outbound_latest_generated_nonce(PANGORO_PANGOLIN_LANE).into();
-		nonce_to_message_id(&PANGORO_PANGOLIN_LANE, nonce)
-	}
-}
-
 pub struct PangoroCallEncoder;
 impl EncodeCall<AccountId, ToPangoroMessagePayload> for PangoroCallEncoder {
 	fn encode_remote_unlock(
-		spec_version: u32,
-		weight: u64,
-		token: Token,
-		recipient: RecipientAccount<AccountId>,
+		submitter: AccountId,
+		remote_unlock_info: S2sRemoteUnlockInfo,
 	) -> Result<ToPangoroMessagePayload, ()> {
-		match recipient {
-			RecipientAccount::<AccountId>::DarwiniaAccount(r) => {
-				let call = PangoroRuntime::Sub2SubBacking(
-					PangoroSub2SubBackingCall::unlock_from_remote(token, r),
-				)
+		if remote_unlock_info.recipient.len() != 32 {
+			return Err(());
+		} else {
+			let recipient_id: AccountId =
+				to_bytes32(remote_unlock_info.recipient.as_slice()).into();
+			let call =
+				PangoroRuntime::Sub2SubBacking(PangoroSub2SubBackingCall::unlock_from_remote(
+					remote_unlock_info.token,
+					recipient_id,
+				))
 				.encode();
-				return Ok(ToPangoroMessagePayload {
-					spec_version,
-					weight,
-					origin: bp_message_dispatch::CallOrigin::SourceRoot,
-					call,
-					dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
-				});
-			}
-			_ => Err(()),
+			return Ok(ToPangoroMessagePayload {
+				spec_version: remote_unlock_info.spec_version,
+				weight: remote_unlock_info.weight,
+				origin: bp_message_dispatch::CallOrigin::SourceAccount(submitter),
+				call,
+				dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
+			});
 		}
 	}
 }
@@ -98,14 +73,11 @@ impl Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
 	type RingCurrency = Ring;
-	type FeeAccount = RootAccountForPayments;
-	type ReceiverAccountId = AccountId;
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangoroChainId;
 	type ToEthAddressT = TruncateToEthAddress;
 	type OutboundPayload = ToPangoroMessagePayload;
 	type CallEncoder = PangoroCallEncoder;
-	type MessageSender = ToPangoroMessageRelayCaller;
 	type InternalTransactHandler = Ethereum;
 	type BackingChainName = PangoroName;
 }

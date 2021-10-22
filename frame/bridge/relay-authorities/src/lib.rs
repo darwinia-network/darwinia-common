@@ -43,7 +43,6 @@ mod types {
 	// --- darwinia-network ---
 	use crate::*;
 
-	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 	pub type MMRRoot<T> = <T as frame_system::Config>::Hash;
 	pub type RingBalance<T, I> = <RingCurrency<T, I> as Currency<AccountId<T>>>::Balance;
 	pub type RingCurrency<T, I> = <T as Config<I>>::RingCurrency;
@@ -87,7 +86,7 @@ use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use darwinia_relay_primitives::relay_authorities::*;
-use darwinia_support::balance::*;
+use darwinia_support::{balance::*, AccountId};
 use types::*;
 
 pub const MAX_SCHEDULED_NUM: usize = 10;

@@ -49,18 +49,18 @@ use sp_runtime::{
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use darwinia_support::{
-	evm::IntoDvmAddress,
+	evm::IntoH160,
 	s2s::{
-		ensure_source_root, MessageConfirmer, RelayMessageCaller, TokenMessageId, RING_DECIMAL,
+		ensure_source_account, MessageConfirmer, RelayMessageSender, TokenMessageId, RING_DECIMAL,
 		RING_NAME, RING_SYMBOL,
 	},
+	AccountId,
 };
 use dp_asset::{
 	token::{Token, TokenInfo, TokenOption},
 	RecipientAccount,
 };
 
-pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type Balance = u128;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 
@@ -92,7 +92,9 @@ pub mod pallet {
 		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
 
 		type FeeAccount: Get<Option<Self::AccountId>>;
-		type MessageSender: RelayMessageCaller<Self::OutboundPayload, RingBalance<Self>>;
+		type MessageSender: RelayMessageSender;
+		type MessageSendPalletIndex: Get<u32>;
+		type MessageLaneId: Get<[u8; 4]>;
 	}
 
 	#[pallet::event]
@@ -109,10 +111,12 @@ pub mod pallet {
 			EthereumAddress,
 			RingBalance<T>,
 		),
-		/// Token unlocked \[token, recipient, amount\]
-		TokenUnlocked(Token, AccountId<T>, RingBalance<T>),
+		/// Token unlocked \[message_id, token, recipient, amount\]
+		TokenUnlocked(TokenMessageId, Token, AccountId<T>, RingBalance<T>),
 		/// Token locked confirmed from remote \[message_id, token, user, result\]
 		TokenLockedConfirmed(TokenMessageId, Token, AccountId<T>, bool),
+		/// Update remote mapping token factory address \[account\]
+		RemoteMappingFactoryAddressUpdated(AccountId<T>),
 	}
 
 	#[pallet::error]
@@ -155,10 +159,16 @@ pub mod pallet {
 	pub type LockedQueue<T: Config> =
 		StorageMap<_, Identity, TokenMessageId, (AccountId<T>, Token), ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn remote_mapping_token_factory_account)]
+	pub type RemoteMappingTokenFactoryAccount<T: Config> =
+		StorageValue<_, AccountId<T>, ValueQuery>;
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub secure_limited_period: BlockNumberFor<T>,
 		pub secure_limited_ring_amount: RingBalance<T>,
+		pub remote_mapping_token_factory_account: AccountId<T>,
 	}
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
@@ -166,6 +176,7 @@ pub mod pallet {
 			Self {
 				secure_limited_period: Zero::zero(),
 				secure_limited_ring_amount: Zero::zero(),
+				remote_mapping_token_factory_account: Default::default(),
 			}
 		}
 	}
@@ -177,6 +188,9 @@ pub mod pallet {
 				<RingBalance<T>>::zero(),
 				self.secure_limited_ring_amount,
 			));
+			<RemoteMappingTokenFactoryAccount<T>>::put(
+				self.remote_mapping_token_factory_account.clone(),
+			);
 		}
 	}
 
@@ -214,7 +228,7 @@ pub mod pallet {
 				T::RingCurrency::transfer(&user, &fee_account, fee, KeepAlive)?;
 			}
 			let token = Token::Native(TokenInfo {
-				address: T::RingPalletId::get().into_dvm_address(),
+				address: T::RingPalletId::get().into_h160(),
 				value: None,
 				option: Some(TokenOption {
 					name: RING_NAME.to_vec(),
@@ -224,10 +238,17 @@ pub mod pallet {
 			});
 			let payload =
 				T::CallEncoder::encode_remote_register(spec_version, weight, token.clone());
-			T::MessageSender::send_message(payload, fee).map_err(|e| {
+			T::MessageSender::send_message_by_root(
+				T::MessageSendPalletIndex::get(),
+				T::MessageLaneId::get(),
+				payload.encode(),
+				fee.saturated_into::<u128>().into(),
+			)
+			.map_err(|e| {
 				log::info!("s2s-backing: register token failed {:?}", e);
 				Error::<T>::SendMessageFailed
 			})?;
+
 			Self::deposit_event(Event::TokenRegistered(token, user));
 			Ok(().into())
 		}
@@ -267,7 +288,7 @@ pub mod pallet {
 			let amount: U256 = value.saturated_into::<u128>().into();
 			let token = Token::Native(TokenInfo {
 				// The native mapped RING token as a special ERC20 address
-				address: T::RingPalletId::get().into_dvm_address(),
+				address: T::RingPalletId::get().into_h160(),
 				value: Some(amount),
 				option: None,
 			});
@@ -276,9 +297,14 @@ pub mod pallet {
 			let payload =
 				T::CallEncoder::encode_remote_issue(spec_version, weight, token.clone(), account)
 					.map_err(|_| Error::<T>::EncodeInvalid)?;
-			T::MessageSender::send_message(payload, fee)
-				.map_err(|_| Error::<T>::SendMessageFailed)?;
-			let message_id = T::MessageSender::latest_token_message_id();
+			T::MessageSender::send_message_by_root(
+				T::MessageSendPalletIndex::get(),
+				T::MessageLaneId::get(),
+				payload.encode(),
+				fee.saturated_into::<u128>().into(),
+			)
+			.map_err(|_| Error::<T>::SendMessageFailed)?;
+			let message_id = T::MessageSender::latest_token_message_id(T::MessageLaneId::get());
 			ensure!(
 				!<LockedQueue<T>>::contains_key(message_id),
 				Error::<T>::NonceDuplicated
@@ -302,8 +328,9 @@ pub mod pallet {
 			// the s2s message relay has been verified the message comes from the issuing pallet with the
 			// chainID and issuing sender address.
 			// here only we need is to check the sender is root account
-			ensure_source_root::<T::AccountId, T::BridgedAccountIdConverter>(
+			ensure_source_account::<T::AccountId, T::BridgedAccountIdConverter>(
 				T::BridgedChainId::get(),
+				<RemoteMappingTokenFactoryAccount<T>>::get(),
 				&user,
 			)?;
 
@@ -345,7 +372,14 @@ pub mod pallet {
 
 			<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = used.saturating_add(amount));
 
-			Self::deposit_event(Event::TokenUnlocked(token.clone(), recipient, amount));
+			let message_id =
+				T::MessageSender::latest_received_token_message_id(T::MessageLaneId::get());
+			Self::deposit_event(Event::TokenUnlocked(
+				message_id,
+				token.clone(),
+				recipient,
+				amount,
+			));
 
 			Ok(().into())
 		}
@@ -370,6 +404,18 @@ pub mod pallet {
 			ensure_root(origin)?;
 
 			<SecureLimitedRingAmount<T>>::mutate(|(_, limitation_)| *limitation_ = limitation);
+
+			Ok(().into())
+		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::set_remote_mapping_token_factory_account())]
+		pub fn set_remote_mapping_token_factory_account(
+			origin: OriginFor<T>,
+			account: AccountId<T>,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			<RemoteMappingTokenFactoryAccount<T>>::put(account.clone());
+			Self::deposit_event(Event::RemoteMappingFactoryAddressUpdated(account));
 
 			Ok(().into())
 		}

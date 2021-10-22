@@ -50,6 +50,8 @@ use frame_system::RawOrigin;
 use sp_core::{H160, H256, U256};
 use sp_runtime::traits::{BadOrigin, UniqueSaturatedInto};
 use sp_std::{marker::PhantomData, prelude::*};
+// --- darwinia-network ---
+use darwinia_support::evm::IntoAccountId;
 
 static ISTANBUL_CONFIG: EvmConfig = EvmConfig::istanbul();
 
@@ -77,8 +79,8 @@ pub mod pallet {
 		/// Chain ID of EVM.
 		type ChainId: Get<u64>;
 
-		/// Mapping from address to account id.
-		type AddressMapping: AddressMapping<Self::AccountId>;
+		/// Convert from H160 to account id.
+		type IntoAccountId: IntoAccountId<Self::AccountId>;
 		/// Block number to block hash.
 		type BlockHashMapping: BlockHashMapping;
 		/// Find author for the current block.
@@ -318,7 +320,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn remove_account(address: &H160) {
 			if AccountCodes::<T>::contains_key(address) {
-				let account_id = T::AddressMapping::into_account_id(*address);
+				let account_id = T::IntoAccountId::into_account_id(*address);
 				let _ = <frame_system::Pallet<T>>::dec_consumers(&account_id);
 			}
 
@@ -333,7 +335,7 @@ pub mod pallet {
 			}
 
 			if !AccountCodes::<T>::contains_key(&address) {
-				let account_id = T::AddressMapping::into_account_id(address);
+				let account_id = T::IntoAccountId::into_account_id(address);
 				let _ = <frame_system::Pallet<T>>::inc_consumers(&account_id);
 			}
 
@@ -407,11 +409,6 @@ pub trait EnsureAddressOrigin<OuterOrigin> {
 	) -> Result<Self::Success, OuterOrigin>;
 }
 
-/// A trait for converting from H160 to `AccountId`.
-pub trait AddressMapping<AccountId> {
-	fn into_account_id(address: H160) -> AccountId;
-}
-
 /// A trait for operating account basic info.
 pub trait AccountBasic<T: frame_system::Config> {
 	/// Get the account basic in EVM format.
@@ -480,33 +477,6 @@ where
 			RawOrigin::Signed(who) if who.as_ref()[0..20] == address[0..20] => Ok(who),
 			r => Err(OuterOrigin::from(r)),
 		})
-	}
-}
-
-/// Darwinia network address mapping.
-pub struct ConcatAddressMapping<AccountId>(PhantomData<AccountId>);
-/// The ConcatAddressMapping used for transfer from evm 20-length to substrate 32-length address
-/// The concat rule inclued three parts:
-/// 1. AccountId Prefix: concat("dvm", "0x00000000000000"), length: 11 byetes
-/// 2. EVM address: the original evm address, length: 20 bytes
-/// 3. CheckSum:  byte_xor(AccountId Prefix + EVM address), length: 1 bytes
-impl<AccountId> AddressMapping<AccountId> for ConcatAddressMapping<AccountId>
-where
-	AccountId: From<[u8; 32]>,
-{
-	fn into_account_id(address: H160) -> AccountId {
-		let mut raw_account = [0u8; 32];
-
-		raw_account[0..4].copy_from_slice(b"dvm:");
-		raw_account[11..31].copy_from_slice(&address[..]);
-
-		let checksum: u8 = raw_account[1..31]
-			.iter()
-			.fold(raw_account[0], |sum, &byte| sum ^ byte);
-
-		raw_account[31] = checksum;
-
-		raw_account.into()
 	}
 }
 

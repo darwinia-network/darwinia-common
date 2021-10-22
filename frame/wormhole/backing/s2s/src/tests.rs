@@ -30,7 +30,7 @@ use sp_runtime::{
 };
 // --- darwinia-network ---
 use crate::{self as s2s_backing, *};
-use darwinia_support::s2s::{RelayMessageCaller, TokenMessageId};
+use darwinia_support::s2s::{RelayMessageSender, TokenMessageId};
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
@@ -93,14 +93,27 @@ impl frame_system::Config for Test {
 }
 
 pub struct MockRelayCaller;
-impl RelayMessageCaller<(), Balance> for MockRelayCaller {
-	fn send_message(
-		_payload: (),
-		_fee: Balance,
+impl RelayMessageSender for MockRelayCaller {
+	fn encode_send_message(
+		_pallet_index: u32,
+		_lane_id: [u8; 4],
+		_payload: Vec<u8>,
+		_fee: u128,
+	) -> Result<Vec<u8>, &'static str> {
+		Ok(Vec::new())
+	}
+	fn send_message_by_root(
+		_pallet_index: u32,
+		_lane_id: [u8; 4],
+		_payload: Vec<u8>,
+		_fee: u128,
 	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
 		Ok(().into())
 	}
-	fn latest_token_message_id() -> TokenMessageId {
+	fn latest_token_message_id(_lane_id: [u8; 4]) -> TokenMessageId {
+		[0u8; 16]
+	}
+	fn latest_received_token_message_id(_lane_id: [u8; 4]) -> TokenMessageId {
 		[0u8; 16]
 	}
 }
@@ -127,6 +140,8 @@ frame_support::parameter_types! {
 	pub const MockId: PalletId = PalletId(*b"da/s2sba");
 	pub const RingPalletId: PalletId = PalletId(*b"da/bring");
 	pub const MaxLockRingAmountPerTx: Balance = 100;
+	pub const BridgePangolinIndex: u32 = 43;
+	pub const BridgePangolinLaneId: [u8; 4] = [0; 4];
 }
 impl Config for Test {
 	type Event = ();
@@ -146,6 +161,8 @@ impl Config for Test {
 
 	type FeeAccount = ();
 	type MessageSender = MockRelayCaller;
+	type MessageSendPalletIndex = BridgePangolinIndex;
+	type MessageLaneId = BridgePangolinLaneId;
 }
 
 frame_support::construct_runtime! {
@@ -168,6 +185,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	s2s_backing::GenesisConfig::<Test> {
 		secure_limited_period: 10,
 		secure_limited_ring_amount: 1_000_000,
+		remote_mapping_token_factory_account: Default::default(),
 	}
 	.assimilate_storage(&mut storage)
 	.unwrap();
@@ -179,7 +197,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 fn test_back_erc20_dvm_address() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(
-			<Test as s2s_backing::Config>::RingPalletId::get().into_dvm_address(),
+			<Test as s2s_backing::Config>::RingPalletId::get().into_h160(),
 			EthereumAddress::from_str("0x6d6f646c64612f6272696e670000000000000000").unwrap()
 		);
 	});
@@ -189,7 +207,7 @@ fn test_back_erc20_dvm_address() {
 fn test_pallet_id_to_dvm_address() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(
-			<Test as s2s_backing::Config>::PalletId::get().into_dvm_address(),
+			<Test as s2s_backing::Config>::PalletId::get().into_h160(),
 			EthereumAddress::from_str("0x6d6f646c64612f73327362610000000000000000").unwrap()
 		);
 	});

@@ -7,7 +7,7 @@ license    = "GPL-3.0"
 name       = "pangolin-runtime"
 readme     = "README.md"
 repository = "https://github.com/darwinia-network/darwinia-common/"
-version    = "2.6.6"
+version    = "2.6.7"
 
 [dependencies]
 # crates.io
@@ -30,7 +30,7 @@ darwinia-democracy                  = { default-features = false, path = "../../
 darwinia-elections-phragmen         = { default-features = false, path = "../../../frame/elections-phragmen" }
 darwinia-evm                        = { default-features = false, path = "../../../frame/evm" }
 darwinia-evm-precompile-dispatch    = { default-features = false, path = "../../../frame/evm/precompile/contracts/dispatch" }
-darwinia-evm-precompile-encoder     = { default-features = false, path = "../../../frame/evm/precompile/contracts/encoder" }
+darwinia-evm-precompile-misc        = { default-features = false, path = "../../../frame/evm/precompile/contracts/misc" }
 darwinia-evm-precompile-simple      = { default-features = false, path = "../../../frame/evm/precompile/contracts/simple" }
 darwinia-evm-precompile-transfer    = { default-features = false, path = "../../../frame/evm/precompile/contracts/transfer" }
 darwinia-fee-market                 = { default-features = false, path = "../../../frame/fee-market" }
@@ -45,6 +45,7 @@ darwinia-staking-rpc-runtime-api    = { default-features = false, path = "../../
 darwinia-support                    = { default-features = false, path = "../../../frame/support" }
 darwinia-vesting                    = { default-features = false, path = "../../../frame/vesting" }
 dp-asset                            = { default-features = false, path = "../../../primitives/asset" }
+dp-contract                         = { default-features = false, path = "../../../primitives/contract" }
 dp-evm                              = { default-features = false, path = "../../../primitives/evm" }
 dp-fee                              = { default-features = false, path = "../../../primitives/fee-market" }
 dvm-ethereum                        = { default-features = false, path = "../../../frame/dvm" }
@@ -140,7 +141,7 @@ std = [
 	"darwinia-bridge-ethereum/std",
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-dispatch/std",
-	"darwinia-evm-precompile-encoder/std",
+	"darwinia-evm-precompile-misc/std",
 	"darwinia-evm-precompile-simple/std",
 	"darwinia-evm-precompile-transfer/std",
 	"darwinia-fee-market/std",
@@ -155,6 +156,7 @@ std = [
 	"darwinia-support/std",
 	"darwinia-vesting/std",
 	"dp-asset/std",
+	"dp-contract/std",
 	"dp-evm/std",
 	"dp-fee/std",
 	"dvm-ethereum/std",

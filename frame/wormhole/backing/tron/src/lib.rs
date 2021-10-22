@@ -31,7 +31,6 @@ pub mod pallet {
 		use crate::pallet::*;
 
 		// Generic type
-		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 		#[cfg(feature = "std")]
 		pub type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
 		#[cfg(feature = "std")]
@@ -52,6 +51,7 @@ pub mod pallet {
 	use sp_runtime::traits::AccountIdConversion;
 	// --- darwinia-network ---
 	use crate::weights::WeightInfo;
+	use darwinia_support::AccountId;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
