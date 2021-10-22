@@ -48,7 +48,7 @@ jobs:
         # with:
         #   command: build
         #   args: --release
-        run: sccache --show-stats && cargo b --release && sccache --show-stats
+        run: /usr/bin/sccache --show-stats && cargo b --release && /usr/bin/sccache --show-stats
       - name: Compress subalfred
         run: cp target/release/subalfred . && tar cf subalfred.tar.zst subalfred -I pzstd
       - name: Upload subalfred
