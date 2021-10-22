@@ -45,6 +45,8 @@ jobs:
         #   command: build
         #   args: --release
         run: |
+          pwd
+          ls -al
           cat $SCCACHE_GCS_KEY_PATH
           sccache --show-stats
           cargo b --release
