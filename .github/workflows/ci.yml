@@ -162,11 +162,14 @@ jobs:
         with:
           name: subalfred
       - name: Uncompress subalfred
-        run: tar xf subalfred.tar.zst -I pzstd
+        run: |
+          pwd
+          ls -al
+          tar xf subalfred.tar.zst -I pzstd
       - name: Fetch latest code
         uses: actions/checkout@v2
       - name: Run checker
-        run: ../subalfred ci default-features -p ../darwinia-common
+        run: /home/runner/work/subalfred ci default-features -p ../darwinia-common
 
   check-with-node:
     name: Check with node
