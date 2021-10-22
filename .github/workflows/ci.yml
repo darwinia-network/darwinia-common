@@ -44,10 +44,11 @@ jobs:
           SCCACHE_GCS_BUCKET: darwinia-build-cache
           SCCACHE_GCS_KEY_PATH: $HOME/.gsc
           RUST_WRAPPER: sccache
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release
+        # uses: actions-rs/cargo@v1
+        # with:
+        #   command: build
+        #   args: --release
+        run: sccache --show-stats && cargo b --release && sccache --show-stats
       - name: Compress subalfred
         run: cp target/release/subalfred . && tar cf subalfred.tar.zst subalfred -I pzstd
       - name: Upload subalfred
