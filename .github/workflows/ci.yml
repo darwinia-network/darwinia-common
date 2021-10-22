@@ -43,13 +43,10 @@ jobs:
         # uses: actions-rs/cargo@v1
         # with:
         #   command: build
-        #   args: --release
+        #   args: --release --locked
         run: |
-          pwd
-          ls -al
-          cat $SCCACHE_GCS_KEY_PATH
           sccache --show-stats
-          cargo b --release
+          cargo b --release --locked
           sccache --show-stats
       - name: Compress subalfred
         run: cp target/release/subalfred . && tar cf subalfred.tar.zst subalfred -I pzstd
@@ -87,10 +84,14 @@ jobs:
           SCCACHE_GCS_BUCKET: darwinia-build-cache
           SCCACHE_GCS_KEY_PATH: /home/runner/work/.gsc
           RUSTC_WRAPPER: sccache
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --locked
+        # uses: actions-rs/cargo@v1
+        # with:
+        #   command: check
+        #   args: --locked
+        run: |
+          sccache --show-stats
+          cargo c --locked
+          sccache --show-stats
 
   build-node-and-internal-test:
     name: Build node and internal test
@@ -120,10 +121,14 @@ jobs:
           SCCACHE_GCS_BUCKET: darwinia-build-cache
           SCCACHE_GCS_KEY_PATH: /home/runner/work/.gsc
           RUSTC_WRAPPER: sccache
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --locked
+        # uses: actions-rs/cargo@v1
+        # with:
+        #   command: build
+        #   args: --release --locked
+        run: |
+          sccache --show-stats
+          cargo b --release --locked
+          sccache --show-stats
       - name: Test
         env:
           SCCACHE_GCS_RW_MODE: READ_WRITE
@@ -131,10 +136,14 @@ jobs:
           SCCACHE_GCS_KEY_PATH: /home/runner/work/.gsc
           RUSTC_WRAPPER: sccache
           CARGO_INCREMENTAL: 0
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --release --all --locked
+        # uses: actions-rs/cargo@v1
+        # with:
+        #   command: test
+        #   args: --release --all --locked
+        run: |
+          sccache --show-stats
+          cargo test --release --all --locked
+          sccache --show-stats
       - name: Compress node
         run: cp target/release/drml . && tar cf node.tar.zst drml -I pzstd
       - name: Upload node
@@ -157,7 +166,7 @@ jobs:
       - name: Fetch latest code
         uses: actions/checkout@v2
       - name: Run checker
-        run: ~/subalfred ci default-features -p ../darwinia-common
+        run: ../subalfred ci default-features -p ../darwinia-common
 
   check-with-node:
     name: Check with node
