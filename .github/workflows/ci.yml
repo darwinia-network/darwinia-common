@@ -10,22 +10,8 @@ on:
       - master
 
 jobs:
-  install-sccache:
-    name: Install sccache
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install sccache
-        env:
-          SCCACHE_VERSION: v0.2.15
-        run: |
-          export SCCACHE_FILE=sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl
-          curl -L https://github.com/mozilla/sccache/releases/download/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz | tar xz
-          sudo mv -f $SCCACHE_FILE/sccache /usr/bin/sccache
-          sudo chmod +x /usr/bin/sccache
-          echo $SCCACHE_GCS_KEY > .gsc
   build-subalfred:
     name: Build subalfred
-    needs: [install-sccache]
     runs-on: ubuntu-latest
     steps:
       - name: Fetch latest code
@@ -38,6 +24,15 @@ jobs:
         with:
           toolchain: nightly-2021-04-22
           default: true
+      - name: Install sccache
+        env:
+          SCCACHE_VERSION: v0.2.15
+        run: |
+          export SCCACHE_FILE=sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl
+          curl -L https://github.com/mozilla/sccache/releases/download/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz | tar xz
+          sudo mv -f $SCCACHE_FILE/sccache /usr/bin/sccache
+          sudo chmod +x /usr/bin/sccache
+          echo $SCCACHE_GCS_KEY > .gsc
       - name: Build
         env:
           SCCACHE_GCS_RW_MODE: READ_WRITE
@@ -48,7 +43,7 @@ jobs:
         # with:
         #   command: build
         #   args: --release
-        run: /usr/bin/sccache --show-stats && cargo b --release && /usr/bin/sccache --show-stats
+        run: sccache --show-stats && cargo b --release && sccache --show-stats
       - name: Compress subalfred
         run: cp target/release/subalfred . && tar cf subalfred.tar.zst subalfred -I pzstd
       - name: Upload subalfred
@@ -59,7 +54,6 @@ jobs:
 
   check-rust-code:
     name: Check Rust code
-    needs: [install-sccache]
     runs-on: ubuntu-latest
     steps:
       - name: Fetch latest code
@@ -70,6 +64,15 @@ jobs:
           toolchain: nightly-2021-04-22
           target: wasm32-unknown-unknown
           default: true
+      - name: Install sccache
+        env:
+          SCCACHE_VERSION: v0.2.15
+        run: |
+          export SCCACHE_FILE=sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl
+          curl -L https://github.com/mozilla/sccache/releases/download/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz | tar xz
+          sudo mv -f $SCCACHE_FILE/sccache /usr/bin/sccache
+          sudo chmod +x /usr/bin/sccache
+          echo $SCCACHE_GCS_KEY > .gsc
       - name: Run checker
         env:
           SCCACHE_GCS_RW_MODE: READ_WRITE
@@ -83,7 +86,6 @@ jobs:
 
   build-node-and-internal-test:
     name: Build node and internal test
-    needs: [install-sccache]
     runs-on: ubuntu-latest
     steps:
       - name: Fetch latest code
@@ -94,6 +96,15 @@ jobs:
           toolchain: nightly-2021-04-22
           target: wasm32-unknown-unknown
           default: true
+      - name: Install sccache
+        env:
+          SCCACHE_VERSION: v0.2.15
+        run: |
+          export SCCACHE_FILE=sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl
+          curl -L https://github.com/mozilla/sccache/releases/download/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz | tar xz
+          sudo mv -f $SCCACHE_FILE/sccache /usr/bin/sccache
+          sudo chmod +x /usr/bin/sccache
+          echo $SCCACHE_GCS_KEY > .gsc
       - name: Build
         env:
           SCCACHE_GCS_RW_MODE: READ_WRITE
