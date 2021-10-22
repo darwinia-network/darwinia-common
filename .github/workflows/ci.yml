@@ -157,7 +157,7 @@ jobs:
       - name: Fetch latest code
         uses: actions/checkout@v2
       - name: Run checker
-        run: ./subalfred ci default-features -p ../darwinia-common
+        run: ~/subalfred ci default-features -p ../darwinia-common
 
   check-with-node:
     name: Check with node
