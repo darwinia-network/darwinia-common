@@ -77,14 +77,14 @@ jobs:
           curl -L https://github.com/mozilla/sccache/releases/download/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz | tar xz
           sudo mv -f $SCCACHE_FILE/sccache /usr/bin
           sudo chmod +x /usr/bin/sccache
-          echo "$SCCACHE_GCS_KEY" > /home/runner/work/.gsc
+          echo $SCCACHE_GCS_KEY > /home/runner/.gsc
       - name: Fetch latest code
         uses: actions/checkout@v2
       - name: Run checker
         env:
           SCCACHE_GCS_RW_MODE: READ_WRITE
           SCCACHE_GCS_BUCKET: darwinia-build-cache
-          SCCACHE_GCS_KEY_PATH: /home/runner/work/.gsc
+          SCCACHE_GCS_KEY_PATH: /home/runner/.gsc
           RUSTC_WRAPPER: sccache
         # uses: actions-rs/cargo@v1
         # with:
@@ -114,7 +114,7 @@ jobs:
           curl -L https://github.com/mozilla/sccache/releases/download/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz | tar xz
           sudo mv -f $SCCACHE_FILE/sccache /usr/bin
           sudo chmod +x /usr/bin/sccache
-          echo "$SCCACHE_GCS_KEY" > /home/runner/work/.gsc
+          echo $SCCACHE_GCS_KEY > /home/runner/.gsc
       - name: Fetch latest code
         uses: actions/checkout@v2
       - name: Build
