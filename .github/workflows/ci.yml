@@ -14,11 +14,6 @@ jobs:
     name: Build subalfred
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch latest code
-        uses: actions/checkout@v2
-        with:
-          repository: l2ust/subalfred
-          ref: main
       - name: Install Rust nightly-2021-04-22 toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -33,6 +28,11 @@ jobs:
           sudo mv -f $SCCACHE_FILE/sccache /usr/bin/sccache
           sudo chmod +x /usr/bin/sccache
           echo $SCCACHE_GCS_KEY > sccache-gcs-key
+      - name: Fetch latest code
+        uses: actions/checkout@v2
+        with:
+          repository: l2ust/subalfred
+          ref: main
       - name: Build
         env:
           SCCACHE_GCS_RW_MODE: READ_WRITE
@@ -44,8 +44,6 @@ jobs:
         #   command: build
         #   args: --release
         run: |
-          ls -al
-          cat $HOME/sccache-gcs-key
           sccache --show-stats
           cargo b --release
           sccache --show-stats
@@ -61,8 +59,6 @@ jobs:
     name: Check Rust code
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch latest code
-        uses: actions/checkout@v2
       - name: Install Rust nightly-2021-04-22 toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -78,6 +74,8 @@ jobs:
           sudo mv -f $SCCACHE_FILE/sccache /usr/bin/sccache
           sudo chmod +x /usr/bin/sccache
           echo "$SCCACHE_GCS_KEY" > .gsc
+      - name: Fetch latest code
+        uses: actions/checkout@v2
       - name: Run checker
         env:
           SCCACHE_GCS_RW_MODE: READ_WRITE
@@ -93,8 +91,6 @@ jobs:
     name: Build node and internal test
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch latest code
-        uses: actions/checkout@v2
       - name: Install Rust nightly-2021-04-22 toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -110,6 +106,8 @@ jobs:
           sudo mv -f $SCCACHE_FILE/sccache /usr/bin/sccache
           sudo chmod +x /usr/bin/sccache
           echo "$SCCACHE_GCS_KEY" > .gsc
+      - name: Fetch latest code
+        uses: actions/checkout@v2
       - name: Build
         env:
           SCCACHE_GCS_RW_MODE: READ_WRITE
@@ -144,14 +142,14 @@ jobs:
     needs: [build-subalfred]
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch latest code
-        uses: actions/checkout@v2
       - name: Download subalfred
         uses: actions/download-artifact@v2
         with:
           name: subalfred
       - name: Uncompress subalfred
         run: tar xf subalfred.tar.zst -I pzstd
+      - name: Fetch latest code
+        uses: actions/checkout@v2
       - name: Run checker
         run: ./subalfred ci default-features -p ../darwinia-common
 
@@ -241,12 +239,12 @@ jobs:
         run: tar xf node.tar.zst -I pzstd
       - name: Launch node
         run: ./drml --dev --tmp &
-      - name: Fetch latest code
-        uses: actions/checkout@v2
       - name: Install nodejs 10
         uses: actions/setup-node@v1
         with:
           node-version: 10
+      - name: Fetch latest code
+        uses: actions/checkout@v2
       - name: DVM test
         run: cd tests/dvm && npm install && npm test
 
