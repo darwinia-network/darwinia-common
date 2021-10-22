@@ -308,8 +308,6 @@ impl<T: Config> Pallet<T> {
 		// Only when total relayer's number greater than `AssignedRelayersNumber`, selection happens.
 		let assigned_relayers_len = T::AssignedRelayersNumber::get() as usize;
 		if relayers.len() >= assigned_relayers_len {
-			<AssignedRelayersStorage<T>>::kill();
-
 			let mut assigned_relayers = Vec::with_capacity(assigned_relayers_len);
 			for i in 0..assigned_relayers_len {
 				if let Some(r) = relayers.get(i) {
