@@ -65,6 +65,11 @@ jobs:
           target: wasm32-unknown-unknown
           default: true
       - name: Run checker
+        env:
+          SCCACHE_GCS_RW_MODE: READ_WRITE
+          SCCACHE_GCS_BUCKET: darwinia-build-cache
+          SCCACHE_GCS_KEY_PATH: $HOME/.gsc
+          RUST_WRAPPER: sccache
         uses: actions-rs/cargo@v1
         with:
           command: check
@@ -83,17 +88,26 @@ jobs:
           target: wasm32-unknown-unknown
           default: true
       - name: Build
+        env:
+          SCCACHE_GCS_RW_MODE: READ_WRITE
+          SCCACHE_GCS_BUCKET: darwinia-build-cache
+          SCCACHE_GCS_KEY_PATH: $HOME/.gsc
+          RUST_WRAPPER: sccache
         uses: actions-rs/cargo@v1
         with:
           command: build
           args: --release --locked
       - name: Test
+        env:
+          SCCACHE_GCS_RW_MODE: READ_WRITE
+          SCCACHE_GCS_BUCKET: darwinia-build-cache
+          SCCACHE_GCS_KEY_PATH: $HOME/.gsc
+          RUST_WRAPPER: sccache
+          CARGO_INCREMENTAL: 0
         uses: actions-rs/cargo@v1
         with:
           command: test
           args: --release --all --locked
-        env:
-          CARGO_INCREMENTAL: 0
       - name: Compress node
         run: cp target/release/drml . && tar cf node.tar.zst drml -I pzstd
       - name: Upload node
