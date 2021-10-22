@@ -166,6 +166,8 @@ jobs:
           pwd
           ls -al
           tar xf subalfred.tar.zst -I pzstd
+          ls -al
+          pwd
       - name: Fetch latest code
         uses: actions/checkout@v2
       - name: Run checker
