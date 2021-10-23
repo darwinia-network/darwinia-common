@@ -261,9 +261,11 @@ jobs:
         with:
           name: node
       - name: Uncompress node
-        run: tar xf node.tar.zst -I pzstd
+        run: |
+          tar xf node.tar.zst -I pzstd
+          sudo mv drml /usr/bin
       - name: Launch node
-        run: drml --dev --tmp &
+        run: drml --unsafe-ws-external --unsafe-rpc-external --rpc-cors all --rpc-methods unsafe --chain pangolin-dev --alice &
       - name: Install nodejs 10
         uses: actions/setup-node@v1
         with:
