@@ -252,7 +252,6 @@ jobs:
               ${{ steps.check-pangoro-storage-prefix.outputs.check-pangoro-storage-prefix }}
               ```
             </details>
-            ---
 
   external-test:
     name: External test
