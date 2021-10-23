@@ -230,26 +230,28 @@ jobs:
         with:
           append: true
           message: |
-            ---
-            ## SHA ${{ github.event.pull_request.head.sha }}
-            ### Pangolin
-            #### Check Runtime Version
-            ```diff
-            ${{ steps.check-pangolin-runtime-version.outputs.check-pangolin-runtime-version }}
-            ```
-            #### Check Storage Prefix
-            ```diff
-            ${{ steps.check-pangolin-storage-prefix.outputs.check-pangolin-storage-prefix }}
-            ```
-            ### Pangoro
-            #### Check Runtime Version
-            ```diff
-            ${{ steps.check-pangoro-runtime-version.outputs.check-pangoro-runtime-version }}
-            ```
-            #### Check Storage Prefix
-            ```diff
-            ${{ steps.check-pangoro-storage-prefix.outputs.check-pangoro-storage-prefix }}
-            ```
+            <details>
+            <summary>Commit ${{ github.event.pull_request.head.sha }}</summary>
+
+            * Pangolin
+              Check Runtime Version
+              ```diff
+              ${{ steps.check-pangolin-runtime-version.outputs.check-pangolin-runtime-version }}
+              ```
+              Check Storage Prefix
+              ```diff
+              ${{ steps.check-pangolin-storage-prefix.outputs.check-pangolin-storage-prefix }}
+              ```
+            * Pangoro
+              Check Runtime Version
+              ```diff
+              ${{ steps.check-pangoro-runtime-version.outputs.check-pangoro-runtime-version }}
+              ```
+              Check Storage Prefix
+              ```diff
+              ${{ steps.check-pangoro-storage-prefix.outputs.check-pangoro-storage-prefix }}
+              ```
+            </details>
 
   external-test:
     name: External test
