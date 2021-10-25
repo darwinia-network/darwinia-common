@@ -48,7 +48,7 @@ use std::{collections::VecDeque, ops::RangeInclusive};
 use crate::{
 	self as darwinia_fee_market,
 	s2s::{
-		payment::{cal_rewards, slash_assigned_relayers, RewardsBook},
+		payment::{slash_and_calculate_rewards, slash_assigned_relayers, RewardsBook},
 		FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler,
 	},
 	*,
@@ -298,7 +298,7 @@ impl MessageDeliveryAndDispatchPayment<AccountId, TestMessageFee>
 			confirmation_relayer_rewards,
 			assigned_relayers_rewards,
 			treasury_total_rewards,
-		} = cal_rewards::<Test, ()>(message_relayers, relayer_fund_account);
+		} = slash_and_calculate_rewards::<Test, ()>(message_relayers, relayer_fund_account);
 		let confimation_key = (
 			b":relayer-reward:",
 			confirmation_relayer,

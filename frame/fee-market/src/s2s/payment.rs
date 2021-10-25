@@ -84,7 +84,7 @@ where
 			confirmation_relayer_rewards,
 			assigned_relayers_rewards,
 			treasury_total_rewards,
-		} = cal_rewards::<T, I>(messages_relayers, relayer_fund_account);
+		} = slash_and_calculate_rewards::<T, I>(messages_relayers, relayer_fund_account);
 
 		// Pay confirmation relayer rewards
 		pay_reward::<T>(
@@ -109,8 +109,8 @@ where
 	}
 }
 
-/// Calculate rewards for messages_relayers, confirmation relayers, treasury, assigned_relayers
-pub fn cal_rewards<T, I>(
+/// Slash and calculate rewards for messages_relayers, confirmation relayers, treasury, assigned_relayers
+pub fn slash_and_calculate_rewards<T, I>(
 	messages_relayers: VecDeque<UnrewardedRelayer<T::AccountId>>,
 	relayer_fund_account: &T::AccountId,
 ) -> RewardsBook<T::AccountId, RingBalance<T>>
