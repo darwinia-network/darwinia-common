@@ -62,7 +62,7 @@ pub mod s2s {
 		fn into_ethereum_id(address: &A) -> H160;
 	}
 
-	// RelayMessageCaller send message to pallet-messages
+	// RelayMessageSender send message to pallet-messages
 	pub trait RelayMessageSender {
 		fn encode_send_message(
 			pallet_index: u32,
