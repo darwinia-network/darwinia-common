@@ -87,21 +87,21 @@ where
 		} = slash_and_calculate_rewards::<T, I>(messages_relayers, relayer_fund_account);
 
 		// Pay confirmation relayer rewards
-		pay_reward::<T>(
+		transfer_and_print_logs_on_error::<T>(
 			relayer_fund_account,
 			confirmation_relayer,
 			confirmation_relayer_rewards,
 		);
 		// Pay messages relayers rewards
 		for (relayer, reward) in messages_relayers_rewards {
-			pay_reward::<T>(relayer_fund_account, &relayer, reward);
+			transfer_and_print_logs_on_error::<T>(relayer_fund_account, &relayer, reward);
 		}
 		// Pay assign relayer reward
 		for (relayer, reward) in assigned_relayers_rewards {
-			pay_reward::<T>(relayer_fund_account, &relayer, reward);
+			transfer_and_print_logs_on_error::<T>(relayer_fund_account, &relayer, reward);
 		}
 		// Pay treasury reward
-		pay_reward::<T>(
+		transfer_and_print_logs_on_error::<T>(
 			relayer_fund_account,
 			&T::TreasuryPalletId::get().into_account(),
 			treasury_total_rewards,
@@ -206,7 +206,7 @@ pub fn slash_assigned_relayers<T: Config>(
 
 			for assigned_relayer in order.relayers_slice() {
 				let slashed_asset =
-					pay_slash::<T>(&assigned_relayer.id, relayer_fund_account, slash_max);
+					do_slash::<T>(&assigned_relayer.id, relayer_fund_account, slash_max);
 				total_slash += slashed_asset;
 			}
 		}
@@ -215,8 +215,8 @@ pub fn slash_assigned_relayers<T: Config>(
 	total_slash
 }
 
-/// Pay slash for absent assigned relayers
-pub fn pay_slash<T: Config>(
+/// Do slash for absent assigned relayers
+pub fn do_slash<T: Config>(
 	slash_account: &T::AccountId,
 	fund_account: &T::AccountId,
 	slash_max: RingBalance<T>,
@@ -227,18 +227,22 @@ pub fn pay_slash<T: Config>(
 	if locked_collateral >= slash_max {
 		slashed = slash_max;
 		let locked_reserved = locked_collateral.saturating_sub(slashed);
-		pay_reward::<T>(slash_account, fund_account, slashed);
+		transfer_and_print_logs_on_error::<T>(slash_account, fund_account, slashed);
 		crate::Pallet::<T>::update_collateral(&slash_account, locked_reserved);
 	} else {
 		slashed = locked_collateral;
-		pay_reward::<T>(slash_account, fund_account, slashed);
+		transfer_and_print_logs_on_error::<T>(slash_account, fund_account, slashed);
 		crate::Pallet::<T>::update_collateral(&slash_account, RingBalance::<T>::zero());
 	}
 	slashed
 }
 
-/// Pay reward to a specific account
-fn pay_reward<T: Config>(from: &T::AccountId, to: &T::AccountId, reward: RingBalance<T>) {
+/// Do transfer
+fn transfer_and_print_logs_on_error<T: Config>(
+	from: &T::AccountId,
+	to: &T::AccountId,
+	reward: RingBalance<T>,
+) {
 	if reward.is_zero() {
 		return;
 	}
