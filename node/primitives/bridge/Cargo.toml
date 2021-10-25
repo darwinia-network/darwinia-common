@@ -13,10 +13,16 @@ version     = "2.6.7"
 # darwinia-network
 common-primitives   = { default-features = false, path = "../common" }
 darwinia-fee-market = { default-features = false, path = "../../../frame/fee-market" }
+darwinia-support    = { default-features = false, path = "../../../frame/support" }
+dp-asset = { default-features = false, path = "../../../primitives/asset"}
+dp-contract = { default-features = false, path = "../../../primitives/contract"}
 # paritytech
 bp-messages            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
 bp-runtime             = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
+bp-message-dispatch    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
+
 bridge-runtime-common  = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
+codec                  = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 frame-support          = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 pallet-bridge-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
 sp-api                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
@@ -31,10 +37,15 @@ std = [
 	# darwinia-network
 	"common-primitives/std",
 	"darwinia-fee-market/std",
+	"darwinia-support/std",
 	# paritytech
 	"bp-messages/std",
 	"bp-runtime/std",
+	"bp-message-dispatch/std",
 	"bridge-runtime-common/std",
+	"codec/std",
+	"dp-asset/std",
+	"dp-contract/std",
 	"pallet-bridge-dispatch/std",
 	"frame-support/std",
 	"sp-api/std",

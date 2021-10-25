@@ -35,6 +35,8 @@ use sp_std::{marker::PhantomData, prelude::*};
 use common_primitives::*;
 use darwinia_fee_market::RingBalance;
 
+pub mod call;
+
 /// Maximal size (in bytes) of encoded (using `Encode::encode()`) account id.
 pub const MAXIMAL_ENCODED_ACCOUNT_ID_SIZE: u32 = 32;
 
