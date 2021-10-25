@@ -10,18 +10,19 @@ use dp_asset::token::Token;
 use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
 use from_substrate_issuing::{Config, EncodeCall};
 
-// remote chain pangoro's dispatch info
+/// The bridged chain(Pangoro) dispatch info
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 pub enum PangoroRuntime {
-	/// s2s bridge backing pallet.
-	/// this index must be the same as the backing pallet in pangoro runtime
+	/// NOTE: The index must be the same as the backing pallet in the pangoro runtime
 	#[codec(index = 20)]
 	Sub2SubBacking(PangoroSub2SubBackingCall),
 }
 
+/// The backing call in the pangoro s2s backing pallet
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 #[allow(non_camel_case_types)]
 pub enum PangoroSub2SubBackingCall {
+	/// NOTE: The index depends on the call order in the s2s backing pallet.
 	#[codec(index = 2)]
 	unlock_from_remote(Token, AccountId),
 }
