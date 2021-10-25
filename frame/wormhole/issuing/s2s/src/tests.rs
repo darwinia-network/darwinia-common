@@ -46,9 +46,17 @@ use sp_runtime::{
 	AccountId32, DispatchErrorWithPostInfo, RuntimeDebug,
 };
 
+use array_bytes::hex2bytes_unchecked;
+use ethereum::{Transaction, TransactionAction, TransactionSignature};
+use frame_support::assert_ok;
+use rlp::RlpStream;
+use sha3::{Digest, Keccak256};
+
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 type Balance = u64;
+
+const TEST_CONTRACT_BYTECODE: &str = "608060405234801561001057600080fd5b506105ad806100206000396000f3fe6080604052600436106100595760003560e01c8063148a79fd14610065578063739d40d9146100ab578063b28bf620146100c0578063c8ff0854146100d5578063ecd22a191461011a578063ef13ef4d1461015557610060565b3661006057005b600080fd5b34801561007157600080fd5b5061008f6004803603602081101561008857600080fd5b50356102b6565b604080516001600160a01b039092168252519081900360200190f35b3480156100b757600080fd5b5061008f6102d1565b3480156100cc57600080fd5b5061008f6102e4565b3480156100e157600080fd5b50610118600480360360608110156100f857600080fd5b506001600160a01b038135811691602081013590911690604001356102e9565b005b34801561012657600080fd5b5061008f6004803603604081101561013d57600080fd5b506001600160a01b03813581169160200135166103e3565b34801561016157600080fd5b5061008f600480360360c081101561017857600080fd5b63ffffffff82351691908101906040810160208201356401000000008111156101a057600080fd5b8201836020820111156101b257600080fd5b803590602001918460018302840111640100000000831117156101d457600080fd5b91908080601f016020809104026020016040519081016040528093929190818152602001838380828437600092019190915250929594936020810193503591505064010000000081111561022757600080fd5b82018360208201111561023957600080fd5b8035906020019184600183028401116401000000008311171561025b57600080fd5b91908080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152509295505060ff8335169350506001600160a01b03602083013581169260400135169050610442565b6000602081905290815260409020546001600160a01b031681565b6b06d6f646c6461722f64766d760441b81565b600181565b6b06d6f646c6461722f64766d760441b33146103365760405162461bcd60e51b81526004018080602001828103825260288152602001806105506028913960400191505060405180910390fd5b6001600160a01b038316600114610394576040805162461bcd60e51b815260206004820152601d60248201527f696e76616c6964206d617070696e6720746f6b656e2061646472657373000000604482015290519081900360640190fd5b604080516001600160a01b0380861682528416602082015280820183905290517f4c965b0027d1a0b20e874218493f3717f065d312001e29e75c42d135c7ab96259181900360600190a1505050565b604080516bffffffffffffffffffffffff19606094851b81166020808401919091529390941b9093166034840152805160288185030181526048909301815282519282019290922060009081529081905220546001600160a01b031690565b60006b06d6f646c6461722f64766d760441b33146104915760405162461bcd60e51b81526004018080602001828103825260288152602001806105506028913960400191505060405180910390fd5b604080516bffffffffffffffffffffffff19606086811b82166020808501919091529086901b909116603483015282516028818403018152604883018085528151918301919091206000818152928390529184902080546001600160a01b03191660019081179091556001600160a01b038089169092529086166068840152608883015291517fc9c337e478378d4317643765b21b7d2da0d66f86675b2e3b6e1aff67ce572daf9181900360a80190a150600197965050505050505056fe53797374656d3a2063616c6c6572206973206e6f74207468652073797374656d206163636f756e74a26469706673582212202576f15b3a6363c8f6949d2605f736ff2b3b65e179f1788b5db7d244efebbc0d64736f6c63430006090033";
 
 darwinia_support::impl_test_account_data! {}
 
@@ -266,14 +274,100 @@ frame_support::construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		S2sIssuing: s2s_issuing::{Pallet, Call, Storage, Config, Event<T>},
+		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>},
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config},
 	}
 }
 
-pub fn new_test_ext() -> sp_io::TestExternalities {
+pub struct AccountInfo {
+	pub address: H160,
+	pub account_id: AccountId32,
+	pub private_key: H256,
+}
+
+pub struct UnsignedTransaction {
+	pub nonce: U256,
+	pub gas_price: U256,
+	pub gas_limit: U256,
+	pub action: TransactionAction,
+	pub value: U256,
+	pub input: Vec<u8>,
+}
+impl UnsignedTransaction {
+	fn signing_rlp_append(&self, s: &mut RlpStream) {
+		s.begin_list(9);
+		s.append(&self.nonce);
+		s.append(&self.gas_price);
+		s.append(&self.gas_limit);
+		s.append(&self.action);
+		s.append(&self.value);
+		s.append(&self.input);
+		s.append(&ChainId::get());
+		s.append(&0u8);
+		s.append(&0u8);
+	}
+
+	fn signing_hash(&self) -> H256 {
+		let mut stream = RlpStream::new();
+		self.signing_rlp_append(&mut stream);
+		H256::from_slice(&Keccak256::digest(&stream.out()).as_slice())
+	}
+
+	pub fn sign(&self, key: &H256) -> Transaction {
+		let hash = self.signing_hash();
+		let msg = libsecp256k1::Message::parse(hash.as_fixed_bytes());
+		let s = libsecp256k1::sign(
+			&msg,
+			&libsecp256k1::SecretKey::parse_slice(&key[..]).unwrap(),
+		);
+		let sig = s.0.serialize();
+
+		let sig = TransactionSignature::new(
+			s.1.serialize() as u64 % 2 + ChainId::get() * 2 + 35,
+			H256::from_slice(&sig[0..32]),
+			H256::from_slice(&sig[32..64]),
+		)
+		.unwrap();
+
+		Transaction {
+			nonce: self.nonce,
+			gas_price: self.gas_price,
+			gas_limit: self.gas_limit,
+			action: self.action,
+			value: self.value,
+			input: self.input.clone(),
+			signature: sig,
+		}
+	}
+}
+
+fn address_build(seed: u8) -> AccountInfo {
+	let raw_private_key = [seed + 1; 32];
+	let secret_key = libsecp256k1::SecretKey::parse_slice(&raw_private_key).unwrap();
+	let raw_public_key = &libsecp256k1::PublicKey::from_secret_key(&secret_key).serialize()[1..65];
+	let raw_address = {
+		let mut s = [0; 20];
+		s.copy_from_slice(&Keccak256::digest(raw_public_key)[12..]);
+		s
+	};
+	let raw_account = {
+		let mut s = [0; 32];
+		s[..20].copy_from_slice(&raw_address);
+		s
+	};
+
+	AccountInfo {
+		private_key: raw_private_key.into(),
+		account_id: raw_account.into(),
+		address: raw_address.into(),
+	}
+}
+
+pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExternalities) {
 	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap();
@@ -287,12 +381,28 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		&mut t,
 	)
 	.unwrap();
-	t.into()
+
+	let pairs = (0..accounts_len)
+		.map(|i| address_build(i as u8))
+		.collect::<Vec<_>>();
+
+	let balances: Vec<_> = (0..accounts_len)
+		.map(|i| (pairs[i].account_id.clone(), 100_000_000_000))
+		.collect();
+
+	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
+		.assimilate_storage(&mut t)
+		.unwrap();
+	let mut ext = sp_io::TestExternalities::new(t);
+	ext.execute_with(|| System::set_block_number(1));
+	(pairs, ext.into())
+	//t.into()
 }
 
 #[test]
 fn burn_and_remote_unlock_success() {
-	new_test_ext().execute_with(|| {
+	let (_, mut ext) = new_test_ext(1);
+	ext.execute_with(|| {
 		let original_token = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		let token: Token = (1, TokenInfo::new(original_token, Some(U256::from(1)), None)).into();
 		let burn_info = S2sRemoteUnlockInfo {
@@ -306,5 +416,38 @@ fn burn_and_remote_unlock_success() {
 		);
 		<Test as s2s_issuing::Config>::CallEncoder::encode_remote_unlock(submitter, burn_info)
 			.unwrap();
+	});
+}
+
+#[test]
+fn register_from_remote_success() {
+	let (pairs, mut ext) = new_test_ext(1);
+	let alice = &pairs[0];
+	ext.execute_with(|| {
+		let t = UnsignedTransaction {
+			nonce: U256::zero(),
+			gas_price: U256::from(1),
+			gas_limit: U256::from(0x100000),
+			action: ethereum::TransactionAction::Create,
+			value: U256::zero(),
+			input: hex2bytes_unchecked(TEST_CONTRACT_BYTECODE),
+		}
+		.sign(&alice.private_key);
+		assert_ok!(Ethereum::execute(
+			alice.address,
+			t.input,
+			t.value,
+			t.gas_limit,
+			Some(t.gas_price),
+			Some(t.nonce),
+			t.action,
+			None,
+		));
+		let mapping_token_factory_address: H160 =
+			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
+		assert_ok!(S2sIssuing::set_mapping_factory_address(
+			Origin::root(),
+			mapping_token_factory_address,
+		));
 	});
 }
