@@ -165,8 +165,8 @@
 		"mmr_proof": "Vec<H256>"
 	},
 	"TokenOption": {
-		"name": "Vec<u32>",
-		"symbol": "Vec<u32>",
+		"name": "Vec<u8>",
+		"symbol": "Vec<u8>",
 		"decimal": "u8"
 	},
 	"TokenInfo": {
@@ -176,7 +176,7 @@
 	},
 	"Token": {
 		"_enum": {
-			"InvalidToken": "u8",
+			"InvalidToken": null,
 			"Native": "TokenInfo",
 			"Erc20": "TokenInfo"
 		}
