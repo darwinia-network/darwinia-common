@@ -173,7 +173,7 @@ impl darwinia_evm::Config for Test {
 
 frame_support::parameter_types! {
 	pub const S2sRelayPalletId: PalletId = PalletId(*b"da/s2sre");
-	pub const PangoroChainId: bp_runtime::ChainId = *b"pcid";
+	pub const PangoroChainId: bp_runtime::ChainId = *b"pagr";
 	pub RootAccountForPayments: Option<AccountId32> = Some([1;32].into());
 	pub PangoroName: Vec<u8> = (b"Pangoro").to_vec();
 }

@@ -28,7 +28,10 @@ use dp_asset::token::TokenInfo;
 use array_bytes::hex2bytes_unchecked;
 use frame_support::assert_ok;
 
+use array_bytes::hex_into_unchecked;
+use dp_asset::token::TokenOption;
 use mock::*;
+use sp_runtime::AccountId32;
 
 #[test]
 fn burn_and_remote_unlock_success() {
@@ -80,5 +83,40 @@ fn register_from_remote_success() {
 			Origin::root(),
 			mapping_token_factory_address,
 		));
+		let remote_root_address = hex2bytes_unchecked(
+			"0xaaa5b780fa60c639ad17212d92e8e6257cb468baa88e1f826e6fe8ae6b7b700c",
+		);
+		let remote_root_account: AccountId32 =
+			AccountId32::decode(&mut &remote_root_address[..]).unwrap_or_default();
+		let original_token_address = hex_into_unchecked("0000000000000000000000000000000000000002");
+		let token_option = TokenOption {
+			name: [10; 32].to_vec(),
+			symbol: [20; 32].to_vec(),
+			decimal: 18,
+		};
+		let token = Token::Native(TokenInfo::new(
+			original_token_address,
+			None,
+			Some(token_option),
+		));
+		let backing_address =
+			<Test as s2s_issuing::Config>::ToEthAddressT::into_ethereum_id(&remote_root_account);
+
+		// before register, the mapping token address is Zero
+		assert_eq!(
+			S2sIssuing::mapped_token_address(backing_address, original_token_address).unwrap(),
+			H160::from_str("0000000000000000000000000000000000000000").unwrap()
+		);
+		assert_ok!(S2sIssuing::register_from_remote(
+			Origin::signed(remote_root_account.clone()),
+			token
+		));
+		let mapping_token =
+			S2sIssuing::mapped_token_address(backing_address, original_token_address).unwrap();
+		// after register, the mapping token address is 0x0000000000000000000000000000000000000001
+		assert_eq!(
+			mapping_token,
+			H160::from_str("0000000000000000000000000000000000000001").unwrap()
+		);
 	});
 }
