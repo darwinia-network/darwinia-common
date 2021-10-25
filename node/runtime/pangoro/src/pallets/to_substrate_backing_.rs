@@ -11,31 +11,13 @@ use sp_core::H160;
 use sp_runtime::DispatchErrorWithPostInfo;
 // --- darwinia-network ---
 use crate::*;
-use bridge_primitives::{AccountIdConverter, PANGORO_PANGOLIN_LANE};
+use bridge_primitives::{
+	call::{CallParams, EncodeRuntimeCall, RuntimeCall},
+	AccountIdConverter, PANGORO_PANGOLIN_LANE,
+};
 use darwinia_support::s2s::{nonce_to_message_id, RelayMessageSender, TokenMessageId};
 use dp_asset::{token::Token, RecipientAccount};
 use to_substrate_backing::{Config, EncodeCall};
-
-/// Bridged chain pangolin call info
-#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
-pub enum PangolinRuntime {
-	/// Note: this index must be the same as the backing pallet in pangolin chain runtime
-	#[codec(index = 49)]
-	Sub2SubIssuing(PangolinSub2SubIssuingCall),
-}
-
-/// Something important to note:
-/// The index below represent the call order in the pangolin issuing pallet call.
-/// For example, `index = 1` point to the `register_from_remote` (second)call in pangolin runtime.
-/// You must update the index here if you change the call order in Pangolin runtime.
-#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
-#[allow(non_camel_case_types)]
-pub enum PangolinSub2SubIssuingCall {
-	#[codec(index = 0)]
-	register_from_remote(Token),
-	#[codec(index = 1)]
-	issue_from_remote(Token, H160),
-}
 
 pub struct PangolinCallEncoder;
 impl PangolinCallEncoder {
@@ -57,10 +39,7 @@ impl EncodeCall<AccountId, ToPangolinMessagePayload> for PangolinCallEncoder {
 		weight: u64,
 		token: Token,
 	) -> ToPangolinMessagePayload {
-		let call = PangolinRuntime::Sub2SubIssuing(
-			PangolinSub2SubIssuingCall::register_from_remote(token),
-		)
-		.encode();
+		let call = RuntimeCall::encode_call(0, 0, CallParams::RegisterFromRemote(token)).unwrap();
 		Self::to_payload(spec_version, weight, call)
 	}
 	/// Encode issuing pallet remote_issue call
@@ -71,10 +50,9 @@ impl EncodeCall<AccountId, ToPangolinMessagePayload> for PangolinCallEncoder {
 		recipient: RecipientAccount<AccountId>,
 	) -> Result<ToPangolinMessagePayload, ()> {
 		let call = match recipient {
-			RecipientAccount::<AccountId>::EthereumAccount(r) => PangolinRuntime::Sub2SubIssuing(
-				PangolinSub2SubIssuingCall::issue_from_remote(token, r),
-			)
-			.encode(),
+			RecipientAccount::<AccountId>::EthereumAccount(r) => {
+				RuntimeCall::encode_call(0, 0, CallParams::IssueFromRemote(token, r)).unwrap()
+			}
 			_ => return Err(()),
 		};
 		Ok(Self::to_payload(spec_version, weight, call))

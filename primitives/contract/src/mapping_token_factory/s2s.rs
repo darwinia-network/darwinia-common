@@ -68,7 +68,7 @@ impl Sub2SubMappingTokenFactory {
 /// @original_token: the origin token address
 /// @recipient: the final receiver of the token to be unlocked on the source chain
 /// @amount: the amount of the unlocked token
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct S2sRemoteUnlockInfo {
 	pub spec_version: u32,
 	pub weight: u64,

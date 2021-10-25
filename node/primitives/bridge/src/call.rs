@@ -85,11 +85,7 @@ pub trait EncodeRuntimeCall {
 pub struct RuntimeCall;
 
 impl EncodeRuntimeCall for RuntimeCall {
-	fn encode_call(
-		spec_version: u32,
-		weight: u64,
-		call_params: CallParams,
-	) -> Result<Vec<u8>, ()> {
+	fn encode_call(spec_version: u32, weight: u64, call_params: CallParams) -> Result<Vec<u8>, ()> {
 		let call = match call_params {
 			CallParams::RegisterFromRemote(token) => PangolinRuntime::Sub2SubIssuing(
 				PangolinSub2SubIssuingCall::register_from_remote(token),
