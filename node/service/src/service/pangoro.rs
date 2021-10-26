@@ -73,6 +73,7 @@ sc_executor::native_executor_instance!(
 );
 
 impl_runtime_apis![
+	darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>,
 	darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance>
 ];
 

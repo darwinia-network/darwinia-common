@@ -6195,6 +6195,7 @@ dependencies = [
  "bridge-runtime-common",
  "common-primitives",
  "darwinia-balances",
+ "darwinia-balances-rpc-runtime-api",
  "darwinia-evm",
  "darwinia-fee-market",
  "darwinia-fee-market-rpc-runtime-api",
