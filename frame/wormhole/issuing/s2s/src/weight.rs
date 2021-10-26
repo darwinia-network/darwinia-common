@@ -22,7 +22,7 @@
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("dev"), DB CACHE: 128
 
 // Executed Command:
-// ./target/debug/drml
+// ./target/release/drml
 // benchmark
 // --chain
 // dev
@@ -42,13 +42,11 @@
 // --output=./frame/wormhole/issuing/s2s/src/weight.rs
 // --template=./.maintain/frame-weight-template.hbs
 
+
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{
-	traits::Get,
-	weights::{constants::RocksDbWeight, Weight},
-};
+use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions needed for from_substrate_issuing.
@@ -56,43 +54,52 @@ pub trait WeightInfo {
 	fn register_from_remote() -> Weight;
 	fn issue_from_remote() -> Weight;
 	fn set_mapping_factory_address() -> Weight;
+	
 }
 
 /// Weights for from_substrate_issuing using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn register_from_remote() -> Weight {
-		(13_337_000_000 as Weight)
+		(1_129_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(13 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+			
 	}
 	fn issue_from_remote() -> Weight {
-		(9_479_000_000 as Weight)
+		(815_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(13 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+			
 	}
 	fn set_mapping_factory_address() -> Weight {
-		(760_000_000 as Weight)
+		(79_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+			
 	}
+	
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn register_from_remote() -> Weight {
-		(13_337_000_000 as Weight)
+		(1_129_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(13 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+			
 	}
 	fn issue_from_remote() -> Weight {
-		(9_479_000_000 as Weight)
+		(815_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(13 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+			
 	}
 	fn set_mapping_factory_address() -> Weight {
-		(760_000_000 as Weight)
+		(79_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+			
 	}
+	
 }
