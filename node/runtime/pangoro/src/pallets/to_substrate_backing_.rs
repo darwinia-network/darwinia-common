@@ -9,12 +9,13 @@ use frame_support::{traits::PalletInfoAccess, weights::PostDispatchInfo, PalletI
 use frame_system::RawOrigin;
 use sp_runtime::DispatchErrorWithPostInfo;
 // --- darwinia-network ---
-use crate::{pangolin_messages::PangolinRuntimeCalls, *};
+use crate::{pangolin_messages::PangolinRuntimeCallsEncoder, *};
 use bridge_primitives::{AccountIdConverter, PANGORO_PANGOLIN_LANE};
 use darwinia_support::s2s::{nonce_to_message_id, RelayMessageSender, TokenMessageId};
 use dp_s2s::{CallParams, EncodeCall, PayloadCreate};
 use to_substrate_backing::Config;
 
+/// Create message payload according to call parameters
 pub struct PangolinPayLoadCreator;
 impl PayloadCreate<AccountId, ToPangolinMessagePayload> for PangolinPayLoadCreator {
 	fn payload(
@@ -22,7 +23,7 @@ impl PayloadCreate<AccountId, ToPangolinMessagePayload> for PangolinPayLoadCreat
 		weight: u64,
 		call_params: CallParams<AccountId>,
 	) -> Result<ToPangolinMessagePayload, ()> {
-		let call = PangolinRuntimeCalls::encode_call(call_params)?;
+		let call = PangolinRuntimeCallsEncoder::encode_call(call_params)?;
 		return Ok(FromThisChainMessagePayload::<WithPangolinMessageBridge> {
 			spec_version,
 			weight,
@@ -32,6 +33,8 @@ impl PayloadCreate<AccountId, ToPangolinMessagePayload> for PangolinPayLoadCreat
 		});
 	}
 }
+
+/// Send payload to the messages pallet
 pub struct ToPangolinMessageSender;
 impl ToPangolinMessageSender {
 	fn send_message_call(

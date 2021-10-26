@@ -25,6 +25,7 @@ use sp_std::vec::Vec;
 use dp_asset::token::Token;
 use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
 
+/// The parameters box for the pallet runtime call.
 #[derive(Clone)]
 pub enum CallParams<AccountId> {
 	RegisterFromRemote(Token),
@@ -32,10 +33,12 @@ pub enum CallParams<AccountId> {
 	UnlockFromRemote(AccountId, S2sRemoteUnlockInfo),
 }
 
+/// Encoding the call parameters to dispatch call binary.
 pub trait EncodeCall<AccountId> {
 	fn encode_call(call_params: CallParams<AccountId>) -> Result<Vec<u8>, ()>;
 }
 
+/// Creating a concrete message payload which would be relay to target chain.
 pub trait PayloadCreate<AccountId, MessagePayload> {
 	fn payload(
 		spec_version: u32,

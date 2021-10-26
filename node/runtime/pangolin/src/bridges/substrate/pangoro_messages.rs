@@ -258,7 +258,7 @@ impl SourceHeaderChain<pangoro_primitives::Balance> for Pangoro {
 	}
 }
 
-/// The bridged chain(Pangoro) dispatch info
+/// Pangoro chain's dispatch call info
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 pub enum PangoroRuntime {
 	/// NOTE: The index must be the same as the backing pallet in the pangoro runtime
@@ -266,7 +266,9 @@ pub enum PangoroRuntime {
 	Sub2SubBacking(PangoroSub2SubBackingCall),
 }
 
-/// The backing call in the pangoro s2s backing pallet
+/// Something important to note:
+/// The index below represent the call order in the pangolin issuing pallet call.
+/// You must update the index here if you change the call order in Pangolin runtime.
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 #[allow(non_camel_case_types)]
 pub enum PangoroSub2SubBackingCall {
@@ -275,8 +277,9 @@ pub enum PangoroSub2SubBackingCall {
 	unlock_from_remote(Token, AccountId),
 }
 
-pub struct PangoroRuntimeCalls;
-impl EncodeCall<AccountId> for PangoroRuntimeCalls {
+/// Generate concrete dispatch call data
+pub struct PangoroRuntimeCallsEncoder;
+impl EncodeCall<AccountId> for PangoroRuntimeCallsEncoder {
 	fn encode_call(call_params: CallParams<AccountId>) -> Result<Vec<u8>, ()> {
 		let call = match call_params {
 			CallParams::UnlockFromRemote(_account_id, unlock_info) => {

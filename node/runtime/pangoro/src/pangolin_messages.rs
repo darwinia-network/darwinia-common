@@ -266,7 +266,7 @@ impl SourceHeaderChain<pangolin_primitives::Balance> for Pangolin {
 	}
 }
 
-/// Bridged chain pangolin call info
+/// Pangolin chain's dispatch call info
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 pub enum PangolinRuntime {
 	/// Note: this index must be the same as the backing pallet in pangolin chain runtime
@@ -276,7 +276,6 @@ pub enum PangolinRuntime {
 
 /// Something important to note:
 /// The index below represent the call order in the pangolin issuing pallet call.
-/// For example, `index = 1` point to the `register_from_remote` (second)call in pangolin runtime.
 /// You must update the index here if you change the call order in Pangolin runtime.
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 #[allow(non_camel_case_types)]
@@ -287,8 +286,9 @@ pub enum PangolinSub2SubIssuingCall {
 	issue_from_remote(Token, H160),
 }
 
-pub struct PangolinRuntimeCalls;
-impl EncodeCall<AccountId> for PangolinRuntimeCalls {
+/// Generate concrete dispatch call data
+pub struct PangolinRuntimeCallsEncoder;
+impl EncodeCall<AccountId> for PangolinRuntimeCallsEncoder {
 	fn encode_call(call_params: CallParams<AccountId>) -> Result<Vec<u8>, ()> {
 		let call = match call_params {
 			CallParams::RegisterFromRemote(token) => PangolinRuntime::Sub2SubIssuing(
