@@ -19,17 +19,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // --- paritytech ---
-use bp_message_dispatch::CallOrigin;
-use bp_runtime::messages::DispatchFeePayment;
 use codec::{Decode, Encode};
 use sp_core::H160;
 use sp_std::vec::Vec;
 // --- darwinia-network ---
-use crate::{FromThisChainMessagePayload, MessageBridge};
 use common_primitives::AccountId;
-use darwinia_support::{s2s::ToEthAddress, to_bytes32};
-use dp_asset::{token::Token, RecipientAccount};
-use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
+use darwinia_support::to_bytes32;
+use dp_asset::token::Token;
 use dp_s2s::{CallParams, EncodeRuntimeCall};
 
 /// The bridged chain(Pangoro) dispatch info
@@ -82,7 +78,7 @@ impl EncodeRuntimeCall<AccountId> for RuntimeCall {
 				PangolinSub2SubIssuingCall::issue_from_remote(token, address),
 			)
 			.encode(),
-			CallParams::UnlockFromRemote(account_id, unlock_info) => {
+			CallParams::UnlockFromRemote(_account_id, unlock_info) => {
 				if unlock_info.recipient.len() != 32 {
 					return Err(());
 				}

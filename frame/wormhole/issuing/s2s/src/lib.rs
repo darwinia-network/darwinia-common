@@ -49,10 +49,9 @@ use darwinia_support::{
 };
 use dp_asset::token::Token;
 use dp_contract::mapping_token_factory::{
-	basic::BasicMappingTokenFactory as bmtf,
-	s2s::{S2sRemoteUnlockInfo, Sub2SubMappingTokenFactory as smtf},
+	basic::BasicMappingTokenFactory as bmtf, s2s::Sub2SubMappingTokenFactory as smtf,
 };
-use dp_s2s::{CallParams, PayloadCreate};
+use dp_s2s::PayloadCreate;
 use dvm_ethereum::InternalTransactHandler;
 
 pub use pallet::*;

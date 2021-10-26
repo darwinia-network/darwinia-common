@@ -676,7 +676,6 @@ dependencies = [
 name = "bridge-primitives"
 version = "2.6.7"
 dependencies = [
- "bp-message-dispatch",
  "bp-messages",
  "bp-runtime",
  "bridge-runtime-common",
@@ -684,7 +683,6 @@ dependencies = [
  "darwinia-fee-market",
  "darwinia-support",
  "dp-asset",
- "dp-contract",
  "dp-s2s",
  "frame-support",
  "pallet-bridge-dispatch",
@@ -2247,7 +2245,6 @@ version = "2.6.7"
 dependencies = [
  "dp-asset",
  "dp-contract",
- "parity-scale-codec",
  "sp-core",
  "sp-std",
 ]

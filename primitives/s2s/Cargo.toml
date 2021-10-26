@@ -15,7 +15,6 @@ version     = "2.6.7"
 dp-asset    = { default-features = false, path = "../asset"}
 dp-contract = { default-features = false, path = "../contract"}
 # paritytech
-codec   = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
 sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 sp-std  = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 
@@ -25,11 +24,9 @@ default = ["std"]
 std = [
 	# crates.io
 	# darwinia-network
-	# "ethereum-primitives/std",
 	"dp-asset/std",
 	"dp-contract/std",
 	# paritytech
-	"codec/std",
 	"sp-core/std",
 	"sp-std/std",
 ]

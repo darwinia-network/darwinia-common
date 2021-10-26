@@ -19,7 +19,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // --- paritytech ---
-use codec::{Decode, Encode};
 use sp_core::H160;
 use sp_std::vec::Vec;
 // --- darwinia-network ---

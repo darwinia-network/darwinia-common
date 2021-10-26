@@ -5,11 +5,10 @@ use sp_runtime::AccountId32;
 // --- darwinia-network ---
 use crate::*;
 use bridge_primitives::{call::RuntimeCall, AccountIdConverter, PANGORO_CHAIN_ID};
-use darwinia_support::{s2s::ToEthAddress, to_bytes32, ChainName};
-use dp_asset::token::Token;
-use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
+use darwinia_support::{s2s::ToEthAddress, ChainName};
 use dp_s2s::{CallParams, EncodeRuntimeCall, PayloadCreate};
 use from_substrate_issuing::Config;
+
 pub struct PangoroPayLoadCreator;
 impl PayloadCreate<AccountId, ToPangoroMessagePayload> for PangoroPayLoadCreator {
 	fn payload(
@@ -19,18 +18,15 @@ impl PayloadCreate<AccountId, ToPangoroMessagePayload> for PangoroPayLoadCreator
 	) -> Result<ToPangoroMessagePayload, ()> {
 		let call = RuntimeCall::encode_call(call_params.clone())?;
 		match call_params {
-			CallParams::UnlockFromRemote(submitter, unlock_info) => {
-				return Ok(ToPangoroMessagePayload {
-					spec_version,
-					weight,
-					origin: bp_message_dispatch::CallOrigin::SourceAccount(submitter),
-					call,
-					dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
-				});
-			}
-			_ => return Err(()),
+			CallParams::UnlockFromRemote(submitter, _) => Ok(ToPangoroMessagePayload {
+				spec_version,
+				weight,
+				origin: bp_message_dispatch::CallOrigin::SourceAccount(submitter),
+				call,
+				dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
+			}),
+			_ => Err(()),
 		}
-		Err(())
 	}
 }
 

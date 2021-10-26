@@ -56,10 +56,7 @@ use darwinia_support::{
 	},
 	AccountId,
 };
-use dp_asset::{
-	token::{Token, TokenInfo, TokenOption},
-	RecipientAccount,
-};
+use dp_asset::token::{Token, TokenInfo, TokenOption};
 use dp_s2s::{CallParams, PayloadCreate};
 
 pub type Balance = u128;
@@ -298,10 +295,6 @@ pub mod pallet {
 				option: None,
 			});
 
-			// let account = RecipientAccount::EthereumAccount(recipient);
-			// let payload =
-			// 	T::CallEncoder::encode_remote_issue(spec_version, weight, token.clone(), account)
-			// 		.map_err(|_| Error::<T>::EncodeInvalid)?;
 			let payload = T::PayloadCreator::payload(
 				spec_version,
 				weight,
