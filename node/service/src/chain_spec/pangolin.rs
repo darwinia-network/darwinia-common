@@ -22,7 +22,7 @@ use std::{collections::BTreeMap, marker::PhantomData, str::FromStr};
 use rand::{seq::SliceRandom, Rng};
 // --- paritytech ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
-use sc_service::{ChainType, Properties};
+use sc_service::{ChainType, GenericChainSpec, Properties};
 use sc_telemetry::TelemetryEndpoints;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
@@ -30,14 +30,14 @@ use sp_core::{crypto::UncheckedInto, sr25519};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::Perbill;
 // --- darwinia-network ---
-use super::{DEFAULT_PROTOCOL_ID, TEAM_MEMBERS};
+use super::*;
 use common_primitives::*;
 use darwinia_bridge_ethereum::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
 use darwinia_claims::ClaimsList;
 use darwinia_evm::GenesisAccount;
 use pangolin_runtime::*;
 
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+pub type ChainSpec = GenericChainSpec<GenesisConfig>;
 
 const PANGOLIN_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
@@ -148,7 +148,7 @@ pub fn genesis_config() -> ChainSpec {
 			),
 		];
 		let initial_nominators = <Vec<AccountId>>::new();
-		let collective_members = vec![super::get_account_id_from_seed::<sr25519::Public>("Alice")];
+		let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
 		let evm_accounts = {
 			let mut map = BTreeMap::new();
 
@@ -179,7 +179,7 @@ pub fn genesis_config() -> ChainSpec {
 			balances: BalancesConfig {
 				balances: vec![
 					(root.clone(), BUNCH_OF_COINS),
-					(super::get_account_id_from_seed::<sr25519::Public>("Alice"), A_FEW_COINS),
+					(get_account_id_from_seed::<sr25519::Public>("Alice"), A_FEW_COINS),
 				]
 				.into_iter()
 				.chain(
@@ -328,7 +328,7 @@ pub fn genesis_config() -> ChainSpec {
 			},
 			ethereum_relay_authorities: EthereumRelayAuthoritiesConfig {
 				authorities: vec![(
-					super::get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
 					1
 				)]
@@ -392,14 +392,14 @@ pub fn genesis_config() -> ChainSpec {
 
 pub fn development_config() -> ChainSpec {
 	fn genesis() -> GenesisConfig {
-		let root = super::get_account_id_from_seed::<sr25519::Public>("Alice");
+		let root = get_account_id_from_seed::<sr25519::Public>("Alice");
 		let s2s_relayer = array_bytes::hex_into_unchecked(S2S_RELAYER);
-		let initial_authorities = vec![super::get_authority_keys_from_seed("Alice")];
+		let initial_authorities = vec![get_authority_keys_from_seed("Alice")];
 		let endowed_accounts = vec![
 			root.clone(),
-			super::get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-			super::get_account_id_from_seed::<sr25519::Public>("Bob"),
-			super::get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Bob"),
+			get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
 			s2s_relayer,
 		]
 		.into_iter()
@@ -409,7 +409,7 @@ pub fn development_config() -> ChainSpec {
 				.map(|m| array_bytes::hex_into_unchecked(m)),
 		)
 		.collect::<Vec<_>>();
-		let collective_members = vec![super::get_account_id_from_seed::<sr25519::Public>("Alice")];
+		let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
 		let evm_accounts = {
 			let mut map = BTreeMap::new();
 
@@ -547,7 +547,7 @@ pub fn development_config() -> ChainSpec {
 			},
 			ethereum_relay_authorities: EthereumRelayAuthoritiesConfig {
 				authorities: vec![(
-					super::get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
 					1
 				)]
@@ -598,29 +598,29 @@ pub fn development_config() -> ChainSpec {
 
 pub fn local_testnet_config() -> ChainSpec {
 	fn genesis() -> GenesisConfig {
-		let root = super::get_account_id_from_seed::<sr25519::Public>("Alice");
+		let root = get_account_id_from_seed::<sr25519::Public>("Alice");
 		let s2s_relayer = array_bytes::hex_into_unchecked(S2S_RELAYER);
 		let initial_authorities = vec![
-			super::get_authority_keys_from_seed("Alice"),
-			super::get_authority_keys_from_seed("Bob"),
-			super::get_authority_keys_from_seed("Charlie"),
-			super::get_authority_keys_from_seed("Dave"),
-			super::get_authority_keys_from_seed("Eve"),
-			super::get_authority_keys_from_seed("Ferdie"),
+			get_authority_keys_from_seed("Alice"),
+			get_authority_keys_from_seed("Bob"),
+			get_authority_keys_from_seed("Charlie"),
+			get_authority_keys_from_seed("Dave"),
+			get_authority_keys_from_seed("Eve"),
+			get_authority_keys_from_seed("Ferdie"),
 		];
 		let endowed_accounts = vec![
-			super::get_account_id_from_seed::<sr25519::Public>("Alice"),
-			super::get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-			super::get_account_id_from_seed::<sr25519::Public>("Bob"),
-			super::get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-			super::get_account_id_from_seed::<sr25519::Public>("Charlie"),
-			super::get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-			super::get_account_id_from_seed::<sr25519::Public>("Dave"),
-			super::get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-			super::get_account_id_from_seed::<sr25519::Public>("Eve"),
-			super::get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-			super::get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-			super::get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Bob"),
+			get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Charlie"),
+			get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Dave"),
+			get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Eve"),
+			get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+			get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 			s2s_relayer,
 		]
 		.into_iter()
@@ -630,7 +630,7 @@ pub fn local_testnet_config() -> ChainSpec {
 				.map(|m| array_bytes::hex_into_unchecked(m)),
 		)
 		.collect::<Vec<_>>();
-		let collective_members = vec![super::get_account_id_from_seed::<sr25519::Public>("Alice")];
+		let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
 		let evm_accounts = {
 			let mut map = BTreeMap::new();
 
@@ -768,7 +768,7 @@ pub fn local_testnet_config() -> ChainSpec {
 			},
 			ethereum_relay_authorities: EthereumRelayAuthoritiesConfig {
 				authorities: vec![(
-					super::get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
 					1
 				)]
