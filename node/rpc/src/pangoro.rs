@@ -75,19 +75,21 @@ where
 	C::Api: darwinia_fee_market_rpc::FeeMarketRuntimeApi<Block, Balance>,
 	C::Api: sc_consensus_babe::BabeApi<Block>,
 	C::Api: sp_block_builder::BlockBuilder<Block>,
+	C::Api: darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
 	P: 'static + sp_transaction_pool::TransactionPool,
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<sp_runtime::traits::HashFor<Block>>,
 {
-	// --- darwinia-network ---
-	use darwinia_fee_market_rpc::{FeeMarket, FeeMarketApi};
 	// --- paritytech ---
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use sc_consensus_babe_rpc::{BabeApi, BabeRpcHandler};
 	use sc_finality_grandpa_rpc::{GrandpaApi, GrandpaRpcHandler};
 	use sc_sync_state_rpc::{SyncStateRpcApi, SyncStateRpcHandler};
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
+	// --- darwinia-network ---
+	use darwinia_balances_rpc::{Balances, BalancesApi};
+	use darwinia_fee_market_rpc::{FeeMarket, FeeMarketApi};
 
 	let FullDeps {
 		client,
@@ -142,7 +144,7 @@ where
 		shared_epoch_changes,
 		deny_unsafe,
 	)));
-
+	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
 	io.extend_with(FeeMarketApi::to_delegate(FeeMarket::new(client.clone())));
 
 	io

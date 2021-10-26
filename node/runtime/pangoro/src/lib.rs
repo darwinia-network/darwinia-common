@@ -101,6 +101,7 @@ use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use common_primitives::*;
+use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_fee_market_rpc_runtime_api::Fee;
 
 pub type Address = MultiAddress<AccountId, ()>;
@@ -420,6 +421,27 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance> for Runtime {
+		fn usable_balance(instance: u8, account: AccountId) -> BalancesRuntimeDispatchInfo<Balance> {
+			match instance {
+				0 => Ring::usable_balance_rpc(account),
+				1 => Kton::usable_balance_rpc(account),
+				_ => Default::default()
+			}
+		}
+	}
+
+	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
+		fn market_fee() -> Option<Fee<Balance>> {
+			if let Some(fee) = FeeMarket::market_fee() {
+				return Some(Fee {
+					amount: fee,
+				});
+			}
+			None
+		}
+	}
+
 	impl bridge_primitives::PangolinFinalityApi<Block> for Runtime {
 		fn best_finalized() -> (pangolin_primitives::BlockNumber, pangolin_primitives::Hash) {
 			let header = BridgePangolinGrandpa::best_finalized();
@@ -474,17 +496,6 @@ sp_api::impl_runtime_apis! {
 
 		fn unrewarded_relayers_state(lane: bp_messages::LaneId) -> bp_messages::UnrewardedRelayersState {
 			BridgePangolinMessages::inbound_unrewarded_relayers_state(lane)
-		}
-	}
-
-	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
-		fn market_fee() -> Option<Fee<Balance>> {
-			if let Some(fee) = FeeMarket::market_fee() {
-				return Some(Fee {
-					amount: fee,
-				});
-			}
-			None
 		}
 	}
 
