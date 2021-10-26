@@ -101,6 +101,7 @@ use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use common_primitives::*;
+use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_fee_market_rpc_runtime_api::Fee;
 
 pub type Address = MultiAddress<AccountId, ()>;
@@ -132,7 +133,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangoro"),
 	impl_name: sp_runtime::create_runtime_str!("Pangoro"),
 	authoring_version: 1,
-	spec_version: 2670,
+	spec_version: 2680,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
@@ -420,6 +421,27 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance> for Runtime {
+		fn usable_balance(instance: u8, account: AccountId) -> BalancesRuntimeDispatchInfo<Balance> {
+			match instance {
+				0 => Ring::usable_balance_rpc(account),
+				1 => Kton::usable_balance_rpc(account),
+				_ => Default::default()
+			}
+		}
+	}
+
+	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
+		fn market_fee() -> Option<Fee<Balance>> {
+			if let Some(fee) = FeeMarket::market_fee() {
+				return Some(Fee {
+					amount: fee,
+				});
+			}
+			None
+		}
+	}
+
 	impl bridge_primitives::PangolinFinalityApi<Block> for Runtime {
 		fn best_finalized() -> (pangolin_primitives::BlockNumber, pangolin_primitives::Hash) {
 			let header = BridgePangolinGrandpa::best_finalized();
@@ -477,17 +499,6 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
-		fn market_fee() -> Option<Fee<Balance>> {
-			if let Some(fee) = FeeMarket::market_fee() {
-				return Some(Fee {
-					amount: fee,
-				});
-			}
-			None
-		}
-	}
-
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade() -> Result<
@@ -535,33 +546,16 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		// --- paritytech ---
-		use frame_support::traits::PalletInfo;
-
-		let name = <Runtime as frame_system::Config>::PalletInfo::name::<Grandpa>()
-			.expect("grandpa is part of pallets in construct_runtime, so it has a name; qed");
-		pallet_grandpa::migrations::v3_1::pre_migration::<Runtime, Grandpa, _>(name);
-
 		Ok(())
 	}
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
-		pallet_grandpa::migrations::v3_1::post_migration::<Grandpa>();
-
 		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		// --- paritytech ---
-		use frame_support::traits::PalletInfo;
-
-		let name = <Runtime as frame_system::Config>::PalletInfo::name::<Grandpa>()
-			.expect("grandpa is part of pallets in construct_runtime, so it has a name; qed");
-
-		pallet_grandpa::migrations::v3_1::migrate::<Runtime, Grandpa, _>(name)
-
-		// migrate()
+		migrate()
 	}
 }
 
