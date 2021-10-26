@@ -39,7 +39,7 @@ use sp_std::convert::TryInto;
 const ACTION_LEN: usize = 4;
 
 // ethereum<>darwinia actions
-const E2D_BURN_ADN_REMOTE_UNLOCK: &[u8] = b"e2d_burn_and_remote_unlock()";
+const E2D_BURN_AND_REMOTE_UNLOCK: &[u8] = b"e2d_burn_and_remote_unlock()";
 const E2D_TOKEN_REGISTER_RESPONSE: &[u8] = b"e2d_token_register_response()";
 
 // substrate<>substrate actions
@@ -74,7 +74,7 @@ where
 		let action_digest = &input[0..ACTION_LEN];
 		let action_params = &input[ACTION_LEN..];
 		let output = match action_digest {
-			_ if Self::match_digest(action_digest, E2D_BURN_ADN_REMOTE_UNLOCK) => {
+			_ if Self::match_digest(action_digest, E2D_BURN_AND_REMOTE_UNLOCK) => {
 				let call: T::Call =
 					from_ethereum_issuing::Call::<T>::deposit_burn_token_event_from_precompile(
 						action_params.to_vec(),

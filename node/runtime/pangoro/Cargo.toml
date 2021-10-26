@@ -17,6 +17,7 @@ serde       = { version = "1.0.127", features = ["derive"], optional = true }
 bridge-primitives                   = { default-features = false, path = "../../primitives/bridge" }
 common-primitives                   = { default-features = false, path = "../../primitives/common" }
 darwinia-balances                   = { default-features = false, path = "../../../frame/balances" }
+darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
 darwinia-evm                        = { default-features = false, path = "../../../frame/evm" }
 darwinia-fee-market                 = { default-features = false, path = "../../../frame/fee-market" }
 darwinia-fee-market-rpc-runtime-api = { default-features = false, path = "../../../frame/fee-market/rpc/runtime-api" }
@@ -88,6 +89,7 @@ std = [
 	"bridge-primitives/std",
 	"common-primitives/std",
 	"darwinia-balances/std",
+	"darwinia-balances-rpc-runtime-api/std",
 	"darwinia-evm/std",
 	"darwinia-fee-market/std",
 	"darwinia-fee-market-rpc-runtime-api/std",
