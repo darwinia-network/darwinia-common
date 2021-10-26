@@ -145,7 +145,7 @@ where
 		deny_unsafe,
 	)));
 	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
-	io.extend_with(FeeMarketApi::to_delegate(FeeMarket::new(client.clone())));
+	io.extend_with(FeeMarketApi::to_delegate(FeeMarket::new(client)));
 
 	io
 }
