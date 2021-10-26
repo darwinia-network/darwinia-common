@@ -54,7 +54,7 @@ fn burn_and_remote_unlock_success() {
 }
 
 #[test]
-fn register_from_remote_success() {
+fn register_and_issue_from_remote_success() {
 	let (pairs, mut ext) = new_test_ext(1);
 	let alice = &pairs[0];
 	ext.execute_with(|| {
@@ -118,5 +118,16 @@ fn register_from_remote_success() {
 			mapping_token,
 			H160::from_str("0000000000000000000000000000000000000001").unwrap()
 		);
+		let issue_token = Token::Native(TokenInfo::new(
+			original_token_address,
+			Some(U256::from(10_000_000_000u128)),
+			None,
+		));
+		let recipient = H160::from_str("1000000000000000000000000000000000000000").unwrap();
+		assert_ok!(S2sIssuing::issue_from_remote(
+			Origin::signed(remote_root_account.clone()),
+			issue_token,
+			recipient
+		));
 	});
 }
