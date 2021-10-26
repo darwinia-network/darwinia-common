@@ -98,7 +98,7 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(fn deposit_event)]
-	#[pallet::metadata(T::AccountId = "AccountId")]
+	#[pallet::metadata(T::AccountId = "AccountId", RingBalance<T> = "RingBalance")]
 	pub enum Event<T: Config> {
 		/// Relayer enrollment
 		EnrollAndLockCollateral(T::AccountId, RingBalance<T>, Fee<T>),
