@@ -30,7 +30,7 @@ use sp_core::{crypto::UncheckedInto, sr25519};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::Perbill;
 // --- darwinia-network ---
-use super::{DEFAULT_PROTOCOL_ID, TEAM_MEMBERS};
+use super::*;
 use common_primitives::*;
 use darwinia_staking::StakerStatus;
 use pangoro_runtime::*;
@@ -138,7 +138,7 @@ pub fn genesis_config() -> ChainSpec {
 				balances: vec![
 					(root.clone(), BUNCH_OF_COINS),
 					(
-						super::get_account_id_from_seed::<sr25519::Public>("Alice"),
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
 						A_FEW_COINS,
 					),
 				]
@@ -264,13 +264,13 @@ pub fn genesis_config() -> ChainSpec {
 
 pub fn development_config() -> ChainSpec {
 	fn genesis() -> GenesisConfig {
-		let root = super::get_account_id_from_seed::<sr25519::Public>("Alice");
-		let initial_authorities = vec![super::get_authority_keys_from_seed("Alice")];
+		let root = get_account_id_from_seed::<sr25519::Public>("Alice");
+		let initial_authorities = vec![get_authority_keys_from_seed("Alice")];
 		let endowed_accounts = vec![
 			root.clone(),
-			super::get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-			super::get_account_id_from_seed::<sr25519::Public>("Bob"),
-			super::get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Bob"),
+			get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
 		]
 		.into_iter()
 		.chain(
