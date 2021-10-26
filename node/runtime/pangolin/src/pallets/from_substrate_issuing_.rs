@@ -3,8 +3,8 @@ use bp_runtime::{messages::DispatchFeePayment, ChainId};
 use frame_support::PalletId;
 use sp_runtime::AccountId32;
 // --- darwinia-network ---
-use crate::*;
-use bridge_primitives::{call::RuntimeCalls, AccountIdConverter, PANGORO_CHAIN_ID};
+use crate::{pangoro_messages::PangoroRuntimeCalls, *};
+use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID};
 use darwinia_support::{s2s::ToEthAddress, ChainName};
 use dp_s2s::{CallParams, EncodeCall, PayloadCreate};
 use from_substrate_issuing::Config;
@@ -16,7 +16,7 @@ impl PayloadCreate<AccountId, ToPangoroMessagePayload> for PangoroPayLoadCreator
 		weight: u64,
 		call_params: CallParams<AccountId>,
 	) -> Result<ToPangoroMessagePayload, ()> {
-		let call = RuntimeCalls::encode_call(call_params.clone())?;
+		let call = PangoroRuntimeCalls::encode_call(call_params.clone())?;
 		match call_params {
 			CallParams::UnlockFromRemote(submitter, _) => Ok(ToPangoroMessagePayload {
 				spec_version,
