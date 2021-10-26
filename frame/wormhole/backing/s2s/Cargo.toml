@@ -21,6 +21,7 @@ serde_json     = { version = "1.0.66", optional = true }
 darwinia-support    = { default-features = false, path = "../../../support" }
 dp-asset            = { default-features = false, path = "../../../../primitives/asset" }
 dp-contract         = { default-features = false, path = "../../../../primitives/contract" }
+dp-s2s              = { default-features = false, path = "../../../../primitives/s2s" }
 ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum" }
 # paritytech
 bp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
@@ -48,6 +49,7 @@ std = [
 	# darwinia-network
 	"dp-asset/std",
 	"dp-contract/std",
+	"dp-s2s/std",
 	"ethereum-primitives/std",
 	"darwinia-support/std",
 	# paritytech

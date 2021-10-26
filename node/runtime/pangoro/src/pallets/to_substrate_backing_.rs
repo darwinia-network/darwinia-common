@@ -11,53 +11,69 @@ use sp_core::H160;
 use sp_runtime::DispatchErrorWithPostInfo;
 // --- darwinia-network ---
 use crate::*;
-use bridge_primitives::{
-	call::{CallParams, EncodeRuntimeCall, RuntimeCall},
-	AccountIdConverter, PANGORO_PANGOLIN_LANE,
-};
+use bridge_primitives::{call::RuntimeCall, AccountIdConverter, PANGORO_PANGOLIN_LANE};
 use darwinia_support::s2s::{nonce_to_message_id, RelayMessageSender, TokenMessageId};
 use dp_asset::{token::Token, RecipientAccount};
-use to_substrate_backing::{Config, EncodeCall};
+use dp_s2s::{CallParams, EncodeRuntimeCall, PayloadCreate};
+use to_substrate_backing::Config;
 
-pub struct PangolinCallEncoder;
-impl PangolinCallEncoder {
-	/// Transfer call to message payload
-	fn to_payload(spec_version: u32, weight: u64, call: Vec<u8>) -> ToPangolinMessagePayload {
-		return FromThisChainMessagePayload::<WithPangolinMessageBridge> {
+pub struct PangolinPayLoadCreator;
+// impl PangolinCallEncoder {
+// 	/// Transfer call to message payload
+// 	fn to_payload(spec_version: u32, weight: u64, call: Vec<u8>) -> ToPangolinMessagePayload {
+// 		return FromThisChainMessagePayload::<WithPangolinMessageBridge> {
+// 			spec_version,
+// 			weight,
+// 			origin: CallOrigin::SourceRoot,
+// 			call,
+// 			dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
+// 		};
+// 	}
+// }
+
+impl PayloadCreate<AccountId, ToPangolinMessagePayload> for PangolinPayLoadCreator {
+	fn payload(
+		spec_version: u32,
+		weight: u64,
+		call_params: CallParams<AccountId>,
+	) -> Result<ToPangolinMessagePayload, ()> {
+		let call = RuntimeCall::encode_call(call_params)?;
+		return Ok(FromThisChainMessagePayload::<WithPangolinMessageBridge> {
 			spec_version,
 			weight,
 			origin: CallOrigin::SourceRoot,
 			call,
 			dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
-		};
+		});
 	}
 }
-impl EncodeCall<AccountId, ToPangolinMessagePayload> for PangolinCallEncoder {
-	/// Encode issuing pallet remote_register call
-	fn encode_remote_register(
-		spec_version: u32,
-		weight: u64,
-		token: Token,
-	) -> ToPangolinMessagePayload {
-		let call = RuntimeCall::encode_call(0, 0, CallParams::RegisterFromRemote(token)).unwrap();
-		Self::to_payload(spec_version, weight, call)
-	}
-	/// Encode issuing pallet remote_issue call
-	fn encode_remote_issue(
-		spec_version: u32,
-		weight: u64,
-		token: Token,
-		recipient: RecipientAccount<AccountId>,
-	) -> Result<ToPangolinMessagePayload, ()> {
-		let call = match recipient {
-			RecipientAccount::<AccountId>::EthereumAccount(r) => {
-				RuntimeCall::encode_call(0, 0, CallParams::IssueFromRemote(token, r)).unwrap()
-			}
-			_ => return Err(()),
-		};
-		Ok(Self::to_payload(spec_version, weight, call))
-	}
-}
+
+// impl EncodeCall<AccountId, ToPangolinMessagePayload> for PangolinCallEncoder {
+// 	/// Encode issuing pallet remote_register call
+// 	fn encode_remote_register(
+// 		spec_version: u32,
+// 		weight: u64,
+// 		token: Token,
+// 	) -> ToPangolinMessagePayload {
+// 		let call = RuntimeCall::encode_call(0, 0, CallParams::RegisterFromRemote(token)).unwrap();
+// 		Self::to_payload(spec_version, weight, call)
+// 	}
+// 	/// Encode issuing pallet remote_issue call
+// 	fn encode_remote_issue(
+// 		spec_version: u32,
+// 		weight: u64,
+// 		token: Token,
+// 		recipient: RecipientAccount<AccountId>,
+// 	) -> Result<ToPangolinMessagePayload, ()> {
+// 		let call = match recipient {
+// 			RecipientAccount::<AccountId>::EthereumAccount(r) => {
+// 				RuntimeCall::encode_call(0, 0, CallParams::IssueFromRemote(token, r)).unwrap()
+// 			}
+// 			_ => return Err(()),
+// 		};
+// 		Ok(Self::to_payload(spec_version, weight, call))
+// 	}
+// }
 
 pub struct ToPangolinMessageSender;
 
@@ -142,7 +158,7 @@ impl Config for Runtime {
 	type BridgedChainId = PangolinChainId;
 
 	type OutboundPayload = ToPangolinMessagePayload;
-	type CallEncoder = PangolinCallEncoder;
+	type PayloadCreator = PangolinPayLoadCreator;
 
 	type FeeAccount = RootAccountForPayments;
 	type MessageSender = ToPangolinMessageSender;

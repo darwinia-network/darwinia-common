@@ -685,6 +685,7 @@ dependencies = [
  "darwinia-support",
  "dp-asset",
  "dp-contract",
+ "dp-s2s",
  "frame-support",
  "pallet-bridge-dispatch",
  "parity-scale-codec",
@@ -1671,6 +1672,7 @@ dependencies = [
  "darwinia-support",
  "dp-contract",
  "dp-evm",
+ "dp-s2s",
  "evm 0.27.0",
  "frame-support",
  "from-ethereum-issuing",
@@ -2237,6 +2239,17 @@ dependencies = [
  "rustc-hex",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "dp-s2s"
+version = "2.6.7"
+dependencies = [
+ "dp-asset",
+ "dp-contract",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-std",
 ]
 
 [[package]]
@@ -3175,6 +3188,7 @@ dependencies = [
  "dp-asset",
  "dp-contract",
  "dp-evm",
+ "dp-s2s",
  "dvm-ethereum",
  "ethereum-primitives",
  "ethereum-types",
@@ -6097,6 +6111,7 @@ dependencies = [
  "dp-contract",
  "dp-evm",
  "dp-fee",
+ "dp-s2s",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
  "ethereum-primitives",
@@ -6206,6 +6221,7 @@ dependencies = [
  "darwinia-staking",
  "darwinia-support",
  "dp-asset",
+ "dp-s2s",
  "frame-executive",
  "frame-support",
  "frame-system",
@@ -10066,6 +10082,7 @@ dependencies = [
  "darwinia-support",
  "dp-asset",
  "dp-contract",
+ "dp-s2s",
  "ethereum-primitives",
  "ethereum-types",
  "frame-support",

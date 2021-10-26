@@ -28,7 +28,7 @@ use sha3::Digest;
 use darwinia_support::{evm::IntoAccountId, s2s::RelayMessageSender};
 use dp_contract::mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams};
 use dp_evm::Precompile;
-use from_substrate_issuing::EncodeCall;
+use dp_s2s::{CallParams, PayloadCreate};
 // --- paritytech ---
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
@@ -105,12 +105,15 @@ where
 			_ if Self::match_digest(action_digest, S2S_ENCODE_REMOTE_UNLOCK_PAYLOAD) => {
 				let unlock_info = S2sRemoteUnlockInfo::decode(&action_params)
 					.map_err(|_| ExitError::Other("decode unlock info failed".into()))?;
-				let payload =
-					<T as from_substrate_issuing::Config>::CallEncoder::encode_remote_unlock(
+				let payload = <T as from_substrate_issuing::Config>::PayloadCreator::payload(
+					unlock_info.spec_version,
+					unlock_info.weight,
+					CallParams::UnlockFromRemote(
 						T::IntoAccountId::into_account_id(context.caller),
 						unlock_info,
-					)
-					.map_err(|_| ExitError::Other("encode remote unlock failed".into()))?;
+					),
+				)
+				.map_err(|_| ExitError::Other("encode remote unlock failed".into()))?;
 				payload.encode()
 			}
 			_ if Self::match_digest(action_digest, S2S_ENCODE_SEND_MESSAGE_CALL) => {

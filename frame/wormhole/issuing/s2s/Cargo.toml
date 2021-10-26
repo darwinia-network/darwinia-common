@@ -24,6 +24,7 @@ darwinia-support    = { default-features = false, path = "../../../support" }
 dp-asset            = { default-features = false, path = "../../../../primitives/asset" }
 dp-contract         = { default-features = false, path = "../../../../primitives/contract" }
 dp-evm              = { default-features = false, path = "../../../../primitives/evm" }
+dp-s2s              = { default-features = false, path = "../../../../primitives/s2s" }
 dvm-ethereum        = { default-features = false, path = "../../../dvm" }
 ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum" }
 # paritytech
@@ -61,6 +62,7 @@ std = [
 	"dp-contract/std",
 	"ethereum-primitives/std",
 	"dp-evm/std",
+	"dp-s2s/std",
 	"dvm-ethereum/std",
 	"darwinia-support/std",
 	# paritytech

@@ -52,6 +52,7 @@ use dp_contract::mapping_token_factory::{
 	basic::BasicMappingTokenFactory as bmtf,
 	s2s::{S2sRemoteUnlockInfo, Sub2SubMappingTokenFactory as smtf},
 };
+use dp_s2s::{CallParams, PayloadCreate};
 use dvm_ethereum::InternalTransactHandler;
 
 pub use pallet::*;
@@ -75,7 +76,7 @@ pub mod pallet {
 		type BridgedChainId: Get<ChainId>;
 		type ToEthAddressT: ToEthAddress<Self::AccountId>;
 		type OutboundPayload: Parameter + Size;
-		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
+		type PayloadCreator: PayloadCreate<Self::AccountId, Self::OutboundPayload>;
 		type InternalTransactHandler: InternalTransactHandler;
 		type BackingChainName: Get<ChainName>;
 	}
@@ -310,11 +311,4 @@ impl<T: Config> Pallet<T> {
 		let contract = MappingFactoryAddress::<T>::get();
 		T::InternalTransactHandler::internal_transact(contract, input)
 	}
-}
-
-pub trait EncodeCall<AccountId, Payload> {
-	fn encode_remote_unlock(
-		submitter: AccountId,
-		remote_unlock_info: S2sRemoteUnlockInfo,
-	) -> Result<Payload, ()>;
 }

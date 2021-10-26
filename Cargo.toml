@@ -64,6 +64,7 @@ members = [
 	"primitives/merkle-patricia-trie",
 	"primitives/relay",
 	"primitives/rpc",
+	"primitives/s2s",
 	"primitives/storage",
 ]
 

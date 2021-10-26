@@ -1,0 +1,35 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Darwinia Substrate To Substrate Primitives"
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "dp-s2s"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "2.6.7"
+
+[dependencies]
+# crates.io
+# darwinia-network
+dp-asset    = { default-features = false, path = "../asset"}
+dp-contract = { default-features = false, path = "../contract"}
+# paritytech
+codec   = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-std  = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+
+[features]
+default = ["std"]
+
+std = [
+	# crates.io
+	# darwinia-network
+	# "ethereum-primitives/std",
+	"dp-asset/std",
+	"dp-contract/std",
+	# paritytech
+	"codec/std",
+	"sp-core/std",
+	"sp-std/std",
+]

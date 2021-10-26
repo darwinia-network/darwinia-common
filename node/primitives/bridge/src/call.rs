@@ -30,6 +30,7 @@ use common_primitives::AccountId;
 use darwinia_support::{s2s::ToEthAddress, to_bytes32};
 use dp_asset::{token::Token, RecipientAccount};
 use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
+use dp_s2s::{CallParams, EncodeRuntimeCall};
 
 /// The bridged chain(Pangoro) dispatch info
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
@@ -68,24 +69,10 @@ pub enum PangolinSub2SubIssuingCall {
 	#[codec(index = 1)]
 	issue_from_remote(Token, H160),
 }
-pub enum CallParams {
-	RegisterFromRemote(Token),
-	IssueFromRemote(Token, H160),
-	UnlockFromRemote(AccountId, S2sRemoteUnlockInfo),
-}
-
-pub trait EncodeRuntimeCall {
-	fn encode_call(
-		_spec_version: u32,
-		_weight: u64,
-		call_params: CallParams,
-	) -> Result<Vec<u8>, ()>;
-}
 
 pub struct RuntimeCall;
-
-impl EncodeRuntimeCall for RuntimeCall {
-	fn encode_call(spec_version: u32, weight: u64, call_params: CallParams) -> Result<Vec<u8>, ()> {
+impl EncodeRuntimeCall<AccountId> for RuntimeCall {
+	fn encode_call(call_params: CallParams<AccountId>) -> Result<Vec<u8>, ()> {
 		let call = match call_params {
 			CallParams::RegisterFromRemote(token) => PangolinRuntime::Sub2SubIssuing(
 				PangolinSub2SubIssuingCall::register_from_remote(token),

@@ -14,8 +14,9 @@ version     = "2.6.7"
 common-primitives   = { default-features = false, path = "../common" }
 darwinia-fee-market = { default-features = false, path = "../../../frame/fee-market" }
 darwinia-support    = { default-features = false, path = "../../../frame/support" }
-dp-asset = { default-features = false, path = "../../../primitives/asset"}
-dp-contract = { default-features = false, path = "../../../primitives/contract"}
+dp-asset            = { default-features = false, path = "../../../primitives/asset"}
+dp-contract         = { default-features = false, path = "../../../primitives/contract"}
+dp-s2s              = { default-features = false, path = "../../../primitives/s2s"}
 # paritytech
 bp-messages            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
 bp-runtime             = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
@@ -38,14 +39,15 @@ std = [
 	"common-primitives/std",
 	"darwinia-fee-market/std",
 	"darwinia-support/std",
+	"dp-asset/std",
+	"dp-contract/std",
+	"dp-s2s/std",
 	# paritytech
 	"bp-messages/std",
 	"bp-runtime/std",
 	"bp-message-dispatch/std",
 	"bridge-runtime-common/std",
 	"codec/std",
-	"dp-asset/std",
-	"dp-contract/std",
 	"pallet-bridge-dispatch/std",
 	"frame-support/std",
 	"sp-api/std",
