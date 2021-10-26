@@ -26,7 +26,7 @@ use sp_std::vec::Vec;
 use common_primitives::AccountId;
 use darwinia_support::to_bytes32;
 use dp_asset::token::Token;
-use dp_s2s::{CallParams, EncodeRuntimeCall};
+use dp_s2s::{CallParams, EncodeCall};
 
 /// The bridged chain(Pangoro) dispatch info
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
@@ -66,8 +66,8 @@ pub enum PangolinSub2SubIssuingCall {
 	issue_from_remote(Token, H160),
 }
 
-pub struct RuntimeCall;
-impl EncodeRuntimeCall<AccountId> for RuntimeCall {
+pub struct RuntimeCalls;
+impl EncodeCall<AccountId> for RuntimeCalls {
 	fn encode_call(call_params: CallParams<AccountId>) -> Result<Vec<u8>, ()> {
 		let call = match call_params {
 			CallParams::RegisterFromRemote(token) => PangolinRuntime::Sub2SubIssuing(

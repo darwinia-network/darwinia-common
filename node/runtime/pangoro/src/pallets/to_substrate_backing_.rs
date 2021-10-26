@@ -10,9 +10,9 @@ use frame_system::RawOrigin;
 use sp_runtime::DispatchErrorWithPostInfo;
 // --- darwinia-network ---
 use crate::*;
-use bridge_primitives::{call::RuntimeCall, AccountIdConverter, PANGORO_PANGOLIN_LANE};
+use bridge_primitives::{call::RuntimeCalls, AccountIdConverter, PANGORO_PANGOLIN_LANE};
 use darwinia_support::s2s::{nonce_to_message_id, RelayMessageSender, TokenMessageId};
-use dp_s2s::{CallParams, EncodeRuntimeCall, PayloadCreate};
+use dp_s2s::{CallParams, EncodeCall, PayloadCreate};
 use to_substrate_backing::Config;
 
 pub struct PangolinPayLoadCreator;
@@ -22,7 +22,7 @@ impl PayloadCreate<AccountId, ToPangolinMessagePayload> for PangolinPayLoadCreat
 		weight: u64,
 		call_params: CallParams<AccountId>,
 	) -> Result<ToPangolinMessagePayload, ()> {
-		let call = RuntimeCall::encode_call(call_params)?;
+		let call = RuntimeCalls::encode_call(call_params)?;
 		return Ok(FromThisChainMessagePayload::<WithPangolinMessageBridge> {
 			spec_version,
 			weight,

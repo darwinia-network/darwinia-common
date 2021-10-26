@@ -32,7 +32,7 @@ pub enum CallParams<AccountId> {
 	UnlockFromRemote(AccountId, S2sRemoteUnlockInfo),
 }
 
-pub trait EncodeRuntimeCall<AccountId> {
+pub trait EncodeCall<AccountId> {
 	fn encode_call(call_params: CallParams<AccountId>) -> Result<Vec<u8>, ()>;
 }
 

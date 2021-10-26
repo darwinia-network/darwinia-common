@@ -10,7 +10,6 @@ repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.6.7"
 
 [dependencies]
-# crates.io
 # darwinia-network
 dp-asset    = { default-features = false, path = "../asset"}
 dp-contract = { default-features = false, path = "../contract"}
@@ -22,7 +21,6 @@ sp-std  = { default-features = false, git = "https://github.com/darwinia-network
 default = ["std"]
 
 std = [
-	# crates.io
 	# darwinia-network
 	"dp-asset/std",
 	"dp-contract/std",
