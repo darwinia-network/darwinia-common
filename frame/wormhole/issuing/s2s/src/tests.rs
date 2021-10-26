@@ -29,6 +29,8 @@ use darwinia_support::{
 	s2s::{RelayMessageSender, TokenMessageId},
 };
 use dp_asset::token::TokenInfo;
+use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
+use dp_s2s::CallParams;
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
@@ -193,15 +195,16 @@ impl Size for MockMessagePayload {
 	}
 }
 
-pub struct PangoroCallEncoder;
-impl EncodeCall<AccountId32, MockMessagePayload> for PangoroCallEncoder {
-	fn encode_remote_unlock(
-		_submitter: AccountId32,
-		remote_unlock_info: S2sRemoteUnlockInfo,
+pub struct PangoroPayLoadCreator;
+impl PayloadCreate<AccountId32, MockMessagePayload> for PangoroPayLoadCreator {
+	fn payload(
+		spec_version: u32,
+		weight: u64,
+		_call_params: CallParams<AccountId<Test>>,
 	) -> Result<MockMessagePayload, ()> {
 		return Ok(MockMessagePayload {
-			spec_version: remote_unlock_info.spec_version,
-			weight: remote_unlock_info.weight,
+			spec_version,
+			weight,
 			call: vec![],
 		});
 	}
@@ -254,7 +257,7 @@ impl Config for Test {
 	type BridgedChainId = PangoroChainId;
 	type ToEthAddressT = TruncateToEthAddress;
 	type OutboundPayload = MockMessagePayload;
-	type CallEncoder = PangoroCallEncoder;
+	type PayloadCreator = PangoroPayLoadCreator;
 	type InternalTransactHandler = Ethereum;
 	type BackingChainName = PangoroName;
 }
@@ -304,7 +307,11 @@ fn burn_and_remote_unlock_success() {
 		let submitter = HashedConverter::into_account_id(
 			H160::from_str("1000000000000000000000000000000000000002").unwrap(),
 		);
-		<Test as s2s_issuing::Config>::CallEncoder::encode_remote_unlock(submitter, burn_info)
-			.unwrap();
+		<Test as s2s_issuing::Config>::PayloadCreator::payload(
+			burn_info.spec_version,
+			burn_info.weight,
+			CallParams::UnlockFromRemote(submitter, burn_info),
+		)
+		.unwrap();
 	});
 }

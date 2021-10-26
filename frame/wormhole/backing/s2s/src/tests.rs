@@ -30,6 +30,7 @@ use sp_runtime::{
 };
 // --- darwinia-network ---
 use crate::{self as s2s_backing, *};
+
 use darwinia_support::s2s::{RelayMessageSender, TokenMessageId};
 
 type Block = MockBlock<Test>;
@@ -118,18 +119,12 @@ impl RelayMessageSender for MockRelayCaller {
 	}
 }
 
-pub struct MockCallEncoder;
-impl EncodeCall<AccountId<Test>, ()> for MockCallEncoder {
-	/// Encode issuing pallet remote_register call
-	fn encode_remote_register(_spec_version: u32, _weight: u64, _token: Token) -> () {
-		()
-	}
-	/// Encode issuing pallet remote_issue call
-	fn encode_remote_issue(
+pub struct MockPayloadCreator;
+impl PayloadCreate<AccountId<Test>, ()> for MockPayloadCreator {
+	fn payload(
 		_spec_version: u32,
 		_weight: u64,
-		_token: Token,
-		_recipient: RecipientAccount<AccountId<Test>>,
+		_call_params: CallParams<AccountId<Test>>,
 	) -> Result<(), ()> {
 		Ok(())
 	}
@@ -157,7 +152,7 @@ impl Config for Test {
 	type BridgedChainId = MockChainId;
 
 	type OutboundPayload = ();
-	type CallEncoder = MockCallEncoder;
+	type PayloadCreator = MockPayloadCreator;
 
 	type FeeAccount = ();
 	type MessageSender = MockRelayCaller;
