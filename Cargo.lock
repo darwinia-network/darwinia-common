@@ -3178,7 +3178,6 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "libsecp256k1 0.3.5",
  "libsecp256k1 0.5.0",
  "log",
  "max-encoded-len",
