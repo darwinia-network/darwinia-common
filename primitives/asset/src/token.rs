@@ -1,5 +1,4 @@
 // This file is part of Darwinia.
-//
 // Copyright (C) 2018-2021 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
@@ -22,64 +21,18 @@
 use codec::{Decode, Encode};
 // --- darwinia-network ---
 // TODO: Use ethereum-types? In https://github.com/darwinia-network/darwinia-common/pull/708
-use ethereum_primitives::{EthereumAddress, U256};
+use ethereum_primitives::EthereumAddress;
 use sp_std::vec::Vec;
+
+pub const NATIVE_TOKEN_TYPE: u32 = 0;
+pub const ERC20_TOKEN_TYPE: u32 = 1;
 
 /// the token extra options
 #[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
-pub struct TokenOption {
+pub struct TokenMetadata {
+	pub token_type: u32,
+	pub address: EthereumAddress,
 	pub name: Vec<u8>,
 	pub symbol: Vec<u8>,
 	pub decimal: u8,
-}
-
-/// the token metadata
-#[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
-pub struct TokenInfo {
-	pub address: EthereumAddress,
-	pub value: Option<U256>,
-	pub option: Option<TokenOption>,
-}
-impl TokenInfo {
-	pub fn new(address: EthereumAddress, value: Option<U256>, option: Option<TokenOption>) -> Self {
-		TokenInfo {
-			address,
-			value,
-			option,
-		}
-	}
-}
-
-/// The token Definition, Native token or ERC20
-#[derive(Encode, Decode, Clone, Debug, Eq, PartialEq)]
-pub enum Token {
-	InvalidToken,
-	Native(TokenInfo),
-	Erc20(TokenInfo),
-}
-impl Token {
-	// TODO: Return more details `Err` or `Option`
-	pub fn token_info(self) -> Result<(u32, TokenInfo), ()> {
-		match self {
-			Self::Erc20(info) => Ok((0, info)),
-			Self::Native(info) => Ok((1, info)),
-			_ => Err(()),
-		}
-	}
-}
-
-impl Default for Token {
-	fn default() -> Self {
-		Token::InvalidToken
-	}
-}
-
-impl From<(u32, TokenInfo)> for Token {
-	fn from(t: (u32, TokenInfo)) -> Self {
-		match t.0 {
-			0 => Self::Erc20(t.1),
-			1 => Self::Native(t.1),
-			_ => Self::InvalidToken,
-		}
-	}
 }

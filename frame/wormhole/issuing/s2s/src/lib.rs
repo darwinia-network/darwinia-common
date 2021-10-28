@@ -49,7 +49,7 @@ use darwinia_support::{
 	s2s::{ensure_source_root, MessageConfirmer, ToEthAddress, TokenMessageId},
 	AccountId, ChainName,
 };
-use dp_asset::token::Token;
+use dp_asset::token::TokenMetadata;
 use dp_contract::mapping_token_factory::{
 	basic::BasicMappingTokenFactory as bmtf,
 	s2s::{S2sRemoteUnlockInfo, Sub2SubMappingTokenFactory as smtf},
@@ -97,7 +97,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn register_from_remote(
 			origin: OriginFor<T>,
-			token: Token,
+			token_metadata: TokenMetadata,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 			ensure_source_root::<T::AccountId, T::BridgedAccountIdConverter>(
@@ -106,39 +106,30 @@ pub mod pallet {
 			)?;
 
 			let backing_address = T::ToEthAddressT::into_ethereum_id(&user);
-			let (token_type, token_info) = token
-				.token_info()
-				.map_err(|_| Error::<T>::InvalidTokenType)?;
 			let mut mapping_token =
-				Self::mapped_token_address(backing_address, token_info.address)?;
+				Self::mapped_token_address(backing_address, token_metadata.address)?;
 			ensure!(mapping_token == H160::zero(), "asset has been registered");
 
-			match token_info.option {
-				Some(option) => {
-					let name = mapping_token_name(option.name, T::BackingChainName::get());
-					let symbol = mapping_token_symbol(option.symbol);
-					let input = bmtf::encode_create_erc20(
-						token_type,
-						&str::from_utf8(name.as_slice()).map_err(|_| Error::<T>::StringCF)?,
-						&str::from_utf8(symbol.as_slice()).map_err(|_| Error::<T>::StringCF)?,
-						option.decimal,
-						backing_address,
-						token_info.address,
-					)
-					.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
+			let name = mapping_token_name(token_metadata.name, T::BackingChainName::get());
+			let symbol = mapping_token_symbol(token_metadata.symbol);
+			let input = bmtf::encode_create_erc20(
+				token_metadata.token_type,
+				&str::from_utf8(name.as_slice()).map_err(|_| Error::<T>::StringCF)?,
+				&str::from_utf8(symbol.as_slice()).map_err(|_| Error::<T>::StringCF)?,
+				token_metadata.decimal,
+				backing_address,
+				token_metadata.address,
+			)
+			.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 
-					Self::transact_mapping_factory(input)?;
-					mapping_token =
-						Self::mapped_token_address(backing_address, token_info.address)?;
-					Self::deposit_event(Event::TokenRegistered(
-						user,
-						backing_address,
-						token_info.address,
-						mapping_token,
-					));
-				}
-				_ => return Err(Error::<T>::InvalidTokenOption.into()),
-			}
+			Self::transact_mapping_factory(input)?;
+			mapping_token = Self::mapped_token_address(backing_address, token_metadata.address)?;
+			Self::deposit_event(Event::TokenRegistered(
+				user,
+				backing_address,
+				token_metadata.address,
+				mapping_token,
+			));
 			Ok(().into())
 		}
 
@@ -150,7 +141,8 @@ pub mod pallet {
 		#[transactional]
 		pub fn issue_from_remote(
 			origin: OriginFor<T>,
-			token: Token,
+			token_address: H160,
+			amount: U256,
 			recipient: H160,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
@@ -163,28 +155,22 @@ pub mod pallet {
 			)?;
 
 			let backing_address = T::ToEthAddressT::into_ethereum_id(&user);
-			let (_, token_info) = token
-				.token_info()
-				.map_err(|_| Error::<T>::InvalidTokenType)?;
-
-			let mapping_token = Self::mapped_token_address(backing_address, token_info.address)?;
+			let mapping_token = Self::mapped_token_address(backing_address, token_address)?;
 			ensure!(
 				mapping_token != H160::zero(),
 				"asset has not been registered"
 			);
 
 			// Redeem process
-			if let Some(value) = token_info.value {
-				let input = bmtf::encode_issue_erc20(mapping_token, recipient, value)
-					.map_err(|_| Error::<T>::InvalidMintEncoding)?;
-				Self::transact_mapping_factory(input)?;
-				Self::deposit_event(Event::TokenIssued(
-					backing_address,
-					mapping_token,
-					recipient,
-					value,
-				));
-			}
+			let input = bmtf::encode_issue_erc20(mapping_token, recipient, amount)
+				.map_err(|_| Error::<T>::InvalidMintEncoding)?;
+			Self::transact_mapping_factory(input)?;
+			Self::deposit_event(Event::TokenIssued(
+				backing_address,
+				mapping_token,
+				recipient,
+				amount,
+			));
 			Ok(().into())
 		}
 

@@ -6,7 +6,6 @@ use sp_runtime::AccountId32;
 use crate::*;
 use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID};
 use darwinia_support::{s2s::ToEthAddress, to_bytes32, ChainName};
-use dp_asset::token::Token;
 use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
 use from_substrate_issuing::{Config, EncodeCall};
 
@@ -23,7 +22,7 @@ pub enum PangoroRuntime {
 #[allow(non_camel_case_types)]
 pub enum PangoroSub2SubBackingCall {
 	#[codec(index = 2)]
-	unlock_from_remote(Token, AccountId),
+	unlock_from_remote(H160, U256, AccountId),
 }
 
 pub struct PangoroCallEncoder;
@@ -39,7 +38,8 @@ impl EncodeCall<AccountId, ToPangoroMessagePayload> for PangoroCallEncoder {
 				to_bytes32(remote_unlock_info.recipient.as_slice()).into();
 			let call =
 				PangoroRuntime::Sub2SubBacking(PangoroSub2SubBackingCall::unlock_from_remote(
-					remote_unlock_info.token,
+					remote_unlock_info.original_token,
+					remote_unlock_info.amount,
 					recipient_id,
 				))
 				.encode();

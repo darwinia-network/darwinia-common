@@ -7,13 +7,13 @@ use bp_runtime::{messages::DispatchFeePayment, ChainId};
 use bridge_runtime_common::messages::source::FromThisChainMessagePayload;
 use frame_support::{traits::PalletInfoAccess, weights::PostDispatchInfo, PalletId};
 use frame_system::RawOrigin;
-use sp_core::H160;
+use sp_core::{H160, U256};
 use sp_runtime::DispatchErrorWithPostInfo;
 // --- darwinia-network ---
 use crate::*;
 use bridge_primitives::{AccountIdConverter, PANGORO_PANGOLIN_LANE};
 use darwinia_support::s2s::{nonce_to_message_id, RelayMessageSender, TokenMessageId};
-use dp_asset::{token::Token, RecipientAccount};
+use dp_asset::{token::TokenMetadata, RecipientAccount};
 use to_substrate_backing::{Config, EncodeCall};
 
 /// Bridged chain pangolin call info
@@ -32,9 +32,9 @@ pub enum PangolinRuntime {
 #[allow(non_camel_case_types)]
 pub enum PangolinSub2SubIssuingCall {
 	#[codec(index = 0)]
-	register_from_remote(Token),
+	register_from_remote(TokenMetadata),
 	#[codec(index = 1)]
-	issue_from_remote(Token, H160),
+	issue_from_remote(H160, U256, H160),
 }
 
 pub struct PangolinCallEncoder;
@@ -55,10 +55,10 @@ impl EncodeCall<AccountId, ToPangolinMessagePayload> for PangolinCallEncoder {
 	fn encode_remote_register(
 		spec_version: u32,
 		weight: u64,
-		token: Token,
+		token_metadata: TokenMetadata,
 	) -> ToPangolinMessagePayload {
 		let call = PangolinRuntime::Sub2SubIssuing(
-			PangolinSub2SubIssuingCall::register_from_remote(token),
+			PangolinSub2SubIssuingCall::register_from_remote(token_metadata),
 		)
 		.encode();
 		Self::to_payload(spec_version, weight, call)
@@ -67,12 +67,13 @@ impl EncodeCall<AccountId, ToPangolinMessagePayload> for PangolinCallEncoder {
 	fn encode_remote_issue(
 		spec_version: u32,
 		weight: u64,
-		token: Token,
+		token_address: H160,
+		amount: U256,
 		recipient: RecipientAccount<AccountId>,
 	) -> Result<ToPangolinMessagePayload, ()> {
 		let call = match recipient {
 			RecipientAccount::<AccountId>::EthereumAccount(r) => PangolinRuntime::Sub2SubIssuing(
-				PangolinSub2SubIssuingCall::issue_from_remote(token, r),
+				PangolinSub2SubIssuingCall::issue_from_remote(token_address, amount, r),
 			)
 			.encode(),
 			_ => return Err(()),
