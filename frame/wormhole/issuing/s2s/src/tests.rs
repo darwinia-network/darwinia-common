@@ -17,285 +17,26 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- crates.io ---
-use codec::{Decode, Encode};
 use std::str::FromStr;
 // --- darwinia-network ---
 use crate::{
 	*, {self as s2s_issuing},
 };
-use darwinia_evm::{EnsureAddressTruncated, FeeCalculator, SubstrateBlockHashMapping};
-use darwinia_support::{
-	evm::IntoAccountId,
-	s2s::{RelayMessageSender, TokenMessageId},
-};
+use darwinia_support::evm::IntoAccountId;
 use dp_asset::token::TokenInfo;
-use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
-use dp_s2s::CallParams;
-use dvm_ethereum::{
-	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
-	IntermediateStateRoot,
-};
-// --- paritytech ---
-use frame_support::{
-	traits::{GenesisBuild, MaxEncodedLen},
-	weights::PostDispatchInfo,
-	PalletId,
-};
-use frame_system::mocking::*;
-use sp_runtime::{
-	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32, DispatchErrorWithPostInfo, RuntimeDebug,
-};
 
-type Block = MockBlock<Test>;
-type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
-type Balance = u64;
+use array_bytes::hex2bytes_unchecked;
+use frame_support::assert_ok;
 
-darwinia_support::impl_test_account_data! {}
-
-frame_support::parameter_types! {
-	pub const ExistentialDeposit: u64 = 1;
-}
-impl darwinia_balances::Config<RingInstance> for Test {
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type OtherCurrencies = ();
-	type Balance = Balance;
-	type Event = ();
-	type MaxLocks = ();
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
-	type WeightInfo = ();
-}
-impl darwinia_balances::Config<KtonInstance> for Test {
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type OtherCurrencies = ();
-	type Balance = Balance;
-	type Event = ();
-	type MaxLocks = ();
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
-	type WeightInfo = ();
-}
-
-frame_support::parameter_types! {
-	pub const MinimumPeriod: u64 = 6000 / 2;
-}
-impl pallet_timestamp::Config for Test {
-	type Moment = u64;
-	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = ();
-}
-
-impl frame_system::Config for Test {
-	type BaseCallFilter = ();
-	type BlockWeights = ();
-	type BlockLength = ();
-	type DbWeight = ();
-	type Origin = Origin;
-	type Index = u64;
-	type BlockNumber = u64;
-	type Hash = H256;
-	type Call = Call;
-	type Hashing = BlakeTwo256;
-	type AccountId = AccountId32;
-	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
-	type Event = ();
-	type BlockHashCount = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
-	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
-	type OnSetCode = ();
-}
-
-frame_support::parameter_types! {
-	pub const DvmPalletId: PalletId = PalletId(*b"dar/dvmp");
-}
-
-impl dvm_ethereum::Config for Test {
-	type Event = ();
-	type PalletId = DvmPalletId;
-	type StateRoot = IntermediateStateRoot;
-	type RingCurrency = Ring;
-	type KtonCurrency = Kton;
-}
-
-pub struct FixedGasPrice;
-impl FeeCalculator for FixedGasPrice {
-	fn min_gas_price() -> U256 {
-		1.into()
-	}
-}
-
-pub struct HashedConverter;
-impl IntoAccountId<AccountId32> for HashedConverter {
-	fn into_account_id(address: H160) -> AccountId32 {
-		let mut data = [0u8; 32];
-		data[0..20].copy_from_slice(&address[..]);
-		AccountId32::from(Into::<[u8; 32]>::into(data))
-	}
-}
-
-frame_support::parameter_types! {
-	pub const ChainId: u64 = 42;
-	pub const BlockGasLimit: U256 = U256::MAX;
-}
-impl darwinia_evm::Config for Test {
-	type FeeCalculator = FixedGasPrice;
-	type GasWeightMapping = ();
-	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
-	type IntoAccountId = HashedConverter;
-	type Event = ();
-	type Precompiles = ();
-	type FindAuthor = ();
-	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
-	type ChainId = ChainId;
-	type BlockGasLimit = BlockGasLimit;
-	type Runner = darwinia_evm::runner::stack::Runner<Self>;
-	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
-	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
-}
-
-frame_support::parameter_types! {
-	pub const S2sRelayPalletId: PalletId = PalletId(*b"da/s2sre");
-	pub const PangoroChainId: bp_runtime::ChainId = *b"pcid";
-	pub RootAccountForPayments: Option<AccountId32> = Some([1;32].into());
-	pub PangoroName: Vec<u8> = (b"Pangoro").to_vec();
-}
-
-pub struct AccountIdConverter;
-impl Convert<H256, AccountId32> for AccountIdConverter {
-	fn convert(hash: H256) -> AccountId32 {
-		hash.to_fixed_bytes().into()
-	}
-}
-
-#[derive(Debug, Encode, Decode, Clone, PartialEq, Eq)]
-pub struct MockMessagePayload {
-	spec_version: u32,
-	weight: u64,
-	call: Vec<u8>,
-}
-
-impl Size for MockMessagePayload {
-	fn size_hint(&self) -> u32 {
-		self.call.len() as _
-	}
-}
-
-pub struct PangoroPayLoadCreator;
-impl PayloadCreate<AccountId32, MockMessagePayload> for PangoroPayLoadCreator {
-	fn payload(
-		spec_version: u32,
-		weight: u64,
-		_call_params: CallParams<AccountId<Test>>,
-	) -> Result<MockMessagePayload, ()> {
-		return Ok(MockMessagePayload {
-			spec_version,
-			weight,
-			call: vec![],
-		});
-	}
-}
-
-pub struct ToPangoroMessageRelayCaller;
-impl RelayMessageSender for ToPangoroMessageRelayCaller {
-	fn encode_send_message(
-		_pallet_index: u32,
-		_lane_id: [u8; 4],
-		_payload: Vec<u8>,
-		_fee: u128,
-	) -> Result<Vec<u8>, &'static str> {
-		Ok(Vec::new())
-	}
-	fn send_message_by_root(
-		_pallet_index: u32,
-		_lane_id: [u8; 4],
-		_payload: Vec<u8>,
-		_fee: u128,
-	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
-		Ok(PostDispatchInfo {
-			actual_weight: None,
-			pays_fee: Pays::No,
-		})
-	}
-	fn latest_token_message_id(_lane_id: [u8; 4]) -> TokenMessageId {
-		[0u8; 16]
-	}
-	fn latest_received_token_message_id(_lane_id: [u8; 4]) -> TokenMessageId {
-		[0u8; 16]
-	}
-}
-
-pub struct TruncateToEthAddress;
-impl ToEthAddress<AccountId32> for TruncateToEthAddress {
-	fn into_ethereum_id(address: &AccountId32) -> H160 {
-		let account20: &[u8] = &address.as_ref();
-		H160::from_slice(&account20[..20])
-	}
-}
-
-impl Config for Test {
-	type Event = ();
-	type PalletId = S2sRelayPalletId;
-	type WeightInfo = ();
-
-	type RingCurrency = Ring;
-	type BridgedAccountIdConverter = AccountIdConverter;
-	type BridgedChainId = PangoroChainId;
-	type ToEthAddressT = TruncateToEthAddress;
-	type OutboundPayload = MockMessagePayload;
-	type PayloadCreator = PangoroPayLoadCreator;
-	type InternalTransactHandler = Ethereum;
-	type BackingChainName = PangoroName;
-}
-
-frame_support::construct_runtime! {
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
-	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		S2sIssuing: s2s_issuing::{Pallet, Call, Storage, Config, Event<T>},
-		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config},
-	}
-}
-
-pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap();
-	let mapping_factory_address =
-		H160::from_str("0000000000000000000000000000000000000002").unwrap();
-
-	<s2s_issuing::GenesisConfig as GenesisBuild<Test>>::assimilate_storage(
-		&s2s_issuing::GenesisConfig {
-			mapping_factory_address,
-		},
-		&mut t,
-	)
-	.unwrap();
-	t.into()
-}
+use array_bytes::hex_into_unchecked;
+use dp_asset::token::TokenOption;
+use mock::*;
+use sp_runtime::AccountId32;
 
 #[test]
 fn burn_and_remote_unlock_success() {
-	new_test_ext().execute_with(|| {
+	let (_, mut ext) = new_test_ext(1);
+	ext.execute_with(|| {
 		let original_token = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		let token: Token = (1, TokenInfo::new(original_token, Some(U256::from(1)), None)).into();
 		let burn_info = S2sRemoteUnlockInfo {
@@ -313,5 +54,84 @@ fn burn_and_remote_unlock_success() {
 			CallParams::UnlockFromRemote(submitter, burn_info),
 		)
 		.unwrap();
+	});
+}
+
+#[test]
+fn register_and_issue_from_remote_success() {
+	let (pairs, mut ext) = new_test_ext(1);
+	let alice = &pairs[0];
+	ext.execute_with(|| {
+		let t = UnsignedTransaction {
+			nonce: U256::zero(),
+			gas_price: U256::from(1),
+			gas_limit: U256::from(0x100000),
+			action: ethereum::TransactionAction::Create,
+			value: U256::zero(),
+			input: hex2bytes_unchecked(TEST_CONTRACT_BYTECODE),
+		}
+		.sign(&alice.private_key);
+		assert_ok!(Ethereum::execute(
+			alice.address,
+			t.input,
+			t.value,
+			t.gas_limit,
+			Some(t.gas_price),
+			Some(t.nonce),
+			t.action,
+			None,
+		));
+		let mapping_token_factory_address: H160 =
+			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
+		assert_ok!(S2sIssuing::set_mapping_factory_address(
+			Origin::root(),
+			mapping_token_factory_address,
+		));
+		let remote_root_address = hex2bytes_unchecked(
+			"0xaaa5b780fa60c639ad17212d92e8e6257cb468baa88e1f826e6fe8ae6b7b700c",
+		);
+		let remote_root_account: AccountId32 =
+			AccountId32::decode(&mut &remote_root_address[..]).unwrap_or_default();
+		let original_token_address = hex_into_unchecked("0000000000000000000000000000000000000002");
+		let token_option = TokenOption {
+			name: [10; 32].to_vec(),
+			symbol: [20; 32].to_vec(),
+			decimal: 18,
+		};
+		let token = Token::Native(TokenInfo::new(
+			original_token_address,
+			None,
+			Some(token_option),
+		));
+		let backing_address =
+			<Test as s2s_issuing::Config>::ToEthAddressT::into_ethereum_id(&remote_root_account);
+
+		// before register, the mapping token address is Zero
+		assert_eq!(
+			S2sIssuing::mapped_token_address(backing_address, original_token_address).unwrap(),
+			H160::from_str("0000000000000000000000000000000000000000").unwrap()
+		);
+		assert_ok!(S2sIssuing::register_from_remote(
+			Origin::signed(remote_root_account.clone()),
+			token
+		));
+		let mapping_token =
+			S2sIssuing::mapped_token_address(backing_address, original_token_address).unwrap();
+		// after register, the mapping token address is 0x0000000000000000000000000000000000000001
+		assert_eq!(
+			mapping_token,
+			H160::from_str("0000000000000000000000000000000000000001").unwrap()
+		);
+		let issue_token = Token::Native(TokenInfo::new(
+			original_token_address,
+			Some(U256::from(10_000_000_000u128)),
+			None,
+		));
+		let recipient = H160::from_str("1000000000000000000000000000000000000000").unwrap();
+		assert_ok!(S2sIssuing::issue_from_remote(
+			Origin::signed(remote_root_account.clone()),
+			issue_token,
+			recipient
+		));
 	});
 }
