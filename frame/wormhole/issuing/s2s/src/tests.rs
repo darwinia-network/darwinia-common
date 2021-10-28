@@ -17,20 +17,20 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- crates.io ---
+use array_bytes::{hex2bytes_unchecked, hex_into_unchecked};
 use std::str::FromStr;
 // --- darwinia-network ---
 use crate::{
 	*, {self as s2s_issuing},
 };
 use darwinia_support::evm::IntoAccountId;
-use dp_asset::token::TokenInfo;
-
-use array_bytes::hex2bytes_unchecked;
-use frame_support::assert_ok;
-
-use array_bytes::hex_into_unchecked;
-use dp_asset::token::TokenOption;
+use dp_asset::token::{TokenInfo, TokenOption};
+use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
+use dp_s2s::CallParams;
 use mock::*;
+
+// --- paritytech ---
+use frame_support::assert_ok;
 use sp_runtime::AccountId32;
 
 #[test]

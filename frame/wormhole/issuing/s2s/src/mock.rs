@@ -28,6 +28,7 @@ use darwinia_support::{
 	evm::IntoAccountId,
 	s2s::{RelayMessageSender, TokenMessageId},
 };
+use dp_s2s::CallParams;
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
@@ -249,15 +250,16 @@ impl Size for MockMessagePayload {
 	}
 }
 
-pub struct PangoroCallEncoder;
-impl EncodeCall<AccountId32, MockMessagePayload> for PangoroCallEncoder {
-	fn encode_remote_unlock(
-		_submitter: AccountId32,
-		remote_unlock_info: S2sRemoteUnlockInfo,
+pub struct PangoroPayLoadCreator;
+impl PayloadCreate<AccountId32, MockMessagePayload> for PangoroPayLoadCreator {
+	fn payload(
+		spec_version: u32,
+		weight: u64,
+		_call_params: CallParams<AccountId<Test>>,
 	) -> Result<MockMessagePayload, ()> {
 		return Ok(MockMessagePayload {
-			spec_version: remote_unlock_info.spec_version,
-			weight: remote_unlock_info.weight,
+			spec_version,
+			weight,
 			call: vec![],
 		});
 	}
@@ -310,7 +312,7 @@ impl Config for Test {
 	type BridgedChainId = PangoroChainId;
 	type ToEthAddressT = TruncateToEthAddress;
 	type OutboundPayload = MockMessagePayload;
-	type CallEncoder = PangoroCallEncoder;
+	type PayloadCreator = PangoroPayLoadCreator;
 	type InternalTransactHandler = Ethereum;
 	type BackingChainName = PangoroName;
 }
