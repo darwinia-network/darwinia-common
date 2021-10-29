@@ -233,10 +233,6 @@ pub mod pallet {
 		InvalidDecoding,
 		/// invalid source origin
 		InvalidOrigin,
-		/// encode dispatch call failed
-		EncodeInvalid,
-		/// send relay message failed
-		SendMessageFailed,
 		/// call mapping factory failed
 		MappingFactoryCallFailed,
 	}

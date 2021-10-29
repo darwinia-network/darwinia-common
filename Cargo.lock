@@ -1945,6 +1945,7 @@ name = "darwinia-support"
 version = "2.6.8"
 dependencies = [
  "array-bytes",
+ "bp-messages",
  "bp-runtime",
  "ethabi",
  "ethereum",

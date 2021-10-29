@@ -2,13 +2,13 @@ pub use darwinia_evm_precompile_dispatch::Dispatch;
 pub use darwinia_evm_precompile_misc::Misc;
 pub use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 pub use darwinia_evm_precompile_transfer::Transfer;
-use darwinia_support::s2s::{nonce_to_message_id, RelayMessageSender, TokenMessageId};
-use frame_system::RawOrigin;
+use darwinia_support::s2s::{LatestMessageNoncer, RelayMessageSender};
 use pallet_bridge_messages::Instance1 as Pangoro;
 
 // --- crates.io ---
 use evm::{executor::PrecompileOutput, Context, ExitError};
 // --- paritytech ---
+use bp_messages::LaneId;
 use codec::{Decode, Encode};
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
@@ -16,7 +16,6 @@ use frame_support::{
 	ConsensusEngineId,
 };
 use sp_core::{crypto::Public, H160, U256};
-use sp_runtime::DispatchErrorWithPostInfo;
 use sp_std::marker::PhantomData;
 // --- darwinia-network ---
 use crate::*;
@@ -47,7 +46,7 @@ pub struct ToPangoroMessageSender;
 impl ToPangoroMessageSender {
 	fn send_message_call(
 		pallet_index: u32,
-		lane_id: [u8; 4],
+		lane_id: LaneId,
 		payload: Vec<u8>,
 		fee: u128,
 	) -> Result<Call, &'static str> {
@@ -74,32 +73,22 @@ impl ToPangoroMessageSender {
 impl RelayMessageSender for ToPangoroMessageSender {
 	fn encode_send_message(
 		pallet_index: u32,
-		lane_id: [u8; 4],
+		lane_id: LaneId,
 		payload: Vec<u8>,
 		fee: u128,
 	) -> Result<Vec<u8>, &'static str> {
 		let call = Self::send_message_call(pallet_index, lane_id, payload, fee)?;
 		Ok(call.encode())
 	}
+}
 
-	fn send_message_by_root(
-		pallet_index: u32,
-		lane_id: [u8; 4],
-		payload: Vec<u8>,
-		fee: u128,
-	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
-		let call = Self::send_message_call(pallet_index, lane_id, payload, fee)?;
-		call.dispatch(RawOrigin::Root.into())
+impl LatestMessageNoncer for ToPangoroMessageSender {
+	fn outbound_latest_generated_nonce(lane_id: LaneId) -> u64 {
+		BridgePangoroMessages::outbound_latest_generated_nonce(lane_id).into()
 	}
 
-	fn latest_token_message_id(lane_id: [u8; 4]) -> TokenMessageId {
-		let nonce: u64 = BridgePangoroMessages::outbound_latest_generated_nonce(lane_id).into();
-		nonce_to_message_id(&lane_id, nonce)
-	}
-
-	fn latest_received_token_message_id(lane_id: [u8; 4]) -> TokenMessageId {
-		let nonce: u64 = BridgePangoroMessages::inbound_latest_received_nonce(lane_id).into();
-		nonce_to_message_id(&lane_id, nonce)
+	fn inbound_latest_received_nonce(lane_id: LaneId) -> u64 {
+		BridgePangoroMessages::inbound_latest_received_nonce(lane_id).into()
 	}
 }
 

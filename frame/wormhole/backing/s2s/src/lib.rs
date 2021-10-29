@@ -34,25 +34,30 @@ pub use weight::WeightInfo;
 use ethereum_primitives::EthereumAddress;
 use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
-use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId};
+use bp_messages::{
+	source_chain::{MessagesBridge, OnDeliveryConfirmed},
+	DeliveredMessages, LaneId,
+};
 use bp_runtime::{ChainId, Size};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{Currency, ExistenceRequirement::*, Get},
-	transactional, PalletId,
+	transactional,
+	weights::PostDispatchInfo,
+	PalletId,
 };
-use frame_system::{ensure_signed, pallet_prelude::*};
+use frame_system::{ensure_signed, pallet_prelude::*, RawOrigin};
 use sp_runtime::{
 	traits::{AccountIdConversion, Convert, Saturating, Zero},
-	SaturatedConversion,
+	DispatchErrorWithPostInfo, SaturatedConversion,
 };
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use darwinia_support::{
 	evm::IntoH160,
 	s2s::{
-		ensure_source_account, nonce_to_message_id, RelayMessageSender, TokenMessageId,
+		ensure_source_account, nonce_to_message_id, LatestMessageNoncer, TokenMessageId,
 		RING_DECIMAL, RING_NAME, RING_SYMBOL,
 	},
 	AccountId,
@@ -92,10 +97,25 @@ pub mod pallet {
 		type OutboundPayload: Parameter + Size;
 		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
 
-		type FeeAccount: Get<Option<Self::AccountId>>;
-		type MessageSender: RelayMessageSender;
+		type MessageNoncer: LatestMessageNoncer;
 		type MessageSendPalletIndex: Get<u32>;
 		type MessageLaneId: Get<LaneId>;
+
+		type OutboundMessageFee: Default
+			+ From<u64>
+			+ PartialOrd
+			+ Parameter
+			+ Saturating
+			+ Zero
+			+ Copy
+			+ From<RingBalance<Self>>;
+
+		type MessagesBridge: MessagesBridge<
+			Self::AccountId,
+			Self::OutboundMessageFee,
+			Self::OutboundPayload,
+			Error = DispatchErrorWithPostInfo<PostDispatchInfo>,
+		>;
 	}
 
 	#[pallet::event]
@@ -138,8 +158,6 @@ pub mod pallet {
 		InvalidOrigin,
 		/// Encode dispatch call failed.
 		EncodeInvalid,
-		/// Send relay message failed.
-		SendMessageFailed,
 		/// Message nonce duplicated.
 		NonceDuplicated,
 		/// Unsupported token
@@ -227,9 +245,6 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 
-			if let Some(fee_account) = T::FeeAccount::get() {
-				T::RingCurrency::transfer(&user, &fee_account, fee, KeepAlive)?;
-			}
 			let token_metadata = TokenMetadata {
 				token_type: NATIVE_TOKEN_TYPE,
 				address: T::RingPalletId::get().into_h160(),
@@ -243,11 +258,14 @@ pub mod pallet {
 				weight,
 				token_metadata.clone(),
 			);
-			T::MessageSender::send_message_by_root(
-				T::MessageSendPalletIndex::get(),
+			// this pallet account as the submitter of the remote message
+			// we need to transfer fee from user to this account to pay the bridge fee
+			T::RingCurrency::transfer(&user, &Self::pallet_account_id(), fee, KeepAlive)?;
+			T::MessagesBridge::send_message(
+				RawOrigin::Signed(Self::pallet_account_id()),
 				T::MessageLaneId::get(),
-				payload.encode(),
-				fee.saturated_into::<u128>().into(),
+				payload,
+				fee.into(),
 			)?;
 
 			Self::deposit_event(Event::TokenRegistered(token_metadata, user));
@@ -280,9 +298,6 @@ pub mod pallet {
 				<Error<T>>::InsufficientBalance
 			);
 
-			if let Some(fee_account) = T::FeeAccount::get() {
-				T::RingCurrency::transfer(&user, &fee_account, fee, KeepAlive)?;
-			}
 			T::RingCurrency::transfer(&user, &Self::pallet_account_id(), value, KeepAlive)?;
 
 			// Send to the target chain
@@ -298,13 +313,19 @@ pub mod pallet {
 				receiver,
 			)
 			.map_err(|_| Error::<T>::EncodeInvalid)?;
-			T::MessageSender::send_message_by_root(
-				T::MessageSendPalletIndex::get(),
+			// this pallet account as the submitter of the remote message
+			// we need to transfer fee from user to this account to pay the bridge fee
+			T::RingCurrency::transfer(&user, &Self::pallet_account_id(), fee, KeepAlive)?;
+			T::MessagesBridge::send_message(
+				RawOrigin::Signed(Self::pallet_account_id()),
 				T::MessageLaneId::get(),
-				payload.encode(),
-				fee.saturated_into::<u128>().into(),
+				payload,
+				fee.into(),
 			)?;
-			let message_id = T::MessageSender::latest_token_message_id(T::MessageLaneId::get());
+
+			let message_nonce =
+				T::MessageNoncer::outbound_latest_generated_nonce(T::MessageLaneId::get());
+			let message_id = nonce_to_message_id(&T::MessageLaneId::get(), message_nonce);
 			ensure!(
 				!<TransactionInfos<T>>::contains_key(message_id),
 				Error::<T>::NonceDuplicated
@@ -367,8 +388,9 @@ pub mod pallet {
 
 			<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = used.saturating_add(amount));
 
-			let message_id =
-				T::MessageSender::latest_received_token_message_id(T::MessageLaneId::get());
+			let message_nonce =
+				T::MessageNoncer::inbound_latest_received_nonce(T::MessageLaneId::get());
+			let message_id = nonce_to_message_id(&T::MessageLaneId::get(), message_nonce);
 			Self::deposit_event(Event::TokenUnlocked(
 				message_id,
 				token_address,
