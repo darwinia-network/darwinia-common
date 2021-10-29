@@ -34,6 +34,7 @@ pub use weight::WeightInfo;
 use ethereum_primitives::EthereumAddress;
 use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
+use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId};
 use bp_runtime::{ChainId, Size};
 use frame_support::{
 	ensure,
@@ -51,8 +52,8 @@ use sp_std::prelude::*;
 use darwinia_support::{
 	evm::IntoH160,
 	s2s::{
-		ensure_source_account, MessageConfirmer, RelayMessageSender, TokenMessageId, RING_DECIMAL,
-		RING_NAME, RING_SYMBOL,
+		ensure_source_account, nonce_to_message_id, RelayMessageSender, TokenMessageId,
+		RING_DECIMAL, RING_NAME, RING_SYMBOL,
 	},
 	AccountId,
 };
@@ -94,7 +95,7 @@ pub mod pallet {
 		type FeeAccount: Get<Option<Self::AccountId>>;
 		type MessageSender: RelayMessageSender;
 		type MessageSendPalletIndex: Get<u32>;
-		type MessageLaneId: Get<[u8; 4]>;
+		type MessageLaneId: Get<LaneId>;
 	}
 
 	#[pallet::event]
@@ -421,28 +422,37 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> MessageConfirmer for Pallet<T> {
-		fn on_messages_confirmed(message_id: TokenMessageId, result: bool) -> Weight {
-			let (token_address, user, amount) = <TransactionInfos<T>>::take(message_id);
-			let mut writes = 1;
-			if !result {
-				// if remote issue mapped token failed, this fund need to transfer token back
-				// to the user. The balance always comes from the user's locked currency while
-				// calling the dispatch call `lock_and_remote_issue`.
-				// This transfer will always successful except some extreme scene, since the
-				// user must lock some currency first, then this transfer can be triggered.
-				let _ =
-					T::RingCurrency::transfer(&Self::pallet_account_id(), &user, amount, KeepAlive);
-				writes += 1;
+	impl<T: Config> OnDeliveryConfirmed for Pallet<T> {
+		fn on_messages_delivered(lane: &LaneId, messages: &DeliveredMessages) -> Weight {
+			if *lane != T::MessageLaneId::get() {
+				return 0;
 			}
-			Self::deposit_event(Event::TokenLockedConfirmed(
-				message_id,
-				token_address,
-				user,
-				amount,
-				result,
-			));
-			<T as frame_system::Config>::DbWeight::get().reads_writes(1, writes)
+			for nonce in messages.begin..=messages.end {
+				let result = messages.message_dispatch_result(nonce);
+				let message_id = nonce_to_message_id(lane, nonce);
+				let (token_address, user, amount) = <TransactionInfos<T>>::take(message_id);
+				if !result {
+					// if remote issue mapped token failed, this fund need to transfer token back
+					// to the user. The balance always comes from the user's locked currency while
+					// calling the dispatch call `lock_and_remote_issue`.
+					// This transfer will always successful except some extreme scene, since the
+					// user must lock some currency first, then this transfer can be triggered.
+					let _ = T::RingCurrency::transfer(
+						&Self::pallet_account_id(),
+						&user,
+						amount,
+						KeepAlive,
+					);
+				}
+				Self::deposit_event(Event::TokenLockedConfirmed(
+					message_id,
+					token_address,
+					user,
+					amount,
+					result,
+				));
+			}
+			<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
 		}
 	}
 }

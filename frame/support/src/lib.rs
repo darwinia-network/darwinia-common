@@ -47,7 +47,7 @@ pub mod s2s {
 	use ethereum_primitives::{H160, H256};
 	// --- paritytech ---
 	use bp_runtime::{derive_account_id, ChainId, SourceAccount};
-	use frame_support::{ensure, pallet_prelude::Weight, weights::PostDispatchInfo};
+	use frame_support::{ensure, weights::PostDispatchInfo};
 	use sp_runtime::{
 		traits::{BadOrigin, Convert},
 		DispatchError, DispatchErrorWithPostInfo,
@@ -80,10 +80,6 @@ pub mod s2s {
 
 		fn latest_token_message_id(lane_id: [u8; 4]) -> TokenMessageId;
 		fn latest_received_token_message_id(lane_id: [u8; 4]) -> TokenMessageId;
-	}
-
-	pub trait MessageConfirmer {
-		fn on_messages_confirmed(message_id: TokenMessageId, result: bool) -> Weight;
 	}
 
 	pub fn ensure_source_root<AccountId, Converter>(

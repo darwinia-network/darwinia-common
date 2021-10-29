@@ -33,6 +33,7 @@ pub use weight::WeightInfo;
 // --- crates.io ---
 use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
+use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -46,7 +47,7 @@ use sp_std::{str, vec::Vec};
 use bp_runtime::{ChainId, Size};
 use darwinia_support::{
 	mapping_token::*,
-	s2s::{ensure_source_root, MessageConfirmer, ToEthAddress, TokenMessageId},
+	s2s::{ensure_source_root, nonce_to_message_id, ToEthAddress},
 	AccountId, ChainName,
 };
 use dp_asset::token::TokenMetadata;
@@ -80,6 +81,7 @@ pub mod pallet {
 		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
 		type InternalTransactHandler: InternalTransactHandler;
 		type BackingChainName: Get<ChainName>;
+		type MessageLaneId: Get<LaneId>;
 	}
 
 	#[pallet::pallet]
@@ -264,14 +266,21 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> MessageConfirmer for Pallet<T> {
-		fn on_messages_confirmed(message_id: TokenMessageId, result: bool) -> Weight {
-			if let Ok(input) =
-				smtf::encode_confirm_burn_and_remote_unlock(message_id.to_vec(), result)
-			{
-				let _ = Self::transact_mapping_factory(input);
+	impl<T: Config> OnDeliveryConfirmed for Pallet<T> {
+		fn on_messages_delivered(lane: &LaneId, messages: &DeliveredMessages) -> Weight {
+			if *lane != T::MessageLaneId::get() {
+				return 0;
 			}
-			return 1;
+			for nonce in messages.begin..=messages.end {
+				let result = messages.message_dispatch_result(nonce);
+				let message_id = nonce_to_message_id(lane, nonce);
+				if let Ok(input) =
+					smtf::encode_confirm_burn_and_remote_unlock(message_id.to_vec(), result)
+				{
+					let _ = Self::transact_mapping_factory(input);
+				}
+			}
+			<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
 		}
 	}
 }

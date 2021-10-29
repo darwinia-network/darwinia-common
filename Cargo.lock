@@ -3163,6 +3163,7 @@ name = "from-substrate-issuing"
 version = "2.6.8"
 dependencies = [
  "array-bytes",
+ "bp-messages",
  "bp-runtime",
  "darwinia-balances",
  "darwinia-evm",
@@ -10059,6 +10060,7 @@ name = "to-substrate-backing"
 version = "2.6.8"
 dependencies = [
  "array-bytes",
+ "bp-messages",
  "bp-runtime",
  "darwinia-balances",
  "darwinia-support",
