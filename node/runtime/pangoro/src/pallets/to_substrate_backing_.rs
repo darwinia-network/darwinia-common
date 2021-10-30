@@ -1,11 +1,11 @@
 pub use pallet_bridge_messages::Instance1 as Pangolin;
 
 // --- paritytech ---
-use bp_message_dispatch::CallOrigin;
 use bp_messages::LaneId;
 use bp_runtime::{messages::DispatchFeePayment, ChainId};
 use bridge_runtime_common::messages::source::FromThisChainMessagePayload;
 use frame_support::{traits::PalletInfoAccess, PalletId};
+use pangoro_primitives::AccountId;
 use sp_core::{H160, U256};
 // --- darwinia-network ---
 use crate::*;
@@ -38,11 +38,16 @@ pub enum PangolinSub2SubIssuingCall {
 pub struct PangolinCallEncoder;
 impl PangolinCallEncoder {
 	/// Transfer call to message payload
-	fn to_payload(spec_version: u32, weight: u64, call: Vec<u8>) -> ToPangolinMessagePayload {
+	fn to_payload(
+		submitter: AccountId,
+		spec_version: u32,
+		weight: u64,
+		call: Vec<u8>,
+	) -> ToPangolinMessagePayload {
 		return FromThisChainMessagePayload::<WithPangolinMessageBridge> {
 			spec_version,
 			weight,
-			origin: CallOrigin::SourceRoot,
+			origin: bp_message_dispatch::CallOrigin::SourceAccount(submitter),
 			call,
 			dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
 		};
@@ -51,6 +56,7 @@ impl PangolinCallEncoder {
 impl EncodeCall<AccountId, ToPangolinMessagePayload> for PangolinCallEncoder {
 	/// Encode issuing pallet remote_register call
 	fn encode_remote_register(
+		submitter: AccountId,
 		spec_version: u32,
 		weight: u64,
 		token_metadata: TokenMetadata,
@@ -59,10 +65,11 @@ impl EncodeCall<AccountId, ToPangolinMessagePayload> for PangolinCallEncoder {
 			PangolinSub2SubIssuingCall::register_from_remote(token_metadata),
 		)
 		.encode();
-		Self::to_payload(spec_version, weight, call)
+		Self::to_payload(submitter, spec_version, weight, call)
 	}
 	/// Encode issuing pallet remote_issue call
 	fn encode_remote_issue(
+		submitter: AccountId,
 		spec_version: u32,
 		weight: u64,
 		token_address: H160,
@@ -76,7 +83,7 @@ impl EncodeCall<AccountId, ToPangolinMessagePayload> for PangolinCallEncoder {
 			.encode(),
 			_ => return Err(()),
 		};
-		Ok(Self::to_payload(spec_version, weight, call))
+		Ok(Self::to_payload(submitter, spec_version, weight, call))
 	}
 }
 

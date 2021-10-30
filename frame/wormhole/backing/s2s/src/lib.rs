@@ -254,6 +254,7 @@ pub mod pallet {
 			};
 
 			let payload = T::CallEncoder::encode_remote_register(
+				Self::pallet_account_id(),
 				spec_version,
 				weight,
 				token_metadata.clone(),
@@ -306,6 +307,7 @@ pub mod pallet {
 
 			let receiver = RecipientAccount::EthereumAccount(recipient);
 			let payload = T::CallEncoder::encode_remote_issue(
+				Self::pallet_account_id(),
 				spec_version,
 				weight,
 				token_address,
@@ -483,12 +485,14 @@ pub mod pallet {
 pub trait EncodeCall<AccountId, MessagePayload> {
 	/// Encode issuing pallet remote_register call
 	fn encode_remote_register(
+		submitter: AccountId,
 		spec_version: u32,
 		weight: u64,
 		token_metadata: TokenMetadata,
 	) -> MessagePayload;
 	/// Encode issuing pallet remote_issue call
 	fn encode_remote_issue(
+		submitter: AccountId,
 		spec_version: u32,
 		weight: u64,
 		token_address: H160,
