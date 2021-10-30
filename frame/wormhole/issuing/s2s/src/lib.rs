@@ -47,7 +47,7 @@ use sp_std::{str, vec::Vec};
 use bp_runtime::{ChainId, Size};
 use darwinia_support::{
 	mapping_token::*,
-	s2s::{ensure_source_root, nonce_to_message_id, ToEthAddress},
+	s2s::{ensure_source_account, nonce_to_message_id, ToEthAddress},
 	AccountId, ChainName,
 };
 use dp_asset::token::TokenMetadata;
@@ -84,6 +84,10 @@ pub mod pallet {
 		type MessageLaneId: Get<LaneId>;
 	}
 
+	#[pallet::storage]
+	#[pallet::getter(fn remote_backing_account)]
+	pub type RemoteBackingAccount<T: Config> = StorageValue<_, AccountId<T>, ValueQuery>;
+
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(PhantomData<T>);
@@ -102,8 +106,9 @@ pub mod pallet {
 			token_metadata: TokenMetadata,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
-			ensure_source_root::<T::AccountId, T::BridgedAccountIdConverter>(
+			ensure_source_account::<T::AccountId, T::BridgedAccountIdConverter>(
 				T::BridgedChainId::get(),
+				<RemoteBackingAccount<T>>::get(),
 				&user,
 			)?;
 
@@ -151,8 +156,9 @@ pub mod pallet {
 			// the s2s message relay has been verified that the message comes from the backing chain with the
 			// chainID and backing sender address.
 			// here only we need is to check the sender is root
-			ensure_source_root::<T::AccountId, T::BridgedAccountIdConverter>(
+			ensure_source_account::<T::AccountId, T::BridgedAccountIdConverter>(
 				T::BridgedChainId::get(),
+				<RemoteBackingAccount<T>>::get(),
 				&user,
 			)?;
 
@@ -190,6 +196,17 @@ pub mod pallet {
 			Self::deposit_event(Event::MappingFactoryAddressUpdated(old_address, address));
 			Ok(().into())
 		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::set_remote_backing_account())]
+		pub fn set_remote_backing_account(
+			origin: OriginFor<T>,
+			account: AccountId<T>,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			<RemoteBackingAccount<T>>::put(account.clone());
+			Self::deposit_event(Event::RemoteBackingAccountUpdated(account));
+			Ok(().into())
+		}
 	}
 
 	#[pallet::event]
@@ -208,6 +225,9 @@ pub mod pallet {
 		/// Set mapping token factory address
 		/// [old, new]
 		MappingFactoryAddressUpdated(H160, H160),
+
+		/// Update remote backing address \[account\]
+		RemoteBackingAccountUpdated(AccountId<T>),
 	}
 
 	#[pallet::error]
