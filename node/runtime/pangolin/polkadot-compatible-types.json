@@ -241,7 +241,7 @@
 	},
 	"MmrRootToSign": {
 		"mmr_root": "Hash",
-		"signatures": "Vec<(EthereumAddress, EcdsaSignature)>"
+		"signatures": "Vec<(AccountId, EcdsaSignature)>"
 	},
 	"MMRRoot": "Hash",
 	"__[primitives.bsc]___": {},
