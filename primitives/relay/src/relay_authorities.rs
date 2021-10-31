@@ -119,11 +119,11 @@ pub struct ScheduledAuthoritiesChange<AccountId, Signer, RingBalance, BlockNumbe
 }
 
 #[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
-pub struct MmrRootToSign<MmrRoot, Signer, Signature> {
+pub struct MmrRootToSign<MmrRoot, AccountId, Signature> {
 	pub mmr_root: MmrRoot,
-	pub signatures: Vec<(Signer, Signature)>,
+	pub signatures: Vec<(AccountId, Signature)>,
 }
-impl<MmrRoot, Signer, Signature> MmrRootToSign<MmrRoot, Signer, Signature> {
+impl<MmrRoot, AccountId, Signature> MmrRootToSign<MmrRoot, AccountId, Signature> {
 	pub fn new(mmr_root: MmrRoot) -> Self {
 		Self {
 			mmr_root,
