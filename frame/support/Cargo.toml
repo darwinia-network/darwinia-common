@@ -47,6 +47,7 @@ std = [
 	"frame-system/std",
 	"frame-support/std",
 	"max-encoded-len/std",
+	"bp-messages/std",
 	"bp-runtime/std",
 	"sp-core/std",
 	"sp-runtime/std",
