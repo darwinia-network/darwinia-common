@@ -84,6 +84,7 @@ pub mod pallet {
 		type MessageLaneId: Get<LaneId>;
 	}
 
+	/// Remote Backing Address, this used to verify the remote caller
 	#[pallet::storage]
 	#[pallet::getter(fn remote_backing_account)]
 	pub type RemoteBackingAccount<T: Config> = StorageValue<_, AccountId<T>, ValueQuery>;
