@@ -21,8 +21,9 @@ use std::str::FromStr;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
-use frame_support::{traits::MaxEncodedLen, weights::PostDispatchInfo, PalletId};
-use frame_system::mocking::*;
+use bp_messages::source_chain::SendMessageArtifacts;
+use frame_support::{dispatch::PostDispatchInfo, traits::MaxEncodedLen, PalletId};
+use frame_system::{mocking::*, RawOrigin};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -30,7 +31,7 @@ use sp_runtime::{
 };
 // --- darwinia-network ---
 use crate::{self as s2s_backing, *};
-use darwinia_support::s2s::{RelayMessageSender, TokenMessageId};
+use darwinia_support::s2s::RelayMessageSender;
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
@@ -102,36 +103,55 @@ impl RelayMessageSender for MockRelayCaller {
 	) -> Result<Vec<u8>, &'static str> {
 		Ok(Vec::new())
 	}
-	fn send_message_by_root(
-		_pallet_index: u32,
-		_lane_id: [u8; 4],
-		_payload: Vec<u8>,
-		_fee: u128,
-	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
-		Ok(().into())
+}
+
+pub struct MockLatestMessageNoncer;
+impl LatestMessageNoncer for MockLatestMessageNoncer {
+	fn outbound_latest_generated_nonce(_lane_id: [u8; 4]) -> u64 {
+		0
 	}
-	fn latest_token_message_id(_lane_id: [u8; 4]) -> TokenMessageId {
-		[0u8; 16]
-	}
-	fn latest_received_token_message_id(_lane_id: [u8; 4]) -> TokenMessageId {
-		[0u8; 16]
+	fn inbound_latest_received_nonce(_lane_id: [u8; 4]) -> u64 {
+		0
 	}
 }
 
 pub struct MockCallEncoder;
 impl EncodeCall<AccountId<Test>, ()> for MockCallEncoder {
 	/// Encode issuing pallet remote_register call
-	fn encode_remote_register(_spec_version: u32, _weight: u64, _token: Token) -> () {
+	fn encode_remote_register(
+		_submitter: AccountId<Test>,
+		_spec_version: u32,
+		_weight: u64,
+		_token: TokenMetadata,
+	) -> () {
 		()
 	}
 	/// Encode issuing pallet remote_issue call
 	fn encode_remote_issue(
+		_submitter: AccountId<Test>,
 		_spec_version: u32,
 		_weight: u64,
-		_token: Token,
+		_token_address: H160,
+		_amount: U256,
 		_recipient: RecipientAccount<AccountId<Test>>,
 	) -> Result<(), ()> {
 		Ok(())
+	}
+}
+
+pub struct MockMessagesBridge;
+impl MessagesBridge<AccountId<Test>, Balance, ()> for MockMessagesBridge {
+	type Error = DispatchErrorWithPostInfo<PostDispatchInfo>;
+	fn send_message(
+		_submitter: RawOrigin<AccountId<Test>>,
+		_laneid: [u8; 4],
+		_payload: (),
+		_fee: Balance,
+	) -> Result<SendMessageArtifacts, Self::Error> {
+		Ok(SendMessageArtifacts {
+			nonce: 0,
+			weight: 0,
+		})
 	}
 }
 
@@ -158,11 +178,12 @@ impl Config for Test {
 
 	type OutboundPayload = ();
 	type CallEncoder = MockCallEncoder;
+	type MessageNoncer = MockLatestMessageNoncer;
 
-	type FeeAccount = ();
-	type MessageSender = MockRelayCaller;
 	type MessageSendPalletIndex = BridgePangolinIndex;
 	type MessageLaneId = BridgePangolinLaneId;
+	type OutboundMessageFee = Balance;
+	type MessagesBridge = MockMessagesBridge;
 }
 
 frame_support::construct_runtime! {
