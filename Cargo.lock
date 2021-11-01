@@ -2195,6 +2195,7 @@ dependencies = [
  "ethabi",
  "ethereum-primitives",
  "ethereum-types",
+ "parity-scale-codec",
  "sp-std",
 ]
 
@@ -2241,6 +2242,7 @@ version = "2.6.7"
 dependencies = [
  "dp-asset",
  "dp-contract",
+ "parity-scale-codec",
  "sp-core",
  "sp-std",
 ]

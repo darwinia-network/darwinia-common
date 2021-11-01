@@ -27,6 +27,7 @@ use ethabi::{
 	param_type::ParamType, token::Token, Bytes, Error, Function, Param, Result as AbiResult,
 };
 // --- paritytech ---
+use codec::{Decode, Encode};
 use dp_asset::token::{Token as Erc20Token, TokenInfo};
 use sp_std::{convert::TryInto, prelude::*};
 
@@ -68,7 +69,7 @@ impl Sub2SubMappingTokenFactory {
 /// @original_token: the origin token address
 /// @recipient: the final receiver of the token to be unlocked on the source chain
 /// @amount: the amount of the unlocked token
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 pub struct S2sRemoteUnlockInfo {
 	pub spec_version: u32,
 	pub weight: u64,
@@ -77,7 +78,7 @@ pub struct S2sRemoteUnlockInfo {
 }
 
 impl S2sRemoteUnlockInfo {
-	pub fn encode(
+	pub fn eth_encode(
 		spec_version: u32,
 		weight: u64,
 		token_type: u32,
@@ -95,7 +96,7 @@ impl S2sRemoteUnlockInfo {
 		])
 	}
 
-	pub fn decode(data: &[u8]) -> AbiResult<Self> {
+	pub fn eth_decode(data: &[u8]) -> AbiResult<Self> {
 		let tokens = ethabi::decode(
 			&[
 				ParamType::Uint(256),

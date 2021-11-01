@@ -20,20 +20,34 @@
 
 // --- paritytech ---
 use sp_core::H160;
-use sp_std::vec::Vec;
+use sp_std::{vec, vec::Vec};
 // --- darwinia-network ---
+use codec::{Decode, Encode};
 use dp_asset::token::Token;
 use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
 
 /// The parameters box for the pallet runtime call.
-#[derive(Clone)]
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 pub enum CallParams<AccountId> {
+	#[codec(index = 0)]
 	RegisterFromRemote(Token),
+	#[codec(index = 1)]
 	IssueFromRemote(Token, H160),
+	#[codec(index = 2)]
 	UnlockFromRemote(AccountId, S2sRemoteUnlockInfo),
 }
+
 /// Creating a concrete message payload which would be relay to target chain.
-pub trait PayloadCreate<AccountId, MessagePayload> {
+pub trait PayloadCreate<AccountId, MessagePayload>
+where
+	AccountId: Encode + Decode,
+{
+	fn encode_call(pallet_index: u8, call_params: CallParams<AccountId>) -> Result<Vec<u8>, ()> {
+		let mut encoded = vec![pallet_index];
+		encoded.append(&mut call_params.encode());
+		Ok(encoded)
+	}
+
 	fn payload(
 		spec_version: u32,
 		weight: u64,

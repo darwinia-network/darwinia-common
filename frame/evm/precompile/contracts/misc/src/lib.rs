@@ -103,7 +103,7 @@ where
 				<S as RelayMessageSender>::latest_received_token_message_id(lane_id).to_vec()
 			}
 			_ if Self::match_digest(action_digest, S2S_ENCODE_REMOTE_UNLOCK_PAYLOAD) => {
-				let unlock_info = S2sRemoteUnlockInfo::decode(&action_params)
+				let unlock_info = S2sRemoteUnlockInfo::eth_decode(&action_params)
 					.map_err(|_| ExitError::Other("decode unlock info failed".into()))?;
 				let payload = <T as from_substrate_issuing::Config>::PayloadCreator::payload(
 					unlock_info.spec_version,

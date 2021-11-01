@@ -11,12 +11,12 @@ use from_substrate_issuing::Config;
 use to_substrate_backing::S2SBackingCall;
 
 /// Pangoro chain's dispatch call info
-#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
-pub enum PangoroRuntime {
-	/// NOTE: The index must be the same as the backing pallet in the pangoro runtime
-	#[codec(index = 20)]
-	Sub2SubBacking(S2SBackingCall<AccountId>),
-}
+// #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+// pub enum PangoroRuntime {
+// 	/// NOTE: The index must be the same as the backing pallet in the pangoro runtime
+// 	#[codec(index = 20)]
+// 	Sub2SubBacking(S2SBackingCall<AccountId>),
+// }
 
 /// Create message payload according to the call parameters.
 pub struct PangoroPayloadCreator;
@@ -26,21 +26,9 @@ impl PayloadCreate<AccountId, ToPangoroMessagePayload> for PangoroPayloadCreator
 		weight: u64,
 		call_params: CallParams<AccountId>,
 	) -> Result<ToPangoroMessagePayload, ()> {
-		let (submitter, call) = match call_params {
-			CallParams::UnlockFromRemote(submitter, unlock_info) => {
-				if unlock_info.recipient.len() != 32 {
-					return Err(());
-				}
-
-				let recipient_id: AccountId = to_bytes32(unlock_info.recipient.as_slice()).into();
-				(
-					submitter,
-					PangoroRuntime::Sub2SubBacking(S2SBackingCall::unlock_from_remote(
-						unlock_info.token,
-						recipient_id,
-					))
-					.encode(),
-				)
+		let (submitter, call) = match call_params.clone() {
+			CallParams::UnlockFromRemote(submitter, _unlock_info) => {
+				(submitter, Self::encode_call(20, call_params)?)
 			}
 			_ => return Err(()),
 		};
