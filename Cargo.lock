@@ -6176,6 +6176,7 @@ dependencies = [
  "static_assertions",
  "substrate-wasm-builder",
  "to-ethereum-backing",
+ "to-substrate-backing",
  "to-tron-backing",
 ]
 
@@ -6223,6 +6224,7 @@ dependencies = [
  "frame-system",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "from-substrate-issuing",
  "log",
  "max-encoded-len",
  "pallet-authority-discovery",

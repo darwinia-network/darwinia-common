@@ -30,8 +30,8 @@ use bridge_primitives::{
 	PANGORO_PANGOLIN_LANE, WITH_PANGOLIN_MESSAGES_PALLET_NAME,
 };
 use darwinia_support::to_bytes32;
-use dp_asset::token::Token;
 use dp_s2s::{CallParams, EncodeCall};
+use to_substrate_backing::S2SBackingCall;
 
 /// Message payload for Pangolin -> Pangoro messages.
 pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessageBridge>;
@@ -263,18 +263,7 @@ impl SourceHeaderChain<pangoro_primitives::Balance> for Pangoro {
 pub enum PangoroRuntime {
 	/// NOTE: The index must be the same as the backing pallet in the pangoro runtime
 	#[codec(index = 20)]
-	Sub2SubBacking(PangoroSub2SubBackingCall),
-}
-
-/// Something important to note:
-/// The index below represent the call order in the pangolin issuing pallet call.
-/// You must update the index here if you change the call order in Pangolin runtime.
-#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
-#[allow(non_camel_case_types)]
-pub enum PangoroSub2SubBackingCall {
-	/// NOTE: The index depends on the call order in the s2s backing pallet.
-	#[codec(index = 2)]
-	unlock_from_remote(Token, AccountId),
+	Sub2SubBacking(S2SBackingCall<AccountId>),
 }
 
 /// Generate concrete dispatch call data
@@ -288,7 +277,7 @@ impl EncodeCall<AccountId> for PangoroRuntimeCallsEncoder {
 				}
 
 				let recipient_id: AccountId = to_bytes32(unlock_info.recipient.as_slice()).into();
-				PangoroRuntime::Sub2SubBacking(PangoroSub2SubBackingCall::unlock_from_remote(
+				PangoroRuntime::Sub2SubBacking(S2SBackingCall::unlock_from_remote(
 					unlock_info.token,
 					recipient_id,
 				))

@@ -23,7 +23,6 @@ use frame_support::{
 	RuntimeDebug,
 };
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
-use sp_core::H160;
 use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
@@ -33,8 +32,8 @@ use bridge_primitives::{
 	PANGORO_PANGOLIN_LANE, WITH_PANGORO_MESSAGES_PALLET_NAME,
 };
 pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
-use dp_asset::token::Token;
 use dp_s2s::{CallParams, EncodeCall};
+use from_substrate_issuing::S2SIssuingCall;
 
 /// Message payload for Pangoro -> Pangolin messages.
 pub type ToPangolinMessagePayload = FromThisChainMessagePayload<WithPangolinMessageBridge>;
@@ -271,19 +270,7 @@ impl SourceHeaderChain<pangolin_primitives::Balance> for Pangolin {
 pub enum PangolinRuntime {
 	/// Note: this index must be the same as the backing pallet in pangolin chain runtime
 	#[codec(index = 49)]
-	Sub2SubIssuing(PangolinSub2SubIssuingCall),
-}
-
-/// Something important to note:
-/// The index below represent the call order in the pangolin issuing pallet call.
-/// You must update the index here if you change the call order in Pangolin runtime.
-#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
-#[allow(non_camel_case_types)]
-pub enum PangolinSub2SubIssuingCall {
-	#[codec(index = 0)]
-	register_from_remote(Token),
-	#[codec(index = 1)]
-	issue_from_remote(Token, H160),
+	Sub2SubIssuing(S2SIssuingCall),
 }
 
 /// Generate concrete dispatch call data
@@ -291,14 +278,14 @@ pub struct PangolinRuntimeCallsEncoder;
 impl EncodeCall<AccountId> for PangolinRuntimeCallsEncoder {
 	fn encode_call(call_params: CallParams<AccountId>) -> Result<Vec<u8>, ()> {
 		let call = match call_params {
-			CallParams::RegisterFromRemote(token) => PangolinRuntime::Sub2SubIssuing(
-				PangolinSub2SubIssuingCall::register_from_remote(token),
-			)
-			.encode(),
-			CallParams::IssueFromRemote(token, address) => PangolinRuntime::Sub2SubIssuing(
-				PangolinSub2SubIssuingCall::issue_from_remote(token, address),
-			)
-			.encode(),
+			CallParams::RegisterFromRemote(token) => {
+				PangolinRuntime::Sub2SubIssuing(S2SIssuingCall::register_from_remote(token))
+					.encode()
+			}
+			CallParams::IssueFromRemote(token, address) => {
+				PangolinRuntime::Sub2SubIssuing(S2SIssuingCall::issue_from_remote(token, address))
+					.encode()
+			}
 			_ => return Err(()),
 		};
 		Ok(call)

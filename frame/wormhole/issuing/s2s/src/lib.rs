@@ -313,3 +313,14 @@ impl<T: Config> Pallet<T> {
 		T::InternalTransactHandler::internal_transact(contract, input)
 	}
 }
+
+/// The index below represent the call order in the pallet. You must update the index here
+/// if you change the call order in the pallet.
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+#[allow(non_camel_case_types)]
+pub enum S2SIssuingCall {
+	#[codec(index = 0)]
+	register_from_remote(Token),
+	#[codec(index = 1)]
+	issue_from_remote(Token, H160),
+}
