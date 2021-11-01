@@ -164,22 +164,12 @@
 		"ethash_proof": "Vec<EthashProof>",
 		"mmr_proof": "Vec<H256>"
 	},
-	"TokenOption": {
+	"TokenMetadata" {
+		"token_type": "u32",
+		"address": "H160",
 		"name": "Vec<u8>",
 		"symbol": "Vec<u8>",
 		"decimal": "u8"
-	},
-	"TokenInfo": {
-		"address": "H160",
-		"value": "Option<U256>",
-		"option": "Option<TokenOption>"
-	},
-	"Token": {
-		"_enum": {
-			"InvalidToken": null,
-			"Native": "TokenInfo",
-			"Erc20": "TokenInfo"
-		}
 	},
 	"TokenMessageId": "[u8; 16; TokenMessageId]",
 	"__[TODO.Generalize]__": "",
