@@ -175,11 +175,13 @@ pub mod pallet {
 	pub type SecureLimitedRingAmount<T> =
 		StorageValue<_, (RingBalance<T>, RingBalance<T>), ValueQuery>;
 
+	/// `(asset_address, sender, amount)` the user *sender* lock and remote issuing amount of asset
 	#[pallet::storage]
 	#[pallet::getter(fn transaction_infos)]
 	pub type TransactionInfos<T: Config> =
 		StorageMap<_, Identity, TokenMessageId, (H160, AccountId<T>, RingBalance<T>), ValueQuery>;
 
+	/// The remote mapping token factory account, here use to ensure the remote caller
 	#[pallet::storage]
 	#[pallet::getter(fn remote_mapping_token_factory_account)]
 	pub type RemoteMappingTokenFactoryAccount<T: Config> =
