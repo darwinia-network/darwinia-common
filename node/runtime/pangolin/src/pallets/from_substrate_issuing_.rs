@@ -9,15 +9,6 @@ use darwinia_support::{s2s::ToEthAddress, to_bytes32, ChainName};
 use dp_s2s::{CallParams, PayloadCreate};
 use from_substrate_issuing::Config;
 use to_substrate_backing::S2SBackingCall;
-
-/// Pangoro chain's dispatch call info
-// #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
-// pub enum PangoroRuntime {
-// 	/// NOTE: The index must be the same as the backing pallet in the pangoro runtime
-// 	#[codec(index = 20)]
-// 	Sub2SubBacking(S2SBackingCall<AccountId>),
-// }
-
 /// Create message payload according to the call parameters.
 pub struct PangoroPayloadCreator;
 impl PayloadCreate<AccountId, ToPangoroMessagePayload> for PangoroPayloadCreator {
