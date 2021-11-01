@@ -287,16 +287,25 @@ pub mod pallet {
 			if *lane != T::MessageLaneId::get() {
 				return 0;
 			}
+			let mut weight = 0 as Weight;
 			for nonce in messages.begin..=messages.end {
 				let result = messages.message_dispatch_result(nonce);
 				let message_id = nonce_to_message_id(lane, nonce);
 				if let Ok(input) =
 					smtf::encode_confirm_burn_and_remote_unlock(message_id.to_vec(), result)
 				{
-					let _ = Self::transact_mapping_factory(input);
+					let dispatch_result = Self::transact_mapping_factory(input);
+					let w = match dispatch_result {
+						Ok(dispatch_info) => dispatch_info.actual_weight.unwrap_or(0),
+						_ => 0,
+					};
+					weight = weight.saturating_add(w);
+					weight = weight.saturating_add(
+						<T as frame_system::Config>::DbWeight::get().reads_writes(1, 0),
+					);
 				}
 			}
-			<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
+			weight
 		}
 	}
 }
