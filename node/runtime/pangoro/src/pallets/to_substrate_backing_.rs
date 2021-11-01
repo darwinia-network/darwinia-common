@@ -9,11 +9,20 @@ use frame_support::{traits::PalletInfoAccess, weights::PostDispatchInfo, PalletI
 use frame_system::RawOrigin;
 use sp_runtime::DispatchErrorWithPostInfo;
 // --- darwinia-network ---
-use crate::{pangolin_messages::PangolinRuntimeCallsEncoder, *};
+use crate::*;
 use bridge_primitives::{AccountIdConverter, PANGORO_PANGOLIN_LANE};
 use darwinia_support::s2s::{nonce_to_message_id, RelayMessageSender, TokenMessageId};
-use dp_s2s::{CallParams, EncodeCall, PayloadCreate};
+use dp_s2s::{CallParams, PayloadCreate};
+use from_substrate_issuing::S2SIssuingCall;
 use to_substrate_backing::Config;
+
+/// Pangolin chain's dispatch call info
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+pub enum PangolinRuntime {
+	/// Note: this index must be the same as the backing pallet in pangolin chain runtime
+	#[codec(index = 49)]
+	Sub2SubIssuing(S2SIssuingCall),
+}
 
 /// Create message payload according to call parameters
 pub struct PangolinPayLoadCreator;
@@ -23,7 +32,19 @@ impl PayloadCreate<AccountId, ToPangolinMessagePayload> for PangolinPayLoadCreat
 		weight: u64,
 		call_params: CallParams<AccountId>,
 	) -> Result<ToPangolinMessagePayload, ()> {
-		let call = PangolinRuntimeCallsEncoder::encode_call(call_params)?;
+		let call = match call_params {
+			CallParams::RegisterFromRemote(token) => {
+				PangolinRuntime::Sub2SubIssuing(S2SIssuingCall::register_from_remote(token))
+					.encode()
+			}
+			CallParams::IssueFromRemote(token, address) => {
+				PangolinRuntime::Sub2SubIssuing(S2SIssuingCall::issue_from_remote(token, address))
+					.encode()
+			}
+			_ => return Err(()),
+		};
+		// Ok(call)
+		// let call = PangolinRuntimeCallsEncoder::encode_call(call_params)?;
 		return Ok(FromThisChainMessagePayload::<WithPangolinMessageBridge> {
 			spec_version,
 			weight,

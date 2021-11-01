@@ -32,7 +32,7 @@ use bridge_primitives::{
 	PANGORO_PANGOLIN_LANE, WITH_PANGORO_MESSAGES_PALLET_NAME,
 };
 pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
-use dp_s2s::{CallParams, EncodeCall};
+use dp_s2s::CallParams;
 use from_substrate_issuing::S2SIssuingCall;
 
 /// Message payload for Pangoro -> Pangolin messages.
@@ -262,32 +262,5 @@ impl SourceHeaderChain<pangolin_primitives::Balance> for Pangolin {
 			proof,
 			messages_count,
 		)
-	}
-}
-
-/// Pangolin chain's dispatch call info
-#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
-pub enum PangolinRuntime {
-	/// Note: this index must be the same as the backing pallet in pangolin chain runtime
-	#[codec(index = 49)]
-	Sub2SubIssuing(S2SIssuingCall),
-}
-
-/// Generate concrete dispatch call data
-pub struct PangolinRuntimeCallsEncoder;
-impl EncodeCall<AccountId> for PangolinRuntimeCallsEncoder {
-	fn encode_call(call_params: CallParams<AccountId>) -> Result<Vec<u8>, ()> {
-		let call = match call_params {
-			CallParams::RegisterFromRemote(token) => {
-				PangolinRuntime::Sub2SubIssuing(S2SIssuingCall::register_from_remote(token))
-					.encode()
-			}
-			CallParams::IssueFromRemote(token, address) => {
-				PangolinRuntime::Sub2SubIssuing(S2SIssuingCall::issue_from_remote(token, address))
-					.encode()
-			}
-			_ => return Err(()),
-		};
-		Ok(call)
 	}
 }

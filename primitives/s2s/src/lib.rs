@@ -32,12 +32,6 @@ pub enum CallParams<AccountId> {
 	IssueFromRemote(Token, H160),
 	UnlockFromRemote(AccountId, S2sRemoteUnlockInfo),
 }
-
-/// Encoding the call parameters to dispatch call binary.
-pub trait EncodeCall<AccountId> {
-	fn encode_call(call_params: CallParams<AccountId>) -> Result<Vec<u8>, ()>;
-}
-
 /// Creating a concrete message payload which would be relay to target chain.
 pub trait PayloadCreate<AccountId, MessagePayload> {
 	fn payload(

@@ -3,11 +3,20 @@ use bp_runtime::{messages::DispatchFeePayment, ChainId};
 use frame_support::PalletId;
 use sp_runtime::AccountId32;
 // --- darwinia-network ---
-use crate::{pangoro_messages::PangoroRuntimeCallsEncoder, *};
+use crate::*;
 use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID};
-use darwinia_support::{s2s::ToEthAddress, ChainName};
-use dp_s2s::{CallParams, EncodeCall, PayloadCreate};
+use darwinia_support::{s2s::ToEthAddress, to_bytes32, ChainName};
+use dp_s2s::{CallParams, PayloadCreate};
 use from_substrate_issuing::Config;
+use to_substrate_backing::S2SBackingCall;
+
+/// Pangoro chain's dispatch call info
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+pub enum PangoroRuntime {
+	/// NOTE: The index must be the same as the backing pallet in the pangoro runtime
+	#[codec(index = 20)]
+	Sub2SubBacking(S2SBackingCall<AccountId>),
+}
 
 /// Create message payload according to the call parameters.
 pub struct PangoroPayloadCreator;
@@ -17,17 +26,31 @@ impl PayloadCreate<AccountId, ToPangoroMessagePayload> for PangoroPayloadCreator
 		weight: u64,
 		call_params: CallParams<AccountId>,
 	) -> Result<ToPangoroMessagePayload, ()> {
-		let call = PangoroRuntimeCallsEncoder::encode_call(call_params.clone())?;
-		match call_params {
-			CallParams::UnlockFromRemote(submitter, _) => Ok(ToPangoroMessagePayload {
-				spec_version,
-				weight,
-				origin: bp_message_dispatch::CallOrigin::SourceAccount(submitter),
-				call,
-				dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
-			}),
-			_ => Err(()),
-		}
+		let (submitter, call) = match call_params {
+			CallParams::UnlockFromRemote(submitter, unlock_info) => {
+				if unlock_info.recipient.len() != 32 {
+					return Err(());
+				}
+
+				let recipient_id: AccountId = to_bytes32(unlock_info.recipient.as_slice()).into();
+				(
+					submitter,
+					PangoroRuntime::Sub2SubBacking(S2SBackingCall::unlock_from_remote(
+						unlock_info.token,
+						recipient_id,
+					))
+					.encode(),
+				)
+			}
+			_ => return Err(()),
+		};
+		Ok(ToPangoroMessagePayload {
+			spec_version,
+			weight,
+			origin: bp_message_dispatch::CallOrigin::SourceAccount(submitter),
+			call,
+			dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
+		})
 	}
 }
 
