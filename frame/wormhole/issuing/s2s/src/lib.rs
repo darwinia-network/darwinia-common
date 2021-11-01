@@ -312,6 +312,10 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
+	/// Get mapping token address from contract
+	///
+	/// Note: The result is padded as 32 bytes, but the address in contract is 20 bytes, we need to
+	/// truncate the prefix(12 bytes) off
 	pub fn mapped_token_address(
 		backing_address: H160,
 		original_token: H160,
