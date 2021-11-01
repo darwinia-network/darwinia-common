@@ -164,7 +164,7 @@
 		"ethash_proof": "Vec<EthashProof>",
 		"mmr_proof": "Vec<H256>"
 	},
-	"TokenMetadata" {
+	"TokenMetadata": {
 	    "token_type": "u32",
 	    "address": "H160",
 	    "name": "Vec<u8>",
