@@ -134,8 +134,8 @@ pub mod pallet {
 		),
 		/// Token unlocked \[message_id, token_address, recipient, amount\]
 		TokenUnlocked(TokenMessageId, H160, AccountId<T>, RingBalance<T>),
-		/// Token locked confirmed from remote \[message_id, token_address, user, amount, result\]
-		TokenLockedConfirmed(TokenMessageId, H160, AccountId<T>, RingBalance<T>, bool),
+		/// Token locked confirmed from remote \[message_id, user, amount, result\]
+		TokenLockedConfirmed(TokenMessageId, AccountId<T>, RingBalance<T>, bool),
 		/// Update remote mapping token factory address \[account\]
 		RemoteMappingFactoryAddressUpdated(AccountId<T>),
 	}
@@ -175,11 +175,11 @@ pub mod pallet {
 	pub type SecureLimitedRingAmount<T> =
 		StorageValue<_, (RingBalance<T>, RingBalance<T>), ValueQuery>;
 
-	/// `(asset_address, sender, amount)` the user *sender* lock and remote issuing amount of asset
+	/// `(sender, amount)` the user *sender* lock and remote issuing amount of asset
 	#[pallet::storage]
 	#[pallet::getter(fn transaction_infos)]
 	pub type TransactionInfos<T: Config> =
-		StorageMap<_, Identity, TokenMessageId, (H160, AccountId<T>, RingBalance<T>), ValueQuery>;
+		StorageMap<_, Identity, TokenMessageId, (AccountId<T>, RingBalance<T>), ValueQuery>;
 
 	/// The remote mapping token factory account, here use to ensure the remote caller
 	#[pallet::storage]
@@ -334,7 +334,7 @@ pub mod pallet {
 				!<TransactionInfos<T>>::contains_key(message_id),
 				Error::<T>::NonceDuplicated
 			);
-			<TransactionInfos<T>>::insert(message_id, (token_address, user.clone(), value));
+			<TransactionInfos<T>>::insert(message_id, (user.clone(), value));
 			Self::deposit_event(Event::TokenLocked(
 				message_id,
 				token_address,
@@ -457,7 +457,7 @@ pub mod pallet {
 			for nonce in messages.begin..=messages.end {
 				let result = messages.message_dispatch_result(nonce);
 				let message_id = nonce_to_message_id(lane, nonce);
-				let (token_address, user, amount) = <TransactionInfos<T>>::take(message_id);
+				let (user, amount) = <TransactionInfos<T>>::take(message_id);
 				if !result {
 					// if remote issue mapped token failed, this fund need to transfer token back
 					// to the user. The balance always comes from the user's locked currency while
@@ -473,7 +473,6 @@ pub mod pallet {
 				}
 				Self::deposit_event(Event::TokenLockedConfirmed(
 					message_id,
-					token_address,
 					user,
 					amount,
 					result,
