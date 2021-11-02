@@ -4,7 +4,7 @@ pub use pallet_bridge_messages::Instance1 as Pangolin;
 use bp_messages::LaneId;
 use bp_runtime::{messages::DispatchFeePayment, ChainId};
 use bridge_runtime_common::messages::source::FromThisChainMessagePayload;
-use frame_support::{traits::PalletInfoAccess, PalletId};
+use frame_support::PalletId;
 use pangoro_primitives::AccountId;
 use sp_core::{H160, U256};
 // --- darwinia-network ---
