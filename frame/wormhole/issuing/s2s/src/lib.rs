@@ -68,19 +68,42 @@ pub mod pallet {
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]
 	pub trait Config: frame_system::Config + darwinia_evm::Config {
+		/// The pallet id of this pallet
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
+
+		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
+
+		/// The *RING* currency.
 		type RingCurrency: Currency<AccountId<Self>>;
 
+		/// The bridge account id converter.
+		/// `remote account` + `remote chain id` derive the new account
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
+
+		/// The bridged chain id
 		type BridgedChainId: Get<ChainId>;
+
+		/// Convert the substrate account to ethereum account
 		type ToEthAddressT: ToEthAddress<Self::AccountId>;
+
+		/// Outbound payload used for s2s message
 		type OutboundPayload: Parameter + Size;
+
+		/// The call encoder to encode a remote dispatch call
 		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
+
+		/// Internal dvm transction handler
 		type InternalTransactHandler: InternalTransactHandler;
+
+		/// The remote chain name where the backing module in
 		type BackingChainName: Get<ChainName>;
+
+		/// The lane id of the s2s bridge
 		type MessageLaneId: Get<LaneId>;
 	}
 

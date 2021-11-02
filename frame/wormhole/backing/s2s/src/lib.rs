@@ -78,28 +78,47 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 
+		/// The pallet id of this pallet
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
+		/// The ring balance pallet id
 		#[pallet::constant]
 		type RingPalletId: Get<PalletId>;
+
 		/// The max lock amount per transaction for security.
 		#[pallet::constant]
 		type MaxLockRingAmountPerTx: Get<RingBalance<Self>>;
+
+		/// The *RING* currency.
 		type RingCurrency: Currency<AccountId<Self>>;
 
+		/// The bridge account id converter.
+		/// `remote account` + `remote chain id` derive the new account
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
+
+		/// The bridged chain id
 		type BridgedChainId: Get<ChainId>;
 
+		/// Outbound payload used for s2s message
 		type OutboundPayload: Parameter + Size;
+
+		/// The call encoder to encode a remote dispatch call
 		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
 
+		/// The message noncer to get the message nonce from the bridge
 		type MessageNoncer: LatestMessageNoncer;
+
+		/// The lane id of the s2s bridge
 		type MessageLaneId: Get<LaneId>;
 
+		/// The message bridge instance to send message
 		type MessagesBridge: MessagesBridge<
 			Self::AccountId,
 			RingBalance<Self>,
