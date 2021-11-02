@@ -78,7 +78,7 @@ pub struct S2sRemoteUnlockInfo {
 }
 
 impl S2sRemoteUnlockInfo {
-	pub fn eth_encode(
+	pub fn abi_encode(
 		spec_version: u32,
 		weight: u64,
 		token_type: u32,
@@ -96,7 +96,7 @@ impl S2sRemoteUnlockInfo {
 		])
 	}
 
-	pub fn eth_decode(data: &[u8]) -> AbiResult<Self> {
+	pub fn abi_decode(data: &[u8]) -> AbiResult<Self> {
 		let tokens = ethabi::decode(
 			&[
 				ParamType::Uint(256),
