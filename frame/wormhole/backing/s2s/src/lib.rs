@@ -100,18 +100,9 @@ pub mod pallet {
 		type MessageNoncer: LatestMessageNoncer;
 		type MessageLaneId: Get<LaneId>;
 
-		type OutboundMessageFee: Default
-			+ From<u64>
-			+ PartialOrd
-			+ Parameter
-			+ Saturating
-			+ Zero
-			+ Copy
-			+ From<RingBalance<Self>>;
-
 		type MessagesBridge: MessagesBridge<
 			Self::AccountId,
-			Self::OutboundMessageFee,
+			RingBalance<Self>,
 			Self::OutboundPayload,
 			Error = DispatchErrorWithPostInfo<PostDispatchInfo>,
 		>;
@@ -267,7 +258,7 @@ pub mod pallet {
 				RawOrigin::Signed(Self::pallet_account_id()),
 				T::MessageLaneId::get(),
 				payload,
-				fee.into(),
+				fee,
 			)?;
 
 			Self::deposit_event(Event::TokenRegistered(token_metadata, user));
@@ -323,7 +314,7 @@ pub mod pallet {
 				RawOrigin::Signed(Self::pallet_account_id()),
 				T::MessageLaneId::get(),
 				payload,
-				fee.into(),
+				fee,
 			)?;
 
 			let message_nonce =

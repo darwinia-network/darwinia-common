@@ -109,23 +109,15 @@ frame_support::parameter_types! {
 impl Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
-
 	type PalletId = S2sBackingPalletId;
-
 	type RingPalletId = RingPalletId;
 	type MaxLockRingAmountPerTx = MaxLockRingAmountPerTx;
 	type RingCurrency = Ring;
-
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangolinChainId;
-
 	type OutboundPayload = ToPangolinMessagePayload;
 	type CallEncoder = PangolinCallEncoder;
-
 	type MessageNoncer = PangolinMessageNoncer;
-
 	type MessageLaneId = BridgePangolinLaneId;
-
-	type OutboundMessageFee = Balance;
 	type MessagesBridge = BridgePangolinMessages;
 }
