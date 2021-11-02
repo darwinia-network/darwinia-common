@@ -125,7 +125,7 @@ impl PayloadCreate<AccountId<Test>, ()> for MockPayloadCreator {
 		_spec_version: u32,
 		_weight: u64,
 		_call_params: CallParams<AccountId<Test>>,
-	) -> Result<(), ()> {
+	) -> Result<(), &'static str> {
 		Ok(())
 	}
 }
