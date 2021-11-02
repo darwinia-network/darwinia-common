@@ -134,7 +134,7 @@ pub mod pallet {
 		),
 		/// Token unlocked \[message_id, token_address, recipient, amount\]
 		TokenUnlocked(TokenMessageId, H160, AccountId<T>, RingBalance<T>),
-		/// Token locked confirmed from remote \[message_id, token, user, result\]
+		/// Token locked confirmed from remote \[message_id, token_address, user, amount, result\]
 		TokenLockedConfirmed(TokenMessageId, H160, AccountId<T>, RingBalance<T>, bool),
 		/// Update remote mapping token factory address \[account\]
 		RemoteMappingFactoryAddressUpdated(AccountId<T>),
