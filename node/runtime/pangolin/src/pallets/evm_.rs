@@ -42,14 +42,13 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 }
 
 pub struct ToPangoroMessageSender;
-
-impl ToPangoroMessageSender {
-	fn send_message_call(
+impl RelayMessageSender for ToPangoroMessageSender {
+	fn encode_send_message(
 		pallet_index: u32,
 		lane_id: LaneId,
 		payload: Vec<u8>,
 		fee: u128,
-	) -> Result<Call, &'static str> {
+	) -> Result<Vec<u8>, &'static str> {
 		let payload = ToPangoroMessagePayload::decode(&mut payload.as_slice())
 			.map_err(|_| "decode pangoro payload failed")?;
 
@@ -66,18 +65,6 @@ impl ToPangoroMessageSender {
 				return Err("invalid pallet index".into());
 			}
 		};
-		Ok(call)
-	}
-}
-
-impl RelayMessageSender for ToPangoroMessageSender {
-	fn encode_send_message(
-		pallet_index: u32,
-		lane_id: LaneId,
-		payload: Vec<u8>,
-		fee: u128,
-	) -> Result<Vec<u8>, &'static str> {
-		let call = Self::send_message_call(pallet_index, lane_id, payload, fee)?;
 		Ok(call.encode())
 	}
 }
