@@ -57,13 +57,13 @@ benchmarks! {
 		let caller: T::AccountId = T::AccountId::decode(&mut &addr_bytes[..]).unwrap_or_default();
 
 		let register_token_address = hex_into_unchecked("0000000000000000000000000000000000000002");
-		let token_metadata = TokenMetadata {
-			token_type: NATIVE_TOKEN_TYPE,
-			address: register_token_address,
-			name: [10; 32].to_vec(),
-			symbol: [20; 32].to_vec(),
-			decimal: 18,
-		};
+		let token_metadata = TokenMetadata::new(
+			NATIVE_TOKEN_TYPE,
+			register_token_address,
+			[10; 32].to_vec(),
+			[20; 32].to_vec(),
+			18,
+		);
 
 		let contract_address = deploy_mapping_token_factory::<T>();
 		assert_ok!(<S2sIssuing<T>>::set_mapping_factory_address(
@@ -76,13 +76,13 @@ benchmarks! {
 		let addr_bytes = hex2bytes_unchecked("0xaaa5b780fa60c639ad17212d92e8e6257cb468baa88e1f826e6fe8ae6b7b700c");
 		let caller: T::AccountId = T::AccountId::decode(&mut &addr_bytes[..]).unwrap_or_default();
 		let issue_token_address = hex_into_unchecked("0000000000000000000000000000000000000002");
-		let token_metadata = TokenMetadata {
-			token_type: NATIVE_TOKEN_TYPE,
-			address: issue_token_address,
-			name: [10; 32].to_vec(),
-			symbol: [20; 32].to_vec(),
-			decimal: 18,
-		};
+		let token_metadata = TokenMetadata::new(
+			NATIVE_TOKEN_TYPE,
+			issue_token_address,
+			[10; 32].to_vec(),
+			[20; 32].to_vec(),
+			18,
+		);
 		let recipient = hex_into_unchecked("0000000000000000000000000000000000000001");
 
 		let contract_address = deploy_mapping_token_factory::<T>();

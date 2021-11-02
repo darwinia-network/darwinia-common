@@ -246,13 +246,13 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 
-			let token_metadata = TokenMetadata {
-				token_type: NATIVE_TOKEN_TYPE,
-				address: T::RingPalletId::get().into_h160(),
-				name: RING_NAME.to_vec(),
-				symbol: RING_SYMBOL.to_vec(),
-				decimal: RING_DECIMAL,
-			};
+			let token_metadata = TokenMetadata::new(
+				NATIVE_TOKEN_TYPE,
+				T::RingPalletId::get().into_h160(),
+				RING_NAME.to_vec(),
+				RING_SYMBOL.to_vec(),
+				RING_DECIMAL,
+			);
 
 			let payload = T::CallEncoder::encode_remote_register(
 				Self::pallet_account_id(),
@@ -471,10 +471,7 @@ pub mod pallet {
 					);
 				}
 				Self::deposit_event(Event::TokenLockedConfirmed(
-					message_id,
-					user,
-					amount,
-					result,
+					message_id, user, amount, result,
 				));
 				weight = weight.saturating_add(
 					<T as frame_system::Config>::DbWeight::get().reads_writes(2, 3),

@@ -90,13 +90,13 @@ fn register_and_issue_from_remote_success() {
 		let remote_backing_account: AccountId32 =
 			AccountId32::decode(&mut &remote_root_address[..]).unwrap_or_default();
 		let original_token_address = hex_into_unchecked("0000000000000000000000000000000000000002");
-		let token = TokenMetadata {
-			token_type: NATIVE_TOKEN_TYPE,
-			address: original_token_address,
-			name: [10u8; 32].to_vec(),
-			symbol: [20u8; 32].to_vec(),
-			decimal: 18u8,
-		};
+		let token = TokenMetadata::new(
+			NATIVE_TOKEN_TYPE,
+			original_token_address,
+			[10u8; 32].to_vec(),
+			[20u8; 32].to_vec(),
+			18u8,
+		);
 		let drived_remote_backing_account: AccountId32 =
 			hex_into_unchecked("77c1308128b230173f735cb97d6c62e5d8eeb86b148ff8461835c836945b1d84");
 		let backing_address = <Test as s2s_issuing::Config>::ToEthAddressT::into_ethereum_id(

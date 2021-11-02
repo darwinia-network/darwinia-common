@@ -36,3 +36,21 @@ pub struct TokenMetadata {
 	pub symbol: Vec<u8>,
 	pub decimal: u8,
 }
+
+impl TokenMetadata {
+	pub fn new(
+		token_type: u32,
+		address: EthereumAddress,
+		name: Vec<u8>,
+		symbol: Vec<u8>,
+		decimal: u8,
+	) -> Self {
+		Self {
+			token_type,
+			address,
+			name,
+			symbol,
+			decimal,
+		}
+	}
+}
