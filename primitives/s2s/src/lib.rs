@@ -42,7 +42,10 @@ pub trait PayloadCreate<AccountId, MessagePayload>
 where
 	AccountId: Encode + Decode,
 {
-	fn encode_call(pallet_index: u8, call_params: CallParams<AccountId>) -> Result<Vec<u8>, ()> {
+	fn encode_call(
+		pallet_index: u8,
+		call_params: CallParams<AccountId>,
+	) -> Result<Vec<u8>, &'static str> {
 		let mut encoded = vec![pallet_index];
 		encoded.append(&mut call_params.encode());
 		Ok(encoded)
@@ -52,7 +55,7 @@ where
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams<AccountId>,
-	) -> Result<MessagePayload, ()>;
+	) -> Result<MessagePayload, &'static str>;
 }
 
 #[cfg(test)]
@@ -94,7 +97,7 @@ mod test {
 			_spec_version: u32,
 			_weight: u64,
 			call_params: CallParams<u64>,
-		) -> Result<Vec<u8>, ()> {
+		) -> Result<Vec<u8>, &'static str> {
 			Self::encode_call(20, call_params)
 		}
 	}
@@ -105,7 +108,7 @@ mod test {
 			_spec_version: u32,
 			_weight: u64,
 			call_params: CallParams<u64>,
-		) -> Result<Vec<u8>, ()> {
+		) -> Result<Vec<u8>, &'static str> {
 			Self::encode_call(49, call_params)
 		}
 	}
@@ -137,6 +140,7 @@ mod test {
 	fn test_pangolin_runtime_call_encode() {
 		let mock_addr = H160::zero();
 		let mock_token = Token::Erc20(TokenInfo::new(mock_addr, None, None));
+
 		let expected_encoded_call = PangolinRuntime::Sub2SubIssuing(
 			S2SIssuingCall::register_from_remote(mock_token.clone()),
 		)

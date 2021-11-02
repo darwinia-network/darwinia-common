@@ -15,6 +15,8 @@ use darwinia_support::s2s::{nonce_to_message_id, RelayMessageSender, TokenMessag
 use dp_s2s::{CallParams, PayloadCreate};
 use to_substrate_backing::Config;
 
+const PANGOLIN_S2S_ISSUING_PALLET_INDEX: u8 = 49;
+
 /// Create message payload according to call parameters
 pub struct PangolinPayLoadCreator;
 impl PayloadCreate<AccountId, ToPangolinMessagePayload> for PangolinPayLoadCreator {
@@ -22,8 +24,8 @@ impl PayloadCreate<AccountId, ToPangolinMessagePayload> for PangolinPayLoadCreat
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams<AccountId>,
-	) -> Result<ToPangolinMessagePayload, ()> {
-		let call = Self::encode_call(49, call_params)?;
+	) -> Result<ToPangolinMessagePayload, &'static str> {
+		let call = Self::encode_call(PANGOLIN_S2S_ISSUING_PALLET_INDEX, call_params)?;
 		return Ok(FromThisChainMessagePayload::<WithPangolinMessageBridge> {
 			spec_version,
 			weight,

@@ -8,6 +8,8 @@ use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID};
 use darwinia_support::{s2s::ToEthAddress, ChainName};
 use dp_s2s::{CallParams, PayloadCreate};
 use from_substrate_issuing::Config;
+
+const PANGORO_S2S_BACKING_PALLET_INDEX: u8 = 20;
 /// Create message payload according to the call parameters.
 pub struct PangoroPayloadCreator;
 impl PayloadCreate<AccountId, ToPangoroMessagePayload> for PangoroPayloadCreator {
@@ -15,12 +17,13 @@ impl PayloadCreate<AccountId, ToPangoroMessagePayload> for PangoroPayloadCreator
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams<AccountId>,
-	) -> Result<ToPangoroMessagePayload, ()> {
+	) -> Result<ToPangoroMessagePayload, &'static str> {
 		let (submitter, call) = match call_params.clone() {
-			CallParams::UnlockFromRemote(submitter, _unlock_info) => {
-				(submitter, Self::encode_call(20, call_params)?)
-			}
-			_ => return Err(()),
+			CallParams::UnlockFromRemote(submitter, _unlock_info) => (
+				submitter,
+				Self::encode_call(PANGORO_S2S_BACKING_PALLET_INDEX, call_params)?,
+			),
+			_ => return Err("The call params is mismatched"),
 		};
 		Ok(ToPangoroMessagePayload {
 			spec_version,
