@@ -170,9 +170,9 @@ pub mod pallet {
 				"asset has not been registered"
 			);
 
-			// Redeem process
+			// issue erc20 tokens
 			let input = bmtf::encode_issue_erc20(mapping_token, recipient, amount)
-				.map_err(|_| Error::<T>::InvalidMintEncoding)?;
+				.map_err(|_| Error::<T>::InvalidIssueEncoding)?;
 			Self::transact_mapping_factory(input)?;
 			Self::deposit_event(Event::TokenIssued(
 				backing_address,
@@ -242,8 +242,8 @@ pub mod pallet {
 		StringCF,
 		/// encode erc20 tx failed
 		InvalidEncodeERC20,
-		/// encode mint tx failed
-		InvalidMintEncoding,
+		/// encode issue tx failed
+		InvalidIssueEncoding,
 		/// invalid ethereum address length
 		InvalidAddressLen,
 		/// invalid token type
