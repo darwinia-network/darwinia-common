@@ -108,6 +108,7 @@ pub mod s2s {
 		Ok(())
 	}
 
+	/// combine laneid and nonce to TokenMessageId used by token protocol
 	pub fn nonce_to_message_id(lane_id: &LaneId, nonce: u64) -> TokenMessageId {
 		let mut message_id: TokenMessageId = Default::default();
 		message_id[4..8].copy_from_slice(&lane_id[..4]);
