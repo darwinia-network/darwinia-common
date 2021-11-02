@@ -103,7 +103,6 @@ frame_support::parameter_types! {
 	pub const RingPalletId: PalletId = PalletId(*b"da/bring");
 	pub const S2sBackingPalletId: PalletId = PalletId(*b"da/s2sba");
 	pub const MaxLockRingAmountPerTx: Balance = 10_000 * COIN;
-	pub BridgePangolinIndex: u32 = <BridgePangolinMessages as PalletInfoAccess>::index() as u32;
 	pub const BridgePangolinLaneId: LaneId = PANGORO_PANGOLIN_LANE;
 }
 
@@ -125,7 +124,6 @@ impl Config for Runtime {
 
 	type MessageNoncer = PangolinMessageNoncer;
 
-	type MessageSendPalletIndex = BridgePangolinIndex;
 	type MessageLaneId = BridgePangolinLaneId;
 
 	type OutboundMessageFee = Balance;

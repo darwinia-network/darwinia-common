@@ -98,7 +98,6 @@ pub mod pallet {
 		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
 
 		type MessageNoncer: LatestMessageNoncer;
-		type MessageSendPalletIndex: Get<u32>;
 		type MessageLaneId: Get<LaneId>;
 
 		type OutboundMessageFee: Default

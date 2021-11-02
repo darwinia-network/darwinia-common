@@ -160,7 +160,6 @@ frame_support::parameter_types! {
 	pub const MockId: PalletId = PalletId(*b"da/s2sba");
 	pub const RingPalletId: PalletId = PalletId(*b"da/bring");
 	pub const MaxLockRingAmountPerTx: Balance = 100;
-	pub const BridgePangolinIndex: u32 = 43;
 	pub const BridgePangolinLaneId: [u8; 4] = [0; 4];
 }
 impl Config for Test {
@@ -180,7 +179,6 @@ impl Config for Test {
 	type CallEncoder = MockCallEncoder;
 	type MessageNoncer = MockLatestMessageNoncer;
 
-	type MessageSendPalletIndex = BridgePangolinIndex;
 	type MessageLaneId = BridgePangolinLaneId;
 	type OutboundMessageFee = Balance;
 	type MessagesBridge = MockMessagesBridge;
