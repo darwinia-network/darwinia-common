@@ -108,7 +108,7 @@ where
 				let payload = <T as from_substrate_issuing::Config>::PayloadCreator::payload(
 					unlock_info.spec_version,
 					unlock_info.weight,
-					CallParams::UnlockFromRemote(
+					CallParams::S2sBackingPalletUnlockFromRemote(
 						T::IntoAccountId::into_account_id(context.caller),
 						unlock_info,
 					),

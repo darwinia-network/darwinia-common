@@ -19,7 +19,7 @@ impl PayloadCreate<AccountId, ToPangoroMessagePayload> for PangoroPayloadCreator
 		call_params: CallParams<AccountId>,
 	) -> Result<ToPangoroMessagePayload, &'static str> {
 		let (submitter, call) = match call_params.clone() {
-			CallParams::UnlockFromRemote(submitter, _unlock_info) => (
+			CallParams::S2sBackingPalletUnlockFromRemote(submitter, _unlock_info) => (
 				submitter,
 				Self::encode_call(PANGORO_S2S_BACKING_PALLET_INDEX, call_params)?,
 			),

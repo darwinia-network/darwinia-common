@@ -51,7 +51,7 @@ fn burn_and_remote_unlock_success() {
 		<Test as s2s_issuing::Config>::PayloadCreator::payload(
 			burn_info.spec_version,
 			burn_info.weight,
-			CallParams::UnlockFromRemote(submitter, burn_info),
+			CallParams::S2sBackingPalletUnlockFromRemote(submitter, burn_info),
 		)
 		.unwrap();
 	});

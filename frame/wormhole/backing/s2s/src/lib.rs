@@ -238,7 +238,7 @@ pub mod pallet {
 			let payload = T::PayloadCreator::payload(
 				spec_version,
 				weight,
-				CallParams::RegisterFromRemote(token.clone()),
+				CallParams::S2sIssuingPalletRegisterFromRemote(token.clone()),
 			);
 			T::MessageSender::send_message_by_root(
 				T::MessageSendPalletIndex::get(),
@@ -298,7 +298,7 @@ pub mod pallet {
 			let payload = T::PayloadCreator::payload(
 				spec_version,
 				weight,
-				CallParams::IssueFromRemote(token.clone(), recipient),
+				CallParams::S2sIssuingPalletIssueFromRemote(token.clone(), recipient),
 			);
 			T::MessageSender::send_message_by_root(
 				T::MessageSendPalletIndex::get(),

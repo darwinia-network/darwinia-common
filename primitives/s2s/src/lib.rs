@@ -30,11 +30,11 @@ use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 pub enum CallParams<AccountId> {
 	#[codec(index = 0)]
-	RegisterFromRemote(Token),
+	S2sIssuingPalletRegisterFromRemote(Token),
 	#[codec(index = 1)]
-	IssueFromRemote(Token, H160),
+	S2sIssuingPalletIssueFromRemote(Token, H160),
 	#[codec(index = 2)]
-	UnlockFromRemote(AccountId, S2sRemoteUnlockInfo),
+	S2sBackingPalletUnlockFromRemote(AccountId, S2sRemoteUnlockInfo),
 }
 
 /// Creating a concrete message payload which would be relay to target chain.
@@ -130,7 +130,7 @@ mod test {
 		let encoded = MockPangoroPayloadCreator::payload(
 			0,
 			0,
-			<CallParams<u64>>::UnlockFromRemote(50, unlock_info),
+			<CallParams<u64>>::S2sBackingPalletUnlockFromRemote(50, unlock_info),
 		)
 		.unwrap();
 		assert_eq!(encoded, expected_encoded_call);
@@ -148,7 +148,7 @@ mod test {
 		let encoded = MockPangolinPayloadCreator::payload(
 			0,
 			0,
-			<CallParams<u64>>::RegisterFromRemote(mock_token.clone()),
+			<CallParams<u64>>::S2sIssuingPalletRegisterFromRemote(mock_token.clone()),
 		)
 		.unwrap();
 		assert_eq!(expected_encoded_call, encoded);
@@ -160,7 +160,7 @@ mod test {
 		let encoded = MockPangolinPayloadCreator::payload(
 			0,
 			0,
-			<CallParams<u64>>::IssueFromRemote(mock_token, mock_addr),
+			<CallParams<u64>>::S2sIssuingPalletIssueFromRemote(mock_token, mock_addr),
 		)
 		.unwrap();
 		assert_eq!(expected_encoded_call, encoded);
