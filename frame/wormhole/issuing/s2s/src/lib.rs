@@ -226,7 +226,6 @@ pub mod pallet {
 		/// Set mapping token factory address
 		/// [old, new]
 		MappingFactoryAddressUpdated(H160, H160),
-
 		/// Update remote backing address \[account\]
 		RemoteBackingAccountUpdated(AccountId<T>),
 	}
