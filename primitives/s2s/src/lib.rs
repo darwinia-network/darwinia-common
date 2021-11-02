@@ -23,7 +23,7 @@ use sp_core::H160;
 use sp_std::{vec, vec::Vec};
 // --- darwinia-network ---
 use codec::{Decode, Encode};
-use dp_asset::token::{Token, TokenInfo};
+use dp_asset::token::Token;
 use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
 
 /// The parameters box for the pallet runtime call.
@@ -58,6 +58,7 @@ where
 #[cfg(test)]
 mod test {
 	use super::*;
+	use dp_asset::token::TokenInfo;
 
 	#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 

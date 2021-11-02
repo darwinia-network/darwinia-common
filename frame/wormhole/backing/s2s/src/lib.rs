@@ -467,12 +467,3 @@ pub mod pallet {
 		}
 	}
 }
-
-/// The index below represent the call order in the pallet. You should update the index here
-/// if you change the call order in the pallet.
-#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
-#[allow(non_camel_case_types)]
-pub enum S2SBackingCall<AccountId> {
-	#[codec(index = 2)]
-	unlock_from_remote(Token, AccountId),
-}

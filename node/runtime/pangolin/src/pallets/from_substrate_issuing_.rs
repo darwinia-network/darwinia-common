@@ -5,10 +5,9 @@ use sp_runtime::AccountId32;
 // --- darwinia-network ---
 use crate::*;
 use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID};
-use darwinia_support::{s2s::ToEthAddress, to_bytes32, ChainName};
+use darwinia_support::{s2s::ToEthAddress, ChainName};
 use dp_s2s::{CallParams, PayloadCreate};
 use from_substrate_issuing::Config;
-use to_substrate_backing::S2SBackingCall;
 /// Create message payload according to the call parameters.
 pub struct PangoroPayloadCreator;
 impl PayloadCreate<AccountId, ToPangoroMessagePayload> for PangoroPayloadCreator {

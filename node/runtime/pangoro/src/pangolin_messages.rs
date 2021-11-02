@@ -32,8 +32,6 @@ use bridge_primitives::{
 	PANGORO_PANGOLIN_LANE, WITH_PANGORO_MESSAGES_PALLET_NAME,
 };
 pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
-use dp_s2s::CallParams;
-use from_substrate_issuing::S2SIssuingCall;
 
 /// Message payload for Pangoro -> Pangolin messages.
 pub type ToPangolinMessagePayload = FromThisChainMessagePayload<WithPangolinMessageBridge>;

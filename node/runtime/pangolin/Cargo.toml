@@ -59,7 +59,6 @@ pangolin-runtime-system-params      = { default-features = false, path = "src/pa
 pangoro-constants                   = { default-features = false, path = "../pangoro/src/constants" }
 pangoro-runtime-system-params       = { default-features = false, path = "../pangoro/src/pallets/system/params" }
 to-ethereum-backing                 = { default-features = false, path = "../../../frame/wormhole/backing/ethereum" }
-to-substrate-backing                = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 to-tron-backing                     = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
 # paritytech
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
@@ -172,7 +171,6 @@ std = [
 	"pangoro-constants/std",
 	"pangoro-runtime-system-params/std",
 	"to-ethereum-backing/std",
-	"to-substrate-backing/std",
 	"to-tron-backing/std",
 	# paritytech
 	"bp-message-dispatch/std",

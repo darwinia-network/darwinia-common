@@ -25,7 +25,6 @@ darwinia-staking                    = { default-features = false, path = "../../
 darwinia-support                    = { default-features = false, path = "../../../frame/support" }
 dp-asset                            = { default-features = false, path = "../../../primitives/asset" }
 dp-s2s                              = { default-features = false, path = "../../../primitives/s2s" }
-from-substrate-issuing              = { default-features = false, path = "../../../frame/wormhole/issuing/s2s" }
 pangolin-constants                  = { default-features = false, path = "../pangolin/src/constants" }
 pangolin-runtime-system-params      = { default-features = false, path = "../pangolin/src/pallets/system/params" }
 pangoro-constants                   = { default-features = false, path = "src/constants" }

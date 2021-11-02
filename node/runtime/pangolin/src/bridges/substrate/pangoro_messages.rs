@@ -29,8 +29,6 @@ use bridge_primitives::{
 	DarwiniaFromThisChainMessageVerifier, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID,
 	PANGORO_PANGOLIN_LANE, WITH_PANGOLIN_MESSAGES_PALLET_NAME,
 };
-use darwinia_support::to_bytes32;
-use dp_s2s::CallParams;
 
 /// Message payload for Pangolin -> Pangoro messages.
 pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessageBridge>;

@@ -13,7 +13,6 @@ use crate::*;
 use bridge_primitives::{AccountIdConverter, PANGORO_PANGOLIN_LANE};
 use darwinia_support::s2s::{nonce_to_message_id, RelayMessageSender, TokenMessageId};
 use dp_s2s::{CallParams, PayloadCreate};
-use from_substrate_issuing::S2SIssuingCall;
 use to_substrate_backing::Config;
 
 /// Create message payload according to call parameters
