@@ -2242,7 +2242,6 @@ name = "dp-s2s"
 version = "2.6.7"
 dependencies = [
  "dp-asset",
- "dp-contract",
  "parity-scale-codec",
  "sp-core",
  "sp-std",
@@ -6221,11 +6220,8 @@ dependencies = [
  "darwinia-staking",
  "darwinia-support",
  "dp-asset",
-<<<<<<< HEAD
  "dp-s2s",
-=======
  "frame-benchmarking",
->>>>>>> master
  "frame-executive",
  "frame-support",
  "frame-system",

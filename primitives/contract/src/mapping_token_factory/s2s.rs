@@ -28,7 +28,6 @@ use ethabi::{
 };
 // --- paritytech ---
 use codec::{Decode, Encode};
-use dp_asset::token::{Token as Erc20Token, TokenInfo};
 use sp_std::{convert::TryInto, prelude::*};
 
 pub struct Sub2SubMappingTokenFactory;

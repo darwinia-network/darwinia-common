@@ -21,22 +21,21 @@
 mod test;
 
 // --- paritytech ---
-use sp_core::H160;
+use sp_core::{H160, U256};
 use sp_std::{vec, vec::Vec};
 // --- darwinia-network ---
 use codec::{Decode, Encode};
-use dp_asset::token::Token;
-use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
+use dp_asset::token::TokenMetadata;
 
 /// The parameters box for the pallet runtime call.
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 pub enum CallParams<AccountId> {
 	#[codec(index = 0)]
-	S2sIssuingPalletRegisterFromRemote(Token),
+	S2sIssuingPalletRegisterFromRemote(TokenMetadata),
 	#[codec(index = 1)]
-	S2sIssuingPalletIssueFromRemote(Token, H160),
+	S2sIssuingPalletIssueFromRemote(H160, U256, H160),
 	#[codec(index = 2)]
-	S2sBackingPalletUnlockFromRemote(AccountId, S2sRemoteUnlockInfo),
+	S2sBackingPalletUnlockFromRemote(H160, U256, AccountId),
 }
 
 /// Creating a concrete message payload which would be relay to target chain.

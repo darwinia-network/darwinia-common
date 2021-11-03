@@ -19,7 +19,7 @@
 #[cfg(test)]
 mod test {
 	use crate::*;
-	use dp_asset::token::TokenInfo;
+	use dp_asset::token::TokenMetadata;
 
 	#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 
@@ -31,7 +31,7 @@ mod test {
 	#[allow(non_camel_case_types)]
 	pub enum S2SBackingCall<AccountId> {
 		#[codec(index = 2)]
-		unlock_from_remote(AccountId, S2sRemoteUnlockInfo),
+		unlock_from_remote(H160, U256, AccountId),
 	}
 
 	#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
@@ -44,9 +44,9 @@ mod test {
 	#[allow(non_camel_case_types)]
 	pub enum S2SIssuingCall {
 		#[codec(index = 0)]
-		register_from_remote(Token),
+		register_from_remote(TokenMetadata),
 		#[codec(index = 1)]
-		issue_from_remote(Token, H160),
+		issue_from_remote(H160, U256, H160),
 	}
 
 	pub struct MockPangoroPayloadCreator;
@@ -73,22 +73,15 @@ mod test {
 
 	#[test]
 	fn test_pangoro_runtime_call_encode() {
-		let unlock_info = S2sRemoteUnlockInfo {
-			spec_version: 1,
-			weight: 100,
-			recipient: vec![1, 2, 3],
-			token: Token::Erc20(TokenInfo::new(H160::zero(), None, None)),
-		};
-
 		let expected_encoded_call = <PangoroRuntime<u64>>::Sub2SubBacking(
-			S2SBackingCall::unlock_from_remote(50, unlock_info.clone()),
+			S2SBackingCall::unlock_from_remote(H160::zero(), U256::zero(), 50),
 		)
 		.encode();
 
 		let encoded = MockPangoroPayloadCreator::payload(
 			0,
 			0,
-			<CallParams<u64>>::S2sBackingPalletUnlockFromRemote(50, unlock_info),
+			<CallParams<u64>>::S2sBackingPalletUnlockFromRemote(H160::zero(), U256::zero(), 50),
 		)
 		.unwrap();
 		assert_eq!(encoded, expected_encoded_call);
@@ -96,8 +89,7 @@ mod test {
 
 	#[test]
 	fn test_pangolin_runtime_call_encode() {
-		let mock_addr = H160::zero();
-		let mock_token = Token::Erc20(TokenInfo::new(mock_addr, None, None));
+		let mock_token = TokenMetadata::new(1, H160::zero(), vec![1, 2, 3], vec![1, 2, 3], 9);
 
 		let expected_encoded_call = PangolinRuntime::Sub2SubIssuing(
 			S2SIssuingCall::register_from_remote(mock_token.clone()),
@@ -112,13 +104,17 @@ mod test {
 		assert_eq!(expected_encoded_call, encoded);
 
 		let expected_encoded_call = PangolinRuntime::Sub2SubIssuing(
-			S2SIssuingCall::issue_from_remote(mock_token.clone(), mock_addr),
+			S2SIssuingCall::issue_from_remote(H160::zero(), U256::zero(), H160::zero()),
 		)
 		.encode();
 		let encoded = MockPangolinPayloadCreator::payload(
 			0,
 			0,
-			<CallParams<u64>>::S2sIssuingPalletIssueFromRemote(mock_token, mock_addr),
+			<CallParams<u64>>::S2sIssuingPalletIssueFromRemote(
+				H160::zero(),
+				U256::zero(),
+				H160::zero(),
+			),
 		)
 		.unwrap();
 		assert_eq!(expected_encoded_call, encoded);
