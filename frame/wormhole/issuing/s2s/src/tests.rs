@@ -24,7 +24,7 @@ use crate::{
 	*, {self as s2s_issuing},
 };
 use darwinia_support::evm::IntoAccountId;
-use dp_asset::token::{TokenInfo, TokenMetadata, TokenOption, NATIVE_TOKEN_TYPE};
+use dp_asset::token::{TokenMetadata, NATIVE_TOKEN_TYPE};
 use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
 use dp_s2s::CallParams;
 use mock::*;
@@ -32,9 +32,6 @@ use mock::*;
 // --- paritytech ---
 use frame_support::assert_ok;
 use frame_system::RawOrigin;
-
-use array_bytes::hex_into_unchecked;
-use mock::*;
 use sp_runtime::AccountId32;
 
 #[test]
@@ -54,9 +51,10 @@ fn burn_and_remote_unlock_success() {
 			H160::from_str("1000000000000000000000000000000000000002").unwrap(),
 		);
 		<Test as s2s_issuing::Config>::PayloadCreator::payload(
+			submitter,
 			burn_info.spec_version,
 			burn_info.weight,
-			CallParams::S2sBackingPalletUnlockFromRemote(submitter, burn_info),
+			CallParams::S2sBackingPalletUnlockFromRemote(burn_info),
 		)
 		.unwrap();
 	});

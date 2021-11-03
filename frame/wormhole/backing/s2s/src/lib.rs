@@ -109,6 +109,8 @@ pub mod pallet {
 
 		/// Outbound payload used for s2s message
 		type OutboundPayload: Parameter + Size;
+
+		/// Create message payload
 		type PayloadCreator: PayloadCreate<Self::AccountId, Self::OutboundPayload>;
 
 		/// The message noncer to get the message nonce from the bridge
@@ -263,12 +265,6 @@ pub mod pallet {
 				RING_DECIMAL,
 			);
 
-			// let payload = T::CallEncoder::encode_remote_register(
-			// 	Self::pallet_account_id(),
-			// 	spec_version,
-			// 	weight,
-			// 	token_metadata.clone(),
-			// );
 			let payload = T::PayloadCreator::payload(
 				Self::pallet_account_id(),
 				spec_version,
@@ -321,16 +317,6 @@ pub mod pallet {
 			let amount: U256 = value.saturated_into::<u128>().into();
 			let token_address = T::RingPalletId::get().into_h160();
 
-			// let receiver = RecipientAccount::EthereumAccount(recipient);
-			// let payload = T::CallEncoder::encode_remote_issue(
-			// 	Self::pallet_account_id(),
-			// 	spec_version,
-			// 	weight,
-			// 	token_address,
-			// 	amount,
-			// 	receiver,
-			// )
-			// .map_err(|_| Error::<T>::EncodeInvalid)?;
 			let payload = T::PayloadCreator::payload(
 				Self::pallet_account_id(),
 				spec_version,

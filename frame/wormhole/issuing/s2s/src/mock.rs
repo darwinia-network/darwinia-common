@@ -252,9 +252,10 @@ impl Size for MockMessagePayload {
 pub struct PangoroPayLoadCreator;
 impl PayloadCreate<AccountId32, MockMessagePayload> for PangoroPayLoadCreator {
 	fn payload(
+		_submitter: AccountId32,
 		spec_version: u32,
 		weight: u64,
-		_call_params: CallParams<AccountId<Test>>,
+		_call_params: CallParams,
 	) -> Result<MockMessagePayload, &'static str> {
 		return Ok(MockMessagePayload {
 			spec_version,

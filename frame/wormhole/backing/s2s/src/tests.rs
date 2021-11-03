@@ -118,9 +118,10 @@ impl LatestMessageNoncer for MockLatestMessageNoncer {
 pub struct MockPayloadCreator;
 impl PayloadCreate<AccountId<Test>, ()> for MockPayloadCreator {
 	fn payload(
+		_submitter: AccountId<Test>,
 		_spec_version: u32,
 		_weight: u64,
-		_call_params: CallParams<AccountId<Test>>,
+		_call_params: CallParams,
 	) -> Result<(), &'static str> {
 		Ok(())
 	}

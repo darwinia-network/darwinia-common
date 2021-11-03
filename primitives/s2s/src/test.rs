@@ -23,15 +23,15 @@ mod test {
 
 	#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 
-	pub enum PangoroRuntime<AccountId> {
+	pub enum PangoroRuntime {
 		#[codec(index = 20)]
-		Sub2SubBacking(S2SBackingCall<AccountId>),
+		Sub2SubBacking(S2SBackingCall),
 	}
 	#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 	#[allow(non_camel_case_types)]
-	pub enum S2SBackingCall<AccountId> {
+	pub enum S2SBackingCall {
 		#[codec(index = 2)]
-		unlock_from_remote(H160, U256, AccountId),
+		unlock_from_remote(S2sRemoteUnlockInfo),
 	}
 
 	#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
@@ -52,9 +52,10 @@ mod test {
 	pub struct MockPangoroPayloadCreator;
 	impl PayloadCreate<u64, Vec<u8>> for MockPangoroPayloadCreator {
 		fn payload(
+			_submitter: u64,
 			_spec_version: u32,
 			_weight: u64,
-			call_params: CallParams<u64>,
+			call_params: CallParams,
 		) -> Result<Vec<u8>, &'static str> {
 			Self::encode_call(20, call_params)
 		}
@@ -63,9 +64,10 @@ mod test {
 	pub struct MockPangolinPayloadCreator;
 	impl PayloadCreate<u64, Vec<u8>> for MockPangolinPayloadCreator {
 		fn payload(
+			_submitter: u64,
 			_spec_version: u32,
 			_weight: u64,
-			call_params: CallParams<u64>,
+			call_params: CallParams,
 		) -> Result<Vec<u8>, &'static str> {
 			Self::encode_call(49, call_params)
 		}
@@ -73,15 +75,24 @@ mod test {
 
 	#[test]
 	fn test_pangoro_runtime_call_encode() {
-		let expected_encoded_call = <PangoroRuntime<u64>>::Sub2SubBacking(
-			S2SBackingCall::unlock_from_remote(H160::zero(), U256::zero(), 50),
+		let mock_unlock_info = S2sRemoteUnlockInfo {
+			spec_version: 1,
+			weight: 20000,
+			token_type: 1,
+			original_token: H160::zero(),
+			amount: U256::zero(),
+			recipient: vec![1, 2, 3],
+		};
+		let expected_encoded_call = PangoroRuntime::Sub2SubBacking(
+			S2SBackingCall::unlock_from_remote(mock_unlock_info.clone()),
 		)
 		.encode();
 
 		let encoded = MockPangoroPayloadCreator::payload(
+			1,
 			0,
 			0,
-			<CallParams<u64>>::S2sBackingPalletUnlockFromRemote(H160::zero(), U256::zero(), 50),
+			CallParams::S2sBackingPalletUnlockFromRemote(mock_unlock_info),
 		)
 		.unwrap();
 		assert_eq!(encoded, expected_encoded_call);
@@ -96,9 +107,10 @@ mod test {
 		)
 		.encode();
 		let encoded = MockPangolinPayloadCreator::payload(
+			1,
 			0,
 			0,
-			<CallParams<u64>>::S2sIssuingPalletRegisterFromRemote(mock_token.clone()),
+			CallParams::S2sIssuingPalletRegisterFromRemote(mock_token.clone()),
 		)
 		.unwrap();
 		assert_eq!(expected_encoded_call, encoded);
@@ -108,13 +120,10 @@ mod test {
 		)
 		.encode();
 		let encoded = MockPangolinPayloadCreator::payload(
+			1,
 			0,
 			0,
-			<CallParams<u64>>::S2sIssuingPalletIssueFromRemote(
-				H160::zero(),
-				U256::zero(),
-				H160::zero(),
-			),
+			CallParams::S2sIssuingPalletIssueFromRemote(H160::zero(), U256::zero(), H160::zero()),
 		)
 		.unwrap();
 		assert_eq!(expected_encoded_call, encoded);

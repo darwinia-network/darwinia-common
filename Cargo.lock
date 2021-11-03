@@ -2239,7 +2239,7 @@ dependencies = [
 
 [[package]]
 name = "dp-s2s"
-version = "2.6.7"
+version = "2.6.8"
 dependencies = [
  "dp-asset",
  "dp-contract",
