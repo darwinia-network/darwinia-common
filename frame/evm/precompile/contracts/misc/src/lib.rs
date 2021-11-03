@@ -25,7 +25,10 @@ use codec::Encode;
 use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 use sha3::Digest;
 // --- darwinia-network ---
-use darwinia_support::{evm::IntoAccountId, s2s::RelayMessageSender};
+use darwinia_support::{
+	evm::IntoAccountId,
+	s2s::{nonce_to_message_id, LatestMessageNoncer, RelayMessageSender},
+};
 use dp_contract::mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams};
 use dp_evm::Precompile;
 use from_substrate_issuing::EncodeCall;
@@ -61,7 +64,7 @@ where
 	<T::Call as Dispatchable>::Origin: From<Option<T::AccountId>>,
 	T::Call: From<from_substrate_issuing::Call<T>>,
 	T::Call: From<from_ethereum_issuing::Call<T>>,
-	S: RelayMessageSender,
+	S: RelayMessageSender + LatestMessageNoncer,
 {
 	fn execute(
 		input: &[u8],
@@ -94,13 +97,15 @@ where
 				let lane_id: [u8; 4] = action_params
 					.try_into()
 					.map_err(|_| ExitError::Other("decode lane id failed".into()))?;
-				<S as RelayMessageSender>::latest_token_message_id(lane_id).to_vec()
+				let nonce = <S as LatestMessageNoncer>::outbound_latest_generated_nonce(lane_id);
+				nonce_to_message_id(&lane_id, nonce).to_vec()
 			}
 			_ if Self::match_digest(action_digest, S2S_READ_LATEST_RECV_MESSAGE_ID) => {
 				let lane_id: [u8; 4] = action_params
 					.try_into()
 					.map_err(|_| ExitError::Other("decode lane id failed".into()))?;
-				<S as RelayMessageSender>::latest_received_token_message_id(lane_id).to_vec()
+				let nonce = <S as LatestMessageNoncer>::inbound_latest_received_nonce(lane_id);
+				nonce_to_message_id(&lane_id, nonce).to_vec()
 			}
 			_ if Self::match_digest(action_digest, S2S_ENCODE_REMOTE_UNLOCK_PAYLOAD) => {
 				let unlock_info = S2sRemoteUnlockInfo::decode(&action_params)

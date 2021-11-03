@@ -27,7 +27,6 @@ use ethabi::{
 	param_type::ParamType, token::Token, Bytes, Error, Function, Param, Result as AbiResult,
 };
 // --- paritytech ---
-use dp_asset::token::{Token as Erc20Token, TokenInfo};
 use sp_std::{convert::TryInto, prelude::*};
 
 pub struct Sub2SubMappingTokenFactory;
@@ -72,8 +71,10 @@ impl Sub2SubMappingTokenFactory {
 pub struct S2sRemoteUnlockInfo {
 	pub spec_version: u32,
 	pub weight: u64,
+	pub token_type: u32,
+	pub original_token: H160,
+	pub amount: U256,
 	pub recipient: Vec<u8>,
-	pub token: Erc20Token,
 }
 
 impl S2sRemoteUnlockInfo {
@@ -125,11 +126,9 @@ impl S2sRemoteUnlockInfo {
 			) => Ok(Self {
 				spec_version: spec_version.low_u32(),
 				weight: weight.low_u64(),
-				token: (
-					token_type.low_u32(),
-					TokenInfo::new(original_token, Some(amount), None),
-				)
-					.into(),
+				token_type: token_type.low_u32(),
+				original_token,
+				amount,
 				recipient,
 			}),
 			_ => Err(Error::InvalidData),

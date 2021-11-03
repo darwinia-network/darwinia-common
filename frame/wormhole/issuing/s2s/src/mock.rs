@@ -26,7 +26,7 @@ use crate::{
 use darwinia_evm::{EnsureAddressTruncated, FeeCalculator, SubstrateBlockHashMapping};
 use darwinia_support::{
 	evm::IntoAccountId,
-	s2s::{RelayMessageSender, TokenMessageId},
+	s2s::{LatestMessageNoncer, RelayMessageSender},
 };
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
@@ -35,14 +35,13 @@ use dvm_ethereum::{
 // --- paritytech ---
 use frame_support::{
 	traits::{GenesisBuild, MaxEncodedLen},
-	weights::PostDispatchInfo,
 	PalletId,
 };
 use frame_system::mocking::*;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32, DispatchErrorWithPostInfo, RuntimeDebug,
+	AccountId32, RuntimeDebug,
 };
 
 use ethereum::{Transaction, TransactionAction, TransactionSignature};
@@ -227,6 +226,7 @@ frame_support::parameter_types! {
 	pub const PangoroChainId: bp_runtime::ChainId = *b"pagr";
 	pub RootAccountForPayments: Option<AccountId32> = Some([1;32].into());
 	pub PangoroName: Vec<u8> = (b"Pangoro").to_vec();
+	pub MessageLaneId: [u8; 4] = *b"ltor";
 }
 
 pub struct AccountIdConverter;
@@ -273,22 +273,14 @@ impl RelayMessageSender for ToPangoroMessageRelayCaller {
 	) -> Result<Vec<u8>, &'static str> {
 		Ok(Vec::new())
 	}
-	fn send_message_by_root(
-		_pallet_index: u32,
-		_lane_id: [u8; 4],
-		_payload: Vec<u8>,
-		_fee: u128,
-	) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>> {
-		Ok(PostDispatchInfo {
-			actual_weight: None,
-			pays_fee: Pays::No,
-		})
+}
+pub struct MockLatestMessageNoncer;
+impl LatestMessageNoncer for MockLatestMessageNoncer {
+	fn outbound_latest_generated_nonce(_lane_id: [u8; 4]) -> u64 {
+		0
 	}
-	fn latest_token_message_id(_lane_id: [u8; 4]) -> TokenMessageId {
-		[0u8; 16]
-	}
-	fn latest_received_token_message_id(_lane_id: [u8; 4]) -> TokenMessageId {
-		[0u8; 16]
+	fn inbound_latest_received_nonce(_lane_id: [u8; 4]) -> u64 {
+		0
 	}
 }
 
@@ -313,6 +305,7 @@ impl Config for Test {
 	type CallEncoder = PangoroCallEncoder;
 	type InternalTransactHandler = Ethereum;
 	type BackingChainName = PangoroName;
+	type MessageLaneId = MessageLaneId;
 }
 
 frame_support::construct_runtime! {

@@ -46,11 +46,12 @@ pub mod s2s {
 	// --- darwinia-network ---
 	use ethereum_primitives::{H160, H256};
 	// --- paritytech ---
+	use bp_messages::LaneId;
 	use bp_runtime::{derive_account_id, ChainId, SourceAccount};
-	use frame_support::{ensure, pallet_prelude::Weight, weights::PostDispatchInfo};
+	use frame_support::ensure;
 	use sp_runtime::{
 		traits::{BadOrigin, Convert},
-		DispatchError, DispatchErrorWithPostInfo,
+		DispatchError,
 	};
 	use sp_std::{cmp::PartialEq, vec::Vec};
 
@@ -66,24 +67,15 @@ pub mod s2s {
 	pub trait RelayMessageSender {
 		fn encode_send_message(
 			pallet_index: u32,
-			lane_id: [u8; 4],
+			lane_id: LaneId,
 			payload: Vec<u8>,
 			fee: u128,
 		) -> Result<Vec<u8>, &'static str>;
-
-		fn send_message_by_root(
-			pallet_index: u32,
-			lane_id: [u8; 4],
-			payload: Vec<u8>,
-			fee: u128,
-		) -> Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>;
-
-		fn latest_token_message_id(lane_id: [u8; 4]) -> TokenMessageId;
-		fn latest_received_token_message_id(lane_id: [u8; 4]) -> TokenMessageId;
 	}
 
-	pub trait MessageConfirmer {
-		fn on_messages_confirmed(message_id: TokenMessageId, result: bool) -> Weight;
+	pub trait LatestMessageNoncer {
+		fn outbound_latest_generated_nonce(lane_id: LaneId) -> u64;
+		fn inbound_latest_received_nonce(lane_id: LaneId) -> u64;
 	}
 
 	pub fn ensure_source_root<AccountId, Converter>(
@@ -116,7 +108,8 @@ pub mod s2s {
 		Ok(())
 	}
 
-	pub fn nonce_to_message_id(lane_id: &[u8], nonce: u64) -> TokenMessageId {
+	/// combine lane id and nonce to TokenMessageId used by token protocol
+	pub fn nonce_to_message_id(lane_id: &LaneId, nonce: u64) -> TokenMessageId {
 		let mut message_id: TokenMessageId = Default::default();
 		message_id[4..8].copy_from_slice(&lane_id[..4]);
 		message_id[8..].copy_from_slice(&nonce.to_be_bytes());

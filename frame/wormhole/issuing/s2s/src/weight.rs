@@ -56,6 +56,7 @@ pub trait WeightInfo {
 	fn register_from_remote() -> Weight;
 	fn issue_from_remote() -> Weight;
 	fn set_mapping_factory_address() -> Weight;
+	fn set_remote_backing_account() -> Weight;
 }
 
 /// Weights for from_substrate_issuing using the Substrate node and recommended hardware.
@@ -76,6 +77,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+	fn set_remote_backing_account() -> Weight {
+		(4_000_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
 }
 
 // For backwards compatibility and tests
@@ -94,5 +98,8 @@ impl WeightInfo for () {
 		(46_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+	}
+	fn set_remote_backing_account() -> Weight {
+		(4_000_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 }

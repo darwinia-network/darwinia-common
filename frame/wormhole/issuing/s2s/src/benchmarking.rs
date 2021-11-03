@@ -23,7 +23,7 @@ use crate::Pallet as S2sIssuing;
 
 use array_bytes::{hex2bytes_unchecked, hex_into_unchecked};
 use darwinia_evm::Runner;
-use dp_asset::token::{Token, TokenInfo, TokenOption};
+use dp_asset::token::{TokenMetadata, NATIVE_TOKEN_TYPE};
 use frame_benchmarking::benchmarks;
 use frame_support::assert_ok;
 use frame_system::RawOrigin;
@@ -107,30 +107,32 @@ benchmarks! {
 		let caller: T::AccountId = T::AccountId::decode(&mut &addr_bytes[..]).unwrap_or_default();
 
 		let register_token_address = hex_into_unchecked("0000000000000000000000000000000000000002");
-		let token_option = TokenOption {
-			name: [10; 32].to_vec(),
-			symbol: [20; 32].to_vec(),
-			decimal: 18,
-		};
-		let token = Token::Native(TokenInfo::new(register_token_address, None, Some(token_option)));
+		let token_metadata = TokenMetadata::new(
+			NATIVE_TOKEN_TYPE,
+			register_token_address,
+			[10; 32].to_vec(),
+			[20; 32].to_vec(),
+			18,
+		);
 
 		let contract_address = deploy_mapping_token_factory::<T>();
 		assert_ok!(<S2sIssuing<T>>::set_mapping_factory_address(
 			RawOrigin::Root.into(),
 			contract_address
 		));
-	}: _(RawOrigin::Signed(caller), token)
+	}: _(RawOrigin::Signed(caller), token_metadata)
 
 	issue_from_remote {
 		let addr_bytes = hex2bytes_unchecked("0xaaa5b780fa60c639ad17212d92e8e6257cb468baa88e1f826e6fe8ae6b7b700c");
 		let caller: T::AccountId = T::AccountId::decode(&mut &addr_bytes[..]).unwrap_or_default();
-		let token_option = TokenOption {
-			name: [10; 32].to_vec(),
-			symbol: [20; 32].to_vec(),
-			decimal: 18,
-		};
-		let register_token_address = hex_into_unchecked("0000000000000000000000000000000000000002");
-		let token = Token::Native(TokenInfo::new(register_token_address, None, Some(token_option)));
+		let issue_token_address = hex_into_unchecked("0000000000000000000000000000000000000002");
+		let token_metadata = TokenMetadata::new(
+			NATIVE_TOKEN_TYPE,
+			issue_token_address,
+			[10; 32].to_vec(),
+			[20; 32].to_vec(),
+			18,
+		);
 		let recipient = hex_into_unchecked("0000000000000000000000000000000000000001");
 
 		let contract_address = deploy_mapping_token_factory::<T>();
@@ -140,13 +142,9 @@ benchmarks! {
 		));
 		assert_ok!(<S2sIssuing<T>>::register_from_remote(
 			RawOrigin::Signed(caller.clone()).into(),
-			token
+			token_metadata
 		));
-		let issue_token = Token::Native(TokenInfo::new(
-		register_token_address,
-		Some(U256::from(10_000_000_000u128)),
-		None));
-	}: _(RawOrigin::Signed(caller), issue_token, recipient)
+	}: _(RawOrigin::Signed(caller), issue_token_address, U256::from(10_000_000_000u128), recipient)
 
 	set_mapping_factory_address {
 		let address = hex_into_unchecked("0000000000000000000000000000000000000001");

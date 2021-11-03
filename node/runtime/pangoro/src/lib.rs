@@ -90,7 +90,7 @@ use sp_consensus_babe::{AllowedSlots, BabeEpochConfiguration};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	generic,
-	traits::{Block as BlockT, Dispatchable, Extrinsic, NumberFor, StaticLookup, Verify},
+	traits::{Block as BlockT, Extrinsic, NumberFor, StaticLookup, Verify},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiAddress, SaturatedConversion,
 };

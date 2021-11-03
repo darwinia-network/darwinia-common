@@ -32,32 +32,38 @@ pub use weight::WeightInfo;
 
 // --- crates.io ---
 use ethereum_primitives::EthereumAddress;
-use ethereum_types::{H256, U256};
+use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
+use bp_messages::{
+	source_chain::{MessagesBridge, OnDeliveryConfirmed},
+	DeliveredMessages, LaneId,
+};
 use bp_runtime::{ChainId, Size};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{Currency, ExistenceRequirement::*, Get},
-	transactional, PalletId,
+	transactional,
+	weights::PostDispatchInfo,
+	PalletId,
 };
-use frame_system::{ensure_signed, pallet_prelude::*};
+use frame_system::{ensure_signed, pallet_prelude::*, RawOrigin};
 use sp_runtime::{
 	traits::{AccountIdConversion, Convert, Saturating, Zero},
-	SaturatedConversion,
+	DispatchErrorWithPostInfo, SaturatedConversion,
 };
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use darwinia_support::{
 	evm::IntoH160,
 	s2s::{
-		ensure_source_account, MessageConfirmer, RelayMessageSender, TokenMessageId, RING_DECIMAL,
-		RING_NAME, RING_SYMBOL,
+		ensure_source_account, nonce_to_message_id, LatestMessageNoncer, TokenMessageId,
+		RING_DECIMAL, RING_NAME, RING_SYMBOL,
 	},
 	AccountId,
 };
 use dp_asset::{
-	token::{Token, TokenInfo, TokenOption},
+	token::{TokenMetadata, NATIVE_TOKEN_TYPE},
 	RecipientAccount,
 };
 
@@ -72,49 +78,73 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 
+		/// The pallet id of this pallet
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
+		/// The ring balance pallet id
 		#[pallet::constant]
 		type RingPalletId: Get<PalletId>;
+
 		/// The max lock amount per transaction for security.
 		#[pallet::constant]
 		type MaxLockRingAmountPerTx: Get<RingBalance<Self>>;
+
+		/// The *RING* currency.
 		type RingCurrency: Currency<AccountId<Self>>;
 
+		/// The bridge account id converter.
+		/// `remote account` + `remote chain id` derive the new account
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
+
+		/// The bridged chain id
 		type BridgedChainId: Get<ChainId>;
 
+		/// Outbound payload used for s2s message
 		type OutboundPayload: Parameter + Size;
+
+		/// The call encoder to encode a remote dispatch call
 		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
 
-		type FeeAccount: Get<Option<Self::AccountId>>;
-		type MessageSender: RelayMessageSender;
-		type MessageSendPalletIndex: Get<u32>;
-		type MessageLaneId: Get<[u8; 4]>;
+		/// The message noncer to get the message nonce from the bridge
+		type MessageNoncer: LatestMessageNoncer;
+
+		/// The lane id of the s2s bridge
+		type MessageLaneId: Get<LaneId>;
+
+		/// The message bridge instance to send message
+		type MessagesBridge: MessagesBridge<
+			Self::AccountId,
+			RingBalance<Self>,
+			Self::OutboundPayload,
+			Error = DispatchErrorWithPostInfo<PostDispatchInfo>,
+		>;
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(fn deposit_event)]
 	#[pallet::metadata(AccountId<T> = "AccountId", RingBalance<T> = "RingBalance")]
 	pub enum Event<T: Config> {
-		/// Token registered \[token address, sender\]
-		TokenRegistered(Token, AccountId<T>),
+		/// Token registered \[token metadata, sender\]
+		TokenRegistered(TokenMetadata, AccountId<T>),
 		/// Token locked \[message_id, token address, sender, recipient, amount\]
 		TokenLocked(
 			TokenMessageId,
-			Token,
+			H160,
 			AccountId<T>,
 			EthereumAddress,
 			RingBalance<T>,
 		),
-		/// Token unlocked \[message_id, token, recipient, amount\]
-		TokenUnlocked(TokenMessageId, Token, AccountId<T>, RingBalance<T>),
-		/// Token locked confirmed from remote \[message_id, token, user, result\]
-		TokenLockedConfirmed(TokenMessageId, Token, AccountId<T>, bool),
+		/// Token unlocked \[message_id, token_address, recipient, amount\]
+		TokenUnlocked(TokenMessageId, H160, AccountId<T>, RingBalance<T>),
+		/// Token locked confirmed from remote \[message_id, user, amount, result\]
+		TokenLockedConfirmed(TokenMessageId, AccountId<T>, RingBalance<T>, bool),
 		/// Update remote mapping token factory address \[account\]
 		RemoteMappingFactoryAddressUpdated(AccountId<T>),
 	}
@@ -137,10 +167,10 @@ pub mod pallet {
 		InvalidOrigin,
 		/// Encode dispatch call failed.
 		EncodeInvalid,
-		/// Send relay message failed.
-		SendMessageFailed,
 		/// Message nonce duplicated.
 		NonceDuplicated,
+		/// Unsupported token
+		UnsupportToken,
 	}
 
 	/// Period between security limitation. Zero means there is no period limitation.
@@ -154,11 +184,13 @@ pub mod pallet {
 	pub type SecureLimitedRingAmount<T> =
 		StorageValue<_, (RingBalance<T>, RingBalance<T>), ValueQuery>;
 
+	/// `(sender, amount)` the user *sender* lock and remote issuing amount of asset
 	#[pallet::storage]
-	#[pallet::getter(fn locked_queue)]
-	pub type LockedQueue<T: Config> =
-		StorageMap<_, Identity, TokenMessageId, (AccountId<T>, Token), ValueQuery>;
+	#[pallet::getter(fn transaction_infos)]
+	pub type TransactionInfos<T: Config> =
+		StorageMap<_, Identity, TokenMessageId, (AccountId<T>, RingBalance<T>), ValueQuery>;
 
+	/// The remote mapping token factory account, here use to ensure the remote caller
 	#[pallet::storage]
 	#[pallet::getter(fn remote_mapping_token_factory_account)]
 	pub type RemoteMappingTokenFactoryAccount<T: Config> =
@@ -224,32 +256,31 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 
-			if let Some(fee_account) = T::FeeAccount::get() {
-				T::RingCurrency::transfer(&user, &fee_account, fee, KeepAlive)?;
-			}
-			let token = Token::Native(TokenInfo {
-				address: T::RingPalletId::get().into_h160(),
-				value: None,
-				option: Some(TokenOption {
-					name: RING_NAME.to_vec(),
-					symbol: RING_SYMBOL.to_vec(),
-					decimal: RING_DECIMAL,
-				}),
-			});
-			let payload =
-				T::CallEncoder::encode_remote_register(spec_version, weight, token.clone());
-			T::MessageSender::send_message_by_root(
-				T::MessageSendPalletIndex::get(),
-				T::MessageLaneId::get(),
-				payload.encode(),
-				fee.saturated_into::<u128>().into(),
-			)
-			.map_err(|e| {
-				log::info!("s2s-backing: register token failed {:?}", e);
-				Error::<T>::SendMessageFailed
-			})?;
+			let token_metadata = TokenMetadata::new(
+				NATIVE_TOKEN_TYPE,
+				T::RingPalletId::get().into_h160(),
+				RING_NAME.to_vec(),
+				RING_SYMBOL.to_vec(),
+				RING_DECIMAL,
+			);
 
-			Self::deposit_event(Event::TokenRegistered(token, user));
+			let payload = T::CallEncoder::encode_remote_register(
+				Self::pallet_account_id(),
+				spec_version,
+				weight,
+				token_metadata.clone(),
+			);
+			// this pallet account as the submitter of the remote message
+			// we need to transfer fee from user to this account to pay the bridge fee
+			T::RingCurrency::transfer(&user, &Self::pallet_account_id(), fee, KeepAlive)?;
+			T::MessagesBridge::send_message(
+				RawOrigin::Signed(Self::pallet_account_id()),
+				T::MessageLaneId::get(),
+				payload,
+				fee,
+			)?;
+
+			Self::deposit_event(Event::TokenRegistered(token_metadata, user));
 			Ok(().into())
 		}
 
@@ -279,39 +310,46 @@ pub mod pallet {
 				<Error<T>>::InsufficientBalance
 			);
 
-			if let Some(fee_account) = T::FeeAccount::get() {
-				T::RingCurrency::transfer(&user, &fee_account, fee, KeepAlive)?;
-			}
-			T::RingCurrency::transfer(&user, &Self::pallet_account_id(), value, AllowDeath)?;
+			T::RingCurrency::transfer(&user, &Self::pallet_account_id(), value, KeepAlive)?;
 
 			// Send to the target chain
 			let amount: U256 = value.saturated_into::<u128>().into();
-			let token = Token::Native(TokenInfo {
-				// The native mapped RING token as a special ERC20 address
-				address: T::RingPalletId::get().into_h160(),
-				value: Some(amount),
-				option: None,
-			});
+			let token_address = T::RingPalletId::get().into_h160();
 
-			let account = RecipientAccount::EthereumAccount(recipient);
-			let payload =
-				T::CallEncoder::encode_remote_issue(spec_version, weight, token.clone(), account)
-					.map_err(|_| Error::<T>::EncodeInvalid)?;
-			T::MessageSender::send_message_by_root(
-				T::MessageSendPalletIndex::get(),
-				T::MessageLaneId::get(),
-				payload.encode(),
-				fee.saturated_into::<u128>().into(),
+			let receiver = RecipientAccount::EthereumAccount(recipient);
+			let payload = T::CallEncoder::encode_remote_issue(
+				Self::pallet_account_id(),
+				spec_version,
+				weight,
+				token_address,
+				amount,
+				receiver,
 			)
-			.map_err(|_| Error::<T>::SendMessageFailed)?;
-			let message_id = T::MessageSender::latest_token_message_id(T::MessageLaneId::get());
+			.map_err(|_| Error::<T>::EncodeInvalid)?;
+			// this pallet account as the submitter of the remote message
+			// we need to transfer fee from user to this account to pay the bridge fee
+			T::RingCurrency::transfer(&user, &Self::pallet_account_id(), fee, KeepAlive)?;
+			T::MessagesBridge::send_message(
+				RawOrigin::Signed(Self::pallet_account_id()),
+				T::MessageLaneId::get(),
+				payload,
+				fee,
+			)?;
+
+			let message_nonce =
+				T::MessageNoncer::outbound_latest_generated_nonce(T::MessageLaneId::get());
+			let message_id = nonce_to_message_id(&T::MessageLaneId::get(), message_nonce);
 			ensure!(
-				!<LockedQueue<T>>::contains_key(message_id),
+				!<TransactionInfos<T>>::contains_key(message_id),
 				Error::<T>::NonceDuplicated
 			);
-			<LockedQueue<T>>::insert(message_id, (user.clone(), token.clone()));
+			<TransactionInfos<T>>::insert(message_id, (user.clone(), value));
 			Self::deposit_event(Event::TokenLocked(
-				message_id, token, user, recipient, value,
+				message_id,
+				token_address,
+				user,
+				recipient,
+				value,
 			));
 			Ok(().into())
 		}
@@ -320,7 +358,8 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::unlock_from_remote())]
 		pub fn unlock_from_remote(
 			origin: OriginFor<T>,
-			token: Token,
+			token_address: H160,
+			amount: U256,
 			recipient: AccountId<T>,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
@@ -334,22 +373,12 @@ pub mod pallet {
 				&user,
 			)?;
 
-			let token_info = match &token {
-				Token::Native(info) => {
-					log::debug!("cross receive native token {:?}", info);
-					info
-				}
-				Token::Erc20(info) => {
-					log::debug!("cross receive erc20 token {:?}", info);
-					return Err(Error::<T>::Erc20NotSupported.into());
-				}
-				_ => return Err(Error::<T>::InvalidTokenType.into()),
-			};
-			let amount = token_info
-				.value
-				.ok_or(<Error<T>>::InvalidTokenValue)?
-				.low_u128()
-				.saturated_into();
+			ensure!(
+				token_address == T::RingPalletId::get().into_h160(),
+				<Error<T>>::UnsupportToken
+			);
+
+			let amount = amount.low_u128().saturated_into();
 
 			// Make sure the total transfer is less than the security limitation
 			{
@@ -372,11 +401,12 @@ pub mod pallet {
 
 			<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = used.saturating_add(amount));
 
-			let message_id =
-				T::MessageSender::latest_received_token_message_id(T::MessageLaneId::get());
+			let message_nonce =
+				T::MessageNoncer::inbound_latest_received_nonce(T::MessageLaneId::get());
+			let message_id = nonce_to_message_id(&T::MessageLaneId::get(), message_nonce);
 			Self::deposit_event(Event::TokenUnlocked(
 				message_id,
-				token.clone(),
+				token_address,
 				recipient,
 				amount,
 			));
@@ -427,25 +457,17 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> MessageConfirmer for Pallet<T> {
-		fn on_messages_confirmed(message_id: TokenMessageId, result: bool) -> Weight {
-			let (user, token) = <LockedQueue<T>>::take(message_id);
-			if !result {
-				let token_info = match &token {
-					Token::Native(info) => {
-						log::debug!("cross receive native token {:?}", info);
-						info
-					}
-					Token::Erc20(info) => {
-						log::debug!("cross receive erc20 token {:?}", info);
-						return 1;
-					}
-					_ => {
-						log::debug!("unrecognized token type");
-						return 1;
-					}
-				};
-				if let Some(value) = token_info.value {
+	impl<T: Config> OnDeliveryConfirmed for Pallet<T> {
+		fn on_messages_delivered(lane: &LaneId, messages: &DeliveredMessages) -> Weight {
+			if *lane != T::MessageLaneId::get() {
+				return 0;
+			}
+			let mut weight = 0 as Weight;
+			for nonce in messages.begin..=messages.end {
+				let result = messages.message_dispatch_result(nonce);
+				let message_id = nonce_to_message_id(lane, nonce);
+				let (user, amount) = <TransactionInfos<T>>::take(message_id);
+				if !result {
 					// if remote issue mapped token failed, this fund need to transfer token back
 					// to the user. The balance always comes from the user's locked currency while
 					// calling the dispatch call `lock_and_remote_issue`.
@@ -454,13 +476,18 @@ pub mod pallet {
 					let _ = T::RingCurrency::transfer(
 						&Self::pallet_account_id(),
 						&user,
-						value.low_u128().saturated_into(),
-						AllowDeath,
+						amount,
+						KeepAlive,
 					);
 				}
+				Self::deposit_event(Event::TokenLockedConfirmed(
+					message_id, user, amount, result,
+				));
+				weight = weight.saturating_add(
+					<T as frame_system::Config>::DbWeight::get().reads_writes(2, 3),
+				);
 			}
-			Self::deposit_event(Event::TokenLockedConfirmed(message_id, token, user, result));
-			return 1;
+			weight
 		}
 	}
 }
@@ -468,12 +495,19 @@ pub mod pallet {
 /// Encode call
 pub trait EncodeCall<AccountId, MessagePayload> {
 	/// Encode issuing pallet remote_register call
-	fn encode_remote_register(spec_version: u32, weight: u64, token: Token) -> MessagePayload;
-	/// Encode issuing pallet remote_issue call
-	fn encode_remote_issue(
+	fn encode_remote_register(
+		submitter: AccountId,
 		spec_version: u32,
 		weight: u64,
-		token: Token,
+		token_metadata: TokenMetadata,
+	) -> MessagePayload;
+	/// Encode issuing pallet remote_issue call
+	fn encode_remote_issue(
+		submitter: AccountId,
+		spec_version: u32,
+		weight: u64,
+		token_address: H160,
+		amount: U256,
 		recipient: RecipientAccount<AccountId>,
 	) -> Result<MessagePayload, ()>;
 }
