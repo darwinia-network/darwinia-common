@@ -166,8 +166,6 @@ pub mod pallet {
 		RingDailyLimited,
 		/// Invalid source origin.
 		InvalidOrigin,
-		/// Encode dispatch call failed.
-		EncodeInvalid,
 		/// Message nonce duplicated.
 		NonceDuplicated,
 		/// Unsupported token

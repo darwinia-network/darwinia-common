@@ -12,11 +12,11 @@ version     = "2.6.8"
 [dependencies]
 # darwinia-network
 dp-asset    = { default-features = false, path = "../asset"}
-dp-contract = { default-features = false, path = "../contract"}
 # paritytech
-codec   = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-std  = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+codec      = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 
 [features]
 default = ["std"]
@@ -24,9 +24,9 @@ default = ["std"]
 std = [
 	# darwinia-network
 	"dp-asset/std",
-	"dp-contract/std",
 	# paritytech
 	"codec/std",
 	"sp-core/std",
+	"sp-runtime/std",
 	"sp-std/std",
 ]

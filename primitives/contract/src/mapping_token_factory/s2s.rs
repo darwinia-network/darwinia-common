@@ -23,11 +23,13 @@ pub use ethabi::{Event, Log};
 // --- crates.io ---
 use ethereum_types::{H160, U256};
 // --- darwinia-network ---
+use darwinia_support::to_bytes32;
 use ethabi::{
 	param_type::ParamType, token::Token, Bytes, Error, Function, Param, Result as AbiResult,
 };
 // --- paritytech ---
 use codec::{Decode, Encode};
+use sp_runtime::AccountId32;
 use sp_std::{convert::TryInto, prelude::*};
 
 pub struct Sub2SubMappingTokenFactory;
@@ -75,7 +77,7 @@ pub struct S2sRemoteUnlockInfo {
 	pub token_type: u32,
 	pub original_token: H160,
 	pub amount: U256,
-	pub recipient: Vec<u8>,
+	pub recipient: AccountId32,
 }
 
 impl S2sRemoteUnlockInfo {
@@ -130,7 +132,7 @@ impl S2sRemoteUnlockInfo {
 				token_type: token_type.low_u32(),
 				original_token,
 				amount,
-				recipient,
+				recipient: to_bytes32(&recipient).into(),
 			}),
 			_ => Err(Error::InvalidData),
 		}

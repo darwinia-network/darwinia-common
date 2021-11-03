@@ -2192,11 +2192,13 @@ dependencies = [
 name = "dp-contract"
 version = "2.6.8"
 dependencies = [
+ "darwinia-support",
  "dp-asset",
  "ethabi",
  "ethereum-primitives",
  "ethereum-types",
  "parity-scale-codec",
+ "sp-runtime",
  "sp-std",
 ]
 
@@ -2242,9 +2244,9 @@ name = "dp-s2s"
 version = "2.6.8"
 dependencies = [
  "dp-asset",
- "dp-contract",
  "parity-scale-codec",
  "sp-core",
+ "sp-runtime",
  "sp-std",
 ]
 

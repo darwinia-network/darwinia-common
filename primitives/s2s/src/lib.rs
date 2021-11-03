@@ -26,7 +26,7 @@ use sp_std::{vec, vec::Vec};
 // --- darwinia-network ---
 use codec::{Decode, Encode};
 use dp_asset::token::TokenMetadata;
-use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
+use sp_runtime::AccountId32;
 
 /// The parameters box for the pallet runtime call.
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
@@ -36,7 +36,7 @@ pub enum CallParams {
 	#[codec(index = 1)]
 	S2sIssuingPalletIssueFromRemote(H160, U256, H160),
 	#[codec(index = 2)]
-	S2sBackingPalletUnlockFromRemote(S2sRemoteUnlockInfo),
+	S2sBackingPalletUnlockFromRemote(H160, U256, AccountId32),
 }
 
 /// Creating a concrete message payload which would be relay to target chain.
