@@ -54,9 +54,7 @@ default = ["std"]
 std = [
 	# crates.io
 	"codec/std",
-	"ethereum/std",
 	"ethereum-types/std",
-	"libsecp256k1/std",
 	"serde",
 	"serde_json",
 	"sha3/std",
