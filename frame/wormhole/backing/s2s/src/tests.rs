@@ -180,7 +180,6 @@ impl Config for Test {
 	type MessageNoncer = MockLatestMessageNoncer;
 
 	type MessageLaneId = BridgePangolinLaneId;
-	type OutboundMessageFee = Balance;
 	type MessagesBridge = MockMessagesBridge;
 }
 
