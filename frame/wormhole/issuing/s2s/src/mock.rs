@@ -53,7 +53,6 @@ type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 type Balance = u64;
 
-
 /*
 * Test Contract
 pragma solidity ^0.6.0;

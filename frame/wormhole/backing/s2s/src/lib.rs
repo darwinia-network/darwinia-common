@@ -62,15 +62,11 @@ use darwinia_support::{
 	},
 	AccountId,
 };
-<<<<<<< HEAD
-use dp_asset::token::{Token, TokenInfo, TokenOption};
-use dp_s2s::{CallParams, PayloadCreate};
-=======
 use dp_asset::{
-	token::{TokenMetadata, NATIVE_TOKEN_TYPE},
+	token::{Token, TokenInfo, TokenMetadata, TokenOption, NATIVE_TOKEN_TYPE},
 	RecipientAccount,
 };
->>>>>>> master
+use dp_s2s::{CallParams, PayloadCreate};
 
 pub type Balance = u128;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
