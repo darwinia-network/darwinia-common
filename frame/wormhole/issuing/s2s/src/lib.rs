@@ -33,6 +33,7 @@ pub use weight::WeightInfo;
 // --- crates.io ---
 use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
+use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -46,10 +47,10 @@ use sp_std::{str, vec::Vec};
 use bp_runtime::{ChainId, Size};
 use darwinia_support::{
 	mapping_token::*,
-	s2s::{ensure_source_root, MessageConfirmer, ToEthAddress, TokenMessageId},
+	s2s::{ensure_source_account, nonce_to_message_id, ToEthAddress},
 	AccountId, ChainName,
 };
-use dp_asset::token::Token;
+use dp_asset::token::TokenMetadata;
 use dp_contract::mapping_token_factory::{
 	basic::BasicMappingTokenFactory as bmtf, s2s::Sub2SubMappingTokenFactory as smtf,
 };
@@ -67,20 +68,45 @@ pub mod pallet {
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]
 	pub trait Config: frame_system::Config + darwinia_evm::Config {
+		/// The pallet id of this pallet
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
+
+		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
+
+		/// The *RING* currency.
 		type RingCurrency: Currency<AccountId<Self>>;
 
+		/// The bridge account id converter.
+		/// `remote account` + `remote chain id` derive the new account
 		type BridgedAccountIdConverter: Convert<H256, Self::AccountId>;
+
+		/// The bridged chain id
 		type BridgedChainId: Get<ChainId>;
+
+		/// Convert the substrate account to ethereum account
 		type ToEthAddressT: ToEthAddress<Self::AccountId>;
+
+		/// Outbound payload used for s2s message
 		type OutboundPayload: Parameter + Size;
 		type PayloadCreator: PayloadCreate<Self::AccountId, Self::OutboundPayload>;
 		type InternalTransactHandler: InternalTransactHandler;
+
+		/// The remote chain name where the backing module in
 		type BackingChainName: Get<ChainName>;
+
+		/// The lane id of the s2s bridge
+		type MessageLaneId: Get<LaneId>;
 	}
+
+	/// Remote Backing Address, this used to verify the remote caller
+	#[pallet::storage]
+	#[pallet::getter(fn remote_backing_account)]
+	pub type RemoteBackingAccount<T: Config> = StorageValue<_, AccountId<T>, ValueQuery>;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -97,48 +123,40 @@ pub mod pallet {
 		#[transactional]
 		pub fn register_from_remote(
 			origin: OriginFor<T>,
-			token: Token,
+			token_metadata: TokenMetadata,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
-			ensure_source_root::<T::AccountId, T::BridgedAccountIdConverter>(
+			ensure_source_account::<T::AccountId, T::BridgedAccountIdConverter>(
 				T::BridgedChainId::get(),
+				<RemoteBackingAccount<T>>::get(),
 				&user,
 			)?;
 
 			let backing_address = T::ToEthAddressT::into_ethereum_id(&user);
-			let (token_type, token_info) = token
-				.token_info()
-				.map_err(|_| Error::<T>::InvalidTokenType)?;
 			let mut mapping_token =
-				Self::mapped_token_address(backing_address, token_info.address)?;
+				Self::mapped_token_address(backing_address, token_metadata.address)?;
 			ensure!(mapping_token == H160::zero(), "asset has been registered");
 
-			match token_info.option {
-				Some(option) => {
-					let name = mapping_token_name(option.name, T::BackingChainName::get());
-					let symbol = mapping_token_symbol(option.symbol);
-					let input = bmtf::encode_create_erc20(
-						token_type,
-						&str::from_utf8(name.as_slice()).map_err(|_| Error::<T>::StringCF)?,
-						&str::from_utf8(symbol.as_slice()).map_err(|_| Error::<T>::StringCF)?,
-						option.decimal,
-						backing_address,
-						token_info.address,
-					)
-					.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
+			let name = mapping_token_name(token_metadata.name, T::BackingChainName::get());
+			let symbol = mapping_token_symbol(token_metadata.symbol);
+			let input = bmtf::encode_create_erc20(
+				token_metadata.token_type,
+				&str::from_utf8(name.as_slice()).map_err(|_| Error::<T>::StringCF)?,
+				&str::from_utf8(symbol.as_slice()).map_err(|_| Error::<T>::StringCF)?,
+				token_metadata.decimal,
+				backing_address,
+				token_metadata.address,
+			)
+			.map_err(|_| Error::<T>::InvalidEncodeERC20)?;
 
-					Self::transact_mapping_factory(input)?;
-					mapping_token =
-						Self::mapped_token_address(backing_address, token_info.address)?;
-					Self::deposit_event(Event::TokenRegistered(
-						user,
-						backing_address,
-						token_info.address,
-						mapping_token,
-					));
-				}
-				_ => return Err(Error::<T>::InvalidTokenOption.into()),
-			}
+			Self::transact_mapping_factory(input)?;
+			mapping_token = Self::mapped_token_address(backing_address, token_metadata.address)?;
+			Self::deposit_event(Event::TokenRegistered(
+				user,
+				backing_address,
+				token_metadata.address,
+				mapping_token,
+			));
 			Ok(().into())
 		}
 
@@ -150,41 +168,37 @@ pub mod pallet {
 		#[transactional]
 		pub fn issue_from_remote(
 			origin: OriginFor<T>,
-			token: Token,
+			token_address: H160,
+			amount: U256,
 			recipient: H160,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 			// the s2s message relay has been verified that the message comes from the backing chain with the
 			// chainID and backing sender address.
 			// here only we need is to check the sender is root
-			ensure_source_root::<T::AccountId, T::BridgedAccountIdConverter>(
+			ensure_source_account::<T::AccountId, T::BridgedAccountIdConverter>(
 				T::BridgedChainId::get(),
+				<RemoteBackingAccount<T>>::get(),
 				&user,
 			)?;
 
 			let backing_address = T::ToEthAddressT::into_ethereum_id(&user);
-			let (_, token_info) = token
-				.token_info()
-				.map_err(|_| Error::<T>::InvalidTokenType)?;
-
-			let mapping_token = Self::mapped_token_address(backing_address, token_info.address)?;
+			let mapping_token = Self::mapped_token_address(backing_address, token_address)?;
 			ensure!(
 				mapping_token != H160::zero(),
 				"asset has not been registered"
 			);
 
-			// Redeem process
-			if let Some(value) = token_info.value {
-				let input = bmtf::encode_issue_erc20(mapping_token, recipient, value)
-					.map_err(|_| Error::<T>::InvalidMintEncoding)?;
-				Self::transact_mapping_factory(input)?;
-				Self::deposit_event(Event::TokenIssued(
-					backing_address,
-					mapping_token,
-					recipient,
-					value,
-				));
-			}
+			// issue erc20 tokens
+			let input = bmtf::encode_issue_erc20(mapping_token, recipient, amount)
+				.map_err(|_| Error::<T>::InvalidIssueEncoding)?;
+			Self::transact_mapping_factory(input)?;
+			Self::deposit_event(Event::TokenIssued(
+				backing_address,
+				mapping_token,
+				recipient,
+				amount,
+			));
 			Ok(().into())
 		}
 
@@ -200,6 +214,17 @@ pub mod pallet {
 			let old_address = <MappingFactoryAddress<T>>::get();
 			<MappingFactoryAddress<T>>::put(address);
 			Self::deposit_event(Event::MappingFactoryAddressUpdated(old_address, address));
+			Ok(().into())
+		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::set_remote_backing_account())]
+		pub fn set_remote_backing_account(
+			origin: OriginFor<T>,
+			account: AccountId<T>,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			<RemoteBackingAccount<T>>::put(account.clone());
+			Self::deposit_event(Event::RemoteBackingAccountUpdated(account));
 			Ok(().into())
 		}
 	}
@@ -220,6 +245,8 @@ pub mod pallet {
 		/// Set mapping token factory address
 		/// [old, new]
 		MappingFactoryAddressUpdated(H160, H160),
+		/// Update remote backing address \[account\]
+		RemoteBackingAccountUpdated(AccountId<T>),
 	}
 
 	#[pallet::error]
@@ -233,8 +260,8 @@ pub mod pallet {
 		StringCF,
 		/// encode erc20 tx failed
 		InvalidEncodeERC20,
-		/// encode mint tx failed
-		InvalidMintEncoding,
+		/// encode issue tx failed
+		InvalidIssueEncoding,
 		/// invalid ethereum address length
 		InvalidAddressLen,
 		/// invalid token type
@@ -245,10 +272,6 @@ pub mod pallet {
 		InvalidDecoding,
 		/// invalid source origin
 		InvalidOrigin,
-		/// encode dispatch call failed
-		EncodeInvalid,
-		/// send relay message failed
-		SendMessageFailed,
 		/// call mapping factory failed
 		MappingFactoryCallFailed,
 	}
@@ -278,19 +301,39 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> MessageConfirmer for Pallet<T> {
-		fn on_messages_confirmed(message_id: TokenMessageId, result: bool) -> Weight {
-			if let Ok(input) =
-				smtf::encode_confirm_burn_and_remote_unlock(message_id.to_vec(), result)
-			{
-				let _ = Self::transact_mapping_factory(input);
+	impl<T: Config> OnDeliveryConfirmed for Pallet<T> {
+		fn on_messages_delivered(lane: &LaneId, messages: &DeliveredMessages) -> Weight {
+			if *lane != T::MessageLaneId::get() {
+				return 0;
 			}
-			return 1;
+			let mut weight = 0 as Weight;
+			for nonce in messages.begin..=messages.end {
+				let result = messages.message_dispatch_result(nonce);
+				let message_id = nonce_to_message_id(lane, nonce);
+				if let Ok(input) =
+					smtf::encode_confirm_burn_and_remote_unlock(message_id.to_vec(), result)
+				{
+					let dispatch_result = Self::transact_mapping_factory(input);
+					let w = match dispatch_result {
+						Ok(dispatch_info) => dispatch_info.actual_weight.unwrap_or(0),
+						_ => 0,
+					};
+					weight = weight.saturating_add(w);
+					weight = weight.saturating_add(
+						<T as frame_system::Config>::DbWeight::get().reads_writes(1, 0),
+					);
+				}
+			}
+			weight
 		}
 	}
 }
 
 impl<T: Config> Pallet<T> {
+	/// Get mapping token address from contract
+	///
+	/// Note: The result is padded as 32 bytes, but the address in contract is 20 bytes, we need to
+	/// truncate the prefix(12 bytes) off
 	pub fn mapped_token_address(
 		backing_address: H160,
 		original_token: H160,

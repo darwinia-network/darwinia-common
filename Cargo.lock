@@ -1946,6 +1946,7 @@ name = "darwinia-support"
 version = "2.6.8"
 dependencies = [
  "array-bytes",
+ "bp-messages",
  "bp-runtime",
  "ethabi",
  "ethereum",
@@ -3176,6 +3177,7 @@ name = "from-substrate-issuing"
 version = "2.6.8"
 dependencies = [
  "array-bytes",
+ "bp-messages",
  "bp-runtime",
  "darwinia-balances",
  "darwinia-evm",
@@ -6219,10 +6221,15 @@ dependencies = [
  "darwinia-staking",
  "darwinia-support",
  "dp-asset",
+<<<<<<< HEAD
  "dp-s2s",
+=======
+ "frame-benchmarking",
+>>>>>>> master
  "frame-executive",
  "frame-support",
  "frame-system",
+ "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "log",
@@ -10075,6 +10082,7 @@ name = "to-substrate-backing"
 version = "2.6.8"
 dependencies = [
  "array-bytes",
+ "bp-messages",
  "bp-runtime",
  "darwinia-balances",
  "darwinia-support",
@@ -10083,6 +10091,7 @@ dependencies = [
  "dp-s2s",
  "ethereum-primitives",
  "ethereum-types",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",

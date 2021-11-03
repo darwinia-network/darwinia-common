@@ -1,4 +1,5 @@
 // --- paritytech ---
+use bp_messages::LaneId;
 use bp_runtime::{messages::DispatchFeePayment, ChainId};
 use frame_support::PalletId;
 use sp_runtime::AccountId32;
@@ -48,6 +49,7 @@ frame_support::parameter_types! {
 	pub const S2sIssuingPalletId: PalletId = PalletId(*b"da/s2sis");
 	pub const PangoroChainId: ChainId = PANGORO_CHAIN_ID;
 	pub PangoroName: ChainName = (b"Pangoro").to_vec();
+	pub const BridgePangoroLaneId: LaneId = PANGORO_PANGOLIN_LANE;
 }
 
 impl Config for Runtime {
@@ -62,4 +64,5 @@ impl Config for Runtime {
 	type PayloadCreator = PangoroPayloadCreator;
 	type InternalTransactHandler = Ethereum;
 	type BackingChainName = PangoroName;
+	type MessageLaneId = BridgePangoroLaneId;
 }

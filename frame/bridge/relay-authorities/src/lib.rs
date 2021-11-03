@@ -212,7 +212,7 @@ decl_storage! {
 		/// Once the signatures count reaches the sign threshold storage will be killed then raise a signed event
 		///
 		/// Params
-		/// 	1. collected signatures
+		/// 	1. the mmr root to be signed, collected signatures
 		pub MmrRootsToSign
 			get(fn mmr_root_to_sign_of)
 			: map hasher(identity) BlockNumberFor<T>
