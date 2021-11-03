@@ -23,7 +23,6 @@ pub use ethabi::{Event, Log};
 // --- crates.io ---
 use ethereum_types::{H160, U256};
 // --- darwinia-network ---
-use darwinia_support::to_bytes32;
 use ethabi::{
 	param_type::ParamType, token::Token, Bytes, Error, Function, Param, Result as AbiResult,
 };
@@ -181,4 +180,11 @@ impl S2sSendMessageParams {
 			_ => Err(Error::InvalidData),
 		}
 	}
+}
+
+pub fn to_bytes32(raw: &[u8]) -> [u8; 32] {
+	let mut result = [0u8; 32];
+	let encoded = ethabi::encode(&[Token::FixedBytes(raw.to_vec())]);
+	result.copy_from_slice(&encoded);
+	result
 }

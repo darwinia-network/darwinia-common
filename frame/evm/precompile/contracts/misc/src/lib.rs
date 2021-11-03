@@ -28,7 +28,6 @@ use sha3::Digest;
 use darwinia_support::{
 	evm::IntoAccountId,
 	s2s::{nonce_to_message_id, LatestMessageNoncer, RelayMessageSender},
-	to_bytes32,
 };
 use dp_contract::mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams};
 use dp_evm::Precompile;

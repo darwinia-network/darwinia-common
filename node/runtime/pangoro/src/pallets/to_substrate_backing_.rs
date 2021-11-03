@@ -10,7 +10,6 @@ use pangoro_primitives::AccountId;
 use crate::*;
 use bridge_primitives::{AccountIdConverter, PANGORO_PANGOLIN_LANE};
 use darwinia_support::s2s::LatestMessageNoncer;
-use dp_asset::{token::TokenMetadata, RecipientAccount};
 use dp_s2s::{CallParams, PayloadCreate};
 use to_substrate_backing::Config;
 

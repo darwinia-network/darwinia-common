@@ -2192,7 +2192,6 @@ dependencies = [
 name = "dp-contract"
 version = "2.6.8"
 dependencies = [
- "darwinia-support",
  "dp-asset",
  "ethabi",
  "ethereum-primitives",

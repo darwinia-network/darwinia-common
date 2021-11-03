@@ -134,13 +134,6 @@ pub mod mapping_token {
 	}
 }
 
-pub fn to_bytes32(raw: &[u8]) -> [u8; 32] {
-	let mut result = [0u8; 32];
-	let encoded = encode(&[Token::FixedBytes(raw.to_vec())]);
-	result.copy_from_slice(&encoded);
-	result
-}
-
 /// 128 bit or 16 bytes to identify an unique s2s message
 /// [0..4]  bytes ---- reserved
 /// [4..8]  bytes ---- laneID

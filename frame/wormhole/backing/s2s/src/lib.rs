@@ -62,10 +62,7 @@ use darwinia_support::{
 	},
 	AccountId,
 };
-use dp_asset::{
-	token::{TokenMetadata, NATIVE_TOKEN_TYPE},
-	RecipientAccount,
-};
+use dp_asset::token::{TokenMetadata, NATIVE_TOKEN_TYPE};
 use dp_s2s::{CallParams, PayloadCreate};
 
 pub type Balance = u128;
