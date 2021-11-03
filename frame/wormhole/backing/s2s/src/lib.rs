@@ -56,14 +56,14 @@ use sp_std::prelude::*;
 // --- darwinia-network ---
 use darwinia_support::{
 	evm::IntoH160,
-	s2s::{
-		ensure_source_account, nonce_to_message_id, LatestMessageNoncer, TokenMessageId,
-		RING_DECIMAL, RING_NAME, RING_SYMBOL,
-	},
+	s2s::{ensure_source_account, nonce_to_message_id, LatestMessageNoncer, TokenMessageId},
 	AccountId,
 };
 use dp_asset::token::{TokenMetadata, NATIVE_TOKEN_TYPE};
-use dp_s2s::{CallParams, PayloadCreate};
+use dp_s2s::{
+	token_info::{RING_DECIMAL, RING_NAME, RING_SYMBOL},
+	CallParams, PayloadCreate,
+};
 
 pub type Balance = u128;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;

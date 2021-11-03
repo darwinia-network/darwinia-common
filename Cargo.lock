@@ -1945,7 +1945,6 @@ dependencies = [
 name = "darwinia-support"
 version = "2.6.8"
 dependencies = [
- "array-bytes",
  "bp-messages",
  "bp-runtime",
  "ethereum",
@@ -2241,7 +2240,9 @@ dependencies = [
 name = "dp-s2s"
 version = "2.6.8"
 dependencies = [
+ "array-bytes",
  "dp-asset",
+ "dp-contract",
  "parity-scale-codec",
  "sp-core",
  "sp-runtime",

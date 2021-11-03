@@ -54,10 +54,6 @@ pub mod s2s {
 	};
 	use sp_std::{cmp::PartialEq, vec::Vec};
 
-	pub const RING_NAME: &[u8] = b"Darwinia Network Native Token";
-	pub const RING_SYMBOL: &[u8] = b"RING";
-	pub const RING_DECIMAL: u8 = 9;
-
 	pub trait ToEthAddress<A> {
 		fn into_ethereum_id(address: &A) -> H160;
 	}
