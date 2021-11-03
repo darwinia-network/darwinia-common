@@ -5,7 +5,7 @@ use frame_support::PalletId;
 use sp_runtime::AccountId32;
 // --- darwinia-network ---
 use crate::*;
-use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID};
+use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE};
 use darwinia_support::{s2s::ToEthAddress, ChainName};
 use dp_s2s::{CallParams, PayloadCreate};
 use from_substrate_issuing::Config;
@@ -15,17 +15,20 @@ const PANGORO_S2S_BACKING_PALLET_INDEX: u8 = 20;
 pub struct PangoroPayloadCreator;
 impl PayloadCreate<AccountId, ToPangoroMessagePayload> for PangoroPayloadCreator {
 	fn payload(
+		submitter: AccountId,
 		spec_version: u32,
 		weight: u64,
-		call_params: CallParams<AccountId>,
+		call_params: CallParams,
 	) -> Result<ToPangoroMessagePayload, &'static str> {
-		let (submitter, call) = match call_params.clone() {
-			CallParams::S2sBackingPalletUnlockFromRemote(submitter, _unlock_info) => (
-				submitter,
-				Self::encode_call(PANGORO_S2S_BACKING_PALLET_INDEX, call_params)?,
-			),
-			_ => return Err("The call params is mismatched"),
-		};
+		let call = Self::encode_call(PANGORO_S2S_BACKING_PALLET_INDEX, call_params)?;
+		// let (submitter, call) = match call_params.clone() {
+		// 	CallParams::S2sBackingPalletUnlockFromRemote(submitter, _unlock_info) => (
+		// 		submitter,
+		// 		Self::encode_call(PANGORO_S2S_BACKING_PALLET_INDEX, call_params)?,
+		// 	),
+		// 	_ => return Err("The call params is mismatched"),
+		// };
+
 		Ok(ToPangoroMessagePayload {
 			spec_version,
 			weight,

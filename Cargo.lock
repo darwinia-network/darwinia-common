@@ -2242,6 +2242,7 @@ name = "dp-s2s"
 version = "2.6.7"
 dependencies = [
  "dp-asset",
+ "dp-contract",
  "parity-scale-codec",
  "sp-core",
  "sp-std",

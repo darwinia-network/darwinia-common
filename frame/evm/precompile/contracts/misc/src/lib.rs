@@ -111,12 +111,10 @@ where
 				let unlock_info = S2sRemoteUnlockInfo::abi_decode(&action_params)
 					.map_err(|_| ExitError::Other("decode unlock info failed".into()))?;
 				let payload = <T as from_substrate_issuing::Config>::PayloadCreator::payload(
+					T::IntoAccountId::into_account_id(context.caller),
 					unlock_info.spec_version,
 					unlock_info.weight,
-					CallParams::S2sBackingPalletUnlockFromRemote(
-						T::IntoAccountId::into_account_id(context.caller),
-						unlock_info,
-					),
+					CallParams::S2sBackingPalletUnlockFromRemote(unlock_info),
 				)
 				.map_err(|_| ExitError::Other("encode remote unlock failed".into()))?;
 				payload.encode()

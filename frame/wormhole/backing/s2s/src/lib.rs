@@ -63,7 +63,7 @@ use darwinia_support::{
 	AccountId,
 };
 use dp_asset::{
-	token::{Token, TokenInfo, TokenMetadata, TokenOption, NATIVE_TOKEN_TYPE},
+	token::{TokenMetadata, NATIVE_TOKEN_TYPE},
 	RecipientAccount,
 };
 use dp_s2s::{CallParams, PayloadCreate};
@@ -263,12 +263,18 @@ pub mod pallet {
 				RING_DECIMAL,
 			);
 
-			let payload = T::CallEncoder::encode_remote_register(
+			// let payload = T::CallEncoder::encode_remote_register(
+			// 	Self::pallet_account_id(),
+			// 	spec_version,
+			// 	weight,
+			// 	token_metadata.clone(),
+			// );
+			let payload = T::PayloadCreator::payload(
 				Self::pallet_account_id(),
 				spec_version,
 				weight,
-				token_metadata.clone(),
-			);
+				CallParams::S2sIssuingPalletRegisterFromRemote(token_metadata.clone()),
+			)?;
 			// this pallet account as the submitter of the remote message
 			// we need to transfer fee from user to this account to pay the bridge fee
 			T::RingCurrency::transfer(&user, &Self::pallet_account_id(), fee, KeepAlive)?;
@@ -315,16 +321,22 @@ pub mod pallet {
 			let amount: U256 = value.saturated_into::<u128>().into();
 			let token_address = T::RingPalletId::get().into_h160();
 
-			let receiver = RecipientAccount::EthereumAccount(recipient);
-			let payload = T::CallEncoder::encode_remote_issue(
+			// let receiver = RecipientAccount::EthereumAccount(recipient);
+			// let payload = T::CallEncoder::encode_remote_issue(
+			// 	Self::pallet_account_id(),
+			// 	spec_version,
+			// 	weight,
+			// 	token_address,
+			// 	amount,
+			// 	receiver,
+			// )
+			// .map_err(|_| Error::<T>::EncodeInvalid)?;
+			let payload = T::PayloadCreator::payload(
 				Self::pallet_account_id(),
 				spec_version,
 				weight,
-				token_address,
-				amount,
-				receiver,
-			)
-			.map_err(|_| Error::<T>::EncodeInvalid)?;
+				CallParams::S2sIssuingPalletIssueFromRemote(token_address, amount, recipient),
+			)?;
 			// this pallet account as the submitter of the remote message
 			// we need to transfer fee from user to this account to pay the bridge fee
 			T::RingCurrency::transfer(&user, &Self::pallet_account_id(), fee, KeepAlive)?;
