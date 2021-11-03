@@ -45,7 +45,7 @@ fn burn_and_remote_unlock_success() {
 			token_type: 0,
 			original_token,
 			amount: U256::from(1),
-			recipient: [1; 32].to_vec(),
+			recipient: AccountId32::new([1; 32]),
 		};
 		let submitter = HashedConverter::into_account_id(
 			H160::from_str("1000000000000000000000000000000000000002").unwrap(),
@@ -54,7 +54,11 @@ fn burn_and_remote_unlock_success() {
 			submitter,
 			burn_info.spec_version,
 			burn_info.weight,
-			CallParams::S2sBackingPalletUnlockFromRemote(burn_info),
+			CallParams::S2sBackingPalletUnlockFromRemote(
+				original_token,
+				U256::from(1),
+				AccountId32::new([1; 32]),
+			),
 		)
 		.unwrap();
 	});

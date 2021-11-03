@@ -1948,7 +1948,6 @@ dependencies = [
  "array-bytes",
  "bp-messages",
  "bp-runtime",
- "ethabi",
  "ethereum",
  "ethereum-primitives",
  "frame-support",

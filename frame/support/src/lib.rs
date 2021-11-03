@@ -33,7 +33,6 @@ pub mod balance {
 		traits::{BalanceInfo, DustCollector, LockableCurrency},
 	};
 }
-use ethabi::{encode, Token};
 use sp_std::{vec, vec::Vec};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;

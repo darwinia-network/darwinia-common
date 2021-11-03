@@ -31,7 +31,7 @@ mod test {
 	#[allow(non_camel_case_types)]
 	pub enum S2SBackingCall {
 		#[codec(index = 2)]
-		unlock_from_remote(S2sRemoteUnlockInfo),
+		unlock_from_remote(H160, U256, AccountId32),
 	}
 
 	#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
@@ -75,24 +75,23 @@ mod test {
 
 	#[test]
 	fn test_pangoro_runtime_call_encode() {
-		let mock_unlock_info = S2sRemoteUnlockInfo {
-			spec_version: 1,
-			weight: 20000,
-			token_type: 1,
-			original_token: H160::zero(),
-			amount: U256::zero(),
-			recipient: vec![1, 2, 3],
-		};
-		let expected_encoded_call = PangoroRuntime::Sub2SubBacking(
-			S2SBackingCall::unlock_from_remote(mock_unlock_info.clone()),
-		)
-		.encode();
+		let expected_encoded_call =
+			PangoroRuntime::Sub2SubBacking(S2SBackingCall::unlock_from_remote(
+				H160::zero(),
+				U256::zero(),
+				AccountId32::new([1; 32]),
+			))
+			.encode();
 
 		let encoded = MockPangoroPayloadCreator::payload(
 			1,
 			0,
 			0,
-			CallParams::S2sBackingPalletUnlockFromRemote(mock_unlock_info),
+			CallParams::S2sBackingPalletUnlockFromRemote(
+				H160::zero(),
+				U256::zero(),
+				AccountId32::new([1; 32]),
+			),
 		)
 		.unwrap();
 		assert_eq!(encoded, expected_encoded_call);
