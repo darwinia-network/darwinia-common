@@ -27,7 +27,6 @@ use ethabi::{
 	param_type::ParamType, token::Token, Bytes, Error, Function, Param, Result as AbiResult,
 };
 // --- paritytech ---
-use codec::{Decode, Encode};
 use sp_std::{convert::TryInto, prelude::*};
 
 pub struct Sub2SubMappingTokenFactory;
@@ -68,7 +67,7 @@ impl Sub2SubMappingTokenFactory {
 /// @original_token: the origin token address
 /// @recipient: the final receiver of the token to be unlocked on the source chain
 /// @amount: the amount of the unlocked token
-#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct S2sRemoteUnlockInfo {
 	pub spec_version: u32,
 	pub weight: u64,

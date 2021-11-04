@@ -390,30 +390,27 @@ pub mod pallet {
 				<Error<T>>::InsufficientBalance
 			);
 
-			if recipient.len() == 32 {
-				let recipient_id = T::AccountId::decode(&mut &recipient[..])
-					.map_err(|_| Error::<T>::InvalidRecipient)?;
-				T::RingCurrency::transfer(
-					&Self::pallet_account_id(),
-					&recipient_id,
-					amount,
-					KeepAlive,
-				)?;
-				<SecureLimitedRingAmount<T>>::mutate(|(used, _)| {
-					*used = used.saturating_add(amount)
-				});
-				let message_nonce =
-					T::MessageNoncer::inbound_latest_received_nonce(T::MessageLaneId::get());
-				let message_id = nonce_to_message_id(&T::MessageLaneId::get(), message_nonce);
-				Self::deposit_event(Event::TokenUnlocked(
-					message_id,
-					token_address,
-					recipient_id,
-					amount,
-				));
-			} else {
-				return Err(<Error<T>>::InvalidRecipient.into());
-			}
+			// Make sure the recipient is valid(AccountId32).
+			ensure!(recipient.len() == 32, Error::<T>::InvalidRecipient);
+			let recipient_id = T::AccountId::decode(&mut &recipient[..])
+				.map_err(|_| Error::<T>::InvalidRecipient)?;
+
+			T::RingCurrency::transfer(
+				&Self::pallet_account_id(),
+				&recipient_id,
+				amount,
+				KeepAlive,
+			)?;
+			<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = used.saturating_add(amount));
+			let message_nonce =
+				T::MessageNoncer::inbound_latest_received_nonce(T::MessageLaneId::get());
+			let message_id = nonce_to_message_id(&T::MessageLaneId::get(), message_nonce);
+			Self::deposit_event(Event::TokenUnlocked(
+				message_id,
+				token_address,
+				recipient_id,
+				amount,
+			));
 
 			Ok(().into())
 		}
