@@ -55,6 +55,26 @@ where
 	) -> Result<MessagePayload, &'static str>;
 }
 
+/// Creating a concrete message payload which would be relay to target chain.
+pub trait CreatePayload<AccountId>
+where
+	AccountId: Encode + Decode,
+	Self: Sized,
+{
+	fn encode_call(pallet_index: u8, call_params: CallParams) -> Result<Vec<u8>, &'static str> {
+		let mut encoded = vec![pallet_index];
+		encoded.append(&mut call_params.encode());
+		Ok(encoded)
+	}
+
+	fn create(
+		submitter: AccountId,
+		spec_version: u32,
+		weight: u64,
+		call_params: CallParams,
+	) -> Result<Self, &'static str>;
+}
+
 #[cfg(test)]
 mod test {
 	use super::*;

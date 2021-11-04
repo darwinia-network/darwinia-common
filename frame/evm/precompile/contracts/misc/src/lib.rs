@@ -31,7 +31,7 @@ use darwinia_support::{
 };
 use dp_contract::mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams};
 use dp_evm::Precompile;
-use dp_s2s::{CallParams, PayloadCreate};
+use dp_s2s::{CallParams, CreatePayload, PayloadCreate};
 // --- paritytech ---
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
@@ -110,7 +110,7 @@ where
 			_ if Self::match_digest(action_digest, S2S_ENCODE_REMOTE_UNLOCK_PAYLOAD) => {
 				let unlock_info = S2sRemoteUnlockInfo::abi_decode(&action_params)
 					.map_err(|_| ExitError::Other("decode unlock info failed".into()))?;
-				let payload = <T as from_substrate_issuing::Config>::PayloadCreator::payload(
+				let payload = <T as from_substrate_issuing::Config>::OutboundPayload::create(
 					T::IntoAccountId::into_account_id(context.caller),
 					unlock_info.spec_version,
 					unlock_info.weight,

@@ -6,7 +6,7 @@ use bp_messages::{
 	target_chain::{ProvedMessages, SourceHeaderChain},
 	InboundLaneData, LaneId, Message, MessageNonce, Parameter as MessagesParameter,
 };
-use bp_runtime::ChainId;
+use bp_runtime::{messages::DispatchFeePayment, ChainId};
 use bridge_runtime_common::messages::{
 	self,
 	source::{self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload},
@@ -29,9 +29,34 @@ use bridge_primitives::{
 	DarwiniaFromThisChainMessageVerifier, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID,
 	PANGORO_PANGOLIN_LANE, WITH_PANGOLIN_MESSAGES_PALLET_NAME,
 };
+use dp_s2s::{CallParams, CreatePayload};
 
+/// The s2s backing pallet index in the pangoro chain runtime.
+pub const PANGORO_S2S_BACKING_PALLET_INDEX: u8 = 20;
 /// Message payload for Pangolin -> Pangoro messages.
 pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessageBridge>;
+
+#[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
+pub struct ToPangoroMessagePayloadBox(ToPangoroMessagePayload);
+
+impl CreatePayload<AccountId> for ToPangoroMessagePayloadBox {
+	fn create(
+		submitter: AccountId,
+		spec_version: u32,
+		weight: u64,
+		call_params: CallParams,
+	) -> Result<Self, &'static str> {
+		let call = Self::encode_call(PANGORO_S2S_BACKING_PALLET_INDEX, call_params)?;
+		Ok(ToPangoroMessagePayloadBox(ToPangoroMessagePayload {
+			spec_version,
+			weight,
+			origin: bp_message_dispatch::CallOrigin::SourceAccount(submitter),
+			call,
+			dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
+		}))
+	}
+}
+
 /// Message verifier for Pangolin -> Pangoro messages.
 pub type ToPangoroMessageVerifier<R> =
 	DarwiniaFromThisChainMessageVerifier<WithPangoroMessageBridge, R>;
@@ -51,8 +76,6 @@ pub type FromPangoroMessageDispatch =
 /// Initial value of `PangoroToPangolinConversionRate` parameter.
 pub const INITIAL_PANGORO_TO_PANGOLIN_CONVERSION_RATE: FixedU128 =
 	FixedU128::from_inner(FixedU128::DIV);
-/// The s2s backing pallet index in the pangoro chain runtime.
-pub const PANGORO_S2S_BACKING_PALLET_INDEX: u8 = 20;
 
 frame_support::parameter_types! {
 	/// Pangoro to Pangolin conversion rate. Initially we treat both tokens as equal.

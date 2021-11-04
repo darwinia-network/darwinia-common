@@ -4,33 +4,14 @@ use bp_runtime::{messages::DispatchFeePayment, ChainId};
 use frame_support::PalletId;
 use sp_runtime::AccountId32;
 // --- darwinia-network ---
-use crate::{pangoro_messages::PANGORO_S2S_BACKING_PALLET_INDEX, *};
+use crate::{
+	pangoro_messages::{ToPangoroMessagePayloadBox, PANGORO_S2S_BACKING_PALLET_INDEX},
+	*,
+};
 use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE};
 use darwinia_support::{s2s::ToEthAddress, ChainName};
 use dp_s2s::{CallParams, PayloadCreate};
 use from_substrate_issuing::Config;
-
-/// Create message payload according to the call parameters.
-pub struct PangoroPayloadCreator;
-impl PayloadCreate<AccountId, ToPangoroMessagePayload> for PangoroPayloadCreator {
-	fn payload(
-		submitter: AccountId,
-		spec_version: u32,
-		weight: u64,
-		call_params: CallParams,
-	) -> Result<ToPangoroMessagePayload, &'static str> {
-		let call = Self::encode_call(PANGORO_S2S_BACKING_PALLET_INDEX, call_params)?;
-
-		Ok(ToPangoroMessagePayload {
-			spec_version,
-			weight,
-			origin: bp_message_dispatch::CallOrigin::SourceAccount(submitter),
-			call,
-			dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
-		})
-	}
-}
-
 // Convert from AccountId32 to H160
 pub struct TruncateToEthAddress;
 impl ToEthAddress<AccountId32> for TruncateToEthAddress {
@@ -55,8 +36,7 @@ impl Config for Runtime {
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangoroChainId;
 	type ToEthAddressT = TruncateToEthAddress;
-	type OutboundPayload = ToPangoroMessagePayload;
-	type PayloadCreator = PangoroPayloadCreator;
+	type OutboundPayload = ToPangoroMessagePayloadBox;
 	type InternalTransactHandler = Ethereum;
 	type BackingChainName = PangoroName;
 	type MessageLaneId = BridgePangoroLaneId;

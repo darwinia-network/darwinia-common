@@ -54,7 +54,7 @@ use dp_asset::token::TokenMetadata;
 use dp_contract::mapping_token_factory::{
 	basic::BasicMappingTokenFactory as bmtf, s2s::Sub2SubMappingTokenFactory as smtf,
 };
-use dp_s2s::PayloadCreate;
+use dp_s2s::{CreatePayload, PayloadCreate};
 use dvm_ethereum::InternalTransactHandler;
 
 pub use pallet::*;
@@ -92,8 +92,9 @@ pub mod pallet {
 		type ToEthAddressT: ToEthAddress<Self::AccountId>;
 
 		/// Outbound payload used for s2s message
-		type OutboundPayload: Parameter + Size;
-		type PayloadCreator: PayloadCreate<Self::AccountId, Self::OutboundPayload>;
+		type OutboundPayload: Parameter + CreatePayload<Self::AccountId>;
+
+		/// The handler for internal transaction.
 		type InternalTransactHandler: InternalTransactHandler;
 
 		/// The remote chain name where the backing module in

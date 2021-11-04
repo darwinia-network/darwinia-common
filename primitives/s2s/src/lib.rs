@@ -21,4 +21,4 @@
 pub mod call_params;
 pub mod token_info;
 
-pub use call_params::{CallParams, PayloadCreate};
+pub use call_params::{CallParams, CreatePayload, PayloadCreate};
