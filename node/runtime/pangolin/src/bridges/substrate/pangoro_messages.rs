@@ -51,6 +51,8 @@ pub type FromPangoroMessageDispatch =
 /// Initial value of `PangoroToPangolinConversionRate` parameter.
 pub const INITIAL_PANGORO_TO_PANGOLIN_CONVERSION_RATE: FixedU128 =
 	FixedU128::from_inner(FixedU128::DIV);
+/// The s2s backing pallet index in the pangoro chain runtime.
+pub const PANGORO_S2S_BACKING_PALLET_INDEX: u8 = 20;
 
 frame_support::parameter_types! {
 	/// Pangoro to Pangolin conversion rate. Initially we treat both tokens as equal.

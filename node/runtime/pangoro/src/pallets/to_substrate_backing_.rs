@@ -7,13 +7,11 @@ use bridge_runtime_common::messages::source::FromThisChainMessagePayload;
 use frame_support::PalletId;
 use pangoro_primitives::AccountId;
 // --- darwinia-network ---
-use crate::*;
+use crate::{pangolin_messages::PANGOLIN_S2S_ISSUING_PALLET_INDEX, *};
 use bridge_primitives::{AccountIdConverter, PANGORO_PANGOLIN_LANE};
 use darwinia_support::s2s::LatestMessageNoncer;
 use dp_s2s::{CallParams, PayloadCreate};
 use to_substrate_backing::Config;
-
-const PANGOLIN_S2S_ISSUING_PALLET_INDEX: u8 = 49;
 
 /// Create message payload according to call parameters
 pub struct PangolinPayLoadCreator;
