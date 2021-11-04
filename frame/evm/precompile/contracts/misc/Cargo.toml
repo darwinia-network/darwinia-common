@@ -26,6 +26,7 @@ from-ethereum-issuing  = { default-features = false, path = "../../../../wormhol
 from-substrate-issuing = { default-features = false, path = "../../../../wormhole/issuing/s2s" }
 # paritytech
 bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
+bp-runtime = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
@@ -49,6 +50,7 @@ std = [
 	"dp-s2s/std",
 	# paritytech
 	"bp-message-dispatch/std",
+	"bp-runtime/std",
 	"frame-support/std",
 	"sp-core/std",
 	"sp-io/std",

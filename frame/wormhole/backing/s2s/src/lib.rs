@@ -39,7 +39,7 @@ use bp_messages::{
 	source_chain::{MessagesBridge, OnDeliveryConfirmed},
 	DeliveredMessages, LaneId,
 };
-use bp_runtime::ChainId;
+use bp_runtime::{messages::DispatchFeePayment, ChainId};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -270,6 +270,7 @@ pub mod pallet {
 				spec_version,
 				weight,
 				CallParams::S2sIssuingPalletRegisterFromRemote(token_metadata.clone()),
+				DispatchFeePayment::AtSourceChain,
 			)?;
 			// this pallet account as the submitter of the remote message
 			// we need to transfer fee from user to this account to pay the bridge fee
@@ -322,6 +323,7 @@ pub mod pallet {
 				spec_version,
 				weight,
 				CallParams::S2sIssuingPalletIssueFromRemote(token_address, amount, recipient),
+				DispatchFeePayment::AtSourceChain,
 			)?;
 			// this pallet account as the submitter of the remote message
 			// we need to transfer fee from user to this account to pay the bridge fee

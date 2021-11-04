@@ -51,6 +51,7 @@ impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangolinMessage
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams,
+		dispatch_fee_payment: DispatchFeePayment,
 	) -> Result<Self::Payload, &'static str> {
 		let call = Self::encode_call(PANGOLIN_S2S_ISSUING_PALLET_INDEX, call_params)?;
 		return Ok(ToPangolinMessagePayload {
@@ -58,7 +59,7 @@ impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangolinMessage
 			weight,
 			origin,
 			call,
-			dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
+			dispatch_fee_payment,
 		});
 	}
 }

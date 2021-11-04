@@ -20,6 +20,7 @@
 
 // --- paritytech ---
 use bp_message_dispatch::CallOrigin;
+use bp_runtime::messages::DispatchFeePayment;
 use sp_core::{H160, U256};
 use sp_std::{vec, vec::Vec};
 // --- darwinia-network ---
@@ -55,6 +56,7 @@ where
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams,
+		dispatch_fee_payment: DispatchFeePayment,
 	) -> Result<Self::Payload, &'static str>;
 }
 

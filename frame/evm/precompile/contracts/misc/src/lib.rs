@@ -34,6 +34,7 @@ use dp_evm::Precompile;
 use dp_s2s::{CallParams, CreatePayload};
 // --- paritytech ---
 use bp_message_dispatch::CallOrigin;
+use bp_runtime::messages::DispatchFeePayment;
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::SaturatedConversion,
@@ -120,6 +121,7 @@ where
 						unlock_info.amount,
 						unlock_info.recipient,
 					),
+					DispatchFeePayment::AtSourceChain,
 				)
 				.map_err(|_| ExitError::Other("encode remote unlock failed".into()))?;
 				payload.encode()

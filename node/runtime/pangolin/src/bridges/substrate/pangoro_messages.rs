@@ -48,6 +48,7 @@ impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangoroMessageP
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams,
+		dispatch_fee_payment: DispatchFeePayment,
 	) -> Result<Self::Payload, &'static str> {
 		let call = Self::encode_call(PANGORO_S2S_BACKING_PALLET_INDEX, call_params)?;
 		Ok(ToPangoroMessagePayload {
@@ -55,7 +56,7 @@ impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangoroMessageP
 			weight,
 			origin,
 			call,
-			dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
+			dispatch_fee_payment,
 		})
 	}
 }

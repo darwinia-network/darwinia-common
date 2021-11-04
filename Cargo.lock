@@ -1663,6 +1663,7 @@ name = "darwinia-evm-precompile-misc"
 version = "2.6.8"
 dependencies = [
  "bp-message-dispatch",
+ "bp-runtime",
  "darwinia-evm",
  "darwinia-support",
  "dp-contract",
@@ -2242,6 +2243,7 @@ version = "2.6.8"
 dependencies = [
  "array-bytes",
  "bp-message-dispatch",
+ "bp-runtime",
  "dp-asset",
  "dp-contract",
  "parity-scale-codec",
