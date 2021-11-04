@@ -411,8 +411,6 @@ pub mod pallet {
 					recipient_id,
 					amount,
 				));
-			} else if recipient.len() == 20 {
-				// TODO: Reserved for ERC20 unlock
 			} else {
 				return Err(<Error<T>>::InvalidRecipient.into());
 			}
