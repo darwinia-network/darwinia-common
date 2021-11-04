@@ -46,15 +46,15 @@ impl CreatePayload<AccountId> for ToPangoroMessagePayloadBox {
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams,
-	) -> Result<Self, &'static str> {
+	) -> Result<Self::payload, &'static str> {
 		let call = Self::encode_call(PANGORO_S2S_BACKING_PALLET_INDEX, call_params)?;
-		Ok(ToPangoroMessagePayloadBox(ToPangoroMessagePayload {
+		Ok(ToPangoroMessagePayload {
 			spec_version,
 			weight,
 			origin: bp_message_dispatch::CallOrigin::SourceAccount(submitter),
 			call,
 			dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
-		}))
+		})
 	}
 }
 

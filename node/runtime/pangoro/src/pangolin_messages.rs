@@ -49,27 +49,7 @@ impl CreatePayload<AccountId> for ToPangolinMessagePayloadBox {
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams,
-	) -> Result<Self, &'static str> {
-		let call = Self::encode_call(PANGOLIN_S2S_ISSUING_PALLET_INDEX, call_params)?;
-		return Ok(ToPangolinMessagePayloadBox(FromThisChainMessagePayload::<
-			WithPangolinMessageBridge,
-		> {
-			spec_version,
-			weight,
-			origin: bp_message_dispatch::CallOrigin::SourceAccount(submitter),
-			call,
-			dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
-		}));
-	}
-}
-
-impl CreatePayload<AccountId> for ToPangolinMessagePayload {
-	fn create(
-		submitter: AccountId,
-		spec_version: u32,
-		weight: u64,
-		call_params: CallParams,
-	) -> Result<Self, &'static str> {
+	) -> Result<Self::payload, &'static str> {
 		let call = Self::encode_call(PANGOLIN_S2S_ISSUING_PALLET_INDEX, call_params)?;
 		return Ok(FromThisChainMessagePayload::<WithPangolinMessageBridge> {
 			spec_version,

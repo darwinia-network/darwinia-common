@@ -61,7 +61,7 @@ where
 	AccountId: Encode + Decode,
 	Self: Sized,
 {
-	type payload;
+	type payload: Sized + Encode + Decode;
 
 	fn encode_call(pallet_index: u8, call_params: CallParams) -> Result<Vec<u8>, &'static str> {
 		let mut encoded = vec![pallet_index];
@@ -74,7 +74,7 @@ where
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams,
-	) -> Result<Self, &'static str>;
+	) -> Result<Self::payload, &'static str>;
 }
 
 #[cfg(test)]

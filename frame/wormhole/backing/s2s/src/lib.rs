@@ -120,8 +120,11 @@ pub mod pallet {
 		type MessagesBridge: MessagesBridge<
 			Self::AccountId,
 			RingBalance<Self>,
-			// Self::OutboundPayload,
+			// Self::OutboundPayload::payload,
+			// <<Self as Config>::OutboundPayload as Trait>::payload
 			// <<Self::OutboundPayload> as CreatePayload>::payload,
+			<<Self as Config>::OutboundPayload as CreatePayload<Self::AccountId>>::payload,
+			// <<Self as Config>::OutboundPayload>::payload,
 			Error = DispatchErrorWithPostInfo<PostDispatchInfo>,
 		>;
 	}
