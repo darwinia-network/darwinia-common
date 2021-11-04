@@ -61,6 +61,8 @@ where
 	AccountId: Encode + Decode,
 	Self: Sized,
 {
+	type payload;
+
 	fn encode_call(pallet_index: u8, call_params: CallParams) -> Result<Vec<u8>, &'static str> {
 		let mut encoded = vec![pallet_index];
 		encoded.append(&mut call_params.encode());

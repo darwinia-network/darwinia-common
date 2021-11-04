@@ -40,6 +40,7 @@ pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessag
 pub struct ToPangoroMessagePayloadBox(ToPangoroMessagePayload);
 
 impl CreatePayload<AccountId> for ToPangoroMessagePayloadBox {
+	type payload = ToPangoroMessagePayload;
 	fn create(
 		submitter: AccountId,
 		spec_version: u32,

@@ -62,7 +62,7 @@ use darwinia_support::{
 use dp_asset::token::{TokenMetadata, NATIVE_TOKEN_TYPE};
 use dp_s2s::{
 	token_info::{RING_DECIMAL, RING_NAME, RING_SYMBOL},
-	CallParams, PayloadCreate,
+	CallParams, CreatePayload, PayloadCreate,
 };
 
 pub type Balance = u128;
@@ -105,10 +105,10 @@ pub mod pallet {
 		type BridgedChainId: Get<ChainId>;
 
 		/// Outbound payload used for s2s message
-		type OutboundPayload: Parameter + Size;
+		type OutboundPayload: Parameter + CreatePayload<Self::AccountId>;
 
-		/// Create message payload
-		type PayloadCreator: PayloadCreate<Self::AccountId, Self::OutboundPayload>;
+		// /// Create message payload
+		// type PayloadCreator: PayloadCreate<Self::AccountId, Self::OutboundPayload>;
 
 		/// The message noncer to get the message nonce from the bridge
 		type MessageNoncer: LatestMessageNoncer;
@@ -120,7 +120,8 @@ pub mod pallet {
 		type MessagesBridge: MessagesBridge<
 			Self::AccountId,
 			RingBalance<Self>,
-			Self::OutboundPayload,
+			// Self::OutboundPayload,
+			// <<Self::OutboundPayload> as CreatePayload>::payload,
 			Error = DispatchErrorWithPostInfo<PostDispatchInfo>,
 		>;
 	}
@@ -262,7 +263,7 @@ pub mod pallet {
 				RING_DECIMAL,
 			);
 
-			let payload = T::PayloadCreator::payload(
+			let payload = T::OutboundPayload::create(
 				Self::pallet_account_id(),
 				spec_version,
 				weight,
@@ -314,7 +315,7 @@ pub mod pallet {
 			let amount: U256 = value.saturated_into::<u128>().into();
 			let token_address = T::RingPalletId::get().into_h160();
 
-			let payload = T::PayloadCreator::payload(
+			let payload = T::OutboundPayload::create(
 				Self::pallet_account_id(),
 				spec_version,
 				weight,
