@@ -2709,6 +2709,7 @@ dependencies = [
  "parity-scale-codec",
  "primitive-types",
  "rlp",
+ "serde",
  "sha3 0.8.2",
 ]
 
@@ -2740,6 +2741,7 @@ dependencies = [
  "funty",
  "parity-scale-codec",
  "primitive-types",
+ "serde",
 ]
 
 [[package]]
