@@ -1662,6 +1662,7 @@ dependencies = [
 name = "darwinia-evm-precompile-misc"
 version = "2.6.8"
 dependencies = [
+ "bp-message-dispatch",
  "darwinia-evm",
  "darwinia-support",
  "dp-contract",
@@ -2240,6 +2241,7 @@ name = "dp-s2s"
 version = "2.6.8"
 dependencies = [
  "array-bytes",
+ "bp-message-dispatch",
  "dp-asset",
  "dp-contract",
  "parity-scale-codec",
@@ -10079,6 +10081,7 @@ name = "to-substrate-backing"
 version = "2.6.8"
 dependencies = [
  "array-bytes",
+ "bp-message-dispatch",
  "bp-messages",
  "bp-runtime",
  "darwinia-balances",

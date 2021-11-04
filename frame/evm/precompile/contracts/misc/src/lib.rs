@@ -33,6 +33,7 @@ use dp_contract::mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessag
 use dp_evm::Precompile;
 use dp_s2s::{CallParams, CreatePayload};
 // --- paritytech ---
+use bp_message_dispatch::CallOrigin;
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::SaturatedConversion,
@@ -111,7 +112,7 @@ where
 				let unlock_info = S2sRemoteUnlockInfo::abi_decode(&action_params)
 					.map_err(|_| ExitError::Other("decode unlock info failed".into()))?;
 				let payload = <T as from_substrate_issuing::Config>::OutboundPayload::create(
-					T::IntoAccountId::into_account_id(context.caller),
+					CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(context.caller)),
 					unlock_info.spec_version,
 					unlock_info.weight,
 					CallParams::S2sBackingPalletUnlockFromRemote(

@@ -3,6 +3,7 @@
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
+use bp_message_dispatch::CallOrigin;
 use bp_messages::{
 	source_chain::TargetHeaderChain,
 	target_chain::{ProvedMessages, SourceHeaderChain},
@@ -23,7 +24,7 @@ use frame_support::{
 	RuntimeDebug,
 };
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
-use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
+use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128, MultiSignature, MultiSigner};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
@@ -42,20 +43,20 @@ pub const PANGOLIN_S2S_ISSUING_PALLET_INDEX: u8 = 49;
 #[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
 pub struct ToPangolinMessagePayloadBox;
 
-impl CreatePayload<AccountId> for ToPangolinMessagePayloadBox {
+impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangolinMessagePayloadBox {
 	type Payload = ToPangolinMessagePayload;
 
 	fn create(
-		submitter: AccountId,
+		origin: CallOrigin<AccountId, MultiSigner, MultiSignature>,
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams,
 	) -> Result<Self::Payload, &'static str> {
 		let call = Self::encode_call(PANGOLIN_S2S_ISSUING_PALLET_INDEX, call_params)?;
-		return Ok(FromThisChainMessagePayload::<WithPangolinMessageBridge> {
+		return Ok(ToPangolinMessagePayload {
 			spec_version,
 			weight,
-			origin: bp_message_dispatch::CallOrigin::SourceAccount(submitter),
+			origin,
 			call,
 			dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
 		});

@@ -34,6 +34,7 @@ pub use weight::WeightInfo;
 use ethereum_primitives::EthereumAddress;
 use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
+use bp_message_dispatch::CallOrigin;
 use bp_messages::{
 	source_chain::{MessagesBridge, OnDeliveryConfirmed},
 	DeliveredMessages, LaneId,
@@ -50,7 +51,7 @@ use frame_support::{
 use frame_system::{ensure_signed, pallet_prelude::*, RawOrigin};
 use sp_runtime::{
 	traits::{AccountIdConversion, Convert, Saturating, Zero},
-	DispatchErrorWithPostInfo, SaturatedConversion,
+	DispatchErrorWithPostInfo, MultiSignature, MultiSigner, SaturatedConversion,
 };
 use sp_std::prelude::*;
 // --- darwinia-network ---
@@ -105,7 +106,8 @@ pub mod pallet {
 		type BridgedChainId: Get<ChainId>;
 
 		/// Outbound payload used for s2s message
-		type OutboundPayload: Parameter + CreatePayload<Self::AccountId>;
+		type OutboundPayload: Parameter
+			+ CreatePayload<Self::AccountId, MultiSigner, MultiSignature>;
 
 		/// The message noncer to get the message nonce from the bridge
 		type MessageNoncer: LatestMessageNoncer;
@@ -117,7 +119,11 @@ pub mod pallet {
 		type MessagesBridge: MessagesBridge<
 			Self::AccountId,
 			RingBalance<Self>,
-			<<Self as Config>::OutboundPayload as CreatePayload<Self::AccountId>>::Payload,
+			<<Self as Config>::OutboundPayload as CreatePayload<
+				Self::AccountId,
+				MultiSigner,
+				MultiSignature,
+			>>::Payload,
 			Error = DispatchErrorWithPostInfo<PostDispatchInfo>,
 		>;
 	}
@@ -260,7 +266,7 @@ pub mod pallet {
 			);
 
 			let payload = T::OutboundPayload::create(
-				Self::pallet_account_id(),
+				CallOrigin::SourceAccount(Self::pallet_account_id()),
 				spec_version,
 				weight,
 				CallParams::S2sIssuingPalletRegisterFromRemote(token_metadata.clone()),
@@ -312,7 +318,7 @@ pub mod pallet {
 			let token_address = T::RingPalletId::get().into_h160();
 
 			let payload = T::OutboundPayload::create(
-				Self::pallet_account_id(),
+				CallOrigin::SourceAccount(Self::pallet_account_id()),
 				spec_version,
 				weight,
 				CallParams::S2sIssuingPalletIssueFromRemote(token_address, amount, recipient),

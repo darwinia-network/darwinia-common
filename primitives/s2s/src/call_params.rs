@@ -19,6 +19,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // --- paritytech ---
+use bp_message_dispatch::CallOrigin;
 use sp_core::{H160, U256};
 use sp_std::{vec, vec::Vec};
 // --- darwinia-network ---
@@ -36,9 +37,9 @@ pub enum CallParams {
 	S2sBackingPalletUnlockFromRemote(H160, U256, Vec<u8>),
 }
 /// Creating a concrete message payload which would be relay to target chain.
-pub trait CreatePayload<AccountId>
+pub trait CreatePayload<SourceChainAccountId, TargetChainAccountPublic, TargetChainSignature>
 where
-	AccountId: Encode + Decode,
+	SourceChainAccountId: Encode + Decode,
 	Self: Sized,
 {
 	type Payload: Sized + Encode + Decode;
@@ -50,7 +51,7 @@ where
 	}
 
 	fn create(
-		submitter: AccountId,
+		origin: CallOrigin<SourceChainAccountId, TargetChainAccountPublic, TargetChainSignature>,
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams,

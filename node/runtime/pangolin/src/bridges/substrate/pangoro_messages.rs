@@ -1,6 +1,7 @@
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
+use bp_message_dispatch::CallOrigin;
 use bp_messages::{
 	source_chain::TargetHeaderChain,
 	target_chain::{ProvedMessages, SourceHeaderChain},
@@ -21,7 +22,7 @@ use frame_support::{
 	RuntimeDebug,
 };
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
-use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
+use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128, MultiSignature, MultiSigner};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
@@ -39,11 +40,11 @@ pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessag
 #[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
 pub struct ToPangoroMessagePayloadBox;
 
-impl CreatePayload<AccountId> for ToPangoroMessagePayloadBox {
+impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangoroMessagePayloadBox {
 	type Payload = ToPangoroMessagePayload;
 
 	fn create(
-		submitter: AccountId,
+		origin: CallOrigin<AccountId, MultiSigner, MultiSignature>,
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams,
@@ -52,7 +53,7 @@ impl CreatePayload<AccountId> for ToPangoroMessagePayloadBox {
 		Ok(ToPangoroMessagePayload {
 			spec_version,
 			weight,
-			origin: bp_message_dispatch::CallOrigin::SourceAccount(submitter),
+			origin,
 			call,
 			dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
 		})

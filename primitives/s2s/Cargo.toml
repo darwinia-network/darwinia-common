@@ -16,10 +16,11 @@ array-bytes = { version = "1.3.3" }
 dp-asset    = { default-features = false, path = "../asset"}
 dp-contract    = { default-features = false, path = "../contract"}
 # paritytech
-codec      = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
-sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
+codec               = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
+sp-core             = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 
 [dev-dependencies]
 dp-contract = { default-features = false, path = "../contract"}
@@ -33,6 +34,7 @@ std = [
 	"dp-asset/std",
 	"dp-contract/std",
 	# paritytech
+	"bp-message-dispatch/std",
 	"codec/std",
 	"sp-core/std",
 	"sp-runtime/std",

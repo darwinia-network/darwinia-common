@@ -41,7 +41,7 @@ use frame_support::{
 	transactional, PalletId,
 };
 use frame_system::ensure_signed;
-use sp_runtime::{traits::Convert, DispatchError};
+use sp_runtime::{traits::Convert, DispatchError, MultiSignature, MultiSigner};
 use sp_std::{str, vec::Vec};
 // --- darwinia-network ---
 use bp_runtime::ChainId;
@@ -92,7 +92,8 @@ pub mod pallet {
 		type ToEthAddressT: ToEthAddress<Self::AccountId>;
 
 		/// Outbound payload used for s2s message
-		type OutboundPayload: Parameter + CreatePayload<Self::AccountId>;
+		type OutboundPayload: Parameter
+			+ CreatePayload<Self::AccountId, MultiSigner, MultiSignature>;
 
 		/// The handler for internal transaction.
 		type InternalTransactHandler: InternalTransactHandler;

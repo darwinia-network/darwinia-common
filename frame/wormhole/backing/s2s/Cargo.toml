@@ -26,6 +26,7 @@ ethereum-primitives = { default-features = false, path = "../../../../primitives
 # paritytech
 bp-messages        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
 bp-runtime         = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
+bp-message-dispatch= { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
 frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 frame-support      = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 frame-system       = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
@@ -56,6 +57,7 @@ std = [
 	"darwinia-support/std",
 	# paritytech
 	"bp-messages/std",
+	"bp-message-dispatch/std",
 	"bp-runtime/std",
 	"frame-benchmarking/std",
 	"frame-support/std",
