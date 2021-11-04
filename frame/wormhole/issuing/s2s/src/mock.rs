@@ -234,20 +234,6 @@ impl Convert<H256, AccountId32> for AccountIdConverter {
 		hash.to_fixed_bytes().into()
 	}
 }
-
-// #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq)]
-// pub struct MockMessagePayload {
-// 	spec_version: u32,
-// 	weight: u64,
-// 	call: Vec<u8>,
-// }
-
-// impl Size for MockMessagePayload {
-// 	fn size_hint(&self) -> u32 {
-// 		self.call.len() as _
-// 	}
-// }
-
 pub struct ToPangoroMessageRelayCaller;
 impl RelayMessageSender for ToPangoroMessageRelayCaller {
 	fn encode_send_message(

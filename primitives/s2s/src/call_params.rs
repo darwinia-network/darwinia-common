@@ -41,10 +41,10 @@ pub enum CallParams {
 /// Creating a concrete message payload which would be relay to target chain.
 pub trait CreatePayload<SourceChainAccountId, TargetChainAccountPublic, TargetChainSignature>
 where
-	SourceChainAccountId: Encode + Decode,
+	SourceChainAccountId: Encode,
 	Self: Sized,
 {
-	type Payload: Sized + Encode + Decode;
+	type Payload: Sized + Encode;
 
 	fn encode_call(pallet_index: u8, call_params: CallParams) -> Result<Vec<u8>, &'static str> {
 		let mut encoded = vec![pallet_index];

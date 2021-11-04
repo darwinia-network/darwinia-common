@@ -41,9 +41,9 @@ pub type ToPangolinMessagePayload = FromThisChainMessagePayload<WithPangolinMess
 pub const PANGOLIN_S2S_ISSUING_PALLET_INDEX: u8 = 49;
 
 #[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
-pub struct ToPangolinMessagePayloadBox;
+pub struct ToPangolinOutboundPayload;
 
-impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangolinMessagePayloadBox {
+impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangolinOutboundPayload {
 	type Payload = ToPangolinMessagePayload;
 
 	fn create(

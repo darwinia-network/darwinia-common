@@ -5,7 +5,7 @@ use bp_messages::LaneId;
 use bp_runtime::ChainId;
 use frame_support::PalletId;
 // --- darwinia-network ---
-use crate::{pangolin_messages::ToPangolinMessagePayloadBox, *};
+use crate::{pangolin_messages::ToPangolinOutboundPayload, *};
 use bridge_primitives::{AccountIdConverter, PANGORO_PANGOLIN_LANE};
 use darwinia_support::s2s::LatestMessageNoncer;
 use to_substrate_backing::Config;
@@ -37,7 +37,7 @@ impl Config for Runtime {
 	type RingCurrency = Ring;
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangolinChainId;
-	type OutboundPayload = ToPangolinMessagePayloadBox;
+	type OutboundPayload = ToPangolinOutboundPayload;
 	type MessageNoncer = PangolinMessageNoncer;
 	type MessageLaneId = BridgePangolinLaneId;
 	type MessagesBridge = BridgePangolinMessages;

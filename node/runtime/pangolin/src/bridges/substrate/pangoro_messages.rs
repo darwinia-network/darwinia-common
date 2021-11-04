@@ -38,9 +38,9 @@ pub const PANGORO_S2S_BACKING_PALLET_INDEX: u8 = 20;
 pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessageBridge>;
 
 #[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
-pub struct ToPangoroMessagePayloadBox;
+pub struct ToPangoroOutboundPayLoad;
 
-impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangoroMessagePayloadBox {
+impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangoroOutboundPayLoad {
 	type Payload = ToPangoroMessagePayload;
 
 	fn create(

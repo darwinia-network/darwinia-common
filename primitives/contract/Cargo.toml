@@ -17,8 +17,8 @@ dp-asset            = { default-features = false, path = "../asset" }
 ethabi              = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", tag = "v13.0.0-no-std" }
 ethereum-primitives = { default-features = false, path = "../ethereum" }
 # paritytech
-codec      = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+codec  = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 
 [features]
 default = ["std"]
