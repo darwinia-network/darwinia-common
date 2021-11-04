@@ -52,7 +52,7 @@ fn burn_and_remote_unlock_success() {
 		let submitter = HashedConverter::into_account_id(
 			H160::from_str("1000000000000000000000000000000000000002").unwrap(),
 		);
-		<Test as s2s_issuing::Config>::OutboundPayload::create(
+		<Test as s2s_issuing::Config>::OutboundPayloadCreator::create(
 			CallOrigin::SourceAccount(submitter),
 			burn_info.spec_version,
 			burn_info.weight,
