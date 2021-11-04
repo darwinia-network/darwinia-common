@@ -45,16 +45,15 @@ benchmarks! {
 	)
 
 	unlock_from_remote {
-		let addr_bytes = hex2bytes_unchecked("0x8e13b96a9c9e3b1832f07935be76c2b331251e26445f520ad1c56b24477ed8dd");
-		let caller: T::AccountId = T::AccountId::decode(&mut &addr_bytes[..]).unwrap_or_default();
+		let caller_bytes = hex2bytes_unchecked("0x8e13b96a9c9e3b1832f07935be76c2b331251e26445f520ad1c56b24477ed8dd");
+		let caller: T::AccountId = T::AccountId::decode(&mut &caller_bytes[..]).unwrap_or_default();
 		let addr_bytes = hex2bytes_unchecked("0x6d6f646c64612f73327362610000000000000000000000000000000000000000");
 		let pallet_account_id: T::AccountId = T::AccountId::decode(&mut &addr_bytes[..]).unwrap_or_default();
 		<T as Config>::RingCurrency::deposit_creating(&pallet_account_id, U256::from(5000).low_u128().saturated_into());
-		let addr_bytes = hex2bytes_unchecked("0x8e13b96a9c9e3b1832f07935be76c2b331251e26445f520ad1c56b24477ed8d6");
-		let recipient: T::AccountId = T::AccountId::decode(&mut &addr_bytes[..]).unwrap_or_default();
+		let recipient_bytes = hex2bytes_unchecked("0x8e13b96a9c9e3b1832f07935be76c2b331251e26445f520ad1c56b24477ed8d6");
 
 		let register_token_address = hex_into_unchecked("0000000000000000000000000000000000000002");
-	}:_(RawOrigin::Signed(caller), register_token_address, 100.into(), recipient)
+	}:_(RawOrigin::Signed(caller), register_token_address, 100.into(), recipient_bytes)
 
 	set_secure_limited_period {
 		let period: BlockNumberFor<T> = Zero::zero();
