@@ -37,7 +37,7 @@ impl Config for Runtime {
 	type RingCurrency = Ring;
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangolinChainId;
-	type OutboundPayload = ToPangolinOutboundPayload;
+	type OutboundPayloadCreator = ToPangolinOutboundPayload;
 	type MessageNoncer = PangolinMessageNoncer;
 	type MessageLaneId = BridgePangolinLaneId;
 	type MessagesBridge = BridgePangolinMessages;

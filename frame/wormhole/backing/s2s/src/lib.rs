@@ -105,8 +105,8 @@ pub mod pallet {
 		/// The bridged chain id
 		type BridgedChainId: Get<ChainId>;
 
-		/// Outbound payload used for s2s message
-		type OutboundPayload: Parameter
+		/// Outbound payload creator used for s2s message
+		type OutboundPayloadCreator: Parameter
 			+ CreatePayload<Self::AccountId, MultiSigner, MultiSignature>;
 
 		/// The message noncer to get the message nonce from the bridge
@@ -119,7 +119,7 @@ pub mod pallet {
 		type MessagesBridge: MessagesBridge<
 			Self::AccountId,
 			RingBalance<Self>,
-			<<Self as Config>::OutboundPayload as CreatePayload<
+			<<Self as Config>::OutboundPayloadCreator as CreatePayload<
 				Self::AccountId,
 				MultiSigner,
 				MultiSignature,
@@ -265,7 +265,7 @@ pub mod pallet {
 				RING_DECIMAL,
 			);
 
-			let payload = T::OutboundPayload::create(
+			let payload = T::OutboundPayloadCreator::create(
 				CallOrigin::SourceAccount(Self::pallet_account_id()),
 				spec_version,
 				weight,
@@ -318,7 +318,7 @@ pub mod pallet {
 			let amount: U256 = value.saturated_into::<u128>().into();
 			let token_address = T::RingPalletId::get().into_h160();
 
-			let payload = T::OutboundPayload::create(
+			let payload = T::OutboundPayloadCreator::create(
 				CallOrigin::SourceAccount(Self::pallet_account_id()),
 				spec_version,
 				weight,

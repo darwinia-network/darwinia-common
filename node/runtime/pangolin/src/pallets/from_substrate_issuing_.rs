@@ -32,7 +32,7 @@ impl Config for Runtime {
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangoroChainId;
 	type ToEthAddressT = TruncateToEthAddress;
-	type OutboundPayload = ToPangoroOutboundPayLoad;
+	type OutboundPayloadCreator = ToPangoroOutboundPayLoad;
 	type InternalTransactHandler = Ethereum;
 	type BackingChainName = PangoroName;
 	type MessageLaneId = BridgePangoroLaneId;

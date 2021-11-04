@@ -112,18 +112,21 @@ where
 			_ if Self::match_digest(action_digest, S2S_ENCODE_REMOTE_UNLOCK_PAYLOAD) => {
 				let unlock_info = S2sRemoteUnlockInfo::abi_decode(&action_params)
 					.map_err(|_| ExitError::Other("decode unlock info failed".into()))?;
-				let payload = <T as from_substrate_issuing::Config>::OutboundPayload::create(
-					CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(context.caller)),
-					unlock_info.spec_version,
-					unlock_info.weight,
-					CallParams::S2sBackingPalletUnlockFromRemote(
-						unlock_info.original_token,
-						unlock_info.amount,
-						unlock_info.recipient,
-					),
-					DispatchFeePayment::AtSourceChain,
-				)
-				.map_err(|_| ExitError::Other("encode remote unlock failed".into()))?;
+				let payload =
+					<T as from_substrate_issuing::Config>::OutboundPayloadCreator::create(
+						CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(
+							context.caller,
+						)),
+						unlock_info.spec_version,
+						unlock_info.weight,
+						CallParams::S2sBackingPalletUnlockFromRemote(
+							unlock_info.original_token,
+							unlock_info.amount,
+							unlock_info.recipient,
+						),
+						DispatchFeePayment::AtSourceChain,
+					)
+					.map_err(|_| ExitError::Other("encode remote unlock failed".into()))?;
 				payload.encode()
 			}
 			_ if Self::match_digest(action_digest, S2S_ENCODE_SEND_MESSAGE_CALL) => {

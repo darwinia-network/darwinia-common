@@ -237,7 +237,7 @@ impl Convert<H256, AccountId32> for AccountIdConverter {
 pub struct ToPangoroMessageRelayCaller;
 impl RelayMessageSender for ToPangoroMessageRelayCaller {
 	fn encode_send_message(
-		_pallet_index: u32,
+		_message_pallet_index: u32,
 		_lane_id: [u8; 4],
 		_payload: Vec<u8>,
 		_fee: u128,
@@ -272,7 +272,7 @@ impl Config for Test {
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangoroChainId;
 	type ToEthAddressT = TruncateToEthAddress;
-	type OutboundPayload = ();
+	type OutboundPayloadCreator = ();
 	type InternalTransactHandler = Ethereum;
 	type BackingChainName = PangoroName;
 	type MessageLaneId = MessageLaneId;

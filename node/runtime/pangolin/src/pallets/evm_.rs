@@ -44,7 +44,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 pub struct ToPangoroMessageSender;
 impl RelayMessageSender for ToPangoroMessageSender {
 	fn encode_send_message(
-		pallet_index: u32,
+		message_pallet_index: u32,
 		lane_id: LaneId,
 		payload: Vec<u8>,
 		fee: u128,
@@ -52,8 +52,10 @@ impl RelayMessageSender for ToPangoroMessageSender {
 		let payload = ToPangoroMessagePayload::decode(&mut payload.as_slice())
 			.map_err(|_| "decode pangoro payload failed")?;
 
-		let call: Call = match pallet_index {
-			_ if pallet_index as usize == <BridgePangoroMessages as PalletInfoAccess>::index() => {
+		let call: Call = match message_pallet_index {
+			_ if message_pallet_index as usize
+				== <BridgePangoroMessages as PalletInfoAccess>::index() =>
+			{
 				BridgeMessagesCall::<Runtime, Pangoro>::send_message(
 					lane_id,
 					payload,

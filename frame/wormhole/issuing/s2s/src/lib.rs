@@ -91,8 +91,8 @@ pub mod pallet {
 		/// Convert the substrate account to ethereum account
 		type ToEthAddressT: ToEthAddress<Self::AccountId>;
 
-		/// Outbound payload used for s2s message
-		type OutboundPayload: Parameter
+		/// Outbound payload creator used for s2s message
+		type OutboundPayloadCreator: Parameter
 			+ CreatePayload<Self::AccountId, MultiSigner, MultiSignature>;
 
 		/// The handler for internal transaction.

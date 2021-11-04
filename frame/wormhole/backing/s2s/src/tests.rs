@@ -96,7 +96,7 @@ impl frame_system::Config for Test {
 pub struct MockRelayCaller;
 impl RelayMessageSender for MockRelayCaller {
 	fn encode_send_message(
-		_pallet_index: u32,
+		_message_pallet_index: u32,
 		_lane_id: [u8; 4],
 		_payload: Vec<u8>,
 		_fee: u128,
@@ -151,7 +151,7 @@ impl Config for Test {
 	type BridgedAccountIdConverter = ();
 	type BridgedChainId = MockChainId;
 
-	type OutboundPayload = ();
+	type OutboundPayloadCreator = ();
 	type MessageNoncer = MockLatestMessageNoncer;
 
 	type MessageLaneId = BridgePangolinLaneId;

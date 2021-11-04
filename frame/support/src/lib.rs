@@ -61,7 +61,7 @@ pub mod s2s {
 	// RelayMessageSender send message to pallet-messages
 	pub trait RelayMessageSender {
 		fn encode_send_message(
-			pallet_index: u32,
+			message_pallet_index: u32,
 			lane_id: LaneId,
 			payload: Vec<u8>,
 			fee: u128,
