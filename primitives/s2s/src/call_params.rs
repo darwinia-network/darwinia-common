@@ -39,12 +39,8 @@ pub enum CallParams {
 	S2sBackingPalletUnlockFromRemote(H160, U256, Vec<u8>),
 }
 /// Creating a concrete message payload which would be relay to target chain.
-pub trait CreatePayload<SourceChainAccountId, TargetChainAccountPublic, TargetChainSignature>
-where
-	SourceChainAccountId: Encode,
-	Self: Sized,
-{
-	type Payload: Sized + Encode;
+pub trait CreatePayload<SourceChainAccountId, TargetChainAccountPublic, TargetChainSignature> {
+	type Payload: Encode;
 
 	fn encode_call(pallet_index: u8, call_params: CallParams) -> Result<Vec<u8>, &'static str> {
 		let mut encoded = vec![pallet_index];
