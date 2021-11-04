@@ -16,28 +16,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- paritytech ---
-use sp_core::{H160, U256};
-// --- darwinia-network ---
-use crate::{evm::IntoH160, *};
-use std::str::FromStr;
+#![cfg_attr(not(feature = "std"), no_std)]
 
-#[test]
-fn const_pow_9_should_work() {
-	assert_eq!(
-		U256::from(10).checked_pow(U256::from(9)).unwrap(),
-		evm::POW_9.into()
-	)
-}
+pub mod call_params;
+pub mod token_info;
 
-#[test]
-fn test_into_dvm_account() {
-	assert_eq!(
-		H160::from_str("726f6f7400000000000000000000000000000000").unwrap(),
-		(&b"root"[..]).into_h160()
-	);
-	assert_eq!(
-		(&b"longbytes..longbytes..longbytes..longbytes"[..]).into_h160(),
-		(&b"longbytes..longbytes"[..]).into_h160()
-	);
-}
+pub use call_params::{CallParams, CreatePayload};

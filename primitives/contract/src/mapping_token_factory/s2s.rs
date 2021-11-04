@@ -78,7 +78,7 @@ pub struct S2sRemoteUnlockInfo {
 }
 
 impl S2sRemoteUnlockInfo {
-	pub fn encode(
+	pub fn abi_encode(
 		spec_version: u32,
 		weight: u64,
 		token_type: u32,
@@ -96,7 +96,7 @@ impl S2sRemoteUnlockInfo {
 		])
 	}
 
-	pub fn decode(data: &[u8]) -> AbiResult<Self> {
+	pub fn abi_decode(data: &[u8]) -> AbiResult<Self> {
 		let tokens = ethabi::decode(
 			&[
 				ParamType::Uint(256),
@@ -178,4 +178,11 @@ impl S2sSendMessageParams {
 			_ => Err(Error::InvalidData),
 		}
 	}
+}
+
+pub fn to_bytes32(raw: &[u8]) -> [u8; 32] {
+	let mut result = [0u8; 32];
+	let encoded = ethabi::encode(&[Token::FixedBytes(raw.to_vec())]);
+	result.copy_from_slice(&encoded);
+	result
 }

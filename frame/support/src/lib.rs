@@ -33,7 +33,6 @@ pub mod balance {
 		traits::{BalanceInfo, DustCollector, LockableCurrency},
 	};
 }
-use ethabi::{encode, Token};
 use sp_std::{vec, vec::Vec};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -55,18 +54,14 @@ pub mod s2s {
 	};
 	use sp_std::{cmp::PartialEq, vec::Vec};
 
-	pub const RING_NAME: &[u8] = b"Darwinia Network Native Token";
-	pub const RING_SYMBOL: &[u8] = b"RING";
-	pub const RING_DECIMAL: u8 = 9;
-
 	pub trait ToEthAddress<A> {
 		fn into_ethereum_id(address: &A) -> H160;
 	}
 
-	// RelayMessageCaller send message to pallet-messages
+	// RelayMessageSender send message to pallet-messages
 	pub trait RelayMessageSender {
 		fn encode_send_message(
-			pallet_index: u32,
+			message_pallet_index: u32,
 			lane_id: LaneId,
 			payload: Vec<u8>,
 			fee: u128,
@@ -132,13 +127,6 @@ pub mod mapping_token {
 		mapping_symbol.extend(original_symbol);
 		mapping_symbol
 	}
-}
-
-pub fn to_bytes32(raw: &[u8]) -> [u8; 32] {
-	let mut result = [0u8; 32];
-	let encoded = encode(&[Token::FixedBytes(raw.to_vec())]);
-	result.copy_from_slice(&encoded);
-	result
 }
 
 /// 128 bit or 16 bytes to identify an unique s2s message

@@ -17,6 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- crates.io ---
+use array_bytes::{hex2bytes_unchecked, hex_into_unchecked};
 use std::str::FromStr;
 // --- darwinia-network ---
 use crate::{
@@ -24,13 +25,15 @@ use crate::{
 };
 use darwinia_support::evm::IntoAccountId;
 use dp_asset::token::{TokenMetadata, NATIVE_TOKEN_TYPE};
+use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
+use dp_s2s::CallParams;
+use mock::*;
 
-use array_bytes::hex2bytes_unchecked;
+// --- paritytech ---
+use bp_message_dispatch::CallOrigin;
+use bp_runtime::messages::DispatchFeePayment;
 use frame_support::assert_ok;
 use frame_system::RawOrigin;
-
-use array_bytes::hex_into_unchecked;
-use mock::*;
 use sp_runtime::AccountId32;
 
 #[test]
@@ -49,8 +52,18 @@ fn burn_and_remote_unlock_success() {
 		let submitter = HashedConverter::into_account_id(
 			H160::from_str("1000000000000000000000000000000000000002").unwrap(),
 		);
-		<Test as s2s_issuing::Config>::CallEncoder::encode_remote_unlock(submitter, burn_info)
-			.unwrap();
+		<Test as s2s_issuing::Config>::OutboundPayloadCreator::create(
+			CallOrigin::SourceAccount(submitter),
+			burn_info.spec_version,
+			burn_info.weight,
+			CallParams::S2sBackingPalletUnlockFromRemote(
+				original_token,
+				U256::from(1),
+				[1; 32].to_vec(),
+			),
+			DispatchFeePayment::AtSourceChain,
+		)
+		.unwrap();
 	});
 }
 

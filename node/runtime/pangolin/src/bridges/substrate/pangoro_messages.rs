@@ -1,12 +1,13 @@
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
+use bp_message_dispatch::CallOrigin;
 use bp_messages::{
 	source_chain::TargetHeaderChain,
 	target_chain::{ProvedMessages, SourceHeaderChain},
 	InboundLaneData, LaneId, Message, MessageNonce, Parameter as MessagesParameter,
 };
-use bp_runtime::ChainId;
+use bp_runtime::{messages::DispatchFeePayment, ChainId};
 use bridge_runtime_common::messages::{
 	self,
 	source::{self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload},
@@ -21,7 +22,7 @@ use frame_support::{
 	RuntimeDebug,
 };
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
-use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
+use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128, MultiSignature, MultiSigner};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
@@ -29,9 +30,37 @@ use bridge_primitives::{
 	DarwiniaFromThisChainMessageVerifier, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID,
 	PANGORO_PANGOLIN_LANE, WITH_PANGOLIN_MESSAGES_PALLET_NAME,
 };
+use dp_s2s::{CallParams, CreatePayload};
 
+/// The s2s backing pallet index in the pangoro chain runtime.
+pub const PANGORO_S2S_BACKING_PALLET_INDEX: u8 = 20;
 /// Message payload for Pangolin -> Pangoro messages.
 pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessageBridge>;
+
+#[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
+pub struct ToPangoroOutboundPayLoad;
+
+impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangoroOutboundPayLoad {
+	type Payload = ToPangoroMessagePayload;
+
+	fn create(
+		origin: CallOrigin<AccountId, MultiSigner, MultiSignature>,
+		spec_version: u32,
+		weight: u64,
+		call_params: CallParams,
+		dispatch_fee_payment: DispatchFeePayment,
+	) -> Result<Self::Payload, &'static str> {
+		let call = Self::encode_call(PANGORO_S2S_BACKING_PALLET_INDEX, call_params)?;
+		Ok(ToPangoroMessagePayload {
+			spec_version,
+			weight,
+			origin,
+			call,
+			dispatch_fee_payment,
+		})
+	}
+}
+
 /// Message verifier for Pangolin -> Pangoro messages.
 pub type ToPangoroMessageVerifier<R> =
 	DarwiniaFromThisChainMessageVerifier<WithPangoroMessageBridge, R>;

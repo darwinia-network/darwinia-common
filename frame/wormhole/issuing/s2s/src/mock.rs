@@ -52,7 +52,6 @@ type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 type Balance = u64;
 
-
 /*
 * Test Contract
 pragma solidity ^0.6.0;
@@ -235,38 +234,10 @@ impl Convert<H256, AccountId32> for AccountIdConverter {
 		hash.to_fixed_bytes().into()
 	}
 }
-
-#[derive(Debug, Encode, Decode, Clone, PartialEq, Eq)]
-pub struct MockMessagePayload {
-	spec_version: u32,
-	weight: u64,
-	call: Vec<u8>,
-}
-
-impl Size for MockMessagePayload {
-	fn size_hint(&self) -> u32 {
-		self.call.len() as _
-	}
-}
-
-pub struct PangoroCallEncoder;
-impl EncodeCall<AccountId32, MockMessagePayload> for PangoroCallEncoder {
-	fn encode_remote_unlock(
-		_submitter: AccountId32,
-		remote_unlock_info: S2sRemoteUnlockInfo,
-	) -> Result<MockMessagePayload, ()> {
-		return Ok(MockMessagePayload {
-			spec_version: remote_unlock_info.spec_version,
-			weight: remote_unlock_info.weight,
-			call: vec![],
-		});
-	}
-}
-
 pub struct ToPangoroMessageRelayCaller;
 impl RelayMessageSender for ToPangoroMessageRelayCaller {
 	fn encode_send_message(
-		_pallet_index: u32,
+		_message_pallet_index: u32,
 		_lane_id: [u8; 4],
 		_payload: Vec<u8>,
 		_fee: u128,
@@ -301,8 +272,7 @@ impl Config for Test {
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangoroChainId;
 	type ToEthAddressT = TruncateToEthAddress;
-	type OutboundPayload = MockMessagePayload;
-	type CallEncoder = PangoroCallEncoder;
+	type OutboundPayloadCreator = ();
 	type InternalTransactHandler = Ethereum;
 	type BackingChainName = PangoroName;
 	type MessageLaneId = MessageLaneId;

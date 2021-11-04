@@ -31,8 +31,10 @@ use darwinia_support::{
 };
 use dp_contract::mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams};
 use dp_evm::Precompile;
-use from_substrate_issuing::EncodeCall;
+use dp_s2s::{CallParams, CreatePayload};
 // --- paritytech ---
+use bp_message_dispatch::CallOrigin;
+use bp_runtime::messages::DispatchFeePayment;
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::SaturatedConversion,
@@ -108,12 +110,21 @@ where
 				nonce_to_message_id(&lane_id, nonce).to_vec()
 			}
 			_ if Self::match_digest(action_digest, S2S_ENCODE_REMOTE_UNLOCK_PAYLOAD) => {
-				let unlock_info = S2sRemoteUnlockInfo::decode(&action_params)
+				let unlock_info = S2sRemoteUnlockInfo::abi_decode(&action_params)
 					.map_err(|_| ExitError::Other("decode unlock info failed".into()))?;
 				let payload =
-					<T as from_substrate_issuing::Config>::CallEncoder::encode_remote_unlock(
-						T::IntoAccountId::into_account_id(context.caller),
-						unlock_info,
+					<T as from_substrate_issuing::Config>::OutboundPayloadCreator::create(
+						CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(
+							context.caller,
+						)),
+						unlock_info.spec_version,
+						unlock_info.weight,
+						CallParams::S2sBackingPalletUnlockFromRemote(
+							unlock_info.original_token,
+							unlock_info.amount,
+							unlock_info.recipient,
+						),
+						DispatchFeePayment::AtSourceChain,
 					)
 					.map_err(|_| ExitError::Other("encode remote unlock failed".into()))?;
 				payload.encode()

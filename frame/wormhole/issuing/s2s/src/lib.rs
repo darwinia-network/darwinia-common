@@ -41,10 +41,10 @@ use frame_support::{
 	transactional, PalletId,
 };
 use frame_system::ensure_signed;
-use sp_runtime::{traits::Convert, DispatchError};
+use sp_runtime::{traits::Convert, DispatchError, MultiSignature, MultiSigner};
 use sp_std::{str, vec::Vec};
 // --- darwinia-network ---
-use bp_runtime::{ChainId, Size};
+use bp_runtime::ChainId;
 use darwinia_support::{
 	mapping_token::*,
 	s2s::{ensure_source_account, nonce_to_message_id, ToEthAddress},
@@ -52,9 +52,9 @@ use darwinia_support::{
 };
 use dp_asset::token::TokenMetadata;
 use dp_contract::mapping_token_factory::{
-	basic::BasicMappingTokenFactory as bmtf,
-	s2s::{S2sRemoteUnlockInfo, Sub2SubMappingTokenFactory as smtf},
+	basic::BasicMappingTokenFactory as bmtf, s2s::Sub2SubMappingTokenFactory as smtf,
 };
+use dp_s2s::CreatePayload;
 use dvm_ethereum::InternalTransactHandler;
 
 pub use pallet::*;
@@ -91,13 +91,11 @@ pub mod pallet {
 		/// Convert the substrate account to ethereum account
 		type ToEthAddressT: ToEthAddress<Self::AccountId>;
 
-		/// Outbound payload used for s2s message
-		type OutboundPayload: Parameter + Size;
+		/// Outbound payload creator used for s2s message
+		type OutboundPayloadCreator: Parameter
+			+ CreatePayload<Self::AccountId, MultiSigner, MultiSignature>;
 
-		/// The call encoder to encode a remote dispatch call
-		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
-
-		/// Internal dvm transction handler
+		/// The handler for internal transaction.
 		type InternalTransactHandler: InternalTransactHandler;
 
 		/// The remote chain name where the backing module in
@@ -359,11 +357,4 @@ impl<T: Config> Pallet<T> {
 		let contract = MappingFactoryAddress::<T>::get();
 		T::InternalTransactHandler::internal_transact(contract, input)
 	}
-}
-
-pub trait EncodeCall<AccountId, Payload> {
-	fn encode_remote_unlock(
-		submitter: AccountId,
-		remote_unlock_info: S2sRemoteUnlockInfo,
-	) -> Result<Payload, ()>;
 }

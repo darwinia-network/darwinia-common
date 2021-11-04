@@ -96,7 +96,7 @@ impl frame_system::Config for Test {
 pub struct MockRelayCaller;
 impl RelayMessageSender for MockRelayCaller {
 	fn encode_send_message(
-		_pallet_index: u32,
+		_message_pallet_index: u32,
 		_lane_id: [u8; 4],
 		_payload: Vec<u8>,
 		_fee: u128,
@@ -112,30 +112,6 @@ impl LatestMessageNoncer for MockLatestMessageNoncer {
 	}
 	fn inbound_latest_received_nonce(_lane_id: [u8; 4]) -> u64 {
 		0
-	}
-}
-
-pub struct MockCallEncoder;
-impl EncodeCall<AccountId<Test>, ()> for MockCallEncoder {
-	/// Encode issuing pallet remote_register call
-	fn encode_remote_register(
-		_submitter: AccountId<Test>,
-		_spec_version: u32,
-		_weight: u64,
-		_token: TokenMetadata,
-	) -> () {
-		()
-	}
-	/// Encode issuing pallet remote_issue call
-	fn encode_remote_issue(
-		_submitter: AccountId<Test>,
-		_spec_version: u32,
-		_weight: u64,
-		_token_address: H160,
-		_amount: U256,
-		_recipient: RecipientAccount<AccountId<Test>>,
-	) -> Result<(), ()> {
-		Ok(())
 	}
 }
 
@@ -175,8 +151,7 @@ impl Config for Test {
 	type BridgedAccountIdConverter = ();
 	type BridgedChainId = MockChainId;
 
-	type OutboundPayload = ();
-	type CallEncoder = MockCallEncoder;
+	type OutboundPayloadCreator = ();
 	type MessageNoncer = MockLatestMessageNoncer;
 
 	type MessageLaneId = BridgePangolinLaneId;

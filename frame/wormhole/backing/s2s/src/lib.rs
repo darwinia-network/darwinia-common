@@ -34,11 +34,12 @@ pub use weight::WeightInfo;
 use ethereum_primitives::EthereumAddress;
 use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
+use bp_message_dispatch::CallOrigin;
 use bp_messages::{
 	source_chain::{MessagesBridge, OnDeliveryConfirmed},
 	DeliveredMessages, LaneId,
 };
-use bp_runtime::{ChainId, Size};
+use bp_runtime::{messages::DispatchFeePayment, ChainId};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -50,21 +51,19 @@ use frame_support::{
 use frame_system::{ensure_signed, pallet_prelude::*, RawOrigin};
 use sp_runtime::{
 	traits::{AccountIdConversion, Convert, Saturating, Zero},
-	DispatchErrorWithPostInfo, SaturatedConversion,
+	DispatchErrorWithPostInfo, MultiSignature, MultiSigner, SaturatedConversion,
 };
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use darwinia_support::{
 	evm::IntoH160,
-	s2s::{
-		ensure_source_account, nonce_to_message_id, LatestMessageNoncer, TokenMessageId,
-		RING_DECIMAL, RING_NAME, RING_SYMBOL,
-	},
+	s2s::{ensure_source_account, nonce_to_message_id, LatestMessageNoncer, TokenMessageId},
 	AccountId,
 };
-use dp_asset::{
-	token::{TokenMetadata, NATIVE_TOKEN_TYPE},
-	RecipientAccount,
+use dp_asset::token::{TokenMetadata, NATIVE_TOKEN_TYPE};
+use dp_s2s::{
+	token_info::{RING_DECIMAL, RING_NAME, RING_SYMBOL},
+	CallParams, CreatePayload,
 };
 
 pub type Balance = u128;
@@ -106,11 +105,9 @@ pub mod pallet {
 		/// The bridged chain id
 		type BridgedChainId: Get<ChainId>;
 
-		/// Outbound payload used for s2s message
-		type OutboundPayload: Parameter + Size;
-
-		/// The call encoder to encode a remote dispatch call
-		type CallEncoder: EncodeCall<Self::AccountId, Self::OutboundPayload>;
+		/// Outbound payload creator used for s2s message
+		type OutboundPayloadCreator: Parameter
+			+ CreatePayload<Self::AccountId, MultiSigner, MultiSignature>;
 
 		/// The message noncer to get the message nonce from the bridge
 		type MessageNoncer: LatestMessageNoncer;
@@ -122,7 +119,11 @@ pub mod pallet {
 		type MessagesBridge: MessagesBridge<
 			Self::AccountId,
 			RingBalance<Self>,
-			Self::OutboundPayload,
+			<<Self as Config>::OutboundPayloadCreator as CreatePayload<
+				Self::AccountId,
+				MultiSigner,
+				MultiSignature,
+			>>::Payload,
 			Error = DispatchErrorWithPostInfo<PostDispatchInfo>,
 		>;
 	}
@@ -165,12 +166,12 @@ pub mod pallet {
 		RingDailyLimited,
 		/// Invalid source origin.
 		InvalidOrigin,
-		/// Encode dispatch call failed.
-		EncodeInvalid,
 		/// Message nonce duplicated.
 		NonceDuplicated,
 		/// Unsupported token
-		UnsupportToken,
+		UnsupportedToken,
+		/// Invalid recipient
+		InvalidRecipient,
 	}
 
 	/// Period between security limitation. Zero means there is no period limitation.
@@ -264,12 +265,13 @@ pub mod pallet {
 				RING_DECIMAL,
 			);
 
-			let payload = T::CallEncoder::encode_remote_register(
-				Self::pallet_account_id(),
+			let payload = T::OutboundPayloadCreator::create(
+				CallOrigin::SourceAccount(Self::pallet_account_id()),
 				spec_version,
 				weight,
-				token_metadata.clone(),
-			);
+				CallParams::S2sIssuingPalletRegisterFromRemote(token_metadata.clone()),
+				DispatchFeePayment::AtSourceChain,
+			)?;
 			// this pallet account as the submitter of the remote message
 			// we need to transfer fee from user to this account to pay the bridge fee
 			T::RingCurrency::transfer(&user, &Self::pallet_account_id(), fee, KeepAlive)?;
@@ -316,16 +318,13 @@ pub mod pallet {
 			let amount: U256 = value.saturated_into::<u128>().into();
 			let token_address = T::RingPalletId::get().into_h160();
 
-			let receiver = RecipientAccount::EthereumAccount(recipient);
-			let payload = T::CallEncoder::encode_remote_issue(
-				Self::pallet_account_id(),
+			let payload = T::OutboundPayloadCreator::create(
+				CallOrigin::SourceAccount(Self::pallet_account_id()),
 				spec_version,
 				weight,
-				token_address,
-				amount,
-				receiver,
-			)
-			.map_err(|_| Error::<T>::EncodeInvalid)?;
+				CallParams::S2sIssuingPalletIssueFromRemote(token_address, amount, recipient),
+				DispatchFeePayment::AtSourceChain,
+			)?;
 			// this pallet account as the submitter of the remote message
 			// we need to transfer fee from user to this account to pay the bridge fee
 			T::RingCurrency::transfer(&user, &Self::pallet_account_id(), fee, KeepAlive)?;
@@ -360,54 +359,56 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			token_address: H160,
 			amount: U256,
-			recipient: AccountId<T>,
+			recipient: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
-
-			// the s2s message relay has been verified the message comes from the issuing pallet with the
-			// chainID and issuing sender address.
-			// here only we need is to check the sender is root account
+			// Check call origin
 			ensure_source_account::<T::AccountId, T::BridgedAccountIdConverter>(
 				T::BridgedChainId::get(),
 				<RemoteMappingTokenFactoryAccount<T>>::get(),
 				&user,
 			)?;
-
+			// Check call params
 			ensure!(
 				token_address == T::RingPalletId::get().into_h160(),
-				<Error<T>>::UnsupportToken
+				<Error<T>>::UnsupportedToken
 			);
 
 			let amount = amount.low_u128().saturated_into();
-
 			// Make sure the total transfer is less than the security limitation
 			{
 				let (used, limitation) = <SecureLimitedRingAmount<T>>::get();
-
 				ensure!(
 					<SecureLimitedPeriod<T>>::get().is_zero()
 						|| used.saturating_add(amount) <= limitation,
 					<Error<T>>::RingDailyLimited
 				);
 			}
-
 			// Make sure the user's balance is enough to lock
 			ensure!(
 				T::RingCurrency::free_balance(&Self::pallet_account_id()) > amount,
 				<Error<T>>::InsufficientBalance
 			);
 
-			T::RingCurrency::transfer(&Self::pallet_account_id(), &recipient, amount, KeepAlive)?;
+			// Make sure the recipient is valid(AccountId32).
+			ensure!(recipient.len() == 32, Error::<T>::InvalidRecipient);
+			let recipient_id = T::AccountId::decode(&mut &recipient[..])
+				.map_err(|_| Error::<T>::InvalidRecipient)?;
 
+			T::RingCurrency::transfer(
+				&Self::pallet_account_id(),
+				&recipient_id,
+				amount,
+				KeepAlive,
+			)?;
 			<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = used.saturating_add(amount));
-
 			let message_nonce =
 				T::MessageNoncer::inbound_latest_received_nonce(T::MessageLaneId::get());
 			let message_id = nonce_to_message_id(&T::MessageLaneId::get(), message_nonce);
 			Self::deposit_event(Event::TokenUnlocked(
 				message_id,
 				token_address,
-				recipient,
+				recipient_id,
 				amount,
 			));
 
@@ -490,24 +491,4 @@ pub mod pallet {
 			weight
 		}
 	}
-}
-
-/// Encode call
-pub trait EncodeCall<AccountId, MessagePayload> {
-	/// Encode issuing pallet remote_register call
-	fn encode_remote_register(
-		submitter: AccountId,
-		spec_version: u32,
-		weight: u64,
-		token_metadata: TokenMetadata,
-	) -> MessagePayload;
-	/// Encode issuing pallet remote_issue call
-	fn encode_remote_issue(
-		submitter: AccountId,
-		spec_version: u32,
-		weight: u64,
-		token_address: H160,
-		amount: U256,
-		recipient: RecipientAccount<AccountId>,
-	) -> Result<MessagePayload, ()>;
 }

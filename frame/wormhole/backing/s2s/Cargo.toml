@@ -21,15 +21,17 @@ serde_json     = { version = "1.0.66", optional = true }
 darwinia-support    = { default-features = false, path = "../../../support" }
 dp-asset            = { default-features = false, path = "../../../../primitives/asset" }
 dp-contract         = { default-features = false, path = "../../../../primitives/contract" }
+dp-s2s              = { default-features = false, path = "../../../../primitives/s2s" }
 ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum" }
 # paritytech
-bp-messages        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
-bp-runtime         = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
-frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-frame-support      = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-frame-system       = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-runtime         = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-std             = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+bp-messages         = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
+bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
+bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
+frame-benchmarking  = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+frame-support       = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+frame-system        = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 
 [dev-dependencies]
 # paritytech
@@ -50,10 +52,12 @@ std = [
 	# darwinia-network
 	"dp-asset/std",
 	"dp-contract/std",
+	"dp-s2s/std",
 	"ethereum-primitives/std",
 	"darwinia-support/std",
 	# paritytech
 	"bp-messages/std",
+	"bp-message-dispatch/std",
 	"bp-runtime/std",
 	"frame-benchmarking/std",
 	"frame-support/std",
