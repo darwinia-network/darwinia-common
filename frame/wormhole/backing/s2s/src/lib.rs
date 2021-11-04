@@ -166,7 +166,9 @@ pub mod pallet {
 		/// Message nonce duplicated.
 		NonceDuplicated,
 		/// Unsupported token
-		UnsupportToken,
+		UnsupportedToken,
+		/// Invalid recipient
+		InvalidRecipient,
 	}
 
 	/// Period between security limitation. Zero means there is no period limitation.
@@ -352,56 +354,63 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			token_address: H160,
 			amount: U256,
-			recipient: AccountId<T>,
+			recipient: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
-
-			// the s2s message relay has been verified the message comes from the issuing pallet with the
-			// chainID and issuing sender address.
-			// here only we need is to check the sender is root account
+			// Check call origin
 			ensure_source_account::<T::AccountId, T::BridgedAccountIdConverter>(
 				T::BridgedChainId::get(),
 				<RemoteMappingTokenFactoryAccount<T>>::get(),
 				&user,
 			)?;
-
+			// Check call params
 			ensure!(
 				token_address == T::RingPalletId::get().into_h160(),
-				<Error<T>>::UnsupportToken
+				<Error<T>>::UnsupportedToken
 			);
 
 			let amount = amount.low_u128().saturated_into();
-
 			// Make sure the total transfer is less than the security limitation
 			{
 				let (used, limitation) = <SecureLimitedRingAmount<T>>::get();
-
 				ensure!(
 					<SecureLimitedPeriod<T>>::get().is_zero()
 						|| used.saturating_add(amount) <= limitation,
 					<Error<T>>::RingDailyLimited
 				);
 			}
-
 			// Make sure the user's balance is enough to lock
 			ensure!(
 				T::RingCurrency::free_balance(&Self::pallet_account_id()) > amount,
 				<Error<T>>::InsufficientBalance
 			);
 
-			T::RingCurrency::transfer(&Self::pallet_account_id(), &recipient, amount, KeepAlive)?;
-
-			<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = used.saturating_add(amount));
-
-			let message_nonce =
-				T::MessageNoncer::inbound_latest_received_nonce(T::MessageLaneId::get());
-			let message_id = nonce_to_message_id(&T::MessageLaneId::get(), message_nonce);
-			Self::deposit_event(Event::TokenUnlocked(
-				message_id,
-				token_address,
-				recipient,
-				amount,
-			));
+			if recipient.len() == 32 {
+				let recipient_id = T::AccountId::decode(&mut &recipient[..])
+					.map_err(|_| Error::<T>::InvalidRecipient)?;
+				T::RingCurrency::transfer(
+					&Self::pallet_account_id(),
+					&recipient_id,
+					amount,
+					KeepAlive,
+				)?;
+				<SecureLimitedRingAmount<T>>::mutate(|(used, _)| {
+					*used = used.saturating_add(amount)
+				});
+				let message_nonce =
+					T::MessageNoncer::inbound_latest_received_nonce(T::MessageLaneId::get());
+				let message_id = nonce_to_message_id(&T::MessageLaneId::get(), message_nonce);
+				Self::deposit_event(Event::TokenUnlocked(
+					message_id,
+					token_address,
+					recipient_id,
+					amount,
+				));
+			} else if recipient.len() == 20 {
+				// TODO: Reserved for ERC20 unlock
+			} else {
+				return Err(<Error<T>>::InvalidRecipient.into());
+			}
 
 			Ok(().into())
 		}

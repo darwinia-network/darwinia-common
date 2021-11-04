@@ -2195,7 +2195,6 @@ dependencies = [
  "ethereum-primitives",
  "ethereum-types",
  "parity-scale-codec",
- "sp-runtime",
  "sp-std",
 ]
 

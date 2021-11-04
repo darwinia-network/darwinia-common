@@ -28,7 +28,6 @@ use ethabi::{
 };
 // --- paritytech ---
 use codec::{Decode, Encode};
-use sp_runtime::AccountId32;
 use sp_std::{convert::TryInto, prelude::*};
 
 pub struct Sub2SubMappingTokenFactory;
@@ -76,7 +75,7 @@ pub struct S2sRemoteUnlockInfo {
 	pub token_type: u32,
 	pub original_token: H160,
 	pub amount: U256,
-	pub recipient: AccountId32,
+	pub recipient: Vec<u8>,
 }
 
 impl S2sRemoteUnlockInfo {
@@ -131,7 +130,7 @@ impl S2sRemoteUnlockInfo {
 				token_type: token_type.low_u32(),
 				original_token,
 				amount,
-				recipient: to_bytes32(&recipient).into(),
+				recipient,
 			}),
 			_ => Err(Error::InvalidData),
 		}
