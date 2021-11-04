@@ -28,7 +28,6 @@ use darwinia_support::{
 	evm::IntoAccountId,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
 };
-use dp_s2s::CallParams;
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
@@ -236,34 +235,18 @@ impl Convert<H256, AccountId32> for AccountIdConverter {
 	}
 }
 
-#[derive(Debug, Encode, Decode, Clone, PartialEq, Eq)]
-pub struct MockMessagePayload {
-	spec_version: u32,
-	weight: u64,
-	call: Vec<u8>,
-}
+// #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq)]
+// pub struct MockMessagePayload {
+// 	spec_version: u32,
+// 	weight: u64,
+// 	call: Vec<u8>,
+// }
 
-impl Size for MockMessagePayload {
-	fn size_hint(&self) -> u32 {
-		self.call.len() as _
-	}
-}
-
-pub struct PangoroPayLoadCreator;
-impl PayloadCreate<AccountId32, MockMessagePayload> for PangoroPayLoadCreator {
-	fn payload(
-		_submitter: AccountId32,
-		spec_version: u32,
-		weight: u64,
-		_call_params: CallParams,
-	) -> Result<MockMessagePayload, &'static str> {
-		return Ok(MockMessagePayload {
-			spec_version,
-			weight,
-			call: vec![],
-		});
-	}
-}
+// impl Size for MockMessagePayload {
+// 	fn size_hint(&self) -> u32 {
+// 		self.call.len() as _
+// 	}
+// }
 
 pub struct ToPangoroMessageRelayCaller;
 impl RelayMessageSender for ToPangoroMessageRelayCaller {
@@ -303,8 +286,7 @@ impl Config for Test {
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangoroChainId;
 	type ToEthAddressT = TruncateToEthAddress;
-	type OutboundPayload = MockMessagePayload;
-	type PayloadCreator = PangoroPayLoadCreator;
+	type OutboundPayload = ();
 	type InternalTransactHandler = Ethereum;
 	type BackingChainName = PangoroName;
 	type MessageLaneId = MessageLaneId;

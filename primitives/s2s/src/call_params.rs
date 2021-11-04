@@ -22,6 +22,7 @@
 use bp_message_dispatch::CallOrigin;
 use bp_runtime::messages::DispatchFeePayment;
 use sp_core::{H160, U256};
+use sp_runtime::{AccountId32, MultiSignature, MultiSigner};
 use sp_std::{vec, vec::Vec};
 // --- darwinia-network ---
 use codec::{Decode, Encode};
@@ -60,6 +61,20 @@ where
 	) -> Result<Self::Payload, &'static str>;
 }
 
+impl CreatePayload<AccountId32, MultiSigner, MultiSignature> for () {
+	type Payload = ();
+
+	fn create(
+		_origin: CallOrigin<AccountId32, MultiSigner, MultiSignature>,
+		_spec_version: u32,
+		_weight: u64,
+		_call_params: CallParams,
+		_dispatch_fee_payment: DispatchFeePayment,
+	) -> Result<Self::Payload, &'static str> {
+		Ok(())
+	}
+}
+
 #[cfg(test)]
 mod test {
 	use super::*;
@@ -75,7 +90,7 @@ mod test {
 	#[allow(non_camel_case_types)]
 	pub enum S2SBackingCall {
 		#[codec(index = 2)]
-		unlock_from_remote(H160, U256, AccountId32),
+		unlock_from_remote(H160, U256, Vec<u8>),
 	}
 
 	#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
@@ -94,24 +109,28 @@ mod test {
 	}
 
 	pub struct MockPangoroPayloadCreator;
-	impl PayloadCreate<u64, Vec<u8>> for MockPangoroPayloadCreator {
-		fn payload(
-			_submitter: u64,
+	impl CreatePayload<u64, (), ()> for MockPangoroPayloadCreator {
+		type Payload = Vec<u8>;
+		fn create(
+			_origin: CallOrigin<u64, (), ()>,
 			_spec_version: u32,
 			_weight: u64,
 			call_params: CallParams,
+			_dispatch_fee_payment: DispatchFeePayment,
 		) -> Result<Vec<u8>, &'static str> {
 			Self::encode_call(20, call_params)
 		}
 	}
 
 	pub struct MockPangolinPayloadCreator;
-	impl PayloadCreate<u64, Vec<u8>> for MockPangolinPayloadCreator {
-		fn payload(
-			_submitter: u64,
+	impl CreatePayload<u64, (), ()> for MockPangolinPayloadCreator {
+		type Payload = Vec<u8>;
+		fn create(
+			_origin: CallOrigin<u64, (), ()>,
 			_spec_version: u32,
 			_weight: u64,
 			call_params: CallParams,
+			_dispatch_fee_payment: DispatchFeePayment,
 		) -> Result<Vec<u8>, &'static str> {
 			Self::encode_call(49, call_params)
 		}
@@ -119,23 +138,21 @@ mod test {
 
 	#[test]
 	fn test_pangoro_runtime_call_encode() {
-		let expected_encoded_call =
-			PangoroRuntime::Sub2SubBacking(S2SBackingCall::unlock_from_remote(
-				H160::zero(),
-				U256::zero(),
-				AccountId32::new([1; 32]),
-			))
-			.encode();
+		let expected_encoded_call = PangoroRuntime::Sub2SubBacking(
+			S2SBackingCall::unlock_from_remote(H160::zero(), U256::zero(), [1; 32].to_vec()),
+		)
+		.encode();
 
-		let encoded = MockPangoroPayloadCreator::payload(
-			1,
+		let encoded = MockPangoroPayloadCreator::create(
+			CallOrigin::SourceRoot,
 			0,
 			0,
 			CallParams::S2sBackingPalletUnlockFromRemote(
 				H160::zero(),
 				U256::zero(),
-				AccountId32::new([1; 32]),
+				[1; 32].to_vec(),
 			),
+			DispatchFeePayment::AtSourceChain,
 		)
 		.unwrap();
 		assert_eq!(encoded, expected_encoded_call);
@@ -149,11 +166,12 @@ mod test {
 			S2SIssuingCall::register_from_remote(mock_token.clone()),
 		)
 		.encode();
-		let encoded = MockPangolinPayloadCreator::payload(
-			1,
+		let encoded = MockPangolinPayloadCreator::create(
+			CallOrigin::SourceRoot,
 			0,
 			0,
 			CallParams::S2sIssuingPalletRegisterFromRemote(mock_token.clone()),
+			DispatchFeePayment::AtSourceChain,
 		)
 		.unwrap();
 		assert_eq!(expected_encoded_call, encoded);
@@ -162,11 +180,12 @@ mod test {
 			S2SIssuingCall::issue_from_remote(H160::zero(), U256::zero(), H160::zero()),
 		)
 		.encode();
-		let encoded = MockPangolinPayloadCreator::payload(
-			1,
+		let encoded = MockPangolinPayloadCreator::create(
+			CallOrigin::SourceRoot,
 			0,
 			0,
 			CallParams::S2sIssuingPalletIssueFromRemote(H160::zero(), U256::zero(), H160::zero()),
+			DispatchFeePayment::AtSourceChain,
 		)
 		.unwrap();
 		assert_eq!(expected_encoded_call, encoded);

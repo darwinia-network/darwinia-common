@@ -30,6 +30,8 @@ use dp_s2s::CallParams;
 use mock::*;
 
 // --- paritytech ---
+use bp_message_dispatch::CallOrigin;
+use bp_runtime::messages::DispatchFeePayment;
 use frame_support::assert_ok;
 use frame_system::RawOrigin;
 use sp_runtime::AccountId32;
@@ -45,20 +47,21 @@ fn burn_and_remote_unlock_success() {
 			token_type: 0,
 			original_token,
 			amount: U256::from(1),
-			recipient: AccountId32::new([1; 32]),
+			recipient: [1; 32].to_vec(),
 		};
 		let submitter = HashedConverter::into_account_id(
 			H160::from_str("1000000000000000000000000000000000000002").unwrap(),
 		);
-		<Test as s2s_issuing::Config>::PayloadCreator::payload(
-			submitter,
+		<Test as s2s_issuing::Config>::OutboundPayload::create(
+			CallOrigin::SourceAccount(submitter),
 			burn_info.spec_version,
 			burn_info.weight,
 			CallParams::S2sBackingPalletUnlockFromRemote(
 				original_token,
 				U256::from(1),
-				AccountId32::new([1; 32]),
+				[1; 32].to_vec(),
 			),
+			DispatchFeePayment::AtSourceChain,
 		)
 		.unwrap();
 	});

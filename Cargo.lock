@@ -3181,6 +3181,7 @@ name = "from-substrate-issuing"
 version = "2.6.8"
 dependencies = [
  "array-bytes",
+ "bp-message-dispatch",
  "bp-messages",
  "bp-runtime",
  "darwinia-balances",

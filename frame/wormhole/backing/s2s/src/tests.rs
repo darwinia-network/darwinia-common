@@ -115,18 +115,6 @@ impl LatestMessageNoncer for MockLatestMessageNoncer {
 	}
 }
 
-pub struct MockPayloadCreator;
-impl PayloadCreate<AccountId<Test>, ()> for MockPayloadCreator {
-	fn payload(
-		_submitter: AccountId<Test>,
-		_spec_version: u32,
-		_weight: u64,
-		_call_params: CallParams,
-	) -> Result<(), &'static str> {
-		Ok(())
-	}
-}
-
 pub struct MockMessagesBridge;
 impl MessagesBridge<AccountId<Test>, Balance, ()> for MockMessagesBridge {
 	type Error = DispatchErrorWithPostInfo<PostDispatchInfo>;
@@ -164,7 +152,6 @@ impl Config for Test {
 	type BridgedChainId = MockChainId;
 
 	type OutboundPayload = ();
-	type PayloadCreator = MockPayloadCreator;
 	type MessageNoncer = MockLatestMessageNoncer;
 
 	type MessageLaneId = BridgePangolinLaneId;
