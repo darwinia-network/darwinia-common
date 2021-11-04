@@ -38,7 +38,7 @@ use bp_messages::{
 	source_chain::{MessagesBridge, OnDeliveryConfirmed},
 	DeliveredMessages, LaneId,
 };
-use bp_runtime::{ChainId, Size};
+use bp_runtime::ChainId;
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -62,7 +62,7 @@ use darwinia_support::{
 use dp_asset::token::{TokenMetadata, NATIVE_TOKEN_TYPE};
 use dp_s2s::{
 	token_info::{RING_DECIMAL, RING_NAME, RING_SYMBOL},
-	CallParams, CreatePayload, PayloadCreate,
+	CallParams, CreatePayload,
 };
 
 pub type Balance = u128;
@@ -107,9 +107,6 @@ pub mod pallet {
 		/// Outbound payload used for s2s message
 		type OutboundPayload: Parameter + CreatePayload<Self::AccountId>;
 
-		// /// Create message payload
-		// type PayloadCreator: PayloadCreate<Self::AccountId, Self::OutboundPayload>;
-
 		/// The message noncer to get the message nonce from the bridge
 		type MessageNoncer: LatestMessageNoncer;
 
@@ -120,11 +117,7 @@ pub mod pallet {
 		type MessagesBridge: MessagesBridge<
 			Self::AccountId,
 			RingBalance<Self>,
-			// Self::OutboundPayload::payload,
-			// <<Self as Config>::OutboundPayload as Trait>::payload
-			// <<Self::OutboundPayload> as CreatePayload>::payload,
-			<<Self as Config>::OutboundPayload as CreatePayload<Self::AccountId>>::payload,
-			// <<Self as Config>::OutboundPayload>::payload,
+			<<Self as Config>::OutboundPayload as CreatePayload<Self::AccountId>>::Payload,
 			Error = DispatchErrorWithPostInfo<PostDispatchInfo>,
 		>;
 	}

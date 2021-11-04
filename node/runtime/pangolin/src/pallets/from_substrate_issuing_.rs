@@ -1,16 +1,12 @@
 // --- paritytech ---
 use bp_messages::LaneId;
-use bp_runtime::{messages::DispatchFeePayment, ChainId};
+use bp_runtime::ChainId;
 use frame_support::PalletId;
 use sp_runtime::AccountId32;
 // --- darwinia-network ---
-use crate::{
-	pangoro_messages::{ToPangoroMessagePayloadBox, PANGORO_S2S_BACKING_PALLET_INDEX},
-	*,
-};
+use crate::{pangoro_messages::ToPangoroMessagePayloadBox, *};
 use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE};
 use darwinia_support::{s2s::ToEthAddress, ChainName};
-use dp_s2s::{CallParams, PayloadCreate};
 use from_substrate_issuing::Config;
 // Convert from AccountId32 to H160
 pub struct TruncateToEthAddress;

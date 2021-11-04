@@ -44,7 +44,7 @@ use frame_system::ensure_signed;
 use sp_runtime::{traits::Convert, DispatchError};
 use sp_std::{str, vec::Vec};
 // --- darwinia-network ---
-use bp_runtime::{ChainId, Size};
+use bp_runtime::ChainId;
 use darwinia_support::{
 	mapping_token::*,
 	s2s::{ensure_source_account, nonce_to_message_id, ToEthAddress},
@@ -54,7 +54,7 @@ use dp_asset::token::TokenMetadata;
 use dp_contract::mapping_token_factory::{
 	basic::BasicMappingTokenFactory as bmtf, s2s::Sub2SubMappingTokenFactory as smtf,
 };
-use dp_s2s::{CreatePayload, PayloadCreate};
+use dp_s2s::CreatePayload;
 use dvm_ethereum::InternalTransactHandler;
 
 pub use pallet::*;

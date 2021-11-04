@@ -2,40 +2,13 @@ pub use pallet_bridge_messages::Instance1 as Pangolin;
 
 // --- paritytech ---
 use bp_messages::LaneId;
-use bp_runtime::{messages::DispatchFeePayment, ChainId};
-use bridge_runtime_common::messages::source::FromThisChainMessagePayload;
+use bp_runtime::ChainId;
 use frame_support::PalletId;
-use pangoro_primitives::AccountId;
 // --- darwinia-network ---
-use crate::{
-	pangolin_messages::{ToPangolinMessagePayloadBox, PANGOLIN_S2S_ISSUING_PALLET_INDEX},
-	*,
-};
+use crate::{pangolin_messages::ToPangolinMessagePayloadBox, *};
 use bridge_primitives::{AccountIdConverter, PANGORO_PANGOLIN_LANE};
 use darwinia_support::s2s::LatestMessageNoncer;
-use dp_s2s::{CallParams, PayloadCreate};
 use to_substrate_backing::Config;
-
-// /// Create message payload according to call parameters
-// pub struct PangolinPayLoadCreator;
-// impl PayloadCreate<AccountId, ToPangolinMessagePayload> for PangolinPayLoadCreator {
-// 	fn payload(
-// 		submitter: AccountId,
-// 		spec_version: u32,
-// 		weight: u64,
-// 		call_params: CallParams,
-// 	) -> Result<ToPangolinMessagePayload, &'static str> {
-// 		let call = Self::encode_call(PANGOLIN_S2S_ISSUING_PALLET_INDEX, call_params)?;
-// 		return Ok(FromThisChainMessagePayload::<WithPangolinMessageBridge> {
-// 			spec_version,
-// 			weight,
-// 			origin: bp_message_dispatch::CallOrigin::SourceAccount(submitter),
-// 			call,
-// 			dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
-// 		});
-// 	}
-// }
-
 pub struct PangolinMessageNoncer;
 impl LatestMessageNoncer for PangolinMessageNoncer {
 	fn outbound_latest_generated_nonce(lane_id: LaneId) -> u64 {
@@ -66,7 +39,6 @@ impl Config for Runtime {
 	type BridgedChainId = PangolinChainId;
 	type OutboundPayload = ToPangolinMessagePayloadBox;
 	type MessageNoncer = PangolinMessageNoncer;
-	// type PayloadCreator = PangolinPayLoadCreator;
 	type MessageLaneId = BridgePangolinLaneId;
 	type MessagesBridge = BridgePangolinMessages;
 }

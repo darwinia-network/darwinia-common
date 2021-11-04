@@ -35,33 +35,13 @@ pub enum CallParams {
 	#[codec(index = 2)]
 	S2sBackingPalletUnlockFromRemote(H160, U256, Vec<u8>),
 }
-
-/// Creating a concrete message payload which would be relay to target chain.
-pub trait PayloadCreate<AccountId, MessagePayload>
-where
-	AccountId: Encode + Decode,
-{
-	fn encode_call(pallet_index: u8, call_params: CallParams) -> Result<Vec<u8>, &'static str> {
-		let mut encoded = vec![pallet_index];
-		encoded.append(&mut call_params.encode());
-		Ok(encoded)
-	}
-
-	fn payload(
-		submitter: AccountId,
-		spec_version: u32,
-		weight: u64,
-		call_params: CallParams,
-	) -> Result<MessagePayload, &'static str>;
-}
-
 /// Creating a concrete message payload which would be relay to target chain.
 pub trait CreatePayload<AccountId>
 where
 	AccountId: Encode + Decode,
 	Self: Sized,
 {
-	type payload: Sized + Encode + Decode;
+	type Payload: Sized + Encode + Decode;
 
 	fn encode_call(pallet_index: u8, call_params: CallParams) -> Result<Vec<u8>, &'static str> {
 		let mut encoded = vec![pallet_index];
@@ -74,7 +54,7 @@ where
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams,
-	) -> Result<Self::payload, &'static str>;
+	) -> Result<Self::Payload, &'static str>;
 }
 
 #[cfg(test)]

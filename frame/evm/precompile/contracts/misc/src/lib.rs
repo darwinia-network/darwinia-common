@@ -31,7 +31,7 @@ use darwinia_support::{
 };
 use dp_contract::mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams};
 use dp_evm::Precompile;
-use dp_s2s::{CallParams, CreatePayload, PayloadCreate};
+use dp_s2s::{CallParams, CreatePayload};
 // --- paritytech ---
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},

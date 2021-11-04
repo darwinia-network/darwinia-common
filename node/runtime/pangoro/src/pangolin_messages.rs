@@ -32,7 +32,7 @@ use bridge_primitives::{
 	PANGORO_PANGOLIN_LANE, WITH_PANGORO_MESSAGES_PALLET_NAME,
 };
 pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
-use dp_s2s::{CallParams, CreatePayload, PayloadCreate};
+use dp_s2s::{CallParams, CreatePayload};
 
 /// Message payload for Pangoro -> Pangolin messages.
 pub type ToPangolinMessagePayload = FromThisChainMessagePayload<WithPangolinMessageBridge>;
@@ -40,16 +40,17 @@ pub type ToPangolinMessagePayload = FromThisChainMessagePayload<WithPangolinMess
 pub const PANGOLIN_S2S_ISSUING_PALLET_INDEX: u8 = 49;
 
 #[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
-pub struct ToPangolinMessagePayloadBox(ToPangolinMessagePayload);
+pub struct ToPangolinMessagePayloadBox;
 
 impl CreatePayload<AccountId> for ToPangolinMessagePayloadBox {
-	type payload = ToPangolinMessagePayload;
+	type Payload = ToPangolinMessagePayload;
+
 	fn create(
 		submitter: AccountId,
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams,
-	) -> Result<Self::payload, &'static str> {
+	) -> Result<Self::Payload, &'static str> {
 		let call = Self::encode_call(PANGOLIN_S2S_ISSUING_PALLET_INDEX, call_params)?;
 		return Ok(FromThisChainMessagePayload::<WithPangolinMessageBridge> {
 			spec_version,

@@ -37,16 +37,17 @@ pub const PANGORO_S2S_BACKING_PALLET_INDEX: u8 = 20;
 pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessageBridge>;
 
 #[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
-pub struct ToPangoroMessagePayloadBox(ToPangoroMessagePayload);
+pub struct ToPangoroMessagePayloadBox;
 
 impl CreatePayload<AccountId> for ToPangoroMessagePayloadBox {
-	type payload = ToPangoroMessagePayload;
+	type Payload = ToPangoroMessagePayload;
+
 	fn create(
 		submitter: AccountId,
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams,
-	) -> Result<Self::payload, &'static str> {
+	) -> Result<Self::Payload, &'static str> {
 		let call = Self::encode_call(PANGORO_S2S_BACKING_PALLET_INDEX, call_params)?;
 		Ok(ToPangoroMessagePayload {
 			spec_version,
