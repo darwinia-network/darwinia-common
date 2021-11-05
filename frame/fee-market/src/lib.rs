@@ -406,7 +406,7 @@ impl<T: Config> Slasher<T> for () {
 		// Slash 20 RING for each delay block until the maximum slash value
 		let slash_each_block = 20_000_000_000u128;
 		let timeout_u128: u128 = timeout.unique_saturated_into();
-		let mut slash = base.saturating_add(
+		let mut slash = base_fee.saturating_add(
 			timeout_u128
 				.saturating_mul(slash_each_block)
 				.unique_saturated_into(),

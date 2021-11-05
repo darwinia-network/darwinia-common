@@ -139,8 +139,8 @@ where
 					break;
 				}
 			}
-			let lowest_fee = order.first_and_last_fee().0.unwrap_or_default();
-			let message_fee = order.first_and_last_fee().1.unwrap_or_default();
+			let lowest_fee = order.lowest_and_highest_fee().0.unwrap_or_default();
+			let message_fee = order.lowest_and_highest_fee().1.unwrap_or_default();
 
 			let message_reward;
 			let confirm_reward;
@@ -197,7 +197,7 @@ pub fn slash_assigned_relayers<T: Config>(
 	match (order.confirm_time, order.range_end()) {
 		(Some(confirm_time), Some(end_time)) if confirm_time >= end_time => {
 			let timeout = confirm_time - end_time;
-			let message_fee = order.first_and_last_fee().1.unwrap_or_default();
+			let message_fee = order.lowest_and_highest_fee().1.unwrap_or_default();
 			let slash_max = T::Slasher::slash(message_fee, timeout);
 			debug_assert!(
 				slash_max <= T::MiniumLockCollateral::get(),
@@ -241,33 +241,28 @@ pub fn do_slash<T: Config>(
 fn transfer_and_print_logs_on_error<T: Config>(
 	from: &T::AccountId,
 	to: &T::AccountId,
-	reward: RingBalance<T>,
+	amount: RingBalance<T>,
 ) {
-	if reward.is_zero() {
+	if amount.is_zero() {
 		return;
 	}
 
 	let pay_result = <T as Config>::RingCurrency::transfer(
 		from,
 		to,
-		reward,
+		amount,
 		// the relayer fund account must stay above ED (needs to be pre-funded)
 		ExistenceRequirement::KeepAlive,
 	);
 
 	match pay_result {
-		Ok(_) => log::trace!(
-			"Pay reward, from {:?} to {:?} reward: {:?}",
-			from,
-			to,
-			reward,
-		),
+		Ok(_) => log::trace!("Transfer, from {:?} to {:?} amount: {:?}", from, to, amount,),
 
 		Err(error) => log::error!(
-			"Failed to pay reward, from {:?} to {:?} reward {:?}: {:?}",
+			"Transfer, from {:?} to {:?} amount {:?}: {:?}",
 			from,
 			to,
-			reward,
+			amount,
 			error,
 		),
 	}

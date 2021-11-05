@@ -131,10 +131,10 @@ where
 		self.relayers.as_ref()
 	}
 
-	pub fn first_and_last_fee(&self) -> (Option<Balance>, Option<Balance>) {
-		let first = self.relayers.iter().nth(0).map(|r| r.fee);
-		let last = self.relayers.iter().last().map(|r| r.fee);
-		(first, last)
+	pub fn lowest_and_highest_fee(&self) -> (Option<Balance>, Option<Balance>) {
+		let lowest = self.relayers.iter().nth(0).map(|r| r.fee);
+		let highest = self.relayers.iter().last().map(|r| r.fee);
+		(lowest, highest)
 	}
 
 	pub fn is_confirmed(&self) -> bool {
@@ -247,7 +247,7 @@ mod test {
 		assert_eq!(order.relayer_valid_range(2).unwrap(), (150..200));
 		assert_eq!(order.relayer_valid_range(3).unwrap(), (200..250));
 		assert_eq!(order.range_end(), Some(250));
-		assert_eq!(order.first_and_last_fee(), (Some(30), Some(80)));
+		assert_eq!(order.lowest_and_highest_fee(), (Some(30), Some(80)));
 	}
 
 	#[test]
