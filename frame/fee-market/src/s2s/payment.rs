@@ -139,45 +139,55 @@ where
 					break;
 				}
 			}
-			let lowest_fee = order.lowest_and_highest_fee().0.unwrap_or_default();
-			let message_fee = order.lowest_and_highest_fee().1.unwrap_or_default();
+			match order.lowest_and_highest_fee() {
+				(Some(lowest_fee), Some(message_fee)) => {
+					let message_reward;
+					let confirm_reward;
 
-			let message_reward;
-			let confirm_reward;
-			if let Some(who) = order.required_delivery_relayer_for_time(order_confirm_time) {
-				// message fee - lowest fee => treasury
-				let treasury_reward = message_fee.saturating_sub(lowest_fee);
-				treasury_total_rewards = treasury_total_rewards.saturating_add(treasury_reward);
+					if let Some(who) = order.required_delivery_relayer_for_time(order_confirm_time)
+					{
+						// message fee - lowest fee => treasury
+						let treasury_reward = message_fee.saturating_sub(lowest_fee);
+						treasury_total_rewards =
+							treasury_total_rewards.saturating_add(treasury_reward);
 
-				// 60% * lowest fee => assigned_relayers_rewards
-				let assigned_relayers_reward = T::AssignedRelayersRewardRatio::get() * lowest_fee;
-				assigned_relayers_rewards
-					.entry(who)
-					.and_modify(|r| *r = r.saturating_add(assigned_relayers_reward))
-					.or_insert(assigned_relayers_reward);
+						// 60% * lowest fee => assigned_relayers_rewards
+						let assigned_relayers_reward =
+							T::AssignedRelayersRewardRatio::get() * lowest_fee;
+						assigned_relayers_rewards
+							.entry(who)
+							.and_modify(|r| *r = r.saturating_add(assigned_relayers_reward))
+							.or_insert(assigned_relayers_reward);
 
-				let bridger_relayers_reward = lowest_fee.saturating_sub(assigned_relayers_reward);
-				// 80% * (1 - 60%) * lowest_fee => message relayer
-				message_reward = T::MessageRelayersRewardRatio::get() * bridger_relayers_reward;
-				// 20% * (1 - 60%) * lowest_fee => confirm relayer
-				confirm_reward = T::ConfirmRelayersRewardRatio::get() * bridger_relayers_reward;
-			} else {
-				// The message is delivered by common relayer instead of order assigned relayers, all assigned relayers of this order should be punished.
-				let slashed_reward = slash_assigned_relayers::<T>(order, relayer_fund_account);
+						let bridger_relayers_reward =
+							lowest_fee.saturating_sub(assigned_relayers_reward);
+						// 80% * (1 - 60%) * lowest_fee => message relayer
+						message_reward =
+							T::MessageRelayersRewardRatio::get() * bridger_relayers_reward;
+						// 20% * (1 - 60%) * lowest_fee => confirm relayer
+						confirm_reward =
+							T::ConfirmRelayersRewardRatio::get() * bridger_relayers_reward;
+					} else {
+						// The message is delivered by common relayer instead of order assigned relayers, all assigned relayers of this order should be punished.
+						let slashed_reward =
+							slash_assigned_relayers::<T>(order, relayer_fund_account);
 
-				// 80% total slash => confirm relayer
-				message_reward = T::MessageRelayersRewardRatio::get() * slashed_reward;
-				// 20% total slash => confirm relayer
-				confirm_reward = T::ConfirmRelayersRewardRatio::get() * slashed_reward;
+						// 80% total slash => confirm relayer
+						message_reward = T::MessageRelayersRewardRatio::get() * slashed_reward;
+						// 20% total slash => confirm relayer
+						confirm_reward = T::ConfirmRelayersRewardRatio::get() * slashed_reward;
+					}
+
+					// Update confirmation relayer total rewards
+					confirmation_rewards = confirmation_rewards.saturating_add(confirm_reward);
+					// Update message relayers total rewards
+					messages_rewards
+						.entry(message_relayer)
+						.and_modify(|r| *r = r.saturating_add(message_reward))
+						.or_insert(message_reward);
+				}
+				_ => {}
 			}
-
-			// Update confirmation relayer total rewards
-			confirmation_rewards = confirmation_rewards.saturating_add(confirm_reward);
-			// Update message relayers total rewards
-			messages_rewards
-				.entry(message_relayer)
-				.and_modify(|r| *r = r.saturating_add(message_reward))
-				.or_insert(message_reward);
 		}
 	}
 	RewardsBook {

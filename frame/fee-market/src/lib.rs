@@ -128,8 +128,6 @@ pub mod pallet {
 		OnlyIncreaseLockedCollateralAllowed,
 		/// The fee is lower than MinimumRelayFee
 		RelayFeeTooLow,
-		/// The enrolled relayers less than MIN_RELAYERS_NUMBER
-		TooFewEnrolledRelayers,
 		/// The relayer is occupied, and can't cancel enrollment now.
 		OccupiedRelayer,
 		/// Extend lock failed.
@@ -153,7 +151,7 @@ pub mod pallet {
 	// Priority relayers storage
 	#[pallet::storage]
 	#[pallet::getter(fn assigned_relayers)]
-	pub type AssignedRelayersStorage<T: Config> =
+	pub type AssignedRelayers<T: Config> =
 		StorageValue<_, Vec<Relayer<T::AccountId, RingBalance<T>>>, OptionQuery>;
 
 	// Order storage
@@ -259,10 +257,6 @@ pub mod pallet {
 		pub fn cancel_enrollment(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_enrolled(&who), <Error<T>>::NotEnrolled);
-			ensure!(
-				<Relayers<T>>::get().len() > T::AssignedRelayersNumber::get() as usize,
-				<Error<T>>::TooFewEnrolledRelayers
-			);
 			ensure!(!Self::is_occupied(&who), <Error<T>>::OccupiedRelayer);
 
 			Self::remove_enrolled_relayer(&who);
@@ -320,16 +314,14 @@ impl<T: Config> Pallet<T> {
 					assigned_relayers.push(r);
 				}
 			}
-			<AssignedRelayersStorage<T>>::put(assigned_relayers);
+			<AssignedRelayers<T>>::put(assigned_relayers);
 		}
 	}
 
 	/// Update relayer locked collateral, then update market fee, this will changes RelayersMap storage.
 	pub fn update_collateral(who: &T::AccountId, new_collateral: RingBalance<T>) {
-		// Ensure always at least `AssignedRelayersNumber` relayers are able to provide market fee.
-		if new_collateral < T::MiniumLockCollateral::get()
-			&& <Relayers<T>>::get().len() > T::AssignedRelayersNumber::get() as usize
-		{
+		// If the slashed collateral lower than MiniumLockCollateral, kick it out.
+		if new_collateral < T::MiniumLockCollateral::get() {
 			Self::remove_enrolled_relayer(who);
 			return;
 		}
@@ -373,14 +365,6 @@ impl<T: Config> Pallet<T> {
 	/// Get market fee(P3), If the enrolled relayers less then MIN_RELAYERS_NUMBER, return NONE.
 	pub fn market_fee() -> Option<Fee<T>> {
 		Self::assigned_relayers().and_then(|relayers| relayers.last().map(|r| r.fee))
-	}
-
-	/// Get order info
-	pub fn order(
-		lane_id: &LaneId,
-		message: &MessageNonce,
-	) -> Option<Order<T::AccountId, T::BlockNumber, Fee<T>>> {
-		<Orders<T>>::get((lane_id, message))
 	}
 
 	/// Whether the enrolled relayer is occupied(Responsible for order relaying)

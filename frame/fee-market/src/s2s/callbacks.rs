@@ -62,6 +62,7 @@ impl<T: Config> OnDeliveryConfirmed for FeeMarketMessageConfirmedHandler<T> {
 			}
 		}
 
+		// TODO: The returned weight should be more accurately. See: https://github.com/darwinia-network/darwinia-common/issues/911
 		<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
 	}
 }
