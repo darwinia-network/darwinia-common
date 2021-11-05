@@ -139,6 +139,8 @@ where
 					break;
 				}
 			}
+			println!("the message relayer is {:?}", message_relayer);
+
 			match order.lowest_and_highest_fee() {
 				(Some(lowest_fee), Some(message_fee)) => {
 					let message_reward;
@@ -190,6 +192,15 @@ where
 			}
 		}
 	}
+
+	println!("messages_relayers_rewards {:?}", messages_rewards);
+	println!(
+		"confirmation_relayer_rewards {:?}",
+		confirmation_rewards
+	);
+	println!("assigned_relayers_rewards {:?}", assigned_relayers_rewards);
+	println!("treasury_total_rewards {:?}", treasury_total_rewards);
+
 	RewardsBook {
 		messages_relayers_rewards: messages_rewards,
 		confirmation_relayer_rewards: confirmation_rewards,
@@ -217,6 +228,7 @@ pub fn slash_assigned_relayers<T: Config>(
 			for assigned_relayer in order.relayers_slice() {
 				let slashed_asset =
 					do_slash::<T>(&assigned_relayer.id, relayer_fund_account, slash_max);
+				println!("slash {:?}, {:?}", assigned_relayer.id, slashed_asset.clone());
 				total_slash += slashed_asset;
 			}
 		}

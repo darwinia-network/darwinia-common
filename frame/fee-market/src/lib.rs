@@ -156,6 +156,7 @@ pub mod pallet {
 
 	// Order storage
 	#[pallet::storage]
+	#[pallet::getter(fn order)]
 	pub type Orders<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -315,6 +316,9 @@ impl<T: Config> Pallet<T> {
 				}
 			}
 			<AssignedRelayers<T>>::put(assigned_relayers);
+		} else {
+			// The enrolled relayers not enough, pallet can't provide any fee advice.
+			<AssignedRelayers<T>>::kill();
 		}
 	}
 
@@ -342,8 +346,14 @@ impl<T: Config> Pallet<T> {
 	/// Remove enrolled relayer, then update market fee.
 	pub fn remove_enrolled_relayer(who: &T::AccountId) {
 		T::RingCurrency::remove_lock(T::LockId::get(), who);
+
 		<RelayersMap<T>>::remove(who.clone());
 		<Relayers<T>>::mutate(|relayers| relayers.retain(|x| x != who));
+		<AssignedRelayers<T>>::mutate(|assigned_relayers| {
+			if let Some(relayers) = assigned_relayers {
+				relayers.retain(|x| x.id != *who);
+			}
+		});
 		Self::update_market();
 	}
 
