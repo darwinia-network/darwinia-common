@@ -5263,6 +5263,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "module-transaction-pause"
+version = "2.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "more-asserts"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
