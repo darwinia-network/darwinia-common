@@ -49,24 +49,19 @@ pub struct FeeMarketMessageConfirmedHandler<T>(PhantomData<T>);
 
 impl<T: Config> OnDeliveryConfirmed for FeeMarketMessageConfirmedHandler<T> {
 	fn on_messages_delivered(lane: &LaneId, delivered_messages: &DeliveredMessages) -> Weight {
-		let mut reads = 0;
-		let mut writes = 0;
-
 		let now = frame_system::Pallet::<T>::block_number();
 		for message_nonce in delivered_messages.begin..=delivered_messages.end {
 			if let Some(order) = <Orders<T>>::get((lane, message_nonce)) {
-				reads += 1;
 				if !order.is_confirmed() {
 					<Orders<T>>::mutate((lane, message_nonce), |order| match order {
 						Some(order) => order.set_confirm_time(Some(now)),
 						None => {}
 					});
 					<ConfirmedMessagesThisBlock<T>>::append((lane, message_nonce));
-					writes += 2;
 				}
 			}
 		}
 
-		<T as frame_system::Config>::DbWeight::get().reads_writes(reads, writes)
+		<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
 	}
 }
