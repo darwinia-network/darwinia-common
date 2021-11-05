@@ -87,21 +87,21 @@ where
 		} = slash_and_calculate_rewards::<T, I>(messages_relayers, relayer_fund_account);
 
 		// Pay confirmation relayer rewards
-		transfer_and_print_logs_on_error::<T>(
+		do_reward::<T>(
 			relayer_fund_account,
 			confirmation_relayer,
 			confirmation_relayer_rewards,
 		);
 		// Pay messages relayers rewards
 		for (relayer, reward) in messages_relayers_rewards {
-			transfer_and_print_logs_on_error::<T>(relayer_fund_account, &relayer, reward);
+			do_reward::<T>(relayer_fund_account, &relayer, reward);
 		}
 		// Pay assign relayer reward
 		for (relayer, reward) in assigned_relayers_rewards {
-			transfer_and_print_logs_on_error::<T>(relayer_fund_account, &relayer, reward);
+			do_reward::<T>(relayer_fund_account, &relayer, reward);
 		}
 		// Pay treasury reward
-		transfer_and_print_logs_on_error::<T>(
+		do_reward::<T>(
 			relayer_fund_account,
 			&T::TreasuryPalletId::get().into_account(),
 			treasury_total_rewards,
@@ -237,41 +237,47 @@ pub fn do_slash<T: Config>(
 	if locked_collateral >= slash_max {
 		slashed = slash_max;
 		let locked_reserved = locked_collateral.saturating_sub(slashed);
-		transfer_and_print_logs_on_error::<T>(slash_account, fund_account, slashed);
+		let _ = <T as Config>::RingCurrency::transfer(
+			slash_account,
+			fund_account,
+			slashed,
+			ExistenceRequirement::AllowDeath,
+		);
 		crate::Pallet::<T>::update_collateral(&slash_account, locked_reserved);
 	} else {
 		slashed = locked_collateral;
-		transfer_and_print_logs_on_error::<T>(slash_account, fund_account, slashed);
+		let _ = <T as Config>::RingCurrency::transfer(
+			slash_account,
+			fund_account,
+			slashed,
+			ExistenceRequirement::AllowDeath,
+		);
 		crate::Pallet::<T>::update_collateral(&slash_account, RingBalance::<T>::zero());
 	}
 	slashed
 }
 
-/// Do transfer
-fn transfer_and_print_logs_on_error<T: Config>(
-	from: &T::AccountId,
-	to: &T::AccountId,
-	amount: RingBalance<T>,
-) {
-	if amount.is_zero() {
+/// Do reward
+fn do_reward<T: Config>(from: &T::AccountId, to: &T::AccountId, reward: RingBalance<T>) {
+	if reward.is_zero() {
 		return;
 	}
 
 	let pay_result = <T as Config>::RingCurrency::transfer(
 		from,
 		to,
-		amount,
+		reward,
 		// the relayer fund account must stay above ED (needs to be pre-funded)
 		ExistenceRequirement::KeepAlive,
 	);
 
 	match pay_result {
-		Ok(_) => log::trace!("Transfer, from {:?} to {:?} amount: {:?}", from, to, amount),
+		Ok(_) => log::trace!("Reward, from {:?} to {:?} reward: {:?}", from, to, reward),
 		Err(e) => log::error!(
-			"Transfer, from {:?} to {:?} amount {:?}: {:?}",
+			"Reward, from {:?} to {:?} reward {:?}: {:?}",
 			from,
 			to,
-			amount,
+			reward,
 			e,
 		),
 	}
