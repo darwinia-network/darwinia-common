@@ -256,14 +256,13 @@ fn transfer_and_print_logs_on_error<T: Config>(
 	);
 
 	match pay_result {
-		Ok(_) => log::trace!("Transfer, from {:?} to {:?} amount: {:?}", from, to, amount,),
-
-		Err(error) => log::error!(
+		Ok(_) => log::trace!("Transfer, from {:?} to {:?} amount: {:?}", from, to, amount),
+		Err(e) => log::error!(
 			"Transfer, from {:?} to {:?} amount {:?}: {:?}",
 			from,
 			to,
 			amount,
-			error,
+			e,
 		),
 	}
 }
