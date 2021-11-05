@@ -132,6 +132,8 @@ pub mod pallet {
 		TooFewEnrolledRelayers,
 		/// The relayer is occupied, and can't cancel enrollment now.
 		OccupiedRelayer,
+		/// Extend lock failed.
+		ExtendLockFailed,
 	}
 
 	// Enrolled relayers storage
@@ -306,12 +308,12 @@ impl<T: Config> Pallet<T> {
 			.iter()
 			.map(RelayersMap::<T>::get)
 			.collect();
-		relayers.sort();
 
 		// Select the first `AssignedRelayersNumber` relayers as AssignedRelayer.
 		// Only when total relayer's number greater than `AssignedRelayersNumber`, selection happens.
 		let assigned_relayers_len = T::AssignedRelayersNumber::get() as usize;
 		if relayers.len() >= assigned_relayers_len {
+			relayers.sort();
 			let mut assigned_relayers = Vec::with_capacity(assigned_relayers_len);
 			for i in 0..assigned_relayers_len {
 				if let Some(r) = relayers.get(i) {
@@ -337,7 +339,8 @@ impl<T: Config> Pallet<T> {
 			who,
 			new_collateral,
 			WithdrawReasons::all(),
-		);
+		)
+		.map_err(|_| <Error<T>>::ExtendLockFailed);
 		<RelayersMap<T>>::mutate(who.clone(), |relayer| {
 			relayer.collateral = new_collateral;
 		});
@@ -392,14 +395,14 @@ impl<T: Config> Pallet<T> {
 }
 
 pub trait Slasher<T: Config> {
-	fn slash(base: RingBalance<T>, _timeout: T::BlockNumber) -> RingBalance<T>;
+	fn slash(base_fee: RingBalance<T>, timeout: T::BlockNumber) -> RingBalance<T>;
 }
 
 impl<T: Config> Slasher<T> for () {
-	// The slash result = base(p3 fee) + slash_each_block * timeout
+	// The slash result = base_fee + slash_each_block * timeout
 	// Note: The maximum slash result is the MiniumLockCollateral. We mush ensures that all enrolled
 	// relayers have ability to pay this slash result.
-	fn slash(base: Fee<T>, timeout: T::BlockNumber) -> RingBalance<T> {
+	fn slash(base_fee: Fee<T>, timeout: T::BlockNumber) -> RingBalance<T> {
 		// Slash 20 RING for each delay block until the maximum slash value
 		let slash_each_block = 20_000_000_000u128;
 		let timeout_u128: u128 = timeout.unique_saturated_into();
