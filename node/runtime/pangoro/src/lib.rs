@@ -189,6 +189,8 @@ frame_support::construct_runtime!(
 
 		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Config<T>, Event<T>} = 20,
 		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 22,
+
+		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 23,
 	}
 );
 

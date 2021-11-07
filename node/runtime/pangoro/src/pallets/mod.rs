@@ -63,3 +63,6 @@ pub use to_substrate_backing_::*;
 
 pub mod fee_market;
 pub use fee_market::*;
+
+pub mod transaction_pause;
+pub use transaction_pause::*;
