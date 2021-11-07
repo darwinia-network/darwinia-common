@@ -12,14 +12,11 @@ sp-runtime    = { git = "https://github.com/darwinia-network/substrate", default
 sp-std        = { git = "https://github.com/darwinia-network/substrate", default-features = false, tag = "darwinia-v0.11.5" }
 
 [dev-dependencies]
-# orml-tokens     = { path = "../../orml/tokens" }
-# orml-traits     = { path = "../../orml/traits" }
-# pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-# sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-# primitives      = { package = "acala-primitives", path = "../../primitives" }
-# smallvec        = "1.4.1"
-# sp-core         = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
-# support         = { package = "module-support", path = "../support" }
+darwinia-balances = { path = "../balances" }
+darwinia-support  = { path = "../support" }
+max-encoded-len   = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-core           = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-io             = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 
 [features]
 default = ["std"]

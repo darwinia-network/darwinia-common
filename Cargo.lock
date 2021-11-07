@@ -5266,9 +5266,14 @@ dependencies = [
 name = "module-transaction-pause"
 version = "2.0.0"
 dependencies = [
+ "darwinia-balances",
+ "darwinia-support",
  "frame-support",
  "frame-system",
+ "max-encoded-len",
  "parity-scale-codec",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]
