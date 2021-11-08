@@ -39,6 +39,7 @@ use frame_support::{
 	transactional, PalletId,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
+use num_traits::Zero;
 use sp_runtime::{
 	traits::{Saturating, UniqueSaturatedInto},
 	Permill,
@@ -69,9 +70,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type LockId: Get<LockIdentifier>;
 
-		/// The minimum locked collateral for a fee market relayer, also represented as the maximum value for slash.
-		#[pallet::constant]
-		type MiniumLockCollateral: Get<RingBalance<Self>>;
 		/// The minimum fee for relaying.
 		#[pallet::constant]
 		type MinimumRelayFee: Get<Fee<Self>>;
@@ -93,7 +91,7 @@ pub mod pallet {
 		type Slasher: Slasher<Self>;
 		/// TODO: ADD more comment
 		#[pallet::constant]
-		type CollateralForEachOrder: Get<RingBalance<Self>>;
+		type CollateralEachOrder: Get<RingBalance<Self>>;
 
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 			+ Currency<Self::AccountId>;
@@ -110,28 +108,31 @@ pub mod pallet {
 	)]
 	pub enum Event<T: Config> {
 		/// Relayer enrollment
-		EnrollAndLockCollateral(T::AccountId, RingBalance<T>, Fee<T>, u32),
-		/// Update relayer locked collateral
-		UpdateLockedCollateral(T::AccountId, RingBalance<T>),
-		/// Update relayer fee
-		UpdateRelayFee(T::AccountId, Fee<T>),
+		Enroll(T::AccountId, RingBalance<T>, Fee<T>, u32),
+		/// Update relayer
+		UpdateRelayer(
+			T::AccountId,
+			Option<RingBalance<T>>,
+			Option<u32>,
+			Option<Fee<T>>,
+		),
 		/// Relayer cancel enrollment
 		CancelEnrollment(T::AccountId),
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Insufficient balance
+		/// Insufficient balance.
 		InsufficientBalance,
-		/// The locked collateral is lower than MiniumLockLimit
+		/// The locked collateral is lower than MiniumLockLimit.
 		LockCollateralTooLow,
-		/// The relayer has been enrolled
+		/// The relayer has been enrolled.
 		AlreadyEnrolled,
-		/// This relayer doesn't enroll ever
+		/// This relayer doesn't enroll ever.
 		NotEnrolled,
-		/// Only increase lock collateral is allowed when update_locked_balance
-		OnlyIncreaseLockedCollateralAllowed,
-		/// The fee is lower than MinimumRelayFee
+		/// Only increase order capacity is allowed.
+		OnlyIncreaseOrderCapacityAllowed,
+		/// The fee is lower than MinimumRelayFee.
 		RelayFeeTooLow,
 		/// The relayer is occupied, and can't cancel enrollment now.
 		OccupiedRelayer,
@@ -191,28 +192,30 @@ pub mod pallet {
 		/// Any accounts can enroll to be a relayer by lock collateral. The relay fee is optional,
 		/// the default value is MinimumRelayFee in runtime.
 		/// Note: One account can enroll only once.
+		/// todo: update the weight function
 		#[pallet::weight(<T as Config>::WeightInfo::enroll_and_lock_collateral())]
 		#[transactional]
-		pub fn enroll_and_lock_collateral(
+		pub fn enroll(
 			origin: OriginFor<T>,
 			order_capacity: u32,
 			relay_fee: Option<Fee<T>>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
+			ensure!(!Self::is_enrolled(&who), <Error<T>>::AlreadyEnrolled);
+
 			// Calculate how many collateral needs for this order capacity.
 			let lock_collateral =
-				T::CollateralForEachOrder::get().saturating_mul(order_capacity.into());
-
+				T::CollateralEachOrder::get().saturating_mul(order_capacity.into());
 			ensure!(
 				T::RingCurrency::free_balance(&who) >= lock_collateral,
 				<Error<T>>::InsufficientBalance
 			);
-			ensure!(!Self::is_enrolled(&who), <Error<T>>::AlreadyEnrolled);
+
 			if let Some(fee) = relay_fee {
 				ensure!(fee >= T::MinimumRelayFee::get(), <Error<T>>::RelayFeeTooLow);
 			}
-
 			let fee = relay_fee.unwrap_or_else(T::MinimumRelayFee::get);
+
 			T::RingCurrency::set_lock(
 				T::LockId::get(),
 				&who,
@@ -221,7 +224,6 @@ pub mod pallet {
 				},
 				WithdrawReasons::all(),
 			);
-
 			// Store enrollment detail information.
 			<RelayersMap<T>>::insert(
 				&who,
@@ -230,8 +232,7 @@ pub mod pallet {
 			<Relayers<T>>::append(who.clone());
 
 			Self::update_market();
-			// TODO: let application knows about this changes.
-			Self::deposit_event(Event::<T>::EnrollAndLockCollateral(
+			Self::deposit_event(Event::<T>::Enroll(
 				who,
 				lock_collateral,
 				fee,
@@ -252,20 +253,59 @@ pub mod pallet {
 			ensure!(Self::is_enrolled(&who), <Error<T>>::NotEnrolled);
 			ensure!(
 				new_order_capacity > Self::get_relayer(&who).order_capacity,
-				// todo: update the error type
-				<Error<T>>::OnlyIncreaseLockedCollateralAllowed
+				<Error<T>>::OnlyIncreaseOrderCapacityAllowed
 			);
 
 			// Calculate how many collateral needs for this order capacity.
 			let new_collateral =
-				T::CollateralForEachOrder::get().saturating_mul(new_order_capacity.into());
+				T::CollateralEachOrder::get().saturating_mul(new_order_capacity.into());
 			ensure!(
 				T::RingCurrency::free_balance(&who) >= new_collateral,
 				<Error<T>>::InsufficientBalance
 			);
 
-			Self::update_order_capacity(&who, new_collateral, Some(new_order_capacity));
-			Self::deposit_event(Event::<T>::UpdateLockedCollateral(who, new_collateral));
+			let _ = T::RingCurrency::extend_lock(
+				T::LockId::get(),
+				&who,
+				new_collateral,
+				WithdrawReasons::all(),
+			)
+			.map_err(|_| <Error<T>>::ExtendLockFailed);
+			<RelayersMap<T>>::mutate(who.clone(), |relayer| {
+				relayer.collateral = new_collateral;
+				relayer.order_capacity += new_order_capacity - relayer.order_capacity;
+			});
+
+			Self::update_market();
+			Self::deposit_event(Event::<T>::UpdateRelayer(
+				who,
+				Some(new_collateral),
+				Some(new_order_capacity),
+				None,
+			));
+			Ok(().into())
+		}
+
+		/// Update relay fee for enrolled relayer
+		#[pallet::weight(<T as Config>::WeightInfo::update_relay_fee())]
+		#[transactional]
+		pub fn update_relay_fee(
+			origin: OriginFor<T>,
+			new_fee: Fee<T>,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			ensure!(Self::is_enrolled(&who), <Error<T>>::NotEnrolled);
+			ensure!(
+				new_fee >= T::MinimumRelayFee::get(),
+				<Error<T>>::RelayFeeTooLow
+			);
+
+			<RelayersMap<T>>::mutate(who.clone(), |relayer| {
+				relayer.fee = new_fee;
+			});
+
+			Self::update_market();
+			Self::deposit_event(Event::<T>::UpdateRelayer(who, None, None, Some(new_fee)));
 			Ok(().into())
 		}
 
@@ -281,39 +321,15 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::CancelEnrollment(who));
 			Ok(().into())
 		}
-
-		/// Update relay fee for enrolled relayer
-		#[pallet::weight(<T as Config>::WeightInfo::update_relay_fee())]
-		#[transactional]
-		pub fn update_relay_fee(
-			origin: OriginFor<T>,
-			relay_fee: Fee<T>,
-		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
-			ensure!(Self::is_enrolled(&who), <Error<T>>::NotEnrolled);
-			ensure!(
-				relay_fee >= T::MinimumRelayFee::get(),
-				<Error<T>>::RelayFeeTooLow
-			);
-
-			<RelayersMap<T>>::mutate(who.clone(), |relayer| {
-				relayer.fee = relay_fee;
-			});
-
-			Self::update_market();
-			Self::deposit_event(Event::<T>::UpdateRelayFee(who, relay_fee));
-			Ok(().into())
-		}
 	}
 }
 
 impl<T: Config> Pallet<T> {
 	/// An important update in this pallet, need to update market information in the following cases:
 	///
-	/// - When new relayer enroll
-	/// - When enrolled relayer wants to update relaying fee
-	/// - When enrolled relayer wants to cancel enrollment
-	/// - When some enrolled relayer's collateral below MiniumLockCollateral, might trigger market update
+	/// - When new relayer enroll.
+	/// - When enrolled relayer wants to update fee or order capacity.
+	/// - When enrolled relayer wants to cancel enrollment.
 	pub fn update_market() {
 		// Sort all enrolled relayers firstly.
 		let mut relayers: Vec<Relayer<T::AccountId, RingBalance<T>>> = <Relayers<T>>::get()
@@ -328,8 +344,13 @@ impl<T: Config> Pallet<T> {
 			relayers.sort();
 
 			let mut assigned_relayers = Vec::with_capacity(assigned_relayers_len);
-			for i in 0..assigned_relayers_len {
-				if let Some(r) = relayers.get(i) {
+			// todo: need more tests.
+			while let Some(r) = relayers.iter().next() {
+				if assigned_relayers.len() == assigned_relayers_len {
+					break;
+				}
+
+				if r.order_capacity >= 1 {
 					assigned_relayers.push(r);
 				}
 			}
@@ -340,32 +361,27 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	/// Update relayer locked collateral, then update market fee, this will changes RelayersMap storage.
-	pub fn update_order_capacity(
-		who: &T::AccountId,
-		new_collateral: RingBalance<T>,
-		new_order_capacity: Option<u32>,
-	) {
-		// todo: how to kick out slashed relayers
-		// If the slashed collateral lower than MiniumLockCollateral, kick it out.
-		// if new_collateral < T::MiniumLockCollateral::get() {
-		// 	Self::remove_enrolled_relayer(who);
-		// 	return;
-		// }
-		if let Some(new_capacity) = new_order_capacity {
-			let _ = T::RingCurrency::extend_lock(
-				T::LockId::get(),
-				who,
-				new_collateral,
-				WithdrawReasons::all(),
-			)
-			.map_err(|_| <Error<T>>::ExtendLockFailed);
-
-			<RelayersMap<T>>::mutate(who.clone(), |relayer| {
-				relayer.collateral = new_collateral;
-				relayer.order_capacity += new_capacity - relayer.order_capacity;
-			});
+	/// Update relayer after slash occurred, this will changes RelayersMap storage.
+	pub fn update_relayer_after_slash(who: &T::AccountId, new_collateral: RingBalance<T>) {
+		if new_collateral == RingBalance::<T>::zero() {
+			Self::remove_enrolled_relayer(who);
+			return;
 		}
+
+		// Update locked collateral
+		let _ = T::RingCurrency::extend_lock(
+			T::LockId::get(),
+			who,
+			new_collateral,
+			WithdrawReasons::all(),
+		)
+		.map_err(|_| <Error<T>>::ExtendLockFailed);
+		// Update order capacity
+		let new_capacity = new_collateral.saturating_div(T::CollateralEachOrder::get());
+		<RelayersMap<T>>::mutate(who.clone(), |relayer| {
+			relayer.collateral = new_collateral;
+			relayer.order_capacity += new_capacity - relayer.order_capacity;
+		});
 
 		Self::update_market();
 	}
@@ -384,20 +400,22 @@ impl<T: Config> Pallet<T> {
 		Self::update_market();
 	}
 
-	pub fn inc_relayer_order_capacity(relayers: &[T::AccountId]) {
-		for who in relayers {
-			<RelayersMap<T>>::mutate(who.clone(), |r| {
-				r.order_capacity += 1;
-			});
-		}
-		Self::update_market();
-	}
-
+	/// Decrease relayer order capacity by 1 after message order created.
 	pub fn dec_relayer_order_capacity(relayers: &[T::AccountId]) {
 		// todo: need to check 0-1 case.
 		for who in relayers {
 			<RelayersMap<T>>::mutate(who.clone(), |r| {
 				r.order_capacity -= 1;
+			});
+		}
+		Self::update_market();
+	}
+
+	/// Increase relayer order capacity by 1 after message order confirmed.
+	pub fn inc_relayer_order_capacity(relayers: &[T::AccountId]) {
+		for who in relayers {
+			<RelayersMap<T>>::mutate(who.clone(), |r| {
+				r.order_capacity += 1;
 			});
 		}
 		Self::update_market();
@@ -443,8 +461,7 @@ impl<T: Config> Slasher<T> for () {
 	// Note: The maximum slash result is the MiniumLockCollateral. We mush ensures that all enrolled
 	// relayers have ability to pay this slash result.
 	fn slash(base_fee: Fee<T>, timeout: T::BlockNumber) -> RingBalance<T> {
-		// Slash 20 RING for each delay block until the maximum slash value
-		let slash_each_block = 20_000_000_000u128;
+		let slash_each_block = 2_000_000_000u128;
 		let timeout_u128: u128 = timeout.unique_saturated_into();
 		let mut slash = base_fee.saturating_add(
 			timeout_u128
@@ -452,8 +469,9 @@ impl<T: Config> Slasher<T> for () {
 				.unique_saturated_into(),
 		);
 
-		if slash >= T::MiniumLockCollateral::get() {
-			slash = T::MiniumLockCollateral::get();
+		// todo: need more tests.
+		if slash >= T::CollateralEachOrder::get() {
+			slash = T::CollateralEachOrder::get();
 		}
 		slash
 	}

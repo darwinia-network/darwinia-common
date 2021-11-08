@@ -30,12 +30,20 @@ impl<T: Config> OnMessageAccepted for FeeMarketMessageAcceptedHandler<T> {
 		// Create a new order based on the latest block, assign relayers which have priority to relaying
 		let now = frame_system::Pallet::<T>::block_number();
 		if let Some(assigned_relayers) = <Pallet<T>>::assigned_relayers() {
-			let order = Order::new(*lane, *message, now, assigned_relayers, T::Slot::get());
+			let order = Order::new(
+				*lane,
+				*message,
+				now,
+				assigned_relayers.clone(),
+				T::Slot::get(),
+			);
 			// Store the create order
 			<Orders<T>>::insert((order.lane, order.message), order);
 
-			let assigned_relayers_ids: Vec<T::AccountId> =
-				assigned_relayers.iter().map(|relayer| relayer.id).collect();
+			let assigned_relayers_ids: Vec<T::AccountId> = assigned_relayers
+				.iter()
+				.map(|relayer| relayer.id.clone())
+				.collect();
 			Pallet::<T>::dec_relayer_order_capacity(&assigned_relayers_ids);
 		}
 
@@ -58,8 +66,11 @@ impl<T: Config> OnDeliveryConfirmed for FeeMarketMessageConfirmedHandler<T> {
 					});
 					<ConfirmedMessagesThisBlock<T>>::append((lane, message_nonce));
 
-					let assigned_relayers_ids: Vec<T::AccountId> =
-						order.relayers_slice().iter().map(|r| r.id).collect();
+					let assigned_relayers_ids: Vec<T::AccountId> = order
+						.relayers_slice()
+						.iter()
+						.map(|r| r.id.clone())
+						.collect();
 					// todo: should we move this part after the reward?
 					Pallet::<T>::inc_relayer_order_capacity(&assigned_relayers_ids);
 				}

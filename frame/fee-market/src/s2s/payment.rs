@@ -139,7 +139,6 @@ where
 					break;
 				}
 			}
-			println!("the message relayer is {:?}", message_relayer);
 
 			match order.lowest_and_highest_fee() {
 				(Some(lowest_fee), Some(message_fee)) => {
@@ -192,12 +191,6 @@ where
 			}
 		}
 	}
-
-	println!("messages_relayers_rewards {:?}", messages_rewards);
-	println!("confirmation_relayer_rewards {:?}", confirmation_rewards);
-	println!("assigned_relayers_rewards {:?}", assigned_relayers_rewards);
-	println!("treasury_total_rewards {:?}", treasury_total_rewards);
-
 	RewardsBook {
 		messages_relayers_rewards: messages_rewards,
 		confirmation_relayer_rewards: confirmation_rewards,
@@ -217,19 +210,10 @@ pub fn slash_assigned_relayers<T: Config>(
 			let timeout = confirm_time - end_time;
 			let message_fee = order.lowest_and_highest_fee().1.unwrap_or_default();
 			let slash_max = T::Slasher::slash(message_fee, timeout);
-			debug_assert!(
-				slash_max <= T::MiniumLockCollateral::get(),
-				"The maximum slash value returned from Slasher is MiniumLockCollateral"
-			);
 
 			for assigned_relayer in order.relayers_slice() {
 				let slashed_asset =
 					do_slash::<T>(&assigned_relayer.id, relayer_fund_account, slash_max);
-				println!(
-					"slash {:?}, {:?}",
-					assigned_relayer.id,
-					slashed_asset.clone()
-				);
 				total_slash += slashed_asset;
 			}
 		}
@@ -246,8 +230,10 @@ pub fn do_slash<T: Config>(
 ) -> RingBalance<T> {
 	let slashed;
 	let locked_collateral = crate::Pallet::<T>::relayer_locked_collateral(&slash_account);
+
 	T::RingCurrency::remove_lock(T::LockId::get(), &slash_account);
 	if locked_collateral >= slash_max {
+		// The original locked collateral is able to cover slash.
 		slashed = slash_max;
 		let locked_reserved = locked_collateral.saturating_sub(slashed);
 		let _ = <T as Config>::RingCurrency::transfer(
@@ -256,8 +242,9 @@ pub fn do_slash<T: Config>(
 			slashed,
 			ExistenceRequirement::AllowDeath,
 		);
-		crate::Pallet::<T>::update_collateral(&slash_account, locked_reserved);
+		crate::Pallet::<T>::update_relayer_after_slash(&slash_account, locked_reserved);
 	} else {
+		// The original locked collateral is not enough, slash all locked collateral before.
 		slashed = locked_collateral;
 		let _ = <T as Config>::RingCurrency::transfer(
 			slash_account,
@@ -265,7 +252,7 @@ pub fn do_slash<T: Config>(
 			slashed,
 			ExistenceRequirement::AllowDeath,
 		);
-		crate::Pallet::<T>::update_collateral(&slash_account, RingBalance::<T>::zero());
+		crate::Pallet::<T>::update_relayer_after_slash(&slash_account, RingBalance::<T>::zero());
 	}
 	slashed
 }
