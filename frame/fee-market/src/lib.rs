@@ -239,7 +239,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Increase the order capacity for the enrolled relayer.
+		/// Update locked collateral for enrolled relayer, only supporting lock more.
 		#[pallet::weight(<T as Config>::WeightInfo::update_locked_collateral())]
 		#[transactional]
 		pub fn update_locked_collateral(
