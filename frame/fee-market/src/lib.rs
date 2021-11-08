@@ -130,8 +130,8 @@ pub mod pallet {
 		AlreadyEnrolled,
 		/// This relayer doesn't enroll ever.
 		NotEnrolled,
-		/// Only increase order capacity is allowed.
-		OnlyIncreaseOrderCapacityAllowed,
+		/// Only increase lock collateral is allowed when update_locked_balance.
+		OnlyIncreaseLockedCollateralAllowed,
 		/// The fee is lower than MinimumRelayFee.
 		RelayFeeTooLow,
 		/// The relayer is occupied, and can't cancel enrollment now.
@@ -192,24 +192,22 @@ pub mod pallet {
 		/// Any accounts can enroll to be a relayer by lock collateral. The relay fee is optional,
 		/// the default value is MinimumRelayFee in runtime.
 		/// Note: One account can enroll only once.
-		/// todo: update the weight function
 		#[pallet::weight(<T as Config>::WeightInfo::enroll_and_lock_collateral())]
 		#[transactional]
-		pub fn enroll(
+		pub fn enroll_and_lock_collateral(
 			origin: OriginFor<T>,
-			order_capacity: u32,
+			lock_collateral: RingBalance<T>,
 			relay_fee: Option<Fee<T>>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(!Self::is_enrolled(&who), <Error<T>>::AlreadyEnrolled);
 
-			// Calculate how many collateral needs for this order capacity.
-			let lock_collateral =
-				T::CollateralEachOrder::get().saturating_mul(order_capacity.into());
 			ensure!(
 				T::RingCurrency::free_balance(&who) >= lock_collateral,
 				<Error<T>>::InsufficientBalance
 			);
+			let order_capacity: u32 =
+				(lock_collateral / T::CollateralEachOrder::get()).saturated_into::<u32>();
 
 			if let Some(fee) = relay_fee {
 				ensure!(fee >= T::MinimumRelayFee::get(), <Error<T>>::RelayFeeTooLow);
@@ -242,28 +240,25 @@ pub mod pallet {
 		}
 
 		/// Increase the order capacity for the enrolled relayer.
-		// todo: update the weight function
 		#[pallet::weight(<T as Config>::WeightInfo::update_locked_collateral())]
 		#[transactional]
-		pub fn increase_order_capacity(
+		pub fn update_locked_collateral(
 			origin: OriginFor<T>,
-			new_order_capacity: u32,
+			new_collateral: RingBalance<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_enrolled(&who), <Error<T>>::NotEnrolled);
 			ensure!(
-				new_order_capacity > Self::get_relayer(&who).order_capacity,
-				<Error<T>>::OnlyIncreaseOrderCapacityAllowed
-			);
-
-			// Calculate how many collateral needs for this order capacity.
-			let new_collateral =
-				T::CollateralEachOrder::get().saturating_mul(new_order_capacity.into());
-			ensure!(
 				T::RingCurrency::free_balance(&who) >= new_collateral,
 				<Error<T>>::InsufficientBalance
 			);
+			ensure!(
+				new_collateral > Self::get_relayer(&who).collateral,
+				<Error<T>>::OnlyIncreaseLockedCollateralAllowed
+			);
 
+			let new_order_capacity: u32 =
+				(new_collateral / T::CollateralEachOrder::get()).saturated_into::<u32>();
 			let _ = T::RingCurrency::extend_lock(
 				T::LockId::get(),
 				&who,
