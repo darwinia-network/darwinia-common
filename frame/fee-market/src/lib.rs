@@ -240,25 +240,31 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Update locked collateral for enrolled relayer, only supporting lock more.
+		/// Increase the order capacity for the enrolled relayer.
+		// todo: update the weight function
 		#[pallet::weight(<T as Config>::WeightInfo::update_locked_collateral())]
 		#[transactional]
-		pub fn update_locked_collateral(
+		pub fn increase_order_capacity(
 			origin: OriginFor<T>,
-			new_collateral: RingBalance<T>,
+			new_order_capacity: u32,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_enrolled(&who), <Error<T>>::NotEnrolled);
 			ensure!(
-				T::RingCurrency::free_balance(&who) >= new_collateral,
-				<Error<T>>::InsufficientBalance
-			);
-			ensure!(
-				new_collateral > Self::get_relayer(&who).collateral,
+				new_order_capacity > Self::get_relayer(&who).order_capacity,
+				// todo: update the error type
 				<Error<T>>::OnlyIncreaseLockedCollateralAllowed
 			);
 
-			Self::update_collateral(&who, new_collateral);
+			// Calculate how many collateral needs for this order capacity.
+			let new_collateral =
+				T::CollateralForEachOrder::get().saturating_mul(new_order_capacity.into());
+			ensure!(
+				T::RingCurrency::free_balance(&who) >= new_collateral,
+				<Error<T>>::InsufficientBalance
+			);
+
+			Self::update_order_capacity(&who, new_collateral, Some(new_order_capacity));
 			Self::deposit_event(Event::<T>::UpdateLockedCollateral(who, new_collateral));
 			Ok(().into())
 		}
@@ -320,6 +326,7 @@ impl<T: Config> Pallet<T> {
 		let assigned_relayers_len = T::AssignedRelayersNumber::get() as usize;
 		if relayers.len() >= assigned_relayers_len {
 			relayers.sort();
+
 			let mut assigned_relayers = Vec::with_capacity(assigned_relayers_len);
 			for i in 0..assigned_relayers_len {
 				if let Some(r) = relayers.get(i) {
@@ -334,23 +341,32 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Update relayer locked collateral, then update market fee, this will changes RelayersMap storage.
-	pub fn update_collateral(who: &T::AccountId, new_collateral: RingBalance<T>) {
+	pub fn update_order_capacity(
+		who: &T::AccountId,
+		new_collateral: RingBalance<T>,
+		new_order_capacity: Option<u32>,
+	) {
+		// todo: how to kick out slashed relayers
 		// If the slashed collateral lower than MiniumLockCollateral, kick it out.
-		if new_collateral < T::MiniumLockCollateral::get() {
-			Self::remove_enrolled_relayer(who);
-			return;
+		// if new_collateral < T::MiniumLockCollateral::get() {
+		// 	Self::remove_enrolled_relayer(who);
+		// 	return;
+		// }
+		if let Some(new_capacity) = new_order_capacity {
+			let _ = T::RingCurrency::extend_lock(
+				T::LockId::get(),
+				who,
+				new_collateral,
+				WithdrawReasons::all(),
+			)
+			.map_err(|_| <Error<T>>::ExtendLockFailed);
+
+			<RelayersMap<T>>::mutate(who.clone(), |relayer| {
+				relayer.collateral = new_collateral;
+				relayer.order_capacity += new_capacity - relayer.order_capacity;
+			});
 		}
 
-		let _ = T::RingCurrency::extend_lock(
-			T::LockId::get(),
-			who,
-			new_collateral,
-			WithdrawReasons::all(),
-		)
-		.map_err(|_| <Error<T>>::ExtendLockFailed);
-		<RelayersMap<T>>::mutate(who.clone(), |relayer| {
-			relayer.collateral = new_collateral;
-		});
 		Self::update_market();
 	}
 
@@ -365,6 +381,25 @@ impl<T: Config> Pallet<T> {
 				relayers.retain(|x| x.id != *who);
 			}
 		});
+		Self::update_market();
+	}
+
+	pub fn inc_relayer_order_capacity(relayers: &[T::AccountId]) {
+		for who in relayers {
+			<RelayersMap<T>>::mutate(who.clone(), |r| {
+				r.order_capacity += 1;
+			});
+		}
+		Self::update_market();
+	}
+
+	pub fn dec_relayer_order_capacity(relayers: &[T::AccountId]) {
+		// todo: need to check 0-1 case.
+		for who in relayers {
+			<RelayersMap<T>>::mutate(who.clone(), |r| {
+				r.order_capacity -= 1;
+			});
+		}
 		Self::update_market();
 	}
 
