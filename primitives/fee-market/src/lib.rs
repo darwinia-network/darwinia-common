@@ -31,14 +31,21 @@ pub struct Relayer<AccountId, Balance> {
 	pub id: AccountId,
 	pub collateral: Balance,
 	pub fee: Balance,
+	pub order_capacity: u32,
 }
 
 impl<AccountId, Balance> Relayer<AccountId, Balance> {
-	pub fn new(id: AccountId, collateral: Balance, fee: Balance) -> Relayer<AccountId, Balance> {
+	pub fn new(
+		id: AccountId,
+		collateral: Balance,
+		fee: Balance,
+		order_capacity: u32,
+	) -> Relayer<AccountId, Balance> {
 		Relayer {
 			id,
 			collateral,
 			fee,
+			order_capacity,
 		}
 	}
 }
@@ -46,7 +53,7 @@ impl<AccountId, Balance> Relayer<AccountId, Balance> {
 impl<AccountId: Parameter, Balance: PartialOrd> PartialOrd for Relayer<AccountId, Balance> {
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
 		if self.fee == other.fee {
-			return other.collateral.partial_cmp(&self.collateral);
+			return other.order_capacity.partial_cmp(&self.order_capacity);
 		}
 		self.fee.partial_cmp(&other.fee)
 	}
@@ -55,7 +62,7 @@ impl<AccountId: Parameter, Balance: PartialOrd> PartialOrd for Relayer<AccountId
 impl<AccountId: Parameter, Balance: Ord> Ord for Relayer<AccountId, Balance> {
 	fn cmp(&self, other: &Self) -> Ordering {
 		if self.fee == other.fee {
-			return self.collateral.cmp(&other.collateral);
+			return self.order_capacity.cmp(&other.order_capacity);
 		}
 		self.fee.cmp(&other.fee)
 	}
@@ -63,7 +70,10 @@ impl<AccountId: Parameter, Balance: Ord> Ord for Relayer<AccountId, Balance> {
 
 impl<AccountId: PartialEq, Balance: PartialEq> PartialEq for Relayer<AccountId, Balance> {
 	fn eq(&self, other: &Self) -> bool {
-		self.fee == other.fee && self.id == other.id && self.collateral == other.collateral
+		self.fee == other.fee
+			&& self.id == other.id
+			&& self.collateral == other.collateral
+			&& self.order_capacity == other.order_capacity
 	}
 }
 
@@ -73,6 +83,7 @@ impl<AccountId: Default, Balance: Default> Default for Relayer<AccountId, Balanc
 			id: AccountId::default(),
 			collateral: Balance::default(),
 			fee: Balance::default(),
+			order_capacity: 0,
 		}
 	}
 }
@@ -209,19 +220,19 @@ mod test {
 
 	#[test]
 	fn test_multi_relayers_sort() {
-		let r1 = Relayer::<AccountId, Balance>::new(1, 100, 30);
-		let r2 = Relayer::<AccountId, Balance>::new(2, 100, 40);
+		let r1 = Relayer::<AccountId, Balance>::new(1, 100, 30, 0);
+		let r2 = Relayer::<AccountId, Balance>::new(2, 100, 40, 0);
 		assert!(r1 < r2);
 
-		let r3 = Relayer::<AccountId, Balance>::new(3, 150, 30);
-		let r4 = Relayer::<AccountId, Balance>::new(4, 100, 30);
+		let r3 = Relayer::<AccountId, Balance>::new(3, 150, 30, 30);
+		let r4 = Relayer::<AccountId, Balance>::new(4, 100, 30, 20);
 		assert!(r3 < r4);
 	}
 
 	#[test]
 	fn test_assign_order_relayers_one() {
 		let mut assigned_relayers = Vec::new();
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30, 0));
 		let order = Order::new(TEST_LANE_ID, TEST_MESSAGE_NONCE, 100, assigned_relayers, 50);
 		assert_eq!(order.relayer_valid_range(1).unwrap(), (100..150));
 	}
@@ -229,8 +240,8 @@ mod test {
 	#[test]
 	fn test_assign_order_relayers_two() {
 		let mut assigned_relayers = Vec::new();
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30));
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(2, 100, 30));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30, 0));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(2, 100, 30, 0));
 		let order = Order::new(TEST_LANE_ID, TEST_MESSAGE_NONCE, 100, assigned_relayers, 50);
 		assert_eq!(order.relayer_valid_range(1).unwrap(), (100..150));
 		assert_eq!(order.relayer_valid_range(2).unwrap(), (150..200));
@@ -239,9 +250,9 @@ mod test {
 	#[test]
 	fn test_assign_order_relayers_three() {
 		let mut assigned_relayers = Vec::new();
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30));
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(2, 100, 40));
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(3, 100, 80));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30, 0));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(2, 100, 40, 0));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(3, 100, 80, 0));
 		let order = Order::new(TEST_LANE_ID, TEST_MESSAGE_NONCE, 100, assigned_relayers, 50);
 		assert_eq!(order.relayer_valid_range(1).unwrap(), (100..150));
 		assert_eq!(order.relayer_valid_range(2).unwrap(), (150..200));
@@ -253,10 +264,10 @@ mod test {
 	#[test]
 	fn test_assign_order_relayers_four() {
 		let mut assigned_relayers = Vec::new();
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30));
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(2, 100, 30));
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(3, 100, 30));
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(4, 100, 30));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30, 0));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(2, 100, 30, 0));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(3, 100, 30, 0));
+		assigned_relayers.push(Relayer::<AccountId, Balance>::new(4, 100, 30, 0));
 		let order = Order::new(TEST_LANE_ID, TEST_MESSAGE_NONCE, 100, assigned_relayers, 50);
 		assert_eq!(order.relayer_valid_range(1).unwrap(), (100..150));
 		assert_eq!(order.relayer_valid_range(2).unwrap(), (150..200));

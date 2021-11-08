@@ -194,10 +194,7 @@ where
 	}
 
 	println!("messages_relayers_rewards {:?}", messages_rewards);
-	println!(
-		"confirmation_relayer_rewards {:?}",
-		confirmation_rewards
-	);
+	println!("confirmation_relayer_rewards {:?}", confirmation_rewards);
 	println!("assigned_relayers_rewards {:?}", assigned_relayers_rewards);
 	println!("treasury_total_rewards {:?}", treasury_total_rewards);
 
@@ -228,7 +225,11 @@ pub fn slash_assigned_relayers<T: Config>(
 			for assigned_relayer in order.relayers_slice() {
 				let slashed_asset =
 					do_slash::<T>(&assigned_relayer.id, relayer_fund_account, slash_max);
-				println!("slash {:?}, {:?}", assigned_relayer.id, slashed_asset.clone());
+				println!(
+					"slash {:?}, {:?}",
+					assigned_relayer.id,
+					slashed_asset.clone()
+				);
 				total_slash += slashed_asset;
 			}
 		}

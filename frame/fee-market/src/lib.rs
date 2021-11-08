@@ -68,6 +68,7 @@ pub mod pallet {
 		type TreasuryPalletId: Get<PalletId>;
 		#[pallet::constant]
 		type LockId: Get<LockIdentifier>;
+
 		/// The minimum locked collateral for a fee market relayer, also represented as the maximum value for slash.
 		#[pallet::constant]
 		type MiniumLockCollateral: Get<RingBalance<Self>>;
@@ -90,6 +91,10 @@ pub mod pallet {
 
 		/// The slash rule
 		type Slasher: Slasher<Self>;
+		/// TODO: ADD more comment
+		#[pallet::constant]
+		type CollateralForEachOrder: Get<RingBalance<Self>>;
+
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 			+ Currency<Self::AccountId>;
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -105,7 +110,7 @@ pub mod pallet {
 	)]
 	pub enum Event<T: Config> {
 		/// Relayer enrollment
-		EnrollAndLockCollateral(T::AccountId, RingBalance<T>, Fee<T>),
+		EnrollAndLockCollateral(T::AccountId, RingBalance<T>, Fee<T>, u32),
 		/// Update relayer locked collateral
 		UpdateLockedCollateral(T::AccountId, RingBalance<T>),
 		/// Update relayer fee
@@ -190,14 +195,14 @@ pub mod pallet {
 		#[transactional]
 		pub fn enroll_and_lock_collateral(
 			origin: OriginFor<T>,
-			lock_collateral: RingBalance<T>,
+			order_capacity: u32,
 			relay_fee: Option<Fee<T>>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			ensure!(
-				lock_collateral >= T::MiniumLockCollateral::get(),
-				<Error<T>>::LockCollateralTooLow
-			);
+			// Calculate how many collateral needs for this order capacity.
+			let lock_collateral =
+				T::CollateralForEachOrder::get().saturating_mul(order_capacity.into());
+
 			ensure!(
 				T::RingCurrency::free_balance(&who) >= lock_collateral,
 				<Error<T>>::InsufficientBalance
@@ -217,14 +222,20 @@ pub mod pallet {
 				WithdrawReasons::all(),
 			);
 
-			<RelayersMap<T>>::insert(&who, Relayer::new(who.clone(), lock_collateral, fee));
+			// Store enrollment detail information.
+			<RelayersMap<T>>::insert(
+				&who,
+				Relayer::new(who.clone(), lock_collateral, fee, order_capacity),
+			);
 			<Relayers<T>>::append(who.clone());
 
 			Self::update_market();
+			// TODO: let application knows about this changes.
 			Self::deposit_event(Event::<T>::EnrollAndLockCollateral(
 				who,
 				lock_collateral,
 				fee,
+				order_capacity,
 			));
 			Ok(().into())
 		}
