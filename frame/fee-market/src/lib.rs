@@ -40,7 +40,10 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use num_traits::Zero;
-use sp_runtime::{traits::UniqueSaturatedInto, Permill, SaturatedConversion};
+use sp_runtime::{
+	traits::{Saturating, UniqueSaturatedInto},
+	Permill, SaturatedConversion,
+};
 use sp_std::{default::Default, vec::Vec};
 // --- darwinia-network ---
 use darwinia_support::{
@@ -122,14 +125,12 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Insufficient balance.
 		InsufficientBalance,
-		/// The locked collateral is lower than MiniumLockLimit.
-		LockCollateralTooLow,
 		/// The relayer has been enrolled.
 		AlreadyEnrolled,
 		/// This relayer doesn't enroll ever.
 		NotEnrolled,
 		/// Only increase lock collateral is allowed when update_locked_balance.
-		OnlyIncreaseLockedCollateralAllowed,
+		OnlyIncCollateralAllowed,
 		/// The fee is lower than MinimumRelayFee.
 		RelayFeeTooLow,
 		/// The relayer is occupied, and can't cancel enrollment now.
@@ -225,7 +226,7 @@ pub mod pallet {
 				&who,
 				Relayer::new(who.clone(), lock_collateral, fee, order_capacity),
 			);
-			<Relayers<T>>::append(who.clone());
+			<Relayers<T>>::append(&who);
 
 			Self::update_market();
 			Self::deposit_event(Event::<T>::Enroll(
@@ -250,13 +251,10 @@ pub mod pallet {
 				T::RingCurrency::free_balance(&who) >= new_collateral,
 				<Error<T>>::InsufficientBalance
 			);
-			ensure!(
-				new_collateral > Self::get_relayer(&who).collateral,
-				<Error<T>>::OnlyIncreaseLockedCollateralAllowed
-			);
 
-			let new_order_capacity: u32 =
-				(new_collateral / T::CollateralEachOrder::get()).saturated_into::<u32>();
+			let collat_diff = new_collateral.saturating_sub(Self::get_relayer(&who).collateral);
+			ensure!(collat_diff > <RingBalance<T>>::zero(), <Error<T>>::OnlyIncCollateralAllowed);
+
 			let _ = T::RingCurrency::extend_lock(
 				T::LockId::get(),
 				&who,
@@ -266,14 +264,15 @@ pub mod pallet {
 			.map_err(|_| <Error<T>>::ExtendLockFailed);
 			<RelayersMap<T>>::mutate(who.clone(), |relayer| {
 				relayer.collateral = new_collateral;
-				relayer.order_capacity += new_order_capacity - relayer.order_capacity;
+				relayer.order_capacity +=
+					(collat_diff / T::CollateralEachOrder::get()).saturated_into::<u32>();
 			});
 
 			Self::update_market();
 			Self::deposit_event(Event::<T>::UpdateRelayer(
-				who,
+				who.clone(),
 				Some(new_collateral),
-				Some(new_order_capacity),
+				Some(Self::get_relayer(&who).order_capacity),
 				None,
 			));
 			Ok(().into())
