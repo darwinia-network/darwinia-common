@@ -42,7 +42,7 @@ use frame_system::{ensure_signed, pallet_prelude::*};
 use num_traits::Zero;
 use sp_runtime::{
 	traits::{Saturating, UniqueSaturatedInto},
-	Permill,
+	Permill, SaturatedConversion,
 };
 use sp_std::{default::Default, vec::Vec};
 // --- darwinia-network ---
@@ -377,10 +377,11 @@ impl<T: Config> Pallet<T> {
 		)
 		.map_err(|_| <Error<T>>::ExtendLockFailed);
 		// Update order capacity
-		let new_capacity = new_collateral.saturating_div(T::CollateralEachOrder::get());
+		let new_capacity: u32 =
+			(new_collateral / T::CollateralEachOrder::get()).saturated_into::<u32>();
 		<RelayersMap<T>>::mutate(who.clone(), |relayer| {
 			relayer.collateral = new_collateral;
-			relayer.order_capacity += new_capacity - relayer.order_capacity;
+			relayer.order_capacity = new_capacity;
 		});
 
 		Self::update_market();
