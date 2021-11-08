@@ -40,10 +40,7 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use num_traits::Zero;
-use sp_runtime::{
-	traits::{Saturating, UniqueSaturatedInto},
-	Permill, SaturatedConversion,
-};
+use sp_runtime::{traits::UniqueSaturatedInto, Permill, SaturatedConversion};
 use sp_std::{default::Default, vec::Vec};
 // --- darwinia-network ---
 use darwinia_support::{
@@ -73,6 +70,7 @@ pub mod pallet {
 		/// The minimum fee for relaying.
 		#[pallet::constant]
 		type MinimumRelayFee: Get<Fee<Self>>;
+		/// The assigned relayers number for each order.
 		#[pallet::constant]
 		type AssignedRelayersNumber: Get<u64>;
 		/// The slot times set
@@ -88,8 +86,8 @@ pub mod pallet {
 		type ConfirmRelayersRewardRatio: Get<Permill>;
 
 		/// The slash rule
-		type Slasher: Slasher<Self>;
-		/// TODO: ADD more comment
+		type SlashForEachBlock: Get<RingBalance<Self>>;
+		/// The collateral relayer need to lock for each order.
 		#[pallet::constant]
 		type CollateralEachOrder: Get<RingBalance<Self>>;
 
@@ -445,30 +443,5 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 		false
-	}
-}
-
-pub trait Slasher<T: Config> {
-	fn slash(base_fee: RingBalance<T>, timeout: T::BlockNumber) -> RingBalance<T>;
-}
-
-impl<T: Config> Slasher<T> for () {
-	// The slash result = base_fee + slash_each_block * timeout
-	// Note: The maximum slash result is the MiniumLockCollateral. We mush ensures that all enrolled
-	// relayers have ability to pay this slash result.
-	fn slash(base_fee: Fee<T>, timeout: T::BlockNumber) -> RingBalance<T> {
-		let slash_each_block = 2_000_000_000u128;
-		let timeout_u128: u128 = timeout.unique_saturated_into();
-		let mut slash = base_fee.saturating_add(
-			timeout_u128
-				.saturating_mul(slash_each_block)
-				.unique_saturated_into(),
-		);
-
-		// todo: need more tests.
-		if slash >= T::CollateralEachOrder::get() {
-			slash = T::CollateralEachOrder::get();
-		}
-		slash
 	}
 }

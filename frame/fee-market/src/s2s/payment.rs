@@ -207,9 +207,16 @@ pub fn slash_assigned_relayers<T: Config>(
 	let mut total_slash = RingBalance::<T>::zero();
 	match (order.confirm_time, order.range_end()) {
 		(Some(confirm_time), Some(end_time)) if confirm_time >= end_time => {
-			let timeout = confirm_time - end_time;
+			let timeout: u128 = (confirm_time - end_time).unique_saturated_into();
 			let message_fee = order.lowest_and_highest_fee().1.unwrap_or_default();
-			let slash_max = T::Slasher::slash(message_fee, timeout);
+			let slash = message_fee.saturating_add(
+				timeout
+					.saturating_mul(UniqueSaturatedInto::<u128>::unique_saturated_into(
+						T::SlashForEachBlock::get(),
+					))
+					.unique_saturated_into(),
+			);
+			let slash_max = sp_std::cmp::min(slash, T::CollateralEachOrder::get());
 
 			for assigned_relayer in order.relayers_slice() {
 				let slashed_asset =

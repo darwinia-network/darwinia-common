@@ -420,7 +420,7 @@ frame_support::parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 	pub const MinimumRelayFee: Balance = 30;
-	pub const MiniumLockCollateral: Balance = 100;
+	pub const CollateralEachOrder: Balance = 100;
 	pub const AssignedRelayersNumber: u64 = 3;
 	pub const Slot: u64 = 50;
 
@@ -452,7 +452,7 @@ impl Config for Test {
 	type PalletId = FeeMarketPalletId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type LockId = FeeMarketLockId;
-	type MiniumLockCollateral = MiniumLockCollateral;
+	type CollateralEachOrder = CollateralEachOrder;
 	type MinimumRelayFee = MinimumRelayFee;
 	type AssignedRelayersNumber = AssignedRelayersNumber;
 	type Slot = Slot;
