@@ -537,7 +537,7 @@ fn test_single_relayer_enroll_workflow_works() {
 		assert_eq!(FeeMarket::relayers().len(), 1);
 		assert_eq!(Ring::free_balance(1), 150);
 		assert_eq!(Ring::usable_balance(&1), 50);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&1), 100);
+		assert_eq!(FeeMarket::get_relayer(&1).collateral, 100);
 		assert_eq!(FeeMarket::get_relayer(1).order_capacity, 1);
 		assert_eq!(FeeMarket::market_fee(), None);
 		assert_err!(
@@ -572,12 +572,12 @@ fn test_single_relayer_update_lock_collateral() {
 			200,
 			None
 		));
-		assert_eq!(FeeMarket::relayer_locked_collateral(&6), 200);
+		assert_eq!(FeeMarket::get_relayer(&6).collateral, 200);
 		assert_eq!(FeeMarket::get_relayer(6).order_capacity, 2);
 
 		// Increase locked balance
 		assert_ok!(FeeMarket::update_locked_collateral(Origin::signed(6), 500));
-		assert_eq!(FeeMarket::relayer_locked_collateral(&6), 500);
+		assert_eq!(FeeMarket::get_relayer(&6).collateral, 500);
 		assert_eq!(FeeMarket::get_relayer(6).order_capacity, 5);
 		// Decrease locked balance
 		assert_err!(
@@ -691,12 +691,12 @@ fn test_single_relayer_update_fee_works() {
 			<Error<Test>>::RelayFeeTooLow
 		);
 
-		assert_eq!(FeeMarket::relayer_fee(&1), 30);
+		assert_eq!(FeeMarket::get_relayer(&1).fee, 30);
 		assert_ok!(FeeMarket::update_relay_fee(Origin::signed(1), 40));
-		assert_eq!(FeeMarket::relayer_fee(&1), 40);
+		assert_eq!(FeeMarket::get_relayer(&1).fee, 40);
 
 		assert_ok!(FeeMarket::update_relay_fee(Origin::signed(3), 150));
-		assert_eq!(FeeMarket::relayer_fee(&3), 150);
+		assert_eq!(FeeMarket::get_relayer(&3).fee, 150);
 		assert_eq!(FeeMarket::market_fee(), Some(150));
 	});
 }
@@ -1023,9 +1023,9 @@ fn test_assigned_relayers_slash_calculation_with_clean() {
 		assert_eq!(Ring::usable_balance(&5), 150);
 		assert_eq!(Ring::usable_balance(&6), 300);
 		assert_eq!(Ring::usable_balance(&7), 300);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&5), 130);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&6), 130);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&7), 130);
+		assert_eq!(FeeMarket::get_relayer(&5).collateral, 130);
+		assert_eq!(FeeMarket::get_relayer(&6).collateral, 130);
+		assert_eq!(FeeMarket::get_relayer(&7).collateral, 130);
 		assert_eq!(FeeMarket::assigned_relayers().unwrap().len(), 3);
 		assert_eq!(FeeMarket::get_relayer(&5).order_capacity, 1);
 		assert_eq!(FeeMarket::get_relayer(&6).order_capacity, 1);
@@ -1037,9 +1037,9 @@ fn test_assigned_relayers_slash_calculation_with_clean() {
 		assert_eq!(Ring::usable_balance(&5), 180);
 		assert_eq!(Ring::usable_balance(&6), 330);
 		assert_eq!(Ring::usable_balance(&7), 330);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&5), 0);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&6), 0);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&7), 0);
+		assert_eq!(FeeMarket::get_relayer(&5).collateral, 0);
+		assert_eq!(FeeMarket::get_relayer(&6).collateral, 0);
+		assert_eq!(FeeMarket::get_relayer(&7).collateral, 0);
 		assert_eq!(FeeMarket::get_relayer(&5).order_capacity, 0);
 		assert_eq!(FeeMarket::get_relayer(&6).order_capacity, 0);
 		assert_eq!(FeeMarket::get_relayer(&7).order_capacity, 0);
@@ -1080,9 +1080,15 @@ fn test_assigned_relayers_slash_order_capacity_correctly() {
 		assert_eq!(Ring::usable_balance(&12), 1000);
 		assert_eq!(Ring::usable_balance(&13), 1000);
 		assert_eq!(Ring::usable_balance(&14), 1000);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&12), 900);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&13), 900);
-		assert_eq!(FeeMarket::relayer_locked_collateral(&14), 900);
+		assert_eq!(FeeMarket::get_relayer(&12).collateral, 900);
+		assert_eq!(FeeMarket::get_relayer(&13).collateral, 900);
+		assert_eq!(FeeMarket::get_relayer(&14).collateral, 900);
+		assert_eq!(FeeMarket::get_relayer(&12).collateral, 900);
+		assert_eq!(FeeMarket::get_relayer(&13).collateral, 900);
+		assert_eq!(FeeMarket::get_relayer(&14).collateral, 900);
+		assert_eq!(FeeMarket::get_relayer(&12).collateral, 900);
+		assert_eq!(FeeMarket::get_relayer(&13).collateral, 900);
+		assert_eq!(FeeMarket::get_relayer(&14).collateral, 900);
 		assert_eq!(FeeMarket::get_relayer(&12).order_capacity, 7);
 		assert_eq!(FeeMarket::get_relayer(&13).order_capacity, 7);
 		assert_eq!(FeeMarket::get_relayer(&14).order_capacity, 7);
@@ -1103,14 +1109,6 @@ fn test_assigned_relayers_slash_kick_out_market_fee_hung() {
 		assert_eq!(Ring::usable_balance(&1), 50);
 		assert_eq!(Ring::usable_balance(&2), 90);
 		assert_eq!(Ring::usable_balance(&3), 230);
-		// assert_eq!(
-		// 	FeeMarket::assigned_relayers().unwrap(),
-		// 	vec![
-		// 		Relayer::<AccountId, Balance>::new(1, 100, 30),
-		// 		Relayer::<AccountId, Balance>::new(2, 110, 50),
-		// 		Relayer::<AccountId, Balance>::new(3, 120, 70),
-		// 	]
-		// );
 
 		order.confirm_time = Some(order.range_end().unwrap() + 50);
 		assert_eq!(slash_assigned_relayers::<Test>(order.clone(), &0), 300);
