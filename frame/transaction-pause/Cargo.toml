@@ -1,0 +1,30 @@
+[package]
+authors = ["Acala Developers"]
+edition = "2018"
+name    = "module-transaction-pause"
+version = "2.0.0"
+
+[dependencies]
+codec         = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
+frame-support = { git = "https://github.com/darwinia-network/substrate", default-features = false, tag = "darwinia-v0.11.5" }
+frame-system  = { git = "https://github.com/darwinia-network/substrate", default-features = false, tag = "darwinia-v0.11.5" }
+sp-runtime    = { git = "https://github.com/darwinia-network/substrate", default-features = false, tag = "darwinia-v0.11.5" }
+sp-std        = { git = "https://github.com/darwinia-network/substrate", default-features = false, tag = "darwinia-v0.11.5" }
+
+[dev-dependencies]
+darwinia-balances = { path = "../balances" }
+darwinia-support  = { path = "../support" }
+max-encoded-len   = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-core           = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-io             = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+
+[features]
+default = ["std"]
+std = [
+	"codec/std",
+	"sp-runtime/std",
+	"frame-support/std",
+	"frame-system/std",
+	"sp-std/std",
+]
+try-runtime = ["frame-support/try-runtime"]

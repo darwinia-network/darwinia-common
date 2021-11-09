@@ -5263,6 +5263,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "module-transaction-pause"
+version = "2.0.0"
+dependencies = [
+ "darwinia-balances",
+ "darwinia-support",
+ "frame-support",
+ "frame-system",
+ "max-encoded-len",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "more-asserts"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6132,6 +6148,7 @@ dependencies = [
  "from-substrate-issuing",
  "log",
  "max-encoded-len",
+ "module-transaction-pause",
  "pallet-authority-discovery",
  "pallet-authorship",
  "pallet-babe",
@@ -6237,6 +6254,7 @@ dependencies = [
  "frame-try-runtime",
  "log",
  "max-encoded-len",
+ "module-transaction-pause",
  "pallet-authority-discovery",
  "pallet-authorship",
  "pallet-babe",

@@ -138,3 +138,6 @@ pub use bridge_bsc::*;
 
 pub mod fee_market;
 pub use fee_market::*;
+
+pub mod transaction_pause;
+pub use transaction_pause::*;

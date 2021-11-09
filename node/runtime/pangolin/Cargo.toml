@@ -54,6 +54,7 @@ dvm-rpc-runtime-api                 = { default-features = false, path = "../../
 ethereum-primitives                 = { default-features = false, path = "../../../primitives/ethereum" }
 from-ethereum-issuing               = { default-features = false, path = "../../../frame/wormhole/issuing/ethereum" }
 from-substrate-issuing              = { default-features = false, path = "../../../frame/wormhole/issuing/s2s" }
+module-transaction-pause            = { default-features = false, path = "../../../frame/transaction-pause" }
 pangolin-constants                  = { default-features = false, path = "src/constants" }
 pangolin-runtime-system-params      = { default-features = false, path = "src/pallets/system/params" }
 pangoro-constants                   = { default-features = false, path = "../pangoro/src/constants" }
@@ -166,6 +167,7 @@ std = [
 	"ethereum-primitives/std",
 	"from-ethereum-issuing/std",
 	"from-substrate-issuing/std",
+	"module-transaction-pause/std",
 	"pangolin-constants/std",
 	"pangolin-runtime-system-params/std",
 	"pangoro-constants/std",
