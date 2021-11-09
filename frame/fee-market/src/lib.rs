@@ -125,6 +125,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Insufficient balance.
 		InsufficientBalance,
+		/// The locked collateral is lower than CollateralEachOrder.
+		LockCollateralTooLow,
 		/// The relayer has been enrolled.
 		AlreadyEnrolled,
 		/// This relayer doesn't enroll ever.
@@ -205,6 +207,10 @@ pub mod pallet {
 				T::RingCurrency::free_balance(&who) >= lock_collateral,
 				<Error<T>>::InsufficientBalance
 			);
+			ensure!(
+				lock_collateral >= T::CollateralEachOrder::get(),
+				<Error<T>>::LockCollateralTooLow
+			);
 			let order_capacity: u32 =
 				(lock_collateral / T::CollateralEachOrder::get()).saturated_into::<u32>();
 
@@ -252,8 +258,18 @@ pub mod pallet {
 				<Error<T>>::InsufficientBalance
 			);
 
-			let collat_diff = new_collateral.saturating_sub(Self::get_relayer(&who).collateral);
-			ensure!(collat_diff > <RingBalance<T>>::zero(), <Error<T>>::OnlyIncCollateralAllowed);
+			let relayer = Self::get_relayer(&who);
+			let old_capacity: u32 =
+				(relayer.collateral / T::CollateralEachOrder::get()).saturated_into::<u32>();
+			let used_capacity = old_capacity.saturating_sub(relayer.order_capacity);
+
+			let new_capacity: u32 =
+				(new_collateral / T::CollateralEachOrder::get()).saturated_into::<u32>();
+			// let collat_diff = new_collateral.saturating_sub(Self::get_relayer(&who).collateral);
+			ensure!(
+				new_collateral > relayer.collateral,
+				<Error<T>>::OnlyIncCollateralAllowed
+			);
 
 			let _ = T::RingCurrency::extend_lock(
 				T::LockId::get(),
@@ -264,8 +280,7 @@ pub mod pallet {
 			.map_err(|_| <Error<T>>::ExtendLockFailed);
 			<RelayersMap<T>>::mutate(who.clone(), |relayer| {
 				relayer.collateral = new_collateral;
-				relayer.order_capacity +=
-					(collat_diff / T::CollateralEachOrder::get()).saturated_into::<u32>();
+				relayer.order_capacity = new_capacity - used_capacity;
 			});
 
 			Self::update_market();
@@ -323,29 +338,27 @@ impl<T: Config> Pallet<T> {
 	/// - When enrolled relayer wants to update fee or order capacity.
 	/// - When enrolled relayer wants to cancel enrollment.
 	pub fn update_market() {
-		// Sort all enrolled relayers firstly.
+		// Sort all enrolled relayers who are able to accept orders.
 		let mut relayers: Vec<Relayer<T::AccountId, RingBalance<T>>> = <Relayers<T>>::get()
 			.iter()
 			.map(RelayersMap::<T>::get)
+			.filter(|r| r.order_capacity >= 1)
 			.collect();
 
 		// Select the first `AssignedRelayersNumber` relayers as AssignedRelayer.
-		// Only when total relayer's number greater than `AssignedRelayersNumber`, selection happens.
 		let assigned_relayers_len = T::AssignedRelayersNumber::get() as usize;
 		if relayers.len() >= assigned_relayers_len {
 			relayers.sort();
 
 			let mut assigned_relayers = Vec::with_capacity(assigned_relayers_len);
-			// todo: need more tests.
-			while let Some(r) = relayers.iter().next() {
+			let mut relayer_iterator = relayers.into_iter();
+			while let Some(r) = relayer_iterator.next() {
 				if assigned_relayers.len() == assigned_relayers_len {
 					break;
 				}
-
-				if r.order_capacity >= 1 {
-					assigned_relayers.push(r);
-				}
+				assigned_relayers.push(r);
 			}
+
 			<AssignedRelayers<T>>::put(assigned_relayers);
 		} else {
 			// The enrolled relayers not enough, pallet can't provide any fee advice.

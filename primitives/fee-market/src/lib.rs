@@ -52,8 +52,10 @@ impl<AccountId, Balance> Relayer<AccountId, Balance> {
 
 impl<AccountId: Parameter, Balance: PartialOrd> PartialOrd for Relayer<AccountId, Balance> {
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-		if self.fee == other.fee {
+		if self.fee == other.fee && self.order_capacity != other.order_capacity {
 			return other.order_capacity.partial_cmp(&self.order_capacity);
+		} else if self.fee == other.fee && self.order_capacity == other.order_capacity {
+			return other.collateral.partial_cmp(&self.collateral);
 		}
 		self.fee.partial_cmp(&other.fee)
 	}
@@ -61,8 +63,10 @@ impl<AccountId: Parameter, Balance: PartialOrd> PartialOrd for Relayer<AccountId
 
 impl<AccountId: Parameter, Balance: Ord> Ord for Relayer<AccountId, Balance> {
 	fn cmp(&self, other: &Self) -> Ordering {
-		if self.fee == other.fee {
-			return self.order_capacity.cmp(&other.order_capacity);
+		if self.fee == other.fee && self.order_capacity != other.order_capacity {
+			return other.order_capacity.cmp(&self.order_capacity);
+		} else if self.fee == other.fee && self.order_capacity == other.order_capacity {
+			return other.collateral.cmp(&self.collateral);
 		}
 		self.fee.cmp(&other.fee)
 	}
@@ -220,13 +224,17 @@ mod test {
 
 	#[test]
 	fn test_multi_relayers_sort() {
-		let r1 = Relayer::<AccountId, Balance>::new(1, 100, 30, 0);
+		let r1 = Relayer::<AccountId, Balance>::new(1, 150, 30, 0);
 		let r2 = Relayer::<AccountId, Balance>::new(2, 100, 40, 0);
 		assert!(r1 < r2);
 
-		let r3 = Relayer::<AccountId, Balance>::new(3, 150, 30, 30);
+		let r3 = Relayer::<AccountId, Balance>::new(3, 150, 30, 10);
 		let r4 = Relayer::<AccountId, Balance>::new(4, 100, 30, 20);
-		assert!(r3 < r4);
+		assert!(r4 < r3);
+
+		let r5 = Relayer::<AccountId, Balance>::new(3, 150, 30, 10);
+		let r6 = Relayer::<AccountId, Balance>::new(4, 100, 30, 10);
+		assert!(r5 < r6);
 	}
 
 	#[test]
