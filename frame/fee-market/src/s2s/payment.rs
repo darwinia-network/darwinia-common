@@ -191,6 +191,17 @@ where
 			}
 		}
 	}
+	println!("book: messages_relayers_rewards {:?}", messages_rewards);
+	println!(
+		"book: confirmation_relayer_rewards {:?}",
+		confirmation_rewards
+	);
+	println!(
+		"book: assigned_relayers_rewards {:?}",
+		assigned_relayers_rewards
+	);
+	println!("book: treasury_total_rewards {:?}", treasury_total_rewards);
+
 	RewardsBook {
 		messages_relayers_rewards: messages_rewards,
 		confirmation_relayer_rewards: confirmation_rewards,
@@ -233,35 +244,31 @@ pub fn slash_assigned_relayers<T: Config>(
 pub fn do_slash<T: Config>(
 	slash_account: &T::AccountId,
 	fund_account: &T::AccountId,
-	slash_max: RingBalance<T>,
+	slash_value: RingBalance<T>,
 ) -> RingBalance<T> {
-	let slashed;
-	let locked_collateral = crate::Pallet::<T>::relayer_locked_collateral(&slash_account);
+	let relayer = crate::Pallet::<T>::get_relayer(&slash_account);
+	let (locked_collateral, usable_order_capacity) = (relayer.collateral, relayer.order_capacity);
+	let slash_capacity: u32 = (slash_value / T::CollateralEachOrder::get()).saturated_into::<u32>();
 
 	T::RingCurrency::remove_lock(T::LockId::get(), &slash_account);
-	if locked_collateral >= slash_max {
-		// The original locked collateral is able to cover slash.
-		slashed = slash_max;
-		let locked_reserved = locked_collateral.saturating_sub(slashed);
-		let _ = <T as Config>::RingCurrency::transfer(
-			slash_account,
-			fund_account,
-			slashed,
-			ExistenceRequirement::AllowDeath,
-		);
-		crate::Pallet::<T>::update_relayer_after_slash(&slash_account, locked_reserved);
-	} else {
-		// The original locked collateral is not enough, slash all locked collateral before.
-		slashed = locked_collateral;
-		let _ = <T as Config>::RingCurrency::transfer(
-			slash_account,
-			fund_account,
-			slashed,
-			ExistenceRequirement::AllowDeath,
-		);
-		crate::Pallet::<T>::update_relayer_after_slash(&slash_account, RingBalance::<T>::zero());
-	}
-	slashed
+	debug_assert!(
+		locked_collateral >= slash_value,
+		"The locked collateral must alway greater than slash max"
+	);
+
+	let _ = <T as Config>::RingCurrency::transfer(
+		slash_account,
+		fund_account,
+		slash_value,
+		ExistenceRequirement::AllowDeath,
+	);
+	crate::Pallet::<T>::update_relayer_after_slash(
+		&slash_account,
+		locked_collateral.saturating_sub(slash_value),
+		usable_order_capacity.saturating_sub(slash_capacity),
+	);
+
+	slash_value
 }
 
 /// Do reward

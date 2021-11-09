@@ -125,8 +125,6 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Insufficient balance.
 		InsufficientBalance,
-		/// The locked collateral is lower than CollateralEachOrder.
-		LockCollateralTooLow,
 		/// The relayer has been enrolled.
 		AlreadyEnrolled,
 		/// This relayer doesn't enroll ever.
@@ -207,10 +205,6 @@ pub mod pallet {
 				T::RingCurrency::free_balance(&who) >= lock_collateral,
 				<Error<T>>::InsufficientBalance
 			);
-			ensure!(
-				lock_collateral >= T::CollateralEachOrder::get(),
-				<Error<T>>::LockCollateralTooLow
-			);
 			let order_capacity: u32 =
 				(lock_collateral / T::CollateralEachOrder::get()).saturated_into::<u32>();
 
@@ -259,17 +253,15 @@ pub mod pallet {
 			);
 
 			let relayer = Self::get_relayer(&who);
-			let old_capacity: u32 =
-				(relayer.collateral / T::CollateralEachOrder::get()).saturated_into::<u32>();
-			let used_capacity = old_capacity.saturating_sub(relayer.order_capacity);
-
-			let new_capacity: u32 =
-				(new_collateral / T::CollateralEachOrder::get()).saturated_into::<u32>();
-			// let collat_diff = new_collateral.saturating_sub(Self::get_relayer(&who).collateral);
 			ensure!(
 				new_collateral > relayer.collateral,
 				<Error<T>>::OnlyIncCollateralAllowed
 			);
+			let old_capacity: u32 =
+				(relayer.collateral / T::CollateralEachOrder::get()).saturated_into::<u32>();
+			let used_capacity = old_capacity.saturating_sub(relayer.order_capacity);
+			let new_capacity: u32 =
+				(new_collateral / T::CollateralEachOrder::get()).saturated_into::<u32>();
 
 			let _ = T::RingCurrency::extend_lock(
 				T::LockId::get(),
@@ -367,8 +359,12 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Update relayer after slash occurred, this will changes RelayersMap storage.
-	pub fn update_relayer_after_slash(who: &T::AccountId, new_collateral: RingBalance<T>) {
-		if new_collateral == RingBalance::<T>::zero() {
+	pub fn update_relayer_after_slash(
+		who: &T::AccountId,
+		new_collateral: RingBalance<T>,
+		new_order_capacity: u32,
+	) {
+		if new_collateral == RingBalance::<T>::zero() || new_order_capacity == 0 {
 			Self::remove_enrolled_relayer(who);
 			return;
 		}
@@ -381,12 +377,9 @@ impl<T: Config> Pallet<T> {
 			WithdrawReasons::all(),
 		)
 		.map_err(|_| <Error<T>>::ExtendLockFailed);
-		// Update order capacity
-		let new_capacity: u32 =
-			(new_collateral / T::CollateralEachOrder::get()).saturated_into::<u32>();
 		<RelayersMap<T>>::mutate(who.clone(), |relayer| {
 			relayer.collateral = new_collateral;
-			relayer.order_capacity = new_capacity;
+			relayer.order_capacity = new_order_capacity;
 		});
 
 		Self::update_market();
@@ -411,7 +404,7 @@ impl<T: Config> Pallet<T> {
 		// todo: need to check 0-1 case.
 		for who in relayers {
 			<RelayersMap<T>>::mutate(who.clone(), |r| {
-				r.order_capacity -= 1;
+				r.order_capacity = r.order_capacity.saturating_sub(1);
 			});
 		}
 		Self::update_market();
@@ -421,7 +414,7 @@ impl<T: Config> Pallet<T> {
 	pub fn inc_relayer_order_capacity(relayers: &[T::AccountId]) {
 		for who in relayers {
 			<RelayersMap<T>>::mutate(who.clone(), |r| {
-				r.order_capacity += 1;
+				r.order_capacity = r.order_capacity.saturating_add(1);
 			});
 		}
 		Self::update_market();
