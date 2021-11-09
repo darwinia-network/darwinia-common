@@ -1,5 +1,6 @@
+pub use darwinia_evm_precompile_bridge_ethereum::EthereumBridge;
+pub use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 pub use darwinia_evm_precompile_dispatch::Dispatch;
-pub use darwinia_evm_precompile_misc::Misc;
 pub use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 pub use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::s2s::{LatestMessageNoncer, RelayMessageSender};
@@ -106,7 +107,8 @@ where
 			_ if address == addr(4) => Some(Identity::execute(input, target_gas, context)),
 			// Darwinia precompiles
 			_ if address == addr(21) => Some(<Transfer<R>>::execute(input, target_gas, context)),
-			_ if address == addr(24) => Some(<Misc<R, ToPangoroMessageSender>>::execute(
+			_ if address == addr(23) => Some(<EthereumBridge<R>>::execute(input, target_gas, context)),
+			_ if address == addr(24) => Some(<Sub2SubBridge<R, ToPangoroMessageSender>>::execute(
 				input, target_gas, context,
 			)),
 			_ if address == addr(25) => Some(<Dispatch<R>>::execute(input, target_gas, context)),
