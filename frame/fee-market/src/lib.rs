@@ -40,10 +40,7 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use num_traits::Zero;
-use sp_runtime::{
-	traits::{Saturating, UniqueSaturatedInto},
-	Permill, SaturatedConversion,
-};
+use sp_runtime::{traits::UniqueSaturatedInto, Permill, SaturatedConversion};
 use sp_std::{default::Default, vec::Vec};
 // --- darwinia-network ---
 use darwinia_support::{

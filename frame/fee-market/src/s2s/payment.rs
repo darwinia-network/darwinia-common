@@ -191,16 +191,6 @@ where
 			}
 		}
 	}
-	println!("book: messages_relayers_rewards {:?}", messages_rewards);
-	println!(
-		"book: confirmation_relayer_rewards {:?}",
-		confirmation_rewards
-	);
-	println!(
-		"book: assigned_relayers_rewards {:?}",
-		assigned_relayers_rewards
-	);
-	println!("book: treasury_total_rewards {:?}", treasury_total_rewards);
 
 	RewardsBook {
 		messages_relayers_rewards: messages_rewards,

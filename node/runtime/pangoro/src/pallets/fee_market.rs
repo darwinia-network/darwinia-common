@@ -11,8 +11,9 @@ frame_support::parameter_types! {
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 
 	pub const AssignedRelayersNumber: u64 = 3;
-	pub const MiniumLockCollateral: Balance = 3000 * COIN;
 	pub const MinimumRelayFee: Balance = 15 * COIN;
+	pub const SlashForEachBlock: Balance = 2 * COIN;
+	pub const CollateralEachOrder: Balance = 100 * COIN;
 	pub const Slot: BlockNumber = 50;
 
 	pub const AssignedRelayersRewardRatio: Permill = Permill::from_percent(60);
@@ -26,14 +27,14 @@ impl Config for Runtime {
 	type LockId = FeeMarketLockId;
 
 	type AssignedRelayersNumber = AssignedRelayersNumber;
-	type MiniumLockCollateral = MiniumLockCollateral;
 	type MinimumRelayFee = MinimumRelayFee;
+	type SlashForEachBlock = SlashForEachBlock;
+	type CollateralEachOrder = CollateralEachOrder;
 	type Slot = Slot;
 
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
 	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
-	type Slasher = ();
 
 	type RingCurrency = Ring;
 	type Event = Event;

@@ -1058,8 +1058,7 @@ fn test_assigned_relayers_slash_order_capacity_correctly() {
 		assert_eq!(FeeMarket::get_relayer(&13).order_capacity, 10);
 		assert_eq!(FeeMarket::get_relayer(&14).order_capacity, 10);
 		let market_fee = FeeMarket::market_fee().unwrap();
-		let (lane, message_nonce) = send_regular_message(market_fee);
-		let mut order = FeeMarket::order((&lane, &message_nonce)).unwrap();
+		let _ = send_regular_message(market_fee);
 		assert_eq!(Ring::usable_balance(&12), 1000);
 		assert_eq!(Ring::usable_balance(&13), 1000);
 		assert_eq!(Ring::usable_balance(&14), 1000);
