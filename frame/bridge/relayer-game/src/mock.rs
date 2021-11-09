@@ -188,16 +188,16 @@ pub mod mock_relay {
 			}
 		}
 
-		pub fn gen_continous(
+		pub fn gen_continuous(
 			start: u32,
 			mut validations: Vec<u8>,
-			continous_valid: bool,
+			continuous_valid: bool,
 		) -> Vec<Self> {
 			if validations.is_empty() {
 				return vec![];
 			}
 
-			let mut parent_hash = if continous_valid {
+			let mut parent_hash = if continuous_valid {
 				0
 			} else {
 				GENESIS_TIME
