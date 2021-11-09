@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "to-substrate-backing"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.6.8"
+version     = "2.6.9"
 
 [dependencies]
 # crates.io
@@ -24,8 +24,8 @@ dp-contract         = { default-features = false, path = "../../../../primitives
 dp-s2s              = { default-features = false, path = "../../../../primitives/s2s" }
 ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum" }
 # paritytech
-bp-messages         = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
 bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
+bp-messages         = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
 bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
 frame-benchmarking  = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
 frame-support       = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
