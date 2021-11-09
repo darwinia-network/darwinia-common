@@ -19,7 +19,9 @@
 //! Node-specific RPC methods for interaction with fee-market.
 
 // --- darwinia-network ---
-pub use darwinia_fee_market_rpc_runtime_api::{Fee, FeeMarketApi as FeeMarketRuntimeApi};
+pub use darwinia_fee_market_rpc_runtime_api::{
+	Fee, FeeMarketApi as FeeMarketRuntimeApi, RelayingOrders,
+};
 
 // --- std ---
 use std::sync::Arc;
@@ -38,9 +40,11 @@ use sp_runtime::{
 const RUNTIME_ERROR: i64 = -1;
 
 #[rpc]
-pub trait FeeMarketApi<Response> {
+pub trait FeeMarketApi<Fee> {
 	#[rpc(name = "fee_marketFee")]
-	fn market_fee(&self) -> Result<Response>;
+	fn market_fee(&self) -> Result<Option<Fee>>;
+	#[rpc(name = "fee_relayingOrders")]
+	fn relaying_orders(&self) -> Result<RelayingOrders>;
 }
 
 pub struct FeeMarket<Client, Block, Balance> {
@@ -57,8 +61,7 @@ impl<Client, Block, Balance> FeeMarket<Client, Block, Balance> {
 	}
 }
 
-impl<Client, Block, Balance> FeeMarketApi<Option<Fee<Balance>>>
-	for FeeMarket<Client, Block, Balance>
+impl<Client, Block, Balance> FeeMarketApi<Fee<Balance>> for FeeMarket<Client, Block, Balance>
 where
 	Client: 'static + Send + Sync + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
 	Client::Api: FeeMarketRuntimeApi<Block, Balance>,
@@ -73,6 +76,18 @@ where
 		api.market_fee(&at).map_err(|e| Error {
 			code: ErrorCode::ServerError(RUNTIME_ERROR),
 			message: "Unable to query market fee.".into(),
+			data: Some(format!("{:?}", e).into()),
+		})
+	}
+
+	fn relaying_orders(&self) -> Result<RelayingOrders> {
+		let api = self.client.runtime_api();
+		let best = self.client.info().best_hash;
+		let at = BlockId::hash(best);
+
+		api.relaying_orders(&at).map_err(|e| Error {
+			code: ErrorCode::ServerError(RUNTIME_ERROR),
+			message: "Unable to query relaying orders.".into(),
 			data: Some(format!("{:?}", e).into()),
 		})
 	}

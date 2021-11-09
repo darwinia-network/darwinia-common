@@ -372,6 +372,10 @@ impl<T: Config> Pallet<T> {
 		Self::assigned_relayers().and_then(|relayers| relayers.last().map(|r| r.fee))
 	}
 
+	pub fn relaying_orders() -> Vec<(LaneId, MessageNonce)> {
+		Vec::new()
+	}
+
 	/// Get order info
 	pub fn order(
 		lane_id: &LaneId,

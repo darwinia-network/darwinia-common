@@ -102,7 +102,7 @@ use sp_version::RuntimeVersion;
 use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use common_primitives::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
-use darwinia_fee_market_rpc_runtime_api::Fee;
+use darwinia_fee_market_rpc_runtime_api::{Fee, RelayingOrders};
 
 pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
@@ -439,6 +439,12 @@ sp_api::impl_runtime_apis! {
 				});
 			}
 			None
+		}
+
+		fn relaying_orders() -> RelayingOrders {
+			return RelayingOrders {
+				orders: Vec::new(),
+			}
 		}
 	}
 

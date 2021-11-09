@@ -29,8 +29,10 @@ use codec::{Codec, Decode, Encode};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 // --- paritytech ---
+use bp_messages::{LaneId, MessageNonce};
 use sp_api::decl_runtime_apis;
 use sp_runtime::traits::{MaybeDisplay, MaybeFromStr};
+use sp_std::vec::Vec;
 
 #[derive(Eq, PartialEq, Encode, Decode, Default)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
@@ -66,6 +68,13 @@ fn deserialize_from_string<'de, D: Deserializer<'de>, T: std::str::FromStr>(
 		.map_err(|_| serde::de::Error::custom("Parse from string failed"))
 }
 
+#[derive(Eq, PartialEq, Encode, Decode, Default)]
+#[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
+pub struct RelayingOrders {
+	pub orders: Vec<(LaneId, MessageNonce)>,
+}
+
 decl_runtime_apis! {
 	pub trait FeeMarketApi<Balance>
 	where
@@ -73,5 +82,7 @@ decl_runtime_apis! {
 	 {
 		fn market_fee(
 		) -> Option<Fee<Balance>>;
+
+		fn relaying_orders() -> RelayingOrders;
 	}
 }
