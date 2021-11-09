@@ -37,7 +37,7 @@ std = [
 	"codec/std",
 	"evm/std",
 	# darwinia-network
-    "darwinia-evm-precompile-utils/std",
+	"darwinia-evm-precompile-utils/std",
 	"darwinia-evm/std",
 	"from-substrate-issuing/std",
 	"darwinia-support/std",
