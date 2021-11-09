@@ -86,10 +86,10 @@ pub mod pallet {
 		type ConfirmRelayersRewardRatio: Get<Permill>;
 
 		/// The slash rule
-		type SlashForEachBlock: Get<RingBalance<Self>>;
+		type SlashPerBlockDelay: Get<RingBalance<Self>>;
 		/// The collateral relayer need to lock for each order.
 		#[pallet::constant]
-		type CollateralEachOrder: Get<RingBalance<Self>>;
+		type CollateralPerOrder: Get<RingBalance<Self>>;
 
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 			+ Currency<Self::AccountId>;
@@ -203,7 +203,7 @@ pub mod pallet {
 				<Error<T>>::InsufficientBalance
 			);
 			let order_capacity: u32 =
-				(lock_collateral / T::CollateralEachOrder::get()).saturated_into::<u32>();
+				(lock_collateral / T::CollateralPerOrder::get()).saturated_into::<u32>();
 
 			if let Some(fee) = relay_fee {
 				ensure!(fee >= T::MinimumRelayFee::get(), <Error<T>>::RelayFeeTooLow);
@@ -255,10 +255,10 @@ pub mod pallet {
 				<Error<T>>::OnlyIncCollateralAllowed
 			);
 			let old_capacity: u32 =
-				(relayer.collateral / T::CollateralEachOrder::get()).saturated_into::<u32>();
+				(relayer.collateral / T::CollateralPerOrder::get()).saturated_into::<u32>();
 			let used_capacity = old_capacity.saturating_sub(relayer.order_capacity);
 			let new_capacity: u32 =
-				(new_collateral / T::CollateralEachOrder::get()).saturated_into::<u32>();
+				(new_collateral / T::CollateralPerOrder::get()).saturated_into::<u32>();
 
 			let _ = T::RingCurrency::extend_lock(
 				T::LockId::get(),

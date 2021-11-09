@@ -213,11 +213,11 @@ pub fn slash_assigned_relayers<T: Config>(
 			let slash = message_fee.saturating_add(
 				timeout
 					.saturating_mul(UniqueSaturatedInto::<u128>::unique_saturated_into(
-						T::SlashForEachBlock::get(),
+						T::SlashPerBlockDelay::get(),
 					))
 					.unique_saturated_into(),
 			);
-			let slash_max = sp_std::cmp::min(slash, T::CollateralEachOrder::get());
+			let slash_max = sp_std::cmp::min(slash, T::CollateralPerOrder::get());
 
 			for assigned_relayer in order.relayers_slice() {
 				let slashed_asset =
@@ -238,7 +238,7 @@ pub fn do_slash<T: Config>(
 ) -> RingBalance<T> {
 	let relayer = crate::Pallet::<T>::get_relayer(&slash_account);
 	let (locked_collateral, usable_order_capacity) = (relayer.collateral, relayer.order_capacity);
-	let slash_capacity: u32 = (slash_value / T::CollateralEachOrder::get()).saturated_into::<u32>();
+	let slash_capacity: u32 = (slash_value / T::CollateralPerOrder::get()).saturated_into::<u32>();
 
 	T::RingCurrency::remove_lock(T::LockId::get(), &slash_account);
 	debug_assert!(
