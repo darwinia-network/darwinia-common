@@ -555,7 +555,7 @@ sp_api::impl_runtime_apis! {
 		}
 		fn relaying_orders() -> RelayingOrders {
 			return RelayingOrders {
-				orders: Vec::new(),
+				orders: FeeMarket::relaying_orders(),
 			}
 		}
 	}
