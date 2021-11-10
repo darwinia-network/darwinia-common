@@ -34,6 +34,7 @@ std = [
 	# darwinia-network
 	"from-ethereum-issuing/std",
 	"darwinia-evm/std",
+	"darwinia-evm-precompile-utils/std",
 	"dp-evm/std",
 	# paritytech
 	"sp-core/std",
