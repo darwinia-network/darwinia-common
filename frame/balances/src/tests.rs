@@ -96,7 +96,7 @@ macro_rules! decl_tests {
 						ID_1,
 						&1,
 						LockFor::Common {
-							amount: Balance::max_value(),
+							amount: Balance::MAX,
 						},
 						WithdrawReasons::all(),
 					);
@@ -116,7 +116,7 @@ macro_rules! decl_tests {
 						ID_1,
 						&1,
 						LockFor::Common {
-							amount: Balance::max_value(),
+							amount: Balance::MAX,
 						},
 						WithdrawReasons::all(),
 					);
@@ -149,7 +149,7 @@ macro_rules! decl_tests {
 						ID_1,
 						&1,
 						LockFor::Common {
-							amount: Balance::max_value(),
+							amount: Balance::MAX,
 						},
 						WithdrawReasons::empty(),
 					);
@@ -586,15 +586,15 @@ macro_rules! decl_tests {
 		#[test]
 		fn transferring_too_high_value_should_not_panic() {
 			<$ext_builder>::default().build().execute_with(|| {
-				Ring::make_free_balance_be(&1, Balance::max_value());
+				Ring::make_free_balance_be(&1, Balance::MAX);
 				Ring::make_free_balance_be(&2, 1);
 
 				assert_err!(
-					Ring::transfer(Some(1).into(), 2, Balance::max_value()),
+					Ring::transfer(Some(1).into(), 2, Balance::MAX),
 					ArithmeticError::Overflow,
 				);
 
-				assert_eq!(Ring::free_balance(1), Balance::max_value());
+				assert_eq!(Ring::free_balance(1), Balance::MAX);
 				assert_eq!(Ring::free_balance(2), 1);
 			});
 		}

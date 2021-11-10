@@ -147,7 +147,7 @@
 //!
 //! ## Assumptions
 //!
-//! * Total issued balanced of all accounts should be less than `Config::Balance::max_value()`.
+//! * Total issued balanced of all accounts should be less than `Config::Balance::MAX`.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -1332,8 +1332,8 @@ pub mod pallet {
 			}
 			<TotalIssuance<T, I>>::mutate(|issued| {
 				*issued = issued.checked_add(&amount).unwrap_or_else(|| {
-					amount = Self::Balance::max_value() - *issued;
-					Self::Balance::max_value()
+					amount = Self::Balance::MAX - *issued;
+					Self::Balance::MAX
 				})
 			});
 			NegativeImbalance::new(amount)

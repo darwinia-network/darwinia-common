@@ -124,7 +124,7 @@ impl FeeCalculator for FixedGasPrice {
 
 frame_support::parameter_types! {
 	pub const ChainId: u64 = 43;
-	pub BlockGasLimit: U256 = u32::max_value().into();
+	pub BlockGasLimit: U256 = u32::MAX.into();
 }
 
 impl Config for Runtime {
