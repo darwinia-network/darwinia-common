@@ -615,7 +615,7 @@ fn test_call_relayer_decrease_lock_collateral_works() {
 
 		assert_err!(
 			FeeMarket::update_locked_collateral(Origin::signed(12), 300),
-			<Error::<Test>>::OnlyIncCollateralAllowed
+			<Error::<Test>>::StillHasOrdersNotConfirmed
 		);
 		assert_ok!(FeeMarket::update_locked_collateral(Origin::signed(12), 400));
 		assert_eq!(FeeMarket::relayer(&12).collateral, 400);

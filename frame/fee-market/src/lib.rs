@@ -123,8 +123,8 @@ pub mod pallet {
 		AlreadyEnrolled,
 		/// This relayer doesn't enroll ever.
 		NotEnrolled,
-		/// Only increase lock collateral is allowed when update_locked_collateral.
-		OnlyIncCollateralAllowed,
+		/// Update locked collateral is not allow since some orders are not confirm.
+		StillHasOrdersNotConfirmed,
 		/// The fee is lower than MinimumRelayFee.
 		RelayFeeTooLow,
 		/// The relayer is occupied, and can't cancel enrollment now.
@@ -264,7 +264,7 @@ pub mod pallet {
 						new_collateral
 							>= T::CollateralPerOrder::get()
 								.saturating_mul(necessary_collateral.into()),
-						<Error<T>>::OnlyIncCollateralAllowed
+						<Error<T>>::StillHasOrdersNotConfirmed
 					);
 
 					T::RingCurrency::remove_lock(T::LockId::get(), &who);
