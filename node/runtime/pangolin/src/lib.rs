@@ -201,7 +201,7 @@ frame_support::construct_runtime! {
 	{
 		// Basic stuff; balances is uncallable initially.
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 0,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage} = 1,
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 1,
 
 		// Must be before session.
 		Babe: pallet_babe::{Pallet, Call, Storage, Config, ValidateUnsigned} = 2,
@@ -215,13 +215,13 @@ frame_support::construct_runtime! {
 		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent} = 7,
 		ElectionProviderMultiPhase: pallet_election_provider_multi_phase::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 8,
 		Staking: darwinia_staking::{Pallet, Call, Storage, Config<T>, Event<T>} = 9,
-		Offences: pallet_offences::{Pallet, Call, Storage, Event} = 10,
+		Offences: pallet_offences::{Pallet, Storage, Event} = 10,
 		Historical: pallet_session_historical::{Pallet} = 11,
 		Session: pallet_session::{Pallet, Call, Storage, Config<T>, Event} = 12,
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 13,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
-		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Call, Config} = 15,
-		HeaderMMR: darwinia_header_mmr::{Pallet, Call, Storage} = 16,
+		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Config} = 15,
+		HeaderMMR: darwinia_header_mmr::{Pallet, Storage} = 16,
 
 		// Governance stuff; uncallable initially.
 		Democracy: darwinia_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 17,
