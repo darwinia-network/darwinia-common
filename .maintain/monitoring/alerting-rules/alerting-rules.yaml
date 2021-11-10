@@ -47,8 +47,8 @@ groups:
     # Under the assumption of an average block production of 6 seconds,
     # "best" and "finalized" being more than 10 blocks apart would imply
     # more than a 1 minute delay between block production and finalization.
-    expr: '(darwinia_block_height_number{status="best"} - ignoring(status)
-    darwinia_block_height_number{status="finalized"}) > 10'
+    expr: '(darwinia_block_height{status="best"} - ignoring(status)
+    darwinia_block_height{status="finalized"}) > 10'
     for: 8m
     labels:
       severity: critical
@@ -109,7 +109,7 @@ groups:
       message: 'The node {{ $labels.instance }} has less than 3 peers for more
       than 15 minutes'
   - alert: NoIncomingConnection
-    expr: increase(polkadot_sub_libp2p_incoming_connections_total[20m]) == 0
+    expr: increase(darwinia_sub_libp2p_incoming_connections_total[20m]) == 0
     labels:
       severity: warning
     annotations:
@@ -134,8 +134,8 @@ groups:
   ##############################################################################
 
   - alert: ContinuousTaskEnded
-    expr: '(polkadot_tasks_spawned_total{task_name != "basic-authorship-proposer", task_name != "substrate-rpc-subscription"} == 1)
-        - on(instance, task_name) group_left() (polkadot_tasks_ended_total == 1)'
+    expr: '(darwinia_tasks_spawned_total{task_name != "basic-authorship-proposer", task_name != "substrate-rpc-subscription"} == 1)
+        - on(instance, task_name) group_left() (darwinia_tasks_ended_total == 1)'
     for: 5m
     labels:
       severity: warning
@@ -157,9 +157,9 @@ groups:
 
   - alert: UnboundedChannelPersistentlyLarge
     expr: '(
-        (polkadot_unbounded_channel_len{action = "send"} -
-            ignoring(action) polkadot_unbounded_channel_len{action = "received"})
-        or on(instance) polkadot_unbounded_channel_len{action = "send"}
+        (darwinia_unbounded_channel_len{action = "send"} -
+            ignoring(action) darwinia_unbounded_channel_len{action = "received"})
+        or on(instance) darwinia_unbounded_channel_len{action = "send"}
     ) >= 200'
     for: 5m
     labels:
@@ -170,9 +170,9 @@ groups:
 
   - alert: UnboundedChannelVeryLarge
     expr: '(
-        (polkadot_unbounded_channel_len{action = "send"} -
-            ignoring(action) polkadot_unbounded_channel_len{action = "received"})
-        or on(instance) polkadot_unbounded_channel_len{action = "send"}
+        (darwinia_unbounded_channel_len{action = "send"} -
+            ignoring(action) darwinia_unbounded_channel_len{action = "received"})
+        or on(instance) darwinia_unbounded_channel_len{action = "send"}
     ) > 15000'
     labels:
       severity: warning
