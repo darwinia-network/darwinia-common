@@ -29,8 +29,8 @@ use dp_evm::Precompile;
 
 #[selector]
 enum Action {
-	BurnAndRemoteUnlock = "burn_and_remote_unlock()",
-	TokenRegisterResponse = "token_register_response()",
+	BurnAndRemoteUnlock = "burn_and_remote_unlock(uint32,address,address,address,bytes,uint256)",
+	TokenRegisterResponse = "token_register_response(address,address,address)",
 }
 
 /// The contract address: 0000000000000000000000000000000000000017
