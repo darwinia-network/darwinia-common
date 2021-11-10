@@ -1436,7 +1436,6 @@ dependencies = [
  "max-encoded-len",
  "pallet-transaction-payment",
  "parity-scale-codec",
- "paste",
  "sp-core",
  "sp-io",
  "sp-runtime",

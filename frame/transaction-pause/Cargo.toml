@@ -5,7 +5,7 @@ name    = "module-transaction-pause"
 version = "2.0.0"
 
 [dependencies]
-codec         = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
+codec         = { package = "parity-scale-codec", version = "2.1", default-features = false }
 frame-support = { git = "https://github.com/darwinia-network/substrate", default-features = false, tag = "darwinia-v0.11.5" }
 frame-system  = { git = "https://github.com/darwinia-network/substrate", default-features = false, tag = "darwinia-v0.11.5" }
 sp-runtime    = { git = "https://github.com/darwinia-network/substrate", default-features = false, tag = "darwinia-v0.11.5" }
