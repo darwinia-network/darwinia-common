@@ -12,7 +12,6 @@ frame_support::parameter_types! {
 
 	pub const AssignedRelayersNumber: u64 = 3;
 	pub const MinimumRelayFee: Balance = 15 * COIN;
-	pub const SlashPerBlockDelay: Balance = 2 * COIN;
 	pub const CollateralPerOrder: Balance = 100 * COIN;
 	pub const Slot: BlockNumber = 50;
 
@@ -28,7 +27,6 @@ impl Config for Runtime {
 
 	type AssignedRelayersNumber = AssignedRelayersNumber;
 	type MinimumRelayFee = MinimumRelayFee;
-	type SlashPerBlockDelay = SlashPerBlockDelay;
 	type CollateralPerOrder = CollateralPerOrder;
 	type Slot = Slot;
 

@@ -362,13 +362,14 @@ impl<T: Config> Pallet<T> {
 		}
 
 		// Update locked collateral
-		let _ = T::RingCurrency::extend_lock(
+		T::RingCurrency::set_lock(
 			T::LockId::get(),
-			who,
-			new_collateral,
+			&who,
+			LockFor::Common {
+				amount: new_collateral,
+			},
 			WithdrawReasons::all(),
-		)
-		.map_err(|_| <Error<T>>::ExtendLockFailed);
+		);
 		<RelayersMap<T>>::mutate(who.clone(), |relayer| {
 			relayer.collateral = new_collateral;
 		});

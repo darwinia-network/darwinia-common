@@ -518,7 +518,7 @@ pub fn unrewarded_relayer(
 }
 
 #[test]
-fn test_single_relayer_enroll_workflow_works() {
+fn test_call_relayer_enroll_works() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(Ring::free_balance(1), 150);
 		assert_err!(
@@ -558,7 +558,7 @@ fn test_single_relayer_enroll_workflow_works() {
 	});
 }
 #[test]
-fn test_single_relayer_update_lock_collateral() {
+fn test_call_relayer_update_lock_collateral_works() {
 	new_test_ext().execute_with(|| {
 		assert_err!(
 			FeeMarket::update_locked_collateral(Origin::signed(6), 100),
@@ -604,7 +604,7 @@ fn test_single_relayer_update_lock_collateral() {
 }
 
 #[test]
-fn test_relayer_cancel_registration() {
+fn test_call_relayer_cancel_registration_works() {
 	new_test_ext().execute_with(|| {
 		assert_err!(
 			FeeMarket::cancel_enrollment(Origin::signed(1)),
@@ -674,7 +674,7 @@ fn test_relayer_cancel_registration() {
 }
 
 #[test]
-fn test_single_relayer_update_fee_works() {
+fn test_call_relayer_update_fee_works() {
 	new_test_ext().execute_with(|| {
 		assert_err!(
 			FeeMarket::update_relay_fee(Origin::signed(1), 1),
@@ -700,7 +700,7 @@ fn test_single_relayer_update_fee_works() {
 }
 
 #[test]
-fn test_market_fee() {
+fn test_rpc_market_fee_works() {
 	new_test_ext().execute_with(|| {
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, None);
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(2), 110, Some(40));
@@ -757,7 +757,7 @@ fn receive_messages_delivery_proof() {
 }
 
 #[test]
-fn test_order_creation_when_bridged_pallet_accept_message() {
+fn test_callback_order_creation() {
 	new_test_ext().execute_with(|| {
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, Some(30));
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(2), 110, Some(50));
@@ -786,7 +786,7 @@ fn test_order_creation_when_bridged_pallet_accept_message() {
 }
 
 #[test]
-fn test_no_order_created_after_send_message_when_fee_market_not_ready() {
+fn test_callback_no_order_created_when_fee_market_not_ready() {
 	new_test_ext().execute_with(|| {
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, Some(30));
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(2), 110, Some(50));
@@ -805,7 +805,7 @@ fn test_no_order_created_after_send_message_when_fee_market_not_ready() {
 }
 
 #[test]
-fn test_order_confirm_time_set_when_bridged_pallet_confirmed_message() {
+fn test_callback_order_confirm() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(2);
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, Some(30));
@@ -833,7 +833,7 @@ fn test_order_confirm_time_set_when_bridged_pallet_confirmed_message() {
 }
 
 #[test]
-fn test_payment_reward_calculation_assigned_relayer_finish_delivery_single_message() {
+fn test_payment_cal_reward_normally_single_message() {
 	new_test_ext().execute_with(|| {
 		// Send message
 		System::set_block_number(2);
@@ -880,7 +880,7 @@ fn test_payment_reward_calculation_assigned_relayer_finish_delivery_single_messa
 }
 
 #[test]
-fn test_payment_reward_calculation_assigned_relayer_finish_delivery_with_multiple_messages() {
+fn test_payment_cal_reward_normally_multi_message() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(2);
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(5), 300, Some(30));
@@ -934,8 +934,7 @@ fn test_payment_reward_calculation_assigned_relayer_finish_delivery_with_multipl
 }
 
 #[test]
-fn test_payment_reward_calculation_assigned_relayer_single_message_with_multiple_duplicated_delivery_proof(
-) {
+fn test_payment_cal_reward_with_duplicated_delivery_proof() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(2);
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, Some(30));
@@ -996,143 +995,19 @@ fn test_payment_reward_calculation_assigned_relayer_single_message_with_multiple
 	});
 }
 
-// #[test]
-// #[ignore]
-// fn test_assigned_relayers_slash_calculation_with_clean() {
-// 	new_test_ext().execute_with(|| {
-// 		System::set_block_number(2);
-// 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(5), 200, Some(30));
-// 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(6), 200, Some(50));
-// 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(7), 200, Some(70));
-// 		assert_eq!(FeeMarket::relayer(&5).order_capacity, 2);
-// 		assert_eq!(FeeMarket::relayer(&6).order_capacity, 2);
-// 		assert_eq!(FeeMarket::relayer(&7).order_capacity, 2);
-// 		let market_fee = FeeMarket::market_fee().unwrap();
-// 		let (lane, message_nonce) = send_regular_message(market_fee);
-// 		let mut order = FeeMarket::order((&lane, &message_nonce)).unwrap();
-// 		assert_eq!(Ring::usable_balance(&5), 150);
-// 		assert_eq!(Ring::usable_balance(&6), 300);
-// 		assert_eq!(Ring::usable_balance(&7), 300);
-// 		assert_eq!(FeeMarket::relayer(&5).order_capacity, 1);
-// 		assert_eq!(FeeMarket::relayer(&6).order_capacity, 1);
-// 		assert_eq!(FeeMarket::relayer(&7).order_capacity, 1);
-
-// 		order.confirm_time = order.range_end();
-// 		assert_eq!(slash_assigned_relayers::<Test>(order.clone(), &0), 210);
-// 		assert_eq!(Ring::usable_balance(&5), 150);
-// 		assert_eq!(Ring::usable_balance(&6), 300);
-// 		assert_eq!(Ring::usable_balance(&7), 300);
-// 		assert_eq!(FeeMarket::relayer(&5).collateral, 130);
-// 		assert_eq!(FeeMarket::relayer(&6).collateral, 130);
-// 		assert_eq!(FeeMarket::relayer(&7).collateral, 130);
-// 		assert_eq!(FeeMarket::assigned_relayers().unwrap().len(), 3);
-// 		assert_eq!(FeeMarket::relayer(&5).order_capacity, 1);
-// 		assert_eq!(FeeMarket::relayer(&6).order_capacity, 1);
-// 		assert_eq!(FeeMarket::relayer(&7).order_capacity, 1);
-
-// 		// slash value = 70 + 30 * 2 = 130 > 100
-// 		order.confirm_time = Some(order.range_end().unwrap() + 30);
-// 		assert_eq!(slash_assigned_relayers::<Test>(order, &10), 300);
-// 		assert_eq!(Ring::usable_balance(&5), 180);
-// 		assert_eq!(Ring::usable_balance(&6), 330);
-// 		assert_eq!(Ring::usable_balance(&7), 330);
-// 		assert_eq!(FeeMarket::relayer(&5).collateral, 0);
-// 		assert_eq!(FeeMarket::relayer(&6).collateral, 0);
-// 		assert_eq!(FeeMarket::relayer(&7).collateral, 0);
-// 		assert_eq!(FeeMarket::relayer(&5).order_capacity, 0);
-// 		assert_eq!(FeeMarket::relayer(&6).order_capacity, 0);
-// 		assert_eq!(FeeMarket::relayer(&7).order_capacity, 0);
-// 		assert!(FeeMarket::assigned_relayers().is_none());
-// 	});
-// }
-
-// #[test]
-// #[ignore]
-// fn test_assigned_relayers_slash_order_capacity_correctly() {
-// 	new_test_ext().execute_with(|| {
-// 		System::set_block_number(2);
-// 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(12), 1000, Some(30));
-// 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(13), 1000, Some(50));
-// 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(14), 1000, Some(70));
-// 		assert_eq!(FeeMarket::relayer(&12).order_capacity, 10);
-// 		assert_eq!(FeeMarket::relayer(&13).order_capacity, 10);
-// 		assert_eq!(FeeMarket::relayer(&14).order_capacity, 10);
-// 		let market_fee = FeeMarket::market_fee().unwrap();
-// 		let _ = send_regular_message(market_fee);
-// 		assert_eq!(Ring::usable_balance(&12), 1000);
-// 		assert_eq!(Ring::usable_balance(&13), 1000);
-// 		assert_eq!(Ring::usable_balance(&14), 1000);
-// 		assert_eq!(FeeMarket::relayer(&12).order_capacity, 9);
-// 		assert_eq!(FeeMarket::relayer(&13).order_capacity, 9);
-// 		assert_eq!(FeeMarket::relayer(&14).order_capacity, 9);
-// 		let (lane, message_nonce) = send_regular_message(market_fee);
-// 		let mut order = FeeMarket::order((&lane, &message_nonce)).unwrap();
-// 		assert_eq!(Ring::usable_balance(&12), 1000);
-// 		assert_eq!(Ring::usable_balance(&13), 1000);
-// 		assert_eq!(Ring::usable_balance(&14), 1000);
-// 		assert_eq!(FeeMarket::relayer(&12).order_capacity, 8);
-// 		assert_eq!(FeeMarket::relayer(&13).order_capacity, 8);
-// 		assert_eq!(FeeMarket::relayer(&14).order_capacity, 8);
-
-// 		// slash value = 70 + 30 * 2 = 130 > 100
-// 		order.confirm_time = Some(order.range_end().unwrap() + 30);
-// 		assert_eq!(slash_assigned_relayers::<Test>(order, &10), 300);
-// 		assert_eq!(Ring::usable_balance(&12), 1000);
-// 		assert_eq!(Ring::usable_balance(&13), 1000);
-// 		assert_eq!(Ring::usable_balance(&14), 1000);
-// 		assert_eq!(FeeMarket::relayer(&12).collateral, 900);
-// 		assert_eq!(FeeMarket::relayer(&13).collateral, 900);
-// 		assert_eq!(FeeMarket::relayer(&14).collateral, 900);
-// 		assert_eq!(FeeMarket::relayer(&12).collateral, 900);
-// 		assert_eq!(FeeMarket::relayer(&13).collateral, 900);
-// 		assert_eq!(FeeMarket::relayer(&14).collateral, 900);
-// 		assert_eq!(FeeMarket::relayer(&12).collateral, 900);
-// 		assert_eq!(FeeMarket::relayer(&13).collateral, 900);
-// 		assert_eq!(FeeMarket::relayer(&14).collateral, 900);
-// 		assert_eq!(FeeMarket::relayer(&12).order_capacity, 7);
-// 		assert_eq!(FeeMarket::relayer(&13).order_capacity, 7);
-// 		assert_eq!(FeeMarket::relayer(&14).order_capacity, 7);
-// 	});
-// }
-
-// #[test]
-// fn test_assigned_relayers_slash_kick_out_market_fee_hung() {
-// 	new_test_ext().execute_with(|| {
-// 		System::set_block_number(2);
-// 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, Some(30));
-// 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(2), 110, Some(50));
-// 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(3), 120, Some(70));
-// 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(4), 120, Some(80));
-// 		let market_fee = FeeMarket::market_fee().unwrap();
-// 		let (lane, message_nonce) = send_regular_message(market_fee);
-// 		let mut order = FeeMarket::order((&lane, &message_nonce)).unwrap();
-// 		assert_eq!(Ring::usable_balance(&1), 50);
-// 		assert_eq!(Ring::usable_balance(&2), 90);
-// 		assert_eq!(Ring::usable_balance(&3), 230);
-
-// 		order.confirm_time = Some(order.range_end().unwrap() + 50);
-// 		assert_eq!(slash_assigned_relayers::<Test>(order.clone(), &0), 300);
-// 		assert_eq!(Ring::usable_balance(&1), 50);
-// 		assert!(!FeeMarket::is_enrolled(&1));
-// 		assert_eq!(Ring::usable_balance(&2), 100);
-// 		assert!(!FeeMarket::is_enrolled(&2));
-// 		assert_eq!(Ring::usable_balance(&3), 250);
-// 		assert!(!FeeMarket::is_enrolled(&3));
-// 		assert!(FeeMarket::assigned_relayers().is_none());
-// 		assert!(FeeMarket::market_fee().is_none());
-// 	});
-// }
-
 #[test]
-fn test_payment_reward_calculation_assigned_relayers_absent_with_single_message() {
+fn test_payment_with_slash_and_remove_enroll() {
 	new_test_ext().execute_with(|| {
 		// Send message
 		System::set_block_number(2);
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, Some(30));
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(2), 110, Some(50));
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(3), 120, Some(100));
+		assert_eq!(FeeMarket::relayer(&1).collateral, 100);
+		assert_eq!(FeeMarket::relayer(&1).order_capacity, 1);
 		let market_fee = FeeMarket::market_fee().unwrap();
 		let (_, _) = send_regular_message(market_fee);
+		assert_eq!(FeeMarket::relayer(&1).order_capacity, 0);
 
 		// Receive delivery message proof
 		System::set_block_number(200);
@@ -1153,16 +1028,69 @@ fn test_payment_reward_calculation_assigned_relayers_absent_with_single_message(
 				..Default::default()
 			},
 		));
-		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 60));
+		assert!(!FeeMarket::is_enrolled(&1));
+		assert!(!FeeMarket::is_enrolled(&2));
+		assert!(!FeeMarket::is_enrolled(&3));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 80));
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
 			TEST_RELAYER_A,
-			240
+			320
 		));
 	});
 }
 
 #[test]
-fn test_payment_reward_calculation_assigned_relayers_absent_with_multiple_message() {
+fn test_payment_with_slash_and_reduce_order_capacity() {
+	new_test_ext().execute_with(|| {
+		// Send message
+		System::set_block_number(2);
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(6), 400, Some(30));
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(7), 400, Some(50));
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(8), 400, Some(100));
+		assert_eq!(FeeMarket::relayer(&6).collateral, 400);
+		assert_eq!(FeeMarket::relayer(&6).order_capacity, 4);
+		let market_fee = FeeMarket::market_fee().unwrap();
+		let (_, _) = send_regular_message(market_fee);
+		assert_eq!(FeeMarket::relayer(&6).order_capacity, 3);
+
+		// Receive delivery message proof
+		System::set_block_number(200);
+		assert_ok!(Messages::receive_messages_delivery_proof(
+			Origin::signed(5),
+			TestMessagesDeliveryProof(Ok((
+				TEST_LANE_ID,
+				InboundLaneData {
+					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
+						.into_iter()
+						.collect(),
+					..Default::default()
+				}
+			))),
+			UnrewardedRelayersState {
+				unrewarded_relayer_entries: 1,
+				total_messages: 1,
+				..Default::default()
+			},
+		));
+		assert!(FeeMarket::is_enrolled(&6));
+		assert!(FeeMarket::is_enrolled(&6));
+		assert!(FeeMarket::is_enrolled(&6));
+		assert_eq!(FeeMarket::relayer(&6).collateral, 300);
+		assert_eq!(FeeMarket::relayer(&7).collateral, 300);
+		assert_eq!(FeeMarket::relayer(&8).collateral, 300);
+		assert_eq!(FeeMarket::relayer(&6).order_capacity, 3);
+		assert_eq!(FeeMarket::relayer(&7).order_capacity, 3);
+		assert_eq!(FeeMarket::relayer(&8).order_capacity, 3);
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 80));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
+			TEST_RELAYER_A,
+			320
+		));
+	});
+}
+
+#[test]
+fn test_payment_cal_slash_with_multiple_message() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(2);
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(6), 400, Some(300));
@@ -1198,15 +1126,15 @@ fn test_payment_reward_calculation_assigned_relayers_absent_with_multiple_messag
 			},
 		));
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
-			5, 120
+			5, 520
 		));
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
 			TEST_RELAYER_A,
-			240
+			1040
 		));
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
 			TEST_RELAYER_B,
-			240
+			1040
 		));
 	});
 }
@@ -1264,7 +1192,7 @@ fn test_clean_order_state_at_the_end_of_block() {
 }
 
 #[test]
-fn test_check_submitted_fee_with_fee_market() {
+fn test_fee_verification_when_send_message() {
 	new_test_ext().execute_with(|| {
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, Some(30));
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(2), 100, Some(40));
