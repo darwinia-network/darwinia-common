@@ -61,18 +61,6 @@ impl<T: Config> OnDeliveryConfirmed for FeeMarketMessageConfirmedHandler<T> {
 						None => {}
 					});
 					<ConfirmedMessagesThisBlock<T>>::append((lane, message_nonce));
-
-					let assigned_relayers_ids: Vec<T::AccountId> = order
-						.relayers_slice()
-						.iter()
-						.map(|r| r.id.clone())
-						.collect();
-					// todo: should we move this part after the reward?
-					Pallet::<T>::relayer_finish_order(
-						&order.lane,
-						&order.message,
-						&assigned_relayers_ids,
-					);
 				}
 			}
 		}

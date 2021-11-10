@@ -168,15 +168,26 @@ where
 						// 20% * (1 - 60%) * lowest_fee => confirm relayer
 						confirm_reward =
 							T::ConfirmRelayersRewardRatio::get() * bridger_relayers_reward;
-					} else {
-						// The message is delivered by common relayer instead of order assigned relayers, all assigned relayers of this order should be punished.
-						let slashed_reward =
-							slash_assigned_relayers::<T>(order, relayer_fund_account);
 
+						// The order is confirmed in time, recover relayer order capacity
+						Pallet::<T>::relayer_finish_order(&order);
+					} else {
+						// The message is delivered by common relayer instead of order assigned relayers, all assigned relayers of this order should be slash.
+						// Total slash = message fee + assigned_relayers slash
+						// For each assigned relayer, slash CollateralPerOrder per order, then order capacity will decrease by 1.
+						let mut total_slash = message_fee;
+
+						let mut assigned_relayers_slash = RingBalance::<T>::zero();
+						for assigned_relayer in order.relayers_slice() {
+							let slashed = do_slash::<T>(&assigned_relayer.id, relayer_fund_account);
+							assigned_relayers_slash += slashed;
+						}
+
+						total_slash += assigned_relayers_slash;
 						// 80% total slash => confirm relayer
-						message_reward = T::MessageRelayersRewardRatio::get() * slashed_reward;
+						message_reward = T::MessageRelayersRewardRatio::get() * total_slash;
 						// 20% total slash => confirm relayer
-						confirm_reward = T::ConfirmRelayersRewardRatio::get() * slashed_reward;
+						confirm_reward = T::ConfirmRelayersRewardRatio::get() * total_slash;
 					}
 
 					// Update confirmation relayer total rewards
@@ -200,46 +211,13 @@ where
 	}
 }
 
-/// Slash order assigned relayers
-pub fn slash_assigned_relayers<T: Config>(
-	order: Order<T::AccountId, T::BlockNumber, RingBalance<T>>,
-	relayer_fund_account: &T::AccountId,
-) -> RingBalance<T> {
-	let mut total_slash = RingBalance::<T>::zero();
-	match (order.confirm_time, order.range_end()) {
-		(Some(confirm_time), Some(end_time)) if confirm_time >= end_time => {
-			let timeout: u128 = (confirm_time - end_time).unique_saturated_into();
-			let message_fee = order.lowest_and_highest_fee().1.unwrap_or_default();
-			let slash = message_fee.saturating_add(
-				timeout
-					.saturating_mul(UniqueSaturatedInto::<u128>::unique_saturated_into(
-						T::SlashPerBlockDelay::get(),
-					))
-					.unique_saturated_into(),
-			);
-			let slash_max = sp_std::cmp::min(slash, T::CollateralPerOrder::get());
-
-			for assigned_relayer in order.relayers_slice() {
-				let slashed_asset =
-					do_slash::<T>(&assigned_relayer.id, relayer_fund_account, slash_max);
-				total_slash += slashed_asset;
-			}
-		}
-		_ => {}
-	}
-	total_slash
-}
-
 /// Do slash for absent assigned relayers
 pub fn do_slash<T: Config>(
 	slash_account: &T::AccountId,
 	fund_account: &T::AccountId,
-	slash_value: RingBalance<T>,
 ) -> RingBalance<T> {
-	let relayer = crate::Pallet::<T>::get_relayer(&slash_account);
-	let (locked_collateral, usable_order_capacity) = (relayer.collateral, relayer.order_capacity);
-	let slash_capacity: u32 = (slash_value / T::CollateralPerOrder::get()).saturated_into::<u32>();
-
+	let locked_collateral = crate::Pallet::<T>::relayer(&slash_account).collateral;
+	let slash_value = T::CollateralPerOrder::get();
 	T::RingCurrency::remove_lock(T::LockId::get(), &slash_account);
 	debug_assert!(
 		locked_collateral >= slash_value,
@@ -255,7 +233,6 @@ pub fn do_slash<T: Config>(
 	crate::Pallet::<T>::update_relayer_after_slash(
 		&slash_account,
 		locked_collateral.saturating_sub(slash_value),
-		usable_order_capacity.saturating_sub(slash_capacity),
 	);
 
 	slash_value

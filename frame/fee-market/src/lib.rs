@@ -40,7 +40,7 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use num_traits::Zero;
-use sp_runtime::{traits::UniqueSaturatedInto, Permill, SaturatedConversion};
+use sp_runtime::{Permill, SaturatedConversion};
 use sp_std::{default::Default, vec::Vec};
 // --- darwinia-network ---
 use darwinia_support::{
@@ -73,6 +73,9 @@ pub mod pallet {
 		/// The assigned relayers number for each order.
 		#[pallet::constant]
 		type AssignedRelayersNumber: Get<u64>;
+		/// The collateral relayer need to lock for each order.
+		#[pallet::constant]
+		type CollateralPerOrder: Get<RingBalance<Self>>;
 		/// The slot times set
 		#[pallet::constant]
 		type Slot: Get<Self::BlockNumber>;
@@ -84,12 +87,6 @@ pub mod pallet {
 		type MessageRelayersRewardRatio: Get<Permill>;
 		#[pallet::constant]
 		type ConfirmRelayersRewardRatio: Get<Permill>;
-
-		/// The slash value for each block when order delay.
-		type SlashPerBlockDelay: Get<RingBalance<Self>>;
-		/// The collateral relayer need to lock for each order.
-		#[pallet::constant]
-		type CollateralPerOrder: Get<RingBalance<Self>>;
 
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 			+ Currency<Self::AccountId>;
@@ -138,7 +135,7 @@ pub mod pallet {
 
 	// Enrolled relayers storage
 	#[pallet::storage]
-	#[pallet::getter(fn get_relayer)]
+	#[pallet::getter(fn relayer)]
 	pub type RelayersMap<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -249,7 +246,7 @@ pub mod pallet {
 				<Error<T>>::InsufficientBalance
 			);
 
-			let relayer = Self::get_relayer(&who);
+			let relayer = Self::relayer(&who);
 			ensure!(
 				new_collateral > relayer.collateral,
 				<Error<T>>::OnlyIncCollateralAllowed
@@ -276,7 +273,7 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::UpdateRelayer(
 				who.clone(),
 				Some(new_collateral),
-				Some(Self::get_relayer(&who).order_capacity),
+				Some(Self::relayer(&who).order_capacity),
 				None,
 			));
 			Ok(().into())
@@ -358,12 +355,8 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Update relayer after slash occurred, this will changes RelayersMap storage. (Update market needed)
-	pub(crate) fn update_relayer_after_slash(
-		who: &T::AccountId,
-		new_collateral: RingBalance<T>,
-		new_order_capacity: u32,
-	) {
-		if new_collateral == RingBalance::<T>::zero() || new_order_capacity == 0 {
+	pub(crate) fn update_relayer_after_slash(who: &T::AccountId, new_collateral: RingBalance<T>) {
+		if new_collateral == RingBalance::<T>::zero() || Self::relayer(&who).order_capacity == 0 {
 			Self::remove_enrolled_relayer(who);
 			return;
 		}
@@ -378,7 +371,6 @@ impl<T: Config> Pallet<T> {
 		.map_err(|_| <Error<T>>::ExtendLockFailed);
 		<RelayersMap<T>>::mutate(who.clone(), |relayer| {
 			relayer.collateral = new_collateral;
-			relayer.order_capacity = new_order_capacity;
 		});
 
 		Self::update_market();
@@ -402,15 +394,12 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn relayer_accept_order(
 		order: &Order<T::AccountId, T::BlockNumber, RingBalance<T>>,
 	) {
-		let assigned_relayers_ids: Vec<T::AccountId> = order
-			.relayers
-			.iter()
-			.map(|relayer| relayer.id.clone())
-			.collect();
+		let assigned_relayers: Vec<T::AccountId> =
+			order.relayers.iter().map(|r| r.id.clone()).collect();
 
-		for who in assigned_relayers_ids {
+		for who in assigned_relayers {
 			<RelayersMap<T>>::mutate(who.clone(), |r| {
-				r.accept_order(&order.lane, &order.message);
+				r.accept_order();
 			});
 		}
 		Self::update_market();
@@ -418,13 +407,13 @@ impl<T: Config> Pallet<T> {
 
 	/// Update relayer order capacity after message order confirmed. (Update market needed)
 	pub(crate) fn relayer_finish_order(
-		lane_id: &LaneId,
-		nonce: &MessageNonce,
-		relayers: &[T::AccountId],
+		order: &Order<T::AccountId, T::BlockNumber, RingBalance<T>>,
 	) {
-		for who in relayers {
+		let assigned_relayers: Vec<T::AccountId> =
+			order.relayers.iter().map(|r| r.id.clone()).collect();
+		for who in assigned_relayers {
 			<RelayersMap<T>>::mutate(who.clone(), |r| {
-				r.finish_order(lane_id, nonce);
+				r.finish_order();
 			});
 		}
 		Self::update_market();

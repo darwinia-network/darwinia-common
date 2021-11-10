@@ -82,7 +82,7 @@ benchmarks! {
 		let new_collateral = T::MiniumLockCollateral::get().saturating_mul(5u32.into());
 	}: update_locked_collateral(RawOrigin::Signed(caller3.clone()), new_collateral)
 	verify {
-		let relayer = <FeeMarket<T>>::get_relayer(&caller3);
+		let relayer = <FeeMarket<T>>::relayer(&caller3);
 		assert_eq!(relayer.collateral,  T::MiniumLockCollateral::get().saturating_mul(5u32.into()));
 	}
 
@@ -92,7 +92,7 @@ benchmarks! {
 		let new_fee = T::MinimumRelayFee::get().saturating_mul(10u32.into());
 	}: update_relay_fee(RawOrigin::Signed(caller3.clone()), new_fee)
 	verify {
-		let relayer = <FeeMarket<T>>::get_relayer(&caller3);
+		let relayer = <FeeMarket<T>>::relayer(&caller3);
 		assert_eq!(relayer.fee,  T::MinimumRelayFee::get().saturating_mul(10u32.into()));
 	}
 
