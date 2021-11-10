@@ -43,8 +43,12 @@ std = [
 	"darwinia-support/std",
 	"dp-contract/std",
 	"dp-evm/std",
+	"dp-s2s/std",
 	# paritytech
+	"bp-message-dispatch/std",
+	"bp-runtime/std",
 	"frame-support/std",
 	"sp-core/std",
 	"sp-io/std",
+	"sp-std/std",
 ]
