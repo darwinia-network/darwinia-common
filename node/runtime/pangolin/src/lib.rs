@@ -171,7 +171,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 1,
-	spec_version: 2680,
+	spec_version: 2690,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 4,
@@ -285,7 +285,9 @@ frame_support::construct_runtime! {
 
 		BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
 
-		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 53
+		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 53,
+
+		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 54,
 	}
 }
 

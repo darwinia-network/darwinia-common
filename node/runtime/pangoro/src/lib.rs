@@ -133,7 +133,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangoro"),
 	impl_name: sp_runtime::create_runtime_str!("Pangoro"),
 	authoring_version: 1,
-	spec_version: 2680,
+	spec_version: 2690,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
@@ -189,6 +189,8 @@ frame_support::construct_runtime!(
 
 		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Config<T>, Event<T>} = 20,
 		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 22,
+
+		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 23,
 	}
 );
 

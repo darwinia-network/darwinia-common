@@ -50,6 +50,7 @@ members = [
 	"frame/staking/rpc",
 	"frame/staking/rpc/runtime-api",
 	"frame/support",
+	"frame/transaction-pause",
 	"frame/vesting",
 	"frame/wormhole/backing/ethereum",
 	"frame/wormhole/backing/s2s",
