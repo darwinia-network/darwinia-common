@@ -681,7 +681,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 				Err(())
 			}
 		});
-		<Affirmations<T, I>>::remove_prefix(&game_id);
+		<Affirmations<T, I>>::remove_prefix(&game_id, None);
 		<BestConfirmedHeaderId<T, I>>::take(&game_id);
 		<RoundCounts<T, I>>::take(&game_id);
 		<AffirmTime<T, I>>::take(&game_id);
