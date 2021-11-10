@@ -12,8 +12,8 @@ version     = "2.6.9"
 
 [dependencies]
 # crates.io
-codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
-evm   = { version = "0.27.0", default-features = false, features = ["with-codec"] }
+codec = { package = "parity-scale-codec", version = "2.1", default-features = false }
+evm   = { version = "0.27", default-features = false, features = ["with-codec"] }
 # darwinia-network
 darwinia-evm                  = { default-features = false, path = "../../../../../evm" }
 darwinia-evm-precompile-utils = { default-features = false, path = "../../utils" }

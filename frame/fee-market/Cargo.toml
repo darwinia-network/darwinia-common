@@ -13,7 +13,7 @@ version     = "2.6.9"
 # crates.io
 bitvec     = { version = "0.20", default-features = false, features = ["alloc"] }
 codec      = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
-log        = { version = "0.4.14", default-features = false }
+log        = { version = "0.4", default-features = false }
 num-traits = { version = "0.2", default-features = false }
 # darwinia-network
 darwinia-support = { default-features = false, path = "../support" }
