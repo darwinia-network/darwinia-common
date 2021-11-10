@@ -190,7 +190,7 @@ macro_rules! decl_tests {
 				.monied(true)
 				.build()
 				.execute_with(|| {
-					pallet_transaction_payment::NextFeeMultiplier::put(Multiplier::saturating_from_integer(1));
+					pallet_transaction_payment::NextFeeMultiplier::<$test>::put(Multiplier::saturating_from_integer(1));
 					Ring::set_lock(
 						ID_1,
 						&1,
