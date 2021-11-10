@@ -16,11 +16,11 @@ serde = { version = "1.0", optional = true, features = ["derive"] }
 # darwinia-network
 darwinia-support = { default-features = false, path = "../support" }
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
 
 [dev-dependencies]
 # crates.io
@@ -29,11 +29,11 @@ hex-literal = { version = "0.3" }
 darwinia-balances = { path = "../balances" }
 darwinia-support  = { features = ["easy-testing"], path = "../support" }
 # paritytech
-max-encoded-len      = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-pallet-scheduler     = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-core              = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-storage           = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+max-encoded-len      = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+pallet-scheduler     = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-core              = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-storage           = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+substrate-test-utils = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
 
 [features]
 default = ["std"]
