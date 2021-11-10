@@ -25,13 +25,15 @@ use sp_std::{
 	ops::{Add, AddAssign, Range},
 	vec::Vec,
 };
+
 /// Relayer who has enrolled the fee market
-#[derive(Encode, Decode, Clone, Eq, Debug, Copy)]
+#[derive(Encode, Decode, Clone, Eq, Debug)]
 pub struct Relayer<AccountId, Balance> {
 	pub id: AccountId,
 	pub collateral: Balance,
 	pub fee: Balance,
 	pub order_capacity: u32,
+	pub orders: Vec<(LaneId, MessageNonce)>,
 }
 
 impl<AccountId, Balance> Relayer<AccountId, Balance> {
@@ -46,7 +48,19 @@ impl<AccountId, Balance> Relayer<AccountId, Balance> {
 			collateral,
 			fee,
 			order_capacity,
+			orders: Vec::new(),
 		}
+	}
+
+	pub fn accept_order(&mut self, lane_id: &LaneId, message_nonce: &MessageNonce) {
+		self.orders.push((*lane_id, *message_nonce));
+		self.order_capacity = self.order_capacity.saturating_sub(1);
+	}
+
+	pub fn finish_order(&mut self, lane_id: &LaneId, message_nonce: &MessageNonce) {
+		self.orders
+			.retain(|(id, nonce)| (id, nonce) != (lane_id, message_nonce));
+		self.order_capacity = self.order_capacity.saturating_add(1);
 	}
 }
 
@@ -78,6 +92,7 @@ impl<AccountId: PartialEq, Balance: PartialEq> PartialEq for Relayer<AccountId, 
 			&& self.id == other.id
 			&& self.collateral == other.collateral
 			&& self.order_capacity == other.order_capacity
+			&& self.orders == other.orders
 	}
 }
 
@@ -88,6 +103,7 @@ impl<AccountId: Default, Balance: Default> Default for Relayer<AccountId, Balanc
 			collateral: Balance::default(),
 			fee: Balance::default(),
 			order_capacity: 0,
+			orders: Vec::new(),
 		}
 	}
 }
@@ -281,5 +297,28 @@ mod test {
 		assert_eq!(order.relayer_valid_range(2).unwrap(), (150..200));
 		assert_eq!(order.relayer_valid_range(3).unwrap(), (200..250));
 		assert_eq!(order.relayer_valid_range(4).unwrap(), (250..300));
+	}
+
+	#[test]
+	fn test_accept_order() {
+		let mut r1 = Relayer::<AccountId, Balance>::new(1, 150, 30, 1);
+		r1.accept_order(&[0, 0, 0, 1], &1);
+		assert_eq!(r1.order_capacity, 0);
+		assert_eq!(r1.orders, vec![([0, 0, 0, 1], 1)]);
+	}
+
+	#[test]
+	fn test_finish_order() {
+		let mut r2 = Relayer::<AccountId, Balance>::new(1, 150, 30, 3);
+		r2.accept_order(&[0, 0, 0, 1], &1);
+		r2.accept_order(&[0, 0, 0, 1], &2);
+		r2.accept_order(&[0, 0, 0, 1], &3);
+		assert_eq!(
+			r2.orders,
+			vec![([0, 0, 0, 1], 1), ([0, 0, 0, 1], 2), ([0, 0, 0, 1], 3)]
+		);
+		r2.finish_order(&[0, 0, 0, 1], &1);
+		assert_eq!(r2.order_capacity, 1);
+		assert_eq!(r2.orders, vec![([0, 0, 0, 1], 2), ([0, 0, 0, 1], 3)]);
 	}
 }

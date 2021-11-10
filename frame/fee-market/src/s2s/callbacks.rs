@@ -38,13 +38,9 @@ impl<T: Config> OnMessageAccepted for FeeMarketMessageAcceptedHandler<T> {
 				T::Slot::get(),
 			);
 			// Store the create order
-			<Orders<T>>::insert((order.lane, order.message), order);
-
-			let assigned_relayers_ids: Vec<T::AccountId> = assigned_relayers
-				.iter()
-				.map(|relayer| relayer.id.clone())
-				.collect();
-			Pallet::<T>::dec_relayer_order_capacity(&assigned_relayers_ids);
+			<Orders<T>>::insert((order.lane, order.message), order.clone());
+			// Update relayer orders and order_capacity
+			Pallet::<T>::relayer_accept_order(&order);
 		}
 
 		// TODO: The returned weight should be more accurately. See: https://github.com/darwinia-network/darwinia-common/issues/911
@@ -72,7 +68,11 @@ impl<T: Config> OnDeliveryConfirmed for FeeMarketMessageConfirmedHandler<T> {
 						.map(|r| r.id.clone())
 						.collect();
 					// todo: should we move this part after the reward?
-					Pallet::<T>::inc_relayer_order_capacity(&assigned_relayers_ids);
+					Pallet::<T>::relayer_finish_order(
+						&order.lane,
+						&order.message,
+						&assigned_relayers_ids,
+					);
 				}
 			}
 		}

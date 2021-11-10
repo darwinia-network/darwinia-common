@@ -398,22 +398,33 @@ impl<T: Config> Pallet<T> {
 		Self::update_market();
 	}
 
-	/// Decrease relayer order capacity by 1 after message order created. (Update market needed)
-	pub(crate) fn dec_relayer_order_capacity(relayers: &[T::AccountId]) {
-		// todo: need to check 0-1 case.
-		for who in relayers {
+	/// Update relayer order capacity after message order created. (Update market needed)
+	pub(crate) fn relayer_accept_order(
+		order: &Order<T::AccountId, T::BlockNumber, RingBalance<T>>,
+	) {
+		let assigned_relayers_ids: Vec<T::AccountId> = order
+			.relayers
+			.iter()
+			.map(|relayer| relayer.id.clone())
+			.collect();
+
+		for who in assigned_relayers_ids {
 			<RelayersMap<T>>::mutate(who.clone(), |r| {
-				r.order_capacity = r.order_capacity.saturating_sub(1);
+				r.accept_order(&order.lane, &order.message);
 			});
 		}
 		Self::update_market();
 	}
 
-	/// Increase relayer order capacity by 1 after message order confirmed. (Update market needed)
-	pub(crate) fn inc_relayer_order_capacity(relayers: &[T::AccountId]) {
+	/// Update relayer order capacity after message order confirmed. (Update market needed)
+	pub(crate) fn relayer_finish_order(
+		lane_id: &LaneId,
+		nonce: &MessageNonce,
+		relayers: &[T::AccountId],
+	) {
 		for who in relayers {
 			<RelayersMap<T>>::mutate(who.clone(), |r| {
-				r.order_capacity = r.order_capacity.saturating_add(1);
+				r.finish_order(lane_id, nonce);
 			});
 		}
 		Self::update_market();
