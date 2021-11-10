@@ -1332,8 +1332,8 @@ pub mod pallet {
 			}
 			<TotalIssuance<T, I>>::mutate(|issued| {
 				*issued = issued.checked_add(&amount).unwrap_or_else(|| {
-					amount = Self::Balance::MAX - *issued;
-					Self::Balance::MAX
+					amount = Self::Balance::max_value() - *issued;
+					Self::Balance::max_value()
 				})
 			});
 			NegativeImbalance::new(amount)
