@@ -145,7 +145,7 @@ frame_support::construct_runtime! {
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		HeaderMmr: darwinia_header_mmr::{Pallet, Call, Storage},
+		HeaderMmr: darwinia_header_mmr::{Pallet, Storage},
 		RelayAuthorities: darwinia_relay_authorities::{Pallet, Call, Storage, Config<T>, Event<T>}
 	}
 }
