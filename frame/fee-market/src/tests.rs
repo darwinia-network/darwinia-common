@@ -557,49 +557,75 @@ fn test_call_relayer_enroll_works() {
 		),);
 	});
 }
+
 #[test]
-fn test_call_relayer_update_lock_collateral_works() {
+fn test_call_relayer_increase_lock_collateral_works() {
 	new_test_ext().execute_with(|| {
 		assert_err!(
-			FeeMarket::update_locked_collateral(Origin::signed(6), 100),
+			FeeMarket::update_locked_collateral(Origin::signed(12), 100),
 			<Error::<Test>>::NotEnrolled
 		);
 
-		assert_ok!(FeeMarket::enroll_and_lock_collateral(
-			Origin::signed(6),
-			200,
-			None
-		));
-		assert_eq!(FeeMarket::relayer(&6).collateral, 200);
-		assert_eq!(FeeMarket::relayer(6).order_capacity, 2);
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(12), 200, None);
+		assert_eq!(FeeMarket::relayer(&12).collateral, 200);
+		assert_eq!(FeeMarket::relayer(12).order_capacity, 2);
 
-		// Increase locked balance
-		assert_ok!(FeeMarket::update_locked_collateral(Origin::signed(6), 500));
-		assert_eq!(FeeMarket::relayer(&6).collateral, 500);
-		assert_eq!(FeeMarket::relayer(6).order_capacity, 5);
-		// Decrease locked balance
+		// Increase locked balance from 200 to 500
+		assert_ok!(FeeMarket::update_locked_collateral(Origin::signed(12), 500));
+		assert_eq!(FeeMarket::relayer(&12).collateral, 500);
+		assert_eq!(FeeMarket::relayer(12).order_capacity, 5);
+
+		// Increase locked balance from 20 to 200
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(13), 20, None);
+		assert_eq!(FeeMarket::relayer(13).order_capacity, 0);
+		assert_ok!(FeeMarket::update_locked_collateral(Origin::signed(13), 200));
+		assert_eq!(FeeMarket::relayer(13).order_capacity, 2);
+
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(14), 300, None);
+		assert_eq!(FeeMarket::relayer(14).order_capacity, 3);
+		let market_fee = FeeMarket::market_fee().unwrap();
+		let _ = send_regular_message(market_fee);
+		let _ = send_regular_message(market_fee);
+		assert_eq!(FeeMarket::relayer(12).order_capacity, 3);
+		assert_eq!(FeeMarket::relayer(13).order_capacity, 0);
+		assert_eq!(FeeMarket::relayer(14).order_capacity, 1);
+		assert_ok!(FeeMarket::update_locked_collateral(Origin::signed(12), 800));
+		assert_ok!(FeeMarket::update_locked_collateral(Origin::signed(13), 800));
+		assert_ok!(FeeMarket::update_locked_collateral(Origin::signed(14), 800));
+		assert_eq!(FeeMarket::relayer(&12).collateral, 800);
+		assert_eq!(FeeMarket::relayer(&13).collateral, 800);
+		assert_eq!(FeeMarket::relayer(&14).collateral, 800);
+		assert_eq!(FeeMarket::relayer(12).order_capacity, 6);
+		assert_eq!(FeeMarket::relayer(13).order_capacity, 6);
+		assert_eq!(FeeMarket::relayer(14).order_capacity, 6);
+	});
+}
+
+#[test]
+fn test_call_relayer_decrease_lock_collateral_works() {
+	new_test_ext().execute_with(|| {
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(12), 800, None);
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(13), 800, None);
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(14), 800, None);
+		let market_fee = FeeMarket::market_fee().unwrap();
+		let _ = send_regular_message(market_fee);
+		let _ = send_regular_message(market_fee);
+		let _ = send_regular_message(market_fee);
+		let _ = send_regular_message(market_fee);
+
 		assert_err!(
-			FeeMarket::update_locked_collateral(Origin::signed(6), 80),
-			<Error<Test>>::OnlyIncCollateralAllowed
+			FeeMarket::update_locked_collateral(Origin::signed(12), 300),
+			<Error::<Test>>::OnlyIncCollateralAllowed
 		);
-
-		assert_ok!(FeeMarket::enroll_and_lock_collateral(
-			Origin::signed(4),
-			20,
-			None
-		));
-		assert_eq!(FeeMarket::relayer(4).order_capacity, 0);
-		assert_ok!(FeeMarket::update_locked_collateral(Origin::signed(4), 200));
-		assert_eq!(FeeMarket::relayer(4).order_capacity, 2);
-
-		assert_ok!(FeeMarket::enroll_and_lock_collateral(
-			Origin::signed(7),
-			120,
-			None
-		));
-		assert_eq!(FeeMarket::relayer(7).order_capacity, 1);
-		assert_ok!(FeeMarket::update_locked_collateral(Origin::signed(7), 400));
-		assert_eq!(FeeMarket::relayer(7).order_capacity, 4);
+		assert_ok!(FeeMarket::update_locked_collateral(Origin::signed(12), 400));
+		assert_eq!(FeeMarket::relayer(&12).collateral, 400);
+		assert_eq!(FeeMarket::relayer(12).order_capacity, 0);
+		assert_ok!(FeeMarket::update_locked_collateral(Origin::signed(13), 500));
+		assert_eq!(FeeMarket::relayer(&13).collateral, 500);
+		assert_eq!(FeeMarket::relayer(13).order_capacity, 1);
+		assert_ok!(FeeMarket::update_locked_collateral(Origin::signed(14), 700));
+		assert_eq!(FeeMarket::relayer(&14).collateral, 700);
+		assert_eq!(FeeMarket::relayer(14).order_capacity, 3);
 	});
 }
 
@@ -1226,5 +1252,28 @@ fn test_fee_verification_when_send_message() {
 			REGULAR_PAYLOAD,
 			50
 		),);
+	});
+}
+
+#[test]
+fn test_relayer_is_occupied() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(2);
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(5), 300, Some(30));
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(6), 300, Some(50));
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(7), 300, Some(100));
+
+		// Send message
+		let market_fee = FeeMarket::market_fee().unwrap();
+		let _ = send_regular_message(market_fee);
+		let _ = send_regular_message(market_fee);
+
+		assert_eq!(FeeMarket::is_occupied(&5), Some(2));
+		assert_eq!(FeeMarket::is_occupied(&6), Some(2));
+		assert_eq!(FeeMarket::is_occupied(&7), Some(2));
+		receive_messages_delivery_proof();
+		assert_eq!(FeeMarket::is_occupied(&5), Some(1));
+		assert_eq!(FeeMarket::is_occupied(&6), Some(1));
+		assert_eq!(FeeMarket::is_occupied(&7), Some(1));
 	});
 }
