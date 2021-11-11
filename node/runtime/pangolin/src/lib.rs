@@ -126,7 +126,7 @@ use common_primitives::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
 use darwinia_evm::{Account as EVMAccount, FeeCalculator, Runner};
-use darwinia_fee_market_rpc_runtime_api::Fee;
+use darwinia_fee_market_rpc_runtime_api::{Fee, InProcessOrders};
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use dvm_ethereum::{Call::transact, Transaction as EthereumTransaction};
@@ -555,6 +555,11 @@ sp_api::impl_runtime_apis! {
 				});
 			}
 			None
+		}
+		fn in_process_orders() -> InProcessOrders {
+			return InProcessOrders {
+				orders: FeeMarket::in_process_orders(),
+			}
 		}
 	}
 

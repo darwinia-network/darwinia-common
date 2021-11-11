@@ -1781,10 +1781,12 @@ dependencies = [
 name = "darwinia-fee-market-rpc-runtime-api"
 version = "2.6.9"
 dependencies = [
+ "bp-messages",
  "parity-scale-codec",
  "serde",
  "sp-api",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
