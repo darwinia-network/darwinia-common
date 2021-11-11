@@ -6,9 +6,9 @@
 .vscode
 
 # Package Manager
-## cargo
+## Cargo
 target
-## npm
+## Npm
 node_modules
 
 # Test Data

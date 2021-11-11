@@ -7,24 +7,24 @@ license     = "GPL-3.0"
 name        = "dp-s2s"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.6.8"
+version     = "2.6.9"
 
 [dependencies]
 # crates.io
 array-bytes = { version = "1.3.3" }
 # darwinia-network
-dp-asset    = { default-features = false, path = "../asset"}
-dp-contract = { default-features = false, path = "../contract"}
+dp-asset    = { default-features = false, path = "../asset" }
+dp-contract = { default-features = false, path = "../contract" }
 # paritytech
-bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
-bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
+bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6" }
+bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6" }
 codec               = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
-sp-core             = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-core             = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
 
 [dev-dependencies]
-dp-contract = { default-features = false, path = "../contract"}
+dp-contract = { default-features = false, path = "../contract" }
 
 [features]
 default = ["std"]

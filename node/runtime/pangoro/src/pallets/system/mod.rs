@@ -1,12 +1,29 @@
 pub use pangolin_runtime_system_params::*;
 
 // --- paritytech ---
-use frame_support::weights::constants::RocksDbWeight;
+use frame_support::{
+	traits::{Contains, Filter},
+	weights::constants::RocksDbWeight,
+};
 use frame_system::Config;
 use sp_runtime::traits::AccountIdLookup;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use crate::*;
+use module_transaction_pause::PausedTransactionFilter;
+
+pub struct BaseFilter;
+impl Filter<Call> for BaseFilter {
+	fn filter(call: &Call) -> bool {
+		let is_paused = PausedTransactionFilter::<Runtime>::contains(call);
+
+		if is_paused {
+			return false;
+		}
+
+		true
+	}
+}
 
 frame_support::parameter_types! {
 	pub const BlockHashCount: BlockNumber = 256;
@@ -15,7 +32,7 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	type BaseCallFilter = ();
+	type BaseCallFilter = BaseFilter;
 	type BlockWeights = RuntimeBlockWeights;
 	type BlockLength = RuntimeBlockLength;
 	type DbWeight = RocksDbWeight;

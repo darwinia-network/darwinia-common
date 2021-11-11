@@ -600,7 +600,7 @@ decl_module! {
 			<NextAuthorities<T, I>>::kill();
 			<AuthoritiesToSign<T, I>>::kill();
 			{
-				<MmrRootsToSign<T, I>>::remove_all();
+				<MmrRootsToSign<T, I>>::remove_all(None);
 				let schedule = (
 					<frame_system::Pallet<T>>::block_number().saturated_into::<u64>() / 10 * 10 + 10
 				).saturated_into();

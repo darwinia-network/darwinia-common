@@ -325,7 +325,7 @@ pub mod pallet {
 			}
 
 			AccountCodes::<T>::remove(address);
-			AccountStorages::<T>::remove_prefix(address);
+			AccountStorages::<T>::remove_prefix(address, None);
 		}
 
 		/// Create an account.

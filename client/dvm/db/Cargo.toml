@@ -7,18 +7,18 @@ license     = "GPL-3.0"
 name        = "dc-db"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.6.8"
+version     = "2.6.9"
 
 [dependencies]
 # crates.io
-codec        = { package = "parity-scale-codec", version = "2.1.1", features = ["derive"] }
-kvdb         = { version = "0.9.0" }
-kvdb-rocksdb = { version = "0.11.0" }
-parking_lot  = { version = "0.11.1" }
+codec        = { package = "parity-scale-codec", version = "2.1", features = ["derive"] }
+kvdb         = { version = "0.9" }
+kvdb-rocksdb = { version = "0.11" }
+parking_lot  = { version = "0.11" }
 # paritytech
-sp-core     = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-database = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-runtime  = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-core     = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-database = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-runtime  = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
 # darwinia-network
 dp-storage   = { path = "../../../primitives/storage/" }
 dvm-ethereum = { path = "../../../frame/dvm" }
