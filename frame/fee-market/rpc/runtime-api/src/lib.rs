@@ -71,7 +71,7 @@ fn deserialize_from_string<'de, D: Deserializer<'de>, T: std::str::FromStr>(
 #[derive(Eq, PartialEq, Encode, Decode, Default)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
-pub struct RelayingOrders {
+pub struct InProcessOrders {
 	pub orders: Vec<(LaneId, MessageNonce)>,
 }
 
@@ -83,6 +83,6 @@ decl_runtime_apis! {
 		fn market_fee(
 		) -> Option<Fee<Balance>>;
 
-		fn relaying_orders() -> RelayingOrders;
+		fn in_process_orders() -> InProcessOrders;
 	}
 }

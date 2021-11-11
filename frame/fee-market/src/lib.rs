@@ -373,7 +373,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get order indexes in the storage
-	pub fn relaying_orders() -> Vec<(LaneId, MessageNonce)> {
+	pub fn in_process_orders() -> Vec<(LaneId, MessageNonce)> {
 		Orders::<T>::iter().map(|(k, _v)| k).collect()
 	}
 

@@ -20,7 +20,7 @@
 
 // --- darwinia-network ---
 pub use darwinia_fee_market_rpc_runtime_api::{
-	Fee, FeeMarketApi as FeeMarketRuntimeApi, RelayingOrders,
+	Fee, FeeMarketApi as FeeMarketRuntimeApi, InProcessOrders,
 };
 
 // --- std ---
@@ -43,8 +43,8 @@ const RUNTIME_ERROR: i64 = -1;
 pub trait FeeMarketApi<Fee> {
 	#[rpc(name = "fee_marketFee")]
 	fn market_fee(&self) -> Result<Option<Fee>>;
-	#[rpc(name = "fee_relayingOrders")]
-	fn relaying_orders(&self) -> Result<RelayingOrders>;
+	#[rpc(name = "fee_inProcessOrders")]
+	fn in_process_orders(&self) -> Result<InProcessOrders>;
 }
 
 pub struct FeeMarket<Client, Block, Balance> {
@@ -80,12 +80,12 @@ where
 		})
 	}
 
-	fn relaying_orders(&self) -> Result<RelayingOrders> {
+	fn in_process_orders(&self) -> Result<InProcessOrders> {
 		let api = self.client.runtime_api();
 		let best = self.client.info().best_hash;
 		let at = BlockId::hash(best);
 
-		api.relaying_orders(&at).map_err(|e| Error {
+		api.in_process_orders(&at).map_err(|e| Error {
 			code: ErrorCode::ServerError(RUNTIME_ERROR),
 			message: "Unable to query relaying orders.".into(),
 			data: Some(format!("{:?}", e).into()),
