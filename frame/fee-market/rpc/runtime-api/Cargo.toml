@@ -27,8 +27,8 @@ std = [
 	"codec/std",
 	"serde",
 	# paritytech
+	"bp-messages/std",
 	"sp-api/std",
 	"sp-std/std",
 	"sp-runtime/std",
-	"bp-messages/std",
 ]

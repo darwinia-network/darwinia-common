@@ -87,7 +87,7 @@ where
 
 		api.in_process_orders(&at).map_err(|e| Error {
 			code: ErrorCode::ServerError(RUNTIME_ERROR),
-			message: "Unable to query relaying orders.".into(),
+			message: "Unable to query in process orders.".into(),
 			data: Some(format!("{:?}", e).into()),
 		})
 	}
