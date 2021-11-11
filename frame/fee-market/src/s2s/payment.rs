@@ -171,7 +171,7 @@ where
 					} else {
 						// The message is delivered by common relayer instead of order assigned relayers, all assigned relayers of this order should be slash.
 						// Total slash = message fee + assigned_relayers slash
-						// For each assigned relayer, slash CollateralPerOrder per order, then order capacity will decrease by 1.
+						// For each assigned relayer, slash CollateralPerOrder per order
 						let mut total_slash = message_fee;
 
 						let mut assigned_relayers_slash = RingBalance::<T>::zero();

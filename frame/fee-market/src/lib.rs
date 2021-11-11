@@ -312,10 +312,10 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
 	/// An important update in this pallet, need to update market information in the following cases:
 	///
-	/// - When new relayer enroll.
-	/// - When enrolled relayer wants to update fee or order capacity.
-	/// - When enrolled relayer wants to cancel enrollment.
-	/// - All order assigned relayers's order capacity sub 1 in `on_messages_accepted()` and add 1 in `on_messages_delivered`.
+	/// - New relayer enroll.
+	/// - The enrolled relayer wants to update fee or order capacity.
+	/// - The enrolled relayer wants to cancel enrollment.
+	/// - The order didn't confirm in-time, slash occurred.
 	pub(crate) fn update_market() {
 		// Sort all enrolled relayers who are able to accept orders.
 		let mut relayers: Vec<Relayer<T::AccountId, RingBalance<T>>> = <Relayers<T>>::get()
