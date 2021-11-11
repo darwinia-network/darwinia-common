@@ -352,11 +352,6 @@ impl<T: Config> Pallet<T> {
 			relayer.collateral = new_collateral;
 		});
 
-		if Self::usable_order_capacity(&who) == 0 {
-			Self::remove_enrolled_relayer(who);
-			return;
-		}
-
 		Self::update_market();
 	}
 
