@@ -180,6 +180,19 @@ impl S2sSendMessageParams {
 	}
 }
 
+pub fn abi_decode_bytes4(data: &[u8]) -> AbiResult<[u8; 4]> {
+	let tokens = ethabi::decode(&[ParamType::FixedBytes(4)], &data)?;
+	if let Token::FixedBytes(decoded) = tokens[0].clone() {
+		let decoded: [u8; 4] = decoded.try_into().map_err(|_| Error::InvalidData)?;
+		return Ok(decoded);
+	}
+	Err(Error::InvalidData)
+}
+
+pub fn abi_encode_bytes(data: Vec<u8>) -> Vec<u8> {
+	ethabi::encode(&[Token::Bytes(data)])
+}
+
 pub fn to_bytes32(raw: &[u8]) -> [u8; 32] {
 	let mut result = [0u8; 32];
 	let encoded = ethabi::encode(&[Token::FixedBytes(raw.to_vec())]);

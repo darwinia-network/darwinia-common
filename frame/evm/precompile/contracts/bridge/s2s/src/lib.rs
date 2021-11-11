@@ -29,7 +29,9 @@ use darwinia_support::{
 	evm::IntoAccountId,
 	s2s::{nonce_to_message_id, LatestMessageNoncer, RelayMessageSender},
 };
-use dp_contract::mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams};
+use dp_contract::mapping_token_factory::s2s::{
+	abi_decode_bytes4, abi_encode_bytes, S2sRemoteUnlockInfo, S2sSendMessageParams,
+};
 use dp_evm::Precompile;
 use dp_s2s::{CallParams, CreatePayload};
 // --- paritytech ---
@@ -37,7 +39,7 @@ use bp_message_dispatch::CallOrigin;
 use bp_runtime::messages::DispatchFeePayment;
 use frame_support::sp_runtime::SaturatedConversion;
 use sp_core::H160;
-use sp_std::{convert::TryInto, vec::Vec};
+use sp_std::vec::Vec;
 
 #[darwinia_evm_precompile_utils::selector]
 enum Action {
@@ -99,23 +101,23 @@ where
 	fn outbound_latest_generated_message_id(
 		dvm_parser: &DvmInputParser,
 	) -> Result<Vec<u8>, ExitError> {
-		let lane_id: [u8; 4] = dvm_parser
-			.input
-			.try_into()
+		let lane_id = abi_decode_bytes4(dvm_parser.input)
 			.map_err(|_| ExitError::Other("decode lane id failed".into()))?;
 		let nonce = <S as LatestMessageNoncer>::outbound_latest_generated_nonce(lane_id);
-		Ok(nonce_to_message_id(&lane_id, nonce).to_vec())
+		Ok(abi_encode_bytes(
+			nonce_to_message_id(&lane_id, nonce).to_vec(),
+		))
 	}
 
 	fn inbound_latest_received_message_id(
 		dvm_parser: &DvmInputParser,
 	) -> Result<Vec<u8>, ExitError> {
-		let lane_id: [u8; 4] = dvm_parser
-			.input
-			.try_into()
+		let lane_id = abi_decode_bytes4(dvm_parser.input)
 			.map_err(|_| ExitError::Other("decode lane id failed".into()))?;
 		let nonce = <S as LatestMessageNoncer>::inbound_latest_received_nonce(lane_id);
-		Ok(nonce_to_message_id(&lane_id, nonce).to_vec())
+		Ok(abi_encode_bytes(
+			nonce_to_message_id(&lane_id, nonce).to_vec(),
+		))
 	}
 
 	fn encode_unlock_from_remote_dispatch_call(
@@ -136,7 +138,7 @@ where
 			DispatchFeePayment::AtSourceChain,
 		)
 		.map_err(|_| ExitError::Other("encode remote unlock failed".into()))?;
-		Ok(payload.encode())
+		Ok(abi_encode_bytes(payload.encode()))
 	}
 
 	fn encode_send_message_dispatch_call(
@@ -151,6 +153,6 @@ where
 			params.fee.low_u128().saturated_into(),
 		)
 		.map_err(|_| ExitError::Other("encode send message call failed".into()))?;
-		Ok(encoded)
+		Ok(abi_encode_bytes(encoded))
 	}
 }
