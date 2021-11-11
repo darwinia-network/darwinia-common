@@ -792,23 +792,54 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 
 #[allow(unused)]
 fn migrate() -> Weight {
+	use dp_fee::Relayer;
 	// TODO: Move to S2S
 	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
 	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
+	log::info!("Start migrate all storage items in AssignedRelayersStorage");
+	if let Some(value) = migration::take_storage_value::<Vec<Relayer<AccountId, Balance>>>(
+		b"FeeMarket",
+		b"AssignedRelayersStorage",
+		&[],
+	) {
+		log::info!("the migrate content {:?}", value);
+		migration::put_storage_value(b"FeeMarket", b"AssignedRelayers", &[], value);
+	}
+	log::info!("Migrate finished");
 
-	0
-	// RuntimeBlockWeights::get().max_block
+	// 0
+	RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
+		assert!(migration::have_storage_value(
+			b"FeeMarket",
+			b"AssignedRelayersStorage",
+			&[]
+		));
+		assert!(!migration::have_storage_value(
+			b"FeeMarket",
+			b"AssignedRelayers",
+			&[]
+		));
 		Ok(())
 	}
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
+		assert!(!migration::have_storage_value(
+			b"FeeMarket",
+			b"AssignedRelayersStorage",
+			&[]
+		));
+		assert!(migration::have_storage_value(
+			b"FeeMarket",
+			b"AssignedRelayers",
+			&[]
+		));
 		Ok(())
 	}
 

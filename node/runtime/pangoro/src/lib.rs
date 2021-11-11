@@ -72,6 +72,8 @@ use codec::{Decode, Encode};
 use bridge_runtime_common::messages::{
 	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
 };
+#[allow(unused)]
+use frame_support::migration;
 use frame_support::{
 	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade},
 	weights::Weight,
@@ -536,22 +538,52 @@ sp_api::impl_runtime_apis! {
 #[allow(unused)]
 fn migrate() -> Weight {
 	// --- paritytech ---
-	#[allow(unused)]
-	use frame_support::migration;
+	use dp_fee::Relayer;
 
-	0
-	// RuntimeBlockWeights::get().max_block
+	log::info!("Start migrate all storage items in AssignedRelayersStorage");
+	if let Some(value) = migration::take_storage_value::<Vec<Relayer<AccountId, Balance>>>(
+		b"FeeMarket",
+		b"AssignedRelayersStorage",
+		&[],
+	) {
+		log::info!("the migrate content {:?}", value);
+		migration::put_storage_value(b"FeeMarket", b"AssignedRelayers", &[], value);
+	}
+	log::info!("Migrate finished");
+
+	// 0
+	RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
+		assert!(migration::have_storage_value(
+			b"FeeMarket",
+			b"AssignedRelayersStorage",
+			&[]
+		));
+		assert!(!migration::have_storage_value(
+			b"FeeMarket",
+			b"AssignedRelayers",
+			&[]
+		));
 		Ok(())
 	}
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
+		assert!(!migration::have_storage_value(
+			b"FeeMarket",
+			b"AssignedRelayersStorage",
+			&[]
+		));
+		assert!(migration::have_storage_value(
+			b"FeeMarket",
+			b"AssignedRelayers",
+			&[]
+		));
 		Ok(())
 	}
 

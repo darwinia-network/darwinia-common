@@ -24,6 +24,7 @@ darwinia-fee-market-rpc-runtime-api = { default-features = false, path = "../../
 darwinia-staking                    = { default-features = false, path = "../../../frame/staking" }
 darwinia-support                    = { default-features = false, path = "../../../frame/support" }
 dp-asset                            = { default-features = false, path = "../../../primitives/asset" }
+dp-fee                              = { default-features = false, path = "../../../primitives/fee-market" }
 dp-s2s                              = { default-features = false, path = "../../../primitives/s2s" }
 pangolin-constants                  = { default-features = false, path = "../pangolin/src/constants" }
 pangolin-runtime-system-params      = { default-features = false, path = "../pangolin/src/pallets/system/params" }
@@ -99,6 +100,7 @@ std = [
 	"darwinia-staking/std",
 	"darwinia-support/std",
 	"dp-asset/std",
+	"dp-fee/std",
 	"dp-s2s/std",
 	"pangolin-constants/std",
 	"pangolin-runtime-system-params/std",

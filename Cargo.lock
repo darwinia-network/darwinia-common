@@ -6227,6 +6227,7 @@ dependencies = [
  "darwinia-staking",
  "darwinia-support",
  "dp-asset",
+ "dp-fee",
  "dp-s2s",
  "frame-benchmarking",
  "frame-executive",
