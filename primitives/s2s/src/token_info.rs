@@ -16,8 +16,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-
 pub const RING_NAME: &[u8] = b"Darwinia Network Native Token";
 pub const RING_SYMBOL: &[u8] = b"RING";
 pub const RING_DECIMAL: u8 = 9;

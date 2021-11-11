@@ -1304,7 +1304,7 @@ fn bond_extra_works() {
 		// Call the bond_extra function with a large number, should handle it
 		assert_ok!(Staking::bond_extra(
 			Origin::signed(11),
-			StakingBalance::RingBalance(Balance::max_value()),
+			StakingBalance::RingBalance(Balance::MAX),
 			0,
 		));
 		// The full amount of the funds should now be in the total and active
@@ -1863,7 +1863,7 @@ fn on_free_balance_zero_stash_removes_validator() {
 			assert!(<Payee<Test>>::contains_key(&11));
 
 			// Reduce free_balance of controller to 0
-			let _ = Ring::slash(&10, Balance::max_value());
+			let _ = Ring::slash(&10, Balance::MAX);
 
 			// Check the balance of the stash account has not been touched
 			assert_eq!(Ring::free_balance(11), 256000);
@@ -1877,7 +1877,7 @@ fn on_free_balance_zero_stash_removes_validator() {
 			assert!(<Payee<Test>>::contains_key(&11));
 
 			// Reduce free_balance of stash to 0
-			let _ = Ring::slash(&11, Balance::max_value());
+			let _ = Ring::slash(&11, Balance::MAX);
 			// Check total balance of stash
 			assert_eq!(Ring::free_balance(&11), 10);
 
@@ -1922,7 +1922,7 @@ fn on_free_balance_zero_stash_removes_nominator() {
 			assert!(<Payee<Test>>::contains_key(&11));
 
 			// Reduce free_balance of controller to 0
-			let _ = Ring::slash(&10, Balance::max_value());
+			let _ = Ring::slash(&10, Balance::MAX);
 			// Check total balance of account 10
 			assert_eq!(Ring::free_balance(&10), 0);
 
@@ -1938,7 +1938,7 @@ fn on_free_balance_zero_stash_removes_nominator() {
 			assert!(<Payee<Test>>::contains_key(&11));
 
 			// Reduce free_balance of stash to 0
-			let _ = Ring::slash(&11, Balance::max_value());
+			let _ = Ring::slash(&11, Balance::MAX);
 			// Check total balance of stash
 			assert_eq!(Ring::free_balance(&11), 10);
 
@@ -2398,7 +2398,7 @@ fn phragmen_should_not_overflow() {
 		let _ = Staking::chill(Origin::signed(20));
 
 		bond_validator(3, 2, StakingBalance::RingBalance(CAP));
-		bond_validator(5, 4, StakingBalance::KtonBalance(Balance::max_value() - 1));
+		bond_validator(5, 4, StakingBalance::KtonBalance(Balance::MAX - 1));
 
 		bond_nominator(7, 6, StakingBalance::RingBalance(1), vec![3, 5]);
 		bond_nominator(9, 8, StakingBalance::KtonBalance(1), vec![3, 5]);
@@ -2422,8 +2422,8 @@ fn phragmen_should_not_overflow() {
 #[test]
 fn reward_validator_slashing_validator_does_not_overflow() {
 	ExtBuilder::default().build_and_execute(|| {
-		let stake = u64::max_value() as Balance * 2;
-		let reward_slash = u64::max_value() as Balance * 2;
+		let stake = u64::MAX as Balance * 2;
+		let reward_slash = u64::MAX as Balance * 2;
 
 		// Assert multiplication overflows in balance arithmetic.
 		assert!(stake.checked_mul(reward_slash).is_none());

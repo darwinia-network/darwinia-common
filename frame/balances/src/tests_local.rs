@@ -29,7 +29,6 @@ use frame_support::{
 		WithdrawReasons,
 	},
 	weights::{DispatchInfo, IdentityFee, Weight},
-	StorageValue,
 };
 use frame_system::{mocking::*, RawOrigin};
 use pallet_transaction_payment::{ChargeTransactionPayment, CurrencyAdapter, Multiplier};
@@ -141,6 +140,7 @@ frame_support::construct_runtime! {
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 	}
 }
 

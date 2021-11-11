@@ -35,11 +35,9 @@ impl InstanceFilter<Call> for ProxyType {
 							// Specifically omitting the entire Balances pallet
 							Call::Authorship(..) |
 							Call::Staking(..) |
-							Call::Offences(..) |
 							Call::Session(..) |
 							Call::Grandpa(..) |
 							Call::ImOnline(..) |
-							Call::AuthorityDiscovery(..) |
 							Call::Democracy(..) |
 							Call::Council(..) |
 							Call::TechnicalCommittee(..) |
@@ -66,7 +64,6 @@ impl InstanceFilter<Call> for ProxyType {
 							Call::Scheduler(..)|
 							Call::Proxy(..)|
 							Call::Multisig(..)|
-							Call::HeaderMMR(..)|
 							// Specifically omitting the entire CrabIssuing pallet
 							// Specifically omitting the entire CrabBacking pallet
 							Call::EthereumRelay(..) |

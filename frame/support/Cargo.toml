@@ -19,15 +19,15 @@ sha3                  = { version = "0.9", default-features = false }
 # darwinia-network
 ethereum-primitives = { default-features = false, path = "../../primitives/ethereum" }
 # paritytech
-bp-messages     = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
-bp-runtime      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.5" }
-frame-support   = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-frame-system    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-max-encoded-len = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-core         = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-io           = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-runtime      = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-std          = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+bp-messages     = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6" }
+bp-runtime      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6" }
+frame-support   = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+frame-system    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+max-encoded-len = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-core         = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-io           = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-runtime      = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-std          = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
 
 [features]
 default = ["std"]

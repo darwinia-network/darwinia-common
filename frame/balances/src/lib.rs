@@ -147,7 +147,7 @@
 //!
 //! ## Assumptions
 //!
-//! * Total issued balanced of all accounts should be less than `Config::Balance::max_value()`.
+//! * Total issued balanced of all accounts should be less than `Config::Balance::MAX`.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 

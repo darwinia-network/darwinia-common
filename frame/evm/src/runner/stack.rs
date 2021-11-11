@@ -349,7 +349,7 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 	}
 
 	fn block_hash(&self, number: U256) -> H256 {
-		if number > U256::from(u32::max_value()) {
+		if number > U256::from(u32::MAX) {
 			H256::default()
 		} else {
 			T::BlockHashMapping::block_hash(number.as_u32())
@@ -470,7 +470,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	}
 
 	fn reset_storage(&mut self, address: H160) {
-		AccountStorages::<T>::remove_prefix(address);
+		AccountStorages::<T>::remove_prefix(address, None);
 	}
 
 	fn log(&mut self, address: H160, topics: Vec<H256>, data: Vec<u8>) {
