@@ -256,8 +256,7 @@
 	"Relayer": {
 		"id": "AccountId",
 		"collateral": "Balance",
-		"fee": "Balance",
-		"order_capacity":"u32"
+		"fee": "Balance"
 	},
 	"Fee": "Balance",
 	"Order": {
