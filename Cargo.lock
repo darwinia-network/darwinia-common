@@ -1653,7 +1653,6 @@ dependencies = [
  "from-substrate-issuing",
  "log",
  "parity-scale-codec",
- "sha3 0.9.1",
  "sp-core",
  "sp-io",
  "sp-std",
