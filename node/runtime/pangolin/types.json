@@ -289,6 +289,9 @@
 	"StakingRuntimeDispatchInfo": {
 		"power": "Power"
 	},
+	"InProcessOrders": {
+		"orders": "Vec<LaneId, MessageNonce>"
+	},
 	"__[might be removed later]__": null,
 	"SpecVersion": "u32"
 }
