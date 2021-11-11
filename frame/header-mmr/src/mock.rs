@@ -84,7 +84,7 @@ frame_support::construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Storage, Config},
-		HeaderMmr: darwinia_header_mmr::{Pallet, Call, Storage},
+		HeaderMmr: darwinia_header_mmr::{Pallet, Storage},
 	}
 }
 

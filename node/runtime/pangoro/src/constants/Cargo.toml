@@ -12,7 +12,7 @@ version    = "2.6.9"
 # darwinia-network
 common-primitives = { default-features = false, path = "../../../../primitives/common" }
 # paritytech
-sp-staking = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-staking = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
 
 [features]
 default = ["std"]

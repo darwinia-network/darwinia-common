@@ -89,7 +89,7 @@ impl EthashPartial {
 			difficulty_bomb_delays: BTreeMap::<BlockNumber, BlockNumber>::default(),
 			expip2_transition: 0xc3500,
 			expip2_duration_limit: 0x1e,
-			progpow_transition: u64::max_value(),
+			progpow_transition: u64::MAX,
 		}
 	}
 
@@ -101,12 +101,12 @@ impl EthashPartial {
 			metropolis_difficulty_increment_divisor: 9,
 			duration_limit: 13,
 			homestead_transition: 1150000,
-			difficulty_hardfork_transition: u64::max_value(),
+			difficulty_hardfork_transition: u64::MAX,
 			difficulty_hardfork_bound_divisor: 2048.into(),
-			bomb_defuse_transition: u64::max_value(),
+			bomb_defuse_transition: u64::MAX,
 			eip100b_transition: 4370000,
-			ecip1010_pause_transition: u64::max_value(),
-			ecip1010_continue_transition: u64::max_value(),
+			ecip1010_pause_transition: u64::MAX,
+			ecip1010_continue_transition: u64::MAX,
 			difficulty_bomb_delays: {
 				let mut m = BTreeMap::new();
 				m.insert(4370000, 3000000);
@@ -115,9 +115,9 @@ impl EthashPartial {
 				m.insert(0xc3d0e8, 0xaae60);
 				m
 			},
-			expip2_transition: u64::max_value(),
+			expip2_transition: u64::MAX,
 			expip2_duration_limit: 30,
-			progpow_transition: u64::max_value(),
+			progpow_transition: u64::MAX,
 		}
 	}
 
@@ -131,10 +131,10 @@ impl EthashPartial {
 			homestead_transition: 0x0,
 			difficulty_hardfork_transition: 0x59d9,
 			difficulty_hardfork_bound_divisor: 0x0800.into(),
-			bomb_defuse_transition: u64::max_value(),
+			bomb_defuse_transition: u64::MAX,
 			eip100b_transition: 0x19f0a0,
-			ecip1010_pause_transition: u64::max_value(),
-			ecip1010_continue_transition: u64::max_value(),
+			ecip1010_pause_transition: u64::MAX,
+			ecip1010_continue_transition: u64::MAX,
 			difficulty_bomb_delays: {
 				let mut m = BTreeMap::new();
 				m.insert(0x19f0a0, 0x2dc6c0);
@@ -143,9 +143,9 @@ impl EthashPartial {
 				m.insert(0xa03549, 0xaae60);
 				m
 			},
-			expip2_transition: u64::max_value(),
+			expip2_transition: u64::MAX,
 			expip2_duration_limit: 30,
-			progpow_transition: u64::max_value(),
+			progpow_transition: u64::MAX,
 		}
 	}
 }
