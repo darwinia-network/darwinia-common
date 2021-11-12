@@ -681,7 +681,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 				Err(())
 			}
 		});
-		<Affirmations<T, I>>::remove_prefix(&game_id);
+		<Affirmations<T, I>>::remove_prefix(&game_id, None);
 		<BestConfirmedHeaderId<T, I>>::take(&game_id);
 		<RoundCounts<T, I>>::take(&game_id);
 		<AffirmTime<T, I>>::take(&game_id);
@@ -1018,7 +1018,7 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	) -> Result<(Self::RelayHeaderId, u32, u32), DispatchError> {
 		log::trace!(
 			target: "relayer-game",
-			"Relayer `{:?}` extend affirmation: {:?} with: {:?}",
+			"Relayer `{:?}` extend affirmation:\n{:#?}\nwith:\n{:#?}",
 			relayer,
 			extended_relay_affirmation_id,
 			game_sample_points,

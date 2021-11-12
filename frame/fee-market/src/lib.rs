@@ -375,6 +375,12 @@ impl<T: Config> Pallet<T> {
 		Self::assigned_relayers().and_then(|relayers| relayers.last().map(|r| r.fee))
 	}
 
+	/// Get order indexes in the storage
+	pub fn in_process_orders() -> Vec<(LaneId, MessageNonce)> {
+		Orders::<T>::iter().map(|(k, _v)| k).collect()
+	}
+
+	/// Whether the enrolled relayer is occupied(Responsible for order relaying)
 	/// Whether the enrolled relayer is occupied, If occupied, return the number of orders and orders locked collateral, otherwise, return None.
 	pub(crate) fn occupied(who: &T::AccountId) -> Option<(u32, RingBalance<T>)> {
 		let mut count = 0u32;

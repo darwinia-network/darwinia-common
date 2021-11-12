@@ -2695,9 +2695,9 @@ impl<T: Config> Module<T> {
 
 	/// Clear all era information for given era.
 	fn clear_era_information(era_index: EraIndex) {
-		<ErasStakers<T>>::remove_prefix(era_index);
-		<ErasStakersClipped<T>>::remove_prefix(era_index);
-		<ErasValidatorPrefs<T>>::remove_prefix(era_index);
+		<ErasStakers<T>>::remove_prefix(era_index, None);
+		<ErasStakersClipped<T>>::remove_prefix(era_index, None);
+		<ErasValidatorPrefs<T>>::remove_prefix(era_index, None);
 		<ErasValidatorReward<T>>::remove(era_index);
 		<ErasRewardPoints<T>>::remove(era_index);
 		ErasTotalStake::remove(era_index);

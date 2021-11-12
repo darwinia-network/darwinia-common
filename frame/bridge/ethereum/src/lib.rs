@@ -538,7 +538,7 @@ decl_module! {
 
 			BestConfirmedBlockNumber::kill();
 			ConfirmedBlockNumbers::kill();
-			ConfirmedHeaderParcels::remove_all();
+			ConfirmedHeaderParcels::remove_all(None);
 		}
 
 		#[weight = 10_000_000]

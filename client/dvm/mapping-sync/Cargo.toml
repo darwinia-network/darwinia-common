@@ -7,19 +7,19 @@ license     = "GPL-3.0"
 name        = "dc-mapping-sync"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.6.8"
+version     = "2.6.9"
 
 [dependencies]
-# paritytech
-sc-client-api = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-api        = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-blockchain = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-runtime    = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+# crates.io
+futures       = { version = "0.3", features = ["compat"] }
+futures-timer = { version = "3.0" }
+log           = { version = "0.4" }
 # darwinia-network
 dc-db               = { path = "../db" }
 dp-consensus        = { path = "../../../primitives/consensus/" }
 dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
-# crates.io
-futures       = { version = "0.3.1", features = ["compat"] }
-futures-timer = "3.0.1"
-log           = "0.4.8"
+# paritytech
+sc-client-api = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-api        = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-blockchain = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-runtime    = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }

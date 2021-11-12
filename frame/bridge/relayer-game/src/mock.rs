@@ -178,34 +178,22 @@ pub mod mock_relay {
 
 			Self {
 				number,
-				hash: GENESIS_TIME
-					.with(|v| v.to_owned())
-					.borrow()
-					.elapsed()
-					.as_nanos(),
+				hash: rand::random(),
 				parent_hash,
 				valid,
 			}
 		}
 
-		pub fn gen_continous(
+		pub fn gen_continuous(
 			start: u32,
 			mut validations: Vec<u8>,
-			continous_valid: bool,
+			continuous_valid: bool,
 		) -> Vec<Self> {
 			if validations.is_empty() {
 				return vec![];
 			}
 
-			let mut parent_hash = if continous_valid {
-				0
-			} else {
-				GENESIS_TIME
-					.with(|v| v.to_owned())
-					.borrow()
-					.elapsed()
-					.as_nanos()
-			};
+			let mut parent_hash = if continuous_valid { 0 } else { rand::random() };
 			let mut chain = vec![Self::gen(start, parent_hash, validations[0])];
 
 			parent_hash = chain[0].hash;
@@ -236,8 +224,6 @@ pub mod mock_relay {
 	}
 }
 
-// --- std ---
-use std::time::Instant;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
@@ -331,7 +317,6 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 }
 frame_support::parameter_types! {
 	pub const RelayerGameLockId: LockIdentifier = *b"da/rgame";
-	pub static GenesisTime: Instant = Instant::now();
 	pub static ChallengeTime: BlockNumber = 6;
 	pub static EstimateBond: Balance = 1;
 }

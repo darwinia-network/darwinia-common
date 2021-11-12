@@ -7,20 +7,20 @@ license     = "GPL-3.0"
 name        = "darwinia-evm-precompile-modexp"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.6.8"
+version     = "2.6.9"
 
 
 [dependencies]
 # crates.io
 dp-evm = { default-features = false, path = "../../../../../primitives/evm" }
-evm    = { version = "0.27.0", default-features = false, features = ["with-codec"] }
+evm    = { version = "0.27", default-features = false, features = ["with-codec"] }
 num    = { version = "0.3", default-features = false, features = ["alloc"] }
 # paritytech
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-io   = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-io   = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
 
 [dev-dependencies]
-hex = "0.4.0"
+hex = { version = "0.4" }
 
 [features]
 default = ["std"]

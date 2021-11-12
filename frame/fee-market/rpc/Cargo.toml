@@ -7,17 +7,17 @@ license     = "GPL-3.0"
 name        = "darwinia-fee-market-rpc"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.6.8"
+version     = "2.6.9"
 
 [dependencies]
 # crates.io
-codec               = { package = "parity-scale-codec", version = "2.1.1" }
-jsonrpc-core        = { version = "15.1.0" }
-jsonrpc-core-client = { version = "15.1.0" }
-jsonrpc-derive      = { version = "15.1.0" }
+codec               = { package = "parity-scale-codec", version = "2.1" }
+jsonrpc-core        = { version = "15.1" }
+jsonrpc-core-client = { version = "15.1" }
+jsonrpc-derive      = { version = "15.1" }
 # darwinia-network
 darwinia-fee-market-rpc-runtime-api = { path = "./runtime-api" }
 # paritytech
-sp-api        = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-blockchain = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
-sp-runtime    = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.5" }
+sp-api        = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-blockchain = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-runtime    = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }

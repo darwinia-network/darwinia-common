@@ -36,9 +36,9 @@ use darwinia_support::balance::*;
 // 			let relayer_a = 1;
 // 			let relayer_b = 2;
 // 			let relay_header_parcels_a =
-// 				MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true);
+// 				MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], true);
 // 			let relay_header_parcels_b =
-// 				MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], false);
+// 				MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], false);
 // 			let game_id = relay_header_parcels_a.len() as _;
 // 			let round_index = relay_header_parcels_a.len() as _;
 
@@ -155,7 +155,7 @@ fn insufficient_bond_should_fail() {
 		.estimate_stake(101)
 		.build()
 		.execute_with(|| {
-			let relay_header_parcels = MockRelayHeader::gen_continous(1, vec![1, 1], true);
+			let relay_header_parcels = MockRelayHeader::gen_continuous(1, vec![1, 1], true);
 
 			{
 				let poor_man = 0;
@@ -215,7 +215,7 @@ fn some_affirm_cases_should_fail() {
 
 #[test]
 fn already_confirmed_should_fail() {
-	let relay_header_parcels = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true);
+	let relay_header_parcels = MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], true);
 
 	ExtBuilder::default()
 		.headers(relay_header_parcels.clone())
@@ -303,8 +303,8 @@ fn extend_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		let relayer_a = 1;
 		let relayer_b = 2;
-		let relay_header_parcels_a = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true);
-		let relay_header_parcels_b = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true);
+		let relay_header_parcels_a = MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], true);
+		let relay_header_parcels_b = MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], true);
 		let game_id = relay_header_parcels_a.len() as _;
 		let round_index = relay_header_parcels_a.len() as _;
 
@@ -358,9 +358,9 @@ fn lock_should_work() {
 				let relayer_a = 1;
 				let relayer_b = 2;
 				let relay_header_parcels_a =
-					MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true);
+					MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], true);
 				let relay_header_parcels_b =
-					MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], false);
+					MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], false);
 				let game_id = relay_header_parcels_a.len() as _;
 				let round_index = relay_header_parcels_a.len() as _;
 				let submit_then_assert = |relayer, relay_parcel, round, index, stakes| {
@@ -440,9 +440,9 @@ fn slash_and_reward_should_work() {
 				let relayer_a = 10;
 				let relayer_b = 20;
 				let relay_header_parcels_a =
-					MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true);
+					MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], true);
 				let relay_header_parcels_b =
-					MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], false);
+					MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], false);
 				let game_id = relay_header_parcels_a.len() as _;
 				let round_index = relay_header_parcels_a.len() as _;
 				let mut stakes = estimate_stake;
@@ -502,10 +502,11 @@ fn slash_and_reward_should_work() {
 #[test]
 fn settle_without_challenge_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		for (relay_header_parcel, i) in MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true)
-			.into_iter()
-			.rev()
-			.zip(1..)
+		for (relay_header_parcel, i) in
+			MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], true)
+				.into_iter()
+				.rev()
+				.zip(1..)
 		{
 			assert_ok!(RelayerGame::affirm(&1, relay_header_parcel.clone(), None));
 			assert!(Ring::usable_balance(&1) < 100);
@@ -528,8 +529,8 @@ fn settle_with_challenge_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		let relayer_a = 1;
 		let relayer_b = 2;
-		let relay_header_parcels_a = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true);
-		let relay_header_parcels_b = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], false);
+		let relay_header_parcels_a = MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], true);
+		let relay_header_parcels_b = MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], false);
 		let game_id = relay_header_parcels_a.len() as _;
 		let round_index = relay_header_parcels_a.len() as u32 - 1;
 
@@ -598,8 +599,8 @@ fn settle_abandon_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		let relayer_a = 1;
 		let relayer_b = 2;
-		let relay_header_parcels_a = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true);
-		let relay_header_parcels_b = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], false);
+		let relay_header_parcels_a = MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], true);
+		let relay_header_parcels_b = MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], false);
 		let game_id = relay_header_parcels_a.len() as _;
 		let round_index = relay_header_parcels_a.len() as u32 - 1;
 
@@ -659,8 +660,8 @@ fn on_chain_arbitrate_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		let relayer_a = 10;
 		let relayer_b = 20;
-		let relay_header_parcels_a = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], true);
-		let relay_header_parcels_b = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], false);
+		let relay_header_parcels_a = MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], true);
+		let relay_header_parcels_b = MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], false);
 		let game_id = relay_header_parcels_a.len() as _;
 		let round_index = relay_header_parcels_a.len() as _;
 
@@ -716,8 +717,8 @@ fn no_honesty_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		let relayer_a = 1;
 		let relayer_b = 2;
-		let relay_header_parcels_a = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], false);
-		let relay_header_parcels_b = MockRelayHeader::gen_continous(1, vec![1, 1, 1, 1, 1], false);
+		let relay_header_parcels_a = MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], false);
+		let relay_header_parcels_b = MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], false);
 		let game_id = relay_header_parcels_a.len() as _;
 		let round_index = relay_header_parcels_a.len() as _;
 
