@@ -14,13 +14,13 @@ proc-macro = true
 
 [dependencies]
 # crates.io
-evm   = { version = "0.27.0", default-features = false, features = ["with-codec"] }
-proc-macro2 = "1.0"
-quote = "1.0"
-sha3 = { version = "0.9.1", default-features = false }
-syn = { version = "1.0", features = ["full", "fold", "extra-traits", "visit"] }
+evm         = { version = "0.27", default-features = false, features = ["with-codec"] }
+proc-macro2 = { version = "1.0" }
+quote       = { version = "1.0" }
+sha3        = { version = "0.9", default-features = false }
+syn         = { version = "1.0", features = ["full", "fold", "extra-traits", "visit"] }
 # paritytech
-sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
 
 [features]
 default = ["std"]
