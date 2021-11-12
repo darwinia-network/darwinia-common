@@ -105,4 +105,7 @@ benchmarks! {
 		assert!(!<FeeMarket<T>>::is_enrolled(&caller1));
 		assert_eq!(<FeeMarket<T>>::relayers().len(), 3);
 	}
+
+	set_operating_mode {
+	}:set_operating_mode(RawOrigin::Root, RewardMode::NoSlash)
 }

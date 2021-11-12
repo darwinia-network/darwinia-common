@@ -26,6 +26,12 @@ use sp_std::{
 	vec::Vec,
 };
 
+#[derive(Encode, Decode, Clone, Eq, PartialEq, Debug, Copy)]
+pub enum RewardMode {
+	Normal,
+	NoSlash,
+}
+
 /// Relayer who has enrolled the fee market
 #[derive(Encode, Decode, Clone, Eq, Debug)]
 pub struct Relayer<AccountId, Balance> {

@@ -169,22 +169,22 @@ where
 						confirm_reward =
 							T::ConfirmRelayersRewardRatio::get() * bridger_relayers_reward;
 					} else {
-						// The message is delivered by common relayer instead of order assigned relayers, all assigned relayers of this order should be slash.
-						// Total slash = message fee + assigned_relayers slash
-						// For each assigned relayer, slash CollateralPerOrder per order
+						// The order is delayed, slash assigned relayers in operating normal mode.
 						let mut total_slash = message_fee;
 
-						let mut assigned_relayers_slash = RingBalance::<T>::zero();
-						for assigned_relayer in order.relayers_slice() {
-							let slashed = do_slash::<T>(
-								&assigned_relayer.id,
-								relayer_fund_account,
-								order.locked_collateral,
-							);
-							assigned_relayers_slash += slashed;
+						if crate::Pallet::<T>::reward_mode() == RewardMode::NoSlash {
+							let mut assigned_relayers_slash = RingBalance::<T>::zero();
+							for assigned_relayer in order.relayers_slice() {
+								let slashed = do_slash::<T>(
+									&assigned_relayer.id,
+									relayer_fund_account,
+									order.locked_collateral,
+								);
+								assigned_relayers_slash += slashed;
+							}
+							total_slash += assigned_relayers_slash;
 						}
 
-						total_slash += assigned_relayers_slash;
 						// 80% total slash => confirm relayer
 						message_reward = T::MessageRelayersRewardRatio::get() * total_slash;
 						// 20% total slash => confirm relayer

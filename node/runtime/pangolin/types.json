@@ -271,6 +271,12 @@
 		"fee": "Balance",
 		"valid_range": "BlockNumber"
 	},
+	"RewardMode": {
+		"_enum": {
+			"Normal": "null",
+			"NoSlash": "null"
+		}
+	},
 	"__[pangolin.runtime]__": {
 		"ProxyType": {
 			"_enum": {

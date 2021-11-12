@@ -47,7 +47,7 @@ use darwinia_support::{
 	balance::{LockFor, LockableCurrency},
 	AccountId,
 };
-use dp_fee::{Order, Relayer};
+use dp_fee::{Order, Relayer, RewardMode};
 
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 pub use pallet::*;
@@ -108,6 +108,8 @@ pub mod pallet {
 		UpdateRelayFee(T::AccountId, RingBalance<T>),
 		/// Relayer cancel enrollment
 		CancelEnrollment(T::AccountId),
+		/// Change operating mode
+		UpdateOperatingMode(RewardMode),
 	}
 
 	#[pallet::error]
@@ -161,6 +163,15 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type ConfirmedMessagesThisBlock<T: Config> =
 		StorageValue<_, Vec<(LaneId, MessageNonce)>, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn reward_mode)]
+	pub type RewardModeStorage<T: Config> =
+		StorageValue<_, RewardMode, ValueQuery, DefaultRewardMode>;
+	#[pallet::type_value]
+	pub fn DefaultRewardMode() -> RewardMode {
+		RewardMode::Normal
+	}
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -300,6 +311,18 @@ pub mod pallet {
 
 			Self::remove_enrolled_relayer(&who);
 			Self::deposit_event(Event::<T>::CancelEnrollment(who));
+			Ok(().into())
+		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::set_reward_mode())]
+		#[transactional]
+		pub fn set_reward_mode(
+			origin: OriginFor<T>,
+			mode: RewardMode,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			RewardModeStorage::<T>::put(mode);
+			Self::deposit_event(Event::<T>::UpdateOperatingMode(mode));
 			Ok(().into())
 		}
 	}
