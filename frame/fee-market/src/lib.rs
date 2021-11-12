@@ -75,8 +75,6 @@ pub mod pallet {
 		/// The collateral relayer need to lock for each order.
 		#[pallet::constant]
 		type CollateralPerOrder: Get<RingBalance<Self>>;
-		#[pallet::constant]
-		type SlashPerBlock: Get<RingBalance<Self>>;
 		/// The slot times set
 		#[pallet::constant]
 		type Slot: Get<Self::BlockNumber>;
@@ -89,6 +87,8 @@ pub mod pallet {
 		#[pallet::constant]
 		type ConfirmRelayersRewardRatio: Get<Permill>;
 
+		/// The slash rule
+		type Slasher: Slasher<Self>;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
 			+ Currency<Self::AccountId>;
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -439,4 +439,8 @@ impl<T: Config> Pallet<T> {
 	fn collateral_to_order_capacity(collateral: RingBalance<T>) -> u32 {
 		(collateral / T::CollateralPerOrder::get()).saturated_into::<u32>()
 	}
+}
+
+pub trait Slasher<T: Config> {
+	fn slash(locked_collateral: RingBalance<T>, timeout: T::BlockNumber) -> RingBalance<T>;
 }

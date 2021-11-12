@@ -38,7 +38,7 @@ use frame_system::mocking::*;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
+	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup, UniqueSaturatedInto},
 	FixedU128, Permill, RuntimeDebug,
 };
 // --- std ---
@@ -421,7 +421,6 @@ frame_support::parameter_types! {
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 	pub const MinimumRelayFee: Balance = 30;
 	pub const CollateralPerOrder: Balance = 100;
-	pub const SlashPerBlock: Balance = 2;
 	pub const AssignedRelayersNumber: u64 = 3;
 	pub const Slot: u64 = 50;
 
@@ -431,12 +430,24 @@ frame_support::parameter_types! {
 	pub const TreasuryPalletAccount: u64 = 666;
 }
 
+pub struct TestSlasher;
+impl<T: Config> Slasher<T> for TestSlasher {
+	fn slash(locked_collateral: RingBalance<T>, timeout: T::BlockNumber) -> RingBalance<T> {
+		let slash_each_block = 2;
+		let slash_value = UniqueSaturatedInto::<u128>::unique_saturated_into(timeout)
+			.saturating_mul(UniqueSaturatedInto::<u128>::unique_saturated_into(
+				slash_each_block,
+			))
+			.unique_saturated_into();
+		sp_std::cmp::min(locked_collateral, slash_value)
+	}
+}
+
 impl Config for Test {
 	type PalletId = FeeMarketPalletId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type LockId = FeeMarketLockId;
 	type CollateralPerOrder = CollateralPerOrder;
-	type SlashPerBlock = SlashPerBlock;
 	type MinimumRelayFee = MinimumRelayFee;
 	type AssignedRelayersNumber = AssignedRelayersNumber;
 	type Slot = Slot;
@@ -445,6 +456,7 @@ impl Config for Test {
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
 	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
 
+	type Slasher = TestSlasher;
 	type RingCurrency = Ring;
 	type Event = Event;
 	type WeightInfo = ();

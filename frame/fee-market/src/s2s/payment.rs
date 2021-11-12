@@ -22,7 +22,7 @@ use bp_messages::{
 	MessageNonce, UnrewardedRelayer,
 };
 use frame_support::traits::{Currency as CurrencyT, ExistenceRequirement, Get};
-use sp_runtime::traits::{AccountIdConversion, Saturating, UniqueSaturatedInto};
+use sp_runtime::traits::{AccountIdConversion, Saturating};
 use sp_std::{
 	collections::{btree_map::BTreeMap, vec_deque::VecDeque},
 	ops::RangeInclusive,
@@ -175,9 +175,9 @@ where
 						if crate::Pallet::<T>::reward_mode() == RewardMode::Normal {
 							let mut assigned_relayers_slash = RingBalance::<T>::zero();
 							for assigned_relayer in order.relayers_slice() {
-								let slash_value: RingBalance<T> = cal_slash_value::<T>(
-									order.delivery_delay(),
+								let slash_value: RingBalance<T> = T::Slasher::slash(
 									order.locked_collateral,
+									order.delivery_delay().unwrap_or_default(),
 								);
 								let slashed = do_slash::<T>(
 									&assigned_relayer.id,
@@ -214,21 +214,6 @@ where
 		assigned_relayers_rewards,
 		treasury_total_rewards,
 	}
-}
-
-pub(crate) fn cal_slash_value<T: Config>(
-	delay: Option<T::BlockNumber>,
-	locked_collateral: RingBalance<T>,
-) -> RingBalance<T> {
-	let mut slash_value = RingBalance::<T>::zero();
-	if let Some(delay_blocks) = delay {
-		slash_value = UniqueSaturatedInto::<u128>::unique_saturated_into(delay_blocks)
-			.saturating_mul(UniqueSaturatedInto::<u128>::unique_saturated_into(
-				T::SlashPerBlock::get(),
-			))
-			.unique_saturated_into();
-	}
-	sp_std::cmp::min(locked_collateral, slash_value)
 }
 
 /// Do slash for absent assigned relayers
