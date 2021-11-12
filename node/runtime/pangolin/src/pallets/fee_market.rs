@@ -14,6 +14,7 @@ frame_support::parameter_types! {
 	pub const MinimumRelayFee: Balance = 15 * COIN;
 	pub const Slot: BlockNumber = 50;
 	pub const CollateralPerOrder: Balance = 100 * COIN;
+	pub const SlashPerBlock: Balance = 2 * COIN;
 
 	pub const AssignedRelayersRewardRatio: Permill = Permill::from_percent(60);
 	pub const MessageRelayersRewardRatio: Permill = Permill::from_percent(80);
@@ -28,6 +29,7 @@ impl Config for Runtime {
 	type AssignedRelayersNumber = AssignedRelayersNumber;
 	type MinimumRelayFee = MinimumRelayFee;
 	type CollateralPerOrder = CollateralPerOrder;
+	type SlashPerBlock = SlashPerBlock;
 	type Slot = Slot;
 
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;

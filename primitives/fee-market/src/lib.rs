@@ -22,10 +22,11 @@ use frame_support::Parameter;
 use sp_std::{
 	cmp::{Ord, Ordering, PartialEq},
 	default::Default,
-	ops::{Add, AddAssign, Range},
+	ops::{Add, AddAssign, Range, Sub},
 	vec::Vec,
 };
 
+/// Reward mode for the fee market
 #[derive(Encode, Decode, Clone, Eq, PartialEq, Debug, Copy)]
 pub enum RewardMode {
 	Normal,
@@ -97,7 +98,8 @@ pub struct Order<AccountId, BlockNumber, Balance> {
 
 impl<AccountId, BlockNumber, Balance> Order<AccountId, BlockNumber, Balance>
 where
-	BlockNumber: Add<Output = BlockNumber> + Copy + AddAssign + PartialOrd,
+	BlockNumber:
+		Add<Output = BlockNumber> + Copy + AddAssign + PartialOrd + Sub<Output = BlockNumber>,
 	Balance: Copy + PartialOrd,
 	AccountId: Clone + PartialEq,
 {
@@ -153,6 +155,15 @@ where
 
 	pub fn range_end(&self) -> Option<BlockNumber> {
 		self.relayers.iter().last().map(|r| r.valid_range.end)
+	}
+
+	pub fn delivery_delay(&self) -> Option<BlockNumber> {
+		if let (Some(confirm_time), Some(range_end)) = (self.confirm_time, self.range_end()) {
+			if confirm_time > range_end {
+				return Some(confirm_time - range_end);
+			}
+		}
+		None
 	}
 
 	pub fn required_delivery_relayer_for_time(

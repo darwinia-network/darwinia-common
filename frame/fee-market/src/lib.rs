@@ -75,6 +75,8 @@ pub mod pallet {
 		/// The collateral relayer need to lock for each order.
 		#[pallet::constant]
 		type CollateralPerOrder: Get<RingBalance<Self>>;
+		#[pallet::constant]
+		type SlashPerBlock: Get<RingBalance<Self>>;
 		/// The slot times set
 		#[pallet::constant]
 		type Slot: Get<Self::BlockNumber>;

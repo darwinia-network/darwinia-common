@@ -22,7 +22,7 @@ use bp_messages::{
 	MessageNonce, UnrewardedRelayer,
 };
 use frame_support::traits::{Currency as CurrencyT, ExistenceRequirement, Get};
-use sp_runtime::traits::{AccountIdConversion, Saturating};
+use sp_runtime::traits::{AccountIdConversion, Saturating, UniqueSaturatedInto};
 use sp_std::{
 	collections::{btree_map::BTreeMap, vec_deque::VecDeque},
 	ops::RangeInclusive,
@@ -172,13 +172,17 @@ where
 						// The order is delayed, slash assigned relayers in operating normal mode.
 						let mut total_slash = message_fee;
 
-						if crate::Pallet::<T>::reward_mode() == RewardMode::NoSlash {
+						if crate::Pallet::<T>::reward_mode() == RewardMode::Normal {
 							let mut assigned_relayers_slash = RingBalance::<T>::zero();
 							for assigned_relayer in order.relayers_slice() {
+								let slash_value: RingBalance<T> = cal_slash_value::<T>(
+									order.delivery_delay(),
+									order.locked_collateral,
+								);
 								let slashed = do_slash::<T>(
 									&assigned_relayer.id,
 									relayer_fund_account,
-									order.locked_collateral,
+									slash_value,
 								);
 								assigned_relayers_slash += slashed;
 							}
@@ -212,8 +216,23 @@ where
 	}
 }
 
+pub(crate) fn cal_slash_value<T: Config>(
+	delay: Option<T::BlockNumber>,
+	locked_collateral: RingBalance<T>,
+) -> RingBalance<T> {
+	let mut slash_value = RingBalance::<T>::zero();
+	if let Some(delay_blocks) = delay {
+		slash_value = UniqueSaturatedInto::<u128>::unique_saturated_into(delay_blocks)
+			.saturating_mul(UniqueSaturatedInto::<u128>::unique_saturated_into(
+				T::SlashPerBlock::get(),
+			))
+			.unique_saturated_into();
+	}
+	sp_std::cmp::min(locked_collateral, slash_value)
+}
+
 /// Do slash for absent assigned relayers
-pub fn do_slash<T: Config>(
+pub(crate) fn do_slash<T: Config>(
 	slash_account: &T::AccountId,
 	fund_account: &T::AccountId,
 	slash_value: RingBalance<T>,
@@ -225,12 +244,21 @@ pub fn do_slash<T: Config>(
 		"The locked collateral must alway greater than slash max"
 	);
 
-	let _ = <T as Config>::RingCurrency::transfer(
+	let pay_result = <T as Config>::RingCurrency::transfer(
 		slash_account,
 		fund_account,
 		slash_value,
 		ExistenceRequirement::AllowDeath,
 	);
+	match pay_result {
+		Ok(_) => log::trace!("Slash {:?} amount: {:?}", slash_account, slash_value),
+		Err(e) => log::error!(
+			"Slash {:?} amount {:?}, err {:?}",
+			slash_account,
+			slash_value,
+			e
+		),
+	}
 	crate::Pallet::<T>::update_relayer_after_slash(
 		&slash_account,
 		locked_collateral.saturating_sub(slash_value),
@@ -240,7 +268,7 @@ pub fn do_slash<T: Config>(
 }
 
 /// Do reward
-fn do_reward<T: Config>(from: &T::AccountId, to: &T::AccountId, reward: RingBalance<T>) {
+pub(crate) fn do_reward<T: Config>(from: &T::AccountId, to: &T::AccountId, reward: RingBalance<T>) {
 	if reward.is_zero() {
 		return;
 	}

@@ -421,6 +421,7 @@ frame_support::parameter_types! {
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 	pub const MinimumRelayFee: Balance = 30;
 	pub const CollateralPerOrder: Balance = 100;
+	pub const SlashPerBlock: Balance = 2;
 	pub const AssignedRelayersNumber: u64 = 3;
 	pub const Slot: u64 = 50;
 
@@ -435,6 +436,7 @@ impl Config for Test {
 	type TreasuryPalletId = TreasuryPalletId;
 	type LockId = FeeMarketLockId;
 	type CollateralPerOrder = CollateralPerOrder;
+	type SlashPerBlock = SlashPerBlock;
 	type MinimumRelayFee = MinimumRelayFee;
 	type AssignedRelayersNumber = AssignedRelayersNumber;
 	type Slot = Slot;
@@ -1006,7 +1008,7 @@ fn test_payment_with_slash_and_reduce_order_capacity() {
 		let (_, _) = send_regular_message(market_fee);
 
 		// Receive delivery message proof
-		System::set_block_number(200);
+		System::set_block_number(2000);
 		assert_ok!(Messages::receive_messages_delivery_proof(
 			Origin::signed(5),
 			TestMessagesDeliveryProof(Ok((
@@ -1053,7 +1055,7 @@ fn test_payment_cal_slash_with_multiple_message() {
 		assert_eq!(message_nonce1 + 1, message_nonce2);
 
 		// Receive delivery message proof
-		System::set_block_number(200);
+		System::set_block_number(2000);
 		assert_ok!(Messages::receive_messages_delivery_proof(
 			Origin::signed(5),
 			TestMessagesDeliveryProof(Ok((
