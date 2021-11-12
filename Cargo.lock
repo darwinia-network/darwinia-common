@@ -1622,6 +1622,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-evm-precompile-bridge-ethereum"
+version = "2.6.9"
+dependencies = [
+ "darwinia-evm",
+ "darwinia-evm-precompile-utils",
+ "dp-evm",
+ "evm 0.27.0",
+ "from-ethereum-issuing",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-std",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-bridge-s2s"
+version = "2.6.9"
+dependencies = [
+ "bp-message-dispatch",
+ "bp-runtime",
+ "darwinia-evm",
+ "darwinia-evm-precompile-utils",
+ "darwinia-support",
+ "dp-contract",
+ "dp-evm",
+ "dp-s2s",
+ "evm 0.27.0",
+ "frame-support",
+ "from-substrate-issuing",
+ "log",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-std",
+]
+
+[[package]]
 name = "darwinia-evm-precompile-curve25519"
 version = "2.6.9"
 dependencies = [
@@ -1655,29 +1692,6 @@ dependencies = [
  "evm 0.27.0",
  "sp-core",
  "sp-io",
-]
-
-[[package]]
-name = "darwinia-evm-precompile-misc"
-version = "2.6.9"
-dependencies = [
- "bp-message-dispatch",
- "bp-runtime",
- "darwinia-evm",
- "darwinia-support",
- "dp-contract",
- "dp-evm",
- "dp-s2s",
- "evm 0.27.0",
- "frame-support",
- "from-ethereum-issuing",
- "from-substrate-issuing",
- "log",
- "parity-scale-codec",
- "sha3 0.9.1",
- "sp-core",
- "sp-io",
- "sp-std",
 ]
 
 [[package]]
@@ -1736,6 +1750,27 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-utils"
+version = "2.6.9"
+dependencies = [
+ "darwinia-evm-precompile-utils-macro",
+ "darwinia-support",
+ "evm 0.27.0",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-utils-macro"
+version = "2.6.9"
+dependencies = [
+ "evm 0.27.0",
+ "proc-macro2",
+ "quote",
+ "sha3 0.9.1",
+ "sp-std",
+ "syn",
 ]
 
 [[package]]
@@ -6115,8 +6150,9 @@ dependencies = [
  "darwinia-democracy",
  "darwinia-elections-phragmen",
  "darwinia-evm",
+ "darwinia-evm-precompile-bridge-ethereum",
+ "darwinia-evm-precompile-bridge-s2s",
  "darwinia-evm-precompile-dispatch",
- "darwinia-evm-precompile-misc",
  "darwinia-evm-precompile-simple",
  "darwinia-evm-precompile-transfer",
  "darwinia-fee-market",

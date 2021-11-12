@@ -1,0 +1,26 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "utils precompiles for EVM pallet."
+edition     = "2018"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "darwinia-evm-precompile-utils"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "2.6.9"
+
+[dependencies]
+# crates.io
+evm   = { version = "0.27", default-features = false, features = ["with-codec"] }
+# darwinia
+darwinia-evm-precompile-utils-macro = { path = "macro" }
+darwinia-support                    = { default-features = false, path = "../../../../support" }
+
+[features]
+default = ["std"]
+
+std = [
+	# crates.io
+	"evm/std",
+	"darwinia-support/std",
+]
