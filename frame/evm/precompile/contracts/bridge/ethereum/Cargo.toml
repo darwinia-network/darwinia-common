@@ -1,6 +1,6 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "Misc precompiles for EVM pallet."
+description = "bridge ethereum precompiles for EVM pallet."
 edition     = "2018"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
