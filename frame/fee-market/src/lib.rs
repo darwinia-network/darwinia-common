@@ -47,7 +47,7 @@ use darwinia_support::{
 	balance::{LockFor, LockableCurrency},
 	AccountId,
 };
-use dp_fee::{Order, Relayer, RewardMode};
+use dp_fee::{Order, Relayer};
 
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 pub use pallet::*;
@@ -110,8 +110,8 @@ pub mod pallet {
 		UpdateRelayFee(T::AccountId, RingBalance<T>),
 		/// Relayer cancel enrollment
 		CancelEnrollment(T::AccountId),
-		/// Update reward mode
-		UpdateRewardMode(RewardMode),
+		/// Update collateral slash protect value
+		UpdateCollateralSlashProtect(RingBalance<T>),
 	}
 
 	#[pallet::error]
@@ -167,13 +167,8 @@ pub mod pallet {
 		StorageValue<_, Vec<(LaneId, MessageNonce)>, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn reward_mode)]
-	pub type RewardModeStorage<T: Config> =
-		StorageValue<_, RewardMode, ValueQuery, DefaultRewardMode>;
-	#[pallet::type_value]
-	pub fn DefaultRewardMode() -> RewardMode {
-		RewardMode::Normal
-	}
+	#[pallet::getter(fn collateral_slash_protect)]
+	pub type CollateralSlashProtect<T: Config> = StorageValue<_, RingBalance<T>, OptionQuery>;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -316,15 +311,15 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(<T as Config>::WeightInfo::set_reward_mode())]
+		#[pallet::weight(<T as Config>::WeightInfo::set_slash_protect())]
 		#[transactional]
-		pub fn set_reward_mode(
+		pub fn set_slash_protect(
 			origin: OriginFor<T>,
-			mode: RewardMode,
+			slash_protect: RingBalance<T>,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			RewardModeStorage::<T>::put(mode);
-			Self::deposit_event(Event::<T>::UpdateRewardMode(mode));
+			CollateralSlashProtect::<T>::put(slash_protect);
+			Self::deposit_event(Event::<T>::UpdateCollateralSlashProtect(slash_protect));
 			Ok(().into())
 		}
 	}

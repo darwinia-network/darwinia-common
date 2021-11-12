@@ -106,6 +106,6 @@ benchmarks! {
 		assert_eq!(<FeeMarket<T>>::relayers().len(), 3);
 	}
 
-	set_operating_mode {
-	}:set_operating_mode(RawOrigin::Root, RewardMode::NoSlash)
+	set_slash_protect {
+	}:set_slash_protect(RawOrigin::Root, T::CollateralPerOrder::get().saturating_mul(1u32.into()))
 }

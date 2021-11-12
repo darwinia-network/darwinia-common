@@ -25,14 +25,6 @@ use sp_std::{
 	ops::{Add, AddAssign, Range, Sub},
 	vec::Vec,
 };
-
-/// Reward mode for the fee market
-#[derive(Encode, Decode, Clone, Eq, PartialEq, Debug, Copy)]
-pub enum RewardMode {
-	Normal,
-	NoSlash,
-}
-
 /// Relayer who has enrolled the fee market
 #[derive(Encode, Decode, Clone, Eq, Debug)]
 pub struct Relayer<AccountId, Balance> {

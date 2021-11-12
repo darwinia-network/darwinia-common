@@ -1053,6 +1053,52 @@ fn test_payment_with_slash_and_reduce_order_capacity() {
 }
 
 #[test]
+fn test_payment_slash_with_protect() {
+	new_test_ext().execute_with(|| {
+		// Send message
+		System::set_block_number(2);
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(6), 400, Some(30));
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(7), 400, Some(50));
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(8), 400, Some(100));
+		assert_eq!(FeeMarket::relayer(&6).collateral, 400);
+		let market_fee = FeeMarket::market_fee().unwrap();
+		let (_, _) = send_regular_message(market_fee);
+		assert_ok!(FeeMarket::set_slash_protect(Origin::root(), 50));
+
+		// Receive delivery message proof
+		System::set_block_number(2000);
+		assert_ok!(Messages::receive_messages_delivery_proof(
+			Origin::signed(5),
+			TestMessagesDeliveryProof(Ok((
+				TEST_LANE_ID,
+				InboundLaneData {
+					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
+						.into_iter()
+						.collect(),
+					..Default::default()
+				}
+			))),
+			UnrewardedRelayersState {
+				unrewarded_relayer_entries: 1,
+				total_messages: 1,
+				..Default::default()
+			},
+		));
+		assert!(FeeMarket::is_enrolled(&6));
+		assert!(FeeMarket::is_enrolled(&6));
+		assert!(FeeMarket::is_enrolled(&6));
+		assert_eq!(FeeMarket::relayer(&6).collateral, 350);
+		assert_eq!(FeeMarket::relayer(&7).collateral, 350);
+		assert_eq!(FeeMarket::relayer(&8).collateral, 350);
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 50));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
+			TEST_RELAYER_A,
+			200
+		));
+	});
+}
+
+#[test]
 fn test_payment_cal_slash_with_multiple_message() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(2);

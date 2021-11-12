@@ -58,7 +58,7 @@ pub trait WeightInfo {
 	fn update_locked_collateral() -> Weight;
 	fn update_relay_fee() -> Weight;
 	fn cancel_enrollment() -> Weight;
-	fn set_reward_mode() -> Weight;
+	fn set_slash_protect() -> Weight;
 }
 
 /// Weights for darwinia_fee_market using the Substrate node and recommended hardware.
@@ -84,7 +84,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(12 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
-	fn set_reward_mode() -> Weight {
+	fn set_slash_protect() -> Weight {
 		(17_924_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
@@ -113,7 +113,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(12 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
 	}
-	fn set_reward_mode() -> Weight {
+	fn set_slash_protect() -> Weight {
 		(17_924_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))

@@ -28,7 +28,7 @@ use sp_std::{
 	ops::RangeInclusive,
 };
 // --- darwinia-network ---
-use crate::{Config, ConfirmedMessagesThisBlock, Orders, *};
+use crate::{Config, ConfirmedMessagesThisBlock, Orders, Pallet, *};
 // --- std ---
 use num_traits::Zero;
 
@@ -169,25 +169,26 @@ where
 						confirm_reward =
 							T::ConfirmRelayersRewardRatio::get() * bridger_relayers_reward;
 					} else {
-						// The order is delayed, slash assigned relayers in operating normal mode.
+						// The order delivery is delay
 						let mut total_slash = message_fee;
 
-						if crate::Pallet::<T>::reward_mode() == RewardMode::Normal {
-							let mut assigned_relayers_slash = RingBalance::<T>::zero();
-							for assigned_relayer in order.relayers_slice() {
-								let amount: RingBalance<T> = T::Slasher::slash(
-									order.locked_collateral,
-									order.delivery_delay().unwrap_or_default(),
-								);
-								let slashed = do_slash::<T>(
-									&assigned_relayer.id,
-									relayer_fund_account,
-									amount,
-								);
-								assigned_relayers_slash += slashed;
-							}
-							total_slash += assigned_relayers_slash;
+						// calculate slash amount
+						let mut amount: RingBalance<T> = T::Slasher::slash(
+							order.locked_collateral,
+							order.delivery_delay().unwrap_or_default(),
+						);
+						if let Some(slash_protect) = Pallet::<T>::collateral_slash_protect() {
+							amount = sp_std::cmp::min(amount, slash_protect);
 						}
+
+						// Slash order's assigned relayers
+						let mut assigned_relayers_slash = RingBalance::<T>::zero();
+						for assigned_relayer in order.relayers_slice() {
+							let slashed =
+								do_slash::<T>(&assigned_relayer.id, relayer_fund_account, amount);
+							assigned_relayers_slash += slashed;
+						}
+						total_slash += assigned_relayers_slash;
 
 						// 80% total slash => confirm relayer
 						message_reward = T::MessageRelayersRewardRatio::get() * total_slash;
@@ -222,7 +223,7 @@ pub(crate) fn do_slash<T: Config>(
 	fund_account: &T::AccountId,
 	amount: RingBalance<T>,
 ) -> RingBalance<T> {
-	let locked_collateral = crate::Pallet::<T>::relayer(&who).collateral;
+	let locked_collateral = Pallet::<T>::relayer(&who).collateral;
 	T::RingCurrency::remove_lock(T::LockId::get(), &who);
 	debug_assert!(
 		locked_collateral >= amount,
