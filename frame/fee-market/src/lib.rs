@@ -50,9 +50,8 @@ use darwinia_support::{
 use dp_fee::{Order, Relayer};
 
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
-pub type Fee<T> = RingBalance<T>;
-
 pub use pallet::*;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -69,7 +68,7 @@ pub mod pallet {
 
 		/// The minimum fee for relaying.
 		#[pallet::constant]
-		type MinimumRelayFee: Get<Fee<Self>>;
+		type MinimumRelayFee: Get<RingBalance<Self>>;
 		/// The assigned relayers number for each order.
 		#[pallet::constant]
 		type AssignedRelayersNumber: Get<u64>;
@@ -99,15 +98,14 @@ pub mod pallet {
 	#[pallet::metadata(
 		T::AccountId = "AccountId",
 		RingBalance<T> = "RingBalance",
-		Fee<T> = "Fee"
 	)]
 	pub enum Event<T: Config> {
 		/// Relayer enrollment
-		Enroll(T::AccountId, RingBalance<T>, Fee<T>),
+		Enroll(T::AccountId, RingBalance<T>, RingBalance<T>),
 		/// Update relayer locked collateral
 		UpdateLockedCollateral(T::AccountId, RingBalance<T>),
 		/// Update relayer fee
-		UpdateRelayFee(T::AccountId, Fee<T>),
+		UpdateRelayFee(T::AccountId, RingBalance<T>),
 		/// Relayer cancel enrollment
 		CancelEnrollment(T::AccountId),
 	}
@@ -157,7 +155,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		(LaneId, MessageNonce),
-		Order<T::AccountId, T::BlockNumber, Fee<T>>,
+		Order<T::AccountId, T::BlockNumber, RingBalance<T>>,
 		OptionQuery,
 	>;
 	#[pallet::storage]
@@ -187,7 +185,7 @@ pub mod pallet {
 		pub fn enroll_and_lock_collateral(
 			origin: OriginFor<T>,
 			lock_collateral: RingBalance<T>,
-			relay_fee: Option<Fee<T>>,
+			relay_fee: Option<RingBalance<T>>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(!Self::is_enrolled(&who), <Error<T>>::AlreadyEnrolled);
@@ -274,7 +272,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn update_relay_fee(
 			origin: OriginFor<T>,
-			new_fee: Fee<T>,
+			new_fee: RingBalance<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_enrolled(&who), <Error<T>>::NotEnrolled);
@@ -373,7 +371,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get market fee, If there is not enough relayers have order capacity to accept new order, return None.
-	pub fn market_fee() -> Option<Fee<T>> {
+	pub fn market_fee() -> Option<RingBalance<T>> {
 		Self::assigned_relayers().and_then(|relayers| relayers.last().map(|r| r.fee))
 	}
 
