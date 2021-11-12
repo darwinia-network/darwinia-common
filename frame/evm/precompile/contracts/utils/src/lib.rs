@@ -20,8 +20,7 @@
 
 pub use darwinia_evm_precompile_utils_macro::selector;
 use evm::ExitError;
-
-const ACTION_LEN: usize = 4;
+use darwinia_support::evm::SELECTOR;
 
 #[derive(Clone, Copy, Debug)]
 pub struct DvmInputParser<'a> {
@@ -31,15 +30,15 @@ pub struct DvmInputParser<'a> {
 
 impl<'a> DvmInputParser<'a> {
 	pub fn new(input: &'a [u8]) -> Result<Self, ExitError> {
-		if input.len() < ACTION_LEN {
+		if input.len() < SELECTOR {
 			return Err(ExitError::Other("input length less than 4 bytes".into()));
 		}
 
-		let mut buffer = [0u8; ACTION_LEN];
-		buffer.copy_from_slice(&input[0..ACTION_LEN]);
+		let mut buffer = [0u8; SELECTOR];
+		buffer.copy_from_slice(&input[0..SELECTOR]);
 		let selector = u32::from_be_bytes(buffer);
 		Ok(Self {
-			input: &input[ACTION_LEN..],
+			input: &input[SELECTOR..],
 			selector,
 		})
 	}

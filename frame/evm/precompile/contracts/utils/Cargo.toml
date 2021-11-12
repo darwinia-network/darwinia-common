@@ -12,7 +12,9 @@ version     = "2.6.9"
 [dependencies]
 # crates.io
 evm   = { version = "0.27", default-features = false, features = ["with-codec"] }
+# darwinia
 darwinia-evm-precompile-utils-macro = { path = "macro" }
+darwinia-support                    = { default-features = false, path = "../../../../support" }
 
 [features]
 default = ["std"]
