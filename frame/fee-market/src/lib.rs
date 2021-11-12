@@ -110,8 +110,8 @@ pub mod pallet {
 		UpdateRelayFee(T::AccountId, RingBalance<T>),
 		/// Relayer cancel enrollment
 		CancelEnrollment(T::AccountId),
-		/// Change operating mode
-		UpdateOperatingMode(RewardMode),
+		/// Update reward mode
+		UpdateRewardMode(RewardMode),
 	}
 
 	#[pallet::error]
@@ -324,7 +324,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
 			RewardModeStorage::<T>::put(mode);
-			Self::deposit_event(Event::<T>::UpdateOperatingMode(mode));
+			Self::deposit_event(Event::<T>::UpdateRewardMode(mode));
 			Ok(().into())
 		}
 	}
