@@ -13,6 +13,7 @@ version     = "2.6.9"
 # crates.io
 codec             = { package = "parity-scale-codec", version = "2.1", default-features = false, features = ["derive"] }
 log               = { version = "0.4" }
+serde             = { version = "1.0", optional = true }
 static_assertions = { version = "1.1" }
 # darwinia-network
 darwinia-staking-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }
@@ -52,6 +53,7 @@ default = ["std"]
 std = [
 	# crates.io
 	"codec/std",
+	"serde",
 	# darwinia-network
 	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",

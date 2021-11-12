@@ -322,16 +322,18 @@ pub mod pallet {
 	use core::mem;
 	// --- crates.io ---
 	use codec::{Decode, Encode, HasCompact};
+	#[cfg(feature = "std")]
+	use serde::{Deserialize, Serialize};
 	// --- paritytech ---
 	use frame_election_provider_support::ElectionProvider;
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{EstimateNextNewSession, OnUnbalanced, UnixTime},
+		traits::{Currency, EstimateNextNewSession, OnUnbalanced, UnixTime},
 		PalletId, WeakBoundedVec,
 	};
 	use frame_system::{offchain::SendTransactionTypes, pallet_prelude::*};
 	use sp_runtime::{
-		traits::{AtLeast32BitUnsigned, Convert, Saturating, Zero},
+		traits::{AtLeast32BitUnsigned, Convert, Saturating, StaticLookup, Zero},
 		Perbill,
 	};
 	use sp_staking::SessionIndex;
@@ -767,6 +769,126 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// The earliest era for which we have a pending, unapplied slash.
+	#[pallet::storage]
+	pub(crate) type EarliestUnappliedSlash<T> = StorageValue<_, EraIndex>;
+
+	/// The last planned session scheduled by the session pallet.
+	///
+	/// This is basically in sync with the call to [`SessionManager::new_session`].
+	#[pallet::storage]
+	#[pallet::getter(fn current_planned_session)]
+	pub type CurrentPlannedSession<T> = StorageValue<_, SessionIndex, ValueQuery>;
+
+	/// True if network has been upgraded to this version.
+	/// Storage version of the pallet.
+	///
+	/// This is set to v6.0.0 for new networks.
+	#[pallet::storage]
+	pub(crate) type StorageVersion<T: Config> = StorageValue<_, Releases, ValueQuery>;
+
+	/// The chain's running time form genesis in milliseconds,
+	/// use for calculate darwinia era payout
+	#[pallet::storage]
+	#[pallet::getter(fn living_time)]
+	pub type LivingTime<T> = StorageValue<_, TsInMs>;
+
+	/// The percentage of the total payout that is distributed to validators and nominators
+	///
+	/// The reset might go to Treasury or something else.
+	#[pallet::storage]
+	#[pallet::getter(fn payout_fraction)]
+	pub type PayoutFraction<T> = StorageValue<_, Perbill>;
+
+	/// Total *RING* in pool.
+	#[pallet::storage]
+	#[pallet::getter(fn ring_pool)]
+	pub type RingPool<T> = StorageValue<_, RingBalance<T>>;
+	/// Total *KTON* in pool.
+	#[pallet::storage]
+	#[pallet::getter(fn kton_pool)]
+	pub type KtonPool<T> = StorageValue<_, RingBalance<T>>;
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub history_depth: u32,
+		pub validator_count: u32,
+		pub minimum_validator_count: u32,
+		pub invulnerables: Vec<AccountId<T>>,
+		pub force_era: Forcing,
+		pub slash_reward_fraction: Perbill,
+		pub canceled_payout: Power,
+		pub stakers: Vec<(
+			AccountId<T>,
+			AccountId<T>,
+			RingBalance<T>,
+			StakerStatus<AccountId<T>>,
+		)>,
+		pub payout_fraction: Perbill,
+	}
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			GenesisConfig {
+				history_depth: 336u32,
+				validator_count: Default::default(),
+				minimum_validator_count: Default::default(),
+				invulnerables: Default::default(),
+				force_era: Default::default(),
+				slash_reward_fraction: Default::default(),
+				canceled_payout: Default::default(),
+				stakers: Default::default(),
+				payout_fraction: Default::default(),
+			}
+		}
+	}
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			HistoryDepth::<T>::put(self.history_depth);
+			ValidatorCount::<T>::put(self.validator_count);
+			MinimumValidatorCount::<T>::put(self.minimum_validator_count);
+			Invulnerables::<T>::put(&self.invulnerables);
+			ForceEra::<T>::put(self.force_era);
+			CanceledSlashPayout::<T>::put(self.canceled_payout);
+			SlashRewardFraction::<T>::put(self.slash_reward_fraction);
+			StorageVersion::<T>::put(Releases::V6_0_0);
+			PayoutFraction::<T>::put(self.payout_fraction);
+
+			for (stash, controller, ring_to_be_bonded, status) in self.stakers {
+				assert!(
+					T::RingCurrency::free_balance(&stash) >= ring_to_be_bonded,
+					"Stash does not have enough balance to bond.",
+				);
+				let _ = <Pallet<T>>::bond(
+					T::Origin::from(Some(stash.to_owned()).into()),
+					T::Lookup::unlookup(controller.to_owned()),
+					StakingBalance::RingBalance(ring_to_be_bonded),
+					RewardDestination::Staked,
+					0,
+				);
+				let _ = match status {
+					StakerStatus::Validator => <Pallet<T>>::validate(
+						T::Origin::from(Some(controller.to_owned()).into()),
+						Default::default(),
+					),
+					StakerStatus::Nominator(votes) => <Pallet<T>>::nominate(
+						T::Origin::from(Some(controller.to_owned()).into()),
+						votes
+							.iter()
+							.map(|l| T::Lookup::unlookup(l.to_owned()))
+							.collect(),
+					),
+					_ => Ok(()),
+				};
+				let _ = T::RingCurrency::make_free_balance_be(
+					&<Pallet<T>>::account_id(),
+					T::RingCurrency::minimum_balance(),
+				);
+			}
+		}
+	}
+
 	/// Means for interacting with a specialized version of the `session` trait.
 	///
 	/// This is needed because `Staking` sets the `ValidatorIdOf` of the `pallet_session::Config`
@@ -1179,6 +1301,7 @@ pub mod pallet {
 
 	/// Mode of era-forcing.
 	#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	pub enum Forcing {
 		/// Not forcing anything - just let whatever happen.
 		NotForcing,
@@ -1209,6 +1332,56 @@ pub mod pallet {
 		pub reporters: Vec<AccountId>,
 		/// The amount of payout.
 		pub payout: slashing::RK<RingBalance, KtonBalance>,
+	}
+
+	// A value placed in storage that represents the current version of the Staking storage. This value
+	// is used by the `on_runtime_upgrade` logic to determine whether we run storage migration logic.
+	// This should match directly with the semantic versions of the Rust crate.
+	#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug)]
+	enum Releases {
+		V1_0_0Ancient,
+		V2_0_0,
+		V3_0_0,
+		V4_0_0,
+		V5_0_0, // blockable validators.
+		V6_0_0, // removal of all storage associated with offchain phragmen.
+	}
+	impl Default for Releases {
+		fn default() -> Self {
+			Releases::V6_0_0
+		}
+	}
+
+	/// Indicates the initial status of the staker.
+	#[derive(RuntimeDebug)]
+	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+	pub enum StakerStatus<AccountId> {
+		/// Chilling.
+		Idle,
+		/// Declared desire in validating or already participating in it.
+		Validator,
+		/// Nominating for a group of other stakers.
+		Nominator(Vec<AccountId>),
+	}
+
+	/// To unify *RING* and *KTON* balances.
+	#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+	pub enum StakingBalance<RingBalance, KtonBalance>
+	where
+		RingBalance: HasCompact,
+		KtonBalance: HasCompact,
+	{
+		RingBalance(RingBalance),
+		KtonBalance(KtonBalance),
+	}
+	impl<RingBalance, KtonBalance> Default for StakingBalance<RingBalance, KtonBalance>
+	where
+		RingBalance: Zero + HasCompact,
+		KtonBalance: Zero + HasCompact,
+	{
+		fn default() -> Self {
+			StakingBalance::RingBalance(Zero::zero())
+		}
 	}
 }
 pub use pallet::*;
