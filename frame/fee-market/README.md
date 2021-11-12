@@ -26,7 +26,7 @@ For simplicity, if count of relayers in current market are less than MIN_ASSIGNE
 ### Detailed Steps in Implementation
 
 1. Enroll and lock collateral
-    1. `enroll_and_lock_collateral` dispatch call.
+    1. `enroll_and_lock_collateral` dispatch call
     2. `cancel_enrollment()` dispatch call, remember to check if the relayer is in priority time slots.
 2. Ask price
    We use simple constant price function for messages currently: fn(message) = const_price * 1 where const_price means fee per message. We might later improve this fn(message) with [relayer defined fee functions](https://github.com/darwinia-network/darwinia-common/issues/813).
@@ -38,7 +38,7 @@ For simplicity, if count of relayers in current market are less than MIN_ASSIGNE
 4. Message delivery and confirmed by bridger.
 5. Reward and Slash Strategy.
 	1. If the order is confirmed in Rn's slot, then  Rn can claim 60% from the reward P1, and message relayer can claim 80% * (1 - 60%) from P1， confirm relayer can claim 20% * (1 - 60%) from P1, (P3 - P1) will go to treasury.
-	2. If the order is confirmed beyond all assigned relayers slot, and then The reward(R) consists of two parts, P3 and `CollaterPerOrder`. The `CollaterPerOrder` comes from each assigned relayer for this order was configure in the runtime. Message relayer can claim 80% from R, confirm relayer can claim 20% from R.
+	2. If the order is confirmed beyond all assigned relayers slot, and then The reward will be S(t) where S(t) > P3, the part S(t) - P3 comes from funds slashed from R1, R2, R3's collateral. Message relayer can claim 80% from S(t)， confirm relayer can claim 20% from S(t).
 
    Note: The ratio parameters in the strategy can be defined in runtime, and there might be update to them for refinement after more benchmark and statistics.
 
