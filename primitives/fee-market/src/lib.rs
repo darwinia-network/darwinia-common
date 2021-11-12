@@ -79,7 +79,7 @@ impl<AccountId: Default, Balance: Default> Default for Relayer<AccountId, Balanc
 }
 
 /// Order represent cross-chain message relay task. Only support sub-sub message for now.
-#[derive(Clone, Encode, Decode, Default)]
+#[derive(Clone, Encode, Decode, Debug, Default)]
 pub struct Order<AccountId, BlockNumber, Balance> {
 	pub lane: LaneId,
 	pub message: MessageNonce,
@@ -174,7 +174,7 @@ where
 
 /// Relayers selected by the fee market. Each prior relayer has a valid slot, if the order can finished in time,
 /// will be rewarded with more percentage. PriorRelayer are responsible for the messages relay in most time.
-#[derive(Clone, Encode, Decode, Default)]
+#[derive(Clone, Encode, Decode, Default, Debug)]
 pub struct PriorRelayer<AccountId, BlockNumber, Balance> {
 	pub id: AccountId,
 	pub fee: Balance,

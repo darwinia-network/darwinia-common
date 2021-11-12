@@ -804,7 +804,11 @@ fn migrate() -> Weight {
 	// TODO: Move to S2S
 	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
 	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
-	log::info!("Start migrate all storage items in AssignedRelayersStorage");
+	use bp_messages::{LaneId, MessageNonce};
+	use dp_fee::{Order, PriorRelayer};
+	use frame_support::{Blake2_128Concat, StorageHasher};
+
+	log::info!("===> Start migrate all storage items in AssignedRelayersStorage");
 	if let Some(value) = migration::take_storage_value::<Vec<Relayer<AccountId, Balance>>>(
 		b"FeeMarket",
 		b"AssignedRelayersStorage",
@@ -813,7 +817,32 @@ fn migrate() -> Weight {
 		log::info!("the migrate content {:?}", value);
 		migration::put_storage_value(b"FeeMarket", b"AssignedRelayers", &[], value);
 	}
-	log::info!("Migrate finished");
+	log::info!("===> End migrate all storage items in AssignedRelayersStorage");
+
+	log::info!("===> Start migrate all storage items in Orders");
+	#[derive(Encode, Decode, Debug, Clone)]
+	struct OldOrder {
+		lane: LaneId,
+		message: MessageNonce,
+		sent_time: BlockNumber,
+		confirm_time: Option<BlockNumber>,
+		relayers: Vec<PriorRelayer<AccountId, BlockNumber, Balance>>,
+	}
+	for (index, order) in migration::storage_iter::<OldOrder>(b"FeeMarket", b"Orders").drain() {
+		let new_order = Order {
+			lane: order.lane,
+			message: order.message,
+			sent_time: order.sent_time,
+			confirm_time: order.confirm_time,
+			locked_collateral: 100 * COIN,
+			relayers: order.relayers,
+		};
+		log::info!("The new order: order {:?}", new_order);
+		let hash = Blake2_128Concat::hash(&(new_order.lane, new_order.message).encode());
+		migration::put_storage_value(b"FeeMarket", b"Orders", &hash, new_order);
+	}
+	log::info!("===> End migrate all storage items in Orders");
+	log::info!("===> All Migrates finished");
 
 	// 0
 	RuntimeBlockWeights::get().max_block
@@ -838,6 +867,7 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
+		use dp_fee::Order;
 		assert!(!migration::have_storage_value(
 			b"FeeMarket",
 			b"AssignedRelayersStorage",
@@ -848,6 +878,16 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 			b"AssignedRelayers",
 			&[]
 		));
+
+		for (_index, new_order) in
+			migration::storage_iter::<Order<AccountId, BlockNumber, Balance>>(
+				b"FeeMarket",
+				b"Orders",
+			)
+			.drain()
+		{
+			assert_eq!(new_order.locked_collateral, 100 * COIN);
+		}
 		Ok(())
 	}
 
