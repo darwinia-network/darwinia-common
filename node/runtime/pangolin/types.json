@@ -258,7 +258,6 @@
 		"collateral": "Balance",
 		"fee": "Balance"
 	},
-	"Fee": "Balance",
 	"Order": {
 		"lane": "LaneId",
 		"message": "MessageNonce",
