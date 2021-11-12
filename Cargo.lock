@@ -1904,7 +1904,6 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "rand_chacha 0.3.1",
- "serde",
  "sp-arithmetic",
  "sp-core",
  "sp-io",
