@@ -175,14 +175,14 @@ where
 						if crate::Pallet::<T>::reward_mode() == RewardMode::Normal {
 							let mut assigned_relayers_slash = RingBalance::<T>::zero();
 							for assigned_relayer in order.relayers_slice() {
-								let slash_value: RingBalance<T> = T::Slasher::slash(
+								let amount: RingBalance<T> = T::Slasher::slash(
 									order.locked_collateral,
 									order.delivery_delay().unwrap_or_default(),
 								);
 								let slashed = do_slash::<T>(
 									&assigned_relayer.id,
 									relayer_fund_account,
-									slash_value,
+									amount,
 								);
 								assigned_relayers_slash += slashed;
 							}
@@ -218,38 +218,39 @@ where
 
 /// Do slash for absent assigned relayers
 pub(crate) fn do_slash<T: Config>(
-	slash_account: &T::AccountId,
+	who: &T::AccountId,
 	fund_account: &T::AccountId,
-	slash_value: RingBalance<T>,
+	amount: RingBalance<T>,
 ) -> RingBalance<T> {
-	let locked_collateral = crate::Pallet::<T>::relayer(&slash_account).collateral;
-	T::RingCurrency::remove_lock(T::LockId::get(), &slash_account);
+	let locked_collateral = crate::Pallet::<T>::relayer(&who).collateral;
+	T::RingCurrency::remove_lock(T::LockId::get(), &who);
 	debug_assert!(
-		locked_collateral >= slash_value,
+		locked_collateral >= amount,
 		"The locked collateral must alway greater than slash max"
 	);
 
 	let pay_result = <T as Config>::RingCurrency::transfer(
-		slash_account,
+		who,
 		fund_account,
-		slash_value,
+		amount,
 		ExistenceRequirement::AllowDeath,
 	);
 	match pay_result {
-		Ok(_) => log::trace!("Slash {:?} amount: {:?}", slash_account, slash_value),
-		Err(e) => log::error!(
-			"Slash {:?} amount {:?}, err {:?}",
-			slash_account,
-			slash_value,
-			e
-		),
+		Ok(_) => {
+			crate::Pallet::<T>::update_relayer_after_slash(
+				&who,
+				locked_collateral.saturating_sub(amount),
+			);
+			log::trace!("Slash {:?} amount: {:?}", who, amount);
+			return amount;
+		}
+		Err(e) => {
+			crate::Pallet::<T>::update_relayer_after_slash(&who, locked_collateral);
+			log::error!("Slash {:?} amount {:?}, err {:?}", who, amount, e)
+		}
 	}
-	crate::Pallet::<T>::update_relayer_after_slash(
-		&slash_account,
-		locked_collateral.saturating_sub(slash_value),
-	);
 
-	slash_value
+	RingBalance::<T>::zero()
 }
 
 /// Do reward
