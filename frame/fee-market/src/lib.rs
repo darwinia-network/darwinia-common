@@ -104,8 +104,10 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// Relayer enrollment
 		Enroll(T::AccountId, RingBalance<T>, Fee<T>),
-		/// Update relayer
-		UpdateRelayer(T::AccountId, Option<RingBalance<T>>, Option<Fee<T>>),
+		/// Update relayer locked collateral
+		UpdateLockedCollateral(T::AccountId, RingBalance<T>),
+		/// Update relayer fee
+		UpdateRelayFee(T::AccountId, Fee<T>),
 		/// Relayer cancel enrollment
 		CancelEnrollment(T::AccountId),
 	}
@@ -263,11 +265,7 @@ pub mod pallet {
 				relayer.collateral = new_collateral;
 			});
 			Self::update_market();
-			Self::deposit_event(Event::<T>::UpdateRelayer(
-				who.clone(),
-				Some(new_collateral),
-				None,
-			));
+			Self::deposit_event(Event::<T>::UpdateLockedCollateral(who, new_collateral));
 			Ok(().into())
 		}
 
@@ -290,7 +288,7 @@ pub mod pallet {
 			});
 
 			Self::update_market();
-			Self::deposit_event(Event::<T>::UpdateRelayer(who, None, Some(new_fee)));
+			Self::deposit_event(Event::<T>::UpdateRelayFee(who, new_fee));
 			Ok(().into())
 		}
 
