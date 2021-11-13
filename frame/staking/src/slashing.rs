@@ -56,7 +56,6 @@ use codec::{Decode, Encode};
 use frame_support::{
 	ensure,
 	traits::{Currency, Imbalance, OnUnbalanced, UnixTime},
-	StorageDoubleMap, StorageMap,
 };
 use sp_runtime::{
 	traits::{Saturating, Zero},
@@ -76,12 +75,12 @@ const REWARD_F1: Perbill = Perbill::from_percent(50);
 /// The index of a slashing span - unique to each stash.
 pub type SpanIndex = u32;
 
-pub(crate) type RKT<T> = RK<RingBalance<T>, KtonBalance<T>>;
+pub type RKT<T> = RK<RingBalance<T>, KtonBalance<T>>;
 
 #[derive(Clone, Copy, Default, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug)]
 pub struct RK<R, K> {
-	pub(crate) r: R,
-	pub(crate) k: K,
+	pub r: R,
+	pub k: K,
 }
 impl<R, K> Zero for RK<R, K>
 where
@@ -179,10 +178,10 @@ where
 // A range of start..end eras for a slashing span.
 #[derive(Encode, Decode)]
 #[cfg_attr(test, derive(Debug, PartialEq))]
-pub(crate) struct SlashingSpan {
-	pub(crate) index: SpanIndex,
-	pub(crate) start: EraIndex,
-	pub(crate) length: Option<EraIndex>, // the ongoing slashing span has indeterminate length.
+pub struct SlashingSpan {
+	pub index: SpanIndex,
+	pub start: EraIndex,
+	pub length: Option<EraIndex>, // the ongoing slashing span has indeterminate length.
 }
 
 impl SlashingSpan {
@@ -209,7 +208,7 @@ pub struct SlashingSpans {
 impl SlashingSpans {
 	// creates a new record of slashing spans for a stash, starting at the beginning
 	// of the bonding period, relative to now.
-	pub(crate) fn new(window_start: EraIndex) -> Self {
+	pub fn new(window_start: EraIndex) -> Self {
 		SlashingSpans {
 			span_index: 0,
 			last_start: window_start,
@@ -224,7 +223,7 @@ impl SlashingSpans {
 	// update the slashing spans to reflect the start of a new span at the era after `now`
 	// returns `true` if a new span was started, `false` otherwise. `false` indicates
 	// that internal state is unchanged.
-	pub(crate) fn end_span(&mut self, now: EraIndex) -> bool {
+	pub fn end_span(&mut self, now: EraIndex) -> bool {
 		let next_start = now + 1;
 		if next_start <= self.last_start {
 			return false;
@@ -238,7 +237,7 @@ impl SlashingSpans {
 	}
 
 	// an iterator over all slashing spans in _reverse_ order - most recent first.
-	pub(crate) fn iter(&'_ self) -> impl Iterator<Item = SlashingSpan> + '_ {
+	pub fn iter(&'_ self) -> impl Iterator<Item = SlashingSpan> + '_ {
 		let mut last_start = self.last_start;
 		let mut index = self.span_index;
 		let last = SlashingSpan {
@@ -297,7 +296,7 @@ impl SlashingSpans {
 
 /// A slashing-span record for a particular stash.
 #[derive(Encode, Decode, Default)]
-pub(crate) struct SpanRecord<RingBalance, KtonBalance> {
+pub struct SpanRecord<RingBalance, KtonBalance> {
 	slashed: RK<RingBalance, KtonBalance>,
 	paid_out: RK<RingBalance, KtonBalance>,
 }
@@ -305,29 +304,29 @@ pub(crate) struct SpanRecord<RingBalance, KtonBalance> {
 impl<RingBalance, KtonBalance> SpanRecord<RingBalance, KtonBalance> {
 	/// The value of stash balance slashed in this span.
 	#[cfg(test)]
-	pub(crate) fn amount_slashed(&self) -> &RK<RingBalance, KtonBalance> {
+	pub fn amount_slashed(&self) -> &RK<RingBalance, KtonBalance> {
 		&self.slashed
 	}
 }
 
 /// Parameters for performing a slash.
 #[derive(Clone)]
-pub(crate) struct SlashParams<'a, T: 'a + Config> {
+pub struct SlashParams<'a, T: 'a + Config> {
 	/// The stash account being slashed.
-	pub(crate) stash: &'a T::AccountId,
+	pub stash: &'a T::AccountId,
 	/// The proportion of the slash.
-	pub(crate) slash: Perbill,
+	pub slash: Perbill,
 	/// The exposure of the stash and all nominators.
-	pub(crate) exposure: &'a Exposure<T::AccountId, RingBalance<T>, KtonBalance<T>>,
+	pub exposure: &'a Exposure<T::AccountId, RingBalance<T>, KtonBalance<T>>,
 	/// The era where the offence occurred.
-	pub(crate) slash_era: EraIndex,
+	pub slash_era: EraIndex,
 	/// The first era in the current bonding period.
-	pub(crate) window_start: EraIndex,
+	pub window_start: EraIndex,
 	/// The current era.
-	pub(crate) now: EraIndex,
+	pub now: EraIndex,
 	/// The maximum percentage of a slash that ever gets paid out.
 	/// This is f_inf in the paper.
-	pub(crate) reward_proportion: Perbill,
+	pub reward_proportion: Perbill,
 }
 
 /// Computes a slash of a validator and nominators. It returns an unapplied
@@ -336,7 +335,7 @@ pub(crate) struct SlashParams<'a, T: 'a + Config> {
 ///
 /// The pending slash record returned does not have initialized reporters. Those have
 /// to be set at a higher level, if any.
-pub(crate) fn compute_slash<T: Config>(
+pub fn compute_slash<T: Config>(
 	params: SlashParams<T>,
 ) -> Option<UnappliedSlash<T::AccountId, RingBalance<T>, KtonBalance<T>>> {
 	let SlashParams {
@@ -669,13 +668,13 @@ impl<'a, T: 'a + Config> Drop for InspectingSpans<'a, T> {
 }
 
 /// Clear slashing metadata for an obsolete era.
-pub(crate) fn clear_era_metadata<T: Config>(obsolete_era: EraIndex) {
+pub fn clear_era_metadata<T: Config>(obsolete_era: EraIndex) {
 	<Pallet<T> as Store>::ValidatorSlashInEra::remove_prefix(&obsolete_era, None);
 	<Pallet<T> as Store>::NominatorSlashInEra::remove_prefix(&obsolete_era, None);
 }
 
 /// Clear slashing metadata for a dead account.
-pub(crate) fn clear_stash_metadata<T: Config>(
+pub fn clear_stash_metadata<T: Config>(
 	stash: &T::AccountId,
 	num_slashing_spans: u32,
 ) -> DispatchResult {
@@ -761,7 +760,7 @@ pub fn do_slash<T: Config>(
 }
 
 /// Apply a previously-unapplied slash.
-pub(crate) fn apply_slash<T: Config>(
+pub fn apply_slash<T: Config>(
 	unapplied_slash: UnappliedSlash<T::AccountId, RingBalance<T>, KtonBalance<T>>,
 ) {
 	let mut slashed_ring = <RingNegativeImbalance<T>>::zero();
