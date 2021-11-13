@@ -157,7 +157,7 @@
 //! pub trait Config: staking::Config {}
 //!
 //! decl_module! {
-//! 	pub struct Pallet<T: Config> for enum Call where origin: T::Origin {
+//! 	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 //! 		/// Reward a validator.
 //! 		#[weight = 0]
 //! 		pub fn reward_myself(origin) -> dispatch::DispatchResult {
@@ -276,6 +276,15 @@ macro_rules! log {
 		)
 	};
 }
+
+#[cfg(test)]
+mod darwinia_tests;
+#[cfg(test)]
+mod inflation_tests;
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod substrate_tests;
 
 pub mod weights;
 pub use weights::WeightInfo;
@@ -3824,9 +3833,9 @@ pub mod pallet {
 	#[derive(PartialEq, Encode, Decode, Default, Debug)]
 	pub struct EraRewardPoints<AccountId: Ord> {
 		/// Total number of points. Equals the sum of reward points for each validator.
-		total: RewardPoint,
+		pub total: RewardPoint,
 		/// The reward points earned by a given validator.
-		individual: BTreeMap<AccountId, RewardPoint>,
+		pub individual: BTreeMap<AccountId, RewardPoint>,
 	}
 
 	/// Mode of era-forcing.

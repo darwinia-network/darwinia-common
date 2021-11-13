@@ -29,23 +29,28 @@
 //! explaining why you delete them.
 
 // --- paritytech ---
-use frame_election_provider_support::Support;
+use frame_election_provider_support::{ElectionProvider, Support};
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{Currency, OnInitialize, ReservableCurrency},
+	dispatch::WithPostDispatchInfo,
+	traits::{Currency, Get, OnInitialize, ReservableCurrency},
 	weights::{extract_actual_weight, GetDispatchInfo},
-	StorageMap,
+	WeakBoundedVec,
 };
 use sp_runtime::{
 	assert_eq_error_rate,
-	traits::{BadOrigin, Dispatchable},
+	traits::{BadOrigin, Dispatchable, Zero},
+	Perbill,
 };
-use sp_staking::offence::OffenceDetails;
+use sp_staking::{
+	offence::{OffenceDetails, OnOffenceHandler},
+	SessionIndex,
+};
 use substrate_test_utils::assert_eq_uvec;
 // --- darwinia-network ---
 use crate::{
 	mock::{AccountId, Balance, *},
-	*,
+	Event, *,
 };
 use darwinia_support::balance::*;
 
@@ -305,7 +310,7 @@ fn rewards_should_work() {
 			);
 			assert_eq!(
 				*staking_events().last().unwrap(),
-				RawEvent::EraPayout(0, total_payout_0, maximum_payout - total_payout_0)
+				Event::EraPayout(0, total_payout_0, maximum_payout - total_payout_0)
 			);
 			make_all_reward_payment(0);
 
@@ -342,7 +347,7 @@ fn rewards_should_work() {
 				maximum_payout * 2 - total_payout_0 - total_payout_1,
 				MICRO,
 			);
-			if let RawEvent::EraPayout(a, b, c) = *staking_events().last().unwrap() {
+			if let Event::EraPayout(a, b, c) = *staking_events().last().unwrap() {
 				assert_eq!(a, 1);
 				assert_eq!(b, total_payout_1);
 				assert_eq_error_rate!(c, maximum_payout - total_payout_1, MICRO);
@@ -946,7 +951,7 @@ fn forcing_new_era_works() {
 		assert_eq!(active_era(), 1);
 
 		// no era change.
-		ForceEra::put(Forcing::ForceNone);
+		<ForceEra<Test>>::put(Forcing::ForceNone);
 
 		start_session(4);
 		assert_eq!(active_era(), 1);
@@ -962,7 +967,7 @@ fn forcing_new_era_works() {
 
 		// back to normal.
 		// this immediately starts a new session.
-		ForceEra::put(Forcing::NotForcing);
+		<ForceEra<Test>>::put(Forcing::NotForcing);
 
 		start_session(8);
 		assert_eq!(active_era(), 1);
@@ -970,7 +975,7 @@ fn forcing_new_era_works() {
 		start_session(9);
 		assert_eq!(active_era(), 2);
 		// forceful change
-		ForceEra::put(Forcing::ForceAlways);
+		<ForceEra<Test>>::put(Forcing::ForceAlways);
 
 		start_session(10);
 		assert_eq!(active_era(), 2);
@@ -982,10 +987,10 @@ fn forcing_new_era_works() {
 		assert_eq!(active_era(), 4);
 
 		// just one forceful change
-		ForceEra::put(Forcing::ForceNew);
+		<ForceEra<Test>>::put(Forcing::ForceNew);
 		start_session(13);
 		assert_eq!(active_era(), 5);
-		assert_eq!(ForceEra::get(), Forcing::NotForcing);
+		assert_eq!(<ForceEra<Test>>::get(), Forcing::NotForcing);
 
 		start_session(14);
 		assert_eq!(active_era(), 6);
@@ -2582,7 +2587,7 @@ fn era_is_always_same_length() {
 		);
 
 		let session = Session::current_index();
-		ForceEra::put(Forcing::ForceNew);
+		<ForceEra<Test>>::put(Forcing::ForceNew);
 		advance_session();
 		advance_session();
 		assert_eq!(current_era(), 3);
@@ -4661,7 +4666,7 @@ mod election_data_provider {
 					45
 				);
 				assert_eq!(staking_events().len(), 1);
-				assert_eq!(*staking_events().last().unwrap(), RawEvent::StakingElection);
+				assert_eq!(*staking_events().last().unwrap(), Event::StakingElection);
 
 				for b in 21..45 {
 					run_to_block(b);
@@ -4678,7 +4683,7 @@ mod election_data_provider {
 					70
 				);
 				assert_eq!(staking_events().len(), 3);
-				assert_eq!(*staking_events().last().unwrap(), RawEvent::StakingElection);
+				assert_eq!(*staking_events().last().unwrap(), Event::StakingElection);
 			})
 	}
 }
