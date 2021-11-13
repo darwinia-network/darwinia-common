@@ -355,7 +355,9 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	use serde::{Deserialize, Serialize};
 	// --- paritytech ---
-	use frame_election_provider_support::{ElectionProvider, Supports, VoteWeight};
+	use frame_election_provider_support::{
+		data_provider, ElectionDataProvider, ElectionProvider, Supports, VoteWeight,
+	};
 	use frame_support::{
 		dispatch::WithPostDispatchInfo,
 		pallet_prelude::*,
@@ -375,12 +377,15 @@ pub mod pallet {
 		},
 		Perbill, Percent, Perquintill, SaturatedConversion,
 	};
-	use sp_staking::SessionIndex;
+	use sp_staking::{
+		offence::{Offence, OffenceDetails, OffenceError, OnOffenceHandler, ReportOffence},
+		SessionIndex,
+	};
 	use sp_std::collections::btree_map::BTreeMap;
 	// --- darwinia-network ---
 	use crate::*;
 	use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo;
-	use darwinia_support::balance::*;
+	use darwinia_support::{balance::*, traits::OnDepositRedeem};
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -3004,6 +3009,415 @@ pub mod pallet {
 			<Validators<T>>::iter().map(|(v, _)| v).collect::<Vec<_>>()
 		}
 	}
+	impl<T: Config> ElectionDataProvider<T::AccountId, T::BlockNumber> for Pallet<T> {
+		const MAXIMUM_VOTES_PER_VOTER: u32 = T::MAX_NOMINATIONS;
+
+		fn desired_targets() -> data_provider::Result<(u32, Weight)> {
+			Ok((
+				Self::validator_count(),
+				<T as frame_system::Config>::DbWeight::get().reads(1),
+			))
+		}
+
+		fn voters(
+			maybe_max_len: Option<usize>,
+		) -> data_provider::Result<(Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)>, Weight)> {
+			// NOTE: reading these counts already needs to iterate a lot of storage keys, but they get
+			// cached. This is okay for the case of `Ok(_)`, but bad for `Err(_)`, as the trait does not
+			// report weight in failures.
+			let nominator_count = <Nominators<T>>::iter().count();
+			let validator_count = <Validators<T>>::iter().count();
+			let voter_count = nominator_count.saturating_add(validator_count);
+
+			if maybe_max_len.map_or(false, |max_len| voter_count > max_len) {
+				return Err("Voter snapshot too big");
+			}
+
+			let slashing_span_count = <SlashingSpans<T>>::iter().count();
+			let weight = T::WeightInfo::get_npos_voters(
+				validator_count as u32,
+				nominator_count as u32,
+				slashing_span_count as u32,
+			);
+			Ok((Self::get_npos_voters(), weight))
+		}
+
+		fn targets(
+			maybe_max_len: Option<usize>,
+		) -> data_provider::Result<(Vec<T::AccountId>, Weight)> {
+			let target_count = <Validators<T>>::iter().count();
+
+			if maybe_max_len.map_or(false, |max_len| target_count > max_len) {
+				return Err("Target snapshot too big");
+			}
+
+			let weight = <T as frame_system::Config>::DbWeight::get().reads(target_count as u64);
+			Ok((Self::get_npos_targets(), weight))
+		}
+
+		fn next_election_prediction(now: T::BlockNumber) -> T::BlockNumber {
+			let current_era = Self::current_era().unwrap_or(0);
+			let current_session = Self::current_planned_session();
+			let current_era_start_session_index =
+				Self::eras_start_session_index(current_era).unwrap_or(0);
+			let era_length = current_session
+				.saturating_sub(current_era_start_session_index)
+				.min(T::SessionsPerEra::get());
+
+			let session_length = T::NextNewSession::average_session_length();
+
+			let until_this_session_end = T::NextNewSession::estimate_next_new_session(now)
+				.0
+				.unwrap_or_default()
+				.saturating_sub(now);
+
+			let sessions_left: T::BlockNumber = T::SessionsPerEra::get()
+				.saturating_sub(era_length)
+				// one session is computed in this_session_end.
+				.saturating_sub(1)
+				.into();
+
+			now.saturating_add(
+				until_this_session_end.saturating_add(sessions_left.saturating_mul(session_length)),
+			)
+		}
+
+		#[cfg(feature = "runtime-benchmarks")]
+		fn put_snapshot(
+			voters: Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)>,
+			targets: Vec<T::AccountId>,
+			target_stake: Option<VoteWeight>,
+		) {
+			use sp_std::convert::TryFrom;
+			targets.into_iter().for_each(|v| {
+				let stake: BalanceOf<T> = target_stake
+					.and_then(|w| <BalanceOf<T>>::try_from(w).ok())
+					.unwrap_or(T::Currency::minimum_balance() * 100u32.into());
+				<Bonded<T>>::insert(v.clone(), v.clone());
+				<Ledger<T>>::insert(
+					v.clone(),
+					StakingLedger {
+						stash: v.clone(),
+						active: stake,
+						total: stake,
+						unlocking: vec![],
+						claimed_rewards: vec![],
+					},
+				);
+				<Validators<T>>::insert(
+					v,
+					ValidatorPrefs {
+						commission: Perbill::zero(),
+						blocked: false,
+					},
+				);
+			});
+
+			voters.into_iter().for_each(|(v, s, t)| {
+				let stake = <BalanceOf<T>>::try_from(s).unwrap_or_else(|_| {
+					panic!("cannot convert a VoteWeight into BalanceOf, benchmark needs reconfiguring.")
+				});
+				<Bonded<T>>::insert(v.clone(), v.clone());
+				<Ledger<T>>::insert(
+					v.clone(),
+					StakingLedger {
+						stash: v.clone(),
+						active: stake,
+						total: stake,
+						unlocking: vec![],
+						claimed_rewards: vec![],
+					},
+				);
+				<Nominators<T>>::insert(
+					v,
+					Nominations {
+						targets: t,
+						submitted_in: 0,
+						suppressed: false,
+					},
+				);
+			});
+		}
+	}
+	impl<T: Config> pallet_session::SessionManager<T::AccountId> for Pallet<T> {
+		fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+			log!(trace, "planning new_session({})", new_index);
+
+			<CurrentPlannedSession<T>>::put(new_index);
+
+			Self::new_session(new_index)
+		}
+		fn end_session(end_index: SessionIndex) {
+			log!(trace, "ending end_session({})", end_index);
+
+			Self::end_session(end_index)
+		}
+		fn start_session(start_index: SessionIndex) {
+			log!(trace, "starting start_session({})", start_index);
+
+			Self::start_session(start_index)
+		}
+	}
+	impl<T: Config> pallet_session::historical::SessionManager<T::AccountId, ExposureT<T>>
+		for Pallet<T>
+	{
+		fn new_session(new_index: SessionIndex) -> Option<Vec<(T::AccountId, ExposureT<T>)>> {
+			<Self as pallet_session::SessionManager<_>>::new_session(new_index).map(|validators| {
+				let current_era = Self::current_era()
+					// Must be some as a new era has been created.
+					.unwrap_or(0);
+
+				validators
+					.into_iter()
+					.map(|v| {
+						let exposure = Self::eras_stakers(current_era, &v);
+						(v, exposure)
+					})
+					.collect()
+			})
+		}
+		fn start_session(start_index: SessionIndex) {
+			<Self as pallet_session::SessionManager<_>>::start_session(start_index)
+		}
+		fn end_session(end_index: SessionIndex) {
+			<Self as pallet_session::SessionManager<_>>::end_session(end_index)
+		}
+	}
+	/// This is intended to be used with `FilterHistoricalOffences`.
+	impl<T>
+		OnOffenceHandler<T::AccountId, pallet_session::historical::IdentificationTuple<T>, Weight>
+		for Pallet<T>
+	where
+		T: Config
+			+ pallet_session::Config<ValidatorId = AccountId<T>>
+			+ pallet_session::historical::Config<
+				FullIdentification = ExposureT<T>,
+				FullIdentificationOf = ExposureOf<T>,
+			>,
+		T::SessionHandler: pallet_session::SessionHandler<AccountId<T>>,
+		T::SessionManager: pallet_session::SessionManager<AccountId<T>>,
+		T::ValidatorIdOf: Convert<AccountId<T>, Option<AccountId<T>>>,
+	{
+		fn on_offence(
+			offenders: &[OffenceDetails<
+				T::AccountId,
+				pallet_session::historical::IdentificationTuple<T>,
+			>],
+			slash_fraction: &[Perbill],
+			slash_session: SessionIndex,
+		) -> Weight {
+			let reward_proportion = <SlashRewardFraction<T>>::get();
+			let mut consumed_weight: Weight = 0;
+			let mut add_db_reads_writes = |reads, writes| {
+				consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
+			};
+
+			let active_era = {
+				let active_era = Self::active_era();
+				add_db_reads_writes(1, 0);
+				if active_era.is_none() {
+					// this offence need not be re-submitted.
+					return consumed_weight;
+				}
+				active_era
+					.expect("value checked not to be `None`; qed")
+					.index
+			};
+			let active_era_start_session_index = Self::eras_start_session_index(active_era)
+				.unwrap_or_else(|| {
+					frame_support::print("Error: start_session_index must be set for current_era");
+					0
+				});
+			add_db_reads_writes(1, 0);
+
+			let window_start = active_era.saturating_sub(T::BondingDurationInEra::get());
+
+			// fast path for active-era report - most likely.
+			// `slash_session` cannot be in a future active era. It must be in `active_era` or before.
+			let slash_era = if slash_session >= active_era_start_session_index {
+				active_era
+			} else {
+				let eras = <BondedEras<T>>::get();
+				add_db_reads_writes(1, 0);
+
+				// reverse because it's more likely to find reports from recent eras.
+				match eras
+					.iter()
+					.rev()
+					.filter(|&&(_, ref sesh)| sesh <= &slash_session)
+					.next()
+				{
+					Some(&(ref slash_era, _)) => *slash_era,
+					// before bonding period. defensive - should be filtered out.
+					None => return consumed_weight,
+				}
+			};
+
+			<Self as Store>::EarliestUnappliedSlash::mutate(|earliest| {
+				if earliest.is_none() {
+					*earliest = Some(active_era)
+				}
+			});
+			add_db_reads_writes(1, 1);
+
+			let slash_defer_duration = T::SlashDeferDuration::get();
+
+			let invulnerables = Self::invulnerables();
+			add_db_reads_writes(1, 0);
+
+			for (details, slash_fraction) in offenders.iter().zip(slash_fraction) {
+				let (stash, exposure) = &details.offender;
+
+				// Skip if the validator is invulnerable.
+				if invulnerables.contains(stash) {
+					continue;
+				}
+
+				let unapplied = slashing::compute_slash::<T>(slashing::SlashParams {
+					stash,
+					slash: *slash_fraction,
+					exposure,
+					slash_era,
+					window_start,
+					now: active_era,
+					reward_proportion,
+				});
+
+				if let Some(mut unapplied) = unapplied {
+					let nominators_len = unapplied.others.len() as u64;
+					let reporters_len = details.reporters.len() as u64;
+
+					{
+						let upper_bound = 1 /* Validator/NominatorSlashInEra */ + 2 /* fetch_spans */;
+						let rw = upper_bound + nominators_len * upper_bound;
+						add_db_reads_writes(rw, rw);
+					}
+					unapplied.reporters = details.reporters.clone();
+					if slash_defer_duration == 0 {
+						// apply right away.
+						slashing::apply_slash::<T>(unapplied);
+						{
+							let slash_cost = (6, 5);
+							let reward_cost = (2, 2);
+							add_db_reads_writes(
+								(1 + nominators_len) * slash_cost.0 + reward_cost.0 * reporters_len,
+								(1 + nominators_len) * slash_cost.1 + reward_cost.1 * reporters_len,
+							);
+						}
+					} else {
+						// defer to end of some `slash_defer_duration` from now.
+						<Self as Store>::UnappliedSlashes::mutate(active_era, move |for_later| {
+							for_later.push(unapplied)
+						});
+						add_db_reads_writes(1, 1);
+					}
+				} else {
+					add_db_reads_writes(4 /* fetch_spans */, 5 /* kick_out_if_recent */)
+				}
+			}
+
+			consumed_weight
+		}
+	}
+	impl<T: Config> OnDepositRedeem<T::AccountId, RingBalance<T>> for Pallet<T> {
+		fn on_deposit_redeem(
+			backing: &T::AccountId,
+			stash: &T::AccountId,
+			amount: RingBalance<T>,
+			start_time: TsInMs,
+			months: u8,
+		) -> DispatchResult {
+			// The timestamp unit is different between Ethereum and Darwinia
+			// Converting from seconds to milliseconds
+			let start_time = start_time * 1000;
+			let promise_month = months.min(36);
+			let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
+
+			if let Some(controller) = Self::bonded(&stash) {
+				let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
+
+				T::RingCurrency::transfer(&backing, &stash, amount, KeepAlive)?;
+
+				let StakingLedger {
+					active_ring,
+					active_deposit_ring,
+					deposit_items,
+					..
+				} = &mut ledger;
+
+				*active_ring = active_ring.saturating_add(amount);
+				*active_deposit_ring = active_deposit_ring.saturating_add(amount);
+				deposit_items.push(TimeDepositItem {
+					value: amount,
+					start_time,
+					expire_time,
+				});
+
+				Self::update_ledger(&controller, &mut ledger);
+			} else {
+				ensure!(
+					!<Bonded<T>>::contains_key(&stash),
+					<Error<T>>::AlreadyBonded
+				);
+
+				let controller = stash;
+
+				ensure!(
+					!<Ledger<T>>::contains_key(controller),
+					<Error<T>>::AlreadyPaired
+				);
+
+				T::RingCurrency::transfer(&backing, &stash, amount, KeepAlive)?;
+
+				<Bonded<T>>::insert(&stash, controller);
+				<Payee<T>>::insert(&stash, RewardDestination::Stash);
+
+				<frame_system::Pallet<T>>::inc_consumers(&stash)
+					.map_err(|_| <Error<T>>::BadState)?;
+
+				let mut ledger = StakingLedger {
+					stash: stash.clone(),
+					active_ring: amount,
+					active_deposit_ring: amount,
+					deposit_items: vec![TimeDepositItem {
+						value: amount,
+						start_time,
+						expire_time,
+					}],
+					claimed_rewards: {
+						let current_era = <CurrentEra<T>>::get().unwrap_or(0);
+						let last_reward_era = current_era.saturating_sub(Self::history_depth());
+						(last_reward_era..current_era).collect()
+					},
+					..Default::default()
+				};
+
+				Self::update_ledger(controller, &mut ledger);
+			};
+
+			Self::deposit_event(Event::BondRing(amount, start_time, expire_time));
+
+			Ok(())
+		}
+	}
+	/// Add reward points to block authors:
+	/// * 20 points to the block producer for producing a (non-uncle) block in the relay chain,
+	/// * 2 points to the block producer for each reference to a previously unreferenced uncle, and
+	/// * 1 point to the producer of each referenced uncle block.
+	impl<T> pallet_authorship::EventHandler<T::AccountId, T::BlockNumber> for Pallet<T>
+	where
+		T: Config + pallet_authorship::Config + pallet_session::Config,
+	{
+		fn note_author(author: T::AccountId) {
+			Self::reward_by_ids(vec![(author, 20)]);
+		}
+		fn note_uncle(author: T::AccountId, _age: T::BlockNumber) {
+			Self::reward_by_ids(vec![
+				(<pallet_authorship::Pallet<T>>::author(), 2),
+				(author, 1),
+			]);
+		}
+	}
 
 	/// Means for interacting with a specialized version of the `session` trait.
 	///
@@ -3506,6 +3920,39 @@ pub mod pallet {
 	impl<T: Config> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
 		fn convert(controller: T::AccountId) -> Option<T::AccountId> {
 			<Pallet<T>>::ledger(&controller).map(|l| l.stash)
+		}
+	}
+
+	/// Filter historical offences out and only allow those from the bonding period.
+	pub struct FilterHistoricalOffences<T, R> {
+		_inner: PhantomData<(T, R)>,
+	}
+	impl<T, Reporter, Offender, R, O> ReportOffence<Reporter, Offender, O>
+		for FilterHistoricalOffences<Pallet<T>, R>
+	where
+		T: Config,
+		R: ReportOffence<Reporter, Offender, O>,
+		O: Offence<Offender>,
+	{
+		fn report_offence(reporters: Vec<Reporter>, offence: O) -> Result<(), OffenceError> {
+			// disallow any slashing from before the current bonding period.
+			let offence_session = offence.session_index();
+			let bonded_eras = <BondedEras<T>>::get();
+
+			if bonded_eras
+				.first()
+				.filter(|(_, start)| offence_session >= *start)
+				.is_some()
+			{
+				R::report_offence(reporters, offence)
+			} else {
+				<Pallet<T>>::deposit_event(Event::OldSlashingReportDiscarded(offence_session));
+				Ok(())
+			}
+		}
+
+		fn is_known_offence(offenders: &[Offender], time_slot: &O::TimeSlot) -> bool {
+			R::is_known_offence(offenders, time_slot)
 		}
 	}
 
