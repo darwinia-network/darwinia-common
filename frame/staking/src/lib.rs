@@ -270,7 +270,7 @@
 #[macro_export]
 macro_rules! log {
 	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
-		log::$level!(
+		frame_support::log::$level!(
 			target: crate::LOG_TARGET,
 			concat!("[{:?}] 💸 ", $patter), <frame_system::Pallet<T>>::block_number() $(, $values)*
 		)
@@ -3971,3 +3971,19 @@ pub mod pallet {
 	}
 }
 pub use pallet::*;
+
+pub mod migration {
+	pub fn migrate(new_pallet_name: &[u8]) {
+		// --- core ---
+		use core::str;
+		// --- paritytech ---
+		use frame_support::{log, migration};
+
+		migration::move_pallet(b"DarwiniaStaking", new_pallet_name);
+
+		log::info!(
+			"Move `DarwiniaStaking` to `{:?}`",
+			str::from_utf8(new_pallet_name)
+		);
+	}
+}

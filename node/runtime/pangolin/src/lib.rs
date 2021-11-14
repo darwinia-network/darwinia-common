@@ -793,14 +793,18 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 	}
 }
 
-#[allow(unused)]
 fn migrate() -> Weight {
+	// --- darwinia-network ---
+	use darwinia_staking::migration;
+
 	// TODO: Move to S2S
 	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
 	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
 
-	0
-	// RuntimeBlockWeights::get().max_block
+	migration::migrate(b"Staking");
+
+	// 0
+	RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;

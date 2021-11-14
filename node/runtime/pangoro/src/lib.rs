@@ -536,14 +536,14 @@ sp_api::impl_runtime_apis! {
 	}
 }
 
-#[allow(unused)]
 fn migrate() -> Weight {
-	// --- paritytech ---
-	#[allow(unused)]
-	use frame_support::migration;
+	// --- darwinia-network ---
+	use darwinia_staking::migration;
 
-	0
-	// RuntimeBlockWeights::get().max_block
+	migration::migrate(b"Staking");
+
+	// 0
+	RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
