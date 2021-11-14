@@ -390,7 +390,7 @@ pub mod pallet {
 		offence::{Offence, OffenceDetails, OffenceError, OnOffenceHandler, ReportOffence},
 		SessionIndex,
 	};
-	use sp_std::collections::btree_map::BTreeMap;
+	use sp_std::{borrow::ToOwned, collections::btree_map::BTreeMap, prelude::*};
 	// --- darwinia-network ---
 	use crate::*;
 	use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo;
