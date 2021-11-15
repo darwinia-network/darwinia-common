@@ -19,10 +19,13 @@
 //! Tests for the module.
 
 // --- paritytech ---
-use frame_support::{assert_err, assert_ok};
+use frame_support::{assert_err, assert_ok, traits::Currency, WeakBoundedVec};
+use sp_runtime::{traits::Zero, Perbill};
+use sp_staking::offence::OffenceDetails;
 use substrate_test_utils::assert_eq_uvec;
 // --- darwinia-network ---
-use crate::{mock::*, *};
+use crate::{mock::*, Event, *};
+use darwinia_support::{balance::*, traits::OnDepositRedeem};
 
 /// gen_paired_account!(a(1), b(2), m(12));
 /// will create stash `a` and controller `b`
@@ -594,7 +597,7 @@ fn punished_claim_should_work() {
 			..Default::default()
 		};
 
-		// will emit RawEvent::BondRing
+		// will emit Event::BondRing
 		assert_ok!(Staking::bond(
 			Origin::signed(stash),
 			controller,
@@ -625,7 +628,7 @@ fn punished_claim_should_work() {
 		let slashed: KtonBalance<Test> = inflation::compute_kton_reward::<Test>(bond_value, 36)
 			- inflation::compute_kton_reward::<Test>(bond_value, 14);
 		System::assert_has_event(
-			RawEvent::DepositsClaimedWithPunish(ledger.stash.clone(), slashed * 3).into(),
+			Event::DepositsClaimedWithPunish(ledger.stash.clone(), slashed * 3).into(),
 		);
 		// assert leger
 		ledger.active_deposit_ring -= bond_value;
@@ -2202,6 +2205,6 @@ fn rebond_event_should_work() {
 					..Default::default()
 				})
 			);
-			System::assert_has_event(RawEvent::BondRing(200, 36000, 36000).into());
+			System::assert_has_event(Event::BondRing(200, 36000, 36000).into());
 		});
 }

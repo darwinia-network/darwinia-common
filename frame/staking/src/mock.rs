@@ -22,24 +22,26 @@
 
 // --- std ---
 use std::{cell::RefCell, collections::HashSet};
+// --- crates.io ---
+use codec::{Decode, Encode};
 // --- paritytech ---
 use frame_election_provider_support::onchain;
 use frame_support::{
 	assert_ok, parameter_types,
 	storage::IterableStorageMap,
 	traits::{
-		Currency, FindAuthor, GenesisBuild, Get, MaxEncodedLen, OnFinalize, OnInitialize,
-		OneSessionHandler,
+		Currency, FindAuthor, GenesisBuild, Get, Imbalance, MaxEncodedLen, OnFinalize,
+		OnInitialize, OnUnbalanced, OneSessionHandler, UnixTime,
 	},
 	weights::constants::RocksDbWeight,
-	StorageValue,
+	PalletId, StorageValue,
 };
 use frame_system::mocking::*;
 use sp_core::H256;
 use sp_runtime::{
 	testing::{Header, TestXt, UintAuthorityId},
-	traits::IdentityLookup,
-	Perbill,
+	traits::{IdentityLookup, Zero},
+	Perbill, RuntimeDebug,
 };
 use sp_staking::{
 	offence::{OffenceDetails, OnOffenceHandler},
@@ -48,26 +50,27 @@ use sp_staking::{
 // --- darwinia-network ---
 use crate::{self as darwinia_staking, *};
 
-pub(crate) type AccountId = u64;
-pub(crate) type AccountIndex = u64;
-pub(crate) type BlockNumber = u64;
-pub(crate) type Balance = u128;
+pub type AccountId = u64;
+pub type AccountIndex = u64;
+pub type BlockNumber = u64;
+pub type Balance = u128;
 
-type Block = MockBlock<Test>;
-type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
-type Extrinsic = TestXt<Call, ()>;
-pub(crate) type StakingCall = darwinia_staking::Call<Test>;
-pub(crate) type TestRuntimeCall = <Test as frame_system::Config>::Call;
+pub type Block = MockBlock<Test>;
+pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+pub type Extrinsic = TestXt<Call, ()>;
 
-pub(crate) type StakingError = Error<Test>;
+pub type StakingCall = darwinia_staking::Call<Test>;
+pub type TestRuntimeCall = <Test as frame_system::Config>::Call;
 
-pub(crate) const NANO: Balance = 1;
-pub(crate) const MICRO: Balance = 1_000 * NANO;
-pub(crate) const MILLI: Balance = 1_000 * MICRO;
-pub(crate) const COIN: Balance = 1_000 * MILLI;
+pub type StakingError = Error<Test>;
 
-pub(crate) const CAP: Balance = 10_000_000_000 * COIN;
-pub(crate) const TOTAL_POWER: Power = 1_000_000_000;
+pub const NANO: Balance = 1;
+pub const MICRO: Balance = 1_000 * NANO;
+pub const MILLI: Balance = 1_000 * MICRO;
+pub const COIN: Balance = 1_000 * MILLI;
+
+pub const CAP: Balance = 10_000_000_000 * COIN;
+pub const TOTAL_POWER: Power = 1_000_000_000;
 
 pub const INIT_TIMESTAMP: TsInMs = 30_000;
 pub const BLOCK_TIME: u64 = 1_000;
@@ -180,7 +183,7 @@ impl pallet_authorship::Config for Test {
 	type FindAuthor = Author11;
 	type UncleGenerations = UncleGenerations;
 	type FilterUncle = ();
-	type EventHandler = Module<Test>;
+	type EventHandler = Pallet<Test>;
 }
 
 parameter_types! {
@@ -569,7 +572,7 @@ impl OnUnbalanced<RingNegativeImbalance<Test>> for RingRewardRemainderMock {
 pub struct SuppressUnixTimeWarning;
 impl UnixTime for SuppressUnixTimeWarning {
 	fn now() -> core::time::Duration {
-		core::time::Duration::from_millis(Timestamp::now().saturated_into::<u64>())
+		core::time::Duration::from_millis(Timestamp::now() as _)
 	}
 }
 
@@ -678,11 +681,11 @@ pub fn assert_ledger_consistent(controller: AccountId) {
 	);
 }
 
-pub(crate) fn active_era() -> EraIndex {
+pub fn active_era() -> EraIndex {
 	Staking::active_era().unwrap().index
 }
 
-pub(crate) fn current_era() -> EraIndex {
+pub fn current_era() -> EraIndex {
 	Staking::current_era().unwrap()
 }
 
@@ -706,7 +709,7 @@ fn bond(stash: AccountId, controller: AccountId, val: StakingBalanceT<Test>) {
 	));
 }
 
-pub(crate) fn bond_validator(stash: AccountId, controller: AccountId, val: StakingBalanceT<Test>) {
+pub fn bond_validator(stash: AccountId, controller: AccountId, val: StakingBalanceT<Test>) {
 	bond(stash, controller, val);
 	assert_ok!(Staking::validate(
 		Origin::signed(controller),
@@ -714,7 +717,7 @@ pub(crate) fn bond_validator(stash: AccountId, controller: AccountId, val: Staki
 	));
 }
 
-pub(crate) fn bond_nominator(
+pub fn bond_nominator(
 	stash: AccountId,
 	controller: AccountId,
 	val: StakingBalanceT<Test>,
@@ -729,7 +732,7 @@ pub(crate) fn bond_nominator(
 /// This will finalize the previous block, initialize up to the given block, essentially simulating
 /// a block import/propose process where we first initialize the block, then execute some stuff (not
 /// in the function), and then finalize the block.
-pub(crate) fn run_to_block(n: BlockNumber) {
+pub fn run_to_block(n: BlockNumber) {
 	Staking::on_finalize(System::block_number());
 	for b in System::block_number() + 1..=n {
 		System::set_block_number(b);
@@ -743,7 +746,7 @@ pub(crate) fn run_to_block(n: BlockNumber) {
 }
 
 /// Progresses from the current block number (whatever that may be) to the `P * session_index + 1`.
-pub(crate) fn start_session(session_index: SessionIndex) {
+pub fn start_session(session_index: SessionIndex) {
 	let end: u64 = if Offset::get().is_zero() {
 		(session_index as u64) * Period::get()
 	} else {
@@ -760,13 +763,13 @@ pub(crate) fn start_session(session_index: SessionIndex) {
 	);
 }
 
-pub(crate) fn advance_session() {
+pub fn advance_session() {
 	let current_index = Session::current_index();
 	start_session(current_index + 1);
 }
 
 /// Progress until the given era.
-pub(crate) fn start_active_era(era_index: EraIndex) {
+pub fn start_active_era(era_index: EraIndex) {
 	start_session((era_index * <SessionsPerEra as Get<u32>>::get()).into());
 	assert_eq!(active_era(), era_index);
 	// One way or another, current_era must have changed before the active era, so they must match
@@ -774,7 +777,7 @@ pub(crate) fn start_active_era(era_index: EraIndex) {
 	assert_eq!(current_era(), active_era());
 }
 
-pub(crate) fn current_total_payout_for_duration(duration: TsInMs) -> Balance {
+pub fn current_total_payout_for_duration(duration: TsInMs) -> Balance {
 	inflation::compute_total_payout::<Test>(
 		duration,
 		Staking::living_time(),
@@ -784,7 +787,7 @@ pub(crate) fn current_total_payout_for_duration(duration: TsInMs) -> Balance {
 	.0
 }
 
-pub(crate) fn maximum_payout_for_duration(duration: u64) -> Balance {
+pub fn maximum_payout_for_duration(duration: u64) -> Balance {
 	inflation::compute_total_payout::<Test>(
 		duration,
 		Staking::living_time(),
@@ -798,7 +801,7 @@ pub(crate) fn maximum_payout_for_duration(duration: u64) -> Balance {
 ///
 /// Note, if you see `time_per_session() - BLOCK_TIME`, it is fine. This is because we set the
 /// timestamp after on_initialize, so the timestamp is always one block old.
-pub(crate) fn time_per_session() -> u64 {
+pub fn time_per_session() -> u64 {
 	Period::get() * BLOCK_TIME
 }
 
@@ -806,20 +809,20 @@ pub(crate) fn time_per_session() -> u64 {
 ///
 /// Note, if you see `time_per_era() - BLOCK_TIME`, it is fine. This is because we set the
 /// timestamp after on_initialize, so the timestamp is always one block old.
-pub(crate) fn time_per_era() -> u64 {
+pub fn time_per_era() -> u64 {
 	time_per_session() * SessionsPerEra::get() as u64
 }
 
 /// Time that will be calculated for the reward per era.
-pub(crate) fn reward_time_per_era() -> u64 {
+pub fn reward_time_per_era() -> u64 {
 	time_per_era() - BLOCK_TIME
 }
 
-pub(crate) fn bonding_duration_in_blocks() -> BlockNumber {
+pub fn bonding_duration_in_blocks() -> BlockNumber {
 	BondingDurationInEra::get() as BlockNumber * Period::get()
 }
 
-pub(crate) fn reward_all_elected() {
+pub fn reward_all_elected() {
 	let rewards = <Test as Config>::SessionInterface::validators()
 		.into_iter()
 		.map(|v| (v, 1));
@@ -827,14 +830,14 @@ pub(crate) fn reward_all_elected() {
 	Staking::reward_by_ids(rewards)
 }
 
-pub(crate) fn validator_controllers() -> Vec<AccountId> {
+pub fn validator_controllers() -> Vec<AccountId> {
 	Session::validators()
 		.into_iter()
 		.map(|s| Staking::bonded(&s).expect("no controller for validator"))
 		.collect()
 }
 
-pub(crate) fn on_offence_in_era(
+pub fn on_offence_in_era(
 	offenders: &[OffenceDetails<
 		AccountId,
 		pallet_session::historical::IdentificationTuple<Test>,
@@ -842,7 +845,7 @@ pub(crate) fn on_offence_in_era(
 	slash_fraction: &[Perbill],
 	era: EraIndex,
 ) {
-	let bonded_eras = BondedEras::get();
+	let bonded_eras = <BondedEras<Test>>::get();
 	for &(bonded_era, start_session) in bonded_eras.iter() {
 		if bonded_era == era {
 			let _ = Staking::on_offence(offenders, slash_fraction, start_session);
@@ -863,7 +866,7 @@ pub(crate) fn on_offence_in_era(
 	}
 }
 
-pub(crate) fn on_offence_now(
+pub fn on_offence_now(
 	offenders: &[OffenceDetails<
 		AccountId,
 		pallet_session::historical::IdentificationTuple<Test>,
@@ -874,7 +877,7 @@ pub(crate) fn on_offence_now(
 	on_offence_in_era(offenders, slash_fraction, now)
 }
 
-pub(crate) fn add_slash(who: &AccountId) {
+pub fn add_slash(who: &AccountId) {
 	on_offence_now(
 		&[OffenceDetails {
 			offender: (
@@ -888,7 +891,7 @@ pub(crate) fn add_slash(who: &AccountId) {
 }
 
 /// Make all validator and nominator request their payment
-pub(crate) fn make_all_reward_payment(era: EraIndex) {
+pub fn make_all_reward_payment(era: EraIndex) {
 	let validators_with_reward = <ErasRewardPoints<Test>>::get(era)
 		.individual
 		.keys()
@@ -907,7 +910,7 @@ pub(crate) fn make_all_reward_payment(era: EraIndex) {
 	}
 }
 
-pub(crate) fn staking_events() -> Vec<darwinia_staking::Event<Test>> {
+pub fn staking_events() -> Vec<darwinia_staking::Event<Test>> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)
@@ -921,14 +924,14 @@ pub(crate) fn staking_events() -> Vec<darwinia_staking::Event<Test>> {
 		.collect()
 }
 
-pub(crate) fn ring_balances(who: &AccountId) -> (Balance, Balance) {
+pub fn ring_balances(who: &AccountId) -> (Balance, Balance) {
 	(Ring::free_balance(who), Ring::reserved_balance(who))
 }
-pub(crate) fn kton_balances(who: &AccountId) -> (Balance, Balance) {
+pub fn kton_balances(who: &AccountId) -> (Balance, Balance) {
 	(Kton::free_balance(who), Kton::reserved_balance(who))
 }
 
-pub(crate) fn ring_power(stake: Balance) -> Power {
+pub fn ring_power(stake: Balance) -> Power {
 	Staking::currency_to_power(stake, Staking::ring_pool())
 }
 

@@ -22,9 +22,10 @@ use substrate_fixed::{
 	types::I64F64,
 };
 // --- paritytech ---
-use sp_arithmetic::helpers_128bit::multiply_by_rational;
+use frame_support::log;
+use sp_arithmetic::helpers_128bit;
 use sp_core::U256;
-use sp_runtime::Perbill;
+use sp_runtime::{Perbill, SaturatedConversion};
 // --- darwinia-network ---
 use crate::*;
 
@@ -57,8 +58,12 @@ pub fn compute_total_payout<T: Config>(
 		let maximum = {
 			let total_left = total_left.saturated_into::<Balance>();
 
-			multiply_by_rational(total_left, era_duration as _, MILLISECONDS_PER_YEAR as _)
-				.unwrap_or(0)
+			helpers_128bit::multiply_by_rational(
+				total_left,
+				era_duration as _,
+				MILLISECONDS_PER_YEAR as _,
+			)
+			.unwrap_or(0)
 		};
 		let year = {
 			let year = living_time / MILLISECONDS_PER_YEAR + 1;

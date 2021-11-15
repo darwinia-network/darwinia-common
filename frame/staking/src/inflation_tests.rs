@@ -17,7 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- paritytech ---
-use sp_runtime::assert_eq_error_rate;
+use sp_runtime::{assert_eq_error_rate, Perbill};
 // --- darwinia-network ---
 use crate::{
 	inflation::*,

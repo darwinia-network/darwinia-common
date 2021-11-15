@@ -73,7 +73,7 @@ use bridge_runtime_common::messages::{
 	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
 };
 #[allow(unused)]
-use frame_support::migration;
+use frame_support::{migration, log};
 use frame_support::{
 	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade},
 	weights::Weight,
@@ -544,12 +544,12 @@ sp_api::impl_runtime_apis! {
 	}
 }
 
-#[allow(unused)]
 fn migrate() -> Weight {
 	// --- paritytech ---
 	use bp_messages::{LaneId, MessageNonce};
-	use dp_fee::{Order, PriorRelayer, Relayer};
 	use frame_support::{Blake2_128Concat, StorageHasher};
+	// --- darwinia-network ---
+	use dp_fee::{Order, PriorRelayer, Relayer};
 
 	log::info!("===> Start migrate all storage items in AssignedRelayersStorage");
 	if let Some(value) = migration::take_storage_value::<Vec<Relayer<AccountId, Balance>>>(
@@ -586,6 +586,8 @@ fn migrate() -> Weight {
 	}
 	log::info!("===> End migrate all storage items in Orders");
 	log::info!("===> All Migrates finished");
+
+	darwinia_staking::migration::migrate(b"Staking");
 
 	// 0
 	RuntimeBlockWeights::get().max_block
