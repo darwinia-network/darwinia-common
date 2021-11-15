@@ -181,6 +181,7 @@ impl darwinia_staking::Config for Test {
 	type NextNewSession = Session;
 	type MaxNominatorRewardedPerValidator = ();
 	type ElectionProvider = onchain::OnChainSequentialPhragmen<Self>;
+	type GenesisElectionProvider = Self::ElectionProvider;
 	type RingCurrency = Ring;
 	type RingRewardRemainder = ();
 	type RingSlash = ();
