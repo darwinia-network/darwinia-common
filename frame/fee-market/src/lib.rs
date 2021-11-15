@@ -102,15 +102,15 @@ pub mod pallet {
 		RingBalance<T> = "RingBalance",
 	)]
 	pub enum Event<T: Config> {
-		/// Relayer enrollment
+		/// Relayer enrollment. \[account_id, locked_collateral, relay_fee\]
 		Enroll(T::AccountId, RingBalance<T>, RingBalance<T>),
-		/// Update relayer locked collateral
+		/// Update relayer locked collateral. \[account_id, new_collateral\]
 		UpdateLockedCollateral(T::AccountId, RingBalance<T>),
-		/// Update relayer fee
+		/// Update relayer fee. \[account_id, new_fee\]
 		UpdateRelayFee(T::AccountId, RingBalance<T>),
-		/// Relayer cancel enrollment
+		/// Relayer cancel enrollment. \[account_id\]
 		CancelEnrollment(T::AccountId),
-		/// Update collateral slash protect value
+		/// Update collateral slash protect value. \[slash_protect_value\]
 		UpdateCollateralSlashProtect(RingBalance<T>),
 	}
 
