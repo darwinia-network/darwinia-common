@@ -24,6 +24,7 @@ use crate::Pallet as FeeMarket;
 use frame_benchmarking::{account, benchmarks};
 use frame_support::assert_ok;
 use frame_system::RawOrigin;
+use sp_runtime::traits::Saturating;
 
 const SEED: u32 = 0;
 
@@ -32,7 +33,7 @@ fn fee_market_ready<T: Config>() {
 	let caller1: T::AccountId = account("source", 1, SEED);
 	let caller2: T::AccountId = account("source", 2, SEED);
 	let caller3: T::AccountId = account("source", 3, SEED);
-	let collateral = T::MiniumLockCollateral::get();
+	let collateral = T::CollateralPerOrder::get();
 	T::RingCurrency::make_free_balance_be(&caller0, collateral.saturating_mul(10u32.into()));
 	T::RingCurrency::make_free_balance_be(&caller1, collateral.saturating_mul(10u32.into()));
 	T::RingCurrency::make_free_balance_be(&caller2, collateral.saturating_mul(10u32.into()));
@@ -68,8 +69,8 @@ benchmarks! {
 	enroll_and_lock_collateral {
 		fee_market_ready::<T>();
 		let relayer: T::AccountId = account("source", 100, SEED);
-		T::RingCurrency::make_free_balance_be(&relayer, T::MiniumLockCollateral::get().saturating_mul(10u32.into()));
-		let lock_collateral = T::MiniumLockCollateral::get().saturating_mul(5u32.into());
+		T::RingCurrency::make_free_balance_be(&relayer, T::CollateralPerOrder::get().saturating_mul(10u32.into()));
+		let lock_collateral = T::CollateralPerOrder::get().saturating_mul(5u32.into());
 	}: enroll_and_lock_collateral(RawOrigin::Signed(relayer.clone()), lock_collateral, None)
 	verify {
 		assert!(<FeeMarket<T>>::is_enrolled(&relayer));
@@ -79,21 +80,21 @@ benchmarks! {
 	update_locked_collateral {
 		fee_market_ready::<T>();
 		let caller3: T::AccountId = account("source", 3, SEED);
-		let new_collateral = T::MiniumLockCollateral::get().saturating_mul(5u32.into());
+		let new_collateral = T::CollateralPerOrder::get().saturating_mul(5u32.into());
 	}: update_locked_collateral(RawOrigin::Signed(caller3.clone()), new_collateral)
 	verify {
-		let relayer = <FeeMarket<T>>::get_relayer(&caller3);
-		assert_eq!(relayer.collateral,  T::MiniumLockCollateral::get().saturating_mul(5u32.into()));
+		let relayer = <FeeMarket<T>>::relayer(&caller3);
+		assert_eq!(relayer.collateral,  T::CollateralPerOrder::get().saturating_mul(5u32.into()));
 	}
 
 	update_relay_fee {
 		fee_market_ready::<T>();
 		let caller3: T::AccountId = account("source", 3, SEED);
-		let new_fee = T::MinimumRelayFee::get().saturating_mul(10u32.into());
+		let new_fee = T::CollateralPerOrder::get().saturating_mul(10u32.into());
 	}: update_relay_fee(RawOrigin::Signed(caller3.clone()), new_fee)
 	verify {
-		let relayer = <FeeMarket<T>>::get_relayer(&caller3);
-		assert_eq!(relayer.fee,  T::MinimumRelayFee::get().saturating_mul(10u32.into()));
+		let relayer = <FeeMarket<T>>::relayer(&caller3);
+		assert_eq!(relayer.fee,  T::CollateralPerOrder::get().saturating_mul(10u32.into()));
 	}
 
 	cancel_enrollment {
@@ -105,4 +106,6 @@ benchmarks! {
 		assert_eq!(<FeeMarket<T>>::relayers().len(), 3);
 	}
 
+	set_slash_protect {
+	}:set_slash_protect(RawOrigin::Root, T::CollateralPerOrder::get().saturating_mul(1u32.into()))
 }

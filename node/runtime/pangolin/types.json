@@ -258,12 +258,12 @@
 		"collateral": "Balance",
 		"fee": "Balance"
 	},
-	"Fee": "Balance",
 	"Order": {
 		"lane": "LaneId",
 		"message": "MessageNonce",
 		"sent_time": "BlockNumber",
 		"confirm_time": "BlockNumber",
+		"locked_collateral": "Balance",
 		"assigned_relayers": "Vec<PriorRelayer>"
 	},
 	"PriorRelayer": {
@@ -288,6 +288,9 @@
 	},
 	"StakingRuntimeDispatchInfo": {
 		"power": "Power"
+	},
+	"InProcessOrders": {
+		"orders": "Vec<LaneId, MessageNonce>"
 	},
 	"__[might be removed later]__": null,
 	"SpecVersion": "u32"

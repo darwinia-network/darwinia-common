@@ -72,6 +72,8 @@ use codec::{Decode, Encode};
 use bridge_runtime_common::messages::{
 	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
 };
+#[allow(unused)]
+use frame_support::migration;
 use frame_support::{
 	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade},
 	weights::Weight,
@@ -102,7 +104,7 @@ use sp_version::RuntimeVersion;
 use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use common_primitives::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
-use darwinia_fee_market_rpc_runtime_api::Fee;
+use darwinia_fee_market_rpc_runtime_api::{Fee, InProcessOrders};
 
 pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
@@ -443,6 +445,12 @@ sp_api::impl_runtime_apis! {
 			}
 			None
 		}
+
+		fn in_process_orders() -> InProcessOrders {
+			return InProcessOrders {
+				orders: FeeMarket::in_process_orders(),
+			}
+		}
 	}
 
 	impl bridge_primitives::PangolinFinalityApi<Block> for Runtime {
@@ -537,8 +545,48 @@ sp_api::impl_runtime_apis! {
 }
 
 fn migrate() -> Weight {
+	// --- paritytech ---
+	use bp_messages::{LaneId, MessageNonce};
+	use frame_support::{Blake2_128Concat, StorageHasher};
 	// --- darwinia-network ---
 	use darwinia_staking::migration;
+	use dp_fee::{Order, PriorRelayer, Relayer};
+
+	log::info!("===> Start migrate all storage items in AssignedRelayersStorage");
+	if let Some(value) = migration::take_storage_value::<Vec<Relayer<AccountId, Balance>>>(
+		b"FeeMarket",
+		b"AssignedRelayersStorage",
+		&[],
+	) {
+		log::info!("the migrate content {:?}", value);
+		migration::put_storage_value(b"FeeMarket", b"AssignedRelayers", &[], value);
+	}
+	log::info!("===> End migrate all storage items in AssignedRelayersStorage");
+
+	log::info!("===> Start migrate all storage items in Orders");
+	#[derive(Encode, Decode, Debug, Clone)]
+	struct OldOrder {
+		lane: LaneId,
+		message: MessageNonce,
+		sent_time: BlockNumber,
+		confirm_time: Option<BlockNumber>,
+		relayers: Vec<PriorRelayer<AccountId, BlockNumber, Balance>>,
+	}
+	for (index, order) in migration::storage_iter::<OldOrder>(b"FeeMarket", b"Orders").drain() {
+		let new_order = Order {
+			lane: order.lane,
+			message: order.message,
+			sent_time: order.sent_time,
+			confirm_time: order.confirm_time,
+			locked_collateral: 100 * COIN,
+			relayers: order.relayers,
+		};
+		log::info!("The new order: order {:?}", new_order);
+		let hash = Blake2_128Concat::hash(&(new_order.lane, new_order.message).encode());
+		migration::put_storage_value(b"FeeMarket", b"Orders", &hash, new_order);
+	}
+	log::info!("===> End migrate all storage items in Orders");
+	log::info!("===> All Migrates finished");
 
 	migration::migrate(b"Staking");
 
@@ -550,11 +598,42 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
+		assert!(migration::have_storage_value(
+			b"FeeMarket",
+			b"AssignedRelayersStorage",
+			&[]
+		));
+		assert!(!migration::have_storage_value(
+			b"FeeMarket",
+			b"AssignedRelayers",
+			&[]
+		));
 		Ok(())
 	}
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
+		use dp_fee::Order;
+		assert!(!migration::have_storage_value(
+			b"FeeMarket",
+			b"AssignedRelayersStorage",
+			&[]
+		));
+		assert!(migration::have_storage_value(
+			b"FeeMarket",
+			b"AssignedRelayers",
+			&[]
+		));
+
+		for (_index, new_order) in
+			migration::storage_iter::<Order<AccountId, BlockNumber, Balance>>(
+				b"FeeMarket",
+				b"Orders",
+			)
+			.drain()
+		{
+			assert_eq!(new_order.locked_collateral, 100 * COIN);
+		}
 		Ok(())
 	}
 

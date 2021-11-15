@@ -468,6 +468,9 @@ pub mod pallet {
 				let result = messages.message_dispatch_result(nonce);
 				let message_id = nonce_to_message_id(lane, nonce);
 				let (user, amount) = <TransactionInfos<T>>::take(message_id);
+				if amount.is_zero() {
+					continue;
+				}
 				if !result {
 					// if remote issue mapped token failed, this fund need to transfer token back
 					// to the user. The balance always comes from the user's locked currency while
