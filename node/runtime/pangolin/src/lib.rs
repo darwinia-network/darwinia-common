@@ -91,7 +91,7 @@ use bridge_runtime_common::messages::{
 	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
 };
 #[allow(unused)]
-use frame_support::migration;
+use frame_support::{log, migration};
 use frame_support::{
 	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade},
 	weights::Weight,
@@ -803,7 +803,6 @@ fn migrate() -> Weight {
 	use bp_messages::{LaneId, MessageNonce};
 	use frame_support::{Blake2_128Concat, StorageHasher};
 	// --- darwinia-network ---
-	use darwinia_staking::migration;
 	use dp_fee::{Order, PriorRelayer, Relayer};
 
 	// TODO: Move to S2S
@@ -846,7 +845,7 @@ fn migrate() -> Weight {
 	log::info!("===> End migrate all storage items in Orders");
 	log::info!("===> All Migrates finished");
 
-	migration::migrate(b"Staking");
+	darwinia_staking::migration::migrate(b"Staking");
 
 	// 0
 	RuntimeBlockWeights::get().max_block
