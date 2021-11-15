@@ -67,6 +67,7 @@ bp-messages                                = { default-features = false, git = "
 bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6" }
 bridge-runtime-common                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6" }
 frame-benchmarking                         = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+frame-election-provider-support            = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
 frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
 frame-support                              = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
 frame-system                               = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
@@ -181,6 +182,7 @@ std = [
 	"bp-runtime/std",
 	"bridge-runtime-common/std",
 	"frame-benchmarking/std",
+	"frame-election-provider-support/std",
 	"frame-executive/std",
 	"frame-support/std",
 	"frame-system/std",
