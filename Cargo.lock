@@ -674,7 +674,7 @@ dependencies = [
 
 [[package]]
 name = "bridge-primitives"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "bp-messages",
  "bp-runtime",
@@ -719,7 +719,7 @@ checksum = "771fe0050b883fcc3ea2359b1a96bcfbc090b7116eae7c3c512c7a083fdf23d3"
 
 [[package]]
 name = "bsc-primitives"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "ethbloom",
@@ -993,7 +993,7 @@ dependencies = [
 
 [[package]]
 name = "common-primitives"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "sp-core",
  "sp-runtime",
@@ -1426,7 +1426,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "darwinia-balances-rpc-runtime-api",
  "darwinia-support",
@@ -1444,7 +1444,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances-rpc"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "darwinia-balances-rpc-runtime-api",
  "jsonrpc-core",
@@ -1458,7 +1458,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances-rpc-runtime-api"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "darwinia-support",
  "parity-scale-codec",
@@ -1469,7 +1469,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-bridge-bsc"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "bsc-primitives",
@@ -1486,7 +1486,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-bridge-ethereum"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "blake2-rfc",
@@ -1512,7 +1512,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-claims"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -1533,7 +1533,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-democracy"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -1554,7 +1554,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-elections-phragmen"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -1574,7 +1574,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -1602,7 +1602,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-blake2"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "dp-evm",
  "evm 0.27.0",
@@ -1612,7 +1612,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-bn128"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "dp-evm",
  "evm 0.27.0",
@@ -1623,7 +1623,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-bridge-ethereum"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
@@ -1638,7 +1638,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-bridge-s2s"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "bp-message-dispatch",
  "bp-runtime",
@@ -1660,7 +1660,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-curve25519"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "curve25519-dalek 3.2.0",
  "dp-evm",
@@ -1685,7 +1685,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-ed25519"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "dp-evm",
  "ed25519-dalek",
@@ -1696,7 +1696,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-modexp"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "dp-evm",
  "evm 0.27.0",
@@ -1719,7 +1719,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-simple"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "dp-evm",
  "evm 0.27.0",
@@ -1730,7 +1730,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-transfer"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "darwinia-evm",
@@ -1754,7 +1754,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-utils"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "darwinia-evm-precompile-utils-macro",
  "darwinia-support",
@@ -1763,7 +1763,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-utils-macro"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "evm 0.27.0",
  "proc-macro2",
@@ -1775,7 +1775,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-fee-market"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "bitvec 0.20.4",
  "bp-messages",
@@ -1800,7 +1800,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-fee-market-rpc"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "darwinia-fee-market-rpc-runtime-api",
  "jsonrpc-core",
@@ -1814,7 +1814,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-fee-market-rpc-runtime-api"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "bp-messages",
  "parity-scale-codec",
@@ -1826,7 +1826,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-header-mmr"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "ckb-merkle-mountain-range",
@@ -1848,7 +1848,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-header-mmr-rpc"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "darwinia-header-mmr-rpc-runtime-api",
  "jsonrpc-core",
@@ -1874,7 +1874,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-relay-authorities"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -1895,7 +1895,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-relay-primitives"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -1905,7 +1905,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-relayer-game"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "darwinia-balances",
  "darwinia-relay-primitives",
@@ -1926,7 +1926,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-staking"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "darwinia-balances",
  "darwinia-staking-rpc-runtime-api",
@@ -1956,7 +1956,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-staking-rpc"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "darwinia-staking-rpc-runtime-api",
  "jsonrpc-core",
@@ -1970,7 +1970,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-staking-rpc-runtime-api"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "darwinia-support",
  "parity-scale-codec",
@@ -1981,7 +1981,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-support"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "bp-messages",
  "bp-runtime",
@@ -2002,7 +2002,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-vesting"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -2046,7 +2046,7 @@ dependencies = [
 
 [[package]]
 name = "dc-db"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "dp-storage",
  "dvm-ethereum",
@@ -2061,7 +2061,7 @@ dependencies = [
 
 [[package]]
 name = "dc-mapping-sync"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "dc-db",
  "dp-consensus",
@@ -2077,7 +2077,7 @@ dependencies = [
 
 [[package]]
 name = "dc-rpc"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "dc-db",
@@ -2203,7 +2203,7 @@ checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 
 [[package]]
 name = "dp-asset"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "ethereum-primitives",
  "parity-scale-codec",
@@ -2213,7 +2213,7 @@ dependencies = [
 
 [[package]]
 name = "dp-consensus"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "ethereum",
  "parity-scale-codec",
@@ -2226,7 +2226,7 @@ dependencies = [
 
 [[package]]
 name = "dp-contract"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "dp-asset",
  "ethabi",
@@ -2237,7 +2237,7 @@ dependencies = [
 
 [[package]]
 name = "dp-evm"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "evm 0.27.0",
  "impl-trait-for-tuples",
@@ -2249,7 +2249,7 @@ dependencies = [
 
 [[package]]
 name = "dp-fee"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "bp-messages",
  "frame-support",
@@ -2260,7 +2260,7 @@ dependencies = [
 
 [[package]]
 name = "dp-rpc"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "ethereum-types",
  "jsonrpc-core",
@@ -2274,7 +2274,7 @@ dependencies = [
 
 [[package]]
 name = "dp-s2s"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "bp-message-dispatch",
@@ -2289,11 +2289,11 @@ dependencies = [
 
 [[package]]
 name = "dp-storage"
-version = "2.6.9"
+version = "2.6.10"
 
 [[package]]
 name = "drml"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "bsc-primitives",
  "dp-consensus",
@@ -2311,7 +2311,7 @@ dependencies = [
 
 [[package]]
 name = "drml-rpc"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "common-primitives",
  "darwinia-balances-rpc",
@@ -2349,7 +2349,7 @@ dependencies = [
 
 [[package]]
 name = "drml-service"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "common-primitives",
@@ -2428,7 +2428,7 @@ dependencies = [
 
 [[package]]
 name = "dvm-ethereum"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -2462,7 +2462,7 @@ dependencies = [
 
 [[package]]
 name = "dvm-rpc-core"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "darwinia-evm",
  "dp-evm",
@@ -2481,7 +2481,7 @@ dependencies = [
 
 [[package]]
 name = "dvm-rpc-runtime-api"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "darwinia-evm",
  "darwinia-support",
@@ -2707,7 +2707,7 @@ dependencies = [
 
 [[package]]
 name = "ethereum-primitives"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "ethash",
@@ -3192,7 +3192,7 @@ dependencies = [
 
 [[package]]
 name = "from-ethereum-issuing"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "darwinia-bridge-ethereum",
@@ -3215,7 +3215,7 @@ dependencies = [
 
 [[package]]
 name = "from-substrate-issuing"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "bp-message-dispatch",
@@ -5167,7 +5167,7 @@ checksum = "71d96e3f3c0b6325d8ccd83c33b28acb183edcb6c67938ba104ec546854b0882"
 
 [[package]]
 name = "merkle-patricia-trie"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "criterion",
@@ -6124,7 +6124,7 @@ dependencies = [
 
 [[package]]
 name = "pangolin-constants"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "common-primitives",
  "sp-staking",
@@ -6132,7 +6132,7 @@ dependencies = [
 
 [[package]]
 name = "pangolin-runtime"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "bp-message-dispatch",
@@ -6244,7 +6244,7 @@ dependencies = [
 
 [[package]]
 name = "pangolin-runtime-system-params"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6254,7 +6254,7 @@ dependencies = [
 
 [[package]]
 name = "pangoro-constants"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "common-primitives",
  "sp-staking",
@@ -6336,7 +6336,7 @@ dependencies = [
 
 [[package]]
 name = "pangoro-runtime-system-params"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -10099,7 +10099,7 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "to-ethereum-backing"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -10130,7 +10130,7 @@ dependencies = [
 
 [[package]]
 name = "to-substrate-backing"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "array-bytes",
  "bp-message-dispatch",
@@ -10159,7 +10159,7 @@ dependencies = [
 
 [[package]]
 name = "to-tron-backing"
-version = "2.6.9"
+version = "2.6.10"
 dependencies = [
  "darwinia-support",
  "frame-support",
