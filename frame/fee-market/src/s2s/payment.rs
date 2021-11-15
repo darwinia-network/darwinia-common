@@ -28,7 +28,7 @@ use sp_std::{
 	ops::RangeInclusive,
 };
 // --- darwinia-network ---
-use crate::{Config, ConfirmedMessagesThisBlock, Orders, *};
+use crate::{Config, ConfirmedMessagesThisBlock, Orders, Pallet, *};
 // --- std ---
 use num_traits::Zero;
 
@@ -87,21 +87,21 @@ where
 		} = slash_and_calculate_rewards::<T, I>(messages_relayers, relayer_fund_account);
 
 		// Pay confirmation relayer rewards
-		transfer_and_print_logs_on_error::<T>(
+		do_reward::<T>(
 			relayer_fund_account,
 			confirmation_relayer,
 			confirmation_relayer_rewards,
 		);
 		// Pay messages relayers rewards
 		for (relayer, reward) in messages_relayers_rewards {
-			transfer_and_print_logs_on_error::<T>(relayer_fund_account, &relayer, reward);
+			do_reward::<T>(relayer_fund_account, &relayer, reward);
 		}
 		// Pay assign relayer reward
 		for (relayer, reward) in assigned_relayers_rewards {
-			transfer_and_print_logs_on_error::<T>(relayer_fund_account, &relayer, reward);
+			do_reward::<T>(relayer_fund_account, &relayer, reward);
 		}
 		// Pay treasury reward
-		transfer_and_print_logs_on_error::<T>(
+		do_reward::<T>(
 			relayer_fund_account,
 			&T::TreasuryPalletId::get().into_account(),
 			treasury_total_rewards,
@@ -139,47 +139,76 @@ where
 					break;
 				}
 			}
-			let lowest_fee = order.first_and_last_fee().0.unwrap_or_default();
-			let message_fee = order.first_and_last_fee().1.unwrap_or_default();
 
-			let message_reward;
-			let confirm_reward;
-			if let Some(who) = order.required_delivery_relayer_for_time(order_confirm_time) {
-				// message fee - lowest fee => treasury
-				let treasury_reward = message_fee.saturating_sub(lowest_fee);
-				treasury_total_rewards = treasury_total_rewards.saturating_add(treasury_reward);
+			match order.lowest_and_highest_fee() {
+				(Some(lowest_fee), Some(message_fee)) => {
+					let message_reward;
+					let confirm_reward;
 
-				// 60% * lowest fee => assigned_relayers_rewards
-				let assigned_relayers_reward = T::AssignedRelayersRewardRatio::get() * lowest_fee;
-				assigned_relayers_rewards
-					.entry(who)
-					.and_modify(|r| *r = r.saturating_add(assigned_relayers_reward))
-					.or_insert(assigned_relayers_reward);
+					if let Some(who) = order.required_delivery_relayer_for_time(order_confirm_time)
+					{
+						// message fee - lowest fee => treasury
+						let treasury_reward = message_fee.saturating_sub(lowest_fee);
+						treasury_total_rewards =
+							treasury_total_rewards.saturating_add(treasury_reward);
 
-				let bridger_relayers_reward = lowest_fee.saturating_sub(assigned_relayers_reward);
-				// 80% * (1 - 60%) * lowest_fee => message relayer
-				message_reward = T::MessageRelayersRewardRatio::get() * bridger_relayers_reward;
-				// 20% * (1 - 60%) * lowest_fee => confirm relayer
-				confirm_reward = T::ConfirmRelayersRewardRatio::get() * bridger_relayers_reward;
-			} else {
-				// The message is delivered by common relayer instead of order assigned relayers, all assigned relayers of this order should be punished.
-				let slashed_reward = slash_assigned_relayers::<T>(order, relayer_fund_account);
+						// 60% * lowest fee => assigned_relayers_rewards
+						let assigned_relayers_reward =
+							T::AssignedRelayersRewardRatio::get() * lowest_fee;
+						assigned_relayers_rewards
+							.entry(who)
+							.and_modify(|r| *r = r.saturating_add(assigned_relayers_reward))
+							.or_insert(assigned_relayers_reward);
 
-				// 80% total slash => confirm relayer
-				message_reward = T::MessageRelayersRewardRatio::get() * slashed_reward;
-				// 20% total slash => confirm relayer
-				confirm_reward = T::ConfirmRelayersRewardRatio::get() * slashed_reward;
+						let bridger_relayers_reward =
+							lowest_fee.saturating_sub(assigned_relayers_reward);
+						// 80% * (1 - 60%) * lowest_fee => message relayer
+						message_reward =
+							T::MessageRelayersRewardRatio::get() * bridger_relayers_reward;
+						// 20% * (1 - 60%) * lowest_fee => confirm relayer
+						confirm_reward =
+							T::ConfirmRelayersRewardRatio::get() * bridger_relayers_reward;
+					} else {
+						// The order delivery is delay
+						let mut total_slash = message_fee;
+
+						// calculate slash amount
+						let mut amount: RingBalance<T> = T::Slasher::slash(
+							order.locked_collateral,
+							order.delivery_delay().unwrap_or_default(),
+						);
+						if let Some(slash_protect) = Pallet::<T>::collateral_slash_protect() {
+							amount = sp_std::cmp::min(amount, slash_protect);
+						}
+
+						// Slash order's assigned relayers
+						let mut assigned_relayers_slash = RingBalance::<T>::zero();
+						for assigned_relayer in order.relayers_slice() {
+							let slashed =
+								do_slash::<T>(&assigned_relayer.id, relayer_fund_account, amount);
+							assigned_relayers_slash += slashed;
+						}
+						total_slash += assigned_relayers_slash;
+
+						// 80% total slash => confirm relayer
+						message_reward = T::MessageRelayersRewardRatio::get() * total_slash;
+						// 20% total slash => confirm relayer
+						confirm_reward = T::ConfirmRelayersRewardRatio::get() * total_slash;
+					}
+
+					// Update confirmation relayer total rewards
+					confirmation_rewards = confirmation_rewards.saturating_add(confirm_reward);
+					// Update message relayers total rewards
+					messages_rewards
+						.entry(message_relayer)
+						.and_modify(|r| *r = r.saturating_add(message_reward))
+						.or_insert(message_reward);
+				}
+				_ => {}
 			}
-
-			// Update confirmation relayer total rewards
-			confirmation_rewards = confirmation_rewards.saturating_add(confirm_reward);
-			// Update message relayers total rewards
-			messages_rewards
-				.entry(message_relayer)
-				.and_modify(|r| *r = r.saturating_add(message_reward))
-				.or_insert(message_reward);
 		}
 	}
+
 	RewardsBook {
 		messages_relayers_rewards: messages_rewards,
 		confirmation_relayer_rewards: confirmation_rewards,
@@ -188,61 +217,45 @@ where
 	}
 }
 
-/// Slash order assigned relayers
-pub fn slash_assigned_relayers<T: Config>(
-	order: Order<T::AccountId, T::BlockNumber, RingBalance<T>>,
-	relayer_fund_account: &T::AccountId,
-) -> RingBalance<T> {
-	let mut total_slash = RingBalance::<T>::zero();
-	match (order.confirm_time, order.range_end()) {
-		(Some(confirm_time), Some(end_time)) if confirm_time >= end_time => {
-			let timeout = confirm_time - end_time;
-			let message_fee = order.first_and_last_fee().1.unwrap_or_default();
-			let slash_max = T::Slasher::slash(message_fee, timeout);
-			debug_assert!(
-				slash_max <= T::MiniumLockCollateral::get(),
-				"The maximum slash value returned from Slasher is MiniumLockCollateral"
-			);
-
-			for assigned_relayer in order.relayers_slice() {
-				let slashed_asset =
-					do_slash::<T>(&assigned_relayer.id, relayer_fund_account, slash_max);
-				total_slash += slashed_asset;
-			}
-		}
-		_ => {}
-	}
-	total_slash
-}
-
 /// Do slash for absent assigned relayers
-pub fn do_slash<T: Config>(
-	slash_account: &T::AccountId,
+pub(crate) fn do_slash<T: Config>(
+	who: &T::AccountId,
 	fund_account: &T::AccountId,
-	slash_max: RingBalance<T>,
+	amount: RingBalance<T>,
 ) -> RingBalance<T> {
-	let slashed;
-	let locked_collateral = crate::Pallet::<T>::relayer_locked_collateral(&slash_account);
-	T::RingCurrency::remove_lock(T::LockId::get(), &slash_account);
-	if locked_collateral >= slash_max {
-		slashed = slash_max;
-		let locked_reserved = locked_collateral.saturating_sub(slashed);
-		transfer_and_print_logs_on_error::<T>(slash_account, fund_account, slashed);
-		crate::Pallet::<T>::update_collateral(&slash_account, locked_reserved);
-	} else {
-		slashed = locked_collateral;
-		transfer_and_print_logs_on_error::<T>(slash_account, fund_account, slashed);
-		crate::Pallet::<T>::update_collateral(&slash_account, RingBalance::<T>::zero());
+	let locked_collateral = Pallet::<T>::relayer(&who).collateral;
+	T::RingCurrency::remove_lock(T::LockId::get(), &who);
+	debug_assert!(
+		locked_collateral >= amount,
+		"The locked collateral must alway greater than slash max"
+	);
+
+	let pay_result = <T as Config>::RingCurrency::transfer(
+		who,
+		fund_account,
+		amount,
+		ExistenceRequirement::AllowDeath,
+	);
+	match pay_result {
+		Ok(_) => {
+			crate::Pallet::<T>::update_relayer_after_slash(
+				&who,
+				locked_collateral.saturating_sub(amount),
+			);
+			log::trace!("Slash {:?} amount: {:?}", who, amount);
+			return amount;
+		}
+		Err(e) => {
+			crate::Pallet::<T>::update_relayer_after_slash(&who, locked_collateral);
+			log::error!("Slash {:?} amount {:?}, err {:?}", who, amount, e)
+		}
 	}
-	slashed
+
+	RingBalance::<T>::zero()
 }
 
-/// Do transfer
-fn transfer_and_print_logs_on_error<T: Config>(
-	from: &T::AccountId,
-	to: &T::AccountId,
-	reward: RingBalance<T>,
-) {
+/// Do reward
+pub(crate) fn do_reward<T: Config>(from: &T::AccountId, to: &T::AccountId, reward: RingBalance<T>) {
 	if reward.is_zero() {
 		return;
 	}
@@ -256,19 +269,13 @@ fn transfer_and_print_logs_on_error<T: Config>(
 	);
 
 	match pay_result {
-		Ok(_) => log::trace!(
-			"Pay reward, from {:?} to {:?} reward: {:?}",
+		Ok(_) => log::trace!("Reward, from {:?} to {:?} reward: {:?}", from, to, reward),
+		Err(e) => log::error!(
+			"Reward, from {:?} to {:?} reward {:?}: {:?}",
 			from,
 			to,
 			reward,
-		),
-
-		Err(error) => log::error!(
-			"Failed to pay reward, from {:?} to {:?} reward {:?}: {:?}",
-			from,
-			to,
-			reward,
-			error,
+			e,
 		),
 	}
 }

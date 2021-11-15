@@ -22,11 +22,11 @@ use frame_support::Parameter;
 use sp_std::{
 	cmp::{Ord, Ordering, PartialEq},
 	default::Default,
-	ops::{Add, AddAssign, Range},
+	ops::{Add, AddAssign, Range, Sub},
 	vec::Vec,
 };
 /// Relayer who has enrolled the fee market
-#[derive(Encode, Decode, Clone, Eq, Debug, Copy)]
+#[derive(Encode, Decode, Clone, Eq, Debug)]
 pub struct Relayer<AccountId, Balance> {
 	pub id: AccountId,
 	pub collateral: Balance,
@@ -78,18 +78,20 @@ impl<AccountId: Default, Balance: Default> Default for Relayer<AccountId, Balanc
 }
 
 /// Order represent cross-chain message relay task. Only support sub-sub message for now.
-#[derive(Clone, Encode, Decode, Default)]
+#[derive(Clone, Encode, Decode, Debug, Default)]
 pub struct Order<AccountId, BlockNumber, Balance> {
 	pub lane: LaneId,
 	pub message: MessageNonce,
 	pub sent_time: BlockNumber,
 	pub confirm_time: Option<BlockNumber>,
+	pub locked_collateral: Balance,
 	pub relayers: Vec<PriorRelayer<AccountId, BlockNumber, Balance>>,
 }
 
 impl<AccountId, BlockNumber, Balance> Order<AccountId, BlockNumber, Balance>
 where
-	BlockNumber: Add<Output = BlockNumber> + Copy + AddAssign + PartialOrd,
+	BlockNumber:
+		Add<Output = BlockNumber> + Copy + AddAssign + PartialOrd + Sub<Output = BlockNumber>,
 	Balance: Copy + PartialOrd,
 	AccountId: Clone + PartialEq,
 {
@@ -97,6 +99,7 @@ where
 		lane: LaneId,
 		message: MessageNonce,
 		sent_time: BlockNumber,
+		locked_collateral: Balance,
 		assigned_relayers: Vec<Relayer<AccountId, Balance>>,
 		slot: BlockNumber,
 	) -> Self {
@@ -119,6 +122,7 @@ where
 			message,
 			sent_time,
 			confirm_time: None,
+			locked_collateral,
 			relayers,
 		}
 	}
@@ -131,10 +135,10 @@ where
 		self.relayers.as_ref()
 	}
 
-	pub fn first_and_last_fee(&self) -> (Option<Balance>, Option<Balance>) {
-		let first = self.relayers.iter().nth(0).map(|r| r.fee);
-		let last = self.relayers.iter().last().map(|r| r.fee);
-		(first, last)
+	pub fn lowest_and_highest_fee(&self) -> (Option<Balance>, Option<Balance>) {
+		let lowest = self.relayers.iter().nth(0).map(|r| r.fee);
+		let highest = self.relayers.iter().last().map(|r| r.fee);
+		(lowest, highest)
 	}
 
 	pub fn is_confirmed(&self) -> bool {
@@ -143,6 +147,15 @@ where
 
 	pub fn range_end(&self) -> Option<BlockNumber> {
 		self.relayers.iter().last().map(|r| r.valid_range.end)
+	}
+
+	pub fn delivery_delay(&self) -> Option<BlockNumber> {
+		if let (Some(confirm_time), Some(range_end)) = (self.confirm_time, self.range_end()) {
+			if confirm_time > range_end {
+				return Some(confirm_time - range_end);
+			}
+		}
+		None
 	}
 
 	pub fn required_delivery_relayer_for_time(
@@ -170,7 +183,7 @@ where
 
 /// Relayers selected by the fee market. Each prior relayer has a valid slot, if the order can finished in time,
 /// will be rewarded with more percentage. PriorRelayer are responsible for the messages relay in most time.
-#[derive(Clone, Encode, Decode, Default)]
+#[derive(Clone, Encode, Decode, Default, Debug)]
 pub struct PriorRelayer<AccountId, BlockNumber, Balance> {
 	pub id: AccountId,
 	pub fee: Balance,
@@ -222,7 +235,14 @@ mod test {
 	fn test_assign_order_relayers_one() {
 		let mut assigned_relayers = Vec::new();
 		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30));
-		let order = Order::new(TEST_LANE_ID, TEST_MESSAGE_NONCE, 100, assigned_relayers, 50);
+		let order = Order::new(
+			TEST_LANE_ID,
+			TEST_MESSAGE_NONCE,
+			100,
+			100,
+			assigned_relayers,
+			50,
+		);
 		assert_eq!(order.relayer_valid_range(1).unwrap(), (100..150));
 	}
 
@@ -231,7 +251,14 @@ mod test {
 		let mut assigned_relayers = Vec::new();
 		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30));
 		assigned_relayers.push(Relayer::<AccountId, Balance>::new(2, 100, 30));
-		let order = Order::new(TEST_LANE_ID, TEST_MESSAGE_NONCE, 100, assigned_relayers, 50);
+		let order = Order::new(
+			TEST_LANE_ID,
+			TEST_MESSAGE_NONCE,
+			100,
+			100,
+			assigned_relayers,
+			50,
+		);
 		assert_eq!(order.relayer_valid_range(1).unwrap(), (100..150));
 		assert_eq!(order.relayer_valid_range(2).unwrap(), (150..200));
 	}
@@ -242,12 +269,19 @@ mod test {
 		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30));
 		assigned_relayers.push(Relayer::<AccountId, Balance>::new(2, 100, 40));
 		assigned_relayers.push(Relayer::<AccountId, Balance>::new(3, 100, 80));
-		let order = Order::new(TEST_LANE_ID, TEST_MESSAGE_NONCE, 100, assigned_relayers, 50);
+		let order = Order::new(
+			TEST_LANE_ID,
+			TEST_MESSAGE_NONCE,
+			100,
+			100,
+			assigned_relayers,
+			50,
+		);
 		assert_eq!(order.relayer_valid_range(1).unwrap(), (100..150));
 		assert_eq!(order.relayer_valid_range(2).unwrap(), (150..200));
 		assert_eq!(order.relayer_valid_range(3).unwrap(), (200..250));
 		assert_eq!(order.range_end(), Some(250));
-		assert_eq!(order.first_and_last_fee(), (Some(30), Some(80)));
+		assert_eq!(order.lowest_and_highest_fee(), (Some(30), Some(80)));
 	}
 
 	#[test]
@@ -257,7 +291,14 @@ mod test {
 		assigned_relayers.push(Relayer::<AccountId, Balance>::new(2, 100, 30));
 		assigned_relayers.push(Relayer::<AccountId, Balance>::new(3, 100, 30));
 		assigned_relayers.push(Relayer::<AccountId, Balance>::new(4, 100, 30));
-		let order = Order::new(TEST_LANE_ID, TEST_MESSAGE_NONCE, 100, assigned_relayers, 50);
+		let order = Order::new(
+			TEST_LANE_ID,
+			TEST_MESSAGE_NONCE,
+			100,
+			100,
+			assigned_relayers,
+			50,
+		);
 		assert_eq!(order.relayer_valid_range(1).unwrap(), (100..150));
 		assert_eq!(order.relayer_valid_range(2).unwrap(), (150..200));
 		assert_eq!(order.relayer_valid_range(3).unwrap(), (200..250));

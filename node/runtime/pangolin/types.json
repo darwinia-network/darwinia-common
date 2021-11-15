@@ -258,12 +258,12 @@
 		"collateral": "Balance",
 		"fee": "Balance"
 	},
-	"Fee": "Balance",
 	"Order": {
 		"lane": "LaneId",
 		"message": "MessageNonce",
 		"sent_time": "BlockNumber",
 		"confirm_time": "BlockNumber",
+		"locked_collateral": "Balance",
 		"assigned_relayers": "Vec<PriorRelayer>"
 	},
 	"PriorRelayer": {

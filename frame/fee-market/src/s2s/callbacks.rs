@@ -27,21 +27,23 @@ pub struct FeeMarketMessageAcceptedHandler<T>(PhantomData<T>);
 impl<T: Config> OnMessageAccepted for FeeMarketMessageAcceptedHandler<T> {
 	// Called when the message is accepted by message pallet
 	fn on_messages_accepted(lane: &LaneId, message: &MessageNonce) -> Weight {
-		let mut reads = 0;
-		let mut writes = 0;
-
 		// Create a new order based on the latest block, assign relayers which have priority to relaying
 		let now = frame_system::Pallet::<T>::block_number();
 		if let Some(assigned_relayers) = <Pallet<T>>::assigned_relayers() {
-			reads += 1;
-			let order = Order::new(*lane, *message, now, assigned_relayers, T::Slot::get());
-
+			let order = Order::new(
+				*lane,
+				*message,
+				now,
+				T::CollateralPerOrder::get(),
+				assigned_relayers,
+				T::Slot::get(),
+			);
 			// Store the create order
-			<Orders<T>>::insert((order.lane, order.message), order);
-			writes += 1;
+			<Orders<T>>::insert((order.lane, order.message), order.clone());
 		}
 
-		<T as frame_system::Config>::DbWeight::get().reads_writes(reads, writes)
+		// TODO: The returned weight should be more accurately. See: https://github.com/darwinia-network/darwinia-common/issues/911
+		<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
 	}
 }
 
@@ -62,6 +64,7 @@ impl<T: Config> OnDeliveryConfirmed for FeeMarketMessageConfirmedHandler<T> {
 			}
 		}
 
+		// TODO: The returned weight should be more accurately. See: https://github.com/darwinia-network/darwinia-common/issues/911
 		<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
 	}
 }
