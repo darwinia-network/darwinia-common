@@ -19,7 +19,7 @@ dc-db               = { path = "../db" }
 dp-consensus        = { path = "../../../primitives/consensus/" }
 dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
 # paritytech
-sc-client-api = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
-sp-api        = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
-sp-blockchain = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
-sp-runtime    = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6" }
+sc-client-api = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+sp-api        = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+sp-blockchain = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+sp-runtime    = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
