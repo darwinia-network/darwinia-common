@@ -10,7 +10,7 @@ frame_support::parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 
-	pub const AssignedRelayersNumber: u64 = 3;
+	pub const AssignedRelayersNumber: u64 = 1;
 	pub const MinimumRelayFee: Balance = 15 * COIN;
 	pub const CollateralPerOrder: Balance = 100 * COIN;
 	pub const SlashPerBlock: Balance = 2 * COIN;
