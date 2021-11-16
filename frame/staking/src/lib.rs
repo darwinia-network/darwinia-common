@@ -381,7 +381,7 @@ pub mod pallet {
 	use sp_runtime::{
 		helpers_128bit,
 		traits::{
-			AccountIdConversion, AtLeast32BitUnsigned, CheckedSub, Convert, Saturating,
+			AccountIdConversion, AtLeast32BitUnsigned, Bounded, CheckedSub, Convert, Saturating,
 			StaticLookup, Zero,
 		},
 		Perbill, Percent, Perquintill, SaturatedConversion,
@@ -421,6 +421,13 @@ pub mod pallet {
 			Self::AccountId,
 			Self::BlockNumber,
 			// we only accept an election provider that has staking as data provider.
+			DataProvider = Pallet<Self>,
+		>;
+
+		/// Something that provides the election functionality at genesis.
+		type GenesisElectionProvider: ElectionProvider<
+			Self::AccountId,
+			Self::BlockNumber,
 			DataProvider = Pallet<Self>,
 		>;
 
@@ -494,44 +501,47 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// The era payout has been set; the first balance is the validator-payout; the second is
 		/// the remainder from the maximum amount of reward.
-		/// [era_index, validator_payout, remainder]
+		/// \[era_index, validator_payout, remainder\]
 		EraPayout(EraIndex, RingBalance<T>, RingBalance<T>),
 
-		/// The staker has been rewarded by this amount. [stash, amount]
+		/// The staker has been rewarded by this amount. \[stash, amount\]
 		Reward(AccountId<T>, RingBalance<T>),
 
 		/// One validator (and its nominators) has been slashed by the given amount.
-		/// [validator, amount, amount]
+		/// \[validator, amount, amount\]
 		Slash(AccountId<T>, RingBalance<T>, KtonBalance<T>),
 		/// An old slashing report from a prior era was discarded because it could
-		/// not be processed. [session_index]
+		/// not be processed. \[session_index\]
 		OldSlashingReportDiscarded(SessionIndex),
 
 		/// A new set of stakers was elected.
 		StakingElection,
 
-		/// An account has bonded this amount. [amount, start, end]
+		/// An account has bonded this amount. \[amount, start, end\]
 		///
 		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
 		/// it will not be emitted for staking rewards when they are added to stake.
 		BondRing(RingBalance<T>, TsInMs, TsInMs),
-		/// An account has bonded this amount. [amount, start, end]
+		/// An account has bonded this amount. \[amount, start, end\]
 		///
 		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
 		/// it will not be emitted for staking rewards when they are added to stake.
 		BondKton(KtonBalance<T>),
 
-		/// An account has unbonded this amount. [amount, now]
+		/// An account has unbonded this amount. \[amount, now\]
 		UnbondRing(RingBalance<T>, BlockNumberFor<T>),
-		/// An account has unbonded this amount. [amount, now]
+		/// An account has unbonded this amount. [amount, now\]
 		UnbondKton(KtonBalance<T>, BlockNumberFor<T>),
 
 		/// A nominator has been kicked from a validator. \[nominator, stash\]
 		Kicked(AccountId<T>, AccountId<T>),
 
-		/// Someone claimed his deposits. [stash]
+		/// The election failed. No new era is planned.
+		StakingElectionFailed,
+
+		/// Someone claimed his deposits. \[stash\]
 		DepositsClaimed(AccountId<T>),
-		/// Someone claimed his deposits with some *KTON*s punishment. [stash, forfeit]
+		/// Someone claimed his deposits with some *KTON*s punishment. \[stash, forfeit\]
 		DepositsClaimedWithPunish(AccountId<T>, KtonBalance<T>),
 	}
 
@@ -1004,7 +1014,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			controller: <T::Lookup as StaticLookup>::Source,
 			value: StakingBalanceT<T>,
-			payee: RewardDestination<T::AccountId>,
+			payee: RewardDestination<AccountId<T>>,
 			promise_month: u8,
 		) -> DispatchResult {
 			let stash = ensure_signed(origin)?;
@@ -1021,14 +1031,14 @@ pub mod pallet {
 
 			match value {
 				StakingBalance::RingBalance(value) => {
-					// reject a bond which is considered to be _dust_.
+					// Reject a bond which is considered to be _dust_.
 					ensure!(
 						value >= T::RingCurrency::minimum_balance(),
 						<Error<T>>::InsufficientValue,
 					);
 				}
 				StakingBalance::KtonBalance(value) => {
-					// reject a bond which is considered to be _dust_.
+					// Reject a bond which is considered to be _dust_.
 					ensure!(
 						value >= T::KtonCurrency::minimum_balance(),
 						<Error<T>>::InsufficientValue,
@@ -1586,10 +1596,10 @@ pub mod pallet {
 						}
 					})
 				})
-				.collect::<Result<Vec<T::AccountId>, _>>()?;
+				.collect::<Result<Vec<AccountId<T>>, _>>()?;
 			let nominations = Nominations {
 				targets,
-				// initial nominations are considered submitted at era 0. See `Nominations` doc
+				// Initial nominations are considered submitted at era 0. See `Nominations` doc
 				submitted_in: Self::current_era().unwrap_or(0),
 				suppressed: false,
 			};
@@ -1646,7 +1656,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::set_payee())]
 		pub fn set_payee(
 			origin: OriginFor<T>,
-			payee: RewardDestination<T::AccountId>,
+			payee: RewardDestination<AccountId<T>>,
 		) -> DispatchResult {
 			let controller = ensure_signed(origin)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
@@ -1758,6 +1768,12 @@ pub mod pallet {
 		///
 		/// The dispatch origin must be Root.
 		///
+		/// # Warning
+		///
+		/// The election process starts multiple blocks before the end of the era.
+		/// Thus the election process may be ongoing when this is called. In this case the
+		/// election will continue until the next era is triggered.
+		///
 		/// # <weight>
 		/// - No arguments.
 		/// - Weight: O(1)
@@ -1776,6 +1792,12 @@ pub mod pallet {
 		/// reset to normal (non-forced) behaviour.
 		///
 		/// The dispatch origin must be Root.
+		///
+		/// # Warning
+		///
+		/// The election process starts multiple blocks before the end of the era.
+		/// If this is called just before a new era is triggered, the election process may not
+		/// have enough blocks to get a result.
 		///
 		/// # <weight>
 		/// - No arguments.
@@ -1802,7 +1824,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::set_invulnerables(invulnerables.len() as u32))]
 		pub fn set_invulnerables(
 			origin: OriginFor<T>,
-			invulnerables: Vec<T::AccountId>,
+			invulnerables: Vec<AccountId<T>>,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -1824,15 +1846,15 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::force_unstake(*num_slashing_spans))]
 		pub fn force_unstake(
 			origin: OriginFor<T>,
-			stash: T::AccountId,
+			stash: AccountId<T>,
 			num_slashing_spans: u32,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
-			// remove all staking-related information.
+			// Remove all staking-related information.
 			Self::kill_stash(&stash, num_slashing_spans)?;
 
-			// remove the lock.
+			// Remove the lock.
 			T::RingCurrency::remove_lock(STAKING_ID, &stash);
 			T::KtonCurrency::remove_lock(STAKING_ID, &stash);
 
@@ -1842,6 +1864,12 @@ pub mod pallet {
 		/// Force there to be a new era at the end of sessions indefinitely.
 		///
 		/// The dispatch origin must be Root.
+		///
+		/// # Warning
+		///
+		/// The election process starts multiple blocks before the end of the era.
+		/// If this is called just before a new era is triggered, the election process may not
+		/// have enough blocks to get a result.
 		///
 		/// # <weight>
 		/// - Weight: O(1)
@@ -1933,7 +1961,7 @@ pub mod pallet {
 		))]
 		pub fn payout_stakers(
 			origin: OriginFor<T>,
-			validator_stash: T::AccountId,
+			validator_stash: AccountId<T>,
 			era: EraIndex,
 		) -> DispatchResultWithPostInfo {
 			ensure_signed(origin)?;
@@ -1979,7 +2007,7 @@ pub mod pallet {
 
 			ledger.rebond(plan_to_rebond_ring, plan_to_rebond_kton);
 
-			// last check: the new active amount of ledger must be more than ED.
+			// Last check: the new active amount of ledger must be more than ED.
 			ensure!(
 				ledger.active_ring >= T::RingCurrency::minimum_balance()
 					|| ledger.active_kton >= T::KtonCurrency::minimum_balance(),
@@ -2071,7 +2099,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::reap_stash(*num_slashing_spans))]
 		pub fn reap_stash(
 			_origin: OriginFor<T>,
-			stash: T::AccountId,
+			stash: AccountId<T>,
 			num_slashing_spans: u32,
 		) -> DispatchResult {
 			let total_ring = T::RingCurrency::total_balance(&stash);
@@ -2115,7 +2143,7 @@ pub mod pallet {
 			for nom_stash in who
 				.into_iter()
 				.map(T::Lookup::lookup)
-				.collect::<Result<Vec<T::AccountId>, _>>()?
+				.collect::<Result<Vec<AccountId<T>>, _>>()?
 				.into_iter()
 			{
 				<Nominators<T>>::mutate(&nom_stash, |maybe_nom| {
@@ -2132,14 +2160,14 @@ pub mod pallet {
 		}
 	}
 	impl<T: Config> Pallet<T> {
-		pub fn account_id() -> T::AccountId {
+		pub fn account_id() -> AccountId<T> {
 			T::PalletId::get().into_account()
 		}
 
 		/// Update the ledger while bonding ring and compute the *KTON* reward
 		pub fn bond_ring(
-			stash: &T::AccountId,
-			controller: &T::AccountId,
+			stash: &AccountId<T>,
+			controller: &AccountId<T>,
 			value: RingBalance<T>,
 			promise_month: u8,
 			mut ledger: StakingLedgerT<T>,
@@ -2157,14 +2185,14 @@ pub mod pallet {
 
 			*active_ring = active_ring.saturating_add(value);
 
-			// last check: the new active amount of ledger must be more than ED.
+			// Last check: the new active amount of ledger must be more than ED.
 			ensure!(
 				*active_ring >= T::RingCurrency::minimum_balance()
 					|| *active_kton >= T::KtonCurrency::minimum_balance(),
 				<Error<T>>::InsufficientValue
 			);
 
-			// if stash promise to an extra-lock
+			// If stash promise to an extra-lock
 			// there will be extra reward (*KTON*), which can also be used for staking
 			if promise_month > 0 {
 				expire_time += promise_month as TsInMs * MONTH_IN_MILLISECONDS;
@@ -2189,13 +2217,13 @@ pub mod pallet {
 
 		/// Update the ledger while bonding controller with *KTON*
 		pub fn bond_kton(
-			controller: &T::AccountId,
+			controller: &AccountId<T>,
 			value: KtonBalance<T>,
 			mut ledger: StakingLedgerT<T>,
 		) -> DispatchResult {
 			ledger.active_kton = ledger.active_kton.saturating_add(value);
 
-			// last check: the new active amount of ledger must be more than ED.
+			// Last check: the new active amount of ledger must be more than ED.
 			ensure!(
 				ledger.active_ring >= T::RingCurrency::minimum_balance()
 					|| ledger.active_kton >= T::KtonCurrency::minimum_balance(),
@@ -2247,7 +2275,7 @@ pub mod pallet {
 		}
 
 		/// The total power that can be slashed from a stash account as of right now.
-		pub fn power_of(stash: &T::AccountId) -> Power {
+		pub fn power_of(stash: &AccountId<T>) -> Power {
 			// Weight note: consider making the stake accessible through stash.
 			Self::bonded(stash)
 				.and_then(Self::ledger)
@@ -2260,13 +2288,13 @@ pub mod pallet {
 
 		darwinia_support::impl_rpc! {
 			pub fn power_of_rpc(
-				stash: impl sp_std::borrow::Borrow<T::AccountId>,
+				stash: impl sp_std::borrow::Borrow<AccountId<T>>,
 			) -> RuntimeDispatchInfo<Power> {
 				RuntimeDispatchInfo { power: Self::power_of(stash.borrow()) }
 			}
 		}
 
-		pub fn stake_of(stash: &T::AccountId) -> (RingBalance<T>, KtonBalance<T>) {
+		pub fn stake_of(stash: &AccountId<T>) -> (RingBalance<T>, KtonBalance<T>) {
 			// Weight note: consider making the stake accessible through stash.
 			Self::bonded(stash)
 				.and_then(Self::ledger)
@@ -2275,7 +2303,7 @@ pub mod pallet {
 		}
 
 		pub fn do_payout_stakers(
-			validator_stash: T::AccountId,
+			validator_stash: AccountId<T>,
 			era: EraIndex,
 		) -> DispatchResultWithPostInfo {
 			// Validate input data
@@ -2429,7 +2457,7 @@ pub mod pallet {
 		/// BE CAREFUL:
 		/// 	This will also update the stash lock.
 		/// 	DO NOT modify the locks' staking amount outside this function.
-		pub fn update_ledger(controller: &T::AccountId, ledger: &mut StakingLedgerT<T>) {
+		pub fn update_ledger(controller: &AccountId<T>, ledger: &mut StakingLedgerT<T>) {
 			let StakingLedger {
 				active_ring,
 				active_kton,
@@ -2484,7 +2512,7 @@ pub mod pallet {
 		}
 
 		/// Chill a stash account.
-		pub fn chill_stash(stash: &T::AccountId) {
+		pub fn chill_stash(stash: &AccountId<T>) {
 			<Validators<T>>::remove(stash);
 			<Nominators<T>>::remove(stash);
 		}
@@ -2492,7 +2520,7 @@ pub mod pallet {
 		/// Actually make a payment to a staker. This uses the currency's reward function
 		/// to pay the right payee for the given staker account.
 		pub fn make_payout(
-			stash: &T::AccountId,
+			stash: &AccountId<T>,
 			amount: RingBalance<T>,
 		) -> Option<RingPositiveImbalance<T>> {
 			let dest = Self::payee(stash);
@@ -2524,10 +2552,12 @@ pub mod pallet {
 		}
 
 		/// Plan a new session potentially trigger a new era.
-		pub fn new_session(session_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+		pub fn new_session(
+			session_index: SessionIndex,
+			is_genesis: bool,
+		) -> Option<Vec<AccountId<T>>> {
 			if let Some(current_era) = Self::current_era() {
 				// Initial era has been set.
-
 				let current_era_start_session_index = Self::eras_start_session_index(current_era)
 					.unwrap_or_else(|| {
 						frame_support::print(
@@ -2541,25 +2571,32 @@ pub mod pallet {
 					.unwrap_or(0); // Must never happen.
 
 				match <ForceEra<T>>::get() {
-					// Will set to default again, which is `NotForcing`.
-					Forcing::ForceNew => <ForceEra<T>>::kill(),
-					// Short circuit to `new_era`.
+					// Will be set to `NotForcing` again if a new era has been triggered.
+					Forcing::ForceNew => (),
+					// Short circuit to `try_trigger_new_era`.
 					Forcing::ForceAlways => (),
-					// Only go to `new_era` if deadline reached.
+					// Only go to `try_trigger_new_era` if deadline reached.
 					Forcing::NotForcing if era_length >= T::SessionsPerEra::get() => (),
 					_ => {
-						// either `Forcing::ForceNone`,
+						// Either `Forcing::ForceNone`,
 						// or `Forcing::NotForcing if era_length >= T::SessionsPerEra::get()`.
 						return None;
 					}
 				}
 
-				// new era.
-				Self::new_era(session_index)
+				// New era.
+				let maybe_new_era_validators = Self::try_trigger_new_era(session_index, is_genesis);
+				if maybe_new_era_validators.is_some()
+					&& matches!(<ForceEra<T>>::get(), Forcing::ForceNew)
+				{
+					<ForceEra<T>>::put(Forcing::NotForcing);
+				}
+
+				maybe_new_era_validators
 			} else {
-				// Set initial era
+				// Set initial era.
 				log!(debug, "Starting the first era.");
-				Self::new_era(session_index)
+				Self::try_trigger_new_era(session_index, is_genesis)
 			}
 		}
 
@@ -2622,13 +2659,13 @@ pub mod pallet {
 				if active_era > bonding_duration {
 					let first_kept = active_era - bonding_duration;
 
-					// prune out everything that's from before the first-kept index.
+					// Prune out everything that's from before the first-kept index.
 					let n_to_prune = bonded
 						.iter()
 						.take_while(|&&(era_idx, _)| era_idx < first_kept)
 						.count();
 
-					// kill slashing metadata.
+					// Kill slashing metadata.
 					for (pruned_era, _) in bonded.drain(..n_to_prune) {
 						slashing::clear_era_metadata::<T>(pruned_era);
 					}
@@ -2668,122 +2705,162 @@ pub mod pallet {
 			}
 		}
 
-		/// Plan a new era. Return the potential new staking set.
-		pub fn new_era(start_session_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+		/// Plan a new era.
+		///
+		/// * Bump the current era storage (which holds the latest planned era).
+		/// * Store start session index for the new planned era.
+		/// * Clean old era information.
+		/// * Store staking information for the new planned era
+		///
+		/// Returns the new validator set.
+		pub fn trigger_new_era(
+			start_session_index: SessionIndex,
+			exposures: Vec<(AccountId<T>, ExposureT<T>)>,
+		) -> Vec<AccountId<T>> {
 			// Increment or set current era.
-			let current_era = <CurrentEra<T>>::mutate(|s| {
+			let new_planned_era = <CurrentEra<T>>::mutate(|s| {
 				*s = Some(s.map(|s| s + 1).unwrap_or(0));
 				s.unwrap()
 			});
-			<ErasStartSessionIndex<T>>::insert(&current_era, &start_session_index);
+			<ErasStartSessionIndex<T>>::insert(&new_planned_era, &start_session_index);
 
 			// Clean old era information.
-			if let Some(old_era) = current_era.checked_sub(Self::history_depth() + 1) {
+			if let Some(old_era) = new_planned_era.checked_sub(Self::history_depth() + 1) {
 				Self::clear_era_information(old_era);
 			}
 
-			let maybe_new_validators = Self::enact_election(current_era);
-
-			maybe_new_validators
+			// Set staking information for the new era.
+			Self::store_stakers_info(exposures, new_planned_era)
 		}
 
-		/// Enact and process the election using the `ElectionProvider` type.
+		/// Potentially plan a new era.
 		///
-		/// This will also process the election, as noted in [`process_election`].
-		pub fn enact_election(current_era: EraIndex) -> Option<Vec<T::AccountId>> {
-			T::ElectionProvider::elect()
-				.map_err(|e| log!(warn, "election provider failed due to {:?}", e))
-				.and_then(|(res, weight)| {
-					<frame_system::Pallet<T>>::register_extra_weight_unchecked(
-						weight,
-						frame_support::weights::DispatchClass::Mandatory,
-					);
-					Self::process_election(res, current_era)
+		/// Get election result from `T::ElectionProvider`.
+		/// In case election result has more than [`MinimumValidatorCount`] validator trigger a new era.
+		///
+		/// In case a new era is planned, the new validator set is returned.
+		fn try_trigger_new_era(
+			start_session_index: SessionIndex,
+			is_genesis: bool,
+		) -> Option<Vec<AccountId<T>>> {
+			let (election_result, weight) = if is_genesis {
+				T::GenesisElectionProvider::elect().map_err(|e| {
+					log!(warn, "genesis election provider failed due to {:?}", e);
+
+					Self::deposit_event(Event::StakingElectionFailed);
 				})
-				.ok()
+			} else {
+				T::ElectionProvider::elect().map_err(|e| {
+					log!(warn, "election provider failed due to {:?}", e);
+
+					Self::deposit_event(Event::StakingElectionFailed);
+				})
+			}
+			.ok()?;
+
+			<frame_system::Pallet<T>>::register_extra_weight_unchecked(
+				weight,
+				frame_support::weights::DispatchClass::Mandatory,
+			);
+
+			let exposures = Self::collect_exposures(election_result);
+
+			if (exposures.len() as u32) < Self::minimum_validator_count().max(1) {
+				// Session will panic if we ever return an empty validator set, thus max(1) ^^.
+				match CurrentEra::<T>::get() {
+					Some(current_era) if current_era > 0 => log!(
+						warn,
+						"chain does not have enough staking candidates to operate for era {:?} ({} \
+						elected, minimum is {})",
+						CurrentEra::<T>::get().unwrap_or(0),
+						exposures.len(),
+						Self::minimum_validator_count(),
+					),
+					None => {
+						// The initial era is allowed to have no exposures.
+						// In this case the SessionManager is expected to choose a sensible validator
+						// set.
+						// TODO: this should be simplified #8911
+						<CurrentEra<T>>::put(0);
+						<ErasStartSessionIndex<T>>::insert(0, &start_session_index);
+					}
+					_ => (),
+				}
+
+				Self::deposit_event(Event::StakingElectionFailed);
+
+				return None;
+			}
+
+			Self::deposit_event(Event::StakingElection);
+
+			Some(Self::trigger_new_era(start_session_index, exposures))
 		}
 
 		/// Process the output of the election.
 		///
-		/// This ensures enough validators have been elected, converts all supports to exposures and
-		/// writes them to the associated storage.
-		///
-		/// Returns `Err(())` if less than [`MinimumValidatorCount`] validators have been elected, `Ok`
-		/// otherwise.
-		pub fn process_election(
-			flat_supports: Supports<T::AccountId>,
-			current_era: EraIndex,
-		) -> Result<Vec<T::AccountId>, ()> {
-			let exposures = Self::collect_exposures(flat_supports);
+		/// Store staking information for the new planned era
+		pub fn store_stakers_info(
+			exposures: Vec<(AccountId<T>, ExposureT<T>)>,
+			new_planned_era: EraIndex,
+		) -> Vec<AccountId<T>> {
 			let elected_stashes = exposures
 				.iter()
 				.cloned()
 				.map(|(x, _)| x)
 				.collect::<Vec<_>>();
-
-			if (elected_stashes.len() as u32) < Self::minimum_validator_count().max(1) {
-				// Session will panic if we ever return an empty validator set, thus max(1) ^^.
-				if current_era > 0 {
-					log!(
-							warn,
-							"chain does not have enough staking candidates to operate for era {:?} ({} elected, minimum is {})",
-							current_era,
-							elected_stashes.len(),
-							Self::minimum_validator_count(),
-						);
-				}
-				return Err(());
-			}
-
 			// Populate stakers, exposures, and the snapshot of validator prefs.
 			let mut total_stake = 0;
+
 			exposures.into_iter().for_each(|(stash, exposure)| {
 				total_stake = total_stake.saturating_add(exposure.total_power);
-				<ErasStakers<T>>::insert(current_era, &stash, &exposure);
+
+				<ErasStakers<T>>::insert(new_planned_era, &stash, &exposure);
 
 				let mut exposure_clipped = exposure;
 				let clipped_max_len = T::MaxNominatorRewardedPerValidator::get() as usize;
+
 				if exposure_clipped.others.len() > clipped_max_len {
 					exposure_clipped
 						.others
 						.sort_by(|a, b| a.power.cmp(&b.power).reverse());
 					exposure_clipped.others.truncate(clipped_max_len);
 				}
-				<ErasStakersClipped<T>>::insert(&current_era, &stash, exposure_clipped);
+
+				<ErasStakersClipped<T>>::insert(&new_planned_era, &stash, exposure_clipped);
 			});
 
 			// Insert current era staking information
-			<ErasTotalStake<T>>::insert(&current_era, total_stake);
+			<ErasTotalStake<T>>::insert(&new_planned_era, total_stake);
 
-			// collect the pref of all winners
+			// Collect the pref of all winners
 			for stash in &elected_stashes {
 				let pref = Self::validators(stash);
-				<ErasValidatorPrefs<T>>::insert(&current_era, stash, pref);
+
+				<ErasValidatorPrefs<T>>::insert(&new_planned_era, stash, pref);
 			}
 
-			Self::deposit_event(Event::StakingElection);
-
-			if current_era > 0 {
+			if new_planned_era > 0 {
 				log!(
 					info,
 					"new validator set of size {:?} has been processed for era {:?}",
 					elected_stashes.len(),
-					current_era,
+					new_planned_era,
 				);
 			}
 
-			Ok(elected_stashes)
+			elected_stashes
 		}
 
 		/// Consume a set of [`Supports`] from [`sp_npos_elections`] and collect them into a
 		/// [`Exposure`].
 		pub fn collect_exposures(
-			supports: Supports<T::AccountId>,
-		) -> Vec<(T::AccountId, ExposureT<T>)> {
+			supports: Supports<AccountId<T>>,
+		) -> Vec<(AccountId<T>, ExposureT<T>)> {
 			supports
 				.into_iter()
 				.map(|(validator, support)| {
-					// build `struct exposure` from `support`
+					// Build `struct exposure` from `support`
 					let mut own_ring_balance: RingBalance<T> = Zero::zero();
 					let mut own_kton_balance: KtonBalance<T> = Zero::zero();
 					let mut own_power = 0;
@@ -2871,7 +2948,7 @@ pub mod pallet {
 		/// This is called:
 		/// - after a `withdraw_unbond()` call that frees all of a stash's bonded balance.
 		/// - through `reap_stash()` if the balance has fallen to zero (through slashing).
-		pub fn kill_stash(stash: &T::AccountId, num_slashing_spans: u32) -> DispatchResult {
+		pub fn kill_stash(stash: &AccountId<T>, num_slashing_spans: u32) -> DispatchResult {
 			let controller = <Bonded<T>>::get(stash).ok_or(<Error<T>>::NotStash)?;
 
 			slashing::clear_stash_metadata::<T>(stash, num_slashing_spans)?;
@@ -2929,7 +3006,7 @@ pub mod pallet {
 		///
 		/// COMPLEXITY: Complexity is `number_of_validator_to_reward x current_elected_len`.
 		/// If you need to reward lots of validator consider using `reward_by_indices`.
-		pub fn reward_by_ids(validators_points: impl IntoIterator<Item = (T::AccountId, u32)>) {
+		pub fn reward_by_ids(validators_points: impl IntoIterator<Item = (AccountId<T>, u32)>) {
 			if let Some(active_era) = Self::active_era() {
 				<ErasRewardPoints<T>>::mutate(active_era.index, |era_rewards| {
 					for (validator, points) in validators_points.into_iter() {
@@ -2951,7 +3028,7 @@ pub mod pallet {
 		#[cfg(feature = "runtime-benchmarks")]
 		pub fn add_era_stakers(
 			current_era: EraIndex,
-			controller: T::AccountId,
+			controller: AccountId<T>,
 			exposure: ExposureT<T>,
 		) {
 			<ErasStakers<T>>::insert(&current_era, &controller, &exposure);
@@ -2972,13 +3049,13 @@ pub mod pallet {
 		/// auto-chilled.
 		///
 		/// Note that this is VERY expensive. Use with care.
-		pub fn get_npos_voters() -> Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)> {
+		pub fn get_npos_voters() -> Vec<(AccountId<T>, VoteWeight, Vec<AccountId<T>>)> {
 			let weight_of =
-				|account_id: &T::AccountId| -> VoteWeight { Self::power_of(account_id) as _ };
+				|account_id: &AccountId<T>| -> VoteWeight { Self::power_of(account_id) as _ };
 			let mut all_voters = Vec::new();
 
 			for (validator, _) in <Validators<T>>::iter() {
-				// append self vote
+				// Append self vote
 				let self_vote = (
 					validator.clone(),
 					weight_of(&validator),
@@ -2987,7 +3064,7 @@ pub mod pallet {
 				all_voters.push(self_vote);
 			}
 
-			// collect all slashing spans into a BTreeMap for further queries.
+			// Collect all slashing spans into a BTreeMap for further queries.
 			let slashing_spans = <SlashingSpans<T>>::iter().collect::<BTreeMap<_, _>>();
 
 			for (nominator, nominations) in <Nominators<T>>::iter() {
@@ -3014,11 +3091,11 @@ pub mod pallet {
 			all_voters
 		}
 
-		pub fn get_npos_targets() -> Vec<T::AccountId> {
+		pub fn get_npos_targets() -> Vec<AccountId<T>> {
 			<Validators<T>>::iter().map(|(v, _)| v).collect::<Vec<_>>()
 		}
 	}
-	impl<T: Config> ElectionDataProvider<T::AccountId, T::BlockNumber> for Pallet<T> {
+	impl<T: Config> ElectionDataProvider<AccountId<T>, T::BlockNumber> for Pallet<T> {
 		const MAXIMUM_VOTES_PER_VOTER: u32 = T::MAX_NOMINATIONS;
 
 		fn desired_targets() -> data_provider::Result<(u32, Weight)> {
@@ -3030,7 +3107,7 @@ pub mod pallet {
 
 		fn voters(
 			maybe_max_len: Option<usize>,
-		) -> data_provider::Result<(Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)>, Weight)> {
+		) -> data_provider::Result<(Vec<(AccountId<T>, VoteWeight, Vec<AccountId<T>>)>, Weight)> {
 			// NOTE: reading these counts already needs to iterate a lot of storage keys, but they get
 			// cached. This is okay for the case of `Ok(_)`, but bad for `Err(_)`, as the trait does not
 			// report weight in failures.
@@ -3053,7 +3130,7 @@ pub mod pallet {
 
 		fn targets(
 			maybe_max_len: Option<usize>,
-		) -> data_provider::Result<(Vec<T::AccountId>, Weight)> {
+		) -> data_provider::Result<(Vec<AccountId<T>>, Weight)> {
 			let target_count = <Validators<T>>::iter().count();
 
 			if maybe_max_len.map_or(false, |max_len| target_count > max_len) {
@@ -3069,22 +3146,24 @@ pub mod pallet {
 			let current_session = Self::current_planned_session();
 			let current_era_start_session_index =
 				Self::eras_start_session_index(current_era).unwrap_or(0);
-			let era_length = current_session
+			let era_progress = current_session
 				.saturating_sub(current_era_start_session_index)
 				.min(T::SessionsPerEra::get());
-
-			let session_length = T::NextNewSession::average_session_length();
-
 			let until_this_session_end = T::NextNewSession::estimate_next_new_session(now)
 				.0
 				.unwrap_or_default()
 				.saturating_sub(now);
-
-			let sessions_left: T::BlockNumber = T::SessionsPerEra::get()
-				.saturating_sub(era_length)
-				// one session is computed in this_session_end.
-				.saturating_sub(1)
-				.into();
+			let session_length = T::NextNewSession::average_session_length();
+			let sessions_left: T::BlockNumber = match ForceEra::<T>::get() {
+				Forcing::ForceNone => Bounded::max_value(),
+				Forcing::ForceNew | Forcing::ForceAlways => Zero::zero(),
+				Forcing::NotForcing if era_progress >= T::SessionsPerEra::get() => Zero::zero(),
+				Forcing::NotForcing => T::SessionsPerEra::get()
+					.saturating_sub(era_progress)
+					// One session is computed in this_session_end.
+					.saturating_sub(1)
+					.into(),
+			};
 
 			now.saturating_add(
 				until_this_session_end.saturating_add(sessions_left.saturating_mul(session_length)),
@@ -3093,8 +3172,8 @@ pub mod pallet {
 
 		#[cfg(feature = "runtime-benchmarks")]
 		fn put_snapshot(
-			voters: Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)>,
-			targets: Vec<T::AccountId>,
+			voters: Vec<(AccountId<T>, VoteWeight, Vec<AccountId<T>>)>,
+			targets: Vec<AccountId<T>>,
 			target_stake: Option<VoteWeight>,
 		) {
 			use sp_std::convert::TryFrom;
@@ -3148,29 +3227,36 @@ pub mod pallet {
 			});
 		}
 	}
-	impl<T: Config> pallet_session::SessionManager<T::AccountId> for Pallet<T> {
-		fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
-			log!(trace, "planning new_session({})", new_index);
+	impl<T: Config> pallet_session::SessionManager<AccountId<T>> for Pallet<T> {
+		fn new_session(new_index: SessionIndex) -> Option<Vec<AccountId<T>>> {
+			log!(trace, "planning new session {}", new_index);
 
 			<CurrentPlannedSession<T>>::put(new_index);
 
-			Self::new_session(new_index)
+			Self::new_session(new_index, false)
 		}
-		fn end_session(end_index: SessionIndex) {
-			log!(trace, "ending end_session({})", end_index);
+		fn new_session_genesis(new_index: SessionIndex) -> Option<Vec<AccountId<T>>> {
+			log!(trace, "planning new session {} at genesis", new_index);
 
-			Self::end_session(end_index)
+			<CurrentPlannedSession<T>>::put(new_index);
+
+			Self::new_session(new_index, true)
 		}
 		fn start_session(start_index: SessionIndex) {
-			log!(trace, "starting start_session({})", start_index);
+			log!(trace, "starting session {}", start_index);
 
 			Self::start_session(start_index)
 		}
+		fn end_session(end_index: SessionIndex) {
+			log!(trace, "ending session {}", end_index);
+
+			Self::end_session(end_index)
+		}
 	}
-	impl<T: Config> pallet_session::historical::SessionManager<T::AccountId, ExposureT<T>>
+	impl<T: Config> pallet_session::historical::SessionManager<AccountId<T>, ExposureT<T>>
 		for Pallet<T>
 	{
-		fn new_session(new_index: SessionIndex) -> Option<Vec<(T::AccountId, ExposureT<T>)>> {
+		fn new_session(new_index: SessionIndex) -> Option<Vec<(AccountId<T>, ExposureT<T>)>> {
 			<Self as pallet_session::SessionManager<_>>::new_session(new_index).map(|validators| {
 				let current_era = Self::current_era()
 					// Must be some as a new era has been created.
@@ -3185,6 +3271,25 @@ pub mod pallet {
 					.collect()
 			})
 		}
+		fn new_session_genesis(
+			new_index: SessionIndex,
+		) -> Option<Vec<(AccountId<T>, ExposureT<T>)>> {
+			<Self as pallet_session::SessionManager<_>>::new_session_genesis(new_index).map(
+				|validators| {
+					let current_era = Self::current_era()
+						// Must be some as a new era has been created.
+						.unwrap_or(0);
+
+					validators
+						.into_iter()
+						.map(|v| {
+							let exposure = Self::eras_stakers(current_era, &v);
+							(v, exposure)
+						})
+						.collect()
+				},
+			)
+		}
 		fn start_session(start_index: SessionIndex) {
 			<Self as pallet_session::SessionManager<_>>::start_session(start_index)
 		}
@@ -3194,7 +3299,7 @@ pub mod pallet {
 	}
 	/// This is intended to be used with `FilterHistoricalOffences`.
 	impl<T>
-		OnOffenceHandler<T::AccountId, pallet_session::historical::IdentificationTuple<T>, Weight>
+		OnOffenceHandler<AccountId<T>, pallet_session::historical::IdentificationTuple<T>, Weight>
 		for Pallet<T>
 	where
 		T: Config
@@ -3209,7 +3314,7 @@ pub mod pallet {
 	{
 		fn on_offence(
 			offenders: &[OffenceDetails<
-				T::AccountId,
+				AccountId<T>,
 				pallet_session::historical::IdentificationTuple<T>,
 			>],
 			slash_fraction: &[Perbill],
@@ -3225,7 +3330,7 @@ pub mod pallet {
 				let active_era = Self::active_era();
 				add_db_reads_writes(1, 0);
 				if active_era.is_none() {
-					// this offence need not be re-submitted.
+					// This offence need not be re-submitted.
 					return consumed_weight;
 				}
 				active_era
@@ -3241,7 +3346,7 @@ pub mod pallet {
 
 			let window_start = active_era.saturating_sub(T::BondingDurationInEra::get());
 
-			// fast path for active-era report - most likely.
+			// Fast path for active-era report - most likely.
 			// `slash_session` cannot be in a future active era. It must be in `active_era` or before.
 			let slash_era = if slash_session >= active_era_start_session_index {
 				active_era
@@ -3249,7 +3354,7 @@ pub mod pallet {
 				let eras = <BondedEras<T>>::get();
 				add_db_reads_writes(1, 0);
 
-				// reverse because it's more likely to find reports from recent eras.
+				// Reverse because it's more likely to find reports from recent eras.
 				match eras
 					.iter()
 					.rev()
@@ -3257,7 +3362,7 @@ pub mod pallet {
 					.next()
 				{
 					Some(&(ref slash_era, _)) => *slash_era,
-					// before bonding period. defensive - should be filtered out.
+					// Before bonding period. defensive - should be filtered out.
 					None => return consumed_weight,
 				}
 			};
@@ -3303,7 +3408,7 @@ pub mod pallet {
 					}
 					unapplied.reporters = details.reporters.clone();
 					if slash_defer_duration == 0 {
-						// apply right away.
+						// Apply right away.
 						slashing::apply_slash::<T>(unapplied);
 						{
 							let slash_cost = (6, 5);
@@ -3314,7 +3419,7 @@ pub mod pallet {
 							);
 						}
 					} else {
-						// defer to end of some `slash_defer_duration` from now.
+						// Defer to end of some `slash_defer_duration` from now.
 						<Self as Store>::UnappliedSlashes::mutate(active_era, move |for_later| {
 							for_later.push(unapplied)
 						});
@@ -3328,10 +3433,10 @@ pub mod pallet {
 			consumed_weight
 		}
 	}
-	impl<T: Config> OnDepositRedeem<T::AccountId, RingBalance<T>> for Pallet<T> {
+	impl<T: Config> OnDepositRedeem<AccountId<T>, RingBalance<T>> for Pallet<T> {
 		fn on_deposit_redeem(
-			backing: &T::AccountId,
-			stash: &T::AccountId,
+			backing: &AccountId<T>,
+			stash: &AccountId<T>,
 			amount: RingBalance<T>,
 			start_time: TsInMs,
 			months: u8,
@@ -3413,14 +3518,14 @@ pub mod pallet {
 	/// * 20 points to the block producer for producing a (non-uncle) block in the relay chain,
 	/// * 2 points to the block producer for each reference to a previously unreferenced uncle, and
 	/// * 1 point to the producer of each referenced uncle block.
-	impl<T> pallet_authorship::EventHandler<T::AccountId, T::BlockNumber> for Pallet<T>
+	impl<T> pallet_authorship::EventHandler<AccountId<T>, T::BlockNumber> for Pallet<T>
 	where
 		T: Config + pallet_authorship::Config + pallet_session::Config,
 	{
-		fn note_author(author: T::AccountId) {
+		fn note_author(author: AccountId<T>) {
 			Self::reward_by_ids(vec![(author, 20)]);
 		}
-		fn note_uncle(author: T::AccountId, _age: T::BlockNumber) {
+		fn note_uncle(author: AccountId<T>, _age: T::BlockNumber) {
 			Self::reward_by_ids(vec![
 				(<pallet_authorship::Pallet<T>>::author(), 2),
 				(author, 1),
@@ -3845,6 +3950,8 @@ pub mod pallet {
 		/// Not forcing anything - just let whatever happen.
 		NotForcing,
 		/// Force a new era, then reset to `NotForcing` as soon as it is done.
+		/// Note that this will force to trigger an election until a new era is triggered, if the
+		/// election failed, the next session end will trigger a new election again, until success.
 		ForceNew,
 		/// Avoid a new era indefinitely.
 		ForceNone,
@@ -3926,8 +4033,8 @@ pub mod pallet {
 	/// A `Convert` implementation that finds the stash of the given controller account,
 	/// if any.
 	pub struct StashOf<T>(PhantomData<T>);
-	impl<T: Config> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
-		fn convert(controller: T::AccountId) -> Option<T::AccountId> {
+	impl<T: Config> Convert<AccountId<T>, Option<AccountId<T>>> for StashOf<T> {
+		fn convert(controller: AccountId<T>) -> Option<AccountId<T>> {
 			<Pallet<T>>::ledger(&controller).map(|l| l.stash)
 		}
 	}
@@ -3944,7 +4051,7 @@ pub mod pallet {
 		O: Offence<Offender>,
 	{
 		fn report_offence(reporters: Vec<Reporter>, offence: O) -> Result<(), OffenceError> {
-			// disallow any slashing from before the current bonding period.
+			// Disallow any slashing from before the current bonding period.
 			let offence_session = offence.session_index();
 			let bonded_eras = <BondedEras<T>>::get();
 
