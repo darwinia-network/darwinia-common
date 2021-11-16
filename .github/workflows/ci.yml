@@ -14,10 +14,10 @@ jobs:
     name: Build subalfred
     runs-on: ubuntu-latest
     steps:
-      - name: Install Rust nightly-2021-04-22 toolchain
+      - name: Install Rust nightly toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2021-04-22
+          toolchain: nightly
           default: true
       - name: Install sccache
         env:
@@ -62,10 +62,10 @@ jobs:
     name: Check Rust code
     runs-on: ubuntu-latest
     steps:
-      - name: Install Rust nightly-2021-04-22 toolchain
+      - name: Install Rust nightly toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2021-04-22
+          toolchain: nightly
           target: wasm32-unknown-unknown
           default: true
       - name: Install sccache
@@ -99,10 +99,10 @@ jobs:
     name: Build node and internal test
     runs-on: ubuntu-latest
     steps:
-      - name: Install Rust nightly-2021-04-22 toolchain
+      - name: Install Rust nightly toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2021-04-22
+          toolchain: nightly
           target: wasm32-unknown-unknown
           default: true
       - name: Install sccache
