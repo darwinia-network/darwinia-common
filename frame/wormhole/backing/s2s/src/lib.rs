@@ -463,7 +463,6 @@ pub mod pallet {
 			if *lane != T::MessageLaneId::get() {
 				return 0;
 			}
-			let mut weight = 0 as Weight;
 			for nonce in messages.begin..=messages.end {
 				let result = messages.message_dispatch_result(nonce);
 				let message_id = nonce_to_message_id(lane, nonce);
@@ -487,11 +486,9 @@ pub mod pallet {
 				Self::deposit_event(Event::TokenLockedConfirmed(
 					message_id, user, amount, result,
 				));
-				weight = weight.saturating_add(
-					<T as frame_system::Config>::DbWeight::get().reads_writes(2, 3),
-				);
 			}
-			weight
+			// TODO: The returned weight should be more accurately. See: https://github.com/darwinia-network/darwinia-common/issues/911
+			<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
 		}
 	}
 }

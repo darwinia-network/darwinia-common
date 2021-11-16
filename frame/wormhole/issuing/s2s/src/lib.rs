@@ -186,10 +186,7 @@ pub mod pallet {
 
 			let backing_address = T::ToEthAddressT::into_ethereum_id(&user);
 			let mapping_token = Self::mapped_token_address(backing_address, token_address)?;
-			ensure!(
-				mapping_token != H160::zero(),
-				"asset has not been registered"
-			);
+			ensure!(mapping_token != H160::zero(), Error::<T>::TokenUnregistered);
 
 			// issue erc20 tokens
 			let input = bmtf::encode_issue_erc20(mapping_token, recipient, amount)
@@ -254,8 +251,8 @@ pub mod pallet {
 	#[pallet::error]
 	/// Issuing pallet errors.
 	pub enum Error<T> {
-		/// The address is not from mapping factory contract address
-		NotFactoryContract,
+		/// Token unregistered when issuing
+		TokenUnregistered,
 		/// Invalid Issuing System Account
 		InvalidIssuingAccount,
 		/// StringCF
@@ -266,16 +263,6 @@ pub mod pallet {
 		InvalidIssueEncoding,
 		/// invalid ethereum address length
 		InvalidAddressLen,
-		/// invalid token type
-		InvalidTokenType,
-		/// invalid token option
-		InvalidTokenOption,
-		/// decode event failed
-		InvalidDecoding,
-		/// invalid source origin
-		InvalidOrigin,
-		/// call mapping factory failed
-		MappingFactoryCallFailed,
 	}
 
 	#[pallet::storage]
@@ -308,25 +295,17 @@ pub mod pallet {
 			if *lane != T::MessageLaneId::get() {
 				return 0;
 			}
-			let mut weight = 0 as Weight;
 			for nonce in messages.begin..=messages.end {
 				let result = messages.message_dispatch_result(nonce);
 				let message_id = nonce_to_message_id(lane, nonce);
 				if let Ok(input) =
 					smtf::encode_confirm_burn_and_remote_unlock(message_id.to_vec(), result)
 				{
-					let dispatch_result = Self::transact_mapping_factory(input);
-					let w = match dispatch_result {
-						Ok(dispatch_info) => dispatch_info.actual_weight.unwrap_or(0),
-						_ => 0,
-					};
-					weight = weight.saturating_add(w);
-					weight = weight.saturating_add(
-						<T as frame_system::Config>::DbWeight::get().reads_writes(1, 0),
-					);
+					let _ = Self::transact_mapping_factory(input);
 				}
 			}
-			weight
+			// TODO: The returned weight should be more accurately. See: https://github.com/darwinia-network/darwinia-common/issues/911
+			<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
 		}
 	}
 }
