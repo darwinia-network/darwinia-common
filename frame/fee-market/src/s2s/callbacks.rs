@@ -42,7 +42,8 @@ impl<T: Config> OnMessageAccepted for FeeMarketMessageAcceptedHandler<T> {
 			<Orders<T>>::insert((order.lane, order.message), order.clone());
 		}
 
-		// TODO: The returned weight should be more accurately. See: https://github.com/darwinia-network/darwinia-common/issues/911
+		// one read for assigned relayers
+		// one write for store order
 		<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
 	}
 }
@@ -59,12 +60,12 @@ impl<T: Config> OnDeliveryConfirmed for FeeMarketMessageConfirmedHandler<T> {
 						Some(order) => order.set_confirm_time(Some(now)),
 						None => {}
 					});
-					<ConfirmedMessagesThisBlock<T>>::append((lane, message_nonce));
 				}
 			}
 		}
 
-		// TODO: The returned weight should be more accurately. See: https://github.com/darwinia-network/darwinia-common/issues/911
+		// one db read for get order
+		// one db write for update order confirm time
 		<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
 	}
 }

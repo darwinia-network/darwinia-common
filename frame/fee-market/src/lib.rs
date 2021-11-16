@@ -41,7 +41,7 @@ use frame_support::{
 use frame_system::{ensure_signed, pallet_prelude::*};
 use num_traits::Zero;
 use sp_runtime::{traits::Saturating, Permill, SaturatedConversion};
-use sp_std::{default::Default, vec::Vec};
+use sp_std::vec::Vec;
 // --- darwinia-network ---
 use darwinia_support::{
 	balance::{LockFor, LockableCurrency},
@@ -162,9 +162,6 @@ pub mod pallet {
 		Order<T::AccountId, T::BlockNumber, RingBalance<T>>,
 		OptionQuery,
 	>;
-	#[pallet::storage]
-	pub type ConfirmedMessagesThisBlock<T: Config> =
-		StorageValue<_, Vec<(LaneId, MessageNonce)>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn collateral_slash_protect)]
@@ -176,10 +173,11 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_: BlockNumberFor<T>) {
 			// Clean the order's storage when the rewards has been paid off
-			for (lane_id, message_nonce) in <ConfirmedMessagesThisBlock<T>>::get() {
-				<Orders<T>>::remove((lane_id, message_nonce));
+			for ((lane_id, message_nonce), order) in <Orders<T>>::iter() {
+				if order.confirm_time.is_some() {
+					<Orders<T>>::remove((lane_id, message_nonce));
+				}
 			}
-			<ConfirmedMessagesThisBlock<T>>::kill();
 		}
 	}
 
