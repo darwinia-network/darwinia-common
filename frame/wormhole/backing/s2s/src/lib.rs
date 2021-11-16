@@ -152,20 +152,12 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Currently we only support native token transfer comes from s2s bridge.
-		Erc20NotSupported,
-		/// Invalid token type.
-		InvalidTokenType,
-		/// Invalid token value.
-		InvalidTokenValue,
 		/// Insufficient balance.
 		InsufficientBalance,
 		/// Ring Lock LIMITED.
 		RingLockLimited,
 		/// Redeem Daily Limited
 		RingDailyLimited,
-		/// Invalid source origin.
-		InvalidOrigin,
 		/// Message nonce duplicated.
 		NonceDuplicated,
 		/// Unsupported token
