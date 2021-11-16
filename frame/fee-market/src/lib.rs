@@ -331,7 +331,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(<T as Config>::WeightInfo::set_slash_protect())]
+		#[pallet::weight(<T as Config>::WeightInfo::set_assigned_relayers_number())]
 		#[transactional]
 		pub fn set_assigned_relayers_number(
 			origin: OriginFor<T>,

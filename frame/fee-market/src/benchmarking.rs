@@ -108,4 +108,11 @@ benchmarks! {
 
 	set_slash_protect {
 	}:set_slash_protect(RawOrigin::Root, T::CollateralPerOrder::get().saturating_mul(1u32.into()))
+
+	set_assigned_relayers_number{
+		fee_market_ready::<T>();
+	}: set_assigned_relayers_number(RawOrigin::Root, 1)
+	verify {
+		assert_eq!(<FeeMarket<T>>::assigned_relayers().unwrap().len(), 1);
+	}
 }
