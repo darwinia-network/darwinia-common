@@ -217,10 +217,6 @@ where
 		}
 	}
 
-	// for (lane_id, message_nonce) in <ConfirmedMessagesThisBlock<T>>::get() {
-
-	// }
-
 	RewardsBook {
 		messages_relayers_rewards: messages_rewards,
 		confirmation_relayer_rewards: confirmation_rewards,
