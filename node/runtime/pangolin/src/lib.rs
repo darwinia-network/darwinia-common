@@ -79,6 +79,7 @@ pub use pangolin_constants::*;
 pub use darwinia_staking::StakerStatus;
 
 pub use darwinia_balances::Call as BalancesCall;
+pub use darwinia_fee_market::Call as FeeMarketCall;
 pub use frame_system::Call as SystemCall;
 pub use pallet_bridge_grandpa::Call as BridgeGrandpaCall;
 pub use pallet_bridge_messages::Call as BridgeMessagesCall;

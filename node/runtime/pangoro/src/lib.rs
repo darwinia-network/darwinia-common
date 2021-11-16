@@ -61,6 +61,7 @@ pub use common_primitives::{self as pangoro_primitives, self as pangolin_primiti
 pub use pangoro_constants::*;
 
 pub use darwinia_balances::Call as BalancesCall;
+pub use darwinia_fee_market::Call as FeeMarketCall;
 pub use frame_system::Call as SystemCall;
 pub use pallet_bridge_grandpa::Call as BridgeGrandpaCall;
 pub use pallet_bridge_messages::Call as BridgeMessagesCall;
