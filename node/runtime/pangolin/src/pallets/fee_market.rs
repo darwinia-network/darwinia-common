@@ -8,7 +8,6 @@ use darwinia_fee_market::{Config, RingBalance, Slasher};
 frame_support::parameter_types! {
 	pub const FeeMarketPalletId: PalletId = PalletId(*b"da/feemk");
 	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
-	pub const AssignedRelayersNumber: u64 = 1;
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 
 	pub const MinimumRelayFee: Balance = 15 * COIN;
@@ -25,7 +24,6 @@ impl Config for Runtime {
 	type TreasuryPalletId = TreasuryPalletId;
 	type LockId = FeeMarketLockId;
 
-	type AssignedRelayersNumber = AssignedRelayersNumber;
 	type MinimumRelayFee = MinimumRelayFee;
 	type CollateralPerOrder = CollateralPerOrder;
 	type Slot = Slot;

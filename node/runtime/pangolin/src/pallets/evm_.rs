@@ -107,7 +107,9 @@ where
 			_ if address == addr(4) => Some(Identity::execute(input, target_gas, context)),
 			// Darwinia precompiles
 			_ if address == addr(21) => Some(<Transfer<R>>::execute(input, target_gas, context)),
-			_ if address == addr(23) => Some(<EthereumBridge<R>>::execute(input, target_gas, context)),
+			_ if address == addr(23) => {
+				Some(<EthereumBridge<R>>::execute(input, target_gas, context))
+			}
 			_ if address == addr(24) => Some(<Sub2SubBridge<R, ToPangoroMessageSender>>::execute(
 				input, target_gas, context,
 			)),
