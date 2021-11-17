@@ -72,7 +72,7 @@ pub mod wasm {
 }
 pub use wasm::*;
 
-pub use common_primitives::self as pangoro_primitives;
+pub use common_primitives::{self as pangoro_primitives};
 
 pub use pangolin_constants::*;
 
