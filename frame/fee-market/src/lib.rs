@@ -180,8 +180,8 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_: BlockNumberFor<T>) {
-			// Clean the order's storage when the rewards has been paid off
 			for ((lane_id, message_nonce), order) in <Orders<T>>::iter() {
+				// Once the order's confirm_time is not None, we consider this order has been rewarded. Hence, clean the storage.
 				if order.confirm_time.is_some() {
 					<Orders<T>>::remove((lane_id, message_nonce));
 				}
