@@ -19,8 +19,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use darwinia_evm_precompile_utils_macro::selector;
-use evm::ExitError;
 use darwinia_support::evm::SELECTOR;
+use evm::ExitError;
 
 #[derive(Clone, Copy, Debug)]
 pub struct DvmInputParser<'a> {
