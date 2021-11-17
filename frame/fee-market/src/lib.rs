@@ -69,9 +69,6 @@ pub mod pallet {
 		/// The minimum fee for relaying.
 		#[pallet::constant]
 		type MinimumRelayFee: Get<RingBalance<Self>>;
-		/// The assigned relayers number for each order.
-		#[pallet::constant]
-		type AssignedRelayersNumber: Get<u64>;
 		/// The collateral relayer need to lock for each order.
 		#[pallet::constant]
 		type CollateralPerOrder: Get<RingBalance<Self>>;
@@ -112,6 +109,8 @@ pub mod pallet {
 		CancelEnrollment(T::AccountId),
 		/// Update collateral slash protect value. \[slash_protect_value\]
 		UpdateCollateralSlashProtect(RingBalance<T>),
+		/// Update market assigned relayers numbers. \[new_assigned_relayers_number\]
+		UpdateAssignedRelayersNumber(u32),
 	}
 
 	#[pallet::error]
@@ -166,6 +165,15 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn collateral_slash_protect)]
 	pub type CollateralSlashProtect<T: Config> = StorageValue<_, RingBalance<T>, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn assigned_relayers_number)]
+	pub type AssignedRelayersNumber<T: Config> =
+		StorageValue<_, u32, ValueQuery, DefaultAssignedRelayersNumber>;
+	#[pallet::type_value]
+	pub fn DefaultAssignedRelayersNumber() -> u32 {
+		3
+	}
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -320,6 +328,20 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::UpdateCollateralSlashProtect(slash_protect));
 			Ok(().into())
 		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::set_assigned_relayers_number())]
+		#[transactional]
+		pub fn set_assigned_relayers_number(
+			origin: OriginFor<T>,
+			number: u32,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			AssignedRelayersNumber::<T>::put(number);
+
+			Self::update_market();
+			Self::deposit_event(Event::<T>::UpdateAssignedRelayersNumber(number));
+			Ok(().into())
+		}
 	}
 }
 
@@ -339,7 +361,7 @@ impl<T: Config> Pallet<T> {
 			.collect();
 
 		// Select the first `AssignedRelayersNumber` relayers as AssignedRelayer.
-		let assigned_relayers_len = T::AssignedRelayersNumber::get() as usize;
+		let assigned_relayers_len = <AssignedRelayersNumber<T>>::get() as usize;
 		if relayers.len() >= assigned_relayers_len {
 			relayers.sort();
 
