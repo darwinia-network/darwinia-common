@@ -21,7 +21,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
 
-// FIXME: https://github.com/darwinia-network/darwinia-common/issues/845
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 #[cfg(test)]
@@ -31,7 +30,6 @@ pub mod weight;
 pub use weight::WeightInfo;
 
 // --- crates.io ---
-use ethereum_primitives::EthereumAddress;
 use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
 use bp_message_dispatch::CallOrigin;
@@ -56,15 +54,11 @@ use sp_runtime::{
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use darwinia_support::{
-	evm::IntoH160,
 	s2s::{ensure_source_account, nonce_to_message_id, LatestMessageNoncer, TokenMessageId},
 	AccountId,
 };
-use dp_asset::token::{TokenMetadata, NATIVE_TOKEN_TYPE};
-use dp_s2s::{
-	token_info::{RING_DECIMAL, RING_NAME, RING_SYMBOL},
-	CallParams, CreatePayload,
-};
+use dp_asset::token::TokenMetadata;
+use dp_s2s::{CallParams, CreatePayload};
 
 pub type Balance = u128;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
@@ -87,9 +81,9 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
-		/// The ring balance pallet id
+		/// The local ring metadata
 		#[pallet::constant]
-		type RingPalletId: Get<PalletId>;
+		type RingMetadata: Get<TokenMetadata>;
 
 		/// The max lock amount per transaction for security.
 		#[pallet::constant]
@@ -135,13 +129,7 @@ pub mod pallet {
 		/// Token registered \[token metadata, sender\]
 		TokenRegistered(TokenMetadata, AccountId<T>),
 		/// Token locked \[message_id, token address, sender, recipient, amount\]
-		TokenLocked(
-			TokenMessageId,
-			H160,
-			AccountId<T>,
-			EthereumAddress,
-			RingBalance<T>,
-		),
+		TokenLocked(TokenMessageId, H160, AccountId<T>, H160, RingBalance<T>),
 		/// Token unlocked \[message_id, token_address, recipient, amount\]
 		TokenUnlocked(TokenMessageId, H160, AccountId<T>, RingBalance<T>),
 		/// Token locked confirmed from remote \[message_id, user, amount, result\]
@@ -249,19 +237,11 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 
-			let token_metadata = TokenMetadata::new(
-				NATIVE_TOKEN_TYPE,
-				T::RingPalletId::get().into_h160(),
-				RING_NAME.to_vec(),
-				RING_SYMBOL.to_vec(),
-				RING_DECIMAL,
-			);
-
 			let payload = T::OutboundPayloadCreator::create(
 				CallOrigin::SourceAccount(Self::pallet_account_id()),
 				spec_version,
 				weight,
-				CallParams::S2sIssuingPalletRegisterFromRemote(token_metadata.clone()),
+				CallParams::S2sIssuingPalletRegisterFromRemote(T::RingMetadata::get()),
 				DispatchFeePayment::AtSourceChain,
 			)?;
 			// this pallet account as the submitter of the remote message
@@ -274,7 +254,7 @@ pub mod pallet {
 				fee,
 			)?;
 
-			Self::deposit_event(Event::TokenRegistered(token_metadata, user));
+			Self::deposit_event(Event::TokenRegistered(T::RingMetadata::get(), user));
 			Ok(().into())
 		}
 
@@ -289,7 +269,7 @@ pub mod pallet {
 			weight: u64,
 			#[pallet::compact] value: RingBalance<T>,
 			#[pallet::compact] fee: RingBalance<T>,
-			recipient: EthereumAddress,
+			recipient: H160,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 
@@ -308,7 +288,7 @@ pub mod pallet {
 
 			// Send to the target chain
 			let amount: U256 = value.saturated_into::<u128>().into();
-			let token_address = T::RingPalletId::get().into_h160();
+			let token_address = T::RingMetadata::get().address;
 
 			let payload = T::OutboundPayloadCreator::create(
 				CallOrigin::SourceAccount(Self::pallet_account_id()),
@@ -362,7 +342,7 @@ pub mod pallet {
 			)?;
 			// Check call params
 			ensure!(
-				token_address == T::RingPalletId::get().into_h160(),
+				token_address == T::RingMetadata::get().address,
 				<Error<T>>::UnsupportedToken
 			);
 
