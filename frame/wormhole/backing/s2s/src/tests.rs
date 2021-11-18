@@ -151,7 +151,12 @@ impl Convert<H256, AccountId32> for MockAccountIdConverter {
 frame_support::parameter_types! {
 	pub const MockChainId: [u8; 4] = [0; 4];
 	pub const MockId: PalletId = PalletId(*b"da/s2sba");
-	pub const RingPalletId: PalletId = PalletId(*b"da/bring");
+	pub RingMetadata = TokenMetadata::new(
+		0,
+		PalletId(*b"da/bring").into_h160(),
+		b"Pangoro Network Native Token".to_vec(),
+		b"ORING".to_vec(),
+		9);
 	pub const MaxLockRingAmountPerTx: Balance = 100;
 	pub const BridgePangolinLaneId: [u8; 4] = [0; 4];
 }
@@ -161,7 +166,7 @@ impl Config for Test {
 
 	type PalletId = MockId;
 
-	type RingPalletId = RingPalletId;
+	type RingMetadata = RingMetadata;
 	type MaxLockRingAmountPerTx = MaxLockRingAmountPerTx;
 	type RingCurrency = Ring;
 
@@ -220,7 +225,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 fn test_back_erc20_dvm_address() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(
-			<Test as s2s_backing::Config>::RingPalletId::get().into_h160(),
+			<Test as s2s_backing::Config>::RingMetadata::get().address,
 			EthereumAddress::from_str("0x6d6f646c64612f6272696e670000000000000000").unwrap()
 		);
 	});
@@ -266,7 +271,7 @@ fn test_unlock_from_remote() {
 			<Test as s2s_backing::Config>::BridgedAccountIdConverter::convert(hash);
 
 		// ring dvm address (original address)
-		let ring_dvm_address = <Test as s2s_backing::Config>::RingPalletId::get().into_h160();
+		let ring_dvm_address = <Test as s2s_backing::Config>::RingMetadata::get().address;
 
 		// //Alice as recipient
 		let recipient_alice = hex2bytes_unchecked(
