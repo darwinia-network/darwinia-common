@@ -57,7 +57,7 @@ use darwinia_support::{
 	s2s::{ensure_source_account, nonce_to_message_id, LatestMessageNoncer, TokenMessageId},
 	AccountId,
 };
-use dp_asset::token::TokenMetadata;
+use dp_asset::TokenMetadata;
 use dp_s2s::{CallParams, CreatePayload};
 
 pub type Balance = u128;

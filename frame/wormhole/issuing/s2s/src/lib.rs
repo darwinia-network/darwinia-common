@@ -50,7 +50,7 @@ use darwinia_support::{
 	s2s::{ensure_source_account, nonce_to_message_id, ToEthAddress},
 	AccountId, ChainName,
 };
-use dp_asset::token::TokenMetadata;
+use dp_asset::TokenMetadata;
 use dp_contract::mapping_token_factory::{
 	basic::BasicMappingTokenFactory as bmtf, s2s::Sub2SubMappingTokenFactory as smtf,
 };
@@ -301,7 +301,9 @@ pub mod pallet {
 				if let Ok(input) =
 					smtf::encode_confirm_burn_and_remote_unlock(message_id.to_vec(), result)
 				{
-					let _ = Self::transact_mapping_factory(input);
+					if let Err(e) = Self::transact_mapping_factory(input) {
+						log::error!("confirm sub<>sub message failed, err {:?}", e);
+					}
 				}
 			}
 			// TODO: The returned weight should be more accurately. See: https://github.com/darwinia-network/darwinia-common/issues/911
