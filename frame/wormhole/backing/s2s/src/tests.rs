@@ -267,13 +267,13 @@ fn test_unlock_from_remote() {
 			<Test as s2s_backing::Config>::BridgedChainId::get(),
 			SourceAccount::Account(remote_mapping_token_factory_account.clone()),
 		);
-		let drived_mapping_token_factory_address =
+		let derived_mapping_token_factory_address =
 			<Test as s2s_backing::Config>::BridgedAccountIdConverter::convert(hash);
 
 		// ring dvm address (original address)
 		let ring_dvm_address = <Test as s2s_backing::Config>::RingMetadata::get().address;
 
-		// //Alice as recipient
+		// Alice as recipient
 		let recipient_alice = hex2bytes_unchecked(
 			"0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
 		);
@@ -286,14 +286,14 @@ fn test_unlock_from_remote() {
 
 		assert_eq!(Ring::free_balance(alice_account.clone()), 0);
 		assert_ok!(Backing::unlock_from_remote(
-			Origin::signed(drived_mapping_token_factory_address.clone()),
+			Origin::signed(derived_mapping_token_factory_address.clone()),
 			ring_dvm_address,
 			U256::from(1_000_000),
 			recipient_alice.clone()
 		));
 		assert_err!(
 			Backing::unlock_from_remote(
-				Origin::signed(drived_mapping_token_factory_address.clone()),
+				Origin::signed(derived_mapping_token_factory_address.clone()),
 				ring_dvm_address,
 				U256::from(1),
 				recipient_alice
