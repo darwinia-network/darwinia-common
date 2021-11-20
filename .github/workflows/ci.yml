@@ -217,7 +217,7 @@ jobs:
 
   code-checks:
     name: Code checks
-    if: github.event.issue.pull_request && contains(github.event.comment.body, '/bot check]')
+    if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '/bot check')
     runs-on: ubuntu-latest
     steps:
       - name: Download subalfred
@@ -238,7 +238,7 @@ jobs:
 
   runtime-checks:
     name: Runtime checks
-    if: github.event.issue.pull_request && contains(github.event.comment.body, '/bot check')
+    if: contains(github.event.comment.html_url, '/pull/') && contains(github.event.comment.body, '/bot check')
     runs-on: ubuntu-latest
     steps:
       - name: Download node
