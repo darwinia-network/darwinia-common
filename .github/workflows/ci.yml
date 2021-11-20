@@ -25,7 +25,7 @@ env:
 jobs:
   build-subalfred:
     name: Build subalfred
-    if: github.event_name == "push" || !github.event.pull_request.draft
+    if: github.event_name == 'push' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
       - name: Install Rust $RUST_TOOLCHAIN toolchain
@@ -54,7 +54,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: $OS-cargo-${{ hashFiles("**/Cargo.lock") }}
+          key: $OS-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             $OS-cargo-
 
@@ -63,7 +63,7 @@ jobs:
         continue-on-error: false
         with:
           path: ${{ matrix.sccache-dir }}
-          key: $OS-sccache-${{ hashFiles("**/Cargo.lock") }}
+          key: $OS-sccache-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             $OS-sccache-
 
@@ -83,7 +83,7 @@ jobs:
 
   build-node:
     name: Build node
-    if: github.event_name == "push" || !github.event.pull_request.draft
+    if: github.event_name == 'push' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
       - name: Install Rust $RUST_TOOLCHAIN toolchain
@@ -109,7 +109,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: $OS-cargo-${{ hashFiles("**/Cargo.lock") }}
+          key: $OS-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             $OS-cargo-
 
@@ -118,7 +118,7 @@ jobs:
         continue-on-error: false
         with:
           path: ${{ matrix.sccache-dir }}
-          key: $OS-sccache-${{ hashFiles("**/Cargo.lock") }}
+          key: $OS-sccache-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             $OS-sccache-
 
@@ -138,7 +138,7 @@ jobs:
 
   unit-tests:
     name: Unit tests
-    if: github.event_name == "push" || !github.event.pull_request.draft
+    if: github.event_name == 'push' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
       - name: Install Rust $RUST_TOOLCHAIN toolchain
@@ -164,7 +164,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: $OS-cargo-${{ hashFiles("**/Cargo.lock") }}
+          key: $OS-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             $OS-cargo-
 
@@ -173,7 +173,7 @@ jobs:
         continue-on-error: false
         with:
           path: ${{ matrix.sccache-dir }}
-          key: $OS-sccache-${{ hashFiles("**/Cargo.lock") }}
+          key: $OS-sccache-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             $OS-sccache-
 
@@ -182,7 +182,7 @@ jobs:
 
   external-test:
     name: External test
-    if: github.event_name == "push" || !github.event.pull_request.draft
+    if: github.event_name == 'push' || !github.event.pull_request.draft
     needs: [build-node-and-internal-test]
     runs-on: ubuntu-latest
     steps:
@@ -217,7 +217,7 @@ jobs:
 
   code-checks:
     name: Code checks
-    if: github.event.issue.pull_request && contains(github.event.comment.body, "[BOT CHECK]") && contains(github.event.comment.body, "Codes")
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '[BOT CHECK]') && contains(github.event.comment.body, 'Codes')
     runs-on: ubuntu-latest
     steps:
       - name: Download subalfred
@@ -238,7 +238,7 @@ jobs:
 
   runtime-checks:
     name: Runtime checks
-    if: github.event.issue.pull_request && contains(github.event.comment.body, "[BOT CHECK]") && contains(github.event.comment.body, "Runtime")
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '[BOT CHECK]') && contains(github.event.comment.body, 'Runtime')
     runs-on: ubuntu-latest
     steps:
       - name: Download node
@@ -294,7 +294,7 @@ jobs:
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
           echo "::set-output name=check-pangoro-storage-prefix::$OUTPUT"
 
-      - if: github.ref != "refs/heads/master"
+      - if: github.ref != 'refs/heads/master'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           append: true
@@ -325,7 +325,7 @@ jobs:
 
   clean-artifacts:
     name: Clean artifacts
-    if: (always() && github.event_name == "pull_request") || github.event.action == "closed" || github.event.pull_request.merged == true
+    if: (always() && github.event_name == 'pull_request') || github.event.action == 'closed' || github.event.pull_request.merged == true
     needs: [check-default-features, check-with-node, external-test]
     steps:
       - uses: geekyeggo/delete-artifact@v1
