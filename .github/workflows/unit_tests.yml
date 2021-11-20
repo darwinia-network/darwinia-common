@@ -1,4 +1,4 @@
-name: CI
+name: Unit tests
 on:
   push:
     branches:
@@ -9,8 +9,6 @@ on:
     branches:
       - main
       - master
-  issue_comment:
-    types: [created, edited]
 
 env:
   OS: ubuntu-latest
@@ -214,122 +212,3 @@ jobs:
           cd tests/dvm
           npm install
           npm test
-
-  code-checks:
-    name: Code checks
-    if: contains(github.event.comment.html_url, '/pull/')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download subalfred
-        uses: actions/download-artifact@v2
-        with:
-          name: subalfred
-
-      - name: Uncompress subalfred
-        run: |
-          tar xf subalfred.tar.zst -I pzstd
-          sudo mv subalfred /usr/bin
-
-      - name: Fetch latest code
-        uses: actions/checkout@v2
-
-      - name: Run checker
-        run: subalfred ci default-features -p ../darwinia-common
-
-  runtime-checks:
-    name: Runtime checks
-    if: contains(github.event.comment.html_url, '/pull/')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download node
-        uses: actions/download-artifact@v2
-        with:
-          name: node
-
-      - name: Download subalfred
-        uses: actions/download-artifact@v2
-        with:
-          name: subalfred
-
-      - name: Uncompress node and subalfred
-        run: |
-          tar xf node.tar.zst -I pzstd
-          tar xf subalfred.tar.zst -I pzstd
-          sudo mv node /usr/bin
-          sudo mv subalfred /usr/bin
-
-      - id: check-pangolin-runtime-version
-        name: Check Pangolin runtime version
-        run: |
-          OUTPUT=$(subalfred ci runtime-version -c Pangolin -e node)
-          OUTPUT="${OUTPUT//'%'/'%25'}​"
-          OUTPUT="${OUTPUT//$'\n'/'%0A'}"
-          OUTPUT="${OUTPUT//$'\r'/'%0D'}"
-          echo "::set-output name=check-pangolin-runtime-version::$OUTPUT"
-
-      - id: check-pangolin-storage-prefix
-        name: Check Pangolin storage prefix
-        run: |
-          OUTPUT=$(subalfred ci storage-prefix -c Pangolin -e node)
-          OUTPUT="${OUTPUT//'%'/'%25'}​"
-          OUTPUT="${OUTPUT//$'\n'/'%0A'}"
-          OUTPUT="${OUTPUT//$'\r'/'%0D'}"
-          echo "::set-output name=check-pangolin-storage-prefix::$OUTPUT"
-
-      - id: check-pangoro-runtime-version
-        name: Check Pangoro runtime version
-        run: |
-          OUTPUT=$(subalfred ci runtime-version -c Pangoro -e node)
-          OUTPUT="${OUTPUT//'%'/'%25'}​"
-          OUTPUT="${OUTPUT//$'\n'/'%0A'}"
-          OUTPUT="${OUTPUT//$'\r'/'%0D'}"
-          echo "::set-output name=check-pangoro-runtime-version::$OUTPUT"
-
-      - id: check-pangoro-storage-prefix
-        name: Check Pangoro storage prefix
-        run: |
-          OUTPUT=$(subalfred ci storage-prefix -c Pangoro -e node)
-          OUTPUT="${OUTPUT//'%'/'%25'}​"
-          OUTPUT="${OUTPUT//$'\n'/'%0A'}"
-          OUTPUT="${OUTPUT//$'\r'/'%0D'}"
-          echo "::set-output name=check-pangoro-storage-prefix::$OUTPUT"
-
-      - if: github.ref != 'refs/heads/master'
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          append: true
-          message: |
-            <details>
-            <summary>Commit ${{ github.event.pull_request.head.sha }}</summary>
-
-            **Pangolin**
-            > Check Runtime Version
-            ```diff
-            ${{ steps.check-pangolin-runtime-version.outputs.check-pangolin-runtime-version }}
-            ```
-            > Check Storage Prefix
-            ```diff
-            ${{ steps.check-pangolin-storage-prefix.outputs.check-pangolin-storage-prefix }}
-            ```
-
-            **Pangoro**
-            > Check Runtime Version
-            ```diff
-            ${{ steps.check-pangoro-runtime-version.outputs.check-pangoro-runtime-version }}
-            ```
-            > Check Storage Prefix
-            ```diff
-            ${{ steps.check-pangoro-storage-prefix.outputs.check-pangoro-storage-prefix }}
-            ```
-            </details>
-
-  clean-artifacts:
-    name: Clean artifacts
-    if: github.event_name == 'pull_request' && (github.event.action == 'closed' || github.event.pull_request.merged == true)
-    steps:
-      - uses: geekyeggo/delete-artifact@v1
-        with:
-          name: |
-            subalfred
-            node
-    runs-on: ubuntu-latest
