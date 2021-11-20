@@ -5,6 +5,7 @@ on:
       - main
       - master
   pull_request:
+    types: [opened, synchronize, ready_for_review]
     branches:
       - main
       - master
@@ -12,6 +13,7 @@ on:
 jobs:
   build-subalfred:
     name: Build subalfred
+    if: github.event_name == 'push' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
       - name: Install Rust nightly toolchain
@@ -60,6 +62,7 @@ jobs:
 
   check-rust-code:
     name: Check Rust code
+    if: github.event_name == 'push' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
       - name: Install Rust nightly toolchain
@@ -97,6 +100,7 @@ jobs:
 
   build-node-and-internal-test:
     name: Build node and internal test
+    if: github.event_name == 'push' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
       - name: Install Rust nightly toolchain
@@ -158,6 +162,7 @@ jobs:
 
   check-default-features:
     name: Check default features
+    if: github.event_name == 'push' || !github.event.pull_request.draft
     needs: [build-subalfred]
     runs-on: ubuntu-latest
     steps:
@@ -176,6 +181,7 @@ jobs:
 
   check-with-node:
     name: Check with node
+    if: github.event_name == 'push' || !github.event.pull_request.draft
     needs: [build-subalfred, build-node-and-internal-test]
     runs-on: ubuntu-latest
     steps:
@@ -256,6 +262,7 @@ jobs:
 
   external-test:
     name: External test
+    if: github.event_name == 'push' || !github.event.pull_request.draft
     needs: [build-node-and-internal-test]
     runs-on: ubuntu-latest
     steps:
@@ -285,8 +292,8 @@ jobs:
 
   clean-artifacts:
     name: Clean artifacts
+    if: always() && !github.event.pull_request.draft
     needs: [check-default-features, check-with-node, external-test]
-    if: always()
     steps:
       - uses: geekyeggo/delete-artifact@v1
         with:
