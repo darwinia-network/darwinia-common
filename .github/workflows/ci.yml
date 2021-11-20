@@ -183,7 +183,7 @@ jobs:
   external-test:
     name: External test
     if: github.event_name == 'push' || !github.event.pull_request.draft
-    needs: [build-node-and-internal-test]
+    needs: [build-node]
     runs-on: ubuntu-latest
     steps:
       - name: Download node
@@ -326,7 +326,6 @@ jobs:
   clean-artifacts:
     name: Clean artifacts
     if: (always() && github.event_name == 'pull_request') || github.event.action == 'closed' || github.event.pull_request.merged == true
-    needs: [check-default-features, check-with-node, external-test]
     steps:
       - uses: geekyeggo/delete-artifact@v1
         with:
