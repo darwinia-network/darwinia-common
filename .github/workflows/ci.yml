@@ -62,7 +62,7 @@ jobs:
         uses: actions/cache@v2
         continue-on-error: false
         with:
-          path: ${{ matrix.sccache-dir }}
+          path: ${{ env.SCCACHE_DIR }}
           key: ${{ env.OS }}-sccache-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ env.OS }}-sccache-
@@ -117,7 +117,7 @@ jobs:
         uses: actions/cache@v2
         continue-on-error: false
         with:
-          path: ${{ matrix.sccache-dir }}
+          path: ${{ env.SCCACHE_DIR }}
           key: ${{ env.OS }}-sccache-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ env.OS }}-sccache-
@@ -172,7 +172,7 @@ jobs:
         uses: actions/cache@v2
         continue-on-error: false
         with:
-          path: ${{ matrix.sccache-dir }}
+          path: ${{ env.SCCACHE_DIR }}
           key: ${{ env.OS }}-sccache-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ env.OS }}-sccache-
