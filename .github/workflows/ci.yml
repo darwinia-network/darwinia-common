@@ -249,6 +249,7 @@ jobs:
     name: Code checks
     if: github.event_name == 'push' || !github.event.pull_request.draft
     # if: github.event.issue.pull_request && contains(github.event.comment.body, '/bot check') && contains(github.event.comment.body, 'code')
+    needs: [build-subalfred]
     runs-on: ubuntu-latest
     steps:
       - name: Download subalfred
@@ -271,6 +272,7 @@ jobs:
     name: Runtime checks
     if: github.event_name == 'push' || !github.event.pull_request.draft
     # if: github.event.issue.pull_request && contains(github.event.comment.body, '/bot check') && contains(github.event.comment.body, 'runtime')
+    needs: [build-drml, build-subalfred]
     runs-on: ubuntu-latest
     steps:
       - name: Download drml
