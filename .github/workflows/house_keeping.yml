@@ -5,16 +5,6 @@ on:
       - main
       - master
 
-env:
-  OS: ubuntu-latest
-  RUST_TOOLCHAIN: nightly
-  RUST_BACKTRACE: full
-  RUSTC_WRAPPER: sccache
-  SCCACHE_LINK: https://github.com/mozilla/sccache/releases/download
-  SCCACHE_VERSION: v0.2.15
-  SCCACHE_DIR: /home/runner/.cache/sccache
-  NODE_VERSION: 10
-
 jobs:
   clean-artifacts:
     name: Clean artifacts

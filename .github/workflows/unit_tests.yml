@@ -197,10 +197,10 @@ jobs:
       - name: Launch node
         run: node --unsafe-ws-external --unsafe-rpc-external --rpc-cors all --rpc-methods unsafe --chain pangolin-dev --alice &
 
-      - name: Install nodejs $NODE_VERSION
+      - name: Install nodejs ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v1
         with:
-          node-version: $NODE_VERSION
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Fetch latest code
         uses: actions/checkout@v2
