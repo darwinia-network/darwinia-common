@@ -18,6 +18,8 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+// --- core ---
+use core::marker::PhantomData;
 // --- paritytech ---
 use bp_messages::{
 	source_chain::{LaneMessageVerifier, Sender},
@@ -30,7 +32,7 @@ use bridge_runtime_common::messages::{
 use frame_support::{weights::Weight, Parameter};
 use sp_core::H256;
 use sp_runtime::{traits::Convert, RuntimeDebug};
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_std::prelude::*;
 // --- darwinia-network ---
 use common_primitives::*;
 use darwinia_fee_market::RingBalance;
