@@ -360,6 +360,7 @@ jobs:
   clean-artifacts:
     name: Clean artifacts
     if: always()
+    needs: [code-checks, runtime-checks]
     steps:
       - uses: geekyeggo/delete-artifact@v1
         with:
