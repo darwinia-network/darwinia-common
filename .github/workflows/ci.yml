@@ -1,4 +1,4 @@
-name: Basic checks
+name: Unit/RPC/Runtime tests
 on:
   push:
     branches:
