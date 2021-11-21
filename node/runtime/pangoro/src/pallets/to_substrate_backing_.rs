@@ -1,5 +1,3 @@
-pub use pallet_bridge_messages::Instance1 as Pangolin;
-
 // --- paritytech ---
 use bp_messages::LaneId;
 use bp_runtime::ChainId;

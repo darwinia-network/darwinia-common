@@ -482,7 +482,7 @@ sp_api::impl_runtime_apis! {
 		) -> Vec<bp_messages::MessageDetails<Balance>> {
 			bridge_runtime_common::messages_api::outbound_message_details::<
 				Runtime,
-				pallet_bridge_messages::Instance1,
+				WithPangolinMessages,
 				WithPangolinMessageBridge,
 			>(lane, begin, end)
 		}

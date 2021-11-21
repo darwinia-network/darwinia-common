@@ -32,7 +32,6 @@ use bridge_primitives::{
 	DarwiniaFromThisChainMessageVerifier, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID,
 	PANGORO_PANGOLIN_LANE, WITH_PANGORO_MESSAGES_PALLET_NAME,
 };
-pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
 use dp_s2s::{CallParams, CreatePayload};
 
 /// Message payload for Pangoro -> Pangolin messages.

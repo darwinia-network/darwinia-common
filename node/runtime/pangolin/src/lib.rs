@@ -280,7 +280,7 @@ frame_support::construct_runtime! {
 		// DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Inherent} = 47,
 
 		BridgePangoroMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
-		BridgeDispatch: pallet_bridge_dispatch::{Pallet, Event<T>} = 44,
+		BridgeDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
 		BridgePangoroGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
 		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 
@@ -715,7 +715,7 @@ sp_api::impl_runtime_apis! {
 		) -> Vec<bp_messages::MessageDetails<Balance>> {
 			bridge_runtime_common::messages_api::outbound_message_details::<
 				Runtime,
-				pallet_bridge_messages::Instance1,
+				WithPangoroMessages,
 				WithPangoroMessageBridge,
 			>(lane, begin, end)
 		}

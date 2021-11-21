@@ -3,8 +3,6 @@ pub use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 pub use darwinia_evm_precompile_dispatch::Dispatch;
 pub use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 pub use darwinia_evm_precompile_transfer::Transfer;
-use darwinia_support::s2s::{LatestMessageNoncer, RelayMessageSender};
-use pallet_bridge_messages::Instance1 as Pangoro;
 
 // --- crates.io ---
 use evm::{executor::PrecompileOutput, Context, ExitError};
@@ -21,7 +19,10 @@ use sp_std::marker::PhantomData;
 // --- darwinia-network ---
 use crate::*;
 use darwinia_evm::{runner::stack::Runner, Config, EnsureAddressTruncated, FeeCalculator};
-use darwinia_support::evm::ConcatConverter;
+use darwinia_support::{
+	evm::ConcatConverter,
+	s2s::{LatestMessageNoncer, RelayMessageSender},
+};
 use dp_evm::{Precompile, PrecompileSet};
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
@@ -57,7 +58,7 @@ impl RelayMessageSender for ToPangoroMessageSender {
 			_ if message_pallet_index as usize
 				== <BridgePangoroMessages as PalletInfoAccess>::index() =>
 			{
-				BridgeMessagesCall::<Runtime, Pangoro>::send_message(
+				BridgeMessagesCall::<Runtime, WithPangoroMessages>::send_message(
 					lane_id,
 					payload,
 					fee.saturated_into(),

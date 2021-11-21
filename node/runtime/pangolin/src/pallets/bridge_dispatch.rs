@@ -1,3 +1,5 @@
+pub use pallet_bridge_dispatch::Instance1 as WithPangoroDispatch;
+
 // --- paritytech ---
 use bp_messages::{LaneId, MessageNonce};
 use pallet_bridge_dispatch::Config;
@@ -22,7 +24,7 @@ impl frame_support::traits::Contains<Call> for Sub2SubFilter {
 	}
 }
 
-impl Config for Runtime {
+impl Config<WithPangoroDispatch> for Runtime {
 	type Event = Event;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
