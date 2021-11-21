@@ -53,18 +53,18 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ env.OS }}-cargo-build-${{ env.GITHUB_CACHE_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-cargo-build-
+            ${{ env.OS }}-cargo-build-${{ env.GITHUB_CACHE_VERSION }}-
 
       - name: Save sccache
         uses: actions/cache@v2
         continue-on-error: false
         with:
           path: ${{ env.SCCACHE_DIR }}
-          key: ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-sccache-build--${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ env.OS }}-sccache-build-${{ env.GITHUB_CACHE_VERSION }}--${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-sccache-build-
+            ${{ env.OS }}-sccache-build-${{ env.GITHUB_CACHE_VERSION }}-
 
       - name: Start sccache server
         run: sccache --start-server
@@ -117,18 +117,18 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ env.OS }}-cargo-build-${{ env.GITHUB_CACHE_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-cargo-build-
+            ${{ env.OS }}-cargo-build-${{ env.GITHUB_CACHE_VERSION }}-
 
       - name: Save sccache
         uses: actions/cache@v2
         continue-on-error: false
         with:
           path: ${{ env.SCCACHE_DIR }}
-          key: ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-sccache-build-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ env.OS }}-sccache-build-${{ env.GITHUB_CACHE_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-sccache-build-
+            ${{ env.OS }}-sccache-build-${{ env.GITHUB_CACHE_VERSION }}-
 
       - name: Start sccache server
         run: sccache --start-server
@@ -181,18 +181,18 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ env.OS }}-cargo-test-${{ env.GITHUB_CACHE_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-cargo-test-
+            ${{ env.OS }}-cargo-test-${{ env.GITHUB_CACHE_VERSION }}-
 
       - name: Save sccache
         uses: actions/cache@v2
         continue-on-error: false
         with:
           path: ${{ env.SCCACHE_DIR }}
-          key: ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-sccache-test-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ env.OS }}-sccache-test-${{ env.GITHUB_CACHE_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-sccache-test-
+            ${{ env.OS }}-sccache-test-${{ env.GITHUB_CACHE_VERSION }}-
 
       - name: Start sccache server
         run: sccache --start-server
