@@ -85,7 +85,7 @@ pub const WITH_PANGORO_MESSAGES_PALLET_NAME: &str = "BridgePangoroMessages";
 /// Name of the `FromPangolinInboundLaneApi::latest_received_nonce` runtime method.
 pub const FROM_PANGOLIN_LATEST_RECEIVED_NONCE_METHOD: &str =
 	"FromPangolinInboundLaneApi_latest_received_nonce";
-/// Name of the `FromPangolinInboundLaneApi::latest_onfirmed_nonce` runtime method.
+/// Name of the `FromPangolinInboundLaneApi::latest_confirmed_nonce` runtime method.
 pub const FROM_PANGOLIN_LATEST_CONFIRMED_NONCE_METHOD: &str =
 	"FromPangolinInboundLaneApi_latest_confirmed_nonce";
 /// Name of the `FromPangolinInboundLaneApi::unrewarded_relayers_state` runtime method.
@@ -118,7 +118,7 @@ pub const WITH_PANGOLIN_MESSAGES_PALLET_NAME: &str = "BridgePangolinMessages";
 /// Name of the `FromPangoroInboundLaneApi::latest_received_nonce` runtime method.
 pub const FROM_PANGORO_LATEST_RECEIVED_NONCE_METHOD: &str =
 	"FromPangoroInboundLaneApi_latest_received_nonce";
-/// Name of the `FromPangoroInboundLaneApi::latest_onfirmed_nonce` runtime method.
+/// Name of the `FromPangoroInboundLaneApi::latest_confirmed_nonce` runtime method.
 pub const FROM_PANGORO_LATEST_CONFIRMED_NONCE_METHOD: &str =
 	"FromPangoroInboundLaneApi_latest_confirmed_nonce";
 /// Name of the `FromPangoroInboundLaneApi::unrewarded_relayers_state` runtime method.
@@ -176,23 +176,16 @@ impl Chain for Pangolin {
 	type Signature = Signature;
 }
 
-/// todo: Reserved for other chains, don't forget change bridge_id
-pub fn derive_account_from_pangolin_id(id: SourceAccount<AccountId>) -> AccountId {
-	let encoded_id = bp_runtime::derive_account_id(PANGOLIN_CHAIN_ID, id);
-	AccountIdConverter::convert(encoded_id)
-}
-/// We use this to get the account on Pangoro (target) which is derived from Pangolin's (source)
-/// account. We do this so we can fund the derived account on Pangoro at Genesis to it can pay
-/// transaction fees.
-///
-/// The reason we can use the same `AccountId` type for both chains is because they share the same
-/// development seed phrase.
-///
-/// Note that this should only be used for testing.
-pub fn derive_account_from_pangoro_id(id: SourceAccount<AccountId>) -> AccountId {
-	let encoded_id = bp_runtime::derive_account_id(PANGORO_CHAIN_ID, id);
-	AccountIdConverter::convert(encoded_id)
-}
+// TODO: These types already defined in upstream repo, reuse them would be better.
+pub(crate) type ThisChain<B> = <B as MessageBridge>::ThisChain;
+pub(crate) type AccountIdOf<C> = <C as ChainWithMessages>::AccountId;
+pub(crate) type BalanceOf<C> = <C as ChainWithMessages>::Balance;
+pub(crate) const OUTBOUND_LANE_DISABLED: &str = "The outbound message lane is disabled.";
+pub(crate) const TOO_MANY_PENDING_MESSAGES: &str = "Too many pending messages at the lane.";
+pub(crate) const BAD_ORIGIN: &str = "Unable to match the source origin to expected target origin.";
+pub(crate) const TOO_LOW_FEE: &str =
+	"Provided fee is below minimal threshold required by the lane.";
+pub(crate) const NO_MARKET_FEE: &str = "The fee market are not ready for accepting messages.";
 
 /// Message verifier that is doing all basic checks.
 ///
@@ -211,18 +204,6 @@ pub fn derive_account_from_pangoro_id(id: SourceAccount<AccountId>) -> AccountId
 /// - check that the sender has paid enough funds for both message delivery and dispatch.
 #[derive(RuntimeDebug)]
 pub struct DarwiniaFromThisChainMessageVerifier<B, R>(PhantomData<(B, R)>);
-
-// TODO: These types already defined in upstream repo, reuse them would be better.
-pub(crate) const OUTBOUND_LANE_DISABLED: &str = "The outbound message lane is disabled.";
-pub(crate) const TOO_MANY_PENDING_MESSAGES: &str = "Too many pending messages at the lane.";
-pub(crate) const BAD_ORIGIN: &str = "Unable to match the source origin to expected target origin.";
-pub(crate) const TOO_LOW_FEE: &str =
-	"Provided fee is below minimal threshold required by the lane.";
-pub(crate) const NO_MARKET_FEE: &str = "The fee market are not ready for accepting messages.";
-pub(crate) type ThisChain<B> = <B as MessageBridge>::ThisChain;
-pub(crate) type AccountIdOf<C> = <C as ChainWithMessages>::AccountId;
-pub(crate) type BalanceOf<C> = <C as ChainWithMessages>::Balance;
-
 impl<B, R>
 	LaneMessageVerifier<
 		AccountIdOf<ThisChain<B>>,
@@ -391,4 +372,22 @@ sp_api::decl_runtime_apis! {
 		/// State of the unrewarded relayers set at given lane.
 		fn unrewarded_relayers_state(lane: LaneId) -> UnrewardedRelayersState;
 	}
+}
+
+// todo: Reserved for other chains, don't forget change bridge_id
+pub fn derive_account_from_pangolin_id(id: SourceAccount<AccountId>) -> AccountId {
+	let encoded_id = bp_runtime::derive_account_id(PANGOLIN_CHAIN_ID, id);
+	AccountIdConverter::convert(encoded_id)
+}
+/// We use this to get the account on Pangoro (target) which is derived from Pangolin's (source)
+/// account. We do this so we can fund the derived account on Pangoro at Genesis to it can pay
+/// transaction fees.
+///
+/// The reason we can use the same `AccountId` type for both chains is because they share the same
+/// development seed phrase.
+///
+/// Note that this should only be used for testing.
+pub fn derive_account_from_pangoro_id(id: SourceAccount<AccountId>) -> AccountId {
+	let encoded_id = bp_runtime::derive_account_id(PANGORO_CHAIN_ID, id);
+	AccountIdConverter::convert(encoded_id)
 }
