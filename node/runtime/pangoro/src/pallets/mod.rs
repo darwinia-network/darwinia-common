@@ -49,8 +49,8 @@ pub use sudo::*;
 pub mod scheduler;
 pub use scheduler::*;
 
-pub mod bridge_message;
-pub use bridge_message::*;
+pub mod bridge_messages;
+pub use bridge_messages::*;
 
 pub mod bridge_dispatch;
 pub use bridge_dispatch::*;
