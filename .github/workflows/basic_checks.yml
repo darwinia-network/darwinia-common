@@ -1,4 +1,4 @@
-name: Unit tests
+name: Basic checks
 on:
   push:
     branches:
@@ -19,6 +19,7 @@ env:
   SCCACHE_VERSION: v0.2.15
   SCCACHE_DIR: /home/runner/.cache/sccache
   NODE_VERSION: 10
+  GITHUB_CACHE_VERSION: 0
 
 jobs:
   build-subalfred:
@@ -52,21 +53,30 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ env.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ env.OS }}-cargo-
+            ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-cargo-build-
 
       - name: Save sccache
         uses: actions/cache@v2
         continue-on-error: false
         with:
           path: ${{ env.SCCACHE_DIR }}
-          key: ${{ env.OS }}-sccache-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-sccache-build--${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ env.OS }}-sccache-
+            ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-sccache-build-
+
+      - name: Start sccache server
+        run: sccache --start-server
 
       - name: Build
-        run: cargo b --locked && sccache --show-stats
+        run: cargo b --locked
+
+      - name: Print sccache stats
+        run: sccache --show-stats
+
+      - name: Stop sccache server
+        run: sccache --stop-server || true
 
       - name: Compress subalfred
         run: |
@@ -107,21 +117,30 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ env.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ env.OS }}-cargo-
+            ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-cargo-build-
 
       - name: Save sccache
         uses: actions/cache@v2
         continue-on-error: false
         with:
           path: ${{ env.SCCACHE_DIR }}
-          key: ${{ env.OS }}-sccache-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-sccache-build-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ env.OS }}-sccache-
+            ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-sccache-build-
+
+      - name: Start sccache server
+        run: sccache --start-server
 
       - name: Build
-        run: cargo b --locked && sccache --show-stats
+        run: cargo b --locked
+
+      - name: Print sccache stats
+        run: sccache --show-stats
+
+      - name: Stop sccache server
+        run: sccache --stop-server || true
 
       - name: Compress node
         run: |
@@ -162,21 +181,30 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ env.OS }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ env.OS }}-cargo-
+            ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-cargo-test-
 
       - name: Save sccache
         uses: actions/cache@v2
         continue-on-error: false
         with:
           path: ${{ env.SCCACHE_DIR }}
-          key: ${{ env.OS }}-sccache-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-sccache-test-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ env.OS }}-sccache-
+            ${{ env.OS }}${{ env.GITHUB_CACHE_VERSION }}-sccache-test-
 
-      - name: Build
-        run: cargo t --locked && sccache --show-stats
+      - name: Start sccache server
+        run: sccache --start-server
+
+      - name: Test
+        run: cargo t --locked
+
+      - name: Print sccache stats
+        run: sccache --show-stats
+
+      - name: Stop sccache server
+        run: sccache --stop-server || true
 
   external-test:
     name: External test
@@ -195,7 +223,9 @@ jobs:
           sudo mv node /usr/bin
 
       - name: Launch node
-        run: node --unsafe-ws-external --unsafe-rpc-external --rpc-cors all --rpc-methods unsafe --chain pangolin-dev --alice &
+        run: |
+          node --unsafe-ws-external --unsafe-rpc-external --rpc-cors all --rpc-methods unsafe --chain pangolin-dev --alice &
+          sleep 120
 
       - name: Install nodejs ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v1
