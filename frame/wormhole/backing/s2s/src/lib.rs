@@ -375,7 +375,7 @@ pub mod pallet {
 			)?;
 			<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = used.saturating_add(amount));
 			let message_nonce =
-				T::MessageNoncer::inbound_latest_received_nonce(T::MessageLaneId::get());
+				T::MessageNoncer::inbound_latest_received_nonce(T::MessageLaneId::get()) + 1;
 			let message_id = nonce_to_message_id(&T::MessageLaneId::get(), message_nonce);
 			Self::deposit_event(Event::TokenUnlocked(
 				message_id,
