@@ -31,7 +31,7 @@ use darwinia_support::{
 };
 use dp_contract::{
 	mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams},
-	primitive_types::{abi_decode_bytes4, abi_encode_bytes},
+	abi_util::{abi_decode_bytes4, abi_encode_bytes},
 };
 use dp_evm::Precompile;
 use dp_s2s::{CallParams, CreatePayload};

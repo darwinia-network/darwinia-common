@@ -20,4 +20,4 @@
 
 pub mod ethereum_backing;
 pub mod mapping_token_factory;
-pub mod primitive_types;
+pub mod abi_util;
