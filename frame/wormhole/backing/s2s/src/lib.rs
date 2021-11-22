@@ -54,7 +54,7 @@ use sp_runtime::{
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use darwinia_support::{
-	s2s::{ensure_source_account, nonce_to_message_id, LatestMessageNoncer, TokenMessageId},
+	s2s::{ensure_source_account, LatestMessageNoncer},
 	AccountId,
 };
 use dp_asset::TokenMetadata;
@@ -128,12 +128,12 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// Token registered \[token metadata, sender\]
 		TokenRegistered(TokenMetadata, AccountId<T>),
-		/// Token locked \[message_id, token address, sender, recipient, amount\]
-		TokenLocked(TokenMessageId, H160, AccountId<T>, H160, RingBalance<T>),
-		/// Token unlocked \[message_id, token_address, recipient, amount\]
-		TokenUnlocked(TokenMessageId, H160, AccountId<T>, RingBalance<T>),
-		/// Token locked confirmed from remote \[message_id, user, amount, result\]
-		TokenLockedConfirmed(TokenMessageId, AccountId<T>, RingBalance<T>, bool),
+		/// Token locked \[message_nonce, token address, sender, recipient, amount\]
+		TokenLocked(u64, H160, AccountId<T>, H160, RingBalance<T>),
+		/// Token unlocked \[message_nonce, token_address, recipient, amount\]
+		TokenUnlocked(u64, H160, AccountId<T>, RingBalance<T>),
+		/// Token locked confirmed from remote \[message_nonce, user, amount, result\]
+		TokenLockedConfirmed(u64, AccountId<T>, RingBalance<T>, bool),
 		/// Update remote mapping token factory address \[account\]
 		RemoteMappingFactoryAddressUpdated(AccountId<T>),
 	}
@@ -169,7 +169,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn transaction_infos)]
 	pub type TransactionInfos<T: Config> =
-		StorageMap<_, Identity, TokenMessageId, (AccountId<T>, RingBalance<T>), ValueQuery>;
+		StorageMap<_, Identity, u64, (AccountId<T>, RingBalance<T>), ValueQuery>;
 
 	/// The remote mapping token factory account, here use to ensure the remote caller
 	#[pallet::storage]
@@ -309,14 +309,13 @@ pub mod pallet {
 
 			let message_nonce =
 				T::MessageNoncer::outbound_latest_generated_nonce(T::MessageLaneId::get());
-			let message_id = nonce_to_message_id(&T::MessageLaneId::get(), message_nonce);
 			ensure!(
-				!<TransactionInfos<T>>::contains_key(message_id),
+				!<TransactionInfos<T>>::contains_key(message_nonce),
 				Error::<T>::NonceDuplicated
 			);
-			<TransactionInfos<T>>::insert(message_id, (user.clone(), value));
+			<TransactionInfos<T>>::insert(message_nonce, (user.clone(), value));
 			Self::deposit_event(Event::TokenLocked(
-				message_id,
+				message_nonce,
 				token_address,
 				user,
 				recipient,
@@ -376,9 +375,8 @@ pub mod pallet {
 			<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = used.saturating_add(amount));
 			let message_nonce =
 				T::MessageNoncer::inbound_latest_received_nonce(T::MessageLaneId::get()) + 1;
-			let message_id = nonce_to_message_id(&T::MessageLaneId::get(), message_nonce);
 			Self::deposit_event(Event::TokenUnlocked(
-				message_id,
+				message_nonce,
 				token_address,
 				recipient_id,
 				amount,
@@ -437,8 +435,7 @@ pub mod pallet {
 			}
 			for nonce in messages.begin..=messages.end {
 				let result = messages.message_dispatch_result(nonce);
-				let message_id = nonce_to_message_id(lane, nonce);
-				let (user, amount) = <TransactionInfos<T>>::take(message_id);
+				let (user, amount) = <TransactionInfos<T>>::take(nonce);
 				if amount.is_zero() {
 					continue;
 				}
@@ -456,7 +453,7 @@ pub mod pallet {
 					);
 				}
 				Self::deposit_event(Event::TokenLockedConfirmed(
-					message_id, user, amount, result,
+					nonce, user, amount, result,
 				));
 			}
 			// TODO: The returned weight should be more accurately. See: https://github.com/darwinia-network/darwinia-common/issues/911
