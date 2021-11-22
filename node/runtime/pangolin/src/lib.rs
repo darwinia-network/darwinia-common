@@ -88,9 +88,7 @@ pub use pallet_sudo::Call as SudoCall;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
-use bridge_runtime_common::messages::{
-	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
-};
+use bridge_runtime_common::messages::MessageBridge;
 #[allow(unused)]
 use frame_support::{log, migration};
 use frame_support::{
@@ -279,9 +277,10 @@ frame_support::construct_runtime! {
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
 		// DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Inherent} = 47,
 
-		BridgePangoroMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
-		BridgeDispatch: pallet_bridge_dispatch::{Pallet, Event<T>} = 44,
+		BridgeDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
 		BridgePangoroGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
+		BridgePangoroMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
+
 		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 
 		BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
@@ -702,7 +701,7 @@ sp_api::impl_runtime_apis! {
 			_lane_id: bp_messages::LaneId,
 			payload: ToPangoroMessagePayload,
 		) -> Option<Balance> {
-			estimate_message_dispatch_and_delivery_fee::<WithPangoroMessageBridge>(
+			bridge_runtime_common::messages::source::estimate_message_dispatch_and_delivery_fee::<WithPangoroMessageBridge>(
 				&payload,
 				WithPangoroMessageBridge::RELAYER_FEE_PERCENT,
 			).ok()
