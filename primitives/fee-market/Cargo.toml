@@ -11,7 +11,7 @@ version     = "2.6.10"
 
 [dependencies]
 # parity-bridges-common
-bp-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-1" }
+bp-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-3" }
 # paritytech
 codec         = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
