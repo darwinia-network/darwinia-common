@@ -34,10 +34,15 @@ pub struct Sub2SubMappingTokenFactory;
 impl Sub2SubMappingTokenFactory {
 	/// encode confirm burn and remote unlock deliver message function
 	pub fn encode_confirm_burn_and_remote_unlock(
+		lane_id: &[u8; 4],
 		message_nonce: u64,
 		result: bool,
 	) -> AbiResult<Bytes> {
 		let inputs = vec![
+			Param {
+				name: "lane_id".into(),
+				kind: ParamType::FixedBytes(4),
+			},
 			Param {
 				name: "nonce".into(),
 				kind: ParamType::Uint(64),
@@ -54,7 +59,14 @@ impl Sub2SubMappingTokenFactory {
 			outputs: vec![],
 			constant: false,
 		}
-		.encode_input(vec![Token::Uint(message_nonce.into()), Token::Bool(result)].as_slice())
+		.encode_input(
+			vec![
+				Token::FixedBytes(lane_id.to_vec()),
+				Token::Uint(message_nonce.into()),
+				Token::Bool(result),
+			]
+			.as_slice(),
+		)
 	}
 }
 

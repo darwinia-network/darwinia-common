@@ -297,8 +297,7 @@ pub mod pallet {
 			}
 			for nonce in messages.begin..=messages.end {
 				let result = messages.message_dispatch_result(nonce);
-				if let Ok(input) =
-					smtf::encode_confirm_burn_and_remote_unlock(nonce, result)
+				if let Ok(input) = smtf::encode_confirm_burn_and_remote_unlock(lane, nonce, result)
 				{
 					if let Err(e) = Self::transact_mapping_factory(input) {
 						log::error!("confirm sub<>sub message failed, err {:?}", e);

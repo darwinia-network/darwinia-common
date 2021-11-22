@@ -47,6 +47,5 @@ pub fn abi_encode_bytes(data: &[u8]) -> Vec<u8> {
 }
 
 pub fn abi_encode_u64(data: u64) -> Vec<u8> {
-    ethabi::encode(&[Token::Uint(data.into())])
+	ethabi::encode(&[Token::Uint(data.into())])
 }
-
