@@ -47,7 +47,7 @@ use sp_std::{str, vec::Vec};
 use bp_runtime::ChainId;
 use darwinia_support::{
 	mapping_token::*,
-	s2s::{ensure_source_account, nonce_to_message_id, ToEthAddress},
+	s2s::{ensure_source_account, ToEthAddress},
 	AccountId, ChainName,
 };
 use dp_asset::TokenMetadata;
@@ -297,9 +297,8 @@ pub mod pallet {
 			}
 			for nonce in messages.begin..=messages.end {
 				let result = messages.message_dispatch_result(nonce);
-				let message_id = nonce_to_message_id(lane, nonce);
 				if let Ok(input) =
-					smtf::encode_confirm_burn_and_remote_unlock(message_id.to_vec(), result)
+					smtf::encode_confirm_burn_and_remote_unlock(nonce, result)
 				{
 					if let Err(e) = Self::transact_mapping_factory(input) {
 						log::error!("confirm sub<>sub message failed, err {:?}", e);
