@@ -113,7 +113,7 @@ where
 	) -> Result<Vec<u8>, ExitError> {
 		let lane_id = abi_decode_bytes4(dvm_parser.input)
 			.map_err(|_| ExitError::Other("decode lane id failed".into()))?;
-		let nonce = <S as LatestMessageNoncer>::inbound_latest_received_nonce(lane_id) + 1;
+		let nonce = <S as LatestMessageNoncer>::inbound_latest_received_nonce(lane_id);
 		Ok(abi_encode_bytes(&nonce_to_message_id(&lane_id, nonce)))
 	}
 
