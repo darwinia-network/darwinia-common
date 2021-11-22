@@ -1,7 +1,8 @@
-pub use pallet_bridge_dispatch::Instance1 as WithPangolinDispatch;
+pub use pallet_bridge_dispatch::Instance1 as S2sBridgeDispatch;
 
 // --- paritytech ---
 use bp_messages::{LaneId, MessageNonce};
+use frame_support::traits::Contains;
 use pallet_bridge_dispatch::Config;
 use sp_runtime::{MultiSignature, MultiSigner};
 // --- darwinia-network ---
@@ -10,16 +11,16 @@ use bridge_primitives::AccountIdConverter;
 use pangolin_messages::FromPangolinEncodedCall;
 
 pub struct Sub2SubFilter;
-impl frame_support::traits::Contains<Call> for Sub2SubFilter {
-	fn contains(call: &Call) -> bool {
+impl Contains<Call> for Sub2SubFilter {
+	fn contains(c: &Call) -> bool {
 		matches!(
-			*call,
+			c,
 			Call::Substrate2SubstrateBacking(to_substrate_backing::Call::unlock_from_remote(..))
 		)
 	}
 }
 
-impl Config<WithPangolinDispatch> for Runtime {
+impl Config<S2sBridgeDispatch> for Runtime {
 	type Event = Event;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;

@@ -69,9 +69,7 @@ pub use pallet_sudo::Call as SudoCall;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
-use bridge_runtime_common::messages::{
-	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
-};
+use bridge_runtime_common::messages::MessageBridge;
 #[allow(unused)]
 use frame_support::{log, migration};
 use frame_support::{
@@ -469,7 +467,7 @@ sp_api::impl_runtime_apis! {
 			_lane_id: bp_messages::LaneId,
 			payload: ToPangolinMessagePayload,
 		) -> Option<Balance> {
-			estimate_message_dispatch_and_delivery_fee::<WithPangolinMessageBridge>(
+			bridge_runtime_common::messages::source::estimate_message_dispatch_and_delivery_fee::<WithPangolinMessageBridge>(
 				&payload,
 				WithPangolinMessageBridge::RELAYER_FEE_PERCENT,
 			).ok()
