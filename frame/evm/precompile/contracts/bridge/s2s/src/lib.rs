@@ -27,11 +27,11 @@ use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 use darwinia_evm_precompile_utils::DvmInputParser;
 use darwinia_support::{
 	evm::IntoAccountId,
-	s2s::{nonce_to_message_id, LatestMessageNoncer, RelayMessageSender},
+	s2s::{LatestMessageNoncer, RelayMessageSender},
 };
 use dp_contract::{
 	mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams},
-	abi_util::{abi_decode_bytes4, abi_encode_bytes},
+	abi_util::{abi_decode_bytes4, abi_encode_bytes, abi_encode_u64},
 };
 use dp_evm::Precompile;
 use dp_s2s::{CallParams, CreatePayload};
@@ -44,8 +44,8 @@ use sp_std::vec::Vec;
 
 #[darwinia_evm_precompile_utils::selector]
 enum Action {
-	OutboundLatestGeneratedMessageId = "outbound_latest_generated_message_id(bytes4)",
-	InboundLatestReceivedMessageId = "inbound_latest_received_message_id(bytes4)",
+	OutboundLatestGeneratedNonce = "outbound_latest_generated_nonce(bytes4)",
+	InboundLatestReceivedNonce = "inbound_latest_received_nonce(bytes4)",
 	EncodeUnlockFromRemoteDispatchCall =
 		"encode_unlock_from_remote_dispatch_call(uint32,uint64,uint32,address,bytes,uint256)",
 	EncodeSendMessageDispatchCall =
@@ -70,11 +70,11 @@ where
 		let dvm_parser = DvmInputParser::new(&input)?;
 
 		let output = match Action::from_u32(dvm_parser.selector)? {
-			Action::OutboundLatestGeneratedMessageId => {
-				Self::outbound_latest_generated_message_id(&dvm_parser)?
+			Action::OutboundLatestGeneratedNonce => {
+				Self::outbound_latest_generated_nonce(&dvm_parser)?
 			}
-			Action::InboundLatestReceivedMessageId => {
-				Self::inbound_latest_received_message_id(&dvm_parser)?
+			Action::InboundLatestReceivedNonce => {
+				Self::inbound_latest_received_nonce(&dvm_parser)?
 			}
 			Action::EncodeUnlockFromRemoteDispatchCall => {
 				Self::encode_unlock_from_remote_dispatch_call(&dvm_parser, context.caller)?
@@ -99,22 +99,22 @@ where
 	T: from_substrate_issuing::Config,
 	S: RelayMessageSender + LatestMessageNoncer,
 {
-	fn outbound_latest_generated_message_id(
+	fn outbound_latest_generated_nonce(
 		dvm_parser: &DvmInputParser,
 	) -> Result<Vec<u8>, ExitError> {
 		let lane_id = abi_decode_bytes4(dvm_parser.input)
 			.map_err(|_| ExitError::Other("decode lane id failed".into()))?;
 		let nonce = <S as LatestMessageNoncer>::outbound_latest_generated_nonce(lane_id);
-		Ok(abi_encode_bytes(&nonce_to_message_id(&lane_id, nonce)))
+		Ok(abi_encode_u64(nonce))
 	}
 
-	fn inbound_latest_received_message_id(
+	fn inbound_latest_received_nonce(
 		dvm_parser: &DvmInputParser,
 	) -> Result<Vec<u8>, ExitError> {
 		let lane_id = abi_decode_bytes4(dvm_parser.input)
 			.map_err(|_| ExitError::Other("decode lane id failed".into()))?;
 		let nonce = <S as LatestMessageNoncer>::inbound_latest_received_nonce(lane_id);
-		Ok(abi_encode_bytes(&nonce_to_message_id(&lane_id, nonce)))
+		Ok(abi_encode_u64(nonce))
 	}
 
 	fn encode_unlock_from_remote_dispatch_call(

@@ -45,3 +45,8 @@ pub fn abi_decode_bytes(data: &[u8]) -> AbiResult<Vec<u8>> {
 pub fn abi_encode_bytes(data: &[u8]) -> Vec<u8> {
 	ethabi::encode(&[Token::Bytes(data.to_vec())])
 }
+
+pub fn abi_encode_u64(data: u64) -> Vec<u8> {
+    ethabi::encode(&[Token::Uint(data.into())])
+}
+
