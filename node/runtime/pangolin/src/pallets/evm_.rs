@@ -3,8 +3,6 @@ pub use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 pub use darwinia_evm_precompile_dispatch::Dispatch;
 pub use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 pub use darwinia_evm_precompile_transfer::Transfer;
-use darwinia_support::s2s::{LatestMessageNoncer, RelayMessageSender};
-use pallet_bridge_messages::Instance1 as Pangoro;
 
 // --- crates.io ---
 use evm::{executor::PrecompileOutput, Context, ExitError};
@@ -58,7 +56,7 @@ impl RelayMessageSender for ToPangoroMessageSender {
 			_ if message_pallet_index as usize
 				== <BridgePangoroMessages as PalletInfoAccess>::index() =>
 			{
-				BridgeMessagesCall::<Runtime, Pangoro>::send_message(
+				BridgeMessagesCall::<Runtime, WithPangoroMessages>::send_message(
 					lane_id,
 					payload,
 					fee.saturated_into(),
