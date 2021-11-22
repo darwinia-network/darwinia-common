@@ -70,7 +70,6 @@ impl RelayMessageSender for ToPangoroMessageSender {
 		Ok(call.encode())
 	}
 }
-
 impl LatestMessageNoncer for ToPangoroMessageSender {
 	fn outbound_latest_generated_nonce(lane_id: LaneId) -> u64 {
 		BridgePangoroMessages::outbound_latest_generated_nonce(lane_id).into()
