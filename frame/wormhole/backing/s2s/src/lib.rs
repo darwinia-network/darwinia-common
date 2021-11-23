@@ -180,7 +180,7 @@ pub mod pallet {
 		Blake2_128Concat,
 		BridgeMessageId,
 		(AccountId<T>, RingBalance<T>),
-		ValueQuery,
+		OptionQuery,
 	>;
 
 	/// The remote mapping token factory account, here use to ensure the remote caller
@@ -450,26 +450,24 @@ pub mod pallet {
 			}
 			for nonce in messages.begin..=messages.end {
 				let result = messages.message_dispatch_result(nonce);
-				let (user, amount) = <TransactionInfos<T>>::take((*lane, nonce));
-				if amount.is_zero() {
-					continue;
+				if let Some((user, amount)) = <TransactionInfos<T>>::take((*lane, nonce)) {
+					if !result {
+						// if remote issue mapped token failed, this fund need to transfer token back
+						// to the user. The balance always comes from the user's locked currency while
+						// calling the dispatch call `lock_and_remote_issue`.
+						// This transfer will always successful except some extreme scene, since the
+						// user must lock some currency first, then this transfer can be triggered.
+						let _ = T::RingCurrency::transfer(
+							&Self::pallet_account_id(),
+							&user,
+							amount,
+							KeepAlive,
+						);
+					}
+					Self::deposit_event(Event::TokenLockedConfirmed(
+						*lane, nonce, user, amount, result,
+					));
 				}
-				if !result {
-					// if remote issue mapped token failed, this fund need to transfer token back
-					// to the user. The balance always comes from the user's locked currency while
-					// calling the dispatch call `lock_and_remote_issue`.
-					// This transfer will always successful except some extreme scene, since the
-					// user must lock some currency first, then this transfer can be triggered.
-					let _ = T::RingCurrency::transfer(
-						&Self::pallet_account_id(),
-						&user,
-						amount,
-						KeepAlive,
-					);
-				}
-				Self::deposit_event(Event::TokenLockedConfirmed(
-					*lane, nonce, user, amount, result,
-				));
 			}
 			// TODO: The returned weight should be more accurately. See: https://github.com/darwinia-network/darwinia-common/issues/911
 			<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
