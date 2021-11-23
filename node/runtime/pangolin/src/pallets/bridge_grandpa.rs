@@ -2,7 +2,7 @@ pub use pallet_bridge_grandpa::Instance1 as WithPangoroGrandpa;
 
 // --- paritytech ---
 use bridge_primitives::Pangoro;
-use pallet_bridge_grandpa::{weights::RialtoWeight, Config};
+use pallet_bridge_grandpa::Config;
 // --- darwinia-network ---
 use crate::*;
 use pangoro_constants::DAYS;
@@ -24,6 +24,5 @@ impl Config<WithPangoroGrandpa> for Runtime {
 	type BridgedChain = Pangoro;
 	type MaxRequests = MaxRequests;
 	type HeadersToKeep = HeadersToKeep;
-	// FIXME
-	type WeightInfo = RialtoWeight<Runtime>;
+	type WeightInfo = ();
 }

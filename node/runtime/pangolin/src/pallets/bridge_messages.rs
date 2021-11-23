@@ -2,7 +2,7 @@ pub use pallet_bridge_messages::Instance1 as WithPangoroMessages;
 
 // --- paritytech ---
 use bp_messages::MessageNonce;
-use pallet_bridge_messages::{weights::RialtoWeight, Config};
+use pallet_bridge_messages::Config;
 // --- darwinia-network ---
 use crate::{
 	pangoro_messages::{
@@ -36,8 +36,7 @@ frame_support::parameter_types! {
 
 impl Config<WithPangoroMessages> for Runtime {
 	type Event = Event;
-	// FIXME
-	type WeightInfo = RialtoWeight<Runtime>;
+	type WeightInfo = ();
 	type Parameter = PangolinToPangoroMessagesParameter;
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
 	type MaxUnrewardedRelayerEntriesAtInboundLane = MaxUnrewardedRelayerEntriesAtInboundLane;
