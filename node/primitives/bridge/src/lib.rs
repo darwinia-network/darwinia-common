@@ -27,7 +27,11 @@ use bp_messages::{
 };
 use bp_runtime::{Chain, ChainId, SourceAccount};
 use bridge_runtime_common::messages::{
-	source::FromThisChainMessagePayload, ChainWithMessages, MessageBridge, ThisChainWithMessages,
+	source::{
+		FromThisChainMessagePayload, BAD_ORIGIN, OUTBOUND_LANE_DISABLED, TOO_LOW_FEE,
+		TOO_MANY_PENDING_MESSAGES,
+	},
+	AccountIdOf, BalanceOf, MessageBridge, ThisChain, ThisChainWithMessages,
 };
 use frame_support::{weights::Weight, Parameter};
 use sp_core::H256;
@@ -178,17 +182,6 @@ impl Chain for Pangolin {
 	type Signature = Signature;
 }
 
-// TODO: These types already defined in upstream repo, reuse them would be better.
-pub(crate) type ThisChain<B> = <B as MessageBridge>::ThisChain;
-pub(crate) type AccountIdOf<C> = <C as ChainWithMessages>::AccountId;
-pub(crate) type BalanceOf<C> = <C as ChainWithMessages>::Balance;
-pub(crate) const OUTBOUND_LANE_DISABLED: &str = "The outbound message lane is disabled.";
-pub(crate) const TOO_MANY_PENDING_MESSAGES: &str = "Too many pending messages at the lane.";
-pub(crate) const BAD_ORIGIN: &str = "Unable to match the source origin to expected target origin.";
-pub(crate) const TOO_LOW_FEE: &str =
-	"Provided fee is below minimal threshold required by the lane.";
-pub(crate) const NO_MARKET_FEE: &str = "The fee market are not ready for accepting messages.";
-
 /// Message verifier that is doing all basic checks.
 ///
 /// This verifier assumes following:
@@ -255,6 +248,8 @@ where
 				return Err(TOO_LOW_FEE);
 			}
 		} else {
+			const NO_MARKET_FEE: &str = "The fee market are not ready for accepting messages.";
+
 			return Err(NO_MARKET_FEE);
 		}
 
