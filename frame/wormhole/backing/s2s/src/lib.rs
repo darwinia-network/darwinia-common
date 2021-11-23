@@ -450,8 +450,7 @@ pub mod pallet {
 			}
 			for nonce in messages.begin..=messages.end {
 				let result = messages.message_dispatch_result(nonce);
-				let message_id: BridgeMessageId = (*lane, nonce);
-				let (user, amount) = <TransactionInfos<T>>::take(message_id);
+				let (user, amount) = <TransactionInfos<T>>::take((*lane, nonce));
 				if amount.is_zero() {
 					continue;
 				}
