@@ -287,10 +287,10 @@ impl MessageDeliveryAndDispatchPayment<AccountId, TestMessageFee>
 	}
 
 	fn pay_relayers_rewards(
-		_lane_id: LaneId,
+		lane_id: LaneId,
 		message_relayers: VecDeque<UnrewardedRelayer<AccountId>>,
 		confirmation_relayer: &AccountId,
-		_received_range: &RangeInclusive<MessageNonce>,
+		received_range: &RangeInclusive<MessageNonce>,
 		relayer_fund_account: &AccountId,
 	) {
 		let RewardsBook {
@@ -298,7 +298,12 @@ impl MessageDeliveryAndDispatchPayment<AccountId, TestMessageFee>
 			confirmation_relayer_rewards,
 			assigned_relayers_rewards,
 			treasury_total_rewards,
-		} = slash_and_calculate_rewards::<Test, ()>(message_relayers, relayer_fund_account);
+		} = slash_and_calculate_rewards::<Test, ()>(
+			lane_id,
+			message_relayers,
+			received_range,
+			relayer_fund_account,
+		);
 		let confimation_key = (
 			b":relayer-reward:",
 			confirmation_relayer,
@@ -421,7 +426,6 @@ frame_support::parameter_types! {
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 	pub const MinimumRelayFee: Balance = 30;
 	pub const CollateralPerOrder: Balance = 100;
-	pub const AssignedRelayersNumber: u64 = 3;
 	pub const Slot: u64 = 50;
 
 	pub const AssignedRelayersRewardRatio: Permill = Permill::from_percent(60);
@@ -449,7 +453,6 @@ impl Config for Test {
 	type LockId = FeeMarketLockId;
 	type CollateralPerOrder = CollateralPerOrder;
 	type MinimumRelayFee = MinimumRelayFee;
-	type AssignedRelayersNumber = AssignedRelayersNumber;
 	type Slot = Slot;
 
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
@@ -838,7 +841,6 @@ fn test_callback_order_confirm() {
 		receive_messages_delivery_proof();
 		let order = FeeMarket::order((&lane, &message_nonce)).unwrap();
 		assert_eq!(order.confirm_time, Some(4));
-		assert_eq!(<ConfirmedMessagesThisBlock<Test>>::get().len(), 1);
 		assert!(FeeMarket::market_fee().is_some());
 		assert!(FeeMarket::assigned_relayers().is_some());
 	});
@@ -995,7 +997,6 @@ fn test_payment_cal_reward_with_duplicated_delivery_proof() {
 			},
 		));
 
-		assert_eq!(ConfirmedMessagesThisBlock::<Test>::get().len(), 1);
 		let t: AccountId = <Test as Config>::TreasuryPalletId::get().into_account();
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(t, 70));
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(1, 18));
@@ -1183,7 +1184,6 @@ fn test_clean_order_state_at_the_end_of_block() {
 				..Default::default()
 			},
 		));
-		assert_eq!(ConfirmedMessagesThisBlock::<Test>::get().len(), 4);
 		assert!(FeeMarket::order((&lane1, &nonce1)).is_some());
 		assert!(FeeMarket::order((&lane2, &nonce2)).is_some());
 		assert!(FeeMarket::order((&lane3, &nonce3)).is_some());
@@ -1192,7 +1192,6 @@ fn test_clean_order_state_at_the_end_of_block() {
 		// Check in next block
 		FeeMarket::on_finalize(10);
 		System::set_block_number(1);
-		assert_eq!(ConfirmedMessagesThisBlock::<Test>::get().len(), 0);
 		assert!(FeeMarket::order((&lane1, &nonce1)).is_none());
 		assert!(FeeMarket::order((&lane2, &nonce2)).is_none());
 		assert!(FeeMarket::order((&lane3, &nonce3)).is_none());

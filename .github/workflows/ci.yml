@@ -1,163 +1,254 @@
-name: CI
+name: Unit/RPC/Runtime tests
 on:
   push:
     branches:
       - main
       - master
   pull_request:
+    types: [opened, synchronize, ready_for_review]
     branches:
       - main
       - master
+  # issue_comment:
+  #   types: [created, edited]
+
+env:
+  OS: ubuntu-latest
+  RUST_TOOLCHAIN: nightly
+  RUST_BACKTRACE: full
+  RUSTC_WRAPPER: sccache
+  SCCACHE_LINK: https://github.com/mozilla/sccache/releases/download
+  SCCACHE_VERSION: v0.2.15
+  SCCACHE_DIR: /home/runner/.cache/sccache
+  NODE_VERSION: 10
+  GITHUB_CACHE_VERSION: 0
 
 jobs:
   build-subalfred:
     name: Build subalfred
+    if: github.event_name == 'push' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
-      - name: Install Rust nightly-2021-04-22 toolchain
+      - name: Install Rust ${{ env.RUST_TOOLCHAIN }} toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2021-04-22
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
           default: true
-      - name: Install sccache
-        env:
-          SCCACHE_VERSION: v0.2.15
-          SCCACHE_GCS_KEY: ${{ secrets.SCCACHE_GCS_KEY }}
+
+      - name: Install sccache ${{ env.SCCACHE_VERSION }}
         run: |
-          export SCCACHE_FILE=sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl
-          curl -L https://github.com/mozilla/sccache/releases/download/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz | tar xz
+          export SCCACHE_FILE=sccache-${{ env.SCCACHE_VERSION }}-x86_64-unknown-linux-musl
+          curl -L ${{ env.SCCACHE_LINK }}/${{ env.SCCACHE_VERSION }}/$SCCACHE_FILE.tar.gz | tar xz
           sudo mv -f $SCCACHE_FILE/sccache /usr/bin
           sudo chmod +x /usr/bin/sccache
-          echo $SCCACHE_GCS_KEY > /home/runner/.gsc
+
       - name: Fetch latest code
         uses: actions/checkout@v2
         with:
           repository: l2ust/subalfred
           ref: main
+
+      - name: Cache cargo registry
+        uses: actions/cache@v2
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ env.OS }}-cargo-build-${{ env.GITHUB_CACHE_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ env.OS }}-cargo-build-${{ env.GITHUB_CACHE_VERSION }}-
+
+      - name: Save sccache
+        uses: actions/cache@v2
+        continue-on-error: false
+        with:
+          path: ${{ env.SCCACHE_DIR }}
+          key: ${{ env.OS }}-sccache-build-${{ env.GITHUB_CACHE_VERSION }}--${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ env.OS }}-sccache-build-${{ env.GITHUB_CACHE_VERSION }}-
+
+      - name: Start sccache server
+        run: sccache --start-server
+
       - name: Build
-        env:
-          SCCACHE_GCS_RW_MODE: READ_WRITE
-          SCCACHE_GCS_BUCKET: darwinia-build-cache
-          SCCACHE_GCS_KEY_PATH: /home/runner/.gsc
-          RUSTC_WRAPPER: sccache
-        # uses: actions-rs/cargo@v1
-        # with:
-        #   command: build
-        #   args: --release --locked
-        run: |
-          sccache --show-stats
-          cargo b --release --locked
-          sccache --show-stats
+        run: cargo b --locked
+
+      - name: Print sccache stats
+        run: sccache --show-stats
+
+      - name: Stop sccache server
+        run: sccache --stop-server || true
+
       - name: Compress subalfred
         run: |
-          cp target/release/subalfred .
+          cp target/debug/subalfred .
           tar cf subalfred.tar.zst subalfred -I pzstd
+
       - name: Upload subalfred
         uses: actions/upload-artifact@v2
         with:
           name: subalfred
           path: subalfred.tar.zst
 
-  check-rust-code:
-    name: Check Rust code
+  build-drml:
+    name: Build drml
+    if: github.event_name == 'push' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
-      - name: Install Rust nightly-2021-04-22 toolchain
+      - name: Install Rust ${{ env.RUST_TOOLCHAIN }} toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2021-04-22
-          target: wasm32-unknown-unknown
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
           default: true
-      - name: Install sccache
-        env:
-          SCCACHE_VERSION: v0.2.15
-          SCCACHE_GCS_KEY: ${{ secrets.SCCACHE_GCS_KEY }}
-        run: |
-          export SCCACHE_FILE=sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl
-          curl -L https://github.com/mozilla/sccache/releases/download/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz | tar xz
-          sudo mv -f $SCCACHE_FILE/sccache /usr/bin
-          sudo chmod +x /usr/bin/sccache
-          echo $SCCACHE_GCS_KEY > /home/runner/.gsc
-      - name: Fetch latest code
-        uses: actions/checkout@v2
-      - name: Run checker
-        env:
-          SCCACHE_GCS_RW_MODE: READ_WRITE
-          SCCACHE_GCS_BUCKET: darwinia-build-cache
-          SCCACHE_GCS_KEY_PATH: /home/runner/.gsc
-          RUSTC_WRAPPER: sccache
-        # uses: actions-rs/cargo@v1
-        # with:
-        #   command: check
-        #   args: --locked
-        run: |
-          sccache --show-stats
-          cargo c --locked
-          sccache --show-stats
 
-  build-node-and-internal-test:
-    name: Build node and internal test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install Rust nightly-2021-04-22 toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly-2021-04-22
-          target: wasm32-unknown-unknown
-          default: true
-      - name: Install sccache
-        env:
-          SCCACHE_VERSION: v0.2.15
-          SCCACHE_GCS_KEY: ${{ secrets.SCCACHE_GCS_KEY }}
+      - name: Install sccache ${{ env.SCCACHE_VERSION }}
         run: |
-          export SCCACHE_FILE=sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl
-          curl -L https://github.com/mozilla/sccache/releases/download/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz | tar xz
+          export SCCACHE_FILE=sccache-${{ env.SCCACHE_VERSION }}-x86_64-unknown-linux-musl
+          curl -L ${{ env.SCCACHE_LINK }}/${{ env.SCCACHE_VERSION }}/$SCCACHE_FILE.tar.gz | tar xz
           sudo mv -f $SCCACHE_FILE/sccache /usr/bin
           sudo chmod +x /usr/bin/sccache
-          echo $SCCACHE_GCS_KEY > /home/runner/.gsc
+
       - name: Fetch latest code
         uses: actions/checkout@v2
+
+      - name: Cache cargo registry
+        uses: actions/cache@v2
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ env.OS }}-cargo-build-${{ env.GITHUB_CACHE_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ env.OS }}-cargo-build-${{ env.GITHUB_CACHE_VERSION }}-
+
+      - name: Save sccache
+        uses: actions/cache@v2
+        continue-on-error: false
+        with:
+          path: ${{ env.SCCACHE_DIR }}
+          key: ${{ env.OS }}-sccache-build-${{ env.GITHUB_CACHE_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ env.OS }}-sccache-build-${{ env.GITHUB_CACHE_VERSION }}-
+
+      - name: Start sccache server
+        run: sccache --start-server
+
       - name: Build
-        env:
-          SCCACHE_GCS_RW_MODE: READ_WRITE
-          SCCACHE_GCS_BUCKET: darwinia-build-cache
-          SCCACHE_GCS_KEY_PATH: /home/runner/.gsc
-          RUSTC_WRAPPER: sccache
-        # uses: actions-rs/cargo@v1
-        # with:
-        #   command: build
-        #   args: --release --locked
+        run: cargo b --locked
+
+      - name: Print sccache stats
+        run: sccache --show-stats
+
+      - name: Stop sccache server
+        run: sccache --stop-server || true
+
+      - name: Compress drml
         run: |
-          sccache --show-stats
-          cargo b --release --locked
-          sccache --show-stats
-      - name: Test
-        env:
-          SCCACHE_GCS_RW_MODE: READ_WRITE
-          SCCACHE_GCS_BUCKET: darwinia-build-cache
-          SCCACHE_GCS_KEY_PATH: /home/runner/.gsc
-          RUSTC_WRAPPER: sccache
-          CARGO_INCREMENTAL: 0
-        # uses: actions-rs/cargo@v1
-        # with:
-        #   command: test
-        #   args: --release --all --locked
-        run: |
-          sccache --show-stats
-          cargo test --release --all --locked
-          sccache --show-stats
-      - name: Compress node
-        run: |
-          cp target/release/drml .
-          tar cf node.tar.zst drml -I pzstd
-      - name: Upload node
+          cp target/debug/drml .
+          tar cf drml.tar.zst drml -I pzstd
+
+      - name: Upload drml
         uses: actions/upload-artifact@v2
         with:
-          name: node
-          path: node.tar.zst
+          name: drml
+          path: drml.tar.zst
 
-  check-default-features:
-    name: Check default features
+  unit-tests:
+    name: Unit tests
+    if: github.event_name == 'push' || !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Rust ${{ env.RUST_TOOLCHAIN }} toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          default: true
+
+      - name: Install sccache ${{ env.SCCACHE_VERSION }}
+        run: |
+          export SCCACHE_FILE=sccache-${{ env.SCCACHE_VERSION }}-x86_64-unknown-linux-musl
+          curl -L ${{ env.SCCACHE_LINK }}/${{ env.SCCACHE_VERSION }}/$SCCACHE_FILE.tar.gz | tar xz
+          sudo mv -f $SCCACHE_FILE/sccache /usr/bin
+          sudo chmod +x /usr/bin/sccache
+
+      - name: Fetch latest code
+        uses: actions/checkout@v2
+
+      - name: Cache cargo registry
+        uses: actions/cache@v2
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ env.OS }}-cargo-test-${{ env.GITHUB_CACHE_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ env.OS }}-cargo-test-${{ env.GITHUB_CACHE_VERSION }}-
+
+      - name: Save sccache
+        uses: actions/cache@v2
+        continue-on-error: false
+        with:
+          path: ${{ env.SCCACHE_DIR }}
+          key: ${{ env.OS }}-sccache-test-${{ env.GITHUB_CACHE_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ env.OS }}-sccache-test-${{ env.GITHUB_CACHE_VERSION }}-
+
+      - name: Start sccache server
+        run: sccache --start-server
+
+      - name: Test
+        run: cargo t --locked
+
+      - name: Print sccache stats
+        run: sccache --show-stats
+
+      - name: Stop sccache server
+        run: sccache --stop-server || true
+
+  rpc-tests:
+    name: RPC tests
+    if: github.event_name == 'push' || !github.event.pull_request.draft
+    needs: [build-drml]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download drml
+        uses: actions/download-artifact@v2
+        with:
+          name: drml
+
+      - name: Uncompress drml
+        run: |
+          tar xf drml.tar.zst -I pzstd
+          sudo mv drml /usr/bin
+
+      - name: Launch drml
+        run: |
+          drml --unsafe-ws-external --unsafe-rpc-external --rpc-cors all --rpc-methods unsafe --chain pangolin-dev --alice &
+          sleep 120
+
+      - name: Install nodejs ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Fetch latest code
+        uses: actions/checkout@v2
+
+      - name: Test
+        run: |
+          pwd
+          ls -al
+          cd tests/dvm
+          npm install
+          npm test
+
+  code-checks:
+    name: Code checks
+    if: github.event_name == 'push' || !github.event.pull_request.draft
+    # if: github.event.issue.pull_request && contains(github.event.comment.body, '/bot check') && contains(github.event.comment.body, 'code')
     needs: [build-subalfred]
     runs-on: ubuntu-latest
     steps:
@@ -165,34 +256,42 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: subalfred
+
       - name: Uncompress subalfred
         run: |
           tar xf subalfred.tar.zst -I pzstd
           sudo mv subalfred /usr/bin
+
       - name: Fetch latest code
         uses: actions/checkout@v2
+
       - name: Run checker
         run: subalfred ci default-features -p ../darwinia-common
 
-  check-with-node:
-    name: Check with node
-    needs: [build-subalfred, build-node-and-internal-test]
+  runtime-checks:
+    name: Runtime checks
+    if: github.event_name == 'push' || !github.event.pull_request.draft
+    # if: github.event.issue.pull_request && contains(github.event.comment.body, '/bot check') && contains(github.event.comment.body, 'runtime')
+    needs: [build-drml, build-subalfred]
     runs-on: ubuntu-latest
     steps:
-      - name: Download node
+      - name: Download drml
         uses: actions/download-artifact@v2
         with:
-          name: node
+          name: drml
+
       - name: Download subalfred
         uses: actions/download-artifact@v2
         with:
           name: subalfred
-      - name: Uncompress node and subalfred
+
+      - name: Uncompress drml and subalfred
         run: |
-          tar xf node.tar.zst -I pzstd
+          tar xf drml.tar.zst -I pzstd
           tar xf subalfred.tar.zst -I pzstd
           sudo mv drml /usr/bin
           sudo mv subalfred /usr/bin
+
       - id: check-pangolin-runtime-version
         name: Check Pangolin runtime version
         run: |
@@ -201,6 +300,7 @@ jobs:
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
           echo "::set-output name=check-pangolin-runtime-version::$OUTPUT"
+
       - id: check-pangolin-storage-prefix
         name: Check Pangolin storage prefix
         run: |
@@ -209,6 +309,7 @@ jobs:
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
           echo "::set-output name=check-pangolin-storage-prefix::$OUTPUT"
+
       - id: check-pangoro-runtime-version
         name: Check Pangoro runtime version
         run: |
@@ -217,6 +318,7 @@ jobs:
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
           echo "::set-output name=check-pangoro-runtime-version::$OUTPUT"
+
       - id: check-pangoro-storage-prefix
         name: Check Pangoro storage prefix
         run: |
@@ -225,6 +327,7 @@ jobs:
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
           echo "::set-output name=check-pangoro-storage-prefix::$OUTPUT"
+
       - if: github.ref != 'refs/heads/master'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
@@ -254,43 +357,14 @@ jobs:
             ```
             </details>
 
-  external-test:
-    name: External test
-    needs: [build-node-and-internal-test]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download node
-        uses: actions/download-artifact@v2
-        with:
-          name: node
-      - name: Uncompress node
-        run: |
-          tar xf node.tar.zst -I pzstd
-          sudo mv drml /usr/bin
-      - name: Launch node
-        run: drml --unsafe-ws-external --unsafe-rpc-external --rpc-cors all --rpc-methods unsafe --chain pangolin-dev --alice &
-      - name: Install nodejs 10
-        uses: actions/setup-node@v1
-        with:
-          node-version: 10
-      - name: Fetch latest code
-        uses: actions/checkout@v2
-      - name: DVM test
-        run: |
-          pwd
-          ls -al
-          cd tests/dvm
-          npm install
-          npm test
-
   clean-artifacts:
     name: Clean artifacts
-    needs: [check-default-features, check-with-node, external-test]
     if: always()
+    needs: [code-checks, runtime-checks]
     steps:
       - uses: geekyeggo/delete-artifact@v1
         with:
           name: |
+            drml
             subalfred
-            node
     runs-on: ubuntu-latest

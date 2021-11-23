@@ -57,7 +57,6 @@ pub mod pangolin_messages;
 use pangolin_messages::{ToPangolinMessagePayload, WithPangolinMessageBridge};
 
 pub use common_primitives::{self as pangoro_primitives, self as pangolin_primitives};
-
 pub use pangoro_constants::*;
 
 pub use darwinia_balances::Call as BalancesCall;
@@ -571,6 +570,8 @@ fn migrate() -> Weight {
 	}
 	log::info!("===> End migrate all storage items in TransactionInfos");
 	log::info!("===> All Migrates finished");
+	migration::remove_storage_prefix(b"FeeMarket", b"ConfirmedMessagesThisBlock", &[]);
+	log::info!("===> Remove `ConfirmedMessagesThisBlock` from the fee market");
 	RuntimeBlockWeights::get().max_block
 }
 
@@ -578,11 +579,21 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
+		assert!(migration::have_storage_value(
+			b"FeeMarket",
+			b"ConfirmedMessagesThisBlock",
+			&[]
+		));
 		Ok(())
 	}
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
+		assert!(!migration::have_storage_value(
+			b"FeeMarket",
+			b"ConfirmedMessagesThisBlock",
+			&[]
+		));
 		Ok(())
 	}
 

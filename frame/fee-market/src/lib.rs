@@ -41,7 +41,7 @@ use frame_support::{
 use frame_system::{ensure_signed, pallet_prelude::*};
 use num_traits::Zero;
 use sp_runtime::{traits::Saturating, Permill, SaturatedConversion};
-use sp_std::{default::Default, vec::Vec};
+use sp_std::vec::Vec;
 // --- darwinia-network ---
 use darwinia_support::{
 	balance::{LockFor, LockableCurrency},
@@ -69,9 +69,6 @@ pub mod pallet {
 		/// The minimum fee for relaying.
 		#[pallet::constant]
 		type MinimumRelayFee: Get<RingBalance<Self>>;
-		/// The assigned relayers number for each order.
-		#[pallet::constant]
-		type AssignedRelayersNumber: Get<u64>;
 		/// The collateral relayer need to lock for each order.
 		#[pallet::constant]
 		type CollateralPerOrder: Get<RingBalance<Self>>;
@@ -112,6 +109,8 @@ pub mod pallet {
 		CancelEnrollment(T::AccountId),
 		/// Update collateral slash protect value. \[slash_protect_value\]
 		UpdateCollateralSlashProtect(RingBalance<T>),
+		/// Update market assigned relayers numbers. \[new_assigned_relayers_number\]
+		UpdateAssignedRelayersNumber(u32),
 	}
 
 	#[pallet::error]
@@ -162,24 +161,31 @@ pub mod pallet {
 		Order<T::AccountId, T::BlockNumber, RingBalance<T>>,
 		OptionQuery,
 	>;
-	#[pallet::storage]
-	pub type ConfirmedMessagesThisBlock<T: Config> =
-		StorageValue<_, Vec<(LaneId, MessageNonce)>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn collateral_slash_protect)]
 	pub type CollateralSlashProtect<T: Config> = StorageValue<_, RingBalance<T>, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn assigned_relayers_number)]
+	pub type AssignedRelayersNumber<T: Config> =
+		StorageValue<_, u32, ValueQuery, DefaultAssignedRelayersNumber>;
+	#[pallet::type_value]
+	pub fn DefaultAssignedRelayersNumber() -> u32 {
+		3
+	}
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(_: BlockNumberFor<T>) {
-			// Clean the order's storage when the rewards has been paid off
-			for (lane_id, message_nonce) in <ConfirmedMessagesThisBlock<T>>::get() {
-				<Orders<T>>::remove((lane_id, message_nonce));
+			for ((lane_id, message_nonce), order) in <Orders<T>>::iter() {
+				// Once the order's confirm_time is not None, we consider this order has been rewarded. Hence, clean the storage.
+				if order.confirm_time.is_some() {
+					<Orders<T>>::remove((lane_id, message_nonce));
+				}
 			}
-			<ConfirmedMessagesThisBlock<T>>::kill();
 		}
 	}
 
@@ -322,6 +328,20 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::UpdateCollateralSlashProtect(slash_protect));
 			Ok(().into())
 		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::set_assigned_relayers_number())]
+		#[transactional]
+		pub fn set_assigned_relayers_number(
+			origin: OriginFor<T>,
+			number: u32,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			AssignedRelayersNumber::<T>::put(number);
+
+			Self::update_market();
+			Self::deposit_event(Event::<T>::UpdateAssignedRelayersNumber(number));
+			Ok(().into())
+		}
 	}
 }
 
@@ -341,7 +361,7 @@ impl<T: Config> Pallet<T> {
 			.collect();
 
 		// Select the first `AssignedRelayersNumber` relayers as AssignedRelayer.
-		let assigned_relayers_len = T::AssignedRelayersNumber::get() as usize;
+		let assigned_relayers_len = <AssignedRelayersNumber<T>>::get() as usize;
 		if relayers.len() >= assigned_relayers_len {
 			relayers.sort();
 
