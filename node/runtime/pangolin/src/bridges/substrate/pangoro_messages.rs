@@ -39,7 +39,6 @@ pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessag
 
 #[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
 pub struct ToPangoroOutboundPayLoad;
-
 impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangoroOutboundPayLoad {
 	type Payload = ToPangoroMessagePayload;
 

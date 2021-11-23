@@ -42,7 +42,6 @@ pub const PANGOLIN_S2S_ISSUING_PALLET_INDEX: u8 = 49;
 
 #[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
 pub struct ToPangolinOutboundPayload;
-
 impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangolinOutboundPayload {
 	type Payload = ToPangolinMessagePayload;
 
