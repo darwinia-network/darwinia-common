@@ -2228,6 +2228,8 @@ dependencies = [
 name = "dp-contract"
 version = "2.6.10"
 dependencies = [
+ "array-bytes",
+ "bp-messages",
  "dp-asset",
  "ethabi",
  "ethereum-primitives",

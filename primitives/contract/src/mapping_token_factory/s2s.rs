@@ -27,6 +27,7 @@ use ethabi::{
 	param_type::ParamType, token::Token, Bytes, Error, Function, Param, Result as AbiResult,
 };
 // --- paritytech ---
+use bp_messages::{LaneId, MessageNonce};
 use sp_std::{convert::TryInto, prelude::*};
 
 pub struct Sub2SubMappingTokenFactory;
@@ -34,8 +35,8 @@ pub struct Sub2SubMappingTokenFactory;
 impl Sub2SubMappingTokenFactory {
 	/// encode confirm burn and remote unlock deliver message function
 	pub fn encode_confirm_burn_and_remote_unlock(
-		lane_id: &[u8; 4],
-		message_nonce: u64,
+		lane_id: &LaneId,
+		message_nonce: MessageNonce,
 		result: bool,
 	) -> AbiResult<Bytes> {
 		let inputs = vec![
@@ -151,7 +152,7 @@ impl S2sRemoteUnlockInfo {
 #[derive(Debug, PartialEq, Eq)]
 pub struct S2sSendMessageParams {
 	pub pallet_index: u32,
-	pub lane_id: [u8; 4],
+	pub lane_id: LaneId,
 	pub payload: Vec<u8>,
 	pub fee: U256,
 }
@@ -179,7 +180,7 @@ impl S2sSendMessageParams {
 				Token::Bytes(payload),
 				Token::Uint(fee),
 			) => {
-				let lane_id: [u8; 4] = lane_id.try_into().map_err(|_| Error::InvalidData)?;
+				let lane_id: LaneId = lane_id.try_into().map_err(|_| Error::InvalidData)?;
 				Ok(Self {
 					pallet_index: pallet_index.low_u32(),
 					lane_id,
