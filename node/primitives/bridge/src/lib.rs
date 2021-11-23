@@ -94,9 +94,9 @@ pub const FROM_PANGOLIN_LATEST_CONFIRMED_NONCE_METHOD: &str =
 pub const FROM_PANGOLIN_UNREWARDED_RELAYERS_STATE: &str =
 	"FromPangolinInboundLaneApi_unrewarded_relayers_state";
 
-/// Name of the `ToPangolinOutboundLaneApi::estimate_message_delivery_and_dispatch_fee` runtime method.
-pub const TO_PANGOLIN_ESTIMATE_MESSAGE_FEE_METHOD: &str =
-	"ToPangolinOutboundLaneApi_estimate_message_delivery_and_dispatch_fee";
+// /// Name of the `ToPangolinOutboundLaneApi::estimate_message_delivery_and_dispatch_fee` runtime method.
+// pub const TO_PANGOLIN_ESTIMATE_MESSAGE_FEE_METHOD: &str =
+// 	"ToPangolinOutboundLaneApi_estimate_message_delivery_and_dispatch_fee";
 /// Name of the `ToPangolinOutboundLaneApi::message_details` runtime method.
 pub const TO_PANGOLIN_MESSAGE_DETAILS_METHOD: &str = "ToPangolinOutboundLaneApi_message_details";
 /// Name of the `ToPangolinOutboundLaneApi::latest_generated_nonce` runtime method.
@@ -127,9 +127,9 @@ pub const FROM_PANGORO_LATEST_CONFIRMED_NONCE_METHOD: &str =
 pub const FROM_PANGORO_UNREWARDED_RELAYERS_STATE: &str =
 	"FromPangoroInboundLaneApi_unrewarded_relayers_state";
 
-/// Name of the `ToPangoroOutboundLaneApi::estimate_message_delivery_and_dispatch_fee` runtime method.
-pub const TO_PANGORO_ESTIMATE_MESSAGE_FEE_METHOD: &str =
-	"ToPangoroOutboundLaneApi_estimate_message_delivery_and_dispatch_fee";
+// /// Name of the `ToPangoroOutboundLaneApi::estimate_message_delivery_and_dispatch_fee` runtime method.
+// pub const TO_PANGORO_ESTIMATE_MESSAGE_FEE_METHOD: &str =
+// 	"ToPangoroOutboundLaneApi_estimate_message_delivery_and_dispatch_fee";
 /// Name of the `ToPangolinOutboundLaneApi::message_details` runtime method.
 pub const TO_PANGORO_MESSAGE_DETAILS_METHOD: &str = "ToPangoroOutboundLaneApi_message_details";
 /// Name of the `ToPangoroOutboundLaneApi::latest_generated_nonce` runtime method.
@@ -278,19 +278,19 @@ sp_api::decl_runtime_apis! {
 	/// This API is implemented by runtimes that are sending messages to Pangolin chain, not the
 	/// Pangolin runtime itself.
 	pub trait ToPangolinOutboundLaneApi<OutboundMessageFee: Parameter, OutboundPayload: Parameter> {
-		/// Estimate message delivery and dispatch fee that needs to be paid by the sender on
-		/// this chain.
-		///
-		/// Returns `None` if message is too expensive to be sent to Pangolin from this chain.
-		///
-		/// Please keep in mind that this method returns lowest message fee required for message
-		/// to be accepted to the lane. It may be good idea to pay a bit over this price to account
-		/// future exchange rate changes and guarantee that relayer would deliver your message
-		/// to the target chain.
-		fn estimate_message_delivery_and_dispatch_fee(
-			lane_id: LaneId,
-			payload: OutboundPayload,
-		) -> Option<OutboundMessageFee>;
+		// /// Estimate message delivery and dispatch fee that needs to be paid by the sender on
+		// /// this chain.
+		// ///
+		// /// Returns `None` if message is too expensive to be sent to Pangolin from this chain.
+		// ///
+		// /// Please keep in mind that this method returns lowest message fee required for message
+		// /// to be accepted to the lane. It may be good idea to pay a bit over this price to account
+		// /// future exchange rate changes and guarantee that relayer would deliver your message
+		// /// to the target chain.
+		// fn estimate_message_delivery_and_dispatch_fee(
+		// 	lane_id: LaneId,
+		// 	payload: OutboundPayload,
+		// ) -> Option<OutboundMessageFee>;
 		/// Returns dispatch weight, encoded payload size and delivery+dispatch fee of all
 		/// messages in given inclusive range.
 		///
@@ -334,19 +334,19 @@ sp_api::decl_runtime_apis! {
 	/// This API is implemented by runtimes that are sending messages to Pangoro chain, not the
 	/// Pangoro runtime itself.
 	pub trait ToPangoroOutboundLaneApi<OutboundMessageFee: Parameter, OutboundPayload: Parameter> {
-		/// Estimate message delivery and dispatch fee that needs to be paid by the sender on
-		/// this chain.
-		///
-		/// Returns `None` if message is too expensive to be sent to Pangoro from this chain.
-		///
-		/// Please keep in mind that this method returns lowest message fee required for message
-		/// to be accepted to the lane. It may be good idea to pay a bit over this price to account
-		/// future exchange rate changes and guarantee that relayer would deliver your message
-		/// to the target chain.
-		fn estimate_message_delivery_and_dispatch_fee(
-			lane_id: LaneId,
-			payload: OutboundPayload,
-		) -> Option<OutboundMessageFee>;
+		// /// Estimate message delivery and dispatch fee that needs to be paid by the sender on
+		// /// this chain.
+		// ///
+		// /// Returns `None` if message is too expensive to be sent to Pangoro from this chain.
+		// ///
+		// /// Please keep in mind that this method returns lowest message fee required for message
+		// /// to be accepted to the lane. It may be good idea to pay a bit over this price to account
+		// /// future exchange rate changes and guarantee that relayer would deliver your message
+		// /// to the target chain.
+		// fn estimate_message_delivery_and_dispatch_fee(
+		// 	lane_id: LaneId,
+		// 	payload: OutboundPayload,
+		// ) -> Option<OutboundMessageFee>;
 		/// Returns dispatch weight, encoded payload size and delivery+dispatch fee of all
 		/// messages in given inclusive range.
 		///

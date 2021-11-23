@@ -463,15 +463,15 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl bridge_primitives::ToPangolinOutboundLaneApi<Block, Balance, ToPangolinMessagePayload> for Runtime {
-		fn estimate_message_delivery_and_dispatch_fee(
-			_lane_id: bp_messages::LaneId,
-			payload: ToPangolinMessagePayload,
-		) -> Option<Balance> {
-			bridge_runtime_common::messages::source::estimate_message_dispatch_and_delivery_fee::<WithPangolinMessageBridge>(
-				&payload,
-				WithPangolinMessageBridge::RELAYER_FEE_PERCENT,
-			).ok()
-		}
+		// fn estimate_message_delivery_and_dispatch_fee(
+		// 	_lane_id: bp_messages::LaneId,
+		// 	payload: ToPangolinMessagePayload,
+		// ) -> Option<Balance> {
+		// 	bridge_runtime_common::messages::source::estimate_message_dispatch_and_delivery_fee::<WithPangolinMessageBridge>(
+		// 		&payload,
+		// 		WithPangolinMessageBridge::RELAYER_FEE_PERCENT,
+		// 	).ok()
+		// }
 
 		fn message_details(
 			lane: bp_messages::LaneId,
