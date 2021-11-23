@@ -546,8 +546,32 @@ sp_api::impl_runtime_apis! {
 }
 
 fn migrate() -> Weight {
-	0
-	// RuntimeBlockWeights::get().max_block
+	use bp_messages::MessageNonce;
+	use frame_support::{Blake2_128Concat, Identity, StorageHasher};
+	log::info!("===> Start migrate all storage items in TransactionInfos(Pallet Sub2SubBacking)");
+	for (message_id, transaction_info) in migration::storage_key_iter::<
+		[u8; 16],
+		(AccountId, Balance),
+		Identity,
+	>(b"Substrate2SubstrateBacking", b"TransactionInfos")
+	.drain()
+	{
+		let mut lane_id: [u8; 4] = Default::default();
+		lane_id.copy_from_slice(&message_id[4..8]);
+
+		let mut nonce: [u8; 8] = Default::default();
+		nonce.copy_from_slice(&message_id[8..]);
+		let hash = Blake2_128Concat::hash(&(lane_id, MessageNonce::from_be_bytes(nonce)).encode());
+		migration::put_storage_value(
+			b"Substrate2SubstrateBacking",
+			b"TransactionInfos",
+			&hash,
+			transaction_info,
+		);
+	}
+	log::info!("===> End migrate all storage items in TransactionInfos");
+	log::info!("===> All Migrates finished");
+	RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
