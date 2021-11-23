@@ -35,7 +35,7 @@ use ethereum_types::{H160, H256, U256};
 use bp_message_dispatch::CallOrigin;
 use bp_messages::{
 	source_chain::{MessagesBridge, OnDeliveryConfirmed},
-	DeliveredMessages, LaneId,
+	BridgeMessageId, DeliveredMessages, LaneId, MessageNonce,
 };
 use bp_runtime::{messages::DispatchFeePayment, ChainId};
 use frame_support::{
@@ -128,12 +128,19 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// Token registered \[token metadata, sender\]
 		TokenRegistered(TokenMetadata, AccountId<T>),
-		/// Token locked \[message_nonce, token address, sender, recipient, amount\]
-		TokenLocked(u64, H160, AccountId<T>, H160, RingBalance<T>),
-		/// Token unlocked \[message_nonce, token_address, recipient, amount\]
-		TokenUnlocked(u64, H160, AccountId<T>, RingBalance<T>),
-		/// Token locked confirmed from remote \[message_nonce, user, amount, result\]
-		TokenLockedConfirmed(u64, AccountId<T>, RingBalance<T>, bool),
+		/// Token locked \[lane_id, message_nonce, token address, sender, recipient, amount\]
+		TokenLocked(
+			LaneId,
+			MessageNonce,
+			H160,
+			AccountId<T>,
+			H160,
+			RingBalance<T>,
+		),
+		/// Token unlocked \[lane_id, message_nonce, token_address, recipient, amount\]
+		TokenUnlocked(LaneId, MessageNonce, H160, AccountId<T>, RingBalance<T>),
+		/// Token locked confirmed from remote \[lane_id, message_nonce, user, amount, result\]
+		TokenLockedConfirmed(LaneId, MessageNonce, AccountId<T>, RingBalance<T>, bool),
 		/// Update remote mapping token factory address \[account\]
 		RemoteMappingFactoryAddressUpdated(AccountId<T>),
 	}
@@ -168,8 +175,13 @@ pub mod pallet {
 	/// `(sender, amount)` the user *sender* lock and remote issuing amount of asset
 	#[pallet::storage]
 	#[pallet::getter(fn transaction_infos)]
-	pub type TransactionInfos<T: Config> =
-		StorageMap<_, Identity, u64, (AccountId<T>, RingBalance<T>), ValueQuery>;
+	pub type TransactionInfos<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		BridgeMessageId,
+		(AccountId<T>, RingBalance<T>),
+		ValueQuery,
+	>;
 
 	/// The remote mapping token factory account, here use to ensure the remote caller
 	#[pallet::storage]
@@ -309,12 +321,14 @@ pub mod pallet {
 
 			let message_nonce =
 				T::MessageNoncer::outbound_latest_generated_nonce(T::MessageLaneId::get());
+			let message_id: BridgeMessageId = (T::MessageLaneId::get(), message_nonce);
 			ensure!(
-				!<TransactionInfos<T>>::contains_key(message_nonce),
+				!<TransactionInfos<T>>::contains_key(message_id),
 				Error::<T>::NonceDuplicated
 			);
-			<TransactionInfos<T>>::insert(message_nonce, (user.clone(), value));
+			<TransactionInfos<T>>::insert(message_id, (user.clone(), value));
 			Self::deposit_event(Event::TokenLocked(
+				T::MessageLaneId::get(),
 				message_nonce,
 				token_address,
 				user,
@@ -376,6 +390,7 @@ pub mod pallet {
 			let message_nonce =
 				T::MessageNoncer::inbound_latest_received_nonce(T::MessageLaneId::get()) + 1;
 			Self::deposit_event(Event::TokenUnlocked(
+				T::MessageLaneId::get(),
 				message_nonce,
 				token_address,
 				recipient_id,
@@ -435,7 +450,8 @@ pub mod pallet {
 			}
 			for nonce in messages.begin..=messages.end {
 				let result = messages.message_dispatch_result(nonce);
-				let (user, amount) = <TransactionInfos<T>>::take(nonce);
+				let message_id: BridgeMessageId = (*lane, nonce);
+				let (user, amount) = <TransactionInfos<T>>::take(message_id);
 				if amount.is_zero() {
 					continue;
 				}
@@ -453,7 +469,7 @@ pub mod pallet {
 					);
 				}
 				Self::deposit_event(Event::TokenLockedConfirmed(
-					nonce, user, amount, result,
+					*lane, nonce, user, amount, result,
 				));
 			}
 			// TODO: The returned weight should be more accurately. See: https://github.com/darwinia-network/darwinia-common/issues/911

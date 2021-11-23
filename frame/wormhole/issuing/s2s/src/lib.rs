@@ -238,9 +238,6 @@ pub mod pallet {
 		/// Redeem Token
 		/// [backing_address, mapping_token, recipient, amount]
 		TokenIssued(H160, H160, H160, U256),
-		/// Token Burned and request Remote unlock
-		/// [spec_version, weight, tokenType, original_token, amount, recipient, fee]
-		TokenBurned(u32, u64, u32, H160, U256, AccountId<T>, U256),
 		/// Set mapping token factory address
 		/// [old, new]
 		MappingFactoryAddressUpdated(H160, H160),
