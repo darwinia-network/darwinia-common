@@ -807,7 +807,7 @@ fn migrate() -> Weight {
 	migration::remove_storage_prefix(b"FeeMarket", b"ConfirmedMessagesThisBlock", &[]);
 	log::info!("===> Remove `ConfirmedMessagesThisBlock` from the fee market");
 
-	migration::move_pallet(b"BridgeDispatch", "BridgePangoroDispatch");
+	migration::move_pallet(b"BridgeDispatch", b"BridgePangoroDispatch");
 	log::info!("Move `BridgeDispatch` to `BridgePangoroDispatch`");
 
 	// 0
