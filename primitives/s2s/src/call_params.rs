@@ -24,7 +24,7 @@ use sp_runtime::{AccountId32, MultiSignature, MultiSigner};
 use sp_std::{vec, vec::Vec};
 // --- darwinia-network ---
 use codec::{Decode, Encode};
-use dp_asset::token::TokenMetadata;
+use dp_asset::TokenMetadata;
 
 /// The parameters box for the pallet runtime call.
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
@@ -72,7 +72,7 @@ impl CreatePayload<AccountId32, MultiSigner, MultiSignature> for () {
 #[cfg(test)]
 mod test {
 	use super::*;
-	use dp_asset::token::TokenMetadata;
+	use dp_asset::TokenMetadata;
 
 	#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 

@@ -7,7 +7,8 @@ use frame_support::PalletId;
 // --- darwinia-network ---
 use crate::{pangolin_messages::ToPangolinOutboundPayload, *};
 use bridge_primitives::{AccountIdConverter, PANGORO_PANGOLIN_LANE};
-use darwinia_support::s2s::LatestMessageNoncer;
+use darwinia_support::{evm::IntoH160, s2s::LatestMessageNoncer};
+use dp_asset::{TokenMetadata, NATIVE_TOKEN_TYPE};
 use to_substrate_backing::Config;
 pub struct PangolinMessageNoncer;
 impl LatestMessageNoncer for PangolinMessageNoncer {
@@ -22,7 +23,12 @@ impl LatestMessageNoncer for PangolinMessageNoncer {
 
 frame_support::parameter_types! {
 	pub const PangolinChainId: ChainId = PANGOLIN_CHAIN_ID;
-	pub const RingPalletId: PalletId = PalletId(*b"da/bring");
+	pub RingMetadata: TokenMetadata = TokenMetadata::new(
+		NATIVE_TOKEN_TYPE,
+		PalletId(*b"da/bring").into_h160(),
+		b"Pangoro Network Native Token".to_vec(),
+		b"ORING".to_vec(),
+		9);
 	pub const S2sBackingPalletId: PalletId = PalletId(*b"da/s2sba");
 	pub const MaxLockRingAmountPerTx: Balance = 10_000 * COIN;
 	pub const BridgePangolinLaneId: LaneId = PANGORO_PANGOLIN_LANE;
@@ -32,7 +38,7 @@ impl Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
 	type PalletId = S2sBackingPalletId;
-	type RingPalletId = RingPalletId;
+	type RingMetadata = RingMetadata;
 	type MaxLockRingAmountPerTx = MaxLockRingAmountPerTx;
 	type RingCurrency = Ring;
 	type BridgedAccountIdConverter = AccountIdConverter;

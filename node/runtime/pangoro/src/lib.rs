@@ -189,7 +189,7 @@ frame_support::construct_runtime!(
 		BridgeDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 18,
 		BridgePangolinGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 19,
 
-		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Config<T>, Event<T>} = 20,
+		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
 		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 22,
 
 		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 23,
@@ -545,10 +545,47 @@ sp_api::impl_runtime_apis! {
 }
 
 fn migrate() -> Weight {
+	// --- paritytech ---
+	use bp_messages::MessageNonce;
+	use frame_support::{Blake2_128Concat, Identity, StorageHasher};
+
+	log::info!("===> Start migrate all storage items in TransactionInfos(Pallet Sub2SubBacking)");
+
+	let mut new_transaction_infos = Vec::new();
+
+	for (message_id, transaction_info) in migration::storage_key_iter::<
+		[u8; 16],
+		(AccountId, Balance),
+		Identity,
+	>(b"Substrate2SubstrateBacking", b"TransactionInfos")
+	.drain()
+	{
+		let mut lane_id: [u8; 4] = Default::default();
+		let mut nonce: [u8; 8] = Default::default();
+
+		lane_id.copy_from_slice(&message_id[4..8]);
+		nonce.copy_from_slice(&message_id[8..]);
+
+		let hash = Blake2_128Concat::hash(&(lane_id, MessageNonce::from_be_bytes(nonce)).encode());
+
+		new_transaction_infos.push((hash, transaction_info));
+	}
+
+	for (hash, transaction_info) in new_transaction_infos.iter() {
+		migration::put_storage_value(
+			b"Substrate2SubstrateBacking",
+			b"TransactionInfos",
+			&hash,
+			transaction_info,
+		);
+	}
+
+	log::info!("===> End migrate all storage items in TransactionInfos");
+
 	migration::remove_storage_prefix(b"FeeMarket", b"ConfirmedMessagesThisBlock", &[]);
+
 	log::info!("===> Remove `ConfirmedMessagesThisBlock` from the fee market");
 
-	// 0
 	RuntimeBlockWeights::get().max_block
 }
 
@@ -556,21 +593,37 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		assert!(migration::have_storage_value(
-			b"FeeMarket",
-			b"ConfirmedMessagesThisBlock",
-			&[]
-		));
+		// --- paritytech ---
+		use frame_support::{Identity, StorageHasher};
+
+		migration::put_storage_value(
+			b"Substrate2SubstrateBacking",
+			b"TransactionInfos",
+			&Identity::hash(&[0u8; 16]).encode(),
+			(AccountId::default(), Balance::default()),
+		);
+
 		Ok(())
 	}
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
+		// --- paritytech ---
+		use bp_messages::MessageNonce;
+		use frame_support::{Blake2_128Concat, StorageHasher};
+
 		assert!(!migration::have_storage_value(
 			b"FeeMarket",
 			b"ConfirmedMessagesThisBlock",
 			&[]
 		));
+
+		assert!(migration::have_storage_value(
+			b"Substrate2SubstrateBacking",
+			b"TransactionInfos",
+			&Blake2_128Concat::hash(&([0u8; 4], MessageNonce::from_be_bytes([0u8; 8])).encode()),
+		));
+
 		Ok(())
 	}
 

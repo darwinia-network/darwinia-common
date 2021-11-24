@@ -19,10 +19,15 @@
 // --- std ---
 use std::str::FromStr;
 // --- crates.io ---
+use array_bytes::hex2bytes_unchecked;
 use codec::{Decode, Encode};
 // --- paritytech ---
 use bp_messages::source_chain::SendMessageArtifacts;
-use frame_support::{dispatch::PostDispatchInfo, traits::MaxEncodedLen, PalletId};
+use bp_runtime::{derive_account_id, SourceAccount};
+
+use frame_support::{
+	assert_err, assert_ok, dispatch::PostDispatchInfo, traits::MaxEncodedLen, PalletId,
+};
 use frame_system::{mocking::*, RawOrigin};
 use sp_runtime::{
 	testing::Header,
@@ -31,7 +36,10 @@ use sp_runtime::{
 };
 // --- darwinia-network ---
 use crate::{self as s2s_backing, *};
-use darwinia_support::s2s::RelayMessageSender;
+use darwinia_support::{
+	evm::{ConcatConverter, IntoAccountId, IntoH160},
+	s2s::RelayMessageSender,
+};
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
@@ -119,11 +127,13 @@ pub struct MockMessagesBridge;
 impl MessagesBridge<AccountId<Test>, Balance, ()> for MockMessagesBridge {
 	type Error = DispatchErrorWithPostInfo<PostDispatchInfo>;
 	fn send_message(
-		_submitter: RawOrigin<AccountId<Test>>,
+		submitter: RawOrigin<AccountId<Test>>,
 		_laneid: [u8; 4],
 		_payload: (),
-		_fee: Balance,
+		fee: Balance,
 	) -> Result<SendMessageArtifacts, Self::Error> {
+		// send fee to fund account [2;32]
+		Ring::transfer(submitter.into(), build_account(2), fee)?;
 		Ok(SendMessageArtifacts {
 			nonce: 0,
 			weight: 0,
@@ -131,10 +141,22 @@ impl MessagesBridge<AccountId<Test>, Balance, ()> for MockMessagesBridge {
 	}
 }
 
+pub struct MockAccountIdConverter;
+impl Convert<H256, AccountId32> for MockAccountIdConverter {
+	fn convert(hash: H256) -> AccountId32 {
+		hash.to_fixed_bytes().into()
+	}
+}
+
 frame_support::parameter_types! {
 	pub const MockChainId: [u8; 4] = [0; 4];
 	pub const MockId: PalletId = PalletId(*b"da/s2sba");
-	pub const RingPalletId: PalletId = PalletId(*b"da/bring");
+	pub RingMetadata: TokenMetadata = TokenMetadata::new(
+		0,
+		PalletId(*b"da/bring").into_h160(),
+		b"Pangoro Network Native Token".to_vec(),
+		b"ORING".to_vec(),
+		9);
 	pub const MaxLockRingAmountPerTx: Balance = 100;
 	pub const BridgePangolinLaneId: [u8; 4] = [0; 4];
 }
@@ -144,11 +166,11 @@ impl Config for Test {
 
 	type PalletId = MockId;
 
-	type RingPalletId = RingPalletId;
+	type RingMetadata = RingMetadata;
 	type MaxLockRingAmountPerTx = MaxLockRingAmountPerTx;
 	type RingCurrency = Ring;
 
-	type BridgedAccountIdConverter = ();
+	type BridgedAccountIdConverter = MockAccountIdConverter;
 	type BridgedChainId = MockChainId;
 
 	type OutboundPayloadCreator = ();
@@ -170,6 +192,10 @@ frame_support::construct_runtime! {
 	}
 }
 
+pub fn build_account(x: u8) -> AccountId32 {
+	AccountId32::decode(&mut &[x; 32][..]).unwrap_or_default()
+}
+
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut storage = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
@@ -183,6 +209,15 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	.assimilate_storage(&mut storage)
 	.unwrap();
 
+	// add some balance to backing account 10 ring
+	let balances = vec![
+		(Backing::pallet_account_id(), 10_000_000_000),
+		(build_account(1), 100),
+	];
+	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
+		.assimilate_storage(&mut storage)
+		.unwrap();
+
 	storage.into()
 }
 
@@ -190,8 +225,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 fn test_back_erc20_dvm_address() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(
-			<Test as s2s_backing::Config>::RingPalletId::get().into_h160(),
-			EthereumAddress::from_str("0x6d6f646c64612f6272696e670000000000000000").unwrap()
+			<Test as s2s_backing::Config>::RingMetadata::get().address,
+			H160::from_str("0x6d6f646c64612f6272696e670000000000000000").unwrap()
 		);
 	});
 }
@@ -201,7 +236,132 @@ fn test_pallet_id_to_dvm_address() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(
 			<Test as s2s_backing::Config>::PalletId::get().into_h160(),
-			EthereumAddress::from_str("0x6d6f646c64612f73327362610000000000000000").unwrap()
+			H160::from_str("0x6d6f646c64612f73327362610000000000000000").unwrap()
+		);
+	});
+}
+
+#[test]
+fn test_backing_account_id() {
+	new_test_ext().execute_with(|| {
+		let expected = hex2bytes_unchecked(
+			// 5EYCAe5gKAhKXbKVquxUAg1Z22qvbkp8Ddmrmp5pCbKRHcs8
+			"0x6d6f646c64612f73327362610000000000000000000000000000000000000000",
+		);
+		let expected_address = AccountId32::decode(&mut &expected[..]).unwrap_or_default();
+		assert_eq!(Backing::pallet_account_id(), expected_address);
+	});
+}
+
+#[test]
+fn test_unlock_from_remote() {
+	new_test_ext().execute_with(|| {
+		// the mapping token factory contract address
+		let mapping_token_factory =
+			H160::from_str("0x61dc46385a09e7ed7688abe6f66bf3d8653618fd").unwrap();
+		// convert dvm address to substrate address
+		let remote_mapping_token_factory_account =
+			ConcatConverter::<AccountId32>::into_account_id(mapping_token_factory);
+		// convert remote address to local derived address
+		let hash = derive_account_id::<AccountId32>(
+			<Test as s2s_backing::Config>::BridgedChainId::get(),
+			SourceAccount::Account(remote_mapping_token_factory_account.clone()),
+		);
+		let derived_mapping_token_factory_address =
+			<Test as s2s_backing::Config>::BridgedAccountIdConverter::convert(hash);
+
+		// ring dvm address (original address)
+		let ring_dvm_address = <Test as s2s_backing::Config>::RingMetadata::get().address;
+
+		// Alice as recipient
+		let recipient_alice = hex2bytes_unchecked(
+			"0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+		);
+		let alice_account = AccountId32::decode(&mut &recipient_alice[..]).unwrap_or_default();
+
+		assert_ok!(Backing::set_remote_mapping_token_factory_account(
+			RawOrigin::Root.into(),
+			remote_mapping_token_factory_account
+		));
+
+		assert_eq!(Ring::free_balance(alice_account.clone()), 0);
+		assert_ok!(Backing::unlock_from_remote(
+			Origin::signed(derived_mapping_token_factory_address.clone()),
+			ring_dvm_address,
+			U256::from(1_000_000),
+			recipient_alice.clone()
+		));
+		assert_err!(
+			Backing::unlock_from_remote(
+				Origin::signed(derived_mapping_token_factory_address.clone()),
+				ring_dvm_address,
+				U256::from(1),
+				recipient_alice
+			),
+			<Error<Test>>::RingDailyLimited
+		);
+		assert_eq!(Ring::free_balance(alice_account), 1_000_000);
+	});
+}
+
+#[test]
+fn test_lock_and_remote_issue() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Backing::lock_and_remote_issue(
+			Origin::signed(build_account(1)),
+			26100,
+			40544000,
+			60,
+			10,
+			H160::from_str("0x0000000000000000000000000000000000000001").unwrap()
+		));
+		assert_eq!(Ring::free_balance(build_account(1)), 30);
+		assert_eq!(Ring::free_balance(build_account(2)), 10);
+		assert_eq!(
+			Ring::free_balance(Backing::pallet_account_id()),
+			10_000_000_060
+		);
+
+		assert_err!(
+			Backing::lock_and_remote_issue(
+				Origin::signed(build_account(1)),
+				26100,
+				40544000,
+				<Test as s2s_backing::Config>::MaxLockRingAmountPerTx::get(),
+				10,
+				H160::from_str("0x0000000000000000000000000000000000000001").unwrap()
+			),
+			<Error<Test>>::RingLockLimited
+		);
+		assert_eq!(Ring::free_balance(build_account(1)), 30);
+		assert_err!(
+			Backing::lock_and_remote_issue(
+				Origin::signed(build_account(0)),
+				26100,
+				40544000,
+				1,
+				1,
+				H160::from_str("0x0000000000000000000000000000000000000001").unwrap()
+			),
+			<Error<Test>>::InsufficientBalance
+		);
+	});
+}
+
+#[test]
+fn test_register_and_remote_create() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Backing::register_and_remote_create(
+			Origin::signed(build_account(1)),
+			26100,
+			40544000,
+			10,
+		));
+		assert_eq!(Ring::free_balance(build_account(1)), 90);
+		assert_eq!(Ring::free_balance(build_account(2)), 10);
+		assert_eq!(
+			Ring::free_balance(Backing::pallet_account_id()),
+			10_000_000_000
 		);
 	});
 }

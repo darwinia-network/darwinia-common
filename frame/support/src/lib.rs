@@ -39,7 +39,6 @@ pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 
 // TODO: Should we move this to `s2s-primitives`?
 pub mod s2s {
-	pub use crate::TokenMessageId;
 	// --- crates.io ---
 	use codec::Encode;
 	// --- darwinia-network ---
@@ -102,14 +101,6 @@ pub mod s2s {
 		ensure!(&target_id == derived_account, BadOrigin);
 		Ok(())
 	}
-
-	/// combine lane id and nonce to TokenMessageId used by token protocol
-	pub fn nonce_to_message_id(lane_id: &LaneId, nonce: u64) -> TokenMessageId {
-		let mut message_id: TokenMessageId = Default::default();
-		message_id[4..8].copy_from_slice(&lane_id[..4]);
-		message_id[8..].copy_from_slice(&nonce.to_be_bytes());
-		message_id
-	}
 }
 
 pub mod mapping_token {
@@ -128,11 +119,5 @@ pub mod mapping_token {
 		mapping_symbol
 	}
 }
-
-/// 128 bit or 16 bytes to identify an unique s2s message
-/// [0..4]  bytes ---- reserved
-/// [4..8]  bytes ---- laneID
-/// [8..16] bytes ---- message nonce
-pub type TokenMessageId = [u8; 16];
 
 pub type ChainName = Vec<u8>;

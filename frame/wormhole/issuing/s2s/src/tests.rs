@@ -24,7 +24,7 @@ use crate::{
 	*, {self as s2s_issuing},
 };
 use darwinia_support::evm::IntoAccountId;
-use dp_asset::token::{TokenMetadata, NATIVE_TOKEN_TYPE};
+use dp_asset::{TokenMetadata, NATIVE_TOKEN_TYPE};
 use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
 use dp_s2s::CallParams;
 use mock::*;
