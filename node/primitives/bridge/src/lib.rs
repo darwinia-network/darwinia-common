@@ -370,21 +370,3 @@ sp_api::decl_runtime_apis! {
 		fn unrewarded_relayers_state(lane: LaneId) -> UnrewardedRelayersState;
 	}
 }
-
-// todo: Reserved for other chains, don't forget change bridge_id
-pub fn derive_account_from_pangolin_id(id: SourceAccount<AccountId>) -> AccountId {
-	let encoded_id = bp_runtime::derive_account_id(PANGOLIN_CHAIN_ID, id);
-	AccountIdConverter::convert(encoded_id)
-}
-/// We use this to get the account on Pangoro (target) which is derived from Pangolin's (source)
-/// account. We do this so we can fund the derived account on Pangoro at Genesis to it can pay
-/// transaction fees.
-///
-/// The reason we can use the same `AccountId` type for both chains is because they share the same
-/// development seed phrase.
-///
-/// Note that this should only be used for testing.
-pub fn derive_account_from_pangoro_id(id: SourceAccount<AccountId>) -> AccountId {
-	let encoded_id = bp_runtime::derive_account_id(PANGORO_CHAIN_ID, id);
-	AccountIdConverter::convert(encoded_id)
-}
