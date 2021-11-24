@@ -4,7 +4,6 @@ pub use pallet_bridge_dispatch::Instance1 as S2sBridgeDispatch;
 use bp_messages::{LaneId, MessageNonce};
 use frame_support::traits::Contains;
 use pallet_bridge_dispatch::Config;
-use sp_runtime::{MultiSignature, MultiSigner};
 // --- darwinia-network ---
 use crate::*;
 use bridge_primitives::AccountIdConverter;
@@ -27,7 +26,7 @@ impl Config<S2sBridgeDispatch> for Runtime {
 	type CallFilter = Sub2SubFilter;
 	type EncodedCall = FromPangolinEncodedCall;
 	type SourceChainAccountId = pangolin_primitives::AccountId;
-	type TargetChainAccountPublic = MultiSigner;
-	type TargetChainSignature = MultiSignature;
+	type TargetChainAccountPublic = AccountPublic;
+	type TargetChainSignature = Signature;
 	type AccountIdConverter = AccountIdConverter;
 }

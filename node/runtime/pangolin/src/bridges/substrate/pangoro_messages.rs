@@ -22,7 +22,7 @@ use frame_support::{
 	RuntimeDebug,
 };
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
-use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128, MultiSignature, MultiSigner};
+use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
@@ -39,11 +39,11 @@ pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessag
 
 #[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
 pub struct ToPangoroOutboundPayLoad;
-impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangoroOutboundPayLoad {
+impl CreatePayload<AccountId, AccountPublic, Signature> for ToPangoroOutboundPayLoad {
 	type Payload = ToPangoroMessagePayload;
 
 	fn create(
-		origin: CallOrigin<AccountId, MultiSigner, MultiSignature>,
+		origin: CallOrigin<AccountId, AccountPublic, Signature>,
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams,

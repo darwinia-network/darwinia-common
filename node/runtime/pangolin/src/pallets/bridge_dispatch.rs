@@ -5,7 +5,6 @@ use bp_messages::{LaneId, MessageNonce};
 use frame_support::traits::Contains;
 use pallet_bridge_dispatch::Config;
 use pangoro_primitives::AccountId;
-use sp_runtime::{MultiSignature, MultiSigner};
 // --- darwinia-network ---
 use crate::{pangoro_messages::FromPangoroEncodedCall, *};
 use bridge_primitives::AccountIdConverter;
@@ -32,7 +31,7 @@ impl Config<S2sBridgeDispatch> for Runtime {
 	type CallFilter = Sub2SubFilter;
 	type EncodedCall = FromPangoroEncodedCall;
 	type SourceChainAccountId = AccountId;
-	type TargetChainAccountPublic = MultiSigner;
-	type TargetChainSignature = MultiSignature;
+	type TargetChainAccountPublic = AccountPublic;
+	type TargetChainSignature = Signature;
 	type AccountIdConverter = AccountIdConverter;
 }

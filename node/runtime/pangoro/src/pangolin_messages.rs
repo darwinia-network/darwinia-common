@@ -24,7 +24,7 @@ use frame_support::{
 	RuntimeDebug,
 };
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
-use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128, MultiSignature, MultiSigner};
+use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
@@ -42,11 +42,11 @@ pub const PANGOLIN_S2S_ISSUING_PALLET_INDEX: u8 = 49;
 
 #[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
 pub struct ToPangolinOutboundPayload;
-impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangolinOutboundPayload {
+impl CreatePayload<AccountId, AccountPublic, Signature> for ToPangolinOutboundPayload {
 	type Payload = ToPangolinMessagePayload;
 
 	fn create(
-		origin: CallOrigin<AccountId, MultiSigner, MultiSignature>,
+		origin: CallOrigin<AccountId, AccountPublic, Signature>,
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams,
