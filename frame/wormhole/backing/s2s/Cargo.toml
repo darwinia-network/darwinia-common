@@ -1,7 +1,7 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet to s2s backing"
-edition     = "2018"
+edition     = "2021"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
 name        = "to-substrate-backing"
