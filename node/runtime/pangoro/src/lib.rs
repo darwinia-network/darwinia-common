@@ -184,9 +184,9 @@ frame_support::construct_runtime!(
 
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 21,
 
-		BridgePangolinMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 17,
-		BridgeDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 18,
+		BridgePangolinDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 18,
 		BridgePangolinGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 19,
+		BridgePangolinMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 17,
 
 		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Config<T>, Event<T>} = 20,
 		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 22,
@@ -546,6 +546,9 @@ sp_api::impl_runtime_apis! {
 fn migrate() -> Weight {
 	migration::remove_storage_prefix(b"FeeMarket", b"ConfirmedMessagesThisBlock", &[]);
 	log::info!("===> Remove `ConfirmedMessagesThisBlock` from the fee market");
+
+	migration::move_pallet(b"BridgeDispatch", "BridgePangolinDispatch");
+	log::info!("Move `BridgeDispatch` to `BridgePangolinDispatch`");
 
 	// 0
 	RuntimeBlockWeights::get().max_block

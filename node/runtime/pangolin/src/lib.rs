@@ -278,7 +278,7 @@ frame_support::construct_runtime! {
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
 		// DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Inherent} = 47,
 
-		BridgeDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
+		BridgePangoroDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
 		BridgePangoroGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
 		BridgePangoroMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
 
@@ -803,8 +803,12 @@ fn migrate() -> Weight {
 	// TODO: Move to S2S
 	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
 	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
+
 	migration::remove_storage_prefix(b"FeeMarket", b"ConfirmedMessagesThisBlock", &[]);
 	log::info!("===> Remove `ConfirmedMessagesThisBlock` from the fee market");
+
+	migration::move_pallet(b"BridgeDispatch", "BridgePangoroDispatch");
+	log::info!("Move `BridgeDispatch` to `BridgePangoroDispatch`");
 
 	// 0
 	RuntimeBlockWeights::get().max_block
