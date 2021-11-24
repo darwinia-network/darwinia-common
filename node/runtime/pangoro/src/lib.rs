@@ -545,10 +545,14 @@ sp_api::impl_runtime_apis! {
 }
 
 fn migrate() -> Weight {
+	// --- paritytech ---
 	use bp_messages::MessageNonce;
 	use frame_support::{Blake2_128Concat, Identity, StorageHasher};
+
 	log::info!("===> Start migrate all storage items in TransactionInfos(Pallet Sub2SubBacking)");
+
 	let mut new_transaction_infos = Vec::new();
+
 	for (message_id, transaction_info) in migration::storage_key_iter::<
 		[u8; 16],
 		(AccountId, Balance),
@@ -557,13 +561,16 @@ fn migrate() -> Weight {
 	.drain()
 	{
 		let mut lane_id: [u8; 4] = Default::default();
-		lane_id.copy_from_slice(&message_id[4..8]);
-
 		let mut nonce: [u8; 8] = Default::default();
+
+		lane_id.copy_from_slice(&message_id[4..8]);
 		nonce.copy_from_slice(&message_id[8..]);
+
 		let hash = Blake2_128Concat::hash(&(lane_id, MessageNonce::from_be_bytes(nonce)).encode());
+
 		new_transaction_infos.push((hash, transaction_info));
 	}
+
 	for (hash, transaction_info) in new_transaction_infos.iter() {
 		migration::put_storage_value(
 			b"Substrate2SubstrateBacking",
@@ -572,10 +579,13 @@ fn migrate() -> Weight {
 			transaction_info,
 		);
 	}
+
 	log::info!("===> End migrate all storage items in TransactionInfos");
+
 	migration::remove_storage_prefix(b"FeeMarket", b"ConfirmedMessagesThisBlock", &[]);
+
 	log::info!("===> Remove `ConfirmedMessagesThisBlock` from the fee market");
-	log::info!("===> All Migrates finished");
+
 	RuntimeBlockWeights::get().max_block
 }
 
@@ -583,16 +593,37 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
+		// --- paritytech ---
+		use frame_support::{Identity, StorageHasher};
+
+		migration::put_storage_value(
+			b"Substrate2SubstrateBacking",
+			b"TransactionInfos",
+			&Identity::hash(&[0u8; 16]).encode(),
+			(AccountId::default(), Balance::default()),
+		);
+
 		Ok(())
 	}
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
+		// --- paritytech ---
+		use bp_messages::MessageNonce;
+		use frame_support::{Blake2_128Concat, StorageHasher};
+
 		assert!(!migration::have_storage_value(
 			b"FeeMarket",
 			b"ConfirmedMessagesThisBlock",
 			&[]
 		));
+
+		assert!(migration::have_storage_value(
+			b"Substrate2SubstrateBacking",
+			b"TransactionInfos",
+			&Blake2_128Concat::hash(&([0u8; 4], MessageNonce::from_be_bytes([0u8; 8])).encode()),
+		));
+
 		Ok(())
 	}
 
