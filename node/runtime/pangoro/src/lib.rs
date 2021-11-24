@@ -71,7 +71,6 @@ pub use pallet_sudo::Call as SudoCall;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
-use bridge_runtime_common::messages::MessageBridge;
 #[allow(unused)]
 use frame_support::{log, migration};
 use frame_support::{
