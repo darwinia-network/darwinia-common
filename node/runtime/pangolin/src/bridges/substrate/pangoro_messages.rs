@@ -27,8 +27,8 @@ use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
 use bridge_primitives::{
-	DarwiniaFromThisChainMessageVerifier, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID,
-	PANGORO_PANGOLIN_LANE, WITH_PANGOLIN_MESSAGES_PALLET_NAME,
+	FromThisChainMessageVerifier, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE,
+	WITH_PANGOLIN_MESSAGES_PALLET_NAME,
 };
 use dp_s2s::{CallParams, CreatePayload};
 
@@ -61,8 +61,7 @@ impl CreatePayload<AccountId, AccountPublic, Signature> for ToPangoroOutboundPay
 }
 
 /// Message verifier for Pangolin -> Pangoro messages.
-pub type ToPangoroMessageVerifier<R> =
-	DarwiniaFromThisChainMessageVerifier<WithPangoroMessageBridge, R>;
+pub type ToPangoroMessageVerifier<R> = FromThisChainMessageVerifier<WithPangoroMessageBridge, R>;
 /// Message payload for Pangoro -> Pangolin messages.
 pub type FromPangoroMessagePayload = FromBridgedChainMessagePayload<WithPangoroMessageBridge>;
 /// Encoded Pangolin Call as it comes from Pangoro.
