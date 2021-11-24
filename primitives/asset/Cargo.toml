@@ -1,7 +1,7 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "Darwinia Asset Primitives"
-edition     = "2018"
+edition     = "2021"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
 name        = "dp-asset"
@@ -11,10 +11,9 @@ version     = "2.6.10"
 
 [dependencies]
 # crates.io
-codec = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
-sha3  = { version = "0.9.1", default-features = false }
-# darwinia-network
-ethereum-primitives = { default-features = false, path = "../ethereum" }
+codec          = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
+ethereum-types = { version = "0.11.0", default-features = false }
+sha3           = { version = "0.9.1", default-features = false }
 # paritytech
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 
@@ -24,9 +23,8 @@ default = ["std"]
 std = [
 	# crates.io
 	"codec/std",
+	"ethereum-types/std",
 	"sha3/std",
-	# darwinia-network
-	"ethereum-primitives/std",
 	# paritytech
 	"sp-std/std",
 

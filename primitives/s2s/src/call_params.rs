@@ -23,7 +23,7 @@ use sp_core::{H160, U256};
 use sp_std::{vec, vec::Vec};
 // --- darwinia-network ---
 use codec::{Decode, Encode};
-use dp_asset::token::TokenMetadata;
+use dp_asset::TokenMetadata;
 
 /// The parameters box for the pallet runtime call.
 #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
@@ -70,7 +70,7 @@ impl<AccountId, Signer, Signature> CreatePayload<AccountId, Signer, Signature> f
 #[cfg(test)]
 mod test {
 	use super::*;
-	use dp_asset::token::TokenMetadata;
+	use dp_asset::TokenMetadata;
 
 	#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
 

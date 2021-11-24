@@ -171,7 +171,6 @@
 		"symbol": "Vec<u8>",
 		"decimal": "u8"
 	},
-	"TokenMessageId": "[u8; 16; TokenMessageId]",
 	"__[TODO.Generalize]__": "",
 	"RelayAuthoritySigner": "EthereumAddress",
 	"RelayAuthorityMessage": "EcdsaMessage",

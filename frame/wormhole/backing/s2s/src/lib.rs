@@ -21,7 +21,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
 
-// FIXME: https://github.com/darwinia-network/darwinia-common/issues/845
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 #[cfg(test)]
@@ -31,13 +30,12 @@ pub mod weight;
 pub use weight::WeightInfo;
 
 // --- crates.io ---
-use ethereum_primitives::EthereumAddress;
 use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
 use bp_message_dispatch::CallOrigin;
 use bp_messages::{
 	source_chain::{MessagesBridge, OnDeliveryConfirmed},
-	DeliveredMessages, LaneId,
+	BridgeMessageId, DeliveredMessages, LaneId, MessageNonce,
 };
 use bp_runtime::{messages::DispatchFeePayment, ChainId};
 use frame_support::{
@@ -56,15 +54,11 @@ use sp_runtime::{
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use darwinia_support::{
-	evm::IntoH160,
-	s2s::{ensure_source_account, nonce_to_message_id, LatestMessageNoncer, TokenMessageId},
+	s2s::{ensure_source_account, LatestMessageNoncer},
 	AccountId,
 };
-use dp_asset::token::{TokenMetadata, NATIVE_TOKEN_TYPE};
-use dp_s2s::{
-	token_info::{RING_DECIMAL, RING_NAME, RING_SYMBOL},
-	CallParams, CreatePayload,
-};
+use dp_asset::TokenMetadata;
+use dp_s2s::{CallParams, CreatePayload};
 
 pub type Balance = u128;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
@@ -87,9 +81,9 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
-		/// The ring balance pallet id
+		/// The local ring metadata
 		#[pallet::constant]
-		type RingPalletId: Get<PalletId>;
+		type RingMetadata: Get<TokenMetadata>;
 
 		/// The max lock amount per transaction for security.
 		#[pallet::constant]
@@ -134,38 +128,31 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// Token registered \[token metadata, sender\]
 		TokenRegistered(TokenMetadata, AccountId<T>),
-		/// Token locked \[message_id, token address, sender, recipient, amount\]
+		/// Token locked \[lane_id, message_nonce, token address, sender, recipient, amount\]
 		TokenLocked(
-			TokenMessageId,
+			LaneId,
+			MessageNonce,
 			H160,
 			AccountId<T>,
-			EthereumAddress,
+			H160,
 			RingBalance<T>,
 		),
-		/// Token unlocked \[message_id, token_address, recipient, amount\]
-		TokenUnlocked(TokenMessageId, H160, AccountId<T>, RingBalance<T>),
-		/// Token locked confirmed from remote \[message_id, user, amount, result\]
-		TokenLockedConfirmed(TokenMessageId, AccountId<T>, RingBalance<T>, bool),
+		/// Token unlocked \[lane_id, message_nonce, token_address, recipient, amount\]
+		TokenUnlocked(LaneId, MessageNonce, H160, AccountId<T>, RingBalance<T>),
+		/// Token locked confirmed from remote \[lane_id, message_nonce, user, amount, result\]
+		TokenLockedConfirmed(LaneId, MessageNonce, AccountId<T>, RingBalance<T>, bool),
 		/// Update remote mapping token factory address \[account\]
 		RemoteMappingFactoryAddressUpdated(AccountId<T>),
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Currently we only support native token transfer comes from s2s bridge.
-		Erc20NotSupported,
-		/// Invalid token type.
-		InvalidTokenType,
-		/// Invalid token value.
-		InvalidTokenValue,
 		/// Insufficient balance.
 		InsufficientBalance,
 		/// Ring Lock LIMITED.
 		RingLockLimited,
 		/// Redeem Daily Limited
 		RingDailyLimited,
-		/// Invalid source origin.
-		InvalidOrigin,
 		/// Message nonce duplicated.
 		NonceDuplicated,
 		/// Unsupported token
@@ -188,8 +175,13 @@ pub mod pallet {
 	/// `(sender, amount)` the user *sender* lock and remote issuing amount of asset
 	#[pallet::storage]
 	#[pallet::getter(fn transaction_infos)]
-	pub type TransactionInfos<T: Config> =
-		StorageMap<_, Identity, TokenMessageId, (AccountId<T>, RingBalance<T>), ValueQuery>;
+	pub type TransactionInfos<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		BridgeMessageId,
+		(AccountId<T>, RingBalance<T>),
+		OptionQuery,
+	>;
 
 	/// The remote mapping token factory account, here use to ensure the remote caller
 	#[pallet::storage]
@@ -257,19 +249,11 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 
-			let token_metadata = TokenMetadata::new(
-				NATIVE_TOKEN_TYPE,
-				T::RingPalletId::get().into_h160(),
-				RING_NAME.to_vec(),
-				RING_SYMBOL.to_vec(),
-				RING_DECIMAL,
-			);
-
 			let payload = T::OutboundPayloadCreator::create(
 				CallOrigin::SourceAccount(Self::pallet_account_id()),
 				spec_version,
 				weight,
-				CallParams::S2sIssuingPalletRegisterFromRemote(token_metadata.clone()),
+				CallParams::S2sIssuingPalletRegisterFromRemote(T::RingMetadata::get()),
 				DispatchFeePayment::AtSourceChain,
 			)?;
 			// this pallet account as the submitter of the remote message
@@ -282,7 +266,7 @@ pub mod pallet {
 				fee,
 			)?;
 
-			Self::deposit_event(Event::TokenRegistered(token_metadata, user));
+			Self::deposit_event(Event::TokenRegistered(T::RingMetadata::get(), user));
 			Ok(().into())
 		}
 
@@ -297,7 +281,7 @@ pub mod pallet {
 			weight: u64,
 			#[pallet::compact] value: RingBalance<T>,
 			#[pallet::compact] fee: RingBalance<T>,
-			recipient: EthereumAddress,
+			recipient: H160,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 
@@ -316,7 +300,7 @@ pub mod pallet {
 
 			// Send to the target chain
 			let amount: U256 = value.saturated_into::<u128>().into();
-			let token_address = T::RingPalletId::get().into_h160();
+			let token_address = T::RingMetadata::get().address;
 
 			let payload = T::OutboundPayloadCreator::create(
 				CallOrigin::SourceAccount(Self::pallet_account_id()),
@@ -337,14 +321,15 @@ pub mod pallet {
 
 			let message_nonce =
 				T::MessageNoncer::outbound_latest_generated_nonce(T::MessageLaneId::get());
-			let message_id = nonce_to_message_id(&T::MessageLaneId::get(), message_nonce);
+			let message_id: BridgeMessageId = (T::MessageLaneId::get(), message_nonce);
 			ensure!(
 				!<TransactionInfos<T>>::contains_key(message_id),
 				Error::<T>::NonceDuplicated
 			);
 			<TransactionInfos<T>>::insert(message_id, (user.clone(), value));
 			Self::deposit_event(Event::TokenLocked(
-				message_id,
+				T::MessageLaneId::get(),
+				message_nonce,
 				token_address,
 				user,
 				recipient,
@@ -370,7 +355,7 @@ pub mod pallet {
 			)?;
 			// Check call params
 			ensure!(
-				token_address == T::RingPalletId::get().into_h160(),
+				token_address == T::RingMetadata::get().address,
 				<Error<T>>::UnsupportedToken
 			);
 
@@ -403,10 +388,10 @@ pub mod pallet {
 			)?;
 			<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = used.saturating_add(amount));
 			let message_nonce =
-				T::MessageNoncer::inbound_latest_received_nonce(T::MessageLaneId::get());
-			let message_id = nonce_to_message_id(&T::MessageLaneId::get(), message_nonce);
+				T::MessageNoncer::inbound_latest_received_nonce(T::MessageLaneId::get()) + 1;
 			Self::deposit_event(Event::TokenUnlocked(
-				message_id,
+				T::MessageLaneId::get(),
+				message_nonce,
 				token_address,
 				recipient_id,
 				amount,
@@ -463,35 +448,29 @@ pub mod pallet {
 			if *lane != T::MessageLaneId::get() {
 				return 0;
 			}
-			let mut weight = 0 as Weight;
 			for nonce in messages.begin..=messages.end {
 				let result = messages.message_dispatch_result(nonce);
-				let message_id = nonce_to_message_id(lane, nonce);
-				let (user, amount) = <TransactionInfos<T>>::take(message_id);
-				if amount.is_zero() {
-					continue;
+				if let Some((user, amount)) = <TransactionInfos<T>>::take((*lane, nonce)) {
+					if !result {
+						// if remote issue mapped token failed, this fund need to transfer token back
+						// to the user. The balance always comes from the user's locked currency while
+						// calling the dispatch call `lock_and_remote_issue`.
+						// This transfer will always successful except some extreme scene, since the
+						// user must lock some currency first, then this transfer can be triggered.
+						let _ = T::RingCurrency::transfer(
+							&Self::pallet_account_id(),
+							&user,
+							amount,
+							KeepAlive,
+						);
+					}
+					Self::deposit_event(Event::TokenLockedConfirmed(
+						*lane, nonce, user, amount, result,
+					));
 				}
-				if !result {
-					// if remote issue mapped token failed, this fund need to transfer token back
-					// to the user. The balance always comes from the user's locked currency while
-					// calling the dispatch call `lock_and_remote_issue`.
-					// This transfer will always successful except some extreme scene, since the
-					// user must lock some currency first, then this transfer can be triggered.
-					let _ = T::RingCurrency::transfer(
-						&Self::pallet_account_id(),
-						&user,
-						amount,
-						KeepAlive,
-					);
-				}
-				Self::deposit_event(Event::TokenLockedConfirmed(
-					message_id, user, amount, result,
-				));
-				weight = weight.saturating_add(
-					<T as frame_system::Config>::DbWeight::get().reads_writes(2, 3),
-				);
 			}
-			weight
+			// TODO: The returned weight should be more accurately. See: https://github.com/darwinia-network/darwinia-common/issues/911
+			<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
 		}
 	}
 }

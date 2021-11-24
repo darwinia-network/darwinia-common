@@ -27,6 +27,7 @@ use ethabi::{
 	param_type::ParamType, token::Token, Bytes, Error, Function, Param, Result as AbiResult,
 };
 // --- paritytech ---
+use bp_messages::{LaneId, MessageNonce};
 use sp_std::{convert::TryInto, prelude::*};
 
 pub struct Sub2SubMappingTokenFactory;
@@ -34,13 +35,18 @@ pub struct Sub2SubMappingTokenFactory;
 impl Sub2SubMappingTokenFactory {
 	/// encode confirm burn and remote unlock deliver message function
 	pub fn encode_confirm_burn_and_remote_unlock(
-		message_id: Vec<u8>,
+		lane_id: &LaneId,
+		message_nonce: MessageNonce,
 		result: bool,
 	) -> AbiResult<Bytes> {
 		let inputs = vec![
 			Param {
-				name: "messageId".into(),
-				kind: ParamType::Bytes,
+				name: "lane_id".into(),
+				kind: ParamType::FixedBytes(4),
+			},
+			Param {
+				name: "nonce".into(),
+				kind: ParamType::Uint(64),
 			},
 			Param {
 				name: "result".into(),
@@ -54,7 +60,14 @@ impl Sub2SubMappingTokenFactory {
 			outputs: vec![],
 			constant: false,
 		}
-		.encode_input(vec![Token::Bytes(message_id), Token::Bool(result)].as_slice())
+		.encode_input(
+			vec![
+				Token::FixedBytes(lane_id.to_vec()),
+				Token::Uint(message_nonce.into()),
+				Token::Bool(result),
+			]
+			.as_slice(),
+		)
 	}
 }
 
@@ -139,7 +152,7 @@ impl S2sRemoteUnlockInfo {
 #[derive(Debug, PartialEq, Eq)]
 pub struct S2sSendMessageParams {
 	pub pallet_index: u32,
-	pub lane_id: [u8; 4],
+	pub lane_id: LaneId,
 	pub payload: Vec<u8>,
 	pub fee: U256,
 }
@@ -167,7 +180,7 @@ impl S2sSendMessageParams {
 				Token::Bytes(payload),
 				Token::Uint(fee),
 			) => {
-				let lane_id: [u8; 4] = lane_id.try_into().map_err(|_| Error::InvalidData)?;
+				let lane_id: LaneId = lane_id.try_into().map_err(|_| Error::InvalidData)?;
 				Ok(Self {
 					pallet_index: pallet_index.low_u32(),
 					lane_id,
@@ -178,24 +191,4 @@ impl S2sSendMessageParams {
 			_ => Err(Error::InvalidData),
 		}
 	}
-}
-
-pub fn abi_decode_bytes4(data: &[u8]) -> AbiResult<[u8; 4]> {
-	let tokens = ethabi::decode(&[ParamType::FixedBytes(4)], &data)?;
-	if let Token::FixedBytes(decoded) = tokens[0].clone() {
-		let decoded: [u8; 4] = decoded.try_into().map_err(|_| Error::InvalidData)?;
-		return Ok(decoded);
-	}
-	Err(Error::InvalidData)
-}
-
-pub fn abi_encode_bytes(data: Vec<u8>) -> Vec<u8> {
-	ethabi::encode(&[Token::Bytes(data)])
-}
-
-pub fn to_bytes32(raw: &[u8]) -> [u8; 32] {
-	let mut result = [0u8; 32];
-	let encoded = ethabi::encode(&[Token::FixedBytes(raw.to_vec())]);
-	result.copy_from_slice(&encoded);
-	result
 }

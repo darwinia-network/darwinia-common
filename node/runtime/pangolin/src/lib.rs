@@ -818,11 +818,6 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		assert!(migration::have_storage_value(
-			b"FeeMarket",
-			b"ConfirmedMessagesThisBlock",
-			&[]
-		));
 		Ok(())
 	}
 

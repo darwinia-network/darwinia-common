@@ -19,6 +19,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod call_params;
-pub mod token_info;
 
 pub use call_params::{CallParams, CreatePayload};
