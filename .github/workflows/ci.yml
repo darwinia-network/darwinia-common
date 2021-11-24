@@ -4,11 +4,19 @@ on:
     branches:
       - main
       - master
+    paths:
+      - "**.rs"
+      - "**.toml"
+      - "**.lock"
   pull_request:
     types: [opened, synchronize, ready_for_review]
     branches:
       - main
       - master
+    paths:
+      - "**.rs"
+      - "**.toml"
+      - "**.lock"
   # issue_comment:
   #   types: [created, edited]
 
