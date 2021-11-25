@@ -24,13 +24,13 @@ use frame_support::{
 	RuntimeDebug,
 };
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
-use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128, MultiSignature, MultiSigner};
+use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
 use bridge_primitives::{
-	DarwiniaFromThisChainMessageVerifier, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID,
-	PANGORO_PANGOLIN_LANE, WITH_PANGORO_MESSAGES_PALLET_NAME,
+	FromThisChainMessageVerifier, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE,
+	WITH_PANGORO_MESSAGES_PALLET_NAME,
 };
 pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
 use dp_s2s::{CallParams, CreatePayload};
@@ -42,12 +42,11 @@ pub const PANGOLIN_S2S_ISSUING_PALLET_INDEX: u8 = 49;
 
 #[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
 pub struct ToPangolinOutboundPayload;
-
-impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangolinOutboundPayload {
+impl CreatePayload<AccountId, AccountPublic, Signature> for ToPangolinOutboundPayload {
 	type Payload = ToPangolinMessagePayload;
 
 	fn create(
-		origin: CallOrigin<AccountId, MultiSigner, MultiSignature>,
+		origin: CallOrigin<AccountId, AccountPublic, Signature>,
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams,
@@ -65,8 +64,7 @@ impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangolinOutboun
 }
 
 /// Message verifier for Pangoro -> Pangolin messages.
-pub type ToPangolinMessageVerifier<R> =
-	DarwiniaFromThisChainMessageVerifier<WithPangolinMessageBridge, R>;
+pub type ToPangolinMessageVerifier<R> = FromThisChainMessageVerifier<WithPangolinMessageBridge, R>;
 /// Message payload for Pangolin -> Pangoro messages.
 pub type FromPangolinMessagePayload = FromBridgedChainMessagePayload<WithPangolinMessageBridge>;
 /// Encoded Pangoro Call as it comes from Pangolin.

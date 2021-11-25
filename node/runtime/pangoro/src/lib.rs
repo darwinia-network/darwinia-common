@@ -56,7 +56,9 @@ pub use wasm::*;
 pub mod pangolin_messages;
 use pangolin_messages::{ToPangolinMessagePayload, WithPangolinMessageBridge};
 
-pub use common_primitives::{self as pangoro_primitives, self as pangolin_primitives};
+pub use common_primitives::{
+	self as pangoro_primitives, {self as pangolin_primitives},
+};
 pub use pangoro_constants::*;
 
 pub use darwinia_balances::Call as BalancesCall;
@@ -69,9 +71,6 @@ pub use pallet_sudo::Call as SudoCall;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
-use bridge_runtime_common::messages::{
-	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
-};
 #[allow(unused)]
 use frame_support::{log, migration};
 use frame_support::{
@@ -185,9 +184,9 @@ frame_support::construct_runtime!(
 
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 21,
 
-		BridgePangolinMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 17,
-		BridgeDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 18,
+		BridgePangolinDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 18,
 		BridgePangolinGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 19,
+		BridgePangolinMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 17,
 
 		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
 		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 22,
@@ -465,15 +464,15 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl bridge_primitives::ToPangolinOutboundLaneApi<Block, Balance, ToPangolinMessagePayload> for Runtime {
-		fn estimate_message_delivery_and_dispatch_fee(
-			_lane_id: bp_messages::LaneId,
-			payload: ToPangolinMessagePayload,
-		) -> Option<Balance> {
-			estimate_message_dispatch_and_delivery_fee::<WithPangolinMessageBridge>(
-				&payload,
-				WithPangolinMessageBridge::RELAYER_FEE_PERCENT,
-			).ok()
-		}
+		// fn estimate_message_delivery_and_dispatch_fee(
+		// 	_lane_id: bp_messages::LaneId,
+		// 	payload: ToPangolinMessagePayload,
+		// ) -> Option<Balance> {
+		// 	bridge_runtime_common::messages::source::estimate_message_dispatch_and_delivery_fee::<WithPangolinMessageBridge>(
+		// 		&payload,
+		// 		WithPangolinMessageBridge::RELAYER_FEE_PERCENT,
+		// 	).ok()
+		// }
 
 		fn message_details(
 			lane: bp_messages::LaneId,
@@ -586,6 +585,10 @@ fn migrate() -> Weight {
 
 	log::info!("===> Remove `ConfirmedMessagesThisBlock` from the fee market");
 
+	migration::move_pallet(b"BridgeDispatch", b"BridgePangolinDispatch");
+	log::info!("Move `BridgeDispatch` to `BridgePangolinDispatch`");
+
+	// 0
 	RuntimeBlockWeights::get().max_block
 }
 

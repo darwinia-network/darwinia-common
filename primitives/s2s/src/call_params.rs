@@ -20,7 +20,6 @@
 use bp_message_dispatch::CallOrigin;
 use bp_runtime::messages::DispatchFeePayment;
 use sp_core::{H160, U256};
-use sp_runtime::{AccountId32, MultiSignature, MultiSigner};
 use sp_std::{vec, vec::Vec};
 // --- darwinia-network ---
 use codec::{Decode, Encode};
@@ -54,16 +53,15 @@ pub trait CreatePayload<SourceChainAccountId, TargetChainAccountPublic, TargetCh
 		dispatch_fee_payment: DispatchFeePayment,
 	) -> Result<Self::Payload, &'static str>;
 }
-
-impl CreatePayload<AccountId32, MultiSigner, MultiSignature> for () {
+impl<AccountId, Signer, Signature> CreatePayload<AccountId, Signer, Signature> for () {
 	type Payload = ();
 
 	fn create(
-		_origin: CallOrigin<AccountId32, MultiSigner, MultiSignature>,
-		_spec_version: u32,
-		_weight: u64,
-		_call_params: CallParams,
-		_dispatch_fee_payment: DispatchFeePayment,
+		_: CallOrigin<AccountId, Signer, Signature>,
+		_: u32,
+		_: u64,
+		_: CallParams,
+		_: DispatchFeePayment,
 	) -> Result<Self::Payload, &'static str> {
 		Ok(())
 	}

@@ -1,3 +1,5 @@
+// --- core ---
+use core::cmp;
 // --- substrate ---
 use frame_support::{traits::LockIdentifier, PalletId};
 use sp_runtime::{traits::UniqueSaturatedInto, Permill};
@@ -43,11 +45,12 @@ pub struct FeeMarketSlasher;
 impl<T: Config> Slasher<T> for FeeMarketSlasher {
 	fn slash(locked_collateral: RingBalance<T>, timeout: T::BlockNumber) -> RingBalance<T> {
 		let slash_each_block = 2 * COIN;
-		let slash_value = UniqueSaturatedInto::<u128>::unique_saturated_into(timeout)
-			.saturating_mul(UniqueSaturatedInto::<u128>::unique_saturated_into(
+		let slash_value = UniqueSaturatedInto::<Balance>::unique_saturated_into(timeout)
+			.saturating_mul(UniqueSaturatedInto::<Balance>::unique_saturated_into(
 				slash_each_block,
 			))
 			.unique_saturated_into();
-		sp_std::cmp::min(locked_collateral, slash_value)
+
+		cmp::min(locked_collateral, slash_value)
 	}
 }

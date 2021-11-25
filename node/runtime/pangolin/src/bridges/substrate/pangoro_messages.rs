@@ -22,13 +22,13 @@ use frame_support::{
 	RuntimeDebug,
 };
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
-use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128, MultiSignature, MultiSigner};
+use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
 use bridge_primitives::{
-	DarwiniaFromThisChainMessageVerifier, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID,
-	PANGORO_PANGOLIN_LANE, WITH_PANGOLIN_MESSAGES_PALLET_NAME,
+	FromThisChainMessageVerifier, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE,
+	WITH_PANGOLIN_MESSAGES_PALLET_NAME,
 };
 use dp_s2s::{CallParams, CreatePayload};
 
@@ -39,12 +39,11 @@ pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessag
 
 #[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
 pub struct ToPangoroOutboundPayLoad;
-
-impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangoroOutboundPayLoad {
+impl CreatePayload<AccountId, AccountPublic, Signature> for ToPangoroOutboundPayLoad {
 	type Payload = ToPangoroMessagePayload;
 
 	fn create(
-		origin: CallOrigin<AccountId, MultiSigner, MultiSignature>,
+		origin: CallOrigin<AccountId, AccountPublic, Signature>,
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams,
@@ -62,8 +61,7 @@ impl CreatePayload<AccountId, MultiSigner, MultiSignature> for ToPangoroOutbound
 }
 
 /// Message verifier for Pangolin -> Pangoro messages.
-pub type ToPangoroMessageVerifier<R> =
-	DarwiniaFromThisChainMessageVerifier<WithPangoroMessageBridge, R>;
+pub type ToPangoroMessageVerifier<R> = FromThisChainMessageVerifier<WithPangoroMessageBridge, R>;
 /// Message payload for Pangoro -> Pangolin messages.
 pub type FromPangoroMessagePayload = FromBridgedChainMessagePayload<WithPangoroMessageBridge>;
 /// Encoded Pangolin Call as it comes from Pangoro.
@@ -75,7 +73,7 @@ type ToPangoroMessagesDeliveryProof =
 	FromBridgedChainMessagesDeliveryProof<pangoro_primitives::Hash>;
 /// Call-dispatch based message dispatch for Pangoro -> Pangolin messages.
 pub type FromPangoroMessageDispatch =
-	FromBridgedChainMessageDispatch<WithPangoroMessageBridge, Runtime, Ring, ()>;
+	FromBridgedChainMessageDispatch<WithPangoroMessageBridge, Runtime, Ring, WithPangoroDispatch>;
 
 /// Initial value of `PangoroToPangolinConversionRate` parameter.
 pub const INITIAL_PANGORO_TO_PANGOLIN_CONVERSION_RATE: FixedU128 =

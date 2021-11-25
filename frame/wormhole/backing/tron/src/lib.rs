@@ -43,8 +43,9 @@ pub mod pallet {
 	pub use types::*;
 
 	// --- paritytech ---
+	#[cfg(feature = "std")]
+	use frame_support::traits::GenesisBuild;
 	use frame_support::{
-		pallet_prelude::*,
 		traits::{Currency, Get},
 		PalletId,
 	};
