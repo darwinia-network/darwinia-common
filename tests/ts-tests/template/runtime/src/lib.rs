@@ -9,17 +9,18 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use codec::{Decode, Encode};
-use pallet_grandpa::fg_primitives;
-use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
+use pallet_grandpa::{
+	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
+};
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::crypto::Public;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
-use sp_runtime::traits::{
-	AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, Verify,
+use sp_core::{
+	crypto::{KeyTypeId, Public},
+	OpaqueMetadata, H160, H256, U256,
 };
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, Verify},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature,
 };
@@ -29,7 +30,9 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
-use fp_rpc::TransactionStatus;
+use darwinia_evm::{Account as EVMAccount, FeeCalculator, Runner};
+use dvm_ethereum::{Call::transact, Transaction as EthereumTransaction};
+use dvm_rpc_runtime_api::TransactionStatus;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{FindAuthor, KeyOwnerProofSystem, Randomness},
@@ -40,12 +43,9 @@ pub use frame_support::{
 	ConsensusEngineId, StorageValue,
 };
 pub use pallet_balances::Call as BalancesCall;
-use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
-use pallet_evm::{
-	Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, HashedAddressMapping, Runner,
-};
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
+use sp_consensus_aura::SlotDuration;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
@@ -130,6 +130,18 @@ pub fn native_version() -> NativeVersion {
 
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
+darwinia_support::impl_account_data! {
+	struct AccountData<Balance>
+	for
+		RingInstance,
+		KtonInstance
+	where
+		Balance = Balance
+	{
+		// other data
+	}
+}
+
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	pub const BlockHashCount: BlockNumber = 256;
@@ -185,11 +197,12 @@ impl frame_system::Config for Runtime {
 	/// What to do if an account is fully reaped from the system.
 	type OnKilledAccount = ();
 	/// The data to be stored in an account.
-	type AccountData = pallet_balances::AccountData<Balance>;
+	type AccountData = AccountData<Balance>;
 	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = ();
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
+	type OnSetCode = ();
 }
 
 impl pallet_aura::Config for Runtime {
@@ -230,22 +243,62 @@ impl pallet_timestamp::Config for Runtime {
 	type OnTimestampSet = ();
 }
 
-parameter_types! {
-	pub const ExistentialDeposit: u128 = 500;
-	// For weight estimation, we assume that the most locks on an individual account will be 50.
-	// This number may need to be adjusted in the future if this assumption no longer holds true.
+// parameter_types! {
+// 	pub const ExistentialDeposit: u128 = 500;
+// 	// For weight estimation, we assume that the most locks on an individual account will be 50.
+// 	// This number may need to be adjusted in the future if this assumption no longer holds true.
+// 	pub const MaxLocks: u32 = 50;
+// }
+
+// impl pallet_balances::Config for Runtime {
+// 	type MaxLocks = MaxLocks;
+// 	/// The type for recording an account's balance.
+// 	type Balance = Balance;
+// 	/// The ubiquitous event type.
+// 	type Event = Event;
+// 	type DustRemoval = ();
+// 	type ExistentialDeposit = ExistentialDeposit;
+// 	type AccountStore = System;
+// 	type WeightInfo = ();
+// }
+// use darwinia_balances::AccountData;
+pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
+use darwinia_support::evm::ConcatConverter;
+use dvm_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
+use frame_support::{traits::MaxEncodedLen, PalletId};
+use sp_runtime::RuntimeDebug;
+type Ring = Balances;
+
+frame_support::parameter_types! {
+	pub const ExistentialDeposit: Balance = 0;
 	pub const MaxLocks: u32 = 50;
+	pub const MaxReserves: u32 = 50;
 }
 
-impl pallet_balances::Config for Runtime {
-	type MaxLocks = MaxLocks;
-	/// The type for recording an account's balance.
+impl darwinia_balances::Config<RingInstance> for Runtime {
 	type Balance = Balance;
-	/// The ubiquitous event type.
-	type Event = Event;
 	type DustRemoval = ();
+	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
+	type MaxLocks = MaxLocks;
+	type MaxReserves = MaxReserves;
+	type ReserveIdentifier = [u8; 8];
+	type BalanceInfo = AccountData<Balance>;
+	type OtherCurrencies = (Kton,);
+	type WeightInfo = ();
+}
+impl darwinia_balances::Config<KtonInstance> for Runtime {
+	type Balance = Balance;
+	type DustRemoval = ();
+	type Event = Event;
+	type ExistentialDeposit = ExistentialDeposit;
+	type AccountStore = System;
+	type MaxLocks = MaxLocks;
+	type MaxReserves = MaxReserves;
+	type ReserveIdentifier = [u8; 8];
+	type BalanceInfo = AccountData<Balance>;
+	type OtherCurrencies = (Ring,);
 	type WeightInfo = ();
 }
 
@@ -284,44 +337,51 @@ parameter_types! {
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
 }
 
-impl pallet_evm::Config for Runtime {
-	type FeeCalculator = pallet_dynamic_fee::Module<Self>;
+pub struct FixedGasPrice;
+impl FeeCalculator for FixedGasPrice {
+	fn min_gas_price() -> U256 {
+		U256::from(1)
+	}
+}
+
+impl darwinia_evm::Config for Runtime {
+	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
-	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping;
-	type CallOrigin = EnsureAddressTruncated;
-	type WithdrawOrigin = EnsureAddressTruncated;
-	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
-	type Currency = Balances;
+	type CallOrigin = darwinia_evm::EnsureAddressTruncated<Self::AccountId>;
+	type IntoAccountId = ConcatConverter<Self::AccountId>;
+	type FindAuthor = FindAuthorTruncated<Aura>;
+	type BlockHashMapping = dvm_ethereum::EthereumBlockHashMapping<Self>;
 	type Event = Event;
-	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type Precompiles = (
-		pallet_evm_precompile_simple::ECRecover,
-		pallet_evm_precompile_simple::Sha256,
-		pallet_evm_precompile_simple::Ripemd160,
-		pallet_evm_precompile_simple::Identity,
-		pallet_evm_precompile_modexp::Modexp,
-		pallet_evm_precompile_simple::ECRecoverPublicKey,
-		pallet_evm_precompile_sha3fips::Sha3FIPS256,
-		pallet_evm_precompile_sha3fips::Sha3FIPS512,
+		darwinia_evm_precompile_simple::ECRecover,
+		darwinia_evm_precompile_simple::Sha256,
+		darwinia_evm_precompile_simple::Ripemd160,
+		darwinia_evm_precompile_simple::Identity,
+		darwinia_evm_precompile_modexp::Modexp,
+		darwinia_evm_precompile_simple::ECRecoverPublicKey,
+		darwinia_evm_precompile_sha3fips::Sha3FIPS256,
+		darwinia_evm_precompile_sha3fips::Sha3FIPS512,
 	);
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type OnChargeTransaction = ();
-	type FindAuthor = FindAuthorTruncated<Aura>;
-}
-
-impl pallet_ethereum::Config for Runtime {
-	type Event = Event;
-	type StateRoot = pallet_ethereum::IntermediateStateRoot;
+	type Runner = darwinia_evm::runner::stack::Runner<Self>;
+	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 }
 
 frame_support::parameter_types! {
-	pub BoundDivision: U256 = U256::from(1024);
+	pub const DvmPalletId: PalletId = PalletId(*b"dar/dvmp");
 }
 
-impl pallet_dynamic_fee::Config for Runtime {
-	type MinGasPriceBoundDivisor = BoundDivision;
+impl dvm_ethereum::Config for Runtime {
+	type PalletId = DvmPalletId;
+	type Event = Event;
+	type StateRoot = dvm_ethereum::IntermediateStateRoot;
+	type RingCurrency = Ring;
+	type KtonCurrency = Kton;
 }
+
+impl pallet_randomness_collective_flip::Config for Runtime {}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -330,37 +390,38 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: frame_system::{Module, Call, Config, Storage, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
-		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-		Aura: pallet_aura::{Module, Config<T>},
-		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
-		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
-		TransactionPayment: pallet_transaction_payment::{Module, Storage},
-		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
-		Ethereum: pallet_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned},
-		EVM: pallet_evm::{Module, Config, Call, Storage, Event<T>},
-		DynamicFee: pallet_dynamic_fee::{Module, Call, Storage, Config, Inherent},
+		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+		Aura: pallet_aura::{Pallet, Config<T>},
+		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event},
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
+		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
+
+		Balances: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned},
+		EVM: darwinia_evm::{Pallet, Config, Call, Storage, Event<T>},
 	}
 );
 
 pub struct TransactionConverter;
 
-impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> UncheckedExtrinsic {
+impl dvm_rpc_runtime_api::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
+	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> UncheckedExtrinsic {
 		UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact(transaction).into(),
+			dvm_ethereum::Call::<Runtime>::transact(transaction).into(),
 		)
 	}
 }
 
-impl fp_rpc::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConverter {
+impl dvm_rpc_runtime_api::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConverter {
 	fn convert_transaction(
 		&self,
-		transaction: pallet_ethereum::Transaction,
+		transaction: dvm_ethereum::Transaction,
 	) -> opaque::UncheckedExtrinsic {
 		let extrinsic = UncheckedExtrinsic::new_unsigned(
-			pallet_ethereum::Call::<Runtime>::transact(transaction).into(),
+			dvm_ethereum::Call::<Runtime>::transact(transaction).into(),
 		);
 		let encoded = extrinsic.encode();
 		opaque::UncheckedExtrinsic::decode(&mut &encoded[..])
@@ -398,7 +459,7 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
-	AllModules,
+	AllPallets,
 >;
 
 impl_runtime_apis! {
@@ -441,18 +502,15 @@ impl_runtime_apis! {
 		) -> sp_inherents::CheckInherentsResult {
 			data.check_extrinsics(&block)
 		}
-
-		fn random_seed() -> <Block as BlockT>::Hash {
-			RandomnessCollectiveFlip::random_seed().0
-		}
 	}
 
 	impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
 		fn validate_transaction(
 			source: TransactionSource,
 			tx: <Block as BlockT>::Extrinsic,
+			block_hash: <Block as BlockT>::Hash,
 		) -> TransactionValidity {
-			Executive::validate_transaction(source, tx)
+			Executive::validate_transaction(source, tx, block_hash)
 		}
 	}
 
@@ -463,8 +521,8 @@ impl_runtime_apis! {
 	}
 
 	impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
-		fn slot_duration() -> u64 {
-			Aura::slot_duration()
+		fn slot_duration() -> SlotDuration {
+			sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
 		}
 
 		fn authorities() -> Vec<AuraId> {
@@ -478,17 +536,18 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl fp_rpc::EthereumRuntimeRPCApi<Block> for Runtime {
+	impl dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block> for Runtime {
 		fn chain_id() -> u64 {
-			<Runtime as pallet_evm::Config>::ChainId::get()
+			<Runtime as darwinia_evm::Config>::ChainId::get()
 		}
 
 		fn account_basic(address: H160) -> EVMAccount {
-			EVM::account_basic(&address)
+			use darwinia_evm::AccountBasic;
+			<Runtime as darwinia_evm::Config>::RingAccountBasic::account_basic(&address)
 		}
 
 		fn gas_price() -> U256 {
-			<Runtime as pallet_evm::Config>::FeeCalculator::min_gas_price()
+			<Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price()
 		}
 
 		fn account_code_at(address: H160) -> Vec<u8> {
@@ -496,7 +555,7 @@ impl_runtime_apis! {
 		}
 
 		fn author() -> H160 {
-			<pallet_evm::Module<Runtime>>::find_author()
+			<darwinia_evm::Pallet<Runtime>>::find_author()
 		}
 
 		fn storage_at(address: H160, index: U256) -> H256 {
@@ -514,16 +573,16 @@ impl_runtime_apis! {
 			gas_price: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
-		) -> Result<pallet_evm::CallInfo, sp_runtime::DispatchError> {
+		) -> Result<darwinia_evm::CallInfo, sp_runtime::DispatchError> {
 			let config = if estimate {
-				let mut config = <Runtime as pallet_evm::Config>::config().clone();
+				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
 				config.estimate = true;
 				Some(config)
 			} else {
 				None
 			};
 
-			<Runtime as pallet_evm::Config>::Runner::call(
+			<Runtime as darwinia_evm::Config>::Runner::call(
 				from,
 				to,
 				data,
@@ -531,7 +590,7 @@ impl_runtime_apis! {
 				gas_limit.low_u64(),
 				gas_price,
 				nonce,
-				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
+				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
 
@@ -543,23 +602,23 @@ impl_runtime_apis! {
 			gas_price: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
-		) -> Result<pallet_evm::CreateInfo, sp_runtime::DispatchError> {
+		) -> Result<darwinia_evm::CreateInfo, sp_runtime::DispatchError> {
 			let config = if estimate {
-				let mut config = <Runtime as pallet_evm::Config>::config().clone();
+				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
 				config.estimate = true;
 				Some(config)
 			} else {
 				None
 			};
 
-			<Runtime as pallet_evm::Config>::Runner::create(
+			<Runtime as darwinia_evm::Config>::Runner::create(
 				from,
 				data,
 				value,
 				gas_limit.low_u64(),
 				gas_price,
 				nonce,
-				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
+				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
 
@@ -567,17 +626,17 @@ impl_runtime_apis! {
 			Ethereum::current_transaction_statuses()
 		}
 
-		fn current_block() -> Option<pallet_ethereum::Block> {
+		fn current_block() -> Option<dvm_ethereum::Block> {
 			Ethereum::current_block()
 		}
 
-		fn current_receipts() -> Option<Vec<pallet_ethereum::Receipt>> {
+		fn current_receipts() -> Option<Vec<dvm_ethereum::Receipt>> {
 			Ethereum::current_receipts()
 		}
 
 		fn current_all() -> (
-			Option<pallet_ethereum::Block>,
-			Option<Vec<pallet_ethereum::Receipt>>,
+			Option<dvm_ethereum::Block>,
+			Option<Vec<dvm_ethereum::Receipt>>,
 			Option<Vec<TransactionStatus>>
 		) {
 			(
@@ -660,7 +719,7 @@ impl_runtime_apis! {
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
-			use pallet_evm::Module as PalletEvmBench;
+			use darwinia_evm::Module as PalletEvmBench;
 			impl frame_system_benchmarking::Config for Runtime {}
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
@@ -668,7 +727,7 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
-			add_benchmark!(params, batches, pallet_evm, PalletEvmBench::<Runtime>);
+			add_benchmark!(params, batches, darwinia_evm, PalletEvmBench::<Runtime>);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

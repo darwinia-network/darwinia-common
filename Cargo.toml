@@ -74,6 +74,7 @@ members = [
 
 exclude = [
 	".maintain/check-default-features",
+	"tests/ts-tests/template/"
 ]
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates
