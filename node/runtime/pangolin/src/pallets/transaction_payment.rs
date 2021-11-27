@@ -1,30 +1,46 @@
+// --- crates.io ---
+use smallvec::smallvec;
 // --- paritytech ---
-use pallet_transaction_payment::{Config, CurrencyAdapter, Multiplier, TargetedFeeAdjustment};
-use sp_runtime::{FixedPointNumber, Perquintill};
+use frame_support::weights::{
+	WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
+};
+use pallet_transaction_payment::{Config, CurrencyAdapter};
+use sp_runtime::Perbill;
 // --- darwinia-network ---
 use crate::*;
 
-/// Parameterized slow adjusting fee updated based on
-/// https://w3f-research.readthedocs.io/en/latest/polkadot/Token%20Economics.html#-2.-slow-adjusting-mechanism
-pub type SlowAdjustingFeeUpdate<R> =
-	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
+/// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
+/// node's balance type.
+///
+/// This should typically create a mapping between the following ranges:
+///   - [0, MAXIMUM_BLOCK_WEIGHT]
+///   - [Balance::min, Balance::max]
+///
+/// Yet, it can be used for any other sort of change to weight-fee. Some examples being:
+///   - Setting it to `0` will essentially disable the weight fee.
+///   - Setting it to `1` will cause the literal `#[weight = x]` values to be charged.
+pub struct WeightToFee;
+impl WeightToFeePolynomial for WeightToFee {
+	type Balance = Balance;
+	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+		// in Crab, extrinsic base weight (smallest non-zero weight) is mapped to 100 MILLI:
+		let p = 100 * MILLI;
+		let q = Balance::from(ExtrinsicBaseWeight::get());
+		smallvec![WeightToFeeCoefficient {
+			degree: 1,
+			negative: false,
+			coeff_frac: Perbill::from_rational(p % q, q),
+			coeff_integer: p / q,
+		}]
+	}
+}
 
 frame_support::parameter_types! {
-	pub const TransactionByteFee: Balance = 10 * MICRO;
-	/// The portion of the `AvailableBlockRatio` that we adjust the fees with. Blocks filled less
-	/// than this will decrease the weight and more will increase.
-	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
-	/// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
-	/// change the fees more rapidly.
-	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(3, 100_000);
-	/// Minimum amount of the multiplier. This value cannot be too low. A test case should ensure
-	/// that combined with `AdjustmentVariable`, we can recover from the minimum.
-	/// See `multiplier_can_grow_from_zero`.
-	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_000u128);
+	pub const TransactionByteFee: Balance = 5 * MILLI;
 }
 
 impl Config for Runtime {
-	type OnChargeTransaction = CurrencyAdapter<Ring, DealWithFees>;
+	type OnChargeTransaction = CurrencyAdapter<Ring, DealWithFees<Self>>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;

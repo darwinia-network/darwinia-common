@@ -13,9 +13,8 @@ frame_support::parameter_types! {
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 
 	pub const MinimumRelayFee: Balance = 15 * COIN;
-	pub const CollateralPerOrder: Balance = 100 * COIN;
-	pub const SlashPerBlock: Balance = 2 * COIN;
-	pub const Slot: BlockNumber = 50;
+	pub const CollateralPerOrder: Balance = 60 * COIN;
+	pub const Slot: BlockNumber = 600;
 
 	pub const AssignedRelayersRewardRatio: Permill = Permill::from_percent(60);
 	pub const MessageRelayersRewardRatio: Permill = Permill::from_percent(80);

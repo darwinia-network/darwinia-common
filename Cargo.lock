@@ -1000,6 +1000,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "common-runtime"
+version = "2.7.0"
+dependencies = [
+ "common-primitives",
+ "darwinia-balances",
+ "darwinia-support",
+ "frame-support",
+ "frame-system",
+ "max-encoded-len",
+ "pallet-authorship",
+ "pallet-transaction-payment",
+ "pallet-treasury",
+ "parity-scale-codec",
+ "sp-runtime",
+ "sp-std",
+ "static_assertions",
+]
+
+[[package]]
 name = "concurrent-queue"
 version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6135,6 +6154,7 @@ dependencies = [
  "bridge-primitives",
  "bridge-runtime-common",
  "common-primitives",
+ "common-runtime",
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-bridge-bsc",
@@ -6208,8 +6228,6 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-utility",
- "pangolin-runtime-system-params",
- "pangoro-runtime-system-params",
  "parity-scale-codec",
  "serde",
  "smallvec 1.7.0",
@@ -6236,16 +6254,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pangolin-runtime-system-params"
-version = "2.7.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "sp-runtime",
- "static_assertions",
-]
-
-[[package]]
 name = "pangoro-runtime"
 version = "2.7.0"
 dependencies = [
@@ -6257,6 +6265,7 @@ dependencies = [
  "bridge-primitives",
  "bridge-runtime-common",
  "common-primitives",
+ "common-runtime",
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-evm",
@@ -6294,10 +6303,10 @@ dependencies = [
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
- "pangolin-runtime-system-params",
- "pangoro-runtime-system-params",
+ "pallet-treasury",
  "parity-scale-codec",
  "serde",
+ "smallvec 1.7.0",
  "sp-api",
  "sp-authority-discovery",
  "sp-block-builder",
@@ -6316,16 +6325,6 @@ dependencies = [
  "sp-version",
  "substrate-wasm-builder",
  "to-substrate-backing",
-]
-
-[[package]]
-name = "pangoro-runtime-system-params"
-version = "2.7.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "sp-runtime",
- "static_assertions",
 ]
 
 [[package]]

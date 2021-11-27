@@ -1,5 +1,3 @@
-pub use pangolin_runtime_system_params::*;
-
 // --- paritytech ---
 use frame_support::{
 	traits::{Contains, Filter},
@@ -26,7 +24,7 @@ impl Filter<Call> for BaseFilter {
 }
 
 frame_support::parameter_types! {
-	pub const BlockHashCount: BlockNumber = 256;
+	pub const BlockHashCount: BlockNumber = 2400;
 	pub const Version: RuntimeVersion = VERSION;
 	pub const SS58Prefix: u16 = 18;
 }

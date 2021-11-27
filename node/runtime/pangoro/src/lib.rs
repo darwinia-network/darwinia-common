@@ -9,9 +9,6 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub mod pallets;
 pub use pallets::*;
 
-pub mod impls;
-pub use impls::*;
-
 pub mod wasm {
 	//! Make the WASM binary available.
 
@@ -59,6 +56,9 @@ use pangolin_messages::{ToPangolinMessagePayload, WithPangolinMessageBridge};
 pub use common_primitives as pangoro_primitives;
 pub use common_primitives as pangolin_primitives;
 
+pub use common_runtime as pangoro_runtime_system_params;
+pub use common_runtime as pangolin_runtime_system_params;
+
 pub use darwinia_balances::Call as BalancesCall;
 pub use darwinia_fee_market::Call as FeeMarketCall;
 pub use frame_system::Call as SystemCall;
@@ -67,7 +67,7 @@ pub use pallet_bridge_messages::Call as BridgeMessagesCall;
 pub use pallet_sudo::Call as SudoCall;
 
 // --- crates.io ---
-use codec::{Decode, Encode};
+use codec::Encode;
 // --- paritytech ---
 #[allow(unused)]
 use frame_support::{log, migration};
@@ -78,7 +78,7 @@ use frame_support::{
 use frame_system::{
 	offchain::{AppCrypto, CreateSignedTransaction, SendTransactionTypes, SigningTypes},
 	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
-	CheckWeight,
+	CheckWeight, EnsureRoot,
 };
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
@@ -100,6 +100,7 @@ use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use common_primitives::*;
+use common_runtime::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_fee_market_rpc_runtime_api::{Fee, InProcessOrders};
 
@@ -127,6 +128,8 @@ pub type Executive = frame_executive::Executive<
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
 pub type Ring = Balances;
+
+pub type RootOrigin = EnsureRoot<AccountId>;
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangoro"),
@@ -177,6 +180,8 @@ frame_support::construct_runtime!(
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event} = 13,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
 		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Config} = 15,
+
+		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 24,
 
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 16,
 

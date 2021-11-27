@@ -1,5 +1,5 @@
 // --- paritytech ---
-use frame_system::{EnsureOneOf, EnsureRoot};
+use frame_system::EnsureOneOf;
 use pallet_collective::{EnsureMember, EnsureProportionAtLeast};
 use sp_core::u32_trait::{_1, _2, _3};
 // --- darwinia-network ---
@@ -7,13 +7,13 @@ use crate::*;
 use darwinia_democracy::Config;
 
 frame_support::parameter_types! {
-	pub const LaunchPeriod: BlockNumber = 3 * MINUTES;
-	pub const VotingPeriod: BlockNumber = 3 * MINUTES;
-	pub const FastTrackVotingPeriod: BlockNumber = 3 * MINUTES;
-	pub const MinimumDeposit: Balance = 1 * COIN;
-	pub const EnactmentPeriod: BlockNumber = 3 * MINUTES;
-	pub const CooloffPeriod: BlockNumber = 3 * MINUTES;
-	pub const PreimageByteDeposit: Balance = 1 * MILLI;
+	pub const LaunchPeriod: BlockNumber = 7 * DAYS;
+	pub const VotingPeriod: BlockNumber = 7 * DAYS;
+	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
+	pub const MinimumDeposit: Balance = 1 * MILLI;
+	pub const EnactmentPeriod: BlockNumber = 8 * DAYS;
+	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
+	pub const PreimageByteDeposit: Balance = 10 * NANO;
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
@@ -46,10 +46,10 @@ impl Config for Runtime {
 	// Root must agree.
 	type CancelProposalOrigin = EnsureOneOf<
 		AccountId,
-		EnsureRoot<AccountId>,
+		RootOrigin,
 		EnsureProportionAtLeast<_1, _1, AccountId, TechnicalCollective>,
 	>;
-	type BlacklistOrigin = EnsureRoot<AccountId>;
+	type BlacklistOrigin = RootOrigin;
 	// Any single technical committee member may veto a coming council proposal, however they can
 	// only do it once and it lasts only for the cool-off period.
 	type VetoOrigin = EnsureMember<AccountId, TechnicalCollective>;

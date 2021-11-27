@@ -8,15 +8,16 @@ use sp_staking::SessionIndex;
 use crate::*;
 use darwinia_staking::{Config, EraIndex};
 
-pub const MAX_NOMINATIONS: u32 = <NposCompactSolution16 as CompactSolution>::LIMIT as u32;
+pub const MAX_NOMINATIONS: u32 = <NposCompactSolution24 as CompactSolution>::LIMIT as u32;
 
 frame_support::parameter_types! {
 	pub const StakingPalletId: PalletId = PalletId(*b"da/staki");
 	pub const SessionsPerEra: SessionIndex = PANGOLIN_SESSIONS_PER_ERA;
-	pub const BondingDurationInEra: EraIndex = 2;
-	pub const BondingDurationInBlockNumber: BlockNumber = 2 * PANGOLIN_BLOCKS_PER_SESSION * PANGOLIN_SESSIONS_PER_ERA;
-	pub const SlashDeferDuration: EraIndex = 1;
-	pub const MaxNominatorRewardedPerValidator: u32 = 128;
+	pub const BondingDurationInEra: EraIndex = BondingDurationInBlockNumber::get()
+		/ (PANGORO_SESSIONS_PER_ERA as BlockNumber * PANGORO_BLOCKS_PER_SESSION);
+	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
+	pub const SlashDeferDuration: EraIndex = BondingDurationInEra::get() - 1;
+	pub const MaxNominatorRewardedPerValidator: u32 = 64;
 	pub const Cap: Balance = RING_HARD_CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }

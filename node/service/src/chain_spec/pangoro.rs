@@ -227,6 +227,7 @@ pub fn genesis_config() -> ChainSpec {
 			grandpa: Default::default(),
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
+			treasury: Default::default(),
 			sudo: SudoConfig { key: root.clone() },
 			substrate_2_substrate_backing: Substrate2SubstrateBackingConfig {
 				secure_limited_period: DAYS,
@@ -327,6 +328,7 @@ pub fn development_config() -> ChainSpec {
 			grandpa: Default::default(),
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
+			treasury: Default::default(),
 			sudo: SudoConfig { key: root.clone() },
 			substrate_2_substrate_backing: Substrate2SubstrateBackingConfig {
 				secure_limited_period: DAYS,
