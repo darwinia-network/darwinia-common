@@ -28,7 +28,7 @@ impl Filter<Call> for BaseFilter {
 frame_support::parameter_types! {
 	pub const BlockHashCount: BlockNumber = 256;
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u16 = 18;
+	pub const SS58Prefix: u16 = 42;
 }
 
 impl Config for Runtime {

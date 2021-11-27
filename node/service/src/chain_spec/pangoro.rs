@@ -60,7 +60,7 @@ fn session_keys(
 fn properties() -> Properties {
 	let mut properties = Properties::new();
 
-	properties.insert("ss58Format".into(), 42.into());
+	properties.insert("ss58Format".into(), 18.into());
 	properties.insert("tokenDecimals".into(), vec![9, 9].into());
 	properties.insert("tokenSymbol".into(), vec!["ORING", "OKTON"].into());
 
