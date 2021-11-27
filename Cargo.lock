@@ -6125,14 +6125,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pangolin-constants"
-version = "2.7.0"
-dependencies = [
- "common-primitives",
- "sp-staking",
-]
-
-[[package]]
 name = "pangolin-runtime"
 version = "2.7.0"
 dependencies = [
@@ -6216,9 +6208,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-utility",
- "pangolin-constants",
  "pangolin-runtime-system-params",
- "pangoro-constants",
  "pangoro-runtime-system-params",
  "parity-scale-codec",
  "serde",
@@ -6253,14 +6243,6 @@ dependencies = [
  "frame-system",
  "sp-runtime",
  "static_assertions",
-]
-
-[[package]]
-name = "pangoro-constants"
-version = "2.7.0"
-dependencies = [
- "common-primitives",
- "sp-staking",
 ]
 
 [[package]]
@@ -6312,9 +6294,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
- "pangolin-constants",
  "pangolin-runtime-system-params",
- "pangoro-constants",
  "pangoro-runtime-system-params",
  "parity-scale-codec",
  "serde",

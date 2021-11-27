@@ -26,9 +26,7 @@ dp-asset                            = { default-features = false, path = "../../
 dp-fee                              = { default-features = false, path = "../../../primitives/fee-market" }
 dp-s2s                              = { default-features = false, path = "../../../primitives/s2s" }
 module-transaction-pause            = { default-features = false, path = "../../../frame/transaction-pause" }
-pangolin-constants                  = { default-features = false, path = "../pangolin/src/constants" }
 pangolin-runtime-system-params      = { default-features = false, path = "../pangolin/src/pallets/system/params" }
-pangoro-constants                   = { default-features = false, path = "src/constants" }
 pangoro-runtime-system-params       = { default-features = false, path = "src/pallets/system/params" }
 to-substrate-backing                = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 # paritytech
@@ -104,9 +102,7 @@ std = [
 	"dp-fee/std",
 	"dp-s2s/std",
 	"module-transaction-pause/std",
-	"pangolin-constants/std",
 	"pangolin-runtime-system-params/std",
-	"pangoro-constants/std",
 	"pangoro-runtime-system-params/std",
 	"to-substrate-backing/std",
 	# paritytech

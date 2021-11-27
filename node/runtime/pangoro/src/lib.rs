@@ -56,10 +56,8 @@ pub use wasm::*;
 pub mod pangolin_messages;
 use pangolin_messages::{ToPangolinMessagePayload, WithPangolinMessageBridge};
 
-pub use common_primitives::{
-	self as pangoro_primitives, {self as pangolin_primitives},
-};
-pub use pangoro_constants::*;
+pub use common_primitives as pangoro_primitives;
+pub use common_primitives as pangolin_primitives;
 
 pub use darwinia_balances::Call as BalancesCall;
 pub use darwinia_fee_market::Call as FeeMarketCall;

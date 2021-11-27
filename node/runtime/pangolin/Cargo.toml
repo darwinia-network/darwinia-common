@@ -55,9 +55,7 @@ ethereum-primitives                     = { default-features = false, path = "..
 from-ethereum-issuing                   = { default-features = false, path = "../../../frame/wormhole/issuing/ethereum" }
 from-substrate-issuing                  = { default-features = false, path = "../../../frame/wormhole/issuing/s2s" }
 module-transaction-pause                = { default-features = false, path = "../../../frame/transaction-pause" }
-pangolin-constants                      = { default-features = false, path = "src/constants" }
 pangolin-runtime-system-params          = { default-features = false, path = "src/pallets/system/params" }
-pangoro-constants                       = { default-features = false, path = "../pangoro/src/constants" }
 pangoro-runtime-system-params           = { default-features = false, path = "../pangoro/src/pallets/system/params" }
 to-ethereum-backing                     = { default-features = false, path = "../../../frame/wormhole/backing/ethereum" }
 to-tron-backing                         = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
@@ -170,9 +168,7 @@ std = [
 	"from-ethereum-issuing/std",
 	"from-substrate-issuing/std",
 	"module-transaction-pause/std",
-	"pangolin-constants/std",
 	"pangolin-runtime-system-params/std",
-	"pangoro-constants/std",
 	"pangoro-runtime-system-params/std",
 	"to-ethereum-backing/std",
 	"to-tron-backing/std",

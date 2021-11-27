@@ -12,12 +12,12 @@ pub const MAX_NOMINATIONS: u32 = <NposCompactSolution16 as CompactSolution>::LIM
 
 frame_support::parameter_types! {
 	pub const StakingPalletId: PalletId = PalletId(*b"da/staki");
-	pub const SessionsPerEra: SessionIndex = SESSIONS_PER_ERA;
+	pub const SessionsPerEra: SessionIndex = PANGOLIN_SESSIONS_PER_ERA;
 	pub const BondingDurationInEra: EraIndex = 2;
-	pub const BondingDurationInBlockNumber: BlockNumber = 2 * BLOCKS_PER_SESSION * SESSIONS_PER_ERA;
+	pub const BondingDurationInBlockNumber: BlockNumber = 2 * PANGOLIN_BLOCKS_PER_SESSION * PANGOLIN_SESSIONS_PER_ERA;
 	pub const SlashDeferDuration: EraIndex = 1;
 	pub const MaxNominatorRewardedPerValidator: u32 = 128;
-	pub const Cap: Balance = CAP;
+	pub const Cap: Balance = RING_HARD_CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
 

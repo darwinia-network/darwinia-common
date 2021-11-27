@@ -17,8 +17,8 @@ sp_npos_elections::generate_solution_type!(
 
 frame_support::parameter_types! {
 	// phase durations. 1/4 of the last session for each.
-	pub const SignedPhase: u32 = BLOCKS_PER_SESSION / 4;
-	pub const UnsignedPhase: u32 = BLOCKS_PER_SESSION / 4;
+	pub const SignedPhase: u32 = PANGORO_BLOCKS_PER_SESSION / 4;
+	pub const UnsignedPhase: u32 = PANGORO_BLOCKS_PER_SESSION / 4;
 
 	// signed config
 	pub const SignedMaxSubmissions: u32 = 10;

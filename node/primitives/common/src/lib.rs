@@ -1,20 +1,20 @@
-// This file is part of Darwinia.
+// This file is part of Pangoro.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2021 Pangoro Network
 // SPDX-License-Identifier: GPL-3.0
 //
-// Darwinia is free software: you can redistribute it and/or modify
+// Pangoro is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// Darwinia is distributed in the hope that it will be useful,
+// Pangoro is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+// along with Pangoro. If not, see <https://www.gnu.org/licenses/>.
 
 //! DRML types shared between the runtime and the Node-side code.
 
@@ -83,3 +83,53 @@ pub type Header = generic::Header<BlockNumber, Hashing>;
 
 /// Block type.
 pub type OpaqueBlock = generic::Block<Header, OpaqueExtrinsic>;
+
+/// 1 in u128.
+pub const NANO: Balance = 1;
+/// 1_000 in u128.
+pub const MICRO: Balance = 1_000 * NANO;
+/// 1_000_000 in u128.
+pub const MILLI: Balance = 1_000 * MICRO;
+/// 1_000_000_000 in u128.
+pub const COIN: Balance = 1_000 * MILLI;
+
+/// GWEI for DVM.
+pub const GWEI: Balance = 1_000_000_000;
+
+/// The hard cap of RING.
+pub const RING_HARD_CAP: Balance = 10_000_000_000 * COIN;
+/// The amount of total power.
+pub const TOTAL_POWER: Power = 1_000_000_000;
+
+/// Deposit calculator for Pangoro.
+pub const fn pangoro_deposit(items: u32, bytes: u32) -> Balance {
+	items as Balance * 20 * MILLI + (bytes as Balance) * 100 * NANO
+}
+/// Deposit calculator for Pangolin.
+pub const fn pangolin_deposit(items: u32, bytes: u32) -> Balance {
+	items as Balance * 20 * COIN + (bytes as Balance) * 100 * MICRO
+}
+
+/// Block time of Pangoro/Pangolin.
+pub const MILLISECS_PER_BLOCK: Moment = 6000;
+
+/// Minute in Pangoro/Pangolin.
+pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
+/// Hour in Pangoro/Pangolin.
+pub const HOURS: BlockNumber = 60 * MINUTES;
+/// Day in Pangoro/Pangolin.
+pub const DAYS: BlockNumber = 24 * HOURS;
+/// Slot duration in Pangoro/Pangolin.
+pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
+
+/// Session length of Pangolin.
+pub const PANGOLIN_BLOCKS_PER_SESSION: BlockNumber = 1 * HOURS;
+/// Era length of Pangolin.
+pub const PANGOLIN_SESSIONS_PER_ERA: BlockNumber = 6;
+/// Session length of Pangoro.
+pub const PANGORO_BLOCKS_PER_SESSION: BlockNumber = 4 * HOURS;
+/// Era length of Pangoro.
+pub const PANGORO_SESSIONS_PER_ERA: BlockNumber = 6;
+
+/// 1 in 4 blocks (on average, not counting collisions) will be primary BABE blocks.
+pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);

@@ -72,11 +72,8 @@ pub mod wasm {
 }
 pub use wasm::*;
 
-pub use common_primitives::{
-	self as pangoro_primitives, {self as pangolin_primitives},
-};
-
-pub use pangolin_constants::*;
+pub use common_primitives as pangoro_primitives;
+pub use common_primitives as pangolin_primitives;
 
 pub use darwinia_staking::StakerStatus;
 
