@@ -32,7 +32,7 @@ env:
 
 jobs:
   basic-checks:
-    name: Task ${{ matrix.task.action }} ${{ matrix.task.target }}
+    name: Task ${{ matrix.action }} ${{ matrix.task.target }}
     if: github.event_name == 'push' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     strategy:
