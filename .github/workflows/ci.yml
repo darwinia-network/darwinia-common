@@ -28,7 +28,7 @@ env:
   RUST_TOOLCHAIN: nightly
   RUST_BACKTRACE: full
   NODE_VERSION: 10
-  GITHUB_CACHE_VERSION: 0
+  GITHUB_CACHE_VERSION: 1
 
 jobs:
   basic-checks:
@@ -72,11 +72,11 @@ jobs:
           restore-keys: |
             cargo-build-${{ env.GITHUB_CACHE_VERSION }}-
 
-      - name: Action ${{ matrix.task.action }}
-        run: cargo ${{ matrix.task.action }} --locked
+      - name: Action ${{ matrix.action }}
+        run: cargo ${{ matrix.action }} --locked
 
       - name: Upload ${{ matrix.task.target }}
-        if: matrix.task.action != 'test'
+        if: matrix.action != 'test'
         uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.task.target }}
