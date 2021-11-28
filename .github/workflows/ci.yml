@@ -60,7 +60,7 @@ jobs:
         with:
           repository: ${{ matrix.task.repository }}
 
-      - name: Cache cargo registry
+      - name: Cache
         uses: actions/cache@v2
         with:
           path: |
@@ -73,7 +73,9 @@ jobs:
             ${{ matrix.action }}-${{ matrix.task.target }}-${{ env.GITHUB_CACHE_VERSION }}-
 
       - name: Action ${{ matrix.action }}
-        run: cargo ${{ matrix.action }} --locked
+        run: |
+          cargo ${{ matrix.action }} --locked
+          mv target/debug/${{ matrix.task.target }} .
 
       - name: Upload ${{ matrix.task.target }}
         if: matrix.action != 'test'
