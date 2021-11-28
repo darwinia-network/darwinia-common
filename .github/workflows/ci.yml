@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        project:
+        task:
           - action: [build, test]
             repository: darwinia-network/darwinia-common
             target: drml
