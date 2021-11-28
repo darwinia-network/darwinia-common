@@ -25,7 +25,6 @@ on:
   #   types: [created, edited]
 
 env:
-  OS: ubuntu-latest
   RUST_TOOLCHAIN: nightly
   RUST_BACKTRACE: full
   NODE_VERSION: 10
@@ -35,7 +34,7 @@ jobs:
   basic-checks:
     name: Task ${{ matrix.task.action }} ${{ matrix.task.target }}
     if: github.event_name == 'push' || !github.event.pull_request.draft
-    runs-on: ${{ env.OS }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         project:
