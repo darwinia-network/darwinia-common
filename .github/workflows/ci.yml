@@ -5,14 +5,22 @@ on:
       - main
       - master
     paths:
-      - [**.rs, **.toml, **lock, **.json, **.yml]
+      - "**.rs"
+      - "**.toml"
+      - "**lock"
+      - "**.json"
+      - "**.yml"
   pull_request:
     types: [opened, synchronize, ready_for_review]
     branches:
       - main
       - master
     paths:
-      - [**.rs, **.toml, **lock, **.json, **.yml]
+      - "**.rs"
+      - "**.toml"
+      - "**lock"
+      - "**.json"
+      - "**.yml"
   # issue_comment:
   #   types: [created, edited]
 
