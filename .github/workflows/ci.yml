@@ -115,7 +115,7 @@ jobs:
     name: Code checks
     if: github.event_name == 'push' || !github.event.pull_request.draft
     # if: github.event.issue.pull_request && contains(github.event.comment.body, '/bot check') && contains(github.event.comment.body, 'code')
-    needs: [build-subalfred]
+    needs: [basic-checks]
     runs-on: ubuntu-latest
     steps:
       - name: Download subalfred
@@ -133,7 +133,7 @@ jobs:
     name: Runtime checks
     if: github.event_name == 'push' || !github.event.pull_request.draft
     # if: github.event.issue.pull_request && contains(github.event.comment.body, '/bot check') && contains(github.event.comment.body, 'runtime')
-    needs: [build-drml, build-subalfred]
+    needs: [basic-checks]
     runs-on: ubuntu-latest
     steps:
       - name: Download drml
@@ -214,7 +214,7 @@ jobs:
   clean-artifacts:
     name: Clean artifacts
     if: always()
-    needs: [basic-checks, code-checks, runtime-checks]
+    needs: [rpc-checks, code-checks, runtime-checks]
     steps:
       - uses: geekyeggo/delete-artifact@v1
         with:
