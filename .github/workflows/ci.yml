@@ -75,7 +75,7 @@ jobs:
       - name: Action ${{ matrix.action }}
         run: |
           cargo ${{ matrix.action }} --locked
-          mv target/debug/${{ matrix.task.target }} .
+          mv target/debug/${{ matrix.task.target }} . 2> /dev/null; true
 
       - name: Upload ${{ matrix.task.target }}
         if: matrix.action != 'test'
