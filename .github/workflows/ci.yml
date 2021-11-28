@@ -49,7 +49,7 @@ jobs:
               target: subalfred
 
     steps:
-      - name: Install Rust ${{ env.RUST_TOOLCHAIN }}  toolchain
+      - name: Install Rust ${{ env.RUST_TOOLCHAIN }} toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
@@ -75,7 +75,7 @@ jobs:
       - name: Action ${{ matrix.action }}
         run: |
           cargo ${{ matrix.action }} --locked
-          cd target/debug
+          if [ -f target/debug/${{ matrix.task.target }} ]; then mv target/debug/${{ matrix.task.target }} .; fi
 
       - name: Upload ${{ matrix.task.target }}
         if: matrix.action != 'test'
