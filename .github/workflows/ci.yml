@@ -37,13 +37,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        action: [build, test]
         task:
-          - action: [build, test]
+          - target: drml
             repository: darwinia-network/darwinia-common
-            target: drml
-          - action: build
+          - target: subalfred
             repository: l2ust/subalfred
-            target: subalfred
+        exclude:
+          - action: test
+            task:
+              target: subalfred
 
     steps:
       - name: Install Rust ${{ env.RUST_TOOLCHAIN }}  toolchain
