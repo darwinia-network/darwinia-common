@@ -33,6 +33,7 @@ sp-inherents        = { git = "https://github.com/darwinia-network/substrate", t
 sc-transaction-pool = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 sc-network          = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+sc-keystore          = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 sc-consensus-aura   = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 sp-consensus-aura    = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 sc-consensus-manual-seal = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
@@ -58,6 +59,7 @@ pallet-transaction-payment-rpc = { git = "https://github.com/darwinia-network/su
 frontier-template-runtime = { path = "../runtime", default-features = false, features = ["std"] }
 dc-rpc 		    = { path = "../../../../client/dvm/rpc" }
 dc-db 		    = { path = "../../../../client/dvm/db" }
+fc-consensus    = { path = "../../../../client/dvm/consensus" }
 dc-mapping-sync = { path = "../../../../client/dvm/mapping-sync" }
 dvm-rpc-runtime-api = {path = "../../../../frame/dvm/rpc/runtime-api" }
 # fc-rpc-core = { path = "../../client/rpc-core" }

@@ -1690,6 +1690,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "fc-consensus"
+version = "2.0.0-dev"
+dependencies = [
+ "async-trait",
+ "dc-db",
+ "derive_more",
+ "dp-consensus",
+ "dp-rpc",
+ "dvm-rpc-runtime-api",
+ "futures 0.3.18",
+ "log",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-timestamp",
+ "substrate-prometheus-endpoint",
+]
+
+[[package]]
 name = "fdlimit"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1950,6 +1975,7 @@ dependencies = [
  "dp-rpc",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
+ "fc-consensus",
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "frontier-template-runtime",
@@ -1966,6 +1992,7 @@ dependencies = [
  "sc-consensus-manual-seal",
  "sc-executor",
  "sc-finality-grandpa",
+ "sc-keystore",
  "sc-network",
  "sc-rpc",
  "sc-rpc-api",

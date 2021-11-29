@@ -3,7 +3,7 @@
 use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use dc_rpc::EthTask;
 use dp_rpc::{FilterPool, PendingTransactions};
-// use fc_consensus::FrontierBlockImport;
+use fc_consensus::FrontierBlockImport;
 use frontier_template_runtime::{self, opaque::Block, RuntimeApi, SLOT_DURATION};
 use futures::StreamExt;
 use sc_cli::SubstrateCli;
@@ -49,20 +49,10 @@ type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
 #[cfg(feature = "aura")]
 pub type ConsensusResult = (
-	sc_consensus_aura::AuraBlockImport<
+	FrontierBlockImport<
 		Block,
+		sc_finality_grandpa::GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
 		FullClient,
-		FrontierBlockImport<
-			Block,
-			sc_finality_grandpa::GrandpaBlockImport<
-				FullBackend,
-				Block,
-				FullClient,
-				FullSelectChain,
-			>,
-			FullClient,
-		>,
-		AuraPair,
 	>,
 	sc_finality_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
 );
