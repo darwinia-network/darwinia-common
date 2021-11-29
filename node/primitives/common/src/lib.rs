@@ -123,13 +123,13 @@ pub const DAYS: BlockNumber = 24 * HOURS;
 pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
 
 /// Session length of Pangolin.
-pub const PANGOLIN_BLOCKS_PER_SESSION: BlockNumber = 1 * HOURS;
+pub const PANGOLIN_BLOCKS_PER_SESSION: BlockNumber = 30 * MINUTES;
 /// Era length of Pangolin.
-pub const PANGOLIN_SESSIONS_PER_ERA: BlockNumber = 6;
+pub const PANGOLIN_SESSIONS_PER_ERA: BlockNumber = 3;
 /// Session length of Pangoro.
-pub const PANGORO_BLOCKS_PER_SESSION: BlockNumber = 4 * HOURS;
+pub const PANGORO_BLOCKS_PER_SESSION: BlockNumber = 2 * HOURS;
 /// Era length of Pangoro.
-pub const PANGORO_SESSIONS_PER_ERA: BlockNumber = 6;
+pub const PANGORO_SESSIONS_PER_ERA: BlockNumber = 3;
 
 /// 1 in 4 blocks (on average, not counting collisions) will be primary BABE blocks.
 pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
