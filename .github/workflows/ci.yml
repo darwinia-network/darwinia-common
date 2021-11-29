@@ -74,7 +74,6 @@ jobs:
       - name: Action ${{ matrix.action }}
         run: |
           cargo ${{ matrix.action }} --locked
-          if [ -f target/debug/${{ matrix.task.target }} ]; then mv target/debug/${{ matrix.task.target }} .; fi
 
       - name: Compress ${{ matrix.task.target }}
         if: matrix.action != 'test'
