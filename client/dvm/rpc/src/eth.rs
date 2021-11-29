@@ -784,7 +784,7 @@ where
 
 		for signer in &self.signers {
 			if signer.accounts().contains(&from) {
-				match signer.sign(message) {
+				match signer.sign(message, &from) {
 					Ok(t) => transaction = Some(t),
 					Err(e) => return Box::new(future::result(Err(e))),
 				}

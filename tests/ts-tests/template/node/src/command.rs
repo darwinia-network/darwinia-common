@@ -1,7 +1,9 @@
-use crate::chain_spec;
-use crate::cli::{Cli, Subcommand};
-use crate::service;
-use crate::service::{frontier_database_dir, new_partial};
+use crate::{
+	chain_spec,
+	cli::{Cli, Subcommand},
+	service,
+	service::{frontier_database_dir, new_partial},
+};
 use sc_cli::{ChainSpec, Role, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
 

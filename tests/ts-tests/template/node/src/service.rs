@@ -1,9 +1,9 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
-use fc_consensus::FrontierBlockImport;
-use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
-use fc_rpc::EthTask;
-use fc_rpc_core::types::{FilterPool, PendingTransactions};
+use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
+use dc_rpc::EthTask;
+use dp_rpc::{FilterPool, PendingTransactions};
+// use fc_consensus::FrontierBlockImport;
 use frontier_template_runtime::{self, opaque::Block, RuntimeApi, SLOT_DURATION};
 use futures::StreamExt;
 use sc_cli::SubstrateCli;
@@ -18,7 +18,8 @@ use sc_service::{error::Error as ServiceError, BasePath, Configuration, TaskMana
 use sc_telemetry::{Telemetry, TelemetryWorker};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_core::U256;
-use sp_inherents::{InherentData, InherentDataProviders, InherentIdentifier, ProvideInherentData};
+// use sp_inherents::{InherentData, InherentDataProvider, InherentIdentifier};
+use sp_inherents::{InherentData, InherentIdentifier};
 use sp_timestamp::InherentError;
 use std::{
 	cell::RefCell,
@@ -77,7 +78,8 @@ pub const INHERENT_IDENTIFIER: InherentIdentifier = *b"timstap0";
 
 thread_local!(static TIMESTAMP: RefCell<u64> = RefCell::new(0));
 
-impl ProvideInherentData for MockTimestampInherentDataProvider {
+use sp_inherents::InherentDataProvider;
+impl InherentDataProvider for MockTimestampInherentDataProvider {
 	fn inherent_identifier(&self) -> &'static InherentIdentifier {
 		&INHERENT_IDENTIFIER
 	}
@@ -109,10 +111,10 @@ pub fn frontier_database_dir(config: &Configuration) -> std::path::PathBuf {
 	config_dir.join("frontier").join("db")
 }
 
-pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backend<Block>>, String> {
-	Ok(Arc::new(fc_db::Backend::<Block>::new(
-		&fc_db::DatabaseSettings {
-			source: fc_db::DatabaseSettingsSrc::RocksDb {
+pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<dc_db::Backend<Block>>, String> {
+	Ok(Arc::new(dc_db::Backend::<Block>::new(
+		&dc_db::DatabaseSettings {
+			source: dc_db::DatabaseSettingsSrc::RocksDb {
 				path: frontier_database_dir(&config),
 				cache_size: 0,
 			},
@@ -134,13 +136,13 @@ pub fn new_partial(
 			ConsensusResult,
 			PendingTransactions,
 			Option<FilterPool>,
-			Arc<fc_db::Backend<Block>>,
+			Arc<dc_db::Backend<Block>>,
 			Option<Telemetry>,
 		),
 	>,
 	ServiceError,
 > {
-	let inherent_data_providers = sp_inherents::InherentDataProviders::new();
+	let inherent_data_providers = sp_inherents::InherentDataProvider::new();
 
 	let telemetry = config
 		.telemetry_endpoints
@@ -189,12 +191,6 @@ pub fn new_partial(
 			.register_provider(MockTimestampInherentDataProvider)
 			.map_err(Into::into)
 			.map_err(sp_consensus::error::Error::InherentData)?;
-		inherent_data_providers
-			.register_provider(pallet_dynamic_fee::InherentDataProvider(U256::from(
-				cli.run.target_gas_price,
-			)))
-			.map_err(Into::into)
-			.map_err(sp_consensus::Error::InherentData)?;
 
 		let frontier_block_import =
 			FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
@@ -226,13 +222,6 @@ pub fn new_partial(
 
 	#[cfg(feature = "aura")]
 	{
-		inherent_data_providers
-			.register_provider(pallet_dynamic_fee::InherentDataProvider(U256::from(
-				cli.run.target_gas_price,
-			)))
-			.map_err(Into::into)
-			.map_err(sp_consensus::Error::InherentData)?;
-
 		let (grandpa_block_import, grandpa_link) = sc_finality_grandpa::block_import(
 			client.clone(),
 			&(client.clone() as Arc<_>),
@@ -383,7 +372,7 @@ pub fn new_full(config: Configuration, cli: &Cli) -> Result<TaskManager, Service
 		keystore: keystore_container.sync_keystore(),
 		task_manager: &mut task_manager,
 		transaction_pool: transaction_pool.clone(),
-		rpc_extensions_builder: rpc_extensions_builder,
+		rpc_extensions_builder,
 		on_demand: None,
 		remote_blockchain: None,
 		backend,
