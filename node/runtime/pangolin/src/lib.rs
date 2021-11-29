@@ -303,7 +303,7 @@ where
 		nonce: Nonce,
 	) -> Option<(Call, <UncheckedExtrinsic as Extrinsic>::SignaturePayload)> {
 		// take the biggest period possible.
-		let period = BlockHashCount::get()
+		let period = BlockHashCountForPangolin::get()
 			.checked_next_power_of_two()
 			.map(|c| c / 2)
 			.unwrap_or(2) as u64;

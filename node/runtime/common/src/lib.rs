@@ -60,8 +60,8 @@ pub const MAXIMUM_BLOCK_WEIGHT: Weight = 2 * WEIGHT_PER_SECOND;
 const_assert!(NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO.deconstruct());
 
 frame_support::parameter_types! {
-	pub const BlockHashCountForCrab: BlockNumber = 256;
-	pub const BlockHashCountForDarwinia: BlockNumber = 2400;
+	pub const BlockHashCountForPangolin: BlockNumber = 256;
+	pub const BlockHashCountForPangoro: BlockNumber = 2400;
 	/// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
 	/// than this will decrease the weight and more will increase.
 	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);

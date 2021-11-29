@@ -26,7 +26,6 @@ impl Filter<Call> for BaseFilter {
 }
 
 frame_support::parameter_types! {
-	pub const BlockHashCount: BlockNumber = 256;
 	pub const Version: RuntimeVersion = VERSION;
 	pub const SS58Prefix: u16 = 42;
 }
@@ -46,7 +45,7 @@ impl Config for Runtime {
 	type Lookup = AccountIdLookup<AccountId, ()>;
 	type Header = Header;
 	type Event = Event;
-	type BlockHashCount = BlockHashCount;
+	type BlockHashCount = BlockHashCountForPangolin;
 	type Version = Version;
 	type PalletInfo = PalletInfo;
 	type AccountData = AccountData<Balance>;
