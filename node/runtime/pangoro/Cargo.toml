@@ -1,9 +1,11 @@
 [package]
 authors    = ["Darwinia Network <hello@darwinia.network>"]
+build      = "build.rs"
 edition    = "2021"
 homepage   = "https://darwinia.network"
 license    = "GPL-3.0"
 name       = "pangoro-runtime"
+readme     = "README.md"
 repository = "https://github.com/darwinia-network/darwinia-common/"
 version    = "2.7.0"
 
@@ -12,9 +14,11 @@ version    = "2.7.0"
 array-bytes = { version = "1.4" }
 codec       = { package = "parity-scale-codec", version = "2.1", default-features = false, features = ["derive"] }
 serde       = { version = "1.0", features = ["derive"], optional = true }
+smallvec    = { version = "1.6" }
 # darwinia-network
 bridge-primitives                   = { default-features = false, path = "../../primitives/bridge" }
 common-primitives                   = { default-features = false, path = "../../primitives/common" }
+common-runtime                      = { default-features = false, path = "../common" }
 darwinia-balances                   = { default-features = false, path = "../../../frame/balances" }
 darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
 darwinia-evm                        = { default-features = false, path = "../../../frame/evm" }
@@ -26,10 +30,6 @@ dp-asset                            = { default-features = false, path = "../../
 dp-fee                              = { default-features = false, path = "../../../primitives/fee-market" }
 dp-s2s                              = { default-features = false, path = "../../../primitives/s2s" }
 module-transaction-pause            = { default-features = false, path = "../../../frame/transaction-pause" }
-pangolin-constants                  = { default-features = false, path = "../pangolin/src/constants" }
-pangolin-runtime-system-params      = { default-features = false, path = "../pangolin/src/pallets/system/params" }
-pangoro-constants                   = { default-features = false, path = "src/constants" }
-pangoro-runtime-system-params       = { default-features = false, path = "src/pallets/system/params" }
 to-substrate-backing                = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 # paritytech
 bp-header-chain                            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-3" }
@@ -63,6 +63,7 @@ pallet-sudo                                = { default-features = false, git = "
 pallet-timestamp                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 pallet-transaction-payment                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+pallet-treasury                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 sp-api                                     = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 sp-authority-discovery                     = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 sp-block-builder                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
@@ -93,6 +94,7 @@ std = [
 	# darwinia-network
 	"bridge-primitives/std",
 	"common-primitives/std",
+	"common-runtime/std",
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
 	"darwinia-evm/std",
@@ -104,10 +106,6 @@ std = [
 	"dp-fee/std",
 	"dp-s2s/std",
 	"module-transaction-pause/std",
-	"pangolin-constants/std",
-	"pangolin-runtime-system-params/std",
-	"pangoro-constants/std",
-	"pangoro-runtime-system-params/std",
 	"to-substrate-backing/std",
 	# paritytech
 	"bp-header-chain/std",
@@ -141,6 +139,7 @@ std = [
 	"pallet-timestamp/std",
 	"pallet-transaction-payment/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
+	"pallet-treasury/std",
 	"sp-api/std",
 	"sp-authority-discovery/std",
 	"sp-block-builder/std",

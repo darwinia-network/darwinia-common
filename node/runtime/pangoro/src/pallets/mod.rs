@@ -43,6 +43,9 @@ pub use im_online::*;
 pub mod authority_discovery;
 pub use authority_discovery::*;
 
+pub mod treasury;
+pub use treasury::*;
+
 pub mod sudo;
 pub use sudo::*;
 

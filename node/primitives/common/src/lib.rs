@@ -83,3 +83,53 @@ pub type Header = generic::Header<BlockNumber, Hashing>;
 
 /// Block type.
 pub type OpaqueBlock = generic::Block<Header, OpaqueExtrinsic>;
+
+/// 1 in u128.
+pub const NANO: Balance = 1;
+/// 1_000 in u128.
+pub const MICRO: Balance = 1_000 * NANO;
+/// 1_000_000 in u128.
+pub const MILLI: Balance = 1_000 * MICRO;
+/// 1_000_000_000 in u128.
+pub const COIN: Balance = 1_000 * MILLI;
+
+/// GWEI for DVM.
+pub const GWEI: Balance = 1_000_000_000;
+
+/// The hard cap of RING.
+pub const RING_HARD_CAP: Balance = 10_000_000_000 * COIN;
+/// The amount of total power.
+pub const TOTAL_POWER: Power = 1_000_000_000;
+
+/// Deposit calculator for Pangoro.
+pub const fn pangoro_deposit(items: u32, bytes: u32) -> Balance {
+	items as Balance * 20 * MILLI + (bytes as Balance) * 100 * NANO
+}
+/// Deposit calculator for Pangolin.
+pub const fn pangolin_deposit(items: u32, bytes: u32) -> Balance {
+	items as Balance * 20 * COIN + (bytes as Balance) * 100 * MICRO
+}
+
+/// Block time of Pangoro/Pangolin.
+pub const MILLISECS_PER_BLOCK: Moment = 6000;
+
+/// Minute in Pangoro/Pangolin.
+pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
+/// Hour in Pangoro/Pangolin.
+pub const HOURS: BlockNumber = 60 * MINUTES;
+/// Day in Pangoro/Pangolin.
+pub const DAYS: BlockNumber = 24 * HOURS;
+/// Slot duration in Pangoro/Pangolin.
+pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
+
+/// Session length of Pangolin.
+pub const PANGOLIN_BLOCKS_PER_SESSION: BlockNumber = 30 * MINUTES;
+/// Era length of Pangolin.
+pub const PANGOLIN_SESSIONS_PER_ERA: BlockNumber = 3;
+/// Session length of Pangoro.
+pub const PANGORO_BLOCKS_PER_SESSION: BlockNumber = 2 * HOURS;
+/// Era length of Pangoro.
+pub const PANGORO_SESSIONS_PER_ERA: BlockNumber = 3;
+
+/// 1 in 4 blocks (on average, not counting collisions) will be primary BABE blocks.
+pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);

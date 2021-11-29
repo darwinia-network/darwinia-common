@@ -2,7 +2,7 @@
 pub use pallet_collective::{Instance1 as CouncilCollective, Instance2 as TechnicalCollective};
 
 // --- paritytech ---
-use frame_system::{EnsureOneOf, EnsureRoot};
+use frame_system::EnsureOneOf;
 use pallet_collective::{
 	Config, EnsureProportionAtLeast, EnsureProportionMoreThan, PrimeDefaultVote,
 };
@@ -12,31 +12,31 @@ use crate::*;
 
 pub type EnsureRootOrHalfCouncil = EnsureOneOf<
 	AccountId,
-	EnsureRoot<AccountId>,
+	RootOrigin,
 	EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>,
 >;
 pub type EnsureRootOrMoreThanHalfCouncil = EnsureOneOf<
 	AccountId,
-	EnsureRoot<AccountId>,
+	RootOrigin,
 	EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
 >;
 pub type EnsureRootOrHalfTechnicalComittee = EnsureOneOf<
 	AccountId,
-	EnsureRoot<AccountId>,
+	RootOrigin,
 	EnsureProportionMoreThan<_1, _2, AccountId, TechnicalCollective>,
 >;
 
 pub type ApproveOrigin = EnsureOneOf<
 	AccountId,
-	EnsureRoot<AccountId>,
+	RootOrigin,
 	EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>,
 >;
 
 frame_support::parameter_types! {
-	pub const CouncilMotionDuration: BlockNumber = 3 * MINUTES;
+	pub const CouncilMotionDuration: BlockNumber = 3 * DAYS;
 	pub const CouncilMaxProposals: u32 = 100;
 	pub const CouncilMaxMembers: u32 = 100;
-	pub const TechnicalMotionDuration: BlockNumber = 3 * MINUTES;
+	pub const TechnicalMotionDuration: BlockNumber = 3 * DAYS;
 	pub const TechnicalMaxProposals: u32 = 100;
 	pub const TechnicalMaxMembers: u32 = 100;
 }

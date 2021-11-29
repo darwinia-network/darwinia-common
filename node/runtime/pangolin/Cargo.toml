@@ -20,6 +20,7 @@ static_assertions = { version = "1.1" }
 # darwinia-network
 bridge-primitives                       = { default-features = false, path = "../../primitives/bridge" }
 common-primitives                       = { default-features = false, path = "../../primitives/common" }
+common-runtime                          = { default-features = false, path = "../common" }
 darwinia-balances                       = { default-features = false, path = "../../../frame/balances" }
 darwinia-balances-rpc-runtime-api       = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
 darwinia-bridge-bsc                     = { default-features = false, path = "../../../frame/bridge/bsc" }
@@ -55,10 +56,6 @@ ethereum-primitives                     = { default-features = false, path = "..
 from-ethereum-issuing                   = { default-features = false, path = "../../../frame/wormhole/issuing/ethereum" }
 from-substrate-issuing                  = { default-features = false, path = "../../../frame/wormhole/issuing/s2s" }
 module-transaction-pause                = { default-features = false, path = "../../../frame/transaction-pause" }
-pangolin-constants                      = { default-features = false, path = "src/constants" }
-pangolin-runtime-system-params          = { default-features = false, path = "src/pallets/system/params" }
-pangoro-constants                       = { default-features = false, path = "../pangoro/src/constants" }
-pangoro-runtime-system-params           = { default-features = false, path = "../pangoro/src/pallets/system/params" }
 to-ethereum-backing                     = { default-features = false, path = "../../../frame/wormhole/backing/ethereum" }
 to-tron-backing                         = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
 # paritytech
@@ -135,6 +132,7 @@ std = [
 	# darwinia-network
 	"bridge-primitives/std",
 	"common-primitives/std",
+	"common-runtime/std",
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
 	"darwinia-bridge-bsc/std",
@@ -170,10 +168,6 @@ std = [
 	"from-ethereum-issuing/std",
 	"from-substrate-issuing/std",
 	"module-transaction-pause/std",
-	"pangolin-constants/std",
-	"pangolin-runtime-system-params/std",
-	"pangoro-constants/std",
-	"pangoro-runtime-system-params/std",
 	"to-ethereum-backing/std",
 	"to-tron-backing/std",
 	# paritytech

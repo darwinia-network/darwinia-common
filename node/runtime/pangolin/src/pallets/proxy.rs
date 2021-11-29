@@ -102,12 +102,12 @@ impl InstanceFilter<Call> for ProxyType {
 
 frame_support::parameter_types! {
 	// One storage item; key size 32, value size 8; .
-	pub const ProxyDepositBase: Balance = pangolin_constants::deposit(1, 8);
+	pub const ProxyDepositBase: Balance = pangolin_deposit(1, 8);
 	// Additional storage item size of 33 bytes.
-	pub const ProxyDepositFactor: Balance = pangolin_constants::deposit(0, 33);
+	pub const ProxyDepositFactor: Balance = pangolin_deposit(0, 33);
 	pub const MaxProxies: u16 = 32;
-	pub const AnnouncementDepositBase: Balance = pangolin_constants::deposit(1, 8);
-	pub const AnnouncementDepositFactor: Balance = pangolin_constants::deposit(0, 66);
+	pub const AnnouncementDepositBase: Balance = pangolin_deposit(1, 8);
+	pub const AnnouncementDepositFactor: Balance = pangolin_deposit(0, 66);
 	pub const MaxPending: u16 = 32;
 }
 

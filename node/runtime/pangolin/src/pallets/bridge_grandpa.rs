@@ -5,7 +5,7 @@ use bridge_primitives::Pangoro;
 use pallet_bridge_grandpa::Config;
 // --- darwinia-network ---
 use crate::*;
-use pangoro_constants::DAYS;
+use pangoro_primitives::DAYS;
 
 frame_support::parameter_types! {
 	// This is a pretty unscientific cap.

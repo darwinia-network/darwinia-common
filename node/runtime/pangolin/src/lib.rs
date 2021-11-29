@@ -28,9 +28,6 @@ pub use pallets::*;
 pub mod bridges;
 pub use bridges::*;
 
-pub mod impls;
-pub use impls::*;
-
 pub mod wasm {
 	//! Make the WASM binary available.
 
@@ -72,11 +69,11 @@ pub mod wasm {
 }
 pub use wasm::*;
 
-pub use common_primitives::{
-	self as pangoro_primitives, {self as pangolin_primitives},
-};
+pub use common_primitives as pangoro_primitives;
+pub use common_primitives as pangolin_primitives;
 
-pub use pangolin_constants::*;
+pub use common_runtime as pangolin_runtime_system_params;
+pub use common_runtime as pangoro_runtime_system_params;
 
 pub use darwinia_staking::StakerStatus;
 
@@ -99,7 +96,7 @@ use frame_support::{
 use frame_system::{
 	offchain::{AppCrypto, CreateSignedTransaction, SendTransactionTypes, SigningTypes},
 	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
-	CheckWeight,
+	CheckWeight, EnsureRoot,
 };
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
@@ -123,6 +120,7 @@ use sp_version::RuntimeVersion;
 use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use bridges::substrate::pangoro_messages::{ToPangoroMessagePayload, WithPangoroMessageBridge};
 use common_primitives::*;
+use common_runtime::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
 use darwinia_evm::{Account as EVMAccount, FeeCalculator, Runner};
@@ -164,6 +162,8 @@ pub type Executive = frame_executive::Executive<
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
 type Ring = Balances;
+
+pub type RootOrigin = EnsureRoot<AccountId>;
 
 /// This runtime version.
 #[sp_version::runtime_version]
@@ -303,7 +303,7 @@ where
 		nonce: Nonce,
 	) -> Option<(Call, <UncheckedExtrinsic as Extrinsic>::SignaturePayload)> {
 		// take the biggest period possible.
-		let period = BlockHashCount::get()
+		let period = BlockHashCountForPangolin::get()
 			.checked_next_power_of_two()
 			.map(|c| c / 2)
 			.unwrap_or(2) as u64;
