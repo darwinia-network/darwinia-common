@@ -1,6 +1,6 @@
 // --- paritytech ---
 use pallet_election_provider_multi_phase::{Config, FallbackStrategy};
-use sp_runtime::{transaction_validity::TransactionPriority, Perbill};
+use sp_runtime::{transaction_validity::TransactionPriority, PerU16, Perbill};
 // --- darwinia-network ---
 use crate::*;
 
@@ -9,7 +9,7 @@ sp_npos_elections::generate_solution_type!(
 	pub struct NposCompactSolution24::<
 		VoterIndex = u32,
 		TargetIndex = u16,
-		Accuracy = sp_runtime::PerU16,
+		Accuracy = PerU16,
 	>(24)
 );
 
