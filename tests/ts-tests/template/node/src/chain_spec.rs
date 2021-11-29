@@ -1,6 +1,6 @@
 use frontier_template_runtime::{
 	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, GenesisConfig, GrandpaConfig,
-	Signature, SudoConfig, SystemConfig, WASM_BINARY,
+	Signature, SudoConfig, SystemConfig, WASM_BINARY, KtonConfig,
 };
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -145,6 +145,13 @@ fn testnet_genesis(
 				.iter()
 				.cloned()
 				.map(|k| (k, 1 << 60))
+				.collect(),
+		},
+		kton: KtonConfig {
+			balances: endowed_accounts
+				.clone()
+				.into_iter()
+				.map(|a| (a, 1 << 60))
 				.collect(),
 		},
 		aura: AuraConfig {

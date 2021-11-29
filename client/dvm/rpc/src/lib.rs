@@ -27,10 +27,10 @@ use ethereum::{
 	Transaction as EthereumTransaction, TransactionMessage as EthereumTransactionMessage,
 };
 use ethereum_types::{H160, H256};
-use sha3::{Digest, Keccak256};
 use evm::{ExitError, ExitReason};
 use jsonrpc_core::{Error, ErrorCode, Value};
 pub use overrides::{OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride};
+use sha3::{Digest, Keccak256};
 
 pub mod frontier_backend_client {
 
@@ -258,7 +258,11 @@ pub trait EthSigner: Send + Sync {
 	/// Available accounts from this signer.
 	fn accounts(&self) -> Vec<H160>;
 	/// Sign a transaction message using the given account in message.
-	fn sign(&self, message: ethereum::TransactionMessage, address: &H160) -> Result<ethereum::Transaction, Error>;
+	fn sign(
+		&self,
+		message: ethereum::TransactionMessage,
+		address: &H160,
+	) -> Result<ethereum::Transaction, Error>;
 }
 
 pub struct EthDevSigner {
@@ -338,4 +342,3 @@ impl EthSigner for EthDevSigner {
 		transaction.ok_or(internal_err("signer not available"))
 	}
 }
-
