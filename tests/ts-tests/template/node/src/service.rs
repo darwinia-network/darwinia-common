@@ -33,7 +33,6 @@ use std::{
 use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use dc_rpc::EthTask;
 use dp_rpc::{FilterPool, PendingTransactions};
-use fc_consensus::FrontierBlockImport;
 use template_runtime::{self, opaque::Block, RuntimeApi, SLOT_DURATION};
 // paritytech
 use sc_cli::SubstrateCli;
@@ -70,19 +69,12 @@ type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
 #[cfg(feature = "aura")]
 pub type ConsensusResult = (
-	FrontierBlockImport<
-		Block,
-		GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
-		FullClient,
-	>,
+	GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
 	sc_finality_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
 );
 
 #[cfg(feature = "manual-seal")]
-pub type ConsensusResult = (
-	FrontierBlockImport<Block, Arc<FullClient>, FullClient>,
-	Sealing,
-);
+pub type ConsensusResult = (Arc<FullClient>, Sealing);
 
 /// Provide a mock duration starting at 0 in millisecond for timestamp inherent.
 /// Each call will increment timestamp by slot_duration making Aura think time has passed.
@@ -203,16 +195,14 @@ pub fn new_partial(
 	#[cfg(feature = "manual-seal")]
 	{
 		let sealing = cli.run.sealing;
-		let frontier_block_import =
-			FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
 		let import_queue = sc_consensus_manual_seal::import_queue(
-			Box::new(frontier_block_import.clone()),
+			Box::new(client.clone()),
 			&task_manager.spawn_essential_handle(),
 			config.prometheus_registry(),
 		);
 
 		Ok(sc_service::PartialComponents {
-			client,
+			client: client.clone(),
 			backend,
 			task_manager,
 			import_queue,
@@ -220,7 +210,7 @@ pub fn new_partial(
 			select_chain,
 			transaction_pool,
 			other: (
-				(frontier_block_import, sealing),
+				(client, sealing),
 				pending_transactions,
 				filter_pool,
 				frontier_backend,
@@ -238,17 +228,10 @@ pub fn new_partial(
 			telemetry.as_ref().map(|x| x.handle()),
 		)?;
 
-		let frontier_block_import = FrontierBlockImport::new(
-			grandpa_block_import.clone(),
-			client.clone(),
-			frontier_backend.clone(),
-		);
-
 		let slot_duration = sc_consensus_aura::slot_duration(&*client)?.slot_duration();
-
 		let import_queue =
 			sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _, _>(ImportQueueParams {
-				block_import: frontier_block_import.clone(),
+				block_import: grandpa_block_import.clone(),
 				justification_import: Some(Box::new(grandpa_block_import.clone())),
 				client: client.clone(),
 				create_inherent_data_providers: move |_, ()| async move {

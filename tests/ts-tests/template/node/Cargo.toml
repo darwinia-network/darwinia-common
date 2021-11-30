@@ -27,7 +27,6 @@ dc-rpc              = { path = "../../../../client/dvm/rpc" }
 dp-rpc 	            = { path = "../../../../primitives/rpc" }
 dvm-ethereum 	    = { path = "../../../../frame/dvm" }
 dvm-rpc-runtime-api = {path = "../../../../frame/dvm/rpc/runtime-api" }
-fc-consensus        = { path = "../../../../client/dvm/consensus" }
 template-runtime    = { path = "../runtime", default-features = false, features = ["std"] }
 
 # paritytech

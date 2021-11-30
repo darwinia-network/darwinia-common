@@ -60,7 +60,7 @@ use frame_support::{
 };
 use sp_consensus_aura::SlotDuration;
 use pallet_transaction_payment::CurrencyAdapter;
-pub use sp_runtime::{Perbill, Permill};
+use sp_runtime::{Perbill, Permill};
 // darwinia-network
 use darwinia_evm::{Account as EVMAccount, FeeCalculator, Runner};
 use dvm_ethereum::{Call::transact, Transaction as EthereumTransaction};
