@@ -4,7 +4,7 @@ use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use dc_rpc::EthTask;
 use dp_rpc::{FilterPool, PendingTransactions};
 use fc_consensus::FrontierBlockImport;
-use frontier_template_runtime::{self, opaque::Block, RuntimeApi, SLOT_DURATION};
+use template_runtime::{self, opaque::Block, RuntimeApi, SLOT_DURATION};
 use futures::StreamExt;
 use sc_cli::SubstrateCli;
 // use sc_client_api::{BlockchainEvents, ExecutorProvider, RemoteBackend};
@@ -39,8 +39,8 @@ use crate::cli::Sealing;
 // Our native executor instance.
 native_executor_instance!(
 	pub Executor,
-	frontier_template_runtime::api::dispatch,
-	frontier_template_runtime::native_version,
+	template_runtime::api::dispatch,
+	template_runtime::native_version,
 	frame_benchmarking::benchmarking::HostFunctions,
 );
 

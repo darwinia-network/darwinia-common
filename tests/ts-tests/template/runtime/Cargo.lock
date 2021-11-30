@@ -1310,50 +1310,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "frontier-template-runtime"
-version = "0.0.0"
-dependencies = [
- "darwinia-balances",
- "darwinia-evm",
- "darwinia-evm-precompile-modexp",
- "darwinia-evm-precompile-sha3fips",
- "darwinia-evm-precompile-simple",
- "darwinia-support",
- "dvm-ethereum",
- "dvm-rpc-runtime-api",
- "frame-benchmarking",
- "frame-executive",
- "frame-support",
- "frame-system",
- "frame-system-benchmarking",
- "frame-system-rpc-runtime-api",
- "max-encoded-len",
- "pallet-aura",
- "pallet-balances",
- "pallet-grandpa",
- "pallet-randomness-collective-flip",
- "pallet-sudo",
- "pallet-timestamp",
- "pallet-transaction-payment",
- "pallet-transaction-payment-rpc-runtime-api",
- "parity-scale-codec",
- "serde",
- "sp-api",
- "sp-block-builder",
- "sp-consensus-aura",
- "sp-core",
- "sp-inherents",
- "sp-io",
- "sp-offchain",
- "sp-runtime",
- "sp-session",
- "sp-std",
- "sp-transaction-pool",
- "sp-version",
- "substrate-wasm-builder",
-]
-
-[[package]]
 name = "funty"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4239,6 +4195,50 @@ dependencies = [
  "redox_syscall 0.2.10",
  "remove_dir_all",
  "winapi",
+]
+
+[[package]]
+name = "template-runtime"
+version = "0.0.0"
+dependencies = [
+ "darwinia-balances",
+ "darwinia-evm",
+ "darwinia-evm-precompile-modexp",
+ "darwinia-evm-precompile-sha3fips",
+ "darwinia-evm-precompile-simple",
+ "darwinia-support",
+ "dvm-ethereum",
+ "dvm-rpc-runtime-api",
+ "frame-benchmarking",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "frame-system-benchmarking",
+ "frame-system-rpc-runtime-api",
+ "max-encoded-len",
+ "pallet-aura",
+ "pallet-balances",
+ "pallet-grandpa",
+ "pallet-randomness-collective-flip",
+ "pallet-sudo",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-block-builder",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-std",
+ "sp-transaction-pool",
+ "sp-version",
+ "substrate-wasm-builder",
 ]
 
 [[package]]

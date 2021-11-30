@@ -1,4 +1,4 @@
-use frontier_template_runtime::{
+use template_runtime::{
 	AccountId, AuraConfig, BalancesConfig, EVMConfig, EthereumConfig, GenesisConfig, GrandpaConfig,
 	KtonConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };

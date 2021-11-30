@@ -5,7 +5,7 @@ use std::sync::Arc;
 use dc_rpc::{OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride};
 use dp_rpc::{FilterPool, PendingTransactions};
 use dvm_ethereum::EthereumStorageSchema;
-use frontier_template_runtime::{opaque::Block, AccountId, Balance, Hash, Index};
+use template_runtime::{opaque::Block, AccountId, Balance, Hash, Index};
 use jsonrpc_pubsub::manager::SubscriptionManager;
 use sc_client_api::{
 	backend::{AuxStore, Backend, StateBackend, StorageProvider},
@@ -130,7 +130,7 @@ where
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
-		frontier_template_runtime::TransactionConverter,
+		template_runtime::TransactionConverter,
 		network.clone(),
 		overrides.clone(),
 		pending_transactions.clone(),

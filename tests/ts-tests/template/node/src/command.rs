@@ -43,7 +43,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&frontier_template_runtime::VERSION
+		&template_runtime::VERSION
 	}
 }
 
@@ -130,7 +130,7 @@ pub fn run() -> sc_cli::Result<()> {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
 				runner.sync_run(|config| {
-					cmd.run::<frontier_template_runtime::Block, service::Executor>(config)
+					cmd.run::<template_runtime::Block, service::Executor>(config)
 				})
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. \

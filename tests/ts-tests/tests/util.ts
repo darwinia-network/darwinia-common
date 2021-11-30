@@ -105,7 +105,6 @@ export async function startFrontierNode(provider?: string): Promise<{ web3: Web3
 					binary.stderr.off("data", onData);
 					binary.stdout.off("data", onData);
 				}
-				// console.log(`\x1b[31m Starting RPC\x1b[0m`);
 				resolve();
 			}
 		};
@@ -133,7 +132,6 @@ export function describeWithFrontier(title: string, cb: (context: { web3: Web3 }
 		});
 
 		after(async function () {
-			//console.log(`\x1b[31m Killing RPC\x1b[0m`);
 			binary.kill();
 		});
 
