@@ -189,10 +189,10 @@ pub fn new_partial(
 	{
 		let sealing = cli.run.sealing;
 
-		inherent_data_providers
-			.register_provider(MockTimestampInherentDataProvider)
-			.map_err(Into::into)
-			.map_err(sp_consensus::error::Error::InherentData)?;
+		// inherent_data_providers
+		// 	.register_provider(MockTimestampInherentDataProvider)
+		// 	.map_err(Into::into)
+		// 	.map_err(sp_consensus::error::Error::InherentData)?;
 
 		let frontier_block_import =
 			FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
@@ -479,7 +479,7 @@ pub fn new_full(config: Configuration, cli: &Cli) -> Result<TaskManager, Service
 							block_import,
 							env,
 							client,
-							pool: transaction_pool.clone(),
+							pool: transaction_pool.pool().clone(),
 							commands_stream,
 							select_chain,
 							consensus_data_provider: None,
@@ -499,7 +499,7 @@ pub fn new_full(config: Configuration, cli: &Cli) -> Result<TaskManager, Service
 							block_import,
 							env,
 							client: client.clone(),
-							pool: transaction_pool.clone(),
+							pool: transaction_pool.pool().clone(),
 							select_chain,
 							consensus_data_provider: None,
 							create_inherent_data_providers: move |_, ()| async move {
@@ -615,10 +615,9 @@ pub fn new_full(config: Configuration, cli: &Cli) -> Result<TaskManager, Service
 				sc_finality_grandpa::run_grandpa_voter(grandpa_config)?,
 			);
 		}
-
-		network_starter.start_network();
-		Ok(task_manager)
 	}
+	network_starter.start_network();
+	Ok(task_manager)
 }
 
 #[cfg(feature = "aura")]
