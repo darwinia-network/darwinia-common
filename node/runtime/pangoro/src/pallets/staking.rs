@@ -1,7 +1,6 @@
 // --- paritytech ---
 use frame_election_provider_support::onchain::OnChainSequentialPhragmen;
 use frame_support::PalletId;
-use frame_system::EnsureRoot;
 use pallet_election_provider_multi_phase::OnChainConfig;
 use sp_npos_elections::CompactSolution;
 use sp_staking::SessionIndex;
@@ -13,12 +12,14 @@ pub const MAX_NOMINATIONS: u32 = <NposCompactSolution16 as CompactSolution>::LIM
 
 frame_support::parameter_types! {
 	pub const StakingPalletId: PalletId = PalletId(*b"da/staki");
-	pub const SessionsPerEra: SessionIndex = SESSIONS_PER_ERA;
-	pub const BondingDurationInEra: EraIndex = 2;
-	pub const BondingDurationInBlockNumber: BlockNumber = 2 * BLOCKS_PER_SESSION * SESSIONS_PER_ERA;
-	pub const SlashDeferDuration: EraIndex = 1;
-	pub const MaxNominatorRewardedPerValidator: u32 = 128;
-	pub const Cap: Balance = CAP;
+	pub const SessionsPerEra: SessionIndex = PANGORO_SESSIONS_PER_ERA;
+	pub const BondingDurationInEra: EraIndex = BondingDurationInBlockNumber::get()
+		/ (PANGORO_SESSIONS_PER_ERA as BlockNumber * PANGORO_BLOCKS_PER_SESSION);
+	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
+	// slightly less than 14 days.
+	pub const SlashDeferDuration: EraIndex = BondingDurationInEra::get() - 1;
+	pub const MaxNominatorRewardedPerValidator: u32 = 64;
+	pub const Cap: Balance = RING_HARD_CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
 
@@ -31,7 +32,7 @@ impl Config for Runtime {
 	type BondingDurationInEra = BondingDurationInEra;
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
 	type SlashDeferDuration = SlashDeferDuration;
-	type SlashCancelOrigin = EnsureRoot<AccountId>;
+	type SlashCancelOrigin = RootOrigin;
 	type SessionInterface = Self;
 	type NextNewSession = Session;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;

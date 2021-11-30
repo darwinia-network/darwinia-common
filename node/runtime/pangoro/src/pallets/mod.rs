@@ -43,14 +43,17 @@ pub use im_online::*;
 pub mod authority_discovery;
 pub use authority_discovery::*;
 
+pub mod treasury;
+pub use treasury::*;
+
 pub mod sudo;
 pub use sudo::*;
 
 pub mod scheduler;
 pub use scheduler::*;
 
-pub mod bridge_message;
-pub use bridge_message::*;
+pub mod bridge_messages;
+pub use bridge_messages::*;
 
 pub mod bridge_dispatch;
 pub use bridge_dispatch::*;

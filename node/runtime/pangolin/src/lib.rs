@@ -28,9 +28,6 @@ pub use pallets::*;
 pub mod bridges;
 pub use bridges::*;
 
-pub mod impls;
-pub use impls::*;
-
 pub mod wasm {
 	//! Make the WASM binary available.
 
@@ -72,9 +69,11 @@ pub mod wasm {
 }
 pub use wasm::*;
 
-pub use common_primitives::{self as pangoro_primitives};
+pub use common_primitives as pangoro_primitives;
+pub use common_primitives as pangolin_primitives;
 
-pub use pangolin_constants::*;
+pub use common_runtime as pangolin_runtime_system_params;
+pub use common_runtime as pangoro_runtime_system_params;
 
 pub use darwinia_staking::StakerStatus;
 
@@ -88,9 +87,6 @@ pub use pallet_sudo::Call as SudoCall;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
-use bridge_runtime_common::messages::{
-	source::estimate_message_dispatch_and_delivery_fee, MessageBridge,
-};
 #[allow(unused)]
 use frame_support::{log, migration};
 use frame_support::{
@@ -100,7 +96,7 @@ use frame_support::{
 use frame_system::{
 	offchain::{AppCrypto, CreateSignedTransaction, SendTransactionTypes, SigningTypes},
 	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
-	CheckWeight,
+	CheckWeight, EnsureRoot,
 };
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
@@ -124,6 +120,7 @@ use sp_version::RuntimeVersion;
 use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use bridges::substrate::pangoro_messages::{ToPangoroMessagePayload, WithPangoroMessageBridge};
 use common_primitives::*;
+use common_runtime::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
 use darwinia_evm::{Account as EVMAccount, FeeCalculator, Runner};
@@ -166,16 +163,18 @@ pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
 type Ring = Balances;
 
+pub type RootOrigin = EnsureRoot<AccountId>;
+
 /// This runtime version.
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
-	authoring_version: 1,
-	spec_version: 2_6_10_0,
-	impl_version: 1,
+	authoring_version: 0,
+	spec_version: 2_7_00_0,
+	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 4,
+	transaction_version: 0,
 };
 
 /// The BABE epoch configuration at genesis.
@@ -279,9 +278,10 @@ frame_support::construct_runtime! {
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
 		// DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Inherent} = 47,
 
-		BridgePangoroMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
-		BridgeDispatch: pallet_bridge_dispatch::{Pallet, Event<T>} = 44,
+		BridgePangoroDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
 		BridgePangoroGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
+		BridgePangoroMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
+
 		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 
 		BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
@@ -303,7 +303,7 @@ where
 		nonce: Nonce,
 	) -> Option<(Call, <UncheckedExtrinsic as Extrinsic>::SignaturePayload)> {
 		// take the biggest period possible.
-		let period = BlockHashCount::get()
+		let period = BlockHashCountForPangolin::get()
 			.checked_next_power_of_two()
 			.map(|c| c / 2)
 			.unwrap_or(2) as u64;
@@ -698,15 +698,15 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl bridge_primitives::ToPangoroOutboundLaneApi<Block, Balance, ToPangoroMessagePayload> for Runtime {
-		fn estimate_message_delivery_and_dispatch_fee(
-			_lane_id: bp_messages::LaneId,
-			payload: ToPangoroMessagePayload,
-		) -> Option<Balance> {
-			estimate_message_dispatch_and_delivery_fee::<WithPangoroMessageBridge>(
-				&payload,
-				WithPangoroMessageBridge::RELAYER_FEE_PERCENT,
-			).ok()
-		}
+		// fn estimate_message_delivery_and_dispatch_fee(
+		// 	_lane_id: bp_messages::LaneId,
+		// 	payload: ToPangoroMessagePayload,
+		// ) -> Option<Balance> {
+		// 	bridge_runtime_common::messages::source::estimate_message_dispatch_and_delivery_fee::<WithPangoroMessageBridge>(
+		// 		&payload,
+		// 		WithPangoroMessageBridge::RELAYER_FEE_PERCENT,
+		// 	).ok()
+		// }
 
 		fn message_details(
 			lane: bp_messages::LaneId,
@@ -803,8 +803,12 @@ fn migrate() -> Weight {
 	// TODO: Move to S2S
 	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
 	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
+
 	migration::remove_storage_prefix(b"FeeMarket", b"ConfirmedMessagesThisBlock", &[]);
 	log::info!("===> Remove `ConfirmedMessagesThisBlock` from the fee market");
+
+	migration::move_pallet(b"BridgeDispatch", b"BridgePangoroDispatch");
+	log::info!("Move `BridgeDispatch` to `BridgePangoroDispatch`");
 
 	// 0
 	RuntimeBlockWeights::get().max_block

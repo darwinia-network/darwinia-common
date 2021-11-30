@@ -7,11 +7,11 @@ license     = "GPL-3.0"
 name        = "to-substrate-backing"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.6.10"
+version     = "2.7.0"
 
 [dependencies]
 # crates.io
-array-bytes    = { version = "1.3" }
+array-bytes    = { version = "1.4" }
 codec          = { package = "parity-scale-codec", version = "2.1", default-features = false, features = ["derive"] }
 ethereum-types = { default-features = false, version = "0.11" }
 log            = { version = "0.4" }

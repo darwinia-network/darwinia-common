@@ -18,19 +18,25 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+// --- core ---
+use core::marker::PhantomData;
 // --- paritytech ---
 use bp_messages::{
 	source_chain::{LaneMessageVerifier, Sender},
 	LaneId, MessageDetails, MessageNonce, OutboundLaneData, UnrewardedRelayersState,
 };
-use bp_runtime::{Chain, ChainId, SourceAccount};
+use bp_runtime::{Chain, ChainId};
 use bridge_runtime_common::messages::{
-	source::FromThisChainMessagePayload, ChainWithMessages, MessageBridge, ThisChainWithMessages,
+	source::{
+		FromThisChainMessagePayload, BAD_ORIGIN, OUTBOUND_LANE_DISABLED, TOO_LOW_FEE,
+		TOO_MANY_PENDING_MESSAGES,
+	},
+	AccountIdOf, BalanceOf, MessageBridge, ThisChain, ThisChainWithMessages,
 };
 use frame_support::{weights::Weight, Parameter};
 use sp_core::H256;
 use sp_runtime::{traits::Convert, RuntimeDebug};
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_std::prelude::*;
 // --- darwinia-network ---
 use common_primitives::*;
 use darwinia_fee_market::RingBalance;
@@ -85,16 +91,16 @@ pub const WITH_PANGORO_MESSAGES_PALLET_NAME: &str = "BridgePangoroMessages";
 /// Name of the `FromPangolinInboundLaneApi::latest_received_nonce` runtime method.
 pub const FROM_PANGOLIN_LATEST_RECEIVED_NONCE_METHOD: &str =
 	"FromPangolinInboundLaneApi_latest_received_nonce";
-/// Name of the `FromPangolinInboundLaneApi::latest_onfirmed_nonce` runtime method.
+/// Name of the `FromPangolinInboundLaneApi::latest_confirmed_nonce` runtime method.
 pub const FROM_PANGOLIN_LATEST_CONFIRMED_NONCE_METHOD: &str =
 	"FromPangolinInboundLaneApi_latest_confirmed_nonce";
 /// Name of the `FromPangolinInboundLaneApi::unrewarded_relayers_state` runtime method.
 pub const FROM_PANGOLIN_UNREWARDED_RELAYERS_STATE: &str =
 	"FromPangolinInboundLaneApi_unrewarded_relayers_state";
 
-/// Name of the `ToPangolinOutboundLaneApi::estimate_message_delivery_and_dispatch_fee` runtime method.
-pub const TO_PANGOLIN_ESTIMATE_MESSAGE_FEE_METHOD: &str =
-	"ToPangolinOutboundLaneApi_estimate_message_delivery_and_dispatch_fee";
+// /// Name of the `ToPangolinOutboundLaneApi::estimate_message_delivery_and_dispatch_fee` runtime method.
+// pub const TO_PANGOLIN_ESTIMATE_MESSAGE_FEE_METHOD: &str =
+// 	"ToPangolinOutboundLaneApi_estimate_message_delivery_and_dispatch_fee";
 /// Name of the `ToPangolinOutboundLaneApi::message_details` runtime method.
 pub const TO_PANGOLIN_MESSAGE_DETAILS_METHOD: &str = "ToPangolinOutboundLaneApi_message_details";
 /// Name of the `ToPangolinOutboundLaneApi::latest_generated_nonce` runtime method.
@@ -118,16 +124,16 @@ pub const WITH_PANGOLIN_MESSAGES_PALLET_NAME: &str = "BridgePangolinMessages";
 /// Name of the `FromPangoroInboundLaneApi::latest_received_nonce` runtime method.
 pub const FROM_PANGORO_LATEST_RECEIVED_NONCE_METHOD: &str =
 	"FromPangoroInboundLaneApi_latest_received_nonce";
-/// Name of the `FromPangoroInboundLaneApi::latest_onfirmed_nonce` runtime method.
+/// Name of the `FromPangoroInboundLaneApi::latest_confirmed_nonce` runtime method.
 pub const FROM_PANGORO_LATEST_CONFIRMED_NONCE_METHOD: &str =
 	"FromPangoroInboundLaneApi_latest_confirmed_nonce";
 /// Name of the `FromPangoroInboundLaneApi::unrewarded_relayers_state` runtime method.
 pub const FROM_PANGORO_UNREWARDED_RELAYERS_STATE: &str =
 	"FromPangoroInboundLaneApi_unrewarded_relayers_state";
 
-/// Name of the `ToPangoroOutboundLaneApi::estimate_message_delivery_and_dispatch_fee` runtime method.
-pub const TO_PANGORO_ESTIMATE_MESSAGE_FEE_METHOD: &str =
-	"ToPangoroOutboundLaneApi_estimate_message_delivery_and_dispatch_fee";
+// /// Name of the `ToPangoroOutboundLaneApi::estimate_message_delivery_and_dispatch_fee` runtime method.
+// pub const TO_PANGORO_ESTIMATE_MESSAGE_FEE_METHOD: &str =
+// 	"ToPangoroOutboundLaneApi_estimate_message_delivery_and_dispatch_fee";
 /// Name of the `ToPangolinOutboundLaneApi::message_details` runtime method.
 pub const TO_PANGORO_MESSAGE_DETAILS_METHOD: &str = "ToPangoroOutboundLaneApi_message_details";
 /// Name of the `ToPangoroOutboundLaneApi::latest_generated_nonce` runtime method.
@@ -176,24 +182,6 @@ impl Chain for Pangolin {
 	type Signature = Signature;
 }
 
-/// todo: Reserved for other chains, don't forget change bridge_id
-pub fn derive_account_from_pangolin_id(id: SourceAccount<AccountId>) -> AccountId {
-	let encoded_id = bp_runtime::derive_account_id(PANGOLIN_CHAIN_ID, id);
-	AccountIdConverter::convert(encoded_id)
-}
-/// We use this to get the account on Pangoro (target) which is derived from Pangolin's (source)
-/// account. We do this so we can fund the derived account on Pangoro at Genesis to it can pay
-/// transaction fees.
-///
-/// The reason we can use the same `AccountId` type for both chains is because they share the same
-/// development seed phrase.
-///
-/// Note that this should only be used for testing.
-pub fn derive_account_from_pangoro_id(id: SourceAccount<AccountId>) -> AccountId {
-	let encoded_id = bp_runtime::derive_account_id(PANGORO_CHAIN_ID, id);
-	AccountIdConverter::convert(encoded_id)
-}
-
 /// Message verifier that is doing all basic checks.
 ///
 /// This verifier assumes following:
@@ -210,25 +198,13 @@ pub fn derive_account_from_pangoro_id(id: SourceAccount<AccountId>) -> AccountId
 ///   dispatch origin;
 /// - check that the sender has paid enough funds for both message delivery and dispatch.
 #[derive(RuntimeDebug)]
-pub struct DarwiniaFromThisChainMessageVerifier<B, R>(PhantomData<(B, R)>);
-
-// TODO: These types already defined in upstream repo, reuse them would be better.
-pub(crate) const OUTBOUND_LANE_DISABLED: &str = "The outbound message lane is disabled.";
-pub(crate) const TOO_MANY_PENDING_MESSAGES: &str = "Too many pending messages at the lane.";
-pub(crate) const BAD_ORIGIN: &str = "Unable to match the source origin to expected target origin.";
-pub(crate) const TOO_LOW_FEE: &str =
-	"Provided fee is below minimal threshold required by the lane.";
-pub(crate) const NO_MARKET_FEE: &str = "The fee market are not ready for accepting messages.";
-pub(crate) type ThisChain<B> = <B as MessageBridge>::ThisChain;
-pub(crate) type AccountIdOf<C> = <C as ChainWithMessages>::AccountId;
-pub(crate) type BalanceOf<C> = <C as ChainWithMessages>::Balance;
-
+pub struct FromThisChainMessageVerifier<B, R>(PhantomData<(B, R)>);
 impl<B, R>
 	LaneMessageVerifier<
 		AccountIdOf<ThisChain<B>>,
 		FromThisChainMessagePayload<B>,
 		BalanceOf<ThisChain<B>>,
-	> for DarwiniaFromThisChainMessageVerifier<B, R>
+	> for FromThisChainMessageVerifier<B, R>
 where
 	B: MessageBridge,
 	R: darwinia_fee_market::Config,
@@ -272,6 +248,8 @@ where
 				return Err(TOO_LOW_FEE);
 			}
 		} else {
+			const NO_MARKET_FEE: &str = "The fee market are not ready for accepting messages.";
+
 			return Err(NO_MARKET_FEE);
 		}
 
@@ -295,19 +273,19 @@ sp_api::decl_runtime_apis! {
 	/// This API is implemented by runtimes that are sending messages to Pangolin chain, not the
 	/// Pangolin runtime itself.
 	pub trait ToPangolinOutboundLaneApi<OutboundMessageFee: Parameter, OutboundPayload: Parameter> {
-		/// Estimate message delivery and dispatch fee that needs to be paid by the sender on
-		/// this chain.
-		///
-		/// Returns `None` if message is too expensive to be sent to Pangolin from this chain.
-		///
-		/// Please keep in mind that this method returns lowest message fee required for message
-		/// to be accepted to the lane. It may be good idea to pay a bit over this price to account
-		/// future exchange rate changes and guarantee that relayer would deliver your message
-		/// to the target chain.
-		fn estimate_message_delivery_and_dispatch_fee(
-			lane_id: LaneId,
-			payload: OutboundPayload,
-		) -> Option<OutboundMessageFee>;
+		// /// Estimate message delivery and dispatch fee that needs to be paid by the sender on
+		// /// this chain.
+		// ///
+		// /// Returns `None` if message is too expensive to be sent to Pangolin from this chain.
+		// ///
+		// /// Please keep in mind that this method returns lowest message fee required for message
+		// /// to be accepted to the lane. It may be good idea to pay a bit over this price to account
+		// /// future exchange rate changes and guarantee that relayer would deliver your message
+		// /// to the target chain.
+		// fn estimate_message_delivery_and_dispatch_fee(
+		// 	lane_id: LaneId,
+		// 	payload: OutboundPayload,
+		// ) -> Option<OutboundMessageFee>;
 		/// Returns dispatch weight, encoded payload size and delivery+dispatch fee of all
 		/// messages in given inclusive range.
 		///
@@ -351,19 +329,19 @@ sp_api::decl_runtime_apis! {
 	/// This API is implemented by runtimes that are sending messages to Pangoro chain, not the
 	/// Pangoro runtime itself.
 	pub trait ToPangoroOutboundLaneApi<OutboundMessageFee: Parameter, OutboundPayload: Parameter> {
-		/// Estimate message delivery and dispatch fee that needs to be paid by the sender on
-		/// this chain.
-		///
-		/// Returns `None` if message is too expensive to be sent to Pangoro from this chain.
-		///
-		/// Please keep in mind that this method returns lowest message fee required for message
-		/// to be accepted to the lane. It may be good idea to pay a bit over this price to account
-		/// future exchange rate changes and guarantee that relayer would deliver your message
-		/// to the target chain.
-		fn estimate_message_delivery_and_dispatch_fee(
-			lane_id: LaneId,
-			payload: OutboundPayload,
-		) -> Option<OutboundMessageFee>;
+		// /// Estimate message delivery and dispatch fee that needs to be paid by the sender on
+		// /// this chain.
+		// ///
+		// /// Returns `None` if message is too expensive to be sent to Pangoro from this chain.
+		// ///
+		// /// Please keep in mind that this method returns lowest message fee required for message
+		// /// to be accepted to the lane. It may be good idea to pay a bit over this price to account
+		// /// future exchange rate changes and guarantee that relayer would deliver your message
+		// /// to the target chain.
+		// fn estimate_message_delivery_and_dispatch_fee(
+		// 	lane_id: LaneId,
+		// 	payload: OutboundPayload,
+		// ) -> Option<OutboundMessageFee>;
 		/// Returns dispatch weight, encoded payload size and delivery+dispatch fee of all
 		/// messages in given inclusive range.
 		///
