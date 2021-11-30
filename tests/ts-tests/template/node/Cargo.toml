@@ -1,14 +1,11 @@
 [package]
-name = "frontier-template-node"
+name = "template-node"
 version = "0.0.0"
-authors = ["Parity Technologies <admin@parity.io>"]
-description = "Frontier Node template"
-edition = "2018"
-license = "Unlicense"
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Template node for ts tests"
+edition = "2021"
+license     = "GPL-3.0"
 build = "build.rs"
-homepage = "https://substrate.dev"
-repository = "https://github.com/paritytech/frontier/"
-publish = false
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]

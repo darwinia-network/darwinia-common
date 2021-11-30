@@ -1964,58 +1964,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "frontier-template-node"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "darwinia-evm",
- "dc-db",
- "dc-mapping-sync",
- "dc-rpc",
- "dp-rpc",
- "dvm-ethereum",
- "dvm-rpc-runtime-api",
- "fc-consensus",
- "frame-benchmarking",
- "frame-benchmarking-cli",
- "frontier-template-runtime",
- "futures 0.3.18",
- "jsonrpc-core",
- "jsonrpc-pubsub",
- "log",
- "pallet-transaction-payment-rpc",
- "sc-basic-authorship",
- "sc-cli",
- "sc-client-api",
- "sc-consensus",
- "sc-consensus-aura",
- "sc-consensus-manual-seal",
- "sc-executor",
- "sc-finality-grandpa",
- "sc-keystore",
- "sc-network",
- "sc-rpc",
- "sc-rpc-api",
- "sc-service",
- "sc-telemetry",
- "sc-transaction-pool",
- "sp-api",
- "sp-block-builder",
- "sp-blockchain",
- "sp-consensus",
- "sp-consensus-aura",
- "sp-core",
- "sp-finality-grandpa",
- "sp-inherents",
- "sp-runtime",
- "sp-timestamp",
- "sp-transaction-pool",
- "structopt",
- "substrate-build-script-utils",
- "substrate-frame-rpc-system",
-]
-
-[[package]]
 name = "frontier-template-runtime"
 version = "0.0.0"
 dependencies = [
@@ -7677,6 +7625,58 @@ dependencies = [
  "redox_syscall 0.2.10",
  "remove_dir_all",
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "template-node"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "darwinia-evm",
+ "dc-db",
+ "dc-mapping-sync",
+ "dc-rpc",
+ "dp-rpc",
+ "dvm-ethereum",
+ "dvm-rpc-runtime-api",
+ "fc-consensus",
+ "frame-benchmarking",
+ "frame-benchmarking-cli",
+ "frontier-template-runtime",
+ "futures 0.3.18",
+ "jsonrpc-core",
+ "jsonrpc-pubsub",
+ "log",
+ "pallet-transaction-payment-rpc",
+ "sc-basic-authorship",
+ "sc-cli",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-consensus-aura",
+ "sc-consensus-manual-seal",
+ "sc-executor",
+ "sc-finality-grandpa",
+ "sc-keystore",
+ "sc-network",
+ "sc-rpc",
+ "sc-rpc-api",
+ "sc-service",
+ "sc-telemetry",
+ "sc-transaction-pool",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-finality-grandpa",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-timestamp",
+ "sp-transaction-pool",
+ "structopt",
+ "substrate-build-script-utils",
+ "substrate-frame-rpc-system",
 ]
 
 [[package]]
