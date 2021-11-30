@@ -16,7 +16,8 @@ use sc_executor::native_executor_instance;
 pub use sc_executor::NativeExecutor;
 use sc_finality_grandpa::SharedVoterState;
 use sc_keystore::LocalKeystore;
-use sc_network::warp_request_handler::WarpSyncProvider;
+// use sc_network::warp_request_handler::WarpSyncProvider;
+use sc_client_api::BlockchainEvents;
 use sc_service::{error::Error as ServiceError, BasePath, Configuration, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryWorker};
 use sp_consensus::SlotData;
@@ -316,25 +317,25 @@ pub fn new_full(config: Configuration, cli: &Cli) -> Result<TaskManager, Service
 		};
 	}
 
-	let warp_sync: Option<Arc<dyn WarpSyncProvider<Block>>> = {
-		#[cfg(feature = "aura")]
-		{
-			config
-				.network
-				.extra_sets
-				.push(sc_finality_grandpa::grandpa_peers_set_config());
-			Some(Arc::new(
-				sc_finality_grandpa::warp_proof::NetworkProvider::new(
-					backend.clone(),
-					consensus_result.1.shared_authority_set().clone(),
-				),
-			))
-		}
-		#[cfg(feature = "manual-seal")]
-		{
-			None
-		}
-	};
+	// let warp_sync: Option<Arc<dyn WarpSyncProvider<Block>>> = {
+	// 	#[cfg(feature = "aura")]
+	// 	{
+	// 		config
+	// 			.network
+	// 			.extra_sets
+	// 			.push(sc_finality_grandpa::grandpa_peers_set_config());
+	// 		Some(Arc::new(
+	// 			sc_finality_grandpa::warp_proof::NetworkProvider::new(
+	// 				backend.clone(),
+	// 				consensus_result.1.shared_authority_set().clone(),
+	// 			),
+	// 		))
+	// 	}
+	// 	#[cfg(feature = "manual-seal")]
+	// 	{
+	// 		None
+	// 	}
+	// };
 
 	let (network, system_rpc_tx, network_starter) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
@@ -345,7 +346,7 @@ pub fn new_full(config: Configuration, cli: &Cli) -> Result<TaskManager, Service
 			import_queue,
 			on_demand: None,
 			block_announce_validator_builder: None,
-			warp_sync,
+			// warp_sync,
 		})?;
 
 	// Channel for the rpc handler to communicate with the authorship task.
@@ -394,10 +395,11 @@ pub fn new_full(config: Configuration, cli: &Cli) -> Result<TaskManager, Service
 				max_past_logs,
 				command_sink: Some(command_sink.clone()),
 			};
-			Ok(crate::rpc::create_full(
-				deps,
-				subscription_task_executor.clone(),
-			))
+			// Ok(crate::rpc::create_full(
+			// 	deps,
+			// 	subscription_task_executor.clone(),
+			// ))
+			crate::rpc::create_full(deps, subscription_task_executor.clone())
 		})
 	};
 
@@ -689,10 +691,19 @@ pub fn new_light(mut config: Configuration) -> Result<TaskManager, ServiceError>
 			telemetry: telemetry.as_ref().map(|x| x.handle()),
 		})?;
 
-	let warp_sync = Arc::new(sc_finality_grandpa::warp_proof::NetworkProvider::new(
-		backend.clone(),
-		grandpa_link.shared_authority_set().clone(),
-	));
+	// let warp_sync = Arc::new(sc_finality_grandpa::warp_proof::NetworkProvider::new(
+	// 	backend.clone(),
+	// 	grandpa_link.shared_authority_set().clone(),
+	// ));
+
+	let light_deps = crate::rpc::LightDeps {
+		remote_blockchain: backend.remote_blockchain(),
+		fetcher: on_demand.clone(),
+		client: client.clone(),
+		pool: transaction_pool.clone(),
+	};
+
+	let rpc_extensions = crate::rpc::create_light(light_deps);
 
 	let (network, system_rpc_tx, network_starter) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
@@ -703,7 +714,7 @@ pub fn new_light(mut config: Configuration) -> Result<TaskManager, ServiceError>
 			import_queue,
 			on_demand: Some(on_demand.clone()),
 			block_announce_validator_builder: None,
-			warp_sync: Some(warp_sync),
+			// warp_sync: Some(warp_sync),
 		})?;
 
 	if config.offchain_worker.enabled {
@@ -740,7 +751,7 @@ pub fn new_light(mut config: Configuration) -> Result<TaskManager, ServiceError>
 		transaction_pool,
 		task_manager: &mut task_manager,
 		on_demand: Some(on_demand),
-		rpc_extensions_builder: Box::new(|_, _| Ok(())),
+		rpc_extensions_builder: Box::new(sc_service::NoopRpcExtensionBuilder(rpc_extensions)),
 		config,
 		client,
 		keystore: keystore_container.sync_keystore(),
