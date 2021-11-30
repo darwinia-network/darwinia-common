@@ -1,3 +1,21 @@
+// This file is part of Darwinia.
+//
+// Copyright (C) 2018-2021 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
 //! The Substrate Node Template runtime. This can be compiled with `#[no_std]`, ready for Wasm.
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -8,7 +26,10 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+// parity
 use codec::{Decode, Encode};
+use frame_support::{traits::MaxEncodedLen, PalletId};
+use sp_runtime::RuntimeDebug;
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
@@ -28,12 +49,7 @@ use sp_std::{marker::PhantomData, prelude::*};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-
-// A few exports that help ease life for downstream crates.
-use darwinia_evm::{Account as EVMAccount, FeeCalculator, Runner};
-use dvm_ethereum::{Call::transact, Transaction as EthereumTransaction};
-use dvm_rpc_runtime_api::TransactionStatus;
-pub use frame_support::{
+use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{FindAuthor, KeyOwnerProofSystem, Randomness},
 	weights::{
@@ -42,39 +58,37 @@ pub use frame_support::{
 	},
 	ConsensusEngineId, StorageValue,
 };
-pub use pallet_balances::Call as BalancesCall;
-pub use pallet_timestamp::Call as TimestampCall;
-use pallet_transaction_payment::CurrencyAdapter;
 use sp_consensus_aura::SlotDuration;
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
+use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::{Perbill, Permill};
+// darwinia-network
+use darwinia_evm::{Account as EVMAccount, FeeCalculator, Runner};
+use dvm_ethereum::{Call::transact, Transaction as EthereumTransaction};
+use dvm_rpc_runtime_api::TransactionStatus;
+use darwinia_support::evm::ConcatConverter;
+use dvm_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
 
 /// Type of block number.
 pub type BlockNumber = u32;
-
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
-
 /// Some way of identifying an account on the chain. We intentionally make it equivalent
 /// to the public key of our transaction signing scheme.
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
-/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
-/// never know...
+/// The type for looking up accounts. We don't expect more than 4 billion of them, but you never know...
 pub type AccountIndex = u32;
-
 /// Balance of an account.
 pub type Balance = u128;
-
 /// Index of a transaction in the chain.
 pub type Index = u32;
-
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;
-
 /// Digest item type.
 pub type DigestItem = generic::DigestItem<Hash>;
+
+pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
+pub type Ring = Balances;
+
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -84,7 +98,6 @@ pub mod opaque {
 	use super::*;
 
 	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-
 	/// Opaque block header type.
 	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 	/// Opaque block type.
@@ -111,9 +124,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 };
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
-
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
-
 // Time is measured by number of blocks.
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
@@ -138,7 +149,6 @@ darwinia_support::impl_account_data! {
 	where
 		Balance = Balance
 	{
-		// other data
 	}
 }
 
@@ -154,7 +164,6 @@ parameter_types! {
 }
 
 // Configure FRAME pallets to include in runtime.
-
 impl frame_system::Config for Runtime {
 	/// The basic call filter to use in dispatchable.
 	type BaseCallFilter = ();
@@ -214,17 +223,13 @@ impl pallet_grandpa::Config for Runtime {
 	type Call = Call;
 
 	type KeyOwnerProofSystem = ();
-
 	type KeyOwnerProof =
 		<Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
-
 	type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
 		KeyTypeId,
 		GrandpaId,
 	)>>::IdentificationTuple;
-
 	type HandleEquivocation = ();
-
 	type WeightInfo = ();
 }
 
@@ -243,31 +248,6 @@ impl pallet_timestamp::Config for Runtime {
 	type OnTimestampSet = ();
 }
 
-// parameter_types! {
-// 	pub const ExistentialDeposit: u128 = 500;
-// 	// For weight estimation, we assume that the most locks on an individual account will be 50.
-// 	// This number may need to be adjusted in the future if this assumption no longer holds true.
-// 	pub const MaxLocks: u32 = 50;
-// }
-
-// impl pallet_balances::Config for Runtime {
-// 	type MaxLocks = MaxLocks;
-// 	/// The type for recording an account's balance.
-// 	type Balance = Balance;
-// 	/// The ubiquitous event type.
-// 	type Event = Event;
-// 	type DustRemoval = ();
-// 	type ExistentialDeposit = ExistentialDeposit;
-// 	type AccountStore = System;
-// 	type WeightInfo = ();
-// }
-// use darwinia_balances::AccountData;
-pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
-use darwinia_support::evm::ConcatConverter;
-use dvm_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
-use frame_support::{traits::MaxEncodedLen, PalletId};
-use sp_runtime::RuntimeDebug;
-type Ring = Balances;
 
 frame_support::parameter_types! {
 	pub const ExistentialDeposit: Balance = 0;
