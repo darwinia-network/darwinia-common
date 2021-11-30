@@ -92,7 +92,7 @@ jobs:
         run: .maintain/purge-large-cache.sh
 
   rpc-checks:
-    name: RPC tests
+    name: RPC checks
     if: github.event_name == 'push' || !github.event.pull_request.draft
     needs: [basic-checks]
     runs-on: ubuntu-latest
