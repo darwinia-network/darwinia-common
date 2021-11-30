@@ -6,7 +6,7 @@
   "scripts": {
     "build": "truffle compile",
     "test": "mocha -r ts-node/register 'tests/**/*.ts'",
-	"single": "mocha -r ts-node/register 'tests/**/test-netapi.ts'"
+	"single": "mocha -r ts-node/register 'tests/**/test-precompiles.ts'"
   },
   "keywords": [],
   "author": "",
