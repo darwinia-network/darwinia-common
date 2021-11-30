@@ -7,7 +7,7 @@ on:
     paths:
       - "**.rs"
       - "**.toml"
-      - "**lock"
+      - "**.lock"
       - "**.json"
       - "**.yml"
   pull_request:
@@ -18,7 +18,7 @@ on:
     paths:
       - "**.rs"
       - "**.toml"
-      - "**lock"
+      - "**.lock"
       - "**.json"
       - "**.yml"
   # issue_comment:
