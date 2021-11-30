@@ -671,7 +671,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances"
-version = "2.6.10"
+version = "2.7.0"
 dependencies = [
  "darwinia-balances-rpc-runtime-api",
  "darwinia-support",
@@ -686,7 +686,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances-rpc-runtime-api"
-version = "2.6.10"
+version = "2.7.0"
 dependencies = [
  "darwinia-support",
  "parity-scale-codec",
@@ -697,7 +697,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm"
-version = "2.6.10"
+version = "2.7.0"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -724,7 +724,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-modexp"
-version = "2.6.10"
+version = "2.7.0"
 dependencies = [
  "dp-evm",
  "evm",
@@ -735,7 +735,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-sha3fips"
-version = "2.0.0"
+version = "2.7.0"
 dependencies = [
  "dp-evm",
  "evm",
@@ -746,7 +746,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-simple"
-version = "2.6.10"
+version = "2.7.0"
 dependencies = [
  "dp-evm",
  "evm",
@@ -757,7 +757,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-support"
-version = "2.6.10"
+version = "2.7.0"
 dependencies = [
  "bp-messages",
  "bp-runtime",
@@ -821,7 +821,7 @@ checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 
 [[package]]
 name = "dp-consensus"
-version = "2.6.10"
+version = "2.7.0"
 dependencies = [
  "ethereum",
  "parity-scale-codec",
@@ -834,7 +834,7 @@ dependencies = [
 
 [[package]]
 name = "dp-evm"
-version = "2.6.10"
+version = "2.7.0"
 dependencies = [
  "evm",
  "impl-trait-for-tuples",
@@ -846,11 +846,11 @@ dependencies = [
 
 [[package]]
 name = "dp-storage"
-version = "2.6.10"
+version = "2.7.0"
 
 [[package]]
 name = "dvm-ethereum"
-version = "2.6.10"
+version = "2.7.0"
 dependencies = [
  "darwinia-evm",
  "darwinia-support",
@@ -878,7 +878,7 @@ dependencies = [
 
 [[package]]
 name = "dvm-rpc-runtime-api"
-version = "2.6.10"
+version = "2.7.0"
 dependencies = [
  "darwinia-evm",
  "darwinia-support",
@@ -1010,7 +1010,7 @@ dependencies = [
 
 [[package]]
 name = "ethereum-primitives"
-version = "2.6.10"
+version = "2.7.0"
 dependencies = [
  "array-bytes",
  "ethash",
@@ -2142,7 +2142,7 @@ checksum = "71d96e3f3c0b6325d8ccd83c33b28acb183edcb6c67938ba104ec546854b0882"
 
 [[package]]
 name = "merkle-patricia-trie"
-version = "2.6.10"
+version = "2.7.0"
 dependencies = [
  "hashbrown 0.9.1",
  "keccak-hash",
