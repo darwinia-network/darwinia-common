@@ -45,14 +45,12 @@ export async function createAndFinalizeBlock(web3: Web3) {
 }
 
 export async function startFrontierNode(provider?: string): Promise<{ web3: Web3; binary: ChildProcess }> {
-	console.log('bear: --- enter the start frontier node');
 	var web3;
 	if (!provider || provider == 'http') {
 		web3 = new Web3(`http://localhost:${RPC_PORT}`);
 	}
 
 	const cmd = BINARY_PATH;
-	console.log('bear: --- {}', cmd);
 	const args = [
 		`--chain=dev`,
 		`--validator`, // Required by manual sealing to author the blocks
