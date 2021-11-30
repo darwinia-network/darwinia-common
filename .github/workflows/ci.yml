@@ -92,7 +92,7 @@ jobs:
         run: .maintain/purge-large-cache.sh
 
   rpc-checks:
-    name: RPC checks
+    name: Task test RPC
     if: github.event_name == 'push' || !github.event.pull_request.draft
     needs: [basic-checks]
     runs-on: ubuntu-latest
@@ -129,7 +129,7 @@ jobs:
           npm test
 
   code-checks:
-    name: Code checks
+    name: Task check Code
     if: github.event_name == 'push' || !github.event.pull_request.draft
     # if: github.event.issue.pull_request && contains(github.event.comment.body, '/bot check') && contains(github.event.comment.body, 'code')
     needs: [basic-checks]
@@ -152,7 +152,7 @@ jobs:
         run: subalfred ci default-features -p ../darwinia-common
 
   runtime-checks:
-    name: Runtime checks
+    name: Task check runtime
     if: github.event_name == 'push' || !github.event.pull_request.draft
     # if: github.event.issue.pull_request && contains(github.event.comment.body, '/bot check') && contains(github.event.comment.body, 'runtime')
     needs: [basic-checks]
@@ -240,12 +240,13 @@ jobs:
             ```
             </details>
 
-  clean-artifacts:
-    name: Clean artifacts
+  housekeeping-checks:
+    name: Task check housekeeping
     if: always()
     needs: [rpc-checks, code-checks, runtime-checks]
     steps:
-      - uses: geekyeggo/delete-artifact@v1
+      - name: Clean artifacts
+        uses: geekyeggo/delete-artifact@v1
         with:
           name: |
             drml
