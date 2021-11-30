@@ -21,9 +21,9 @@ structopt      = { version = "0.3.8" }
 
 # darwinia-network
 darwinia-evm        = { path = "../../../../frame/evm" }
-dc-db 		        = { path = "../../../../client/dvm/db" }
+dc-db               = { path = "../../../../client/dvm/db" }
 dc-mapping-sync     = { path = "../../../../client/dvm/mapping-sync" }
-dc-rpc 		        = { path = "../../../../client/dvm/rpc" }
+dc-rpc              = { path = "../../../../client/dvm/rpc" }
 dp-rpc 	            = { path = "../../../../primitives/rpc" }
 dvm-ethereum 	    = { path = "../../../../frame/dvm" }
 dvm-rpc-runtime-api = {path = "../../../../frame/dvm/rpc/runtime-api" }
@@ -49,7 +49,7 @@ sc-rpc-api                     = { git = "https://github.com/darwinia-network/su
 sc-service                     = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 sc-telemetry                   = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 sc-transaction-pool            = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-api 				           = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+sp-api                         = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 sp-blockchain                  = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 sp-block-builder               = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 sp-consensus                   = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }

@@ -1,36 +1,56 @@
+// This file is part of Darwinia.
+//
+// Copyright (C) 2018-2021 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
-use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
-use dc_rpc::EthTask;
-use dp_rpc::{FilterPool, PendingTransactions};
-use fc_consensus::FrontierBlockImport;
-use template_runtime::{self, opaque::Block, RuntimeApi, SLOT_DURATION};
-use futures::StreamExt;
-use sc_cli::SubstrateCli;
-// use sc_client_api::{BlockchainEvents, ExecutorProvider, RemoteBackend};
-use sc_client_api::{ExecutorProvider, RemoteBackend};
-use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
-#[cfg(feature = "manual-seal")]
-use sc_consensus_manual_seal::{self as manual_seal};
-use sc_executor::native_executor_instance;
 pub use sc_executor::NativeExecutor;
-use sc_finality_grandpa::SharedVoterState;
-use sc_keystore::LocalKeystore;
-// use sc_network::warp_request_handler::WarpSyncProvider;
-use sc_client_api::BlockchainEvents;
-use sc_service::{error::Error as ServiceError, BasePath, Configuration, TaskManager};
-use sc_telemetry::{Telemetry, TelemetryWorker};
-use sp_consensus::SlotData;
-use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
-use sp_core::U256;
-use sp_inherents::{InherentData, InherentIdentifier};
-use sp_timestamp::InherentError;
+
+// std
+use async_trait::async_trait;
+use futures::StreamExt;
 use std::{
 	cell::RefCell,
 	collections::{BTreeMap, HashMap},
 	sync::{Arc, Mutex},
 	time::Duration,
 };
+// darwinia-network
+use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
+use dc_rpc::EthTask;
+use dp_rpc::{FilterPool, PendingTransactions};
+use fc_consensus::FrontierBlockImport;
+use template_runtime::{self, opaque::Block, RuntimeApi, SLOT_DURATION};
+// paritytech
+use sc_cli::SubstrateCli;
+use sc_client_api::{BlockchainEvents, ExecutorProvider, RemoteBackend};
+use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
+#[cfg(feature = "manual-seal")]
+use sc_consensus_manual_seal::{self as manual_seal};
+use sc_executor::native_executor_instance;
+use sc_finality_grandpa::{GrandpaBlockImport, SharedVoterState};
+use sc_keystore::LocalKeystore;
+use sc_service::{error::Error as ServiceError, BasePath, Configuration, TaskManager};
+use sc_telemetry::{Telemetry, TelemetryWorker};
+use sp_consensus::SlotData;
+use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
+use sp_core::U256;
+use sp_inherents::{InherentData, InherentDataProvider, InherentIdentifier};
+use sp_timestamp::InherentError;
 
 use crate::cli::Cli;
 #[cfg(feature = "manual-seal")]
@@ -52,7 +72,7 @@ type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 pub type ConsensusResult = (
 	FrontierBlockImport<
 		Block,
-		sc_finality_grandpa::GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+		GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
 		FullClient,
 	>,
 	sc_finality_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
@@ -71,9 +91,6 @@ pub struct MockTimestampInherentDataProvider;
 pub const INHERENT_IDENTIFIER: InherentIdentifier = *b"timstap0";
 
 thread_local!(static TIMESTAMP: RefCell<u64> = RefCell::new(0));
-
-use async_trait::async_trait;
-use sp_inherents::InherentDataProvider;
 
 #[async_trait]
 impl InherentDataProvider for MockTimestampInherentDataProvider {
@@ -180,23 +197,14 @@ pub fn new_partial(
 	);
 
 	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
-
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
-
 	let frontier_backend = open_frontier_backend(config)?;
 
 	#[cfg(feature = "manual-seal")]
 	{
 		let sealing = cli.run.sealing;
-
-		// inherent_data_providers
-		// 	.register_provider(MockTimestampInherentDataProvider)
-		// 	.map_err(Into::into)
-		// 	.map_err(sp_consensus::error::Error::InherentData)?;
-
 		let frontier_block_import =
 			FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
-
 		let import_queue = sc_consensus_manual_seal::import_queue(
 			Box::new(frontier_block_import.clone()),
 			&task_manager.spawn_essential_handle(),
@@ -317,26 +325,6 @@ pub fn new_full(config: Configuration, cli: &Cli) -> Result<TaskManager, Service
 		};
 	}
 
-	// let warp_sync: Option<Arc<dyn WarpSyncProvider<Block>>> = {
-	// 	#[cfg(feature = "aura")]
-	// 	{
-	// 		config
-	// 			.network
-	// 			.extra_sets
-	// 			.push(sc_finality_grandpa::grandpa_peers_set_config());
-	// 		Some(Arc::new(
-	// 			sc_finality_grandpa::warp_proof::NetworkProvider::new(
-	// 				backend.clone(),
-	// 				consensus_result.1.shared_authority_set().clone(),
-	// 			),
-	// 		))
-	// 	}
-	// 	#[cfg(feature = "manual-seal")]
-	// 	{
-	// 		None
-	// 	}
-	// };
-
 	let (network, system_rpc_tx, network_starter) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &config,
@@ -395,15 +383,11 @@ pub fn new_full(config: Configuration, cli: &Cli) -> Result<TaskManager, Service
 				max_past_logs,
 				command_sink: Some(command_sink.clone()),
 			};
-			// Ok(crate::rpc::create_full(
-			// 	deps,
-			// 	subscription_task_executor.clone(),
-			// ))
 			crate::rpc::create_full(deps, subscription_task_executor.clone())
 		})
 	};
 
-	let _rpc_handlers = sc_service::spawn_tasks(sc_service::SpawnTasksParams {
+	let _ = sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		network: network.clone(),
 		client: client.clone(),
 		keystore: keystore_container.sync_keystore(),

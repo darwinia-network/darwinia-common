@@ -1,11 +1,31 @@
+// This file is part of Darwinia.
+//
+// Copyright (C) 2018-2021 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
 //! A collection of node-specific RPC methods.
 
-use std::sync::Arc;
-
+// std
+use std::{collections::BTreeMap, sync::Arc};
+// darwinia-network
 use dc_rpc::{OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride};
 use dp_rpc::{FilterPool, PendingTransactions};
 use dvm_ethereum::EthereumStorageSchema;
 use template_runtime::{opaque::Block, AccountId, Balance, Hash, Index};
+// paritytech
 use jsonrpc_pubsub::manager::SubscriptionManager;
 use sc_client_api::{
 	backend::{AuxStore, Backend, StateBackend, StorageProvider},
@@ -20,7 +40,6 @@ use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::BlakeTwo256;
 use sp_transaction_pool::TransactionPool;
-use std::collections::BTreeMap;
 
 /// Light client extra dependencies.
 pub struct LightDeps<C, F, P> {
