@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "truffle compile",
-    "test": "mocha -r ts-node/register 'tests/**/*.ts'",
-	"single": "mocha -r ts-node/register 'tests/**/test-web3api.ts'"
+    "test": "mocha -r ts-node/register 'tests/**/*.ts'"
   },
   "keywords": [],
   "author": "",
