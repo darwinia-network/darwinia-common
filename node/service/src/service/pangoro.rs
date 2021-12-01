@@ -64,9 +64,10 @@ use drml_rpc::{
 	pangoro::{FullDeps, LightDeps},
 	BabeDeps, DenyUnsafe, GrandpaDeps, RpcExtension, SubscriptionTaskExecutor,
 };
+use pangoro_runtime::RuntimeApi;
 
 sc_executor::native_executor_instance!(
-	pub PangoroExecutor,
+	pub Executor,
 	pangoro_runtime::api::dispatch,
 	pangoro_runtime::native_version,
 	frame_benchmarking::benchmarking::HostFunctions,
@@ -664,15 +665,13 @@ pub fn pangoro_new_full(
 ) -> Result<
 	(
 		TaskManager,
-		Arc<impl PangoroClient<Block, FullBackend, pangoro_runtime::RuntimeApi>>,
+		Arc<impl PangoroClient<Block, FullBackend, RuntimeApi>>,
 		RpcHandlers,
 	),
 	ServiceError,
 > {
-	let (components, client, rpc_handlers) = new_full::<
-		pangoro_runtime::RuntimeApi,
-		PangoroExecutor,
-	>(config, authority_discovery_disabled)?;
+	let (components, client, rpc_handlers) =
+		new_full::<RuntimeApi, Executor>(config, authority_discovery_disabled)?;
 
 	Ok((components, client, rpc_handlers))
 }
@@ -681,5 +680,5 @@ pub fn pangoro_new_full(
 pub fn pangoro_new_light(
 	config: Configuration,
 ) -> Result<(TaskManager, RpcHandlers), ServiceError> {
-	new_light::<pangoro_runtime::RuntimeApi, PangoroExecutor>(config)
+	new_light::<RuntimeApi, Executor>(config)
 }
