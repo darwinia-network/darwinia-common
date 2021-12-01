@@ -35,6 +35,9 @@ pub use dp_evm::{
 	PrecompileSet, Vicinity,
 };
 
+// --- std ---
+#[cfg(feature = "std")]
+use std::collections::BTreeMap;
 // --- crates.io ---
 #[cfg(feature = "std")]
 use codec::{Decode, Encode};
@@ -146,7 +149,7 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
-		pub accounts: std::collections::BTreeMap<H160, GenesisAccount>,
+		pub accounts: BTreeMap<H160, GenesisAccount>,
 	}
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
@@ -480,16 +483,16 @@ where
 	}
 }
 
-#[cfg(feature = "std")]
-#[derive(Clone, Eq, PartialEq, Encode, Decode, Debug, Serialize, Deserialize)]
 /// Account used for genesis block construction.
+#[cfg(feature = "std")]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Encode, Decode, Serialize, Deserialize)]
 pub struct GenesisAccount {
 	/// Account nonce.
 	pub nonce: U256,
 	/// Account balance.
 	pub balance: U256,
 	/// Full account storage.
-	pub storage: std::collections::BTreeMap<H256, H256>,
+	pub storage: BTreeMap<H256, H256>,
 	/// Account code.
 	pub code: Vec<u8>,
 }

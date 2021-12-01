@@ -156,10 +156,8 @@ pub fn genesis_config() -> ChainSpec {
 				map.insert(
 					array_bytes::hex_into_unchecked(account),
 					GenesisAccount {
-						nonce: 0.into(),
 						balance: (MANY_COINS * (10 as Balance).pow(9)).into(),
-						storage: BTreeMap::new(),
-						code: vec![],
+						..Default::default()
 					},
 				);
 			}
@@ -417,10 +415,8 @@ pub fn development_config() -> ChainSpec {
 				map.insert(
 					array_bytes::hex_into_unchecked(account),
 					GenesisAccount {
-						nonce: 0.into(),
 						balance: (123_456_789_000_000_000_000_090 as Balance).into(),
-						storage: BTreeMap::new(),
-						code: vec![],
+						..Default::default()
 					},
 				);
 			}
@@ -638,10 +634,8 @@ pub fn local_testnet_config() -> ChainSpec {
 				map.insert(
 					array_bytes::hex_into_unchecked(account),
 					GenesisAccount {
-						nonce: 0.into(),
 						balance: (123_456_789_000_000_000_000_090 as Balance).into(),
-						storage: BTreeMap::new(),
-						code: vec![],
+						..Default::default()
 					},
 				);
 			}
