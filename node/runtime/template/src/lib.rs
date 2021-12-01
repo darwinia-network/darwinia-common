@@ -50,12 +50,6 @@ pub mod wasm {
 }
 pub use wasm::*;
 
-pub use common_primitives as pangoro_primitives;
-pub use common_primitives as pangolin_primitives;
-
-pub use common_runtime as pangoro_runtime_system_params;
-pub use common_runtime as pangolin_runtime_system_params;
-
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
@@ -78,9 +72,9 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
-use common_primitives::*;
 use common_runtime::*;
 use darwinia_evm::{FeeCalculator, Runner};
+use drml_common_primitives::*;
 
 pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;

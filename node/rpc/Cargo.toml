@@ -14,7 +14,6 @@ version     = "2.7.0"
 jsonrpc-core   = { version = "15.1" }
 jsonrpc-pubsub = { version = "15.1" }
 # darwinia-network
-common-primitives       = { path = "../primitives/common" }
 darwinia-balances-rpc   = { path = "../../frame/balances/rpc" }
 darwinia-fee-market-rpc = { path = "../../frame/fee-market/rpc" }
 darwinia-header-mmr-rpc = { path = "../../frame/header-mmr/rpc" }
@@ -22,6 +21,7 @@ darwinia-staking-rpc    = { path = "../../frame/staking/rpc" }
 dc-db                   = { path = "../../client/dvm/db" }
 dc-rpc                  = { path = "../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }
 dp-rpc                  = { path = "../../primitives/rpc" }
+drml-common-primitives  = { path = "../primitives/common" }
 dvm-ethereum            = { path = "../../frame/dvm" }
 dvm-rpc-runtime-api     = { path = "../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime        = { path = "../runtime/pangolin" }

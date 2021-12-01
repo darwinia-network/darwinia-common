@@ -57,7 +57,7 @@ use crate::{
 		LightClient,
 	},
 };
-use common_primitives::{AccountId, Balance, Nonce, OpaqueBlock as Block};
+use drml_common_primitives::{AccountId, Balance, Nonce, OpaqueBlock as Block};
 use drml_rpc::{
 	pangoro::{FullDeps, LightDeps},
 	BabeDeps, DenyUnsafe, GrandpaDeps, RpcExtension, SubscriptionTaskExecutor,

@@ -608,7 +608,7 @@ dependencies = [
 [[package]]
 name = "bp-header-chain"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-3#e26d59105acb795161881e49eb14992b8b0c22fa"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-4#495a773403e5827bbf9d7b20d97333f673628db9"
 dependencies = [
  "finality-grandpa",
  "frame-support",
@@ -623,7 +623,7 @@ dependencies = [
 [[package]]
 name = "bp-message-dispatch"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-3#e26d59105acb795161881e49eb14992b8b0c22fa"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-4#495a773403e5827bbf9d7b20d97333f673628db9"
 dependencies = [
  "bp-runtime",
  "frame-support",
@@ -634,7 +634,7 @@ dependencies = [
 [[package]]
 name = "bp-messages"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-3#e26d59105acb795161881e49eb14992b8b0c22fa"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-4#495a773403e5827bbf9d7b20d97333f673628db9"
 dependencies = [
  "bitvec 0.20.4",
  "bp-runtime",
@@ -649,7 +649,7 @@ dependencies = [
 [[package]]
 name = "bp-runtime"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-3#e26d59105acb795161881e49eb14992b8b0c22fa"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-4#495a773403e5827bbf9d7b20d97333f673628db9"
 dependencies = [
  "frame-support",
  "hash-db",
@@ -666,7 +666,7 @@ dependencies = [
 [[package]]
 name = "bp-test-utils"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-3#e26d59105acb795161881e49eb14992b8b0c22fa"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-4#495a773403e5827bbf9d7b20d97333f673628db9"
 dependencies = [
  "bp-header-chain",
  "ed25519-dalek",
@@ -679,26 +679,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "bridge-primitives"
-version = "2.7.0"
-dependencies = [
- "bp-messages",
- "bp-runtime",
- "bridge-runtime-common",
- "common-primitives",
- "darwinia-fee-market",
- "frame-support",
- "pallet-bridge-dispatch",
- "sp-api",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "bridge-runtime-common"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-3#e26d59105acb795161881e49eb14992b8b0c22fa"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-4#495a773403e5827bbf9d7b20d97333f673628db9"
 dependencies = [
  "bp-message-dispatch",
  "bp-messages",
@@ -998,20 +981,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "common-primitives"
-version = "2.7.0"
-dependencies = [
- "sp-core",
- "sp-runtime",
-]
-
-[[package]]
 name = "common-runtime"
 version = "2.7.0"
 dependencies = [
- "common-primitives",
  "darwinia-balances",
  "darwinia-support",
+ "drml-common-primitives",
  "frame-support",
  "frame-system",
  "max-encoded-len",
@@ -2337,10 +2312,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "drml-bridge-primitives"
+version = "2.7.0"
+dependencies = [
+ "bp-messages",
+ "bp-runtime",
+ "bridge-runtime-common",
+ "darwinia-fee-market",
+ "drml-common-primitives",
+ "frame-support",
+ "pallet-bridge-dispatch",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "drml-common-primitives"
+version = "2.7.0"
+dependencies = [
+ "sp-core",
+ "sp-runtime",
+]
+
+[[package]]
 name = "drml-rpc"
 version = "2.7.0"
 dependencies = [
- "common-primitives",
  "darwinia-balances-rpc",
  "darwinia-fee-market-rpc",
  "darwinia-header-mmr-rpc",
@@ -2348,6 +2347,7 @@ dependencies = [
  "dc-db",
  "dc-rpc",
  "dp-rpc",
+ "drml-common-primitives",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
  "futures 0.3.17",
@@ -2383,7 +2383,6 @@ version = "2.7.0"
 dependencies = [
  "array-bytes",
  "async-trait",
- "common-primitives",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-bridge-ethereum",
  "darwinia-claims",
@@ -2396,6 +2395,7 @@ dependencies = [
  "dc-mapping-sync",
  "dc-rpc",
  "dp-rpc",
+ "drml-common-primitives",
  "drml-rpc",
  "dvm-rpc-runtime-api",
  "frame-benchmarking",
@@ -5779,7 +5779,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-dispatch"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-3#e26d59105acb795161881e49eb14992b8b0c22fa"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-4#495a773403e5827bbf9d7b20d97333f673628db9"
 dependencies = [
  "bp-message-dispatch",
  "bp-runtime",
@@ -5795,7 +5795,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-3#e26d59105acb795161881e49eb14992b8b0c22fa"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-4#495a773403e5827bbf9d7b20d97333f673628db9"
 dependencies = [
  "bp-header-chain",
  "bp-runtime",
@@ -5816,7 +5816,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-messages"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-3#e26d59105acb795161881e49eb14992b8b0c22fa"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?tag=darwinia-v0.11.6-4#495a773403e5827bbf9d7b20d97333f673628db9"
 dependencies = [
  "bitvec 0.20.4",
  "bp-message-dispatch",
@@ -6183,9 +6183,7 @@ dependencies = [
  "bp-message-dispatch",
  "bp-messages",
  "bp-runtime",
- "bridge-primitives",
  "bridge-runtime-common",
- "common-primitives",
  "common-runtime",
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
@@ -6216,6 +6214,8 @@ dependencies = [
  "dp-evm",
  "dp-fee",
  "dp-s2s",
+ "drml-bridge-primitives",
+ "drml-common-primitives",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
  "ethereum-primitives",
@@ -6294,9 +6294,7 @@ dependencies = [
  "bp-message-dispatch",
  "bp-messages",
  "bp-runtime",
- "bridge-primitives",
  "bridge-runtime-common",
- "common-primitives",
  "common-runtime",
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
@@ -6308,6 +6306,8 @@ dependencies = [
  "dp-asset",
  "dp-fee",
  "dp-s2s",
+ "drml-bridge-primitives",
+ "drml-common-primitives",
  "frame-benchmarking",
  "frame-election-provider-support",
  "frame-executive",
@@ -10079,7 +10079,6 @@ dependencies = [
 name = "template-runtime"
 version = "2.7.0"
 dependencies = [
- "common-primitives",
  "common-runtime",
  "darwinia-balances",
  "darwinia-evm",
@@ -10087,6 +10086,7 @@ dependencies = [
  "darwinia-evm-precompile-sha3fips",
  "darwinia-evm-precompile-simple",
  "darwinia-support",
+ "drml-common-primitives",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
  "frame-executive",

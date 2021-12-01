@@ -35,7 +35,7 @@ use sp_consensus_babe::AuthorityId as BabeId;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::IdentifyAccount;
 // --- darwinia-network ---
-use common_primitives::{AccountId, AccountPublic};
+use drml_common_primitives::{AccountId, AccountPublic};
 
 const DEFAULT_PROTOCOL_ID: &str = "drml";
 

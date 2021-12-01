@@ -69,8 +69,8 @@ pub mod wasm {
 }
 pub use wasm::*;
 
-pub use common_primitives as pangoro_primitives;
-pub use common_primitives as pangolin_primitives;
+pub use drml_common_primitives as pangoro_primitives;
+pub use drml_common_primitives as pangolin_primitives;
 
 pub use common_runtime as pangolin_runtime_system_params;
 pub use common_runtime as pangoro_runtime_system_params;
@@ -115,9 +115,7 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
-use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use bridges::substrate::pangoro_messages::{ToPangoroMessagePayload, WithPangoroMessageBridge};
-use common_primitives::*;
 use common_runtime::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
@@ -125,6 +123,8 @@ use darwinia_evm::{AccountBasic, FeeCalculator, Runner};
 use darwinia_fee_market_rpc_runtime_api::{Fee, InProcessOrders};
 use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
+use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
+use drml_common_primitives::*;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
@@ -680,7 +680,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl bridge_primitives::PangoroFinalityApi<Block> for Runtime {
+	impl drml_bridge_primitives::PangoroFinalityApi<Block> for Runtime {
 		fn best_finalized() -> (pangoro_primitives::BlockNumber, pangoro_primitives::Hash) {
 			let header = BridgePangoroGrandpa::best_finalized();
 			(header.number, header.hash())
@@ -691,7 +691,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl bridge_primitives::ToPangoroOutboundLaneApi<Block, Balance, ToPangoroMessagePayload> for Runtime {
+	impl drml_bridge_primitives::ToPangoroOutboundLaneApi<Block, Balance, ToPangoroMessagePayload> for Runtime {
 		// fn estimate_message_delivery_and_dispatch_fee(
 		// 	_lane_id: bp_messages::LaneId,
 		// 	payload: ToPangoroMessagePayload,
@@ -723,7 +723,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl bridge_primitives::FromPangoroInboundLaneApi<Block> for Runtime {
+	impl drml_bridge_primitives::FromPangoroInboundLaneApi<Block> for Runtime {
 		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
 			BridgePangoroMessages::inbound_latest_received_nonce(lane)
 		}

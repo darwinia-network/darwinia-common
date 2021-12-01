@@ -24,7 +24,7 @@
 use std::collections::BTreeMap;
 // --- darwinia-network ---
 use crate::*;
-use common_primitives::Power;
+use drml_common_primitives::Power;
 use dvm_ethereum::EthereumStorageSchema;
 
 /// Full client dependencies.

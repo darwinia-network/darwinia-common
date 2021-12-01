@@ -1,7 +1,7 @@
 pub use pallet_bridge_grandpa::Instance1 as WithPangoroGrandpa;
 
 // --- paritytech ---
-use bridge_primitives::Pangoro;
+use drml_bridge_primitives::Pangoro;
 use pallet_bridge_grandpa::Config;
 // --- darwinia-network ---
 use crate::*;

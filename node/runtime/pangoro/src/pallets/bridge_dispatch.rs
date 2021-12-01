@@ -6,7 +6,7 @@ use frame_support::traits::Contains;
 use pallet_bridge_dispatch::Config;
 // --- darwinia-network ---
 use crate::*;
-use bridge_primitives::AccountIdConverter;
+use drml_bridge_primitives::AccountIdConverter;
 use pangolin_messages::FromPangolinEncodedCall;
 
 pub struct Sub2SubFilter;

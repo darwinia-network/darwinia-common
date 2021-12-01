@@ -53,8 +53,8 @@ pub use wasm::*;
 pub mod pangolin_messages;
 use pangolin_messages::{ToPangolinMessagePayload, WithPangolinMessageBridge};
 
-pub use common_primitives as pangoro_primitives;
-pub use common_primitives as pangolin_primitives;
+pub use drml_common_primitives as pangoro_primitives;
+pub use drml_common_primitives as pangolin_primitives;
 
 pub use common_runtime as pangoro_runtime_system_params;
 pub use common_runtime as pangolin_runtime_system_params;
@@ -96,11 +96,11 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
-use bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
-use common_primitives::*;
 use common_runtime::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_fee_market_rpc_runtime_api::{Fee, InProcessOrders};
+use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
+use drml_common_primitives::*;
 
 pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
@@ -452,7 +452,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl bridge_primitives::PangolinFinalityApi<Block> for Runtime {
+	impl drml_bridge_primitives::PangolinFinalityApi<Block> for Runtime {
 		fn best_finalized() -> (pangolin_primitives::BlockNumber, pangolin_primitives::Hash) {
 			let header = BridgePangolinGrandpa::best_finalized();
 			(header.number, header.hash())
@@ -463,7 +463,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl bridge_primitives::ToPangolinOutboundLaneApi<Block, Balance, ToPangolinMessagePayload> for Runtime {
+	impl drml_bridge_primitives::ToPangolinOutboundLaneApi<Block, Balance, ToPangolinMessagePayload> for Runtime {
 		// fn estimate_message_delivery_and_dispatch_fee(
 		// 	_lane_id: bp_messages::LaneId,
 		// 	payload: ToPangolinMessagePayload,
@@ -495,7 +495,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl bridge_primitives::FromPangolinInboundLaneApi<Block> for Runtime {
+	impl drml_bridge_primitives::FromPangolinInboundLaneApi<Block> for Runtime {
 		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
 			BridgePangolinMessages::inbound_latest_received_nonce(lane)
 		}

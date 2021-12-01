@@ -27,7 +27,7 @@ pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 // --- std ---
 use std::sync::Arc;
 // --- darwinia-network ---
-use common_primitives::{
+use drml_common_primitives::{
 	AccountId, Balance, BlockNumber, Hash, Hashing, Nonce, OpaqueBlock as Block,
 };
 

@@ -31,7 +31,7 @@ use async_trait::async_trait;
 use futures::StreamExt;
 // --- paritytech ---
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
-use sc_client_api::{BlockchainEvents, };
+use sc_client_api::BlockchainEvents;
 use sc_consensus_manual_seal as manual_seal;
 use sc_keystore::LocalKeystore;
 use sc_service::{error::Error as ServiceError, BasePath, Configuration, TaskManager};
@@ -39,10 +39,10 @@ use sc_telemetry::{Telemetry, TelemetryWorker};
 use sp_inherents::{InherentData, InherentDataProvider, InherentIdentifier};
 // --- darwinia-network ---
 use crate::service::{FullBackend, FullClient, FullSelectChain};
-use common_primitives::{OpaqueBlock as Block, SLOT_DURATION};
 use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use dc_rpc::EthTask;
 use dp_rpc::{FilterPool, PendingTransactions};
+use drml_common_primitives::{OpaqueBlock as Block, SLOT_DURATION};
 use drml_rpc::{template::FullDeps, SubscriptionTaskExecutor};
 use template_runtime::RuntimeApi;
 
@@ -194,7 +194,12 @@ fn remote_keystore(_url: &String) -> Result<Arc<LocalKeystore>, &'static str> {
 }
 
 /// Builds a new service for a full client.
-pub fn new_full(config: Configuration, is_manual_sealing: bool, enable_dev_signer: bool, max_past_logs: u32) -> Result<TaskManager, ServiceError> {
+pub fn new_full(
+	config: Configuration,
+	is_manual_sealing: bool,
+	enable_dev_signer: bool,
+	max_past_logs: u32,
+) -> Result<TaskManager, ServiceError> {
 	let sc_service::PartialComponents {
 		client,
 		backend,
@@ -344,8 +349,7 @@ pub fn new_full(config: Configuration, is_manual_sealing: bool, enable_dev_signe
 
 		// Background authorship future
 		if is_manual_sealing {
-			let authorship_future =
-			manual_seal::run_manual_seal(manual_seal::ManualSealParams {
+			let authorship_future = manual_seal::run_manual_seal(manual_seal::ManualSealParams {
 				block_import,
 				env,
 				client,
@@ -358,13 +362,12 @@ pub fn new_full(config: Configuration, is_manual_sealing: bool, enable_dev_signe
 					Ok(mock_timestamp)
 				},
 			});
-		// we spawn the future on a background thread managed by service.
-		task_manager
-			.spawn_essential_handle()
-			.spawn_blocking("manual-seal", authorship_future);
+			// we spawn the future on a background thread managed by service.
+			task_manager
+				.spawn_essential_handle()
+				.spawn_blocking("manual-seal", authorship_future);
 		} else {
-			let authorship_future =
-			manual_seal::run_instant_seal(manual_seal::InstantSealParams {
+			let authorship_future = manual_seal::run_instant_seal(manual_seal::InstantSealParams {
 				block_import,
 				env,
 				client: client.clone(),
@@ -377,10 +380,10 @@ pub fn new_full(config: Configuration, is_manual_sealing: bool, enable_dev_signe
 					Ok(mock_timestamp)
 				},
 			});
-		// we spawn the future on a background thread managed by service.
-		task_manager
-			.spawn_essential_handle()
-			.spawn_blocking("instant-seal", authorship_future);
+			// we spawn the future on a background thread managed by service.
+			task_manager
+				.spawn_essential_handle()
+				.spawn_blocking("instant-seal", authorship_future);
 		}
 
 		log::info!("Manual Seal Ready");
