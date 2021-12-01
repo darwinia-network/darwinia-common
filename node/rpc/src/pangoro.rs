@@ -22,7 +22,6 @@
 
 // --- darwinia-network ---
 use crate::*;
-use common_primitives::{AccountId, Balance, Nonce};
 
 /// Full client dependencies
 pub struct FullDeps<C, P, SC, B> {
