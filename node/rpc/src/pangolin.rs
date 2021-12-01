@@ -21,11 +21,10 @@
 #![warn(missing_docs)]
 
 // --- std ---
-use std::{collections::BTreeMap, sync::Arc};
+use std::collections::BTreeMap;
 // --- darwinia-network ---
 use crate::*;
 use common_primitives::{AccountId, Balance, Nonce, Power};
-use dp_rpc::{FilterPool, PendingTransactions};
 use dvm_ethereum::EthereumStorageSchema;
 
 /// Full client dependencies.
@@ -39,7 +38,7 @@ pub struct FullDeps<C, P, SC, B> {
 	/// A copy of the chain spec.
 	pub chain_spec: Box<dyn sc_chain_spec::ChainSpec>,
 	/// Whether to deny unsafe calls
-	pub deny_unsafe: sc_rpc::DenyUnsafe,
+	pub deny_unsafe: DenyUnsafe,
 	/// BABE specific dependencies.
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
@@ -49,9 +48,9 @@ pub struct FullDeps<C, P, SC, B> {
 	/// Network service
 	pub network: Arc<sc_network::NetworkService<Block, Hash>>,
 	/// Ethereum pending transactions.
-	pub pending_transactions: PendingTransactions,
+	pub pending_transactions: dp_rpc::PendingTransactions,
 	/// EthFilterApi pool.
-	pub filter_pool: Option<FilterPool>,
+	pub filter_pool: Option<dp_rpc::FilterPool>,
 	/// Backend.
 	pub backend: Arc<dc_db::Backend<Block>>,
 	/// Maximum number of logs in a query.
@@ -73,16 +72,16 @@ pub struct LightDeps<C, F, P> {
 /// Instantiate all RPC extensions.
 pub fn create_full<C, P, SC, B>(
 	deps: FullDeps<C, P, SC, B>,
-	subscription_task_executor: sc_rpc::SubscriptionTaskExecutor,
+	subscription_task_executor: SubscriptionTaskExecutor,
 ) -> RpcExtension
 where
 	C: 'static
 		+ Send
 		+ Sync
-		+ sp_api::ProvideRuntimeApi<Block>
 		+ sc_client_api::AuxStore
 		+ sc_client_api::BlockchainEvents<Block>
 		+ sc_client_api::StorageProvider<Block, B>
+		+ sp_api::ProvideRuntimeApi<Block>
 		+ sp_blockchain::HeaderBackend<Block>
 		+ sp_blockchain::HeaderMetadata<Block, Error = sp_blockchain::Error>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
@@ -97,7 +96,7 @@ where
 	P: 'static + Sync + Send + sp_transaction_pool::TransactionPool<Block = Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
-	B::State: sc_client_api::StateBackend<sp_runtime::traits::HashFor<Block>>,
+	B::State: sc_client_api::StateBackend<Hashing>,
 {
 	// --- crates.io ---
 	use jsonrpc_pubsub::manager::SubscriptionManager;
