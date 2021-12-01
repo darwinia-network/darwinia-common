@@ -13,9 +13,9 @@ version     = "2.7.0"
 codec             = { package = "parity-scale-codec", version = "2.1", default-features = false }
 static_assertions = { version = "1.1" }
 # darwinia-network
-common-primitives = { default-features = false, path = "../../primitives/common" }
-darwinia-balances = { default-features = false, path = "../../../frame/balances" }
-darwinia-support  = { default-features = false, path = "../../../frame/support" }
+darwinia-balances      = { default-features = false, path = "../../../frame/balances" }
+darwinia-support       = { default-features = false, path = "../../../frame/support" }
+drml-common-primitives = { default-features = false, path = "../../primitives/common" }
 # paritytech
 frame-support              = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 frame-system               = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
@@ -36,9 +36,9 @@ std = [
 	# crates.io
 	"codec/std",
 	# darwinia-network
-	"common-primitives/std",
 	"darwinia-balances/std",
 	"darwinia-support/std",
+	"drml-common-primitives/std",
 	# paritytech
 	"frame-support/std",
 	"frame-system/std",

@@ -24,8 +24,8 @@
 use std::{collections::BTreeMap, sync::Arc};
 // --- darwinia-network ---
 use crate::*;
-use common_primitives::{AccountId, Balance, Nonce, Power};
 use dp_rpc::{FilterPool, PendingTransactions};
+use drml_common_primitives::{AccountId, Balance, Nonce, Power};
 use dvm_ethereum::EthereumStorageSchema;
 
 /// Full client dependencies.

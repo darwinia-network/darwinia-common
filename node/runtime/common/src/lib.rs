@@ -26,8 +26,7 @@ pub use impls::*;
 
 pub use frame_support::weights::constants::{ExtrinsicBaseWeight, RocksDbWeight};
 
-pub use darwinia_balances::Instance1 as RingInstance;
-pub use darwinia_balances::Instance2 as KtonInstance;
+pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
 
 // --- crates.io ---
 use static_assertions::const_assert;
@@ -43,7 +42,7 @@ use frame_system::limits::{BlockLength, BlockWeights};
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
 // --- darwinia-network ---
-use common_primitives::BlockNumber;
+use drml_common_primitives::BlockNumber;
 
 pub type NegativeImbalance<T> = <darwinia_balances::Pallet<T, RingInstance> as Currency<
 	<T as frame_system::Config>::AccountId,
