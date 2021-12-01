@@ -18,8 +18,6 @@
 
 //! Pangoro service. Specialized wrapper over substrate service.
 
-pub use pangoro_runtime;
-
 // --- std ---
 use std::{sync::Arc, time::Duration};
 // --- crates.io ---

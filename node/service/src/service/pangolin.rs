@@ -18,8 +18,6 @@
 
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
-pub use pangolin_runtime;
-
 // --- std ---
 use std::{
 	collections::{BTreeMap, HashMap},
