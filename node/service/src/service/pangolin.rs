@@ -64,7 +64,7 @@ use crate::{
 		LightClient,
 	},
 };
-use common_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
+use drml_common_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
 use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use dc_rpc::EthTask;

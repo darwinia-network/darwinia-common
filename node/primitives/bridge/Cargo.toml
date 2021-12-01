@@ -4,15 +4,15 @@ description = "Pangolin node bridge primitives"
 edition     = "2021"
 homepage    = "https://darwinia.network/"
 license     = "GPL-3.0"
-name        = "bridge-primitives"
+name        = "drml-bridge-primitives"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.7.0"
 
 [dependencies]
 # darwinia-network
-common-primitives   = { default-features = false, path = "../common" }
-darwinia-fee-market = { default-features = false, path = "../../../frame/fee-market" }
+darwinia-fee-market    = { default-features = false, path = "../../../frame/fee-market" }
+drml-common-primitives = { default-features = false, path = "../common" }
 # paritytech
 bp-messages            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-3" }
 bp-runtime             = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-3" }
@@ -29,8 +29,8 @@ default = ["std"]
 
 std = [
 	# darwinia-network
-	"common-primitives/std",
 	"darwinia-fee-market/std",
+	"drml-common-primitives/std",
 	# paritytech
 	"bp-messages/std",
 	"bp-runtime/std",

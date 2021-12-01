@@ -31,7 +31,7 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::Perbill;
 // --- darwinia-network ---
 use super::*;
-use common_primitives::*;
+use drml_common_primitives::*;
 use darwinia_staking::StakerStatus;
 use pangoro_runtime::*;
 
