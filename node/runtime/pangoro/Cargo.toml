@@ -16,8 +16,6 @@ codec       = { package = "parity-scale-codec", version = "2.1", default-feature
 serde       = { version = "1.0", features = ["derive"], optional = true }
 smallvec    = { version = "1.6" }
 # darwinia-network
-bridge-primitives                   = { default-features = false, path = "../../primitives/bridge" }
-common-primitives                   = { default-features = false, path = "../../primitives/common" }
 common-runtime                      = { default-features = false, path = "../common" }
 darwinia-balances                   = { default-features = false, path = "../../../frame/balances" }
 darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
@@ -29,6 +27,8 @@ darwinia-support                    = { default-features = false, path = "../../
 dp-asset                            = { default-features = false, path = "../../../primitives/asset" }
 dp-fee                              = { default-features = false, path = "../../../primitives/fee-market" }
 dp-s2s                              = { default-features = false, path = "../../../primitives/s2s" }
+drml-bridge-primitives              = { default-features = false, path = "../../primitives/bridge" }
+drml-common-primitives              = { default-features = false, path = "../../primitives/common" }
 module-transaction-pause            = { default-features = false, path = "../../../frame/transaction-pause" }
 to-substrate-backing                = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 # paritytech
@@ -92,8 +92,6 @@ std = [
 	"codec/std",
 	"serde",
 	# darwinia-network
-	"bridge-primitives/std",
-	"common-primitives/std",
 	"common-runtime/std",
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
@@ -105,6 +103,8 @@ std = [
 	"dp-asset/std",
 	"dp-fee/std",
 	"dp-s2s/std",
+	"drml-bridge-primitives/std",
+	"drml-common-primitives/std",
 	"module-transaction-pause/std",
 	"to-substrate-backing/std",
 	# paritytech

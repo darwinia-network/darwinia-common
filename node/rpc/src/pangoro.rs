@@ -28,7 +28,7 @@ use std::sync::Arc;
 use sp_api::ProvideRuntimeApi;
 // --- darwinia-network ---
 use crate::*;
-use common_primitives::{AccountId, Balance, Nonce};
+use drml_common_primitives::{AccountId, Balance, Nonce};
 
 /// Full client dependencies
 pub struct FullDeps<C, P, SC, B> {

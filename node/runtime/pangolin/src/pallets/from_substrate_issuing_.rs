@@ -5,7 +5,7 @@ use frame_support::PalletId;
 use sp_runtime::AccountId32;
 // --- darwinia-network ---
 use crate::{pangoro_messages::ToPangoroOutboundPayLoad, *};
-use bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE};
+use drml_bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE};
 use darwinia_support::{s2s::ToEthAddress, ChainName};
 use from_substrate_issuing::Config;
 // Convert from AccountId32 to H160

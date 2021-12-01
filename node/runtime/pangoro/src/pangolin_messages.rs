@@ -28,12 +28,12 @@ use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
-use bridge_primitives::{
+pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
+use dp_s2s::{CallParams, CreatePayload};
+use drml_bridge_primitives::{
 	FromThisChainMessageVerifier, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE,
 	WITH_PANGORO_MESSAGES_PALLET_NAME,
 };
-pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
-use dp_s2s::{CallParams, CreatePayload};
 
 /// Message payload for Pangoro -> Pangolin messages.
 pub type ToPangolinMessagePayload = FromThisChainMessagePayload<WithPangolinMessageBridge>;
@@ -150,17 +150,18 @@ impl messages::ThisChainWithMessages for Pangoro {
 	fn estimate_delivery_confirmation_transaction() -> MessageTransaction<Weight> {
 		let inbound_data_size =
 			InboundLaneData::<pangoro_primitives::AccountId>::encoded_size_hint(
-				bridge_primitives::MAXIMAL_ENCODED_ACCOUNT_ID_SIZE,
+				drml_bridge_primitives::MAXIMAL_ENCODED_ACCOUNT_ID_SIZE,
 				1,
 				1,
 			)
 			.unwrap_or(u32::MAX);
 
 		MessageTransaction {
-			dispatch_weight: bridge_primitives::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
+			dispatch_weight:
+				drml_bridge_primitives::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
 			size: inbound_data_size
-				.saturating_add(bridge_primitives::EXTRA_STORAGE_PROOF_SIZE)
-				.saturating_add(bridge_primitives::TX_EXTRA_BYTES),
+				.saturating_add(drml_bridge_primitives::EXTRA_STORAGE_PROOF_SIZE)
+				.saturating_add(drml_bridge_primitives::TX_EXTRA_BYTES),
 		}
 	}
 
@@ -219,17 +220,17 @@ impl messages::BridgedChainWithMessages for Pangolin {
 
 		MessageTransaction {
 			dispatch_weight: extra_bytes_in_payload
-				.saturating_mul(bridge_primitives::ADDITIONAL_MESSAGE_BYTE_DELIVERY_WEIGHT)
-				.saturating_add(bridge_primitives::DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT)
+				.saturating_mul(drml_bridge_primitives::ADDITIONAL_MESSAGE_BYTE_DELIVERY_WEIGHT)
+				.saturating_add(drml_bridge_primitives::DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT)
 				.saturating_add(message_dispatch_weight)
 				.saturating_sub(if include_pay_dispatch_fee_cost {
 					0
 				} else {
-					bridge_primitives::PAY_INBOUND_DISPATCH_FEE_WEIGHT
+					drml_bridge_primitives::PAY_INBOUND_DISPATCH_FEE_WEIGHT
 				}),
 			size: message_payload_len
-				.saturating_add(bridge_primitives::EXTRA_STORAGE_PROOF_SIZE)
-				.saturating_add(bridge_primitives::TX_EXTRA_BYTES),
+				.saturating_add(drml_bridge_primitives::EXTRA_STORAGE_PROOF_SIZE)
+				.saturating_add(drml_bridge_primitives::TX_EXTRA_BYTES),
 		}
 	}
 
