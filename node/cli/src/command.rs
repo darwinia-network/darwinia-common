@@ -25,12 +25,8 @@ use sc_service::ChainSpec;
 use sc_service::TaskManager;
 use sp_core::crypto::Ss58AddressFormat;
 // --- darwinia-network ---
-use crate::cli::{Cli, Subcommand};
-use service::{
-	pangolin_chain_spec, pangolin_runtime, pangolin_service, pangoro_chain_spec, pangoro_runtime,
-	pangoro_service, IdentifyVariant, PangolinChainSpec, PangolinExecutor, PangoroChainSpec,
-	PangoroExecutor,
-};
+use crate::cli::*;
+use drml_service::*;
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
@@ -62,21 +58,26 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		if spec.is_pangoro() {
-			&pangoro_runtime::VERSION
-		} else {
+		#[cfg(feature = "template")]
+		if spec.is_template() {
+			return &template_runtime::VERSION;
+		}
+
+		if spec.is_pangolin() {
 			&pangolin_runtime::VERSION
+		} else {
+			&pangoro_runtime::VERSION
 		}
 	}
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn ChainSpec>, String> {
 		let id = if id == "" {
 			let n = get_exec_name().unwrap_or_default();
-			["pangolin", "pangoro"]
+			["template", "pangolin", "pangoro"]
 				.iter()
 				.cloned()
 				.find(|&chain| n.starts_with(chain))
-				.unwrap_or("pangolin")
+				.unwrap_or("pangoro")
 		} else {
 			id
 		};
@@ -89,15 +90,17 @@ impl SubstrateCli for Cli {
 			"pangoro" => Box::new(pangoro_chain_spec::config()?),
 			"pangoro-genesis" => Box::new(pangoro_chain_spec::genesis_config()),
 			"pangoro-dev" => Box::new(pangoro_chain_spec::development_config()),
+			#[cfg(feature = "template")]
+			"template" | "template-dev" => Box::new(template_chain_spec::development_config()),
 			path => {
 				let path = PathBuf::from(path);
 				let chain_spec = Box::new(PangolinChainSpec::from_json_file(path.clone())?)
 					as Box<dyn ChainSpec>;
 
-				if self.run.force_pangoro || chain_spec.is_pangoro() {
-					Box::new(PangoroChainSpec::from_json_file(path)?)
-				} else {
+				if self.run.force_pangoro || chain_spec.is_pangolin() {
 					chain_spec
+				} else {
+					Box::new(PangoroChainSpec::from_json_file(path)?)
 				}
 			}
 		})
@@ -113,9 +116,9 @@ fn get_exec_name() -> Option<String> {
 
 fn set_default_ss58_version(spec: &Box<dyn ChainSpec>) {
 	let ss58_version = if spec.is_pangoro() {
-		Ss58AddressFormat::SubstrateAccount
-	} else {
 		Ss58AddressFormat::DarwiniaAccount
+	} else {
+		Ss58AddressFormat::SubstrateAccount
 	};
 
 	sp_core::crypto::set_default_ss58_version(ss58_version);
@@ -123,6 +126,35 @@ fn set_default_ss58_version(spec: &Box<dyn ChainSpec>) {
 
 /// Parse command line arguments into service configuration.
 pub fn run() -> sc_cli::Result<()> {
+	macro_rules! async_run {
+		(|$cmd:ident, $cli:ident, $config:ident, $max_past_logs:ident, $client:ident, $backend:ident, $import_queue:ident| $($code:tt)*) => {{
+			let runner = $cli.create_runner($cmd)?;
+			let chain_spec = &runner.config().chain_spec;
+
+			set_default_ss58_version(chain_spec);
+
+			if chain_spec.is_pangolin() {
+				runner.async_run(|mut $config| {
+					let ($client, $backend, $import_queue, task_manager) = pangolin_service::new_chain_ops::<
+						pangolin_runtime::RuntimeApi,
+						PangolinExecutor,
+					>(&mut $config, $max_past_logs)?;
+
+					{ $( $code )* }.map(|v| (v, task_manager))
+				})
+			} else {
+				runner.async_run(|mut $config| {
+					let ($client, $backend, $import_queue, task_manager) = pangoro_service::new_chain_ops::<
+						pangoro_runtime::RuntimeApi,
+						PangoroExecutor,
+					>(&mut $config)?;
+
+					{ $( $code )* }.map(|v| (v, task_manager))
+				})
+			}
+		}};
+	}
+
 	let cli = Cli::from_args();
 	let max_past_logs = cli.run.dvm_args.max_past_logs;
 
@@ -134,19 +166,24 @@ pub fn run() -> sc_cli::Result<()> {
 
 			set_default_ss58_version(chain_spec);
 
-			if chain_spec.is_pangoro() {
-				runner.run_node_until_exit(|config| async move {
-					match config.role {
-						Role::Light => pangoro_service::pangoro_new_light(config)
-							.map(|(task_manager, _)| task_manager),
-						_ => {
-							pangoro_service::pangoro_new_full(config, authority_discovery_disabled)
-								.map(|(task_manager, _, _)| task_manager)
-						}
-					}
-					.map_err(sc_cli::Error::Service)
-				})
-			} else {
+			#[cfg(feature = "template")]
+			if chain_spec.is_template() {
+				let is_manual_sealing = cli.run.dvm_args.sealing.is_manual();
+				let enable_dev_signer = cli.run.dvm_args.enable_dev_signer;
+
+				return runner
+					.run_node_until_exit(|config| async move {
+						template_service::new_full(
+							config,
+							is_manual_sealing,
+							enable_dev_signer,
+							max_past_logs,
+						)
+					})
+					.map_err(sc_cli::Error::Service);
+			}
+
+			if chain_spec.is_pangolin() {
 				runner.run_node_until_exit(|config| async move {
 					match config.role {
 						Role::Light => pangolin_service::pangolin_new_light(config)
@@ -160,6 +197,18 @@ pub fn run() -> sc_cli::Result<()> {
 					}
 					.map_err(sc_cli::Error::Service)
 				})
+			} else {
+				runner.run_node_until_exit(|config| async move {
+					match config.role {
+						Role::Light => pangoro_service::pangoro_new_light(config)
+							.map(|(task_manager, _)| task_manager),
+						_ => {
+							pangoro_service::pangoro_new_full(config, authority_discovery_disabled)
+								.map(|(task_manager, _, _)| task_manager)
+						}
+					}
+					.map_err(sc_cli::Error::Service)
+				})
 			}
 		}
 		Some(Subcommand::BuildSpec(cmd)) => {
@@ -168,108 +217,32 @@ pub fn run() -> sc_cli::Result<()> {
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
 		}
 		Some(Subcommand::CheckBlock(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			let chain_spec = &runner.config().chain_spec;
-
-			set_default_ss58_version(chain_spec);
-
-			if chain_spec.is_pangoro() {
-				runner.async_run(|mut config| {
-					let (client, _, import_queue, task_manager) = pangoro_service::new_chain_ops::<
-						pangoro_runtime::RuntimeApi,
-						PangoroExecutor,
-					>(&mut config)?;
-
-					Ok((cmd.run(client, import_queue), task_manager))
-				})
-			} else {
-				runner.async_run(|mut config| {
-					let (client, _, import_queue, task_manager) = pangolin_service::new_chain_ops::<
-						pangolin_runtime::RuntimeApi,
-						PangolinExecutor,
-					>(&mut config, max_past_logs)?;
-
-					Ok((cmd.run(client, import_queue), task_manager))
-				})
-			}
+			async_run!(
+				|cmd, cli, config, max_past_logs, client, _backend, import_queue| Ok(
+					cmd.run(client, import_queue)
+				)
+			)
 		}
 		Some(Subcommand::ExportBlocks(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			let chain_spec = &runner.config().chain_spec;
-
-			set_default_ss58_version(chain_spec);
-
-			if chain_spec.is_pangoro() {
-				runner.async_run(|mut config| {
-					let (client, _, _, task_manager) = pangoro_service::new_chain_ops::<
-						pangoro_runtime::RuntimeApi,
-						PangoroExecutor,
-					>(&mut config)?;
-
-					Ok((cmd.run(client, config.database), task_manager))
-				})
-			} else {
-				runner.async_run(|mut config| {
-					let (client, _, _, task_manager) = pangolin_service::new_chain_ops::<
-						pangolin_runtime::RuntimeApi,
-						PangolinExecutor,
-					>(&mut config, max_past_logs)?;
-
-					Ok((cmd.run(client, config.database), task_manager))
-				})
-			}
+			async_run!(
+				|cmd, cli, config, max_past_logs, client, _backend, _import_queue| Ok(
+					cmd.run(client, config.database)
+				)
+			)
 		}
 		Some(Subcommand::ExportState(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			let chain_spec = &runner.config().chain_spec;
-
-			set_default_ss58_version(chain_spec);
-
-			if chain_spec.is_pangoro() {
-				runner.async_run(|mut config| {
-					let (client, _, _, task_manager) = pangoro_service::new_chain_ops::<
-						pangoro_runtime::RuntimeApi,
-						PangoroExecutor,
-					>(&mut config)?;
-
-					Ok((cmd.run(client, config.chain_spec), task_manager))
-				})
-			} else {
-				runner.async_run(|mut config| {
-					let (client, _, _, task_manager) = pangolin_service::new_chain_ops::<
-						pangolin_runtime::RuntimeApi,
-						PangolinExecutor,
-					>(&mut config, max_past_logs)?;
-
-					Ok((cmd.run(client, config.chain_spec), task_manager))
-				})
-			}
+			async_run!(
+				|cmd, cli, config, max_past_logs, client, _backend, _import_queue| Ok(
+					cmd.run(client, config.chain_spec)
+				)
+			)
 		}
 		Some(Subcommand::ImportBlocks(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			let chain_spec = &runner.config().chain_spec;
-
-			set_default_ss58_version(chain_spec);
-
-			if chain_spec.is_pangoro() {
-				runner.async_run(|mut config| {
-					let (client, _, import_queue, task_manager) = pangoro_service::new_chain_ops::<
-						pangoro_runtime::RuntimeApi,
-						PangoroExecutor,
-					>(&mut config)?;
-
-					Ok((cmd.run(client, import_queue), task_manager))
-				})
-			} else {
-				runner.async_run(|mut config| {
-					let (client, _, import_queue, task_manager) = pangolin_service::new_chain_ops::<
-						pangolin_runtime::RuntimeApi,
-						PangolinExecutor,
-					>(&mut config, max_past_logs)?;
-
-					Ok((cmd.run(client, import_queue), task_manager))
-				})
-			}
+			async_run!(
+				|cmd, cli, config, max_past_logs, client, _backend, import_queue| Ok(
+					cmd.run(client, import_queue)
+				)
+			)
 		}
 		Some(Subcommand::PurgeChain(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
@@ -277,9 +250,7 @@ pub fn run() -> sc_cli::Result<()> {
 
 			set_default_ss58_version(chain_spec);
 
-			if chain_spec.is_pangoro() {
-				runner.sync_run(|config| cmd.run(config.database))
-			} else {
+			if chain_spec.is_pangolin() {
 				runner.sync_run(|config| {
 					// Remove dvm offchain db
 					let dvm_database_config = sc_service::DatabaseConfig::RocksDb {
@@ -290,33 +261,16 @@ pub fn run() -> sc_cli::Result<()> {
 
 					cmd.run(config.database)
 				})
+			} else {
+				runner.sync_run(|config| cmd.run(config.database))
 			}
 		}
 		Some(Subcommand::Revert(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			let chain_spec = &runner.config().chain_spec;
-
-			set_default_ss58_version(chain_spec);
-
-			if chain_spec.is_pangoro() {
-				runner.async_run(|mut config| {
-					let (client, backend, _, task_manager) = pangoro_service::new_chain_ops::<
-						pangoro_runtime::RuntimeApi,
-						PangoroExecutor,
-					>(&mut config)?;
-
-					Ok((cmd.run(client, backend), task_manager))
-				})
-			} else {
-				runner.async_run(|mut config| {
-					let (client, backend, _, task_manager) = pangolin_service::new_chain_ops::<
-						pangolin_runtime::RuntimeApi,
-						PangolinExecutor,
-					>(&mut config, max_past_logs)?;
-
-					Ok((cmd.run(client, backend), task_manager))
-				})
-			}
+			async_run!(
+				|cmd, cli, config, max_past_logs, client, backend, _import_queue| Ok(
+					cmd.run(client, backend)
+				)
+			)
 		}
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
 		Some(Subcommand::Sign(cmd)) => cmd.run(),
@@ -329,20 +283,7 @@ pub fn run() -> sc_cli::Result<()> {
 
 			set_default_ss58_version(chain_spec);
 
-			if chain_spec.is_pangoro() {
-				runner.async_run(|config| {
-					// we don't need any of the components of new_partial, just a runtime, or a task
-					// manager to do `async_run`.
-					let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
-					let task_manager = TaskManager::new(config.task_executor.clone(), registry)
-						.map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
-
-					Ok((
-						cmd.run::<pangoro_runtime::Block, PangoroExecutor>(config),
-						task_manager,
-					))
-				})
-			} else {
+			if chain_spec.is_pangolin() {
 				runner.async_run(|config| {
 					// we don't need any of the components of new_partial, just a runtime, or a task
 					// manager to do `async_run`.
@@ -355,6 +296,19 @@ pub fn run() -> sc_cli::Result<()> {
 						task_manager,
 					))
 				})
+			} else {
+				runner.async_run(|config| {
+					// we don't need any of the components of new_partial, just a runtime, or a task
+					// manager to do `async_run`.
+					let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
+					let task_manager = TaskManager::new(config.task_executor.clone(), registry)
+						.map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
+
+					Ok((
+						cmd.run::<pangoro_runtime::Block, PangoroExecutor>(config),
+						task_manager,
+					))
+				})
 			}
 		}
 		#[cfg(feature = "runtime-benchmarks")]
@@ -364,11 +318,11 @@ pub fn run() -> sc_cli::Result<()> {
 
 			set_default_ss58_version(chain_spec);
 
-			if chain_spec.is_pangoro() {
-				runner.sync_run(|config| cmd.run::<pangoro_runtime::Block, PangoroExecutor>(config))
-			} else {
+			if chain_spec.is_pangolin() {
 				runner
 					.sync_run(|config| cmd.run::<pangolin_runtime::Block, PangolinExecutor>(config))
+			} else {
+				runner.sync_run(|config| cmd.run::<pangoro_runtime::Block, PangoroExecutor>(config))
 			}
 		}
 	}

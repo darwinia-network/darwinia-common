@@ -41,6 +41,7 @@ jobs:
         task:
           - target: drml
             repository: darwinia-network/darwinia-common
+            features: --features template
           - target: subalfred
             repository: l2ust/subalfred
         exclude:
@@ -72,7 +73,7 @@ jobs:
             ${{ matrix.action }}-${{ matrix.task.target }}-${{ env.GITHUB_CACHE_VERSION }}-
 
       - name: Action ${{ matrix.action }}
-        run: cargo ${{ matrix.action }} --locked
+        run: cargo ${{ matrix.action }} ${{ matrix.task.features }} --locked
 
       - name: Compress ${{ matrix.task.target }}
         if: matrix.action != 'test'

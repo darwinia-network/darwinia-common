@@ -22,6 +22,11 @@ pub use pangolin::ChainSpec as PangolinChainSpec;
 pub mod pangoro;
 pub use pangoro::ChainSpec as PangoroChainSpec;
 
+#[cfg(feature = "template")]
+pub mod template;
+#[cfg(feature = "template")]
+pub use template::ChainSpec as TemplateChainSpec;
+
 // --- paritytech ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_finality_grandpa::AuthorityId as GrandpaId;

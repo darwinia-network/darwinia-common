@@ -40,11 +40,14 @@ macro_rules! impl_runtime_apis {
 
 pub mod pangolin;
 pub use pangolin::Executor as PangolinExecutor;
-pub use pangolin_runtime;
 
 pub mod pangoro;
 pub use pangoro::Executor as PangoroExecutor;
-pub use pangoro_runtime;
+
+#[cfg(feature = "template")]
+pub mod template;
+#[cfg(feature = "template")]
+pub use template::Executor as TemplateExecutor;
 
 // --- std ---
 use std::sync::Arc;
@@ -75,17 +78,33 @@ type LightClient<RuntimeApi, Executor> =
 pub trait RuntimeExtrinsic: 'static + Send + Sync + Codec {}
 impl<E> RuntimeExtrinsic for E where E: 'static + Send + Sync + Codec {}
 
-/// Can be called for a `Configuration` to check if it is a configuration for the `Pangoro` network.
+/// Can be called for a `Configuration` to check the network type.
 pub trait IdentifyVariant {
+	/// Returns if this is a configuration for the `Pangolin` network.
+	fn is_pangolin(&self) -> bool;
+
 	/// Returns if this is a configuration for the `Pangoro` network.
 	fn is_pangoro(&self) -> bool;
+
+	/// Returns if this is a configuration for the `Template` network.
+	#[cfg(feature = "template")]
+	fn is_template(&self) -> bool;
 
 	/// Returns true if this configuration is for a development network.
 	fn is_dev(&self) -> bool;
 }
 impl IdentifyVariant for Box<dyn ChainSpec> {
+	fn is_pangolin(&self) -> bool {
+		self.id().starts_with("pangolin")
+	}
+
 	fn is_pangoro(&self) -> bool {
 		self.id().starts_with("pangoro")
+	}
+
+	#[cfg(feature = "template")]
+	fn is_template(&self) -> bool {
+		self.id().starts_with("template")
 	}
 
 	fn is_dev(&self) -> bool {
