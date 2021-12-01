@@ -129,7 +129,7 @@ jobs:
           npm test
 
   code-checks:
-    name: Task check Code
+    name: Task check code
     if: github.event_name == 'push' || !github.event.pull_request.draft
     # if: github.event.issue.pull_request && contains(github.event.comment.body, '/bot check') && contains(github.event.comment.body, 'code')
     needs: [basic-checks]
