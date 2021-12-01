@@ -62,10 +62,10 @@ pangoro-runtime-system-params           = { default-features = false, path = "..
 to-ethereum-backing                     = { default-features = false, path = "../../../frame/wormhole/backing/ethereum" }
 to-tron-backing                         = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
 # paritytech
-bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-3" }
-bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-3" }
-bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-3" }
-bridge-runtime-common                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-3" }
+bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
+bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
+bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
+bridge-runtime-common                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
 frame-benchmarking                         = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 frame-election-provider-support            = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
@@ -79,9 +79,9 @@ pallet-authority-discovery                 = { default-features = false, git = "
 pallet-authorship                          = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 pallet-babe                                = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 pallet-bounties                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-pallet-bridge-dispatch                     = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-3" }
-pallet-bridge-grandpa                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-3" }
-pallet-bridge-messages                     = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-3" }
+pallet-bridge-dispatch                     = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
+pallet-bridge-grandpa                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
+pallet-bridge-messages                     = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
 pallet-collective                          = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 pallet-election-provider-multi-phase       = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 pallet-grandpa                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
