@@ -30,8 +30,8 @@ use darwinia_support::{
 	s2s::{LatestMessageNoncer, RelayMessageSender},
 };
 use dp_contract::{
-	mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams},
 	abi_util::{abi_decode_bytes4, abi_encode_bytes, abi_encode_u64},
+	mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams},
 };
 use dp_evm::Precompile;
 use dp_s2s::{CallParams, CreatePayload};
@@ -73,9 +73,7 @@ where
 			Action::OutboundLatestGeneratedNonce => {
 				Self::outbound_latest_generated_nonce(&dvm_parser)?
 			}
-			Action::InboundLatestReceivedNonce => {
-				Self::inbound_latest_received_nonce(&dvm_parser)?
-			}
+			Action::InboundLatestReceivedNonce => Self::inbound_latest_received_nonce(&dvm_parser)?,
 			Action::EncodeUnlockFromRemoteDispatchCall => {
 				Self::encode_unlock_from_remote_dispatch_call(&dvm_parser, context.caller)?
 			}
@@ -99,18 +97,14 @@ where
 	T: from_substrate_issuing::Config,
 	S: RelayMessageSender + LatestMessageNoncer,
 {
-	fn outbound_latest_generated_nonce(
-		dvm_parser: &DvmInputParser,
-	) -> Result<Vec<u8>, ExitError> {
+	fn outbound_latest_generated_nonce(dvm_parser: &DvmInputParser) -> Result<Vec<u8>, ExitError> {
 		let lane_id = abi_decode_bytes4(dvm_parser.input)
 			.map_err(|_| ExitError::Other("decode lane id failed".into()))?;
 		let nonce = <S as LatestMessageNoncer>::outbound_latest_generated_nonce(lane_id);
 		Ok(abi_encode_u64(nonce))
 	}
 
-	fn inbound_latest_received_nonce(
-		dvm_parser: &DvmInputParser,
-	) -> Result<Vec<u8>, ExitError> {
+	fn inbound_latest_received_nonce(dvm_parser: &DvmInputParser) -> Result<Vec<u8>, ExitError> {
 		let lane_id = abi_decode_bytes4(dvm_parser.input)
 			.map_err(|_| ExitError::Other("decode lane id failed".into()))?;
 		let nonce = <S as LatestMessageNoncer>::inbound_latest_received_nonce(lane_id);
