@@ -1,3 +1,5 @@
+pub use pallet_grandpa::AuthorityId as GrandpaId;
+
 // --- paritytech ---
 use pallet_grandpa::Config;
 // --- darwinia-network ---
