@@ -9,6 +9,7 @@
 ## Cargo
 target
 ## Npm
+package-lock.json
 node_modules
 
 # Test Data
