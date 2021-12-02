@@ -23,4 +23,16 @@ describeWithFrontier("Frontier RPC (Constant)", (context) => {
 		// as we are running manual sealing consensus.
 		expect(await context.web3.eth.getCoinbase()).to.equal("0x0000000000000000000000000000000000000000");
 	});
+
+	it("should gas price", async function () {
+		expect(await context.web3.eth.getGasPrice()).to.equal("1");
+	});
+
+	it("should protocal version is 1", async function () {
+		expect(await context.web3.eth.getProtocolVersion()).to.equal(1);
+	});
+
+	it("should is syncing is false", async function () {
+		expect(await context.web3.eth.isSyncing()).to.be.false;
+	});
 });
