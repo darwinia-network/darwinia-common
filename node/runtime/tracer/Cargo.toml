@@ -1,29 +1,33 @@
 [package]
-name = "tracer"
-edition = "2021"
-# TODO: more descriptions
-version = "0.1.0"
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "DRML node common runtime"
+edition     = "2021"
+homepage    = "https://darwinia.network"
+license     = "GPL-3.0"
+name        = "runtime-tracer"
+repository  = "https://github.com/darwinia-network/darwinia-common"
+version     = "2.7.0"
 
 [dependencies]
+# darwinia-network
+tracing-events = { path = "../../../primitives/evm/trace", default-features = false, features = [ "evm-tracing" ] }
 
-# Moonbeam
-evm-tracing-events = { path = "../../primitives/rpc/evm-tracing-events", default-features = false, features = [ "evm-tracing" ] }
-moonbeam-primitives-ext = { path = "../../primitives/ext", default-features = false }
+# moonbeam-primitives-ext = { path = "../../primitives/ext", default-features = false }
 
-# Substrate
-codec = { package = "parity-scale-codec", version = "2.2", default-features = false }
-sp-core = { git = "https://github.com/purestake/substrate.git", branch = "moonbeam-polkadot-v0.9.12", default-features = false }
-sp-io = { git = "https://github.com/purestake/substrate.git", branch = "moonbeam-polkadot-v0.9.12", default-features = false }
-sp-runtime = { git = "https://github.com/purestake/substrate.git", branch = "moonbeam-polkadot-v0.9.12", default-features = false }
-sp-std = { git = "https://github.com/purestake/substrate.git", branch = "moonbeam-polkadot-v0.9.12", default-features = false }
+# paritytech
+codec   = { package = "parity-scale-codec", version = "2.2", default-features = false }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+sp-io   = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 
-# Frontier
-ethereum-types = { version = "0.12.0", default-features = false }
-evm = { version = "0.30.1", default-features = false, features = [ "with-codec" ] }
-evm-gasometer = { version = "0.30.0", default-features = false }
-evm-runtime = { version = "0.30.0", default-features = false }
-fp-evm = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.12", default-features = false }
-pallet-evm = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.12", default-features = false }
+# crate.io
+ethereum-types = { version = "0.11.0", default-features = false }
+evm = { version = "0.27", default-features = false, features = [ "with-codec" ] }
+evm-gasometer = { version = "0.27", default-features = false }
+evm-runtime = { version = "0.27", default-features = false }
+# fp-evm = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.12", default-features = false }
+# pallet-evm = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.12", default-features = false }
 
 [features]
 default = [ "std" ]
@@ -32,12 +36,12 @@ std = [
 	"ethereum-types/std",
 	"evm-gasometer/std",
 	"evm-runtime/std",
-	"evm-tracing-events/std",
+	"tracing-events/std",
 	"evm/std",
 	"evm/with-serde",
-	"fp-evm/std",
-	"moonbeam-primitives-ext/std",
-	"pallet-evm/std",
+	# "fp-evm/std",
+	# "moonbeam-primitives-ext/std",
+	# "pallet-evm/std",
 	"sp-core/std",
 	"sp-runtime/std",
 	"sp-std/std",

@@ -7427,6 +7427,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "runtime-tracer"
+version = "2.7.0"
+dependencies = [
+ "ethereum-types",
+ "evm 0.27.0",
+ "evm-gasometer 0.27.0",
+ "evm-runtime 0.27.0",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "tracing-events",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10653,6 +10669,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f4ed65637b8390770814083d20756f87bfa2c21bf2f110babdc5438351746e4"
 dependencies = [
  "lazy_static",
+]
+
+[[package]]
+name = "tracing-events"
+version = "2.7.0"
+dependencies = [
+ "environmental",
+ "ethereum",
+ "ethereum-types",
+ "evm 0.27.0",
+ "evm-gasometer 0.27.0",
+ "evm-runtime 0.27.0",
+ "parity-scale-codec",
 ]
 
 [[package]]
