@@ -49,9 +49,9 @@ jobs:
               target: subalfred
         include:
           - action: build
+            features: --features template
             task:
               target: drml
-              features: --features template
 
     steps:
       - name: Install Rust ${{ env.RUST_TOOLCHAIN }} toolchain
@@ -77,7 +77,7 @@ jobs:
             ${{ matrix.action }}-${{ matrix.task.target }}-${{ env.GITHUB_CACHE_VERSION }}-
 
       - name: Action ${{ matrix.action }}
-        run: cargo ${{ matrix.action }} ${{ matrix.task.features }} --locked
+        run: cargo ${{ matrix.action }} ${{ matrix.features }} --locked
 
       - name: Compress ${{ matrix.task.target }}
         if: matrix.action != 'test'
