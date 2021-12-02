@@ -94,13 +94,13 @@ impl SubstrateCli for Cli {
 			"template" | "template-dev" => Box::new(template_chain_spec::development_config()),
 			path => {
 				let path = PathBuf::from(path);
-				let chain_spec = Box::new(PangolinChainSpec::from_json_file(path.clone())?)
-					as Box<dyn ChainSpec>;
+				let chain_spec =
+					Box::new(PangoroChainSpec::from_json_file(path.clone())?) as Box<dyn ChainSpec>;
 
-				if self.run.force_pangoro || chain_spec.is_pangolin() {
-					chain_spec
+				if self.run.force_pangolin || chain_spec.is_pangolin() {
+					Box::new(PangolinChainSpec::from_json_file(path)?)
 				} else {
-					Box::new(PangoroChainSpec::from_json_file(path)?)
+					chain_spec
 				}
 			}
 		})
