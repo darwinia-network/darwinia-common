@@ -41,13 +41,13 @@ jobs:
         task:
           - target: drml
             repository: darwinia-network/darwinia-common
-            features: --features template
           - target: subalfred
             repository: l2ust/subalfred
-        exclude:
-          - action: test
+        include:
+          - action: build
             task:
-              target: subalfred
+              target: drml
+              features: --features template
 
     steps:
       - name: Install Rust ${{ env.RUST_TOOLCHAIN }} toolchain
