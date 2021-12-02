@@ -9,7 +9,7 @@ export const WS_PORT = 19933;
 export const DISPLAY_LOG = process.env.FRONTIER_LOG || false;
 export const FRONTIER_LOG = process.env.FRONTIER_LOG || "info";
 
-export const BINARY_PATH = `./template/node/target/debug/template-node`;
+export const BINARY_PATH = `./../../target/release/drml`;
 export const SPAWNING_TIME = 30000;
 
 export async function customRequest(web3: Web3, method: string, params: any[]) {
@@ -52,7 +52,7 @@ export async function startFrontierNode(provider?: string): Promise<{ web3: Web3
 
 	const cmd = BINARY_PATH;
 	const args = [
-		`--chain=dev`,
+		`--chain=template-dev`,
 		`--validator`, // Required by manual sealing to author the blocks
 		`--execution=Native`, // Faster execution using native
 		`--no-telemetry`,
