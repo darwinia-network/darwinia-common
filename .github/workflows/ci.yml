@@ -123,8 +123,6 @@ jobs:
 
       - name: Test
         run: |
-          pwd
-          ls -al
           cd tests/dvm
           npm install
           npm test
