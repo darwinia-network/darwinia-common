@@ -20,15 +20,8 @@
 
 #![warn(missing_docs)]
 
-pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
-
-// --- std ---
-use std::sync::Arc;
-// --- paritytech ---
-use sp_api::ProvideRuntimeApi;
 // --- darwinia-network ---
 use crate::*;
-use drml_common_primitives::{AccountId, Balance, Nonce};
 
 /// Full client dependencies
 pub struct FullDeps<C, P, SC, B> {
@@ -41,7 +34,7 @@ pub struct FullDeps<C, P, SC, B> {
 	/// A copy of the chain spec.
 	pub chain_spec: Box<dyn sc_chain_spec::ChainSpec>,
 	/// Whether to deny unsafe calls
-	pub deny_unsafe: sc_rpc::DenyUnsafe,
+	pub deny_unsafe: DenyUnsafe,
 	/// BABE specific dependencies.
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
@@ -66,8 +59,8 @@ where
 	C: 'static
 		+ Send
 		+ Sync
-		+ ProvideRuntimeApi<Block>
 		+ sc_client_api::AuxStore
+		+ sp_api::ProvideRuntimeApi<Block>
 		+ sp_blockchain::HeaderBackend<Block>
 		+ sp_blockchain::HeaderMetadata<Block, Error = sp_blockchain::Error>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
@@ -79,7 +72,7 @@ where
 	P: 'static + sp_transaction_pool::TransactionPool,
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
-	B::State: sc_client_api::StateBackend<sp_runtime::traits::HashFor<Block>>,
+	B::State: sc_client_api::StateBackend<Hashing>,
 {
 	// --- paritytech ---
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
@@ -153,7 +146,11 @@ where
 /// Instantiate all RPC extensions for light node.
 pub fn create_light<C, P, F>(deps: LightDeps<C, F, P>) -> RpcExtension
 where
-	C: 'static + Send + Sync + ProvideRuntimeApi<Block> + sp_blockchain::HeaderBackend<Block>,
+	C: 'static
+		+ Send
+		+ Sync
+		+ sp_api::ProvideRuntimeApi<Block>
+		+ sp_blockchain::HeaderBackend<Block>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	P: 'static + sp_transaction_pool::TransactionPool,

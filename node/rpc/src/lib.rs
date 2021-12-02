@@ -18,6 +18,8 @@
 
 pub mod pangolin;
 pub mod pangoro;
+#[cfg(feature = "template")]
+pub mod template;
 
 // --- paritytech ---
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
@@ -25,7 +27,9 @@ pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 // --- std ---
 use std::sync::Arc;
 // --- darwinia-network ---
-use drml_common_primitives::{BlockNumber, Hash, OpaqueBlock as Block};
+use drml_common_primitives::{
+	AccountId, Balance, BlockNumber, Hash, Hashing, Nonce, OpaqueBlock as Block,
+};
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;

@@ -259,7 +259,7 @@
 //!
 //! ## Related Modules
 //!
-//! - [Balances](../pallet_balances/index.html): Used to manage values at stake.
+//! - [Balances](../darwinia_balances/index.html): Used to manage values at stake.
 //! - [Session](../pallet_session/index.html): Used to manage sessions. Also, a list of new
 //!   validators is stored in the Session pallet's `Validators` at the end of each era.
 

@@ -18,8 +18,6 @@
 
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
-pub use pangolin_runtime;
-
 // --- std ---
 use std::{
 	collections::{BTreeMap, HashMap},
@@ -64,18 +62,19 @@ use crate::{
 		LightClient,
 	},
 };
-use drml_common_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
 use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use dc_rpc::EthTask;
 use dp_rpc::{FilterPool, PendingTransactions};
+use drml_common_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use drml_rpc::{
 	pangolin::{FullDeps, LightDeps},
 	BabeDeps, DenyUnsafe, GrandpaDeps, RpcExtension, SubscriptionTaskExecutor,
 };
+use pangolin_runtime::RuntimeApi;
 
 sc_executor::native_executor_instance!(
-	pub PangolinExecutor,
+	pub Executor,
 	pangolin_runtime::api::dispatch,
 	pangolin_runtime::native_version,
 	frame_benchmarking::benchmarking::HostFunctions,
@@ -795,15 +794,13 @@ pub fn pangolin_new_full(
 ) -> Result<
 	(
 		TaskManager,
-		Arc<impl PangolinClient<Block, FullBackend, pangolin_runtime::RuntimeApi>>,
+		Arc<impl PangolinClient<Block, FullBackend, RuntimeApi>>,
 		RpcHandlers,
 	),
 	ServiceError,
 > {
-	let (components, client, rpc_handlers) = new_full::<
-		pangolin_runtime::RuntimeApi,
-		PangolinExecutor,
-	>(config, authority_discovery_disabled, max_past_logs)?;
+	let (components, client, rpc_handlers) =
+		new_full::<RuntimeApi, Executor>(config, authority_discovery_disabled, max_past_logs)?;
 
 	Ok((components, client, rpc_handlers))
 }
@@ -812,5 +809,5 @@ pub fn pangolin_new_full(
 pub fn pangolin_new_light(
 	config: Configuration,
 ) -> Result<(TaskManager, RpcHandlers), ServiceError> {
-	new_light::<pangolin_runtime::RuntimeApi, PangolinExecutor>(config)
+	new_light::<RuntimeApi, Executor>(config)
 }

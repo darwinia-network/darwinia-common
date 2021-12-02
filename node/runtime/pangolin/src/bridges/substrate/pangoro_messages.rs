@@ -26,11 +26,11 @@ use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
+use dp_s2s::{CallParams, CreatePayload};
 use drml_bridge_primitives::{
 	FromThisChainMessageVerifier, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE,
 	WITH_PANGOLIN_MESSAGES_PALLET_NAME,
 };
-use dp_s2s::{CallParams, CreatePayload};
 
 /// The s2s backing pallet index in the pangoro chain runtime.
 pub const PANGORO_S2S_BACKING_PALLET_INDEX: u8 = 20;
@@ -151,7 +151,8 @@ impl messages::ThisChainWithMessages for Pangolin {
 		.unwrap_or(u32::MAX);
 
 		MessageTransaction {
-			dispatch_weight: drml_bridge_primitives::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
+			dispatch_weight:
+				drml_bridge_primitives::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
 			size: inbound_data_size
 				.saturating_add(drml_bridge_primitives::EXTRA_STORAGE_PROOF_SIZE)
 				.saturating_add(drml_bridge_primitives::TX_EXTRA_BYTES),

@@ -17,6 +17,8 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- crates.io ---
+#[cfg(feature = "template")]
+use structopt::clap::arg_enum;
 use structopt::StructOpt;
 // --- paritytech ---
 use sc_cli::{KeySubcommand, SignCmd, VanityCmd, VerifyCmd};
@@ -44,9 +46,9 @@ pub struct RunCmd {
 	#[structopt(flatten)]
 	pub base: sc_cli::RunCmd,
 
-	/// Force using Pangoro native runtime.
-	#[structopt(long = "force-pangoro")]
-	pub force_pangoro: bool,
+	/// Force using Pangolin native runtime.
+	#[structopt(long = "force-pangolin")]
+	pub force_pangolin: bool,
 
 	/// Disable the authority discovery module on validator or sentry nodes.
 	///
@@ -122,4 +124,40 @@ pub struct DvmArgs {
 	/// Maximum number of logs in a query.
 	#[structopt(long, default_value = "10000")]
 	pub max_past_logs: u32,
+
+	/// Choose sealing method.
+	#[cfg(feature = "template")]
+	#[structopt(long = "sealing", default_value)]
+	pub sealing: Sealing,
+
+	#[cfg(feature = "template")]
+	#[structopt(long = "enable-dev-signer")]
+	pub enable_dev_signer: bool,
+}
+
+#[cfg(feature = "template")]
+arg_enum! {
+	/// Available Sealing methods.
+	#[derive(Debug, Copy, Clone, StructOpt)]
+	pub enum Sealing {
+		// Seal using rpc method.
+		Manual,
+		// Seal when transaction is executed.
+		Instant,
+	}
+}
+#[cfg(feature = "template")]
+impl Sealing {
+	pub fn is_manual(&self) -> bool {
+		match self {
+			Self::Manual => true,
+			Self::Instant => false,
+		}
+	}
+}
+#[cfg(feature = "template")]
+impl Default for Sealing {
+	fn default() -> Sealing {
+		Sealing::Manual
+	}
 }

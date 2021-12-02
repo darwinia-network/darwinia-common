@@ -16,25 +16,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pub mod client;
+// --- paritytech ---
+use substrate_wasm_builder::WasmBuilder;
 
-pub mod chain_spec;
-#[cfg(feature = "template")]
-pub use chain_spec::template as template_chain_spec;
-pub use chain_spec::{
-	pangolin as pangolin_chain_spec, pangoro as pangoro_chain_spec, PangolinChainSpec,
-	PangoroChainSpec,
-};
-
-pub mod service;
-#[cfg(feature = "template")]
-pub use service::template as template_service;
-pub use service::{
-	pangolin as pangolin_service, pangoro as pangoro_service, IdentifyVariant, PangolinExecutor,
-	PangoroExecutor,
-};
-
-pub use pangolin_runtime::{self, RuntimeApi as PangolinRuntimeApi};
-pub use pangoro_runtime::{self, RuntimeApi as PangoroRuntimeApi};
-#[cfg(feature = "template")]
-pub use template_runtime;
+fn main() {
+	WasmBuilder::new()
+		.with_current_project()
+		.export_heap_base()
+		.import_memory()
+		.build()
+}

@@ -45,3 +45,14 @@ sp-keystore                    = { git = "https://github.com/darwinia-network/su
 sp-runtime                     = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 sp-transaction-pool            = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 substrate-frame-rpc-system     = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+# template
+futures                  = { version = "0.3", optional = true }
+sc-consensus-manual-seal = { optional = true, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+template-runtime         = { optional = true, path = "../runtime/template" }
+
+[features]
+template = [
+	"futures",
+	"sc-consensus-manual-seal",
+	"template-runtime",
+]

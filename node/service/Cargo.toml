@@ -70,6 +70,15 @@ sp-timestamp                               = { git = "https://github.com/darwini
 sp-transaction-pool                        = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 sp-trie                                    = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+# template
+async-trait              = { version = "0.1", optional = true }
+log                      = { version = "0.4", optional = true }
+sc-consensus-aura        = { optional = true, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+sc-consensus-manual-seal = { optional = true, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+sp-consensus-aura        = { optional = true, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+sp-inherents             = { optional = true, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+template-runtime         = { optional = true, path = "../runtime/template" }
+
 
 [features]
 default = [
@@ -80,6 +89,17 @@ default = [
 db = ["sc-service/db"]
 
 full-node = []
+
+template = [
+	"drml-rpc/template",
+	"async-trait",
+	"log",
+	"sc-consensus-aura",
+	"sc-consensus-manual-seal",
+	"sp-consensus-aura",
+	"sp-inherents",
+	"template-runtime",
+]
 
 runtime-benchmarks = ["pangolin-runtime/runtime-benchmarks"]
 

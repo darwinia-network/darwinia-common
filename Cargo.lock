@@ -173,6 +173,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e22d1f4b888c298a027c99dc9048015fac177587de20fc30232a057dfbe24a21"
 
 [[package]]
+name = "assert_matches"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b34d609dfbaf33d6889b2b7106d3ca345eacad44200913df5ba02bfd31d2ba9"
+
+[[package]]
 name = "async-channel"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2344,6 +2350,7 @@ dependencies = [
  "drml-common-primitives",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
+ "futures 0.3.17",
  "jsonrpc-core",
  "jsonrpc-pubsub",
  "pallet-transaction-payment-rpc",
@@ -2353,6 +2360,7 @@ dependencies = [
  "sc-consensus-babe",
  "sc-consensus-babe-rpc",
  "sc-consensus-epochs",
+ "sc-consensus-manual-seal",
  "sc-finality-grandpa",
  "sc-finality-grandpa-rpc",
  "sc-network",
@@ -2366,6 +2374,7 @@ dependencies = [
  "sp-runtime",
  "sp-transaction-pool",
  "substrate-frame-rpc-system",
+ "template-runtime",
 ]
 
 [[package]]
@@ -2373,6 +2382,7 @@ name = "drml-service"
 version = "2.7.0"
 dependencies = [
  "array-bytes",
+ "async-trait",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-bridge-ethereum",
  "darwinia-claims",
@@ -2391,6 +2401,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-system-rpc-runtime-api",
  "futures 0.3.17",
+ "log",
  "pallet-im-online",
  "pallet-transaction-payment-rpc-runtime-api",
  "pangolin-runtime",
@@ -2401,7 +2412,9 @@ dependencies = [
  "sc-basic-authorship",
  "sc-client-api",
  "sc-consensus",
+ "sc-consensus-aura",
  "sc-consensus-babe",
+ "sc-consensus-manual-seal",
  "sc-consensus-slots",
  "sc-consensus-uncles",
  "sc-executor",
@@ -2419,9 +2432,11 @@ dependencies = [
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
+ "sp-consensus-aura",
  "sp-consensus-babe",
  "sp-core",
  "sp-finality-grandpa",
+ "sp-inherents",
  "sp-offchain",
  "sp-runtime",
  "sp-session",
@@ -2429,6 +2444,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-trie",
  "substrate-prometheus-endpoint",
+ "template-runtime",
 ]
 
 [[package]]
@@ -5665,6 +5681,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-aura"
+version = "3.0.0"
+source = "git+https://github.com/darwinia-network/substrate?tag=darwinia-v0.11.6-1#3c951d7eb441b8dec5f438084b0c264422385069"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-session",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "sp-application-crypto",
+ "sp-consensus-aura",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-authority-discovery"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate?tag=darwinia-v0.11.6-1#3c951d7eb441b8dec5f438084b0c264422385069"
@@ -7770,6 +7802,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "sc-consensus-aura"
+version = "0.9.0"
+source = "git+https://github.com/darwinia-network/substrate?tag=darwinia-v0.11.6-1#3c951d7eb441b8dec5f438084b0c264422385069"
+dependencies = [
+ "async-trait",
+ "derive_more",
+ "futures 0.3.17",
+ "futures-timer 3.0.2",
+ "log",
+ "parity-scale-codec",
+ "sc-block-builder",
+ "sc-client-api",
+ "sc-consensus-slots",
+ "sc-telemetry",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-aura",
+ "sp-consensus-slots",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-version",
+ "substrate-prometheus-endpoint",
+]
+
+[[package]]
 name = "sc-consensus-babe"
 version = "0.9.0"
 source = "git+https://github.com/darwinia-network/substrate?tag=darwinia-v0.11.6-1#3c951d7eb441b8dec5f438084b0c264422385069"
@@ -7850,6 +7913,41 @@ dependencies = [
  "sc-consensus",
  "sp-blockchain",
  "sp-runtime",
+]
+
+[[package]]
+name = "sc-consensus-manual-seal"
+version = "0.9.0"
+source = "git+https://github.com/darwinia-network/substrate?tag=darwinia-v0.11.6-1#3c951d7eb441b8dec5f438084b0c264422385069"
+dependencies = [
+ "assert_matches",
+ "async-trait",
+ "derive_more",
+ "futures 0.3.17",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "log",
+ "parity-scale-codec",
+ "parking_lot 0.11.2",
+ "sc-client-api",
+ "sc-consensus-babe",
+ "sc-consensus-epochs",
+ "sc-transaction-pool",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-babe",
+ "sp-consensus-slots",
+ "sp-core",
+ "sp-inherents",
+ "sp-keyring",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-timestamp",
+ "sp-transaction-pool",
+ "substrate-prometheus-endpoint",
 ]
 
 [[package]]
@@ -9133,6 +9231,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-consensus-aura"
+version = "0.9.0"
+source = "git+https://github.com/darwinia-network/substrate?tag=darwinia-v0.11.6-1#3c951d7eb441b8dec5f438084b0c264422385069"
+dependencies = [
+ "async-trait",
+ "parity-scale-codec",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-consensus",
+ "sp-consensus-slots",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-std",
+ "sp-timestamp",
+]
+
+[[package]]
 name = "sp-consensus-babe"
 version = "0.9.0"
 source = "git+https://github.com/darwinia-network/substrate?tag=darwinia-v0.11.6-1#3c951d7eb441b8dec5f438084b0c264422385069"
@@ -9958,6 +10073,49 @@ dependencies = [
  "redox_syscall 0.2.10",
  "remove_dir_all",
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "template-runtime"
+version = "2.7.0"
+dependencies = [
+ "common-runtime",
+ "darwinia-balances",
+ "darwinia-evm",
+ "darwinia-evm-precompile-modexp",
+ "darwinia-evm-precompile-sha3fips",
+ "darwinia-evm-precompile-simple",
+ "darwinia-support",
+ "drml-common-primitives",
+ "dvm-ethereum",
+ "dvm-rpc-runtime-api",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "frame-system-rpc-runtime-api",
+ "max-encoded-len",
+ "pallet-aura",
+ "pallet-grandpa",
+ "pallet-randomness-collective-flip",
+ "pallet-sudo",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-block-builder",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-std",
+ "sp-transaction-pool",
+ "sp-version",
+ "substrate-wasm-builder",
 ]
 
 [[package]]
