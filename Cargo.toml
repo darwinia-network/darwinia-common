@@ -8,7 +8,7 @@ members = [
 	"node/runtime/pangolin",
 	"node/runtime/pangoro",
 	"node/runtime/template",
-	"node/runtime/tracer",
+	# "node/runtime/tracer",
 	"node/service",
 	"client/dvm/db",
 	"client/dvm/mapping-sync",
