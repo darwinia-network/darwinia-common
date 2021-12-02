@@ -43,6 +43,10 @@ jobs:
             repository: darwinia-network/darwinia-common
           - target: subalfred
             repository: l2ust/subalfred
+        exclude:
+          - action: test
+            task:
+              target: subalfred
         include:
           - action: build
             task:
