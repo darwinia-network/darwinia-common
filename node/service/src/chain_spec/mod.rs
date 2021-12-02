@@ -22,6 +22,11 @@ pub use pangolin::ChainSpec as PangolinChainSpec;
 pub mod pangoro;
 pub use pangoro::ChainSpec as PangoroChainSpec;
 
+#[cfg(feature = "template")]
+pub mod template;
+#[cfg(feature = "template")]
+pub use template::ChainSpec as TemplateChainSpec;
+
 // --- paritytech ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_finality_grandpa::AuthorityId as GrandpaId;
@@ -30,7 +35,7 @@ use sp_consensus_babe::AuthorityId as BabeId;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::IdentifyAccount;
 // --- darwinia-network ---
-use common_primitives::{AccountId, AccountPublic};
+use drml_common_primitives::{AccountId, AccountPublic};
 
 const DEFAULT_PROTOCOL_ID: &str = "drml";
 

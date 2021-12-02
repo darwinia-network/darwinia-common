@@ -38,8 +38,8 @@ use sp_core::H256;
 use sp_runtime::{traits::Convert, RuntimeDebug};
 use sp_std::prelude::*;
 // --- darwinia-network ---
-use common_primitives::*;
 use darwinia_fee_market::RingBalance;
+use drml_common_primitives::*;
 
 /// Maximal size (in bytes) of encoded (using `Encode::encode()`) account id.
 pub const MAXIMAL_ENCODED_ACCOUNT_ID_SIZE: u32 = 32;

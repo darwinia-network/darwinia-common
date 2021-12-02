@@ -1,7 +1,7 @@
 const expect = require("chai").expect;
 const Web3 = require("web3");
 
-const web3 = new Web3("http://localhost:9933");
+const web3 = new Web3("http://127.0.0.1:9933");
 
 describe("Test RPC Constants", function () {
 	it("Should have 0 hashrate", async function () {

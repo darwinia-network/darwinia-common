@@ -1,3 +1,5 @@
+pub use pallet_grandpa::AuthorityId as GrandpaId;
+
 // --- paritytech ---
 use frame_support::traits::KeyOwnerProofSystem;
 use pallet_grandpa::{Config, EquivocationHandler};

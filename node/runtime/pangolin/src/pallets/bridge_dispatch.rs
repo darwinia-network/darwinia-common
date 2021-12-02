@@ -7,7 +7,7 @@ use pallet_bridge_dispatch::Config;
 use pangoro_primitives::AccountId;
 // --- darwinia-network ---
 use crate::{pangoro_messages::FromPangoroEncodedCall, *};
-use bridge_primitives::AccountIdConverter;
+use drml_bridge_primitives::AccountIdConverter;
 
 pub struct Sub2SubFilter;
 impl Contains<Call> for Sub2SubFilter {

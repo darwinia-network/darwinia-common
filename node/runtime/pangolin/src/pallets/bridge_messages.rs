@@ -11,15 +11,15 @@ use crate::{
 	},
 	*,
 };
-use bridge_primitives::{
-	AccountIdConverter, MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
-	MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE, MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
-	PANGORO_CHAIN_ID,
-};
 use darwinia_fee_market::s2s::{
 	FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler, FeeMarketPayment,
 };
 use darwinia_support::evm::{ConcatConverter, IntoAccountId, IntoH160};
+use drml_bridge_primitives::{
+	AccountIdConverter, MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
+	MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE, MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
+	PANGORO_CHAIN_ID,
+};
 
 frame_support::parameter_types! {
 	pub const MaxMessagesToPruneAtOnce: MessageNonce = 8;

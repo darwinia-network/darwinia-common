@@ -41,6 +41,7 @@ jobs:
         task:
           - target: drml
             repository: darwinia-network/darwinia-common
+            features: --features template
           - target: subalfred
             repository: l2ust/subalfred
         exclude:
@@ -72,7 +73,7 @@ jobs:
             ${{ matrix.action }}-${{ matrix.task.target }}-${{ env.GITHUB_CACHE_VERSION }}-
 
       - name: Action ${{ matrix.action }}
-        run: cargo ${{ matrix.action }} --locked
+        run: cargo ${{ matrix.action }} ${{ matrix.task.features }} --locked
 
       - name: Compress ${{ matrix.task.target }}
         if: matrix.action != 'test'
@@ -122,14 +123,12 @@ jobs:
 
       - name: Test
         run: |
-          pwd
-          ls -al
           cd tests/dvm
           npm install
           npm test
 
   code-checks:
-    name: Task check Code
+    name: Task check code
     if: github.event_name == 'push' || !github.event.pull_request.draft
     # if: github.event.issue.pull_request && contains(github.event.comment.body, '/bot check') && contains(github.event.comment.body, 'code')
     needs: [basic-checks]

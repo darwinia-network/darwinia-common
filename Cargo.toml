@@ -7,6 +7,7 @@ members = [
 	"node/runtime/common",
 	"node/runtime/pangolin",
 	"node/runtime/pangoro",
+	"node/runtime/template",
 	"node/service",
 	"client/dvm/db",
 	"client/dvm/mapping-sync",
@@ -67,11 +68,6 @@ members = [
 	"primitives/rpc",
 	"primitives/s2s",
 	"primitives/storage",
-]
-
-exclude = [
-	".maintain/check-default-features",
-	"tests/ts-tests/template/"
 ]
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates
