@@ -50,6 +50,10 @@ jobs:
             flags: --release --features template
             task:
               target: drml
+          - action: build
+            flags: --release
+            task:
+              target: subalfred
 
     steps:
       - name: Install Rust ${{ env.RUST_TOOLCHAIN }} toolchain
