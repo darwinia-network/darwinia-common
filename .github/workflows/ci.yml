@@ -110,8 +110,6 @@ jobs:
             run: npm test
           - target: frontier
             run: |
-              mkdir -p ../../../target/release
-              cp /usr/bin/drml ../../../target/release/drml
               npm run build
               npm run test
 

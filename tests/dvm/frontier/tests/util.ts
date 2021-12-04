@@ -1,3 +1,4 @@
+import fs from 'fs'
 import Web3 from "web3";
 import { JsonRpcResponse } from "web3-core-helpers";
 import { spawn, ChildProcess } from "child_process";
@@ -49,7 +50,14 @@ export async function startFrontierNode(provider?: string): Promise<{ web3: Web3
 		web3 = new Web3(`http://127.0.0.1:${RPC_PORT}`);
 	}
 
-	const cmd = BINARY_PATH;
+	let cmd = BINARY_PATH;
+
+	fs.stat(cmd, (exists) => {
+		if (exists == null) {
+			cmd = `/usr/bin/drml`;
+		}
+	});
+
 	const args = [
 		`--chain=template-dev`,
 		`--validator`, // Required by manual sealing to author the blocks
