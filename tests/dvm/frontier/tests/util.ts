@@ -52,11 +52,9 @@ export async function startFrontierNode(provider?: string): Promise<{ web3: Web3
 
 	let cmd = BINARY_PATH;
 
-	fs.stat(cmd, (exists) => {
-		if (exists == null) {
-			cmd = `/usr/bin/drml`;
-		}
-	});
+	if (!fs.existsSync(cmd)) {
+		cmd = "/usr/bin/drml";
+	}
 
 	const args = [
 		`--chain=template-dev`,
