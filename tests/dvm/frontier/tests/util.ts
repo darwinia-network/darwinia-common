@@ -9,7 +9,7 @@ export const WS_PORT = 19933;
 export const DISPLAY_LOG = process.env.FRONTIER_LOG || false;
 export const FRONTIER_LOG = process.env.FRONTIER_LOG || "info";
 
-export const BINARY_PATH = `./../../../target/release/drml`;
+export const BINARY_PATH = `../../../target/release/drml`;
 export const SPAWNING_TIME = 30000;
 
 export async function customRequest(web3: Web3, method: string, params: any[]) {
@@ -24,8 +24,7 @@ export async function customRequest(web3: Web3, method: string, params: any[]) {
 			(error: Error | null, result?: JsonRpcResponse) => {
 				if (error) {
 					reject(
-						`Failed to send custom request (${method} (${params.join(",")})): ${
-							error.message || error.toString()
+						`Failed to send custom request (${method} (${params.join(",")})): ${error.message || error.toString()
 						}`
 					);
 				}
@@ -47,7 +46,7 @@ export async function createAndFinalizeBlock(web3: Web3) {
 export async function startFrontierNode(provider?: string): Promise<{ web3: Web3; binary: ChildProcess }> {
 	var web3;
 	if (!provider || provider == 'http') {
-		web3 = new Web3(`http://localhost:${RPC_PORT}`);
+		web3 = new Web3(`http://127.0.0.1:${RPC_PORT}`);
 	}
 
 	const cmd = BINARY_PATH;
@@ -113,7 +112,7 @@ export async function startFrontierNode(provider?: string): Promise<{ web3: Web3
 	});
 
 	if (provider == 'ws') {
-		web3 = new Web3(`ws://localhost:${WS_PORT}`);
+		web3 = new Web3(`ws://127.0.0.1:${WS_PORT}`);
 	}
 
 	return { web3, binary };
