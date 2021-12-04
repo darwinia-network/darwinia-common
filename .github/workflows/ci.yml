@@ -140,7 +140,7 @@ jobs:
         run: |
           cd tests/dvm/${{ matrix.task.target }}
           npm install
-          ${{ matrix.target }}
+          ${{ matrix.task.run }}
 
   code-checks:
     name: Task check code
