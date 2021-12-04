@@ -561,8 +561,8 @@ pub mod pallet {
 		DuplicateIndex,
 		/// Slash record index out of bounds.
 		InvalidSlashIndex,
-		/// Can not bond with value less than minimum balance.
-		InsufficientValue,
+		/// Can not bond with value less than minimum required.
+		InsufficientBond,
 		/// Can not schedule more unlock chunks.
 		NoMoreChunks,
 		/// Can not rebond without unlocking chunks.
@@ -587,6 +587,14 @@ pub mod pallet {
 		TooManyTargets,
 		/// A nomination target was supplied that was blocked or otherwise not a validator.
 		BadTarget,
+		/// The user has enough bond and thus cannot be chilled forcefully by an external person.
+		CannotChillOther,
+		/// There are too many nominators in the system. Governance needs to adjust the staking settings
+		/// to keep things safe for the runtime.
+		TooManyNominators,
+		/// There are too many validators in the system. Governance needs to adjust the staking settings
+		/// to keep things safe for the runtime.
+		TooManyValidators,
 		/// Payout - INSUFFICIENT
 		PayoutIns,
 	}
@@ -637,6 +645,14 @@ pub mod pallet {
 	#[pallet::getter(fn bonded)]
 	pub type Bonded<T: Config> = StorageMap<_, Twox64Concat, AccountId<T>, AccountId<T>>;
 
+	/// The minimum active bond to become and maintain the role of a nominator.
+	#[pallet::storage]
+	pub type MinNominatorBond<T: Config> = StorageValue<_, RingBalance<T>, ValueQuery>;
+
+	/// The minimum active bond to become and maintain the role of a validator.
+	#[pallet::storage]
+	pub type MinValidatorBond<T: Config> = StorageValue<_, RingBalance<T>, ValueQuery>;
+
 	/// Map from all (unlocked) "controller" accounts to the info regarding the staking.
 	#[pallet::storage]
 	#[pallet::getter(fn ledger)]
@@ -649,16 +665,40 @@ pub mod pallet {
 		StorageMap<_, Twox64Concat, AccountId<T>, RewardDestination<AccountId<T>>, ValueQuery>;
 
 	/// The map from (wannabe) validator stash key to the preferences of that validator.
+	///
+	/// When updating this storage item, you must also update the `CurrentValidatorsCount`.
 	#[pallet::storage]
 	#[pallet::getter(fn validators)]
 	pub type Validators<T: Config> =
 		StorageMap<_, Twox64Concat, AccountId<T>, ValidatorPrefs, ValueQuery>;
 
+	/// A tracker to keep count of the number of items in the `Validators` map.
+	#[pallet::storage]
+	pub type CurrentValidatorsCount<T> = StorageValue<_, u32, ValueQuery>;
+
+	/// The maximum validator count before we stop allowing new validators to join.
+	///
+	/// When this value is not set, no limits are enforced.
+	#[pallet::storage]
+	pub type MaxValidatorsCount<T> = StorageValue<_, u32, OptionQuery>;
+
 	/// The map from nominator stash key to the set of stash keys of all validators to nominate.
+	///
+	/// When updating this storage item, you must also update the `CurrentNominatorsCount`.
 	#[pallet::storage]
 	#[pallet::getter(fn nominators)]
 	pub type Nominators<T: Config> =
 		StorageMap<_, Twox64Concat, AccountId<T>, Nominations<AccountId<T>>>;
+
+	/// A tracker to keep count of the number of items in the `Nominators` map.
+	#[pallet::storage]
+	pub type CurrentNominatorsCount<T> = StorageValue<_, u32, ValueQuery>;
+
+	/// The maximum nominator count before we stop allowing new validators to join.
+	///
+	/// When this value is not set, no limits are enforced.
+	#[pallet::storage]
+	pub type MaxNominatorsCount<T> = StorageValue<_, u32, OptionQuery>;
 
 	/// The current era index.
 	///
@@ -886,6 +926,8 @@ pub mod pallet {
 			RingBalance<T>,
 			StakerStatus<AccountId<T>>,
 		)>,
+		pub min_nominator_bond: RingBalance<T>,
+		pub min_validator_bond: RingBalance<T>,
 		pub payout_fraction: Perbill,
 	}
 	#[cfg(feature = "std")]
@@ -900,6 +942,8 @@ pub mod pallet {
 				slash_reward_fraction: Default::default(),
 				canceled_payout: Default::default(),
 				stakers: Default::default(),
+				min_nominator_bond: Default::default(),
+				min_validator_bond: Default::default(),
 				payout_fraction: Default::default(),
 			}
 		}
@@ -914,7 +958,9 @@ pub mod pallet {
 			<ForceEra<T>>::put(self.force_era);
 			<CanceledSlashPayout<T>>::put(self.canceled_payout);
 			<SlashRewardFraction<T>>::put(self.slash_reward_fraction);
-			<StorageVersion<T>>::put(Releases::V6_0_0);
+			<StorageVersion<T>>::put(Releases::V7_0_0);
+			<MinNominatorBond<T>>::put(self.min_nominator_bond);
+			<MinValidatorBond<T>>::put(self.min_validator_bond);
 			<PayoutFraction<T>>::put(self.payout_fraction);
 
 			for (stash, controller, ring_to_be_bonded, status) in &self.stakers {
@@ -953,6 +999,23 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> Weight {
+			if <StorageVersion<T>>::get() == Releases::V6_0_0 {
+				migration::migrate::<T>()
+			} else {
+				T::DbWeight::get().reads(1)
+			}
+		}
+
+		#[cfg(feature = "try-runtime")]
+		fn pre_upgrade() -> Result<(), &'static str> {
+			if <StorageVersion<T>>::get() == Releases::V6_0_0 {
+				migration::pre_migrate::<T>()
+			} else {
+				Ok(())
+			}
+		}
+
 		fn on_initialize(_now: T::BlockNumber) -> Weight {
 			// just return the weight of the on_finalize.
 			T::DbWeight::get().reads(1)
@@ -1034,14 +1097,14 @@ pub mod pallet {
 					// Reject a bond which is considered to be _dust_.
 					ensure!(
 						value >= T::RingCurrency::minimum_balance(),
-						<Error<T>>::InsufficientValue,
+						<Error<T>>::InsufficientBond,
 					);
 				}
 				StakingBalance::KtonBalance(value) => {
 					// Reject a bond which is considered to be _dust_.
 					ensure!(
 						value >= T::KtonCurrency::minimum_balance(),
-						<Error<T>>::InsufficientValue,
+						<Error<T>>::InsufficientBond,
 					);
 				}
 			}
@@ -1221,6 +1284,9 @@ pub mod pallet {
 		/// can co-exists at the same time. In that case,  [`StakingLock::shrink`] need
 		/// to be called first to remove some of the chunks (if possible).
 		///
+		/// If a user encounters the `InsufficientBond` error when calling this extrinsic,
+		/// they should call `chill` first in order to free up their bonded funds.
+		///
 		/// The dispatch origin for this call must be _Signed_ by the controller, not the stash.
 		/// And, it can be only called when [`EraElectionStatus`] is `Closed`.
 		///
@@ -1249,6 +1315,7 @@ pub mod pallet {
 			)
 			.0;
 			let StakingLedger {
+				stash,
 				active_ring,
 				active_deposit_ring,
 				active_kton,
@@ -1296,6 +1363,21 @@ pub mod pallet {
 							*active_ring = Zero::zero();
 							*active_kton = Zero::zero();
 						}
+
+						let min_active_bond = if <Nominators<T>>::contains_key(&*stash) {
+							<MinNominatorBond<T>>::get()
+						} else if <Validators<T>>::contains_key(&*stash) {
+							<MinValidatorBond<T>>::get()
+						} else {
+							Zero::zero()
+						};
+
+						// Make sure that the user maintains enough active bond for their role.
+						// If a user runs into this error, they should chill first.
+						ensure!(
+							*active_ring >= min_active_bond,
+							<Error<T>>::InsufficientBond
+						);
 
 						ring_staking_lock
 							.unbondings
@@ -1540,11 +1622,27 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::validate())]
 		pub fn validate(origin: OriginFor<T>, prefs: ValidatorPrefs) -> DispatchResult {
 			let controller = ensure_signed(origin)?;
+
+			// If this error is reached, we need to adjust the `MinValidatorBond` and start calling `chill_other`.
+			// Until then, we explicitly block new validators to protect the runtime.
+			if let Some(max_validators) = <MaxValidatorsCount<T>>::get() {
+				ensure!(
+					<CurrentValidatorsCount<T>>::get() < max_validators,
+					<Error<T>>::TooManyValidators
+				);
+			}
+
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
+
+			ensure!(
+				ledger.active_ring >= <MinValidatorBond<T>>::get(),
+				<Error<T>>::InsufficientBond
+			);
+
 			let stash = &ledger.stash;
 
-			<Nominators<T>>::remove(stash);
-			<Validators<T>>::insert(stash, prefs);
+			Self::do_remove_nominator(stash);
+			Self::do_add_validator(stash, prefs);
 
 			Ok(())
 		}
@@ -1574,7 +1672,23 @@ pub mod pallet {
 			targets: Vec<<T::Lookup as StaticLookup>::Source>,
 		) -> DispatchResult {
 			let controller = ensure_signed(origin)?;
+
+			// If this error is reached, we need to adjust the `MinNominatorBond` and start calling `chill_other`.
+			// Until then, we explicitly block new nominators to protect the runtime.
+			if let Some(max_nominators) = <MaxNominatorsCount<T>>::get() {
+				ensure!(
+					<CurrentNominatorsCount<T>>::get() < max_nominators,
+					<Error<T>>::TooManyNominators
+				);
+			}
+
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
+
+			ensure!(
+				ledger.active_ring >= <MinNominatorBond<T>>::get(),
+				<Error<T>>::InsufficientBond
+			);
+
 			let stash = &ledger.stash;
 
 			ensure!(!targets.is_empty(), <Error<T>>::EmptyTargets);
@@ -1604,8 +1718,8 @@ pub mod pallet {
 				suppressed: false,
 			};
 
-			<Validators<T>>::remove(stash);
-			<Nominators<T>>::insert(stash, &nominations);
+			Self::do_remove_validator(stash);
+			Self::do_add_nominator(stash, nominations);
 
 			Ok(())
 		}
@@ -2011,7 +2125,7 @@ pub mod pallet {
 			ensure!(
 				ledger.active_ring >= T::RingCurrency::minimum_balance()
 					|| ledger.active_kton >= T::KtonCurrency::minimum_balance(),
-				<Error<T>>::InsufficientValue
+				<Error<T>>::InsufficientBond
 			);
 
 			Self::update_ledger(&controller, &mut ledger);
@@ -2158,6 +2272,83 @@ pub mod pallet {
 
 			Ok(())
 		}
+
+		/// Update the various staking limits this pallet.
+		///
+		/// * `min_nominator_bond`: The minimum active bond needed to be a nominator.
+		/// * `min_validator_bond`: The minimum active bond needed to be a validator.
+		/// * `max_nominator_count`: The max number of users who can be a nominator at once.
+		///   When set to `None`, no limit is enforced.
+		/// * `max_validator_count`: The max number of users who can be a validator at once.
+		///   When set to `None`, no limit is enforced.
+		///
+		/// Origin must be Root to call this function.
+		///
+		/// NOTE: Existing nominators and validators will not be affected by this update.
+		/// to kick people under the new limits, `chill_other` should be called.
+		#[pallet::weight(T::WeightInfo::update_staking_limits())]
+		pub fn update_staking_limits(
+			origin: OriginFor<T>,
+			min_nominator_bond: RingBalance<T>,
+			min_validator_bond: RingBalance<T>,
+			max_nominator_count: Option<u32>,
+			max_validator_count: Option<u32>,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+
+			<MinNominatorBond<T>>::set(min_nominator_bond);
+			<MinValidatorBond<T>>::set(min_validator_bond);
+			<MaxNominatorsCount<T>>::set(max_nominator_count);
+			<MaxValidatorsCount<T>>::set(max_validator_count);
+
+			Ok(())
+		}
+
+		/// Declare a `controller` as having no desire to either validator or nominate.
+		///
+		/// Effects will be felt at the beginning of the next era.
+		///
+		/// The dispatch origin for this call must be _Signed_, but can be called by anyone.
+		///
+		/// If the caller is the same as the controller being targeted, then no further checks
+		/// are enforced. However, this call can also be made by an third party user who witnesses
+		/// that this controller does not satisfy the minimum bond requirements to be in their role.
+		///
+		/// This can be helpful if bond requirements are updated, and we need to remove old users
+		/// who do not satisfy these requirements.
+		///
+		// TODO: Maybe we can deprecate `chill` in the future.
+		// https://github.com/paritytech/substrate/issues/9111
+		#[pallet::weight(T::WeightInfo::chill_other())]
+		pub fn chill_other(origin: OriginFor<T>, controller: T::AccountId) -> DispatchResult {
+			// Anyone can call this function.
+			let caller = ensure_signed(origin)?;
+			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
+			let stash = ledger.stash;
+
+			// If the caller is not the controller, we want to check that the minimum bond
+			// requirements are not satisfied, and thus we have reason to chill this user.
+			//
+			// Otherwise, if caller is the same as the controller, this is just like `chill`.
+			if caller != controller {
+				let min_active_bond = if <Nominators<T>>::contains_key(&stash) {
+					<MinNominatorBond<T>>::get()
+				} else if <Validators<T>>::contains_key(&stash) {
+					<MinValidatorBond<T>>::get()
+				} else {
+					Zero::zero()
+				};
+
+				ensure!(
+					ledger.active_ring < min_active_bond,
+					<Error<T>>::CannotChillOther
+				);
+			}
+
+			Self::chill_stash(&stash);
+
+			Ok(())
+		}
 	}
 	impl<T: Config> Pallet<T> {
 		pub fn account_id() -> AccountId<T> {
@@ -2189,7 +2380,7 @@ pub mod pallet {
 			ensure!(
 				*active_ring >= T::RingCurrency::minimum_balance()
 					|| *active_kton >= T::KtonCurrency::minimum_balance(),
-				<Error<T>>::InsufficientValue
+				<Error<T>>::InsufficientBond
 			);
 
 			// If stash promise to an extra-lock
@@ -2227,7 +2418,7 @@ pub mod pallet {
 			ensure!(
 				ledger.active_ring >= T::RingCurrency::minimum_balance()
 					|| ledger.active_kton >= T::KtonCurrency::minimum_balance(),
-				<Error<T>>::InsufficientValue
+				<Error<T>>::InsufficientBond
 			);
 
 			Self::update_ledger(&controller, &mut ledger);
@@ -2513,8 +2704,8 @@ pub mod pallet {
 
 		/// Chill a stash account.
 		pub fn chill_stash(stash: &AccountId<T>) {
-			<Validators<T>>::remove(stash);
-			<Nominators<T>>::remove(stash);
+			Self::do_remove_validator(stash);
+			Self::do_remove_nominator(stash);
 		}
 
 		/// Actually make a payment to a staker. This uses the currency's reward function
@@ -2767,12 +2958,12 @@ pub mod pallet {
 
 			if (exposures.len() as u32) < Self::minimum_validator_count().max(1) {
 				// Session will panic if we ever return an empty validator set, thus max(1) ^^.
-				match CurrentEra::<T>::get() {
+				match <CurrentEra<T>>::get() {
 					Some(current_era) if current_era > 0 => log!(
 						warn,
 						"chain does not have enough staking candidates to operate for era {:?} ({} \
 						elected, minimum is {})",
-						CurrentEra::<T>::get().unwrap_or(0),
+						<CurrentEra<T>>::get().unwrap_or(0),
 						exposures.len(),
 						Self::minimum_validator_count(),
 					),
@@ -2957,8 +3148,9 @@ pub mod pallet {
 			<Ledger<T>>::remove(&controller);
 
 			<Payee<T>>::remove(stash);
-			<Validators<T>>::remove(stash);
-			<Nominators<T>>::remove(stash);
+
+			Self::do_remove_validator(stash);
+			Self::do_remove_nominator(stash);
 
 			<frame_system::Pallet<T>>::dec_consumers(stash);
 
@@ -3091,8 +3283,51 @@ pub mod pallet {
 			all_voters
 		}
 
+		/// This is a very expensive function and result should be cached versus being called multiple times.
 		pub fn get_npos_targets() -> Vec<AccountId<T>> {
 			<Validators<T>>::iter().map(|(v, _)| v).collect::<Vec<_>>()
+		}
+
+		/// This function will add a nominator to the `Nominators` storage map,
+		/// and keep track of the `CurrentNominatorsCount`.
+		///
+		/// If the nominator already exists, their nominations will be updated.
+		pub fn do_add_nominator(who: &T::AccountId, nominations: Nominations<T::AccountId>) {
+			if !<Nominators<T>>::contains_key(who) {
+				<CurrentNominatorsCount<T>>::mutate(|x| x.saturating_inc())
+			}
+
+			<Nominators<T>>::insert(who, nominations);
+		}
+
+		/// This function will remove a nominator from the `Nominators` storage map,
+		/// and keep track of the `CurrentNominatorsCount`.
+		pub fn do_remove_nominator(who: &T::AccountId) {
+			if <Nominators<T>>::contains_key(who) {
+				<Nominators<T>>::remove(who);
+				<CurrentNominatorsCount<T>>::mutate(|x| x.saturating_dec());
+			}
+		}
+
+		/// This function will add a validator to the `Validators` storage map,
+		/// and keep track of the `CurrentValidatorsCount`.
+		///
+		/// If the validator already exists, their preferences will be updated.
+		pub fn do_add_validator(who: &T::AccountId, prefs: ValidatorPrefs) {
+			if !<Validators<T>>::contains_key(who) {
+				<CurrentValidatorsCount<T>>::mutate(|x| x.saturating_inc())
+			}
+
+			<Validators<T>>::insert(who, prefs);
+		}
+
+		/// This function will remove a validator from the `Validators` storage map,
+		/// and keep track of the `CurrentValidatorsCount`.
+		pub fn do_remove_validator(who: &T::AccountId) {
+			if <Validators<T>>::contains_key(who) {
+				<Validators<T>>::remove(who);
+				<CurrentValidatorsCount<T>>::mutate(|x| x.saturating_dec());
+			}
 		}
 	}
 	impl<T: Config> ElectionDataProvider<AccountId<T>, T::BlockNumber> for Pallet<T> {
@@ -3108,12 +3343,16 @@ pub mod pallet {
 		fn voters(
 			maybe_max_len: Option<usize>,
 		) -> data_provider::Result<(Vec<(AccountId<T>, VoteWeight, Vec<AccountId<T>>)>, Weight)> {
-			// NOTE: reading these counts already needs to iterate a lot of storage keys, but they get
-			// cached. This is okay for the case of `Ok(_)`, but bad for `Err(_)`, as the trait does not
-			// report weight in failures.
-			let nominator_count = <Nominators<T>>::iter().count();
-			let validator_count = <Validators<T>>::iter().count();
-			let voter_count = nominator_count.saturating_add(validator_count);
+			let nominator_count = <CurrentNominatorsCount<T>>::get();
+			let validator_count = <CurrentValidatorsCount<T>>::get();
+			let voter_count = nominator_count.saturating_add(validator_count) as usize;
+
+			debug_assert!(
+				<Nominators<T>>::iter().count() as u32 == <CurrentNominatorsCount<T>>::get()
+			);
+			debug_assert!(
+				<Validators<T>>::iter().count() as u32 == <CurrentValidatorsCount<T>>::get()
+			);
 
 			if maybe_max_len.map_or(false, |max_len| voter_count > max_len) {
 				return Err("Voter snapshot too big");
@@ -3131,7 +3370,7 @@ pub mod pallet {
 		fn targets(
 			maybe_max_len: Option<usize>,
 		) -> data_provider::Result<(Vec<AccountId<T>>, Weight)> {
-			let target_count = <Validators<T>>::iter().count();
+			let target_count = <CurrentValidatorsCount<T>>::get() as usize;
 
 			if maybe_max_len.map_or(false, |max_len| target_count > max_len) {
 				return Err("Target snapshot too big");
@@ -3154,7 +3393,7 @@ pub mod pallet {
 				.unwrap_or_default()
 				.saturating_sub(now);
 			let session_length = T::NextNewSession::average_session_length();
-			let sessions_left: T::BlockNumber = match ForceEra::<T>::get() {
+			let sessions_left: T::BlockNumber = match <ForceEra<T>>::get() {
 				Forcing::ForceNone => Bounded::max_value(),
 				Forcing::ForceNew | Forcing::ForceAlways => Zero::zero(),
 				Forcing::NotForcing if era_progress >= T::SessionsPerEra::get() => Zero::zero(),
@@ -3180,7 +3419,7 @@ pub mod pallet {
 			targets.into_iter().for_each(|v| {
 				let stake: BalanceOf<T> = target_stake
 					.and_then(|w| <BalanceOf<T>>::try_from(w).ok())
-					.unwrap_or(T::Currency::minimum_balance() * 100u32.into());
+					.unwrap_or(<MinNominatorBond<T>>::get() * 100u32.into());
 				<Bonded<T>>::insert(v.clone(), v.clone());
 				<Ledger<T>>::insert(
 					v.clone(),
@@ -3192,8 +3431,8 @@ pub mod pallet {
 						claimed_rewards: vec![],
 					},
 				);
-				<Validators<T>>::insert(
-					v,
+				Self::do_add_validator(
+					&v,
 					ValidatorPrefs {
 						commission: Perbill::zero(),
 						blocked: false,
@@ -3216,8 +3455,8 @@ pub mod pallet {
 						claimed_rewards: vec![],
 					},
 				);
-				<Nominators<T>>::insert(
-					v,
+				Self::do_add_nominator(
+					&v,
 					Nominations {
 						targets: t,
 						submitted_in: 0,
@@ -3991,10 +4230,11 @@ pub mod pallet {
 		V4_0_0,
 		V5_0_0, // blockable validators.
 		V6_0_0, // removal of all storage associated with offchain phragmen.
+		V7_0_0, // keep track of number of nominators / validators in map
 	}
 	impl Default for Releases {
 		fn default() -> Self {
-			Releases::V6_0_0
+			Releases::V7_0_0
 		}
 	}
 
@@ -4080,17 +4320,36 @@ pub mod pallet {
 pub use pallet::*;
 
 pub mod migration {
-	pub fn migrate(new_pallet_name: &[u8]) {
-		// --- core ---
-		use core::str;
-		// --- paritytech ---
-		use frame_support::{log, migration};
+	// --- paritytech ---
+	use frame_support::{traits::Get, weights::Weight};
+	use sp_runtime::traits::Zero;
+	// --- darwinia-network ---
+	use crate::*;
 
-		migration::move_pallet(b"DarwiniaStaking", new_pallet_name);
-
-		log::info!(
-			"Move `DarwiniaStaking` to `{:?}`",
-			str::from_utf8(new_pallet_name)
+	pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
+		assert!(
+			<CurrentValidatorsCount<T>>::get().is_zero(),
+			"CurrentValidatorsCount already set."
 		);
+		assert!(
+			<CurrentNominatorsCount<T>>::get().is_zero(),
+			"CurrentNominatorsCount already set."
+		);
+		assert!(<StorageVersion<T>>::get() == Releases::V6_0_0);
+		Ok(())
+	}
+
+	pub fn migrate<T: Config>() -> Weight {
+		log!(info, "Migrating staking to Releases::V7_0_0");
+		let validator_count = <Validators<T>>::iter().count() as u32;
+		let nominator_count = <Nominators<T>>::iter().count() as u32;
+
+		<CurrentValidatorsCount<T>>::put(validator_count);
+		<CurrentNominatorsCount<T>>::put(nominator_count);
+
+		<StorageVersion<T>>::put(Releases::V7_0_0);
+		log!(info, "Completed staking migration to Releases::V7_0_0");
+
+		T::DbWeight::get().reads_writes(validator_count.saturating_add(nominator_count).into(), 2)
 	}
 }
