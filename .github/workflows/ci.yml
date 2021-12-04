@@ -251,7 +251,7 @@ jobs:
   housekeeping-checks:
     name: Task check housekeeping
     if: always()
-    needs: [integration-checks, code-checks, runtime-checks]
+    needs: [dvm-checks, code-checks, runtime-checks]
     steps:
       - name: Clean artifacts
         uses: geekyeggo/delete-artifact@v1
