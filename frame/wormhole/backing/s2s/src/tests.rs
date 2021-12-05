@@ -20,14 +20,12 @@
 use std::str::FromStr;
 // --- crates.io ---
 use array_bytes::hex2bytes_unchecked;
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 // --- paritytech ---
 use bp_messages::source_chain::SendMessageArtifacts;
 use bp_runtime::{derive_account_id, SourceAccount};
 
-use frame_support::{
-	assert_err, assert_ok, dispatch::PostDispatchInfo, traits::MaxEncodedLen, PalletId,
-};
+use frame_support::{assert_err, assert_ok, dispatch::PostDispatchInfo, PalletId};
 use frame_system::{mocking::*, RawOrigin};
 use sp_runtime::{
 	testing::Header,

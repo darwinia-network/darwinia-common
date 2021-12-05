@@ -18,12 +18,10 @@
 
 // --- std ---
 use std::{collections::BTreeMap, str::FromStr};
+// --- crates.io ---
+use codec::MaxEncodedLen;
 // --- paritytech ---
-use frame_support::{
-	assert_ok,
-	traits::{GenesisBuild, MaxEncodedLen},
-	ConsensusEngineId,
-};
+use frame_support::{assert_ok, traits::GenesisBuild, ConsensusEngineId};
 use frame_system::mocking::*;
 use sp_core::H256;
 use sp_runtime::{

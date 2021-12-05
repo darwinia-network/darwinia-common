@@ -518,7 +518,7 @@ pub mod pallet {
 	pub use imbalances::{NegativeImbalance, PositiveImbalance};
 
 	// --- crates.io ---
-	use codec::{Codec, EncodeLike};
+	use codec::{Codec, EncodeLike, MaxEncodedLen};
 	// --- paritytech ---
 	use frame_support::{
 		ensure,
@@ -527,8 +527,8 @@ pub mod pallet {
 			fungible::Inspect,
 			tokens::{DepositConsequence, WithdrawConsequence},
 			BalanceStatus, Currency, ExistenceRequirement, Imbalance, LockIdentifier,
-			MaxEncodedLen, NamedReservableCurrency, OnUnbalanced, ReservableCurrency,
-			SignedImbalance, StoredMap, TryDrop, WithdrawReasons,
+			NamedReservableCurrency, OnUnbalanced, ReservableCurrency, SignedImbalance, StoredMap,
+			TryDrop, WithdrawReasons,
 		},
 		WeakBoundedVec,
 	};

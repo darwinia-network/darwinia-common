@@ -1160,10 +1160,9 @@ impl<T: Config> ContainsLengthBound for Pallet<T> {
 mod tests {
 	use super::*;
 	use crate as elections_phragmen;
+	use codec::MaxEncodedLen;
 	use frame_support::{
-		assert_noop, assert_ok,
-		dispatch::DispatchResultWithPostInfo,
-		traits::{MaxEncodedLen, OnInitialize},
+		assert_noop, assert_ok, dispatch::DispatchResultWithPostInfo, traits::OnInitialize,
 	};
 	use frame_system::ensure_signed;
 	use sp_core::H256;

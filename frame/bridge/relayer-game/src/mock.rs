@@ -225,9 +225,9 @@ pub mod mock_relay {
 }
 
 // --- crates.io ---
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 // --- paritytech ---
-use frame_support::traits::{GenesisBuild, MaxEncodedLen, OnFinalize};
+use frame_support::traits::{GenesisBuild, OnFinalize};
 use frame_system::mocking::*;
 use sp_runtime::RuntimeDebug;
 // --- darwinia-network ---

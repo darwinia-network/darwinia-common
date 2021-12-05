@@ -19,13 +19,12 @@
 //! Test setup for potential reentracy and lost updates of nested mutations.
 
 // --- crates.io ---
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 // --- paritytech ---
 use frame_support::{
 	assert_ok,
 	traits::{
-		BalanceStatus, Currency, GenesisBuild, MaxEncodedLen, OnUnbalanced, ReservableCurrency,
-		StorageMapShim,
+		BalanceStatus, Currency, GenesisBuild, OnUnbalanced, ReservableCurrency, StorageMapShim,
 	},
 	weights::IdentityFee,
 };

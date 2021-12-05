@@ -17,7 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- crates.io ---
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use std::str::FromStr;
 // --- darwinia-network ---
 use crate::{
@@ -33,10 +33,7 @@ use dvm_ethereum::{
 	IntermediateStateRoot,
 };
 // --- paritytech ---
-use frame_support::{
-	traits::{GenesisBuild, MaxEncodedLen},
-	PalletId,
-};
+use frame_support::{traits::GenesisBuild, PalletId};
 use frame_system::mocking::*;
 use sp_runtime::{
 	testing::Header,

@@ -2,11 +2,11 @@
 
 use super::*;
 use crate as pallet_democracy;
-use codec::Encode;
+use codec::{Encode, MaxEncodedLen};
 use darwinia_balances::Error as BalancesError;
 use frame_support::{
 	assert_noop, assert_ok, ord_parameter_types, parameter_types,
-	traits::{Filter, GenesisBuild, MaxEncodedLen, OnInitialize, SortedMembers},
+	traits::{Filter, GenesisBuild, OnInitialize, SortedMembers},
 	weights::Weight,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};

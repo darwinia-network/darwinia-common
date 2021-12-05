@@ -19,13 +19,13 @@
 //! Test utilities
 
 // --- crates.io ---
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 // --- paritytech ---
 use frame_support::{
 	assert_err, assert_noop, assert_ok, assert_storage_noop, parameter_types,
 	traits::{
 		BalanceStatus, Currency, ExistenceRequirement, GenesisBuild, Imbalance, LockIdentifier,
-		MaxEncodedLen, NamedReservableCurrency, ReservableCurrency, StorageMapShim,
+		 NamedReservableCurrency, ReservableCurrency, StorageMapShim,
 		WithdrawReasons,
 	},
 	weights::{DispatchInfo, IdentityFee, Weight},

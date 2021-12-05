@@ -17,11 +17,11 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- crates.io ---
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use num_traits::Zero;
 // --- paritytech ---
 use frame_support::{
-	traits::{ConstU32, LockIdentifier, MaxEncodedLen, WithdrawReasons},
+	traits::{ConstU32, LockIdentifier, WithdrawReasons},
 	WeakBoundedVec,
 };
 use sp_runtime::{traits::AtLeast32BitUnsigned, RuntimeDebug};

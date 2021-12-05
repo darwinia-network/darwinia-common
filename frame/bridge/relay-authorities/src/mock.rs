@@ -19,9 +19,9 @@
 //! # Mock file for relay authorities
 
 // --- crates.io ---
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 // --- paritytech ---
-use frame_support::traits::{GenesisBuild, MaxEncodedLen, OnFinalize, OnInitialize};
+use frame_support::traits::{GenesisBuild, OnFinalize, OnInitialize};
 use frame_system::{mocking::*, EnsureRoot};
 use sp_core::H256;
 use sp_io::{hashing, TestExternalities};
