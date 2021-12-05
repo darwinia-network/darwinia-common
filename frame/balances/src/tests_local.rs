@@ -25,8 +25,7 @@ use frame_support::{
 	assert_err, assert_noop, assert_ok, assert_storage_noop, parameter_types,
 	traits::{
 		BalanceStatus, Currency, ExistenceRequirement, GenesisBuild, Imbalance, LockIdentifier,
-		 NamedReservableCurrency, ReservableCurrency, StorageMapShim,
-		WithdrawReasons,
+		NamedReservableCurrency, ReservableCurrency, StorageMapShim, WithdrawReasons,
 	},
 	weights::{DispatchInfo, IdentityFee, Weight},
 };
