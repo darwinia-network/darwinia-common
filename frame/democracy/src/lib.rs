@@ -526,8 +526,6 @@ pub mod pallet {
 		/// A registered preimage was removed and the deposit collected by the reaper.
 		/// \[proposal_hash, provider, deposit, reaper\]
 		PreimageReaped(T::Hash, T::AccountId, BalanceOf<T>, T::AccountId),
-		/// An \[account\] has been unlocked successfully.
-		Unlocked(T::AccountId),
 		/// A proposal \[hash\] has been blacklisted permanently.
 		Blacklisted(T::Hash),
 	}
@@ -538,8 +536,6 @@ pub mod pallet {
 		ValueLow,
 		/// Proposal does not exist
 		ProposalMissing,
-		/// Unknown index
-		BadIndex,
 		/// Cannot cancel the same proposal twice
 		AlreadyCanceled,
 		/// Proposal already made
@@ -554,8 +550,6 @@ pub mod pallet {
 		NoProposal,
 		/// Identity may not veto a proposal twice
 		AlreadyVetoed,
-		/// Not delegated
-		NotDelegated,
 		/// Preimage already noted
 		DuplicatePreimage,
 		/// Not imminent
@@ -572,10 +566,6 @@ pub mod pallet {
 		PreimageInvalid,
 		/// No proposals waiting
 		NoneWaiting,
-		/// The target account does not have a lock.
-		NotLocked,
-		/// The lock on the account to be unlocked has not yet expired.
-		NotExpired,
 		/// The given account did not vote on the referendum.
 		NotVoter,
 		/// The actor has no permission to conduct the action.
@@ -597,8 +587,6 @@ pub mod pallet {
 		WrongUpperBound,
 		/// Maximum number of votes reached.
 		MaxVotesReached,
-		/// The provided witness data is wrong.
-		InvalidWitness,
 		/// Maximum number of proposals reached.
 		TooManyProposals,
 	}
