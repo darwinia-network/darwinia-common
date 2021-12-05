@@ -81,9 +81,9 @@ where
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
 	// --- darwinia-network ---
 	use dc_rpc::{
-		EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi, EthPubSubApiServer,
-		HexEncodedIdProvider, NetApi, NetApiServer, OverrideHandle, RuntimeApiStorageOverride,
-		SchemaV1Override, StorageOverride, Web3Api, Web3ApiServer,
+		EthApi, EthApiServer, EthDevSigner, EthFilterApi, EthFilterApiServer, EthPubSubApi,
+		EthPubSubApiServer, EthSigner, HexEncodedIdProvider, NetApi, NetApiServer, OverrideHandle,
+		RuntimeApiStorageOverride, SchemaV1Override, StorageOverride, Web3Api, Web3ApiServer,
 	};
 	use dvm_ethereum::EthereumStorageSchema;
 	use template_runtime::TransactionConverter;
@@ -94,13 +94,13 @@ where
 		pool,
 		deny_unsafe,
 		is_authority,
+		enable_dev_signer,
 		network,
 		pending_transactions,
 		filter_pool,
 		command_sink,
 		backend,
 		max_past_logs,
-		enable_dev_signer: _,
 	} = deps;
 
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(
@@ -112,10 +112,10 @@ where
 		client.clone(),
 	)));
 
-	// let mut signers = Vec::new();
-	// if enable_dev_signer {
-	// 	signers.push(Box::new(EthDevSigner::new()) as Box<dyn EthSigner>);
-	// }
+	let mut signers = Vec::new();
+	if enable_dev_signer {
+		signers.push(Box::new(EthDevSigner::new()) as Box<dyn EthSigner>);
+	}
 	let mut overrides_map = BTreeMap::new();
 	overrides_map.insert(
 		EthereumStorageSchema::V1,
@@ -137,7 +137,7 @@ where
 		pending_transactions.clone(),
 		backend.clone(),
 		is_authority,
-		// signers,
+		signers,
 		max_past_logs,
 	)));
 

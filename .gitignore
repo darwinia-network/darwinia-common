@@ -11,6 +11,7 @@ target
 ## Npm
 package-lock.json
 node_modules
+build
 
 # Test Data
 ## Pangolin Local Testnet

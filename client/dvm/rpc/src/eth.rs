@@ -94,6 +94,7 @@ where
 		pending_transactions: PendingTransactions,
 		backend: Arc<dc_db::Backend<B>>,
 		is_authority: bool,
+		signers: Vec<Box<dyn EthSigner>>,
 		max_past_logs: u32,
 	) -> Self {
 		Self {
@@ -105,7 +106,7 @@ where
 			pending_transactions,
 			backend,
 			is_authority,
-			signers: Vec::new(),
+			signers,
 			max_past_logs,
 			_marker: PhantomData,
 		}
@@ -784,7 +785,7 @@ where
 
 		for signer in &self.signers {
 			if signer.accounts().contains(&from) {
-				match signer.sign(message) {
+				match signer.sign(message, &from) {
 					Ok(t) => transaction = Some(t),
 					Err(e) => return Box::new(future::result(Err(e))),
 				}
