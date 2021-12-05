@@ -537,7 +537,7 @@ pub mod pallet {
 	use sp_runtime::{
 		traits::{
 			AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedSub, MaybeSerializeDeserialize,
-			Saturating, StaticLookup, StoredMapError, Zero,
+			Saturating, StaticLookup, Zero,
 		},
 		ArithmeticError, DispatchError, DispatchResult, RuntimeDebug,
 	};
@@ -1111,8 +1111,8 @@ pub mod pallet {
 		pub fn mutate_account<R>(
 			who: &T::AccountId,
 			f: impl FnOnce(&mut T::BalanceInfo) -> R,
-		) -> Result<R, StoredMapError> {
-			Self::try_mutate_account(who, |a, _| -> Result<R, StoredMapError> { Ok(f(a)) })
+		) -> Result<R, DispatchError> {
+			Self::try_mutate_account(who, |a, _| -> Result<R, DispatchError> { Ok(f(a)) })
 		}
 
 		/// Mutate an account to some new value, or delete it entirely with `None`. Will enforce
@@ -1124,7 +1124,7 @@ pub mod pallet {
 		///
 		/// NOTE: LOW-LEVEL: This will not attempt to maintain total issuance. It is expected that
 		/// the caller will do this.
-		fn try_mutate_account<R, E: From<StoredMapError>>(
+		fn try_mutate_account<R, E: From<DispatchError>>(
 			who: &T::AccountId,
 			f: impl FnOnce(&mut T::BalanceInfo, bool) -> Result<R, E>,
 		) -> Result<R, E> {
@@ -1147,7 +1147,7 @@ pub mod pallet {
 		///
 		/// NOTE: LOW-LEVEL: This will not attempt to maintain total issuance. It is expected that
 		/// the caller will do this.
-		fn try_mutate_account_with_dust<R, E: From<StoredMapError>>(
+		fn try_mutate_account_with_dust<R, E: From<DispatchError>>(
 			who: &T::AccountId,
 			f: impl FnOnce(&mut T::BalanceInfo, bool) -> Result<R, E>,
 		) -> Result<(R, DustCleaner<T, I>), E> {
@@ -1470,7 +1470,7 @@ pub mod pallet {
 					who,
 					|account,
 					 _is_new|
-					 -> Result<(Self::NegativeImbalance, Self::Balance), StoredMapError> {
+					 -> Result<(Self::NegativeImbalance, Self::Balance), DispatchError> {
 						// Best value is the most amount we can slash following liveness rules.
 						let best_value = match attempt {
 							// First attempt we try to slash the full amount, and see if liveness issues happen.
