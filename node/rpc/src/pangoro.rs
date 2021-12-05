@@ -69,7 +69,7 @@ where
 	C::Api: sc_consensus_babe::BabeApi<Block>,
 	C::Api: sp_block_builder::BlockBuilder<Block>,
 	C::Api: darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
-	P: 'static + sp_transaction_pool::TransactionPool,
+	P: 'static + sc_transaction_pool_api::TransactionPool,
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<Hashing>,
@@ -153,7 +153,7 @@ where
 		+ sp_blockchain::HeaderBackend<Block>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-	P: 'static + sp_transaction_pool::TransactionPool,
+	P: 'static + sc_transaction_pool_api::TransactionPool,
 	F: 'static + sc_client_api::Fetcher<Block>,
 {
 	// --- paritytech ---
