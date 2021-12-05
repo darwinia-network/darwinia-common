@@ -113,7 +113,7 @@ pub fn new_partial(
 		FullClient<RuntimeApi, Executor>,
 		FullBackend,
 		FullSelectChain,
-		sp_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
+		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
 		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
 		(
 			ConsensusResult,
