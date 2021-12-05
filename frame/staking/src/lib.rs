@@ -668,7 +668,7 @@ pub mod pallet {
 
 	/// The map from (wannabe) validator stash key to the preferences of that validator.
 	///
-	/// When updating this storage item, you must also update the `CurrentValidatorsCount`.
+	/// When updating this storage item, you must also update the `CounterForValidators`.
 	#[pallet::storage]
 	#[pallet::getter(fn validators)]
 	pub type Validators<T: Config> =
@@ -676,7 +676,7 @@ pub mod pallet {
 
 	/// A tracker to keep count of the number of items in the `Validators` map.
 	#[pallet::storage]
-	pub type CurrentValidatorsCount<T> = StorageValue<_, u32, ValueQuery>;
+	pub type CounterForValidators<T> = StorageValue<_, u32, ValueQuery>;
 
 	/// The maximum validator count before we stop allowing new validators to join.
 	///
@@ -686,7 +686,7 @@ pub mod pallet {
 
 	/// The map from nominator stash key to the set of stash keys of all validators to nominate.
 	///
-	/// When updating this storage item, you must also update the `CurrentNominatorsCount`.
+	/// When updating this storage item, you must also update the `CounterForNominators`.
 	#[pallet::storage]
 	#[pallet::getter(fn nominators)]
 	pub type Nominators<T: Config> =
@@ -694,7 +694,7 @@ pub mod pallet {
 
 	/// A tracker to keep count of the number of items in the `Nominators` map.
 	#[pallet::storage]
-	pub type CurrentNominatorsCount<T> = StorageValue<_, u32, ValueQuery>;
+	pub type CounterForNominators<T> = StorageValue<_, u32, ValueQuery>;
 
 	/// The maximum nominator count before we stop allowing new validators to join.
 	///
@@ -1629,7 +1629,7 @@ pub mod pallet {
 			// Until then, we explicitly block new validators to protect the runtime.
 			if let Some(max_validators) = <MaxValidatorsCount<T>>::get() {
 				ensure!(
-					<CurrentValidatorsCount<T>>::get() < max_validators,
+					<CounterForValidators<T>>::get() < max_validators,
 					<Error<T>>::TooManyValidators
 				);
 			}
@@ -1679,7 +1679,7 @@ pub mod pallet {
 			// Until then, we explicitly block new nominators to protect the runtime.
 			if let Some(max_nominators) = <MaxNominatorsCount<T>>::get() {
 				ensure!(
-					<CurrentNominatorsCount<T>>::get() < max_nominators,
+					<CounterForNominators<T>>::get() < max_nominators,
 					<Error<T>>::TooManyNominators
 				);
 			}
@@ -3291,44 +3291,44 @@ pub mod pallet {
 		}
 
 		/// This function will add a nominator to the `Nominators` storage map,
-		/// and keep track of the `CurrentNominatorsCount`.
+		/// and keep track of the `CounterForNominators`.
 		///
 		/// If the nominator already exists, their nominations will be updated.
 		pub fn do_add_nominator(who: &T::AccountId, nominations: Nominations<T::AccountId>) {
 			if !<Nominators<T>>::contains_key(who) {
-				<CurrentNominatorsCount<T>>::mutate(|x| x.saturating_inc())
+				<CounterForNominators<T>>::mutate(|x| x.saturating_inc())
 			}
 
 			<Nominators<T>>::insert(who, nominations);
 		}
 
 		/// This function will remove a nominator from the `Nominators` storage map,
-		/// and keep track of the `CurrentNominatorsCount`.
+		/// and keep track of the `CounterForNominators`.
 		pub fn do_remove_nominator(who: &T::AccountId) {
 			if <Nominators<T>>::contains_key(who) {
 				<Nominators<T>>::remove(who);
-				<CurrentNominatorsCount<T>>::mutate(|x| x.saturating_dec());
+				<CounterForNominators<T>>::mutate(|x| x.saturating_dec());
 			}
 		}
 
 		/// This function will add a validator to the `Validators` storage map,
-		/// and keep track of the `CurrentValidatorsCount`.
+		/// and keep track of the `CounterForValidators`.
 		///
 		/// If the validator already exists, their preferences will be updated.
 		pub fn do_add_validator(who: &T::AccountId, prefs: ValidatorPrefs) {
 			if !<Validators<T>>::contains_key(who) {
-				<CurrentValidatorsCount<T>>::mutate(|x| x.saturating_inc())
+				<CounterForValidators<T>>::mutate(|x| x.saturating_inc())
 			}
 
 			<Validators<T>>::insert(who, prefs);
 		}
 
 		/// This function will remove a validator from the `Validators` storage map,
-		/// and keep track of the `CurrentValidatorsCount`.
+		/// and keep track of the `CounterForValidators`.
 		pub fn do_remove_validator(who: &T::AccountId) {
 			if <Validators<T>>::contains_key(who) {
 				<Validators<T>>::remove(who);
-				<CurrentValidatorsCount<T>>::mutate(|x| x.saturating_dec());
+				<CounterForValidators<T>>::mutate(|x| x.saturating_dec());
 			}
 		}
 	}
@@ -3345,15 +3345,15 @@ pub mod pallet {
 		fn voters(
 			maybe_max_len: Option<usize>,
 		) -> data_provider::Result<(Vec<(AccountId<T>, VoteWeight, Vec<AccountId<T>>)>, Weight)> {
-			let nominator_count = <CurrentNominatorsCount<T>>::get();
-			let validator_count = <CurrentValidatorsCount<T>>::get();
+			let nominator_count = <CounterForNominators<T>>::get();
+			let validator_count = <CounterForValidators<T>>::get();
 			let voter_count = nominator_count.saturating_add(validator_count) as usize;
 
 			debug_assert!(
-				<Nominators<T>>::iter().count() as u32 == <CurrentNominatorsCount<T>>::get()
+				<Nominators<T>>::iter().count() as u32 == <CounterForNominators<T>>::get()
 			);
 			debug_assert!(
-				<Validators<T>>::iter().count() as u32 == <CurrentValidatorsCount<T>>::get()
+				<Validators<T>>::iter().count() as u32 == <CounterForValidators<T>>::get()
 			);
 
 			if maybe_max_len.map_or(false, |max_len| voter_count > max_len) {
@@ -3372,7 +3372,7 @@ pub mod pallet {
 		fn targets(
 			maybe_max_len: Option<usize>,
 		) -> data_provider::Result<(Vec<AccountId<T>>, Weight)> {
-			let target_count = <CurrentValidatorsCount<T>>::get() as usize;
+			let target_count = <CounterForValidators<T>>::get() as usize;
 
 			if maybe_max_len.map_or(false, |max_len| target_count > max_len) {
 				return Err("Target snapshot too big");
@@ -4330,12 +4330,12 @@ pub mod migration {
 
 	pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
 		assert!(
-			<CurrentValidatorsCount<T>>::get().is_zero(),
-			"CurrentValidatorsCount already set."
+			<CounterForValidators<T>>::get().is_zero(),
+			"CounterForValidators already set."
 		);
 		assert!(
-			<CurrentNominatorsCount<T>>::get().is_zero(),
-			"CurrentNominatorsCount already set."
+			<CounterForNominators<T>>::get().is_zero(),
+			"CounterForNominators already set."
 		);
 		assert!(<StorageVersion<T>>::get() == Releases::V6_0_0);
 		Ok(())
@@ -4346,8 +4346,8 @@ pub mod migration {
 		let validator_count = <Validators<T>>::iter().count() as u32;
 		let nominator_count = <Nominators<T>>::iter().count() as u32;
 
-		<CurrentValidatorsCount<T>>::put(validator_count);
-		<CurrentNominatorsCount<T>>::put(nominator_count);
+		<CounterForValidators<T>>::put(validator_count);
+		<CounterForNominators<T>>::put(nominator_count);
 
 		<StorageVersion<T>>::put(Releases::V7_0_0);
 		log!(info, "Completed staking migration to Releases::V7_0_0");
