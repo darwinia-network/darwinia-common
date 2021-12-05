@@ -285,6 +285,8 @@ mod inflation_tests;
 mod mock;
 #[cfg(test)]
 mod substrate_tests;
+#[cfg(test)]
+mod testing_utils;
 
 pub mod weights;
 pub use weights::WeightInfo;

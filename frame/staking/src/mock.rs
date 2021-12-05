@@ -309,6 +309,8 @@ pub struct ExtBuilder {
 	invulnerables: Vec<AccountId>,
 	has_stakers: bool,
 	initialize_first_session: bool,
+	min_nominator_bond: Balance,
+	min_validator_bond: Balance,
 	init_kton: bool,
 }
 impl ExtBuilder {
@@ -370,6 +372,14 @@ impl ExtBuilder {
 	}
 	pub fn offset(self, offset: BlockNumber) -> Self {
 		OFFSET.with(|v| *v.borrow_mut() = offset);
+		self
+	}
+	pub fn min_nominator_bond(mut self, amount: Balance) -> Self {
+		self.min_nominator_bond = amount;
+		self
+	}
+	pub fn min_validator_bond(mut self, amount: Balance) -> Self {
+		self.min_validator_bond = amount;
 		self
 	}
 	pub fn build(self) -> sp_io::TestExternalities {
@@ -485,6 +495,8 @@ impl ExtBuilder {
 			minimum_validator_count: self.minimum_validator_count,
 			invulnerables: self.invulnerables,
 			slash_reward_fraction: Perbill::from_percent(10),
+			min_nominator_bond: self.min_nominator_bond,
+			min_validator_bond: self.min_validator_bond,
 			payout_fraction: Perbill::from_percent(50),
 			..Default::default()
 		}
@@ -544,6 +556,8 @@ impl Default for ExtBuilder {
 			invulnerables: vec![],
 			has_stakers: true,
 			initialize_first_session: true,
+			min_nominator_bond: ExistentialDeposit::get(),
+			min_validator_bond: ExistentialDeposit::get(),
 			init_kton: false,
 		}
 	}
@@ -581,6 +595,14 @@ fn post_conditions() {
 	check_nominators();
 	check_exposures();
 	check_ledgers();
+	check_count();
+}
+
+fn check_count() {
+	let nominator_count = <Nominators<Test>>::iter().count() as u32;
+	let validator_count = <Validators<Test>>::iter().count() as u32;
+	assert_eq!(nominator_count, <CurrentNominatorsCount<Test>>::get());
+	assert_eq!(validator_count, <CurrentValidatorsCount<Test>>::get());
 }
 
 fn check_ledgers() {

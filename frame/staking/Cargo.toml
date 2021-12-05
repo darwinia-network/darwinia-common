@@ -39,6 +39,7 @@ rand_chacha = { version = "0.3" }
 darwinia-balances = { path = "../../frame/balances" }
 darwinia-support  = { features = ["easy-testing"], path = "../support" }
 # paritytech
+frame-benchmarking   = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 max-encoded-len      = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 pallet-timestamp     = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
 sp-storage           = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
