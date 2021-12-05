@@ -1162,7 +1162,9 @@ mod tests {
 	use crate as elections_phragmen;
 	use codec::MaxEncodedLen;
 	use frame_support::{
-		assert_noop, assert_ok, dispatch::DispatchResultWithPostInfo, traits::OnInitialize,
+		assert_noop, assert_ok,
+		dispatch::DispatchResultWithPostInfo,
+		traits::{AllowAll, OnInitialize},
 	};
 	use frame_system::ensure_signed;
 	use sp_core::H256;
@@ -1202,7 +1204,7 @@ mod tests {
 	}
 
 	impl frame_system::Config for Test {
-		type BaseCallFilter = ();
+		type BaseCallFilter = AllowAll;
 		type BlockWeights = BlockWeights;
 		type BlockLength = ();
 		type DbWeight = ();

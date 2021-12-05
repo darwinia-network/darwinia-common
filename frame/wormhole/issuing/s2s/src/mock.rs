@@ -33,7 +33,10 @@ use dvm_ethereum::{
 	IntermediateStateRoot,
 };
 // --- paritytech ---
-use frame_support::{traits::GenesisBuild, PalletId};
+use frame_support::{
+	traits::{AllowAll, GenesisBuild},
+	PalletId,
+};
 use frame_system::mocking::*;
 use sp_runtime::{
 	testing::Header,
@@ -144,7 +147,7 @@ impl pallet_timestamp::Config for Test {
 }
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = AllowAll;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();

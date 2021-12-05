@@ -30,8 +30,8 @@ use frame_support::{
 	assert_ok, parameter_types,
 	storage::IterableStorageMap,
 	traits::{
-		Currency, FindAuthor, GenesisBuild, Get, Imbalance, OnFinalize, OnInitialize, OnUnbalanced,
-		OneSessionHandler, UnixTime,
+		AllowAll, Currency, FindAuthor, GenesisBuild, Get, Imbalance, OnFinalize, OnInitialize,
+		OnUnbalanced, OneSessionHandler, UnixTime,
 	},
 	weights::constants::RocksDbWeight,
 	PalletId, StorageValue,
@@ -123,7 +123,7 @@ parameter_types! {
 		);
 }
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = AllowAll;
 	type BlockWeights = BlockWeights;
 	type BlockLength = ();
 	type DbWeight = RocksDbWeight;

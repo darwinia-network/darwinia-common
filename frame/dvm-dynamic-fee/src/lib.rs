@@ -173,7 +173,7 @@ mod tests {
 
 	use frame_support::{
 		assert_ok, parameter_types,
-		traits::{OnFinalize, OnInitialize},
+		traits::{AllowAll, OnFinalize, OnInitialize},
 	};
 	use sp_core::{H256, U256};
 	use sp_io::TestExternalities;
@@ -198,7 +198,7 @@ mod tests {
 			frame_system::limits::BlockWeights::simple_max(1024);
 	}
 	impl frame_system::Config for Test {
-		type BaseCallFilter = ();
+		type BaseCallFilter = AllowAll;
 		type BlockWeights = ();
 		type BlockLength = ();
 		type DbWeight = ();

@@ -21,7 +21,7 @@
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
 // --- paritytech ---
-use frame_support::traits::{GenesisBuild, OnFinalize, OnInitialize};
+use frame_support::traits::{AllowAll, GenesisBuild, OnFinalize, OnInitialize};
 use frame_system::{mocking::*, EnsureRoot};
 use sp_core::H256;
 use sp_io::{hashing, TestExternalities};
@@ -50,7 +50,7 @@ pub const DEFAULT_SIGNATURE: [u8; 65] = [0; 65];
 darwinia_support::impl_test_account_data! {}
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = AllowAll;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();

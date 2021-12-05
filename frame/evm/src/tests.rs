@@ -21,7 +21,11 @@ use std::{collections::BTreeMap, str::FromStr};
 // --- crates.io ---
 use codec::MaxEncodedLen;
 // --- paritytech ---
-use frame_support::{assert_ok, traits::GenesisBuild, ConsensusEngineId};
+use frame_support::{
+	assert_ok,
+	traits::{AllowAll, GenesisBuild},
+	ConsensusEngineId,
+};
 use frame_system::mocking::*;
 use sp_core::H256;
 use sp_runtime::{
@@ -41,7 +45,7 @@ type Balance = u64;
 darwinia_support::impl_test_account_data! {}
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = AllowAll;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();

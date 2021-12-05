@@ -24,7 +24,8 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	assert_ok,
 	traits::{
-		BalanceStatus, Currency, GenesisBuild, OnUnbalanced, ReservableCurrency, StorageMapShim,
+		AllowAll, BalanceStatus, Currency, GenesisBuild, OnUnbalanced, ReservableCurrency,
+		StorageMapShim,
 	},
 	weights::IdentityFee,
 };
@@ -49,7 +50,7 @@ frame_support::parameter_types! {
 	pub static ExistentialDeposit: Balance = 0;
 }
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = AllowAll;
 	type BlockWeights = BlockWeights;
 	type BlockLength = ();
 	type DbWeight = ();
