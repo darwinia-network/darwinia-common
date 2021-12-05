@@ -74,6 +74,30 @@ macro_rules! decl_tests {
 		}
 
 		#[test]
+		fn reap_failed_due_to_provider_and_consumer() {
+			<$ext_builder>::default().existential_deposit(1).monied(true).build().execute_with(|| {
+				// SCENARIO: only one provider and there are remaining consumers.
+				assert_ok!(System::inc_consumers(&1));
+				assert!(!System::can_dec_provider(&1));
+				assert_noop!(
+					<Ring as Currency<_>>::transfer(&1, &2, 10, ExistenceRequirement::AllowDeath),
+					RingError::KeepAlive
+				);
+				assert!(System::account_exists(&1));
+				assert_eq!(Ring::free_balance(1), 10);
+
+				// SCENARIO: more than one provider, but will not kill account due to other provider.
+				assert_eq!(System::inc_providers(&1), frame_system::IncRefStatus::Existed);
+				assert_eq!(System::providers(&1), 2);
+				assert!(System::can_dec_provider(&1));
+				assert_ok!(<Ring as Currency<_>>::transfer(&1, &2, 10, ExistenceRequirement::AllowDeath));
+				assert_eq!(System::providers(&1), 1);
+				assert!(System::account_exists(&1));
+				assert_eq!(Ring::free_balance(1), 0);
+			});
+		}
+
+		#[test]
 		fn partial_locking_should_work() {
 			<$ext_builder>::default()
 				.existential_deposit(1)

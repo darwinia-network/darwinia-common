@@ -2307,10 +2307,10 @@ pub mod pallet {
 			era: EraIndex,
 		) -> DispatchResultWithPostInfo {
 			// Validate input data
-			let current_era = <CurrentEra<T>>::get().ok_or(
+			let current_era = <CurrentEra<T>>::get().ok_or_else(|| {
 				<Error<T>>::InvalidEraToReward
-					.with_weight(T::WeightInfo::payout_stakers_alive_staked(0)),
-			)?;
+					.with_weight(T::WeightInfo::payout_stakers_alive_staked(0))
+			})?;
 			ensure!(
 				era <= current_era,
 				<Error<T>>::InvalidEraToReward
@@ -2330,9 +2330,9 @@ pub mod pallet {
 					.with_weight(T::WeightInfo::payout_stakers_alive_staked(0))
 			})?;
 
-			let controller = Self::bonded(&validator_stash).ok_or(
+			let controller = Self::bonded(&validator_stash).ok_or_else(||{
 				<Error<T>>::NotStash.with_weight(T::WeightInfo::payout_stakers_alive_staked(0)),
-			)?;
+			})?;
 			let mut ledger =
 				<Ledger<T>>::get(&controller).ok_or_else(|| <Error<T>>::NotController)?;
 

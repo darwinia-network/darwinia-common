@@ -1423,7 +1423,7 @@ pub mod pallet {
 							let allow_death =
 								existence_requirement == ExistenceRequirement::AllowDeath;
 							let allow_death = allow_death
-								&& !<frame_system::Pallet<T>>::is_provider_required(transactor);
+								&& <frame_system::Pallet<T>>::can_dec_provider(transactor);
 							ensure!(
 								allow_death
 									|| from_account.total() >= ed || !T::OtherCurrencies::is_dust(
