@@ -26,7 +26,7 @@ impl Config for Runtime {
 	type Lookup = AccountIdLookup<AccountId, ()>;
 	type Header = Header;
 	type Event = Event;
-	type BlockHashCount = BlockHashCountForPangoro;
+	type BlockHashCount = BlockHashCountForPangolin;
 	type Version = Version;
 	type PalletInfo = PalletInfo;
 	type AccountData = AccountData<Balance>;
