@@ -36,7 +36,6 @@ sp-std              = { default-features = false, git = "https://github.com/darw
 [dev-dependencies]
 # paritytech
 darwinia-balances = { path = "../../../balances" }
-max-encoded-len   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 pallet-timestamp  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-io             = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 

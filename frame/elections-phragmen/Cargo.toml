@@ -31,7 +31,6 @@ hex-literal = { version = "0.3" }
 darwinia-balances = { path = "../balances" }
 darwinia-support  = { path = "../support", features = ["easy-testing"] }
 # paritytech
-max-encoded-len      = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 substrate-test-utils = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 
 [features]

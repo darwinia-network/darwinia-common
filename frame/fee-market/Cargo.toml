@@ -34,7 +34,6 @@ pallet-bridge-messages = { default-features = false, git = "https://github.com/d
 
 [dev-dependencies]
 darwinia-balances = { path = "../balances" }
-max-encoded-len   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 
 [features]
 default = ["std"]

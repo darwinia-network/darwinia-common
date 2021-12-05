@@ -19,13 +19,11 @@ darwinia-support                  = { default-features = false, path = "../suppo
 # paritytech
 frame-support   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 frame-system    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-max-encoded-len = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-runtime      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-std          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 
 [dev-dependencies]
 # paritytech
-max-encoded-len            = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-core                    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-io                      = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
@@ -42,7 +40,6 @@ std = [
 	# paritytech
 	"frame-support/std",
 	"frame-system/std",
-	"max-encoded-len/std",
 	"sp-runtime/std",
 	"sp-std/std",
 ]

@@ -44,8 +44,6 @@ ethabi      = { git = "https://github.com/darwinia-network/ethabi", tag = "v13.0
 darwinia-balances                = { path = "../balances" }
 darwinia-evm-precompile-simple   = { path = "../evm/precompile/contracts/simple" }
 darwinia-evm-precompile-transfer = { path = "../evm/precompile/contracts/transfer" }
-# paritytech
-max-encoded-len = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 
 [features]
 default = ["std"]

@@ -30,7 +30,6 @@ serde      = { version = "1.0" }
 # darwinia-network
 darwinia-balances = { path = "../../balances" }
 # paritytech
-max-encoded-len = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-core         = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-io           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 

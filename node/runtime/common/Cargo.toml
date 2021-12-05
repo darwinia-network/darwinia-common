@@ -25,9 +25,6 @@ pallet-treasury            = { default-features = false, git = "https://github.c
 sp-runtime                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-std                     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 
-# will be removed in later substrate version
-max-encoded-len = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-
 [features]
 default = ["std"]
 
@@ -47,5 +44,4 @@ std = [
 	"pallet-treasury/std",
 	"sp-runtime/std",
 	"sp-std/std",
-	"max-encoded-len/std",
 ]

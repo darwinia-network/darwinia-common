@@ -14,7 +14,6 @@ sp-std        = { git = "https://github.com/darwinia-network/substrate", default
 [dev-dependencies]
 darwinia-balances = { path = "../balances" }
 darwinia-support  = { path = "../support" }
-max-encoded-len   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-core           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-io             = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 
