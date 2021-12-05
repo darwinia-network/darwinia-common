@@ -541,6 +541,10 @@ pub mod pallet {
 		/// The election failed. No new era is planned.
 		StakingElectionFailed,
 
+		/// An account has stopped participating as either a validator or nominator.
+		/// \[stash\]
+		Chilled(T::AccountId),
+
 		/// Someone claimed his deposits. \[stash\]
 		DepositsClaimed(AccountId<T>),
 		/// Someone claimed his deposits with some *KTON*s punishment. \[stash, forfeit\]
@@ -2750,8 +2754,12 @@ pub mod pallet {
 
 		/// Chill a stash account.
 		pub fn chill_stash(stash: &AccountId<T>) {
-			Self::do_remove_validator(stash);
-			Self::do_remove_nominator(stash);
+			let chilled_as_validator = Self::do_remove_validator(stash);
+			let chilled_as_nominator = Self::do_remove_nominator(stash);
+
+			if chilled_as_validator || chilled_as_nominator {
+				Self::deposit_event(<Event<T>>::Chilled(stash.clone()));
+			}
 		}
 
 		/// Actually make a payment to a staker. This uses the currency's reward function
@@ -3348,10 +3356,16 @@ pub mod pallet {
 
 		/// This function will remove a nominator from the `Nominators` storage map,
 		/// and keep track of the `CounterForNominators`.
-		pub fn do_remove_nominator(who: &T::AccountId) {
+		///
+		/// Returns true if `who` was removed from `Nominators`, otherwise false.
+		pub fn do_remove_nominator(who: &T::AccountId) -> bool {
 			if <Nominators<T>>::contains_key(who) {
 				<Nominators<T>>::remove(who);
 				<CounterForNominators<T>>::mutate(|x| x.saturating_dec());
+
+				true
+			} else {
+				false
 			}
 		}
 
@@ -3369,10 +3383,15 @@ pub mod pallet {
 
 		/// This function will remove a validator from the `Validators` storage map,
 		/// and keep track of the `CounterForValidators`.
-		pub fn do_remove_validator(who: &T::AccountId) {
+		///
+		/// Returns true if `who` was removed from `Validators`, otherwise false.
+		pub fn do_remove_validator(who: &T::AccountId) -> bool {
 			if <Validators<T>>::contains_key(who) {
 				<Validators<T>>::remove(who);
 				<CounterForValidators<T>>::mutate(|x| x.saturating_dec());
+				true
+			} else {
+				false
 			}
 		}
 	}
