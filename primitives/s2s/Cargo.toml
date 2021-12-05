@@ -12,13 +12,13 @@ version     = "2.7.0"
 [dependencies]
 # crates.io
 array-bytes = { version = "1.4" }
+codec       = { package = "parity-scale-codec", version = "2.1", default-features = false, features = ["derive"] }
 # darwinia-network
 dp-asset    = { default-features = false, path = "../asset" }
 dp-contract = { default-features = false, path = "../contract" }
 # paritytech
 bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
 bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
-codec               = { package = "parity-scale-codec", version = "2.1", default-features = false, features = ["derive"] }
 sp-core             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
@@ -30,14 +30,14 @@ dp-contract = { default-features = false, path = "../contract" }
 default = ["std"]
 
 std = [
+	# crates.io
+	"codec/std",
 	# darwinia-network
 	"dp-contract/std",
 	"dp-asset/std",
-	"dp-contract/std",
 	# paritytech
 	"bp-message-dispatch/std",
 	"bp-runtime/std",
-	"codec/std",
 	"sp-core/std",
 	"sp-runtime/std",
 	"sp-std/std",

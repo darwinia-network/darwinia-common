@@ -10,10 +10,10 @@ repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.7.0"
 
 [dependencies]
-# parity-bridges-common
-bp-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
+# crates.io
+codec = { package = "parity-scale-codec", version = "2.1", default-features = false, features = ["derive"] }
 # paritytech
-codec         = { package = "parity-scale-codec", version = "2.1.1", default-features = false, features = ["derive"] }
+bp-messages   = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
@@ -22,10 +22,10 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 default = ["std"]
 
 std = [
-	# parity-bridges-common
-	"bp-messages/std",
-	# paritytech
+	# crates.io
 	"codec/std",
+	# paritytech
+	"bp-messages/std",
 	"frame-support/std",
 	"sp-runtime/std",
 	"sp-std/std",
