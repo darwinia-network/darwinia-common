@@ -38,6 +38,7 @@ use sc_client_api::{
 	client::BlockchainEvents,
 };
 use sc_network::{ExHashT, NetworkService};
+use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
 use sp_api::{BlockId, Core, HeaderT, ProvideRuntimeApi};
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::{
@@ -45,7 +46,6 @@ use sp_runtime::{
 	transaction_validity::TransactionSource,
 };
 use sp_storage::{StorageData, StorageKey};
-use sp_transaction_pool::{InPoolTransaction, TransactionPool};
 // --- std ---
 use codec::{self, Decode, Encode};
 use ethereum::{

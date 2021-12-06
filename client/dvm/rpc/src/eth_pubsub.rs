@@ -14,10 +14,10 @@ use sc_client_api::{
 };
 use sc_network::{ExHashT, NetworkService};
 use sc_rpc::Metadata;
+use sc_transaction_pool_api::TransactionPool;
 use sp_api::{BlockId, ProvideRuntimeApi};
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT, UniqueSaturatedInto};
-use sp_transaction_pool::TransactionPool;
 // --- std ---
 use ethereum_types::{H256, U256};
 use futures::{StreamExt as _, TryStreamExt as _};
@@ -310,7 +310,7 @@ where
 				});
 			}
 			Kind::NewPendingTransactions => {
-				use sp_transaction_pool::InPoolTransaction;
+				use sc_transaction_pool_api::InPoolTransaction;
 				self.subscriptions.add(subscriber, move |sink| {
 					let stream = pool
 						.import_notification_stream()
