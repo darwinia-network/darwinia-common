@@ -173,6 +173,7 @@ fn get_wkton_balance(sender: &AccountInfo, nonce: u64) -> U256 {
 }
 
 fn wkton_balance_input(address: H160) -> Vec<u8> {
+	#[allow(deprecated)]
 	let func = Function {
 		name: "balanceOf".to_owned(),
 		inputs: vec![Param {
@@ -186,6 +187,7 @@ fn wkton_balance_input(address: H160) -> Vec<u8> {
 }
 
 fn transfer_and_call(address: H160, value: U256) -> Vec<u8> {
+	#[allow(deprecated)]
 	let func = Function {
 		name: "transfer_and_call".to_owned(),
 		inputs: vec![
@@ -206,6 +208,7 @@ fn transfer_and_call(address: H160, value: U256) -> Vec<u8> {
 }
 
 fn withdraw(to: Vec<u8>, value: U256) -> Vec<u8> {
+	#[allow(deprecated)]
 	let func = Function {
 		name: "withdraw".to_owned(),
 		inputs: vec![

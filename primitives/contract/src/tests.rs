@@ -47,6 +47,7 @@ mod abi_tests {
 			kind: ParamType::FixedBytes(4),
 		}];
 
+		#[allow(deprecated)]
 		Function {
 			name: "test_input_error".into(),
 			inputs,
