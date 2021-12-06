@@ -30,7 +30,7 @@ use dvm_rpc_runtime_api::TransactionStatus;
 #[doc(no_inline)]
 pub use ethereum::{
 	Block as EthereumBlock, LegacyTransaction, LegacyTransactionMessage, Log,
-	Receipt as EthereumReceipt, TransactionAction, TransactionSignature,TransactionV0
+	Receipt as EthereumReceipt, TransactionAction, TransactionSignature, TransactionV0,
 };
 
 #[cfg(all(feature = "std", test))]

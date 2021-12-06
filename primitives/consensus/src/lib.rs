@@ -18,13 +18,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
+use ethereum::LegacyTransaction;
 use sha3::{Digest as Sha3Digest, Keccak256};
 use sp_core::H256;
 use sp_runtime::{
 	generic::{Digest, OpaqueDigestItemId},
 	ConsensusEngineId,
 };
-use ethereum::LegacyTransaction;
 use sp_std::vec::Vec;
 
 pub const FRONTIER_ENGINE_ID: ConsensusEngineId = [b'f', b'r', b'o', b'n'];
