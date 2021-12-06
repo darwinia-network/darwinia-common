@@ -1,24 +1,13 @@
-use crate::{frontier_backend_client, overrides::OverrideHandle};
 pub use dvm_rpc_core::EthPubSubApiServer;
-// --- darwinia-network ---
-use dp_rpc::{
-	pubsub::{Kind, Params, PubSubSyncStatus, Result as PubSubResult},
-	Bytes, FilteredParams, Header, Log, Rich,
-};
+
+// --- std ---
+use std::{collections::BTreeMap, iter, marker::PhantomData, sync::Arc};
+// --- crates.io ---
 use dvm_rpc_core::EthPubSubApi::{self as EthPubSubApiT};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
-// --- paritytech ---
-use sc_client_api::{
-	backend::{Backend, StateBackend, StorageProvider},
-	client::BlockchainEvents,
+use ethereum::{
+	Block as EthereumBlock, LegacyTransaction, Log as EthereumLog, Receipt as EthereumReceipt,
 };
-use sc_network::{ExHashT, NetworkService};
-use sc_rpc::Metadata;
-use sc_transaction_pool_api::TransactionPool;
-use sp_api::{BlockId, ProvideRuntimeApi};
-use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
-use sp_runtime::traits::{BlakeTwo256, Block as BlockT, UniqueSaturatedInto};
-// --- std ---
 use ethereum_types::{H256, U256};
 use futures::{StreamExt as _, TryStreamExt as _};
 use jsonrpc_core::{
@@ -33,7 +22,23 @@ use jsonrpc_pubsub::{
 use log::warn;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use sha3::{Digest, Keccak256};
-use std::{collections::BTreeMap, iter, marker::PhantomData, sync::Arc};
+// --- paritytech ---
+use sc_client_api::{
+	backend::{Backend, StateBackend, StorageProvider},
+	client::BlockchainEvents,
+};
+use sc_network::{ExHashT, NetworkService};
+use sc_rpc::Metadata;
+use sc_transaction_pool_api::TransactionPool;
+use sp_api::{BlockId, ProvideRuntimeApi};
+use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT, UniqueSaturatedInto};
+// --- darwinia-network ---
+use crate::{frontier_backend_client, overrides::OverrideHandle};
+use dp_rpc::{
+	pubsub::{Kind, Params, PubSubSyncStatus, Result as PubSubResult},
+	Bytes, FilteredParams, Header, Log, Rich,
+};
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub struct HexEncodedIdProvider {
@@ -52,6 +57,7 @@ impl IdProvider for HexEncodedIdProvider {
 		let mut rng = thread_rng();
 		let id: String = iter::repeat(())
 			.map(|()| rng.sample(Alphanumeric))
+			.map(char::from)
 			.take(self.len)
 			.collect();
 
@@ -97,7 +103,7 @@ impl SubscriptionResult {
 	pub fn new() -> Self {
 		SubscriptionResult {}
 	}
-	pub fn new_heads(&self, block: ethereum::Block) -> PubSubResult {
+	pub fn new_heads(&self, block: EthereumBlock<LegacyTransaction>) -> PubSubResult {
 		PubSubResult::Header(Box::new(Rich {
 			inner: Header {
 				hash: Some(H256::from_slice(
@@ -128,8 +134,8 @@ impl SubscriptionResult {
 	}
 	pub fn logs(
 		&self,
-		block: ethereum::Block,
-		receipts: Vec<ethereum::Receipt>,
+		block: EthereumBlock<LegacyTransaction>,
+		receipts: Vec<EthereumReceipt>,
 		params: &FilteredParams,
 	) -> Vec<Log> {
 		let block_hash = Some(H256::from_slice(
@@ -171,8 +177,8 @@ impl SubscriptionResult {
 	fn add_log(
 		&self,
 		block_hash: H256,
-		ethereum_log: &ethereum::Log,
-		block: &ethereum::Block,
+		ethereum_log: &EthereumLog,
+		block: &EthereumBlock<LegacyTransaction>,
 		params: &FilteredParams,
 	) -> bool {
 		let log = Log {

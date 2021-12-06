@@ -33,7 +33,7 @@ use sp_api::{BlockId, ProvideRuntimeApi};
 use sp_io::hashing::{blake2_128, twox_128};
 use sp_runtime::traits::Block as BlockT;
 // --- std ---
-use ethereum::Block as EthereumBlock;
+use ethereum::{Block as EthereumBlock, LegacyTransaction};
 use ethereum_types::{H160, H256, U256};
 use std::{collections::BTreeMap, marker::PhantomData, sync::Arc};
 
@@ -53,7 +53,7 @@ pub trait StorageOverride<Block: BlockT> {
 	/// For a given account address and index, returns pallet_evm::AccountStorages.
 	fn storage_at(&self, block: &BlockId<Block>, address: H160, index: U256) -> Option<H256>;
 	/// Return the current block.
-	fn current_block(&self, block: &BlockId<Block>) -> Option<EthereumBlock>;
+	fn current_block(&self, block: &BlockId<Block>) -> Option<EthereumBlock<LegacyTransaction>>;
 	/// Return the current receipt.
 	fn current_receipts(&self, block: &BlockId<Block>) -> Option<Vec<ethereum::Receipt>>;
 	/// Return the current transaction status.
@@ -119,7 +119,7 @@ where
 	}
 
 	/// Return the current block.
-	fn current_block(&self, block: &BlockId<Block>) -> Option<EthereumBlock> {
+	fn current_block(&self, block: &BlockId<Block>) -> Option<EthereumBlock<LegacyTransaction>> {
 		self.client.runtime_api().current_block(&block).ok()?
 	}
 

@@ -25,7 +25,7 @@ use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use sp_storage::StorageKey;
 // --- std ---
 use codec::Decode;
-use ethereum::Block as EthereumBlock;
+use ethereum::{Block as EthereumBlock, LegacyTransaction};
 use ethereum_types::{H160, H256, U256};
 use std::{marker::PhantomData, sync::Arc};
 
@@ -102,8 +102,8 @@ where
 	}
 
 	/// Return the current block.
-	fn current_block(&self, block: &BlockId<Block>) -> Option<EthereumBlock> {
-		self.query_storage::<ethereum::Block>(
+	fn current_block(&self, block: &BlockId<Block>) -> Option<EthereumBlock<LegacyTransaction>> {
+		self.query_storage::<EthereumBlock<LegacyTransaction>>(
 			block,
 			&StorageKey(storage_prefix_build(b"Ethereum", b"CurrentBlock")),
 		)

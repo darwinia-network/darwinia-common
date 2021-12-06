@@ -353,7 +353,7 @@ sp_api::impl_runtime_apis! {
 			Ethereum::current_transaction_statuses()
 		}
 
-		fn current_block() -> Option<dvm_ethereum::EthereumBlock> {
+		fn current_block() -> Option<dvm_ethereum::EthereumBlock<dvm_ethereum::LegacyTransaction>> {
 			Ethereum::current_block()
 		}
 
@@ -362,7 +362,7 @@ sp_api::impl_runtime_apis! {
 		}
 
 		fn current_all() -> (
-			Option<dvm_ethereum::EthereumBlock>,
+			Option<dvm_ethereum::EthereumBlock<dvm_ethereum::LegacyTransaction>>,
 			Option<Vec<dvm_ethereum::EthereumReceipt>>,
 			Option<Vec<dvm_rpc_runtime_api::TransactionStatus>>
 		) {
@@ -393,7 +393,7 @@ impl dvm_rpc_runtime_api::ConvertTransaction<UncheckedExtrinsic> for Transaction
 	}
 }
 impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> OpaqueExtrinsic {
+	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV0) -> OpaqueExtrinsic {
 		let extrinsic = UncheckedExtrinsic::new_unsigned(
 			<dvm_ethereum::Call<Runtime>>::transact(transaction).into(),
 		);
