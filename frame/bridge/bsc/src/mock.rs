@@ -19,7 +19,7 @@
 // --- std ---
 use std::time::{SystemTime, UNIX_EPOCH};
 // --- paritytech ---
-use frame_support::traits::{AllowAll, GenesisBuild};
+use frame_support::traits::{Everything, GenesisBuild};
 use frame_system::mocking::*;
 use sp_core::U256;
 use sp_io::TestExternalities;
@@ -36,7 +36,7 @@ pub type BlockNumber = u64;
 pub type BSCError = Error<Test>;
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = AllowAll;
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();

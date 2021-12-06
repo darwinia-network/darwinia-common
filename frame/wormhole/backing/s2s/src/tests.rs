@@ -25,7 +25,7 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use bp_messages::source_chain::SendMessageArtifacts;
 use bp_runtime::{derive_account_id, SourceAccount};
 use frame_support::{
-	assert_err, assert_ok, dispatch::PostDispatchInfo, traits::AllowAll, PalletId,
+	assert_err, assert_ok, dispatch::PostDispatchInfo, traits::Everything, PalletId,
 };
 use frame_system::{mocking::*, RawOrigin};
 use sp_runtime::{
@@ -75,7 +75,7 @@ impl pallet_timestamp::Config for Test {
 }
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = AllowAll;
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();

@@ -1169,7 +1169,7 @@ mod tests {
 	use frame_support::{
 		assert_noop, assert_ok,
 		dispatch::DispatchResultWithPostInfo,
-		traits::{AllowAll, OnInitialize},
+		traits::{Everything, OnInitialize},
 	};
 	use frame_system::ensure_signed;
 	use sp_core::H256;
@@ -1209,7 +1209,7 @@ mod tests {
 	}
 
 	impl frame_system::Config for Test {
-		type BaseCallFilter = AllowAll;
+		type BaseCallFilter = Everything;
 		type BlockWeights = BlockWeights;
 		type BlockLength = ();
 		type DbWeight = ();

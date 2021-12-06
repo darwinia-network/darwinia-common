@@ -24,7 +24,7 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	assert_err, assert_noop, assert_ok, assert_storage_noop, parameter_types,
 	traits::{
-		AllowAll, BalanceStatus, Currency, ExistenceRequirement, GenesisBuild, Imbalance,
+		BalanceStatus, Currency, Everything, ExistenceRequirement, GenesisBuild, Imbalance,
 		LockIdentifier, NamedReservableCurrency, ReservableCurrency, StorageMapShim,
 		WithdrawReasons,
 	},
@@ -54,7 +54,7 @@ parameter_types! {
 		frame_system::limits::BlockWeights::simple_max(1024);
 }
 impl frame_system::Config for Test {
-	type BaseCallFilter = AllowAll;
+	type BaseCallFilter = Everything;
 	type BlockWeights = BlockWeights;
 	type BlockLength = ();
 	type DbWeight = ();

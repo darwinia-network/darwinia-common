@@ -34,7 +34,7 @@ use dvm_ethereum::{
 };
 // --- paritytech ---
 use frame_support::{
-	traits::{AllowAll, GenesisBuild},
+	traits::{Everything, GenesisBuild},
 	PalletId,
 };
 use frame_system::mocking::*;
@@ -147,7 +147,7 @@ impl pallet_timestamp::Config for Test {
 }
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = AllowAll;
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();

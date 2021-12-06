@@ -23,7 +23,7 @@ use codec::{Decode, Encode};
 // --- paritytech ---
 use frame_election_provider_support::onchain;
 use frame_support::{
-	traits::{AllowAll, GenesisBuild, MaxEncodedLen, SortedMembers},
+	traits::{Everything, GenesisBuild, MaxEncodedLen, SortedMembers},
 	PalletId,
 };
 use frame_system::{mocking::*, EnsureRoot};
@@ -60,7 +60,7 @@ pub type EthereumRelayError = darwinia_bridge_ethereum::Error<Test>;
 darwinia_support::impl_test_account_data! {}
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = AllowAll;
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();

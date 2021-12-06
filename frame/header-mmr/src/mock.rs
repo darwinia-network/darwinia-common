@@ -23,7 +23,7 @@ use codec::Encode;
 // --- github.com ---
 use mmr::MMRStore;
 // --- paritytech ---
-use frame_support::traits::{AllowAll, OnFinalize, OnInitialize};
+use frame_support::traits::{Everything, OnFinalize, OnInitialize};
 use frame_system::mocking::*;
 use sp_core::{
 	offchain::{testing::TestOffchainExt, OffchainDbExt, OffchainWorkerExt},
@@ -45,7 +45,7 @@ type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = AllowAll;
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();

@@ -23,7 +23,7 @@ use codec::MaxEncodedLen;
 // --- paritytech ---
 use frame_support::{
 	assert_ok,
-	traits::{AllowAll, GenesisBuild},
+	traits::{Everything, GenesisBuild},
 	ConsensusEngineId,
 };
 use frame_system::mocking::*;
@@ -45,7 +45,7 @@ type Balance = u64;
 darwinia_support::impl_test_account_data! {}
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = AllowAll;
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();

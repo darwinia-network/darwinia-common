@@ -444,7 +444,7 @@ mod tests {
 	use sp_core::H256;
 	use sp_runtime::{
 		testing::Header,
-		traits::{AllowAll, BadOrigin, BlakeTwo256, Identity, IdentityLookup},
+		traits::{BadOrigin, BlakeTwo256, Everything, Identity, IdentityLookup},
 	};
 
 	type Block = MockBlock<Test>;
@@ -455,7 +455,7 @@ mod tests {
 	darwinia_support::impl_test_account_data! {}
 
 	impl frame_system::Config for Test {
-		type BaseCallFilter = AllowAll;
+		type BaseCallFilter = Everything;
 		type BlockWeights = ();
 		type BlockLength = ();
 		type DbWeight = ();

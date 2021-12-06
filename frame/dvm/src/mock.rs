@@ -25,7 +25,7 @@ use evm::{executor::PrecompileOutput, Context, ExitError};
 use rlp::RlpStream;
 // --- paritytech ---
 use frame_support::{
-	traits::{AllowAll, FindAuthor, GenesisBuild, MaxEncodedLen},
+	traits::{Everything, FindAuthor, GenesisBuild, MaxEncodedLen},
 	ConsensusEngineId, PalletId,
 };
 use frame_system::mocking::*;
@@ -57,7 +57,7 @@ frame_support::parameter_types! {
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 }
 impl frame_system::Config for Test {
-	type BaseCallFilter = AllowAll;
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();

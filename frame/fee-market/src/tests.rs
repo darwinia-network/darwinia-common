@@ -38,7 +38,7 @@ use frame_system::mocking::*;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{AccountIdConversion, AllowAll, BlakeTwo256, IdentityLookup, UniqueSaturatedInto},
+	traits::{AccountIdConversion, BlakeTwo256, Everything, IdentityLookup, UniqueSaturatedInto},
 	FixedU128, Permill, RuntimeDebug,
 };
 // --- std ---
@@ -65,7 +65,7 @@ frame_support::parameter_types! {
 	pub const DbWeight: RuntimeDbWeight = RuntimeDbWeight { read: 1, write: 2 };
 }
 impl frame_system::Config for Test {
-	type BaseCallFilter = AllowAll;
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = DbWeight;
