@@ -34,7 +34,8 @@ use darwinia_staking::StakerStatus;
 use drml_common_primitives::*;
 use pangoro_runtime::*;
 
-pub type ChainSpec = GenericChainSpec<GenesisConfig, Extensions>;
+// pub type ChainSpec = GenericChainSpec<GenesisConfig, Extensions>;
+pub type ChainSpec = GenericChainSpec<GenesisConfig>;
 
 const PANGORO_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
