@@ -23,13 +23,12 @@ pub use eth::{
 	Web3ApiServer,
 };
 pub use eth_pubsub::{EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider};
-use ethereum::{
-	Transaction as EthereumTransaction, TransactionMessage as EthereumTransactionMessage,
-};
+pub use overrides::{OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride};
+
+use ethereum::{LegacyTransactionMessage, TransactionSignature, TransactionV0};
 use ethereum_types::{H160, H256};
 use evm::{ExitError, ExitReason};
 use jsonrpc_core::{Error, ErrorCode, Value};
-pub use overrides::{OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride};
 use sha3::{Digest, Keccak256};
 
 pub mod frontier_backend_client {
@@ -242,13 +241,13 @@ pub fn error_on_execution_failure(reason: &ExitReason, data: &[u8]) -> Result<()
 	}
 }
 
-pub fn public_key(transaction: &EthereumTransaction) -> Result<[u8; 64], sp_io::EcdsaVerifyError> {
+pub fn public_key(transaction: &TransactionV0) -> Result<[u8; 64], sp_io::EcdsaVerifyError> {
 	let mut sig = [0u8; 65];
 	let mut msg = [0u8; 32];
 	sig[0..32].copy_from_slice(&transaction.signature.r()[..]);
 	sig[32..64].copy_from_slice(&transaction.signature.s()[..]);
 	sig[64] = transaction.signature.standard_v();
-	msg.copy_from_slice(&EthereumTransactionMessage::from(transaction.clone()).hash()[..]);
+	msg.copy_from_slice(&LegacyTransactionMessage::from(transaction.clone()).hash()[..]);
 
 	sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg)
 }
@@ -260,9 +259,9 @@ pub trait EthSigner: Send + Sync {
 	/// Sign a transaction message using the given account in message.
 	fn sign(
 		&self,
-		message: ethereum::TransactionMessage,
+		message: LegacyTransactionMessage,
 		address: &H160,
-	) -> Result<ethereum::TransactionV0, Error>;
+	) -> Result<TransactionV0, Error>;
 }
 
 pub struct EthDevSigner {
@@ -298,9 +297,9 @@ impl EthSigner for EthDevSigner {
 
 	fn sign(
 		&self,
-		message: ethereum::TransactionMessage,
+		message: LegacyTransactionMessage,
 		address: &H160,
-	) -> Result<ethereum::TransactionV0, Error> {
+	) -> Result<TransactionV0, Error> {
 		let mut transaction = None;
 
 		for secret in &self.keys {
@@ -324,14 +323,14 @@ impl EthSigner for EthDevSigner {
 				let r = H256::from_slice(&rs[0..32]);
 				let s = H256::from_slice(&rs[32..64]);
 
-				transaction = Some(ethereum::TransactionV0 {
+				transaction = Some(TransactionV0 {
 					nonce: message.nonce,
 					gas_price: message.gas_price,
 					gas_limit: message.gas_limit,
 					action: message.action,
 					value: message.value,
 					input: message.input.clone(),
-					signature: ethereum::TransactionSignature::new(v, r, s)
+					signature: TransactionSignature::new(v, r, s)
 						.ok_or(internal_err("signer generated invalid signature"))?,
 				});
 

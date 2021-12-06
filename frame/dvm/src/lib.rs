@@ -30,7 +30,7 @@ use dvm_rpc_runtime_api::TransactionStatus;
 #[doc(no_inline)]
 pub use ethereum::{
 	Block as EthereumBlock, LegacyTransaction, LegacyTransactionMessage, Log,
-	Receipt as EthereumReceipt, TransactionAction, TransactionSignature,
+	Receipt as EthereumReceipt, TransactionAction, TransactionSignature,TransactionV0
 };
 
 #[cfg(all(feature = "std", test))]
@@ -40,7 +40,6 @@ mod tests;
 
 // --- crates.io ---
 use codec::{Decode, Encode};
-use ethereum::TransactionV0;
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
 use sha3::{Digest, Keccak256};

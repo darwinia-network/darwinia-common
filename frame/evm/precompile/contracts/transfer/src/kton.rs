@@ -26,7 +26,7 @@ use darwinia_evm::{runner::Runner, AccountBasic, Config, Pallet};
 use darwinia_support::evm::{SELECTOR, TRANSFER_ADDR};
 // --- crates.io ---
 use codec::Decode;
-use ethabi::{Function, Param, ParamType, Token};
+use ethabi::{Function, Param, ParamType, StateMutability, Token};
 use evm::{executor::PrecompileOutput, Context, ExitError, ExitReason, ExitSucceed};
 use sha3::Digest;
 
@@ -163,14 +163,17 @@ fn make_call_data(
 			Param {
 				name: "address".to_owned(),
 				kind: ParamType::Address,
+				internal_type: None,
 			},
 			Param {
 				name: "value".to_owned(),
 				kind: ParamType::Uint(256),
+				internal_type: None,
 			},
 		],
 		outputs: vec![],
 		constant: false,
+		state_mutability: StateMutability::NonPayable,
 	};
 	func.encode_input(&[Token::Address(eth_address), Token::Uint(eth_value)])
 		.map_err(|_| ExitError::Other("Make call data error happened".into()))
