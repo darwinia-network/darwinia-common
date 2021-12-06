@@ -20,7 +20,9 @@
 mod abi_tests {
 	use crate::abi_util::{abi_encode_bytes4, abi_encode_u64};
 	use array_bytes::hex2bytes_unchecked;
-	use ethabi::{param_type::ParamType, token::Token, Bytes, Function, Param, Result};
+	use ethabi::{
+		param_type::ParamType, token::Token, Bytes, Function, Param, Result, StateMutability,
+	};
 
 	#[test]
 	fn test_abi_encode_bytes4() {
@@ -53,6 +55,7 @@ mod abi_tests {
 			name: "test_input_error".into(),
 			inputs,
 			outputs: vec![],
+			constant: false,
 			state_mutability: StateMutability::NonPayable,
 		}
 		.encode_input(vec![Token::FixedBytes(param.to_vec())].as_slice())

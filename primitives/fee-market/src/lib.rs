@@ -136,7 +136,11 @@ where
 	}
 
 	pub fn fee(&self) -> Balance {
-		self.relayers.iter().last().map(|r| r.fee).unwrap_or_default()
+		self.relayers
+			.iter()
+			.last()
+			.map(|r| r.fee)
+			.unwrap_or_default()
 	}
 
 	pub fn is_confirmed(&self) -> bool {

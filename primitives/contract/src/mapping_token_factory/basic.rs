@@ -22,11 +22,11 @@ pub use ethabi::{Event, Log};
 
 // --- crates.io ---
 use ethereum_types::{Address as EthereumAddress, U256};
-// --- darwinia-network ---
 use ethabi::{
 	param_type::ParamType, token::Token, Bytes, Function, Param, Result as AbiResult,
 	StateMutability,
 };
+// --- paritytech ---
 use sp_std::vec;
 
 pub struct BasicMappingTokenFactory;

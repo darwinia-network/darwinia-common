@@ -276,7 +276,10 @@ pub fn new_full(
 				command_sink: Some(command_sink.clone()),
 			};
 
-			Ok(drml_rpc::template::create_full(deps, subscription_task_executor.clone()))
+			Ok(drml_rpc::template::create_full(
+				deps,
+				subscription_task_executor.clone(),
+			))
 		})
 	};
 

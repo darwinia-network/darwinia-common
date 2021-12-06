@@ -16,6 +16,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+// --- crates.io ---
+use codec::Decode;
+use ethabi::{Function, Param, ParamType, StateMutability, Token};
+use evm::{executor::PrecompileOutput, Context, ExitError, ExitReason, ExitSucceed};
+use sha3::Digest;
 // --- paritytech ---
 use frame_support::ensure;
 use sp_core::{H160, U256};
@@ -24,11 +29,6 @@ use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 use crate::{util, AccountId};
 use darwinia_evm::{runner::Runner, AccountBasic, Config, Pallet};
 use darwinia_support::evm::{SELECTOR, TRANSFER_ADDR};
-// --- crates.io ---
-use codec::Decode;
-use ethabi::{Function, Param, ParamType, StateMutability, Token};
-use evm::{executor::PrecompileOutput, Context, ExitError, ExitReason, ExitSucceed};
-use sha3::Digest;
 
 const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,uint256)";
 const WITHDRAW_ACTION: &[u8] = b"withdraw(bytes32,uint256)";
