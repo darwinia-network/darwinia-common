@@ -45,6 +45,7 @@ mod abi_tests {
 		let inputs = vec![Param {
 			name: "param".into(),
 			kind: ParamType::FixedBytes(4),
+			internal_type: Some("bytes4".into()),
 		}];
 
 		#[allow(deprecated)]
@@ -52,7 +53,7 @@ mod abi_tests {
 			name: "test_input_error".into(),
 			inputs,
 			outputs: vec![],
-			constant: false,
+			state_mutability: StateMutability::NonPayable,
 		}
 		.encode_input(vec![Token::FixedBytes(param.to_vec())].as_slice())
 	}
