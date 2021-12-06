@@ -25,6 +25,7 @@ use ethereum_types::{H160, U256};
 // --- darwinia-network ---
 use ethabi::{
 	param_type::ParamType, token::Token, Bytes, Error, Function, Param, Result as AbiResult,
+	StateMutability,
 };
 // --- paritytech ---
 use bp_messages::{LaneId, MessageNonce};
@@ -43,14 +44,17 @@ impl Sub2SubMappingTokenFactory {
 			Param {
 				name: "lane_id".into(),
 				kind: ParamType::FixedBytes(4),
+				internal_type: Some("bytes4".into()),
 			},
 			Param {
 				name: "nonce".into(),
 				kind: ParamType::Uint(64),
+				internal_type: Some("uint64".into()),
 			},
 			Param {
 				name: "result".into(),
 				kind: ParamType::Bool,
+				internal_type: Some("bool".into()),
 			},
 		];
 
@@ -59,6 +63,7 @@ impl Sub2SubMappingTokenFactory {
 			inputs,
 			outputs: vec![],
 			constant: false,
+			state_mutability: StateMutability::NonPayable,
 		}
 		.encode_input(
 			vec![
