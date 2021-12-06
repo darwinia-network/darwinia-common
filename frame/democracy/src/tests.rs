@@ -6,7 +6,7 @@ use codec::{Encode, MaxEncodedLen};
 use darwinia_balances::Error as BalancesError;
 use frame_support::{
 	assert_noop, assert_ok, ord_parameter_types, parameter_types,
-	traits::{Filter, GenesisBuild, OnInitialize, SortedMembers},
+	traits::{Contains, GenesisBuild, OnInitialize, SortedMembers},
 	weights::Weight,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
@@ -65,8 +65,8 @@ frame_support::construct_runtime!(
 
 // Test that a fitlered call can be dispatched.
 pub struct BaseFilter;
-impl Filter<Call> for BaseFilter {
-	fn filter(call: &Call) -> bool {
+impl Contains<Call> for BaseFilter {
+	fn contains(call: &Call) -> bool {
 		!matches!(
 			call,
 			&Call::Balances(darwinia_balances::Call::<_, RingInstance>::set_balance(..))
