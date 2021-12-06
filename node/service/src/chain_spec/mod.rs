@@ -29,10 +29,12 @@ pub use template::ChainSpec as TemplateChainSpec;
 
 // --- paritytech ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
+use sc_client_api::{BadBlocks, ForkBlocks};
 use sc_finality_grandpa::AuthorityId as GrandpaId;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
 use sp_core::{sr25519, Pair, Public};
+use sc_sync_state_rpc::LightSyncStateExtension;
 use sp_runtime::traits::IdentifyAccount;
 // --- darwinia-network ---
 use drml_common_primitives::{AccountId, AccountPublic};
@@ -63,6 +65,21 @@ const TEAM_MEMBERS: &[&str] = &[
 	// Xuelei
 	"0x88d388115bd0df43e805b029207cfa4925cecfb29026e345979d9b0004466c49",
 ];
+
+/// Node `ChainSpec` extensions.
+///
+/// Additional parameters for some Substrate core modules,
+/// customizable from the chain spec.
+#[derive(Default, Clone, Serialize, Deserialize, ChainSpecExtension)]
+#[serde(rename_all = "camelCase")]
+pub struct Extensions {
+	/// Block numbers with known hashes.
+	pub fork_blocks: ForkBlocks<Block>,
+	/// Known bad block hashes.
+	pub bad_blocks: BadBlocks<Block>,
+	/// The light sync state extension used by the sync-state rpc.
+	pub light_sync_state: LightSyncStateExtension,
+}
 
 /// Generate a crypto pair from seed.
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {

@@ -52,13 +52,13 @@ use crate::{
 	client::PangoroClient,
 	service::{
 		self, FullBackend, FullClient, FullGrandpaBlockImport, FullSelectChain, LightBackend,
-		LightClient,
+		LightClient, RpcResult,
 	},
 };
 use drml_common_primitives::{AccountId, Balance, Nonce, OpaqueBlock as Block};
 use drml_rpc::{
 	pangoro::{FullDeps, LightDeps},
-	BabeDeps, DenyUnsafe, GrandpaDeps, RpcExtension, SubscriptionTaskExecutor,
+	BabeDeps, DenyUnsafe, GrandpaDeps, SubscriptionTaskExecutor,
 };
 use pangoro_runtime::RuntimeApi;
 
@@ -85,7 +85,7 @@ fn new_partial<RuntimeApi, Executor>(
 		DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
 		FullPool<Block, FullClient<RuntimeApi, Executor>>,
 		(
-			impl Fn(DenyUnsafe, SubscriptionTaskExecutor) -> RpcExtension,
+			impl Fn(DenyUnsafe, SubscriptionTaskExecutor) -> RpcResult,
 			(
 				BabeBlockImport<
 					Block,
@@ -201,7 +201,7 @@ where
 		let select_chain = select_chain.clone();
 		let chain_spec = config.chain_spec.cloned_box();
 
-		move |deny_unsafe, subscription_executor| -> RpcExtension {
+		move |deny_unsafe, subscription_executor| -> RpcResult {
 			let deps = FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
@@ -222,7 +222,7 @@ where
 				},
 			};
 
-			drml_rpc::pangoro::create_full(deps)
+			drml_rpc::pangoro::create_full(deps).map_err(Into::into)
 		}
 	};
 
@@ -332,7 +332,6 @@ where
 		task_manager: &mut task_manager,
 		on_demand: None,
 		remote_blockchain: None,
-
 		system_rpc_tx,
 		telemetry: telemetry.as_mut(),
 	})?;

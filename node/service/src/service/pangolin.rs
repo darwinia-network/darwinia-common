@@ -57,7 +57,7 @@ use crate::{
 	client::PangolinClient,
 	service::{
 		self, FullBackend, FullClient, FullGrandpaBlockImport, FullSelectChain, LightBackend,
-		LightClient,
+		LightClient, RpcResult,
 	},
 };
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
@@ -67,7 +67,7 @@ use dp_rpc::{FilterPool, PendingTransactions};
 use drml_common_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use drml_rpc::{
 	pangolin::{FullDeps, LightDeps},
-	BabeDeps, DenyUnsafe, GrandpaDeps, RpcExtension, SubscriptionTaskExecutor,
+	BabeDeps, DenyUnsafe, GrandpaDeps, SubscriptionTaskExecutor,
 };
 use pangolin_runtime::RuntimeApi;
 
@@ -125,7 +125,7 @@ fn new_partial<RuntimeApi, Executor>(
 				bool,
 				Arc<NetworkService<Block, Hash>>,
 				SubscriptionTaskExecutor,
-			) -> RpcExtension,
+			) -> RpcResult,
 			(
 				BabeBlockImport<
 					Block,
@@ -251,7 +251,7 @@ where
 		let dvm_backend = dvm_backend.clone();
 		let filter_pool = filter_pool.clone();
 
-		move |deny_unsafe, is_authority, network, subscription_executor| -> RpcExtension {
+		move |deny_unsafe, is_authority, network, subscription_executor| -> RpcResult {
 			let deps = FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
@@ -278,7 +278,7 @@ where
 				max_past_logs,
 			};
 
-			drml_rpc::pangolin::create_full(deps, subscription_task_executor.clone())
+			drml_rpc::pangolin::create_full(deps, subscription_task_executor).map_err(Into::into)
 		}
 	};
 
@@ -406,7 +406,7 @@ where
 			let wrap_rpc_extensions_builder = {
 				let network = network.clone();
 
-				move |deny_unsafe, subscription_executor| -> RpcExtension {
+				move |deny_unsafe, subscription_executor| -> RpcResult {
 					rpc_extensions_builder(
 						deny_unsafe,
 						is_authority,

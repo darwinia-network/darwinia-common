@@ -54,7 +54,7 @@ pub struct FullDeps<C, P> {
 pub fn create_full<C, P, B>(
 	deps: FullDeps<C, P>,
 	subscription_task_executor: SubscriptionTaskExecutor,
-) -> jsonrpc_core::IoHandler<sc_rpc::Metadata>
+) -> RpcExtension
 where
 	C: 'static
 		+ Send

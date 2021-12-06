@@ -73,7 +73,7 @@ pub struct LightDeps<C, F, P> {
 pub fn create_full<C, P, SC, B>(
 	deps: FullDeps<C, P, SC, B>,
 	subscription_task_executor: SubscriptionTaskExecutor,
-) -> RpcExtension
+) -> RpcResult
 where
 	C: 'static
 		+ Send
@@ -176,7 +176,7 @@ where
 		shared_authority_set,
 		shared_epoch_changes,
 		deny_unsafe,
-	)));
+	)?));
 	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
 	io.extend_with(HeaderMMRApi::to_delegate(HeaderMMR::new(client.clone())));
 	io.extend_with(StakingApi::to_delegate(Staking::new(client.clone())));
@@ -233,7 +233,7 @@ where
 	)));
 	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client)));
 
-	io
+	Ok(io)
 }
 
 /// Instantiate all RPC extensions for light node.

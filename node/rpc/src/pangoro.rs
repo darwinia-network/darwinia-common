@@ -54,7 +54,7 @@ pub struct LightDeps<C, F, P> {
 }
 
 /// Instantiate all RPC extensions.
-pub fn create_full<C, P, SC, B>(deps: FullDeps<C, P, SC, B>) -> RpcExtension
+pub fn create_full<C, P, SC, B>(deps: FullDeps<C, P, SC, B>) -> RpcResult
 where
 	C: 'static
 		+ Send
@@ -136,11 +136,11 @@ where
 		shared_authority_set,
 		shared_epoch_changes,
 		deny_unsafe,
-	)));
+	)?));
 	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
 	io.extend_with(FeeMarketApi::to_delegate(FeeMarket::new(client)));
 
-	io
+	Ok(io)
 }
 
 /// Instantiate all RPC extensions for light node.

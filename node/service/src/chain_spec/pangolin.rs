@@ -37,7 +37,7 @@ use darwinia_evm::GenesisAccount;
 use drml_common_primitives::*;
 use pangolin_runtime::*;
 
-pub type ChainSpec = GenericChainSpec<GenesisConfig>;
+pub type ChainSpec = GenericChainSpec<GenesisConfig, Extensions>;
 
 const PANGOLIN_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 

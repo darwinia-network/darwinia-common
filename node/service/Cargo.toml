@@ -51,6 +51,7 @@ sc-finality-grandpa                        = { git = "https://github.com/darwini
 sc-keystore                                = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-network                                 = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-service                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sc-sync-state-rpc                          = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-telemetry                               = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-transaction-pool                        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-api                                     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
