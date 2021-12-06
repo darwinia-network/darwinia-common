@@ -276,7 +276,7 @@ pub fn new_full(
 				command_sink: Some(command_sink.clone()),
 			};
 
-			drml_rpc::template::create_full(deps, subscription_task_executor.clone())
+			Ok(drml_rpc::template::create_full(deps, subscription_task_executor.clone()))
 		})
 	};
 
@@ -353,12 +353,13 @@ pub fn new_full(
 				block_import,
 				env,
 				client,
-				pool: transaction_pool.pool().clone(),
+				pool: transaction_pool.clone(),
 				commands_stream,
 				select_chain,
 				consensus_data_provider: None,
 				create_inherent_data_providers: move |_, ()| async move {
 					let mock_timestamp = MockTimestampInherentDataProvider;
+
 					Ok(mock_timestamp)
 				},
 			});
@@ -371,7 +372,7 @@ pub fn new_full(
 				block_import,
 				env,
 				client: client.clone(),
-				pool: transaction_pool.pool().clone(),
+				pool: transaction_pool.clone(),
 				select_chain,
 				consensus_data_provider: None,
 				create_inherent_data_providers: move |_, ()| async move {
