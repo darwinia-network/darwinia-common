@@ -262,7 +262,7 @@ pub trait EthSigner: Send + Sync {
 		&self,
 		message: ethereum::TransactionMessage,
 		address: &H160,
-	) -> Result<ethereum::Transaction, Error>;
+	) -> Result<ethereum::TransactionV0, Error>;
 }
 
 pub struct EthDevSigner {
@@ -300,7 +300,7 @@ impl EthSigner for EthDevSigner {
 		&self,
 		message: ethereum::TransactionMessage,
 		address: &H160,
-	) -> Result<ethereum::Transaction, Error> {
+	) -> Result<ethereum::TransactionV0, Error> {
 		let mut transaction = None;
 
 		for secret in &self.keys {
@@ -324,7 +324,7 @@ impl EthSigner for EthDevSigner {
 				let r = H256::from_slice(&rs[0..32]);
 				let s = H256::from_slice(&rs[32..64]);
 
-				transaction = Some(ethereum::Transaction {
+				transaction = Some(ethereum::TransactionV0 {
 					nonce: message.nonce,
 					gas_price: message.gas_price,
 					gas_limit: message.gas_limit,

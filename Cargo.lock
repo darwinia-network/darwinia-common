@@ -1715,8 +1715,8 @@ dependencies = [
  "darwinia-evm",
  "darwinia-support",
  "dp-evm",
- "ethabi 13.0.0",
- "ethereum-types 0.11.0",
+ "ethabi 15.0.0",
+ "ethereum-types 0.12.1",
  "evm",
  "frame-support",
  "frame-system",
@@ -2060,8 +2060,8 @@ dependencies = [
  "dvm-ethereum",
  "dvm-rpc-core",
  "dvm-rpc-runtime-api",
- "ethereum 0.7.1",
- "ethereum-types 0.11.0",
+ "ethereum 0.10.0",
+ "ethereum-types 0.12.1",
  "evm",
  "futures 0.3.18",
  "jsonrpc-core",
@@ -2071,7 +2071,7 @@ dependencies = [
  "libsecp256k1 0.3.5",
  "log",
  "parity-scale-codec",
- "rand 0.7.3",
+ "rand 0.8.4",
  "rlp",
  "sc-client-api",
  "sc-network",
@@ -2237,7 +2237,7 @@ dependencies = [
 name = "dp-rpc"
 version = "2.7.0"
 dependencies = [
- "ethereum-types 0.11.0",
+ "ethereum-types 0.12.1",
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
@@ -2450,8 +2450,8 @@ dependencies = [
  "dp-storage",
  "dvm-rpc-runtime-api",
  "ethabi 13.0.0",
- "ethereum 0.7.1",
- "ethereum-types 0.11.0",
+ "ethereum 0.9.0",
+ "ethereum-types 0.12.1",
  "evm",
  "frame-support",
  "frame-system",
@@ -2475,8 +2475,8 @@ dependencies = [
  "darwinia-evm",
  "dp-evm",
  "dp-rpc",
- "ethereum 0.7.1",
- "ethereum-types 0.11.0",
+ "ethereum 0.10.0",
+ "ethereum-types 0.12.1",
  "jsonrpc-core",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
@@ -2494,8 +2494,8 @@ dependencies = [
  "darwinia-evm",
  "darwinia-support",
  "dp-evm",
- "ethereum 0.7.1",
- "ethereum-types 0.11.0",
+ "ethereum 0.10.0",
+ "ethereum-types 0.12.1",
  "parity-scale-codec",
  "sp-api",
  "sp-core",
@@ -2724,12 +2724,30 @@ dependencies = [
 
 [[package]]
 name = "ethereum"
-version = "0.7.1"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "567ce064a8232c16e2b2c2173a936b91fbe35c2f2c5278871f5a1a31688b42e9"
+checksum = "42ccff962ede8fe7c3ec53d46b8316f3c53377a701a30c0325918b38ce04a497"
 dependencies = [
- "ethereum-types 0.11.0",
- "funty",
+ "bytes 1.1.0",
+ "ethereum-types 0.12.1",
+ "hash-db",
+ "hash256-std-hasher",
+ "parity-scale-codec",
+ "rlp",
+ "rlp-derive",
+ "serde",
+ "sha3 0.9.1",
+ "triehash",
+]
+
+[[package]]
+name = "ethereum"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a67be3eaf296ef668733f54c637e84d0ca34eaf194f0077455135981ad464c3"
+dependencies = [
+ "bytes 1.1.0",
+ "ethereum-types 0.12.1",
  "hash-db",
  "hash256-std-hasher",
  "parity-scale-codec",
@@ -2820,18 +2838,18 @@ checksum = "f7531096570974c3a9dcf9e4b8e1cede1ec26cf5046219fb3b9d897503b9be59"
 
 [[package]]
 name = "evm"
-version = "0.27.0"
+version = "0.30.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f833b0e642bec8286b80f00ad6cc6a95e50210c77949b9cb484637e6a05ed596"
+checksum = "3144301c57a81101003055c7cab61b58e68060f3bd1c54aa419f663e4f0e6347"
 dependencies = [
  "environmental",
- "ethereum 0.7.1",
+ "ethereum 0.8.0",
  "evm-core",
  "evm-gasometer",
  "evm-runtime",
  "log",
  "parity-scale-codec",
- "primitive-types 0.9.1",
+ "primitive-types 0.10.1",
  "rlp",
  "serde",
  "sha3 0.8.2",
@@ -2839,37 +2857,37 @@ dependencies = [
 
 [[package]]
 name = "evm-core"
-version = "0.27.1"
+version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "908739da31125d17a69533c290a6c818b494176e59a2ce8accbf122f7d76835c"
+checksum = "a7bfa2dae9a2c6c0172d83c37eb406bfabf6a9d1af17b7ab4958e89853ddae97"
 dependencies = [
  "funty",
  "parity-scale-codec",
- "primitive-types 0.9.1",
+ "primitive-types 0.10.1",
  "serde",
 ]
 
 [[package]]
 name = "evm-gasometer"
-version = "0.27.0"
+version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4118f952ce320c11e1b7b8a575e477d70bc86a3b92ea23e427174d979cf1da26"
+checksum = "14d5b12117cb9a5a9b9f031296ea86416da2cd9d8c9a9e3a2fa10275ae55f3ea"
 dependencies = [
  "environmental",
  "evm-core",
  "evm-runtime",
- "primitive-types 0.9.1",
+ "primitive-types 0.10.1",
 ]
 
 [[package]]
 name = "evm-runtime"
-version = "0.27.0"
+version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "952296b416c3b334b26933ad1f9cfa9203e251691586fb317e411872886ca31b"
+checksum = "3921ac8964cf13d12693392fef6686ef94470328ccd8eea384c6ff9ac0125b01"
 dependencies = [
  "environmental",
  "evm-core",
- "primitive-types 0.9.1",
+ "primitive-types 0.10.1",
  "sha3 0.8.2",
 ]
 
@@ -3250,7 +3268,7 @@ dependencies = [
  "dp-evm",
  "dp-s2s",
  "dvm-ethereum",
- "ethereum 0.7.1",
+ "ethereum 0.10.0",
  "ethereum-primitives",
  "ethereum-types 0.12.1",
  "evm",
@@ -5150,7 +5168,7 @@ version = "2.7.0"
 dependencies = [
  "array-bytes",
  "criterion",
- "ethereum-types 0.11.0",
+ "ethereum-types 0.12.1",
  "hashbrown",
  "hex",
  "keccak-hash",

@@ -11,7 +11,7 @@ version     = "2.7.0"
 
 [dependencies]
 # crates.io
-ethereum-types      = { version = "0.11" }
+ethereum-types      = { version = "0.12" }
 jsonrpc-core        = { version = "15.1" }
 jsonrpc-core-client = { version = "15.1" }
 jsonrpc-derive      = { version = "15.1" }

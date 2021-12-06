@@ -25,7 +25,7 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 # crates.io
 array-bytes    = { version = "1.4" }
 criterion      = { version = "0.3" }
-ethereum-types = { version = "0.11" }
+ethereum-types = { version = "0.12" }
 hex            = { version = "0.4" }
 rand           = { version = "0.8" }
 uuid           = { version = "0.8", features = ["serde", "v4"] }
