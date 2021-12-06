@@ -17,6 +17,8 @@ log            = { version = "0.4"}
 # darwinia-network
 tracing-events = { path = "../../../../primitives/evm/tracing-events" }
 tracing-apis   = { path = "../../../../primitives/evm/tracing-apis" }
+# dc-tracing-formatters = { path = "../formatters" }
+dc-tracing-types = { path = "../types" }
 # paritytech
 codec  = { package = "parity-scale-codec", version = "2.2", default-features = false }
 sp-std = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }

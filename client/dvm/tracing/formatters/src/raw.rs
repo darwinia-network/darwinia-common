@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::listeners::raw::Listener;
-use crate::types::single::TransactionTrace;
+use dc_tracing_listeners::raw::Listener;
+use dc_tracing_types::single::TransactionTrace;
 
 pub struct Formatter;
 

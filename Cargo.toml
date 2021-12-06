@@ -16,6 +16,7 @@ members = [
 	"client/dvm/tracing/debug",
 	"client/dvm/tracing/formatters",
 	"client/dvm/tracing/listeners",
+	"client/dvm/tracing/types",
 	"frame/balances",
 	"frame/balances/rpc",
 	"frame/balances/rpc/runtime-api",
