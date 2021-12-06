@@ -90,7 +90,7 @@ impl BasicMappingTokenFactory {
 			Param {
 				name: "name".into(),
 				kind: ParamType::String,
-				internal_type: Some("uint32".into()),
+				internal_type: Some("string".into()),
 			},
 			Param {
 				name: "symbol".into(),
