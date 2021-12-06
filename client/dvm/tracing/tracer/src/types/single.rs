@@ -29,8 +29,8 @@ use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 #[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, Serialize)]
 #[serde(rename_all = "camelCase", untagged)]
 pub enum Call {
-	Blockscout(dc_tracing_formatters::blockscout::BlockscoutCall),
-	CallTracer(dc_tracing_formatters::call_tracer::CallTracerCall),
+	Blockscout(crate::formatters::blockscout::BlockscoutCall),
+	CallTracer(crate::formatters::call_tracer::CallTracerCall),
 }
 
 #[derive(Clone, Copy, Eq, PartialEq, Debug, Encode, Decode)]
@@ -47,7 +47,7 @@ pub enum TraceType {
 	Block,
 }
 
-Single transaction trace.
+// Single transaction trace.
 #[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, Serialize)]
 #[serde(rename_all = "camelCase", untagged)]
 pub enum TransactionTrace {

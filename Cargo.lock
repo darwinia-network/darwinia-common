@@ -2137,25 +2137,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "dc-tracing-formatters"
+name = "dc-tracing-tracer"
 version = "0.1.0"
 dependencies = [
- "ethereum-types 0.12.1",
- "hex",
- "log",
- "parity-scale-codec",
- "serde",
- "serde_json",
- "sp-std",
- "tracing-apis",
- "tracing-events",
-]
-
-[[package]]
-name = "dc-tracing-listeners"
-version = "0.1.0"
-dependencies = [
- "dc-tracing-formatters",
  "ethereum-types 0.11.0",
  "hex",
  "log",

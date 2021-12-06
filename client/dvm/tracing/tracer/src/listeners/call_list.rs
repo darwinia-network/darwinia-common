@@ -14,8 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use dc_tracing_formatters::blockscout::{BlockscoutCall as Call, BlockscoutCallInner as CallInner};
-use dc_tracing_types::{CallResult, CallType, ContextType, CreateResult};
+use crate::formatters::blockscout::BlockscoutCall as Call;
+use crate::formatters::blockscout::BlockscoutCallInner as CallInner;
+use crate::types::{CallResult, CallType, ContextType, CreateResult};
 use ethereum_types::{H160, U256};
 use std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 use tracing_events::{
@@ -121,7 +122,7 @@ impl Default for Listener {
 
 impl Listener {
 	pub fn using<R, F: FnOnce() -> R>(&mut self, f: F) -> R {
-		evm_tracing_events::using(self, f)
+		tracing_events::using(self, f)
 	}
 
 	/// Called at the end of each transaction when tracing.

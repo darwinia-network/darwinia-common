@@ -17,7 +17,7 @@
 use ethereum_types::{H160, H256};
 use std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 
-use dc_tracing_types::{convert_memory, single::RawStepLog, ContextType};
+use crate::types::{convert_memory, single::RawStepLog, ContextType};
 use tracing_events::{
 	runtime::{Capture, ExitReason},
 	Event, GasometerEvent, Listener as ListenerT, RuntimeEvent,

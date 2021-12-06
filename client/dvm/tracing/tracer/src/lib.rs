@@ -14,20 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use dc_tracing_listeners::raw::Listener;
-use dc_tracing_types::single::TransactionTrace;
+//! This crate contains the client-side part that interacts with our "v2" tracing design.
 
-pub struct Formatter;
-
-impl super::ResponseFormatter for Formatter {
-	type Listener = Listener;
-	type Response = TransactionTrace;
-
-	fn format(listener: Listener) -> Option<TransactionTrace> {
-		Some(TransactionTrace::Raw {
-			step_logs: listener.step_logs,
-			gas: listener.final_gas.into(),
-			return_value: listener.return_value,
-		})
-	}
-}
+pub mod formatters;
+pub mod listeners;
+pub mod types;
