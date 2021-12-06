@@ -124,6 +124,19 @@ fn set_default_ss58_version(spec: &Box<dyn ChainSpec>) {
 	sp_core::crypto::set_default_ss58_version(ss58_version);
 }
 
+fn validate_trace_environment(cli: &Cli) -> sc_cli::Result<()> {
+	if (cli.run.dvm_args.ethapi.contains(&EthApi::Debug)
+		|| cli.run.dvm_args.ethapi.contains(&EthApi::Trace))
+		&& cli.run.base.import_params.wasm_runtime_overrides.is_none()
+	{
+		return Err(
+			"`debug` or `trace` namespaces requires `--wasm-runtime-overrides /path/to/overrides`."
+				.into(),
+		);
+	}
+	Ok(())
+}
+
 /// Parse command line arguments into service configuration.
 pub fn run() -> sc_cli::Result<()> {
 	macro_rules! async_run {
@@ -156,6 +169,7 @@ pub fn run() -> sc_cli::Result<()> {
 	}
 
 	let cli = Cli::from_args();
+	let _ = validate_trace_environment(&cli)?;
 	let max_past_logs = cli.run.dvm_args.max_past_logs;
 
 	match &cli.subcommand {

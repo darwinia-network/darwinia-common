@@ -17,6 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- crates.io ---
+use std::str::FromStr;
 #[cfg(feature = "template")]
 use structopt::clap::arg_enum;
 use structopt::StructOpt;
@@ -121,6 +122,16 @@ pub enum Subcommand {
 
 #[derive(Debug, StructOpt)]
 pub struct DvmArgs {
+	/// Enable EVM tracing module on a non-authority node.
+	#[structopt(
+		long,
+		conflicts_with = "collator",
+		conflicts_with = "validator",
+		require_delimiter = true
+	)]
+	// TODO: what's the aim of the conflicts_with
+	pub ethapi: Vec<EthApi>,
+
 	/// Maximum number of logs in a query.
 	#[structopt(long, default_value = "10000")]
 	pub max_past_logs: u32,
@@ -159,5 +170,31 @@ impl Sealing {
 impl Default for Sealing {
 	fn default() -> Sealing {
 		Sealing::Manual
+	}
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum EthApi {
+	// TODO: do we need all of them?
+	Txpool,
+	Debug,
+	Trace,
+}
+
+impl FromStr for EthApi {
+	type Err = String;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		Ok(match s {
+			"txpool" => Self::Txpool,
+			"debug" => Self::Debug,
+			"trace" => Self::Trace,
+			_ => {
+				return Err(format!(
+					"`{}` is not recognized as a supported Ethereum Api",
+					s
+				))
+			}
+		})
 	}
 }
