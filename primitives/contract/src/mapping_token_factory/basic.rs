@@ -21,11 +21,11 @@
 pub use ethabi::{Event, Log};
 
 // --- crates.io ---
-use ethereum_types::{Address as EthereumAddress, U256};
 use ethabi::{
 	param_type::ParamType, token::Token, Bytes, Function, Param, Result as AbiResult,
 	StateMutability,
 };
+use ethereum_types::{Address as EthereumAddress, U256};
 // --- paritytech ---
 use sp_std::vec;
 
