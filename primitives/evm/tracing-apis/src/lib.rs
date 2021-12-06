@@ -1,4 +1,3 @@
-
 // Copyright 2019-2021 PureStake Inc.
 // This file is part of Moonbeam.
 
@@ -38,6 +37,7 @@ sp_api::decl_runtime_apis! {
 
 #[derive(Clone, Copy, Eq, PartialEq, Debug, Encode, Decode)]
 pub enum TracerInput {
+	// TODO: Do we need all of them?
 	None,
 	Blockscout,
 	CallTracer,

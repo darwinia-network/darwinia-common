@@ -59,6 +59,7 @@ module-transaction-pause                = { default-features = false, path = "..
 to-ethereum-backing                     = { default-features = false, path = "../../../frame/wormhole/backing/ethereum" }
 to-tron-backing                         = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
 # dvm tracing
+tracing-apis   = { default-features = false, path = "../../../primitives/evm/tracing-apis" }
 tracing-events = { optional = true, default-features = false, path = "../../../primitives/evm/tracing-events" }
 runtime-tracer = { optional = true, default-features = false, path = "../tracer" }
 # paritytech
