@@ -163,12 +163,12 @@ fn make_call_data(
 			Param {
 				name: "address".to_owned(),
 				kind: ParamType::Address,
-				internal_type: None,
+				internal_type: Some("address".into()),
 			},
 			Param {
 				name: "value".to_owned(),
 				kind: ParamType::Uint(256),
-				internal_type: None,
+				internal_type: Some("uint256".into()),
 			},
 		],
 		outputs: vec![],
