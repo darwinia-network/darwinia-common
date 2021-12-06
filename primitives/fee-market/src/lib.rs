@@ -92,7 +92,7 @@ impl<AccountId, BlockNumber, Balance> Order<AccountId, BlockNumber, Balance>
 where
 	BlockNumber:
 		Add<Output = BlockNumber> + Copy + AddAssign + PartialOrd + Sub<Output = BlockNumber>,
-	Balance: Copy + PartialOrd,
+	Balance: Copy + PartialOrd + Default,
 	AccountId: Clone + PartialEq,
 {
 	pub fn new(
@@ -135,10 +135,8 @@ where
 		self.relayers.as_ref()
 	}
 
-	pub fn lowest_and_highest_fee(&self) -> (Option<Balance>, Option<Balance>) {
-		let lowest = self.relayers.iter().nth(0).map(|r| r.fee);
-		let highest = self.relayers.iter().last().map(|r| r.fee);
-		(lowest, highest)
+	pub fn fee(&self) -> Balance {
+		self.relayers.iter().last().map(|r| r.fee).unwrap_or_default()
 	}
 
 	pub fn is_confirmed(&self) -> bool {
@@ -161,10 +159,10 @@ where
 	pub fn required_delivery_relayer_for_time(
 		&self,
 		message_confirm_time: BlockNumber,
-	) -> Option<AccountId> {
+	) -> Option<(AccountId, Balance)> {
 		for prior_relayer in self.relayers.iter() {
 			if prior_relayer.valid_range.contains(&message_confirm_time) {
-				return Some(prior_relayer.id.clone());
+				return Some((prior_relayer.id.clone(), prior_relayer.fee));
 			}
 		}
 		None
@@ -281,7 +279,7 @@ mod test {
 		assert_eq!(order.relayer_valid_range(2).unwrap(), (150..200));
 		assert_eq!(order.relayer_valid_range(3).unwrap(), (200..250));
 		assert_eq!(order.range_end(), Some(250));
-		assert_eq!(order.lowest_and_highest_fee(), (Some(30), Some(80)));
+		assert_eq!(order.fee(), 80);
 	}
 
 	#[test]
