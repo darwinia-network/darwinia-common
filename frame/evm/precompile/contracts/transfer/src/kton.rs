@@ -157,6 +157,7 @@ fn make_call_data(
 ) -> Result<Vec<u8>, ExitError> {
 	let eth_address = util::s2e_address(sp_address);
 	let eth_value = util::s2e_u256(sp_value);
+	#[allow(deprecated)]
 	let func = Function {
 		name: "deposit".to_owned(),
 		inputs: vec![
