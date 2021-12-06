@@ -1447,7 +1447,7 @@ name = "darwinia-balances-rpc"
 version = "2.7.0"
 dependencies = [
  "darwinia-balances-rpc-runtime-api",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "parity-scale-codec",
@@ -1803,7 +1803,7 @@ name = "darwinia-fee-market-rpc"
 version = "2.7.0"
 dependencies = [
  "darwinia-fee-market-rpc-runtime-api",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "parity-scale-codec",
@@ -1851,7 +1851,7 @@ name = "darwinia-header-mmr-rpc"
 version = "2.7.0"
 dependencies = [
  "darwinia-header-mmr-rpc-runtime-api",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "parity-scale-codec",
@@ -1959,7 +1959,7 @@ name = "darwinia-staking-rpc"
 version = "2.7.0"
 dependencies = [
  "darwinia-staking-rpc-runtime-api",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "parity-scale-codec",
@@ -2091,7 +2091,7 @@ dependencies = [
  "ethereum-types 0.11.0",
  "evm",
  "futures 0.3.17",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
@@ -2111,6 +2111,59 @@ dependencies = [
  "sp-runtime",
  "sp-storage",
  "sp-transaction-pool",
+]
+
+[[package]]
+name = "dc-tracing-debug"
+version = "0.1.0"
+dependencies = [
+ "dc-db",
+ "dc-rpc",
+ "ethereum 0.9.0",
+ "ethereum-types 0.12.1",
+ "futures 0.3.17",
+ "jsonrpc-core 18.0.0",
+ "log",
+ "sc-client-api",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-utils",
+ "tokio 1.12.0",
+ "tracing-apis",
+]
+
+[[package]]
+name = "dc-tracing-formatters"
+version = "0.1.0"
+dependencies = [
+ "ethereum-types 0.12.1",
+ "hex",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-std",
+ "tracing-apis",
+ "tracing-events",
+]
+
+[[package]]
+name = "dc-tracing-listeners"
+version = "0.1.0"
+dependencies = [
+ "ethereum-types 0.12.1",
+ "hex",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-std",
+ "tracing-apis",
+ "tracing-events",
 ]
 
 [[package]]
@@ -2265,7 +2318,7 @@ name = "dp-rpc"
 version = "2.7.0"
 dependencies = [
  "ethereum-types 0.11.0",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
@@ -2351,7 +2404,7 @@ dependencies = [
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
  "futures 0.3.17",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-pubsub",
  "pallet-transaction-payment-rpc",
  "pangolin-runtime",
@@ -2506,7 +2559,7 @@ dependencies = [
  "dp-rpc",
  "ethereum 0.7.1",
  "ethereum-types 0.11.0",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
  "parity-scale-codec",
@@ -2806,6 +2859,7 @@ dependencies = [
  "fixed-hash",
  "impl-codec",
  "impl-rlp",
+ "impl-serde",
  "primitive-types 0.10.1",
  "scale-info",
  "uint",
@@ -4160,7 +4214,7 @@ checksum = "489b9c612e60c766f751ab40fcb43cbb55a1e10bb44a9b4307ed510ca598cbd7"
 dependencies = [
  "failure",
  "futures 0.1.31",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-pubsub",
  "log",
  "serde",
@@ -4175,6 +4229,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0745a6379e3edc893c84ec203589790774e4247420033e71a76d3ab4687991fa"
 dependencies = [
  "futures 0.1.31",
+ "log",
+ "serde",
+ "serde_derive",
+ "serde_json",
+]
+
+[[package]]
+name = "jsonrpc-core"
+version = "18.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14f7f76aef2d054868398427f6c54943cf3d1caa9a7ec7d0c38d69df97a965eb"
+dependencies = [
+ "futures 0.3.17",
+ "futures-executor",
+ "futures-util",
  "log",
  "serde",
  "serde_derive",
@@ -4209,7 +4278,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fb5c4513b7b542f42da107942b7b759f27120b5cc894729f88254b28dff44b7"
 dependencies = [
  "hyper 0.12.36",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-server-utils",
  "log",
  "net2",
@@ -4223,7 +4292,7 @@ version = "15.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf50e53e4eea8f421a7316c5f63e395f7bc7c4e786a6dc54d76fab6ff7aa7ce7"
 dependencies = [
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-server-utils",
  "log",
  "parity-tokio-ipc",
@@ -4237,7 +4306,7 @@ version = "15.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "639558e0604013be9787ae52f798506ae42bf4220fe587bdc5625871cc8b9c77"
 dependencies = [
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "log",
  "parking_lot 0.10.2",
  "rand 0.7.3",
@@ -4252,7 +4321,7 @@ checksum = "72f1f3990650c033bd8f6bd46deac76d990f9bbfb5f8dc8c4767bf0a00392176"
 dependencies = [
  "bytes 0.4.12",
  "globset",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "lazy_static",
  "log",
  "tokio 0.1.22",
@@ -4266,7 +4335,7 @@ version = "15.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6596fe75209b73a2a75ebe1dce4e60e03b88a2b25e8807b667597f6315150d22"
 dependencies = [
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-server-utils",
  "log",
  "parity-ws",
@@ -6103,7 +6172,7 @@ name = "pallet-transaction-payment-rpc"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate?tag=darwinia-v0.11.6-1#3c951d7eb441b8dec5f438084b0c264422385069"
 dependencies = [
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -6841,6 +6910,7 @@ dependencies = [
  "fixed-hash",
  "impl-codec",
  "impl-rlp",
+ "impl-serde",
  "scale-info",
  "uint",
 ]
@@ -7898,7 +7968,7 @@ source = "git+https://github.com/darwinia-network/substrate?tag=darwinia-v0.11.6
 dependencies = [
  "derive_more",
  "futures 0.3.17",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "sc-consensus-babe",
@@ -7937,7 +8007,7 @@ dependencies = [
  "async-trait",
  "derive_more",
  "futures 0.3.17",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "log",
@@ -8131,7 +8201,7 @@ dependencies = [
  "derive_more",
  "finality-grandpa",
  "futures 0.3.17",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
@@ -8352,7 +8422,7 @@ source = "git+https://github.com/darwinia-network/substrate?tag=darwinia-v0.11.6
 dependencies = [
  "futures 0.3.17",
  "hash-db",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-pubsub",
  "log",
  "parity-scale-codec",
@@ -8387,7 +8457,7 @@ source = "git+https://github.com/darwinia-network/substrate?tag=darwinia-v0.11.6
 dependencies = [
  "derive_more",
  "futures 0.3.17",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
@@ -8411,7 +8481,7 @@ version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate?tag=darwinia-v0.11.6-1#3c951d7eb441b8dec5f438084b0c264422385069"
 dependencies = [
  "futures 0.1.31",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-http-server",
  "jsonrpc-ipc-server",
  "jsonrpc-pubsub",
@@ -8435,7 +8505,7 @@ dependencies = [
  "futures 0.3.17",
  "futures-timer 3.0.2",
  "hash-db",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-pubsub",
  "lazy_static",
  "log",
@@ -8509,7 +8579,7 @@ name = "sc-sync-state-rpc"
 version = "0.9.0"
 source = "git+https://github.com/darwinia-network/substrate?tag=darwinia-v0.11.6-1#3c951d7eb441b8dec5f438084b0c264422385069"
 dependencies = [
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "sc-chain-spec",
@@ -9955,7 +10025,7 @@ source = "git+https://github.com/darwinia-network/substrate?tag=darwinia-v0.11.6
 dependencies = [
  "frame-system-rpc-runtime-api",
  "futures 0.3.17",
- "jsonrpc-core",
+ "jsonrpc-core 15.1.0",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "log",
