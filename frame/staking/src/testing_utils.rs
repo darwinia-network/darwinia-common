@@ -2,31 +2,32 @@
 use frame_benchmarking::account;
 use frame_support::traits::Currency;
 use frame_system::RawOrigin;
-use sp_runtime::{traits::StaticLookup, Perbill};
+use sp_runtime::traits::StaticLookup;
+// use sp_runtime::Perbill;
 // --- darwinia-network ---
 use crate::{Pallet as Staking, *};
 
 pub const SEED: u32 = 0;
 
-/// create `max` validators.
-pub fn create_validators<T: Config>(
-	max: u32,
-	balance_factor: u32,
-) -> Result<Vec<<T::Lookup as StaticLookup>::Source>, &'static str> {
-	let mut validators: Vec<<T::Lookup as StaticLookup>::Source> = Vec::with_capacity(max as usize);
-	for i in 0..max {
-		let (stash, controller) =
-			create_stash_controller::<T>(i, balance_factor, RewardDestination::Staked)?;
-		let validator_prefs = ValidatorPrefs {
-			commission: Perbill::from_percent(50),
-			..Default::default()
-		};
-		<Staking<T>>::validate(RawOrigin::Signed(controller).into(), validator_prefs)?;
-		let stash_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(stash);
-		validators.push(stash_lookup);
-	}
-	Ok(validators)
-}
+// /// create `max` validators.
+// pub fn create_validators<T: Config>(
+// 	max: u32,
+// 	balance_factor: u32,
+// ) -> Result<Vec<<T::Lookup as StaticLookup>::Source>, &'static str> {
+// 	let mut validators: Vec<<T::Lookup as StaticLookup>::Source> = Vec::with_capacity(max as usize);
+// 	for i in 0..max {
+// 		let (stash, controller) =
+// 			create_stash_controller::<T>(i, balance_factor, RewardDestination::Staked)?;
+// 		let validator_prefs = ValidatorPrefs {
+// 			commission: Perbill::from_percent(50),
+// 			..Default::default()
+// 		};
+// 		<Staking<T>>::validate(RawOrigin::Signed(controller).into(), validator_prefs)?;
+// 		let stash_lookup: <T::Lookup as StaticLookup>::Source = T::Lookup::unlookup(stash);
+// 		validators.push(stash_lookup);
+// 	}
+// 	Ok(validators)
+// }
 
 /// Create a stash and controller pair.
 pub fn create_stash_controller<T: Config>(

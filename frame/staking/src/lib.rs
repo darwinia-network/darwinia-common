@@ -3413,7 +3413,7 @@ pub mod pallet {
 		#[cfg(any(feature = "runtime-benchmarks", test))]
 		fn add_voter(voter: T::AccountId, weight: VoteWeight, targets: Vec<T::AccountId>) {
 			use sp_std::convert::TryFrom;
-			let stake = <BalanceOf<T>>::try_from(weight).unwrap_or_else(|_| {
+			let stake = <RingBalance<T>>::try_from(weight).unwrap_or_else(|_| {
 				panic!("cannot convert a VoteWeight into BalanceOf, benchmark needs reconfiguring.")
 			});
 			<Bonded<T>>::insert(voter.clone(), voter.clone());

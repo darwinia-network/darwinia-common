@@ -235,7 +235,7 @@ fn set_balance_proposal(value: u64) -> Vec<u8> {
 fn set_balance_proposal_is_correctly_filtered_out() {
 	for i in 0..10 {
 		let call = Call::decode(&mut &set_balance_proposal(i)[..]).unwrap();
-		assert!(!<Test as frame_system::Config>::BaseCallFilter::filter(
+		assert!(!<Test as frame_system::Config>::BaseCallFilter::contains(
 			&call
 		));
 	}
