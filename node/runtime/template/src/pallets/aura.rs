@@ -14,4 +14,5 @@ sp_runtime::impl_opaque_keys! {
 
 impl Config for Runtime {
 	type AuthorityId = AuraId;
+	type DisabledValidators = ();
 }
