@@ -31,10 +31,10 @@ pub use template::ChainSpec as TemplateChainSpec;
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_client_api::{BadBlocks, ForkBlocks};
 use sc_finality_grandpa::AuthorityId as GrandpaId;
+use sc_sync_state_rpc::LightSyncStateExtension;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
 use sp_core::{sr25519, Pair, Public};
-use sc_sync_state_rpc::LightSyncStateExtension;
 use sp_runtime::traits::IdentifyAccount;
 // --- darwinia-network ---
 use drml_common_primitives::{AccountId, AccountPublic};
