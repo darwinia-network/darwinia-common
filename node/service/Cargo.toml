@@ -15,6 +15,7 @@ array-bytes = { version = "1.4" }
 codec       = { package = "parity-scale-codec", version = "2.1" }
 futures     = { version = "0.3" }
 rand        = { version = "0.8" }
+serde       = { version = "1.0" }
 serde_json  = { version = "1.0" }
 # darwinia-network
 darwinia-balances-rpc-runtime-api   = { path = "../../frame/balances/rpc/runtime-api" }
@@ -41,6 +42,7 @@ pallet-im-online                           = { git = "https://github.com/darwini
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-authority-discovery                     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-basic-authorship                        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sc-chain-spec                              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-client-api                              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-consensus                               = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-consensus-babe                          = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
