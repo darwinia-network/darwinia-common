@@ -31,10 +31,10 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::Perbill;
 // --- darwinia-network ---
 use super::*;
-use common_primitives::*;
 use darwinia_bridge_ethereum::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
 use darwinia_claims::ClaimsList;
 use darwinia_evm::GenesisAccount;
+use drml_common_primitives::*;
 use pangolin_runtime::*;
 
 pub type ChainSpec = GenericChainSpec<GenesisConfig>;
@@ -156,10 +156,8 @@ pub fn genesis_config() -> ChainSpec {
 				map.insert(
 					array_bytes::hex_into_unchecked(account),
 					GenesisAccount {
-						nonce: 0.into(),
 						balance: (MANY_COINS * (10 as Balance).pow(9)).into(),
-						storage: BTreeMap::new(),
-						code: vec![],
+						..Default::default()
 					},
 				);
 			}
@@ -417,10 +415,8 @@ pub fn development_config() -> ChainSpec {
 				map.insert(
 					array_bytes::hex_into_unchecked(account),
 					GenesisAccount {
-						nonce: 0.into(),
 						balance: (123_456_789_000_000_000_000_090 as Balance).into(),
-						storage: BTreeMap::new(),
-						code: vec![],
+						..Default::default()
 					},
 				);
 			}
@@ -638,10 +634,8 @@ pub fn local_testnet_config() -> ChainSpec {
 				map.insert(
 					array_bytes::hex_into_unchecked(account),
 					GenesisAccount {
-						nonce: 0.into(),
 						balance: (123_456_789_000_000_000_000_090 as Balance).into(),
-						storage: BTreeMap::new(),
-						code: vec![],
+						..Default::default()
 					},
 				);
 			}

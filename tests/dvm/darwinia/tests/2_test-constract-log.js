@@ -3,7 +3,7 @@ const assert = require("chai").assert;
 const Web3 = require("web3");
 const conf = require("./config.js");
 
-const web3 = new Web3("ws://localhost:9944");
+const web3 = new Web3("ws://127.0.0.1:9944");
 const account = web3.eth.accounts.wallet.add(conf.privKey);
 const jsontest = new web3.eth.Contract(conf.abi);
 jsontest.options.from = conf.address;

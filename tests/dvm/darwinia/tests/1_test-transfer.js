@@ -1,7 +1,7 @@
 const expect = require("chai").expect;
 const Web3 = require("web3");
 const conf = require("./config.js");
-const web3 = new Web3("http://localhost:9933");
+const web3 = new Web3("http://127.0.0.1:9933");
 
 const addressWithdrawPrecompile = "0x0000000000000000000000000000000000000015";
 const addressFrom = "0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b";

@@ -19,13 +19,22 @@
 pub mod client;
 
 pub mod chain_spec;
+#[cfg(feature = "template")]
+pub use chain_spec::template as template_chain_spec;
 pub use chain_spec::{
 	pangolin as pangolin_chain_spec, pangoro as pangoro_chain_spec, PangolinChainSpec,
 	PangoroChainSpec,
 };
 
 pub mod service;
+#[cfg(feature = "template")]
+pub use service::template as template_service;
 pub use service::{
-	pangolin as pangolin_service, pangolin_runtime, pangoro as pangoro_service, pangoro_runtime,
-	IdentifyVariant, PangolinExecutor, PangoroExecutor,
+	pangolin as pangolin_service, pangoro as pangoro_service, IdentifyVariant, PangolinExecutor,
+	PangoroExecutor,
 };
+
+pub use pangolin_runtime::{self, RuntimeApi as PangolinRuntimeApi};
+pub use pangoro_runtime::{self, RuntimeApi as PangoroRuntimeApi};
+#[cfg(feature = "template")]
+pub use template_runtime;
