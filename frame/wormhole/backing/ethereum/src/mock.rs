@@ -19,11 +19,11 @@
 //! Mock file for ethereum-backing.
 
 // --- crates.io ---
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 // --- paritytech ---
 use frame_election_provider_support::onchain;
 use frame_support::{
-	traits::{Everything, GenesisBuild, MaxEncodedLen, SortedMembers},
+	traits::{Everything, GenesisBuild, SortedMembers},
 	PalletId,
 };
 use frame_system::{mocking::*, EnsureRoot};

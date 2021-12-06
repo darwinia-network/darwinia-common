@@ -30,7 +30,7 @@ use bp_messages::{
 use bp_runtime::{messages::MessageDispatchResult, Size};
 use frame_support::{
 	assert_err, assert_ok,
-	traits::{GenesisBuild, LockIdentifier},
+	traits::{Everything, GenesisBuild, LockIdentifier},
 	weights::{RuntimeDbWeight, Weight},
 	PalletId,
 };
@@ -38,7 +38,7 @@ use frame_system::mocking::*;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{AccountIdConversion, BlakeTwo256, Everything, IdentityLookup, UniqueSaturatedInto},
+	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup, UniqueSaturatedInto},
 	FixedU128, Permill, RuntimeDebug,
 };
 // --- std ---

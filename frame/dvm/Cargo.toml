@@ -39,7 +39,7 @@ sp-std           = { default-features = false, git = "https://github.com/darwini
 [dev-dependencies]
 # crates.io
 array-bytes = { version = "1.4" }
-ethabi      = { git = "https://github.com/darwinia-network/ethabi", tag = "v13.0.0-no-std" }
+ethabi      = { version = "15.0" }
 # darwinia-network
 darwinia-balances                = { path = "../balances" }
 darwinia-evm-precompile-simple   = { path = "../evm/precompile/contracts/simple" }

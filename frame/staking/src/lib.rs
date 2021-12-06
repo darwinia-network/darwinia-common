@@ -2767,12 +2767,12 @@ pub mod pallet {
 
 			if (exposures.len() as u32) < Self::minimum_validator_count().max(1) {
 				// Session will panic if we ever return an empty validator set, thus max(1) ^^.
-				match CurrentEra::<T>::get() {
+				match <CurrentEra<T>>::get() {
 					Some(current_era) if current_era > 0 => log!(
 						warn,
 						"chain does not have enough staking candidates to operate for era {:?} ({} \
 						elected, minimum is {})",
-						CurrentEra::<T>::get().unwrap_or(0),
+						<CurrentEra<T>>::get().unwrap_or(0),
 						exposures.len(),
 						Self::minimum_validator_count(),
 					),
@@ -3154,7 +3154,7 @@ pub mod pallet {
 				.unwrap_or_default()
 				.saturating_sub(now);
 			let session_length = T::NextNewSession::average_session_length();
-			let sessions_left: T::BlockNumber = match ForceEra::<T>::get() {
+			let sessions_left: T::BlockNumber = match <ForceEra<T>>::get() {
 				Forcing::ForceNone => Bounded::max_value(),
 				Forcing::ForceNew | Forcing::ForceAlways => Zero::zero(),
 				Forcing::NotForcing if era_progress >= T::SessionsPerEra::get() => Zero::zero(),
@@ -3181,10 +3181,12 @@ pub mod pallet {
 				voter.clone(),
 				StakingLedger {
 					stash: voter.clone(),
-					active: stake,
-					total: stake,
-					unlocking: vec![],
-					claimed_rewards: vec![],
+					active_ring: stake,
+					ring_staking_lock: StakingLock {
+						staking_amount: stake,
+						..Default::default()
+					},
+					..Default::default()
 				},
 			);
 			Self::do_add_nominator(
@@ -3199,16 +3201,18 @@ pub mod pallet {
 
 		#[cfg(any(feature = "runtime-benchmarks", test))]
 		fn add_target(target: T::AccountId) {
-			let stake = MinValidatorBond::<T>::get() * 100u32.into();
+			let stake = <MinValidatorBond<T>>::get() * 100u32.into();
 			<Bonded<T>>::insert(target.clone(), target.clone());
 			<Ledger<T>>::insert(
 				target.clone(),
 				StakingLedger {
 					stash: target.clone(),
-					active: stake,
-					total: stake,
-					unlocking: vec![],
-					claimed_rewards: vec![],
+					active_ring: stake,
+					ring_staking_lock: StakingLock {
+						staking_amount: stake,
+						..Default::default()
+					},
+					..Default::default()
 				},
 			);
 			Self::do_add_validator(

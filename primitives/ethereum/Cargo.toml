@@ -30,7 +30,7 @@ merkle-patricia-trie = { default-features = false, path = "../merkle-patricia-tr
 array-bytes    = { version = "1.4", features = ["serde"] }
 codec          = { package = "parity-scale-codec", version = "2.1", features = ["derive"] }
 ethbloom       = { version = "0.11", features = ["codec"] }
-ethereum-types = { version = "0.11", features = ["codec"] }
+ethereum-types = { version = "0.12", features = ["codec"] }
 keccak-hasher  = { version = "0.15" }
 rlp            = { version = "0.5" }
 rlp-derive     = { version = "0.1" }

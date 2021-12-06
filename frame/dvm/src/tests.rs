@@ -225,7 +225,7 @@ fn withdraw(to: Vec<u8>, value: U256) -> Vec<u8> {
 		.unwrap()
 }
 
-fn sign_transaction(account: &AccountInfo, unsign_tx: UnsignedTransaction) -> Transaction {
+fn sign_transaction(account: &AccountInfo, unsign_tx: UnsignedTransaction) -> TransactionV0 {
 	unsign_tx.sign(&account.private_key)
 }
 

@@ -392,12 +392,12 @@ dependencies = [
 
 [[package]]
 name = "bae"
-version = "0.1.6"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec107f431ee3d8a8e45e6dd117adab769556ef463959e77bf6a4888d5fd500cf"
+checksum = "33b8de67cc41132507eeece2584804efcb15f85ba516e34c944b7667f480397a"
 dependencies = [
  "heck",
- "proc-macro-error 0.4.12",
+ "proc-macro-error",
  "proc-macro2",
  "quote",
  "syn",
@@ -701,7 +701,7 @@ dependencies = [
  "hash-db",
  "parity-scale-codec",
  "plain_hasher",
- "primitive-types 0.10.1",
+ "primitive-types",
  "rlp",
  "serde",
  "serde_json",
@@ -1480,7 +1480,7 @@ dependencies = [
  "darwinia-relayer-game",
  "darwinia-support",
  "ethereum-primitives",
- "ethereum-types 0.12.1",
+ "ethereum-types",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -1569,7 +1569,7 @@ dependencies = [
  "log",
  "pallet-timestamp",
  "parity-scale-codec",
- "primitive-types 0.10.1",
+ "primitive-types",
  "rlp",
  "serde",
  "sha3 0.9.1",
@@ -1715,8 +1715,8 @@ dependencies = [
  "darwinia-evm",
  "darwinia-support",
  "dp-evm",
- "ethabi 15.0.0",
- "ethereum-types 0.12.1",
+ "ethabi",
+ "ethereum-types",
  "evm",
  "frame-support",
  "frame-system",
@@ -2061,7 +2061,7 @@ dependencies = [
  "dvm-rpc-core",
  "dvm-rpc-runtime-api",
  "ethereum",
- "ethereum-types 0.12.1",
+ "ethereum-types",
  "evm",
  "futures 0.3.18",
  "jsonrpc-core",
@@ -2178,7 +2178,7 @@ checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 name = "dp-asset"
 version = "2.7.0"
 dependencies = [
- "ethereum-types 0.12.1",
+ "ethereum-types",
  "parity-scale-codec",
  "sha3 0.9.1",
  "sp-std",
@@ -2204,9 +2204,9 @@ dependencies = [
  "array-bytes",
  "bp-messages",
  "dp-asset",
- "ethabi 15.0.0",
+ "ethabi",
  "ethereum-primitives",
- "ethereum-types 0.12.1",
+ "ethereum-types",
  "sp-std",
 ]
 
@@ -2237,7 +2237,7 @@ dependencies = [
 name = "dp-rpc"
 version = "2.7.0"
 dependencies = [
- "ethereum-types 0.12.1",
+ "ethereum-types",
  "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
@@ -2452,9 +2452,9 @@ dependencies = [
  "dp-evm",
  "dp-storage",
  "dvm-rpc-runtime-api",
- "ethabi 13.0.0",
+ "ethabi",
  "ethereum",
- "ethereum-types 0.12.1",
+ "ethereum-types",
  "evm",
  "frame-support",
  "frame-system",
@@ -2479,7 +2479,7 @@ dependencies = [
  "dp-evm",
  "dp-rpc",
  "ethereum",
- "ethereum-types 0.12.1",
+ "ethereum-types",
  "jsonrpc-core",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
@@ -2498,7 +2498,7 @@ dependencies = [
  "darwinia-support",
  "dp-evm",
  "ethereum",
- "ethereum-types 0.12.1",
+ "ethereum-types",
  "parity-scale-codec",
  "sp-api",
  "sp-core",
@@ -2672,28 +2672,15 @@ dependencies = [
 
 [[package]]
 name = "ethabi"
-version = "13.0.0"
-source = "git+https://github.com/darwinia-network/ethabi?tag=v13.0.0-no-std#baacf174d5c2f12122c4ee3fe31506fb52069983"
-dependencies = [
- "anyhow",
- "ethereum-types 0.11.0",
- "hex",
- "serde",
- "serde_json",
- "sha3 0.9.1",
- "thiserror",
- "uint",
-]
-
-[[package]]
-name = "ethabi"
 version = "15.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f76ef192b63e8a44b3d08832acebbb984c3fba154b5c26f70037c860202a0d4b"
 dependencies = [
  "anyhow",
- "ethereum-types 0.12.1",
+ "ethereum-types",
  "hex",
+ "serde",
+ "serde_json",
  "sha3 0.9.1",
  "thiserror",
  "uint",
@@ -2705,7 +2692,7 @@ version = "0.4.2"
 source = "git+https://github.com/darwinia-network/rust-ethash?tag=v0.4.2#ee07a503226adfb889e2ead5ac38656a7698c728"
 dependencies = [
  "byteorder",
- "ethereum-types 0.12.1",
+ "ethereum-types",
  "rlp",
  "sha3 0.9.1",
 ]
@@ -2732,7 +2719,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a67be3eaf296ef668733f54c637e84d0ca34eaf194f0077455135981ad464c3"
 dependencies = [
  "bytes 1.1.0",
- "ethereum-types 0.12.1",
+ "ethereum-types",
  "hash-db",
  "hash256-std-hasher",
  "parity-scale-codec",
@@ -2750,8 +2737,7 @@ dependencies = [
  "array-bytes",
  "ethash",
  "ethbloom",
- "ethereum-types 0.11.0",
- "ethereum-types 0.12.1",
+ "ethereum-types",
  "keccak-hash",
  "keccak-hasher",
  "merkle-patricia-trie",
@@ -2767,21 +2753,6 @@ dependencies = [
 
 [[package]]
 name = "ethereum-types"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f64b5df66a228d85e4b17e5d6c6aa43b0310898ffe8a85988c4c032357aaabfd"
-dependencies = [
- "ethbloom",
- "fixed-hash",
- "impl-codec",
- "impl-rlp",
- "impl-serde",
- "primitive-types 0.9.1",
- "uint",
-]
-
-[[package]]
-name = "ethereum-types"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "05136f7057fe789f06e6d41d07b34e6f70d8c86e5693b60f97aaa6553553bdaf"
@@ -2791,7 +2762,7 @@ dependencies = [
  "impl-codec",
  "impl-rlp",
  "impl-serde",
- "primitive-types 0.10.1",
+ "primitive-types",
  "scale-info",
  "uint",
 ]
@@ -2815,7 +2786,7 @@ dependencies = [
  "evm-runtime",
  "log",
  "parity-scale-codec",
- "primitive-types 0.10.1",
+ "primitive-types",
  "rlp",
  "serde",
  "sha3 0.8.2",
@@ -2829,7 +2800,7 @@ checksum = "a7bfa2dae9a2c6c0172d83c37eb406bfabf6a9d1af17b7ab4958e89853ddae97"
 dependencies = [
  "funty",
  "parity-scale-codec",
- "primitive-types 0.10.1",
+ "primitive-types",
  "serde",
 ]
 
@@ -2842,7 +2813,7 @@ dependencies = [
  "environmental",
  "evm-core",
  "evm-runtime",
- "primitive-types 0.10.1",
+ "primitive-types",
 ]
 
 [[package]]
@@ -2853,7 +2824,7 @@ checksum = "3921ac8964cf13d12693392fef6686ef94470328ccd8eea384c6ff9ac0125b01"
 dependencies = [
  "environmental",
  "evm-core",
- "primitive-types 0.10.1",
+ "primitive-types",
  "sha3 0.8.2",
 ]
 
@@ -3236,7 +3207,7 @@ dependencies = [
  "dvm-ethereum",
  "ethereum",
  "ethereum-primitives",
- "ethereum-types 0.12.1",
+ "ethereum-types",
  "evm",
  "frame-benchmarking",
  "frame-support",
@@ -3540,9 +3511,9 @@ dependencies = [
 
 [[package]]
 name = "gloo-timers"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47204a46aaff920a1ea58b11d03dec6f704287d27561724a4631e450654a891f"
+checksum = "6f16c88aa13d2656ef20d1c042086b8767bbe2bdb62526894275a1b062161b2e"
 dependencies = [
  "futures-channel",
  "futures-core",
@@ -4315,7 +4286,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce2bd4c29270e724d3eaadf7bdc8700af4221fc0ed771b855eadcd1b98d52851"
 dependencies = [
- "primitive-types 0.10.1",
+ "primitive-types",
  "tiny-keccak",
 ]
 
@@ -5152,7 +5123,7 @@ version = "2.7.0"
 dependencies = [
  "array-bytes",
  "criterion",
- "ethereum-types 0.12.1",
+ "ethereum-types",
  "hashbrown",
  "hex",
  "keccak-hash",
@@ -5341,7 +5312,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "424f6e86263cd5294cbd7f1e95746b95aca0e0d66bff31e5a40d6baa87b4aa99"
 dependencies = [
  "proc-macro-crate 1.1.0",
- "proc-macro-error 1.0.4",
+ "proc-macro-error",
  "proc-macro2",
  "quote",
  "syn",
@@ -6400,7 +6371,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "parity-util-mem-derive",
  "parking_lot 0.11.2",
- "primitive-types 0.10.1",
+ "primitive-types",
  "smallvec 1.7.0",
  "winapi 0.3.9",
 ]
@@ -6782,19 +6753,6 @@ checksum = "ed0cfbc8191465bed66e1718596ee0b0b35d5ee1f41c5df2189d0fe8bde535ba"
 
 [[package]]
 name = "primitive-types"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06345ee39fbccfb06ab45f3a1a5798d9dafa04cb8921a76d227040003a234b0e"
-dependencies = [
- "fixed-hash",
- "impl-codec",
- "impl-rlp",
- "impl-serde",
- "uint",
-]
-
-[[package]]
-name = "primitive-types"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "05e4722c697a58a99d5d06a08c30821d7c082a4632198de1eaa5a6c22ef42373"
@@ -6828,40 +6786,14 @@ dependencies = [
 
 [[package]]
 name = "proc-macro-error"
-version = "0.4.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18f33027081eba0a6d8aba6d1b1c3a3be58cbb12106341c2d5759fcd9b5277e7"
-dependencies = [
- "proc-macro-error-attr 0.4.12",
- "proc-macro2",
- "quote",
- "syn",
- "version_check",
-]
-
-[[package]]
-name = "proc-macro-error"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "da25490ff9892aab3fcf7c36f08cfb902dd3e71ca0f9f9517bea02a73a5ce38c"
 dependencies = [
- "proc-macro-error-attr 1.0.4",
+ "proc-macro-error-attr",
  "proc-macro2",
  "quote",
  "syn",
- "version_check",
-]
-
-[[package]]
-name = "proc-macro-error-attr"
-version = "0.4.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a5b4b77fdb63c1eca72173d68d24501c54ab1269409f6b672c85deb18af69de"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
- "syn-mid",
  "version_check",
 ]
 
@@ -6878,9 +6810,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.32"
+version = "1.0.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba508cc11742c0dc5c1659771673afbab7a0efab23aa17e854cbab0837ed0b43"
+checksum = "fb37d2df5df740e582f28f8560cf425f52bb267d872fe58358eadb554909f07a"
 dependencies = [
  "unicode-xid",
 ]
@@ -9251,7 +9183,7 @@ dependencies = [
  "parity-scale-codec",
  "parity-util-mem",
  "parking_lot 0.11.2",
- "primitive-types 0.10.1",
+ "primitive-types",
  "rand 0.7.3",
  "regex",
  "schnorrkel",
@@ -9487,7 +9419,7 @@ source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.1
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
- "primitive-types 0.10.1",
+ "primitive-types",
  "sp-externalities",
  "sp-runtime-interface-proc-macro",
  "sp-std",
@@ -9782,7 +9714,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dcb5ae327f9cc13b68763b5749770cb9e048a99bd9dfdfa58d0cf05d5f64afe0"
 dependencies = [
  "heck",
- "proc-macro-error 1.0.4",
+ "proc-macro-error",
  "proc-macro2",
  "quote",
  "syn",
@@ -9961,17 +9893,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-xid",
-]
-
-[[package]]
-name = "syn-mid"
-version = "0.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "baa8e7560a164edb1621a55d18a0c59abf49d360f47aa7b821061dd7eea7fac9"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -10191,7 +10112,7 @@ dependencies = [
  "darwinia-relayer-game",
  "darwinia-staking",
  "darwinia-support",
- "ethabi 15.0.0",
+ "ethabi",
  "ethereum-primitives",
  "frame-election-provider-support",
  "frame-support",
@@ -10224,7 +10145,7 @@ dependencies = [
  "dp-contract",
  "dp-s2s",
  "ethereum-primitives",
- "ethereum-types 0.12.1",
+ "ethereum-types",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
