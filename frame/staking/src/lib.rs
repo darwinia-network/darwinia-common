@@ -307,7 +307,6 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{Currency, EstimateNextNewSession, OnUnbalanced, UnixTime},
-		weights::constants::{WEIGHT_PER_MICROS, WEIGHT_PER_NANOS},
 		PalletId,
 	};
 	use frame_system::{offchain::SendTransactionTypes, pallet_prelude::*};
@@ -1405,7 +1404,7 @@ pub mod pallet {
 		/// - Read: Ledger, [Origin Account]
 		/// - Write: [Origin Account], Ledger
 		/// # </weight>
-		#[pallet::weight(50 * WEIGHT_PER_MICROS + T::DbWeight::get().reads_writes(2, 2))]
+		#[pallet::weight(T::WeightInfo::claim_mature_deposits())]
 		pub fn claim_mature_deposits(origin: OriginFor<T>) -> DispatchResult {
 			let controller = ensure_signed(origin)?;
 			let (ledger, mutated) = Self::clear_mature_deposits(
@@ -1436,7 +1435,7 @@ pub mod pallet {
 		/// - Read: Ledger, Locks, [Origin Account]
 		/// - Write: [Origin Account], Locks, Ledger
 		/// # </weight>
-		#[pallet::weight(50 * WEIGHT_PER_MICROS + T::DbWeight::get().reads_writes(3, 2))]
+		#[pallet::weight(T::WeightInfo::try_claim_deposits_with_punish())]
 		pub fn try_claim_deposits_with_punish(
 			origin: OriginFor<T>,
 			expire_time: TsInMs,
@@ -1998,6 +1997,8 @@ pub mod pallet {
 
 			let origin_active_ring = ledger.active_ring;
 			let origin_active_kton = ledger.active_kton;
+			let initial_unbondings = ledger.ring_staking_lock.unbondings.len() as u32
+				+ ledger.kton_staking_lock.unbondings.len() as u32;
 
 			ledger.rebond(plan_to_rebond_ring, plan_to_rebond_kton);
 
@@ -2022,14 +2023,12 @@ pub mod pallet {
 				Self::deposit_event(Event::BondKton(rebond_kton));
 			}
 
-			Ok(Some(
-				35 * WEIGHT_PER_MICROS
-					+ 50 * WEIGHT_PER_NANOS
-						* (ledger.ring_staking_lock.unbondings.len() as Weight
-							+ ledger.kton_staking_lock.unbondings.len() as Weight)
-					+ T::DbWeight::get().reads_writes(3, 2),
-			)
-			.into())
+			let removed_unbondings = 1.saturating_add(initial_unbondings).saturating_sub(
+				ledger.ring_staking_lock.unbondings.len() as u32
+					+ ledger.kton_staking_lock.unbondings.len() as u32,
+			);
+
+			Ok(Some(T::WeightInfo::rebond(removed_unbondings)).into())
 		}
 
 		/// Set `HistoryDepth` value. This function will delete any history information
