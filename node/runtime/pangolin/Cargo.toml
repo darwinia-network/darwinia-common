@@ -58,6 +58,9 @@ from-substrate-issuing                  = { default-features = false, path = "..
 module-transaction-pause                = { default-features = false, path = "../../../frame/transaction-pause" }
 to-ethereum-backing                     = { default-features = false, path = "../../../frame/wormhole/backing/ethereum" }
 to-tron-backing                         = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
+# dvm tracing
+tracing-events = { optional = true, default-features = false, path = "../../../primitives/evm/tracing-events" }
+runtime-tracer = { optional = true, default-features = false, path = "../tracer" }
 # paritytech
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
 bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
@@ -228,6 +231,11 @@ std = [
 	"sp-std/std",
 	"sp-transaction-pool/std",
 	"sp-version/std",
+]
+
+evm-tracing = [
+	"tracing-events",
+	"runtime-tracer",
 ]
 
 runtime-benchmarks = [

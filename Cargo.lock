@@ -6217,6 +6217,7 @@ dependencies = [
  "pallet-treasury",
  "pallet-utility",
  "parity-scale-codec",
+ "runtime-tracer",
  "serde",
  "smallvec 1.7.0",
  "sp-api",
@@ -6239,6 +6240,7 @@ dependencies = [
  "substrate-wasm-builder",
  "to-ethereum-backing",
  "to-tron-backing",
+ "tracing-events",
 ]
 
 [[package]]
