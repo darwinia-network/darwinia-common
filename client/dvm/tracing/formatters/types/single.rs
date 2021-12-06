@@ -26,12 +26,12 @@ use codec::{Decode, Encode};
 use ethereum_types::{H256, U256};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
-// #[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, Serialize)]
-// #[serde(rename_all = "camelCase", untagged)]
-// pub enum Call {
-// 	Blockscout(dc_tracing_formatters::blockscout::BlockscoutCall),
-// 	CallTracer(dc_tracing_formatters::call_tracer::CallTracerCall),
-// }
+#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, Serialize)]
+#[serde(rename_all = "camelCase", untagged)]
+pub enum Call {
+	Blockscout(dc_tracing_formatters::blockscout::BlockscoutCall),
+	CallTracer(dc_tracing_formatters::call_tracer::CallTracerCall),
+}
 
 #[derive(Clone, Copy, Eq, PartialEq, Debug, Encode, Decode)]
 pub enum TraceType {
@@ -47,24 +47,24 @@ pub enum TraceType {
 	Block,
 }
 
-/// Single transaction trace.
-// #[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, Serialize)]
-// #[serde(rename_all = "camelCase", untagged)]
-// pub enum TransactionTrace {
-// 	/// Classical output of `debug_trace`.
-// 	#[serde(rename_all = "camelCase")]
-// 	Raw {
-// 		gas: U256,
-// 		#[serde(with = "hex")]
-// 		return_value: Vec<u8>,
-// 		step_logs: Vec<RawStepLog>,
-// 	},
-// 	/// Matches the formatter used by Blockscout.
-// 	/// Is also used to built output of OpenEthereum's `trace_filter`.
-// 	CallList(Vec<Call>),
-// 	/// Used by Geth's callTracer.
-// 	CallListNested(Call),
-// }
+Single transaction trace.
+#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, Serialize)]
+#[serde(rename_all = "camelCase", untagged)]
+pub enum TransactionTrace {
+	/// Classical output of `debug_trace`.
+	#[serde(rename_all = "camelCase")]
+	Raw {
+		gas: U256,
+		#[serde(with = "hex")]
+		return_value: Vec<u8>,
+		step_logs: Vec<RawStepLog>,
+	},
+	/// Matches the formatter used by Blockscout.
+	/// Is also used to built output of OpenEthereum's `trace_filter`.
+	CallList(Vec<Call>),
+	/// Used by Geth's callTracer.
+	CallListNested(Call),
+}
 
 #[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, Serialize)]
 #[serde(rename_all = "camelCase")]

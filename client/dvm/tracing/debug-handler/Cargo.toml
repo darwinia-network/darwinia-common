@@ -1,5 +1,5 @@
 [package]
-name = "dc-tracing-debug"
+name = "dc-tracing-debug-handler"
 version = '0.1.0'
 authors = ['PureStake']
 edition = '2018'
