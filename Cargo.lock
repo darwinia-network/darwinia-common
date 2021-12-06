@@ -1907,6 +1907,7 @@ dependencies = [
  "darwinia-balances",
  "darwinia-staking-rpc-runtime-api",
  "darwinia-support",
+ "frame-benchmarking",
  "frame-election-provider-support",
  "frame-support",
  "frame-system",
