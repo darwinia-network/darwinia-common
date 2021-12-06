@@ -19,7 +19,7 @@ serde_json  = { version = "1.0", optional = true }
 # darwinia-network
 darwinia-relay-primitives = { default-features = false, path = "../../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../../support" }
-ethabi                    = { default-features = false, git = "https://github.com/darwinia-network/ethabi", tag = "v13.0.0-no-std" }
+ethabi                    = { version = "15.0", default-features = false }
 ethereum-primitives       = { default-features = false, path = "../../../../primitives/ethereum" }
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
