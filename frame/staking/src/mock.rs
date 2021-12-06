@@ -25,7 +25,7 @@ use std::{cell::RefCell, collections::HashSet};
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
 // --- paritytech ---
-use frame_election_provider_support::onchain;
+use frame_election_provider_support::*;
 use frame_support::{
 	assert_ok, parameter_types,
 	storage::IterableStorageMap,
@@ -43,10 +43,7 @@ use sp_runtime::{
 	traits::{IdentityLookup, Zero},
 	Perbill, RuntimeDebug,
 };
-use sp_staking::{
-	offence::{OffenceDetails, OnOffenceHandler},
-	SessionIndex,
-};
+use sp_staking::{offence::*, *};
 // --- darwinia-network ---
 use crate::{self as darwinia_staking, *};
 
