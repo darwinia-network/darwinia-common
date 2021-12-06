@@ -58,6 +58,7 @@ impl Sub2SubMappingTokenFactory {
 			},
 		];
 
+		#[allow(deprecated)]
 		Function {
 			name: "confirmBurnAndRemoteUnlock".into(),
 			inputs,

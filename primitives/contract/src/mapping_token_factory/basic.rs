@@ -56,6 +56,7 @@ impl BasicMappingTokenFactory {
 			internal_type: Some("address".into()),
 		}];
 
+		#[allow(deprecated)]
 		Function {
 			name: "mappingToken".into(),
 			inputs,
@@ -120,6 +121,7 @@ impl BasicMappingTokenFactory {
 			internal_type: Some("address".into()),
 		}];
 
+		#[allow(deprecated)]
 		Function {
 			name: "newErc20Contract".into(),
 			inputs,
@@ -164,6 +166,7 @@ impl BasicMappingTokenFactory {
 			},
 		];
 
+		#[allow(deprecated)]
 		Function {
 			name: "issueMappingToken".into(),
 			inputs,
