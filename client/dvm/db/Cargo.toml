@@ -13,7 +13,7 @@ version     = "2.7.0"
 # crates.io
 codec        = { package = "parity-scale-codec", version = "2.1", features = ["derive"] }
 kvdb         = { version = "0.10" }
-kvdb-rocksdb = { version = "0.12" }
+kvdb-rocksdb = { version = "0.14" }
 parking_lot  = { version = "0.11" }
 # paritytech
 sp-core     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }

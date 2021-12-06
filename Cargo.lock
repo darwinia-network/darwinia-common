@@ -2024,7 +2024,7 @@ dependencies = [
  "dp-storage",
  "dvm-ethereum",
  "kvdb",
- "kvdb-rocksdb",
+ "kvdb-rocksdb 0.14.0",
  "parity-scale-codec",
  "parking_lot 0.11.2",
  "sp-core",
@@ -4372,6 +4372,24 @@ name = "kvdb-rocksdb"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d169dbb316aa0fa185d02d847c047f1aa20e292cf1563d790c13536a2a732c8"
+dependencies = [
+ "fs-swap",
+ "kvdb",
+ "log",
+ "num_cpus",
+ "owning_ref",
+ "parity-util-mem",
+ "parking_lot 0.11.2",
+ "regex",
+ "rocksdb",
+ "smallvec 1.7.0",
+]
+
+[[package]]
+name = "kvdb-rocksdb"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b1b6ea8f2536f504b645ad78419c8246550e19d2c3419a167080ce08edee35a"
 dependencies = [
  "fs-swap",
  "kvdb",
@@ -7707,7 +7725,7 @@ dependencies = [
  "hash-db",
  "kvdb",
  "kvdb-memorydb",
- "kvdb-rocksdb",
+ "kvdb-rocksdb 0.12.1",
  "linked-hash-map",
  "log",
  "parity-db",
