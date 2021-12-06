@@ -24,6 +24,7 @@ use sp_runtime::{
 	generic::{Digest, OpaqueDigestItemId},
 	ConsensusEngineId,
 };
+use ethereum::LegacyTransaction;
 use sp_std::vec::Vec;
 
 pub const FRONTIER_ENGINE_ID: ConsensusEngineId = [b'f', b'r', b'o', b'n'];
@@ -47,7 +48,7 @@ impl Log {
 #[derive(Decode, Encode, Clone, PartialEq, Eq)]
 pub enum PreLog {
 	#[codec(index = 3)]
-	Block(ethereum::Block),
+	Block(ethereum::Block<LegacyTransaction>),
 }
 
 #[derive(Decode, Encode, Clone, PartialEq, Eq)]
@@ -55,7 +56,7 @@ pub enum PostLog {
 	#[codec(index = 1)]
 	Hashes(Hashes),
 	#[codec(index = 2)]
-	Block(ethereum::Block),
+	Block(ethereum::Block<LegacyTransaction>),
 }
 
 #[derive(Decode, Encode, Clone, PartialEq, Eq)]
@@ -67,7 +68,7 @@ pub struct Hashes {
 }
 
 impl Hashes {
-	pub fn from_block(block: ethereum::Block) -> Self {
+	pub fn from_block(block: ethereum::Block<LegacyTransaction>) -> Self {
 		let mut transaction_hashes = Vec::new();
 
 		for t in &block.transactions {

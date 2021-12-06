@@ -1715,7 +1715,7 @@ dependencies = [
  "darwinia-evm",
  "darwinia-support",
  "dp-evm",
- "ethabi",
+ "ethabi 13.0.0",
  "ethereum-types 0.11.0",
  "evm",
  "frame-support",
@@ -2188,7 +2188,7 @@ dependencies = [
 name = "dp-consensus"
 version = "2.7.0"
 dependencies = [
- "ethereum 0.7.1",
+ "ethereum 0.10.0",
  "parity-scale-codec",
  "rlp",
  "sha3 0.9.1",
@@ -2204,9 +2204,9 @@ dependencies = [
  "array-bytes",
  "bp-messages",
  "dp-asset",
- "ethabi",
+ "ethabi 15.0.0",
  "ethereum-primitives",
- "ethereum-types 0.11.0",
+ "ethereum-types 0.12.1",
  "sp-std",
 ]
 
@@ -2449,7 +2449,7 @@ dependencies = [
  "dp-evm",
  "dp-storage",
  "dvm-rpc-runtime-api",
- "ethabi",
+ "ethabi 13.0.0",
  "ethereum 0.7.1",
  "ethereum-types 0.11.0",
  "evm",
@@ -2683,12 +2683,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "ethabi"
+version = "15.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f76ef192b63e8a44b3d08832acebbb984c3fba154b5c26f70037c860202a0d4b"
+dependencies = [
+ "anyhow",
+ "ethereum-types 0.12.1",
+ "hex",
+ "sha3 0.9.1",
+ "thiserror",
+ "uint",
+]
+
+[[package]]
 name = "ethash"
-version = "0.4.0"
-source = "git+https://github.com/darwinia-network/rust-ethash?tag=v0.4.0#e5d6d4c490ac710d793db4f8c1c1bdbb2bfbb164"
+version = "0.4.1"
+source = "git+https://github.com/darwinia-network/rust-ethash?tag=v0.4.1#a5af50ac7edd05f79d12468400b3a03d7d58ee7e"
 dependencies = [
  "byteorder",
- "ethereum-types 0.11.0",
+ "ethereum-types 0.12.1",
  "rlp",
  "sha3 0.9.1",
 ]
@@ -10175,7 +10189,7 @@ dependencies = [
  "darwinia-relayer-game",
  "darwinia-staking",
  "darwinia-support",
- "ethabi",
+ "ethabi 13.0.0",
  "ethereum-primitives",
  "frame-election-provider-support",
  "frame-support",
