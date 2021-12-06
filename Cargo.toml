@@ -63,6 +63,7 @@ members = [
 	"primitives/contract",
 	"primitives/ethereum",
 	"primitives/evm",
+	"primitives/evm/tracing-apis",
 	"primitives/evm/tracing-events",
 	"primitives/evm/tracing-ext",
 	"primitives/fee-market",
