@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
+// TODO: update the licenses
+
 //! Environmental-aware externalities for EVM tracing in Wasm runtime. This enables
 //! capturing the - potentially large - trace output data in the host and keep
 //! a low memory footprint in `--execution=wasm`.
@@ -30,6 +32,7 @@ use sp_std::vec::Vec;
 
 use tracing_events::{Event, EvmEvent, GasometerEvent, RuntimeEvent};
 
+// TODO: update host functions in the node
 #[runtime_interface]
 pub trait DvmExt {
 	fn raw_step(&mut self, _data: Vec<u8>) {}
