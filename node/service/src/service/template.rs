@@ -233,7 +233,7 @@ pub fn new_full(
 			import_queue,
 			on_demand: None,
 			block_announce_validator_builder: None,
-			// warp_sync,
+			warp_sync: None,
 		})?;
 
 	// Channel for the rpc handler to communicate with the authorship task.
