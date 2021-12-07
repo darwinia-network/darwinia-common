@@ -654,7 +654,7 @@ sp_api::impl_runtime_apis! {
 			Ethereum::current_transaction_statuses()
 		}
 
-		fn current_block() -> Option<dvm_ethereum::EthereumBlock::<dvm_ethereum::LegacyTransaction>> {
+		fn current_block() -> Option<dvm_ethereum::EthereumBlockV0> {
 			Ethereum::current_block()
 		}
 
@@ -663,7 +663,7 @@ sp_api::impl_runtime_apis! {
 		}
 
 		fn current_all() -> (
-			Option<dvm_ethereum::EthereumBlock::<dvm_ethereum::LegacyTransaction>>,
+			Option<dvm_ethereum::EthereumBlockV0>,
 			Option<Vec<dvm_ethereum::EthereumReceipt>>,
 			Option<Vec<dvm_rpc_runtime_api::TransactionStatus>>
 		) {

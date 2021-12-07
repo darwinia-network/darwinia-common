@@ -29,8 +29,8 @@ pub mod account_basic;
 use dvm_rpc_runtime_api::TransactionStatus;
 #[doc(no_inline)]
 pub use ethereum::{
-	Block as EthereumBlock, LegacyTransaction, LegacyTransactionMessage, Log,
-	Receipt as EthereumReceipt, TransactionAction, TransactionSignature, TransactionV0,
+	BlockV0 as EthereumBlockV0, LegacyTransactionMessage, Log, Receipt as EthereumReceipt,
+	TransactionAction, TransactionSignature, TransactionV0,
 };
 
 #[cfg(all(feature = "std", test))]
@@ -279,7 +279,7 @@ pub mod pallet {
 
 	/// The current Ethereum block.
 	#[pallet::storage]
-	pub(super) type CurrentBlock<T: Config> = StorageValue<_, EthereumBlock<LegacyTransaction>>;
+	pub(super) type CurrentBlock<T: Config> = StorageValue<_, EthereumBlockV0>;
 
 	/// The current Ethereum receipts.
 	#[pallet::storage]
@@ -431,7 +431,7 @@ impl<T: Config> Pallet<T> {
 		CurrentTransactionStatuses::<T>::get()
 	}
 	/// Get current block.
-	pub fn current_block() -> Option<EthereumBlock<LegacyTransaction>> {
+	pub fn current_block() -> Option<EthereumBlockV0> {
 		CurrentBlock::<T>::get()
 	}
 
@@ -535,7 +535,7 @@ impl<T: Config> Pallet<T> {
 			mix_hash: H256::default(),
 			nonce: H64::default(),
 		};
-		let block = EthereumBlock::new(partial_header, transactions, ommers);
+		let block = EthereumBlockV0::new(partial_header, transactions, ommers);
 
 		CurrentBlock::<T>::put(block.clone());
 		CurrentReceipts::<T>::put(receipts);

@@ -18,7 +18,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use ethereum::LegacyTransaction;
 use sha3::{Digest as Sha3Digest, Keccak256};
 use sp_core::H256;
 use sp_runtime::{
@@ -48,7 +47,7 @@ impl Log {
 #[derive(Decode, Encode, Clone, PartialEq, Eq)]
 pub enum PreLog {
 	#[codec(index = 3)]
-	Block(ethereum::Block<LegacyTransaction>),
+	Block(ethereum::BlockV0),
 }
 
 #[derive(Decode, Encode, Clone, PartialEq, Eq)]
@@ -56,7 +55,7 @@ pub enum PostLog {
 	#[codec(index = 1)]
 	Hashes(Hashes),
 	#[codec(index = 2)]
-	Block(ethereum::Block<LegacyTransaction>),
+	Block(ethereum::BlockV0),
 }
 
 #[derive(Decode, Encode, Clone, PartialEq, Eq)]
@@ -68,7 +67,7 @@ pub struct Hashes {
 }
 
 impl Hashes {
-	pub fn from_block(block: ethereum::Block<LegacyTransaction>) -> Self {
+	pub fn from_block(block: ethereum::BlockV0) -> Self {
 		let mut transaction_hashes = Vec::new();
 
 		for t in &block.transactions {

@@ -49,8 +49,7 @@ use sp_storage::{StorageData, StorageKey};
 // --- std ---
 use codec::{self, Decode, Encode};
 use ethereum::{
-	Block as EthereumBlock, LegacyTransaction, LegacyTransactionMessage, TransactionAction,
-	TransactionV0,
+	BlockV0 as EthereumBlockV0, LegacyTransactionMessage, TransactionAction, TransactionV0,
 };
 use ethereum_types::{H160, H256, H512, H64, U256, U64};
 use futures::{future::TryFutureExt, StreamExt};
@@ -117,7 +116,7 @@ where
 }
 
 fn rich_block_build(
-	block: EthereumBlock<LegacyTransaction>,
+	block: EthereumBlockV0,
 	statuses: Vec<Option<TransactionStatus>>,
 	hash: Option<H256>,
 	full_transactions: bool,
@@ -186,7 +185,7 @@ fn rich_block_build(
 
 fn transaction_build(
 	transaction: TransactionV0,
-	block: Option<EthereumBlock<LegacyTransaction>>,
+	block: Option<EthereumBlockV0>,
 	status: Option<TransactionStatus>,
 ) -> Transaction {
 	let pubkey = match public_key(&transaction) {
@@ -358,7 +357,7 @@ where
 fn filter_block_logs<'a>(
 	ret: &'a mut Vec<Log>,
 	filter: &'a Filter,
-	block: EthereumBlock<LegacyTransaction>,
+	block: EthereumBlockV0,
 	transaction_statuses: Vec<TransactionStatus>,
 ) -> &'a Vec<Log> {
 	let params = FilteredParams::new(Some(filter.clone()));
