@@ -17,6 +17,9 @@ futures     = { version = "0.3" }
 rand        = { version = "0.8" }
 serde       = { version = "1.0" }
 serde_json  = { version = "1.0" }
+tokio = { version = "0.2.21", features = [ "macros", "sync" ] }
+jsonrpc-core = "15.0.0"
+jsonrpc-pubsub = "15.0.0"
 # darwinia-network
 darwinia-balances-rpc-runtime-api   = { path = "../../frame/balances/rpc/runtime-api" }
 darwinia-bridge-ethereum            = { path = "../../frame/bridge/ethereum" }
@@ -35,6 +38,12 @@ drml-rpc                            = { path = "../rpc" }
 dvm-rpc-runtime-api                 = { path = "../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
 pangoro-runtime                     = { path = "../runtime/pangoro" }
+# trace
+dc-tracing-debug-handler = { default-features = false, path = "../../client/dvm/evm-tracing/rpc/debug" }
+dc-tracing-trace-handler = { default-features = false, path = "../../client/dvm/evm-tracing/rpc/trace" }
+dc-tracing-rpc-core-debug = { default-features = false, path = "../../client/dvm/evm-tracing/rpc-core/debug" }
+tracing-apis = { default-features = false, path = "../../primitives/evm/tracing-apis" }
+
 # paritytech
 frame-benchmarking                         = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
@@ -45,6 +54,7 @@ sc-basic-authorship                        = { git = "https://github.com/darwini
 sc-chain-spec                              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-client-api                              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-consensus                               = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sc-rpc                               = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-consensus-babe                          = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-consensus-slots                         = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-consensus-uncles                        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
@@ -74,7 +84,7 @@ sp-trie                                    = { git = "https://github.com/darwini
 substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 # template
 async-trait              = { version = "0.1", optional = true }
-log                      = { version = "0.4", optional = true }
+log                      = { version = "0.4" }
 sc-consensus-aura        = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-consensus-manual-seal = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-consensus-aura        = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
@@ -95,7 +105,6 @@ full-node = []
 template = [
 	"drml-rpc/template",
 	"async-trait",
-	"log",
 	"sc-consensus-aura",
 	"sc-consensus-manual-seal",
 	"sp-consensus-aura",

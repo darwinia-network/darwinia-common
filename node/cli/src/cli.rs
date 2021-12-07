@@ -176,10 +176,22 @@ impl Default for Sealing {
 #[derive(Debug, PartialEq, Clone)]
 pub enum EthApi {
 	// TODO: do we need all of them?
+	// todo: rename it to ethapicmd
 	Txpool,
 	Debug,
 	Trace,
 }
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct RpcConfig {
+	pub ethapi: Vec<EthApi>,
+	pub ethapi_max_permits: u32,
+	pub ethapi_trace_max_count: u32,
+	pub ethapi_trace_cache_duration: u64,
+	pub eth_log_block_cache: usize,
+	pub max_past_logs: u32,
+}
+
 
 impl FromStr for EthApi {
 	type Err = String;

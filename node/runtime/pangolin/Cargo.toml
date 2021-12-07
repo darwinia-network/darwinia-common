@@ -62,6 +62,11 @@ to-tron-backing                         = { default-features = false, path = "..
 tracing-apis   = { default-features = false, path = "../../../primitives/evm/tracing-apis" }
 tracing-events = { optional = true, default-features = false, path = "../../../primitives/evm/tracing-events" }
 runtime-tracer = { optional = true, default-features = false, path = "../tracer" }
+# dc-tracing-debug-handler = { optional = true, default-features = false, path = "../../../client/dvm/evm-tracing/rpc/debug" }
+# dc-tracing-trace-handler = { optional = true, default-features = false, path = "../../../client/dvm/evm-tracing/rpc/trace" }
+# dc-tracing-rpc-core-debug = { optional = true, default-features = false, path = "../../../client/dvm/evm-tracing/rpc-core/debug" }
+
+
 # paritytech
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }
 bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }

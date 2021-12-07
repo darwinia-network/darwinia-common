@@ -687,7 +687,7 @@ sp_api::impl_runtime_apis! {
 	impl tracing_apis::DebugRuntimeApi<Block> for Runtime {
 		fn trace_transaction(
 			extrinsics: Vec<<Block as BlockT>::Extrinsic>,
-			traced_transaction: &dvm_ethereum::Transaction,
+			traced_transaction: &dvm_ethereum::TransactionV0,
 		) -> Result<
 			(),
 			sp_runtime::DispatchError,
@@ -695,7 +695,7 @@ sp_api::impl_runtime_apis! {
 			log::debug!("bear: --- enter Api(trace_transaction), traced_transaction {:?}", traced_transaction);
 			#[cfg(feature = "evm-tracing")]
 			{
-				use moonbeam_evm_tracer::tracer::EvmTracer;
+				use runtime_tracer::tracer::EvmTracer;
 				// Apply the a subset of extrinsics: all the substrate-specific or ethereum
 				// transactions that preceded the requested transaction.
 				for ext in extrinsics.into_iter() {
@@ -731,7 +731,7 @@ sp_api::impl_runtime_apis! {
 		> {
 			#[cfg(feature = "evm-tracing")]
 			{
-				use moonbeam_evm_tracer::tracer::EvmTracer;
+				use runtime_tracer::tracer::EvmTracer;
 				use sha3::{Digest, Keccak256};
 
 				let mut config = <Runtime as pallet_evm::Config>::config().clone();

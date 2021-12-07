@@ -44,6 +44,8 @@ pub use pangolin::Executor as PangolinExecutor;
 pub mod pangoro;
 pub use pangoro::Executor as PangoroExecutor;
 
+pub mod tracing;
+
 #[cfg(feature = "template")]
 pub mod template;
 #[cfg(feature = "template")]

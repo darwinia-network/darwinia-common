@@ -2170,6 +2170,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "dc-tracing-trace-handler"
+version = "0.6.0"
+dependencies = [
+ "dc-rpc",
+ "dc-tracer",
+ "dc-tracing-rpc-core-trace",
+ "dc-tracing-rpc-core-types",
+ "dvm-rpc-runtime-api",
+ "ethereum",
+ "ethereum-types 0.12.1",
+ "futures 0.3.18",
+ "jsonrpc-core",
+ "sc-client-api",
+ "sc-network",
+ "serde",
+ "sha3 0.9.1",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 4.0.0-dev",
+ "sp-transaction-pool",
+ "sp-utils",
+ "tokio 0.2.25",
+ "tracing",
+ "tracing-apis",
+]
+
+[[package]]
 name = "derive_more"
 version = "0.99.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2450,6 +2480,9 @@ dependencies = [
  "dc-db",
  "dc-mapping-sync",
  "dc-rpc",
+ "dc-tracing-debug-handler",
+ "dc-tracing-rpc-core-debug",
+ "dc-tracing-trace-handler",
  "dp-rpc",
  "drml-common-primitives",
  "drml-rpc",
@@ -2457,6 +2490,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-system-rpc-runtime-api",
  "futures 0.3.18",
+ "jsonrpc-core",
+ "jsonrpc-pubsub",
  "log",
  "pallet-im-online",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -2478,6 +2513,7 @@ dependencies = [
  "sc-finality-grandpa",
  "sc-keystore",
  "sc-network",
+ "sc-rpc",
  "sc-service",
  "sc-sync-state-rpc",
  "sc-telemetry",
@@ -2503,6 +2539,8 @@ dependencies = [
  "sp-trie",
  "substrate-prometheus-endpoint",
  "template-runtime",
+ "tokio 0.2.25",
+ "tracing-apis",
 ]
 
 [[package]]
@@ -5366,36 +5404,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "moonbeam-rpc-trace"
-version = "0.6.0"
-dependencies = [
- "dc-rpc",
- "dc-tracer",
- "dc-tracing-rpc-core-trace",
- "dc-tracing-rpc-core-types",
- "dvm-rpc-runtime-api",
- "ethereum",
- "ethereum-types 0.12.1",
- "futures 0.3.18",
- "jsonrpc-core",
- "sc-client-api",
- "sc-network",
- "serde",
- "sha3 0.9.1",
- "sp-api",
- "sp-block-builder",
- "sp-blockchain",
- "sp-io",
- "sp-runtime",
- "sp-std 4.0.0-dev",
- "sp-transaction-pool",
- "sp-utils",
- "tokio 0.2.25",
- "tracing",
- "tracing-apis",
-]
-
-[[package]]
 name = "more-asserts"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6301,6 +6309,7 @@ dependencies = [
  "pallet-treasury",
  "pallet-utility",
  "parity-scale-codec",
+ "runtime-tracer",
  "serde",
  "smallvec 1.7.0",
  "sp-api",
@@ -6323,6 +6332,8 @@ dependencies = [
  "substrate-wasm-builder",
  "to-ethereum-backing",
  "to-tron-backing",
+ "tracing-apis",
+ "tracing-events",
 ]
 
 [[package]]
