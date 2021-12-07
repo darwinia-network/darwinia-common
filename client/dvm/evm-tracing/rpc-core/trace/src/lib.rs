@@ -17,7 +17,7 @@
 use dc_tracer::types::block::TransactionTrace;
 use dc_tracing_rpc_core_types::RequestBlockId;
 use ethereum_types::H160;
-use futures::future::BoxFuture;
+use futures::{compat::Compat, future::BoxFuture};
 use jsonrpc_derive::rpc;
 use serde::Deserialize;
 
@@ -29,7 +29,7 @@ pub trait Trace {
 	fn filter(
 		&self,
 		filter: FilterRequest,
-	) -> BoxFuture<'static, jsonrpc_core::Result<Vec<TransactionTrace>>>;
+	) -> Compat<BoxFuture<'static, jsonrpc_core::Result<Vec<TransactionTrace>>>>;
 }
 
 #[derive(Clone, Eq, PartialEq, Debug, Deserialize)]

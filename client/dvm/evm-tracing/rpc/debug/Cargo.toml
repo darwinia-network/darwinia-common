@@ -9,7 +9,7 @@ repository = 'https://github.com/PureStake/moonbeam/'
 
 [dependencies]
 # crates.io
-tokio          = { version = "1.10", features = ["sync", "time"] }
+tokio          = { version = "0.2.21", features = ["sync", "time"] }
 futures        = { version = "0.3", features = ["compat"] }
 jsonrpc-core   = "15.0.1"
 log            = '0.4'
@@ -26,18 +26,9 @@ sp-runtime       = { git = "https://github.com/darwinia-network/substrate", bran
 sp-utils         = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 # darwinia-network
 dc-db  = { path = "../../../db" }
-dc-rpc = { path = "../../../rpc" }
+dc-rpc = { path = "../../../rpc", features = ["rpc_binary_search_estimate"] }
 tracing-apis = { path = "../../../../../primitives/evm/tracing-apis/" }
 dc-tracing-rpc-core-debug = { path = "../../rpc-core/debug" }
 dc-tracing-rpc-core-types = { path = "../../rpc-core/types" }
 dc-tracer = { path = "../../tracer" }
 dvm-rpc-runtime-api = { path = "../../../../../frame/dvm/rpc/runtime-api" }
-# moonbeam-rpc-primitives-debug = { path = "../../../primitives/rpc/debug" }
-# fc-consensus = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.12" }
-# dc-db = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.12" }
-# fp-rpc = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.12" }
-
-
-
-
-# dc-rpc = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.12", features = ["rpc_binary_search_estimate"] }

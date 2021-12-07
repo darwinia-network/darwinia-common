@@ -14,7 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 pub use dc_tracing_rpc_core_debug::{Debug as DebugT, DebugServer, TraceParams};
-use futures::{future::BoxFuture, FutureExt, SinkExt, StreamExt};
+use futures::{
+	compat::Compat,
+	future::{BoxFuture, TryFutureExt},
+	FutureExt, SinkExt, StreamExt,
+};
 use jsonrpc_core::Result as RpcResult;
 
 use tokio::{
@@ -69,7 +73,7 @@ impl DebugT for Debug {
 		&self,
 		transaction_hash: H256,
 		params: Option<TraceParams>,
-	) -> BoxFuture<'static, RpcResult<single::TransactionTrace>> {
+	) -> Compat<BoxFuture<'static, RpcResult<single::TransactionTrace>>> {
 		let mut requester = self.requester.clone();
 
 		async move {
@@ -96,13 +100,14 @@ impl DebugT for Debug {
 				})
 		}
 		.boxed()
+		.compat()
 	}
 
 	fn trace_block(
 		&self,
 		id: RequestBlockId,
 		params: Option<TraceParams>,
-	) -> BoxFuture<'static, RpcResult<Vec<single::TransactionTrace>>> {
+	) -> Compat<BoxFuture<'static, RpcResult<Vec<single::TransactionTrace>>>> {
 		let mut requester = self.requester.clone();
 
 		println!("---> Enter {:?}", id);
@@ -131,6 +136,7 @@ impl DebugT for Debug {
 				})
 		}
 		.boxed()
+		.compat()
 	}
 }
 
@@ -418,7 +424,6 @@ where
 			client.as_ref(),
 			frontier_backend.as_ref(),
 			transaction_hash,
-			false,
 		) {
 			Ok(Some((hash, index))) => (hash, index as usize),
 			Ok(None) => return Err(internal_err("Transaction hash not found".to_string())),

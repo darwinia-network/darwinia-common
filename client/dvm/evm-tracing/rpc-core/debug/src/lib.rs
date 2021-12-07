@@ -16,7 +16,7 @@
 use dc_tracer::types::single;
 use dc_tracing_rpc_core_types::RequestBlockId;
 use ethereum_types::H256;
-use futures::future::BoxFuture;
+use futures::{compat::Compat, future::BoxFuture};
 use jsonrpc_core::Result as RpcResult;
 use jsonrpc_derive::rpc;
 use serde::Deserialize;
@@ -41,11 +41,11 @@ pub trait Debug {
 		&self,
 		transaction_hash: H256,
 		params: Option<TraceParams>,
-	) -> BoxFuture<'static, RpcResult<single::TransactionTrace>>;
+	) -> Compat<BoxFuture<'static, RpcResult<single::TransactionTrace>>>;
 	#[rpc(name = "debug_traceBlockByNumber", alias("debug_traceBlockByHash"))]
 	fn trace_block(
 		&self,
 		id: RequestBlockId,
 		params: Option<TraceParams>,
-	) -> BoxFuture<'static, RpcResult<Vec<single::TransactionTrace>>>;
+	) -> Compat<BoxFuture<'static, RpcResult<Vec<single::TransactionTrace>>>>;
 }
