@@ -15,7 +15,7 @@ array-bytes = { version = "1.4" }
 codec       = { package = "parity-scale-codec", version = "2.1" }
 futures     = { version = "0.3" }
 rand        = { version = "0.8" }
-serde       = { version = "1.0" }
+serde       = { version = "1.0", features = ["derive"] }
 serde_json  = { version = "1.0" }
 # darwinia-network
 darwinia-balances-rpc-runtime-api   = { path = "../../frame/balances/rpc/runtime-api" }
