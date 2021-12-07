@@ -59,9 +59,9 @@ module-transaction-pause                = { default-features = false, path = "..
 to-ethereum-backing                     = { default-features = false, path = "../../../frame/wormhole/backing/ethereum" }
 to-tron-backing                         = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
 # dvm tracing
-# tracing-apis   = { default-features = false, path = "../../../primitives/evm/tracing-apis" }
-# tracing-events = { optional = true, default-features = false, path = "../../../primitives/evm/tracing-events" }
-# runtime-tracer = { optional = true, default-features = false, path = "../tracer" }
+tracing-apis   = { default-features = false, path = "../../../primitives/evm/tracing-apis" }
+tracing-events = { optional = true, default-features = false, path = "../../../primitives/evm/tracing-events" }
+runtime-tracer = { optional = true, default-features = false, path = "../tracer" }
 # paritytech
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }
 bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }
@@ -233,8 +233,8 @@ std = [
 ]
 
 evm-tracing = [
-	# "tracing-events",
-	# "runtime-tracer",
+	"tracing-events",
+	"runtime-tracer",
 ]
 
 runtime-benchmarks = [
