@@ -1,5 +1,5 @@
 [package]
-name = "dc-tracing-tracer"
+name = "dc-tracer"
 version = '0.1.0'
 authors = ['PureStake']
 edition = '2018'
