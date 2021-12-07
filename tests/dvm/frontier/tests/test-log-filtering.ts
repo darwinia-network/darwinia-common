@@ -62,7 +62,7 @@ describeWithFrontier("Frontier RPC (Log filtering)", (context) => {
 
 	step("EthFilterApi::getFilterLogs - should filter out non-matching cases.", async function () {
 		let tx = await sendTransaction(context);
-		await createAndFinalizeBlock(context.web3);
+		await createAndFinalizeBlock(context.web3, false);
 		let receipt = await context.web3.eth.getTransactionReceipt(tx.transactionHash);
 
 		const non_matching_cases = getNonMatchingCases(receipt);
