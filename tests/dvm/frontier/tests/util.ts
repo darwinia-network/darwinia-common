@@ -16,6 +16,7 @@ export const SPAWNING_TIME = 30000;
 
 export async function customRequest(web3: Web3, method: string, params: any[]) {
 	const provider = new ethers.providers.JsonRpcProvider(`http://127.0.0.1:${RPC_PORT}`);
+
 	return provider.send(method, params);
 }
 
