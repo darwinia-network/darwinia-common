@@ -14,10 +14,10 @@ tracing-events = { path = "../../../primitives/evm/tracing-events", default-feat
 tracing-ext    = { path = "../../../primitives/evm/tracing-ext", default-features = false }
 # paritytech
 codec      = { package = "parity-scale-codec", version = "2.2", default-features = false }
-sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 # crate.io
 ethereum-types = { version = "0.11.0", default-features = false }
 evm            = { git = "https://github.com/darwinia-network/evm", branch = "darwinia", default-features = false, features = [ "with-codec" ] }

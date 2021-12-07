@@ -12,17 +12,16 @@ repository = 'https://github.com/PureStake/moonbeam/'
 ethereum       = { version = "0.9.0", default-features = false, features = ["with-codec"] }
 ethereum-types = { version = "0.12.0", default-features = false }
 environmental  = { version = "1.1.2", default-features = false }
-serde = { version = "1.0", features = ["derive"], optional = true }
-serde_json = { version = "1.0", optional = true }
-hex = { version = "0.4", features = ["serde"], optional = true}
-# darwinia-network
+serde          = { version = "1.0", features = ["derive"], optional = true }
+serde_json     = { version = "1.0", optional = true }
+hex            = { version = "0.4", features = ["serde"], optional = true}
 # paritytech
-codec = { package = "parity-scale-codec", version = "2.2", default-features = false }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-io = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-api = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-core= { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+codec      = { package = "parity-scale-codec", version = "2.2", default-features = false }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 
 
 [features]

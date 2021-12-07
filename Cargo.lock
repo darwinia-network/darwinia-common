@@ -701,7 +701,7 @@ dependencies = [
  "hash-db",
  "parity-scale-codec",
  "plain_hasher",
- "primitive-types 0.9.1",
+ "primitive-types 0.10.1",
  "rlp",
  "serde",
  "serde_json",
@@ -1431,7 +1431,7 @@ name = "darwinia-balances-rpc"
 version = "2.7.0"
 dependencies = [
  "darwinia-balances-rpc-runtime-api",
- "jsonrpc-core 15.1.0",
+ "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "parity-scale-codec",
@@ -1480,7 +1480,7 @@ dependencies = [
  "darwinia-relayer-game",
  "darwinia-support",
  "ethereum-primitives",
- "ethereum-types 0.11.0",
+ "ethereum-types 0.12.1",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -1569,7 +1569,7 @@ dependencies = [
  "log",
  "pallet-timestamp",
  "parity-scale-codec",
- "primitive-types 0.9.1",
+ "primitive-types 0.10.1",
  "rlp",
  "serde",
  "sha3 0.9.1",
@@ -1716,11 +1716,7 @@ dependencies = [
  "darwinia-support",
  "dp-evm",
  "ethabi",
-<<<<<<< HEAD
- "ethereum-types 0.11.0",
-=======
- "ethereum-types",
->>>>>>> master
+ "ethereum-types 0.12.1",
  "evm",
  "frame-support",
  "frame-system",
@@ -1785,7 +1781,7 @@ name = "darwinia-fee-market-rpc"
 version = "2.7.0"
 dependencies = [
  "darwinia-fee-market-rpc-runtime-api",
- "jsonrpc-core 15.1.0",
+ "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "parity-scale-codec",
@@ -1833,7 +1829,7 @@ name = "darwinia-header-mmr-rpc"
 version = "2.7.0"
 dependencies = [
  "darwinia-header-mmr-rpc-runtime-api",
- "jsonrpc-core 15.1.0",
+ "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "parity-scale-codec",
@@ -1939,7 +1935,7 @@ name = "darwinia-staking-rpc"
 version = "2.7.0"
 dependencies = [
  "darwinia-staking-rpc-runtime-api",
- "jsonrpc-core 15.1.0",
+ "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "parity-scale-codec",
@@ -1965,7 +1961,7 @@ version = "2.7.0"
 dependencies = [
  "bp-messages",
  "bp-runtime",
- "ethereum 0.7.1",
+ "ethereum 0.9.0",
  "ethereum-primitives",
  "frame-support",
  "frame-system",
@@ -2065,19 +2061,11 @@ dependencies = [
  "dvm-ethereum",
  "dvm-rpc-core",
  "dvm-rpc-runtime-api",
-<<<<<<< HEAD
- "ethereum 0.7.1",
- "ethereum-types 0.11.0",
- "evm",
- "futures 0.3.17",
- "jsonrpc-core 15.1.0",
-=======
- "ethereum",
- "ethereum-types",
+ "ethereum 0.9.0",
+ "ethereum-types 0.12.1",
  "evm",
  "futures 0.3.18",
  "jsonrpc-core",
->>>>>>> master
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
@@ -2097,44 +2085,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-storage",
-]
-
-[[package]]
-name = "dc-tracing-debug-handler"
-version = "0.1.0"
-dependencies = [
- "dc-db",
- "dc-rpc",
- "ethereum 0.9.0",
- "ethereum-types 0.12.1",
- "futures 0.3.17",
- "jsonrpc-core 18.0.0",
- "log",
- "sc-client-api",
- "sp-api",
- "sp-block-builder",
- "sp-blockchain",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-utils",
- "tokio 1.12.0",
- "tracing-apis",
-]
-
-[[package]]
-name = "dc-tracing-tracer"
-version = "0.1.0"
-dependencies = [
- "ethereum-types 0.11.0",
- "hex",
- "log",
- "parity-scale-codec",
- "serde",
- "serde_json",
- "sp-std",
- "tracing-apis",
- "tracing-events",
 ]
 
 [[package]]
@@ -2229,7 +2179,7 @@ checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 name = "dp-asset"
 version = "2.7.0"
 dependencies = [
- "ethereum-types 0.11.0",
+ "ethereum-types 0.12.1",
  "parity-scale-codec",
  "sha3 0.9.1",
  "sp-std",
@@ -2239,7 +2189,7 @@ dependencies = [
 name = "dp-consensus"
 version = "2.7.0"
 dependencies = [
- "ethereum 0.7.1",
+ "ethereum 0.9.0",
  "parity-scale-codec",
  "rlp",
  "sha3 0.9.1",
@@ -2257,7 +2207,7 @@ dependencies = [
  "dp-asset",
  "ethabi",
  "ethereum-primitives",
- "ethereum-types 0.11.0",
+ "ethereum-types 0.12.1",
  "sp-std",
 ]
 
@@ -2288,8 +2238,8 @@ dependencies = [
 name = "dp-rpc"
 version = "2.7.0"
 dependencies = [
- "ethereum-types 0.11.0",
- "jsonrpc-core 15.1.0",
+ "ethereum-types 0.12.1",
+ "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
@@ -2374,13 +2324,8 @@ dependencies = [
  "drml-common-primitives",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
-<<<<<<< HEAD
- "futures 0.3.17",
- "jsonrpc-core 15.1.0",
-=======
  "futures 0.3.18",
  "jsonrpc-core",
->>>>>>> master
  "jsonrpc-pubsub",
  "pallet-transaction-payment-rpc",
  "pangolin-runtime",
@@ -2509,13 +2454,8 @@ dependencies = [
  "dp-storage",
  "dvm-rpc-runtime-api",
  "ethabi",
-<<<<<<< HEAD
- "ethereum 0.7.1",
- "ethereum-types 0.11.0",
-=======
- "ethereum",
- "ethereum-types",
->>>>>>> master
+ "ethereum 0.9.0",
+ "ethereum-types 0.12.1",
  "evm",
  "frame-support",
  "frame-system",
@@ -2539,9 +2479,9 @@ dependencies = [
  "darwinia-evm",
  "dp-evm",
  "dp-rpc",
- "ethereum 0.7.1",
- "ethereum-types 0.11.0",
- "jsonrpc-core 15.1.0",
+ "ethereum 0.9.0",
+ "ethereum-types 0.12.1",
+ "jsonrpc-core",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
  "parity-scale-codec",
@@ -2558,8 +2498,8 @@ dependencies = [
  "darwinia-evm",
  "darwinia-support",
  "dp-evm",
- "ethereum 0.7.1",
- "ethereum-types 0.11.0",
+ "ethereum 0.9.0",
+ "ethereum-types 0.12.1",
  "parity-scale-codec",
  "sp-api",
  "sp-core",
@@ -2738,7 +2678,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f76ef192b63e8a44b3d08832acebbb984c3fba154b5c26f70037c860202a0d4b"
 dependencies = [
  "anyhow",
- "ethereum-types 0.11.0",
+ "ethereum-types 0.12.1",
  "hex",
  "serde",
  "serde_json",
@@ -2753,7 +2693,7 @@ version = "0.4.2"
 source = "git+https://github.com/darwinia-network/rust-ethash?tag=v0.4.2#ee07a503226adfb889e2ead5ac38656a7698c728"
 dependencies = [
  "byteorder",
- "ethereum-types 0.11.0",
+ "ethereum-types 0.12.1",
  "rlp",
  "sha3 0.9.1",
 ]
@@ -2775,17 +2715,12 @@ dependencies = [
 
 [[package]]
 name = "ethereum"
-version = "0.9.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a67be3eaf296ef668733f54c637e84d0ca34eaf194f0077455135981ad464c3"
+checksum = "567ce064a8232c16e2b2c2173a936b91fbe35c2f2c5278871f5a1a31688b42e9"
 dependencies = [
-<<<<<<< HEAD
  "ethereum-types 0.11.0",
  "funty",
-=======
- "bytes 1.1.0",
- "ethereum-types",
->>>>>>> master
  "hash-db",
  "hash256-std-hasher",
  "parity-scale-codec",
@@ -2821,7 +2756,7 @@ dependencies = [
  "array-bytes",
  "ethash",
  "ethbloom",
- "ethereum-types 0.11.0",
+ "ethereum-types 0.12.1",
  "keccak-hash",
  "keccak-hasher",
  "merkle-patricia-trie",
@@ -2837,21 +2772,16 @@ dependencies = [
 
 [[package]]
 name = "ethereum-types"
-version = "0.12.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05136f7057fe789f06e6d41d07b34e6f70d8c86e5693b60f97aaa6553553bdaf"
+checksum = "f64b5df66a228d85e4b17e5d6c6aa43b0310898ffe8a85988c4c032357aaabfd"
 dependencies = [
  "ethbloom",
  "fixed-hash",
  "impl-codec",
  "impl-rlp",
  "impl-serde",
-<<<<<<< HEAD
  "primitive-types 0.9.1",
-=======
- "primitive-types",
- "scale-info",
->>>>>>> master
  "uint",
 ]
 
@@ -2872,7 +2802,6 @@ dependencies = [
 ]
 
 [[package]]
-<<<<<<< HEAD
 name = "event-listener"
 version = "2.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2881,19 +2810,10 @@ checksum = "f7531096570974c3a9dcf9e4b8e1cede1ec26cf5046219fb3b9d897503b9be59"
 [[package]]
 name = "evm"
 version = "0.27.0"
-source = "git+https://github.com/darwinia-network/evm?branch=darwinia#9ebf38628166bdd89560323a63e216a4ddad6c95"
+source = "git+https://github.com/darwinia-network/evm?branch=darwinia#a93227686a2fd4f6e02c77e5d7a7104f98cf4a49"
 dependencies = [
  "environmental",
  "ethereum 0.7.1",
-=======
-name = "evm"
-version = "0.30.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3144301c57a81101003055c7cab61b58e68060f3bd1c54aa419f663e4f0e6347"
-dependencies = [
- "environmental",
- "ethereum",
->>>>>>> master
  "evm-core",
  "evm-gasometer",
  "evm-runtime",
@@ -2907,14 +2827,8 @@ dependencies = [
 
 [[package]]
 name = "evm-core"
-<<<<<<< HEAD
 version = "0.27.1"
-source = "git+https://github.com/darwinia-network/evm?branch=darwinia#9ebf38628166bdd89560323a63e216a4ddad6c95"
-=======
-version = "0.30.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7bfa2dae9a2c6c0172d83c37eb406bfabf6a9d1af17b7ab4958e89853ddae97"
->>>>>>> master
+source = "git+https://github.com/darwinia-network/evm?branch=darwinia#a93227686a2fd4f6e02c77e5d7a7104f98cf4a49"
 dependencies = [
  "funty",
  "parity-scale-codec",
@@ -2924,43 +2838,23 @@ dependencies = [
 
 [[package]]
 name = "evm-gasometer"
-<<<<<<< HEAD
 version = "0.27.0"
-source = "git+https://github.com/darwinia-network/evm?branch=darwinia#9ebf38628166bdd89560323a63e216a4ddad6c95"
-=======
-version = "0.30.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14d5b12117cb9a5a9b9f031296ea86416da2cd9d8c9a9e3a2fa10275ae55f3ea"
->>>>>>> master
+source = "git+https://github.com/darwinia-network/evm?branch=darwinia#a93227686a2fd4f6e02c77e5d7a7104f98cf4a49"
 dependencies = [
  "environmental",
  "evm-core",
  "evm-runtime",
-<<<<<<< HEAD
  "primitive-types 0.9.1",
-=======
- "primitive-types",
->>>>>>> master
 ]
 
 [[package]]
 name = "evm-runtime"
-<<<<<<< HEAD
 version = "0.27.0"
-source = "git+https://github.com/darwinia-network/evm?branch=darwinia#9ebf38628166bdd89560323a63e216a4ddad6c95"
+source = "git+https://github.com/darwinia-network/evm?branch=darwinia#a93227686a2fd4f6e02c77e5d7a7104f98cf4a49"
 dependencies = [
  "environmental",
  "evm-core",
  "primitive-types 0.9.1",
-=======
-version = "0.30.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3921ac8964cf13d12693392fef6686ef94470328ccd8eea384c6ff9ac0125b01"
-dependencies = [
- "environmental",
- "evm-core",
- "primitive-types",
->>>>>>> master
  "sha3 0.8.2",
 ]
 
@@ -3341,13 +3235,9 @@ dependencies = [
  "dp-evm",
  "dp-s2s",
  "dvm-ethereum",
- "ethereum 0.7.1",
+ "ethereum 0.9.0",
  "ethereum-primitives",
-<<<<<<< HEAD
- "ethereum-types 0.11.0",
-=======
- "ethereum-types",
->>>>>>> master
+ "ethereum-types 0.12.1",
  "evm",
  "frame-benchmarking",
  "frame-support",
@@ -4247,7 +4137,7 @@ checksum = "489b9c612e60c766f751ab40fcb43cbb55a1e10bb44a9b4307ed510ca598cbd7"
 dependencies = [
  "failure",
  "futures 0.1.31",
- "jsonrpc-core 15.1.0",
+ "jsonrpc-core",
  "jsonrpc-pubsub",
  "log",
  "serde",
@@ -4262,21 +4152,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0745a6379e3edc893c84ec203589790774e4247420033e71a76d3ab4687991fa"
 dependencies = [
  "futures 0.1.31",
- "log",
- "serde",
- "serde_derive",
- "serde_json",
-]
-
-[[package]]
-name = "jsonrpc-core"
-version = "18.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14f7f76aef2d054868398427f6c54943cf3d1caa9a7ec7d0c38d69df97a965eb"
-dependencies = [
- "futures 0.3.17",
- "futures-executor",
- "futures-util",
  "log",
  "serde",
  "serde_derive",
@@ -4311,7 +4186,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fb5c4513b7b542f42da107942b7b759f27120b5cc894729f88254b28dff44b7"
 dependencies = [
  "hyper 0.12.36",
- "jsonrpc-core 15.1.0",
+ "jsonrpc-core",
  "jsonrpc-server-utils",
  "log",
  "net2",
@@ -4325,7 +4200,7 @@ version = "15.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf50e53e4eea8f421a7316c5f63e395f7bc7c4e786a6dc54d76fab6ff7aa7ce7"
 dependencies = [
- "jsonrpc-core 15.1.0",
+ "jsonrpc-core",
  "jsonrpc-server-utils",
  "log",
  "parity-tokio-ipc",
@@ -4339,7 +4214,7 @@ version = "15.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "639558e0604013be9787ae52f798506ae42bf4220fe587bdc5625871cc8b9c77"
 dependencies = [
- "jsonrpc-core 15.1.0",
+ "jsonrpc-core",
  "log",
  "parking_lot 0.10.2",
  "rand 0.7.3",
@@ -4354,7 +4229,7 @@ checksum = "72f1f3990650c033bd8f6bd46deac76d990f9bbfb5f8dc8c4767bf0a00392176"
 dependencies = [
  "bytes 0.4.12",
  "globset",
- "jsonrpc-core 15.1.0",
+ "jsonrpc-core",
  "lazy_static",
  "log",
  "tokio 0.1.22",
@@ -4368,7 +4243,7 @@ version = "15.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6596fe75209b73a2a75ebe1dce4e60e03b88a2b25e8807b667597f6315150d22"
 dependencies = [
- "jsonrpc-core 15.1.0",
+ "jsonrpc-core",
  "jsonrpc-server-utils",
  "log",
  "parity-ws",
@@ -4444,7 +4319,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce2bd4c29270e724d3eaadf7bdc8700af4221fc0ed771b855eadcd1b98d52851"
 dependencies = [
- "primitive-types 0.9.1",
+ "primitive-types 0.10.1",
  "tiny-keccak",
 ]
 
@@ -5220,31 +5095,6 @@ dependencies = [
 ]
 
 [[package]]
-<<<<<<< HEAD
-name = "max-encoded-len"
-version = "3.0.0"
-source = "git+https://github.com/darwinia-network/substrate?tag=darwinia-v0.11.6-1#3c951d7eb441b8dec5f438084b0c264422385069"
-dependencies = [
- "impl-trait-for-tuples",
- "max-encoded-len-derive",
- "parity-scale-codec",
- "primitive-types 0.9.1",
-]
-
-[[package]]
-name = "max-encoded-len-derive"
-version = "3.0.0"
-source = "git+https://github.com/darwinia-network/substrate?tag=darwinia-v0.11.6-1#3c951d7eb441b8dec5f438084b0c264422385069"
-dependencies = [
- "proc-macro-crate 1.1.0",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-=======
->>>>>>> master
 name = "maybe-uninit"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5306,13 +5156,8 @@ version = "2.7.0"
 dependencies = [
  "array-bytes",
  "criterion",
-<<<<<<< HEAD
- "ethereum-types 0.11.0",
- "hashbrown 0.9.1",
-=======
- "ethereum-types",
+ "ethereum-types 0.12.1",
  "hashbrown",
->>>>>>> master
  "hex",
  "keccak-hash",
  "rand 0.8.4",
@@ -6228,7 +6073,7 @@ name = "pallet-transaction-payment-rpc"
 version = "4.0.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.11.7#ddaa176d2e4e9d44f962fd4ab4bc0107cca5a1c5"
 dependencies = [
- "jsonrpc-core 15.1.0",
+ "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -6365,7 +6210,6 @@ dependencies = [
  "pallet-treasury",
  "pallet-utility",
  "parity-scale-codec",
- "runtime-tracer",
  "serde",
  "smallvec 1.7.0",
  "sp-api",
@@ -6388,8 +6232,6 @@ dependencies = [
  "substrate-wasm-builder",
  "to-ethereum-backing",
  "to-tron-backing",
- "tracing-apis",
- "tracing-events",
 ]
 
 [[package]]
@@ -6562,7 +6404,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "parity-util-mem-derive",
  "parking_lot 0.11.2",
- "primitive-types 0.9.1",
+ "primitive-types 0.10.1",
  "smallvec 1.7.0",
  "winapi 0.3.9",
 ]
@@ -6944,15 +6786,14 @@ checksum = "ed0cfbc8191465bed66e1718596ee0b0b35d5ee1f41c5df2189d0fe8bde535ba"
 
 [[package]]
 name = "primitive-types"
-version = "0.10.1"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05e4722c697a58a99d5d06a08c30821d7c082a4632198de1eaa5a6c22ef42373"
+checksum = "06345ee39fbccfb06ab45f3a1a5798d9dafa04cb8921a76d227040003a234b0e"
 dependencies = [
  "fixed-hash",
  "impl-codec",
  "impl-rlp",
  "impl-serde",
- "scale-info",
  "uint",
 ]
 
@@ -7530,23 +7371,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "runtime-tracer"
-version = "2.7.0"
-dependencies = [
- "ethereum-types 0.11.0",
- "evm",
- "evm-gasometer",
- "evm-runtime",
- "parity-scale-codec",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "tracing-events",
- "tracing-ext",
-]
-
-[[package]]
 name = "rustc-demangle"
 version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8012,13 +7836,8 @@ version = "0.10.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.11.7#ddaa176d2e4e9d44f962fd4ab4bc0107cca5a1c5"
 dependencies = [
  "derive_more",
-<<<<<<< HEAD
- "futures 0.3.17",
- "jsonrpc-core 15.1.0",
-=======
  "futures 0.3.18",
  "jsonrpc-core",
->>>>>>> master
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "sc-consensus-babe",
@@ -8056,13 +7875,8 @@ dependencies = [
  "assert_matches",
  "async-trait",
  "derive_more",
-<<<<<<< HEAD
- "futures 0.3.17",
- "jsonrpc-core 15.1.0",
-=======
  "futures 0.3.18",
  "jsonrpc-core",
->>>>>>> master
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "log",
@@ -8258,13 +8072,8 @@ source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.1
 dependencies = [
  "derive_more",
  "finality-grandpa",
-<<<<<<< HEAD
- "futures 0.3.17",
- "jsonrpc-core 15.1.0",
-=======
  "futures 0.3.18",
  "jsonrpc-core",
->>>>>>> master
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
@@ -8466,7 +8275,7 @@ source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.1
 dependencies = [
  "futures 0.3.18",
  "hash-db",
- "jsonrpc-core 15.1.0",
+ "jsonrpc-core",
  "jsonrpc-pubsub",
  "log",
  "parity-scale-codec",
@@ -8500,13 +8309,8 @@ version = "0.10.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.11.7#ddaa176d2e4e9d44f962fd4ab4bc0107cca5a1c5"
 dependencies = [
  "derive_more",
-<<<<<<< HEAD
- "futures 0.3.17",
- "jsonrpc-core 15.1.0",
-=======
  "futures 0.3.18",
  "jsonrpc-core",
->>>>>>> master
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
@@ -8530,7 +8334,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.11.7#ddaa176d2e4e9d44f962fd4ab4bc0107cca5a1c5"
 dependencies = [
  "futures 0.1.31",
- "jsonrpc-core 15.1.0",
+ "jsonrpc-core",
  "jsonrpc-http-server",
  "jsonrpc-ipc-server",
  "jsonrpc-pubsub",
@@ -8554,7 +8358,7 @@ dependencies = [
  "futures 0.3.18",
  "futures-timer 3.0.2",
  "hash-db",
- "jsonrpc-core 15.1.0",
+ "jsonrpc-core",
  "jsonrpc-pubsub",
  "lazy_static",
  "log",
@@ -8630,7 +8434,7 @@ name = "sc-sync-state-rpc"
 version = "0.10.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.11.7#ddaa176d2e4e9d44f962fd4ab4bc0107cca5a1c5"
 dependencies = [
- "jsonrpc-core 15.1.0",
+ "jsonrpc-core",
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "parity-scale-codec",
@@ -9425,7 +9229,7 @@ dependencies = [
  "parity-scale-codec",
  "parity-util-mem",
  "parking_lot 0.11.2",
- "primitive-types 0.9.1",
+ "primitive-types 0.10.1",
  "rand 0.7.3",
  "regex",
  "schnorrkel",
@@ -9661,7 +9465,7 @@ source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.1
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
- "primitive-types 0.9.1",
+ "primitive-types 0.10.1",
  "sp-externalities",
  "sp-runtime-interface-proc-macro",
  "sp-std",
@@ -10047,13 +9851,8 @@ version = "4.0.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.11.7#ddaa176d2e4e9d44f962fd4ab4bc0107cca5a1c5"
 dependencies = [
  "frame-system-rpc-runtime-api",
-<<<<<<< HEAD
- "futures 0.3.17",
- "jsonrpc-core 15.1.0",
-=======
  "futures 0.3.18",
  "jsonrpc-core",
->>>>>>> master
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "log",
@@ -10392,7 +10191,7 @@ dependencies = [
  "dp-contract",
  "dp-s2s",
  "ethereum-primitives",
- "ethereum-types 0.11.0",
+ "ethereum-types 0.12.1",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -10786,24 +10585,12 @@ name = "tracing-events"
 version = "2.7.0"
 dependencies = [
  "environmental",
- "ethereum 0.7.1",
- "ethereum-types 0.11.0",
+ "ethereum 0.9.0",
+ "ethereum-types 0.12.1",
  "evm",
  "evm-gasometer",
  "evm-runtime",
  "parity-scale-codec",
-]
-
-[[package]]
-name = "tracing-ext"
-version = "0.1.0"
-dependencies = [
- "ethereum-types 0.12.1",
- "parity-scale-codec",
- "sp-externalities",
- "sp-runtime-interface",
- "sp-std",
- "tracing-events",
 ]
 
 [[package]]
