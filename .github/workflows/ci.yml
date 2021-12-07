@@ -26,9 +26,8 @@ env:
   RUST_TOOLCHAIN: nightly
   RUST_BACKTRACE: full
   RUSTC_WRAPPER: sccache
-  SCCACHE_VERSION: 0.2.13
-  SCCACHE_FILE: sccache-${{ env.SCCACHE_VERSION }}-x86_64-unknown-linux-musl
-  SCCACHE_LINK: https://github.com/mozilla/sccache/releases/download/${{ env.SCCACHE_VERSION }}/${{ env.SCCACHE_FILE }}.tar.gz
+  SCCACHE_LINK: https://github.com/mozilla/sccache/releases/download
+  SCCACHE_VERSION: v0.2.15
   SCCACHE_DIR: /home/runner/.cache/sccache
   NODE_VERSION: 10
   GITHUB_CACHE_VERSION: 0
@@ -68,7 +67,8 @@ jobs:
 
       - name: Install Sccache
         run: |
-          curl -L ${{ env.SCCACHE_LINK }} | tar xz
+          export SCCACHE_FILE=sccache-${{ env.SCCACHE_VERSION }}-x86_64-unknown-linux-musl
+          curl -L ${{ env.SCCACHE_LINK }}/${{ env.SCCACHE_VERSION }}/$SCCACHE_FILE.tar.gz | tar xz
           sudo mv ${{ env.SCCACHE_FILE }}/sccache /usr/bin
 
       - name: Fetch latest code
