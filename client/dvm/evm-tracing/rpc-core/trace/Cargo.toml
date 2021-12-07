@@ -1,5 +1,5 @@
 [package]
-name = "dc-rpc-core-trace"
+name = "dc-tracing-rpc-core-trace"
 authors = [ "PureStake" ]
 edition = "2018"
 homepage = "https://moonbeam.network"

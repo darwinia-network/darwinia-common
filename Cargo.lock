@@ -2019,22 +2019,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dc-core-debug"
-version = "0.1.0"
-dependencies = [
- "dc-tracer",
- "dc-tracing-rpc-core-types",
- "ethereum-types 0.12.1",
- "futures 0.3.18",
- "jsonrpc-core 18.0.0",
- "jsonrpc-core-client 18.0.0",
- "jsonrpc-derive 18.0.0",
- "serde",
- "serde_json",
- "sp-core",
-]
-
-[[package]]
 name = "dc-db"
 version = "2.7.0"
 dependencies = [
@@ -2104,21 +2088,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dc-rpc-core-trace"
-version = "0.6.0"
-dependencies = [
- "dc-tracer",
- "dc-tracing-rpc-core-types",
- "ethereum-types 0.12.1",
- "futures 0.3.18",
- "jsonrpc-core 18.0.0",
- "jsonrpc-core-client 18.0.0",
- "jsonrpc-derive 18.0.0",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "dc-tracer"
 version = "0.1.0"
 dependencies = [
@@ -2131,6 +2100,64 @@ dependencies = [
  "sp-std 3.0.0",
  "tracing-apis",
  "tracing-events",
+]
+
+[[package]]
+name = "dc-tracing-debug-handler"
+version = "0.1.0"
+dependencies = [
+ "dc-db",
+ "dc-rpc",
+ "dc-tracer",
+ "dc-tracing-rpc-core-debug",
+ "dc-tracing-rpc-core-types",
+ "dvm-rpc-runtime-api",
+ "ethereum",
+ "ethereum-types 0.12.1",
+ "futures 0.3.18",
+ "jsonrpc-core 15.1.0",
+ "log",
+ "sc-client-api",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-utils",
+ "tokio 1.14.0",
+ "tracing-apis",
+]
+
+[[package]]
+name = "dc-tracing-rpc-core-debug"
+version = "0.1.0"
+dependencies = [
+ "dc-tracer",
+ "dc-tracing-rpc-core-types",
+ "ethereum-types 0.12.1",
+ "futures 0.3.18",
+ "jsonrpc-core 18.0.0",
+ "jsonrpc-core-client 18.0.0",
+ "jsonrpc-derive 18.0.0",
+ "serde",
+ "serde_json",
+ "sp-core",
+]
+
+[[package]]
+name = "dc-tracing-rpc-core-trace"
+version = "0.6.0"
+dependencies = [
+ "dc-tracer",
+ "dc-tracing-rpc-core-types",
+ "ethereum-types 0.12.1",
+ "futures 0.3.18",
+ "jsonrpc-core 18.0.0",
+ "jsonrpc-core-client 18.0.0",
+ "jsonrpc-derive 18.0.0",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

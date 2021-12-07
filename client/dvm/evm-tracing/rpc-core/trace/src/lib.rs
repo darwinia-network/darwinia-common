@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
+use dc_tracer::types::block::TransactionTrace;
+use dc_tracing_rpc_core_types::RequestBlockId;
 use ethereum_types::H160;
 use futures::future::BoxFuture;
 use jsonrpc_derive::rpc;
-use dc_tracer::types::block::TransactionTrace;
-use dc_tracing_rpc_core_types::RequestBlockId;
 use serde::Deserialize;
 
 pub use rpc_impl_Trace::gen_server::Trace as TraceServer;

@@ -24,8 +24,8 @@ pub use call_tracer::Formatter as CallTracer;
 pub use raw::Formatter as Raw;
 pub use trace_filter::Formatter as TraceFilter;
 
-use tracing_events::Listener;
 use serde::Serialize;
+use tracing_events::Listener;
 
 pub trait ResponseFormatter {
 	type Listener: Listener;

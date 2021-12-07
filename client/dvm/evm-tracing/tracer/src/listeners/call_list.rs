@@ -14,9 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::formatters::blockscout::BlockscoutCall as Call;
-use crate::formatters::blockscout::BlockscoutCallInner as CallInner;
-use crate::types::{CallResult, CallType, ContextType, CreateResult};
+use crate::{
+	formatters::blockscout::{BlockscoutCall as Call, BlockscoutCallInner as CallInner},
+	types::{CallResult, CallType, ContextType, CreateResult},
+};
 use ethereum_types::{H160, U256};
 use std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 use tracing_events::{

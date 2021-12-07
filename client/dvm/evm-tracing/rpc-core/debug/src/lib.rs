@@ -13,12 +13,12 @@
 
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
+use dc_tracer::types::single;
+use dc_tracing_rpc_core_types::RequestBlockId;
 use ethereum_types::H256;
 use futures::future::BoxFuture;
 use jsonrpc_core::Result as RpcResult;
 use jsonrpc_derive::rpc;
-use dc_tracer::types::single;
-use dc_tracing_rpc_core_types::RequestBlockId;
 use serde::Deserialize;
 
 pub use rpc_impl_Debug::gen_server::Debug as DebugServer;
