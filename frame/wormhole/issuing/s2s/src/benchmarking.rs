@@ -23,7 +23,7 @@ use crate::Pallet as S2sIssuing;
 
 use array_bytes::{hex2bytes_unchecked, hex_into_unchecked};
 use darwinia_evm::Runner;
-use dp_asset::token::{TokenMetadata, NATIVE_TOKEN_TYPE};
+use dp_asset::{TokenMetadata, NATIVE_TOKEN_TYPE};
 use frame_benchmarking::benchmarks;
 use frame_support::assert_ok;
 use frame_system::RawOrigin;
