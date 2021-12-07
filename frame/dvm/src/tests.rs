@@ -182,7 +182,7 @@ fn wkton_balance_input(address: H160) -> Vec<u8> {
 			internal_type: Some("address".into()),
 		}],
 		outputs: vec![],
-		constant: false,
+		constant: true,
 		state_mutability: StateMutability::NonPayable,
 	};
 	func.encode_input(&[Token::Address(address)]).unwrap()
