@@ -24,35 +24,42 @@
 //! - For each traced block an async task responsible to wait for a permit, spawn a blocking
 //!   task and waiting for the result, then send it to the main `CacheTask`.
 
-use futures::{future::BoxFuture, select, stream::FuturesUnordered, FutureExt, SinkExt, StreamExt};
+use futures::{
+	compat::Compat,
+	future::{BoxFuture, TryFutureExt},
+	select,
+	stream::FuturesUnordered,
+	FutureExt, SinkExt, StreamExt,
+};
 use std::{collections::BTreeMap, future::Future, marker::PhantomData, sync::Arc, time::Duration};
 use tokio::{
 	sync::{mpsc, oneshot, Semaphore},
-	time::sleep,
+	time::delay_for,
 };
 use tracing::{instrument, Instrument};
 
 use jsonrpc_core::Result;
 use sc_client_api::backend::Backend;
-use sc_utils::mpsc::TracingUnboundedSender;
 use sp_api::{BlockId, Core, HeaderT, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{
 	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata,
 };
 use sp_runtime::traits::Block as BlockT;
+use sp_utils::mpsc::TracingUnboundedSender;
 
+use dc_rpc::internal_err;
+use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 use ethereum_types::H256;
-use fc_rpc::internal_err;
-use fp_rpc::EthereumRuntimeRPCApi;
+// use sp_utils::mpsc::TracingUnboundedSender;
 
-use moonbeam_client_evm_tracing::{
+use dc_tracer::{
 	formatters::ResponseFormatter,
 	types::block::{self, TransactionTrace},
 };
-pub use moonbeam_rpc_core_trace::{FilterRequest, Trace as TraceT, TraceServer};
-use moonbeam_rpc_core_types::{RequestBlockId, RequestBlockTag};
-use moonbeam_rpc_primitives_debug::DebugRuntimeApi;
+pub use dc_tracing_rpc_core_trace::{FilterRequest, Trace as TraceT, TraceServer};
+use dc_tracing_rpc_core_types::{RequestBlockId, RequestBlockTag};
+use tracing_apis::DebugRuntimeApi;
 
 /// RPC handler. Will communicate with a `CacheTask` through a `CacheRequester`.
 pub struct Trace<B, C> {
@@ -240,8 +247,9 @@ where
 	fn filter(
 		&self,
 		filter: FilterRequest,
-	) -> BoxFuture<'static, jsonrpc_core::Result<Vec<TransactionTrace>>> {
-		self.clone().filter(filter).boxed()
+	) -> Compat<BoxFuture<'static, jsonrpc_core::Result<Vec<TransactionTrace>>>> {
+		// Wraps the async function into futures compatibility layer.
+		self.clone().filter(filter).boxed().compat()
 	}
 }
 
@@ -443,15 +451,16 @@ where
 	) -> (impl Future<Output = ()>, CacheRequester) {
 		// Communication with the outside world :
 		let (requester_tx, mut requester_rx) =
-			sc_utils::mpsc::tracing_unbounded("trace-filter-cache");
+			sp_utils::mpsc::tracing_unbounded("trace-filter-cache");
 
 		// Task running in the service.
 		let task = async move {
 			// The following variables are polled by the select! macro, and thus cannot be
 			// part of Self without introducing borrowing issues.
 			let mut batch_expirations = FuturesUnordered::new();
-			let (blocking_tx, mut blocking_rx) =
+			let (blocking_tx, blocking_rx) =
 				mpsc::channel(blocking_permits.available_permits() * 2);
+				let mut blocking_rx = blocking_rx.fuse();
 
 			// Contains the inner state of the cache task, excluding the pooled futures/channels.
 			// Having this object allow to refactor each event into its own function, simplifying
@@ -481,7 +490,7 @@ where
 								// Cannot be refactored inside `request_stop_batch` because
 								// it has an unnamable type :C
 								batch_expirations.push(async move {
-									sleep(cache_duration).await;
+									delay_for(cache_duration).await;
 									batch_id
 								});
 
@@ -489,7 +498,7 @@ where
 							},
 						}
 					},
-					message = blocking_rx.recv().fuse() => {
+					message = blocking_rx.next() => {
 						match message {
 							None => (),
 							Some(BlockingTaskMessage::Started { block_hash })
@@ -542,7 +551,7 @@ where
 				let (unqueue_sender, unqueue_receiver) = oneshot::channel();
 				let client = Arc::clone(&self.client);
 				let backend = Arc::clone(&self.backend);
-				let blocking_tx = blocking_tx.clone();
+				let mut blocking_tx = blocking_tx.clone();
 
 				// Spawn all block caching asynchronously.
 				// It will wait to obtain a permit, then spawn a blocking task.
@@ -861,13 +870,12 @@ where
 						height, e
 					))
 				})?;
-			Ok(moonbeam_rpc_primitives_debug::Response::Block)
+			Ok(tracing_apis::Response::Block)
 		};
 
-		let mut proxy = moonbeam_client_evm_tracing::listeners::CallList::default();
+		let mut proxy = dc_tracer::listeners::CallList::default();
 		proxy.using(f)?;
-		let mut traces: Vec<_> =
-			moonbeam_client_evm_tracing::formatters::TraceFilter::format(proxy).unwrap();
+		let mut traces: Vec<_> = dc_tracer::formatters::TraceFilter::format(proxy).unwrap();
 		// Fill missing data.
 		for trace in traces.iter_mut() {
 			trace.block_hash = eth_block_hash;

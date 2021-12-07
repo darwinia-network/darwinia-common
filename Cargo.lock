@@ -5366,6 +5366,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "moonbeam-rpc-trace"
+version = "0.6.0"
+dependencies = [
+ "dc-rpc",
+ "dc-tracer",
+ "dc-tracing-rpc-core-trace",
+ "dc-tracing-rpc-core-types",
+ "dvm-rpc-runtime-api",
+ "ethereum",
+ "ethereum-types 0.12.1",
+ "futures 0.3.18",
+ "jsonrpc-core",
+ "sc-client-api",
+ "sc-network",
+ "serde",
+ "sha3 0.9.1",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 4.0.0-dev",
+ "sp-transaction-pool",
+ "sp-utils",
+ "tokio 0.2.25",
+ "tracing",
+ "tracing-apis",
+]
+
+[[package]]
 name = "more-asserts"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
