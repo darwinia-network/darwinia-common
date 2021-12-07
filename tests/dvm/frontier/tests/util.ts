@@ -38,7 +38,7 @@ export async function customRequest(web3: Web3, method: string, params: any[]) {
 // Create a block and finalize it.
 // It will include all previously executed transactions since the last finalized block.
 export async function createAndFinalizeBlock(web3: Web3) {
-	const response = await customRequest(web3, "engine_createBlock", [false, true, null]);
+	const response = await customRequest(web3, "engine_createBlock", [true, true, null]);
 	if (!response.result) {
 		throw new Error(`Unexpected result: ${JSON.stringify(response)}`);
 	}
