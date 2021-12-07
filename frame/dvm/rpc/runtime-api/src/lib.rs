@@ -18,7 +18,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use ethereum::{Block as EthereumBlock, Log};
+use ethereum::{BlockV0 as EthereumBlockV0, Log};
 use ethereum_types::Bloom;
 use sp_core::{H160, H256, U256};
 use sp_runtime::traits::Block as BlockT;
@@ -86,24 +86,24 @@ sp_api::decl_runtime_apis! {
 			estimate: bool,
 		) -> Result<dp_evm::CreateInfo, sp_runtime::DispatchError>;
 		/// Return the current block.
-		fn current_block() -> Option<EthereumBlock>;
+		fn current_block() -> Option<EthereumBlockV0>;
 		/// Return the current receipt.
 		fn current_receipts() -> Option<Vec<ethereum::Receipt>>;
 		/// Return the current transaction status.
 		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>>;
 		/// Return all the current data for a block in a single runtime call.
 		fn current_all() -> (
-			Option<EthereumBlock>,
+			Option<EthereumBlockV0>,
 			Option<Vec<ethereum::Receipt>>,
 			Option<Vec<TransactionStatus>>
 		);
 		/// Receives a `Vec<OpaqueExtrinsic>` and filters all the ethereum transactions.
 		fn extrinsic_filter(
 			xts: Vec<<Block as BlockT>::Extrinsic>,
-		) -> Vec<ethereum::Transaction>;
+		) -> Vec<ethereum::TransactionV0>;
 	}
 }
 
 pub trait ConvertTransaction<E> {
-	fn convert_transaction(&self, transaction: ethereum::Transaction) -> E;
+	fn convert_transaction(&self, transaction: ethereum::TransactionV0) -> E;
 }

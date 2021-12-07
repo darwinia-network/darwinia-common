@@ -65,6 +65,7 @@ use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
 // --- darwinia-network ---
 use drml_common_primitives::OpaqueBlock as Block;
+use drml_rpc::RpcExtension;
 
 type FullBackend = TFullBackend<Block>;
 type FullSelectChain = LongestChain<FullBackend, Block>;
@@ -74,6 +75,8 @@ type FullGrandpaBlockImport<RuntimeApi, Executor> =
 type LightBackend = TLightBackendWithHash<Block, BlakeTwo256>;
 type LightClient<RuntimeApi, Executor> =
 	TLightClientWithBackend<Block, RuntimeApi, Executor, LightBackend>;
+
+type RpcResult = Result<RpcExtension, ServiceError>;
 
 pub trait RuntimeExtrinsic: 'static + Send + Sync + Codec {}
 impl<E> RuntimeExtrinsic for E where E: 'static + Send + Sync + Codec {}

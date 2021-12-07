@@ -883,7 +883,7 @@ pub mod pallet {
 
 	/// The last planned session scheduled by the session pallet.
 	///
-	/// This is basically in sync with the call to [`SessionManager::new_session`].
+	/// This is basically in sync with the call to [`pallet_session::SessionManager::new_session`].
 	#[pallet::storage]
 	#[pallet::getter(fn current_planned_session)]
 	pub type CurrentPlannedSession<T> = StorageValue<_, SessionIndex, ValueQuery>;
@@ -1163,8 +1163,8 @@ pub mod pallet {
 		/// The dispatch origin for this call must be _Signed_ by the stash, not the controller.
 		///
 		/// Use this if there are additional funds in your stash account that you wish to bond.
-		/// Unlike [`bond`] or [`unbond`] this function does not impose any limitation on the amount
-		/// that can be added.
+		/// Unlike [`bond`](Self::bond) or [`unbond`](Self::unbond) this function does not impose any limitation
+		/// on the amount that can be added.
 		///
 		/// Emits `Bonded`.
 		///
@@ -1814,7 +1814,7 @@ pub mod pallet {
 		/// The dispatch origin must be Root.
 		///
 		/// # <weight>
-		/// Same as [`set_validator_count`].
+		/// Same as [`Self::set_validator_count`].
 		/// # </weight>
 		#[pallet::weight(T::WeightInfo::set_validator_count())]
 		pub fn increase_validator_count(
@@ -1833,7 +1833,7 @@ pub mod pallet {
 		/// The dispatch origin must be Root.
 		///
 		/// # <weight>
-		/// Same as [`set_validator_count`].
+		/// Same as [`Self::set_validator_count`].
 		/// # </weight>
 		#[pallet::weight(T::WeightInfo::set_validator_count())]
 		pub fn scale_validator_count(origin: OriginFor<T>, factor: Percent) -> DispatchResult {
@@ -2484,10 +2484,10 @@ pub mod pallet {
 			era: EraIndex,
 		) -> DispatchResultWithPostInfo {
 			// Validate input data
-			let current_era = <CurrentEra<T>>::get().ok_or(
+			let current_era = <CurrentEra<T>>::get().ok_or_else(|| {
 				<Error<T>>::InvalidEraToReward
-					.with_weight(T::WeightInfo::payout_stakers_alive_staked(0)),
-			)?;
+					.with_weight(T::WeightInfo::payout_stakers_alive_staked(0))
+			})?;
 			ensure!(
 				era <= current_era,
 				<Error<T>>::InvalidEraToReward
@@ -2507,9 +2507,9 @@ pub mod pallet {
 					.with_weight(T::WeightInfo::payout_stakers_alive_staked(0))
 			})?;
 
-			let controller = Self::bonded(&validator_stash).ok_or(
-				<Error<T>>::NotStash.with_weight(T::WeightInfo::payout_stakers_alive_staked(0)),
-			)?;
+			let controller = Self::bonded(&validator_stash).ok_or_else(|| {
+				<Error<T>>::NotStash.with_weight(T::WeightInfo::payout_stakers_alive_staked(0))
+			})?;
 			let mut ledger =
 				<Ledger<T>>::get(&controller).ok_or_else(|| <Error<T>>::NotController)?;
 
@@ -3408,6 +3408,68 @@ pub mod pallet {
 			now.saturating_add(
 				until_this_session_end.saturating_add(sessions_left.saturating_mul(session_length)),
 			)
+		}
+
+		#[cfg(any(feature = "runtime-benchmarks", test))]
+		fn add_voter(voter: T::AccountId, weight: VoteWeight, targets: Vec<T::AccountId>) {
+			use sp_std::convert::TryFrom;
+			let stake = <RingBalance<T>>::try_from(weight).unwrap_or_else(|_| {
+				panic!("cannot convert a VoteWeight into BalanceOf, benchmark needs reconfiguring.")
+			});
+			<Bonded<T>>::insert(voter.clone(), voter.clone());
+			<Ledger<T>>::insert(
+				voter.clone(),
+				StakingLedger {
+					stash: voter.clone(),
+					active_ring: stake,
+					ring_staking_lock: StakingLock {
+						staking_amount: stake,
+						..Default::default()
+					},
+					..Default::default()
+				},
+			);
+			Self::do_add_nominator(
+				&voter,
+				Nominations {
+					targets,
+					submitted_in: 0,
+					suppressed: false,
+				},
+			);
+		}
+
+		#[cfg(any(feature = "runtime-benchmarks", test))]
+		fn add_target(target: T::AccountId) {
+			let stake = <MinValidatorBond<T>>::get() * 100u32.into();
+			<Bonded<T>>::insert(target.clone(), target.clone());
+			<Ledger<T>>::insert(
+				target.clone(),
+				StakingLedger {
+					stash: target.clone(),
+					active_ring: stake,
+					ring_staking_lock: StakingLock {
+						staking_amount: stake,
+						..Default::default()
+					},
+					..Default::default()
+				},
+			);
+			Self::do_add_validator(
+				&target,
+				ValidatorPrefs {
+					commission: Perbill::zero(),
+					blocked: false,
+				},
+			);
+		}
+
+		#[cfg(any(feature = "runtime-benchmarks", test))]
+		fn clear() {
+			<Bonded<T>>::remove_all(None);
+			<Ledger<T>>::remove_all(None);
+			<Validators<T>>::remove_all(None);
+			<Nominators<T>>::remove_all(None);
 		}
 
 		#[cfg(feature = "runtime-benchmarks")]

@@ -23,15 +23,15 @@
 // --- std ---
 use std::{cell::RefCell, collections::HashSet};
 // --- crates.io ---
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 // --- paritytech ---
 use frame_election_provider_support::onchain;
 use frame_support::{
 	assert_ok, parameter_types,
 	storage::IterableStorageMap,
 	traits::{
-		Currency, FindAuthor, GenesisBuild, Get, Imbalance, MaxEncodedLen, OnFinalize,
-		OnInitialize, OnUnbalanced, OneSessionHandler, UnixTime,
+		Currency, Everything, FindAuthor, GenesisBuild, Get, Imbalance, OnFinalize, OnInitialize,
+		OnUnbalanced, OneSessionHandler, UnixTime,
 	},
 	weights::constants::RocksDbWeight,
 	PalletId, StorageValue,
@@ -123,7 +123,7 @@ parameter_types! {
 		);
 }
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = BlockWeights;
 	type BlockLength = ();
 	type DbWeight = RocksDbWeight;

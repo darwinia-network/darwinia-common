@@ -290,6 +290,7 @@ pub mod pallet {
 		/// Indicator for whether an emergency origin is even allowed to happen. Some chains may want
 		/// to set this permanently to `false`, others may want to condition it on things such as
 		/// an upgrade having happened recently.
+		#[pallet::constant]
 		type InstantAllowed: Get<bool>;
 
 		/// Minimum voting period allowed for a fast-track referendum.
@@ -344,6 +345,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		/// The maximum number of public proposals that can exist at any time.
+		#[pallet::constant]
 		type MaxProposals: Get<u32>;
 	}
 
@@ -502,8 +504,8 @@ pub mod pallet {
 		NotPassed(ReferendumIndex),
 		/// A referendum has been cancelled. \[ref_index\]
 		Cancelled(ReferendumIndex),
-		/// A proposal has been enacted. \[ref_index, is_ok\]
-		Executed(ReferendumIndex, bool),
+		/// A proposal has been enacted. \[ref_index, result\]
+		Executed(ReferendumIndex, DispatchResult),
 		/// An account has delegated their vote to another account. \[who, target\]
 		Delegated(T::AccountId, T::AccountId),
 		/// An \[account\] has cancelled a previous delegation operation.
@@ -524,8 +526,6 @@ pub mod pallet {
 		/// A registered preimage was removed and the deposit collected by the reaper.
 		/// \[proposal_hash, provider, deposit, reaper\]
 		PreimageReaped(T::Hash, T::AccountId, BalanceOf<T>, T::AccountId),
-		/// An \[account\] has been unlocked successfully.
-		Unlocked(T::AccountId),
 		/// A proposal \[hash\] has been blacklisted permanently.
 		Blacklisted(T::Hash),
 	}
@@ -536,8 +536,6 @@ pub mod pallet {
 		ValueLow,
 		/// Proposal does not exist
 		ProposalMissing,
-		/// Unknown index
-		BadIndex,
 		/// Cannot cancel the same proposal twice
 		AlreadyCanceled,
 		/// Proposal already made
@@ -552,8 +550,6 @@ pub mod pallet {
 		NoProposal,
 		/// Identity may not veto a proposal twice
 		AlreadyVetoed,
-		/// Not delegated
-		NotDelegated,
 		/// Preimage already noted
 		DuplicatePreimage,
 		/// Not imminent
@@ -570,10 +566,6 @@ pub mod pallet {
 		PreimageInvalid,
 		/// No proposals waiting
 		NoneWaiting,
-		/// The target account does not have a lock.
-		NotLocked,
-		/// The lock on the account to be unlocked has not yet expired.
-		NotExpired,
 		/// The given account did not vote on the referendum.
 		NotVoter,
 		/// The actor has no permission to conduct the action.
@@ -595,8 +587,6 @@ pub mod pallet {
 		WrongUpperBound,
 		/// Maximum number of votes reached.
 		MaxVotesReached,
-		/// The provided witness data is wrong.
-		InvalidWitness,
 		/// Maximum number of proposals reached.
 		TooManyProposals,
 	}
@@ -1747,10 +1737,11 @@ impl<T: Config> Pallet<T> {
 				debug_assert!(err_amount.is_zero());
 				Self::deposit_event(Event::<T>::PreimageUsed(proposal_hash, provider, deposit));
 
-				let ok = proposal
+				let res = proposal
 					.dispatch(frame_system::RawOrigin::Root.into())
-					.is_ok();
-				Self::deposit_event(Event::<T>::Executed(index, ok));
+					.map(|_| ())
+					.map_err(|e| e.error);
+				Self::deposit_event(Event::<T>::Executed(index, res));
 
 				Ok(())
 			} else {

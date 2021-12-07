@@ -1113,7 +1113,7 @@ fn reward_destination_works() {
 				active_ring: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000,
-					unbondings: WeakBoundedVec::force_from(vec![], None),
+					..Default::default()
 				},
 				..Default::default()
 			}),
@@ -1138,7 +1138,7 @@ fn reward_destination_works() {
 				active_ring: 1000 + total_payout_0,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000 + total_payout_0,
-					unbondings: WeakBoundedVec::force_from(vec![], None),
+					..Default::default()
 				},
 				claimed_rewards: vec![0],
 				..Default::default()
@@ -1172,7 +1172,7 @@ fn reward_destination_works() {
 				active_ring: 1000 + total_payout_0,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000 + total_payout_0,
-					unbondings: WeakBoundedVec::force_from(vec![], None),
+					..Default::default()
 				},
 				claimed_rewards: vec![0, 1],
 				..Default::default()
@@ -1204,7 +1204,7 @@ fn reward_destination_works() {
 				active_ring: 1000 + total_payout_0,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000 + total_payout_0,
-					unbondings: WeakBoundedVec::force_from(vec![], None),
+					..Default::default()
 				},
 				claimed_rewards: vec![0, 1, 2],
 				..Default::default()
@@ -1286,7 +1286,7 @@ fn bond_extra_works() {
 				active_ring: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000,
-					unbondings: WeakBoundedVec::force_from(vec![], None),
+					..Default::default()
 				},
 				..Default::default()
 			})
@@ -1309,7 +1309,7 @@ fn bond_extra_works() {
 				active_ring: 1000 + 100,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000 + 100,
-					unbondings: WeakBoundedVec::force_from(vec![], None),
+					..Default::default()
 				},
 				..Default::default()
 			}),
@@ -1329,7 +1329,7 @@ fn bond_extra_works() {
 				active_ring: 1000000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000000,
-					unbondings: WeakBoundedVec::force_from(vec![], None),
+					..Default::default()
 				},
 				..Default::default()
 			}),

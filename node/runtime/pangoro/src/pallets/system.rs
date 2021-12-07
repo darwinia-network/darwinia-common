@@ -1,8 +1,5 @@
 // --- paritytech ---
-use frame_support::{
-	traits::{Contains, Filter},
-	weights::constants::RocksDbWeight,
-};
+use frame_support::{traits::Contains, weights::constants::RocksDbWeight};
 use frame_system::Config;
 use sp_runtime::traits::AccountIdLookup;
 use sp_version::RuntimeVersion;
@@ -11,8 +8,8 @@ use crate::*;
 use module_transaction_pause::PausedTransactionFilter;
 
 pub struct BaseFilter;
-impl Filter<Call> for BaseFilter {
-	fn filter(call: &Call) -> bool {
+impl Contains<Call> for BaseFilter {
+	fn contains(call: &Call) -> bool {
 		let is_paused = PausedTransactionFilter::<Runtime>::contains(call);
 
 		if is_paused {

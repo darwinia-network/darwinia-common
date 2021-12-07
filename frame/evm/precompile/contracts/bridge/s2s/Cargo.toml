@@ -12,7 +12,7 @@ version     = "2.7.0"
 [dependencies]
 # crates.io
 codec = { package = "parity-scale-codec", version = "2.1", default-features = false }
-evm   = { version = "0.27", default-features = false, features = ["with-codec"] }
+evm   = { version = "0.30", default-features = false, features = ["with-codec"] }
 log   = { version = "0.4" }
 # darwinia-network
 darwinia-evm                  = { default-features = false, path = "../../../../../evm" }
@@ -23,12 +23,12 @@ dp-evm                        = { default-features = false, path = "../../../../
 dp-s2s                        = { default-features = false, path = "../../../../../../primitives/s2s" }
 from-substrate-issuing        = { default-features = false, path = "../../../../../wormhole/issuing/s2s" }
 # paritytech
-bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
-bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
-frame-support       = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-core             = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-io               = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }
+bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }
+frame-support       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-core             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-io               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 
 [features]
 default = ["std"]

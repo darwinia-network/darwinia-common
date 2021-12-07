@@ -54,7 +54,7 @@ pub struct FullDeps<C, P> {
 pub fn create_full<C, P, B>(
 	deps: FullDeps<C, P>,
 	subscription_task_executor: SubscriptionTaskExecutor,
-) -> jsonrpc_core::IoHandler<sc_rpc::Metadata>
+) -> RpcExtension
 where
 	C: 'static
 		+ Send
@@ -69,7 +69,7 @@ where
 	C::Api: sp_block_builder::BlockBuilder<Block>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
-	P: 'static + sp_transaction_pool::TransactionPool<Block = Block>,
+	P: 'static + sc_transaction_pool_api::TransactionPool<Block = Block>,
 	B: 'static + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<Hashing>,
 {

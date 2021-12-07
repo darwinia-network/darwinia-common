@@ -50,6 +50,8 @@ pub mod pallet {
 	}
 	pub use types::*;
 
+	// --- crates.io ---
+	use ethabi::{Event as EthEvent, EventParam as EthEventParam, ParamType, RawLog};
 	// --- paritytech ---
 	use frame_support::{
 		pallet_prelude::*,
@@ -70,7 +72,6 @@ pub mod pallet {
 		traits::{EthereumReceipt, OnDepositRedeem},
 		AccountId,
 	};
-	use ethabi::{Event as EthEvent, EventParam as EthEventParam, ParamType, RawLog};
 	use ethereum_primitives::{
 		log_entry::LogEntry, receipt::EthereumTransactionIndex, EthereumAddress, U256,
 	};

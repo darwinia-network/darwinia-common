@@ -18,6 +18,7 @@ impl Config for Runtime {
 	type EpochDuration = EpochDuration;
 	type ExpectedBlockTime = ExpectedBlockTime;
 	type EpochChangeTrigger = ExternalTrigger;
+	type DisabledValidators = Session;
 	type KeyOwnerProofSystem = Historical;
 	type KeyOwnerProof =
 		<Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, AuthorityId)>>::Proof;

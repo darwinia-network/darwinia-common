@@ -17,18 +17,16 @@ log   = { version = "0.4" }
 darwinia-balances-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }
 darwinia-support                  = { default-features = false, path = "../support" }
 # paritytech
-frame-support   = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-frame-system    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-max-encoded-len = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-runtime      = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-std          = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+frame-support   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+frame-system    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-runtime      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-std          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 
 [dev-dependencies]
 # paritytech
-max-encoded-len            = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-core                    = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-io                      = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-core                    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-io                      = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 
 [features]
 default = ["std"]
@@ -42,7 +40,6 @@ std = [
 	# paritytech
 	"frame-support/std",
 	"frame-system/std",
-	"max-encoded-len/std",
 	"sp-runtime/std",
 	"sp-std/std",
 ]

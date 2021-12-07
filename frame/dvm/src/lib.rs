@@ -29,7 +29,8 @@ pub mod account_basic;
 use dvm_rpc_runtime_api::TransactionStatus;
 #[doc(no_inline)]
 pub use ethereum::{
-	Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage, TransactionSignature,
+	BlockV0 as EthereumBlockV0, LegacyTransactionMessage, Log, Receipt as EthereumReceipt,
+	TransactionAction, TransactionSignature, TransactionV0,
 };
 
 #[cfg(all(feature = "std", test))]
@@ -146,7 +147,7 @@ pub mod pallet {
 		#[pallet::weight(<T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(transaction.gas_limit.unique_saturated_into()))]
 		pub fn transact(
 			origin: OriginFor<T>,
-			transaction: ethereum::Transaction,
+			transaction: TransactionV0,
 		) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
 
@@ -273,19 +274,16 @@ pub mod pallet {
 
 	/// Current building block's transactions and receipts.
 	#[pallet::storage]
-	pub(super) type Pending<T: Config> = StorageValue<
-		_,
-		Vec<(ethereum::Transaction, TransactionStatus, ethereum::Receipt)>,
-		ValueQuery,
-	>;
+	pub(super) type Pending<T: Config> =
+		StorageValue<_, Vec<(TransactionV0, TransactionStatus, EthereumReceipt)>, ValueQuery>;
 
 	/// The current Ethereum block.
 	#[pallet::storage]
-	pub(super) type CurrentBlock<T: Config> = StorageValue<_, ethereum::Block>;
+	pub(super) type CurrentBlock<T: Config> = StorageValue<_, EthereumBlockV0>;
 
 	/// The current Ethereum receipts.
 	#[pallet::storage]
-	pub(super) type CurrentReceipts<T: Config> = StorageValue<_, Vec<ethereum::Receipt>>;
+	pub(super) type CurrentReceipts<T: Config> = StorageValue<_, Vec<EthereumReceipt>>;
 
 	/// The current transaction statuses.
 	#[pallet::storage]
@@ -337,7 +335,7 @@ impl<T: Config> Pallet<T> {
 	/// Execute transaction from EthApi(network transaction)
 	/// NOTE: For the rpc transaction, the execution will return ok(..) even when encounters error
 	/// from evm runner
-	pub fn rpc_transact(transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
+	pub fn rpc_transact(transaction: TransactionV0) -> DispatchResultWithPostInfo {
 		ensure!(
 			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 			Error::<T>::PreLogExists,
@@ -405,7 +403,7 @@ impl<T: Config> Pallet<T> {
 			),
 		};
 
-		let receipt = ethereum::Receipt {
+		let receipt = EthereumReceipt {
 			state_root: match reason {
 				ExitReason::Succeed(_) => H256::from_low_u64_be(1),
 				ExitReason::Error(_) => H256::from_low_u64_le(0),
@@ -433,7 +431,7 @@ impl<T: Config> Pallet<T> {
 		CurrentTransactionStatuses::<T>::get()
 	}
 	/// Get current block.
-	pub fn current_block() -> Option<ethereum::Block> {
+	pub fn current_block() -> Option<EthereumBlockV0> {
 		CurrentBlock::<T>::get()
 	}
 
@@ -443,7 +441,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get receipts by number.
-	pub fn current_receipts() -> Option<Vec<ethereum::Receipt>> {
+	pub fn current_receipts() -> Option<Vec<EthereumReceipt>> {
 		CurrentReceipts::<T>::get()
 	}
 
@@ -492,9 +490,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Transfer rpc transaction to dvm transaction
-	fn to_dvm_transaction(
-		transaction: ethereum::Transaction,
-	) -> Result<DVMTransaction, DispatchError> {
+	fn to_dvm_transaction(transaction: TransactionV0) -> Result<DVMTransaction, DispatchError> {
 		let source = recover_signer(&transaction).ok_or(Error::<T>::InvalidSignature)?;
 		Ok(DVMTransaction {
 			source,
@@ -539,7 +535,7 @@ impl<T: Config> Pallet<T> {
 			mix_hash: H256::default(),
 			nonce: H64::default(),
 		};
-		let block = ethereum::Block::new(partial_header, transactions, ommers);
+		let block = EthereumBlockV0::new(partial_header, transactions, ommers);
 
 		CurrentBlock::<T>::put(block.clone());
 		CurrentReceipts::<T>::put(receipts);

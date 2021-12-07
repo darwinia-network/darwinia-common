@@ -218,6 +218,10 @@ sp_api::impl_runtime_apis! {
 			Grandpa::grandpa_authorities()
 		}
 
+		fn current_set_id() -> fg_primitives::SetId {
+			Grandpa::current_set_id()
+		}
+
 		fn submit_report_equivocation_unsigned_extrinsic(
 			_: fg_primitives::EquivocationProof<
 				<Block as BlockT>::Hash,
@@ -353,17 +357,17 @@ sp_api::impl_runtime_apis! {
 			Ethereum::current_transaction_statuses()
 		}
 
-		fn current_block() -> Option<dvm_ethereum::Block> {
+		fn current_block() -> Option<dvm_ethereum::EthereumBlockV0> {
 			Ethereum::current_block()
 		}
 
-		fn current_receipts() -> Option<Vec<dvm_ethereum::Receipt>> {
+		fn current_receipts() -> Option<Vec<dvm_ethereum::EthereumReceipt>> {
 			Ethereum::current_receipts()
 		}
 
 		fn current_all() -> (
-			Option<dvm_ethereum::Block>,
-			Option<Vec<dvm_ethereum::Receipt>>,
+			Option<dvm_ethereum::EthereumBlockV0>,
+			Option<Vec<dvm_ethereum::EthereumReceipt>>,
 			Option<Vec<dvm_rpc_runtime_api::TransactionStatus>>
 		) {
 			(
@@ -375,7 +379,7 @@ sp_api::impl_runtime_apis! {
 
 		fn extrinsic_filter(
 			xts: Vec<<Block as BlockT>::Extrinsic>,
-		) -> Vec<dvm_ethereum::Transaction> {
+		) -> Vec<dvm_ethereum::TransactionV0> {
 			xts.into_iter().filter_map(|xt| match xt.function {
 				Call::Ethereum(dvm_ethereum::Call::transact(t)) => Some(t),
 				_ => None
@@ -386,14 +390,14 @@ sp_api::impl_runtime_apis! {
 
 pub struct TransactionConverter;
 impl dvm_rpc_runtime_api::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> UncheckedExtrinsic {
+	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV0) -> UncheckedExtrinsic {
 		UncheckedExtrinsic::new_unsigned(
 			<dvm_ethereum::Call<Runtime>>::transact(transaction).into(),
 		)
 	}
 }
 impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> OpaqueExtrinsic {
+	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV0) -> OpaqueExtrinsic {
 		let extrinsic = UncheckedExtrinsic::new_unsigned(
 			<dvm_ethereum::Call<Runtime>>::transact(transaction).into(),
 		);

@@ -19,10 +19,10 @@
 // --- core ---
 use core::fmt::Debug;
 // --- crates.io ---
-use codec::FullCodec;
+use codec::{FullCodec, MaxEncodedLen};
 use impl_trait_for_tuples::impl_for_tuples;
 // --- paritytech ---
-use frame_support::traits::{Currency, Get, LockIdentifier, MaxEncodedLen, WithdrawReasons};
+use frame_support::traits::{Currency, Get, LockIdentifier, WithdrawReasons};
 use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia-network ---

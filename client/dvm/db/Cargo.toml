@@ -12,13 +12,13 @@ version     = "2.7.0"
 [dependencies]
 # crates.io
 codec        = { package = "parity-scale-codec", version = "2.1", features = ["derive"] }
-kvdb         = { version = "0.9" }
-kvdb-rocksdb = { version = "0.11" }
+kvdb         = { version = "0.10" }
+kvdb-rocksdb = { version = "0.14" }
 parking_lot  = { version = "0.11" }
 # paritytech
-sp-core     = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-database = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-runtime  = { git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+sp-core     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-database = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-runtime  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 # darwinia-network
 dp-storage   = { path = "../../../primitives/storage/" }
 dvm-ethereum = { path = "../../../frame/dvm" }

@@ -19,12 +19,12 @@
 //! Test setup for potential reentracy and lost updates of nested mutations.
 
 // --- crates.io ---
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 // --- paritytech ---
 use frame_support::{
 	assert_ok,
 	traits::{
-		BalanceStatus, Currency, GenesisBuild, MaxEncodedLen, OnUnbalanced, ReservableCurrency,
+		BalanceStatus, Currency, Everything, GenesisBuild, OnUnbalanced, ReservableCurrency,
 		StorageMapShim,
 	},
 	weights::IdentityFee,
@@ -50,7 +50,7 @@ frame_support::parameter_types! {
 	pub static ExistentialDeposit: Balance = 0;
 }
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = BlockWeights;
 	type BlockLength = ();
 	type DbWeight = ();
