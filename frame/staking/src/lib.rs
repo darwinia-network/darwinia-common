@@ -315,7 +315,7 @@ pub mod pallet {
 		Perbill, Percent, SaturatedConversion,
 	};
 	use sp_staking::SessionIndex;
-	use sp_std::{borrow::ToOwned, prelude::*};
+	use sp_std::prelude::*;
 	// --- darwinia-network ---
 	use crate::*;
 	use darwinia_support::balance::*;
