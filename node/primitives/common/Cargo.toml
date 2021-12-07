@@ -11,8 +11,8 @@ version     = "2.7.0"
 
 [dependencies]
 # paritytech
-sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 
 [features]
 default = ["std"]

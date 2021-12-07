@@ -19,13 +19,13 @@
 //! Test utilities
 
 // --- crates.io ---
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use ethereum::{TransactionAction, TransactionSignature};
 use evm::{executor::PrecompileOutput, Context, ExitError};
 use rlp::RlpStream;
 // --- paritytech ---
 use frame_support::{
-	traits::{FindAuthor, GenesisBuild, MaxEncodedLen},
+	traits::{Everything, FindAuthor, GenesisBuild},
 	ConsensusEngineId, PalletId,
 };
 use frame_system::mocking::*;
@@ -57,7 +57,7 @@ frame_support::parameter_types! {
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 }
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
@@ -260,7 +260,7 @@ impl UnsignedTransaction {
 		H256::from_slice(&Keccak256::digest(&stream.out()).as_slice())
 	}
 
-	pub fn sign(&self, key: &H256) -> Transaction {
+	pub fn sign(&self, key: &H256) -> TransactionV0 {
 		let hash = self.signing_hash();
 		let msg = libsecp256k1::Message::parse(hash.as_fixed_bytes());
 		let s = libsecp256k1::sign(
@@ -276,7 +276,7 @@ impl UnsignedTransaction {
 		)
 		.unwrap();
 
-		Transaction {
+		TransactionV0 {
 			nonce: self.nonce,
 			gas_price: self.gas_price,
 			gas_limit: self.gas_limit,

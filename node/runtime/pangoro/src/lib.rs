@@ -369,6 +369,10 @@ sp_api::impl_runtime_apis! {
 			Grandpa::grandpa_authorities()
 		}
 
+		fn current_set_id() -> fg_primitives::SetId {
+			Grandpa::current_set_id()
+		}
+
 		fn submit_report_equivocation_unsigned_extrinsic(
 			equivocation_proof: fg_primitives::EquivocationProof<
 				<Block as BlockT>::Hash,
@@ -524,13 +528,19 @@ sp_api::impl_runtime_apis! {
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
-		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
+		) -> Result<
+			(Vec<frame_benchmarking::BenchmarkBatch>, Vec<frame_support::traits::StorageInfo>),
+			sp_runtime::RuntimeString,
+		>{
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 			use frame_system_benchmarking::Pallet as SystemBench;
+			use frame_support::traits::StorageInfoTrait;
+
+
 			impl frame_system_benchmarking::Config for Runtime {}
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
-
+			let storage_info = AllPalletsWithSystem::storage_info();
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
@@ -538,7 +548,8 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, to_substrate_backing, Substrate2SubstrateBacking);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
-			Ok(batches)
+
+			Ok((batches, storage_info))
 		}
 	}
 }

@@ -22,7 +22,6 @@ use std::str::FromStr;
 use rand::{seq::SliceRandom, Rng};
 // --- paritytech ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
-use sc_service::{ChainType, Properties};
 use sc_telemetry::TelemetryEndpoints;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
@@ -35,7 +34,9 @@ use darwinia_staking::StakerStatus;
 use drml_common_primitives::*;
 use pangoro_runtime::*;
 
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+// TODO: next version
+// pub type ChainSpec = GenericChainSpec<GenesisConfig, Extensions>;
+pub type ChainSpec = GenericChainSpec<GenesisConfig>;
 
 const PANGORO_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
@@ -259,7 +260,7 @@ pub fn genesis_config() -> ChainSpec {
 		),
 		Some(DEFAULT_PROTOCOL_ID),
 		Some(properties()),
-		None,
+		Default::default(),
 	)
 }
 
@@ -347,6 +348,6 @@ pub fn development_config() -> ChainSpec {
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
 		Some(properties()),
-		None,
+		Default::default(),
 	)
 }

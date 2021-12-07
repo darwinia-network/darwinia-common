@@ -14,23 +14,23 @@ version     = "2.7.0"
 array-bytes     = { version = "1.4" }
 codec           = { package = "parity-scale-codec", version = "2.1", optional = true, default-features = false, features = ["derive"] }
 ethbloom        = { version = "0.11", default-features = false }
-ethereum-types  = { version = "0.11", default-features = false }
-keccak-hash     = { version = "0.7", default-features = false }
+ethereum-types  = { version = "0.12", default-features = false }
+keccak-hash     = { version = "0.8", default-features = false }
 rlp             = { version = "0.5", optional = true, default-features = false }
 rlp-derive      = { version = "0.1", optional = true }
 serde           = { version = "1.0", optional = true, features = ["derive"] }
 sp-debug-derive = { version = "3.0" }
 subhasher       = { version = "0.1", default-features = false }
 # darwinia-network
-ethash               = { default-features = false, git = "https://github.com/darwinia-network/rust-ethash", tag = "v0.4.0" }
+ethash               = { default-features = false, git = "https://github.com/darwinia-network/rust-ethash", tag = "v0.4.2" }
 merkle-patricia-trie = { default-features = false, path = "../merkle-patricia-trie" }
 
 [dev-dependencies]
 # crates.io
 array-bytes    = { version = "1.4", features = ["serde"] }
-codec          = { package = "parity-scale-codec", version = "2.1.1", features = ["derive"] }
+codec          = { package = "parity-scale-codec", version = "2.1", features = ["derive"] }
 ethbloom       = { version = "0.11", features = ["codec"] }
-ethereum-types = { version = "0.11", features = ["codec"] }
+ethereum-types = { version = "0.12", features = ["codec"] }
 keccak-hasher  = { version = "0.15" }
 rlp            = { version = "0.5" }
 rlp-derive     = { version = "0.1" }

@@ -225,9 +225,9 @@ pub mod mock_relay {
 }
 
 // --- crates.io ---
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 // --- paritytech ---
-use frame_support::traits::{GenesisBuild, MaxEncodedLen, OnFinalize};
+use frame_support::traits::{Everything, GenesisBuild, OnFinalize};
 use frame_system::mocking::*;
 use sp_runtime::RuntimeDebug;
 // --- darwinia-network ---
@@ -247,7 +247,7 @@ pub type RelayerGameError = Error<Test, DefaultInstance>;
 darwinia_support::impl_test_account_data! {}
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();

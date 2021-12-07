@@ -20,13 +20,12 @@
 use std::str::FromStr;
 // --- crates.io ---
 use array_bytes::hex2bytes_unchecked;
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 // --- paritytech ---
 use bp_messages::source_chain::SendMessageArtifacts;
 use bp_runtime::{derive_account_id, SourceAccount};
-
 use frame_support::{
-	assert_err, assert_ok, dispatch::PostDispatchInfo, traits::MaxEncodedLen, PalletId,
+	assert_err, assert_ok, dispatch::PostDispatchInfo, traits::Everything, PalletId,
 };
 use frame_system::{mocking::*, RawOrigin};
 use sp_runtime::{
@@ -76,7 +75,7 @@ impl pallet_timestamp::Config for Test {
 }
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();

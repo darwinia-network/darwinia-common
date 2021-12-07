@@ -1,5 +1,5 @@
 // --- paritytech ---
-use frame_support::weights::constants::RocksDbWeight;
+use frame_support::{traits::Everything, weights::constants::RocksDbWeight};
 use frame_system::Config;
 use sp_runtime::traits::AccountIdLookup;
 use sp_version::RuntimeVersion;
@@ -12,7 +12,7 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = RuntimeBlockWeights;
 	type BlockLength = RuntimeBlockLength;
 	type DbWeight = RocksDbWeight;
@@ -26,7 +26,7 @@ impl Config for Runtime {
 	type Lookup = AccountIdLookup<AccountId, ()>;
 	type Header = Header;
 	type Event = Event;
-	type BlockHashCount = BlockHashCountForPangoro;
+	type BlockHashCount = BlockHashCountForPangolin;
 	type Version = Version;
 	type PalletInfo = PalletInfo;
 	type AccountData = AccountData<Balance>;
