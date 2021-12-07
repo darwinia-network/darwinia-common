@@ -14,6 +14,7 @@ frame_support::parameter_types! {
 	};
 }
 impl Config for Runtime {
+	type Event = Event;
 	type BSCConfiguration = Configuration;
 	type UnixTime = Timestamp;
 	type OnHeadersSubmitted = ();

@@ -83,6 +83,7 @@ pub mod pallet {
 	// --- paritytech ---
 	use frame_support::{pallet_prelude::*, traits::UnixTime};
 	use frame_system::pallet_prelude::*;
+	use rlp::Decodable;
 	use sp_core::U256;
 	use sp_io::crypto;
 	use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
@@ -91,9 +92,12 @@ pub mod pallet {
 	use sp_std::{collections::btree_set::BTreeSet, prelude::*};
 	// --- darwinia-network ---
 	use bsc_primitives::*;
+	use ethereum_primitives::storage::{EthereumStorage, EthereumStorageProof};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		/// The overarching event type.
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type UnixTime: UnixTime;
 		/// BSC configuration.
 		type BSCConfiguration: Get<BSCConfiguration>;
@@ -166,6 +170,19 @@ pub mod pallet {
 		///
 		/// Recover pubkey from signature error
 		RecoverPubkeyFail,
+
+		/// Older header should be rejected
+		RejectOldHeader,
+
+		/// Verfiy Storage Proof Failed
+		VerifyStorageFail,
+	}
+
+	#[pallet::event]
+	#[pallet::generate_deposit(fn deposit_event)]
+	pub enum Event<T: Config> {
+		/// New bsc header submitted \[header\]
+		NewHeaderUpdated(BSCHeader),
 	}
 
 	#[pallet::storage]
@@ -175,6 +192,10 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn finalized_checkpoint)]
 	pub type FinalizedCheckpoint<T> = StorageValue<_, BSCHeader, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn latest_bsc_header)]
+	pub type LatestBscHeader<T> = StorageValue<_, BSCHeader, ValueQuery>;
 
 	/// [`Authorities`] is the set of qualified authorities that currently active or activated in previous rounds
 	/// this was added to track the older qualified authorities, to make sure we can verify a older header
@@ -251,6 +272,23 @@ pub mod pallet {
 				}
 			}
 
+			Ok(().into())
+		}
+
+		#[pallet::weight(0)]
+		pub fn submit_header(
+			origin: OriginFor<T>,
+			header: BSCHeader,
+		) -> DispatchResultWithPostInfo {
+			ensure_signed(origin)?;
+			let latest_header = <LatestBscHeader<T>>::get();
+			ensure!(
+				latest_header.number < header.number,
+				<Error<T>>::RejectOldHeader
+			);
+			Self::verify_header(&header)?;
+			<LatestBscHeader<T>>::put(&header);
+			Self::deposit_event(Event::NewHeaderUpdated(header));
 			Ok(().into())
 		}
 	}
@@ -604,6 +642,20 @@ pub mod pallet {
 	/// check if the signer address in a set of qualified signers
 	fn contains(signers: &[Address], signer: Address) -> bool {
 		signers.iter().any(|i| *i == signer)
+	}
+
+	pub trait StorageVerifier<S> {
+		fn verify_storage(proof: &EthereumStorageProof) -> Result<S, DispatchError>;
+	}
+
+	impl<T: Config, S: Decodable> StorageVerifier<S> for Pallet<T> {
+		fn verify_storage(proof: &EthereumStorageProof) -> Result<S, DispatchError> {
+			let latest_header = <LatestBscHeader<T>>::get();
+			let storage =
+				EthereumStorage::<S>::verify_storage_proof(latest_header.state_root, proof)
+					.map_err(|_| <Error<T>>::VerifyStorageFail)?;
+			Ok(storage.0)
+		}
 	}
 }
 pub use pallet::*;

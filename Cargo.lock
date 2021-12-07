@@ -1473,10 +1473,12 @@ version = "2.7.0"
 dependencies = [
  "array-bytes",
  "bsc-primitives",
+ "ethereum-primitives",
  "frame-support",
  "frame-system",
  "pallet-timestamp",
  "parity-scale-codec",
+ "rlp",
  "serde_json",
  "sp-core",
  "sp-io",
@@ -2235,6 +2237,10 @@ dependencies = [
  "ethabi",
  "ethereum-primitives",
  "ethereum-types",
+ "merkle-patricia-trie",
+ "parity-scale-codec",
+ "rlp",
+ "sha3 0.9.1",
  "sp-std",
 ]
 
