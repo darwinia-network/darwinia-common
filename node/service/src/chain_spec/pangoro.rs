@@ -34,6 +34,7 @@ use darwinia_staking::StakerStatus;
 use drml_common_primitives::*;
 use pangoro_runtime::*;
 
+// TODO: next version
 // pub type ChainSpec = GenericChainSpec<GenesisConfig, Extensions>;
 pub type ChainSpec = GenericChainSpec<GenesisConfig>;
 

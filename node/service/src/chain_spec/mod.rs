@@ -71,6 +71,7 @@ const TEAM_MEMBERS: &[&str] = &[
 	"0x88d388115bd0df43e805b029207cfa4925cecfb29026e345979d9b0004466c49",
 ];
 
+// TODO: next version
 // /// Node `ChainSpec` extensions.
 // ///
 // /// Additional parameters for some Substrate core modules,
