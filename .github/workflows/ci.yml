@@ -25,6 +25,11 @@ on:
 env:
   RUST_TOOLCHAIN: nightly
   RUST_BACKTRACE: full
+  RUSTC_WRAPPER: sccache
+  SCCACHE_VERSION: 0.2.13
+  SCCACHE_FILE: sccache-${{ env.SCCACHE_VERSION }}-x86_64-unknown-linux-musl
+  SCCACHE_LINK: https://github.com/mozilla/sccache/releases/download/${{ env.SCCACHE_VERSION }}/${{ env.SCCACHE_FILE }}.tar.gz
+  SCCACHE_DIR: /home/runner/.cache/sccache
   NODE_VERSION: 10
   GITHUB_CACHE_VERSION: 0
 
@@ -61,21 +66,32 @@ jobs:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           default: true
 
+      - name: Install Sccache
+        run: |
+          curl -L ${{ env.SCCACHE_LINK }} | tar xz
+          sudo mv ${{ env.SCCACHE_FILE }}/sccache /usr/bin
+
       - name: Fetch latest code
         uses: actions/checkout@v2
         with:
           repository: ${{ matrix.task.repository }}
 
-      - name: Cache
+      - name: Cache cargo
         uses: actions/cache@v2
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ matrix.action }}-${{ matrix.task.target }}-${{ env.GITHUB_CACHE_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ matrix.action }}-${{ matrix.task.target }}-${{ env.GITHUB_CACHE_VERSION }}-
+          key: cargo-${{ matrix.action }}-${{ matrix.task.target }}-${{ env.GITHUB_CACHE_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: cargo-${{ matrix.action }}-${{ matrix.task.target }}-${{ env.GITHUB_CACHE_VERSION }}-
+
+      - name: Cache sccache
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.SCCACHE_DIR}}
+          key: sccache-${{ matrix.action }}-${{ matrix.task.target }}-${{ env.GITHUB_CACHE_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: sccache-${{ matrix.action }}-${{ matrix.task.target }}-${{ env.GITHUB_CACHE_VERSION }}-
 
       - name: Action ${{ matrix.action }}
         run: cargo ${{ matrix.action }} ${{ matrix.flags }} --release --locked
