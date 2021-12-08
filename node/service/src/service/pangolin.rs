@@ -546,47 +546,16 @@ where
 		);
 	}
 
-	// Spawn Frontier pending transactions maintenance task (as essential, otherwise we leak).
-	if let Some(pending_transactions) = pending_transactions {
-		const TRANSACTION_RETAIN_THRESHOLD: u64 = 5;
-		task_manager.spawn_essential_handle().spawn(
-			"frontier-pending-transactions",
-			EthTask::pending_transaction_task(
-				Arc::clone(&client),
-				pending_transactions,
-				TRANSACTION_RETAIN_THRESHOLD,
-			),
-		);
-	}
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-schema-cache-task",
-		EthTask::ethereum_schema_cache_task(Arc::clone(&client), Arc::clone(&dvm_backend)),
-	);
-
-	if is_archive {
-		task_manager.spawn_essential_handle().spawn(
-			"frontier-mapping-sync-worker",
-			MappingSyncWorker::new(
-				client.import_notification_stream(),
-				Duration::new(6, 0),
-				client.clone(),
-				backend.clone(),
-				dvm_backend.clone(),
-				SyncStrategy::Normal,
-			)
-			.for_each(|()| futures::future::ready(())),
-		);
-	}
-
-	// Spawn Frontier EthFilterApi maintenance task.
-	if let Some(filter_pool) = filter_pool {
-		// Each filter is allowed to stay in the pool for 100 blocks.
-		const FILTER_RETAIN_THRESHOLD: u64 = 100;
-		task_manager.spawn_essential_handle().spawn(
-			"frontier-filter-pool",
-			EthTask::filter_pool_task(Arc::clone(&client), filter_pool, FILTER_RETAIN_THRESHOLD),
-		);
-	}
+	// Spawn dvm related tasks
+	super::dvm_tasks::spawn_dvm_tasks(super::dvm_tasks::DvmTasksParams {
+		task_manager: &task_manager,
+		client: client.clone(),
+		substrate_backend: backend.clone(),
+		dvm_backend: dvm_backend.clone(),
+		filter_pool: filter_pool.clone(),
+		pending_transactions,
+		is_archive,
+	});
 
 	network_starter.start_network();
 
