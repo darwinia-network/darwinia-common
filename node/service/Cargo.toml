@@ -42,7 +42,7 @@ pangoro-runtime                     = { path = "../runtime/pangoro" }
 dc-tracing-debug-handler = { default-features = false, path = "../../client/dvm/evm-tracing/rpc/debug" }
 dc-tracing-trace-handler = { default-features = false, path = "../../client/dvm/evm-tracing/rpc/trace" }
 dc-tracing-rpc-core-debug = { default-features = false, path = "../../client/dvm/evm-tracing/rpc-core/debug" }
-dp-evm-trace-apis = { default-features = false, path = "../../primitives/evm/tracing/apis" }
+dp-evm-trace-apis = { default-features = false, path = "../../primitives/evm/trace/apis" }
 
 # paritytech
 frame-benchmarking                         = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }

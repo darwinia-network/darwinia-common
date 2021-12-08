@@ -15,8 +15,8 @@ serde_json     = { version = "1.0" }
 hex            = { version = "0.4", features = ["serde"]}
 log            = { version = "0.4"}
 # darwinia-network
-dp-evm-trace-events = { path = "../../../../primitives/evm/tracing/events" }
-dp-evm-trace-apis   = { path = "../../../../primitives/evm/tracing/apis" }
+dp-evm-trace-events = { path = "../../../../primitives/evm/trace/events" }
+dp-evm-trace-apis   = { path = "../../../../primitives/evm/trace/apis" }
 # dc-tracing-types = { path = "../types" }
 # dc-tracing-formatters = { path = "../formatters" }
 # paritytech

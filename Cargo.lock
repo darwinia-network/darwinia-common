@@ -2379,6 +2379,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "dp-evm-tracer"
+version = "2.7.0"
+dependencies = [
+ "dp-evm-trace-events",
+ "dp-evm-trace-ext",
+ "ethereum-types 0.11.0",
+ "evm",
+ "evm-gasometer",
+ "evm-runtime",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 4.0.0-dev",
+]
+
+[[package]]
 name = "dp-fee"
 version = "2.7.0"
 dependencies = [
@@ -6306,6 +6323,7 @@ dependencies = [
  "dp-evm",
  "dp-evm-trace-apis",
  "dp-evm-trace-events",
+ "dp-evm-tracer",
  "dp-fee",
  "dp-s2s",
  "drml-bridge-primitives",
@@ -6354,7 +6372,6 @@ dependencies = [
  "pallet-treasury",
  "pallet-utility",
  "parity-scale-codec",
- "runtime-tracer",
  "serde",
  "smallvec 1.7.0",
  "sp-api",
@@ -7511,23 +7528,6 @@ checksum = "ffc936cf8a7ea60c58f030fd36a612a48f440610214dc54bc36431f9ea0c3efb"
 dependencies = [
  "libc",
  "winapi 0.3.9",
-]
-
-[[package]]
-name = "runtime-tracer"
-version = "2.7.0"
-dependencies = [
- "dp-evm-trace-events",
- "dp-evm-trace-ext",
- "ethereum-types 0.11.0",
- "evm",
- "evm-gasometer",
- "evm-runtime",
- "parity-scale-codec",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std 4.0.0-dev",
 ]
 
 [[package]]
