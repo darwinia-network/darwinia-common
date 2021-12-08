@@ -26,7 +26,7 @@
 
 pub mod tracer {
 	use codec::Encode;
-	use tracing_events::{EvmEvent, GasometerEvent, RuntimeEvent};
+	use dp_evm_trace_events::{EvmEvent, GasometerEvent, RuntimeEvent};
 
 	use evm::tracing::{using as evm_using, EventListener as EvmListener};
 	use evm_gasometer::tracing::{using as gasometer_using, EventListener as GasometerListener};
@@ -78,7 +78,7 @@ pub mod tracer {
 		}
 
 		pub fn emit_new() {
-			tracing_ext::dvm_ext::call_list_new();
+			dp_evm_trace_ext::dvm_ext::call_list_new();
 		}
 	}
 
@@ -87,7 +87,7 @@ pub mod tracer {
 		fn event(&mut self, event: evm::tracing::Event) {
 			let event: EvmEvent = event.into();
 			let message = event.encode();
-			tracing_ext::dvm_ext::evm_event(message);
+			dp_evm_trace_ext::dvm_ext::evm_event(message);
 		}
 	}
 
@@ -96,7 +96,7 @@ pub mod tracer {
 		fn event(&mut self, event: evm_gasometer::tracing::Event) {
 			let event: GasometerEvent = event.into();
 			let message = event.encode();
-			tracing_ext::dvm_ext::gasometer_event(message);
+			dp_evm_trace_ext::dvm_ext::gasometer_event(message);
 		}
 	}
 
@@ -105,7 +105,7 @@ pub mod tracer {
 		fn event(&mut self, event: evm_runtime::tracing::Event) {
 			let event: RuntimeEvent = event.into();
 			let message = event.encode();
-			tracing_ext::dvm_ext::runtime_event(message);
+			dp_evm_trace_ext::dvm_ext::runtime_event(message);
 		}
 	}
 }

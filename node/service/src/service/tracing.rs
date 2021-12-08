@@ -106,7 +106,7 @@ where
 	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
 	C: BlockchainEvents<B>,
 	C: Send + Sync + 'static,
-	C::Api: EthereumRuntimeRPCApi<B> + tracing_apis::DebugRuntimeApi<B>,
+	C::Api: EthereumRuntimeRPCApi<B> + dp_evm_trace_apis::DebugRuntimeApi<B>,
 	C::Api: BlockBuilder<B>,
 	B: BlockT<Hash = H256> + Send + Sync + 'static,
 	B::Header: HeaderT<Number = u32>,

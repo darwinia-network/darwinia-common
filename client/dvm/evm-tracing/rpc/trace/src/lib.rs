@@ -59,7 +59,7 @@ use dc_tracer::{
 };
 pub use dc_tracing_rpc_core_trace::{FilterRequest, Trace as TraceT, TraceServer};
 use dc_tracing_rpc_core_types::{RequestBlockId, RequestBlockTag};
-use tracing_apis::DebugRuntimeApi;
+use dp_evm_trace_apis::DebugRuntimeApi;
 
 /// RPC handler. Will communicate with a `CacheTask` through a `CacheRequester`.
 pub struct Trace<B, C> {
@@ -870,7 +870,7 @@ where
 						height, e
 					))
 				})?;
-			Ok(tracing_apis::Response::Block)
+			Ok(dp_evm_trace_apis::Response::Block)
 		};
 
 		let mut proxy = dc_tracer::listeners::CallList::default();

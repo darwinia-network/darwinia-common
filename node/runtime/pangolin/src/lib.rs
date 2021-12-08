@@ -684,7 +684,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl tracing_apis::DebugRuntimeApi<Block> for Runtime {
+	impl dp_evm_trace_apis::DebugRuntimeApi<Block> for Runtime {
 		fn trace_transaction(
 			extrinsics: Vec<<Block as BlockT>::Extrinsic>,
 			traced_transaction: &dvm_ethereum::TransactionV0,

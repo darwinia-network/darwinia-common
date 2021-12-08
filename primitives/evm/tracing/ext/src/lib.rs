@@ -30,7 +30,7 @@ use sp_runtime_interface::runtime_interface;
 use codec::Decode;
 use sp_std::vec::Vec;
 
-use tracing_events::{Event, EvmEvent, GasometerEvent, RuntimeEvent};
+use dp_evm_trace_events::{Event, EvmEvent, GasometerEvent, RuntimeEvent};
 
 // TODO: update host functions in the node
 #[runtime_interface]

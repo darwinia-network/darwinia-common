@@ -18,12 +18,12 @@ use crate::{
 	formatters::blockscout::{BlockscoutCall as Call, BlockscoutCallInner as CallInner},
 	types::{CallResult, CallType, ContextType, CreateResult},
 };
-use ethereum_types::{H160, U256};
-use std::{collections::btree_map::BTreeMap, vec, vec::Vec};
-use tracing_events::{
+use dp_evm_trace_events::{
 	runtime::{Capture, ExitError, ExitReason, ExitSucceed},
 	Event, EvmEvent, GasometerEvent, Listener as ListenerT, RuntimeEvent,
 };
+use ethereum_types::{H160, U256};
+use std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 
 /// Enum of the different "modes" of tracer for multiple runtime versions and
 /// the kind of EVM events that are emitted.
@@ -123,7 +123,7 @@ impl Default for Listener {
 
 impl Listener {
 	pub fn using<R, F: FnOnce() -> R>(&mut self, f: F) -> R {
-		tracing_events::using(self, f)
+		dp_evm_trace_events::using(self, f)
 	}
 
 	/// Called at the end of each transaction when tracing.

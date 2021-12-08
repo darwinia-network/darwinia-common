@@ -29,6 +29,7 @@ use tokio::{
 use dc_rpc::{frontier_backend_client, internal_err};
 use dc_tracer::{formatters::ResponseFormatter, types::single};
 use dc_tracing_rpc_core_types::{RequestBlockId, RequestBlockTag};
+use dp_evm_trace_apis::{DebugRuntimeApi, TracerInput};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 use ethereum_types::{H128, H256};
 use sc_client_api::backend::Backend;
@@ -40,7 +41,6 @@ use sp_blockchain::{
 use sp_runtime::traits::{Block as BlockT, UniqueSaturatedInto};
 use sp_utils::mpsc::TracingUnboundedSender;
 use std::{future::Future, marker::PhantomData, str::FromStr, sync::Arc};
-use tracing_apis::{DebugRuntimeApi, TracerInput};
 
 pub enum RequesterInput {
 	Transaction(H256),
@@ -377,7 +377,7 @@ where
 						reference_id, e
 					))
 				})?;
-			Ok(tracing_apis::Response::Block)
+			Ok(dp_evm_trace_apis::Response::Block)
 		};
 
 		return match trace_type {
@@ -467,7 +467,7 @@ where
 						.map_err(|e| internal_err(format!("Runtime api access error: {:?}", e)))?
 						.map_err(|e| internal_err(format!("DispatchError: {:?}", e)))?;
 
-					Ok(tracing_apis::Response::Single)
+					Ok(dp_evm_trace_apis::Response::Single)
 				};
 
 				return match trace_type {

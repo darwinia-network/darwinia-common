@@ -1,6 +1,6 @@
 [package]
 # TODO: update the crate info
-name = "tracing-ext"
+name = "dp-evm-trace-ext"
 authors = [ "PureStake" ]
 edition = "2018"
 homepage = "https://moonbeam.network"
@@ -13,7 +13,7 @@ version = "0.1.0"
 # crates.io
 ethereum-types = { version = "0.12.0", default-features = false }
 # darwinia-network
-tracing-events = { path = "../tracing-events", default-features = false }
+dp-evm-trace-events = { path = "../events", default-features = false }
 # paritytech
 codec                = { package = "parity-scale-codec", version = "2.2", default-features = false }
 sp-externalities     = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
@@ -25,7 +25,7 @@ default = [ "std" ]
 std = [
 	"codec/std",
 	"ethereum-types/std",
-	"tracing-events/std",
+	"dp-evm-trace-events/std",
 	"sp-externalities/std",
 	"sp-runtime-interface/std",
 	"sp-std/std",

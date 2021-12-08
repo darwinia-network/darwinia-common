@@ -2091,6 +2091,8 @@ dependencies = [
 name = "dc-tracer"
 version = "0.1.0"
 dependencies = [
+ "dp-evm-trace-apis",
+ "dp-evm-trace-events",
  "ethereum-types 0.12.1",
  "hex",
  "log",
@@ -2098,8 +2100,6 @@ dependencies = [
  "serde",
  "serde_json",
  "sp-std 3.0.0",
- "tracing-apis",
- "tracing-events",
 ]
 
 [[package]]
@@ -2111,6 +2111,7 @@ dependencies = [
  "dc-tracer",
  "dc-tracing-rpc-core-debug",
  "dc-tracing-rpc-core-types",
+ "dp-evm-trace-apis",
  "dvm-rpc-runtime-api",
  "ethereum",
  "ethereum-types 0.12.1",
@@ -2126,7 +2127,6 @@ dependencies = [
  "sp-runtime",
  "sp-utils",
  "tokio 0.2.25",
- "tracing-apis",
 ]
 
 [[package]]
@@ -2177,6 +2177,7 @@ dependencies = [
  "dc-tracer",
  "dc-tracing-rpc-core-trace",
  "dc-tracing-rpc-core-types",
+ "dp-evm-trace-apis",
  "dvm-rpc-runtime-api",
  "ethereum",
  "ethereum-types 0.12.1",
@@ -2196,7 +2197,6 @@ dependencies = [
  "sp-utils",
  "tokio 0.2.25",
  "tracing",
- "tracing-apis",
 ]
 
 [[package]]
@@ -2333,6 +2333,49 @@ dependencies = [
  "serde",
  "sp-core",
  "sp-std 4.0.0-dev",
+]
+
+[[package]]
+name = "dp-evm-trace-apis"
+version = "0.1.0"
+dependencies = [
+ "environmental",
+ "ethereum",
+ "ethereum-types 0.12.1",
+ "hex",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 4.0.0-dev",
+]
+
+[[package]]
+name = "dp-evm-trace-events"
+version = "2.7.0"
+dependencies = [
+ "environmental",
+ "ethereum",
+ "ethereum-types 0.12.1",
+ "evm",
+ "evm-gasometer",
+ "evm-runtime",
+ "parity-scale-codec",
+]
+
+[[package]]
+name = "dp-evm-trace-ext"
+version = "0.1.0"
+dependencies = [
+ "dp-evm-trace-events",
+ "ethereum-types 0.12.1",
+ "parity-scale-codec",
+ "sp-externalities 0.9.0",
+ "sp-runtime-interface 3.0.0",
+ "sp-std 3.0.0",
 ]
 
 [[package]]
@@ -2483,6 +2526,7 @@ dependencies = [
  "dc-tracing-debug-handler",
  "dc-tracing-rpc-core-debug",
  "dc-tracing-trace-handler",
+ "dp-evm-trace-apis",
  "dp-rpc",
  "drml-common-primitives",
  "drml-rpc",
@@ -2540,7 +2584,6 @@ dependencies = [
  "substrate-prometheus-endpoint",
  "template-runtime",
  "tokio 0.2.25",
- "tracing-apis",
 ]
 
 [[package]]
@@ -6261,6 +6304,8 @@ dependencies = [
  "dp-asset",
  "dp-contract",
  "dp-evm",
+ "dp-evm-trace-apis",
+ "dp-evm-trace-events",
  "dp-fee",
  "dp-s2s",
  "drml-bridge-primitives",
@@ -6332,8 +6377,6 @@ dependencies = [
  "substrate-wasm-builder",
  "to-ethereum-backing",
  "to-tron-backing",
- "tracing-apis",
- "tracing-events",
 ]
 
 [[package]]
@@ -7474,6 +7517,8 @@ dependencies = [
 name = "runtime-tracer"
 version = "2.7.0"
 dependencies = [
+ "dp-evm-trace-events",
+ "dp-evm-trace-ext",
  "ethereum-types 0.11.0",
  "evm",
  "evm-gasometer",
@@ -7483,8 +7528,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std 4.0.0-dev",
- "tracing-events",
- "tracing-ext",
 ]
 
 [[package]]
@@ -10757,24 +10800,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tracing-apis"
-version = "0.1.0"
-dependencies = [
- "environmental",
- "ethereum",
- "ethereum-types 0.12.1",
- "hex",
- "parity-scale-codec",
- "serde",
- "serde_json",
- "sp-api",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std 4.0.0-dev",
-]
-
-[[package]]
 name = "tracing-attributes"
 version = "0.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10792,31 +10817,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f4ed65637b8390770814083d20756f87bfa2c21bf2f110babdc5438351746e4"
 dependencies = [
  "lazy_static",
-]
-
-[[package]]
-name = "tracing-events"
-version = "2.7.0"
-dependencies = [
- "environmental",
- "ethereum",
- "ethereum-types 0.12.1",
- "evm",
- "evm-gasometer",
- "evm-runtime",
- "parity-scale-codec",
-]
-
-[[package]]
-name = "tracing-ext"
-version = "0.1.0"
-dependencies = [
- "ethereum-types 0.12.1",
- "parity-scale-codec",
- "sp-externalities 0.9.0",
- "sp-runtime-interface 3.0.0",
- "sp-std 3.0.0",
- "tracing-events",
 ]
 
 [[package]]

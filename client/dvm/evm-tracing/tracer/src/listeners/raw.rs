@@ -18,7 +18,7 @@ use ethereum_types::{H160, H256};
 use std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 
 use crate::types::{convert_memory, single::RawStepLog, ContextType};
-use tracing_events::{
+use dp_evm_trace_events::{
 	runtime::{Capture, ExitReason},
 	Event, GasometerEvent, Listener as ListenerT, RuntimeEvent,
 };
@@ -87,7 +87,7 @@ impl Listener {
 
 	pub fn using<R, F: FnOnce() -> R>(&mut self, f: F) -> R {
 		log::debug!("bear: --- Listener using");
-		tracing_events::using(self, f)
+		dp_evm_trace_events::using(self, f)
 	}
 
 	pub fn gasometer_event(&mut self, event: GasometerEvent) {
