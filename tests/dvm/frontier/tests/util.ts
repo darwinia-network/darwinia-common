@@ -2,7 +2,6 @@ import fs from 'fs'
 import Web3 from "web3";
 import { JsonRpcResponse } from "web3-core-helpers";
 import { spawn, ChildProcess } from "child_process";
-import { ethers } from "ethers";
 
 export const PORT = 19931;
 export const RPC_PORT = 19932;
