@@ -15,8 +15,25 @@ export const BINARY_PATH = `../../../target/release/drml`;
 export const SPAWNING_TIME = 30000;
 
 export async function customRequest(web3: Web3, method: string, params: any[]) {
-	const provider = new ethers.providers.JsonRpcProvider(`http://127.0.0.1:${RPC_PORT}`);
-	return provider.send(method, params);
+	return new Promise<JsonRpcResponse>((resolve, reject) => {
+		(web3.currentProvider as any).send(
+			{
+				jsonrpc: "2.0",
+				id: 1,
+				method,
+				params,
+			},
+			(error: Error | null, result?: JsonRpcResponse) => {
+				if (error) {
+					reject(
+						`Failed to send custom request (${method} (${params.join(",")})): ${error.message || error.toString()
+						}`
+					);
+				}
+				resolve(result);
+			}
+		);
+	});
 }
 
 // Create a block and finalize it.
