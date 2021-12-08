@@ -1,3 +1,4 @@
+pub use darwinia_evm_precompile_bridge_bsc::BscBridge;
 pub use darwinia_evm_precompile_bridge_ethereum::EthereumBridge;
 pub use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 pub use darwinia_evm_precompile_dispatch::Dispatch;
@@ -104,7 +105,6 @@ where
 			_ if address == addr(3) => Some(Ripemd160::execute(input, target_gas, context)),
 			_ if address == addr(4) => Some(Identity::execute(input, target_gas, context)),
 			// Darwinia precompiles
-			_ if address == addr(21) => Some(<Transfer<R>>::execute(input, target_gas, context)),
 			_ if address == addr(23) => {
 				Some(<EthereumBridge<R>>::execute(input, target_gas, context))
 			}
@@ -112,6 +112,7 @@ where
 				input, target_gas, context,
 			)),
 			_ if address == addr(25) => Some(<Dispatch<R>>::execute(input, target_gas, context)),
+			_ if address == addr(26) => Some(<BscBridge<R>>::execute(input, target_gas, context)),
 			_ => None,
 		}
 	}

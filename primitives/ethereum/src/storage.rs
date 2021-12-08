@@ -85,6 +85,22 @@ pub struct EthereumStorageProof {
 	pub storage_proof: Vec<Vec<u8>>,
 }
 
+impl EthereumStorageProof {
+	pub fn new(
+		address: H160,
+		key: H256,
+		account_proof: Vec<Vec<u8>>,
+		storage_proof: Vec<Vec<u8>>,
+	) -> Self {
+		Self {
+			address,
+			key,
+			account_proof,
+			storage_proof,
+		}
+	}
+}
+
 #[cfg(any(feature = "full-rlp", test))]
 pub struct EthereumStorage<T: Decodable>(pub T);
 
