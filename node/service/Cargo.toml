@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "drml-service"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.7.0"
+version     = "2.7.1"
 
 [dependencies]
 # crates.io
@@ -15,7 +15,7 @@ array-bytes = { version = "1.4" }
 codec       = { package = "parity-scale-codec", version = "2.1" }
 futures     = { version = "0.3" }
 rand        = { version = "0.8" }
-serde       = { version = "1.0" }
+serde       = { version = "1.0", features = ["derive"] }
 serde_json  = { version = "1.0" }
 tokio = { version = "0.2.21", features = [ "macros", "sync" ] }
 jsonrpc-core = "15.0.0"

@@ -167,7 +167,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 0,
-	spec_version: 2_7_00_0,
+	spec_version: 2_7_01_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -836,20 +836,32 @@ sp_api::impl_runtime_apis! {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
+		fn benchmark_metadata(extra: bool) -> (
+			Vec<frame_benchmarking::BenchmarkList>,
+			Vec<frame_support::traits::StorageInfo>,
+		) {
+			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_support::traits::StorageInfoTrait;
+			use frame_system_benchmarking::Pallet as SystemBench;
+
+			let mut list = Vec::<BenchmarkList>::new();
+
+			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+
+			let storage_info = AllPalletsWithSystem::storage_info();
+
+			return (list, storage_info)
+		}
+
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
-		) -> Result<
-			(Vec<frame_benchmarking::BenchmarkBatch>, Vec<frame_support::traits::StorageInfo>),
-			sp_runtime::RuntimeString,
-		> {
+		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 			use frame_system_benchmarking::Pallet as SystemBench;
-			use frame_support::traits::StorageInfoTrait;
 
 			impl frame_system_benchmarking::Config for Runtime {}
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
-			let storage_info = AllPalletsWithSystem::storage_info();
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
@@ -861,7 +873,7 @@ sp_api::impl_runtime_apis! {
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 
-			Ok((batches, storage_info))
+			Ok(batches)
 		}
 	}
 }
@@ -890,11 +902,9 @@ fn migrate() -> Weight {
 	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
 	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
 
-	migration::remove_storage_prefix(b"FeeMarket", b"ConfirmedMessagesThisBlock", &[]);
-	log::info!("===> Remove `ConfirmedMessagesThisBlock` from the fee market");
+	migration::move_pallet(b"Instance2Treasury", b"KtonTreasury");
 
-	migration::move_pallet(b"BridgeDispatch", b"BridgePangoroDispatch");
-	log::info!("Move `BridgeDispatch` to `BridgePangoroDispatch`");
+	log::info!("`KtonTreasury` migrated.");
 
 	// 0
 	RuntimeBlockWeights::get().max_block
@@ -909,11 +919,6 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
-		assert!(!migration::have_storage_value(
-			b"FeeMarket",
-			b"ConfirmedMessagesThisBlock",
-			&[]
-		));
 		Ok(())
 	}
 

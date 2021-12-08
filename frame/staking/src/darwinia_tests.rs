@@ -21,7 +21,7 @@
 // --- paritytech ---
 use frame_support::{assert_err, assert_ok, traits::Currency, WeakBoundedVec};
 use sp_runtime::{traits::Zero, Perbill};
-use sp_staking::offence::OffenceDetails;
+use sp_staking::offence::*;
 use substrate_test_utils::assert_eq_uvec;
 // --- darwinia-network ---
 use crate::{mock::*, Event, *};

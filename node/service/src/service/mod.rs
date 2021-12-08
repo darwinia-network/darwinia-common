@@ -38,6 +38,8 @@ macro_rules! impl_runtime_apis {
 	};
 }
 
+pub mod dvm_tasks;
+
 pub mod pangolin;
 pub use pangolin::Executor as PangolinExecutor;
 
