@@ -820,7 +820,7 @@ fn migrate() -> Weight {
 	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
 	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
 
-	migration::move_pallet("Instance2Treasury", "KtonTreasury");
+	migration::move_pallet(b"Instance2Treasury", b"KtonTreasury");
 
 	log::info!("`KtonTreasury` migrated.");
 
