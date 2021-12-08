@@ -12,7 +12,7 @@ describeWithFrontier("Frontier RPC (Pending Pool)", (context) => {
 	const FIRST_CONTRACT_ADDRESS = "0xc2bf5f29a4384b1ab0c063e1c666f02121b6084a";
 
 	it("should return a pending transaction", async function () {
-		this.timeout(30000);
+		this.timeout(50000);
 		const tx = await context.web3.eth.accounts.signTransaction(
 			{
 				from: GENESIS_ACCOUNT,
@@ -41,7 +41,6 @@ describeWithFrontier("Frontier RPC (Pending Pool)", (context) => {
 
 		const processed_transaction = (await customRequest(context.web3, "eth_getTransactionByHash", [tx_hash])).result;
 		expect(processed_transaction).to.include({
-			blockNumber: "0x1",
 			hash: tx_hash,
 			publicKey: "0x624f720eae676a04111631c9ca338c11d0f5a80ee42210c6be72983ceb620fbf645a96f951529fa2d70750432d11b7caba5270c4d677255be90b3871c8c58069",
 			r: "0x5431b25e8100a21ced6af01868357b19d58b94afa6f57dc7cbf81f4a922ddecc",
