@@ -33,10 +33,10 @@ use ethereum_primitives::{
 
 #[selector]
 enum Action {
-	VerifyStorageProof = "verify_storage_proof(bytes32,address,bytes[],bytes[])",
+	VerifyStorageProof = "verify_storage_proof(address,bytes32,bytes[],bytes[])",
 }
 
-/// The contract address: 0000000000000000000000000000000000000020
+/// The contract address: 0000000000000000000000000000000000000026
 pub struct BscBridge<T> {
 	_marker: PhantomData<T>,
 }
