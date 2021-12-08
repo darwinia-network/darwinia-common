@@ -10,6 +10,8 @@ on:
       - "**.lock"
       - "**.json"
       - "**.yml"
+      - "**.js"
+      - "**.ts"
   pull_request:
     types: [opened, synchronize, ready_for_review]
     branches:
@@ -21,6 +23,8 @@ on:
       - "**.lock"
       - "**.json"
       - "**.yml"
+      - "**.js"
+      - "**.ts"
 
 env:
   RUST_TOOLCHAIN: nightly
