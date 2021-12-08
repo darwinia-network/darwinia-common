@@ -130,7 +130,7 @@ pub struct DvmArgs {
 		require_delimiter = true
 	)]
 	// TODO: what's the aim of the conflicts_with
-	pub ethapi: Vec<EthApi>,
+	pub ethapi: Vec<EthApiCmd>,
 
 	/// Maximum number of logs in a query.
 	#[structopt(long, default_value = "10000")]
@@ -174,9 +174,8 @@ impl Default for Sealing {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum EthApi {
+pub enum EthApiCmd {
 	// TODO: do we need all of them?
-	// todo: rename it to ethapicmd
 	Txpool,
 	Debug,
 	Trace,
@@ -184,7 +183,7 @@ pub enum EthApi {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct RpcConfig {
-	pub ethapi: Vec<EthApi>,
+	pub ethapi: Vec<EthApiCmd>,
 	pub ethapi_max_permits: u32,
 	pub ethapi_trace_max_count: u32,
 	pub ethapi_trace_cache_duration: u64,
@@ -192,8 +191,7 @@ pub struct RpcConfig {
 	pub max_past_logs: u32,
 }
 
-
-impl FromStr for EthApi {
+impl FromStr for EthApiCmd {
 	type Err = String;
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {

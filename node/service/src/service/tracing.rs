@@ -115,18 +115,18 @@ where
 {
 	let permit_pool = Arc::new(Semaphore::new(rpc_config.ethapi_max_permits as usize));
 
-	let (trace_filter_task, trace_filter_requester) =
-		if rpc_config.ethapi.contains(&EthApi::Trace) {
-			let (trace_filter_task, trace_filter_requester) = CacheTask::create(
-				Arc::clone(&params.client),
-				Arc::clone(&params.substrate_backend),
-				Duration::from_secs(rpc_config.ethapi_trace_cache_duration),
-				Arc::clone(&permit_pool),
-			);
-			(Some(trace_filter_task), Some(trace_filter_requester))
-		} else {
-			(None, None)
-		};
+	let (trace_filter_task, trace_filter_requester) = if rpc_config.ethapi.contains(&EthApi::Trace)
+	{
+		let (trace_filter_task, trace_filter_requester) = CacheTask::create(
+			Arc::clone(&params.client),
+			Arc::clone(&params.substrate_backend),
+			Duration::from_secs(rpc_config.ethapi_trace_cache_duration),
+			Arc::clone(&permit_pool),
+		);
+		(Some(trace_filter_task), Some(trace_filter_requester))
+	} else {
+		(None, None)
+	};
 
 	let (debug_task, debug_requester) = if rpc_config.ethapi.contains(&EthApi::Debug) {
 		let (debug_task, debug_requester) = DebugHandler::task(

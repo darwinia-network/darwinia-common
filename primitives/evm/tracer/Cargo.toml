@@ -10,8 +10,8 @@ version     = "2.7.0"
 
 [dependencies]
 # darwinia-network
-tracing-events = { path = "../../../primitives/evm/tracing-events", default-features = false, features = [ "evm-tracing" ] }
-tracing-ext    = { path = "../../../primitives/evm/tracing-ext", default-features = false }
+tracing-events = { path = "../tracing-events", default-features = false, features = [ "evm-tracing" ] }
+tracing-ext    = { path = "../tracing-ext", default-features = false }
 # paritytech
 codec      = { package = "parity-scale-codec", version = "2.2", default-features = false }
 sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }

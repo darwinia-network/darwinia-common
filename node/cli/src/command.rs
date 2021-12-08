@@ -125,8 +125,8 @@ fn set_default_ss58_version(spec: &Box<dyn ChainSpec>) {
 }
 
 fn validate_trace_environment(cli: &Cli) -> sc_cli::Result<()> {
-	if (cli.run.dvm_args.ethapi.contains(&EthApi::Debug)
-		|| cli.run.dvm_args.ethapi.contains(&EthApi::Trace))
+	if (cli.run.dvm_args.ethapi.contains(&EthApiCmd::Debug)
+		|| cli.run.dvm_args.ethapi.contains(&EthApiCmd::Trace))
 		&& cli.run.base.import_params.wasm_runtime_overrides.is_none()
 	{
 		return Err(
