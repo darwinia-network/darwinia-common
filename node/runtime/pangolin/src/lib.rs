@@ -820,14 +820,8 @@ fn migrate() -> Weight {
 	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
 	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
 
-	migration::remove_storage_prefix(b"FeeMarket", b"ConfirmedMessagesThisBlock", &[]);
-	log::info!("===> Remove `ConfirmedMessagesThisBlock` from the fee market");
-
-	migration::move_pallet(b"BridgeDispatch", b"BridgePangoroDispatch");
-	log::info!("Move `BridgeDispatch` to `BridgePangoroDispatch`");
-
-	// 0
-	RuntimeBlockWeights::get().max_block
+	0
+	// RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
@@ -839,11 +833,6 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
-		assert!(!migration::have_storage_value(
-			b"FeeMarket",
-			b"ConfirmedMessagesThisBlock",
-			&[]
-		));
 		Ok(())
 	}
 
