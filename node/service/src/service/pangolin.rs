@@ -57,7 +57,7 @@ use crate::{
 	client::PangolinClient,
 	service::{
 		self,
-		dvm_tasks::{spawn_dvm_tasks, DvmTasksParams},
+		dvm_tasks::{self, DvmTasksParams},
 		FullBackend, FullClient, FullGrandpaBlockImport, FullSelectChain, LightBackend,
 		LightClient, RpcResult,
 	},
@@ -547,7 +547,7 @@ where
 	}
 
 	// Spawn dvm related tasks
-	spawn_dvm_tasks(DvmTasksParams {
+	dvm_tasks::spawn(DvmTasksParams {
 		task_manager: &task_manager,
 		client: client.clone(),
 		substrate_backend: backend,

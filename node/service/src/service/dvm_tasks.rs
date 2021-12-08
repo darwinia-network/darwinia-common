@@ -43,7 +43,7 @@ pub struct DvmTasksParams<'a, B: BlockT, C, BE> {
 	pub is_archive: bool,
 }
 
-pub fn spawn_dvm_tasks<B, C, BE>(params: DvmTasksParams<B, C, BE>)
+pub fn spawn<B, C, BE>(params: DvmTasksParams<B, C, BE>)
 where
 	C: ProvideRuntimeApi<B> + BlockOf,
 	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,

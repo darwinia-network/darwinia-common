@@ -36,7 +36,7 @@ use sc_telemetry::{Telemetry, TelemetryWorker};
 use sp_inherents::{InherentData, InherentDataProvider, InherentIdentifier};
 // --- darwinia-network ---
 use crate::service::{
-	dvm_tasks::{spawn_dvm_tasks, DvmTasksParams},
+	dvm_tasks::{self, DvmTasksParams},
 	FullBackend, FullClient, FullSelectChain,
 };
 use dp_rpc::{FilterPool, PendingTransactions};
@@ -298,7 +298,7 @@ pub fn new_full(
 	})?;
 
 	// Spawn dvm related tasks
-	spawn_dvm_tasks(DvmTasksParams {
+	dvm_tasks::spawn(DvmTasksParams {
 		task_manager: &task_manager,
 		client: client.clone(),
 		substrate_backend: backend,
