@@ -8,11 +8,11 @@ export const PORT = 19931;
 export const RPC_PORT = 19932;
 export const WS_PORT = 19933;
 
-export const DISPLAY_LOG = process.env.FRONTIER_LOG || true;
+export const DISPLAY_LOG = process.env.FRONTIER_LOG || false;
 export const FRONTIER_LOG = process.env.FRONTIER_LOG || "info";
 
 export const BINARY_PATH = `../../../target/release/drml`;
-export const SPAWNING_TIME = 30000;
+export const SPAWNING_TIME = 50000;
 
 export async function customRequest(web3: Web3, method: string, params: any[]) {
 	return new Promise<JsonRpcResponse>((resolve, reject) => {
