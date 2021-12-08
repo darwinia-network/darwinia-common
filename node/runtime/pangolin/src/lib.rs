@@ -820,8 +820,12 @@ fn migrate() -> Weight {
 	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
 	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
 
-	0
-	// RuntimeBlockWeights::get().max_block
+	migration::move_pallet("Instance2Treasury", "KtonTreasury");
+
+	log::info!("`KtonTreasury` migrated.");
+
+	// 0
+	RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
