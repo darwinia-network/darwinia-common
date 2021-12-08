@@ -23,11 +23,13 @@ use core::marker::PhantomData;
 // --- crates.io ---
 use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 // --- darwinia-network ---
-use darwinia_bridge_bsc::StorageVerifier;
 use darwinia_evm_precompile_utils::{selector, DvmInputParser};
 use dp_contract::{abi_util::abi_encode_bytes32, bsc_light_client::BscStorageVerifyParams};
 use dp_evm::Precompile;
-use ethereum_primitives::storage::EthereumStorageProof;
+use ethereum_primitives::{
+	storage::{EthereumStorage, EthereumStorageProof},
+	H256,
+};
 
 #[selector]
 enum Action {
@@ -41,7 +43,7 @@ pub struct BscBridge<T> {
 
 impl<T> Precompile for BscBridge<T>
 where
-	T: StorageVerifier<[u8; 32]>,
+	T: darwinia_bridge_bsc::Config,
 {
 	fn execute(
 		input: &[u8],
@@ -59,9 +61,11 @@ where
 					params.account_proof,
 					params.storage_proof,
 				);
-				let storage_value = <T as StorageVerifier<[u8; 32]>>::verify_storage(&proof)
-					.map_err(|_| ExitError::Other("verify storage proof failed".into()))?;
-				abi_encode_bytes32(storage_value)
+				let latest_header = darwinia_bridge_bsc::Pallet::<T>::latest_bsc_header();
+				let storage_value =
+					EthereumStorage::<H256>::verify_storage_proof(latest_header.state_root, &proof)
+						.map_err(|_| ExitError::Other("verify storage proof failed".into()))?;
+				abi_encode_bytes32(storage_value.0.into())
 			}
 		};
 
