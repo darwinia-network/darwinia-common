@@ -31,7 +31,7 @@ pub use template::ChainSpec as TemplateChainSpec;
 use serde::{Deserialize, Serialize};
 // --- paritytech ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
-use sc_chain_spec::{ChainSpecExtension, ChainType, GenericChainSpec, Properties};
+use sc_chain_spec::ChainSpecExtension;
 use sc_client_api::{BadBlocks, ForkBlocks};
 use sc_finality_grandpa::AuthorityId as GrandpaId;
 use sc_sync_state_rpc::LightSyncStateExtension;

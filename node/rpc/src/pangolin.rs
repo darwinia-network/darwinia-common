@@ -202,7 +202,7 @@ where
 		pending_transactions.clone(),
 		backend.clone(),
 		is_authority,
-		Vec::new(),
+		vec![],
 		max_past_logs,
 	)));
 	if let Some(filter_pool) = filter_pool {
