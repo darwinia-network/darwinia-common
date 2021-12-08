@@ -12,7 +12,7 @@ describeWithFrontier("Frontier RPC (Pending Pool)", (context) => {
 	const FIRST_CONTRACT_ADDRESS = "0xc2bf5f29a4384b1ab0c063e1c666f02121b6084a";
 
 	it("should return a pending transaction", async function () {
-		this.timeout(15000);
+		this.timeout(30000);
 		const tx = await context.web3.eth.accounts.signTransaction(
 			{
 				from: GENESIS_ACCOUNT,
