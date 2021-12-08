@@ -21,16 +21,12 @@ use std::{sync::Arc, time::Duration};
 // --- crates.io ---
 use futures::StreamExt;
 // --- paritytech ---
-use sc_client_api::{
-	backend::{AuxStore, Backend as BlockChainBackend, StateBackend, StorageProvider},
-	BlockOf, BlockchainEvents,
-};
+use sc_client_api::{backend::Backend as BlockChainBackend, BlockOf, BlockchainEvents};
 use sc_service::TaskManager;
 use sp_api::{HeaderT, ProvideRuntimeApi};
-use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_core::H256;
-use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
+use sp_runtime::traits::Block as BlockT;
 // --- darwinia-network ---
 use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use dc_rpc::EthTask;
@@ -52,13 +48,10 @@ where
 	C: ProvideRuntimeApi<B> + BlockOf,
 	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
 	C: BlockchainEvents<B>,
-	C: Send + Sync + 'static,
 	C::Api: EthereumRuntimeRPCApi<B>,
-	C::Api: BlockBuilder<B>,
 	B: BlockT<Hash = H256> + Send + Sync + 'static,
 	B::Header: HeaderT<Number = u32>,
 	BE: BlockChainBackend<B> + 'static,
-	BE::State: StateBackend<BlakeTwo256>,
 {
 	let DvmTasksParams {
 		task_manager,

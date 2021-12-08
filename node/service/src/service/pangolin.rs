@@ -30,7 +30,7 @@ use futures::StreamExt;
 // --- paritytech ---
 use sc_authority_discovery::WorkerConfig;
 use sc_basic_authorship::ProposerFactory;
-use sc_client_api::{BlockchainEvents, ExecutorProvider, RemoteBackend, StateBackendFor};
+use sc_client_api::{ExecutorProvider, RemoteBackend, StateBackendFor};
 use sc_consensus::{BasicQueue, DefaultImportQueue, LongestChain};
 use sc_consensus_babe::{
 	BabeBlockImport, BabeLink, BabeParams, Config as BabeConfig, SlotProportion,
@@ -56,13 +56,13 @@ use sp_trie::PrefixedMemoryDB;
 use crate::{
 	client::PangolinClient,
 	service::{
-		self, FullBackend, FullClient, FullGrandpaBlockImport, FullSelectChain, LightBackend,
+		self,
+		dvm_tasks::{spawn_dvm_tasks, DvmTasksParams},
+		FullBackend, FullClient, FullGrandpaBlockImport, FullSelectChain, LightBackend,
 		LightClient, RpcResult,
 	},
 };
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
-use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
-use dc_rpc::EthTask;
 use dp_rpc::{FilterPool, PendingTransactions};
 use drml_common_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use drml_rpc::{
@@ -547,12 +547,12 @@ where
 	}
 
 	// Spawn dvm related tasks
-	super::dvm_tasks::spawn_dvm_tasks(super::dvm_tasks::DvmTasksParams {
+	spawn_dvm_tasks(DvmTasksParams {
 		task_manager: &task_manager,
 		client: client.clone(),
-		substrate_backend: backend.clone(),
-		dvm_backend: dvm_backend.clone(),
-		filter_pool: filter_pool.clone(),
+		substrate_backend: backend,
+		dvm_backend,
+		filter_pool,
 		pending_transactions,
 		is_archive,
 	});
