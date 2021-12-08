@@ -54,7 +54,7 @@ pub struct LightDeps<C, F, P> {
 }
 
 /// Instantiate all RPC extensions.
-pub fn create_full<C, P, SC, B>(deps: FullDeps<C, P, SC, B>) -> RpcExtension
+pub fn create_full<C, P, SC, B>(deps: FullDeps<C, P, SC, B>) -> RpcResult
 where
 	C: 'static
 		+ Send
@@ -69,7 +69,7 @@ where
 	C::Api: sc_consensus_babe::BabeApi<Block>,
 	C::Api: sp_block_builder::BlockBuilder<Block>,
 	C::Api: darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
-	P: 'static + sp_transaction_pool::TransactionPool,
+	P: 'static + sc_transaction_pool_api::TransactionPool,
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<Hashing>,
@@ -136,11 +136,11 @@ where
 		shared_authority_set,
 		shared_epoch_changes,
 		deny_unsafe,
-	)));
+	)?));
 	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
 	io.extend_with(FeeMarketApi::to_delegate(FeeMarket::new(client)));
 
-	io
+	Ok(io)
 }
 
 /// Instantiate all RPC extensions for light node.
@@ -153,7 +153,7 @@ where
 		+ sp_blockchain::HeaderBackend<Block>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-	P: 'static + sp_transaction_pool::TransactionPool,
+	P: 'static + sc_transaction_pool_api::TransactionPool,
 	F: 'static + sc_client_api::Fetcher<Block>,
 {
 	// --- paritytech ---

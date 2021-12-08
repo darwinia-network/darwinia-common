@@ -438,7 +438,8 @@ where
 mod tests {
 	use crate::{self as darwinia_vesting, *};
 
-	use frame_support::{assert_noop, assert_ok, traits::MaxEncodedLen};
+	use codec::MaxEncodedLen;
+	use frame_support::{assert_noop, assert_ok, traits::Everything};
 	use frame_system::{mocking::*, RawOrigin};
 	use sp_core::H256;
 	use sp_runtime::{
@@ -454,7 +455,7 @@ mod tests {
 	darwinia_support::impl_test_account_data! {}
 
 	impl frame_system::Config for Test {
-		type BaseCallFilter = ();
+		type BaseCallFilter = Everything;
 		type BlockWeights = ();
 		type BlockLength = ();
 		type DbWeight = ();

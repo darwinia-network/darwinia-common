@@ -518,7 +518,7 @@ pub mod pallet {
 	pub use imbalances::{NegativeImbalance, PositiveImbalance};
 
 	// --- crates.io ---
-	use codec::{Codec, EncodeLike};
+	use codec::{Codec, EncodeLike, MaxEncodedLen};
 	// --- paritytech ---
 	use frame_support::{
 		ensure,
@@ -527,8 +527,8 @@ pub mod pallet {
 			fungible::Inspect,
 			tokens::{DepositConsequence, WithdrawConsequence},
 			BalanceStatus, Currency, ExistenceRequirement, Imbalance, LockIdentifier,
-			MaxEncodedLen, NamedReservableCurrency, OnUnbalanced, ReservableCurrency,
-			SignedImbalance, StoredMap, TryDrop, WithdrawReasons,
+			NamedReservableCurrency, OnUnbalanced, ReservableCurrency, SignedImbalance, StoredMap,
+			TryDrop, WithdrawReasons,
 		},
 		WeakBoundedVec,
 	};
@@ -537,7 +537,7 @@ pub mod pallet {
 	use sp_runtime::{
 		traits::{
 			AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedSub, MaybeSerializeDeserialize,
-			Saturating, StaticLookup, StoredMapError, Zero,
+			Saturating, StaticLookup, Zero,
 		},
 		ArithmeticError, DispatchError, DispatchResult, RuntimeDebug,
 	};
@@ -578,9 +578,11 @@ pub mod pallet {
 
 		/// The maximum number of locks that should exist on an account.
 		/// Not strictly enforced, but used for weight estimation.
+		#[pallet::constant]
 		type MaxLocks: Get<u32>;
 
 		/// The maximum number of named reserves that can exist on an account.
+		#[pallet::constant]
 		type MaxReserves: Get<u32>;
 
 		/// The id type for named reserves.
@@ -1109,8 +1111,8 @@ pub mod pallet {
 		pub fn mutate_account<R>(
 			who: &T::AccountId,
 			f: impl FnOnce(&mut T::BalanceInfo) -> R,
-		) -> Result<R, StoredMapError> {
-			Self::try_mutate_account(who, |a, _| -> Result<R, StoredMapError> { Ok(f(a)) })
+		) -> Result<R, DispatchError> {
+			Self::try_mutate_account(who, |a, _| -> Result<R, DispatchError> { Ok(f(a)) })
 		}
 
 		/// Mutate an account to some new value, or delete it entirely with `None`. Will enforce
@@ -1122,7 +1124,7 @@ pub mod pallet {
 		///
 		/// NOTE: LOW-LEVEL: This will not attempt to maintain total issuance. It is expected that
 		/// the caller will do this.
-		fn try_mutate_account<R, E: From<StoredMapError>>(
+		fn try_mutate_account<R, E: From<DispatchError>>(
 			who: &T::AccountId,
 			f: impl FnOnce(&mut T::BalanceInfo, bool) -> Result<R, E>,
 		) -> Result<R, E> {
@@ -1145,7 +1147,7 @@ pub mod pallet {
 		///
 		/// NOTE: LOW-LEVEL: This will not attempt to maintain total issuance. It is expected that
 		/// the caller will do this.
-		fn try_mutate_account_with_dust<R, E: From<StoredMapError>>(
+		fn try_mutate_account_with_dust<R, E: From<DispatchError>>(
 			who: &T::AccountId,
 			f: impl FnOnce(&mut T::BalanceInfo, bool) -> Result<R, E>,
 		) -> Result<(R, DustCleaner<T, I>), E> {
@@ -1421,7 +1423,7 @@ pub mod pallet {
 							let allow_death =
 								existence_requirement == ExistenceRequirement::AllowDeath;
 							let allow_death = allow_death
-								&& !<frame_system::Pallet<T>>::is_provider_required(transactor);
+								&& <frame_system::Pallet<T>>::can_dec_provider(transactor);
 							ensure!(
 								allow_death
 									|| from_account.total() >= ed || !T::OtherCurrencies::is_dust(
@@ -1468,7 +1470,7 @@ pub mod pallet {
 					who,
 					|account,
 					 _is_new|
-					 -> Result<(Self::NegativeImbalance, Self::Balance), StoredMapError> {
+					 -> Result<(Self::NegativeImbalance, Self::Balance), DispatchError> {
 						// Best value is the most amount we can slash following liveness rules.
 						let best_value = match attempt {
 							// First attempt we try to slash the full amount, and see if liveness issues happen.

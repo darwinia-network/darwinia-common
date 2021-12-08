@@ -7,15 +7,15 @@ license     = "GPL-3.0"
 name        = "to-tron-backing"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.7.0"
+version     = "2.7.1"
 
 [dependencies]
 # crates.io
 codec = { package = "parity-scale-codec", version = "2.1", default-features = false }
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 # darwinia-network
 darwinia-support = { default-features = false, path = "../../../support" }
 

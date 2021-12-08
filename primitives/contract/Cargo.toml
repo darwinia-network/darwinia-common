@@ -7,18 +7,18 @@ license     = "GPL-3.0"
 name        = "dp-contract"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.7.0"
+version     = "2.7.1"
 
 [dependencies]
 # crates.io
-ethereum-types = { default-features = false, version = "0.11.0" }
+ethereum-types = { default-features = false, version = "0.12" }
 # darwinia-network
 dp-asset            = { default-features = false, path = "../asset" }
-ethabi              = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", tag = "v13.0.0-no-std" }
+ethabi              = { version = "15.0", default-features = false }
 ethereum-primitives = { default-features = false, path = "../ethereum" }
 # paritytech
-bp-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
-sp-std      = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+bp-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }
+sp-std      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 
 [dev-dependencies]
 array-bytes = { version = "1.4" }

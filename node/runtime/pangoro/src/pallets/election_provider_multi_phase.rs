@@ -13,6 +13,19 @@ sp_npos_elections::generate_solution_type!(
 	>(16)
 );
 
+/// The numbers configured here should always be more than the the maximum limits of staking pallet
+/// to ensure election snapshot will not run out of memory.
+pub struct BenchmarkConfig;
+impl pallet_election_provider_multi_phase::BenchmarkingConfig for BenchmarkConfig {
+	const VOTERS: [u32; 2] = [5_000, 10_000];
+	const TARGETS: [u32; 2] = [1_000, 2_000];
+	const ACTIVE_VOTERS: [u32; 2] = [1000, 4_000];
+	const DESIRED_TARGETS: [u32; 2] = [400, 800];
+	const SNAPSHOT_MAXIMUM_VOTERS: u32 = 25_000;
+	const MINER_MAXIMUM_VOTERS: u32 = 15_000;
+	const MAXIMUM_TARGETS: u32 = 2000;
+}
+
 frame_support::parameter_types! {
 	// no signed phase for now, just unsigned.
 	pub const SignedPhase: u32 = 0;
@@ -38,6 +51,7 @@ frame_support::parameter_types! {
 impl Config for Runtime {
 	type Event = Event;
 	type Currency = Ring;
+	type EstimateCallFee = TransactionPayment;
 	type SignedPhase = SignedPhase;
 	type UnsignedPhase = UnsignedPhase;
 	type SolutionImprovementThreshold = SolutionImprovementThreshold;
@@ -60,5 +74,5 @@ impl Config for Runtime {
 	type Fallback = Fallback;
 	type WeightInfo = ();
 	type ForceOrigin = RootOrigin;
-	type BenchmarkingConfig = ();
+	type BenchmarkingConfig = BenchmarkConfig;
 }

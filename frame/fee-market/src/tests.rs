@@ -30,7 +30,7 @@ use bp_messages::{
 use bp_runtime::{messages::MessageDispatchResult, Size};
 use frame_support::{
 	assert_err, assert_ok,
-	traits::{GenesisBuild, LockIdentifier},
+	traits::{Everything, GenesisBuild, LockIdentifier},
 	weights::{RuntimeDbWeight, Weight},
 	PalletId,
 };
@@ -65,7 +65,7 @@ frame_support::parameter_types! {
 	pub const DbWeight: RuntimeDbWeight = RuntimeDbWeight { read: 1, write: 2 };
 }
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = DbWeight;

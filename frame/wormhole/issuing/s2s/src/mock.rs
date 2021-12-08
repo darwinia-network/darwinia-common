@@ -17,7 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- crates.io ---
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use std::str::FromStr;
 // --- darwinia-network ---
 use crate::{
@@ -34,7 +34,7 @@ use dvm_ethereum::{
 };
 // --- paritytech ---
 use frame_support::{
-	traits::{GenesisBuild, MaxEncodedLen},
+	traits::{Everything, GenesisBuild},
 	PalletId,
 };
 use frame_system::mocking::*;
@@ -44,7 +44,7 @@ use sp_runtime::{
 	AccountId32, RuntimeDebug,
 };
 
-use ethereum::{Transaction, TransactionAction, TransactionSignature};
+use ethereum::{TransactionAction, TransactionSignature, TransactionV0};
 use rlp::RlpStream;
 use sha3::{Digest, Keccak256};
 
@@ -147,7 +147,7 @@ impl pallet_timestamp::Config for Test {
 }
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
@@ -328,7 +328,7 @@ impl UnsignedTransaction {
 		H256::from_slice(&Keccak256::digest(&stream.out()).as_slice())
 	}
 
-	pub fn sign(&self, key: &H256) -> Transaction {
+	pub fn sign(&self, key: &H256) -> TransactionV0 {
 		let hash = self.signing_hash();
 		let msg = libsecp256k1::Message::parse(hash.as_fixed_bytes());
 		let s = libsecp256k1::sign(
@@ -344,7 +344,7 @@ impl UnsignedTransaction {
 		)
 		.unwrap();
 
-		Transaction {
+		TransactionV0 {
 			nonce: self.nonce,
 			gas_price: self.gas_price,
 			gas_limit: self.gas_limit,

@@ -29,7 +29,7 @@
 //! explaining why you delete them.
 
 // --- paritytech ---
-use frame_election_provider_support::{ElectionProvider, Support};
+use frame_election_provider_support::*;
 use frame_support::{
 	assert_noop, assert_ok,
 	dispatch::WithPostDispatchInfo,
@@ -42,10 +42,7 @@ use sp_runtime::{
 	traits::{BadOrigin, Dispatchable, Zero},
 	Perbill, Percent,
 };
-use sp_staking::{
-	offence::{OffenceDetails, OnOffenceHandler},
-	SessionIndex,
-};
+use sp_staking::{offence::*, *};
 use substrate_test_utils::assert_eq_uvec;
 // --- darwinia-network ---
 use crate::{
@@ -311,7 +308,7 @@ fn rewards_should_work() {
 			);
 			assert_eq!(
 				*staking_events().last().unwrap(),
-				Event::EraPayout(0, total_payout_0, maximum_payout - total_payout_0)
+				Event::EraPaid(0, total_payout_0, maximum_payout - total_payout_0)
 			);
 			make_all_reward_payment(0);
 
@@ -348,7 +345,7 @@ fn rewards_should_work() {
 				maximum_payout * 2 - total_payout_0 - total_payout_1,
 				MICRO,
 			);
-			if let Event::EraPayout(a, b, c) = *staking_events().last().unwrap() {
+			if let Event::EraPaid(a, b, c) = *staking_events().last().unwrap() {
 				assert_eq!(a, 1);
 				assert_eq!(b, total_payout_1);
 				assert_eq_error_rate!(c, maximum_payout - total_payout_1, MICRO);
@@ -1113,7 +1110,7 @@ fn reward_destination_works() {
 				active_ring: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000,
-					unbondings: WeakBoundedVec::force_from(vec![], None),
+					..Default::default()
 				},
 				..Default::default()
 			}),
@@ -1138,7 +1135,7 @@ fn reward_destination_works() {
 				active_ring: 1000 + total_payout_0,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000 + total_payout_0,
-					unbondings: WeakBoundedVec::force_from(vec![], None),
+					..Default::default()
 				},
 				claimed_rewards: vec![0],
 				..Default::default()
@@ -1172,7 +1169,7 @@ fn reward_destination_works() {
 				active_ring: 1000 + total_payout_0,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000 + total_payout_0,
-					unbondings: WeakBoundedVec::force_from(vec![], None),
+					..Default::default()
 				},
 				claimed_rewards: vec![0, 1],
 				..Default::default()
@@ -1204,7 +1201,7 @@ fn reward_destination_works() {
 				active_ring: 1000 + total_payout_0,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000 + total_payout_0,
-					unbondings: WeakBoundedVec::force_from(vec![], None),
+					..Default::default()
 				},
 				claimed_rewards: vec![0, 1, 2],
 				..Default::default()
@@ -1286,7 +1283,7 @@ fn bond_extra_works() {
 				active_ring: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000,
-					unbondings: WeakBoundedVec::force_from(vec![], None),
+					..Default::default()
 				},
 				..Default::default()
 			})
@@ -1309,7 +1306,7 @@ fn bond_extra_works() {
 				active_ring: 1000 + 100,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000 + 100,
-					unbondings: WeakBoundedVec::force_from(vec![], None),
+					..Default::default()
 				},
 				..Default::default()
 			}),
@@ -1329,7 +1326,7 @@ fn bond_extra_works() {
 				active_ring: 1000000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000000,
-					unbondings: WeakBoundedVec::force_from(vec![], None),
+					..Default::default()
 				},
 				..Default::default()
 			}),
@@ -4675,7 +4672,7 @@ mod election_data_provider {
 					45
 				);
 				assert_eq!(staking_events().len(), 1);
-				assert_eq!(*staking_events().last().unwrap(), Event::StakingElection);
+				assert_eq!(*staking_events().last().unwrap(), Event::StakersElected);
 
 				for b in 21..45 {
 					run_to_block(b);
@@ -4692,7 +4689,7 @@ mod election_data_provider {
 					70
 				);
 				assert_eq!(staking_events().len(), 3);
-				assert_eq!(*staking_events().last().unwrap(), Event::StakingElection);
+				assert_eq!(*staking_events().last().unwrap(), Event::StakersElected);
 
 				Staking::force_no_eras(Origin::root()).unwrap();
 				assert_eq!(
@@ -4730,7 +4727,7 @@ mod election_data_provider {
 					55 + 25
 				);
 				assert_eq!(staking_events().len(), 6);
-				assert_eq!(*staking_events().last().unwrap(), Event::StakingElection);
+				assert_eq!(*staking_events().last().unwrap(), Event::StakersElected);
 				// The new era has been planned, forcing is changed from `ForceNew` to `NotForcing`.
 				assert_eq!(<ForceEra<Test>>::get(), Forcing::NotForcing);
 			})

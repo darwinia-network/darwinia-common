@@ -755,7 +755,7 @@ pub fn do_slash<T: Config>(
 
 	if slashed {
 		<Pallet<T>>::update_ledger(&controller, &mut ledger);
-		<Pallet<T>>::deposit_event(Event::Slash(stash.clone(), value.r, value.k));
+		<Pallet<T>>::deposit_event(Event::Slashed(stash.clone(), value.r, value.k));
 	}
 }
 

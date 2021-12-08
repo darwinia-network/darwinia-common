@@ -38,6 +38,7 @@ use sc_client_api::{
 	client::BlockchainEvents,
 };
 use sc_network::{ExHashT, NetworkService};
+use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
 use sp_api::{BlockId, Core, HeaderT, ProvideRuntimeApi};
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::{
@@ -45,10 +46,11 @@ use sp_runtime::{
 	transaction_validity::TransactionSource,
 };
 use sp_storage::{StorageData, StorageKey};
-use sp_transaction_pool::{InPoolTransaction, TransactionPool};
 // --- std ---
 use codec::{self, Decode, Encode};
-use ethereum::{Block as EthereumBlock, Transaction as EthereumTransaction};
+use ethereum::{
+	BlockV0 as EthereumBlockV0, LegacyTransactionMessage, TransactionAction, TransactionV0,
+};
 use ethereum_types::{H160, H256, H512, H64, U256, U64};
 use futures::{future::TryFutureExt, StreamExt};
 use jsonrpc_core::{
@@ -114,7 +116,7 @@ where
 }
 
 fn rich_block_build(
-	block: ethereum::Block,
+	block: EthereumBlockV0,
 	statuses: Vec<Option<TransactionStatus>>,
 	hash: Option<H256>,
 	full_transactions: bool,
@@ -182,8 +184,8 @@ fn rich_block_build(
 }
 
 fn transaction_build(
-	transaction: EthereumTransaction,
-	block: Option<EthereumBlock>,
+	transaction: TransactionV0,
+	block: Option<EthereumBlockV0>,
 	status: Option<TransactionStatus>,
 ) -> Transaction {
 	let pubkey = match public_key(&transaction) {
@@ -217,7 +219,7 @@ fn transaction_build(
 		to: status.as_ref().map_or(
 			{
 				match transaction.action {
-					ethereum::TransactionAction::Call(to) => Some(to),
+					TransactionAction::Call(to) => Some(to),
 					_ => None,
 				}
 			},
@@ -355,7 +357,7 @@ where
 fn filter_block_logs<'a>(
 	ret: &'a mut Vec<Log>,
 	filter: &'a Filter,
-	block: EthereumBlock,
+	block: EthereumBlockV0,
 	transaction_statuses: Vec<TransactionStatus>,
 ) -> &'a Vec<Log> {
 	let params = FilteredParams::new(Some(filter.clone()));
@@ -768,15 +770,15 @@ where
 			Err(e) => return Box::new(future::result(Err(e))),
 		};
 
-		let message = ethereum::TransactionMessage {
+		let message = LegacyTransactionMessage {
 			nonce,
 			gas_price: request.gas_price.unwrap_or(U256::from(1)),
 			gas_limit: request.gas.unwrap_or(U256::max_value()),
 			value: request.value.unwrap_or(U256::zero()),
 			input: request.data.map(|s| s.into_vec()).unwrap_or_default(),
 			action: match request.to {
-				Some(to) => ethereum::TransactionAction::Call(to),
-				None => ethereum::TransactionAction::Create,
+				Some(to) => TransactionAction::Call(to),
+				None => TransactionAction::Create,
 			},
 			chain_id: chain_id.map(|s| s.as_u64()),
 		};
@@ -832,7 +834,7 @@ where
 	}
 
 	fn send_raw_transaction(&self, bytes: Bytes) -> BoxFuture<H256> {
-		let transaction = match rlp::decode::<ethereum::Transaction>(&bytes.0[..]) {
+		let transaction = match rlp::decode::<TransactionV0>(&bytes.0[..]) {
 			Ok(transaction) => transaction,
 			Err(_) => {
 				return Box::new(future::result(Err(internal_err(

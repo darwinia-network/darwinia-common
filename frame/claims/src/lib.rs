@@ -579,13 +579,13 @@ mod secp_utils {
 #[cfg(test)]
 mod tests {
 	// --- crates.io ---
-	use codec::Encode;
+	use codec::{Encode, MaxEncodedLen};
 	// --- paritytech ---
 	use frame_support::{
 		assert_err, assert_noop, assert_ok,
 		dispatch::DispatchError::BadOrigin,
 		ord_parameter_types, parameter_types,
-		traits::{GenesisBuild, MaxEncodedLen},
+		traits::{Everything, GenesisBuild},
 	};
 	use frame_system::mocking::*;
 	use sp_core::H256;
@@ -607,7 +607,7 @@ mod tests {
 	darwinia_support::impl_test_account_data! {}
 
 	impl frame_system::Config for Test {
-		type BaseCallFilter = ();
+		type BaseCallFilter = Everything;
 		type BlockWeights = ();
 		type BlockLength = ();
 		type DbWeight = ();

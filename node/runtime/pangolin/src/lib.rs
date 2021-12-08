@@ -167,7 +167,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 0,
-	spec_version: 2_7_00_0,
+	spec_version: 2_7_01_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -405,6 +405,10 @@ sp_api::impl_runtime_apis! {
 	impl fg_primitives::GrandpaApi<Block> for Runtime {
 		fn grandpa_authorities() -> GrandpaAuthorityList {
 			Grandpa::grandpa_authorities()
+		}
+
+		fn current_set_id() -> fg_primitives::SetId {
+			Grandpa::current_set_id()
 		}
 
 		fn submit_report_equivocation_unsigned_extrinsic(
@@ -650,17 +654,17 @@ sp_api::impl_runtime_apis! {
 			Ethereum::current_transaction_statuses()
 		}
 
-		fn current_block() -> Option<dvm_ethereum::Block> {
+		fn current_block() -> Option<dvm_ethereum::EthereumBlockV0> {
 			Ethereum::current_block()
 		}
 
-		fn current_receipts() -> Option<Vec<dvm_ethereum::Receipt>> {
+		fn current_receipts() -> Option<Vec<dvm_ethereum::EthereumReceipt>> {
 			Ethereum::current_receipts()
 		}
 
 		fn current_all() -> (
-			Option<dvm_ethereum::Block>,
-			Option<Vec<dvm_ethereum::Receipt>>,
+			Option<dvm_ethereum::EthereumBlockV0>,
+			Option<Vec<dvm_ethereum::EthereumReceipt>>,
 			Option<Vec<dvm_rpc_runtime_api::TransactionStatus>>
 		) {
 			(
@@ -672,7 +676,7 @@ sp_api::impl_runtime_apis! {
 
 		fn extrinsic_filter(
 			xts: Vec<<Block as BlockT>::Extrinsic>,
-		) -> Vec<dvm_ethereum::Transaction> {
+		) -> Vec<dvm_ethereum::TransactionV0> {
 			xts.into_iter().filter_map(|xt| match xt.function {
 				Call::Ethereum(dvm_ethereum::Call::transact(t)) => Some(t),
 				_ => None
@@ -750,15 +754,32 @@ sp_api::impl_runtime_apis! {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
+		fn benchmark_metadata(extra: bool) -> (
+			Vec<frame_benchmarking::BenchmarkList>,
+			Vec<frame_support::traits::StorageInfo>,
+		) {
+			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_support::traits::StorageInfoTrait;
+			use frame_system_benchmarking::Pallet as SystemBench;
+
+			let mut list = Vec::<BenchmarkList>::new();
+
+			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+
+			let storage_info = AllPalletsWithSystem::storage_info();
+
+			return (list, storage_info)
+		}
+
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 			use frame_system_benchmarking::Pallet as SystemBench;
+
 			impl frame_system_benchmarking::Config for Runtime {}
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
-
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
@@ -769,6 +790,7 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, darwinia_fee_market, FeeMarket);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
+
 			Ok(batches)
 		}
 	}
@@ -776,14 +798,14 @@ sp_api::impl_runtime_apis! {
 
 pub struct TransactionConverter;
 impl dvm_rpc_runtime_api::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> UncheckedExtrinsic {
+	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV0) -> UncheckedExtrinsic {
 		UncheckedExtrinsic::new_unsigned(
 			<dvm_ethereum::Call<Runtime>>::transact(transaction).into(),
 		)
 	}
 }
 impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> OpaqueExtrinsic {
+	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV0) -> OpaqueExtrinsic {
 		let extrinsic = UncheckedExtrinsic::new_unsigned(
 			<dvm_ethereum::Call<Runtime>>::transact(transaction).into(),
 		);
@@ -798,11 +820,9 @@ fn migrate() -> Weight {
 	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
 	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
 
-	migration::remove_storage_prefix(b"FeeMarket", b"ConfirmedMessagesThisBlock", &[]);
-	log::info!("===> Remove `ConfirmedMessagesThisBlock` from the fee market");
+	migration::move_pallet(b"Instance2Treasury", b"KtonTreasury");
 
-	migration::move_pallet(b"BridgeDispatch", b"BridgePangoroDispatch");
-	log::info!("Move `BridgeDispatch` to `BridgePangoroDispatch`");
+	log::info!("`KtonTreasury` migrated.");
 
 	// 0
 	RuntimeBlockWeights::get().max_block
@@ -817,11 +837,6 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
-		assert!(!migration::have_storage_value(
-			b"FeeMarket",
-			b"ConfirmedMessagesThisBlock",
-			&[]
-		));
 		Ok(())
 	}
 

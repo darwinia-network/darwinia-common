@@ -7,20 +7,20 @@ license     = "GPL-3.0"
 name        = "darwinia-evm-precompile-utils-macro"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.7.0"
+version     = "2.7.1"
 
 [lib]
 proc-macro = true
 
 [dependencies]
 # crates.io
-evm         = { version = "0.27", default-features = false, features = ["with-codec"] }
+evm         = { version = "0.30", default-features = false, features = ["with-codec"] }
 proc-macro2 = { version = "1.0" }
 quote       = { version = "1.0" }
 sha3        = { version = "0.9", default-features = false }
 syn         = { version = "1.0", features = ["full", "fold", "extra-traits", "visit"] }
 # paritytech
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 
 [features]
 default = ["std"]

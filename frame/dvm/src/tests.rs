@@ -19,7 +19,7 @@
 // --- crates.io ---
 use array_bytes::{bytes2hex, hex2bytes_unchecked};
 use codec::Decode;
-use ethabi::{Function, Param, ParamType, Token};
+use ethabi::{Function, Param, ParamType, StateMutability, Token};
 use ethereum::TransactionSignature;
 use evm::ExitSucceed;
 use std::str::FromStr;
@@ -173,59 +173,70 @@ fn get_wkton_balance(sender: &AccountInfo, nonce: u64) -> U256 {
 }
 
 fn wkton_balance_input(address: H160) -> Vec<u8> {
+	#[allow(deprecated)]
 	let func = Function {
 		name: "balanceOf".to_owned(),
 		inputs: vec![Param {
 			name: "address".to_owned(),
 			kind: ParamType::Address,
+			internal_type: Some("address".into()),
 		}],
 		outputs: vec![],
-		constant: false,
+		constant: true,
+		state_mutability: StateMutability::NonPayable,
 	};
 	func.encode_input(&[Token::Address(address)]).unwrap()
 }
 
 fn transfer_and_call(address: H160, value: U256) -> Vec<u8> {
+	#[allow(deprecated)]
 	let func = Function {
 		name: "transfer_and_call".to_owned(),
 		inputs: vec![
 			Param {
 				name: "address".to_owned(),
 				kind: ParamType::Address,
+				internal_type: Some("address".into()),
 			},
 			Param {
 				name: "value".to_owned(),
 				kind: ParamType::Uint(256),
+				internal_type: Some("uint256".into()),
 			},
 		],
 		outputs: vec![],
 		constant: false,
+		state_mutability: StateMutability::NonPayable,
 	};
 	func.encode_input(&[Token::Address(address), Token::Uint(value)])
 		.unwrap()
 }
 
 fn withdraw(to: Vec<u8>, value: U256) -> Vec<u8> {
+	#[allow(deprecated)]
 	let func = Function {
 		name: "withdraw".to_owned(),
 		inputs: vec![
 			Param {
 				name: "to".to_owned(),
 				kind: ParamType::FixedBytes(32),
+				internal_type: Some("bytes32".into()),
 			},
 			Param {
 				name: "value".to_owned(),
 				kind: ParamType::Uint(256),
+				internal_type: Some("uint256".into()),
 			},
 		],
 		outputs: vec![],
 		constant: false,
+		state_mutability: StateMutability::NonPayable,
 	};
 	func.encode_input(&[Token::FixedBytes(to), Token::Uint(value)])
 		.unwrap()
 }
 
-fn sign_transaction(account: &AccountInfo, unsign_tx: UnsignedTransaction) -> Transaction {
+fn sign_transaction(account: &AccountInfo, unsign_tx: UnsignedTransaction) -> TransactionV0 {
 	unsign_tx.sign(&account.private_key)
 }
 

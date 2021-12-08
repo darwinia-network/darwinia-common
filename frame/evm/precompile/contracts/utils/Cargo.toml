@@ -7,11 +7,11 @@ license     = "GPL-3.0"
 name        = "darwinia-evm-precompile-utils"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.7.0"
+version     = "2.7.1"
 
 [dependencies]
 # crates.io
-evm = { version = "0.27", default-features = false, features = ["with-codec"] }
+evm = { version = "0.30", default-features = false, features = ["with-codec"] }
 # darwinia
 darwinia-evm-precompile-utils-macro = { path = "macro" }
 darwinia-support                    = { default-features = false, path = "../../../../support" }

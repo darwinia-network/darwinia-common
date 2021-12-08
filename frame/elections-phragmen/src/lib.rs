@@ -87,7 +87,7 @@ use frame_support::{
 	traits::{
 		ChangeMembers, Contains, ContainsLengthBound, Currency, CurrencyToVote, Get,
 		InitializeMembers, LockIdentifier, OnUnbalanced, ReservableCurrency, SortedMembers,
-		WithdrawReasons,
+		StorageVersion, WithdrawReasons,
 	},
 	weights::Weight,
 };
@@ -102,6 +102,9 @@ use darwinia_support::balance::*;
 
 pub mod weights;
 pub use weights::WeightInfo;
+
+/// The current storage version.
+const STORAGE_VERSION: StorageVersion = StorageVersion::new(4);
 
 /// The maximum votes allowed per voter.
 pub const MAXIMUM_VOTE: usize = 16;
@@ -220,6 +223,7 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::hooks]
@@ -407,8 +411,9 @@ pub mod pallet {
 		///   origin is removed as a runner-up.
 		/// - `origin` is a current member. In this case, the deposit is unreserved and origin is
 		///   removed as a member, consequently not being a candidate for the next round anymore.
-		///   Similar to [`remove_members`], if replacement runners exists, they are immediately
-		///   used. If the prime is renouncing, then no prime will exist until the next round.
+		///   Similar to [`remove_member`](Self::remove_member), if replacement runners exists,
+		///   they are immediately used. If the prime is renouncing, then no prime will exist until
+		///   the next round.
 		///
 		/// The dispatch origin of this call must be signed, and have one of the above roles.
 		///
@@ -1160,10 +1165,11 @@ impl<T: Config> ContainsLengthBound for Pallet<T> {
 mod tests {
 	use super::*;
 	use crate as elections_phragmen;
+	use codec::MaxEncodedLen;
 	use frame_support::{
 		assert_noop, assert_ok,
 		dispatch::DispatchResultWithPostInfo,
-		traits::{MaxEncodedLen, OnInitialize},
+		traits::{Everything, OnInitialize},
 	};
 	use frame_system::ensure_signed;
 	use sp_core::H256;
@@ -1203,7 +1209,7 @@ mod tests {
 	}
 
 	impl frame_system::Config for Test {
-		type BaseCallFilter = ();
+		type BaseCallFilter = Everything;
 		type BlockWeights = BlockWeights;
 		type BlockLength = ();
 		type DbWeight = ();

@@ -17,7 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- crates.io ---
-use ethereum::TransactionMessage;
+use ethereum::LegacyTransactionMessage;
 use sha3::{Digest, Keccak256};
 // --- darwinia-network ---
 use ethereum_primitives::{H160, H256, U256};
@@ -89,13 +89,13 @@ where
 	}
 }
 
-pub fn recover_signer(transaction: &ethereum::Transaction) -> Option<H160> {
+pub fn recover_signer(transaction: &ethereum::TransactionV0) -> Option<H160> {
 	let mut sig = [0u8; 65];
 	let mut msg = [0u8; 32];
 	sig[0..32].copy_from_slice(&transaction.signature.r()[..]);
 	sig[32..64].copy_from_slice(&transaction.signature.s()[..]);
 	sig[64] = transaction.signature.standard_v();
-	msg.copy_from_slice(&TransactionMessage::from(transaction.clone()).hash()[..]);
+	msg.copy_from_slice(&LegacyTransactionMessage::from(transaction.clone()).hash()[..]);
 
 	let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg).ok()?;
 	Some(H160::from(H256::from_slice(
@@ -110,7 +110,7 @@ pub struct DVMTransaction {
 	/// gas price wrapped by Option
 	pub gas_price: Option<U256>,
 	/// the transaction defined in ethereum lib
-	pub tx: ethereum::Transaction,
+	pub tx: ethereum::TransactionV0,
 }
 
 impl DVMTransaction {
@@ -124,7 +124,7 @@ impl DVMTransaction {
 		target: H160,
 		input: Vec<u8>,
 	) -> Self {
-		let transaction = ethereum::Transaction {
+		let transaction = ethereum::TransactionV0 {
 			nonce,
 			// Not used, and will be overwritten by None later.
 			gas_price: U256::zero(),

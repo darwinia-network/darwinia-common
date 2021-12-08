@@ -6,7 +6,7 @@ homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "common-runtime"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.7.0"
+version     = "2.7.1"
 
 [dependencies]
 # crates.io
@@ -17,16 +17,13 @@ darwinia-balances      = { default-features = false, path = "../../../frame/bala
 darwinia-support       = { default-features = false, path = "../../../frame/support" }
 drml-common-primitives = { default-features = false, path = "../../primitives/common" }
 # paritytech
-frame-support              = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-frame-system               = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-pallet-authorship          = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-pallet-transaction-payment = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-pallet-treasury            = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-runtime                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-std                     = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-
-# will be removed in later substrate version
-max-encoded-len = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+frame-support              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+frame-system               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+pallet-authorship          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+pallet-transaction-payment = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+pallet-treasury            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-runtime                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-std                     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 
 [features]
 default = ["std"]
@@ -47,5 +44,4 @@ std = [
 	"pallet-treasury/std",
 	"sp-runtime/std",
 	"sp-std/std",
-	"max-encoded-len/std",
 ]

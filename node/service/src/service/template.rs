@@ -113,7 +113,7 @@ pub fn new_partial(
 		FullClient<RuntimeApi, Executor>,
 		FullBackend,
 		FullSelectChain,
-		sp_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
+		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
 		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
 		(
 			ConsensusResult,
@@ -233,7 +233,7 @@ pub fn new_full(
 			import_queue,
 			on_demand: None,
 			block_announce_validator_builder: None,
-			// warp_sync,
+			warp_sync: None,
 		})?;
 
 	// Channel for the rpc handler to communicate with the authorship task.
@@ -276,7 +276,10 @@ pub fn new_full(
 				command_sink: Some(command_sink.clone()),
 			};
 
-			drml_rpc::template::create_full(deps, subscription_task_executor.clone())
+			Ok(drml_rpc::template::create_full(
+				deps,
+				subscription_task_executor.clone(),
+			))
 		})
 	};
 
@@ -353,12 +356,13 @@ pub fn new_full(
 				block_import,
 				env,
 				client,
-				pool: transaction_pool.pool().clone(),
+				pool: transaction_pool.clone(),
 				commands_stream,
 				select_chain,
 				consensus_data_provider: None,
 				create_inherent_data_providers: move |_, ()| async move {
 					let mock_timestamp = MockTimestampInherentDataProvider;
+
 					Ok(mock_timestamp)
 				},
 			});
@@ -371,7 +375,7 @@ pub fn new_full(
 				block_import,
 				env,
 				client: client.clone(),
-				pool: transaction_pool.pool().clone(),
+				pool: transaction_pool.clone(),
 				select_chain,
 				consensus_data_provider: None,
 				create_inherent_data_providers: move |_, ()| async move {

@@ -7,21 +7,21 @@ license     = "GPL-3.0"
 name        = "dp-s2s"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.7.0"
+version     = "2.7.1"
 
 [dependencies]
 # crates.io
 array-bytes = { version = "1.4" }
+codec       = { package = "parity-scale-codec", version = "2.1", default-features = false, features = ["derive"] }
 # darwinia-network
 dp-asset    = { default-features = false, path = "../asset" }
 dp-contract = { default-features = false, path = "../contract" }
 # paritytech
-bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
-bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", tag = "darwinia-v0.11.6-4" }
-codec               = { package = "parity-scale-codec", version = "2.1", default-features = false, features = ["derive"] }
-sp-core             = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
-sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", tag = "darwinia-v0.11.6-1" }
+bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }
+bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }
+sp-core             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 
 [dev-dependencies]
 dp-contract = { default-features = false, path = "../contract" }
@@ -30,14 +30,14 @@ dp-contract = { default-features = false, path = "../contract" }
 default = ["std"]
 
 std = [
+	# crates.io
+	"codec/std",
 	# darwinia-network
 	"dp-contract/std",
 	"dp-asset/std",
-	"dp-contract/std",
 	# paritytech
 	"bp-message-dispatch/std",
 	"bp-runtime/std",
-	"codec/std",
 	"sp-core/std",
 	"sp-runtime/std",
 	"sp-std/std",
