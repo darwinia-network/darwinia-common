@@ -33,6 +33,7 @@ describeWithFrontier("Frontier RPC (Revert Reason)", (context) => {
 	});
 
 	it("should fail with revert reason", async function () {
+		this.timeout(15000);
 		const contract = new context.web3.eth.Contract(TEST_CONTRACT_ABI, contractAddress, {
 			from: GENESIS_ACCOUNT,
 			gasPrice: "0x01",

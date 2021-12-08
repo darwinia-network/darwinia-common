@@ -20,7 +20,7 @@ describeWithFrontier("Frontier RPC (Constructor Revert)", (context) => {
 	const GOOD_BYTECODE = '6080604052348015600f57600080fd5b506001601a57600080fd5b603f8060276000396000f3fe6080604052600080fdfea2646970667358221220c70bc8b03cdfdf57b5f6c4131b836f9c2c4df01b8202f530555333f2a00e4b8364736f6c63430006060033';
 
 	it("should provide a tx receipt after successful deployment", async function () {
-		this.timeout(15000);
+		this.timeout(30000);
 		const GOOD_TX_HASH = '0xae813c533aac0719fbca4db6e3bb05cfb5859bdeaaa7dc5c9dbd24083301be8d';
 
 		const tx = await context.web3.eth.accounts.signTransaction(
@@ -59,7 +59,7 @@ describeWithFrontier("Frontier RPC (Constructor Revert)", (context) => {
 	});
 
 	it("should provide a tx receipt after failed deployment", async function () {
-		this.timeout(15000);
+		this.timeout(30000);
 		// Transaction hash depends on which nonce we're using
 		//const FAIL_TX_HASH = '0x89a956c4631822f407b3af11f9251796c276655860c892919f848699ed570a8d'; //nonce 1
 		const FAIL_TX_HASH = '0x640df9deb183d565addc45bdc8f95b30c7c03ce7e69df49456be9929352e4347'; //nonce 2
