@@ -947,7 +947,7 @@ pub mod pallet {
 		#[cfg(feature = "try-runtime")]
 		fn pre_upgrade() -> Result<(), &'static str> {
 			if <StorageVersion<T>>::get() == Releases::V6_0_0 {
-				migration::pre_migrate::<T>()
+				migrations::pre_migrate::<T>()
 			} else {
 				Ok(())
 			}
