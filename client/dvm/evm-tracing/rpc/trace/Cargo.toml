@@ -38,7 +38,5 @@ dc-tracing-rpc-core-types = { path = "../../rpc-core/types" }
 dc-tracing-rpc-core-trace = { path = "../../rpc-core/trace" }
 dc-tracer = { path = "../../tracer" }
 dvm-rpc-runtime-api = { path = "../../../../../frame/dvm/rpc/runtime-api" }
-# moonbeam-client-evm-tracing = { path = "../../evm-tracing" }
-# moonbeam-rpc-core-trace = { path = "../../rpc-core/trace" }
-# moonbeam-rpc-core-types = { path = "../../rpc-core/types" }
+
 

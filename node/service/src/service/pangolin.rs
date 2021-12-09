@@ -75,7 +75,10 @@ sc_executor::native_executor_instance!(
 	pub Executor,
 	pangolin_runtime::api::dispatch,
 	pangolin_runtime::native_version,
-	frame_benchmarking::benchmarking::HostFunctions,
+	(
+		frame_benchmarking::benchmarking::HostFunctions,
+		dp_evm_trace_ext::dvm_ext::HostFunctions
+	),
 );
 
 // A set of APIs that drml-like runtimes must implement.

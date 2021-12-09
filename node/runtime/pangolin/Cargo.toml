@@ -59,12 +59,10 @@ module-transaction-pause                = { default-features = false, path = "..
 to-ethereum-backing                     = { default-features = false, path = "../../../frame/wormhole/backing/ethereum" }
 to-tron-backing                         = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
 # dvm tracing
-dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/evm/trace/apis" }
-dp-evm-trace-events = { optional = true, default-features = false, path = "../../../primitives/evm/trace/events" }
-dp-evm-tracer = { optional = true, default-features = false, path = "../../../primitives/evm/trace/tracer" }
-# dc-tracing-debug-handler = { optional = true, default-features = false, path = "../../../client/dvm/evm-tracing/rpc/debug" }
-# dc-tracing-trace-handler = { optional = true, default-features = false, path = "../../../client/dvm/evm-tracing/rpc/trace" }
-# dc-tracing-rpc-core-debug = { optional = true, default-features = false, path = "../../../client/dvm/evm-tracing/rpc-core/debug" }
+dp-evm-trace-apis   = { path = "../../../primitives/evm/trace/apis" }
+dp-evm-trace-events = { default-features = false, path = "../../../primitives/evm/trace/events" }
+dp-evm-tracer = { default-features = false, path = "../../../primitives/evm/trace/tracer" }
+dp-evm-trace-ext = { default-features = false, path = "../../../primitives/evm/trace/ext" }
 
 
 # paritytech
@@ -235,11 +233,11 @@ std = [
 	"sp-std/std",
 	"sp-transaction-pool/std",
 	"sp-version/std",
-]
-
-evm-tracing = [
-	"dp-evm-trace-events",
-	"dp-evm-tracer",
+	# trace
+	"dp-evm-trace-apis/std",
+	"dp-evm-trace-events/std",
+	"dp-evm-tracer/std",
+	"dp-evm-trace-ext/std",
 ]
 
 runtime-benchmarks = [

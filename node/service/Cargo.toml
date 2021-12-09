@@ -43,6 +43,7 @@ dc-tracing-debug-handler = { default-features = false, path = "../../client/dvm/
 dc-tracing-trace-handler = { default-features = false, path = "../../client/dvm/evm-tracing/rpc/trace" }
 dc-tracing-rpc-core-debug = { default-features = false, path = "../../client/dvm/evm-tracing/rpc-core/debug" }
 dp-evm-trace-apis = { default-features = false, path = "../../primitives/evm/trace/apis" }
+dp-evm-trace-ext = { path = "../../primitives/evm/trace/ext" }
 
 # paritytech
 frame-benchmarking                         = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
@@ -112,9 +113,9 @@ template = [
 	"template-runtime",
 ]
 
-evm-tracing = [
-	"pangolin-runtime/evm-tracing",
-]
+# evm-tracing = [
+# 	"pangolin-runtime/evm-tracing",
+# ]
 
 runtime-benchmarks = ["pangolin-runtime/runtime-benchmarks"]
 
