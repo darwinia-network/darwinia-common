@@ -9,8 +9,8 @@ use crate::*;
 use drml_bridge_primitives::AccountIdConverter;
 use pangolin_messages::FromPangolinEncodedCall;
 
-pub struct Sub2SubFilter;
-impl Contains<Call> for Sub2SubFilter {
+pub struct S2sCallFilter;
+impl Contains<Call> for S2sCallFilter {
 	fn contains(c: &Call) -> bool {
 		matches!(
 			c,
@@ -23,7 +23,7 @@ impl Config<WithPangolinDispatch> for Runtime {
 	type Event = Event;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
-	type CallFilter = Sub2SubFilter;
+	type CallFilter = S2sCallFilter;
 	type EncodedCall = FromPangolinEncodedCall;
 	type SourceChainAccountId = pangolin_primitives::AccountId;
 	type TargetChainAccountPublic = AccountPublic;
