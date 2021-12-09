@@ -77,7 +77,8 @@ sc_executor::native_executor_instance!(
 	pangolin_runtime::native_version,
 	(
 		frame_benchmarking::benchmarking::HostFunctions,
-		dp_evm_trace_ext::dvm_ext::HostFunctions
+		// todo: Add HostFunctions
+		// dp_evm_trace_ext::dvm_ext::HostFunctions
 	),
 );
 
