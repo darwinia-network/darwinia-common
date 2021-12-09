@@ -308,6 +308,7 @@ fn new_full<RuntimeApi, Executor>(
 	mut config: Configuration,
 	authority_discovery_disabled: bool,
 	max_past_logs: u32,
+	rpc_config: super::dvm_tasks::RpcConfig,
 ) -> Result<
 	(
 		TaskManager,
@@ -546,8 +547,7 @@ where
 		);
 	}
 
-	// Spawn dvm related tasks
-	dvm_tasks::spawn(DvmTasksParams {
+	let tracing_requesters = dvm_tasks::spawn(DvmTasksParams {
 		task_manager: &task_manager,
 		client: client.clone(),
 		substrate_backend: backend,
@@ -555,6 +555,7 @@ where
 		filter_pool,
 		pending_transactions,
 		is_archive,
+		rpc_config,
 	});
 
 	network_starter.start_network();
@@ -761,6 +762,7 @@ pub fn pangolin_new_full(
 	config: Configuration,
 	authority_discovery_disabled: bool,
 	max_past_logs: u32,
+	rpc_config: super::dvm_tasks::RpcConfig,
 ) -> Result<
 	(
 		TaskManager,
@@ -769,8 +771,12 @@ pub fn pangolin_new_full(
 	),
 	ServiceError,
 > {
-	let (components, client, rpc_handlers) =
-		new_full::<RuntimeApi, Executor>(config, authority_discovery_disabled, max_past_logs)?;
+	let (components, client, rpc_handlers) = new_full::<RuntimeApi, Executor>(
+		config,
+		authority_discovery_disabled,
+		max_past_logs,
+		rpc_config,
+	)?;
 
 	Ok((components, client, rpc_handlers))
 }

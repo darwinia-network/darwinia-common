@@ -2492,6 +2492,7 @@ dependencies = [
  "darwinia-staking-rpc",
  "dc-db",
  "dc-rpc",
+ "dp-evm-trace-apis",
  "dp-rpc",
  "drml-common-primitives",
  "dvm-ethereum",

@@ -171,6 +171,15 @@ pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
 	let _ = validate_trace_environment(&cli)?;
 	let max_past_logs = cli.run.dvm_args.max_past_logs;
+	// for tracing
+	let rpc_config = RpcConfig {
+		ethapi: cli.run.ethapi,
+		ethapi_max_permits: cli.run.ethapi_max_permits,
+		ethapi_trace_max_count: cli.run.ethapi_trace_max_count,
+		ethapi_trace_cache_duration: cli.run.ethapi_trace_cache_duration,
+		eth_log_block_cache: cli.run.eth_log_block_cache,
+		max_past_logs: cli.run.max_past_logs,
+	};
 
 	match &cli.subcommand {
 		None => {
@@ -206,6 +215,7 @@ pub fn run() -> sc_cli::Result<()> {
 							config,
 							authority_discovery_disabled,
 							max_past_logs,
+							rpc_config,
 						)
 						.map(|(task_manager, _, _)| task_manager),
 					}

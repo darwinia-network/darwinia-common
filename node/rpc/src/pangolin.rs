@@ -92,6 +92,7 @@ where
 	C::Api: darwinia_header_mmr_rpc::HeaderMMRRuntimeApi<Block, Hash>,
 	C::Api: darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
 	C::Api: darwinia_fee_market_rpc::FeeMarketRuntimeApi<Block, Balance>,
+	C::Api: dp_evm_trace_apis::DebugRuntimeApi<Block>,
 	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
 	P: 'static + Sync + Send + sc_transaction_pool_api::TransactionPool<Block = Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,

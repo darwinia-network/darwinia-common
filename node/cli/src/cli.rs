@@ -172,39 +172,3 @@ impl Default for Sealing {
 		Sealing::Manual
 	}
 }
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum EthApiCmd {
-	// TODO: do we need all of them?
-	Txpool,
-	Debug,
-	Trace,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct RpcConfig {
-	pub ethapi: Vec<EthApiCmd>,
-	pub ethapi_max_permits: u32,
-	pub ethapi_trace_max_count: u32,
-	pub ethapi_trace_cache_duration: u64,
-	pub eth_log_block_cache: usize,
-	pub max_past_logs: u32,
-}
-
-impl FromStr for EthApiCmd {
-	type Err = String;
-
-	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		Ok(match s {
-			"txpool" => Self::Txpool,
-			"debug" => Self::Debug,
-			"trace" => Self::Trace,
-			_ => {
-				return Err(format!(
-					"`{}` is not recognized as a supported Ethereum Api",
-					s
-				))
-			}
-		})
-	}
-}
