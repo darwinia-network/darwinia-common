@@ -84,7 +84,8 @@ impl_runtime_apis![
 	darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>,
 	darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>,
 	darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance>,
-	dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>
+	dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
+	dp_evm_trace_apis::DebugRuntimeApi<Block>
 ];
 
 pub fn dvm_database_dir(config: &Configuration) -> PathBuf {

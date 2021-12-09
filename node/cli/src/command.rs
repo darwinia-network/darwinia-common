@@ -26,7 +26,10 @@ use sc_service::TaskManager;
 use sp_core::crypto::Ss58AddressFormat;
 // --- darwinia-network ---
 use crate::cli::*;
-use drml_service::*;
+use drml_service::{
+	service::dvm_tasks::{EthApiCmd, RpcConfig},
+	*,
+};
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
@@ -170,15 +173,16 @@ pub fn run() -> sc_cli::Result<()> {
 
 	let cli = Cli::from_args();
 	let _ = validate_trace_environment(&cli)?;
+	// todo: remove this max past log
 	let max_past_logs = cli.run.dvm_args.max_past_logs;
 	// for tracing
 	let rpc_config = RpcConfig {
-		ethapi: cli.run.ethapi,
-		ethapi_max_permits: cli.run.ethapi_max_permits,
-		ethapi_trace_max_count: cli.run.ethapi_trace_max_count,
-		ethapi_trace_cache_duration: cli.run.ethapi_trace_cache_duration,
-		eth_log_block_cache: cli.run.eth_log_block_cache,
-		max_past_logs: cli.run.max_past_logs,
+		ethapi: cli.run.dvm_args.ethapi.clone(),
+		ethapi_max_permits: cli.run.dvm_args.ethapi_max_permits,
+		ethapi_trace_max_count: cli.run.dvm_args.ethapi_trace_max_count,
+		ethapi_trace_cache_duration: cli.run.dvm_args.ethapi_trace_cache_duration,
+		eth_log_block_cache: cli.run.dvm_args.eth_log_block_cache,
+		max_past_logs: cli.run.dvm_args.max_past_logs,
 	};
 
 	match &cli.subcommand {
