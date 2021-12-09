@@ -695,13 +695,14 @@ sp_api::impl_runtime_apis! {
 			log::debug!("bear: --- enter Api(trace_transaction), traced_transaction {:?}", traced_transaction);
 			// #[cfg(feature = "evm-tracing")]
 			{
-				use runtime_tracer::tracer::EvmTracer;
+				use dp_evm_tracer::tracer::EvmTracer;
+				use dvm_ethereum::Call::transact;
 				// Apply the a subset of extrinsics: all the substrate-specific or ethereum
 				// transactions that preceded the requested transaction.
 				for ext in extrinsics.into_iter() {
 					let _ = match &ext.0.function {
-						Call::Ethereum(transact { transaction }) => {
-							if transaction == traced_transaction {
+						Call::Ethereum(transact(transaction)) => {
+							if &transaction == traced_transaction {
 								log::debug!("bear: --- EvmTracer trace {:?}", traced_transaction);
 								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
 								return Ok(());
@@ -731,18 +732,19 @@ sp_api::impl_runtime_apis! {
 		> {
 			// #[cfg(feature = "evm-tracing")]
 			{
-				use runtime_tracer::tracer::EvmTracer;
+				use dp_evm_tracer::tracer::EvmTracer;
 				use sha3::{Digest, Keccak256};
+				use dvm_ethereum::Call::transact;
 
-				let mut config = <Runtime as pallet_evm::Config>::config().clone();
+				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
 				config.estimate = true;
 
 				// Apply all extrinsics. Ethereum extrinsics are traced.
 				for ext in extrinsics.into_iter() {
 					match &ext.0.function {
-						Call::Ethereum(transact { transaction }) => {
+						Call::Ethereum(transact(transaction)) => {
 							let eth_extrinsic_hash =
-								H256::from_slice(Keccak256::digest(&rlp::encode(transaction)).as_slice());
+								H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
 							if known_transactions.contains(&eth_extrinsic_hash) {
 								// Each known extrinsic is a new call stack.
 								EvmTracer::emit_new();
