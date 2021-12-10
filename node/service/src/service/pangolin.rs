@@ -361,11 +361,21 @@ where
 		);
 	}
 
-	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
-	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
-	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 	let dvm_backend = open_dvm_backend(&config)?;
+	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
+	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
+	let tracing_requesters = dvm_tasks::spawn(DvmTasksParams {
+		task_manager: &task_manager,
+		client: client.clone(),
+		substrate_backend: backend.clone(),
+		dvm_backend: dvm_backend.clone(),
+		filter_pool: filter_pool.clone(),
+		pending_transactions: pending_transactions.clone(),
+		is_archive,
+		rpc_config: rpc_config.clone(),
+	});
 
+	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let (babe_import, grandpa_link, babe_link) = import_setup;
 	let babe_config = babe_link.config().clone();
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
@@ -414,8 +424,19 @@ where
 				max_past_logs,
 			};
 
-			drml_rpc::pangolin::create_full(deps, subscription_task_executor.clone())
-				.map_err(Into::into)
+			use crate::service::dvm_tasks::EthApiCmd;
+			let mut io = drml_rpc::pangolin::create_full(deps, subscription_task_executor.clone())
+				.map_err(ServiceError::from)?;
+			let ethapi_cmd = rpc_config.ethapi.clone();
+			if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
+				crate::service::dvm_tasks::extend_with_tracing(
+					client.clone(),
+					tracing_requesters.clone(),
+					rpc_config.ethapi_trace_max_count,
+					&mut io,
+				);
+			}
+			Ok(io)
 		}
 	};
 
@@ -565,17 +586,6 @@ where
 			sc_finality_grandpa::run_grandpa_voter(grandpa_config)?,
 		);
 	}
-
-	let tracing_requesters = dvm_tasks::spawn(DvmTasksParams {
-		task_manager: &task_manager,
-		client: client.clone(),
-		substrate_backend: backend,
-		dvm_backend,
-		filter_pool,
-		pending_transactions,
-		is_archive,
-		rpc_config,
-	});
 
 	network_starter.start_network();
 

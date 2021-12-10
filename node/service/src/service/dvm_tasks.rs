@@ -16,20 +16,28 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+use super::*;
+
 // --- std ---
 use std::{sync::Arc, time::Duration};
 // --- crates.io ---
 use futures::StreamExt;
 use tokio::sync::Semaphore;
 // --- paritytech ---
-use sc_client_api::{backend::Backend as BlockChainBackend, BlockOf, BlockchainEvents};
+use sc_client_api::{
+	backend::{AuxStore, Backend, StateBackend, StorageProvider},
+	BlockOf, BlockchainEvents,
+};
 use sc_service::TaskManager;
 use sp_api::{HeaderT, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
-use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
+use sp_blockchain::{
+	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata,
+};
 use sp_core::H256;
 use sp_runtime::traits::Block as BlockT;
 // --- darwinia-network ---
+use crate::pangolin_service::RuntimeApiCollection;
 use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use dc_rpc::EthTask;
 use dc_tracing_debug_handler::{Debug, DebugHandler, DebugRequester, DebugServer};
@@ -39,6 +47,34 @@ use dc_tracing_trace_handler::{
 use dp_evm_trace_apis::DebugRuntimeApi;
 use dp_rpc::{FilterPool, PendingTransactions};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
+
+pub fn extend_with_tracing<C, BE>(
+	client: Arc<C>,
+	requesters: RpcRequesters,
+	trace_filter_max_count: u32,
+	io: &mut jsonrpc_core::IoHandler<sc_rpc::Metadata>,
+) where
+	BE: Backend<Block> + 'static,
+	BE::State: StateBackend<BlakeTwo256>,
+	BE::Blockchain: BlockchainBackend<Block>,
+	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
+	C: BlockchainEvents<Block>,
+	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
+	C: Send + Sync + 'static,
+	C::Api: RuntimeApiCollection<StateBackend = BE::State>,
+{
+	if let Some(trace_filter_requester) = requesters.trace {
+		io.extend_with(TraceServer::to_delegate(Trace::new(
+			client,
+			trace_filter_requester,
+			trace_filter_max_count,
+		)));
+	}
+
+	if let Some(debug_requester) = requesters.debug {
+		io.extend_with(DebugServer::to_delegate(Debug::new(debug_requester)));
+	}
+}
 
 pub struct DvmTasksParams<'a, B: BlockT, C, BE> {
 	pub task_manager: &'a TaskManager,
@@ -60,7 +96,7 @@ where
 	C::Api: BlockBuilder<B>,
 	B: BlockT<Hash = H256> + Send + Sync + 'static,
 	B::Header: HeaderT<Number = u32>,
-	BE: BlockChainBackend<B> + 'static,
+	BE: Backend<B> + 'static,
 {
 	let DvmTasksParams {
 		task_manager,
