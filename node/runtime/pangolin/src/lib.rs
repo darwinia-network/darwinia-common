@@ -279,13 +279,12 @@ frame_support::construct_runtime! {
 		BridgePangoroGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
 		BridgePangoroMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
 
+		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 53,
+		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 54,
+
 		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 
 		BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
-
-		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 53,
-
-		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 54,
 	}
 }
 
@@ -714,7 +713,7 @@ sp_api::impl_runtime_apis! {
 		) -> Vec<bp_messages::MessageDetails<Balance>> {
 			bridge_runtime_common::messages_api::outbound_message_details::<
 				Runtime,
-				pallet_bridge_messages::Instance1,
+				WithPangoroMessages,
 				WithPangoroMessageBridge,
 			>(lane, begin, end)
 		}

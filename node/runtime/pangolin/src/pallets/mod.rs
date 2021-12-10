@@ -130,14 +130,14 @@ pub use bridge_dispatch::*;
 pub mod bridge_grandpa;
 pub use bridge_grandpa::*;
 
-pub mod from_substrate_issuing_;
-pub use from_substrate_issuing_::*;
-
-pub mod bridge_bsc;
-pub use bridge_bsc::*;
-
 pub mod fee_market;
 pub use fee_market::*;
 
 pub mod transaction_pause;
 pub use transaction_pause::*;
+
+pub mod from_substrate_issuing_;
+pub use from_substrate_issuing_::*;
+
+pub mod bridge_bsc;
+pub use bridge_bsc::*;

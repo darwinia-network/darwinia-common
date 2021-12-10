@@ -9,17 +9,16 @@ use pangoro_primitives::AccountId;
 use crate::{pangoro_messages::FromPangoroEncodedCall, *};
 use drml_bridge_primitives::AccountIdConverter;
 
-pub struct Sub2SubFilter;
-impl Contains<Call> for Sub2SubFilter {
+pub struct S2sCallFilter;
+impl Contains<Call> for S2sCallFilter {
 	fn contains(c: &Call) -> bool {
 		matches!(
 			c,
 			Call::Substrate2SubstrateIssuing(from_substrate_issuing::Call::register_from_remote(
 				..
+			)) | Call::Substrate2SubstrateIssuing(from_substrate_issuing::Call::issue_from_remote(
+				..
 			))
-		) || matches!(
-			c,
-			Call::Substrate2SubstrateIssuing(from_substrate_issuing::Call::issue_from_remote(..))
 		)
 	}
 }
@@ -28,7 +27,7 @@ impl Config<WithPangoroDispatch> for Runtime {
 	type Event = Event;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
-	type CallFilter = Sub2SubFilter;
+	type CallFilter = S2sCallFilter;
 	type EncodedCall = FromPangoroEncodedCall;
 	type SourceChainAccountId = AccountId;
 	type TargetChainAccountPublic = AccountPublic;
