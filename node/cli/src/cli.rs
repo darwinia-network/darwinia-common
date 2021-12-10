@@ -16,14 +16,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- crates.io ---
-use std::str::FromStr;
+// crates.io
 #[cfg(feature = "template")]
 use structopt::clap::arg_enum;
 use structopt::StructOpt;
-// --- paritytech ---
+// paritytech
 use sc_cli::{KeySubcommand, SignCmd, VanityCmd, VerifyCmd};
-
+// darwinia-network
 use drml_service::service::dvm_tasks::EthApiCmd;
 
 /// An overarching CLI command definition.
@@ -125,13 +124,7 @@ pub enum Subcommand {
 #[derive(Debug, StructOpt)]
 pub struct DvmArgs {
 	/// Enable EVM tracing module on a non-authority node.
-	#[structopt(
-		long,
-		conflicts_with = "collator",
-		conflicts_with = "validator",
-		require_delimiter = true
-	)]
-	// TODO: what's the aim of the conflicts_with
+	#[structopt(long, conflicts_with = "validator", require_delimiter = true)]
 	pub ethapi: Vec<EthApiCmd>,
 
 	/// Number of concurrent tracing tasks. Meant to be shared by both "debug" and "trace" modules.

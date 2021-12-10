@@ -77,7 +77,6 @@ sc_executor::native_executor_instance!(
 	pangolin_runtime::native_version,
 	(
 		frame_benchmarking::benchmarking::HostFunctions,
-		// todo: Add HostFunctions
 		dp_evm_trace_ext::dvm_ext::HostFunctions
 	),
 );
@@ -116,7 +115,6 @@ fn open_dvm_backend(config: &Configuration) -> Result<Arc<Backend<Block>>, Strin
 #[cfg(feature = "full-node")]
 fn new_partial<RuntimeApi, Executor>(
 	config: &mut Configuration,
-	max_past_logs: u32,
 ) -> Result<
 	PartialComponents<
 		FullClient<RuntimeApi, Executor>,
@@ -271,7 +269,6 @@ where
 fn new_full<RuntimeApi, Executor>(
 	mut config: Configuration,
 	authority_discovery_disabled: bool,
-	max_past_logs: u32,
 	rpc_config: super::dvm_tasks::RpcConfig,
 ) -> Result<
 	(
@@ -294,6 +291,7 @@ where
 	let force_authoring = config.force_authoring;
 	let disable_grandpa = config.disable_grandpa;
 	let name = config.network.node_name.clone();
+	let max_past_logs = rpc_config.max_past_logs;
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let auth_disc_publish_non_global_ips = config.network.allow_non_globals_in_dht;
 	config
@@ -321,7 +319,7 @@ where
 				// dvm_backend,
 				// filter_pool,
 			),
-	} = new_partial::<RuntimeApi, Executor>(&mut config, max_past_logs)?;
+	} = new_partial::<RuntimeApi, Executor>(&mut config)?;
 	let shared_voter_state = rpc_setup;
 
 	if let Some(url) = &config.keystore_remote {
@@ -757,7 +755,6 @@ where
 #[cfg(feature = "full-node")]
 pub fn new_chain_ops<Runtime, Dispatch>(
 	config: &mut Configuration,
-	max_past_logs: u32,
 ) -> Result<
 	(
 		Arc<FullClient<Runtime, Dispatch>>,
@@ -780,7 +777,7 @@ where
 		import_queue,
 		task_manager,
 		..
-	} = new_partial::<Runtime, Dispatch>(config, max_past_logs)?;
+	} = new_partial::<Runtime, Dispatch>(config)?;
 
 	Ok((client, backend, import_queue, task_manager))
 }
@@ -790,7 +787,6 @@ where
 pub fn pangolin_new_full(
 	config: Configuration,
 	authority_discovery_disabled: bool,
-	max_past_logs: u32,
 	rpc_config: super::dvm_tasks::RpcConfig,
 ) -> Result<
 	(
@@ -800,12 +796,8 @@ pub fn pangolin_new_full(
 	),
 	ServiceError,
 > {
-	let (components, client, rpc_handlers) = new_full::<RuntimeApi, Executor>(
-		config,
-		authority_discovery_disabled,
-		max_past_logs,
-		rpc_config,
-	)?;
+	let (components, client, rpc_handlers) =
+		new_full::<RuntimeApi, Executor>(config, authority_discovery_disabled, rpc_config)?;
 
 	Ok((components, client, rpc_handlers))
 }

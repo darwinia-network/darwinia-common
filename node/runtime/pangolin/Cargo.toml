@@ -61,10 +61,10 @@ to-tron-backing                         = { default-features = false, path = "..
 # dvm tracing
 dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/evm/trace/apis" }
 dp-evm-trace-events = { default-features = false, path = "../../../primitives/evm/trace/events" }
-dp-evm-tracer = { default-features = false, path = "../../../primitives/evm/trace/tracer" }
-dp-evm-trace-ext = { default-features = false, path = "../../../primitives/evm/trace/ext" }
-sha3 = { version = "0.8", default-features = false }
-rlp = { version = "0.5", default-features = false }
+dp-evm-trace-ext    = { default-features = false, path = "../../../primitives/evm/trace/ext" }
+dp-evm-tracer       = { default-features = false, path = "../../../primitives/evm/trace/tracer" }
+rlp                 = { version = "0.5", default-features = false }
+sha3                = { version = "0.8", default-features = false }
 
 
 # paritytech
@@ -238,10 +238,10 @@ std = [
 	# trace
 	"dp-evm-trace-apis/std",
 	"dp-evm-trace-events/std",
-	"dp-evm-tracer/std",
 	"dp-evm-trace-ext/std",
-	"sha3/std",
+	"dp-evm-tracer/std",
 	"rlp/std",
+	"sha3/std",
 ]
 
 runtime-benchmarks = [

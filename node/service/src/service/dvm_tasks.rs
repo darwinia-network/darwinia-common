@@ -76,17 +76,6 @@ pub fn extend_with_tracing<C, BE>(
 	}
 }
 
-pub struct DvmTasksParams<'a, B: BlockT, C, BE> {
-	pub task_manager: &'a TaskManager,
-	pub client: Arc<C>,
-	pub substrate_backend: Arc<BE>,
-	pub dvm_backend: Arc<dc_db::Backend<B>>,
-	pub filter_pool: Option<FilterPool>,
-	pub pending_transactions: PendingTransactions,
-	pub is_archive: bool,
-	pub rpc_config: RpcConfig,
-}
-
 pub fn spawn<B, C, BE>(params: DvmTasksParams<B, C, BE>) -> RpcRequesters
 where
 	C: ProvideRuntimeApi<B> + BlockOf,
@@ -153,9 +142,8 @@ where
 		);
 	}
 
-	let ethapi_cmd = rpc_config.ethapi.clone();
-	if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
-		// trace tasks
+	let cmd = rpc_config.ethapi.clone();
+	if cmd.contains(&EthApiCmd::Debug) || cmd.contains(&EthApiCmd::Trace) {
 		let permit_pool = Arc::new(Semaphore::new(rpc_config.ethapi_max_permits as usize));
 		let (trace_filter_task, trace_filter_requester) =
 			if rpc_config.ethapi.contains(&EthApiCmd::Trace) {
@@ -181,6 +169,7 @@ where
 		} else {
 			(None, None)
 		};
+
 		// `trace_filter` cache task. Essential.
 		// Proxies rpc requests to it's handler.
 		if let Some(trace_filter_task) = trace_filter_task {
@@ -210,7 +199,17 @@ where
 	}
 }
 
-// todo: remove it later
+pub struct DvmTasksParams<'a, B: BlockT, C, BE> {
+	pub task_manager: &'a TaskManager,
+	pub client: Arc<C>,
+	pub substrate_backend: Arc<BE>,
+	pub dvm_backend: Arc<dc_db::Backend<B>>,
+	pub filter_pool: Option<FilterPool>,
+	pub pending_transactions: PendingTransactions,
+	pub is_archive: bool,
+	pub rpc_config: RpcConfig,
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct RpcConfig {
 	pub ethapi: Vec<EthApiCmd>,
@@ -221,7 +220,6 @@ pub struct RpcConfig {
 	pub max_past_logs: u32,
 }
 
-// todo: remove it later
 #[derive(Debug, PartialEq, Clone)]
 pub enum EthApiCmd {
 	Txpool,

@@ -14,7 +14,7 @@ version     = "2.7.1"
 codec          = { package = "parity-scale-codec", version = "2.1", default-features = false }
 ethereum       = { version = "0.9", default-features = false, features = ["with-codec"] }
 ethereum-types = { version = "0.12", default-features = false }
-evm = { git = "https://github.com/darwinia-network/evm", branch = "darwinia", default-features = false, features = ["with-codec"] }
+evm            = { git = "https://github.com/darwinia-network/evm", branch = "darwinia", default-features = false, features = ["with-codec"] }
 libsecp256k1   = { version = "0.5", default-features = false, features = ["static-context", "hmac"] }
 log            = { version = "0.4" }
 rlp            = { version = "0.5", default-features = false }
