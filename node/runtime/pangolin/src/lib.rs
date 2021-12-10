@@ -19,7 +19,6 @@
 //! The Darwinia Node Template runtime. This can be compiled with `#[no_std]`, ready for Wasm.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-// `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
 pub mod pallets;
@@ -28,6 +27,7 @@ pub use pallets::*;
 pub mod bridges;
 pub use bridges::*;
 
+#[cfg(not(feature = "no-wasm"))]
 pub mod wasm {
 	//! Make the WASM binary available.
 
@@ -67,6 +67,7 @@ pub mod wasm {
 		return WASM_BINARY;
 	}
 }
+#[cfg(not(feature = "no-wasm"))]
 pub use wasm::*;
 
 pub use drml_common_primitives as pangoro_primitives;

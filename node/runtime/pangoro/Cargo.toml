@@ -173,3 +173,5 @@ try-runtime = [
 	"darwinia-balances/try-runtime",
 	"darwinia-staking/try-runtime",
 ]
+
+no-wasm = []

@@ -3,12 +3,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "256"]
 
-#[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
-
 pub mod pallets;
 pub use pallets::*;
 
+#[cfg(not(feature = "no-wasm"))]
 pub mod wasm {
 	//! Make the WASM binary available.
 
@@ -48,6 +46,7 @@ pub mod wasm {
 		return WASM_BINARY;
 	}
 }
+#[cfg(not(feature = "no-wasm"))]
 pub use wasm::*;
 
 pub mod pangolin_messages;
