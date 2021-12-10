@@ -78,7 +78,7 @@ sc_executor::native_executor_instance!(
 	(
 		frame_benchmarking::benchmarking::HostFunctions,
 		// todo: Add HostFunctions
-		// dp_evm_trace_ext::dvm_ext::HostFunctions
+		dp_evm_trace_ext::dvm_ext::HostFunctions
 	),
 );
 
