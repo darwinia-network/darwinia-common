@@ -2445,6 +2445,7 @@ version = "2.7.1"
 dependencies = [
  "bsc-primitives",
  "dp-consensus",
+ "drml-rpc",
  "drml-service",
  "frame-benchmarking-cli",
  "log",
@@ -2492,6 +2493,8 @@ dependencies = [
  "darwinia-staking-rpc",
  "dc-db",
  "dc-rpc",
+ "dc-tracing-debug-handler",
+ "dc-tracing-trace-handler",
  "dp-evm-trace-apis",
  "dp-rpc",
  "drml-common-primitives",

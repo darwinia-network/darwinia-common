@@ -23,7 +23,7 @@ use structopt::StructOpt;
 // paritytech
 use sc_cli::{KeySubcommand, SignCmd, VanityCmd, VerifyCmd};
 // darwinia-network
-use drml_service::service::dvm_tasks::EthApiCmd;
+use drml_rpc::EthApiCmd;
 
 /// An overarching CLI command definition.
 #[derive(Debug, StructOpt)]

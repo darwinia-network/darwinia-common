@@ -67,7 +67,7 @@ use dp_rpc::{FilterPool, PendingTransactions};
 use drml_common_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use drml_rpc::{
 	pangolin::{FullDeps, LightDeps},
-	BabeDeps, GrandpaDeps, SubscriptionTaskExecutor,
+	BabeDeps, GrandpaDeps, RpcConfig, SubscriptionTaskExecutor,
 };
 use pangolin_runtime::RuntimeApi;
 
@@ -245,7 +245,7 @@ where
 fn new_full<RuntimeApi, Executor>(
 	mut config: Configuration,
 	authority_discovery_disabled: bool,
-	rpc_config: super::dvm_tasks::RpcConfig,
+	rpc_config: RpcConfig,
 ) -> Result<
 	(
 		TaskManager,
@@ -360,6 +360,7 @@ where
 		let select_chain = select_chain.clone();
 		let chain_spec = config.chain_spec.cloned_box();
 		let shared_voter_state = shared_voter_state.clone();
+		// let tracing_requesters = tracing_requesters.clone();
 
 		move |deny_unsafe, is_authority, network, subscription_executor| -> RpcResult {
 			let deps = FullDeps {
@@ -385,22 +386,12 @@ where
 				pending_transactions: pending_transactions.clone(),
 				backend: dvm_backend.clone(),
 				filter_pool: filter_pool.clone(),
-				max_past_logs,
+				tracing_requesters: tracing_requesters.clone(),
+				rpc_config: rpc_config.clone(),
 			};
 
-			use crate::service::dvm_tasks::EthApiCmd;
-			let mut io = drml_rpc::pangolin::create_full(deps, subscription_task_executor.clone())
-				.map_err(ServiceError::from)?;
-			let ethapi_cmd = rpc_config.ethapi.clone();
-			if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
-				crate::service::dvm_tasks::extend_with_tracing(
-					client.clone(),
-					tracing_requesters.clone(),
-					rpc_config.ethapi_trace_max_count,
-					&mut io,
-				);
-			}
-			Ok(io)
+			drml_rpc::pangolin::create_full(deps, subscription_task_executor.clone())
+				.map_err(Into::into)
 		}
 	};
 
@@ -753,7 +744,7 @@ where
 pub fn pangolin_new_full(
 	config: Configuration,
 	authority_discovery_disabled: bool,
-	rpc_config: super::dvm_tasks::RpcConfig,
+	rpc_config: RpcConfig,
 ) -> Result<
 	(
 		TaskManager,

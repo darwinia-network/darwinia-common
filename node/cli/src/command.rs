@@ -26,10 +26,8 @@ use sc_service::TaskManager;
 use sp_core::crypto::Ss58AddressFormat;
 // --- darwinia-network ---
 use crate::cli::*;
-use drml_service::{
-	service::dvm_tasks::{EthApiCmd, RpcConfig},
-	*,
-};
+use drml_rpc::{EthApiCmd, RpcConfig};
+use drml_service::*;
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {

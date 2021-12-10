@@ -45,35 +45,8 @@ use dc_tracing_trace_handler::{
 };
 use dp_evm_trace_apis::DebugRuntimeApi;
 use dp_rpc::{FilterPool, PendingTransactions};
+use drml_rpc::{EthApiCmd, RpcConfig, RpcRequesters};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
-
-pub fn extend_with_tracing<C, BE>(
-	client: Arc<C>,
-	requesters: RpcRequesters,
-	trace_filter_max_count: u32,
-	io: &mut jsonrpc_core::IoHandler<sc_rpc::Metadata>,
-) where
-	BE: Backend<Block> + 'static,
-	BE::State: StateBackend<BlakeTwo256>,
-	BE::Blockchain: BlockchainBackend<Block>,
-	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
-	C: BlockchainEvents<Block>,
-	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
-	C: Send + Sync + 'static,
-	C::Api: RuntimeApiCollection<StateBackend = BE::State>,
-{
-	if let Some(trace_filter_requester) = requesters.trace {
-		io.extend_with(TraceServer::to_delegate(Trace::new(
-			client,
-			trace_filter_requester,
-			trace_filter_max_count,
-		)));
-	}
-
-	if let Some(debug_requester) = requesters.debug {
-		io.extend_with(DebugServer::to_delegate(Debug::new(debug_requester)));
-	}
-}
 
 pub fn spawn<B, C, BE>(params: DvmTasksParams<B, C, BE>) -> RpcRequesters
 where
@@ -209,43 +182,43 @@ pub struct DvmTasksParams<'a, B: BlockT, C, BE> {
 	pub rpc_config: RpcConfig,
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct RpcConfig {
-	pub ethapi: Vec<EthApiCmd>,
-	pub ethapi_max_permits: u32,
-	pub ethapi_trace_max_count: u32,
-	pub ethapi_trace_cache_duration: u64,
-	pub eth_log_block_cache: usize,
-	pub max_past_logs: u32,
-}
+// #[derive(Debug, PartialEq, Clone)]
+// pub struct RpcConfig {
+// 	pub ethapi: Vec<EthApiCmd>,
+// 	pub ethapi_max_permits: u32,
+// 	pub ethapi_trace_max_count: u32,
+// 	pub ethapi_trace_cache_duration: u64,
+// 	pub eth_log_block_cache: usize,
+// 	pub max_past_logs: u32,
+// }
 
-#[derive(Debug, PartialEq, Clone)]
-pub enum EthApiCmd {
-	Txpool,
-	Debug,
-	Trace,
-}
+// #[derive(Debug, PartialEq, Clone)]
+// pub enum EthApiCmd {
+// 	Txpool,
+// 	Debug,
+// 	Trace,
+// }
 
-use std::str::FromStr;
-impl FromStr for EthApiCmd {
-	type Err = String;
+// use std::str::FromStr;
+// impl FromStr for EthApiCmd {
+// 	type Err = String;
 
-	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		Ok(match s {
-			"txpool" => Self::Txpool,
-			"debug" => Self::Debug,
-			"trace" => Self::Trace,
-			_ => {
-				return Err(format!(
-					"`{}` is not recognized as a supported Ethereum Api",
-					s
-				))
-			}
-		})
-	}
-}
-#[derive(Clone)]
-pub struct RpcRequesters {
-	pub debug: Option<DebugRequester>,
-	pub trace: Option<TraceFilterCacheRequester>,
-}
+// 	fn from_str(s: &str) -> Result<Self, Self::Err> {
+// 		Ok(match s {
+// 			"txpool" => Self::Txpool,
+// 			"debug" => Self::Debug,
+// 			"trace" => Self::Trace,
+// 			_ => {
+// 				return Err(format!(
+// 					"`{}` is not recognized as a supported Ethereum Api",
+// 					s
+// 				))
+// 			}
+// 		})
+// 	}
+// }
+// #[derive(Clone)]
+// pub struct RpcRequesters {
+// 	pub debug: Option<DebugRequester>,
+// 	pub trace: Option<TraceFilterCacheRequester>,
+// }

@@ -23,7 +23,6 @@
 //! Proxies EVM messages to the host functions.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-
 pub mod tracer {
 	use codec::Encode;
 	use dp_evm_trace_events::{EvmEvent, GasometerEvent, RuntimeEvent};
