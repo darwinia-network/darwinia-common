@@ -1,5 +1,3 @@
-pub use pallet_bridge_messages::Instance1 as Pangolin;
-
 // --- paritytech ---
 use bp_messages::LaneId;
 use bp_runtime::ChainId;
@@ -10,6 +8,7 @@ use darwinia_support::{evm::IntoH160, s2s::LatestMessageNoncer};
 use dp_asset::{TokenMetadata, NATIVE_TOKEN_TYPE};
 use drml_bridge_primitives::{AccountIdConverter, PANGORO_PANGOLIN_LANE};
 use to_substrate_backing::Config;
+
 pub struct PangolinMessageNoncer;
 impl LatestMessageNoncer for PangolinMessageNoncer {
 	fn outbound_latest_generated_nonce(lane_id: LaneId) -> u64 {

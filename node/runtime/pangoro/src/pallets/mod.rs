@@ -61,11 +61,11 @@ pub use bridge_dispatch::*;
 pub mod bridge_grandpa;
 pub use bridge_grandpa::*;
 
-pub mod to_substrate_backing_;
-pub use to_substrate_backing_::*;
-
 pub mod fee_market;
 pub use fee_market::*;
 
 pub mod transaction_pause;
 pub use transaction_pause::*;
+
+pub mod to_substrate_backing_;
+pub use to_substrate_backing_::*;
