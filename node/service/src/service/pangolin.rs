@@ -41,7 +41,7 @@ use sc_finality_grandpa::{
 	LinkHalf, SharedVoterState as GrandpaSharedVoterState,
 	VotingRulesBuilder as GrandpaVotingRulesBuilder,
 };
-use sc_network::{Event, NetworkService};
+use sc_network::Event;
 use sc_service::{
 	config::KeystoreConfig, BasePath, BuildNetworkParams, Configuration, Error as ServiceError,
 	NoopRpcExtensionBuilder, PartialComponents, RpcHandlers, SpawnTasksParams, TaskManager,
@@ -67,7 +67,7 @@ use dp_rpc::{FilterPool, PendingTransactions};
 use drml_common_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use drml_rpc::{
 	pangolin::{FullDeps, LightDeps},
-	BabeDeps, DenyUnsafe, GrandpaDeps, SubscriptionTaskExecutor,
+	BabeDeps, GrandpaDeps, SubscriptionTaskExecutor,
 };
 use pangolin_runtime::RuntimeApi;
 
@@ -285,18 +285,8 @@ where
 		select_chain,
 		import_queue,
 		transaction_pool,
-		other:
-			(
-				// rpc_extensions_builder,
-				import_setup,
-				rpc_setup,
-				mut telemetry,
-				// pending_transactions,
-				// dvm_backend,
-				// filter_pool,
-			),
+		other: (import_setup, rpc_setup, mut telemetry),
 	} = new_partial::<RuntimeApi, Executor>(&mut config)?;
-	let shared_voter_state = rpc_setup;
 
 	if let Some(url) = &config.keystore_remote {
 		match service::remote_keystore(url) {
@@ -335,6 +325,7 @@ where
 		);
 	}
 
+	// Spawn dvm related services
 	let dvm_backend = open_dvm_backend(&config)?;
 	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
@@ -349,8 +340,10 @@ where
 		rpc_config: rpc_config.clone(),
 	});
 
+	// Create rpc extension builder
 	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let (babe_import, grandpa_link, babe_link) = import_setup;
+	let shared_voter_state = rpc_setup;
 	let babe_config = babe_link.config().clone();
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
 	let justification_stream = grandpa_link.justification_stream();
@@ -366,9 +359,6 @@ where
 		let transaction_pool = transaction_pool.clone();
 		let select_chain = select_chain.clone();
 		let chain_spec = config.chain_spec.cloned_box();
-		let pending_transactions = pending_transactions.clone();
-		let dvm_backend = dvm_backend.clone();
-		let filter_pool = filter_pool.clone();
 		let shared_voter_state = shared_voter_state.clone();
 
 		move |deny_unsafe, is_authority, network, subscription_executor| -> RpcResult {
