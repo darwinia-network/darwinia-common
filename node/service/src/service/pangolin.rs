@@ -123,12 +123,6 @@ fn new_partial<RuntimeApi, Executor>(
 		DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
 		FullPool<Block, FullClient<RuntimeApi, Executor>>,
 		(
-			// impl Fn(
-			// 	DenyUnsafe,
-			// 	bool,
-			// 	Arc<NetworkService<Block, Hash>>,
-			// 	SubscriptionTaskExecutor,
-			// ) -> RpcResult,
 			(
 				BabeBlockImport<
 					Block,
@@ -140,9 +134,6 @@ fn new_partial<RuntimeApi, Executor>(
 			),
 			GrandpaSharedVoterState,
 			Option<Telemetry>,
-			// PendingTransactions,
-			// Arc<Backend<Block>>,
-			// Option<FilterPool>,
 		),
 	>,
 	ServiceError,
@@ -177,19 +168,17 @@ where
 			&config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 		)?;
+
+	// Spawn telemetry service
 	let telemetry = telemetry.map(|(worker, telemetry)| {
 		task_manager.spawn_handle().spawn("telemetry", worker.run());
 		telemetry
 	});
+
 	let client = Arc::new(client);
 	let select_chain = LongestChain::new(backend.clone());
-	let transaction_pool = BasicPool::new_full(
-		config.transaction_pool.clone(),
-		config.role.is_authority().into(),
-		config.prometheus_registry(),
-		task_manager.spawn_essential_handle(),
-		client.clone(),
-	);
+
+	// Consensus part
 	let grandpa_hard_forks = vec![];
 	let (grandpa_block_import, grandpa_link) =
 		sc_finality_grandpa::block_import_with_authority_set_hard_forks(
@@ -229,21 +218,16 @@ where
 		CanAuthorWithNativeVersion::new(client.executor().clone()),
 		telemetry.as_ref().map(|x| x.handle()),
 	)?;
-	// let justification_stream = grandpa_link.justification_stream();
-	// let shared_authority_set = grandpa_link.shared_authority_set().clone();
-	let shared_voter_state = GrandpaSharedVoterState::empty();
-	// let finality_proof_provider = GrandpaFinalityProofProvider::new_for_service(
-	// 	backend.clone(),
-	// 	Some(shared_authority_set.clone()),
-	// );
+	let rpc_setup = GrandpaSharedVoterState::empty();
 	let import_setup = (babe_import.clone(), grandpa_link, babe_link.clone());
-	let rpc_setup = shared_voter_state.clone();
-	// let babe_config = babe_link.config().clone();
-	// let shared_epoch_changes = babe_link.epoch_changes().clone();
-	// let dvm_backend = open_dvm_backend(config)?;
-	// let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
-	// let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
-	// let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
+
+	let transaction_pool = BasicPool::new_full(
+		config.transaction_pool.clone(),
+		config.role.is_authority().into(),
+		config.prometheus_registry(),
+		task_manager.spawn_essential_handle(),
+		client.clone(),
+	);
 
 	Ok(PartialComponents {
 		client,
@@ -253,15 +237,7 @@ where
 		select_chain,
 		import_queue,
 		transaction_pool,
-		other: (
-			// rpc_extensions_builder,
-			import_setup,
-			rpc_setup,
-			telemetry,
-			// pending_transactions,
-			// dvm_backend,
-			// filter_pool,
-		),
+		other: (import_setup, rpc_setup, telemetry),
 	})
 }
 

@@ -16,8 +16,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-use super::*;
-
 // --- std ---
 use std::{sync::Arc, time::Duration};
 // --- crates.io ---
@@ -37,6 +35,7 @@ use sp_blockchain::{
 use sp_core::H256;
 use sp_runtime::traits::Block as BlockT;
 // --- darwinia-network ---
+use super::*;
 use crate::pangolin_service::RuntimeApiCollection;
 use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use dc_rpc::EthTask;
