@@ -14,6 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
+// crates.io
+use ethereum_types::{H160, U256};
+use std::{collections::btree_map::BTreeMap, vec, vec::Vec};
+// darwinia-network
 use crate::{
 	formatters::blockscout::{BlockscoutCall as Call, BlockscoutCallInner as CallInner},
 	types::{CallResult, CallType, ContextType, CreateResult},
@@ -22,8 +26,6 @@ use dp_evm_trace_events::{
 	runtime::{Capture, ExitError, ExitReason, ExitSucceed},
 	Event, EvmEvent, GasometerEvent, Listener as ListenerT, RuntimeEvent,
 };
-use ethereum_types::{H160, U256};
-use std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 
 /// Enum of the different "modes" of tracer for multiple runtime versions and
 /// the kind of EVM events that are emitted.
@@ -130,7 +132,6 @@ impl Listener {
 	/// Allow to insert the pending entries regardless of which runtime version
 	/// is used (with or without EvmEvent::Exit).
 	pub fn finish_transaction(&mut self) {
-		log::debug!("bear: --- Listener(finish_transaction)");
 		// remove any leftover context
 		let mut context_stack = vec![];
 		core::mem::swap(&mut self.context_stack, &mut context_stack);
@@ -218,7 +219,6 @@ impl Listener {
 	}
 
 	pub fn gasometer_event(&mut self, event: GasometerEvent) {
-		log::debug!("bear: --- Listener(gasometer_event), event {:?}", event);
 		match event {
 			GasometerEvent::RecordCost { snapshot, .. }
 			| GasometerEvent::RecordDynamicCost { snapshot, .. }
@@ -241,7 +241,6 @@ impl Listener {
 	}
 
 	pub fn runtime_event(&mut self, event: RuntimeEvent) {
-		log::debug!("bear: --- Listener(runtime_event), event {:?}", event);
 		match event {
 			RuntimeEvent::StepResult {
 				result: Err(Capture::Trap(opcode)),
@@ -279,7 +278,6 @@ impl Listener {
 	}
 
 	pub fn evm_event(&mut self, event: EvmEvent) {
-		log::debug!("bear: --- Listener(evm_event), event {:?}", event);
 		match event {
 			EvmEvent::TransactCall {
 				caller,
@@ -518,11 +516,6 @@ impl Listener {
 	}
 
 	fn insert_entry(&mut self, key: u32, entry: Call) {
-		log::debug!(
-			"bear: --- Listener(insert_entry), key {:?}, entry {:?}",
-			key,
-			entry
-		);
 		if self.entries.is_empty() {
 			self.entries.push(BTreeMap::new());
 		}
@@ -535,11 +528,6 @@ impl Listener {
 		reason: ExitReason,
 		return_value: Vec<u8>,
 	) -> Option<(u32, Call)> {
-		log::debug!(
-			"bear: --- Listener(pop_context_to_entry), reason {:?}, return_value {:?}",
-			reason,
-			return_value
-		);
 		if let Some(context) = self.context_stack.pop() {
 			let mut gas_used = context.start_gas.unwrap_or(0) - context.gas;
 			if context.entries_index == 0 {
