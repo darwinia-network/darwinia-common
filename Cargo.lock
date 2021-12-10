@@ -2337,7 +2337,7 @@ dependencies = [
 
 [[package]]
 name = "dp-evm-trace-apis"
-version = "0.1.0"
+version = "2.7.1"
 dependencies = [
  "environmental",
  "ethereum",
@@ -2368,7 +2368,7 @@ dependencies = [
 
 [[package]]
 name = "dp-evm-trace-ext"
-version = "0.1.0"
+version = "2.7.1"
 dependencies = [
  "dp-evm-trace-events",
  "ethereum-types 0.12.1",

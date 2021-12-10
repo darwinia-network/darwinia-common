@@ -22,27 +22,18 @@ use std::{sync::Arc, time::Duration};
 use futures::StreamExt;
 use tokio::sync::Semaphore;
 // --- paritytech ---
-use sc_client_api::{
-	backend::{AuxStore, Backend, StateBackend, StorageProvider},
-	BlockOf, BlockchainEvents,
-};
+use sc_client_api::{backend::Backend, BlockOf, BlockchainEvents};
 use sc_service::TaskManager;
 use sp_api::{HeaderT, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
-use sp_blockchain::{
-	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata,
-};
+use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_core::H256;
 use sp_runtime::traits::Block as BlockT;
 // --- darwinia-network ---
-use super::*;
-use crate::pangolin_service::RuntimeApiCollection;
 use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use dc_rpc::EthTask;
-use dc_tracing_debug_handler::{Debug, DebugHandler, DebugRequester, DebugServer};
-use dc_tracing_trace_handler::{
-	CacheRequester as TraceFilterCacheRequester, CacheTask, Trace, TraceServer,
-};
+use dc_tracing_debug_handler::DebugHandler;
+use dc_tracing_trace_handler::CacheTask;
 use dp_evm_trace_apis::DebugRuntimeApi;
 use dp_rpc::{FilterPool, PendingTransactions};
 use drml_rpc::{EthApiCmd, RpcConfig, RpcRequesters};
@@ -181,44 +172,3 @@ pub struct DvmTasksParams<'a, B: BlockT, C, BE> {
 	pub is_archive: bool,
 	pub rpc_config: RpcConfig,
 }
-
-// #[derive(Debug, PartialEq, Clone)]
-// pub struct RpcConfig {
-// 	pub ethapi: Vec<EthApiCmd>,
-// 	pub ethapi_max_permits: u32,
-// 	pub ethapi_trace_max_count: u32,
-// 	pub ethapi_trace_cache_duration: u64,
-// 	pub eth_log_block_cache: usize,
-// 	pub max_past_logs: u32,
-// }
-
-// #[derive(Debug, PartialEq, Clone)]
-// pub enum EthApiCmd {
-// 	Txpool,
-// 	Debug,
-// 	Trace,
-// }
-
-// use std::str::FromStr;
-// impl FromStr for EthApiCmd {
-// 	type Err = String;
-
-// 	fn from_str(s: &str) -> Result<Self, Self::Err> {
-// 		Ok(match s {
-// 			"txpool" => Self::Txpool,
-// 			"debug" => Self::Debug,
-// 			"trace" => Self::Trace,
-// 			_ => {
-// 				return Err(format!(
-// 					"`{}` is not recognized as a supported Ethereum Api",
-// 					s
-// 				))
-// 			}
-// 		})
-// 	}
-// }
-// #[derive(Clone)]
-// pub struct RpcRequesters {
-// 	pub debug: Option<DebugRequester>,
-// 	pub trace: Option<TraceFilterCacheRequester>,
-// }

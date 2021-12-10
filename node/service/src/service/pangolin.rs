@@ -267,7 +267,6 @@ where
 	let force_authoring = config.force_authoring;
 	let disable_grandpa = config.disable_grandpa;
 	let name = config.network.node_name.clone();
-	let max_past_logs = rpc_config.max_past_logs;
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let auth_disc_publish_non_global_ips = config.network.allow_non_globals_in_dht;
 	config

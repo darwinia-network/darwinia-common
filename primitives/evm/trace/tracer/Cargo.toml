@@ -10,7 +10,6 @@ version     = "2.7.0"
 
 [dependencies]
 # darwinia-network
-# dp-evm-trace-events = { path = "../events", default-features = false, features = [ "evm-tracing" ] }
 dp-evm-trace-events = { path = "../events", default-features = false }
 dp-evm-trace-ext    = { path = "../ext", default-features = false }
 # paritytech
