@@ -23,9 +23,9 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
 	{
 		F::find_author(digests).map(|author_index| {
-			let authority_id = Babe::authorities()[author_index as usize].clone();
+			let authority_id = Aura::authorities()[author_index as usize].clone();
 
-			H160::from_slice(&authority_id.0.to_raw_vec()[4..24])
+			H160::from_slice(&authority_id.to_raw_vec()[4..24])
 		})
 	}
 }

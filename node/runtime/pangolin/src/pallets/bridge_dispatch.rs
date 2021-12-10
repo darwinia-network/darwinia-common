@@ -16,8 +16,9 @@ impl Contains<Call> for S2sCallFilter {
 			c,
 			Call::Substrate2SubstrateIssuing(from_substrate_issuing::Call::register_from_remote(
 				..
-			)),
-			Call::Substrate2SubstrateIssuing(from_substrate_issuing::Call::issue_from_remote(..))
+			)) | Call::Substrate2SubstrateIssuing(from_substrate_issuing::Call::issue_from_remote(
+				..
+			))
 		)
 	}
 }

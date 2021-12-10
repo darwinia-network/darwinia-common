@@ -20,7 +20,7 @@ impl ToEthAddress<AccountId32> for TruncateToEthAddress {
 frame_support::parameter_types! {
 	pub const S2sIssuingPalletId: PalletId = PalletId(*b"da/s2sis");
 	pub const PangoroChainId: ChainId = PANGORO_CHAIN_ID;
-	pub PangoroName: ChainName = (b"Pangoro").to_vec();
+	pub BackingChainName: ChainName = (b"Pangoro").to_vec();
 	pub const BridgePangoroLaneId: LaneId = PANGORO_PANGOLIN_LANE;
 }
 
@@ -34,6 +34,6 @@ impl Config for Runtime {
 	type ToEthAddressT = TruncateToEthAddress;
 	type OutboundPayloadCreator = ToPangoroOutboundPayLoad;
 	type InternalTransactHandler = Ethereum;
-	type BackingChainName = PangoroName;
+	type BackingChainName = BackingChainName;
 	type MessageLaneId = BridgePangoroLaneId;
 }

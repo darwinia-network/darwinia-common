@@ -5,7 +5,6 @@ use evm::{executor::PrecompileOutput, Context, ExitError};
 // --- paritytech ---
 use bp_messages::LaneId;
 use codec::{Decode, Encode};
-use darwinia_support::s2s::{LatestMessageNoncer, RelayMessageSender};
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::{FindAuthor, PalletInfoAccess},
@@ -20,7 +19,10 @@ use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 use darwinia_evm_precompile_dispatch::Dispatch;
 use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use darwinia_evm_precompile_transfer::Transfer;
-use darwinia_support::evm::ConcatConverter;
+use darwinia_support::{
+	evm::ConcatConverter,
+	s2s::{LatestMessageNoncer, RelayMessageSender},
+};
 use dp_evm::{Precompile, PrecompileSet};
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
