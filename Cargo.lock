@@ -2104,7 +2104,7 @@ dependencies = [
 
 [[package]]
 name = "dc-tracing-debug-handler"
-version = "0.1.0"
+version = "2.7.1"
 dependencies = [
  "dc-db",
  "dc-rpc",
@@ -2131,7 +2131,7 @@ dependencies = [
 
 [[package]]
 name = "dc-tracing-rpc-core-debug"
-version = "0.1.0"
+version = "2.7.1"
 dependencies = [
  "dc-tracer",
  "dc-tracing-rpc-core-types",
@@ -2147,7 +2147,7 @@ dependencies = [
 
 [[package]]
 name = "dc-tracing-rpc-core-trace"
-version = "0.6.0"
+version = "2.7.1"
 dependencies = [
  "dc-tracer",
  "dc-tracing-rpc-core-types",
@@ -2162,7 +2162,7 @@ dependencies = [
 
 [[package]]
 name = "dc-tracing-rpc-core-types"
-version = "0.1.0"
+version = "2.7.1"
 dependencies = [
  "ethereum-types 0.12.1",
  "serde",

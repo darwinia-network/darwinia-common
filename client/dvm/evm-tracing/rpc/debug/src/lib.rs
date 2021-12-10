@@ -13,25 +13,29 @@
 
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
+
 pub use dc_tracing_rpc_core_debug::{Debug as DebugT, DebugServer, TraceParams};
+
+// crates.io
+use ethereum_types::{H128, H256};
 use futures::{
 	compat::Compat,
 	future::{BoxFuture, TryFutureExt},
 	FutureExt, SinkExt, StreamExt,
 };
 use jsonrpc_core::Result as RpcResult;
-
+use std::{future::Future, marker::PhantomData, str::FromStr, sync::Arc};
 use tokio::{
 	self,
 	sync::{oneshot, Semaphore},
 };
-
+// darwinia-network
 use dc_rpc::{frontier_backend_client, internal_err};
 use dc_tracer::{formatters::ResponseFormatter, types::single};
 use dc_tracing_rpc_core_types::{RequestBlockId, RequestBlockTag};
 use dp_evm_trace_apis::{DebugRuntimeApi, TracerInput};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
-use ethereum_types::{H128, H256};
+// paritytech
 use sc_client_api::backend::Backend;
 use sp_api::{BlockId, Core, HeaderT, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
@@ -40,7 +44,6 @@ use sp_blockchain::{
 };
 use sp_runtime::traits::{Block as BlockT, UniqueSaturatedInto};
 use sp_utils::mpsc::TracingUnboundedSender;
-use std::{future::Future, marker::PhantomData, str::FromStr, sync::Arc};
 
 pub enum RequesterInput {
 	Transaction(H256),
@@ -109,8 +112,6 @@ impl DebugT for Debug {
 		params: Option<TraceParams>,
 	) -> Compat<BoxFuture<'static, RpcResult<Vec<single::TransactionTrace>>>> {
 		let mut requester = self.requester.clone();
-
-		println!("---> Enter {:?}", id);
 
 		async move {
 			let (tx, rx) = oneshot::channel();
@@ -224,12 +225,10 @@ where
 						// blocking tasks use a more restrictive permit pool shared by trace modules.
 						// https://docs.rs/tokio/0.2.23/tokio/sync/struct.Semaphore.html
 						tokio::task::spawn(async move {
-							println!("--> Request2");
 							let _ = response_tx.send(
 								async {
 									let _permit = permit_pool.acquire().await;
 
-									println!("--> Request3");
 									tokio::task::spawn_blocking(move || {
 										Self::handle_block_request(
 											client.clone(),
@@ -393,7 +392,6 @@ where
 						"Bug: failed to resolve the tracer format."
 					))),
 				}?;
-				println!("---> Response {:?}", response);
 
 				Ok(Response::Block(response))
 			}
