@@ -1,42 +1,39 @@
 [package]
-name = "dc-tracing-trace-handler"
-authors = [ "PureStake" ]
-edition = "2018"
-homepage = "https://moonbeam.network"
-license = "GPL-3.0-only"
-repository = "https://github.com/PureStake/moonbeam/"
-version = "0.6.0"
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Trace handler for evm trace"
+edition     = "2021"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "dc-tracing-trace-handler"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "2.7.1"
 
 [dependencies]
 # crates.io
-ethereum = { version = "0.9.0", features = [ "with-codec" ] }
-ethereum-types = "0.12.0"
-serde = { version = "1.0", features = [ "derive" ] }
-sha3 = "0.9"
-futures = { version = "0.3", features = ["compat"] }
-tokio = { version = "0.2.21", features = [ "sync", "time" ] }
-tracing = "0.1.25"
-jsonrpc-core = "15.0.1"
+ethereum       = { version = "0.9.0", features = [ "with-codec" ] }
+ethereum-types = { version = "0.12.0" }
+futures        = { version = "0.3", features = ["compat"] }
+jsonrpc-core   = { version = "15.0.1" }
+serde          = { version = "1.0", features = [ "derive" ] }
+sha3           = { version = "0.9" }
+tokio          = { version = "0.2.21", features = [ "sync", "time" ] }
+tracing        = { version = "0.1.25" }
 # paritytech
-sp-utils            = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-api              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-block-builder    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-blockchain       = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-io               = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-runtime          = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-block-builder    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-client-api       = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-network          = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-io               = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-utils            = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-std              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 # darwinia-network
-# moonbeam-rpc-primitives-debug = { path = "../../../primitives/rpc/debug" }
-dp-evm-trace-apis = { path = "../../../../../primitives/evm/trace/apis" }
-# fp-rpc = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.12" }
-dc-rpc = { path = "../../../rpc", features = ["rpc_binary_search_estimate"] }
-# fc-rpc-core = { git = "https://github.com/purestake/frontier", branch = "moonbeam-polkadot-v0.9.12" }
-dc-tracing-rpc-core-types = { path = "../../rpc-core/types" }
+dc-rpc                    = { path = "../../../rpc", features = ["rpc_binary_search_estimate"] }
+dc-tracer                 = { path = "../../tracer" }
 dc-tracing-rpc-core-trace = { path = "../../rpc-core/trace" }
-dc-tracer = { path = "../../tracer" }
-dvm-rpc-runtime-api = { path = "../../../../../frame/dvm/rpc/runtime-api" }
-
-
+dc-tracing-rpc-core-types = { path = "../../rpc-core/types" }
+dp-evm-trace-apis         = { path = "../../../../../primitives/evm/trace/apis" }
+dvm-rpc-runtime-api       = { path = "../../../../../frame/dvm/rpc/runtime-api" }
