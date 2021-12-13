@@ -401,9 +401,8 @@ where
 		keystore: keystore_container.sync_keystore(),
 		network: network.clone(),
 		rpc_extensions_builder: {
+			let network = network.clone();
 			let wrap_rpc_extensions_builder = {
-				let network = network.clone();
-
 				move |deny_unsafe, subscription_executor| -> RpcResult {
 					rpc_extensions_builder(
 						deny_unsafe,

@@ -107,14 +107,13 @@ impl EthashPartial {
 			eip100b_transition: 4370000,
 			ecip1010_pause_transition: u64::MAX,
 			ecip1010_continue_transition: u64::MAX,
-			difficulty_bomb_delays: {
-				let mut m = BTreeMap::new();
-				m.insert(4370000, 3000000);
-				m.insert(7280000, 2000000);
-				m.insert(0x8c6180, 0x3d0900);
-				m.insert(0xc3d0e8, 0xaae60);
-				m
-			},
+			difficulty_bomb_delays: BTreeMap::from([
+				(4370000, 3000000),
+				(7280000, 2000000),
+				(0x8c6180, 0x3d0900),
+				(0xc5d488, 0xaae60),
+				(0xd228c8, 0xf4240),
+			]),
 			expip2_transition: u64::MAX,
 			expip2_duration_limit: 30,
 			progpow_transition: u64::MAX,

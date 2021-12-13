@@ -28,6 +28,7 @@ describeWithFrontier("Frontier RPC (Bloom)", (context) => {
 	}
 
 	step("receipt data should be in bloom", async function () {
+		this.timeout(15000);
 		let tx = await sendTransaction(context);
 		await createAndFinalizeBlock(context.web3);
 		// check transaction bloom
