@@ -18,6 +18,7 @@ mod debug;
 mod eth;
 mod eth_pubsub;
 mod overrides;
+mod trace;
 
 pub use debug::{Debug, DebugApiServer, DebugRequester, DebugTask};
 pub use eth::{
@@ -26,6 +27,7 @@ pub use eth::{
 };
 pub use eth_pubsub::{EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider};
 pub use overrides::{OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride};
+pub use trace::{CacheRequester, CacheTask, Trace, TraceApiServer};
 
 use ethereum::{LegacyTransactionMessage, TransactionSignature, TransactionV0};
 use ethereum_types::{H160, H256};

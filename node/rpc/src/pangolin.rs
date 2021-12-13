@@ -117,11 +117,11 @@ where
 	use dc_rpc::{
 		Debug, DebugApiServer, EthApi, EthApiServer, EthFilterApi, EthFilterApiServer,
 		EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider, NetApi, NetApiServer,
-		OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride, Web3Api,
-		Web3ApiServer,
+		OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride, Trace,
+		TraceApiServer, Web3Api, Web3ApiServer,
 	};
 	// use dc_tracing_debug_handler::{Debug, DebugApiServer};
-	use dc_tracing_trace_handler::{Trace, TraceApiServer};
+	// use dc_tracing_trace_handler::{Trace, TraceApiServer};
 	use pangolin_runtime::TransactionConverter;
 
 	let FullDeps {

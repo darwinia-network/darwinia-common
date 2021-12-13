@@ -27,6 +27,7 @@ rand                = { version = "0.8" }
 rlp                 = { version = "0.5" }
 sha3                = { version = "0.9" }
 tokio = { version = "0.2.21", features = ["sync", "time"] }
+tracing = { version = "0.1.25" }
 # darwinia-network
 dc-db               = { path = "../db" }
 dp-consensus        = { path = "../../../primitives/consensus/" }

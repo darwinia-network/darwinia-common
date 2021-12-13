@@ -13,8 +13,6 @@ members = [
 	"client/dvm/mapping-sync",
 	"client/dvm/rpc",
 	"client/dvm/evm-tracing/tracer",
-	# "client/dvm/evm-tracing/rpc/debug",
-	"client/dvm/evm-tracing/rpc/trace",
 	"frame/balances",
 	"frame/balances/rpc",
 	"frame/balances/rpc/runtime-api",

@@ -43,7 +43,7 @@ use tokio::{
 };
 use tracing::{instrument, Instrument};
 // darwinia-network
-use dc_rpc::internal_err;
+use crate::internal_err;
 use dc_tracer::{
 	formatters::ResponseFormatter,
 	types::block::{self, TransactionTrace},

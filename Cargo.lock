@@ -2090,6 +2090,7 @@ dependencies = [
  "sp-storage",
  "sp-utils",
  "tokio 0.2.25",
+ "tracing",
 ]
 
 [[package]]
@@ -2105,36 +2106,6 @@ dependencies = [
  "serde",
  "serde_json",
  "sp-std",
-]
-
-[[package]]
-name = "dc-tracing-trace-handler"
-version = "2.7.1"
-dependencies = [
- "dc-rpc",
- "dc-tracer",
- "dp-evm-trace-apis",
- "dp-rpc",
- "dvm-rpc-core",
- "dvm-rpc-runtime-api",
- "ethereum",
- "ethereum-types 0.12.1",
- "futures 0.3.18",
- "jsonrpc-core",
- "sc-client-api",
- "sc-network",
- "serde",
- "sha3 0.9.1",
- "sp-api",
- "sp-block-builder",
- "sp-blockchain",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "sp-transaction-pool",
- "sp-utils",
- "tokio 0.2.25",
- "tracing",
 ]
 
 [[package]]
@@ -2431,7 +2402,6 @@ dependencies = [
  "darwinia-staking-rpc",
  "dc-db",
  "dc-rpc",
- "dc-tracing-trace-handler",
  "dp-evm-trace-apis",
  "dp-rpc",
  "drml-common-primitives",
@@ -2481,7 +2451,6 @@ dependencies = [
  "dc-db",
  "dc-mapping-sync",
  "dc-rpc",
- "dc-tracing-trace-handler",
  "dp-evm-trace-apis",
  "dp-evm-trace-ext",
  "dp-rpc",

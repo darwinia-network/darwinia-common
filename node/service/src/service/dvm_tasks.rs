@@ -31,8 +31,7 @@ use sp_core::H256;
 use sp_runtime::traits::Block as BlockT;
 // --- darwinia-network ---
 use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
-use dc_rpc::{DebugTask, EthTask};
-use dc_tracing_trace_handler::CacheTask;
+use dc_rpc::{CacheTask, DebugTask, EthTask};
 use dp_evm_trace_apis::DebugRuntimeApi;
 use dp_rpc::{FilterPool, PendingTransactions};
 use drml_rpc::{EthApiCmd, RpcConfig, RpcRequesters};
