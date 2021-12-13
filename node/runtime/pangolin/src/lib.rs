@@ -702,7 +702,6 @@ sp_api::impl_runtime_apis! {
 					let _ = match &ext.function {
 						Call::Ethereum(transact(transaction)) => {
 							if transaction == traced_transaction {
-								log::debug!("bear: --- EvmTracer trace {:?}", traced_transaction);
 								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
 								return Ok(());
 							} else {

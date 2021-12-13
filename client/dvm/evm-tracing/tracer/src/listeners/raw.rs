@@ -87,12 +87,10 @@ impl Listener {
 	}
 
 	pub fn using<R, F: FnOnce() -> R>(&mut self, f: F) -> R {
-		log::debug!("bear: --- Listener using");
 		dp_evm_trace_events::using(self, f)
 	}
 
 	pub fn gasometer_event(&mut self, event: GasometerEvent) {
-		log::debug!("bear: --- Listener(gasometer_event) event {:?}", event);
 		match event {
 			GasometerEvent::RecordTransaction { cost, .. } => {
 				// First event of a transaction.
@@ -131,7 +129,6 @@ impl Listener {
 	}
 
 	pub fn runtime_event(&mut self, event: RuntimeEvent) {
-		log::debug!("bear: --- Listener(runtime_event) event {:?}", event);
 		match event {
 			RuntimeEvent::Step {
 				context,
