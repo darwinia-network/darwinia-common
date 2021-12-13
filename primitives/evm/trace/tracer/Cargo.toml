@@ -42,5 +42,3 @@ std = [
 	"evm-gasometer/std",
 	"evm-runtime/std",
 ]
-
-# evm-tracing = [ "dp-evm-trace-events" ]

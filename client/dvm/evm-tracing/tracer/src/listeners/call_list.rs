@@ -646,7 +646,7 @@ impl ListenerT for Listener {
 mod tests {
 	use super::*;
 	use ethereum_types::H256;
-	use evm_tracing_events::{
+	use dp_evm_trace_events::{
 		evm::CreateScheme,
 		gasometer::Snapshot,
 		runtime::{Memory, Stack},

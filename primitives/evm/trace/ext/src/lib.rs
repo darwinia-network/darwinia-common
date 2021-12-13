@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-// TODO: update the licenses
-
 //! Environmental-aware externalities for EVM tracing in Wasm runtime. This enables
 //! capturing the - potentially large - trace output data in the host and keep
 //! a low memory footprint in `--execution=wasm`.
@@ -25,14 +23,14 @@
 //! - Host functions will decode the input and emit an event `with` environmental.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-use sp_runtime_interface::runtime_interface;
 
+// paritytech
+use sp_runtime_interface::runtime_interface;
 use codec::Decode;
 use sp_std::vec::Vec;
-
+// darwinia-network
 use dp_evm_trace_events::{Event, EvmEvent, GasometerEvent, RuntimeEvent};
 
-// TODO: update host functions in the node
 #[runtime_interface]
 pub trait DvmExt {
 	fn raw_step(&mut self, _data: Vec<u8>) {}
@@ -46,7 +44,7 @@ pub trait DvmExt {
 	fn call_list_new(&mut self) {}
 
 	// New design, proxy events.
-	/// An `Evm` event proxied by the Moonbeam runtime to this host function.
+	/// An `Evm` event proxied by the Darwinia runtime to this host function.
 	/// evm -> moonbeam_runtime -> host.
 	fn evm_event(&mut self, event: Vec<u8>) {
 		if let Ok(event) = EvmEvent::decode(&mut &event[..]) {
@@ -54,7 +52,7 @@ pub trait DvmExt {
 		}
 	}
 
-	/// A `Gasometer` event proxied by the Moonbeam runtime to this host function.
+	/// A `Gasometer` event proxied by the Darwinia runtime to this host function.
 	/// evm_gasometer -> moonbeam_runtime -> host.
 	fn gasometer_event(&mut self, event: Vec<u8>) {
 		if let Ok(event) = GasometerEvent::decode(&mut &event[..]) {
@@ -62,7 +60,7 @@ pub trait DvmExt {
 		}
 	}
 
-	/// A `Runtime` event proxied by the Moonbeam runtime to this host function.
+	/// A `Runtime` event proxied by the Darwinia runtime to this host function.
 	/// evm_runtime -> moonbeam_runtime -> host.
 	fn runtime_event(&mut self, event: Vec<u8>) {
 		if let Ok(event) = RuntimeEvent::decode(&mut &event[..]) {
