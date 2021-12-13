@@ -60,13 +60,11 @@ to-ethereum-backing                     = { default-features = false, path = "..
 to-tron-backing                         = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
 # dvm tracing
 dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/evm/trace/apis" }
-dp-evm-trace-events = { default-features = false, path = "../../../primitives/evm/trace/events" }
+dp-evm-trace-events = { optional = true, default-features = false, path = "../../../primitives/evm/trace/events" }
 dp-evm-trace-ext    = { default-features = false, path = "../../../primitives/evm/trace/ext" }
-dp-evm-tracer       = { default-features = false, path = "../../../primitives/evm/trace/tracer" }
-rlp                 = { version = "0.5", default-features = false }
-sha3                = { version = "0.8", default-features = false }
-
-
+dp-evm-tracer       = { optional = true, default-features = false, path = "../../../primitives/evm/trace/tracer" }
+rlp                 = { optional = true, default-features = false, version = "0.5" }
+sha3                = { optional = true, default-features = false, version = "0.8" }
 # paritytech
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }
 bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }
@@ -273,3 +271,10 @@ try-runtime = [
 ]
 
 no-wasm = []
+
+evm-tracing = [
+	"dp-evm-trace-events",
+	"dp-evm-tracer",
+	"rlp",
+	"sha3"
+]

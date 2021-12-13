@@ -63,6 +63,8 @@ wasmtime = ["sc-cli/wasmtime"]
 
 template = ["drml-service/template"]
 
+evm-tracing = ["drml-service/evm-tracing"]
+
 runtime-benchmarks = [
 	# darwinia-network
 	"drml-service/runtime-benchmarks",

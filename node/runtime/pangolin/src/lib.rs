@@ -692,8 +692,7 @@ sp_api::impl_runtime_apis! {
 			(),
 			sp_runtime::DispatchError,
 		> {
-			log::debug!("bear: --- enter Api(trace_transaction), traced_transaction {:?}", traced_transaction);
-			// #[cfg(feature = "evm-tracing")]
+			#[cfg(feature = "evm-tracing")]
 			{
 				use dp_evm_tracer::tracer::EvmTracer;
 				use dvm_ethereum::Call::transact;
@@ -718,10 +717,10 @@ sp_api::impl_runtime_apis! {
 					"Failed to find Ethereum transaction among the extrinsics.",
 				))
 			}
-			// #[cfg(not(feature = "evm-tracing"))]
-			// Err(sp_runtime::DispatchError::Other(
-			// 	"Missing `evm-tracing` compile time feature flag.",
-			// ))
+			#[cfg(not(feature = "evm-tracing"))]
+			Err(sp_runtime::DispatchError::Other(
+				"Missing `evm-tracing` compile time feature flag.",
+			))
 		}
 		fn trace_block(
 			extrinsics: Vec<<Block as BlockT>::Extrinsic>,
@@ -730,7 +729,7 @@ sp_api::impl_runtime_apis! {
 			(),
 			sp_runtime::DispatchError,
 		> {
-			// #[cfg(feature = "evm-tracing")]
+			#[cfg(feature = "evm-tracing")]
 			{
 				use dp_evm_tracer::tracer::EvmTracer;
 				use sha3::{Digest, Keccak256};
@@ -761,10 +760,10 @@ sp_api::impl_runtime_apis! {
 
 				Ok(())
 			}
-			// #[cfg(not(feature = "evm-tracing"))]
-			// Err(sp_runtime::DispatchError::Other(
-			// 	"Missing `evm-tracing` compile time feature flag.",
-			// ))
+			#[cfg(not(feature = "evm-tracing"))]
+			Err(sp_runtime::DispatchError::Other(
+				"Missing `evm-tracing` compile time feature flag.",
+			))
 		}
 	}
 

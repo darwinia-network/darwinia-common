@@ -10,7 +10,7 @@ version     = "2.7.0"
 
 [dependencies]
 # darwinia-network
-dp-evm-trace-events = { path = "../events", default-features = false }
+dp-evm-trace-events = { path = "../events", default-features = false, features = [ "evm-tracing" ] }
 dp-evm-trace-ext    = { path = "../ext", default-features = false }
 # paritytech
 codec      = { package = "parity-scale-codec", version = "2.2", default-features = false }
@@ -42,3 +42,5 @@ std = [
 	"evm-gasometer/std",
 	"evm-runtime/std",
 ]
+
+# evm-tracing = [ "dp-evm-trace-events" ]
