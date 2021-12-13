@@ -36,7 +36,7 @@ dp-storage          = { path = "../../../primitives/storage/" }
 dvm-ethereum        = { path = "../../../frame/dvm" }
 dvm-rpc-core        = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
-dc-tracer           = { path = "../evm-tracing/tracer" }
+dc-tracer           = { path = "../tracer" }
 dp-evm-trace-apis   = { path = "../../../primitives/evm/trace/apis" }
 # paritytech
 sc-client-api           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
