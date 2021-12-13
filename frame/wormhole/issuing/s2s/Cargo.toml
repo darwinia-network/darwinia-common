@@ -28,9 +28,9 @@ dp-s2s              = { default-features = false, path = "../../../../primitives
 dvm-ethereum        = { default-features = false, path = "../../../dvm" }
 ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum" }
 # paritytech
-bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }
-bp-messages         = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }
-bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }
+bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network//parity-bridges-common", branch = "realtime-version-darwinia" }
+bp-messages         = { default-features = false, git = "https://github.com/darwinia-network//parity-bridges-common", branch = "realtime-version-darwinia" }
+bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network//parity-bridges-common", branch = "realtime-version-darwinia" }
 frame-benchmarking  = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 frame-support       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 frame-system        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
