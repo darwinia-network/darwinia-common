@@ -18,7 +18,7 @@
 
 // darwinia-network
 use dc_tracer::types::block::TransactionTrace;
-use dc_tracing_rpc_core_types::RequestBlockId;
+use dp_rpc::RequestBlockId;
 // crates.ip
 use ethereum_types::H160;
 use futures::{compat::Compat, future::BoxFuture};

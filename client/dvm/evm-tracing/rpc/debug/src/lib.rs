@@ -32,8 +32,8 @@ use tokio::{
 // darwinia-network
 use dc_rpc::{frontier_backend_client, internal_err};
 use dc_tracer::{formatters::ResponseFormatter, types::single};
-use dc_tracing_rpc_core_types::{RequestBlockId, RequestBlockTag};
 use dp_evm_trace_apis::{DebugRuntimeApi, TracerInput};
+use dp_rpc::{RequestBlockId, RequestBlockTag};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 // paritytech
 use sc_client_api::backend::Backend;

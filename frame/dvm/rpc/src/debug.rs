@@ -18,7 +18,7 @@
 
 // darwinia-network
 use dc_tracer::types::single;
-use dc_tracing_rpc_core_types::RequestBlockId;
+use dp_rpc::RequestBlockId;
 // crate.io
 use ethereum_types::H256;
 use futures::{compat::Compat, future::BoxFuture};

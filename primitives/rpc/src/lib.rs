@@ -26,6 +26,7 @@ mod index;
 mod log;
 mod receipt;
 mod sync;
+mod trace;
 mod transaction;
 mod transaction_request;
 mod work;
@@ -49,6 +50,7 @@ pub use self::{
 		ChainStatus, EthProtocolInfo, PeerCount, PeerInfo, PeerNetworkInfo, PeerProtocolsInfo,
 		Peers, PipProtocolInfo, SyncInfo, SyncStatus, TransactionStats,
 	},
+	trace::{RequestBlockId, RequestBlockTag},
 	transaction::{
 		LocalTransactionStatus, PendingTransaction, PendingTransactions, RichRawTransaction,
 		Transaction,
