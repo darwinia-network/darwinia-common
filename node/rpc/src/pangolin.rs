@@ -120,8 +120,6 @@ where
 		OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride, Trace,
 		TraceApiServer, Web3Api, Web3ApiServer,
 	};
-	// use dc_tracing_debug_handler::{Debug, DebugApiServer};
-	// use dc_tracing_trace_handler::{Trace, TraceApiServer};
 	use pangolin_runtime::TransactionConverter;
 
 	let FullDeps {

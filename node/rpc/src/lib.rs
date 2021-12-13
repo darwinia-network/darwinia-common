@@ -80,7 +80,6 @@ pub struct RpcConfig {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum EthApiCmd {
-	Txpool,
 	Debug,
 	Trace,
 }
@@ -91,7 +90,6 @@ impl FromStr for EthApiCmd {
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
 		Ok(match s {
-			"txpool" => Self::Txpool,
 			"debug" => Self::Debug,
 			"trace" => Self::Trace,
 			_ => {

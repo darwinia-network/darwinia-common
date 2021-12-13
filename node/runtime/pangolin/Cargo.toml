@@ -58,7 +58,7 @@ from-substrate-issuing                  = { default-features = false, path = "..
 module-transaction-pause                = { default-features = false, path = "../../../frame/transaction-pause" }
 to-ethereum-backing                     = { default-features = false, path = "../../../frame/wormhole/backing/ethereum" }
 to-tron-backing                         = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
-# dvm tracing
+# dvm trace
 dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/evm/trace/apis" }
 dp-evm-trace-events = { optional = true, default-features = false, path = "../../../primitives/evm/trace/events" }
 dp-evm-trace-ext    = { default-features = false, path = "../../../primitives/evm/trace/ext" }

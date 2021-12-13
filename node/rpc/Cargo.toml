@@ -20,8 +20,8 @@ darwinia-header-mmr-rpc = { path = "../../frame/header-mmr/rpc" }
 darwinia-staking-rpc    = { path = "../../frame/staking/rpc" }
 dc-db                   = { path = "../../client/dvm/db" }
 dc-rpc                  = { path = "../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }
-dp-rpc                  = { path = "../../primitives/rpc" }
 dp-evm-trace-apis       = { path = "../../primitives/evm/trace/apis" }
+dp-rpc                  = { path = "../../primitives/rpc" }
 drml-common-primitives  = { path = "../primitives/common" }
 dvm-ethereum            = { path = "../../frame/dvm" }
 dvm-rpc-runtime-api     = { path = "../../frame/dvm/rpc/runtime-api" }

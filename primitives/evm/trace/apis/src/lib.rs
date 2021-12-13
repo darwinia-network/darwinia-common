@@ -37,8 +37,6 @@ sp_api::decl_runtime_apis! {
 
 #[derive(Clone, Copy, Eq, PartialEq, Debug, Encode, Decode)]
 pub enum TracerInput {
-	// TODO: Do we need all of them?
-	// What's the difference between Blockscout and CallTracer
 	None,
 	Blockscout,
 	CallTracer,

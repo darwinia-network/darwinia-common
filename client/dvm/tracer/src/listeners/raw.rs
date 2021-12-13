@@ -66,12 +66,6 @@ struct Step {
 
 impl Listener {
 	pub fn new(disable_storage: bool, disable_memory: bool, disable_stack: bool) -> Self {
-		log::debug!(
-			"bear: --- Listener new, disable storage {}, disable memory {}, disable stack {}",
-			disable_storage,
-			disable_memory,
-			disable_stack
-		);
 		Self {
 			disable_storage,
 			disable_memory,
