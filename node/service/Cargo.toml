@@ -42,7 +42,6 @@ jsonrpc-core               = { version = "15.0.0" }
 jsonrpc-pubsub             = { version = "15.0.0" }
 dc-tracing-debug-handler   = { path = "../../client/dvm/evm-tracing/rpc/debug" }
 dc-tracing-trace-handler   = { path = "../../client/dvm/evm-tracing/rpc/trace" }
-dc-tracing-rpc-core-debug  = { path = "../../client/dvm/evm-tracing/rpc-core/debug" }
 dp-evm-trace-apis          = { path = "../../primitives/evm/trace/apis" }
 dp-evm-trace-ext           = { path = "../../primitives/evm/trace/ext" }
 sc-rpc                     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }

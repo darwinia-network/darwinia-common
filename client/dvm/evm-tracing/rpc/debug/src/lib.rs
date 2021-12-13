@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-pub use dc_tracing_rpc_core_debug::{Debug as DebugT, DebugServer, TraceParams};
+pub use dvm_rpc_core::{DebugApi as DebugT, DebugApiServer, TraceParams};
 
 // crates.io
 use ethereum_types::{H128, H256};

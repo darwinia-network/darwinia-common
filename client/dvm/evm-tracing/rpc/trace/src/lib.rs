@@ -24,7 +24,7 @@
 //! - For each traced block an async task responsible to wait for a permit, spawn a blocking
 //!   task and waiting for the result, then send it to the main `CacheTask`.
 
-pub use dc_tracing_rpc_core_trace::{FilterRequest, Trace as TraceT, TraceServer};
+pub use dvm_rpc_core::{FilterRequest, TraceApi as TraceT, TraceApiServer};
 
 // crates.io
 use ethereum_types::H256;

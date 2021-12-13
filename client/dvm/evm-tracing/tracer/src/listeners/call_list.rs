@@ -645,13 +645,13 @@ impl ListenerT for Listener {
 #[allow(unused)]
 mod tests {
 	use super::*;
-	use ethereum_types::H256;
 	use dp_evm_trace_events::{
 		evm::CreateScheme,
 		gasometer::Snapshot,
 		runtime::{Memory, Stack},
 		Context as EvmContext,
 	};
+	use ethereum_types::H256;
 
 	enum TestEvmEvent {
 		Call,

@@ -119,8 +119,8 @@ where
 		HexEncodedIdProvider, NetApi, NetApiServer, OverrideHandle, RuntimeApiStorageOverride,
 		SchemaV1Override, StorageOverride, Web3Api, Web3ApiServer,
 	};
-	use dc_tracing_debug_handler::{Debug, DebugServer};
-	use dc_tracing_trace_handler::{Trace, TraceServer};
+	use dc_tracing_debug_handler::{Debug, DebugApiServer};
+	use dc_tracing_trace_handler::{Trace, TraceApiServer};
 	use pangolin_runtime::TransactionConverter;
 
 	let FullDeps {
@@ -242,7 +242,7 @@ where
 	let ethapi_cmd = rpc_config.ethapi.clone();
 	if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
 		if let Some(trace_filter_requester) = tracing_requesters.trace {
-			io.extend_with(TraceServer::to_delegate(Trace::new(
+			io.extend_with(TraceApiServer::to_delegate(Trace::new(
 				client,
 				trace_filter_requester,
 				rpc_config.ethapi_trace_max_count,
@@ -250,7 +250,7 @@ where
 		}
 
 		if let Some(debug_requester) = tracing_requesters.debug {
-			io.extend_with(DebugServer::to_delegate(Debug::new(debug_requester)));
+			io.extend_with(DebugApiServer::to_delegate(Debug::new(debug_requester)));
 		}
 	}
 

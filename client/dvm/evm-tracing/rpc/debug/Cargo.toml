@@ -31,6 +31,6 @@ dc-db                     = { path = "../../../db" }
 dp-evm-trace-apis         = { path = "../../../../../primitives/evm/trace/apis" }
 dc-rpc                    = { path = "../../../rpc", features = ["rpc_binary_search_estimate"] }
 dc-tracer                 = { path = "../../tracer" }
-dc-tracing-rpc-core-debug = { path = "../../rpc-core/debug" }
 dc-tracing-rpc-core-types = { path = "../../rpc-core/types" }
 dvm-rpc-runtime-api       = { path = "../../../../../frame/dvm/rpc/runtime-api" }
+dvm-rpc-core              = { path = "../../../../../frame/dvm/rpc" }

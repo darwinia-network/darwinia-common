@@ -2109,9 +2109,9 @@ dependencies = [
  "dc-db",
  "dc-rpc",
  "dc-tracer",
- "dc-tracing-rpc-core-debug",
  "dc-tracing-rpc-core-types",
  "dp-evm-trace-apis",
+ "dvm-rpc-core",
  "dvm-rpc-runtime-api",
  "ethereum",
  "ethereum-types 0.12.1",
@@ -2130,37 +2130,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dc-tracing-rpc-core-debug"
-version = "2.7.1"
-dependencies = [
- "dc-tracer",
- "dc-tracing-rpc-core-types",
- "ethereum-types 0.12.1",
- "futures 0.3.18",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "serde",
- "serde_json",
- "sp-core",
-]
-
-[[package]]
-name = "dc-tracing-rpc-core-trace"
-version = "2.7.1"
-dependencies = [
- "dc-tracer",
- "dc-tracing-rpc-core-types",
- "ethereum-types 0.12.1",
- "futures 0.3.18",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "dc-tracing-rpc-core-types"
 version = "2.7.1"
 dependencies = [
@@ -2175,9 +2144,9 @@ version = "2.7.1"
 dependencies = [
  "dc-rpc",
  "dc-tracer",
- "dc-tracing-rpc-core-trace",
  "dc-tracing-rpc-core-types",
  "dp-evm-trace-apis",
+ "dvm-rpc-core",
  "dvm-rpc-runtime-api",
  "ethereum",
  "ethereum-types 0.12.1",
@@ -2545,7 +2514,6 @@ dependencies = [
  "dc-mapping-sync",
  "dc-rpc",
  "dc-tracing-debug-handler",
- "dc-tracing-rpc-core-debug",
  "dc-tracing-trace-handler",
  "dp-evm-trace-apis",
  "dp-evm-trace-ext",
@@ -2662,14 +2630,19 @@ name = "dvm-rpc-core"
 version = "2.7.1"
 dependencies = [
  "darwinia-evm",
+ "dc-tracer",
+ "dc-tracing-rpc-core-types",
  "dp-evm",
  "dp-rpc",
  "ethereum",
  "ethereum-types 0.12.1",
+ "futures 0.3.18",
  "jsonrpc-core",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
  "parity-scale-codec",
+ "serde",
+ "serde_json",
  "sp-api",
  "sp-core",
  "sp-runtime",

@@ -33,7 +33,7 @@ sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate", b
 # darwinia-network
 dc-rpc                    = { path = "../../../rpc", features = ["rpc_binary_search_estimate"] }
 dc-tracer                 = { path = "../../tracer" }
-dc-tracing-rpc-core-trace = { path = "../../rpc-core/trace" }
 dc-tracing-rpc-core-types = { path = "../../rpc-core/types" }
 dp-evm-trace-apis         = { path = "../../../../../primitives/evm/trace/apis" }
 dvm-rpc-runtime-api       = { path = "../../../../../frame/dvm/rpc/runtime-api" }
+dvm-rpc-core              = { path = "../../../../../frame/dvm/rpc" }

@@ -1,444 +1,357 @@
-2021-12-13 13:23:15 Running in --dev mode, RPC CORS has been disabled.    
-2021-12-13 13:23:15 Darwinia Runtime Module Library    
-2021-12-13 13:23:15 ✌️  version 2.7.1-d6ac33bef-x86_64-linux-gnu    
-2021-12-13 13:23:15 ❤️  by Darwinia Network <hello@darwinia.network>, 2018-2021    
-2021-12-13 13:23:15 📋 Chain specification: Pangolin    
-2021-12-13 13:23:15 🏷 Node name: different-scarecrow-6862    
-2021-12-13 13:23:15 👤 Role: AUTHORITY    
-2021-12-13 13:23:15 💾 Database: RocksDb at /tmp/substrateoXgNex/chains/pangolin/db    
-2021-12-13 13:23:15 ⛓  Native runtime: Pangolin-27010 (Pangolin-0.tx0.au0)    
-2021-12-13 13:23:16 `pallet_timestamp::UnixTime::now` is called at genesis, invalid value returned: 0    
-2021-12-13 13:23:16 [0] 💸 new validator set of size 1 has been processed for era 1    
-2021-12-13 13:23:16 [darwinia-claims] Genesis Claims List is Set to EMPTY    
-2021-12-13 13:23:16 🔨 Initializing Genesis block/state (state: 0xd3ac…bae2, header-hash: 0x51db…520b)    
-2021-12-13 13:23:16 👴 Loading GRANDPA authority set from genesis on what appears to be first startup.    
-2021-12-13 13:23:17 ⏱  Loaded block-time = 6s from block 0x51dbe66d8fd31a1b10dedc4d05e1616badfd90627e68d8820d2280e27a44520b    
-2021-12-13 13:23:17 👶 Creating empty BABE epoch changes on what appears to be first startup.    
-2021-12-13 13:23:17 🏷 Local node identity is: 12D3KooWMMtJVAQULu5FVzahcu4VHfpSe5ZE3qKUwPqryhYQEGhK    
-2021-12-13 13:23:17 📦 Highest known block at #0    
-2021-12-13 13:23:17 〽️ Prometheus exporter started at 127.0.0.1:9615    
-2021-12-13 13:23:17 Listening for new connections on 127.0.0.1:9944.    
-2021-12-13 13:23:17 👶 Starting BABE Authorship worker    
-2021-12-13 13:23:18 🙌 Starting consensus session on top of parent 0x51dbe66d8fd31a1b10dedc4d05e1616badfd90627e68d8820d2280e27a44520b    
-2021-12-13 13:23:18 🎁 Prepared block for proposing at 1 [hash: 0x7e73a8e15c44de8ade4da1e04ecccacd684131b95f4cd59904ee57784054d183; parent_hash: 0x51db…520b; extrinsics (1): [0x6093…2588]]    
-2021-12-13 13:23:18 🔖 Pre-sealed block for proposal at 1. Hash now 0xe6324304dd51ed6c3e3d9a73c0c7e56de18515da1a83b436a6f180c26aa10c4b, previously 0x7e73a8e15c44de8ade4da1e04ecccacd684131b95f4cd59904ee57784054d183.    
-2021-12-13 13:23:18 👶 New epoch 0 launching at block 0xe632…0c4b (block slot 273228833 >= start slot 273228833).    
-2021-12-13 13:23:18 👶 Next epoch starts at slot 273229133    
-2021-12-13 13:23:18 ✨ Imported #1 (0xe632…0c4b)    
-2021-12-13 13:23:22 💤 Idle (0 peers), best: #1 (0xe632…0c4b), finalized #0 (0x51db…520b), ⬇ 0 ⬆ 0    
-2021-12-13 13:23:24 🙌 Starting consensus session on top of parent 0xe6324304dd51ed6c3e3d9a73c0c7e56de18515da1a83b436a6f180c26aa10c4b    
-2021-12-13 13:23:24 🎁 Prepared block for proposing at 2 [hash: 0x98f5b44d2c196b70b09016397b84adccfd8e18f791ab3af5ca5dbe8ff1762659; parent_hash: 0xe632…0c4b; extrinsics (1): [0xdfe2…bde2]]    
-2021-12-13 13:23:24 🔖 Pre-sealed block for proposal at 2. Hash now 0xfcdf9e25e471943873845982e5f77a6f051d8521cace7eb10647572054bff0d1, previously 0x98f5b44d2c196b70b09016397b84adccfd8e18f791ab3af5ca5dbe8ff1762659.    
-2021-12-13 13:23:24 ✨ Imported #2 (0xfcdf…f0d1)    
-2021-12-13 13:23:27 💤 Idle (0 peers), best: #2 (0xfcdf…f0d1), finalized #0 (0x51db…520b), ⬇ 0 ⬆ 0    
-2021-12-13 13:23:30 🙌 Starting consensus session on top of parent 0xfcdf9e25e471943873845982e5f77a6f051d8521cace7eb10647572054bff0d1    
-2021-12-13 13:23:30 🎁 Prepared block for proposing at 3 [hash: 0x991b78e3b69f1bfa68b86aa77e05eef6cafa1cb31dc7c3ce2268ca9c22eb2673; parent_hash: 0xfcdf…f0d1; extrinsics (1): [0x8369…4b48]]    
-2021-12-13 13:23:30 🔖 Pre-sealed block for proposal at 3. Hash now 0x73b0da42f0a467dd885200a613aa3ca93b76e5cf43ab5e4577116e2e50bed0bf, previously 0x991b78e3b69f1bfa68b86aa77e05eef6cafa1cb31dc7c3ce2268ca9c22eb2673.    
-2021-12-13 13:23:30 ✨ Imported #3 (0x73b0…d0bf)    
-2021-12-13 13:23:32 💤 Idle (0 peers), best: #3 (0x73b0…d0bf), finalized #0 (0x51db…520b), ⬇ 0 ⬆ 0    
-2021-12-13 13:23:36 🙌 Starting consensus session on top of parent 0x73b0da42f0a467dd885200a613aa3ca93b76e5cf43ab5e4577116e2e50bed0bf    
-2021-12-13 13:23:36 🎁 Prepared block for proposing at 4 [hash: 0xfcd26efe209c4e88f5d56495134b1aeb10bc0c0f31c4a69e22fdb211161419e7; parent_hash: 0x73b0…d0bf; extrinsics (1): [0xa9b4…5baf]]    
-2021-12-13 13:23:36 🔖 Pre-sealed block for proposal at 4. Hash now 0x02790be5012a0b1cdeb4f9e63bd8dd26bc06c98e845b1a30215991ed16e8dfe7, previously 0xfcd26efe209c4e88f5d56495134b1aeb10bc0c0f31c4a69e22fdb211161419e7.    
-2021-12-13 13:23:36 ✨ Imported #4 (0x0279…dfe7)    
-2021-12-13 13:23:37 💤 Idle (0 peers), best: #4 (0x0279…dfe7), finalized #1 (0xe632…0c4b), ⬇ 0 ⬆ 0    
-2021-12-13 13:23:42 🙌 Starting consensus session on top of parent 0x02790be5012a0b1cdeb4f9e63bd8dd26bc06c98e845b1a30215991ed16e8dfe7    
-2021-12-13 13:23:42 🎁 Prepared block for proposing at 5 [hash: 0x5c6b8d12e96839d1ea0369963544c1b00f1a5d81f094380b8fb04759b60fe091; parent_hash: 0x0279…dfe7; extrinsics (1): [0x62d8…3ad9]]    
-2021-12-13 13:23:42 🔖 Pre-sealed block for proposal at 5. Hash now 0xc8f2b1cf4ffddc4f4465614e9df63e098af455cc95bd17f37cd55e6c7a19712a, previously 0x5c6b8d12e96839d1ea0369963544c1b00f1a5d81f094380b8fb04759b60fe091.    
-2021-12-13 13:23:42 ✨ Imported #5 (0xc8f2…712a)    
-2021-12-13 13:23:42 💤 Idle (0 peers), best: #5 (0xc8f2…712a), finalized #2 (0xfcdf…f0d1), ⬇ 0 ⬆ 0    
-2021-12-13 13:23:47 💤 Idle (0 peers), best: #5 (0xc8f2…712a), finalized #3 (0x73b0…d0bf), ⬇ 0 ⬆ 0    
-2021-12-13 13:23:48 🙌 Starting consensus session on top of parent 0xc8f2b1cf4ffddc4f4465614e9df63e098af455cc95bd17f37cd55e6c7a19712a    
-2021-12-13 13:23:48 🎁 Prepared block for proposing at 6 [hash: 0x8c73321f84b7d7ed51da845b4ad7a2a49ed83074cc60687fa73fea80b94ce428; parent_hash: 0xc8f2…712a; extrinsics (1): [0xc1ed…04ec]]    
-2021-12-13 13:23:48 🔖 Pre-sealed block for proposal at 6. Hash now 0x4dbbc5dbe33c27328121183025b4b171805662e6065d3144674530795df8748b, previously 0x8c73321f84b7d7ed51da845b4ad7a2a49ed83074cc60687fa73fea80b94ce428.    
-2021-12-13 13:23:48 ✨ Imported #6 (0x4dbb…748b)    
-2021-12-13 13:23:52 💤 Idle (0 peers), best: #6 (0x4dbb…748b), finalized #3 (0x73b0…d0bf), ⬇ 0 ⬆ 0    
-2021-12-13 13:23:54 🙌 Starting consensus session on top of parent 0x4dbbc5dbe33c27328121183025b4b171805662e6065d3144674530795df8748b    
-2021-12-13 13:23:54 🎁 Prepared block for proposing at 7 [hash: 0x3b1f4028005c474a740c3ccefd03495c61e15439715c2bd56572f6bd3981b4b0; parent_hash: 0x4dbb…748b; extrinsics (2): [0x3779…5296, 0x6447…e519]]    
-2021-12-13 13:23:54 🔖 Pre-sealed block for proposal at 7. Hash now 0xeae8cb1536ff6dc9b8b891528d357b96ad808da81ff476ff707f24ae840f9b93, previously 0x3b1f4028005c474a740c3ccefd03495c61e15439715c2bd56572f6bd3981b4b0.    
-2021-12-13 13:23:54 ✨ Imported #7 (0xeae8…9b93)    
-2021-12-13 13:23:57 💤 Idle (0 peers), best: #7 (0xeae8…9b93), finalized #4 (0x0279…dfe7), ⬇ 0 ⬆ 0    
-2021-12-13 13:24:00 🙌 Starting consensus session on top of parent 0xeae8cb1536ff6dc9b8b891528d357b96ad808da81ff476ff707f24ae840f9b93    
-2021-12-13 13:24:00 🎁 Prepared block for proposing at 8 [hash: 0x087b86870ff35e7d75e095b8673f824855f431da4fd7282be2fa9a4d6d88f97f; parent_hash: 0xeae8…9b93; extrinsics (1): [0xbe55…df50]]    
-2021-12-13 13:24:00 🔖 Pre-sealed block for proposal at 8. Hash now 0x19da6ce66006ea084326c88bb34aa354047b3b265330104ef3938bd440ff9e5a, previously 0x087b86870ff35e7d75e095b8673f824855f431da4fd7282be2fa9a4d6d88f97f.    
-2021-12-13 13:24:00 ✨ Imported #8 (0x19da…9e5a)    
-2021-12-13 13:24:02 💤 Idle (0 peers), best: #8 (0x19da…9e5a), finalized #5 (0xc8f2…712a), ⬇ 0 ⬆ 0    
-2021-12-13 13:24:05 Accepted a new tcp connection from 127.0.0.1:51304.    
-2021-12-13 13:24:06 🙌 Starting consensus session on top of parent 0x19da6ce66006ea084326c88bb34aa354047b3b265330104ef3938bd440ff9e5a    
-2021-12-13 13:24:06 🎁 Prepared block for proposing at 9 [hash: 0xfafc5f6d8ed64b87d833b488dc860d6bd4d1b28a69e121cd7c48445ce8f1187b; parent_hash: 0x19da…9e5a; extrinsics (2): [0x0198…75b8, 0x94f1…f9c7]]    
-2021-12-13 13:24:06 🔖 Pre-sealed block for proposal at 9. Hash now 0x60a5e53e96d11405c3a01cf7d4b2ab06bd444942d180d9b4a91dbd1d3efe63dd, previously 0xfafc5f6d8ed64b87d833b488dc860d6bd4d1b28a69e121cd7c48445ce8f1187b.    
-2021-12-13 13:24:06 ✨ Imported #9 (0x60a5…63dd)    
-2021-12-13 13:24:07 💤 Idle (0 peers), best: #9 (0x60a5…63dd), finalized #6 (0x4dbb…748b), ⬇ 0 ⬆ 0    
-2021-12-13 13:24:12 🙌 Starting consensus session on top of parent 0x60a5e53e96d11405c3a01cf7d4b2ab06bd444942d180d9b4a91dbd1d3efe63dd    
-2021-12-13 13:24:12 🎁 Prepared block for proposing at 10 [hash: 0xde9a4bd9378f4d6decc5a237b7af2ccebe0fb8989f1c49f82fb31c565941759f; parent_hash: 0x60a5…63dd; extrinsics (1): [0xf3bb…be80]]    
-2021-12-13 13:24:12 🔖 Pre-sealed block for proposal at 10. Hash now 0xe2e0e03d537717e178e88b89308a62818398a09812ce6ffb60554e55a539321b, previously 0xde9a4bd9378f4d6decc5a237b7af2ccebe0fb8989f1c49f82fb31c565941759f.    
-2021-12-13 13:24:12 ✨ Imported #10 (0xe2e0…321b)    
-2021-12-13 13:24:12 💤 Idle (0 peers), best: #10 (0xe2e0…321b), finalized #7 (0xeae8…9b93), ⬇ 0 ⬆ 0    
-2021-12-13 13:24:17 💤 Idle (0 peers), best: #10 (0xe2e0…321b), finalized #7 (0xeae8…9b93), ⬇ 0 ⬆ 0    
-2021-12-13 13:24:18 🙌 Starting consensus session on top of parent 0xe2e0e03d537717e178e88b89308a62818398a09812ce6ffb60554e55a539321b    
-2021-12-13 13:24:18 🎁 Prepared block for proposing at 11 [hash: 0x900ce680db6d9a6c6e60a67e5bb63460ce5944db55c21ae4f1764063c587579e; parent_hash: 0xe2e0…321b; extrinsics (1): [0xb299…792e]]    
-2021-12-13 13:24:18 🔖 Pre-sealed block for proposal at 11. Hash now 0xf78697f85a7c19f133a2e3abacb6b56357763d3636e6760c7660066237cb9831, previously 0x900ce680db6d9a6c6e60a67e5bb63460ce5944db55c21ae4f1764063c587579e.    
-2021-12-13 13:24:18 ✨ Imported #11 (0xf786…9831)    
-2021-12-13 13:24:22 💤 Idle (0 peers), best: #11 (0xf786…9831), finalized #9 (0x60a5…63dd), ⬇ 0 ⬆ 0    
-2021-12-13 13:24:24 🙌 Starting consensus session on top of parent 0xf78697f85a7c19f133a2e3abacb6b56357763d3636e6760c7660066237cb9831    
-2021-12-13 13:24:24 🎁 Prepared block for proposing at 12 [hash: 0x2fbedff41f88907e3c175c229b0a3a636ced2c21d5e6849dd8aeae77d05dc54c; parent_hash: 0xf786…9831; extrinsics (1): [0xb1cf…9629]]    
-2021-12-13 13:24:24 🔖 Pre-sealed block for proposal at 12. Hash now 0x82345ddee7533993a49a3f67d745437a88f04c8be12e630453aeff1e2a831628, previously 0x2fbedff41f88907e3c175c229b0a3a636ced2c21d5e6849dd8aeae77d05dc54c.    
-2021-12-13 13:24:24 ✨ Imported #12 (0x8234…1628)    
-2021-12-13 13:24:27 💤 Idle (0 peers), best: #12 (0x8234…1628), finalized #9 (0x60a5…63dd), ⬇ 0 ⬆ 0    
-2021-12-13 13:24:30 🙌 Starting consensus session on top of parent 0x82345ddee7533993a49a3f67d745437a88f04c8be12e630453aeff1e2a831628    
-2021-12-13 13:24:30 🎁 Prepared block for proposing at 13 [hash: 0x9168289bfe62f80380fc37de8ac38da3217567fac309eba0807e92c9d5016458; parent_hash: 0x8234…1628; extrinsics (1): [0xff69…270e]]    
-2021-12-13 13:24:30 🔖 Pre-sealed block for proposal at 13. Hash now 0xaa180d5b107329c5474e5048009c89fc2d54819bba726aba0739509c4bc68d6e, previously 0x9168289bfe62f80380fc37de8ac38da3217567fac309eba0807e92c9d5016458.    
-2021-12-13 13:24:30 ✨ Imported #13 (0xaa18…8d6e)    
-2021-12-13 13:24:32 💤 Idle (0 peers), best: #13 (0xaa18…8d6e), finalized #10 (0xe2e0…321b), ⬇ 0 ⬆ 0    
-2021-12-13 13:24:36 🙌 Starting consensus session on top of parent 0xaa180d5b107329c5474e5048009c89fc2d54819bba726aba0739509c4bc68d6e    
-2021-12-13 13:24:36 🎁 Prepared block for proposing at 14 [hash: 0x0952e67a3a63a5115d16dd605979cdc2edaaccc229c9e4f0acdf428d1a325548; parent_hash: 0xaa18…8d6e; extrinsics (1): [0xce0f…a521]]    
-2021-12-13 13:24:36 🔖 Pre-sealed block for proposal at 14. Hash now 0xac257cc624140a9959d48a08a337208a00027bbfbd636d637c05b4f27f30b68a, previously 0x0952e67a3a63a5115d16dd605979cdc2edaaccc229c9e4f0acdf428d1a325548.    
-2021-12-13 13:24:36 ✨ Imported #14 (0xac25…b68a)    
-2021-12-13 13:24:37 💤 Idle (0 peers), best: #14 (0xac25…b68a), finalized #11 (0xf786…9831), ⬇ 0 ⬆ 0    
-2021-12-13 13:24:42 🙌 Starting consensus session on top of parent 0xac257cc624140a9959d48a08a337208a00027bbfbd636d637c05b4f27f30b68a    
-2021-12-13 13:24:42 🎁 Prepared block for proposing at 15 [hash: 0x33a887bf8c4eaffa7f951ba6df4c9445377e85137711b07df68bc903bd7a2003; parent_hash: 0xac25…b68a; extrinsics (1): [0xf33a…dfcf]]    
-2021-12-13 13:24:42 🔖 Pre-sealed block for proposal at 15. Hash now 0x63379905f3a5c4f18ea40404a972335ca23e45d034da42f2631dea10e582d662, previously 0x33a887bf8c4eaffa7f951ba6df4c9445377e85137711b07df68bc903bd7a2003.    
-2021-12-13 13:24:42 ✨ Imported #15 (0x6337…d662)    
-2021-12-13 13:24:42 💤 Idle (0 peers), best: #15 (0x6337…d662), finalized #12 (0x8234…1628), ⬇ 0 ⬆ 0    
-2021-12-13 13:24:47 💤 Idle (0 peers), best: #15 (0x6337…d662), finalized #13 (0xaa18…8d6e), ⬇ 0 ⬆ 0    
-2021-12-13 13:24:48 🙌 Starting consensus session on top of parent 0x63379905f3a5c4f18ea40404a972335ca23e45d034da42f2631dea10e582d662    
-2021-12-13 13:24:48 🎁 Prepared block for proposing at 16 [hash: 0x71c50f1fc661ccf6e34c7f2e746eafa9f2bd1f6dbaf796ae616c40c9d34de7f6; parent_hash: 0x6337…d662; extrinsics (1): [0xed73…0544]]    
-2021-12-13 13:24:48 🔖 Pre-sealed block for proposal at 16. Hash now 0xb08a227107cc76d6f4243e4bf978c377ef89e3dc38114e241a8c529a1c09dbcb, previously 0x71c50f1fc661ccf6e34c7f2e746eafa9f2bd1f6dbaf796ae616c40c9d34de7f6.    
-2021-12-13 13:24:48 ✨ Imported #16 (0xb08a…dbcb)    
-2021-12-13 13:24:52 💤 Idle (0 peers), best: #16 (0xb08a…dbcb), finalized #13 (0xaa18…8d6e), ⬇ 0 ⬆ 0    
-2021-12-13 13:24:54 🙌 Starting consensus session on top of parent 0xb08a227107cc76d6f4243e4bf978c377ef89e3dc38114e241a8c529a1c09dbcb    
-2021-12-13 13:24:54 🎁 Prepared block for proposing at 17 [hash: 0x078c1c08268d55e8e72aca51bc0a0d0ec6e87a5843f243923be0df6f459b54c8; parent_hash: 0xb08a…dbcb; extrinsics (1): [0xf8da…769b]]    
-2021-12-13 13:24:54 🔖 Pre-sealed block for proposal at 17. Hash now 0xf61d34a2e3ac1de89dc5d0df568e4114a013358220d1f02793606d1af2f6de0d, previously 0x078c1c08268d55e8e72aca51bc0a0d0ec6e87a5843f243923be0df6f459b54c8.    
-2021-12-13 13:24:54 ✨ Imported #17 (0xf61d…de0d)    
-2021-12-13 13:24:57 💤 Idle (0 peers), best: #17 (0xf61d…de0d), finalized #14 (0xac25…b68a), ⬇ 0 ⬆ 0    
-2021-12-13 13:25:00 🙌 Starting consensus session on top of parent 0xf61d34a2e3ac1de89dc5d0df568e4114a013358220d1f02793606d1af2f6de0d    
-2021-12-13 13:25:00 🎁 Prepared block for proposing at 18 [hash: 0x8b84a8484819cce1c0e91473d73664aa7db43f725acf911f18b80d6316d9cabb; parent_hash: 0xf61d…de0d; extrinsics (1): [0x1529…6bf8]]    
-2021-12-13 13:25:00 🔖 Pre-sealed block for proposal at 18. Hash now 0xfbc331d9b5e93e43ecbdf2062cefdef045aa34b97afb91d8fee31698e0311e8c, previously 0x8b84a8484819cce1c0e91473d73664aa7db43f725acf911f18b80d6316d9cabb.    
-2021-12-13 13:25:00 ✨ Imported #18 (0xfbc3…1e8c)    
-2021-12-13 13:25:02 💤 Idle (0 peers), best: #18 (0xfbc3…1e8c), finalized #15 (0x6337…d662), ⬇ 0 ⬆ 0    
-2021-12-13 13:25:06 🙌 Starting consensus session on top of parent 0xfbc331d9b5e93e43ecbdf2062cefdef045aa34b97afb91d8fee31698e0311e8c    
-2021-12-13 13:25:06 🎁 Prepared block for proposing at 19 [hash: 0xd36f6cb89dbd83e8bcb1a084049f783a6b68f9e9206d93c55b904d9376821ada; parent_hash: 0xfbc3…1e8c; extrinsics (1): [0xc0ee…ee0f]]    
-2021-12-13 13:25:06 🔖 Pre-sealed block for proposal at 19. Hash now 0xdc6f50b4fdb1339bfbcbe4fad3f7327071941f4ec07bc2189f2cd5dab8067cf6, previously 0xd36f6cb89dbd83e8bcb1a084049f783a6b68f9e9206d93c55b904d9376821ada.    
-2021-12-13 13:25:06 ✨ Imported #19 (0xdc6f…7cf6)    
-2021-12-13 13:25:07 💤 Idle (0 peers), best: #19 (0xdc6f…7cf6), finalized #16 (0xb08a…dbcb), ⬇ 0 ⬆ 0    
-2021-12-13 13:25:12 🙌 Starting consensus session on top of parent 0xdc6f50b4fdb1339bfbcbe4fad3f7327071941f4ec07bc2189f2cd5dab8067cf6    
-2021-12-13 13:25:12 🎁 Prepared block for proposing at 20 [hash: 0xd1a99dae197fac48a9fd37fce3d4edd31886407620c9197a1045e49f36ee1a84; parent_hash: 0xdc6f…7cf6; extrinsics (1): [0xbab6…2f93]]    
-2021-12-13 13:25:12 🔖 Pre-sealed block for proposal at 20. Hash now 0x4075344053b3c17f373a39d426367c4a876fffd888f7aed68eb792c804dc85d7, previously 0xd1a99dae197fac48a9fd37fce3d4edd31886407620c9197a1045e49f36ee1a84.    
-2021-12-13 13:25:12 ✨ Imported #20 (0x4075…85d7)    
-2021-12-13 13:25:12 💤 Idle (0 peers), best: #20 (0x4075…85d7), finalized #17 (0xf61d…de0d), ⬇ 0 ⬆ 0    
-2021-12-13 13:25:17 💤 Idle (0 peers), best: #20 (0x4075…85d7), finalized #17 (0xf61d…de0d), ⬇ 0 ⬆ 0    
-2021-12-13 13:25:18 🙌 Starting consensus session on top of parent 0x4075344053b3c17f373a39d426367c4a876fffd888f7aed68eb792c804dc85d7    
-2021-12-13 13:25:18 🎁 Prepared block for proposing at 21 [hash: 0x32b8a9b846daae4d94687192695c03cc0194be9a49833ce8000ead1ec83f40cd; parent_hash: 0x4075…85d7; extrinsics (1): [0xe00f…4aca]]    
-2021-12-13 13:25:18 🔖 Pre-sealed block for proposal at 21. Hash now 0x928ed86e51733ef8ce0e2e77906db41019fc6c288c18430abdb223be8372dac7, previously 0x32b8a9b846daae4d94687192695c03cc0194be9a49833ce8000ead1ec83f40cd.    
-2021-12-13 13:25:18 ✨ Imported #21 (0x928e…dac7)    
-2021-12-13 13:25:22 💤 Idle (0 peers), best: #21 (0x928e…dac7), finalized #19 (0xdc6f…7cf6), ⬇ 0 ⬆ 0    
-2021-12-13 13:25:24 🙌 Starting consensus session on top of parent 0x928ed86e51733ef8ce0e2e77906db41019fc6c288c18430abdb223be8372dac7    
-2021-12-13 13:25:24 🎁 Prepared block for proposing at 22 [hash: 0xb0f10cf21556986f55903cc41450cffc3a22062debce0fdc9c606504488a3e88; parent_hash: 0x928e…dac7; extrinsics (1): [0x753c…4af8]]    
-2021-12-13 13:25:24 🔖 Pre-sealed block for proposal at 22. Hash now 0x22a7365ee769b3c777b9c89d04adda8c7dfdff2de0259dae40df5ea7fb79652e, previously 0xb0f10cf21556986f55903cc41450cffc3a22062debce0fdc9c606504488a3e88.    
-2021-12-13 13:25:24 ✨ Imported #22 (0x22a7…652e)    
-2021-12-13 13:25:27 💤 Idle (0 peers), best: #22 (0x22a7…652e), finalized #19 (0xdc6f…7cf6), ⬇ 0 ⬆ 0    
-2021-12-13 13:25:30 🙌 Starting consensus session on top of parent 0x22a7365ee769b3c777b9c89d04adda8c7dfdff2de0259dae40df5ea7fb79652e    
-2021-12-13 13:25:30 🎁 Prepared block for proposing at 23 [hash: 0x3eaedb9b0d485e98c5530b08efb41e17d9e4e340c99785fe4efe23513809d442; parent_hash: 0x22a7…652e; extrinsics (1): [0xfc34…26e4]]    
-2021-12-13 13:25:30 🔖 Pre-sealed block for proposal at 23. Hash now 0x0d760e28ad83b7e00092180150bbc6a19a8adb754571ba65ed5e76334ed2e4e1, previously 0x3eaedb9b0d485e98c5530b08efb41e17d9e4e340c99785fe4efe23513809d442.    
-2021-12-13 13:25:30 ✨ Imported #23 (0x0d76…e4e1)    
-2021-12-13 13:25:32 💤 Idle (0 peers), best: #23 (0x0d76…e4e1), finalized #20 (0x4075…85d7), ⬇ 0 ⬆ 0    
-2021-12-13 13:25:36 🙌 Starting consensus session on top of parent 0x0d760e28ad83b7e00092180150bbc6a19a8adb754571ba65ed5e76334ed2e4e1    
-2021-12-13 13:25:36 🎁 Prepared block for proposing at 24 [hash: 0x69a8121fb4a3c89dd4173e9108dda8eaa6fb874313ea5a8b754375fa43437690; parent_hash: 0x0d76…e4e1; extrinsics (1): [0x5f97…5e5d]]    
-2021-12-13 13:25:36 🔖 Pre-sealed block for proposal at 24. Hash now 0x776ae041a0566142b955dad02a4ae16c7a1e952a3ed1f7800a118194df1d9ed6, previously 0x69a8121fb4a3c89dd4173e9108dda8eaa6fb874313ea5a8b754375fa43437690.    
-2021-12-13 13:25:36 ✨ Imported #24 (0x776a…9ed6)    
-2021-12-13 13:25:37 💤 Idle (0 peers), best: #24 (0x776a…9ed6), finalized #21 (0x928e…dac7), ⬇ 0 ⬆ 0    
-2021-12-13 13:25:42 🙌 Starting consensus session on top of parent 0x776ae041a0566142b955dad02a4ae16c7a1e952a3ed1f7800a118194df1d9ed6    
-2021-12-13 13:25:42 🎁 Prepared block for proposing at 25 [hash: 0xd25934c0784b9ee173cce051f8ccc457b55a457ad3d75d82c488bd8f685d217b; parent_hash: 0x776a…9ed6; extrinsics (1): [0x06ed…3023]]    
-2021-12-13 13:25:42 🔖 Pre-sealed block for proposal at 25. Hash now 0x490b46c9512cb9ca7ea2b6856c5cda82fc23fe1e602644f877e530cd151ef703, previously 0xd25934c0784b9ee173cce051f8ccc457b55a457ad3d75d82c488bd8f685d217b.    
-2021-12-13 13:25:42 ✨ Imported #25 (0x490b…f703)    
-2021-12-13 13:25:42 💤 Idle (0 peers), best: #25 (0x490b…f703), finalized #22 (0x22a7…652e), ⬇ 0 ⬆ 0    
-2021-12-13 13:25:47 💤 Idle (0 peers), best: #25 (0x490b…f703), finalized #23 (0x0d76…e4e1), ⬇ 0 ⬆ 0    
-2021-12-13 13:25:48 🙌 Starting consensus session on top of parent 0x490b46c9512cb9ca7ea2b6856c5cda82fc23fe1e602644f877e530cd151ef703    
-2021-12-13 13:25:48 🎁 Prepared block for proposing at 26 [hash: 0x750a7002fbffd67c1c579107a2ca402f64eaeb49c408d0f7c4fc879f247b6e4d; parent_hash: 0x490b…f703; extrinsics (1): [0xc7da…d5b7]]    
-2021-12-13 13:25:48 🔖 Pre-sealed block for proposal at 26. Hash now 0x4bdabc3805b3631145f2a8b3ae68e9a2c58f139ccdf777e35ebb97d269d9c166, previously 0x750a7002fbffd67c1c579107a2ca402f64eaeb49c408d0f7c4fc879f247b6e4d.    
-2021-12-13 13:25:48 ✨ Imported #26 (0x4bda…c166)    
-2021-12-13 13:25:52 💤 Idle (0 peers), best: #26 (0x4bda…c166), finalized #23 (0x0d76…e4e1), ⬇ 0 ⬆ 0    
-2021-12-13 13:25:54 🙌 Starting consensus session on top of parent 0x4bdabc3805b3631145f2a8b3ae68e9a2c58f139ccdf777e35ebb97d269d9c166    
-2021-12-13 13:25:54 🎁 Prepared block for proposing at 27 [hash: 0xb816c2e046c76f6ca314261976c211ea1364180712bd3fae8010b07ff6a3cd03; parent_hash: 0x4bda…c166; extrinsics (1): [0xa732…9ab5]]    
-2021-12-13 13:25:54 🔖 Pre-sealed block for proposal at 27. Hash now 0xeef105a1332707695f777268fbc8870cd8791d8db4863856ce070b25c36d433e, previously 0xb816c2e046c76f6ca314261976c211ea1364180712bd3fae8010b07ff6a3cd03.    
-2021-12-13 13:25:54 ✨ Imported #27 (0xeef1…433e)    
-2021-12-13 13:25:57 💤 Idle (0 peers), best: #27 (0xeef1…433e), finalized #24 (0x776a…9ed6), ⬇ 0 ⬆ 0    
-2021-12-13 13:26:00 🙌 Starting consensus session on top of parent 0xeef105a1332707695f777268fbc8870cd8791d8db4863856ce070b25c36d433e    
-2021-12-13 13:26:00 🎁 Prepared block for proposing at 28 [hash: 0xb60903eb2c4fdb31ae9dff7f795b2d1d5aab68955342d3c24f7d01f1305677ff; parent_hash: 0xeef1…433e; extrinsics (1): [0x574f…c6aa]]    
-2021-12-13 13:26:00 🔖 Pre-sealed block for proposal at 28. Hash now 0xfff285fadb3cf9ae47dcd24a243f297251fdbbb48bdf42f4df5126a1c7f5329a, previously 0xb60903eb2c4fdb31ae9dff7f795b2d1d5aab68955342d3c24f7d01f1305677ff.    
-2021-12-13 13:26:00 ✨ Imported #28 (0xfff2…329a)    
-2021-12-13 13:26:02 💤 Idle (0 peers), best: #28 (0xfff2…329a), finalized #25 (0x490b…f703), ⬇ 0 ⬆ 0    
-2021-12-13 13:26:06 🙌 Starting consensus session on top of parent 0xfff285fadb3cf9ae47dcd24a243f297251fdbbb48bdf42f4df5126a1c7f5329a    
-2021-12-13 13:26:06 🎁 Prepared block for proposing at 29 [hash: 0x14b71e1b50140ed77f34d27b41d96a4b08d1a28ecdf2f6f18d3a7f19c3cc2bb6; parent_hash: 0xfff2…329a; extrinsics (1): [0xce06…6a9a]]    
-2021-12-13 13:26:06 🔖 Pre-sealed block for proposal at 29. Hash now 0x9c5127ec3bf79a570801afa9dac99d479f6b21d6e5d92c6ffd992edb956a3438, previously 0x14b71e1b50140ed77f34d27b41d96a4b08d1a28ecdf2f6f18d3a7f19c3cc2bb6.    
-2021-12-13 13:26:06 ✨ Imported #29 (0x9c51…3438)    
-2021-12-13 13:26:07 💤 Idle (0 peers), best: #29 (0x9c51…3438), finalized #26 (0x4bda…c166), ⬇ 0 ⬆ 0    
-2021-12-13 13:26:12 🙌 Starting consensus session on top of parent 0x9c5127ec3bf79a570801afa9dac99d479f6b21d6e5d92c6ffd992edb956a3438    
-2021-12-13 13:26:12 🎁 Prepared block for proposing at 30 [hash: 0xdaa9d81326ea0d852f5f6814eccb5fab55db2bcfa92c60ba014b7f59c5cfcc06; parent_hash: 0x9c51…3438; extrinsics (1): [0xd6f3…bb1f]]    
-2021-12-13 13:26:12 🔖 Pre-sealed block for proposal at 30. Hash now 0xae1ea4d1067caf1d5feddb3ed5b05ae3f1461b816eaaf031d7ae35d9f58ae0d3, previously 0xdaa9d81326ea0d852f5f6814eccb5fab55db2bcfa92c60ba014b7f59c5cfcc06.    
-2021-12-13 13:26:12 ✨ Imported #30 (0xae1e…e0d3)    
-2021-12-13 13:26:12 💤 Idle (0 peers), best: #30 (0xae1e…e0d3), finalized #27 (0xeef1…433e), ⬇ 0 ⬆ 0    
-2021-12-13 13:26:17 💤 Idle (0 peers), best: #30 (0xae1e…e0d3), finalized #27 (0xeef1…433e), ⬇ 0 ⬆ 0    
-2021-12-13 13:26:18 🙌 Starting consensus session on top of parent 0xae1ea4d1067caf1d5feddb3ed5b05ae3f1461b816eaaf031d7ae35d9f58ae0d3    
-2021-12-13 13:26:18 🎁 Prepared block for proposing at 31 [hash: 0x5566b61a6e349b9433842f7420085065fbf1cd04420131434c277d579cfcfa48; parent_hash: 0xae1e…e0d3; extrinsics (1): [0x75a5…a50a]]    
-2021-12-13 13:26:18 🔖 Pre-sealed block for proposal at 31. Hash now 0xf0063660340b38dd84f6f2a6bb2e1f5d7f45624b2c7d75474b79fb9b6b8d6041, previously 0x5566b61a6e349b9433842f7420085065fbf1cd04420131434c277d579cfcfa48.    
-2021-12-13 13:26:18 ✨ Imported #31 (0xf006…6041)    
-2021-12-13 13:26:22 💤 Idle (0 peers), best: #31 (0xf006…6041), finalized #29 (0x9c51…3438), ⬇ 0 ⬆ 0    
-2021-12-13 13:26:24 🙌 Starting consensus session on top of parent 0xf0063660340b38dd84f6f2a6bb2e1f5d7f45624b2c7d75474b79fb9b6b8d6041    
-2021-12-13 13:26:24 🎁 Prepared block for proposing at 32 [hash: 0x0da27d62da2df1437d824e92a3de041236eb510961eb22edf107d10e8953df7f; parent_hash: 0xf006…6041; extrinsics (1): [0x95d2…b376]]    
-2021-12-13 13:26:24 🔖 Pre-sealed block for proposal at 32. Hash now 0x593286702b9d428d02f70a8c11d1f44162162478239f95f87ad23fc2dc15a853, previously 0x0da27d62da2df1437d824e92a3de041236eb510961eb22edf107d10e8953df7f.    
-2021-12-13 13:26:24 ✨ Imported #32 (0x5932…a853)    
-2021-12-13 13:26:27 💤 Idle (0 peers), best: #32 (0x5932…a853), finalized #29 (0x9c51…3438), ⬇ 0 ⬆ 0    
-2021-12-13 13:26:30 🙌 Starting consensus session on top of parent 0x593286702b9d428d02f70a8c11d1f44162162478239f95f87ad23fc2dc15a853    
-2021-12-13 13:26:30 🎁 Prepared block for proposing at 33 [hash: 0xcfbda8c6e9d6a32b8ed95492849649b21a333123f60b328976a2076f033cf096; parent_hash: 0x5932…a853; extrinsics (1): [0xbdce…b6d6]]    
-2021-12-13 13:26:30 🔖 Pre-sealed block for proposal at 33. Hash now 0x19a68e672e786a3e35d2b6b366d105d58552160350c7f5a1c65e6ab85ed0e4de, previously 0xcfbda8c6e9d6a32b8ed95492849649b21a333123f60b328976a2076f033cf096.    
-2021-12-13 13:26:30 ✨ Imported #33 (0x19a6…e4de)    
-2021-12-13 13:26:32 💤 Idle (0 peers), best: #33 (0x19a6…e4de), finalized #30 (0xae1e…e0d3), ⬇ 0 ⬆ 0    
-2021-12-13 13:26:36 🙌 Starting consensus session on top of parent 0x19a68e672e786a3e35d2b6b366d105d58552160350c7f5a1c65e6ab85ed0e4de    
-2021-12-13 13:26:36 🎁 Prepared block for proposing at 34 [hash: 0xee39df6e3f0b395d5c98abb9f30ae330e7a49f46a0d5c6bfd095c1a2b040e27c; parent_hash: 0x19a6…e4de; extrinsics (1): [0x4df8…c540]]    
-2021-12-13 13:26:36 🔖 Pre-sealed block for proposal at 34. Hash now 0x9ef94ccaef55cfc272456f824a3ab32767bd32e083a00588bfd388946ead6f6c, previously 0xee39df6e3f0b395d5c98abb9f30ae330e7a49f46a0d5c6bfd095c1a2b040e27c.    
-2021-12-13 13:26:36 ✨ Imported #34 (0x9ef9…6f6c)    
-2021-12-13 13:26:37 💤 Idle (0 peers), best: #34 (0x9ef9…6f6c), finalized #31 (0xf006…6041), ⬇ 0 ⬆ 0    
-2021-12-13 13:26:42 🙌 Starting consensus session on top of parent 0x9ef94ccaef55cfc272456f824a3ab32767bd32e083a00588bfd388946ead6f6c    
-2021-12-13 13:26:42 🎁 Prepared block for proposing at 35 [hash: 0x20cd84a15cc0cd807cb5c6ec718d54278fe21e70b5c8dff372c856a7349183ed; parent_hash: 0x9ef9…6f6c; extrinsics (1): [0x662a…98ea]]    
-2021-12-13 13:26:42 🔖 Pre-sealed block for proposal at 35. Hash now 0x90bf047a70418cc24f96e8ff6ba64c369295772985c072ddad34fe6c763f4624, previously 0x20cd84a15cc0cd807cb5c6ec718d54278fe21e70b5c8dff372c856a7349183ed.    
-2021-12-13 13:26:42 ✨ Imported #35 (0x90bf…4624)    
-2021-12-13 13:26:42 💤 Idle (0 peers), best: #35 (0x90bf…4624), finalized #32 (0x5932…a853), ⬇ 0 ⬆ 0    
-2021-12-13 13:26:47 💤 Idle (0 peers), best: #35 (0x90bf…4624), finalized #33 (0x19a6…e4de), ⬇ 0 ⬆ 0    
-2021-12-13 13:26:48 🙌 Starting consensus session on top of parent 0x90bf047a70418cc24f96e8ff6ba64c369295772985c072ddad34fe6c763f4624    
-2021-12-13 13:26:48 🎁 Prepared block for proposing at 36 [hash: 0xe61f5a486cc7b02b3ac1b49cfbdabb8aaaadca01037b6057aa63465610d2abfa; parent_hash: 0x90bf…4624; extrinsics (1): [0x3e3c…603d]]    
-2021-12-13 13:26:48 🔖 Pre-sealed block for proposal at 36. Hash now 0xa38541443c9d06b96bd8c3c9e81a45ce3393e39f5c7fd6f8a677fe3af7bfb5b6, previously 0xe61f5a486cc7b02b3ac1b49cfbdabb8aaaadca01037b6057aa63465610d2abfa.    
-2021-12-13 13:26:48 ✨ Imported #36 (0xa385…b5b6)    
-2021-12-13 13:26:52 💤 Idle (0 peers), best: #36 (0xa385…b5b6), finalized #33 (0x19a6…e4de), ⬇ 0 ⬆ 0    
-2021-12-13 13:26:54 🙌 Starting consensus session on top of parent 0xa38541443c9d06b96bd8c3c9e81a45ce3393e39f5c7fd6f8a677fe3af7bfb5b6    
-2021-12-13 13:26:54 🎁 Prepared block for proposing at 37 [hash: 0x7586426bb694129ed042587d3740894d90252024d8793e407ba21d1bce528d08; parent_hash: 0xa385…b5b6; extrinsics (1): [0x47c4…a62c]]    
-2021-12-13 13:26:54 🔖 Pre-sealed block for proposal at 37. Hash now 0xba83e80449e24a5061ba812cb6e2a9f5cb490aadadca55857d2c0d56e28756af, previously 0x7586426bb694129ed042587d3740894d90252024d8793e407ba21d1bce528d08.    
-2021-12-13 13:26:54 ✨ Imported #37 (0xba83…56af)    
-2021-12-13 13:26:57 💤 Idle (0 peers), best: #37 (0xba83…56af), finalized #34 (0x9ef9…6f6c), ⬇ 0 ⬆ 0    
-2021-12-13 13:27:00 🙌 Starting consensus session on top of parent 0xba83e80449e24a5061ba812cb6e2a9f5cb490aadadca55857d2c0d56e28756af    
-2021-12-13 13:27:00 🎁 Prepared block for proposing at 38 [hash: 0xe8a4e85d2262ae7ba2d1609727cee62e87a256f4fb24cde5ecd6480daa72a4f7; parent_hash: 0xba83…56af; extrinsics (1): [0xef00…281b]]    
-2021-12-13 13:27:00 🔖 Pre-sealed block for proposal at 38. Hash now 0x071ebf697d5908799dcdd22d33d183497c9535ae96a72550b1b2896d8a7a292f, previously 0xe8a4e85d2262ae7ba2d1609727cee62e87a256f4fb24cde5ecd6480daa72a4f7.    
-2021-12-13 13:27:00 ✨ Imported #38 (0x071e…292f)    
-2021-12-13 13:27:02 💤 Idle (0 peers), best: #38 (0x071e…292f), finalized #35 (0x90bf…4624), ⬇ 0 ⬆ 0    
-2021-12-13 13:27:06 🙌 Starting consensus session on top of parent 0x071ebf697d5908799dcdd22d33d183497c9535ae96a72550b1b2896d8a7a292f    
-2021-12-13 13:27:06 🎁 Prepared block for proposing at 39 [hash: 0x1ee0fcef911023349b6e13c29f2f801646582f19911d543542c99b332bee6cb6; parent_hash: 0x071e…292f; extrinsics (1): [0xd7c8…6379]]    
-2021-12-13 13:27:06 🔖 Pre-sealed block for proposal at 39. Hash now 0x8550924f376a15cdc922a29f38f01a686e65e76a6ee50270da8b90eb55e80d09, previously 0x1ee0fcef911023349b6e13c29f2f801646582f19911d543542c99b332bee6cb6.    
-2021-12-13 13:27:06 ✨ Imported #39 (0x8550…0d09)    
-2021-12-13 13:27:07 💤 Idle (0 peers), best: #39 (0x8550…0d09), finalized #36 (0xa385…b5b6), ⬇ 0 ⬆ 0    
-2021-12-13 13:27:12 🙌 Starting consensus session on top of parent 0x8550924f376a15cdc922a29f38f01a686e65e76a6ee50270da8b90eb55e80d09    
-2021-12-13 13:27:12 🎁 Prepared block for proposing at 40 [hash: 0xcbcf56f420eeacc97c304a10614e0d7a1965b7ab2d601c3cdac02b545f481d79; parent_hash: 0x8550…0d09; extrinsics (1): [0x2398…b846]]    
-2021-12-13 13:27:12 🔖 Pre-sealed block for proposal at 40. Hash now 0x5e2b5e037d8df161fbd33652771a0b7e526dd5df6f009d858a21a9c29e1b1cf3, previously 0xcbcf56f420eeacc97c304a10614e0d7a1965b7ab2d601c3cdac02b545f481d79.    
-2021-12-13 13:27:12 ✨ Imported #40 (0x5e2b…1cf3)    
-2021-12-13 13:27:12 💤 Idle (0 peers), best: #40 (0x5e2b…1cf3), finalized #37 (0xba83…56af), ⬇ 0 ⬆ 0    
-2021-12-13 13:27:17 💤 Idle (0 peers), best: #40 (0x5e2b…1cf3), finalized #37 (0xba83…56af), ⬇ 0 ⬆ 0    
-2021-12-13 13:27:18 🙌 Starting consensus session on top of parent 0x5e2b5e037d8df161fbd33652771a0b7e526dd5df6f009d858a21a9c29e1b1cf3    
-2021-12-13 13:27:18 🎁 Prepared block for proposing at 41 [hash: 0x0e82392ae5c8c2eb8061ec801223e7223e283f82798807c524740700c61eb8d6; parent_hash: 0x5e2b…1cf3; extrinsics (1): [0x9a24…5660]]    
-2021-12-13 13:27:18 🔖 Pre-sealed block for proposal at 41. Hash now 0x2b2946e2e3961890d870f1537493c23ed772ea9529077323e9537993ed3830d3, previously 0x0e82392ae5c8c2eb8061ec801223e7223e283f82798807c524740700c61eb8d6.    
-2021-12-13 13:27:18 ✨ Imported #41 (0x2b29…30d3)    
-2021-12-13 13:27:22 💤 Idle (0 peers), best: #41 (0x2b29…30d3), finalized #39 (0x8550…0d09), ⬇ 0 ⬆ 0    
-2021-12-13 13:27:24 🙌 Starting consensus session on top of parent 0x2b2946e2e3961890d870f1537493c23ed772ea9529077323e9537993ed3830d3    
-2021-12-13 13:27:24 🎁 Prepared block for proposing at 42 [hash: 0x1909bc471e923266e6b69001d6d11861853bcdc601fa4acbf98c2d5c5b825091; parent_hash: 0x2b29…30d3; extrinsics (1): [0x4cd5…ff14]]    
-2021-12-13 13:27:24 🔖 Pre-sealed block for proposal at 42. Hash now 0xf4b8fadb3241660efbe702e4c99dec2460030a6f47affaef78b3713b47d15d68, previously 0x1909bc471e923266e6b69001d6d11861853bcdc601fa4acbf98c2d5c5b825091.    
-2021-12-13 13:27:24 ✨ Imported #42 (0xf4b8…5d68)    
-2021-12-13 13:27:27 💤 Idle (0 peers), best: #42 (0xf4b8…5d68), finalized #39 (0x8550…0d09), ⬇ 0 ⬆ 0    
-2021-12-13 13:27:30 🙌 Starting consensus session on top of parent 0xf4b8fadb3241660efbe702e4c99dec2460030a6f47affaef78b3713b47d15d68    
-2021-12-13 13:27:30 🎁 Prepared block for proposing at 43 [hash: 0x8956b36792264a3e93ec44ba5971b2b775dba45bea40497fa710fa0c545b7fac; parent_hash: 0xf4b8…5d68; extrinsics (1): [0x5118…119c]]    
-2021-12-13 13:27:30 🔖 Pre-sealed block for proposal at 43. Hash now 0x2f047a3d8fbb7491b2c3f00ac39e1480793645f4fbc9d1d842c1376e0c6d9179, previously 0x8956b36792264a3e93ec44ba5971b2b775dba45bea40497fa710fa0c545b7fac.    
-2021-12-13 13:27:30 ✨ Imported #43 (0x2f04…9179)    
-2021-12-13 13:27:32 💤 Idle (0 peers), best: #43 (0x2f04…9179), finalized #40 (0x5e2b…1cf3), ⬇ 0 ⬆ 0    
-2021-12-13 13:27:36 🙌 Starting consensus session on top of parent 0x2f047a3d8fbb7491b2c3f00ac39e1480793645f4fbc9d1d842c1376e0c6d9179    
-2021-12-13 13:27:36 🎁 Prepared block for proposing at 44 [hash: 0x392b82c44db0a6f9e2ffdf479827365637a16a09e02f1a1d750a2f3822165560; parent_hash: 0x2f04…9179; extrinsics (1): [0x7885…1220]]    
-2021-12-13 13:27:36 🔖 Pre-sealed block for proposal at 44. Hash now 0xd55eb83d87caa5b531b0102f79596e9e370579b6a75a76e8af4e61b1c85efe24, previously 0x392b82c44db0a6f9e2ffdf479827365637a16a09e02f1a1d750a2f3822165560.    
-2021-12-13 13:27:36 ✨ Imported #44 (0xd55e…fe24)    
-2021-12-13 13:27:37 💤 Idle (0 peers), best: #44 (0xd55e…fe24), finalized #41 (0x2b29…30d3), ⬇ 0 ⬆ 0    
-2021-12-13 13:27:42 🙌 Starting consensus session on top of parent 0xd55eb83d87caa5b531b0102f79596e9e370579b6a75a76e8af4e61b1c85efe24    
-2021-12-13 13:27:42 🎁 Prepared block for proposing at 45 [hash: 0x2ccbc95a87413c15268e07de461e16a692eca46171248a914481e2bff95c0a18; parent_hash: 0xd55e…fe24; extrinsics (1): [0xe191…d0b1]]    
-2021-12-13 13:27:42 🔖 Pre-sealed block for proposal at 45. Hash now 0xee5bfee731381b469e96d5b64e948142be0a09c041d4388c8fce621f35687ff8, previously 0x2ccbc95a87413c15268e07de461e16a692eca46171248a914481e2bff95c0a18.    
-2021-12-13 13:27:42 ✨ Imported #45 (0xee5b…7ff8)    
-2021-12-13 13:27:42 💤 Idle (0 peers), best: #45 (0xee5b…7ff8), finalized #42 (0xf4b8…5d68), ⬇ 0 ⬆ 0    
-2021-12-13 13:27:47 💤 Idle (0 peers), best: #45 (0xee5b…7ff8), finalized #43 (0x2f04…9179), ⬇ 0 ⬆ 0    
-2021-12-13 13:27:48 🙌 Starting consensus session on top of parent 0xee5bfee731381b469e96d5b64e948142be0a09c041d4388c8fce621f35687ff8    
-2021-12-13 13:27:48 🎁 Prepared block for proposing at 46 [hash: 0x5773cc366c88ddf08fbf62455af82bd69c07dec5258618e6247f808dbc75aa13; parent_hash: 0xee5b…7ff8; extrinsics (1): [0x4bc6…a85f]]    
-2021-12-13 13:27:48 🔖 Pre-sealed block for proposal at 46. Hash now 0xf0588144393737c9419a85ebfa079406d35b12dc871ac21097c2632724fa3fbe, previously 0x5773cc366c88ddf08fbf62455af82bd69c07dec5258618e6247f808dbc75aa13.    
-2021-12-13 13:27:48 ✨ Imported #46 (0xf058…3fbe)    
-2021-12-13 13:27:52 💤 Idle (0 peers), best: #46 (0xf058…3fbe), finalized #43 (0x2f04…9179), ⬇ 0 ⬆ 0    
-2021-12-13 13:27:54 🙌 Starting consensus session on top of parent 0xf0588144393737c9419a85ebfa079406d35b12dc871ac21097c2632724fa3fbe    
-2021-12-13 13:27:54 🎁 Prepared block for proposing at 47 [hash: 0x0fa5676efd123c37230467beccaff7de2d8a602c9bb0e3fc9835de6e60e9f750; parent_hash: 0xf058…3fbe; extrinsics (1): [0x82c9…09d0]]    
-2021-12-13 13:27:54 🔖 Pre-sealed block for proposal at 47. Hash now 0x937df2d97c610eb2f513a852127899ebd9a011cf0691bf467b1c3b626b41cbe0, previously 0x0fa5676efd123c37230467beccaff7de2d8a602c9bb0e3fc9835de6e60e9f750.    
-2021-12-13 13:27:54 ✨ Imported #47 (0x937d…cbe0)    
-2021-12-13 13:27:57 💤 Idle (0 peers), best: #47 (0x937d…cbe0), finalized #44 (0xd55e…fe24), ⬇ 0 ⬆ 0    
-2021-12-13 13:28:00 🙌 Starting consensus session on top of parent 0x937df2d97c610eb2f513a852127899ebd9a011cf0691bf467b1c3b626b41cbe0    
-2021-12-13 13:28:00 🎁 Prepared block for proposing at 48 [hash: 0x620482fcd35d2aea2e18004e4d599499ac74e7a8c75f26001d56324f71defcbd; parent_hash: 0x937d…cbe0; extrinsics (1): [0x4eb4…e3c6]]    
-2021-12-13 13:28:00 🔖 Pre-sealed block for proposal at 48. Hash now 0x0014bd7d3e89c5fe7d60ef3296c57325bfc5f33be653395148ec77d5e966748d, previously 0x620482fcd35d2aea2e18004e4d599499ac74e7a8c75f26001d56324f71defcbd.    
-2021-12-13 13:28:00 ✨ Imported #48 (0x0014…748d)    
-2021-12-13 13:28:02 💤 Idle (0 peers), best: #48 (0x0014…748d), finalized #45 (0xee5b…7ff8), ⬇ 0 ⬆ 0    
-2021-12-13 13:28:06 🙌 Starting consensus session on top of parent 0x0014bd7d3e89c5fe7d60ef3296c57325bfc5f33be653395148ec77d5e966748d    
-2021-12-13 13:28:06 🎁 Prepared block for proposing at 49 [hash: 0x0c7ea5de5d235583f8409446ee2e9bda5d5487aba1d334dbcb20e0e633eab27f; parent_hash: 0x0014…748d; extrinsics (1): [0x21b7…ff5c]]    
-2021-12-13 13:28:06 🔖 Pre-sealed block for proposal at 49. Hash now 0xdc2c3217932fc87c2e63853851681b10ef22efe3bef45633e74ac99265a8388e, previously 0x0c7ea5de5d235583f8409446ee2e9bda5d5487aba1d334dbcb20e0e633eab27f.    
-2021-12-13 13:28:06 ✨ Imported #49 (0xdc2c…388e)    
-2021-12-13 13:28:07 💤 Idle (0 peers), best: #49 (0xdc2c…388e), finalized #46 (0xf058…3fbe), ⬇ 0 ⬆ 0    
-2021-12-13 13:28:12 🙌 Starting consensus session on top of parent 0xdc2c3217932fc87c2e63853851681b10ef22efe3bef45633e74ac99265a8388e    
-2021-12-13 13:28:12 🎁 Prepared block for proposing at 50 [hash: 0x422e7872da387a982a9028edfdee94086ad0bcb1609f8ff500a9692e84f7789a; parent_hash: 0xdc2c…388e; extrinsics (1): [0x8cf0…d43d]]    
-2021-12-13 13:28:12 🔖 Pre-sealed block for proposal at 50. Hash now 0x29ae9d0f2ba3b73d5cbea30d55b5bab2870bfded57b8e6dc7c1289309fe74d93, previously 0x422e7872da387a982a9028edfdee94086ad0bcb1609f8ff500a9692e84f7789a.    
-2021-12-13 13:28:12 ✨ Imported #50 (0x29ae…4d93)    
-2021-12-13 13:28:12 💤 Idle (0 peers), best: #50 (0x29ae…4d93), finalized #47 (0x937d…cbe0), ⬇ 0 ⬆ 0    
-2021-12-13 13:28:17 💤 Idle (0 peers), best: #50 (0x29ae…4d93), finalized #47 (0x937d…cbe0), ⬇ 0 ⬆ 0    
-2021-12-13 13:28:18 🙌 Starting consensus session on top of parent 0x29ae9d0f2ba3b73d5cbea30d55b5bab2870bfded57b8e6dc7c1289309fe74d93    
-2021-12-13 13:28:18 🎁 Prepared block for proposing at 51 [hash: 0xf871258bbc0b8231509716608158fedcf471d14e17c4dbbc11c5fb9c75b98e75; parent_hash: 0x29ae…4d93; extrinsics (1): [0x00eb…8a41]]    
-2021-12-13 13:28:18 🔖 Pre-sealed block for proposal at 51. Hash now 0xb84688cf679444c93205d9f07c717dfaef84d118e3bf393b98e40d91ea260e20, previously 0xf871258bbc0b8231509716608158fedcf471d14e17c4dbbc11c5fb9c75b98e75.    
-2021-12-13 13:28:18 ✨ Imported #51 (0xb846…0e20)    
-2021-12-13 13:28:22 💤 Idle (0 peers), best: #51 (0xb846…0e20), finalized #49 (0xdc2c…388e), ⬇ 0 ⬆ 0    
-2021-12-13 13:28:24 🙌 Starting consensus session on top of parent 0xb84688cf679444c93205d9f07c717dfaef84d118e3bf393b98e40d91ea260e20    
-2021-12-13 13:28:24 🎁 Prepared block for proposing at 52 [hash: 0x53e09b9f19a59b6649a81d553f1343e56c6d3510918c521738afc4df88e69e47; parent_hash: 0xb846…0e20; extrinsics (1): [0xa63e…7689]]    
-2021-12-13 13:28:24 🔖 Pre-sealed block for proposal at 52. Hash now 0xc141c1537f69b83253879ca6d18544b7a738def60eef83cd92d74a253daf72fe, previously 0x53e09b9f19a59b6649a81d553f1343e56c6d3510918c521738afc4df88e69e47.    
-2021-12-13 13:28:24 ✨ Imported #52 (0xc141…72fe)    
-2021-12-13 13:28:27 💤 Idle (0 peers), best: #52 (0xc141…72fe), finalized #49 (0xdc2c…388e), ⬇ 0 ⬆ 0    
-2021-12-13 13:28:30 🙌 Starting consensus session on top of parent 0xc141c1537f69b83253879ca6d18544b7a738def60eef83cd92d74a253daf72fe    
-2021-12-13 13:28:30 🎁 Prepared block for proposing at 53 [hash: 0x87d52170af8cb9350eecbcf8da2f5f529095a25730be0c6691ca105215fb2c5a; parent_hash: 0xc141…72fe; extrinsics (1): [0x2d9c…22cb]]    
-2021-12-13 13:28:30 🔖 Pre-sealed block for proposal at 53. Hash now 0xf6599e0410b1aac7f6060d67fc697e66ce3ee29ec8c9621ed32fbca6bc603a84, previously 0x87d52170af8cb9350eecbcf8da2f5f529095a25730be0c6691ca105215fb2c5a.    
-2021-12-13 13:28:30 ✨ Imported #53 (0xf659…3a84)    
-2021-12-13 13:28:32 💤 Idle (0 peers), best: #53 (0xf659…3a84), finalized #50 (0x29ae…4d93), ⬇ 0 ⬆ 0    
-2021-12-13 13:28:36 🙌 Starting consensus session on top of parent 0xf6599e0410b1aac7f6060d67fc697e66ce3ee29ec8c9621ed32fbca6bc603a84    
-2021-12-13 13:28:36 🎁 Prepared block for proposing at 54 [hash: 0xea9435c779537185f6315b98284d64e62a1f667f2fd905b0d993e4bc49f15362; parent_hash: 0xf659…3a84; extrinsics (1): [0x4fcc…61e0]]    
-2021-12-13 13:28:36 🔖 Pre-sealed block for proposal at 54. Hash now 0xa548821f13c41baac3f8dd0b07462eaca982e77ba429c21894fa5c65fa3bd011, previously 0xea9435c779537185f6315b98284d64e62a1f667f2fd905b0d993e4bc49f15362.    
-2021-12-13 13:28:36 ✨ Imported #54 (0xa548…d011)    
-2021-12-13 13:28:37 💤 Idle (0 peers), best: #54 (0xa548…d011), finalized #51 (0xb846…0e20), ⬇ 0 ⬆ 0    
-2021-12-13 13:28:42 🙌 Starting consensus session on top of parent 0xa548821f13c41baac3f8dd0b07462eaca982e77ba429c21894fa5c65fa3bd011    
-2021-12-13 13:28:42 🎁 Prepared block for proposing at 55 [hash: 0xabec89650fef28420d34a0f718f778257a495f00a0e90ac36336e880fd091f33; parent_hash: 0xa548…d011; extrinsics (1): [0xd093…ead5]]    
-2021-12-13 13:28:42 🔖 Pre-sealed block for proposal at 55. Hash now 0x9541723652c36338aed4bf5671f3a6351bd1b5a7105747b8faa6348ec9fd53c6, previously 0xabec89650fef28420d34a0f718f778257a495f00a0e90ac36336e880fd091f33.    
-2021-12-13 13:28:42 ✨ Imported #55 (0x9541…53c6)    
-2021-12-13 13:28:42 💤 Idle (0 peers), best: #55 (0x9541…53c6), finalized #52 (0xc141…72fe), ⬇ 0 ⬆ 0    
-2021-12-13 13:28:47 💤 Idle (0 peers), best: #55 (0x9541…53c6), finalized #53 (0xf659…3a84), ⬇ 0 ⬆ 0    
-2021-12-13 13:28:48 🙌 Starting consensus session on top of parent 0x9541723652c36338aed4bf5671f3a6351bd1b5a7105747b8faa6348ec9fd53c6    
-2021-12-13 13:28:48 🎁 Prepared block for proposing at 56 [hash: 0x4c98ae85ac3bb7c4df8983e6a85a730f0fceea926b7b4fbd1f9e5917694b82f5; parent_hash: 0x9541…53c6; extrinsics (1): [0x6255…f35d]]    
-2021-12-13 13:28:48 🔖 Pre-sealed block for proposal at 56. Hash now 0xa20e64bdecc165e41024b6c3e91ffdfb0ec5fe501da0dcd6b3563122bc7a1b6c, previously 0x4c98ae85ac3bb7c4df8983e6a85a730f0fceea926b7b4fbd1f9e5917694b82f5.    
-2021-12-13 13:28:48 ✨ Imported #56 (0xa20e…1b6c)    
-2021-12-13 13:28:52 💤 Idle (0 peers), best: #56 (0xa20e…1b6c), finalized #53 (0xf659…3a84), ⬇ 0 ⬆ 0    
-2021-12-13 13:28:54 🙌 Starting consensus session on top of parent 0xa20e64bdecc165e41024b6c3e91ffdfb0ec5fe501da0dcd6b3563122bc7a1b6c    
-2021-12-13 13:28:54 🎁 Prepared block for proposing at 57 [hash: 0x20f467830fd176a6926f160d0504f280fb1e8d2cc583aa23cf7162eb836dafc0; parent_hash: 0xa20e…1b6c; extrinsics (1): [0x2bf1…1ef6]]    
-2021-12-13 13:28:54 🔖 Pre-sealed block for proposal at 57. Hash now 0xeb7850f8c083353bf07c1e27c3a1a5f49e23e1d2235a7b5e39e71eaa4889b4f0, previously 0x20f467830fd176a6926f160d0504f280fb1e8d2cc583aa23cf7162eb836dafc0.    
-2021-12-13 13:28:54 ✨ Imported #57 (0xeb78…b4f0)    
-2021-12-13 13:28:57 💤 Idle (0 peers), best: #57 (0xeb78…b4f0), finalized #54 (0xa548…d011), ⬇ 0 ⬆ 0    
-2021-12-13 13:29:00 🙌 Starting consensus session on top of parent 0xeb7850f8c083353bf07c1e27c3a1a5f49e23e1d2235a7b5e39e71eaa4889b4f0    
-2021-12-13 13:29:00 🎁 Prepared block for proposing at 58 [hash: 0xfc4b35d630e2e12d8169f13f9838748b6f8fbb310cceea920c2603f67ffaabc3; parent_hash: 0xeb78…b4f0; extrinsics (1): [0xb0a4…aac3]]    
-2021-12-13 13:29:00 🔖 Pre-sealed block for proposal at 58. Hash now 0xda9a1781c743721b13fb2e635dc996d2b5125cd94c4c93073c61bc43fb8381a3, previously 0xfc4b35d630e2e12d8169f13f9838748b6f8fbb310cceea920c2603f67ffaabc3.    
-2021-12-13 13:29:00 ✨ Imported #58 (0xda9a…81a3)    
-2021-12-13 13:29:02 💤 Idle (0 peers), best: #58 (0xda9a…81a3), finalized #55 (0x9541…53c6), ⬇ 0 ⬆ 0    
-2021-12-13 13:29:06 🙌 Starting consensus session on top of parent 0xda9a1781c743721b13fb2e635dc996d2b5125cd94c4c93073c61bc43fb8381a3    
-2021-12-13 13:29:06 🎁 Prepared block for proposing at 59 [hash: 0x9e890227d96a11a9f93a8781c2b096e312a03198491b36ecf30017f01fd9e43b; parent_hash: 0xda9a…81a3; extrinsics (1): [0x0831…fe38]]    
-2021-12-13 13:29:06 🔖 Pre-sealed block for proposal at 59. Hash now 0xf229444c7416546ab156d0322d4b56fbec1fd59fddf35f9ddc4f16d48d192faa, previously 0x9e890227d96a11a9f93a8781c2b096e312a03198491b36ecf30017f01fd9e43b.    
-2021-12-13 13:29:06 ✨ Imported #59 (0xf229…2faa)    
-2021-12-13 13:29:07 💤 Idle (0 peers), best: #59 (0xf229…2faa), finalized #56 (0xa20e…1b6c), ⬇ 0 ⬆ 0    
-2021-12-13 13:29:12 🙌 Starting consensus session on top of parent 0xf229444c7416546ab156d0322d4b56fbec1fd59fddf35f9ddc4f16d48d192faa    
-2021-12-13 13:29:12 🎁 Prepared block for proposing at 60 [hash: 0x24001772a857528966d353350e1f7ef770d9d542ff0e0d2c94adae27bbe7f5ab; parent_hash: 0xf229…2faa; extrinsics (1): [0x224f…c062]]    
-2021-12-13 13:29:12 🔖 Pre-sealed block for proposal at 60. Hash now 0xa1813a3a4a0a3a65db9713a6de403751d950527b697594ff25fd10bb38f3930f, previously 0x24001772a857528966d353350e1f7ef770d9d542ff0e0d2c94adae27bbe7f5ab.    
-2021-12-13 13:29:12 ✨ Imported #60 (0xa181…930f)    
-2021-12-13 13:29:12 💤 Idle (0 peers), best: #60 (0xa181…930f), finalized #57 (0xeb78…b4f0), ⬇ 0 ⬆ 0    
-2021-12-13 13:29:17 💤 Idle (0 peers), best: #60 (0xa181…930f), finalized #57 (0xeb78…b4f0), ⬇ 0 ⬆ 0    
-2021-12-13 13:29:18 🙌 Starting consensus session on top of parent 0xa1813a3a4a0a3a65db9713a6de403751d950527b697594ff25fd10bb38f3930f    
-2021-12-13 13:29:18 🎁 Prepared block for proposing at 61 [hash: 0x4bcbc3a5ace73aa620b2d5204c3da7e2e368fcf24b17f4226056475bfa63b3a6; parent_hash: 0xa181…930f; extrinsics (1): [0x51e6…5986]]    
-2021-12-13 13:29:18 🔖 Pre-sealed block for proposal at 61. Hash now 0x3d6c8c83d9654358b18b4463d4d54c9958b3a92d7159676656a735729e9b2d2e, previously 0x4bcbc3a5ace73aa620b2d5204c3da7e2e368fcf24b17f4226056475bfa63b3a6.    
-2021-12-13 13:29:18 ✨ Imported #61 (0x3d6c…2d2e)    
-2021-12-13 13:29:22 💤 Idle (0 peers), best: #61 (0x3d6c…2d2e), finalized #59 (0xf229…2faa), ⬇ 0 ⬆ 0    
-2021-12-13 13:29:24 🙌 Starting consensus session on top of parent 0x3d6c8c83d9654358b18b4463d4d54c9958b3a92d7159676656a735729e9b2d2e    
-2021-12-13 13:29:24 🎁 Prepared block for proposing at 62 [hash: 0x30cc8854cd4f0af23466ef495067729e1a4fb4ecf6a5824f814a52b34c977983; parent_hash: 0x3d6c…2d2e; extrinsics (1): [0xa1af…5d7f]]    
-2021-12-13 13:29:24 🔖 Pre-sealed block for proposal at 62. Hash now 0x7e07029ef5b00de91d4c732bfd7e4a9c378ae8be4f9bacd413d4ab24ec6a2512, previously 0x30cc8854cd4f0af23466ef495067729e1a4fb4ecf6a5824f814a52b34c977983.    
-2021-12-13 13:29:24 ✨ Imported #62 (0x7e07…2512)    
-2021-12-13 13:29:27 💤 Idle (0 peers), best: #62 (0x7e07…2512), finalized #59 (0xf229…2faa), ⬇ 0 ⬆ 0    
-2021-12-13 13:29:30 🙌 Starting consensus session on top of parent 0x7e07029ef5b00de91d4c732bfd7e4a9c378ae8be4f9bacd413d4ab24ec6a2512    
-2021-12-13 13:29:30 🎁 Prepared block for proposing at 63 [hash: 0x0fba1828ecda5c999e6e1c0041e6e325b2ffbdf34e1c9b9263b251343b7a4da8; parent_hash: 0x7e07…2512; extrinsics (1): [0x8888…b58d]]    
-2021-12-13 13:29:30 🔖 Pre-sealed block for proposal at 63. Hash now 0x0fe6b5968f6dc331afcc1632c47d8eaa7acdb911d22c79ea95e3b5f2cd133077, previously 0x0fba1828ecda5c999e6e1c0041e6e325b2ffbdf34e1c9b9263b251343b7a4da8.    
-2021-12-13 13:29:30 ✨ Imported #63 (0x0fe6…3077)    
-2021-12-13 13:29:32 💤 Idle (0 peers), best: #63 (0x0fe6…3077), finalized #60 (0xa181…930f), ⬇ 0 ⬆ 0    
-2021-12-13 13:29:36 🙌 Starting consensus session on top of parent 0x0fe6b5968f6dc331afcc1632c47d8eaa7acdb911d22c79ea95e3b5f2cd133077    
-2021-12-13 13:29:36 🎁 Prepared block for proposing at 64 [hash: 0xb18406e6a88da54ea45a1e79a9fde08cc614a078866dfb51faaa5f0b63f84966; parent_hash: 0x0fe6…3077; extrinsics (1): [0x3d72…1a4c]]    
-2021-12-13 13:29:36 🔖 Pre-sealed block for proposal at 64. Hash now 0x522a160b50796a14650ad7b25fb8b6417247756e3405e553ddaf655b947c8685, previously 0xb18406e6a88da54ea45a1e79a9fde08cc614a078866dfb51faaa5f0b63f84966.    
-2021-12-13 13:29:36 ✨ Imported #64 (0x522a…8685)    
-2021-12-13 13:29:37 💤 Idle (0 peers), best: #64 (0x522a…8685), finalized #61 (0x3d6c…2d2e), ⬇ 0 ⬆ 0    
-2021-12-13 13:29:42 🙌 Starting consensus session on top of parent 0x522a160b50796a14650ad7b25fb8b6417247756e3405e553ddaf655b947c8685    
-2021-12-13 13:29:42 🎁 Prepared block for proposing at 65 [hash: 0xc32feb3945a2f9266a19205bb93be977bf17e693ffd6b4e72a22cf8575f0a187; parent_hash: 0x522a…8685; extrinsics (1): [0x31da…b9e8]]    
-2021-12-13 13:29:42 🔖 Pre-sealed block for proposal at 65. Hash now 0x530f084abcba0af81f24ffed157254079289717597e139dba208c90273f56a42, previously 0xc32feb3945a2f9266a19205bb93be977bf17e693ffd6b4e72a22cf8575f0a187.    
-2021-12-13 13:29:42 ✨ Imported #65 (0x530f…6a42)    
-2021-12-13 13:29:42 💤 Idle (0 peers), best: #65 (0x530f…6a42), finalized #62 (0x7e07…2512), ⬇ 0 ⬆ 0    
-2021-12-13 13:29:47 💤 Idle (0 peers), best: #65 (0x530f…6a42), finalized #63 (0x0fe6…3077), ⬇ 0 ⬆ 0    
-2021-12-13 13:29:48 🙌 Starting consensus session on top of parent 0x530f084abcba0af81f24ffed157254079289717597e139dba208c90273f56a42    
-2021-12-13 13:29:48 🎁 Prepared block for proposing at 66 [hash: 0x3d5fdd44b558cf905276b073d39765e67f85069706e617d987ac2125fa596854; parent_hash: 0x530f…6a42; extrinsics (1): [0x4482…170f]]    
-2021-12-13 13:29:48 🔖 Pre-sealed block for proposal at 66. Hash now 0x652d2ab0395196f3e572b3954b36a1ad149cdd39aa8e5f81ce5cd85df768e2ed, previously 0x3d5fdd44b558cf905276b073d39765e67f85069706e617d987ac2125fa596854.    
-2021-12-13 13:29:48 ✨ Imported #66 (0x652d…e2ed)    
-2021-12-13 13:29:52 💤 Idle (0 peers), best: #66 (0x652d…e2ed), finalized #63 (0x0fe6…3077), ⬇ 0 ⬆ 0    
-2021-12-13 13:29:54 🙌 Starting consensus session on top of parent 0x652d2ab0395196f3e572b3954b36a1ad149cdd39aa8e5f81ce5cd85df768e2ed    
-2021-12-13 13:29:54 🎁 Prepared block for proposing at 67 [hash: 0x3f6c702c280bd37dfa673dbdad7973b5cc7c37a7bd3f186c9805ccb9cedbb870; parent_hash: 0x652d…e2ed; extrinsics (1): [0x0247…0042]]    
-2021-12-13 13:29:54 🔖 Pre-sealed block for proposal at 67. Hash now 0xa88818741ef8bbd7f6730344dfa102056d6908ff03995fc8c1181ffb90874e19, previously 0x3f6c702c280bd37dfa673dbdad7973b5cc7c37a7bd3f186c9805ccb9cedbb870.    
-2021-12-13 13:29:54 ✨ Imported #67 (0xa888…4e19)    
-2021-12-13 13:29:57 💤 Idle (0 peers), best: #67 (0xa888…4e19), finalized #64 (0x522a…8685), ⬇ 0 ⬆ 0    
-2021-12-13 13:30:00 🙌 Starting consensus session on top of parent 0xa88818741ef8bbd7f6730344dfa102056d6908ff03995fc8c1181ffb90874e19    
-2021-12-13 13:30:00 🎁 Prepared block for proposing at 68 [hash: 0xfc4da5e398dc2519a6bdcee2310ba69b38f0709696ca904f1c73a406710843e1; parent_hash: 0xa888…4e19; extrinsics (1): [0x6395…e6b1]]    
-2021-12-13 13:30:00 🔖 Pre-sealed block for proposal at 68. Hash now 0xc3b1e147cc99732767ba4be8aa789973f3195a6b31435bdd2b60b94577429624, previously 0xfc4da5e398dc2519a6bdcee2310ba69b38f0709696ca904f1c73a406710843e1.    
-2021-12-13 13:30:00 ✨ Imported #68 (0xc3b1…9624)    
-2021-12-13 13:30:02 💤 Idle (0 peers), best: #68 (0xc3b1…9624), finalized #65 (0x530f…6a42), ⬇ 0 ⬆ 0    
-2021-12-13 13:30:06 🙌 Starting consensus session on top of parent 0xc3b1e147cc99732767ba4be8aa789973f3195a6b31435bdd2b60b94577429624    
-2021-12-13 13:30:06 🎁 Prepared block for proposing at 69 [hash: 0x83c40e6b706a4edcbcf448a92533803d408c6f323fc70499e5aa51c133569dc9; parent_hash: 0xc3b1…9624; extrinsics (1): [0x5464…5065]]    
-2021-12-13 13:30:06 🔖 Pre-sealed block for proposal at 69. Hash now 0x2dbdf0c4ac9a9e593b7b90b857f0d525d6e30f545c9ffb78259a25ea6a6592b6, previously 0x83c40e6b706a4edcbcf448a92533803d408c6f323fc70499e5aa51c133569dc9.    
-2021-12-13 13:30:06 ✨ Imported #69 (0x2dbd…92b6)    
-2021-12-13 13:30:07 💤 Idle (0 peers), best: #69 (0x2dbd…92b6), finalized #66 (0x652d…e2ed), ⬇ 0 ⬆ 0    
-2021-12-13 13:30:12 🙌 Starting consensus session on top of parent 0x2dbdf0c4ac9a9e593b7b90b857f0d525d6e30f545c9ffb78259a25ea6a6592b6    
-2021-12-13 13:30:12 🎁 Prepared block for proposing at 70 [hash: 0x9e01fda041923716868e71b9c934dde38def167d1a27bb97ebb5d9488367a293; parent_hash: 0x2dbd…92b6; extrinsics (1): [0xa7a3…a6c0]]    
-2021-12-13 13:30:12 🔖 Pre-sealed block for proposal at 70. Hash now 0x7899ce98fd6b00ec61f64322ebd7ee6ddc1e735aa6875525fbdea5811b304dc4, previously 0x9e01fda041923716868e71b9c934dde38def167d1a27bb97ebb5d9488367a293.    
-2021-12-13 13:30:12 ✨ Imported #70 (0x7899…4dc4)    
-2021-12-13 13:30:12 💤 Idle (0 peers), best: #70 (0x7899…4dc4), finalized #67 (0xa888…4e19), ⬇ 0 ⬆ 0    
-2021-12-13 13:30:17 💤 Idle (0 peers), best: #70 (0x7899…4dc4), finalized #67 (0xa888…4e19), ⬇ 0 ⬆ 0    
-2021-12-13 13:30:18 🙌 Starting consensus session on top of parent 0x7899ce98fd6b00ec61f64322ebd7ee6ddc1e735aa6875525fbdea5811b304dc4    
-2021-12-13 13:30:18 🎁 Prepared block for proposing at 71 [hash: 0x77375d877698ba5c3604184b479edb1cacf9bccb68281addc18931cd18d124d1; parent_hash: 0x7899…4dc4; extrinsics (1): [0xcc20…c2e7]]    
-2021-12-13 13:30:18 🔖 Pre-sealed block for proposal at 71. Hash now 0x6660e9a548d4be69a68ce5d9b3cb9a060c1a91cfba1b286b067b77aa1416ec45, previously 0x77375d877698ba5c3604184b479edb1cacf9bccb68281addc18931cd18d124d1.    
-2021-12-13 13:30:18 ✨ Imported #71 (0x6660…ec45)    
-2021-12-13 13:30:22 💤 Idle (0 peers), best: #71 (0x6660…ec45), finalized #69 (0x2dbd…92b6), ⬇ 0 ⬆ 0    
-2021-12-13 13:30:24 🙌 Starting consensus session on top of parent 0x6660e9a548d4be69a68ce5d9b3cb9a060c1a91cfba1b286b067b77aa1416ec45    
-2021-12-13 13:30:24 🎁 Prepared block for proposing at 72 [hash: 0x09c086cee6b1fcd660e24abe654a19045ad7cb181300bd57d86cbf862b33e509; parent_hash: 0x6660…ec45; extrinsics (1): [0x929f…1b96]]    
-2021-12-13 13:30:24 🔖 Pre-sealed block for proposal at 72. Hash now 0xc132fc876bf14e390cd0affced151c9cd64e9ab02df56729eaa5aa29cb239868, previously 0x09c086cee6b1fcd660e24abe654a19045ad7cb181300bd57d86cbf862b33e509.    
-2021-12-13 13:30:24 ✨ Imported #72 (0xc132…9868)    
-2021-12-13 13:30:27 💤 Idle (0 peers), best: #72 (0xc132…9868), finalized #69 (0x2dbd…92b6), ⬇ 0 ⬆ 0    
-2021-12-13 13:30:30 🙌 Starting consensus session on top of parent 0xc132fc876bf14e390cd0affced151c9cd64e9ab02df56729eaa5aa29cb239868    
-2021-12-13 13:30:30 🎁 Prepared block for proposing at 73 [hash: 0xa50a5cfc98c2b1095efb7e502257cba823379db4ab02ec64cf0cf47a2686d08b; parent_hash: 0xc132…9868; extrinsics (1): [0x6318…3318]]    
-2021-12-13 13:30:30 🔖 Pre-sealed block for proposal at 73. Hash now 0x4db6b8436b756b9c3dec2600ee549e2f5f3f163be593bc89e6d89b242be9791f, previously 0xa50a5cfc98c2b1095efb7e502257cba823379db4ab02ec64cf0cf47a2686d08b.    
-2021-12-13 13:30:30 ✨ Imported #73 (0x4db6…791f)    
-2021-12-13 13:30:32 💤 Idle (0 peers), best: #73 (0x4db6…791f), finalized #70 (0x7899…4dc4), ⬇ 0 ⬆ 0    
-2021-12-13 13:30:36 🙌 Starting consensus session on top of parent 0x4db6b8436b756b9c3dec2600ee549e2f5f3f163be593bc89e6d89b242be9791f    
-2021-12-13 13:30:36 🎁 Prepared block for proposing at 74 [hash: 0x0d587a94299dba74878ae26b658fb83ff1dfee18b28316881de6d51ad587dda6; parent_hash: 0x4db6…791f; extrinsics (1): [0xad18…96cf]]    
-2021-12-13 13:30:36 🔖 Pre-sealed block for proposal at 74. Hash now 0x6e1305eef1ba6fdc9051431640c58e65323692f507023351d52e167c5ec9f2bf, previously 0x0d587a94299dba74878ae26b658fb83ff1dfee18b28316881de6d51ad587dda6.    
-2021-12-13 13:30:36 ✨ Imported #74 (0x6e13…f2bf)    
-2021-12-13 13:30:37 💤 Idle (0 peers), best: #74 (0x6e13…f2bf), finalized #71 (0x6660…ec45), ⬇ 0 ⬆ 0    
-2021-12-13 13:30:42 🙌 Starting consensus session on top of parent 0x6e1305eef1ba6fdc9051431640c58e65323692f507023351d52e167c5ec9f2bf    
-2021-12-13 13:30:42 🎁 Prepared block for proposing at 75 [hash: 0xcd80a0210a36feeffa7b680395691ba488947e7ff35010e86a8b63220d1f77ba; parent_hash: 0x6e13…f2bf; extrinsics (1): [0xc0bc…b200]]    
-2021-12-13 13:30:42 🔖 Pre-sealed block for proposal at 75. Hash now 0x76a8c85a299ce381f197aab9364cc6696892aff6cf1ddd85ed3551f769c442eb, previously 0xcd80a0210a36feeffa7b680395691ba488947e7ff35010e86a8b63220d1f77ba.    
-2021-12-13 13:30:42 ✨ Imported #75 (0x76a8…42eb)    
-2021-12-13 13:30:42 💤 Idle (0 peers), best: #75 (0x76a8…42eb), finalized #72 (0xc132…9868), ⬇ 0 ⬆ 0    
-2021-12-13 13:30:47 💤 Idle (0 peers), best: #75 (0x76a8…42eb), finalized #73 (0x4db6…791f), ⬇ 0 ⬆ 0    
-2021-12-13 13:30:48 🙌 Starting consensus session on top of parent 0x76a8c85a299ce381f197aab9364cc6696892aff6cf1ddd85ed3551f769c442eb    
-2021-12-13 13:30:48 🎁 Prepared block for proposing at 76 [hash: 0x9a506c857875054b52c0f3fd6ac649f484f36d9bbed872f4607f25c08520d942; parent_hash: 0x76a8…42eb; extrinsics (1): [0xc94e…98c6]]    
-2021-12-13 13:30:48 🔖 Pre-sealed block for proposal at 76. Hash now 0x78a4745528e729a63b20fc6492ba417dd947c1d56274e45fbe64ab478578383f, previously 0x9a506c857875054b52c0f3fd6ac649f484f36d9bbed872f4607f25c08520d942.    
-2021-12-13 13:30:48 ✨ Imported #76 (0x78a4…383f)    
-2021-12-13 13:30:52 💤 Idle (0 peers), best: #76 (0x78a4…383f), finalized #73 (0x4db6…791f), ⬇ 0 ⬆ 0    
-2021-12-13 13:30:54 🙌 Starting consensus session on top of parent 0x78a4745528e729a63b20fc6492ba417dd947c1d56274e45fbe64ab478578383f    
-2021-12-13 13:30:54 🎁 Prepared block for proposing at 77 [hash: 0x2b8934b1f00fd31b293c527b6384616a1a267a7d3011e74d031700b01e5f1343; parent_hash: 0x78a4…383f; extrinsics (1): [0xa077…24d0]]    
-2021-12-13 13:30:54 🔖 Pre-sealed block for proposal at 77. Hash now 0x5df52939c9424cff28f1b517e5455ff52d5bbb1f9bf4114011c60cf76bb4933a, previously 0x2b8934b1f00fd31b293c527b6384616a1a267a7d3011e74d031700b01e5f1343.    
-2021-12-13 13:30:54 ✨ Imported #77 (0x5df5…933a)    
-2021-12-13 13:30:57 💤 Idle (0 peers), best: #77 (0x5df5…933a), finalized #74 (0x6e13…f2bf), ⬇ 0 ⬆ 0    
-2021-12-13 13:31:00 🙌 Starting consensus session on top of parent 0x5df52939c9424cff28f1b517e5455ff52d5bbb1f9bf4114011c60cf76bb4933a    
-2021-12-13 13:31:00 🎁 Prepared block for proposing at 78 [hash: 0xf916e36aad30577511c45a0223b9ebafa850b28596aa2b649f3187047bc3fc2f; parent_hash: 0x5df5…933a; extrinsics (1): [0xb229…65b5]]    
-2021-12-13 13:31:00 🔖 Pre-sealed block for proposal at 78. Hash now 0x1e3ea29debce372da7c51fd8fb73088c1dac3f6f77089a3c41676817f7bd304f, previously 0xf916e36aad30577511c45a0223b9ebafa850b28596aa2b649f3187047bc3fc2f.    
-2021-12-13 13:31:00 ✨ Imported #78 (0x1e3e…304f)    
-2021-12-13 13:31:02 💤 Idle (0 peers), best: #78 (0x1e3e…304f), finalized #75 (0x76a8…42eb), ⬇ 0 ⬆ 0    
-2021-12-13 13:31:06 🙌 Starting consensus session on top of parent 0x1e3ea29debce372da7c51fd8fb73088c1dac3f6f77089a3c41676817f7bd304f    
-2021-12-13 13:31:06 🎁 Prepared block for proposing at 79 [hash: 0x6c42d869f55de50ba1b29f0e25fb467cccd7996fec8a8d0ee364510875ca3a70; parent_hash: 0x1e3e…304f; extrinsics (1): [0xce36…bc23]]    
-2021-12-13 13:31:06 🔖 Pre-sealed block for proposal at 79. Hash now 0x4a9a1bb89c62aac4c309137b2f6c0cfa602d020539fdf38aba2461d42e18a559, previously 0x6c42d869f55de50ba1b29f0e25fb467cccd7996fec8a8d0ee364510875ca3a70.    
-2021-12-13 13:31:06 ✨ Imported #79 (0x4a9a…a559)    
-2021-12-13 13:31:07 💤 Idle (0 peers), best: #79 (0x4a9a…a559), finalized #76 (0x78a4…383f), ⬇ 0 ⬆ 0    
-2021-12-13 13:31:12 🙌 Starting consensus session on top of parent 0x4a9a1bb89c62aac4c309137b2f6c0cfa602d020539fdf38aba2461d42e18a559    
-2021-12-13 13:31:12 🎁 Prepared block for proposing at 80 [hash: 0x1d97dd031cb317f854dcc08b0e6696abffb7d988664870e9449f09de39f58895; parent_hash: 0x4a9a…a559; extrinsics (1): [0x1c2e…b8df]]    
-2021-12-13 13:31:12 🔖 Pre-sealed block for proposal at 80. Hash now 0x1b7c4e10d96b39e414f1113828a737dd389fbdb29bf0870a31c8a7e8dc7a90bf, previously 0x1d97dd031cb317f854dcc08b0e6696abffb7d988664870e9449f09de39f58895.    
-2021-12-13 13:31:12 ✨ Imported #80 (0x1b7c…90bf)    
-2021-12-13 13:31:12 💤 Idle (0 peers), best: #80 (0x1b7c…90bf), finalized #77 (0x5df5…933a), ⬇ 0 ⬆ 0    
-2021-12-13 13:31:17 💤 Idle (0 peers), best: #80 (0x1b7c…90bf), finalized #77 (0x5df5…933a), ⬇ 0 ⬆ 0    
-2021-12-13 13:31:18 🙌 Starting consensus session on top of parent 0x1b7c4e10d96b39e414f1113828a737dd389fbdb29bf0870a31c8a7e8dc7a90bf    
-2021-12-13 13:31:18 🎁 Prepared block for proposing at 81 [hash: 0x034ef9fb06385a6484ccf073790c7e1f01ba9eea3d911cf516cccc5315ea7dd6; parent_hash: 0x1b7c…90bf; extrinsics (1): [0x787d…7e98]]    
-2021-12-13 13:31:18 🔖 Pre-sealed block for proposal at 81. Hash now 0x3b3e95b827b9f6448d957c034a6b8004ca5f9fd33f5212e5d4f9c000d6be486b, previously 0x034ef9fb06385a6484ccf073790c7e1f01ba9eea3d911cf516cccc5315ea7dd6.    
-2021-12-13 13:31:18 ✨ Imported #81 (0x3b3e…486b)    
+2021-12-13 16:52:20 Running in --dev mode, RPC CORS has been disabled.    
+2021-12-13 16:52:20 Darwinia Runtime Module Library    
+2021-12-13 16:52:20 ✌️  version 2.7.1-e1fbce1a1-x86_64-linux-gnu    
+2021-12-13 16:52:20 ❤️  by Darwinia Network <hello@darwinia.network>, 2018-2021    
+2021-12-13 16:52:20 📋 Chain specification: Pangolin    
+2021-12-13 16:52:20 🏷 Node name: funny-potato-7189    
+2021-12-13 16:52:20 👤 Role: AUTHORITY    
+2021-12-13 16:52:20 💾 Database: RocksDb at /tmp/substrateLVGDEh/chains/pangolin/db    
+2021-12-13 16:52:20 ⛓  Native runtime: Pangolin-27010 (Pangolin-0.tx0.au0)    
+2021-12-13 16:52:20 `pallet_timestamp::UnixTime::now` is called at genesis, invalid value returned: 0    
+2021-12-13 16:52:20 [0] 💸 new validator set of size 1 has been processed for era 1    
+2021-12-13 16:52:20 [darwinia-claims] Genesis Claims List is Set to EMPTY    
+2021-12-13 16:52:20 🔨 Initializing Genesis block/state (state: 0xcb7e…23a8, header-hash: 0x9e23…7f7a)    
+2021-12-13 16:52:20 👴 Loading GRANDPA authority set from genesis on what appears to be first startup.    
+2021-12-13 16:52:22 ⏱  Loaded block-time = 6s from block 0x9e2302f2257770b1f07668b0a4e90651515916c7c3380a37ec45bf24f3d47f7a    
+2021-12-13 16:52:22 👶 Creating empty BABE epoch changes on what appears to be first startup.    
+2021-12-13 16:52:22 🏷 Local node identity is: 12D3KooWFpdkGtKKYUbGUWpG98w5We99T9r1c2tavkF5b4D7HJ8c    
+2021-12-13 16:52:23 📦 Highest known block at #0    
+2021-12-13 16:52:23 〽️ Prometheus exporter started at 127.0.0.1:9615    
+2021-12-13 16:52:23 Listening for new connections on 127.0.0.1:9944.    
+2021-12-13 16:52:23 👶 Starting BABE Authorship worker    
+2021-12-13 16:52:24 🙌 Starting consensus session on top of parent 0x9e2302f2257770b1f07668b0a4e90651515916c7c3380a37ec45bf24f3d47f7a    
+2021-12-13 16:52:24 🎁 Prepared block for proposing at 1 [hash: 0x7ed1ecc052218013d7340b18c630af7a7664f6058c4682a1be8e945353e3246a; parent_hash: 0x9e23…7f7a; extrinsics (1): [0xa4e3…1b94]]    
+2021-12-13 16:52:24 🔖 Pre-sealed block for proposal at 1. Hash now 0x412bf4b3ddeca6c43289e986e9dd131119e25267195b7c1549c74eacdc7848cd, previously 0x7ed1ecc052218013d7340b18c630af7a7664f6058c4682a1be8e945353e3246a.    
+2021-12-13 16:52:24 👶 New epoch 0 launching at block 0x412b…48cd (block slot 273230924 >= start slot 273230924).    
+2021-12-13 16:52:24 👶 Next epoch starts at slot 273231224    
+2021-12-13 16:52:24 ✨ Imported #1 (0x412b…48cd)    
+2021-12-13 16:52:28 💤 Idle (0 peers), best: #1 (0x412b…48cd), finalized #0 (0x9e23…7f7a), ⬇ 0 ⬆ 0    
+2021-12-13 16:52:30 🙌 Starting consensus session on top of parent 0x412bf4b3ddeca6c43289e986e9dd131119e25267195b7c1549c74eacdc7848cd    
+2021-12-13 16:52:30 🎁 Prepared block for proposing at 2 [hash: 0x2b7b7bd19628d9db1c378dfd6dc759b4654ea07d37ede5b8c6b84622dfb99eee; parent_hash: 0x412b…48cd; extrinsics (1): [0x9352…5d16]]    
+2021-12-13 16:52:30 🔖 Pre-sealed block for proposal at 2. Hash now 0x091aa9e2c7fc4ffe8c28b8232695fb73610a7572d692b0a5c6551ae54781e5da, previously 0x2b7b7bd19628d9db1c378dfd6dc759b4654ea07d37ede5b8c6b84622dfb99eee.    
+2021-12-13 16:52:30 ✨ Imported #2 (0x091a…e5da)    
+2021-12-13 16:52:33 💤 Idle (0 peers), best: #2 (0x091a…e5da), finalized #0 (0x9e23…7f7a), ⬇ 0 ⬆ 0    
+2021-12-13 16:52:36 🙌 Starting consensus session on top of parent 0x091aa9e2c7fc4ffe8c28b8232695fb73610a7572d692b0a5c6551ae54781e5da    
+2021-12-13 16:52:36 🎁 Prepared block for proposing at 3 [hash: 0x05c0aaecbad184b2fdaae01ac31aa48541e6f3fa5fcfb13d30daaf653cf71cb0; parent_hash: 0x091a…e5da; extrinsics (1): [0x13aa…feb5]]    
+2021-12-13 16:52:36 🔖 Pre-sealed block for proposal at 3. Hash now 0x40d0ad229a1c057b3a471f4e6f9dec8fda8c289e8b3d3a3347a909a9adb0aeff, previously 0x05c0aaecbad184b2fdaae01ac31aa48541e6f3fa5fcfb13d30daaf653cf71cb0.    
+2021-12-13 16:52:36 ✨ Imported #3 (0x40d0…aeff)    
+2021-12-13 16:52:38 💤 Idle (0 peers), best: #3 (0x40d0…aeff), finalized #0 (0x9e23…7f7a), ⬇ 0 ⬆ 0    
+2021-12-13 16:52:42 🙌 Starting consensus session on top of parent 0x40d0ad229a1c057b3a471f4e6f9dec8fda8c289e8b3d3a3347a909a9adb0aeff    
+2021-12-13 16:52:42 🎁 Prepared block for proposing at 4 [hash: 0x4afebfcd37fb4109239b53513702652a454dbe2ad279cbf341476cec76cd140b; parent_hash: 0x40d0…aeff; extrinsics (1): [0x609a…99e1]]    
+2021-12-13 16:52:42 🔖 Pre-sealed block for proposal at 4. Hash now 0xe8f2e32b1247985c2a1d15ac2447fcb9225203be508826e116c45e32e1199dc3, previously 0x4afebfcd37fb4109239b53513702652a454dbe2ad279cbf341476cec76cd140b.    
+2021-12-13 16:52:42 ✨ Imported #4 (0xe8f2…9dc3)    
+2021-12-13 16:52:43 💤 Idle (0 peers), best: #4 (0xe8f2…9dc3), finalized #1 (0x412b…48cd), ⬇ 0 ⬆ 0    
+2021-12-13 16:52:48 🙌 Starting consensus session on top of parent 0xe8f2e32b1247985c2a1d15ac2447fcb9225203be508826e116c45e32e1199dc3    
+2021-12-13 16:52:48 🎁 Prepared block for proposing at 5 [hash: 0x806f36841efc06a5f484c0077065401faeea7aefc6ff7f716c888365d4fc6dbc; parent_hash: 0xe8f2…9dc3; extrinsics (2): [0x1659…ab2f, 0x6447…e519]]    
+2021-12-13 16:52:48 🔖 Pre-sealed block for proposal at 5. Hash now 0xbb59c6c059322214648487c32d22c900040d40f7d15355f20b0cbb6c3ffa77c8, previously 0x806f36841efc06a5f484c0077065401faeea7aefc6ff7f716c888365d4fc6dbc.    
+2021-12-13 16:52:48 ✨ Imported #5 (0xbb59…77c8)    
+2021-12-13 16:52:48 💤 Idle (0 peers), best: #5 (0xbb59…77c8), finalized #2 (0x091a…e5da), ⬇ 0 ⬆ 0    
+2021-12-13 16:52:53 💤 Idle (0 peers), best: #5 (0xbb59…77c8), finalized #3 (0x40d0…aeff), ⬇ 0 ⬆ 0    
+2021-12-13 16:52:54 🙌 Starting consensus session on top of parent 0xbb59c6c059322214648487c32d22c900040d40f7d15355f20b0cbb6c3ffa77c8    
+2021-12-13 16:52:54 🎁 Prepared block for proposing at 6 [hash: 0x9a4909e2462a12da4d7fb4988c58fb3308ef5af65d779971f686642ef9fc5022; parent_hash: 0xbb59…77c8; extrinsics (1): [0xeb26…0e5e]]    
+2021-12-13 16:52:54 🔖 Pre-sealed block for proposal at 6. Hash now 0x9dc7d67caeb5e174cc7e0904bbbab562322766e2888a7da94bb014299fa44931, previously 0x9a4909e2462a12da4d7fb4988c58fb3308ef5af65d779971f686642ef9fc5022.    
+2021-12-13 16:52:54 ✨ Imported #6 (0x9dc7…4931)    
+2021-12-13 16:52:58 💤 Idle (0 peers), best: #6 (0x9dc7…4931), finalized #3 (0x40d0…aeff), ⬇ 0 ⬆ 0    
+2021-12-13 16:53:00 🙌 Starting consensus session on top of parent 0x9dc7d67caeb5e174cc7e0904bbbab562322766e2888a7da94bb014299fa44931    
+2021-12-13 16:53:00 🎁 Prepared block for proposing at 7 [hash: 0x806f550ccf1a108a6dfadc5005755fe9c370eeeea0253cda64b0a6a975213d68; parent_hash: 0x9dc7…4931; extrinsics (1): [0x2e09…b2f2]]    
+2021-12-13 16:53:00 🔖 Pre-sealed block for proposal at 7. Hash now 0xde0ad717ee21dd1b510b4147106fe71cb91bebfeb285a9ec1b3f1a2d301123de, previously 0x806f550ccf1a108a6dfadc5005755fe9c370eeeea0253cda64b0a6a975213d68.    
+2021-12-13 16:53:00 ✨ Imported #7 (0xde0a…23de)    
+2021-12-13 16:53:03 💤 Idle (0 peers), best: #7 (0xde0a…23de), finalized #4 (0xe8f2…9dc3), ⬇ 0 ⬆ 0    
+2021-12-13 16:53:06 🙌 Starting consensus session on top of parent 0xde0ad717ee21dd1b510b4147106fe71cb91bebfeb285a9ec1b3f1a2d301123de    
+2021-12-13 16:53:06 🎁 Prepared block for proposing at 8 [hash: 0x5759bdd1b029beeeb2129a671e33249d3c505eca4f39c2d7c7486a7458679b1d; parent_hash: 0xde0a…23de; extrinsics (1): [0xd548…c899]]    
+2021-12-13 16:53:06 🔖 Pre-sealed block for proposal at 8. Hash now 0x19b7839bf351050da625d5f21235a37a028f78348705eb1c3900a6ca56f875d6, previously 0x5759bdd1b029beeeb2129a671e33249d3c505eca4f39c2d7c7486a7458679b1d.    
+2021-12-13 16:53:06 ✨ Imported #8 (0x19b7…75d6)    
+2021-12-13 16:53:08 💤 Idle (0 peers), best: #8 (0x19b7…75d6), finalized #5 (0xbb59…77c8), ⬇ 0 ⬆ 0    
+2021-12-13 16:53:12 🙌 Starting consensus session on top of parent 0x19b7839bf351050da625d5f21235a37a028f78348705eb1c3900a6ca56f875d6    
+2021-12-13 16:53:12 🎁 Prepared block for proposing at 9 [hash: 0x1899f79e2297f87cdaf1105ae416357c9c73272e982773c0e7af14317e0a1df2; parent_hash: 0x19b7…75d6; extrinsics (1): [0x964d…b456]]    
+2021-12-13 16:53:12 🔖 Pre-sealed block for proposal at 9. Hash now 0xa18a3479153807dd9e98bdf2c72f64b77ab89e96324db27eab0b61c2b7df3356, previously 0x1899f79e2297f87cdaf1105ae416357c9c73272e982773c0e7af14317e0a1df2.    
+2021-12-13 16:53:12 ✨ Imported #9 (0xa18a…3356)    
+2021-12-13 16:53:13 💤 Idle (0 peers), best: #9 (0xa18a…3356), finalized #6 (0x9dc7…4931), ⬇ 0 ⬆ 0    
+2021-12-13 16:53:18 🙌 Starting consensus session on top of parent 0xa18a3479153807dd9e98bdf2c72f64b77ab89e96324db27eab0b61c2b7df3356    
+2021-12-13 16:53:18 🎁 Prepared block for proposing at 10 [hash: 0x5b13be93573c3be5df3ff18b6bc6aa2a16e53dbaf3d67bfe5480d8797a2d1ae2; parent_hash: 0xa18a…3356; extrinsics (1): [0x970f…0c74]]    
+2021-12-13 16:53:18 🔖 Pre-sealed block for proposal at 10. Hash now 0x0408fcbfc05a6d7c3a373d0893f56e328c89eba62f83d2418086ebe537ce114a, previously 0x5b13be93573c3be5df3ff18b6bc6aa2a16e53dbaf3d67bfe5480d8797a2d1ae2.    
+2021-12-13 16:53:18 ✨ Imported #10 (0x0408…114a)    
+2021-12-13 16:53:18 💤 Idle (0 peers), best: #10 (0x0408…114a), finalized #7 (0xde0a…23de), ⬇ 0 ⬆ 0    
+2021-12-13 16:53:23 💤 Idle (0 peers), best: #10 (0x0408…114a), finalized #7 (0xde0a…23de), ⬇ 0 ⬆ 0    
+2021-12-13 16:53:24 🙌 Starting consensus session on top of parent 0x0408fcbfc05a6d7c3a373d0893f56e328c89eba62f83d2418086ebe537ce114a    
+2021-12-13 16:53:24 🎁 Prepared block for proposing at 11 [hash: 0x6c88253fdd20ed4057828aeb594c5a59b1ac945f3d001e961d0c4230bac00d71; parent_hash: 0x0408…114a; extrinsics (1): [0x880c…6a0f]]    
+2021-12-13 16:53:24 🔖 Pre-sealed block for proposal at 11. Hash now 0x72b886157d2bef7a3dc652f8b285813976d6c43630b0f632168cb0f26a28a2b7, previously 0x6c88253fdd20ed4057828aeb594c5a59b1ac945f3d001e961d0c4230bac00d71.    
+2021-12-13 16:53:24 ✨ Imported #11 (0x72b8…a2b7)    
+2021-12-13 16:53:28 💤 Idle (0 peers), best: #11 (0x72b8…a2b7), finalized #9 (0xa18a…3356), ⬇ 0 ⬆ 0    
+2021-12-13 16:53:30 🙌 Starting consensus session on top of parent 0x72b886157d2bef7a3dc652f8b285813976d6c43630b0f632168cb0f26a28a2b7    
+2021-12-13 16:53:30 🎁 Prepared block for proposing at 12 [hash: 0xdc172e8c2ff26f5861ed77f4e858ed2aeee261397bb34e91d2ae9a08998c3600; parent_hash: 0x72b8…a2b7; extrinsics (1): [0x0f52…68c2]]    
+2021-12-13 16:53:30 🔖 Pre-sealed block for proposal at 12. Hash now 0x0e0c90090931302e8f0cd804cc271314ed81d86f870584ff1e70d53064ee59e6, previously 0xdc172e8c2ff26f5861ed77f4e858ed2aeee261397bb34e91d2ae9a08998c3600.    
+2021-12-13 16:53:30 ✨ Imported #12 (0x0e0c…59e6)    
+2021-12-13 16:53:33 💤 Idle (0 peers), best: #12 (0x0e0c…59e6), finalized #9 (0xa18a…3356), ⬇ 0 ⬆ 0    
+2021-12-13 16:53:36 🙌 Starting consensus session on top of parent 0x0e0c90090931302e8f0cd804cc271314ed81d86f870584ff1e70d53064ee59e6    
+2021-12-13 16:53:36 🎁 Prepared block for proposing at 13 [hash: 0xc558c5f00c35bd8c2a81fa737704394bda429752608c494c296d098195879e67; parent_hash: 0x0e0c…59e6; extrinsics (1): [0xd096…a552]]    
+2021-12-13 16:53:36 🔖 Pre-sealed block for proposal at 13. Hash now 0xa701a6d03495a8770f7eae21a2d439f7a88ef8fbab0299d3b505eddcc7bd3bca, previously 0xc558c5f00c35bd8c2a81fa737704394bda429752608c494c296d098195879e67.    
+2021-12-13 16:53:36 ✨ Imported #13 (0xa701…3bca)    
+2021-12-13 16:53:38 💤 Idle (0 peers), best: #13 (0xa701…3bca), finalized #10 (0x0408…114a), ⬇ 0 ⬆ 0    
+2021-12-13 16:53:42 🙌 Starting consensus session on top of parent 0xa701a6d03495a8770f7eae21a2d439f7a88ef8fbab0299d3b505eddcc7bd3bca    
+2021-12-13 16:53:42 🎁 Prepared block for proposing at 14 [hash: 0x15bb9368f430952666b55540ad5e372b866e490f768402e2e108690fbf65163c; parent_hash: 0xa701…3bca; extrinsics (1): [0x644e…a760]]    
+2021-12-13 16:53:42 🔖 Pre-sealed block for proposal at 14. Hash now 0x25566c8a95dc70d19cd31bfa8a24f08a9667d887e3574410f78b5d51fff70b20, previously 0x15bb9368f430952666b55540ad5e372b866e490f768402e2e108690fbf65163c.    
+2021-12-13 16:53:42 ✨ Imported #14 (0x2556…0b20)    
+2021-12-13 16:53:43 💤 Idle (0 peers), best: #14 (0x2556…0b20), finalized #11 (0x72b8…a2b7), ⬇ 0 ⬆ 0    
+2021-12-13 16:53:48 🙌 Starting consensus session on top of parent 0x25566c8a95dc70d19cd31bfa8a24f08a9667d887e3574410f78b5d51fff70b20    
+2021-12-13 16:53:48 🎁 Prepared block for proposing at 15 [hash: 0xbe65257039eca2ed653b57056465f356f317fbb209e9b6b204a1f93d386d2db9; parent_hash: 0x2556…0b20; extrinsics (1): [0xab1e…6915]]    
+2021-12-13 16:53:48 🔖 Pre-sealed block for proposal at 15. Hash now 0x57dcd8d92b09d8ade869eccb35ce9a191b4f27529819361c1cb73afed553b36a, previously 0xbe65257039eca2ed653b57056465f356f317fbb209e9b6b204a1f93d386d2db9.    
+2021-12-13 16:53:48 ✨ Imported #15 (0x57dc…b36a)    
+2021-12-13 16:53:48 💤 Idle (0 peers), best: #15 (0x57dc…b36a), finalized #12 (0x0e0c…59e6), ⬇ 0 ⬆ 0    
+2021-12-13 16:53:53 💤 Idle (0 peers), best: #15 (0x57dc…b36a), finalized #13 (0xa701…3bca), ⬇ 0 ⬆ 0    
+2021-12-13 16:53:54 🙌 Starting consensus session on top of parent 0x57dcd8d92b09d8ade869eccb35ce9a191b4f27529819361c1cb73afed553b36a    
+2021-12-13 16:53:54 🎁 Prepared block for proposing at 16 [hash: 0x762b46014aa31285b525a4e743658fefcca405851968dab8f9388791c441a32f; parent_hash: 0x57dc…b36a; extrinsics (1): [0x9fb3…5843]]    
+2021-12-13 16:53:54 🔖 Pre-sealed block for proposal at 16. Hash now 0xc0bea6eb43ef36f4359eb4c1f04d9d2094ea390dfd69947de46071bc646be1d7, previously 0x762b46014aa31285b525a4e743658fefcca405851968dab8f9388791c441a32f.    
+2021-12-13 16:53:54 ✨ Imported #16 (0xc0be…e1d7)    
+2021-12-13 16:53:58 💤 Idle (0 peers), best: #16 (0xc0be…e1d7), finalized #13 (0xa701…3bca), ⬇ 0 ⬆ 0    
+2021-12-13 16:54:00 🙌 Starting consensus session on top of parent 0xc0bea6eb43ef36f4359eb4c1f04d9d2094ea390dfd69947de46071bc646be1d7    
+2021-12-13 16:54:00 🎁 Prepared block for proposing at 17 [hash: 0xf306754c525b2ee41f00bcf5291758a86a2de323f77aff81ea1b1d226d03a0d2; parent_hash: 0xc0be…e1d7; extrinsics (1): [0x974e…d2fe]]    
+2021-12-13 16:54:00 🔖 Pre-sealed block for proposal at 17. Hash now 0xa0ff95f477b6509289d57057b03a0699ddbe69f1e2835ecea2cae5132093eedc, previously 0xf306754c525b2ee41f00bcf5291758a86a2de323f77aff81ea1b1d226d03a0d2.    
+2021-12-13 16:54:00 ✨ Imported #17 (0xa0ff…eedc)    
+2021-12-13 16:54:03 💤 Idle (0 peers), best: #17 (0xa0ff…eedc), finalized #14 (0x2556…0b20), ⬇ 0 ⬆ 0    
+2021-12-13 16:54:06 🙌 Starting consensus session on top of parent 0xa0ff95f477b6509289d57057b03a0699ddbe69f1e2835ecea2cae5132093eedc    
+2021-12-13 16:54:06 🎁 Prepared block for proposing at 18 [hash: 0x90802489ea955a4937f362922abb89675f43b1bc0adc0b522e658dbd9e72c704; parent_hash: 0xa0ff…eedc; extrinsics (1): [0x7022…0115]]    
+2021-12-13 16:54:06 🔖 Pre-sealed block for proposal at 18. Hash now 0xe865193eb245c23ce56bd74bfcadeda7486bf81c206be3a4c550b816e4ea281d, previously 0x90802489ea955a4937f362922abb89675f43b1bc0adc0b522e658dbd9e72c704.    
+2021-12-13 16:54:06 ✨ Imported #18 (0xe865…281d)    
+2021-12-13 16:54:08 💤 Idle (0 peers), best: #18 (0xe865…281d), finalized #15 (0x57dc…b36a), ⬇ 0 ⬆ 0    
+2021-12-13 16:54:12 🙌 Starting consensus session on top of parent 0xe865193eb245c23ce56bd74bfcadeda7486bf81c206be3a4c550b816e4ea281d    
+2021-12-13 16:54:12 🎁 Prepared block for proposing at 19 [hash: 0x859bfe770369ed3e9568e807aca91d0c2c2493a3ced96c5e52294610567031b3; parent_hash: 0xe865…281d; extrinsics (1): [0x7767…f981]]    
+2021-12-13 16:54:12 🔖 Pre-sealed block for proposal at 19. Hash now 0x2cdf29145ea881f953e6a494a9041ddb12c258de24377849b0297474922cec8b, previously 0x859bfe770369ed3e9568e807aca91d0c2c2493a3ced96c5e52294610567031b3.    
+2021-12-13 16:54:12 ✨ Imported #19 (0x2cdf…ec8b)    
+2021-12-13 16:54:13 💤 Idle (0 peers), best: #19 (0x2cdf…ec8b), finalized #16 (0xc0be…e1d7), ⬇ 0 ⬆ 0    
+2021-12-13 16:54:18 🙌 Starting consensus session on top of parent 0x2cdf29145ea881f953e6a494a9041ddb12c258de24377849b0297474922cec8b    
+2021-12-13 16:54:18 🎁 Prepared block for proposing at 20 [hash: 0x1e979613f63f5b00e56d95a3ffed8ed70421710f83902fc543e110d81a2f5ed9; parent_hash: 0x2cdf…ec8b; extrinsics (1): [0x212b…e4bd]]    
+2021-12-13 16:54:18 🔖 Pre-sealed block for proposal at 20. Hash now 0xd284200ba1c8fc4452e81def74ee3b67e30e41fc8ef0fe8ca6115b48f4cdea31, previously 0x1e979613f63f5b00e56d95a3ffed8ed70421710f83902fc543e110d81a2f5ed9.    
+2021-12-13 16:54:18 ✨ Imported #20 (0xd284…ea31)    
+2021-12-13 16:54:18 💤 Idle (0 peers), best: #20 (0xd284…ea31), finalized #17 (0xa0ff…eedc), ⬇ 0 ⬆ 0    
+2021-12-13 16:54:23 💤 Idle (0 peers), best: #20 (0xd284…ea31), finalized #17 (0xa0ff…eedc), ⬇ 0 ⬆ 0    
+2021-12-13 16:54:24 🙌 Starting consensus session on top of parent 0xd284200ba1c8fc4452e81def74ee3b67e30e41fc8ef0fe8ca6115b48f4cdea31    
+2021-12-13 16:54:24 🎁 Prepared block for proposing at 21 [hash: 0x2c9f2317b88ee9dfb00d13f709c1aaa3c0326e259171867fa52da4b36a1dc35a; parent_hash: 0xd284…ea31; extrinsics (1): [0x4b1d…7046]]    
+2021-12-13 16:54:24 🔖 Pre-sealed block for proposal at 21. Hash now 0xc19f676b7ebda47ff96103d7c733339784465bd34660cc777cf52b4b527004b3, previously 0x2c9f2317b88ee9dfb00d13f709c1aaa3c0326e259171867fa52da4b36a1dc35a.    
+2021-12-13 16:54:24 ✨ Imported #21 (0xc19f…04b3)    
+2021-12-13 16:54:28 💤 Idle (0 peers), best: #21 (0xc19f…04b3), finalized #19 (0x2cdf…ec8b), ⬇ 0 ⬆ 0    
+2021-12-13 16:54:30 🙌 Starting consensus session on top of parent 0xc19f676b7ebda47ff96103d7c733339784465bd34660cc777cf52b4b527004b3    
+2021-12-13 16:54:30 🎁 Prepared block for proposing at 22 [hash: 0xc965252123c8985d9528313c52df87a1f9bc4359e5247769040d446b4dfa24ae; parent_hash: 0xc19f…04b3; extrinsics (1): [0x4e36…3515]]    
+2021-12-13 16:54:30 🔖 Pre-sealed block for proposal at 22. Hash now 0x3e3382d36d18543cd94cbbdd77313a438db57e8aa9e82c37723c0f5d62aaebff, previously 0xc965252123c8985d9528313c52df87a1f9bc4359e5247769040d446b4dfa24ae.    
+2021-12-13 16:54:30 ✨ Imported #22 (0x3e33…ebff)    
+2021-12-13 16:54:33 💤 Idle (0 peers), best: #22 (0x3e33…ebff), finalized #19 (0x2cdf…ec8b), ⬇ 0 ⬆ 0    
+2021-12-13 16:54:36 🙌 Starting consensus session on top of parent 0x3e3382d36d18543cd94cbbdd77313a438db57e8aa9e82c37723c0f5d62aaebff    
+2021-12-13 16:54:36 🎁 Prepared block for proposing at 23 [hash: 0x68fa11b6390e426953a13ebe0ed187a32d62c2201d456aa4c13c2aa1668e179a; parent_hash: 0x3e33…ebff; extrinsics (1): [0x3d1a…071b]]    
+2021-12-13 16:54:36 🔖 Pre-sealed block for proposal at 23. Hash now 0x44ec66057a50cb4270f6e4ac6f654560a4d93852feee8a108a0fd7edd646b69c, previously 0x68fa11b6390e426953a13ebe0ed187a32d62c2201d456aa4c13c2aa1668e179a.    
+2021-12-13 16:54:36 ✨ Imported #23 (0x44ec…b69c)    
+2021-12-13 16:54:38 💤 Idle (0 peers), best: #23 (0x44ec…b69c), finalized #20 (0xd284…ea31), ⬇ 0 ⬆ 0    
+2021-12-13 16:54:42 🙌 Starting consensus session on top of parent 0x44ec66057a50cb4270f6e4ac6f654560a4d93852feee8a108a0fd7edd646b69c    
+2021-12-13 16:54:42 🎁 Prepared block for proposing at 24 [hash: 0xb21ba48d99def03f69f0e4d4b582e3be5501eac75242043f95a2d37fa3e51496; parent_hash: 0x44ec…b69c; extrinsics (1): [0x4d64…dfbf]]    
+2021-12-13 16:54:42 🔖 Pre-sealed block for proposal at 24. Hash now 0x454cbbf84aacc6376f3591014b2b84652abab275883dd0cab4268949eda5098d, previously 0xb21ba48d99def03f69f0e4d4b582e3be5501eac75242043f95a2d37fa3e51496.    
+2021-12-13 16:54:42 ✨ Imported #24 (0x454c…098d)    
+2021-12-13 16:54:43 💤 Idle (0 peers), best: #24 (0x454c…098d), finalized #21 (0xc19f…04b3), ⬇ 0 ⬆ 0    
+2021-12-13 16:54:48 🙌 Starting consensus session on top of parent 0x454cbbf84aacc6376f3591014b2b84652abab275883dd0cab4268949eda5098d    
+2021-12-13 16:54:48 🎁 Prepared block for proposing at 25 [hash: 0x7f6297fcd15ea6c1cd9945c9b15d3d9d29ab96273a44d7ba9afcb73c6c534067; parent_hash: 0x454c…098d; extrinsics (1): [0x2e02…999d]]    
+2021-12-13 16:54:48 🔖 Pre-sealed block for proposal at 25. Hash now 0xe877056f5f8c847b259037f12904d9a0749120aecf4c5806bc8db078d012c2fb, previously 0x7f6297fcd15ea6c1cd9945c9b15d3d9d29ab96273a44d7ba9afcb73c6c534067.    
+2021-12-13 16:54:48 ✨ Imported #25 (0xe877…c2fb)    
+2021-12-13 16:54:48 💤 Idle (0 peers), best: #25 (0xe877…c2fb), finalized #22 (0x3e33…ebff), ⬇ 0 ⬆ 0    
+2021-12-13 16:54:53 💤 Idle (0 peers), best: #25 (0xe877…c2fb), finalized #23 (0x44ec…b69c), ⬇ 0 ⬆ 0    
+2021-12-13 16:54:54 🙌 Starting consensus session on top of parent 0xe877056f5f8c847b259037f12904d9a0749120aecf4c5806bc8db078d012c2fb    
+2021-12-13 16:54:54 🎁 Prepared block for proposing at 26 [hash: 0xcae08aaab398f6bea819396a1b30a723fb62ce0183801543f5021342a85a8db4; parent_hash: 0xe877…c2fb; extrinsics (1): [0x4651…1374]]    
+2021-12-13 16:54:54 🔖 Pre-sealed block for proposal at 26. Hash now 0xdaaabdb029d895f58ab589564e80cfcf0d4e17b60fe9e36506be7b4c79cdddb1, previously 0xcae08aaab398f6bea819396a1b30a723fb62ce0183801543f5021342a85a8db4.    
+2021-12-13 16:54:54 ✨ Imported #26 (0xdaaa…ddb1)    
+2021-12-13 16:54:58 💤 Idle (0 peers), best: #26 (0xdaaa…ddb1), finalized #23 (0x44ec…b69c), ⬇ 0 ⬆ 0    
+2021-12-13 16:55:00 🙌 Starting consensus session on top of parent 0xdaaabdb029d895f58ab589564e80cfcf0d4e17b60fe9e36506be7b4c79cdddb1    
+2021-12-13 16:55:00 🎁 Prepared block for proposing at 27 [hash: 0x5715e160fa89afc32d7c8c2159228ec0796525f9ff0f6ef47681a5f2a4399cee; parent_hash: 0xdaaa…ddb1; extrinsics (1): [0xf71e…2ba6]]    
+2021-12-13 16:55:00 🔖 Pre-sealed block for proposal at 27. Hash now 0x5bd5b32fe6769fe844998b6fc3be585c648789cc25f5ef6aa8fb2f0dbdc4b080, previously 0x5715e160fa89afc32d7c8c2159228ec0796525f9ff0f6ef47681a5f2a4399cee.    
+2021-12-13 16:55:00 ✨ Imported #27 (0x5bd5…b080)    
+2021-12-13 16:55:03 💤 Idle (0 peers), best: #27 (0x5bd5…b080), finalized #24 (0x454c…098d), ⬇ 0 ⬆ 0    
+2021-12-13 16:55:06 🙌 Starting consensus session on top of parent 0x5bd5b32fe6769fe844998b6fc3be585c648789cc25f5ef6aa8fb2f0dbdc4b080    
+2021-12-13 16:55:06 🎁 Prepared block for proposing at 28 [hash: 0x55dcd8ba2ab464600f264a82aca5fdef80315437dc59204463cc71a90a364e0d; parent_hash: 0x5bd5…b080; extrinsics (1): [0xe2a6…a408]]    
+2021-12-13 16:55:06 🔖 Pre-sealed block for proposal at 28. Hash now 0xce44e257bbdd695edd4349d0d9cc666f752b0281267647f66759a3e2376a734f, previously 0x55dcd8ba2ab464600f264a82aca5fdef80315437dc59204463cc71a90a364e0d.    
+2021-12-13 16:55:06 ✨ Imported #28 (0xce44…734f)    
+2021-12-13 16:55:08 💤 Idle (0 peers), best: #28 (0xce44…734f), finalized #25 (0xe877…c2fb), ⬇ 0 ⬆ 0    
+2021-12-13 16:55:12 🙌 Starting consensus session on top of parent 0xce44e257bbdd695edd4349d0d9cc666f752b0281267647f66759a3e2376a734f    
+2021-12-13 16:55:12 🎁 Prepared block for proposing at 29 [hash: 0x7cfc5b5bcb4d8f00c15c21c0938145133209cc7813346987dffa84ae887877d8; parent_hash: 0xce44…734f; extrinsics (1): [0x2173…a965]]    
+2021-12-13 16:55:12 🔖 Pre-sealed block for proposal at 29. Hash now 0xe5fad6395b0f5c936c4deddce9d6072151d4787b6f2f94c8f248ee5845bf1a95, previously 0x7cfc5b5bcb4d8f00c15c21c0938145133209cc7813346987dffa84ae887877d8.    
+2021-12-13 16:55:12 ✨ Imported #29 (0xe5fa…1a95)    
+2021-12-13 16:55:13 💤 Idle (0 peers), best: #29 (0xe5fa…1a95), finalized #26 (0xdaaa…ddb1), ⬇ 0 ⬆ 0    
+2021-12-13 16:55:16 Accepted a new tcp connection from 127.0.0.1:56948.    
+2021-12-13 16:55:18 🙌 Starting consensus session on top of parent 0xe5fad6395b0f5c936c4deddce9d6072151d4787b6f2f94c8f248ee5845bf1a95    
+2021-12-13 16:55:18 🎁 Prepared block for proposing at 30 [hash: 0x10c7509ccededaea39b5336a6aee589cfd40db552e350f0edcaf8037bc9a3c8b; parent_hash: 0xe5fa…1a95; extrinsics (2): [0x3bdc…329f, 0x94f1…f9c7]]    
+2021-12-13 16:55:18 🔖 Pre-sealed block for proposal at 30. Hash now 0x207dbaa934621d4db2bbc1c937497ccfc0aec8f5dc0d5f5406e11ea052a9dd75, previously 0x10c7509ccededaea39b5336a6aee589cfd40db552e350f0edcaf8037bc9a3c8b.    
+2021-12-13 16:55:18 ✨ Imported #30 (0x207d…dd75)    
+2021-12-13 16:55:18 💤 Idle (0 peers), best: #30 (0x207d…dd75), finalized #27 (0x5bd5…b080), ⬇ 0 ⬆ 0    
+2021-12-13 16:55:23 💤 Idle (0 peers), best: #30 (0x207d…dd75), finalized #27 (0x5bd5…b080), ⬇ 0 ⬆ 0    
+2021-12-13 16:55:24 🙌 Starting consensus session on top of parent 0x207dbaa934621d4db2bbc1c937497ccfc0aec8f5dc0d5f5406e11ea052a9dd75    
+2021-12-13 16:55:24 🎁 Prepared block for proposing at 31 [hash: 0xb7ee0c31d78c03fc7762024e212751ea19402e37cdf13318718c19c4d5b3a3d7; parent_hash: 0x207d…dd75; extrinsics (1): [0xc22c…d5a5]]    
+2021-12-13 16:55:24 🔖 Pre-sealed block for proposal at 31. Hash now 0x6679421c78924e1eaadec1947a6631b615ee1c6a21e21afe1564898bd7951d63, previously 0xb7ee0c31d78c03fc7762024e212751ea19402e37cdf13318718c19c4d5b3a3d7.    
+2021-12-13 16:55:24 ✨ Imported #31 (0x6679…1d63)    
+2021-12-13 16:55:28 💤 Idle (0 peers), best: #31 (0x6679…1d63), finalized #29 (0xe5fa…1a95), ⬇ 0 ⬆ 0    
+2021-12-13 16:55:30 🙌 Starting consensus session on top of parent 0x6679421c78924e1eaadec1947a6631b615ee1c6a21e21afe1564898bd7951d63    
+2021-12-13 16:55:30 🎁 Prepared block for proposing at 32 [hash: 0x434d22be4fc32fad9a85f82cdcf5ac168f8bc3d5869621b4f6c168c2cee142d7; parent_hash: 0x6679…1d63; extrinsics (1): [0xd7d8…346d]]    
+2021-12-13 16:55:30 🔖 Pre-sealed block for proposal at 32. Hash now 0x7fd3f62e0f0afaf8838279580d54f54018eb7881f9cac6a96f3903f8e7440129, previously 0x434d22be4fc32fad9a85f82cdcf5ac168f8bc3d5869621b4f6c168c2cee142d7.    
+2021-12-13 16:55:30 ✨ Imported #32 (0x7fd3…0129)    
+2021-12-13 16:55:33 💤 Idle (0 peers), best: #32 (0x7fd3…0129), finalized #29 (0xe5fa…1a95), ⬇ 0 ⬆ 0    
+2021-12-13 16:55:36 🙌 Starting consensus session on top of parent 0x7fd3f62e0f0afaf8838279580d54f54018eb7881f9cac6a96f3903f8e7440129    
+2021-12-13 16:55:36 🎁 Prepared block for proposing at 33 [hash: 0xf97eafa8791470df1afe664e80919b1a8cd22149d83523a3753f00711a26a889; parent_hash: 0x7fd3…0129; extrinsics (1): [0xfbec…2220]]    
+2021-12-13 16:55:36 🔖 Pre-sealed block for proposal at 33. Hash now 0x498af4559137227e3dea0ba89d8e2a46400cc1f77c525f6538dfdb9d9a190c5e, previously 0xf97eafa8791470df1afe664e80919b1a8cd22149d83523a3753f00711a26a889.    
+2021-12-13 16:55:36 ✨ Imported #33 (0x498a…0c5e)    
+2021-12-13 16:55:38 💤 Idle (0 peers), best: #33 (0x498a…0c5e), finalized #30 (0x207d…dd75), ⬇ 0 ⬆ 0    
+2021-12-13 16:55:42 🙌 Starting consensus session on top of parent 0x498af4559137227e3dea0ba89d8e2a46400cc1f77c525f6538dfdb9d9a190c5e    
+2021-12-13 16:55:42 🎁 Prepared block for proposing at 34 [hash: 0x48f0f1c78720c3bdac2fa9171fdbed68836cf9c545ca76f0543b94021da2c7b4; parent_hash: 0x498a…0c5e; extrinsics (1): [0xde1d…a4f9]]    
+2021-12-13 16:55:42 🔖 Pre-sealed block for proposal at 34. Hash now 0x3c06bb876ffaf3bf4a4f0f5505e37484839d4dfeb3de4d495ad500e5ca366d60, previously 0x48f0f1c78720c3bdac2fa9171fdbed68836cf9c545ca76f0543b94021da2c7b4.    
+2021-12-13 16:55:42 ✨ Imported #34 (0x3c06…6d60)    
+2021-12-13 16:55:43 💤 Idle (0 peers), best: #34 (0x3c06…6d60), finalized #31 (0x6679…1d63), ⬇ 0 ⬆ 0    
+2021-12-13 16:55:48 🙌 Starting consensus session on top of parent 0x3c06bb876ffaf3bf4a4f0f5505e37484839d4dfeb3de4d495ad500e5ca366d60    
+2021-12-13 16:55:48 🎁 Prepared block for proposing at 35 [hash: 0xf23073ddd7d55f2e59ed6e03af975d02206d99fb6e44960b8e5be2e7006156da; parent_hash: 0x3c06…6d60; extrinsics (1): [0xee53…9a6f]]    
+2021-12-13 16:55:48 🔖 Pre-sealed block for proposal at 35. Hash now 0x6b295b32e831480ba5e653575bce8526725a94c1a4cbbca23fe2cfd15914f9b2, previously 0xf23073ddd7d55f2e59ed6e03af975d02206d99fb6e44960b8e5be2e7006156da.    
+2021-12-13 16:55:48 ✨ Imported #35 (0x6b29…f9b2)    
+2021-12-13 16:55:48 💤 Idle (0 peers), best: #35 (0x6b29…f9b2), finalized #32 (0x7fd3…0129), ⬇ 0 ⬆ 0    
+2021-12-13 16:55:53 💤 Idle (0 peers), best: #35 (0x6b29…f9b2), finalized #33 (0x498a…0c5e), ⬇ 0 ⬆ 0    
+2021-12-13 16:55:54 🙌 Starting consensus session on top of parent 0x6b295b32e831480ba5e653575bce8526725a94c1a4cbbca23fe2cfd15914f9b2    
+2021-12-13 16:55:54 🎁 Prepared block for proposing at 36 [hash: 0x673b52322ef4268f6d48e5cfad982fa65b809666477b3c21df55e589396503c1; parent_hash: 0x6b29…f9b2; extrinsics (1): [0x80f6…02ed]]    
+2021-12-13 16:55:54 🔖 Pre-sealed block for proposal at 36. Hash now 0x5585097c2f6ead5812f02b58210bd43d1eeb0bafb34ce978614894d2458dc72a, previously 0x673b52322ef4268f6d48e5cfad982fa65b809666477b3c21df55e589396503c1.    
+2021-12-13 16:55:54 ✨ Imported #36 (0x5585…c72a)    
+2021-12-13 16:55:58 💤 Idle (0 peers), best: #36 (0x5585…c72a), finalized #33 (0x498a…0c5e), ⬇ 0 ⬆ 0    
+2021-12-13 16:56:00 🙌 Starting consensus session on top of parent 0x5585097c2f6ead5812f02b58210bd43d1eeb0bafb34ce978614894d2458dc72a    
+2021-12-13 16:56:00 🎁 Prepared block for proposing at 37 [hash: 0x6b7530d763fa34e018c92086373a4f678764c1aed7ba76b4ece913336a9ea473; parent_hash: 0x5585…c72a; extrinsics (1): [0x1554…02f8]]    
+2021-12-13 16:56:00 🔖 Pre-sealed block for proposal at 37. Hash now 0x1725703e6ed459d32c5f773c6e64782c4f0946da473adedab0ee695f57f6f9f5, previously 0x6b7530d763fa34e018c92086373a4f678764c1aed7ba76b4ece913336a9ea473.    
+2021-12-13 16:56:00 ✨ Imported #37 (0x1725…f9f5)    
+2021-12-13 16:56:03 💤 Idle (0 peers), best: #37 (0x1725…f9f5), finalized #34 (0x3c06…6d60), ⬇ 0 ⬆ 0    
+2021-12-13 16:56:06 🙌 Starting consensus session on top of parent 0x1725703e6ed459d32c5f773c6e64782c4f0946da473adedab0ee695f57f6f9f5    
+2021-12-13 16:56:06 🎁 Prepared block for proposing at 38 [hash: 0x04d3363993d87f4009e5ae4907c8b17c5bc018e80092e5fd31abc5187b326dd2; parent_hash: 0x1725…f9f5; extrinsics (1): [0x95e5…5b13]]    
+2021-12-13 16:56:06 🔖 Pre-sealed block for proposal at 38. Hash now 0xd839d0316b094c58574f0f919a481580131b3564cffdb18ccf84f568e94c9608, previously 0x04d3363993d87f4009e5ae4907c8b17c5bc018e80092e5fd31abc5187b326dd2.    
+2021-12-13 16:56:06 ✨ Imported #38 (0xd839…9608)    
+2021-12-13 16:56:08 💤 Idle (0 peers), best: #38 (0xd839…9608), finalized #35 (0x6b29…f9b2), ⬇ 0 ⬆ 0    
+2021-12-13 16:56:08 A request asked a pooled block (0x091a…e5da), adding it to the list of waiting requests.
+2021-12-13 16:56:08 Ran out of free WASM instances    
+2021-12-13 16:56:08 A request asked a pooled block (0x40d0…aeff), adding it to the list of waiting requests.
+2021-12-13 16:56:08 A request asked a cached block (0xe8f2…9dc3), sending the traces directly.
+2021-12-13 16:56:08 A request asked a pooled block (0xbb59…77c8), adding it to the list of waiting requests.
+2021-12-13 16:56:08 A request asked a pooled block (0x9dc7…4931), adding it to the list of waiting requests.
+2021-12-13 16:56:08 A request asked a cached block (0xde0a…23de), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0x19b7…75d6), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0xa18a…3356), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0x0408…114a), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0x72b8…a2b7), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0x0e0c…59e6), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0xa701…3bca), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0x2556…0b20), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0x57dc…b36a), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0xc0be…e1d7), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0xa0ff…eedc), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0xe865…281d), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0x2cdf…ec8b), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0xd284…ea31), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0xc19f…04b3), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0x3e33…ebff), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0x44ec…b69c), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0x454c…098d), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0xe877…c2fb), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0xdaaa…ddb1), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0x5bd5…b080), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0xce44…734f), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0xe5fa…1a95), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0x207d…dd75), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0x6679…1d63), sending the traces directly.
+2021-12-13 16:56:08 A request asked a cached block (0x7fd3…0129), sending the traces directly.
+2021-12-13 16:56:12 🙌 Starting consensus session on top of parent 0xd839d0316b094c58574f0f919a481580131b3564cffdb18ccf84f568e94c9608    
+2021-12-13 16:56:12 🎁 Prepared block for proposing at 39 [hash: 0x4034fdb5c8f8ef88290245e2e29b4c0259c9cfcde5e7d4702e3f5bcaa361aa87; parent_hash: 0xd839…9608; extrinsics (1): [0x9508…14b8]]    
+2021-12-13 16:56:12 🔖 Pre-sealed block for proposal at 39. Hash now 0xb9a51a9439fb69cdfda059e60ab2ebd3cb552651e239e656314a0078ef0be4ca, previously 0x4034fdb5c8f8ef88290245e2e29b4c0259c9cfcde5e7d4702e3f5bcaa361aa87.    
+2021-12-13 16:56:12 ✨ Imported #39 (0xb9a5…e4ca)    
+2021-12-13 16:56:13 💤 Idle (0 peers), best: #39 (0xb9a5…e4ca), finalized #36 (0x5585…c72a), ⬇ 0 ⬆ 0    
+2021-12-13 16:56:13 A request asked a cached block (0x091a…e5da), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0x40d0…aeff), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0xe8f2…9dc3), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0xbb59…77c8), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0x9dc7…4931), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0xde0a…23de), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0x19b7…75d6), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0xa18a…3356), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0x0408…114a), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0x72b8…a2b7), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0x0e0c…59e6), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0xa701…3bca), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0x2556…0b20), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0x57dc…b36a), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0xc0be…e1d7), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0xa0ff…eedc), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0xe865…281d), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0x2cdf…ec8b), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0xd284…ea31), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0xc19f…04b3), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0x3e33…ebff), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0x44ec…b69c), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0x454c…098d), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0xe877…c2fb), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0xdaaa…ddb1), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0x5bd5…b080), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0xce44…734f), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0xe5fa…1a95), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0x207d…dd75), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0x6679…1d63), sending the traces directly.
+2021-12-13 16:56:13 A request asked a cached block (0x7fd3…0129), sending the traces directly.
+2021-12-13 16:56:18 🙌 Starting consensus session on top of parent 0xb9a51a9439fb69cdfda059e60ab2ebd3cb552651e239e656314a0078ef0be4ca    
+2021-12-13 16:56:18 🎁 Prepared block for proposing at 40 [hash: 0x70eb573bc4177e86fb90b424da377e2d68f1b99a63cfb3af9c8c1cc26a84b501; parent_hash: 0xb9a5…e4ca; extrinsics (1): [0x00eb…d8e8]]    
+2021-12-13 16:56:18 🔖 Pre-sealed block for proposal at 40. Hash now 0x90207a5835ddcafab9436be14c503b6d269690ba2cf0ce0c50d013d9b2fe65e5, previously 0x70eb573bc4177e86fb90b424da377e2d68f1b99a63cfb3af9c8c1cc26a84b501.    
+2021-12-13 16:56:18 ✨ Imported #40 (0x9020…65e5)    
+2021-12-13 16:56:18 💤 Idle (0 peers), best: #40 (0x9020…65e5), finalized #37 (0x1725…f9f5), ⬇ 0 ⬆ 0    
+2021-12-13 16:56:23 💤 Idle (0 peers), best: #40 (0x9020…65e5), finalized #37 (0x1725…f9f5), ⬇ 0 ⬆ 0    
+2021-12-13 16:56:24 🙌 Starting consensus session on top of parent 0x90207a5835ddcafab9436be14c503b6d269690ba2cf0ce0c50d013d9b2fe65e5    
+2021-12-13 16:56:24 🎁 Prepared block for proposing at 41 [hash: 0x1d1ef47f77a4e77b002f7b6fbbcca479a9b88f3516fc6a17d62643f82b5aa34b; parent_hash: 0x9020…65e5; extrinsics (1): [0x1e6c…fa2d]]    
+2021-12-13 16:56:24 🔖 Pre-sealed block for proposal at 41. Hash now 0xe5c66db8b0fef9a163bb533674cf345960d17e0480611371a4f0f266f45a0505, previously 0x1d1ef47f77a4e77b002f7b6fbbcca479a9b88f3516fc6a17d62643f82b5aa34b.    
+2021-12-13 16:56:24 ✨ Imported #41 (0xe5c6…0505)    
+2021-12-13 16:56:28 💤 Idle (0 peers), best: #41 (0xe5c6…0505), finalized #39 (0xb9a5…e4ca), ⬇ 0 ⬆ 0    
+2021-12-13 16:56:30 🙌 Starting consensus session on top of parent 0xe5c66db8b0fef9a163bb533674cf345960d17e0480611371a4f0f266f45a0505    
+2021-12-13 16:56:30 🎁 Prepared block for proposing at 42 [hash: 0xc2228ab69c3d8bc2eb66ddabc2d278f8c7b031e996b1af3eb1868bd6aefac231; parent_hash: 0xe5c6…0505; extrinsics (1): [0x5e86…7f9d]]    
+2021-12-13 16:56:30 🔖 Pre-sealed block for proposal at 42. Hash now 0xb46e9c8b4beea3a903e4a0584e896e9084be27e7e2925b4998400e2ce58f6827, previously 0xc2228ab69c3d8bc2eb66ddabc2d278f8c7b031e996b1af3eb1868bd6aefac231.    
+2021-12-13 16:56:30 ✨ Imported #42 (0xb46e…6827)    
+2021-12-13 16:56:33 💤 Idle (0 peers), best: #42 (0xb46e…6827), finalized #39 (0xb9a5…e4ca), ⬇ 0 ⬆ 0    
+2021-12-13 16:56:36 🙌 Starting consensus session on top of parent 0xb46e9c8b4beea3a903e4a0584e896e9084be27e7e2925b4998400e2ce58f6827    
+2021-12-13 16:56:36 🎁 Prepared block for proposing at 43 [hash: 0x1c835409c5a83580fadf43f0d59eb5965853c61dc1c9ff3c73a99e94c6322f35; parent_hash: 0xb46e…6827; extrinsics (1): [0x679f…382a]]    
+2021-12-13 16:56:36 🔖 Pre-sealed block for proposal at 43. Hash now 0x96e4155216110cbe712cca53be3e99bc969299c8b69f63fc60545f6cd40d8efd, previously 0x1c835409c5a83580fadf43f0d59eb5965853c61dc1c9ff3c73a99e94c6322f35.    
+2021-12-13 16:56:36 ✨ Imported #43 (0x96e4…8efd)    
+2021-12-13 16:56:38 💤 Idle (0 peers), best: #43 (0x96e4…8efd), finalized #40 (0x9020…65e5), ⬇ 0 ⬆ 0    
+2021-12-13 16:56:42 🙌 Starting consensus session on top of parent 0x96e4155216110cbe712cca53be3e99bc969299c8b69f63fc60545f6cd40d8efd    
+2021-12-13 16:56:42 🎁 Prepared block for proposing at 44 [hash: 0xdd3dfc136368f4745bb18d08c1a0671cedf8fba19cb5953e2e5414e0fcafe1b9; parent_hash: 0x96e4…8efd; extrinsics (1): [0xb6fe…161e]]    
+2021-12-13 16:56:42 🔖 Pre-sealed block for proposal at 44. Hash now 0xf51b830c85e265259fc50cdbb5d0435d508edcd0fc8459699d78aa6201840afb, previously 0xdd3dfc136368f4745bb18d08c1a0671cedf8fba19cb5953e2e5414e0fcafe1b9.    
+2021-12-13 16:56:42 ✨ Imported #44 (0xf51b…0afb)    
+2021-12-13 16:56:43 💤 Idle (0 peers), best: #44 (0xf51b…0afb), finalized #41 (0xe5c6…0505), ⬇ 0 ⬆ 0    
+2021-12-13 16:56:48 🙌 Starting consensus session on top of parent 0xf51b830c85e265259fc50cdbb5d0435d508edcd0fc8459699d78aa6201840afb    
+2021-12-13 16:56:48 🎁 Prepared block for proposing at 45 [hash: 0xa88c4fe67f20d8b686a469054014c191d4ff1e2e25c603ed7ce9ace4588d8c63; parent_hash: 0xf51b…0afb; extrinsics (1): [0x9e06…7b51]]    
+2021-12-13 16:56:48 🔖 Pre-sealed block for proposal at 45. Hash now 0xae2f854c546072cc8b4943c6204875f159f12063d7c1308cc6a105e32f163b23, previously 0xa88c4fe67f20d8b686a469054014c191d4ff1e2e25c603ed7ce9ace4588d8c63.    
+2021-12-13 16:56:48 ✨ Imported #45 (0xae2f…3b23)    
+2021-12-13 16:56:48 💤 Idle (0 peers), best: #45 (0xae2f…3b23), finalized #42 (0xb46e…6827), ⬇ 0 ⬆ 0    
+2021-12-13 16:56:53 💤 Idle (0 peers), best: #45 (0xae2f…3b23), finalized #43 (0x96e4…8efd), ⬇ 0 ⬆ 0    
+2021-12-13 16:56:54 🙌 Starting consensus session on top of parent 0xae2f854c546072cc8b4943c6204875f159f12063d7c1308cc6a105e32f163b23    
+2021-12-13 16:56:54 🎁 Prepared block for proposing at 46 [hash: 0x947dca588eed3095a08ba61f15be4dbe2c7f00a62aa3fc88918bf31ef03f5bf0; parent_hash: 0xae2f…3b23; extrinsics (1): [0x78b3…3d26]]    
+2021-12-13 16:56:54 🔖 Pre-sealed block for proposal at 46. Hash now 0xdd0ab6bcf0bd77a8c29e21dc3fbad7063f792dc6ffdd872e1275b8085c079941, previously 0x947dca588eed3095a08ba61f15be4dbe2c7f00a62aa3fc88918bf31ef03f5bf0.    
+2021-12-13 16:56:54 ✨ Imported #46 (0xdd0a…9941)    
+2021-12-13 16:56:58 💤 Idle (0 peers), best: #46 (0xdd0a…9941), finalized #43 (0x96e4…8efd), ⬇ 0 ⬆ 0    
+2021-12-13 16:57:00 🙌 Starting consensus session on top of parent 0xdd0ab6bcf0bd77a8c29e21dc3fbad7063f792dc6ffdd872e1275b8085c079941    
+2021-12-13 16:57:00 🎁 Prepared block for proposing at 47 [hash: 0xc3cd1d00825aea117e952d95eb0351831557c2407ca5804b007c55e17e81d0ff; parent_hash: 0xdd0a…9941; extrinsics (1): [0xbac9…9ec3]]    
+2021-12-13 16:57:00 🔖 Pre-sealed block for proposal at 47. Hash now 0x8df40eed041ed18d8bebb17c51fa6c8644c9da05138fff9aa7bb347dddd642dc, previously 0xc3cd1d00825aea117e952d95eb0351831557c2407ca5804b007c55e17e81d0ff.    
+2021-12-13 16:57:00 ✨ Imported #47 (0x8df4…42dc)    
+2021-12-13 16:57:03 💤 Idle (0 peers), best: #47 (0x8df4…42dc), finalized #44 (0xf51b…0afb), ⬇ 0 ⬆ 0    
+2021-12-13 16:57:06 🙌 Starting consensus session on top of parent 0x8df40eed041ed18d8bebb17c51fa6c8644c9da05138fff9aa7bb347dddd642dc    
+2021-12-13 16:57:06 🎁 Prepared block for proposing at 48 [hash: 0x70e87a75f62f917355664c049af3540c62263f4883f282b708505df7f80bc416; parent_hash: 0x8df4…42dc; extrinsics (1): [0x410f…8f27]]    
+2021-12-13 16:57:06 🔖 Pre-sealed block for proposal at 48. Hash now 0x4e0ce90168e902a12a990afefbd745217aa2b1219fbbdf02e74ed42d035051fd, previously 0x70e87a75f62f917355664c049af3540c62263f4883f282b708505df7f80bc416.    
+2021-12-13 16:57:06 ✨ Imported #48 (0x4e0c…51fd)    
+2021-12-13 16:57:08 💤 Idle (0 peers), best: #48 (0x4e0c…51fd), finalized #45 (0xae2f…3b23), ⬇ 0 ⬆ 0    
+2021-12-13 16:57:12 🙌 Starting consensus session on top of parent 0x4e0ce90168e902a12a990afefbd745217aa2b1219fbbdf02e74ed42d035051fd    
+2021-12-13 16:57:12 🎁 Prepared block for proposing at 49 [hash: 0xe5e84f6fa2ac37a0c0946049159a87aba04379fb0eb207507ae72647b5e9e4d9; parent_hash: 0x4e0c…51fd; extrinsics (1): [0xc93b…5624]]    
+2021-12-13 16:57:12 🔖 Pre-sealed block for proposal at 49. Hash now 0xca440b6257911b45d41475455e2afc2f6602ea04a2e98170c7f4cc61b3547be9, previously 0xe5e84f6fa2ac37a0c0946049159a87aba04379fb0eb207507ae72647b5e9e4d9.    
+2021-12-13 16:57:12 ✨ Imported #49 (0xca44…7be9)    
+2021-12-13 16:57:13 💤 Idle (0 peers), best: #49 (0xca44…7be9), finalized #46 (0xdd0a…9941), ⬇ 0 ⬆ 0    
+2021-12-13 16:57:18 🙌 Starting consensus session on top of parent 0xca440b6257911b45d41475455e2afc2f6602ea04a2e98170c7f4cc61b3547be9    
+2021-12-13 16:57:18 🎁 Prepared block for proposing at 50 [hash: 0x4b0ba0428665c1bc1b86fd0253f16e0341a2ea21ea27b6c778a68b532de1da80; parent_hash: 0xca44…7be9; extrinsics (1): [0xfb14…5c24]]    
+2021-12-13 16:57:18 🔖 Pre-sealed block for proposal at 50. Hash now 0x1eedacbe0bb69988ddd1fb11a4789d1e6cd1d5a6e74951e6bba29850f745eedf, previously 0x4b0ba0428665c1bc1b86fd0253f16e0341a2ea21ea27b6c778a68b532de1da80.    
+2021-12-13 16:57:18 ✨ Imported #50 (0x1eed…eedf)    
+2021-12-13 16:57:18 💤 Idle (0 peers), best: #50 (0x1eed…eedf), finalized #47 (0x8df4…42dc), ⬇ 0 ⬆ 0    
+2021-12-13 16:57:23 💤 Idle (0 peers), best: #50 (0x1eed…eedf), finalized #47 (0x8df4…42dc), ⬇ 0 ⬆ 0    
+2021-12-13 16:57:24 🙌 Starting consensus session on top of parent 0x1eedacbe0bb69988ddd1fb11a4789d1e6cd1d5a6e74951e6bba29850f745eedf    
+2021-12-13 16:57:24 🎁 Prepared block for proposing at 51 [hash: 0xa3d9b2fda25bd993dae6aa33fdefe3adb2cd1811a951aa6c75d31e8864d74a51; parent_hash: 0x1eed…eedf; extrinsics (1): [0x15ad…e5fc]]    
+2021-12-13 16:57:24 🔖 Pre-sealed block for proposal at 51. Hash now 0x8be1b4907fd4d327c09e1d30fab536cb955768b8ae81bc3aef406f46e1780c18, previously 0xa3d9b2fda25bd993dae6aa33fdefe3adb2cd1811a951aa6c75d31e8864d74a51.    
+2021-12-13 16:57:24 ✨ Imported #51 (0x8be1…0c18)    
+2021-12-13 16:57:28 💤 Idle (0 peers), best: #51 (0x8be1…0c18), finalized #49 (0xca44…7be9), ⬇ 0 ⬆ 0    
+2021-12-13 16:57:30 🙌 Starting consensus session on top of parent 0x8be1b4907fd4d327c09e1d30fab536cb955768b8ae81bc3aef406f46e1780c18    
+2021-12-13 16:57:30 🎁 Prepared block for proposing at 52 [hash: 0xf0beef072594d9d226a55306553116dd2ff9c7dd6cfb50c4bf4e85d7f520523c; parent_hash: 0x8be1…0c18; extrinsics (1): [0x6a28…b0e6]]    
+2021-12-13 16:57:30 🔖 Pre-sealed block for proposal at 52. Hash now 0xe7133803e4c24ccf7a650215d35746066bc3c5fb4e75c061e0994667fa613a97, previously 0xf0beef072594d9d226a55306553116dd2ff9c7dd6cfb50c4bf4e85d7f520523c.    
+2021-12-13 16:57:30 ✨ Imported #52 (0xe713…3a97)    
+2021-12-13 16:57:33 💤 Idle (0 peers), best: #52 (0xe713…3a97), finalized #49 (0xca44…7be9), ⬇ 0 ⬆ 0    

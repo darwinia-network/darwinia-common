@@ -25,8 +25,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // paritytech
-use sp_runtime_interface::runtime_interface;
 use codec::Decode;
+use sp_runtime_interface::runtime_interface;
 use sp_std::vec::Vec;
 // darwinia-network
 use dp_evm_trace_events::{Event, EvmEvent, GasometerEvent, RuntimeEvent};
