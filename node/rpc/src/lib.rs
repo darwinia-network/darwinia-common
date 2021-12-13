@@ -27,7 +27,7 @@ pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 // --- std ---
 use std::{error::Error, sync::Arc};
 // --- darwinia-network ---
-use dc_tracing_debug_handler::DebugRequester;
+use dc_rpc::DebugRequester;
 use dc_tracing_trace_handler::CacheRequester as TraceFilterCacheRequester;
 use drml_common_primitives::{
 	AccountId, Balance, BlockNumber, Hash, Hashing, Nonce, OpaqueBlock as Block,

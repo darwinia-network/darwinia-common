@@ -30,7 +30,7 @@ use tokio::{
 	sync::{oneshot, Semaphore},
 };
 // darwinia-network
-use dc_rpc::{frontier_backend_client, internal_err};
+use crate::{frontier_backend_client, internal_err};
 use dc_tracer::{formatters::ResponseFormatter, types::single};
 use dp_evm_trace_apis::{DebugRuntimeApi, TracerInput};
 use dp_rpc::{RequestBlockId, RequestBlockTag};
@@ -141,9 +141,9 @@ impl DebugT for Debug {
 	}
 }
 
-pub struct DebugHandler<B: BlockT, C, BE>(PhantomData<(B, C, BE)>);
+pub struct DebugTask<B: BlockT, C, BE>(PhantomData<(B, C, BE)>);
 
-impl<B, C, BE> DebugHandler<B, C, BE>
+impl<B, C, BE> DebugTask<B, C, BE>
 where
 	BE: Backend<B> + 'static,
 	C: ProvideRuntimeApi<B>,

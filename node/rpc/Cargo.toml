@@ -51,7 +51,7 @@ futures                  = { version = "0.3", optional = true }
 sc-consensus-manual-seal = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 template-runtime         = { optional = true, path = "../runtime/template" }
 # trace
-dc-tracing-debug-handler = { path = "../../client/dvm/evm-tracing/rpc/debug" }
+# dc-tracing-debug-handler = { path = "../../client/dvm/evm-tracing/rpc/debug" }
 dc-tracing-trace-handler = { path = "../../client/dvm/evm-tracing/rpc/trace" }
 
 [features]

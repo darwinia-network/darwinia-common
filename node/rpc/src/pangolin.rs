@@ -115,11 +115,12 @@ where
 	use darwinia_header_mmr_rpc::{HeaderMMR, HeaderMMRApi};
 	use darwinia_staking_rpc::{Staking, StakingApi};
 	use dc_rpc::{
-		EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi, EthPubSubApiServer,
-		HexEncodedIdProvider, NetApi, NetApiServer, OverrideHandle, RuntimeApiStorageOverride,
-		SchemaV1Override, StorageOverride, Web3Api, Web3ApiServer,
+		Debug, DebugApiServer, EthApi, EthApiServer, EthFilterApi, EthFilterApiServer,
+		EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider, NetApi, NetApiServer,
+		OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride, Web3Api,
+		Web3ApiServer,
 	};
-	use dc_tracing_debug_handler::{Debug, DebugApiServer};
+	// use dc_tracing_debug_handler::{Debug, DebugApiServer};
 	use dc_tracing_trace_handler::{Trace, TraceApiServer};
 	use pangolin_runtime::TransactionConverter;
 

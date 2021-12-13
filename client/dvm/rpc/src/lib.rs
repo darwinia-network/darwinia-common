@@ -14,10 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Substrate. If not, see <http://www.gnu.org/licenses/>.
 
+mod debug;
 mod eth;
 mod eth_pubsub;
 mod overrides;
 
+pub use debug::{Debug, DebugApiServer, DebugRequester, DebugTask};
 pub use eth::{
 	EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthTask, NetApi, NetApiServer, Web3Api,
 	Web3ApiServer,

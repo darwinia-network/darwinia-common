@@ -31,8 +31,7 @@ use sp_core::H256;
 use sp_runtime::traits::Block as BlockT;
 // --- darwinia-network ---
 use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
-use dc_rpc::EthTask;
-use dc_tracing_debug_handler::DebugHandler;
+use dc_rpc::{DebugTask, EthTask};
 use dc_tracing_trace_handler::CacheTask;
 use dp_evm_trace_apis::DebugRuntimeApi;
 use dp_rpc::{FilterPool, PendingTransactions};
@@ -122,7 +121,7 @@ where
 			};
 
 		let (debug_task, debug_requester) = if rpc_config.ethapi.contains(&EthApiCmd::Debug) {
-			let (debug_task, debug_requester) = DebugHandler::task(
+			let (debug_task, debug_requester) = DebugTask::task(
 				Arc::clone(&client),
 				Arc::clone(&substrate_backend),
 				Arc::clone(&dvm_backend),

@@ -26,6 +26,7 @@ log                 = { version = "0.4" }
 rand                = { version = "0.8" }
 rlp                 = { version = "0.5" }
 sha3                = { version = "0.9" }
+tokio = { version = "0.2.21", features = ["sync", "time"] }
 # darwinia-network
 dc-db               = { path = "../db" }
 dp-consensus        = { path = "../../../primitives/consensus/" }
@@ -34,6 +35,8 @@ dp-storage          = { path = "../../../primitives/storage/" }
 dvm-ethereum        = { path = "../../../frame/dvm" }
 dvm-rpc-core        = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
+dc-tracer           = { path = "../evm-tracing/tracer" }
+dp-evm-trace-apis   = { path = "../../../primitives/evm/trace/apis" }
 # paritytech
 sc-client-api           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sc-network              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
@@ -45,6 +48,8 @@ sp-blockchain           = { git = "https://github.com/darwinia-network/substrate
 sp-io                   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-runtime              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-storage              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-utils = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-block-builder = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 
 [features]
 rpc_binary_search_estimate = []
