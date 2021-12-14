@@ -35,16 +35,16 @@ dvm-ethereum        = { path = "../../../frame/dvm" }
 dvm-rpc-core        = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
 # paritytech
-sc-client-api           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sc-network              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sc-rpc                  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sc-service              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sc-transaction-pool-api = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-api                  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-blockchain           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-io                   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-runtime              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-storage              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sc-client-api           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sc-network              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sc-rpc                  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sc-service              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sc-transaction-pool-api = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-api                  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-blockchain           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-io                   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-runtime              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-storage              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 
 [features]
 rpc_binary_search_estimate = []
