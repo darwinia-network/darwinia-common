@@ -105,9 +105,7 @@ template = [
 	"template-runtime",
 ]
 
-evm-tracing = [
-	"pangolin-runtime/evm-tracing",
-]
+evm-tracing = ["pangolin-runtime/evm-tracing"]
 
 runtime-benchmarks = ["pangolin-runtime/runtime-benchmarks"]
 
