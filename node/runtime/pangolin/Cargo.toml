@@ -257,3 +257,5 @@ try-runtime = [
 	"dvm-ethereum/try-runtime",
 	"to-ethereum-backing/try-runtime",
 ]
+
+no-wasm = []

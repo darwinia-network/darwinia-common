@@ -8,11 +8,13 @@ use crate::{pangoro_messages::ToPangoroOutboundPayLoad, *};
 use darwinia_support::{s2s::ToEthAddress, ChainName};
 use drml_bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE};
 use from_substrate_issuing::Config;
+
 // Convert from AccountId32 to H160
 pub struct TruncateToEthAddress;
 impl ToEthAddress<AccountId32> for TruncateToEthAddress {
 	fn into_ethereum_id(address: &AccountId32) -> H160 {
 		let account20: &[u8] = &address.as_ref();
+
 		H160::from_slice(&account20[..20])
 	}
 }
@@ -20,8 +22,8 @@ impl ToEthAddress<AccountId32> for TruncateToEthAddress {
 frame_support::parameter_types! {
 	pub const S2sIssuingPalletId: PalletId = PalletId(*b"da/s2sis");
 	pub const PangoroChainId: ChainId = PANGORO_CHAIN_ID;
-	pub PangoroName: ChainName = (b"Pangoro").to_vec();
 	pub const BridgePangoroLaneId: LaneId = PANGORO_PANGOLIN_LANE;
+	pub BackingChainName: ChainName = (b"Pangoro").to_vec();
 }
 
 impl Config for Runtime {
@@ -34,6 +36,6 @@ impl Config for Runtime {
 	type ToEthAddressT = TruncateToEthAddress;
 	type OutboundPayloadCreator = ToPangoroOutboundPayLoad;
 	type InternalTransactHandler = Ethereum;
-	type BackingChainName = PangoroName;
+	type BackingChainName = BackingChainName;
 	type MessageLaneId = BridgePangoroLaneId;
 }

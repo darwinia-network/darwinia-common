@@ -33,7 +33,7 @@ use sp_api::{BlockId, ProvideRuntimeApi};
 use sp_io::hashing::{blake2_128, twox_128};
 use sp_runtime::traits::Block as BlockT;
 // --- std ---
-use ethereum::{BlockV0 as EthereumBlockV0};
+use ethereum::BlockV0 as EthereumBlockV0;
 use ethereum_types::{H160, H256, U256};
 use std::{collections::BTreeMap, marker::PhantomData, sync::Arc};
 

@@ -24,23 +24,21 @@ use std::{
 	collections::{BTreeMap, HashMap},
 	path::PathBuf,
 	sync::{Arc, Mutex},
-	time::Duration,
 };
 // --- crates.io ---
 use async_trait::async_trait;
-use futures::StreamExt;
 // --- paritytech ---
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
-use sc_client_api::BlockchainEvents;
 use sc_consensus_manual_seal as manual_seal;
 use sc_keystore::LocalKeystore;
 use sc_service::{error::Error as ServiceError, BasePath, Configuration, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryWorker};
 use sp_inherents::{InherentData, InherentDataProvider, InherentIdentifier};
 // --- darwinia-network ---
-use crate::service::{FullBackend, FullClient, FullSelectChain};
-use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
-use dc_rpc::EthTask;
+use crate::service::{
+	dvm_tasks::{self, DvmTasksParams},
+	FullBackend, FullClient, FullSelectChain,
+};
 use dp_rpc::{FilterPool, PendingTransactions};
 use drml_common_primitives::{OpaqueBlock as Block, SLOT_DURATION};
 use drml_rpc::{template::FullDeps, SubscriptionTaskExecutor};
@@ -251,6 +249,7 @@ pub fn new_full(
 	let role = config.role.clone();
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let is_authority = config.role.is_authority();
+	let is_archive = config.state_pruning.is_archive();
 	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 
 	let rpc_extensions_builder = {
@@ -298,46 +297,16 @@ pub fn new_full(
 		telemetry: telemetry.as_mut(),
 	})?;
 
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-mapping-sync-worker",
-		MappingSyncWorker::new(
-			client.import_notification_stream(),
-			Duration::new(6, 0),
-			client.clone(),
-			backend.clone(),
-			frontier_backend.clone(),
-			SyncStrategy::Normal,
-		)
-		.for_each(|()| futures::future::ready(())),
-	);
-
-	// Spawn Frontier EthFilterApi maintenance task.
-	if let Some(filter_pool) = filter_pool {
-		// Each filter is allowed to stay in the pool for 100 blocks.
-		const FILTER_RETAIN_THRESHOLD: u64 = 100;
-		task_manager.spawn_essential_handle().spawn(
-			"frontier-filter-pool",
-			EthTask::filter_pool_task(Arc::clone(&client), filter_pool, FILTER_RETAIN_THRESHOLD),
-		);
-	}
-
-	// Spawn Frontier pending transactions maintenance task (as essential, otherwise we leak).
-	if let Some(pending_transactions) = pending_transactions {
-		const TRANSACTION_RETAIN_THRESHOLD: u64 = 5;
-		task_manager.spawn_essential_handle().spawn(
-			"frontier-pending-transactions",
-			EthTask::pending_transaction_task(
-				Arc::clone(&client),
-				pending_transactions,
-				TRANSACTION_RETAIN_THRESHOLD,
-			),
-		);
-	}
-
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-schema-cache-task",
-		EthTask::ethereum_schema_cache_task(Arc::clone(&client), Arc::clone(&frontier_backend)),
-	);
+	// Spawn dvm related tasks
+	dvm_tasks::spawn(DvmTasksParams {
+		task_manager: &task_manager,
+		client: client.clone(),
+		substrate_backend: backend,
+		dvm_backend: frontier_backend,
+		filter_pool,
+		pending_transactions,
+		is_archive,
+	});
 
 	let (block_import, is_manual_sealing) = consensus_result;
 

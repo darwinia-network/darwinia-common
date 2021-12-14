@@ -1,44 +1,45 @@
-pub use darwinia_evm_precompile_bridge_bsc::BscBridge;
-pub use darwinia_evm_precompile_bridge_ethereum::EthereumBridge;
-pub use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
-pub use darwinia_evm_precompile_dispatch::Dispatch;
-pub use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
-pub use darwinia_evm_precompile_transfer::Transfer;
-
+// --- core ---
+use core::marker::PhantomData;
 // --- crates.io ---
 use evm::{executor::PrecompileOutput, Context, ExitError};
 // --- paritytech ---
 use bp_messages::LaneId;
 use codec::{Decode, Encode};
-use darwinia_support::s2s::{LatestMessageNoncer, RelayMessageSender};
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::{FindAuthor, PalletInfoAccess},
 	ConsensusEngineId,
 };
 use sp_core::{crypto::Public, H160, U256};
-use sp_std::marker::PhantomData;
 // --- darwinia-network ---
 use crate::*;
 use darwinia_evm::{runner::stack::Runner, Config, EnsureAddressTruncated, FeeCalculator};
-use darwinia_support::evm::ConcatConverter;
+pub use darwinia_evm_precompile_bridge_bsc::BscBridge;
+use darwinia_evm_precompile_bridge_ethereum::EthereumBridge;
+use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
+use darwinia_evm_precompile_dispatch::Dispatch;
+use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
+use darwinia_support::{
+	evm::ConcatConverter,
+	s2s::{LatestMessageNoncer, RelayMessageSender},
+};
 use dp_evm::{Precompile, PrecompileSet};
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping,
 };
 
-pub struct EthereumFindAuthor<F>(sp_std::marker::PhantomData<F>);
+pub struct EthereumFindAuthor<F>(PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 	fn find_author<'a, I>(digests: I) -> Option<H160>
 	where
 		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
 	{
-		if let Some(author_index) = F::find_author(digests) {
+		F::find_author(digests).map(|author_index| {
 			let authority_id = Babe::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.0.to_raw_vec()[4..24]));
-		}
-		None
+
+			H160::from_slice(&authority_id.0.to_raw_vec()[4..24])
+		})
 	}
 }
 

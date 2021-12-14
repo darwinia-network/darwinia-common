@@ -22,6 +22,7 @@ use std::{collections::BTreeMap, marker::PhantomData, str::FromStr};
 use rand::{seq::SliceRandom, Rng};
 // --- paritytech ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
+use sc_chain_spec::{ChainType, GenericChainSpec, Properties};
 use sc_telemetry::TelemetryEndpoints;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;

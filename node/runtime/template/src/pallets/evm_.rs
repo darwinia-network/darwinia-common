@@ -9,11 +9,6 @@ use darwinia_evm::{runner::stack::Runner, Config, EnsureAddressTruncated};
 use darwinia_support::evm::ConcatConverter;
 use dvm_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
 
-frame_support::parameter_types! {
-	pub const ChainId: u64 = 42;
-	pub BlockGasLimit: U256 = U256::from(u32::max_value());
-}
-
 pub struct FixedGasPrice;
 impl FeeCalculator for FixedGasPrice {
 	fn min_gas_price() -> U256 {
@@ -27,12 +22,17 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 	where
 		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
 	{
-		if let Some(author_index) = F::find_author(digests) {
+		F::find_author(digests).map(|author_index| {
 			let authority_id = Aura::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.to_raw_vec()[4..24]));
-		}
-		None
+
+			H160::from_slice(&authority_id.to_raw_vec()[4..24])
+		})
 	}
+}
+
+frame_support::parameter_types! {
+	pub const ChainId: u64 = 42;
+	pub BlockGasLimit: U256 = U256::from(u32::max_value());
 }
 
 impl Config for Runtime {
