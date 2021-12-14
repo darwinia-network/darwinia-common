@@ -15,7 +15,7 @@ array-bytes         = { version = "1.4" }
 codec               = { package = "parity-scale-codec", version = "2.1" }
 ethereum            = { version = "0.9", features = ["with-codec"] }
 ethereum-types      = { version = "0.12" }
-evm                 = { git = "https://github.com/darwinia-network/evm", branch = "darwinia"}
+evm                 = { git = "https://github.com/darwinia-network/evm", branch = "darwinia" }
 futures             = { version = "0.3", features = ["compat"] }
 jsonrpc-core        = { version = "15.1" }
 jsonrpc-core-client = { version = "15.1" }

@@ -1,12 +1,12 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "DRML node common runtime"
+description = "Node runtime tracer for evm trace"
 edition     = "2021"
 homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "dp-evm-tracer"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.7.0"
+version     = "2.7.1"
 
 [dependencies]
 # darwinia-network
@@ -19,7 +19,7 @@ sp-io      = { default-features = false, git = "https://github.com/darwinia-netw
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
 # crate.io
-ethereum-types = { version = "0.11.0", default-features = false }
+ethereum-types = { version = "0.12.0", default-features = false }
 evm            = { git = "https://github.com/darwinia-network/evm", branch = "darwinia", default-features = false, features = [ "with-codec" ] }
 evm-gasometer  = { git = "https://github.com/darwinia-network/evm", branch = "darwinia", default-features = false }
 evm-runtime    = { git = "https://github.com/darwinia-network/evm", branch = "darwinia", default-features = false }
