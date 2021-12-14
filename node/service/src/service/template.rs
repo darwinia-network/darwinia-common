@@ -41,7 +41,7 @@ use crate::service::{
 };
 use dp_rpc::{FilterPool, PendingTransactions};
 use drml_common_primitives::{OpaqueBlock as Block, SLOT_DURATION};
-use drml_rpc::{template::FullDeps, SubscriptionTaskExecutor};
+use drml_rpc::{template::FullDeps, RpcConfig, SubscriptionTaskExecutor};
 use template_runtime::RuntimeApi;
 
 thread_local!(static TIMESTAMP: RefCell<u64> = RefCell::new(0));
@@ -196,7 +196,7 @@ pub fn new_full(
 	config: Configuration,
 	is_manual_sealing: bool,
 	enable_dev_signer: bool,
-	max_past_logs: u32,
+	rpc_config: RpcConfig,
 ) -> Result<TaskManager, ServiceError> {
 	let sc_service::PartialComponents {
 		client,
@@ -246,10 +246,22 @@ pub fn new_full(
 		);
 	}
 
+	// Spawn dvm related tasks
+	let is_archive = config.state_pruning.is_archive();
+	let tracing_requesters = dvm_tasks::spawn(DvmTasksParams {
+		task_manager: &task_manager,
+		client: client.clone(),
+		substrate_backend: backend.clone(),
+		dvm_backend: frontier_backend.clone(),
+		filter_pool: filter_pool.clone(),
+		pending_transactions: pending_transactions.clone(),
+		rpc_config: rpc_config.clone(),
+		is_archive,
+	});
+
 	let role = config.role.clone();
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let is_authority = config.role.is_authority();
-	let is_archive = config.state_pruning.is_archive();
 	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 
 	let rpc_extensions_builder = {
@@ -271,7 +283,8 @@ pub fn new_full(
 				pending_transactions: pending.clone(),
 				filter_pool: filter_pool.clone(),
 				backend: frontier_backend.clone(),
-				max_past_logs,
+				tracing_requesters: tracing_requesters.clone(),
+				rpc_config: rpc_config.clone(),
 				command_sink: Some(command_sink.clone()),
 			};
 
@@ -296,17 +309,6 @@ pub fn new_full(
 		config,
 		telemetry: telemetry.as_mut(),
 	})?;
-
-	// Spawn dvm related tasks
-	dvm_tasks::spawn(DvmTasksParams {
-		task_manager: &task_manager,
-		client: client.clone(),
-		substrate_backend: backend,
-		dvm_backend: frontier_backend,
-		filter_pool,
-		pending_transactions,
-		is_archive,
-	});
 
 	let (block_import, is_manual_sealing) = consensus_result;
 

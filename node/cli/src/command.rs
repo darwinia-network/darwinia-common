@@ -199,7 +199,7 @@ pub fn run() -> sc_cli::Result<()> {
 							config,
 							is_manual_sealing,
 							enable_dev_signer,
-							max_past_logs,
+							rpc_config,
 						)
 					})
 					.map_err(sc_cli::Error::Service);

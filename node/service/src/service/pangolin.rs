@@ -359,7 +359,6 @@ where
 		let select_chain = select_chain.clone();
 		let chain_spec = config.chain_spec.cloned_box();
 		let shared_voter_state = shared_voter_state.clone();
-		// let tracing_requesters = tracing_requesters.clone();
 
 		move |deny_unsafe, is_authority, network, subscription_executor| -> RpcResult {
 			let deps = FullDeps {
