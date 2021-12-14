@@ -2,13 +2,13 @@
 use frame_election_provider_support::onchain::OnChainSequentialPhragmen;
 use frame_support::PalletId;
 use pallet_election_provider_multi_phase::OnChainConfig;
-use sp_npos_elections::CompactSolution;
+use sp_npos_elections::NposSolution;
 use sp_staking::SessionIndex;
 // --- darwinia-network ---
 use crate::*;
 use darwinia_staking::{Config, EraIndex};
 
-pub const MAX_NOMINATIONS: u32 = <NposCompactSolution24 as CompactSolution>::LIMIT as u32;
+pub const MAX_NOMINATIONS: u32 = <NposCompactSolution24 as NposSolution>::LIMIT as u32;
 
 frame_support::parameter_types! {
 	pub const StakingPalletId: PalletId = PalletId(*b"da/staki");
