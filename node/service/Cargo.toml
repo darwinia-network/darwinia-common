@@ -78,10 +78,10 @@ sp-trie                                    = { git = "https://github.com/darwini
 substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 # template
 async-trait              = { version = "0.1", optional = true }
-sc-consensus-aura        = { optional = true, git = "https://github.com/darwinia-network/substrate",branch = "darwinia-v0.11.8" }
-sc-consensus-manual-seal = { optional = true, git = "https://github.com/darwinia-network/substrate",branch = "darwinia-v0.11.8" }
-sp-consensus-aura        = { optional = true, git = "https://github.com/darwinia-network/substrate",branch = "darwinia-v0.11.8" }
-sp-inherents             = { optional = true, git = "https://github.com/darwinia-network/substrate",branch = "darwinia-v0.11.8" }
+sc-consensus-aura        = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sc-consensus-manual-seal = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-consensus-aura        = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-inherents             = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 template-runtime         = { optional = true, path = "../runtime/template" }
 
 
