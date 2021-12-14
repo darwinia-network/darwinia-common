@@ -16,8 +16,8 @@ evm                   = { version = "0.30", default-features = false, features =
 impl-trait-for-tuples = { version = "0.2" }
 serde                 = { version = "1.0", optional = true, features = ["derive"] }
 # paritytech
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-std  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-std  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 
 [features]
 default = ["std"]
