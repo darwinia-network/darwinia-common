@@ -1464,6 +1464,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "rlp",
+ "serde_json",
  "sp-core",
  "sp-io",
  "sp-runtime",
