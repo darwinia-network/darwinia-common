@@ -233,7 +233,6 @@ pub fn new_full(
 			block_announce_validator_builder: None,
 			warp_sync: None,
 		})?;
-
 	// Channel for the rpc handler to communicate with the authorship task.
 	let (command_sink, commands_stream) = futures::channel::mpsc::channel(1000);
 
@@ -246,7 +245,6 @@ pub fn new_full(
 		);
 	}
 
-	// Spawn dvm related tasks
 	let is_archive = config.state_pruning.is_archive();
 	let tracing_requesters = dvm_tasks::spawn(DvmTasksParams {
 		task_manager: &task_manager,
@@ -258,12 +256,10 @@ pub fn new_full(
 		rpc_config: rpc_config.clone(),
 		is_archive,
 	});
-
 	let role = config.role.clone();
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let is_authority = config.role.is_authority();
 	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
-
 	let rpc_extensions_builder = {
 		let client = client.clone();
 		let pool = transaction_pool.clone();
@@ -294,7 +290,6 @@ pub fn new_full(
 			))
 		})
 	};
-
 	let _ = sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		network: network.clone(),
 		client: client.clone(),
@@ -309,7 +304,6 @@ pub fn new_full(
 		config,
 		telemetry: telemetry.as_mut(),
 	})?;
-
 	let (block_import, is_manual_sealing) = consensus_result;
 
 	if role.is_authority() {

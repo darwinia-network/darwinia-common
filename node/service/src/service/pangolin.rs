@@ -37,9 +37,9 @@ use sc_consensus_babe::{
 };
 use sc_executor::NativeExecutionDispatch;
 use sc_finality_grandpa::{
-	Config as GrandpaConfig, FinalityProofProvider as GrandpaFinalityProofProvider, GrandpaParams,
-	LinkHalf, SharedVoterState as GrandpaSharedVoterState,
-	VotingRulesBuilder as GrandpaVotingRulesBuilder,
+	warp_proof::NetworkProvider, Config as GrandpaConfig,
+	FinalityProofProvider as GrandpaFinalityProofProvider, GrandpaParams, LinkHalf,
+	SharedVoterState as GrandpaSharedVoterState, VotingRulesBuilder as GrandpaVotingRulesBuilder,
 };
 use sc_network::Event;
 use sc_service::{
@@ -132,7 +132,6 @@ fn new_partial<RuntimeApi, Executor>(
 				LinkHalf<Block, FullClient<RuntimeApi, Executor>, FullSelectChain>,
 				BabeLink<Block>,
 			),
-			GrandpaSharedVoterState,
 			Option<Telemetry>,
 		),
 	>,
@@ -168,17 +167,19 @@ where
 			&config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 		)?;
-
-	// Spawn telemetry service
 	let telemetry = telemetry.map(|(worker, telemetry)| {
 		task_manager.spawn_handle().spawn("telemetry", worker.run());
 		telemetry
 	});
-
 	let client = Arc::new(client);
 	let select_chain = LongestChain::new(backend.clone());
-
-	// Consensus part
+	let transaction_pool = BasicPool::new_full(
+		config.transaction_pool.clone(),
+		config.role.is_authority().into(),
+		config.prometheus_registry(),
+		task_manager.spawn_essential_handle(),
+		client.clone(),
+	);
 	let grandpa_hard_forks = vec![];
 	let (grandpa_block_import, grandpa_link) =
 		sc_finality_grandpa::block_import_with_authority_set_hard_forks(
@@ -218,16 +219,7 @@ where
 		CanAuthorWithNativeVersion::new(client.executor().clone()),
 		telemetry.as_ref().map(|x| x.handle()),
 	)?;
-	let rpc_setup = GrandpaSharedVoterState::empty();
 	let import_setup = (babe_import.clone(), grandpa_link, babe_link.clone());
-
-	let transaction_pool = BasicPool::new_full(
-		config.transaction_pool.clone(),
-		config.role.is_authority().into(),
-		config.prometheus_registry(),
-		task_manager.spawn_essential_handle(),
-		client.clone(),
-	);
 
 	Ok(PartialComponents {
 		client,
@@ -237,7 +229,7 @@ where
 		select_chain,
 		import_queue,
 		transaction_pool,
-		other: (import_setup, rpc_setup, telemetry),
+		other: (import_setup, telemetry),
 	})
 }
 
@@ -269,6 +261,7 @@ where
 	let name = config.network.node_name.clone();
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let auth_disc_publish_non_global_ips = config.network.allow_non_globals_in_dht;
+
 	config
 		.network
 		.extra_sets
@@ -284,7 +277,7 @@ where
 		select_chain,
 		import_queue,
 		transaction_pool,
-		other: (import_setup, rpc_setup, mut telemetry),
+		other: ((babe_import, grandpa_link, babe_link), mut telemetry),
 	} = new_partial::<RuntimeApi, Executor>(&mut config)?;
 
 	if let Some(url) = &config.keystore_remote {
@@ -299,9 +292,9 @@ where
 		};
 	}
 
-	let warp_sync = Arc::new(sc_finality_grandpa::warp_proof::NetworkProvider::new(
+	let warp_sync = Arc::new(NetworkProvider::new(
 		backend.clone(),
-		import_setup.1.shared_authority_set().clone(),
+		grandpa_link.shared_authority_set().clone(),
 	));
 	let (network, system_rpc_tx, network_starter) =
 		sc_service::build_network(BuildNetworkParams {
@@ -324,7 +317,6 @@ where
 		);
 	}
 
-	// Spawn dvm related services
 	let dvm_backend = open_dvm_backend(&config)?;
 	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
@@ -338,11 +330,8 @@ where
 		is_archive,
 		rpc_config: rpc_config.clone(),
 	});
-
-	// Create rpc extension builder
 	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
-	let (babe_import, grandpa_link, babe_link) = import_setup;
-	let shared_voter_state = rpc_setup;
+	let shared_voter_state = GrandpaSharedVoterState::empty();
 	let babe_config = babe_link.config().clone();
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
 	let justification_stream = grandpa_link.justification_stream();
@@ -351,7 +340,6 @@ where
 		backend.clone(),
 		Some(shared_authority_set.clone()),
 	);
-
 	let rpc_extensions_builder = {
 		let client = client.clone();
 		let keystore = keystore_container.sync_keystore();
@@ -392,7 +380,6 @@ where
 				.map_err(Into::into)
 		}
 	};
-
 	let rpc_handlers = sc_service::spawn_tasks(SpawnTasksParams {
 		config,
 		backend: backend.clone(),
@@ -633,7 +620,7 @@ where
 		NeverCanAuthor,
 		telemetry.as_ref().map(|x| x.handle()),
 	)?;
-	let warp_sync = Arc::new(sc_finality_grandpa::warp_proof::NetworkProvider::new(
+	let warp_sync = Arc::new(NetworkProvider::new(
 		backend.clone(),
 		grandpa_link.shared_authority_set().clone(),
 	));
