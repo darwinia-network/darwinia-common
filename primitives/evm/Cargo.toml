@@ -6,8 +6,8 @@ homepage    = "https://substrate.dev"
 license     = "Apache-2.0"
 name        = "dp-evm"
 readme      = "README.md"
-repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.7.1"
+repository  = "https://github.com/darwinia-network/darwinia-common"
+version     = "2.7.2"
 
 [dependencies]
 # crates.io
