@@ -18,7 +18,7 @@ log         = { version = "0.4" }
 rand        = { version = "0.8" }
 serde       = { version = "1.0", features = ["derive"] }
 serde_json  = { version = "1.0" }
-tokio       = { version = "0.2.21", features = [ "macros", "sync" ] }
+tokio       = { version = "0.2.21", features = ["macros", "sync"] }
 # darwinia-network
 darwinia-balances-rpc-runtime-api   = { path = "../../frame/balances/rpc/runtime-api" }
 darwinia-bridge-ethereum            = { path = "../../frame/bridge/ethereum" }
@@ -31,9 +31,9 @@ darwinia-staking-rpc-runtime-api    = { path = "../../frame/staking/rpc/runtime-
 dc-db                               = { path = "../../client/dvm/db" }
 dc-mapping-sync                     = { path = "../../client/dvm/mapping-sync" }
 dc-rpc                              = { path = "../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }
-dp-rpc                              = { path = "../../primitives/rpc" }
 dp-evm-trace-apis                   = { path = "../../primitives/evm/trace/apis" }
 dp-evm-trace-ext                    = { path = "../../primitives/evm/trace/ext" }
+dp-rpc                              = { path = "../../primitives/rpc" }
 drml-common-primitives              = { path = "../primitives/common" }
 drml-rpc                            = { path = "../rpc" }
 dvm-rpc-runtime-api                 = { path = "../../frame/dvm/rpc/runtime-api" }
