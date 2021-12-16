@@ -61,9 +61,9 @@ trie-memory-tracker = ["sp-trie/memory-tracker"]
 
 wasmtime = ["sc-cli/wasmtime"]
 
-template = ["drml-service/template"]
-
 evm-tracing = ["drml-service/evm-tracing"]
+
+template = ["drml-service/template"]
 
 runtime-benchmarks = [
 	# darwinia-network
