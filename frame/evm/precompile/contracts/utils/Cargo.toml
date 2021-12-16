@@ -2,7 +2,7 @@
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "utils precompiles for EVM pallet."
 edition     = "2021"
-homepage    = "https://darwinia.network/"
+homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "darwinia-evm-precompile-utils"
 readme      = "README.md"

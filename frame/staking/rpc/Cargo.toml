@@ -2,7 +2,7 @@
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "Node-specific RPC methods for interaction with staking."
 edition     = "2021"
-homepage    = "https://darwinia.network/"
+homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "darwinia-staking-rpc"
 readme      = "README.md"

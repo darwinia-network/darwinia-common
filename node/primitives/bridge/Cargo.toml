@@ -2,11 +2,11 @@
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "Pangolin node bridge primitives"
 edition     = "2021"
-homepage    = "https://darwinia.network/"
+homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "drml-bridge-primitives"
 readme      = "README.md"
-repository  = "https://github.com/darwinia-network/darwinia-common/"
+repository  = "https://github.com/darwinia-network/darwinia-common"
 version     = "2.7.2"
 
 [dependencies]

@@ -2,7 +2,7 @@
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "Mapping sync logic for dvm."
 edition     = "2021"
-homepage    = "https://darwinia.network/"
+homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "dc-mapping-sync"
 readme      = "README.md"

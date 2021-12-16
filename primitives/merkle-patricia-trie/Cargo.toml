@@ -2,7 +2,7 @@
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "Merkle-Patricia Trie (Ethereum Style)"
 edition     = "2021"
-homepage    = "https://darwinia.network/"
+homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "merkle-patricia-trie"
 readme      = "README.md"

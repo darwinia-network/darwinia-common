@@ -2,11 +2,11 @@
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "Pallet for logging MMR into header digest"
 edition     = "2021"
-homepage    = "https://darwinia.network/"
+homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "darwinia-header-mmr"
 readme      = "README.md"
-repository  = "https://github.com/darwinia-network/darwinia-common/"
+repository  = "https://github.com/darwinia-network/darwinia-common"
 version     = "2.7.2"
 
 [dependencies]

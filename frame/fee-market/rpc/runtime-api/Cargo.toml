@@ -2,11 +2,11 @@
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "Runtime API definition required by fee-market RPC extensions."
 edition     = "2021"
-homepage    = "https://darwinia.network/"
+homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "darwinia-fee-market-rpc-runtime-api"
 readme      = "README.md"
-repository  = "https://github.com/darwinia-network/darwinia-common/"
+repository  = "https://github.com/darwinia-network/darwinia-common"
 version     = "2.7.2"
 
 [dependencies]

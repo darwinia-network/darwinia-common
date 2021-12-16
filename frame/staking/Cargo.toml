@@ -2,11 +2,11 @@
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet staking"
 edition     = "2021"
-homepage    = "https://darwinia.network/"
+homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "darwinia-staking"
 readme      = "README.md"
-repository  = "https://github.com/darwinia-network/darwinia-common/"
+repository  = "https://github.com/darwinia-network/darwinia-common"
 version     = "2.7.2"
 
 [dependencies]
