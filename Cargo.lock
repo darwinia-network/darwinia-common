@@ -2178,7 +2178,7 @@ dependencies = [
 
 [[package]]
 name = "dp-consensus"
-version = "2.7.1"
+version = "2.7.2"
 dependencies = [
  "ethereum",
  "parity-scale-codec",
