@@ -536,6 +536,7 @@ sp_api::impl_runtime_apis! {
 			let mut list = Vec::<BenchmarkList>::new();
 
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+			list_benchmark!(list, extra, to_substrate_backing, Substrate2SubstrateBacking);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 

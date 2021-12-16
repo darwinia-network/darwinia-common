@@ -765,6 +765,10 @@ sp_api::impl_runtime_apis! {
 			let mut list = Vec::<BenchmarkList>::new();
 
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+			list_benchmark!(list, extra, darwinia_evm, EVM);
+			list_benchmark!(list, extra, from_substrate_issuing, Substrate2SubstrateIssuing);
+			list_benchmark!(list, extra, from_ethereum_issuing, EthereumIssuing);
+			list_benchmark!(list, extra, darwinia_fee_market, FeeMarket);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
