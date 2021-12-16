@@ -70,8 +70,8 @@ where
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: sp_block_builder::BlockBuilder<Block>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
 	C::Api: dp_evm_trace_apis::DebugRuntimeApi<Block>,
+	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
 	P: 'static + sc_transaction_pool_api::TransactionPool<Block = Block>,
 	B: 'static + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<Hashing>,
@@ -189,6 +189,7 @@ where
 	}
 
 	let ethapi_cmd = rpc_config.ethapi.clone();
+
 	if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
 		if let Some(trace_filter_requester) = tracing_requesters.trace {
 			io.extend_with(TraceApiServer::to_delegate(Trace::new(
