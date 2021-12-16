@@ -63,8 +63,8 @@ dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/ev
 dp-evm-trace-events = { optional = true, default-features = false, path = "../../../primitives/evm/trace/events" }
 dp-evm-trace-ext    = { default-features = false, path = "../../../primitives/evm/trace/ext" }
 dp-evm-tracer       = { optional = true, default-features = false, path = "../../../primitives/evm/trace/tracer" }
-rlp                 = { optional = true, default-features = false, version = "0.5" }
-sha3                = { optional = true, default-features = false, version = "0.8" }
+rlp                 = { version = "0.5", optional = true, default-features = false }
+sha3                = { version = "0.8", optional = true, default-features = false }
 # paritytech
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.8" }
 bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.8" }

@@ -29,8 +29,8 @@ dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/ev
 dp-evm-trace-events = { default-features = false, path = "../../../primitives/evm/trace/events" }
 dp-evm-trace-ext    = { default-features = false, path = "../../../primitives/evm/trace/ext" }
 dp-evm-tracer       = { default-features = false, path = "../../../primitives/evm/trace/tracer" }
-rlp                 = { default-features = false, version = "0.5" }
-sha3                = { default-features = false, version = "0.8" }
+rlp                 = { version = "0.5", default-features = false }
+sha3                = { version = "0.8", default-features = false }
 # paritytech
 frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 frame-support                              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
