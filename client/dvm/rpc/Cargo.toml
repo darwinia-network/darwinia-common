@@ -15,7 +15,6 @@ array-bytes         = { version = "1.4" }
 codec               = { package = "parity-scale-codec", version = "2.1" }
 ethereum            = { version = "0.9", features = ["with-codec"] }
 ethereum-types      = { version = "0.12" }
-evm                 = { git = "https://github.com/darwinia-network/evm", branch = "darwinia" }
 futures             = { version = "0.3", features = ["compat"] }
 jsonrpc-core        = { version = "15.1" }
 jsonrpc-core-client = { version = "15.1" }
@@ -38,14 +37,15 @@ dp-storage          = { path = "../../../primitives/storage/" }
 dvm-ethereum        = { path = "../../../frame/dvm" }
 dvm-rpc-core        = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
+evm                 = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.11.8" }
 # paritytech
-sp-block-builder        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 sc-client-api           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 sc-network              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 sc-rpc                  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 sc-service              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 sc-transaction-pool-api = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 sp-api                  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-block-builder        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 sp-blockchain           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 sp-io                   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 sp-runtime              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }

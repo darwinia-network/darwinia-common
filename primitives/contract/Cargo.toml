@@ -11,10 +11,10 @@ version     = "2.7.1"
 
 [dependencies]
 # crates.io
+ethabi         = { version = "15.0", default-features = false }
 ethereum-types = { default-features = false, version = "0.12" }
 # darwinia-network
 dp-asset            = { default-features = false, path = "../asset" }
-ethabi              = { default-features = false, version = "15.0" }
 ethereum-primitives = { default-features = false, path = "../ethereum" }
 # paritytech
 bp-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.8" }
@@ -28,10 +28,10 @@ default = ["std"]
 
 std = [
 	# crates.io
+	"ethabi/std",
 	"ethereum-types/std",
 	# darwinia-network
 	"dp-asset/std",
-	"ethabi/std",
 	"ethereum-primitives/std",
 	# paritytech
 	"bp-messages/std",

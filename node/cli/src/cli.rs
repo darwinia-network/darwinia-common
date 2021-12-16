@@ -16,13 +16,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// crates.io
+// --- crates.io ---
 #[cfg(feature = "template")]
 use structopt::clap::arg_enum;
 use structopt::StructOpt;
-// paritytech
+// --- paritytech ---
 use sc_cli::{KeySubcommand, SignCmd, VanityCmd, VerifyCmd};
-// darwinia-network
+// --- darwinia-network ---
 use drml_rpc::EthApiCmd;
 
 /// An overarching CLI command definition.

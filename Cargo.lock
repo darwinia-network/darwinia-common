@@ -2858,7 +2858,7 @@ checksum = "f7531096570974c3a9dcf9e4b8e1cede1ec26cf5046219fb3b9d897503b9be59"
 [[package]]
 name = "evm"
 version = "0.30.1"
-source = "git+https://github.com/darwinia-network/evm?branch=darwinia#a93227686a2fd4f6e02c77e5d7a7104f98cf4a49"
+source = "git+https://github.com/darwinia-network/evm?branch=darwinia-v0.11.8#a93227686a2fd4f6e02c77e5d7a7104f98cf4a49"
 dependencies = [
  "environmental",
  "ethereum",
@@ -2876,7 +2876,7 @@ dependencies = [
 [[package]]
 name = "evm-core"
 version = "0.30.0"
-source = "git+https://github.com/darwinia-network/evm?branch=darwinia#a93227686a2fd4f6e02c77e5d7a7104f98cf4a49"
+source = "git+https://github.com/darwinia-network/evm?branch=darwinia-v0.11.8#a93227686a2fd4f6e02c77e5d7a7104f98cf4a49"
 dependencies = [
  "funty",
  "parity-scale-codec",
@@ -2887,7 +2887,7 @@ dependencies = [
 [[package]]
 name = "evm-gasometer"
 version = "0.30.0"
-source = "git+https://github.com/darwinia-network/evm?branch=darwinia#a93227686a2fd4f6e02c77e5d7a7104f98cf4a49"
+source = "git+https://github.com/darwinia-network/evm?branch=darwinia-v0.11.8#a93227686a2fd4f6e02c77e5d7a7104f98cf4a49"
 dependencies = [
  "environmental",
  "evm-core",
@@ -2898,7 +2898,7 @@ dependencies = [
 [[package]]
 name = "evm-runtime"
 version = "0.30.0"
-source = "git+https://github.com/darwinia-network/evm?branch=darwinia#a93227686a2fd4f6e02c77e5d7a7104f98cf4a49"
+source = "git+https://github.com/darwinia-network/evm?branch=darwinia-v0.11.8#a93227686a2fd4f6e02c77e5d7a7104f98cf4a49"
 dependencies = [
  "environmental",
  "evm-core",
