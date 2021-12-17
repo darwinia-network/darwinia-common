@@ -2,12 +2,12 @@
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "Pallet for logging MMR into header digest"
 edition     = "2021"
-homepage    = "https://darwinia.network/"
+homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "darwinia-header-mmr"
 readme      = "README.md"
-repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.7.1"
+repository  = "https://github.com/darwinia-network/darwinia-common"
+version     = "2.7.2"
 
 [dependencies]
 # crates.io
@@ -20,19 +20,19 @@ darwinia-relay-primitives           = { default-features = false, path = "../../
 darwinia-support                    = { default-features = false, path = "../support" }
 mmr                                 = { package = "ckb-merkle-mountain-range", default-features = false, git = "https://github.com/darwinia-network/merkle-mountain-range" }
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 
 [dev-dependencies]
 # crates.io
 array-bytes = { version = "1.4" }
 serde_json  = { version = "1.0" }
 # paritytech
-sp-tracing = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-tracing = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 
 [features]
 default = ["std"]

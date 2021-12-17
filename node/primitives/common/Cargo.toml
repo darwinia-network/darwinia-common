@@ -2,17 +2,17 @@
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "DRML node runtime primitives"
 edition     = "2021"
-homepage    = "https://darwinia.network/"
+homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "drml-common-primitives"
 readme      = "README.md"
-repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.7.1"
+repository  = "https://github.com/darwinia-network/darwinia-common"
+version     = "2.7.2"
 
 [dependencies]
 # paritytech
-sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 
 [features]
 default = ["std"]

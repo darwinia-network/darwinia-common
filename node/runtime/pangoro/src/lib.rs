@@ -132,7 +132,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangoro"),
 	impl_name: sp_runtime::create_runtime_str!("Pangoro"),
 	authoring_version: 0,
-	spec_version: 2_7_01_0,
+	spec_version: 2_7_02_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -536,6 +536,7 @@ sp_api::impl_runtime_apis! {
 			let mut list = Vec::<BenchmarkList>::new();
 
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+			list_benchmark!(list, extra, to_substrate_backing, Substrate2SubstrateBacking);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 

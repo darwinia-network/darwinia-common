@@ -2,21 +2,21 @@
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "Primitives for the fee market"
 edition     = "2021"
-homepage    = "https://darwinia.network/"
+homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "dp-fee"
 readme      = "README.md"
-repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.7.1"
+repository  = "https://github.com/darwinia-network/darwinia-common"
+version     = "2.7.2"
 
 [dependencies]
 # crates.io
 codec = { package = "parity-scale-codec", version = "2.1", default-features = false, features = ["derive"] }
 # paritytech
-bp-messages   = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+bp-messages   = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.8" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 
 [features]
 default = ["std"]

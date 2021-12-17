@@ -2,12 +2,12 @@
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "FRAME pallet to s2s issuing"
 edition     = "2021"
-homepage    = "https://darwinia.network/"
+homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "from-substrate-issuing"
 readme      = "README.md"
-repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.7.1"
+repository  = "https://github.com/darwinia-network/darwinia-common"
+version     = "2.7.2"
 
 [dependencies]
 # crates.io
@@ -28,15 +28,15 @@ dp-s2s              = { default-features = false, path = "../../../../primitives
 dvm-ethereum        = { default-features = false, path = "../../../dvm" }
 ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum" }
 # paritytech
-bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }
-bp-messages         = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }
-bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.7" }
-frame-benchmarking  = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-frame-support       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-frame-system        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-io               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.8" }
+bp-messages         = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.8" }
+bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.8" }
+frame-benchmarking  = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+frame-support       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+frame-system        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-io               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 
 [dev-dependencies]
 # crates.io
@@ -46,7 +46,7 @@ libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 rlp          = { version = "0.5" }
 # darwinia-network
 darwinia-balances = { path = "../../../balances" }
-pallet-timestamp  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+pallet-timestamp  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 
 [features]
 default = ["std"]

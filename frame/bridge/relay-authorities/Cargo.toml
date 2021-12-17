@@ -2,12 +2,12 @@
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "Relayer Authorities Protocal Implementation"
 edition     = "2021"
-homepage    = "https://darwinia.network/"
+homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "darwinia-relay-authorities"
 readme      = "README.md"
-repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.7.1"
+repository  = "https://github.com/darwinia-network/darwinia-common"
+version     = "2.7.2"
 
 [dependencies]
 # crates.io
@@ -17,10 +17,10 @@ log   = { version = "0.4" }
 darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../support" }
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 
 [dev-dependencies]
 # crates.io
@@ -30,9 +30,9 @@ darwinia-balances   = { path = "../../balances" }
 darwinia-header-mmr = { features = ["easy-testing"], path = "../../header-mmr" }
 darwinia-support    = { path = "../../support" }
 # paritytech
-sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-io      = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-tracing = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-io      = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-tracing = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 
 [features]
 default = ["std"]

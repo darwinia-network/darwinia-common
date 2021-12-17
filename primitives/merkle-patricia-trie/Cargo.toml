@@ -2,12 +2,12 @@
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "Merkle-Patricia Trie (Ethereum Style)"
 edition     = "2021"
-homepage    = "https://darwinia.network/"
+homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "merkle-patricia-trie"
 readme      = "README.md"
-repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.7.1"
+repository  = "https://github.com/darwinia-network/darwinia-common"
+version     = "2.7.2"
 
 [[bench]]
 harness = false
@@ -19,7 +19,7 @@ hash      = { package = "keccak-hash", version = "0.8", default-features = false
 hashbrown = { version = "0.11" }
 rlp       = { version = "0.5", default-features = false }
 # paritytech
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 
 [dev-dependencies]
 # crates.io

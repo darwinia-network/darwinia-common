@@ -2,12 +2,12 @@
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "Node-specific RPC methods for interaction with balances."
 edition     = "2021"
-homepage    = "https://darwinia.network/"
+homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "darwinia-balances-rpc"
 readme      = "README.md"
-repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.7.1"
+repository  = "https://github.com/darwinia-network/darwinia-common"
+version     = "2.7.2"
 
 [dependencies]
 # crates.io
@@ -18,6 +18,6 @@ jsonrpc-derive      = { version = "15.1" }
 # darwinia-network
 darwinia-balances-rpc-runtime-api = { path = "./runtime-api" }
 # paritytech
-sp-api        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-blockchain = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
-sp-runtime    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.7" }
+sp-api        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-blockchain = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-runtime    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }

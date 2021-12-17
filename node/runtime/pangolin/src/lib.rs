@@ -168,7 +168,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 0,
-	spec_version: 2_7_01_0,
+	spec_version: 2_7_02_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -765,6 +765,10 @@ sp_api::impl_runtime_apis! {
 			let mut list = Vec::<BenchmarkList>::new();
 
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+			list_benchmark!(list, extra, darwinia_evm, EVM);
+			list_benchmark!(list, extra, from_substrate_issuing, Substrate2SubstrateIssuing);
+			list_benchmark!(list, extra, from_ethereum_issuing, EthereumIssuing);
+			list_benchmark!(list, extra, darwinia_fee_market, FeeMarket);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -821,12 +825,8 @@ fn migrate() -> Weight {
 	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
 	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
 
-	migration::move_pallet(b"Instance2Treasury", b"KtonTreasury");
-
-	log::info!("`KtonTreasury` migrated.");
-
-	// 0
-	RuntimeBlockWeights::get().max_block
+	0
+	// RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
