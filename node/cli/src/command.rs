@@ -92,8 +92,8 @@ impl SubstrateCli for Cli {
 			"pangoro-dev" => Box::new(pangoro_chain_spec::development_config()),
 			#[cfg(feature = "template")]
 			"template" | "template-dev" => Box::new(template_chain_spec::development_config()),
-			path => {
-				let path = PathBuf::from(path);
+			_ => {
+				let path = PathBuf::from(id);
 				let chain_spec =
 					Box::new(PangoroChainSpec::from_json_file(path.clone())?) as Box<dyn ChainSpec>;
 
