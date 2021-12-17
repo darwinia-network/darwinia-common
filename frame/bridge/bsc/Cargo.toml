@@ -28,6 +28,7 @@ sp-std             = { default-features = false, git = "https://github.com/darwi
 
 [dev-dependencies]
 # paritytech
+array-bytes = { version = "1.4" }
 pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 serde_json       = { version = "1.0" }
 

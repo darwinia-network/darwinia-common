@@ -80,6 +80,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+pub mod weight;
+
 #[frame_support::pallet]
 pub mod pallet {
 	// --- paritytech ---
@@ -93,6 +95,7 @@ pub mod pallet {
 	use sp_std::borrow::ToOwned;
 	use sp_std::{collections::btree_set::BTreeSet, prelude::*};
 	// --- darwinia-network ---
+	pub use super::weight::WeightInfo;
 	use bsc_primitives::*;
 	use ethereum_primitives::storage::{EthereumStorage, EthereumStorageProof};
 
@@ -105,6 +108,7 @@ pub mod pallet {
 		type BSCConfiguration: Get<BSCConfiguration>;
 		/// Handler for headers submission result.
 		type OnHeadersSubmitted: OnHeadersSubmitted<Self::AccountId>;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::error]
@@ -253,7 +257,7 @@ pub mod pallet {
 		}
 
 		/// Verify signed relayed headers and finalize authority set
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::verify_and_update_authority_set_signed())]
 		pub fn verify_and_update_authority_set_signed(
 			origin: OriginFor<T>,
 			headers: Vec<BSCHeader>,
@@ -295,11 +299,6 @@ pub mod pallet {
 		}
 	}
 	impl<T: Config> Pallet<T> {
-		/// Return true if the header's timestamp greater or equal than current on-chain time
-		pub fn is_timestamp_ahead(timestamp: u64) -> bool {
-			T::UnixTime::now().as_millis() as u64 <= timestamp
-		}
-
 		/// Perform basic checks that only require header itself.
 		pub fn contextless_checks(config: &BSCConfiguration, header: &BSCHeader) -> DispatchResult {
 			// he genesis block is the always valid dead-end
@@ -337,12 +336,6 @@ pub mod pallet {
 
 			// Ensure that the mix digest is zero as we don't have fork protection currently
 			ensure!(header.mix_digest.is_zero(), <Error<T>>::InvalidMixDigest);
-
-			// Don't waste time checking blocks from the future
-			ensure!(
-				!Self::is_timestamp_ahead(header.timestamp),
-				<Error<T>>::HeaderTimestampIsAhead
-			);
 
 			// Check that the extra-data contains the vanity, validators and signature.
 			ensure!(

@@ -769,6 +769,7 @@ sp_api::impl_runtime_apis! {
 			list_benchmark!(list, extra, from_substrate_issuing, Substrate2SubstrateIssuing);
 			list_benchmark!(list, extra, from_ethereum_issuing, EthereumIssuing);
 			list_benchmark!(list, extra, darwinia_fee_market, FeeMarket);
+			list_benchmark!(list, extra, darwinia_bridge_bsc, BSC);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
