@@ -32,20 +32,19 @@ pub type MerkleProof = Vec<Vec<u8>>;
 #[derive(Debug, PartialEq, Eq)]
 pub struct BscStorageVerifyParams {
 	pub lane_address: H160,
-	pub storage_key: H256,
 	pub account_proof: MerkleProof,
-	pub storage_proof: MerkleProof,
+	pub storage_keys: Vec<H256>,
+	pub storage_proofs: Vec<MerkleProof>,
 }
 
 impl BscStorageVerifyParams {
 	pub fn decode(data: &[u8]) -> AbiResult<Self> {
 		let tokens = ethabi::decode(
 			&[
-				ParamType::FixedBytes(32),
 				ParamType::FixedBytes(20),
-				ParamType::FixedBytes(32),
 				ParamType::Array(Box::new(ParamType::Bytes)),
-				ParamType::Array(Box::new(ParamType::Bytes)),
+				ParamType::Array(Box::new(ParamType::FixedBytes(32))),
+				ParamType::Array(Box::new(ParamType::Array(Box::new(ParamType::Bytes)))),
 			],
 			&data,
 		)?;
@@ -57,14 +56,12 @@ impl BscStorageVerifyParams {
 		) {
 			(
 				Token::FixedBytes(lane_address),
-				Token::FixedBytes(storage_key),
 				Token::Array(account_proof),
-				Token::Array(storage_proof),
+				Token::Array(storage_keys),
+				Token::Array(storage_proofs),
 			) => {
 				let lane_address: [u8; 20] =
 					lane_address.try_into().map_err(|_| Error::InvalidData)?;
-				let storage_key: [u8; 32] =
-					storage_key.try_into().map_err(|_| Error::InvalidData)?;
 				let account_proof: AbiResult<MerkleProof> = account_proof
 					.iter()
 					.map(|x| match x {
@@ -72,18 +69,37 @@ impl BscStorageVerifyParams {
 						_ => Err(Error::InvalidData),
 					})
 					.collect();
-				let storage_proof: AbiResult<MerkleProof> = storage_proof
+				let storage_keys: AbiResult<Vec<H256>> = storage_keys
 					.iter()
 					.map(|x| match x {
-						Token::Bytes(proof) => Ok(proof.clone()),
+						Token::FixedBytes(storage_key) => {
+							let key: [u8; 32] = storage_key
+								.clone()
+								.try_into()
+								.map_err(|_| Error::InvalidData)?;
+							Ok(key.into())
+						}
+						_ => Err(Error::InvalidData),
+					})
+					.collect();
+				let storage_proofs: AbiResult<Vec<MerkleProof>> = storage_proofs
+					.iter()
+					.map(|storage_proof| match storage_proof {
+						Token::Array(proof) => proof
+							.iter()
+							.map(|x| match x {
+								Token::Bytes(proof_item) => Ok(proof_item.clone()),
+								_ => Err(Error::InvalidData),
+							})
+							.collect(),
 						_ => Err(Error::InvalidData),
 					})
 					.collect();
 				Ok(Self {
 					lane_address: lane_address.into(),
-					storage_key: storage_key.into(),
+					storage_keys: storage_keys?,
 					account_proof: account_proof?,
-					storage_proof: storage_proof?,
+					storage_proofs: storage_proofs?,
 				})
 			}
 			_ => Err(Error::InvalidData),

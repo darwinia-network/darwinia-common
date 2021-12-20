@@ -12,6 +12,8 @@ version     = "2.7.1"
 [dependencies]
 # crates.io
 evm = { version = "0.30", default-features = false, features = ["with-codec"] }
+# paritytech
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 # darwinia-network
 darwinia-bridge-bsc           = { default-features = false, path = "../../../../../bridge/bsc" }
 darwinia-evm-precompile-utils = { default-features = false, path = "../../utils" }
@@ -25,6 +27,8 @@ default = ["std"]
 std = [
 	# crates.io
 	"evm/std",
+    # paritytech
+	"sp-std/std",
 	# darwinia-network
 	"darwinia-bridge-bsc/std",
 	"darwinia-evm-precompile-utils/std",
