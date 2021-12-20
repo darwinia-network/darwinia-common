@@ -42,15 +42,17 @@ do
 
   echo "Firing $CHAIN Node $validator"
   $EXECUTABLE \
-    --base-path $DATA_DIR/$validator \
-    --$validator \
-    --chain $CHAIN-local \
     --rpc-port $((9933 + index)) \
     --ws-port $((9944 + index)) \
     --port $((30333 + index)) \
-    --node-key 0000000000000000000000000000000000000000000000000000000000000$((1 + index)) \
+    --unsafe-rpc-external \
     --unsafe-ws-external \
-    --rpc-cors all &> $LOG_DIR/$validator.log &
+    --rpc-methods usnafe \
+    --rpc-cors all \
+    --chain $CHAIN-local \
+    -d $DATA_DIR/$validator \
+    --$validator \
+    &> $LOG_DIR/$validator.log &
 
   index=$((index + 1))
 done
