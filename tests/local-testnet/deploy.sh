@@ -23,7 +23,6 @@ EXECUTABLE=$REPO_PATH/target/release/drml
 echo "Build \`drml\`"
 cargo build --release
 
-
 index=100
 
 if [[ "$CHAIN" == "pangolin" ]] ; then
@@ -41,16 +40,19 @@ do
   rm -rf $DATA_DIR/$validator/chains/$CHAIN/network
   rm -rf $DATA_DIR/$validator/chains/$CHAIN/dvm
 
-  echo "Firing ${CHAIN} Node ${validator}"
-  ${EXECUTABLE} \
-    --base-path $DATA_DIR/$validator \
-    --$validator \
-    --chain $CHAIN-local \
-    --port $((30333 + index)) \
+  echo "Firing $CHAIN Node $validator"
+  $EXECUTABLE \
+    --rpc-port $((9933 + index)) \
     --ws-port $((9944 + index)) \
-    --node-key 0000000000000000000000000000000000000000000000000000000000000$((1 + index)) \
+    --port $((30333 + index)) \
+    --unsafe-rpc-external \
     --unsafe-ws-external \
-    --rpc-cors all &> $LOG_DIR/$validator.log &
+    --rpc-methods unsafe \
+    --rpc-cors all \
+    --chain $CHAIN-local \
+    -d $DATA_DIR/$validator \
+    --$validator \
+    &> $LOG_DIR/$validator.log &
 
   index=$((index + 1))
 done
