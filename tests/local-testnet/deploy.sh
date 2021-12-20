@@ -47,7 +47,7 @@ do
     --port $((30333 + index)) \
     --unsafe-rpc-external \
     --unsafe-ws-external \
-    --rpc-methods usnafe \
+    --rpc-methods unsafe \
     --rpc-cors all \
     --chain $CHAIN-local \
     -d $DATA_DIR/$validator \
