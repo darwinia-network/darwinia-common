@@ -46,7 +46,7 @@ do
     --base-path $DATA_DIR/$validator \
     --$validator \
     --chain $CHAIN-local \
-    --port $((30333 + index)) \
+    --rpc-port $((30333 + index)) \
     --ws-port $((9944 + index)) \
     --node-key 0000000000000000000000000000000000000000000000000000000000000$((1 + index)) \
     --unsafe-ws-external \
