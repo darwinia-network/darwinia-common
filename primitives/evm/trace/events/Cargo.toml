@@ -1,0 +1,42 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Primitives for Darwinia EVM trace event"
+edition     = "2021"
+homepage    = "https://substrate.dev"
+license     = "Apache-2.0"
+name        = "dp-evm-trace-events"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "2.7.1"
+
+
+[dependencies]
+# crates.io
+environmental  = { version = "1.1.2", default-features = false }
+ethereum       = { version = "0.9.0", default-features = false, features = ["with-codec"] }
+ethereum-types = { version = "0.12.0", default-features = false }
+# darwinia-network
+evm           = { default-features = false, features = ["with-codec", "tracing"], git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.11.8" }
+evm-gasometer = { default-features = false, features = ["tracing"], git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.11.8" }
+evm-runtime   = { default-features = false, features = ["tracing"], git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.11.8" }
+# paritytech
+codec = { package = "parity-scale-codec", version = "2.2", default-features = false }
+
+
+[features]
+default = ["std"]
+
+std = [
+	# crates.io
+	"environmental/std",
+	"ethereum/std",
+	"ethereum-types/std",
+	# darwinia-network
+	"evm/std",
+	"evm-gasometer/std",
+	"evm-runtime/std",
+	# paritytech
+	"codec/std",
+]
+
+evm-tracing = ["evm-gasometer/tracing", "evm-runtime/tracing", "evm/tracing"]

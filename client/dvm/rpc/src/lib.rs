@@ -14,16 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Substrate. If not, see <http://www.gnu.org/licenses/>.
 
+mod debug;
 mod eth;
 mod eth_pubsub;
 mod overrides;
+mod trace;
 
+pub use debug::{Debug, DebugApiServer, DebugRequester, DebugTask};
 pub use eth::{
 	EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthTask, NetApi, NetApiServer, Web3Api,
 	Web3ApiServer,
 };
 pub use eth_pubsub::{EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider};
 pub use overrides::{OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride};
+pub use trace::{CacheRequester, CacheTask, Trace, TraceApiServer};
 
 use ethereum::{LegacyTransactionMessage, TransactionSignature, TransactionV0};
 use ethereum_types::{H160, H256};

@@ -21,6 +21,7 @@ structopt = { version = "0.3", optional = true }
 # darwinia-network
 bsc-primitives = { path = "../../primitives/bsc" }
 dp-consensus   = { path = "../../primitives/consensus" }
+drml-rpc       = { default-features = false, path = "../rpc" }
 drml-service   = { default-features = false, path = "../service" }
 # paritytech
 frame-benchmarking-cli = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
@@ -59,6 +60,8 @@ full-node = ["drml-service/full-node"]
 trie-memory-tracker = ["sp-trie/memory-tracker"]
 
 wasmtime = ["sc-cli/wasmtime"]
+
+evm-tracing = ["drml-service/evm-tracing"]
 
 template = ["drml-service/template"]
 

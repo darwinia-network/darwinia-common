@@ -2046,7 +2046,9 @@ version = "2.7.2"
 dependencies = [
  "array-bytes",
  "dc-db",
+ "dc-tracer",
  "dp-consensus",
+ "dp-evm-trace-apis",
  "dp-rpc",
  "dp-storage",
  "dvm-ethereum",
@@ -2072,10 +2074,29 @@ dependencies = [
  "sc-transaction-pool-api",
  "sha3 0.9.1",
  "sp-api",
+ "sp-block-builder",
  "sp-blockchain",
  "sp-io",
  "sp-runtime",
  "sp-storage",
+ "sp-utils",
+ "tokio 0.2.25",
+ "tracing",
+]
+
+[[package]]
+name = "dc-tracer"
+version = "2.7.1"
+dependencies = [
+ "dp-evm-trace-apis",
+ "dp-evm-trace-events",
+ "ethereum-types",
+ "hex",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-std",
 ]
 
 [[package]]
@@ -2215,6 +2236,66 @@ dependencies = [
 ]
 
 [[package]]
+name = "dp-evm-trace-apis"
+version = "2.7.1"
+dependencies = [
+ "environmental",
+ "ethereum",
+ "ethereum-types",
+ "hex",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "dp-evm-trace-events"
+version = "2.7.1"
+dependencies = [
+ "environmental",
+ "ethereum",
+ "ethereum-types",
+ "evm",
+ "evm-gasometer",
+ "evm-runtime",
+ "parity-scale-codec",
+]
+
+[[package]]
+name = "dp-evm-trace-ext"
+version = "2.7.1"
+dependencies = [
+ "dp-evm-trace-events",
+ "ethereum-types",
+ "parity-scale-codec",
+ "sp-externalities",
+ "sp-runtime-interface",
+ "sp-std",
+]
+
+[[package]]
+name = "dp-evm-tracer"
+version = "2.7.1"
+dependencies = [
+ "dp-evm-trace-events",
+ "dp-evm-trace-ext",
+ "ethereum-types",
+ "evm",
+ "evm-gasometer",
+ "evm-runtime",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "dp-fee"
 version = "2.7.2"
 dependencies = [
@@ -2264,6 +2345,7 @@ version = "2.7.2"
 dependencies = [
  "bsc-primitives",
  "dp-consensus",
+ "drml-rpc",
  "drml-service",
  "frame-benchmarking-cli",
  "log",
@@ -2311,6 +2393,7 @@ dependencies = [
  "darwinia-staking-rpc",
  "dc-db",
  "dc-rpc",
+ "dp-evm-trace-apis",
  "dp-rpc",
  "drml-common-primitives",
  "dvm-ethereum",
@@ -2359,6 +2442,8 @@ dependencies = [
  "dc-db",
  "dc-mapping-sync",
  "dc-rpc",
+ "dp-evm-trace-apis",
+ "dp-evm-trace-ext",
  "dp-rpc",
  "drml-common-primitives",
  "drml-rpc",
@@ -2412,6 +2497,7 @@ dependencies = [
  "sp-trie",
  "substrate-prometheus-endpoint",
  "template-runtime",
+ "tokio 0.2.25",
 ]
 
 [[package]]
@@ -2468,14 +2554,18 @@ name = "dvm-rpc-core"
 version = "2.7.2"
 dependencies = [
  "darwinia-evm",
+ "dc-tracer",
  "dp-evm",
  "dp-rpc",
  "ethereum",
  "ethereum-types",
+ "futures 0.3.18",
  "jsonrpc-core",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
  "parity-scale-codec",
+ "serde",
+ "serde_json",
  "sp-api",
  "sp-core",
  "sp-runtime",
@@ -2768,8 +2858,7 @@ checksum = "f7531096570974c3a9dcf9e4b8e1cede1ec26cf5046219fb3b9d897503b9be59"
 [[package]]
 name = "evm"
 version = "0.30.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3144301c57a81101003055c7cab61b58e68060f3bd1c54aa419f663e4f0e6347"
+source = "git+https://github.com/darwinia-network/evm?branch=darwinia-v0.11.8#a93227686a2fd4f6e02c77e5d7a7104f98cf4a49"
 dependencies = [
  "environmental",
  "ethereum",
@@ -2787,8 +2876,7 @@ dependencies = [
 [[package]]
 name = "evm-core"
 version = "0.30.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7bfa2dae9a2c6c0172d83c37eb406bfabf6a9d1af17b7ab4958e89853ddae97"
+source = "git+https://github.com/darwinia-network/evm?branch=darwinia-v0.11.8#a93227686a2fd4f6e02c77e5d7a7104f98cf4a49"
 dependencies = [
  "funty",
  "parity-scale-codec",
@@ -2799,8 +2887,7 @@ dependencies = [
 [[package]]
 name = "evm-gasometer"
 version = "0.30.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14d5b12117cb9a5a9b9f031296ea86416da2cd9d8c9a9e3a2fa10275ae55f3ea"
+source = "git+https://github.com/darwinia-network/evm?branch=darwinia-v0.11.8#a93227686a2fd4f6e02c77e5d7a7104f98cf4a49"
 dependencies = [
  "environmental",
  "evm-core",
@@ -2811,8 +2898,7 @@ dependencies = [
 [[package]]
 name = "evm-runtime"
 version = "0.30.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3921ac8964cf13d12693392fef6686ef94470328ccd8eea384c6ff9ac0125b01"
+source = "git+https://github.com/darwinia-network/evm?branch=darwinia-v0.11.8#a93227686a2fd4f6e02c77e5d7a7104f98cf4a49"
 dependencies = [
  "environmental",
  "evm-core",
@@ -3619,6 +3705,9 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "hex-literal"
@@ -6162,6 +6251,10 @@ dependencies = [
  "dp-asset",
  "dp-contract",
  "dp-evm",
+ "dp-evm-trace-apis",
+ "dp-evm-trace-events",
+ "dp-evm-trace-ext",
+ "dp-evm-tracer",
  "dp-fee",
  "dp-s2s",
  "drml-bridge-primitives",
@@ -6210,7 +6303,9 @@ dependencies = [
  "pallet-treasury",
  "pallet-utility",
  "parity-scale-codec",
+ "rlp",
  "serde",
+ "sha3 0.8.2",
  "smallvec 1.7.0",
  "sp-api",
  "sp-application-crypto",
@@ -9965,6 +10060,10 @@ dependencies = [
  "darwinia-evm-precompile-sha3fips",
  "darwinia-evm-precompile-simple",
  "darwinia-support",
+ "dp-evm-trace-apis",
+ "dp-evm-trace-events",
+ "dp-evm-trace-ext",
+ "dp-evm-tracer",
  "drml-common-primitives",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
@@ -9980,7 +10079,9 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
+ "rlp",
  "serde",
+ "sha3 0.8.2",
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",

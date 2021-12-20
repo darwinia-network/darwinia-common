@@ -16,12 +16,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+mod debug;
 mod eth;
 mod eth_pubsub;
 mod net;
+mod trace;
 mod web3;
 
+pub use debug::{DebugApi, DebugApiServer, TraceParams};
 pub use eth::{EthApi, EthApiServer, EthFilterApi, EthFilterApiServer};
 pub use eth_pubsub::{EthPubSubApi, EthPubSubApiServer};
 pub use net::{NetApi, NetApiServer};
+pub use trace::{FilterRequest, TraceApi, TraceApiServer};
 pub use web3::{Web3Api, Web3ApiServer};

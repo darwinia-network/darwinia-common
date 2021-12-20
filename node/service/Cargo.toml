@@ -14,9 +14,11 @@ version     = "2.7.2"
 array-bytes = { version = "1.4" }
 codec       = { package = "parity-scale-codec", version = "2.1" }
 futures     = { version = "0.3" }
+log         = { version = "0.4" }
 rand        = { version = "0.8" }
 serde       = { version = "1.0", features = ["derive"] }
 serde_json  = { version = "1.0" }
+tokio       = { version = "0.2.21", features = ["macros", "sync"] }
 # darwinia-network
 darwinia-balances-rpc-runtime-api   = { path = "../../frame/balances/rpc/runtime-api" }
 darwinia-bridge-ethereum            = { path = "../../frame/bridge/ethereum" }
@@ -29,6 +31,8 @@ darwinia-staking-rpc-runtime-api    = { path = "../../frame/staking/rpc/runtime-
 dc-db                               = { path = "../../client/dvm/db" }
 dc-mapping-sync                     = { path = "../../client/dvm/mapping-sync" }
 dc-rpc                              = { path = "../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }
+dp-evm-trace-apis                   = { path = "../../primitives/evm/trace/apis" }
+dp-evm-trace-ext                    = { path = "../../primitives/evm/trace/ext" }
 dp-rpc                              = { path = "../../primitives/rpc" }
 drml-common-primitives              = { path = "../primitives/common" }
 drml-rpc                            = { path = "../rpc" }
@@ -74,7 +78,6 @@ sp-trie                                    = { git = "https://github.com/darwini
 substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 # template
 async-trait              = { version = "0.1", optional = true }
-log                      = { version = "0.4", optional = true }
 sc-consensus-aura        = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 sc-consensus-manual-seal = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 sp-consensus-aura        = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
@@ -95,13 +98,14 @@ full-node = []
 template = [
 	"drml-rpc/template",
 	"async-trait",
-	"log",
 	"sc-consensus-aura",
 	"sc-consensus-manual-seal",
 	"sp-consensus-aura",
 	"sp-inherents",
 	"template-runtime",
 ]
+
+evm-tracing = ["pangolin-runtime/evm-tracing"]
 
 runtime-benchmarks = ["pangolin-runtime/runtime-benchmarks"]
 

@@ -684,6 +684,88 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl dp_evm_trace_apis::DebugRuntimeApi<Block> for Runtime {
+		fn trace_transaction(
+			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+			_traced_transaction: &dvm_ethereum::TransactionV0,
+		) -> Result<
+			(),
+			sp_runtime::DispatchError,
+		> {
+			#[cfg(feature = "evm-tracing")]
+			{
+				use dp_evm_tracer::tracer::EvmTracer;
+				use dvm_ethereum::Call::transact;
+				// Apply the a subset of extrinsics: all the substrate-specific or ethereum
+				// transactions that preceded the requested transaction.
+				for ext in _extrinsics.into_iter() {
+					let _ = match &ext.function {
+						Call::Ethereum(transact(transaction)) => {
+							if transaction == _traced_transaction {
+								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
+								return Ok(());
+							} else {
+								Executive::apply_extrinsic(ext)
+							}
+						}
+						_ => Executive::apply_extrinsic(ext),
+					};
+				}
+
+				Err(sp_runtime::DispatchError::Other(
+					"Failed to find Ethereum transaction among the extrinsics.",
+				))
+			}
+			#[cfg(not(feature = "evm-tracing"))]
+			Err(sp_runtime::DispatchError::Other(
+				"Missing `evm-tracing` compile time feature flag.",
+			))
+		}
+		fn trace_block(
+			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+			_known_transactions: Vec<H256>,
+		) -> Result<
+			(),
+			sp_runtime::DispatchError,
+		> {
+			#[cfg(feature = "evm-tracing")]
+			{
+				use dp_evm_tracer::tracer::EvmTracer;
+				use sha3::{Digest, Keccak256};
+				use dvm_ethereum::Call::transact;
+
+				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
+				config.estimate = true;
+
+				// Apply all extrinsics. Ethereum extrinsics are traced.
+				for ext in _extrinsics.into_iter() {
+					match &ext.function {
+						Call::Ethereum(transact(transaction)) => {
+							let eth_extrinsic_hash =
+								H256::from_slice(Keccak256::digest(&rlp::encode(transaction)).as_slice());
+							if _known_transactions.contains(&eth_extrinsic_hash) {
+								// Each known extrinsic is a new call stack.
+								EvmTracer::emit_new();
+								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
+							} else {
+								let _ = Executive::apply_extrinsic(ext);
+							}
+						}
+						_ => {
+							let _ = Executive::apply_extrinsic(ext);
+						}
+					};
+				}
+
+				Ok(())
+			}
+			#[cfg(not(feature = "evm-tracing"))]
+			Err(sp_runtime::DispatchError::Other(
+				"Missing `evm-tracing` compile time feature flag.",
+			))
+		}
+	}
+
 	impl drml_bridge_primitives::PangoroFinalityApi<Block> for Runtime {
 		fn best_finalized() -> (pangoro_primitives::BlockNumber, pangoro_primitives::Hash) {
 			let header = BridgePangoroGrandpa::best_finalized();

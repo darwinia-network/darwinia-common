@@ -53,8 +53,10 @@ pub struct FullDeps<C, P, SC, B> {
 	pub filter_pool: Option<dp_rpc::FilterPool>,
 	/// Backend.
 	pub backend: Arc<dc_db::Backend<Block>>,
-	/// Maximum number of logs in a query.
-	pub max_past_logs: u32,
+	/// Rpc requester for evm trace
+	pub tracing_requesters: RpcRequesters,
+	/// Rpc Config
+	pub rpc_config: RpcConfig,
 }
 
 /// Light client extra dependencies.
@@ -92,6 +94,7 @@ where
 	C::Api: darwinia_header_mmr_rpc::HeaderMMRRuntimeApi<Block, Hash>,
 	C::Api: darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
 	C::Api: darwinia_fee_market_rpc::FeeMarketRuntimeApi<Block, Balance>,
+	C::Api: dp_evm_trace_apis::DebugRuntimeApi<Block>,
 	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
 	P: 'static + Sync + Send + sc_transaction_pool_api::TransactionPool<Block = Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,
@@ -112,9 +115,10 @@ where
 	use darwinia_header_mmr_rpc::{HeaderMMR, HeaderMMRApi};
 	use darwinia_staking_rpc::{Staking, StakingApi};
 	use dc_rpc::{
-		EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi, EthPubSubApiServer,
-		HexEncodedIdProvider, NetApi, NetApiServer, OverrideHandle, RuntimeApiStorageOverride,
-		SchemaV1Override, StorageOverride, Web3Api, Web3ApiServer,
+		Debug, DebugApiServer, EthApi, EthApiServer, EthFilterApi, EthFilterApiServer,
+		EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider, NetApi, NetApiServer,
+		OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride, Trace,
+		TraceApiServer, Web3Api, Web3ApiServer,
 	};
 	use pangolin_runtime::TransactionConverter;
 
@@ -131,7 +135,8 @@ where
 		pending_transactions,
 		filter_pool,
 		backend,
-		max_past_logs,
+		tracing_requesters,
+		rpc_config,
 	} = deps;
 	let mut io = jsonrpc_core::IoHandler::default();
 
@@ -203,7 +208,7 @@ where
 		backend.clone(),
 		is_authority,
 		vec![],
-		max_past_logs,
+		rpc_config.max_past_logs,
 	)));
 	if let Some(filter_pool) = filter_pool {
 		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
@@ -212,7 +217,7 @@ where
 			filter_pool.clone(),
 			500 as usize, // max stored filters
 			overrides.clone(),
-			max_past_logs,
+			rpc_config.max_past_logs,
 		)));
 	}
 	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
@@ -231,7 +236,23 @@ where
 		// Whether to format the `peer_count` response as Hex (default) or not.
 		true,
 	)));
-	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client)));
+	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client.clone())));
+
+	let ethapi_cmd = rpc_config.ethapi.clone();
+
+	if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
+		if let Some(trace_filter_requester) = tracing_requesters.trace {
+			io.extend_with(TraceApiServer::to_delegate(Trace::new(
+				client,
+				trace_filter_requester,
+				rpc_config.ethapi_trace_max_count,
+			)));
+		}
+
+		if let Some(debug_requester) = tracing_requesters.debug {
+			io.extend_with(DebugApiServer::to_delegate(Debug::new(debug_requester)));
+		}
+	}
 
 	Ok(io)
 }

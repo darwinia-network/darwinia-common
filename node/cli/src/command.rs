@@ -26,6 +26,7 @@ use sc_service::TaskManager;
 use sp_core::crypto::Ss58AddressFormat;
 // --- darwinia-network ---
 use crate::cli::*;
+use drml_rpc::{EthApiCmd, RpcConfig};
 use drml_service::*;
 
 impl SubstrateCli for Cli {
@@ -124,10 +125,23 @@ fn set_default_ss58_version(spec: &Box<dyn ChainSpec>) {
 	sp_core::crypto::set_default_ss58_version(ss58_version);
 }
 
+fn validate_trace_environment(cli: &Cli) -> sc_cli::Result<()> {
+	if (cli.run.dvm_args.ethapi.contains(&EthApiCmd::Debug)
+		|| cli.run.dvm_args.ethapi.contains(&EthApiCmd::Trace))
+		&& cli.run.base.import_params.wasm_runtime_overrides.is_none()
+	{
+		return Err(
+			"`debug` or `trace` namespaces requires `--wasm-runtime-overrides /path/to/overrides`."
+				.into(),
+		);
+	}
+	Ok(())
+}
+
 /// Parse command line arguments into service configuration.
 pub fn run() -> sc_cli::Result<()> {
 	macro_rules! async_run {
-		(|$cmd:ident, $cli:ident, $config:ident, $max_past_logs:ident, $client:ident, $backend:ident, $import_queue:ident| $($code:tt)*) => {{
+		(|$cmd:ident, $cli:ident, $config:ident, $client:ident, $backend:ident, $import_queue:ident| $($code:tt)*) => {{
 			let runner = $cli.create_runner($cmd)?;
 			let chain_spec = &runner.config().chain_spec;
 
@@ -138,7 +152,7 @@ pub fn run() -> sc_cli::Result<()> {
 					let ($client, $backend, $import_queue, task_manager) = pangolin_service::new_chain_ops::<
 						pangolin_runtime::RuntimeApi,
 						PangolinExecutor,
-					>(&mut $config, $max_past_logs)?;
+					>(&mut $config)?;
 
 					{ $( $code )* }.map(|v| (v, task_manager))
 				})
@@ -156,7 +170,15 @@ pub fn run() -> sc_cli::Result<()> {
 	}
 
 	let cli = Cli::from_args();
-	let max_past_logs = cli.run.dvm_args.max_past_logs;
+	let _ = validate_trace_environment(&cli)?;
+	let rpc_config = RpcConfig {
+		ethapi: cli.run.dvm_args.ethapi.clone(),
+		ethapi_max_permits: cli.run.dvm_args.ethapi_max_permits,
+		ethapi_trace_max_count: cli.run.dvm_args.ethapi_trace_max_count,
+		ethapi_trace_cache_duration: cli.run.dvm_args.ethapi_trace_cache_duration,
+		eth_log_block_cache: cli.run.dvm_args.eth_log_block_cache,
+		max_past_logs: cli.run.dvm_args.max_past_logs,
+	};
 
 	match &cli.subcommand {
 		None => {
@@ -177,7 +199,7 @@ pub fn run() -> sc_cli::Result<()> {
 							config,
 							is_manual_sealing,
 							enable_dev_signer,
-							max_past_logs,
+							rpc_config,
 						)
 					})
 					.map_err(sc_cli::Error::Service);
@@ -191,7 +213,7 @@ pub fn run() -> sc_cli::Result<()> {
 						_ => pangolin_service::pangolin_new_full(
 							config,
 							authority_discovery_disabled,
-							max_past_logs,
+							rpc_config,
 						)
 						.map(|(task_manager, _, _)| task_manager),
 					}
@@ -217,32 +239,24 @@ pub fn run() -> sc_cli::Result<()> {
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
 		}
 		Some(Subcommand::CheckBlock(cmd)) => {
-			async_run!(
-				|cmd, cli, config, max_past_logs, client, _backend, import_queue| Ok(
-					cmd.run(client, import_queue)
-				)
-			)
+			async_run!(|cmd, cli, config, client, _backend, import_queue| Ok(
+				cmd.run(client, import_queue)
+			))
 		}
 		Some(Subcommand::ExportBlocks(cmd)) => {
-			async_run!(
-				|cmd, cli, config, max_past_logs, client, _backend, _import_queue| Ok(
-					cmd.run(client, config.database)
-				)
-			)
+			async_run!(|cmd, cli, config, client, _backend, _import_queue| Ok(
+				cmd.run(client, config.database)
+			))
 		}
 		Some(Subcommand::ExportState(cmd)) => {
-			async_run!(
-				|cmd, cli, config, max_past_logs, client, _backend, _import_queue| Ok(
-					cmd.run(client, config.chain_spec)
-				)
-			)
+			async_run!(|cmd, cli, config, client, _backend, _import_queue| Ok(
+				cmd.run(client, config.chain_spec)
+			))
 		}
 		Some(Subcommand::ImportBlocks(cmd)) => {
-			async_run!(
-				|cmd, cli, config, max_past_logs, client, _backend, import_queue| Ok(
-					cmd.run(client, import_queue)
-				)
-			)
+			async_run!(|cmd, cli, config, client, _backend, import_queue| Ok(
+				cmd.run(client, import_queue)
+			))
 		}
 		Some(Subcommand::PurgeChain(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
@@ -266,11 +280,9 @@ pub fn run() -> sc_cli::Result<()> {
 			}
 		}
 		Some(Subcommand::Revert(cmd)) => {
-			async_run!(
-				|cmd, cli, config, max_past_logs, client, backend, _import_queue| Ok(
-					cmd.run(client, backend)
-				)
-			)
+			async_run!(|cmd, cli, config, client, backend, _import_queue| Ok(
+				cmd.run(client, backend)
+			))
 		}
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
 		Some(Subcommand::Sign(cmd)) => cmd.run(),

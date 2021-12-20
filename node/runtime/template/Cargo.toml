@@ -24,6 +24,13 @@ darwinia-support                 = { default-features = false, path = "../../../
 drml-common-primitives           = { default-features = false, path = "../../primitives/common" }
 dvm-ethereum                     = { default-features = false, path = "../../../frame/dvm" }
 dvm-rpc-runtime-api              = { default-features = false, path = "../../../frame/dvm/rpc/runtime-api" }
+# trace
+dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/evm/trace/apis" }
+dp-evm-trace-events = { default-features = false, path = "../../../primitives/evm/trace/events" }
+dp-evm-trace-ext    = { default-features = false, path = "../../../primitives/evm/trace/ext" }
+dp-evm-tracer       = { default-features = false, path = "../../../primitives/evm/trace/tracer" }
+rlp                 = { version = "0.5", default-features = false }
+sha3                = { version = "0.8", default-features = false }
 # paritytech
 frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 frame-support                              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
@@ -70,6 +77,13 @@ std = [
 	"drml-common-primitives/std",
 	"dvm-ethereum/std",
 	"dvm-rpc-runtime-api/std",
+	# trace
+	"dp-evm-trace-apis/std",
+	"dp-evm-trace-events/std",
+	"dp-evm-trace-ext/std",
+	"dp-evm-tracer/std",
+	"rlp/std",
+	"sha3/std",
 	# paritytech
 	"frame-executive/std",
 	"frame-support/std",

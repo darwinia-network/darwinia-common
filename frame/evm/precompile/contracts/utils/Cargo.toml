@@ -10,17 +10,16 @@ repository  = "https://github.com/darwinia-network/darwinia-common"
 version     = "2.7.2"
 
 [dependencies]
-# crates.io
-evm = { version = "0.30", default-features = false, features = ["with-codec"] }
-# darwinia
+# darwinia-network
 darwinia-evm-precompile-utils-macro = { path = "macro" }
 darwinia-support                    = { default-features = false, path = "../../../../support" }
+evm                                 = { default-features = false, features = ["with-codec"], git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.11.8" }
 
 [features]
 default = ["std"]
 
 std = [
-	# crates.io
-	"evm/std",
+	# darwinia-network
 	"darwinia-support/std",
+	"evm/std",
 ]

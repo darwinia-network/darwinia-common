@@ -13,7 +13,6 @@ version    = "2.7.2"
 # crates.io
 array-bytes       = { version = "1.4" }
 codec             = { package = "parity-scale-codec", version = "2.1", default-features = false }
-evm               = { version = "0.30", default-features = false, features = ["with-codec"] }
 serde             = { version = "1.0", optional = true }
 smallvec          = { version = "1.7" }
 static_assertions = { version = "1.1" }
@@ -53,11 +52,19 @@ drml-common-primitives                  = { default-features = false, path = "..
 dvm-ethereum                            = { default-features = false, path = "../../../frame/dvm" }
 dvm-rpc-runtime-api                     = { default-features = false, path = "../../../frame/dvm/rpc/runtime-api" }
 ethereum-primitives                     = { default-features = false, path = "../../../primitives/ethereum" }
+evm                                     = { default-features = false, features = ["with-codec"], git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.11.8" }
 from-ethereum-issuing                   = { default-features = false, path = "../../../frame/wormhole/issuing/ethereum" }
 from-substrate-issuing                  = { default-features = false, path = "../../../frame/wormhole/issuing/s2s" }
 module-transaction-pause                = { default-features = false, path = "../../../frame/transaction-pause" }
 to-ethereum-backing                     = { default-features = false, path = "../../../frame/wormhole/backing/ethereum" }
 to-tron-backing                         = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
+# dvm trace
+dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/evm/trace/apis" }
+dp-evm-trace-events = { optional = true, default-features = false, path = "../../../primitives/evm/trace/events" }
+dp-evm-trace-ext    = { default-features = false, path = "../../../primitives/evm/trace/ext" }
+dp-evm-tracer       = { optional = true, default-features = false, path = "../../../primitives/evm/trace/tracer" }
+rlp                 = { version = "0.5", optional = true, default-features = false }
+sha3                = { version = "0.8", optional = true, default-features = false }
 # paritytech
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.8" }
 bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.8" }
@@ -126,7 +133,6 @@ default = ["std"]
 std = [
 	# crates.io
 	"codec/std",
-	"evm/std",
 	"serde",
 	# darwinia-network
 	"common-runtime/std",
@@ -164,6 +170,7 @@ std = [
 	"dvm-ethereum/std",
 	"dvm-rpc-runtime-api/std",
 	"ethereum-primitives/std",
+	"evm/std",
 	"from-ethereum-issuing/std",
 	"from-substrate-issuing/std",
 	"module-transaction-pause/std",
@@ -226,6 +233,13 @@ std = [
 	"sp-std/std",
 	"sp-transaction-pool/std",
 	"sp-version/std",
+	# trace
+	"dp-evm-trace-apis/std",
+	"dp-evm-trace-events/std",
+	"dp-evm-trace-ext/std",
+	"dp-evm-tracer/std",
+	"rlp/std",
+	"sha3/std",
 ]
 
 runtime-benchmarks = [
@@ -257,3 +271,10 @@ try-runtime = [
 ]
 
 no-wasm = []
+
+evm-tracing = [
+	"dp-evm-trace-events",
+	"dp-evm-tracer",
+	"rlp",
+	"sha3",
+]
