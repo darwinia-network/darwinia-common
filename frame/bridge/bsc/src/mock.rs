@@ -82,6 +82,8 @@ frame_support::parameter_types! {
 	};
 }
 impl Config for Test {
+	type Event = ();
+	type WeightInfo = ();
 	type BSCConfiguration = Configuration;
 	type UnixTime = Timestamp;
 	type OnHeadersSubmitted = ();
