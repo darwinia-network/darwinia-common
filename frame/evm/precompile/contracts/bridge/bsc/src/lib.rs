@@ -34,7 +34,8 @@ use ethereum_primitives::{
 
 #[selector]
 enum Action {
-	VerifyStorageProof = "verify_storage_proof(address,bytes32,bytes[],bytes[])",
+	// account, account_proof, storage_keys, storage_proofs
+	VerifyStorageProof = "verify_storage_proof(address,bytes[],bytes32[],bytes[][])",
 }
 
 /// The contract address: 0000000000000000000000000000000000000026
