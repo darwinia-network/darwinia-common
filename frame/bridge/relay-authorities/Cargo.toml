@@ -17,10 +17,10 @@ log   = { version = "0.4" }
 darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../support" }
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 
 [dev-dependencies]
 # crates.io
@@ -30,9 +30,9 @@ darwinia-balances   = { path = "../../balances" }
 darwinia-header-mmr = { features = ["easy-testing"], path = "../../header-mmr" }
 darwinia-support    = { path = "../../support" }
 # paritytech
-sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-io      = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-tracing = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-io      = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-tracing = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 
 [features]
 default = ["std"]

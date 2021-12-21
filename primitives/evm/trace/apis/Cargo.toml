@@ -11,19 +11,19 @@ version     = "2.7.1"
 
 [dependencies]
 # crates.io
+environmental  = { version = "1.1.2", default-features = false }
 ethereum       = { version = "0.9.0", default-features = false, features = ["with-codec"] }
 ethereum-types = { version = "0.12.0", default-features = false }
-environmental  = { version = "1.1.2", default-features = false }
-hex            = { version = "0.4", features = ["serde"], optional = true}
+hex            = { version = "0.4", features = ["serde"], optional = true }
 serde          = { version = "1.0", features = ["derive"], optional = true }
 serde_json     = { version = "1.0", optional = true }
 # paritytech
 codec      = { package = "parity-scale-codec", version = "2.2", default-features = false }
-sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 
 
 [features]
@@ -42,5 +42,5 @@ std = [
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
-	"sp-std/std"
+	"sp-std/std",
 ]

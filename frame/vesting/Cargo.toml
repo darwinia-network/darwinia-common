@@ -15,10 +15,10 @@ codec = { package = "parity-scale-codec", version = "2.1", default-features = fa
 # darwinia-network
 darwinia-support = { default-features = false, path = "../support" }
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 
 [dev-dependencies]
 # crates.io
@@ -26,9 +26,9 @@ hex-literal = { version = "0.3" }
 # darwinia-network
 darwinia-balances = { path = "../balances" }
 # paritytech
-sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-io      = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-storage = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-io      = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-storage = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 
 [features]
 default = ["std"]

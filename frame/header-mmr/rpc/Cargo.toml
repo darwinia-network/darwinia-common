@@ -18,6 +18,6 @@ jsonrpc-derive      = { version = "15.1" }
 # darwinia-network
 darwinia-header-mmr-rpc-runtime-api = { path = "./runtime-api" }
 # paritytech
-sp-api        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-blockchain = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-runtime    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-api        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-blockchain = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-runtime    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }

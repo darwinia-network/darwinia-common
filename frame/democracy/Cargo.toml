@@ -16,11 +16,11 @@ serde = { version = "1.0", optional = true, features = ["derive"] }
 # darwinia-network
 darwinia-support = { default-features = false, path = "../support" }
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 
 [dev-dependencies]
 # crates.io
@@ -29,10 +29,10 @@ hex-literal = { version = "0.3" }
 darwinia-balances = { path = "../balances" }
 darwinia-support  = { features = ["easy-testing"], path = "../support" }
 # paritytech
-pallet-scheduler     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-core              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-storage           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-substrate-test-utils = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+pallet-scheduler     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-core              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-storage           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+substrate-test-utils = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 
 [features]
 default = ["std"]
