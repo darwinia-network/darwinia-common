@@ -30,14 +30,75 @@ use sp_std::{convert::TryInto, prelude::*};
 pub type MerkleProof = Vec<Vec<u8>>;
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct BscStorageVerifyParams {
+pub struct BscSingleStorageVerifyParams {
+	pub lane_address: H160,
+	pub account_proof: MerkleProof,
+	pub storage_key: H256,
+	pub storage_proof: MerkleProof,
+}
+
+impl BscSingleStorageVerifyParams {
+	pub fn decode(data: &[u8]) -> AbiResult<Self> {
+		let tokens = ethabi::decode(
+			&[
+				ParamType::FixedBytes(20),
+				ParamType::Array(Box::new(ParamType::Bytes)),
+				ParamType::FixedBytes(32),
+				ParamType::Array(Box::new(ParamType::Bytes)),
+			],
+			&data,
+		)?;
+		match (
+			tokens[0].clone(),
+			tokens[1].clone(),
+			tokens[2].clone(),
+			tokens[3].clone(),
+		) {
+			(
+				Token::FixedBytes(lane_address),
+				Token::Array(account_proof),
+				Token::FixedBytes(storage_key),
+				Token::Array(storage_proof),
+			) => {
+				let lane_address: [u8; 20] =
+					lane_address.try_into().map_err(|_| Error::InvalidData)?;
+				let account_proof: AbiResult<MerkleProof> = account_proof
+					.iter()
+					.map(|proof| match proof {
+						Token::Bytes(proof) => Ok(proof.clone()),
+						_ => Err(Error::InvalidData),
+					})
+					.collect();
+				let storage_key: [u8; 32] =
+					storage_key.try_into().map_err(|_| Error::InvalidData)?;
+				let storage_proof: AbiResult<MerkleProof> = storage_proof
+					.iter()
+					.map(|proof| match proof {
+						Token::Bytes(proof) => Ok(proof.clone()),
+						_ => Err(Error::InvalidData),
+					})
+					.collect();
+				Ok(Self {
+					lane_address: lane_address.into(),
+					account_proof: account_proof?,
+					storage_key: storage_key.into(),
+					storage_proof: storage_proof?,
+				})
+			}
+			_ => Err(Error::InvalidData),
+		}
+	}
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct BscMultiStorageVerifyParams {
 	pub lane_address: H160,
 	pub account_proof: MerkleProof,
 	pub storage_keys: Vec<H256>,
 	pub storage_proofs: Vec<MerkleProof>,
 }
 
-impl BscStorageVerifyParams {
+impl BscMultiStorageVerifyParams {
 	pub fn decode(data: &[u8]) -> AbiResult<Self> {
 		let tokens = ethabi::decode(
 			&[
@@ -64,14 +125,14 @@ impl BscStorageVerifyParams {
 					lane_address.try_into().map_err(|_| Error::InvalidData)?;
 				let account_proof: AbiResult<MerkleProof> = account_proof
 					.iter()
-					.map(|x| match x {
+					.map(|proof| match proof {
 						Token::Bytes(proof) => Ok(proof.clone()),
 						_ => Err(Error::InvalidData),
 					})
 					.collect();
 				let storage_keys: AbiResult<Vec<H256>> = storage_keys
 					.iter()
-					.map(|x| match x {
+					.map(|storage_key| match storage_key {
 						Token::FixedBytes(storage_key) => {
 							let key: [u8; 32] = storage_key
 								.clone()
@@ -87,7 +148,7 @@ impl BscStorageVerifyParams {
 					.map(|storage_proof| match storage_proof {
 						Token::Array(proof) => proof
 							.iter()
-							.map(|x| match x {
+							.map(|proof_item| match proof_item {
 								Token::Bytes(proof_item) => Ok(proof_item.clone()),
 								_ => Err(Error::InvalidData),
 							})

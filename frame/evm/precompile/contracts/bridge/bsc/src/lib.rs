@@ -25,7 +25,10 @@ use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 use sp_std::vec::Vec;
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{selector, DvmInputParser};
-use dp_contract::{abi_util::abi_encode_array_bytes32, bsc_light_client::BscStorageVerifyParams};
+use dp_contract::{
+	abi_util::{abi_encode_array_bytes32, abi_encode_bytes32},
+	bsc_light_client::{BscMultiStorageVerifyParams, BscSingleStorageVerifyParams},
+};
 use dp_evm::Precompile;
 use ethereum_primitives::{
 	storage::{EthereumStorage, EthereumStorageProof},
@@ -34,8 +37,11 @@ use ethereum_primitives::{
 
 #[selector]
 enum Action {
+	// account, account_proof, storage_key, storage_proof
+	VerfiySingleStorageProof =
+		"function verify_single_storage_proof(address,bytes[],bytes32,bytes[])",
 	// account, account_proof, storage_keys, storage_proofs
-	VerifyStorageProof = "verify_storage_proof(address,bytes[],bytes32[],bytes[][])",
+	VerifyMultiStorageProof = "verify_multi_storage_proof(address,bytes[],bytes32[],bytes[][])",
 }
 
 /// The contract address: 0000000000000000000000000000000000000026
@@ -53,10 +59,31 @@ where
 		_context: &Context,
 	) -> core::result::Result<PrecompileOutput, ExitError> {
 		let dvm_parser = DvmInputParser::new(&input)?;
-		let output = match Action::from_u32(dvm_parser.selector)? {
-			Action::VerifyStorageProof => {
-				let params = BscStorageVerifyParams::decode(dvm_parser.input)
-					.map_err(|_| ExitError::Other("decode storage verify info failed".into()))?;
+		let (output, cost) = match Action::from_u32(dvm_parser.selector)? {
+			Action::VerfiySingleStorageProof => {
+				let params =
+					BscSingleStorageVerifyParams::decode(dvm_parser.input).map_err(|_| {
+						ExitError::Other("decode single storage verify info failed".into())
+					})?;
+				let latest_header = darwinia_bridge_bsc::Pallet::<T>::latest_bsc_header();
+				let proof = EthereumStorageProof::new(
+					params.lane_address,
+					params.storage_key,
+					params.account_proof,
+					params.storage_proof,
+				);
+				let storage_value =
+					EthereumStorage::<H256>::verify_storage_proof(latest_header.state_root, &proof)
+						.map_err(|_| {
+							ExitError::Other("verify single storage proof failed".into())
+						})?;
+				(abi_encode_bytes32(storage_value.0.into()), 10000u64)
+			}
+			Action::VerifyMultiStorageProof => {
+				let params =
+					BscMultiStorageVerifyParams::decode(dvm_parser.input).map_err(|_| {
+						ExitError::Other("decode multi storage verify info failed".into())
+					})?;
 				let latest_header = darwinia_bridge_bsc::Pallet::<T>::latest_bsc_header();
 				if params.storage_keys.len() != params.storage_proofs.len() {
 					return Err(ExitError::Other(
@@ -81,13 +108,16 @@ where
 						Ok(storage_value.0.into())
 					})
 					.collect();
-				abi_encode_array_bytes32(storage_values?)
+				(
+					abi_encode_array_bytes32(storage_values?),
+					10000 * params.storage_keys.len() as u64,
+				)
 			}
 		};
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Stopped,
-			cost: 10000 * params.storage_keys.len(),
+			cost,
 			output,
 			logs: Default::default(),
 		})
