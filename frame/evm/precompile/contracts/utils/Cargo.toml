@@ -13,7 +13,7 @@ version     = "2.7.2"
 # darwinia-network
 darwinia-evm-precompile-utils-macro = { path = "macro" }
 darwinia-support                    = { default-features = false, path = "../../../../support" }
-evm                                 = { default-features = false, features = ["with-codec"], git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.11.8" }
+evm                                 = { default-features = false, features = ["with-codec"], version = "0.30" }
 
 [features]
 default = ["std"]

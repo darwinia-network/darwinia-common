@@ -52,7 +52,7 @@ drml-common-primitives                  = { default-features = false, path = "..
 dvm-ethereum                            = { default-features = false, path = "../../../frame/dvm" }
 dvm-rpc-runtime-api                     = { default-features = false, path = "../../../frame/dvm/rpc/runtime-api" }
 ethereum-primitives                     = { default-features = false, path = "../../../primitives/ethereum" }
-evm                                     = { default-features = false, features = ["with-codec"], git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.11.8" }
+evm                                     = { default-features = false, features = ["with-codec"], version = "0.30" }
 from-ethereum-issuing                   = { default-features = false, path = "../../../frame/wormhole/issuing/ethereum" }
 from-substrate-issuing                  = { default-features = false, path = "../../../frame/wormhole/issuing/s2s" }
 module-transaction-pause                = { default-features = false, path = "../../../frame/transaction-pause" }
