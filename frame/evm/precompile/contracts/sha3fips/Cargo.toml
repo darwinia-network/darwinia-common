@@ -13,9 +13,9 @@ version     = "2.7.2"
 [dependencies]
 # crates.io
 dp-evm      = { default-features = false, path = "../../../../../primitives/evm" }
+evm         = { version = "0.30", default-features = false, features = ["with-codec"] }
 tiny-keccak = { version = "2.0", features = ["fips202"] }
 # darwinia-network
-evm = { default-features = false, features = ["with-codec"], version = "0.30" }
 # paritytech
 sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 sp-io   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
@@ -26,7 +26,6 @@ default = ["std"]
 std = [
 	# crates.io
 	"dp-evm/std",
-	# darwinia-network
 	"evm/std",
 	# paritytech
 	"sp-core/std",

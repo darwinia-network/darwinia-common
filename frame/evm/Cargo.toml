@@ -13,6 +13,9 @@ version     = "2.7.2"
 # crates.io
 array-bytes     = { version = "1.4" }
 codec           = { package = "parity-scale-codec", version = "2.1", default-features = false }
+evm             = { version = "0.30", default-features = false, features = ["with-codec"] }
+evm-gasometer   = { version = "0.30", default-features = false }
+evm-runtime     = { version = "0.30", default-features = false }
 log             = { version = "0.4" }
 primitive-types = { version = "0.10", default-features = false, features = ["rlp", "byteorder"] }
 rlp             = { version = "0.5", default-features = false }
@@ -22,9 +25,6 @@ sha3            = { version = "0.9", default-features = false }
 darwinia-balances = { default-features = false, path = "../balances" }
 darwinia-support  = { default-features = false, path = "../support" }
 dp-evm            = { default-features = false, path = "../../primitives/evm" }
-evm               = { default-features = false, features = ["with-codec"], version = "0.30" }
-evm-gasometer     = { default-features = false, version = "0.30" }
-evm-runtime       = { default-features = false, version = "0.30" }
 # paritytech
 frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 frame-support      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
@@ -45,6 +45,10 @@ default = ["std"]
 std = [
 	# crates.io
 	"codec/std",
+	"evm/std",
+	"evm/with-serde",
+	"evm-gasometer/std",
+	"evm-runtime/std",
 	"primitive-types/std",
 	"rlp/std",
 	"serde",
@@ -53,10 +57,6 @@ std = [
 	"darwinia-balances/std",
 	"darwinia-support/std",
 	"dp-evm/std",
-	"evm/std",
-	"evm/with-serde",
-	"evm-gasometer/std",
-	"evm-runtime/std",
 	# paritytech
 	"frame-benchmarking/std",
 	"frame-support/std",
