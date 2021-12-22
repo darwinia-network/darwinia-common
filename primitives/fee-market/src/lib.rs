@@ -16,8 +16,11 @@
 // limitations under the License.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use bp_messages::{LaneId, MessageNonce};
+// --- crates.io ---
 use codec::{Decode, Encode};
+use scale_info::TypeInfo;
+// --- paritytech ---
+use bp_messages::{LaneId, MessageNonce};
 use frame_support::Parameter;
 use sp_std::{
 	cmp::{Ord, Ordering, PartialEq},
@@ -26,7 +29,7 @@ use sp_std::{
 	vec::Vec,
 };
 /// Relayer who has enrolled the fee market
-#[derive(Encode, Decode, Clone, Eq, Debug)]
+#[derive(Clone, Debug, Eq, Encode, Decode, TypeInfo)]
 pub struct Relayer<AccountId, Balance> {
 	pub id: AccountId,
 	pub collateral: Balance,
@@ -78,7 +81,7 @@ impl<AccountId: Default, Balance: Default> Default for Relayer<AccountId, Balanc
 }
 
 /// Order represent cross-chain message relay task. Only support sub-sub message for now.
-#[derive(Clone, Encode, Decode, Debug, Default)]
+#[derive(Clone, Debug, Default, Encode, Decode, TypeInfo)]
 pub struct Order<AccountId, BlockNumber, Balance> {
 	pub lane: LaneId,
 	pub message: MessageNonce,
@@ -185,7 +188,7 @@ where
 
 /// Relayers selected by the fee market. Each prior relayer has a valid slot, if the order can finished in time,
 /// will be rewarded with more percentage. PriorRelayer are responsible for the messages relay in most time.
-#[derive(Clone, Encode, Decode, Default, Debug)]
+#[derive(Clone, Debug, Default, Encode, Decode, TypeInfo)]
 pub struct PriorRelayer<AccountId, BlockNumber, Balance> {
 	pub id: AccountId,
 	pub fee: Balance,

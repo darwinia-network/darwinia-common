@@ -16,7 +16,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- substrate ---
+// --- std ---
+use std::{collections::VecDeque, ops::RangeInclusive};
+// --- crates.io ---
+use bitvec::prelude::*;
+use scale_info::TypeInfo;
+// --- paritytech ---
 use bp_messages::{
 	source_chain::{
 		LaneMessageVerifier, MessageDeliveryAndDispatchPayment, Sender, TargetHeaderChain,
@@ -41,9 +46,6 @@ use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup, UniqueSaturatedInto},
 	FixedU128, Permill, RuntimeDebug,
 };
-// --- std ---
-use bitvec::prelude::*;
-use std::{collections::VecDeque, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::{
 	self as darwinia_fee_market,
@@ -136,7 +138,7 @@ pub const REGULAR_PAYLOAD: TestPayload = message_payload(0, 50);
 /// Vec of proved messages, grouped by lane.
 pub type MessagesByLaneVec = Vec<(LaneId, ProvedLaneMessages<Message<TestMessageFee>>)>;
 
-#[derive(Decode, Encode, Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, TypeInfo)]
 pub struct TestPayload {
 	/// Field that may be used to identify messages.
 	pub id: u64,
@@ -166,7 +168,7 @@ pub const fn message_payload(id: u64, declared_weight: Weight) -> TestPayload {
 }
 
 /// Test messages proof.
-#[derive(Debug, Encode, Decode, Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, TypeInfo)]
 pub struct TestMessagesProof {
 	pub result: Result<MessagesByLaneVec, ()>,
 }
@@ -177,7 +179,7 @@ impl Size for TestMessagesProof {
 }
 
 /// Messages delivery proof used in tests.
-#[derive(Debug, Encode, Decode, Eq, Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, TypeInfo)]
 pub struct TestMessagesDeliveryProof(pub Result<(LaneId, InboundLaneData<TestRelayer>), ()>);
 impl Size for TestMessagesDeliveryProof {
 	fn size_hint(&self) -> u32 {
@@ -185,7 +187,7 @@ impl Size for TestMessagesDeliveryProof {
 	}
 }
 
-#[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, TypeInfo)]
 pub enum TestMessagesParameter {
 	TokenConversionRate(FixedU128),
 }
