@@ -12,10 +12,12 @@ frame_support::parameter_types! {
 		period: 0x03,
 		epoch_length: 0xc8,
 	};
+	pub const EpochInStorage: u64 = 128;
 }
 impl Config for Runtime {
 	type Event = Event;
 	type BSCConfiguration = Configuration;
 	type OnHeadersSubmitted = ();
+	type EpochInStorage = EpochInStorage;
 	type WeightInfo = ();
 }

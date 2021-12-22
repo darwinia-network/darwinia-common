@@ -107,6 +107,9 @@ pub mod pallet {
 		type BSCConfiguration: Get<BSCConfiguration>;
 		/// Handler for headers submission result.
 		type OnHeadersSubmitted: OnHeadersSubmitted<Self::AccountId>;
+		/// Max epoch length stored, cannot verify header older than this epoch length
+		type EpochInStorage: Get<u64>;
+		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 	}
 
@@ -585,7 +588,13 @@ pub mod pallet {
 
 					<Authorities<T>>::put(authorities);
 					// insert this epoch's authority indexes
-					<AuthoritiesOfRound<T>>::insert(checkpoint.number / cfg.epoch_length, indexes);
+					let epoch = checkpoint.number / cfg.epoch_length;
+					<AuthoritiesOfRound<T>>::insert(epoch, indexes);
+					if epoch > T::EpochInStorage::get()
+						&& <AuthoritiesOfRound<T>>::contains_key(epoch - T::EpochInStorage::get())
+					{
+						<AuthoritiesOfRound<T>>::remove(epoch - T::EpochInStorage::get());
+					}
 
 					// skip the rest submitted headers
 					return Ok(new_authority_set);
