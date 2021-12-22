@@ -12,10 +12,9 @@ version     = "2.7.2"
 [dependencies]
 # crates.io
 codec                 = { package = "parity-scale-codec", version = "2.1", default-features = false }
+evm                   = { version = "0.30", default-features = false, features = ["with-codec"] }
 impl-trait-for-tuples = { version = "0.2" }
 serde                 = { version = "1.0", optional = true, features = ["derive"] }
-# darwinia-network
-evm = { default-features = false, features = ["with-codec"], git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.11.8" }
 # paritytech
 sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 sp-std  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
@@ -26,10 +25,9 @@ default = ["std"]
 std = [
 	# crates.io
 	"codec/std",
+	"evm/std",
 	"evm/with-serde",
 	"serde",
-	# darwinia-network
-	"evm/std",
 	# paritytech
 	"sp-core/std",
 	"sp-std/std",
