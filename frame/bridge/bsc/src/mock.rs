@@ -85,7 +85,6 @@ impl Config for Test {
 	type Event = ();
 	type WeightInfo = ();
 	type BSCConfiguration = Configuration;
-	type UnixTime = Timestamp;
 	type OnHeadersSubmitted = ();
 }
 

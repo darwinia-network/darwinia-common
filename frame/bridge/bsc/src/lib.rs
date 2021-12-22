@@ -85,7 +85,7 @@ pub mod weight;
 #[frame_support::pallet]
 pub mod pallet {
 	// --- paritytech ---
-	use frame_support::{pallet_prelude::*, traits::UnixTime};
+	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 	use rlp::Decodable;
 	use sp_core::U256;
@@ -103,7 +103,6 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type UnixTime: UnixTime;
 		/// BSC configuration.
 		type BSCConfiguration: Get<BSCConfiguration>;
 		/// Handler for headers submission result.
@@ -281,7 +280,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::submit_header())]
 		pub fn submit_header(
 			origin: OriginFor<T>,
 			header: BSCHeader,
