@@ -11,12 +11,12 @@ version     = "2.7.1"
 [dependencies]
 # crates.io
 ethereum-types = { version = "0.12.0", default-features = false }
+evm            = { version = "0.30", default-features = false, features = ["with-codec"] }
+evm-gasometer  = { version = "0.30", default-features = false }
+evm-runtime    = { version = "0.30", default-features = false }
 # darwinia-network
 dp-evm-trace-events = { path = "../events", default-features = false, features = ["evm-tracing"] }
 dp-evm-trace-ext    = { path = "../ext", default-features = false }
-evm                 = { default-features = false, features = ["with-codec"], git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.12.0" }
-evm-gasometer       = { default-features = false, git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.12.0" }
-evm-runtime         = { default-features = false, git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.12.0" }
 # paritytech
 codec      = { package = "parity-scale-codec", version = "2.2", default-features = false }
 sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
@@ -29,12 +29,12 @@ default = ["std"]
 std = [
 	# crates.io
 	"ethereum-types/std",
-	# darwinia-network
-	"dp-evm-trace-events/std",
-	"dp-evm-trace-ext/std",
 	"evm/std",
 	"evm-gasometer/std",
 	"evm-runtime/std",
+	# darwinia-network
+	"dp-evm-trace-events/std",
+	"dp-evm-trace-ext/std",
 	# paritytech
 	"codec/std",
 	"sp-core/std",

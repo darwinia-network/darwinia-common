@@ -13,6 +13,7 @@ version    = "2.7.2"
 # crates.io
 array-bytes       = { version = "1.4" }
 codec             = { package = "parity-scale-codec", version = "2.1", default-features = false }
+evm               = { version = "0.30", default-features = false, features = ["with-codec"] }
 serde             = { version = "1.0", optional = true }
 smallvec          = { version = "1.7" }
 static_assertions = { version = "1.1" }
@@ -52,7 +53,6 @@ drml-common-primitives                  = { default-features = false, path = "..
 dvm-ethereum                            = { default-features = false, path = "../../../frame/dvm" }
 dvm-rpc-runtime-api                     = { default-features = false, path = "../../../frame/dvm/rpc/runtime-api" }
 ethereum-primitives                     = { default-features = false, path = "../../../primitives/ethereum" }
-evm                                     = { default-features = false, features = ["with-codec"], git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.12.0" }
 from-ethereum-issuing                   = { default-features = false, path = "../../../frame/wormhole/issuing/ethereum" }
 from-substrate-issuing                  = { default-features = false, path = "../../../frame/wormhole/issuing/s2s" }
 module-transaction-pause                = { default-features = false, path = "../../../frame/transaction-pause" }
@@ -133,6 +133,7 @@ default = ["std"]
 std = [
 	# crates.io
 	"codec/std",
+	"evm/std",
 	"serde",
 	# darwinia-network
 	"common-runtime/std",
@@ -170,7 +171,6 @@ std = [
 	"dvm-ethereum/std",
 	"dvm-rpc-runtime-api/std",
 	"ethereum-primitives/std",
-	"evm/std",
 	"from-ethereum-issuing/std",
 	"from-substrate-issuing/std",
 	"module-transaction-pause/std",
