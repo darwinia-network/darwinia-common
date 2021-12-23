@@ -124,7 +124,6 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(fn deposit_event)]
-	#[pallet::metadata(AccountId<T> = "AccountId", RingBalance<T> = "RingBalance")]
 	pub enum Event<T: Config> {
 		/// Token registered \[token metadata, sender\]
 		TokenRegistered(TokenMetadata, AccountId<T>),
