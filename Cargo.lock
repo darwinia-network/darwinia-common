@@ -1430,6 +1430,7 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "rlp",
+ "scale-info",
  "serde",
  "serde_json",
  "sp-core",
@@ -1824,6 +1825,7 @@ version = "2.7.2"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
+ "scale-info",
  "sp-runtime",
  "sp-std",
 ]
@@ -1841,6 +1843,7 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "rand 0.8.4",
+ "scale-info",
  "serde",
  "sp-core",
  "sp-io",
@@ -2774,6 +2777,7 @@ dependencies = [
  "parity-scale-codec",
  "rlp",
  "rlp-derive",
+ "scale-info",
  "serde",
  "serde_json",
  "sp-debug-derive 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
