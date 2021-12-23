@@ -112,7 +112,7 @@ pub mod pallet {
 		UpdateCollateralSlashProtect(RingBalance<T>),
 		/// Update market assigned relayers numbers. \[new_assigned_relayers_number\]
 		UpdateAssignedRelayersNumber(u32),
-		/// Slash report \[order_lane, order_nonce, sent_time, confirm_time, delay_number, slash_amount\]
+		/// Slash report \[order_lane, order_nonce, sent_time, confirm_time, delay_number, account_id, slash_amount\]
 		FeeMarketSlash(
 			LaneId,
 			MessageNonce,
