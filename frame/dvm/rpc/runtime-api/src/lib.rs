@@ -17,14 +17,17 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 #![cfg_attr(not(feature = "std"), no_std)]
 
+// --- crates.io ---
 use codec::{Decode, Encode};
 use ethereum::{BlockV0 as EthereumBlockV0, Log};
 use ethereum_types::Bloom;
+use scale_info::TypeInfo;
+// --- paritytech ---
 use sp_core::{H160, H256, U256};
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::{traits::Block as BlockT, RuntimeDebug};
 use sp_std::vec::Vec;
 
-#[derive(Eq, PartialEq, Clone, Encode, Decode, sp_runtime::RuntimeDebug)]
+#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct TransactionStatus {
 	pub transaction_hash: H256,
 	pub transaction_index: u32,
@@ -33,20 +36,6 @@ pub struct TransactionStatus {
 	pub contract_address: Option<H160>,
 	pub logs: Vec<Log>,
 	pub logs_bloom: Bloom,
-}
-
-impl Default for TransactionStatus {
-	fn default() -> Self {
-		TransactionStatus {
-			transaction_hash: H256::default(),
-			transaction_index: 0 as u32,
-			from: H160::default(),
-			to: None,
-			contract_address: None,
-			logs: Vec::new(),
-			logs_bloom: Bloom::default(),
-		}
-	}
 }
 
 sp_api::decl_runtime_apis! {

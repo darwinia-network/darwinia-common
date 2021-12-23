@@ -20,6 +20,7 @@
 use std::{collections::BTreeMap, str::FromStr};
 // --- crates.io ---
 use codec::MaxEncodedLen;
+use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{
 	assert_ok,

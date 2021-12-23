@@ -14,6 +14,7 @@ version     = "2.7.2"
 # crates.io
 async-trait = { version = "0.1" }
 codec       = { package = "parity-scale-codec", version = "2.1", default-features = false }
+scale-info  = { version = "1.0", default-features = false, features = ["derive"] }
 # darwinia-network
 darwinia-evm = { default-features = false, path = "../evm" }
 # paritytech
@@ -33,6 +34,7 @@ default = ["std"]
 std = [
 	# crates.io
 	"codec/std",
+	"scale-info/std",
 	# darwinia-network
 	"darwinia-evm/std",
 	# paritytech

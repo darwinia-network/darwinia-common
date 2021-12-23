@@ -195,7 +195,7 @@ pub mod pallet {
 		type Call = Call<T>;
 
 		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
-			if let Call::transact(transaction) = call {
+			if let Call::transact { transaction } = call {
 				// We must ensure a transaction can pay the cost of its data bytes.
 				// If it can't it should not be included in a block.
 				let mut gasometer = evm::gasometer::Gasometer::new(
@@ -204,10 +204,12 @@ pub mod pallet {
 				);
 				let transaction_cost = match transaction.action {
 					TransactionAction::Call(_) => {
-						evm::gasometer::call_transaction_cost(&transaction.input)
+						// TODO: EVM
+						evm::gasometer::call_transaction_cost(&transaction.input, &[])
 					}
 					TransactionAction::Create => {
-						evm::gasometer::create_transaction_cost(&transaction.input)
+						// TODO: EVM
+						evm::gasometer::create_transaction_cost(&transaction.input, &[])
 					}
 				};
 				if gasometer.record_transaction(transaction_cost).is_err() {
@@ -623,16 +625,8 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 	}
 }
 
-/// Returns the Ethereum block hash by number.
-pub struct EthereumBlockHashMapping<T>(PhantomData<T>);
-impl<T: Config> BlockHashMapping for EthereumBlockHashMapping<T> {
-	fn block_hash(number: u32) -> H256 {
-		BlockHash::<T>::get(U256::from(number))
-	}
-}
-
 /// The schema version for Pallet Ethereum's storage
-#[derive(Clone, Copy, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
 pub enum EthereumStorageSchema {
 	Undefined,
 	V1,
@@ -650,6 +644,14 @@ enum TransactionValidationError {
 	InvalidChainId,
 	InvalidSignature,
 	InvalidGasLimit,
+}
+
+/// Returns the Ethereum block hash by number.
+pub struct EthereumBlockHashMapping<T>(PhantomData<T>);
+impl<T: Config> BlockHashMapping for EthereumBlockHashMapping<T> {
+	fn block_hash(number: u32) -> H256 {
+		BlockHash::<T>::get(U256::from(number))
+	}
 }
 
 /// Returned the Ethereum block state root.

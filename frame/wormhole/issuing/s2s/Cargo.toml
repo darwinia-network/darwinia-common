@@ -40,8 +40,8 @@ sp-std              = { default-features = false, git = "https://github.com/darw
 
 [dev-dependencies]
 # crates.io
-ethereum     = { version = "0.9", features = ["with-codec"] }
-evm          = { version = "0.30", features = ["with-codec"] }
+ethereum     = { version = "0.10", features = ["with-codec"] }
+evm          = { version = "0.33", features = ["with-codec"] }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 rlp          = { version = "0.5" }
 # darwinia-network

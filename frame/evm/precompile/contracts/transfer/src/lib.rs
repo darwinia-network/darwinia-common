@@ -49,7 +49,7 @@ use dp_evm::Precompile;
 use kton::Kton;
 use ring::RingBack;
 // --- crates.io ---
-use evm::{executor::PrecompileOutput, Context, ExitError};
+use evm::{executor::stack::PrecompileOutput, Context, ExitError};
 
 /// Transfer Precompile Contract, used to support the exchange of KTON and RING transfer.
 pub enum Transfer<T> {

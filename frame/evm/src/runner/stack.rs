@@ -21,7 +21,7 @@
 // --- crates.io ---
 use evm::{
 	backend::Backend as BackendT,
-	executor::{StackExecutor, StackState as StackStateT, StackSubstateMetadata},
+	executor::stack::{StackExecutor, StackState as StackStateT, StackSubstateMetadata},
 	ExitError, ExitReason, Transfer,
 };
 use sha3::{Digest, Keccak256};
@@ -54,8 +54,9 @@ impl<T: Config> Runner<T> {
 		f: F,
 	) -> Result<ExecutionInfo<R>, DispatchError>
 	where
+		// TODO: EVM
 		F: FnOnce(
-			&mut StackExecutor<'config, SubstrateStackState<'_, 'config, T>>,
+			&mut StackExecutor<'config, '_, SubstrateStackState<'_, 'config, T>, ()>,
 		) -> (ExitReason, R),
 	{
 		// Gas price check is skipped when performing a gas estimation.
@@ -77,8 +78,10 @@ impl<T: Config> Runner<T> {
 
 		let metadata = StackSubstateMetadata::new(gas_limit, &config);
 		let state = SubstrateStackState::new(&vicinity, metadata);
-		let mut executor =
-			StackExecutor::new_with_precompile(state, config, T::Precompiles::execute);
+		// TODO: EVM
+		// let mut executor =
+		// StackExecutor::new_with_precompiles(state, config, &T::Precompiles::execute);
+		let mut executor = StackExecutor::new_with_precompiles(state, config, &());
 
 		let total_fee = gas_price
 			.checked_mul(U256::from(gas_limit))
@@ -162,6 +165,7 @@ impl<T: Config> RunnerT<T> for Runner<T> {
 		nonce: Option<U256>,
 		config: &evm::Config,
 	) -> Result<CallInfo, Self::Error> {
+		// TODO: EVM
 		Self::execute(
 			source,
 			value,
@@ -169,7 +173,7 @@ impl<T: Config> RunnerT<T> for Runner<T> {
 			gas_price,
 			nonce,
 			config,
-			|executor| executor.transact_call(source, target, value, input, gas_limit),
+			|executor| executor.transact_call(source, target, value, input, gas_limit, vec![]),
 		)
 	}
 
@@ -192,7 +196,8 @@ impl<T: Config> RunnerT<T> for Runner<T> {
 			|executor| {
 				let address = executor.create_address(evm::CreateScheme::Legacy { caller: source });
 				(
-					executor.transact_create(source, value, init, gas_limit),
+					// TODO: EVM
+					executor.transact_create(source, value, init, gas_limit, vec![]),
 					address,
 				)
 			},
@@ -224,7 +229,8 @@ impl<T: Config> RunnerT<T> for Runner<T> {
 					salt,
 				});
 				(
-					executor.transact_create2(source, value, init, salt, gas_limit),
+					// TODO: EVM
+					executor.transact_create2(source, value, init, salt, gas_limit, vec![]),
 					address,
 				)
 			},
@@ -377,6 +383,10 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 	fn block_gas_limit(&self) -> U256 {
 		T::BlockGasLimit::get()
 	}
+	fn block_base_fee_per_gas(&self) -> U256 {
+		// TODO: EVM
+		todo!()
+	}
 
 	fn chain_id(&self) -> U256 {
 		U256::from(T::ChainId::get())
@@ -441,6 +451,14 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 
 	fn deleted(&self, address: H160) -> bool {
 		self.substate.deleted(address)
+	}
+	fn is_cold(&self, address: H160) -> bool {
+		// TODO: EVM
+		todo!()
+	}
+	fn is_storage_cold(&self, address: H160, key: H256) -> bool {
+		// TODO: EVM
+		todo!()
 	}
 
 	fn inc_nonce(&mut self, address: H160) {
