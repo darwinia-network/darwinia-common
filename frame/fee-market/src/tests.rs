@@ -1133,31 +1133,37 @@ fn test_payment_slash_event() {
 		));
 
 		System::assert_has_event(Event::FeeMarket(crate::Event::FeeMarketSlash(
-			TEST_LANE_ID,
-			1,
-			2,
-			Some(2000),
-			Some(1848),
-			6,
-			50,
+			SlashReport {
+				lane: TEST_LANE_ID,
+				message: 1,
+				sent_time: 2,
+				confirm_time: Some(2000),
+				delay_time: Some(1848),
+				account_id: 6,
+				amount: 50,
+			},
 		)));
 		System::assert_has_event(Event::FeeMarket(crate::Event::FeeMarketSlash(
-			TEST_LANE_ID,
-			1,
-			2,
-			Some(2000),
-			Some(1848),
-			7,
-			50,
+			SlashReport {
+				lane: TEST_LANE_ID,
+				message: 1,
+				sent_time: 2,
+				confirm_time: Some(2000),
+				delay_time: Some(1848),
+				account_id: 7,
+				amount: 50,
+			},
 		)));
 		System::assert_has_event(Event::FeeMarket(crate::Event::FeeMarketSlash(
-			TEST_LANE_ID,
-			1,
-			2,
-			Some(2000),
-			Some(1848),
-			8,
-			50,
+			SlashReport {
+				lane: TEST_LANE_ID,
+				message: 1,
+				sent_time: 2,
+				confirm_time: Some(2000),
+				delay_time: Some(1848),
+				account_id: 8,
+				amount: 50,
+			},
 		)));
 	});
 }

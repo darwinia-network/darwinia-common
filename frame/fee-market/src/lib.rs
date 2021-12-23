@@ -43,12 +43,11 @@ use num_traits::Zero;
 use sp_runtime::{traits::Saturating, Permill, SaturatedConversion};
 use sp_std::vec::Vec;
 // --- darwinia-network ---
-use crate::s2s::SlashReport;
 use darwinia_support::{
 	balance::{LockFor, LockableCurrency},
 	AccountId,
 };
-use dp_fee::{Order, Relayer};
+use dp_fee::{Order, Relayer, SlashReport};
 
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 pub use pallet::*;
@@ -112,16 +111,8 @@ pub mod pallet {
 		UpdateCollateralSlashProtect(RingBalance<T>),
 		/// Update market assigned relayers numbers. \[new_assigned_relayers_number\]
 		UpdateAssignedRelayersNumber(u32),
-		/// Slash report \[order_lane, order_nonce, sent_time, confirm_time, delay_number, account_id, slash_amount\]
-		FeeMarketSlash(
-			LaneId,
-			MessageNonce,
-			T::BlockNumber,
-			Option<T::BlockNumber>,
-			Option<T::BlockNumber>,
-			T::AccountId,
-			RingBalance<T>,
-		),
+		/// Slash report
+		FeeMarketSlash(SlashReport<T::AccountId, T::BlockNumber, RingBalance<T>>),
 	}
 
 	#[pallet::error]
@@ -389,7 +380,7 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn update_relayer_after_slash(
 		who: &T::AccountId,
 		new_collateral: RingBalance<T>,
-		report: &SlashReport<T>,
+		report: SlashReport<T::AccountId, T::BlockNumber, RingBalance<T>>,
 	) {
 		T::RingCurrency::set_lock(
 			T::LockId::get(),
@@ -403,15 +394,7 @@ impl<T: Config> Pallet<T> {
 			relayer.collateral = new_collateral;
 		});
 
-		Self::deposit_event(<Event<T>>::FeeMarketSlash(
-			report.lane,
-			report.message,
-			report.sent_time,
-			report.confirm_time,
-			report.delay_time,
-			who.clone(),
-			report.amount,
-		));
+		Self::deposit_event(<Event<T>>::FeeMarketSlash(report));
 		Self::update_market();
 	}
 

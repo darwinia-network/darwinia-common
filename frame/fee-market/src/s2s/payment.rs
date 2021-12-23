@@ -182,13 +182,13 @@ where
 
 					// Slash order's assigned relayers
 					let mut assigned_relayers_slash = RingBalance::<T>::zero();
-					let report = SlashReport::new(&order, amount);
 					for assigned_relayer in order.relayers_slice() {
+						let report = SlashReport::new(&order, assigned_relayer.id.clone(), amount);
 						let slashed = do_slash::<T>(
 							&assigned_relayer.id,
 							relayer_fund_account,
 							amount,
-							&report,
+							report,
 						);
 						assigned_relayers_slash += slashed;
 					}
@@ -224,7 +224,7 @@ pub(crate) fn do_slash<T: Config>(
 	who: &T::AccountId,
 	fund_account: &T::AccountId,
 	amount: RingBalance<T>,
-	report: &SlashReport<T>,
+	report: SlashReport<T::AccountId, T::BlockNumber, RingBalance<T>>,
 ) -> RingBalance<T> {
 	let locked_collateral = Pallet::<T>::relayer(&who).collateral;
 	T::RingCurrency::remove_lock(T::LockId::get(), &who);
@@ -290,31 +290,4 @@ pub struct RewardsBook<AccountId, Balance> {
 	pub confirmation_relayer_rewards: Balance,
 	pub assigned_relayers_rewards: BTreeMap<AccountId, Balance>,
 	pub treasury_total_rewards: Balance,
-}
-
-/// The detail information about slash behavior
-#[derive(Clone, Encode, Eq, PartialEq)]
-pub struct SlashReport<T: Config> {
-	pub lane: LaneId,
-	pub message: MessageNonce,
-	pub sent_time: T::BlockNumber,
-	pub confirm_time: Option<T::BlockNumber>,
-	pub delay_time: Option<T::BlockNumber>,
-	pub amount: RingBalance<T>,
-}
-
-impl<T: Config> SlashReport<T> {
-	pub fn new(
-		order: &Order<T::AccountId, T::BlockNumber, RingBalance<T>>,
-		amount: RingBalance<T>,
-	) -> Self {
-		Self {
-			lane: order.lane,
-			message: order.message,
-			sent_time: order.sent_time,
-			confirm_time: order.confirm_time,
-			delay_time: order.delivery_delay(),
-			amount,
-		}
-	}
 }
