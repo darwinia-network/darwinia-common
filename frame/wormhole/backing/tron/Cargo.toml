@@ -11,7 +11,8 @@ version     = "2.7.2"
 
 [dependencies]
 # crates.io
-codec = { package = "parity-scale-codec", version = "2.1", default-features = false }
+codec      = { package = "parity-scale-codec", version = "2.1", default-features = false }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
@@ -25,6 +26,7 @@ default = ["std"]
 std = [
 	# crates.io
 	"codec/std",
+	"scale-info/std",
 	# paritytech
 	"frame-support/std",
 	"frame-system/std",
