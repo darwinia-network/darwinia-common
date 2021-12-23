@@ -182,7 +182,7 @@ where
 
 					// Slash order's assigned relayers
 					let mut assigned_relayers_slash = RingBalance::<T>::zero();
-					let report = SlashReport::new(order.clone(), amount);
+					let report = SlashReport::new(&order, amount);
 					for assigned_relayer in order.relayers_slice() {
 						let slashed = do_slash::<T>(
 							&assigned_relayer.id,
@@ -305,7 +305,7 @@ pub struct SlashReport<T: Config> {
 
 impl<T: Config> SlashReport<T> {
 	pub fn new(
-		order: Order<T::AccountId, T::BlockNumber, RingBalance<T>>,
+		order: &Order<T::AccountId, T::BlockNumber, RingBalance<T>>,
 		amount: RingBalance<T>,
 	) -> Self {
 		Self {
