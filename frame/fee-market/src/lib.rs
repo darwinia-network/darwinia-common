@@ -394,8 +394,8 @@ impl<T: Config> Pallet<T> {
 			relayer.collateral = new_collateral;
 		});
 
-		Self::deposit_event(<Event<T>>::FeeMarketSlash(report));
 		Self::update_market();
+		Self::deposit_event(<Event<T>>::FeeMarketSlash(report));
 	}
 
 	/// Remove enrolled relayer, then update market fee. (Update market needed)
