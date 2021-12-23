@@ -22,6 +22,7 @@
 use core::fmt::Debug;
 // --- crates.io ---
 use codec::{Decode, Encode, FullCodec};
+use scale_info::TypeInfo;
 // --- paritytech ---
 use sp_runtime::{DispatchResult, RuntimeDebug};
 use sp_std::prelude::*;
@@ -30,9 +31,9 @@ pub type OpCode = [u8; 4];
 pub type Term = u32;
 
 pub trait Sign<BlockNumber> {
-	type Signature: Clone + Debug + PartialEq + FullCodec;
-	type Message: Clone + Debug + Default + PartialEq + FullCodec;
-	type Signer: Clone + Debug + Default + Ord + PartialEq + FullCodec;
+	type Signature: Clone + Debug + PartialEq + FullCodec + TypeInfo;
+	type Message: Clone + Debug + Default + PartialEq + FullCodec + TypeInfo;
+	type Signer: Clone + Debug + Default + Ord + PartialEq + FullCodec + TypeInfo;
 
 	fn hash(raw_message: impl AsRef<[u8]>) -> Self::Message;
 
@@ -68,7 +69,7 @@ impl<BlockNumber, Root> MMR<BlockNumber, Root> for () {
 
 // Avoid duplicate type
 // Use `RelayAuthority` instead `Authority`
-#[derive(Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct RelayAuthority<AccountId, Signer, RingBalance, BlockNumber> {
 	pub account_id: AccountId,
 	pub signer: Signer,
@@ -110,7 +111,7 @@ where
 }
 
 /// The scheduled change of authority set
-#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ScheduledAuthoritiesChange<AccountId, Signer, RingBalance, BlockNumber> {
 	/// The new authorities after the change
 	pub next_authorities: Vec<RelayAuthority<AccountId, Signer, RingBalance, BlockNumber>>,
@@ -118,7 +119,7 @@ pub struct ScheduledAuthoritiesChange<AccountId, Signer, RingBalance, BlockNumbe
 	pub deadline: BlockNumber,
 }
 
-#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct MmrRootToSign<MmrRoot, AccountId, Signature> {
 	pub mmr_root: MmrRoot,
 	pub signatures: Vec<(AccountId, Signature)>,

@@ -71,7 +71,7 @@ mod types {
 use codec::Encode;
 // --- paritytech ---
 use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage, ensure,
+	decl_error, decl_event, decl_module, decl_storage, ensure, log,
 	traits::{Currency, EnsureOrigin, Get, LockIdentifier, WithdrawReasons},
 	weights::Weight,
 	StorageValue,
