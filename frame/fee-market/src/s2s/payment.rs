@@ -182,9 +182,14 @@ where
 
 					// Slash order's assigned relayers
 					let mut assigned_relayers_slash = RingBalance::<T>::zero();
+					let report = SlashReport::new(order.clone(), amount);
 					for assigned_relayer in order.relayers_slice() {
-						let slashed =
-							do_slash::<T>(&assigned_relayer.id, relayer_fund_account, amount);
+						let slashed = do_slash::<T>(
+							&assigned_relayer.id,
+							relayer_fund_account,
+							amount,
+							&report,
+						);
 						assigned_relayers_slash += slashed;
 					}
 					total_slash += assigned_relayers_slash;
@@ -219,6 +224,7 @@ pub(crate) fn do_slash<T: Config>(
 	who: &T::AccountId,
 	fund_account: &T::AccountId,
 	amount: RingBalance<T>,
+	report: &SlashReport<T>,
 ) -> RingBalance<T> {
 	let locked_collateral = Pallet::<T>::relayer(&who).collateral;
 	T::RingCurrency::remove_lock(T::LockId::get(), &who);
@@ -236,14 +242,15 @@ pub(crate) fn do_slash<T: Config>(
 	match pay_result {
 		Ok(_) => {
 			crate::Pallet::<T>::update_relayer_after_slash(
-				&who,
+				who,
 				locked_collateral.saturating_sub(amount),
+				report,
 			);
 			log::trace!("Slash {:?} amount: {:?}", who, amount);
 			return amount;
 		}
 		Err(e) => {
-			crate::Pallet::<T>::update_relayer_after_slash(&who, locked_collateral);
+			crate::Pallet::<T>::update_relayer_after_slash(who, locked_collateral, report);
 			log::error!("Slash {:?} amount {:?}, err {:?}", who, amount, e)
 		}
 	}
@@ -283,4 +290,31 @@ pub struct RewardsBook<AccountId, Balance> {
 	pub confirmation_relayer_rewards: Balance,
 	pub assigned_relayers_rewards: BTreeMap<AccountId, Balance>,
 	pub treasury_total_rewards: Balance,
+}
+
+/// The detail information about slash behavior
+#[derive(Clone, Encode, Eq, PartialEq)]
+pub struct SlashReport<T: Config> {
+	pub lane: LaneId,
+	pub message: MessageNonce,
+	pub sent_time: T::BlockNumber,
+	pub confirm_time: Option<T::BlockNumber>,
+	pub delay_time: Option<T::BlockNumber>,
+	pub amount: RingBalance<T>,
+}
+
+impl<T: Config> SlashReport<T> {
+	pub fn new(
+		order: Order<T::AccountId, T::BlockNumber, RingBalance<T>>,
+		amount: RingBalance<T>,
+	) -> Self {
+		Self {
+			lane: order.lane,
+			message: order.message,
+			sent_time: order.sent_time,
+			confirm_time: order.confirm_time,
+			delay_time: order.delivery_delay(),
+			amount,
+		}
+	}
 }
