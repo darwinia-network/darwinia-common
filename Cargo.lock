@@ -976,6 +976,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-treasury",
  "parity-scale-codec",
+ "scale-info",
  "sp-runtime",
  "sp-std",
  "static_assertions",
