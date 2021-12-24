@@ -39,6 +39,7 @@ mod types {
 
 // --- crates.io ---
 use codec::{Decode, Encode};
+use scale_info::TypeInfo;
 // --- paritytech ---
 #[cfg(feature = "std")]
 use frame_support::traits::WithdrawReasons;
@@ -419,7 +420,10 @@ impl<T: Config> sp_runtime::traits::ValidateUnsigned for Module<T> {
 		const PRIORITY: u64 = 100;
 
 		match call {
-			Call::claim(account, signature) => {
+			Call::claim {
+				dest: account,
+				signature,
+			} => {
 				let data = account.using_encoded(to_ascii_hex);
 
 				match signature {
@@ -490,19 +494,19 @@ enum ValidityError {
 	SignerHasNoClaim = 1,
 }
 
-#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum OtherSignature {
 	Eth(EcdsaSignature),
 	Tron(EcdsaSignature),
 }
 
-#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum OtherAddress {
 	Eth(AddressT),
 	Tron(AddressT),
 }
 
-#[derive(Clone, Encode, Decode)]
+#[derive(Clone, Encode, Decode, TypeInfo)]
 pub struct EcdsaSignature(pub [u8; 65]);
 impl PartialEq for EcdsaSignature {
 	fn eq(&self, other: &Self) -> bool {
@@ -1023,14 +1027,14 @@ mod tests {
 			assert_eq!(
 				Claims::validate_unsigned(
 					source,
-					&darwinia_claims::Call::claim(
-						1,
-						OtherSignature::Eth(eth_sig::<Test>(
+					&darwinia_claims::Call::claim {
+						dest: 1,
+						signature: OtherSignature::Eth(eth_sig::<Test>(
 							&alice(),
 							&1u64.encode(),
 							ETHEREUM_SIGNED_MESSAGE
 						)),
-					)
+					}
 				),
 				Ok(ValidTransaction {
 					priority: 100,
@@ -1043,35 +1047,38 @@ mod tests {
 			assert_eq!(
 				Claims::validate_unsigned(
 					source,
-					&darwinia_claims::Call::claim(0, OtherSignature::Eth(EcdsaSignature([0; 65])))
+					&darwinia_claims::Call::claim {
+						dest: 0,
+						signature: OtherSignature::Eth(EcdsaSignature([0; 65]))
+					}
 				),
 				InvalidTransaction::Custom(ValidityError::InvalidSignature as _).into(),
 			);
 			assert_eq!(
 				Claims::validate_unsigned(
 					source,
-					&darwinia_claims::Call::claim(
-						1,
-						OtherSignature::Eth(eth_sig::<Test>(
+					&darwinia_claims::Call::claim {
+						dest: 1,
+						signature: OtherSignature::Eth(eth_sig::<Test>(
 							&carol(),
 							&1u64.encode(),
 							ETHEREUM_SIGNED_MESSAGE
 						)),
-					)
+					}
 				),
 				InvalidTransaction::Custom(ValidityError::SignerHasNoClaim as _).into(),
 			);
 			assert_eq!(
 				Claims::validate_unsigned(
 					source,
-					&darwinia_claims::Call::claim(
-						0,
-						OtherSignature::Eth(eth_sig::<Test>(
+					&darwinia_claims::Call::claim {
+						dest: 0,
+						signature: OtherSignature::Eth(eth_sig::<Test>(
 							&carol(),
 							&1u64.encode(),
 							ETHEREUM_SIGNED_MESSAGE
 						)),
-					)
+					}
 				),
 				InvalidTransaction::Custom(ValidityError::SignerHasNoClaim as _).into(),
 			);

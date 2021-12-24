@@ -21,6 +21,7 @@ use std::str::FromStr;
 // --- crates.io ---
 use array_bytes::hex2bytes_unchecked;
 use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 // --- paritytech ---
 use bp_messages::source_chain::SendMessageArtifacts;
 use bp_runtime::{derive_account_id, SourceAccount};

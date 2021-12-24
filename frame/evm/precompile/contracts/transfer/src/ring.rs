@@ -25,7 +25,7 @@ use darwinia_evm::{AccountBasic, Config};
 use darwinia_support::evm::TRANSFER_ADDR;
 // --- crates.io ---
 use codec::Decode;
-use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
+use evm::{executor::stack::PrecompileOutput, Context, ExitError, ExitSucceed};
 
 pub struct RingBack<T> {
 	_maker: PhantomData<T>,

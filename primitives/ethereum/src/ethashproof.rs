@@ -24,12 +24,14 @@ use sp_debug_derive::RuntimeDebug;
 // --- github.com ---
 #[cfg(any(feature = "full-codec", test))]
 use codec::{Decode, Encode};
+#[cfg(any(feature = "full-codec", test))]
+use scale_info::TypeInfo;
 #[cfg(any(feature = "full-serde", test))]
 use serde::Deserialize;
 // --- darwinia-network ---
 use crate::{H128, H512};
 
-#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode, TypeInfo))]
 #[cfg_attr(any(feature = "full-serde", test), derive(Deserialize))]
 #[derive(Clone, Default, PartialEq, Eq, RuntimeDebug)]
 pub struct EthashProof {

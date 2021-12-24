@@ -18,6 +18,7 @@ ethereum-types  = { version = "0.12", default-features = false }
 keccak-hash     = { version = "0.8", default-features = false }
 rlp             = { version = "0.5", optional = true, default-features = false }
 rlp-derive      = { version = "0.1", optional = true }
+scale-info      = { version = "1.0", optional = true, default-features = false, features = ["derive"] }
 serde           = { version = "1.0", optional = true, features = ["derive"] }
 sp-debug-derive = { version = "3.0" }
 subhasher       = { version = "0.1", default-features = false }
@@ -57,6 +58,7 @@ full-codec = [
 	"codec",
 	"ethbloom/codec",
 	"ethereum-types/codec",
+	"scale-info",
 ]
 
 full-rlp = [

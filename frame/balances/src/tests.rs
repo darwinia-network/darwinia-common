@@ -22,7 +22,7 @@
 macro_rules! decl_tests {
 	($test:ty, $ext_builder:ty, $existential_deposit:expr) => {
 		pub const CALL: &<$test as frame_system::Config>::Call =
-			&Call::Ring(darwinia_balances::Call::transfer(0, 0));
+			&Call::Ring(darwinia_balances::Call::transfer{ dest: 0, value: 0 });
 
 		const ID_1: LockIdentifier = *b"1       ";
 		const ID_2: LockIdentifier = *b"2       ";

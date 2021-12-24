@@ -157,7 +157,16 @@ pub mod mock_relay {
 	}
 
 	#[derive(
-		Clone, Debug, Default, PartialEq, PartialOrd, Encode, Decode, Serialize, Deserialize,
+		Clone,
+		Debug,
+		Default,
+		PartialEq,
+		PartialOrd,
+		Encode,
+		Decode,
+		TypeInfo,
+		Serialize,
+		Deserialize,
 	)]
 	pub struct MockRelayHeader {
 		pub number: MockRelayBlockNumber,
@@ -226,6 +235,7 @@ pub mod mock_relay {
 
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::traits::{Everything, GenesisBuild, OnFinalize};
 use frame_system::mocking::*;

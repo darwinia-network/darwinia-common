@@ -50,6 +50,7 @@ use core::fmt::{Debug, Formatter, Result as FmtResult};
 // --- crates.io ---
 use codec::{Decode, Encode};
 use ethereum_types::H128;
+use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
@@ -961,7 +962,7 @@ impl<T: Config> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 }
 
 #[cfg_attr(any(feature = "std", test), derive(serde::Deserialize))]
-#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct EthereumRelayHeaderParcel {
 	pub header: EthereumHeader,
 	pub parent_mmr_root: H256,
@@ -975,21 +976,21 @@ impl RelayHeaderParcelInfo for EthereumRelayHeaderParcel {
 }
 
 #[cfg_attr(any(feature = "std", test), derive(serde::Deserialize))]
-#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct EthereumRelayProofs {
 	pub ethash_proof: Vec<EthashProof>,
 	pub mmr_proof: Vec<H256>,
 }
 
 #[cfg_attr(any(feature = "std", test), derive(serde::Deserialize))]
-#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct MMRProof {
 	pub member_leaf_index: u64,
 	pub last_leaf_index: u64,
 	pub proof: Vec<H256>,
 }
 
-#[derive(Encode, Decode, Clone, Eq, PartialEq)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]
 pub struct CheckEthereumRelayHeaderParcel<T: Config>(PhantomData<T>);
 impl<T: Config> CheckEthereumRelayHeaderParcel<T> {
 	pub fn new() -> Self {
@@ -1007,7 +1008,7 @@ impl<T: Config> Debug for CheckEthereumRelayHeaderParcel<T> {
 		Ok(())
 	}
 }
-impl<T: Send + Sync + Config> SignedExtension for CheckEthereumRelayHeaderParcel<T> {
+impl<T: Send + Sync + Config + TypeInfo> SignedExtension for CheckEthereumRelayHeaderParcel<T> {
 	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderParcel";
 	type AccountId = T::AccountId;
 	type Call = <T as Config>::Call;
@@ -1026,9 +1027,12 @@ impl<T: Send + Sync + Config> SignedExtension for CheckEthereumRelayHeaderParcel
 		_: usize,
 	) -> TransactionValidity {
 		match call.is_sub_type() {
-			Some(Call::affirm(ref relay_header_parcel, _)) => {
+			Some(Call::affirm {
+				ethereum_relay_header_parcel,
+				..
+			}) => {
 				if T::RelayerGame::get_affirmed_relay_header_parcels(&RelayAffirmationId {
-					game_id: relay_header_parcel.header.number,
+					game_id: ethereum_relay_header_parcel.header.number,
 					round: 0,
 					index: 0,
 				})

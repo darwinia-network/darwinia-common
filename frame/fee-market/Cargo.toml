@@ -13,8 +13,7 @@ version     = "2.7.2"
 # crates.io
 bitvec     = { version = "0.20", default-features = false, features = ["alloc"] }
 codec      = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
-log        = { version = "0.4", default-features = false }
-num-traits = { version = "0.2", default-features = false }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 # darwinia-network
 darwinia-support = { default-features = false, path = "../support" }
 dp-fee           = { default-features = false, path = "../../primitives/fee-market" }
@@ -42,8 +41,7 @@ std = [
 	# crates.io
 	"bitvec/std",
 	"codec/std",
-	"log/std",
-	"num-traits/std",
+	"scale-info/std",
 	# darwinia-network
 	"darwinia-support/std",
 	"dp-fee/std",

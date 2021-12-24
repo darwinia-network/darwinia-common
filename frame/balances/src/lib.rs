@@ -519,6 +519,7 @@ pub mod pallet {
 
 	// --- crates.io ---
 	use codec::{Codec, EncodeLike, MaxEncodedLen};
+	use scale_info::TypeInfo;
 	// --- paritytech ---
 	use frame_support::{
 		ensure,
@@ -558,7 +559,8 @@ pub mod pallet {
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ Debug
-			+ MaxEncodedLen;
+			+ MaxEncodedLen
+			+ TypeInfo;
 
 		/// Handler for the unbalanced reduction when removing a dust account.
 		type DustRemoval: OnUnbalanced<NegativeImbalance<Self, I>>;
@@ -596,7 +598,8 @@ pub mod pallet {
 			+ Codec
 			+ Clone
 			+ Default
-			+ EncodeLike;
+			+ EncodeLike
+			+ TypeInfo;
 
 		// A handle to check if other currencies drop below existential deposit.
 		type OtherCurrencies: DustCollector<Self::AccountId>;
@@ -604,7 +607,6 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	#[pallet::metadata(T::AccountId = "AccountId", T::Balance = "Balance")]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
 		/// An account was created with some free balance. \[account, free_balance\]
 		Endowed(T::AccountId, T::Balance),
@@ -2199,7 +2201,7 @@ pub mod pallet {
 	// A value placed in storage that represents the current version of the Balances storage.
 	// This value is used by the `on_runtime_upgrade` logic to determine whether we run
 	// storage migration logic. This should match directly with the semantic versions of the Rust crate.
-	#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, MaxEncodedLen)]
+	#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 	pub enum Releases {
 		V1_0_0,
 		V2_0_0,
@@ -2211,7 +2213,7 @@ pub mod pallet {
 	}
 
 	/// Store named reserved balance.
-	#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, MaxEncodedLen)]
+	#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 	pub struct ReserveData<ReserveIdentifier, Balance> {
 		/// The identifier for the named reserve.
 		pub id: ReserveIdentifier,

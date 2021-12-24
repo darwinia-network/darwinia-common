@@ -26,6 +26,7 @@ use ethbloom::{Bloom, Input};
 use hash_db::Hasher;
 use primitive_types::U256;
 use rlp::RlpStream;
+use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 // --- paritytech ---
@@ -65,7 +66,7 @@ pub const DIFF_NOTURN: U256 = U256([1, 0, 0, 0]);
 pub const SIGNING_DELAY_NOTURN_MS: u64 = 500;
 
 /// Complete header id.
-#[derive(Encode, Decode, Default, RuntimeDebug, PartialEq, Clone, Copy)]
+#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct HeaderId {
 	/// Header number.
 	pub number: u64,
@@ -74,7 +75,7 @@ pub struct HeaderId {
 }
 
 /// An BSC(Binance Smart Chain) header.
-#[derive(Clone, Default, Encode, Decode, PartialEq, RuntimeDebug)]
+#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[cfg_attr(
 	feature = "std",
 	derive(Serialize, Deserialize),

@@ -32,7 +32,7 @@ pub use weight::WeightInfo;
 
 // --- paritytech ---
 use frame_support::{
-	ensure,
+	ensure, log,
 	pallet_prelude::*,
 	parameter_types,
 	traits::{Currency, ExistenceRequirement::*, Get},

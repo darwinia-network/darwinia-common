@@ -291,7 +291,10 @@ fn transaction_without_enough_gas_should_not_work() {
 		transaction.gas_price = U256::from(11_000_000);
 
 		assert_err!(
-			Ethereum::validate_unsigned(TransactionSource::External, &Call::transact(transaction)),
+			Ethereum::validate_unsigned(
+				TransactionSource::External,
+				&Call::transact { transaction }
+			),
 			InvalidTransaction::Payment
 		);
 	});
@@ -307,10 +310,15 @@ fn transaction_with_invalid_nonce_should_not_work() {
 		let mut transaction = creation_contract(ERC20_CONTRACT_BYTECODE, 0);
 		transaction.nonce = U256::from(1);
 
-		let signed = transaction.sign(&alice.private_key);
+		let signed_transaction = transaction.sign(&alice.private_key);
 
 		assert_eq!(
-			Ethereum::validate_unsigned(TransactionSource::External, &Call::transact(signed)),
+			Ethereum::validate_unsigned(
+				TransactionSource::External,
+				&Call::transact {
+					transaction: signed_transaction
+				}
+			),
 			ValidTransactionBuilder::default()
 				.and_provides((alice.address, U256::from(1)))
 				.priority(1u64)
@@ -332,10 +340,15 @@ fn transaction_with_invalid_nonce_should_not_work() {
 		));
 
 		transaction.nonce = U256::from(0);
-		let signed2 = transaction.sign(&alice.private_key);
+		let signed_transaction = transaction.sign(&alice.private_key);
 
 		assert_err!(
-			Ethereum::validate_unsigned(TransactionSource::External, &Call::transact(signed2)),
+			Ethereum::validate_unsigned(
+				TransactionSource::External,
+				&Call::transact {
+					transaction: signed_transaction
+				}
+			),
 			InvalidTransaction::Stale
 		);
 	});

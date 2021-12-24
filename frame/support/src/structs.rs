@@ -18,13 +18,16 @@
 
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
-use num_traits::Zero;
+use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{
 	traits::{ConstU32, LockIdentifier, WithdrawReasons},
 	WeakBoundedVec,
 };
-use sp_runtime::{traits::AtLeast32BitUnsigned, RuntimeDebug};
+use sp_runtime::{
+	traits::{AtLeast32BitUnsigned, Zero},
+	RuntimeDebug,
+};
 use sp_std::{ops::BitOr, prelude::*};
 
 /// Frozen balance information for an account.
@@ -59,7 +62,7 @@ where
 }
 
 /// Simplified reasons for withdrawing balance.
-#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, MaxEncodedLen)]
+#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub enum LockReasons {
 	/// Paying system transaction fees.
 	Fee = 0,
@@ -91,7 +94,7 @@ impl BitOr for LockReasons {
 
 /// A single lock on a balance. There can be many of these on an account and they "overlap", so the
 /// same balance is frozen by multiple locks.
-#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, MaxEncodedLen)]
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub struct BalanceLock<Balance, Moment> {
 	/// An identifier for this lock. Only one lock may be in existence for each identifier.
 	pub id: LockIdentifier,
@@ -116,13 +119,13 @@ where
 	}
 }
 
-#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, MaxEncodedLen)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub enum LockFor<Balance, Moment> {
 	Common { amount: Balance },
 	Staking(StakingLock<Balance, Moment>),
 }
 
-#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, MaxEncodedLen)]
+#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub struct StakingLock<Balance, Moment> {
 	/// The amount which the free balance may not drop below when this lock is in effect.
 	pub staking_amount: Balance,
@@ -152,7 +155,7 @@ where
 	}
 }
 
-#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, MaxEncodedLen)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub struct Unbonding<Balance, Moment> {
 	/// The amount which the free balance may not drop below when this lock is in effect.
 	pub amount: Balance,

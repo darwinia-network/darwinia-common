@@ -8,6 +8,7 @@ version = "2.7.2"
 codec         = { package = "parity-scale-codec", version = "2.1", default-features = false }
 frame-support = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.0" }
 frame-system  = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.0" }
+scale-info    = { version = "1.0", default-features = false, features = ["derive"] }
 sp-runtime    = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.0" }
 sp-std        = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.0" }
 
@@ -21,6 +22,7 @@ sp-io             = { git = "https://github.com/darwinia-network/substrate", bra
 default = ["std"]
 std = [
 	"codec/std",
+	"scale-info/std",
 	"sp-runtime/std",
 	"frame-support/std",
 	"frame-system/std",

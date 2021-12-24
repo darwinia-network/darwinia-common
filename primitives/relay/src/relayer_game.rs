@@ -22,6 +22,7 @@
 use core::fmt::Debug;
 // --- crates.io ---
 use codec::{Decode, Encode, FullCodec};
+use scale_info::TypeInfo;
 // --- paritytech ---
 use sp_runtime::{traits::Zero, DispatchError, DispatchResult, RuntimeDebug};
 use sp_std::prelude::*;
@@ -36,11 +37,12 @@ pub trait RelayHeaderParcelInfo {
 /// to expose some necessary APIs for relayer game
 pub trait Relayable {
 	/// The Id which point to a unique header, for ethereum it's block number
-	type RelayHeaderId: Clone + Debug + Default + PartialOrd + FullCodec;
+	type RelayHeaderId: Clone + Debug + Default + PartialOrd + FullCodec + TypeInfo;
 	type RelayHeaderParcel: Clone
 		+ Debug
 		+ PartialEq
 		+ FullCodec
+		+ TypeInfo
 		+ RelayHeaderParcelInfo<HeaderId = Self::RelayHeaderId>;
 	type RelayProofs;
 
@@ -117,7 +119,7 @@ pub trait AdjustableRelayerGame {
 
 	/// Give an estimate stake value for a specify round
 	///
-	/// Usally the stake value go expensive wihle the round and the affirmations count increase
+	/// Usually the stake value go expensive while the round and the affirmations count increase
 	fn estimate_stake(round: u32, affirmations_count: u32) -> Self::Balance;
 }
 
@@ -128,6 +130,7 @@ pub trait RelayerGameProtocol {
 		+ Debug
 		+ PartialEq
 		+ FullCodec
+		+ TypeInfo
 		+ RelayHeaderParcelInfo<HeaderId = Self::RelayHeaderId>;
 	type RelayProofs;
 
@@ -177,7 +180,7 @@ pub trait RelayerGameProtocol {
 }
 
 /// Game id, round and the index under the round point to a unique affirmation AKA affirmation id
-#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct RelayAffirmationId<RelayHeaderId> {
 	/// Game id aka relay header id
 	pub game_id: RelayHeaderId,
@@ -187,7 +190,7 @@ pub struct RelayAffirmationId<RelayHeaderId> {
 	pub index: u32,
 }
 
-#[derive(Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct RelayAffirmation<RelayHeaderParcel, Relayer, Balance, RelayHeaderId> {
 	pub relayer: Relayer,
 	pub relay_header_parcels: Vec<RelayHeaderParcel>,
@@ -213,7 +216,7 @@ where
 }
 
 /// Info for keeping track of a proposal being voted on.
-#[derive(Default, Encode, Decode, RuntimeDebug)]
+#[derive(Default, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct RelayVotingState<TechnicalMember> {
 	/// The current set of technical members that approved it.
 	pub ayes: Vec<TechnicalMember>,
