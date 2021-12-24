@@ -899,14 +899,15 @@ pub mod pallet {
 					T::RingCurrency::free_balance(&stash) >= *ring_to_be_bonded,
 					"Stash does not have enough balance to bond.",
 				);
-				let _ = <Pallet<T>>::bond(
+
+				frame_support::assert_ok!(<Pallet<T>>::bond(
 					T::Origin::from(Some(stash.to_owned()).into()),
 					T::Lookup::unlookup(controller.to_owned()),
 					StakingBalance::RingBalance(*ring_to_be_bonded),
 					RewardDestination::Staked,
 					0,
-				);
-				let _ = match status {
+				));
+				frame_support::assert_ok!(match status {
 					StakerStatus::Validator => <Pallet<T>>::validate(
 						T::Origin::from(Some(controller.to_owned()).into()),
 						Default::default(),
@@ -919,8 +920,8 @@ pub mod pallet {
 							.collect(),
 					),
 					_ => Ok(()),
-				};
-				let _ = T::RingCurrency::make_free_balance_be(
+				});
+				T::RingCurrency::make_free_balance_be(
 					&<Pallet<T>>::account_id(),
 					T::RingCurrency::minimum_balance(),
 				);

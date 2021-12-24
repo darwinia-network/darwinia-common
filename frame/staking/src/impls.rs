@@ -143,6 +143,11 @@ impl<T: Config> Pallet<T> {
 		Self::bonded(stash)
 			.and_then(Self::ledger)
 			.map(|l| {
+				// dbg!(Self::currency_to_power::<_>(
+				// 	l.active_ring,
+				// 	Self::ring_pool()
+				// ));
+
 				Self::currency_to_power::<_>(l.active_ring, Self::ring_pool())
 					+ Self::currency_to_power::<_>(l.active_kton, Self::kton_pool())
 			})
