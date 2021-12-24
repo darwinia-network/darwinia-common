@@ -2258,7 +2258,7 @@ fn bond_with_duplicate_vote_should_be_ignored_by_election_provider() {
 
 			// winners should be 21 and 31. Otherwise this election is taking duplicates into
 			// account.
-			let supports = <Test as Config>::ElectionProvider::elect().unwrap().0;
+			let supports = <Test as Config>::ElectionProvider::elect().unwrap();
 			assert_eq!(
 				supports,
 				vec![
@@ -2347,7 +2347,7 @@ fn bond_with_duplicate_vote_should_be_ignored_by_election_provider_elected() {
 			assert_ok!(Staking::nominate(Origin::signed(4), vec![21, 31]));
 
 			// winners should be 21 and 11.
-			let supports = <Test as Config>::ElectionProvider::elect().unwrap().0;
+			let supports = <Test as Config>::ElectionProvider::elect().unwrap();
 			assert_eq!(
 				supports,
 				vec![
@@ -4003,7 +4003,10 @@ fn payout_stakers_handles_weight_refund() {
 			start_active_era(2);
 
 			// Collect payouts when there are no nominators
-			let call = TestRuntimeCall::Staking(StakingCall::payout_stakers(11, 1));
+			let call = TestRuntimeCall::Staking(StakingCall::payout_stakers {
+				validator_stash: 11,
+				era: 1,
+			});
 			let info = call.get_dispatch_info();
 			let result = call.dispatch(Origin::signed(20));
 			assert_ok!(result);
@@ -4018,7 +4021,10 @@ fn payout_stakers_handles_weight_refund() {
 			start_active_era(3);
 
 			// Collect payouts for an era where the validator did not receive any points.
-			let call = TestRuntimeCall::Staking(StakingCall::payout_stakers(11, 2));
+			let call = TestRuntimeCall::Staking(StakingCall::payout_stakers {
+				validator_stash: 11,
+				era: 2,
+			});
 			let info = call.get_dispatch_info();
 			let result = call.dispatch(Origin::signed(20));
 			assert_ok!(result);
@@ -4034,7 +4040,10 @@ fn payout_stakers_handles_weight_refund() {
 			start_active_era(4);
 
 			// Collect payouts when the validator has `half_max_nom_rewarded` nominators.
-			let call = TestRuntimeCall::Staking(StakingCall::payout_stakers(11, 3));
+			let call = TestRuntimeCall::Staking(StakingCall::payout_stakers {
+				validator_stash: 11,
+				era: 3,
+			});
 			let info = call.get_dispatch_info();
 			let result = call.dispatch(Origin::signed(20));
 			assert_ok!(result);
@@ -4065,7 +4074,10 @@ fn payout_stakers_handles_weight_refund() {
 			start_active_era(6);
 
 			// Collect payouts when the validator had `half_max_nom_rewarded` nominators.
-			let call = TestRuntimeCall::Staking(StakingCall::payout_stakers(11, 5));
+			let call = TestRuntimeCall::Staking(StakingCall::payout_stakers {
+				validator_stash: 11,
+				era: 5,
+			});
 			let info = call.get_dispatch_info();
 			let result = call.dispatch(Origin::signed(20));
 			assert_ok!(result);
@@ -4075,7 +4087,10 @@ fn payout_stakers_handles_weight_refund() {
 			);
 
 			// Try and collect payouts for an era that has already been collected.
-			let call = TestRuntimeCall::Staking(StakingCall::payout_stakers(11, 5));
+			let call = TestRuntimeCall::Staking(StakingCall::payout_stakers {
+				validator_stash: 11,
+				era: 5,
+			});
 			let info = call.get_dispatch_info();
 			let result = call.dispatch(Origin::signed(20));
 			assert!(result.is_err());
@@ -4583,7 +4598,6 @@ mod election_data_provider {
 				.map(|(x, _)| x)
 				.all(|v| Staking::voters(None)
 					.unwrap()
-					.0
 					.into_iter()
 					.find(|(w, _, t)| { v == *w && t[0] == *w })
 					.is_some()))
@@ -4597,7 +4611,6 @@ mod election_data_provider {
 			assert_eq!(
 				<Staking as ElectionDataProvider<AccountId, BlockNumber>>::voters(None)
 					.unwrap()
-					.0
 					.iter()
 					.find(|x| x.0 == 101)
 					.unwrap()
@@ -4613,7 +4626,6 @@ mod election_data_provider {
 			assert_eq!(
 				<Staking as ElectionDataProvider<AccountId, BlockNumber>>::voters(None)
 					.unwrap()
-					.0
 					.iter()
 					.find(|x| x.0 == 101)
 					.unwrap()
@@ -4626,7 +4638,6 @@ mod election_data_provider {
 			assert_eq!(
 				<Staking as ElectionDataProvider<AccountId, BlockNumber>>::voters(None)
 					.unwrap()
-					.0
 					.iter()
 					.find(|x| x.0 == 101)
 					.unwrap()

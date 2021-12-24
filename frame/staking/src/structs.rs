@@ -1,5 +1,6 @@
 // --- core ---
 use core::{marker::PhantomData, mem};
+use scale_info::TypeInfo;
 // --- crates.io ---
 use codec::{Decode, Encode, HasCompact};
 #[cfg(feature = "std")]
@@ -28,7 +29,9 @@ impl<T: Config> Convert<AccountId<T>, Option<ExposureT<T>>> for ExposureOf<T> {
 	}
 }
 /// A snapshot of the stake backing a single validator in the system.
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, Default, RuntimeDebug)]
+#[derive(
+	Clone, Default, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, RuntimeDebug, TypeInfo,
+)]
 pub struct Exposure<AccountId, RingBalance, KtonBalance>
 where
 	RingBalance: HasCompact,
@@ -46,7 +49,7 @@ where
 	pub others: Vec<IndividualExposure<AccountId, RingBalance, KtonBalance>>,
 }
 /// The amount of exposure (to slashing) than an individual nominator has.
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct IndividualExposure<AccountId, RingBalance, KtonBalance>
 where
 	RingBalance: HasCompact,
@@ -63,7 +66,7 @@ where
 }
 
 /// Information regarding the active era (era in used in session).
-#[derive(Encode, Decode, RuntimeDebug)]
+#[derive(Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ActiveEraInfo {
 	/// Index of era.
 	pub index: EraIndex,
@@ -75,7 +78,7 @@ pub struct ActiveEraInfo {
 }
 
 /// The ledger of a (bonded) stash.
-#[derive(PartialEq, Eq, Clone, Default, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct StakingLedger<AccountId, RingBalance, KtonBalance, BlockNumber>
 where
 	RingBalance: HasCompact,
@@ -308,7 +311,7 @@ where
 	}
 }
 /// The *RING* under deposit.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct TimeDepositItem<RingBalance: HasCompact> {
 	#[codec(compact)]
 	pub value: RingBalance,
@@ -319,7 +322,7 @@ pub struct TimeDepositItem<RingBalance: HasCompact> {
 }
 
 /// A destination account for payment.
-#[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum RewardDestination<AccountId> {
 	/// Pay into the stash account, increasing the amount at stake accordingly.
 	Staked,
@@ -339,7 +342,7 @@ impl<AccountId> Default for RewardDestination<AccountId> {
 }
 
 /// Preference of what happens regarding validation.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ValidatorPrefs {
 	/// Reward that validator takes up-front; only the rest is split between themselves and
 	/// nominators.
@@ -360,7 +363,7 @@ impl Default for ValidatorPrefs {
 }
 
 /// A record of the nominations made by a specific account.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct Nominations<AccountId> {
 	/// The targets of nomination.
 	pub targets: Vec<AccountId>,
@@ -378,7 +381,7 @@ pub struct Nominations<AccountId> {
 /// Reward points of an era. Used to split era total payout between validators.
 ///
 /// This points will be used to reward validators and their respective nominators.
-#[derive(PartialEq, Encode, Decode, Default, Debug)]
+#[derive(Debug, Default, PartialEq, Encode, Decode, TypeInfo)]
 pub struct EraRewardPoints<AccountId: Ord> {
 	/// Total number of points. Equals the sum of reward points for each validator.
 	pub total: RewardPoint,
@@ -387,7 +390,7 @@ pub struct EraRewardPoints<AccountId: Ord> {
 }
 
 /// Mode of era-forcing.
-#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Forcing {
 	/// Not forcing anything - just let whatever happen.
@@ -409,7 +412,7 @@ impl Default for Forcing {
 
 /// A pending slash record. The value of the slash has been computed but not applied yet,
 /// rather deferred for several eras.
-#[derive(Encode, Decode, Default, RuntimeDebug)]
+#[derive(Default, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct UnappliedSlash<AccountId, RingBalance, KtonBalance> {
 	/// The stash ID of the offending validator.
 	pub validator: AccountId,
@@ -426,7 +429,7 @@ pub struct UnappliedSlash<AccountId, RingBalance, KtonBalance> {
 // A value placed in storage that represents the current version of the Staking storage. This value
 // is used by the `on_runtime_upgrade` logic to determine whether we run storage migration logic.
 // This should match directly with the semantic versions of the Rust crate.
-#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug)]
+#[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum Releases {
 	V1_0_0Ancient,
 	V2_0_0,
@@ -443,7 +446,7 @@ impl Default for Releases {
 }
 
 /// Indicates the initial status of the staker.
-#[derive(RuntimeDebug)]
+#[derive(RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum StakerStatus<AccountId> {
 	/// Chilling.
@@ -455,7 +458,7 @@ pub enum StakerStatus<AccountId> {
 }
 
 /// To unify *RING* and *KTON* balances.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum StakingBalance<RingBalance, KtonBalance>
 where
 	RingBalance: HasCompact,

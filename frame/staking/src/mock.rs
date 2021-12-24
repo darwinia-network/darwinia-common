@@ -24,6 +24,7 @@
 use std::{cell::RefCell, collections::HashSet};
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_election_provider_support::*;
 use frame_support::{
@@ -224,9 +225,6 @@ impl darwinia_balances::Config<KtonInstance> for Test {
 }
 
 impl onchain::Config for Test {
-	type AccountId = AccountId;
-	type BlockNumber = BlockNumber;
-	type BlockWeights = BlockWeights;
 	type Accuracy = Perbill;
 	type DataProvider = Staking;
 }

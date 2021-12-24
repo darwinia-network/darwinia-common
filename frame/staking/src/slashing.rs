@@ -52,6 +52,7 @@
 
 // --- crates.io ---
 use codec::{Decode, Encode};
+use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{
 	ensure,
@@ -77,7 +78,9 @@ pub type SpanIndex = u32;
 
 pub type RKT<T> = RK<RingBalance<T>, KtonBalance<T>>;
 
-#[derive(Clone, Copy, Default, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug)]
+#[derive(
+	Clone, Copy, Default, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug, TypeInfo,
+)]
 pub struct RK<R, K> {
 	pub r: R,
 	pub k: K,
@@ -176,7 +179,7 @@ where
 }
 
 // A range of start..end eras for a slashing span.
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, TypeInfo)]
 #[cfg_attr(test, derive(Debug, PartialEq))]
 pub struct SlashingSpan {
 	pub index: SpanIndex,
@@ -191,7 +194,7 @@ impl SlashingSpan {
 }
 
 /// An encoding of all of a nominator's slashing spans.
-#[derive(Encode, Decode, RuntimeDebug)]
+#[derive(Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct SlashingSpans {
 	// the index of the current slashing span of the nominator. different for
 	// every stash, resets when the account hits free balance 0.
@@ -295,7 +298,7 @@ impl SlashingSpans {
 }
 
 /// A slashing-span record for a particular stash.
-#[derive(Encode, Decode, Default)]
+#[derive(Default, Encode, Decode, TypeInfo)]
 pub struct SpanRecord<RingBalance, KtonBalance> {
 	slashed: RK<RingBalance, KtonBalance>,
 	paid_out: RK<RingBalance, KtonBalance>,
