@@ -9797,6 +9797,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
  "rlp",
+ "scale-info",
  "serde",
  "sha3 0.8.2",
  "sp-api",
