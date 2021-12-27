@@ -27,8 +27,9 @@ sp-runtime         = { default-features = false, git = "https://github.com/darwi
 sp-std             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 
 [dev-dependencies]
-# paritytech
+# crates.io
 array-bytes = { version = "1.4" }
+# paritytech
 pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 serde_json       = { version = "1.0" }
 

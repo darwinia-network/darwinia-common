@@ -27,7 +27,7 @@ default = ["std"]
 std = [
 	# crates.io
 	"evm/std",
-    # paritytech
+	# paritytech
 	"sp-std/std",
 	# darwinia-network
 	"darwinia-bridge-bsc/std",
