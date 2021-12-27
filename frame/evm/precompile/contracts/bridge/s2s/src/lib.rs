@@ -22,7 +22,7 @@
 use core::marker::PhantomData;
 // --- crates.io ---
 use codec::Encode;
-use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
+use evm::{executor::stack::PrecompileOutput, Context, ExitError, ExitSucceed};
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::DvmInputParser;
 use darwinia_support::{

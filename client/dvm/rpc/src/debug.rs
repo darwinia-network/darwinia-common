@@ -37,13 +37,13 @@ use dp_rpc::{RequestBlockId, RequestBlockTag};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 // paritytech
 use sc_client_api::backend::Backend;
+use sc_utils::mpsc::TracingUnboundedSender;
 use sp_api::{BlockId, Core, HeaderT, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{
 	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata,
 };
 use sp_runtime::traits::{Block as BlockT, UniqueSaturatedInto};
-use sp_utils::mpsc::TracingUnboundedSender;
 
 pub enum RequesterInput {
 	Transaction(H256),
@@ -163,7 +163,7 @@ where
 		permit_pool: Arc<Semaphore>,
 	) -> (impl Future<Output = ()>, DebugRequester) {
 		let (tx, mut rx): (DebugRequester, _) =
-			sp_utils::mpsc::tracing_unbounded("debug-requester");
+			sc_utils::mpsc::tracing_unbounded("debug-requester");
 
 		let fut = async move {
 			loop {

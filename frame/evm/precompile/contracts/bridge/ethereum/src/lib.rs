@@ -22,7 +22,7 @@
 use core::marker::PhantomData;
 // --- crates.io ---
 use codec::Encode;
-use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
+use evm::{executor::stack::PrecompileOutput, Context, ExitError, ExitSucceed};
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{selector, DvmInputParser};
 use dp_evm::Precompile;
@@ -53,17 +53,17 @@ where
 		let output = match Action::from_u32(dvm_parser.selector)? {
 			Action::BurnAndRemoteUnlock => {
 				let call: T::Call =
-					from_ethereum_issuing::Call::<T>::deposit_burn_token_event_from_precompile(
-						dvm_parser.input.to_vec(),
-					)
+					from_ethereum_issuing::Call::<T>::deposit_burn_token_event_from_precompile {
+						input: dvm_parser.input.to_vec(),
+					}
 					.into();
 				call.encode()
 			}
 			Action::TokenRegisterResponse => {
 				let call: T::Call =
-					from_ethereum_issuing::Call::<T>::register_response_from_contract(
-						dvm_parser.input.to_vec(),
-					)
+					from_ethereum_issuing::Call::<T>::register_response_from_contract {
+						input: dvm_parser.input.to_vec(),
+					}
 					.into();
 				call.encode()
 			}

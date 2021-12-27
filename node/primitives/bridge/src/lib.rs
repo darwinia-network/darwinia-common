@@ -166,6 +166,16 @@ impl Chain for Pangoro {
 	type Balance = Balance;
 	type Index = Nonce;
 	type Signature = Signature;
+
+	// TODO: S2S
+	fn max_extrinsic_size() -> u32 {
+		todo!()
+	}
+
+	// TODO: S2S
+	fn max_extrinsic_weight() -> Weight {
+		todo!()
+	}
 }
 
 /// Pangolin chain.
@@ -180,6 +190,16 @@ impl Chain for Pangolin {
 	type Balance = Balance;
 	type Index = Nonce;
 	type Signature = Signature;
+
+	// TODO: S2S
+	fn max_extrinsic_size() -> u32 {
+		todo!()
+	}
+
+	// TODO: S2S
+	fn max_extrinsic_weight() -> Weight {
+		todo!()
+	}
 }
 
 /// Message verifier that is doing all basic checks.
