@@ -26,8 +26,8 @@ log                 = { version = "0.4" }
 rand                = { version = "0.8" }
 rlp                 = { version = "0.5" }
 sha3                = { version = "0.9" }
-tokio               = { version = "0.2.21", features = ["sync", "time"] }
-tracing             = { version = "0.1.25" }
+tokio               = { version = "0.2", features = ["blocking", "rt-core", "sync", "time"] }
+tracing             = { version = "0.1" }
 # darwinia-network
 dc-db               = { path = "../db" }
 dc-tracer           = { path = "../tracer" }

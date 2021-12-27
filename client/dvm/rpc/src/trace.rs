@@ -451,7 +451,7 @@ where
 	) -> (impl Future<Output = ()>, CacheRequester) {
 		// Communication with the outside world :
 		let (requester_tx, mut requester_rx) =
-			sp_utils::mpsc::tracing_unbounded("trace-filter-cache");
+			sc_utils::mpsc::tracing_unbounded("trace-filter-cache");
 
 		// Task running in the service.
 		let task = async move {
