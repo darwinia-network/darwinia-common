@@ -16,11 +16,11 @@ codec               = { package = "parity-scale-codec", version = "2.1" }
 ethereum            = { version = "0.10", features = ["with-codec"] }
 ethereum-types      = { version = "0.12" }
 evm                 = { version = "0.33" }
-futures             = { version = "0.3", features = ["compat"] }
-jsonrpc-core        = { version = "15.1" }
-jsonrpc-core-client = { version = "15.1" }
-jsonrpc-derive      = { version = "15.1" }
-jsonrpc-pubsub      = { version = "15.1" }
+futures             = { version = "0.3" }
+jsonrpc-core        = { version = "18.0" }
+jsonrpc-core-client = { version = "18.0" }
+jsonrpc-derive      = { version = "18.0" }
+jsonrpc-pubsub      = { version = "18.0" }
 libsecp256k1        = { version = "0.3" }
 log                 = { version = "0.4" }
 rand                = { version = "0.8" }

@@ -76,7 +76,7 @@ impl DebugT for Debug {
 		&self,
 		transaction_hash: H256,
 		params: Option<TraceParams>,
-	) -> Compat<BoxFuture<'static, RpcResult<single::TransactionTrace>>> {
+	) -> BoxFuture<'static, RpcResult<single::TransactionTrace>> {
 		let mut requester = self.requester.clone();
 
 		async move {
@@ -103,14 +103,13 @@ impl DebugT for Debug {
 				})
 		}
 		.boxed()
-		.compat()
 	}
 
 	fn trace_block(
 		&self,
 		id: RequestBlockId,
 		params: Option<TraceParams>,
-	) -> Compat<BoxFuture<'static, RpcResult<Vec<single::TransactionTrace>>>> {
+	) -> BoxFuture<'static, RpcResult<Vec<single::TransactionTrace>>> {
 		let mut requester = self.requester.clone();
 
 		async move {
@@ -137,7 +136,6 @@ impl DebugT for Debug {
 				})
 		}
 		.boxed()
-		.compat()
 	}
 }
 

@@ -33,7 +33,7 @@ pub trait TraceApi {
 	fn filter(
 		&self,
 		filter: FilterRequest,
-	) -> Compat<BoxFuture<'static, jsonrpc_core::Result<Vec<TransactionTrace>>>>;
+	) -> BoxFuture<'static, jsonrpc_core::Result<Vec<TransactionTrace>>>;
 }
 
 #[derive(Clone, Eq, PartialEq, Debug, Deserialize)]

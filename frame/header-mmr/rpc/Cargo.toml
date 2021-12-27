@@ -12,9 +12,9 @@ version     = "2.7.2"
 [dependencies]
 # crates.io
 codec               = { package = "parity-scale-codec", version = "2.1" }
-jsonrpc-core        = { version = "15.1" }
-jsonrpc-core-client = { version = "15.1" }
-jsonrpc-derive      = { version = "15.1" }
+jsonrpc-core        = { version = "18.0" }
+jsonrpc-core-client = { version = "18.0" }
+jsonrpc-derive      = { version = "18.0" }
 # darwinia-network
 darwinia-header-mmr-rpc-runtime-api = { path = "./runtime-api" }
 # paritytech

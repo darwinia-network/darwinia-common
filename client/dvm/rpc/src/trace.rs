@@ -247,9 +247,9 @@ where
 	fn filter(
 		&self,
 		filter: FilterRequest,
-	) -> Compat<BoxFuture<'static, jsonrpc_core::Result<Vec<TransactionTrace>>>> {
+	) -> BoxFuture<'static, jsonrpc_core::Result<Vec<TransactionTrace>>> {
 		// Wraps the async function into futures compatibility layer.
-		self.clone().filter(filter).boxed().compat()
+		self.clone().filter(filter).boxed()
 	}
 }
 
@@ -458,9 +458,8 @@ where
 			// The following variables are polled by the select! macro, and thus cannot be
 			// part of Self without introducing borrowing issues.
 			let mut batch_expirations = FuturesUnordered::new();
-			let (blocking_tx, blocking_rx) =
+			let (blocking_tx, mut blocking_rx) =
 				mpsc::channel(blocking_permits.available_permits() * 2);
-			let mut blocking_rx = blocking_rx.fuse();
 
 			// Contains the inner state of the cache task, excluding the pooled futures/channels.
 			// Having this object allow to refactor each event into its own function, simplifying
@@ -498,7 +497,7 @@ where
 							},
 						}
 					},
-					message = blocking_rx.next() => {
+					message = blocking_rx.recv().fuse() => {
 						match message {
 							None => (),
 							Some(BlockingTaskMessage::Started { block_hash })

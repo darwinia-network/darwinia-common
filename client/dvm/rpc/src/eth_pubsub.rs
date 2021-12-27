@@ -7,7 +7,7 @@ use dvm_rpc_core::EthPubSubApi::{self as EthPubSubApiT};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 use ethereum::{BlockV0 as EthereumBlockV0, Log as EthereumLog, Receipt as EthereumReceipt};
 use ethereum_types::{H256, U256};
-use futures::{StreamExt as _, TryStreamExt as _};
+use futures::{FutureExt, SinkExt, StreamExt as _, TryStreamExt as _};
 use jsonrpc_core::{
 	futures::{Future, Sink},
 	Result as JsonRpcResult,
@@ -274,10 +274,11 @@ where
 							return Ok::<Result<PubSubResult, jsonrpc_core::types::error::Error>, ()>(
 								Ok(PubSubResult::Log(Box::new(x))),
 							);
-						})
-						.compat();
-					sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e))
-						.send_all(stream)
+						});
+					stream
+						.forward(
+							sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e)),
+						)
 						.map(|_| ())
 				});
 			}
@@ -306,10 +307,11 @@ where
 						})
 						.map(|block| {
 							return Ok::<_, ()>(Ok(SubscriptionResult::new().new_heads(block)));
-						})
-						.compat();
-					sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e))
-						.send_all(stream)
+						});
+					stream
+						.forward(
+							sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e)),
+						)
 						.map(|_| ())
 				});
 			}
@@ -345,10 +347,11 @@ where
 									Keccak256::digest(&rlp::encode(&transaction)).as_slice(),
 								))),
 							);
-						})
-						.compat();
-					sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e))
-						.send_all(stream)
+						});
+					stream
+						.forward(
+							sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e)),
+						)
 						.map(|_| ())
 				});
 			}
@@ -370,10 +373,11 @@ where
 							return Ok::<Result<PubSubResult, jsonrpc_core::types::error::Error>, ()>(
 								Ok(PubSubResult::SyncState(PubSubSyncStatus { syncing })),
 							);
-						})
-						.compat();
-					sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e))
-						.send_all(stream)
+						});
+					stream
+						.forward(
+							sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e)),
+						)
 						.map(|_| ())
 				});
 			}

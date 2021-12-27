@@ -14,10 +14,10 @@ version     = "2.7.2"
 codec          = { package = "parity-scale-codec", version = "2.1", default-features = false }
 ethereum       = { version = "0.10", default-features = false, features = ["with-codec"] }
 ethereum-types = { version = "0.12", default-features = false }
-futures        = { version = "0.3", features = ["compat"] }
-jsonrpc-core   = { version = "15.1" }
-jsonrpc-derive = { version = "15.1" }
-jsonrpc-pubsub = { version = "15.1" }
+futures        = { version = "0.3" }
+jsonrpc-core   = { version = "18.0" }
+jsonrpc-derive = { version = "18.0" }
+jsonrpc-pubsub = { version = "18.0" }
 serde          = { version = "1.0", features = ["derive"] }
 serde_json     = { version = "1.0" }
 

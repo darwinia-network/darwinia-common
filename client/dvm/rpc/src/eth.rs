@@ -16,6 +16,40 @@
 
 pub use dvm_rpc_core::{EthApiServer, EthFilterApiServer, NetApiServer, Web3ApiServer};
 
+// --- std ---
+use std::{
+	collections::{BTreeMap, HashMap},
+	marker::PhantomData,
+	sync::{Arc, Mutex},
+	time,
+};
+// --- crates.io ---
+use codec::{self, Decode, Encode};
+use ethereum::{
+	BlockV0 as EthereumBlockV0, LegacyTransactionMessage, TransactionAction, TransactionV0,
+};
+use ethereum_types::{H160, H256, H512, H64, U256, U64};
+use futures::{future::TryFutureExt, StreamExt};
+use jsonrpc_core::{
+	futures::future::{self, Future},
+	BoxFuture, ErrorCode, Result,
+};
+use log::warn;
+use sha3::{Digest, Keccak256};
+// --- paritytech ---
+use sc_client_api::{
+	backend::{AuxStore, Backend, StateBackend, StorageProvider},
+	client::BlockchainEvents,
+};
+use sc_network::{ExHashT, NetworkService};
+use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
+use sp_api::{BlockId, Core, HeaderT, ProvideRuntimeApi};
+use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
+use sp_runtime::{
+	traits::{BlakeTwo256, Block as BlockT, NumberFor, One, Saturating, UniqueSaturatedInto, Zero},
+	transaction_validity::TransactionSource,
+};
+use sp_storage::{StorageData, StorageKey};
 // --- darwinia-network ---
 use crate::{
 	error_on_execution_failure, frontier_backend_client, internal_err, overrides::OverrideHandle,
@@ -33,39 +67,6 @@ use dvm_rpc_core::{
 	EthApi as EthApiT, EthFilterApi as EthFilterApiT, NetApi as NetApiT, Web3Api as Web3ApiT,
 };
 use dvm_rpc_runtime_api::{ConvertTransaction, EthereumRuntimeRPCApi, TransactionStatus};
-// --- paritytech ---
-use sc_client_api::{
-	backend::{AuxStore, Backend, StateBackend, StorageProvider},
-	client::BlockchainEvents,
-};
-use sc_network::{ExHashT, NetworkService};
-use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
-use sp_api::{BlockId, Core, HeaderT, ProvideRuntimeApi};
-use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
-use sp_runtime::{
-	traits::{BlakeTwo256, Block as BlockT, NumberFor, One, Saturating, UniqueSaturatedInto, Zero},
-	transaction_validity::TransactionSource,
-};
-use sp_storage::{StorageData, StorageKey};
-// --- std ---
-use codec::{self, Decode, Encode};
-use ethereum::{
-	BlockV0 as EthereumBlockV0, LegacyTransactionMessage, TransactionAction, TransactionV0,
-};
-use ethereum_types::{H160, H256, H512, H64, U256, U64};
-use futures::{future::TryFutureExt, StreamExt};
-use jsonrpc_core::{
-	futures::future::{self, Future},
-	BoxFuture, ErrorCode, Result,
-};
-use log::warn;
-use sha3::{Digest, Keccak256};
-use std::{
-	collections::{BTreeMap, HashMap},
-	marker::PhantomData,
-	sync::{Arc, Mutex},
-	time,
-};
 
 pub struct EthApi<B: BlockT, C, P, CT, BE, H: ExHashT> {
 	pool: Arc<P>,
@@ -740,20 +741,18 @@ where
 		Ok(Bytes(vec![]))
 	}
 
-	fn send_transaction(&self, request: TransactionRequest) -> BoxFuture<H256> {
+	fn send_transaction(&self, request: TransactionRequest) -> BoxFuture<Result<H256>> {
 		let from = match request.from {
 			Some(from) => from,
 			None => {
 				let accounts = match self.accounts() {
 					Ok(accounts) => accounts,
-					Err(e) => return Box::new(future::result(Err(e))),
+					Err(e) => return Box::pin(future::err(e)),
 				};
 
 				match accounts.get(0) {
 					Some(account) => account.clone(),
-					None => {
-						return Box::new(future::result(Err(internal_err("no signer available"))))
-					}
+					None => return Box::pin(future::err(internal_err("no signer available"))),
 				}
 			}
 		};
@@ -762,18 +761,19 @@ where
 			Some(nonce) => nonce,
 			None => match self.transaction_count(from, None) {
 				Ok(nonce) => nonce,
-				Err(e) => return Box::new(future::result(Err(e))),
+				Err(e) => return Box::pin(future::err(e)),
 			},
 		};
 
 		let chain_id = match self.chain_id() {
-			Ok(chain_id) => chain_id,
-			Err(e) => return Box::new(future::result(Err(e))),
+			Ok(Some(chain_id)) => chain_id.as_u64(),
+			Ok(None) => return Box::pin(future::err(internal_err("chain id not available"))),
+			Err(e) => return Box::pin(future::err(e)),
 		};
 
 		let message = LegacyTransactionMessage {
 			nonce,
-			gas_price: request.gas_price.unwrap_or(U256::from(1)),
+			gas_price: request.gas_price.unwrap_or(U256::from(1u32)),
 			gas_limit: request.gas.unwrap_or(U256::max_value()),
 			value: request.value.unwrap_or(U256::zero()),
 			input: request.data.map(|s| s.into_vec()).unwrap_or_default(),
@@ -781,7 +781,7 @@ where
 				Some(to) => TransactionAction::Call(to),
 				None => TransactionAction::Create,
 			},
-			chain_id: chain_id.map(|s| s.as_u64()),
+			chain_id: Some(chain_id),
 		};
 
 		let mut transaction = None;
@@ -790,7 +790,7 @@ where
 			if signer.accounts().contains(&from) {
 				match signer.sign(message, &from) {
 					Ok(t) => transaction = Some(t),
-					Err(e) => return Box::new(future::result(Err(e))),
+					Err(e) => return Box::pin(future::err(e)),
 				}
 				break;
 			}
@@ -798,14 +798,14 @@ where
 
 		let transaction = match transaction {
 			Some(transaction) => transaction,
-			None => return Box::new(future::result(Err(internal_err("no signer available")))),
+			None => return Box::pin(future::err(internal_err("no signer available"))),
 		};
 		let transaction_hash =
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
 		let hash = self.client.info().best_hash;
 		let number = self.client.info().best_number;
 		let pending = self.pending_transactions.clone();
-		Box::new(
+		Box::pin(
 			self.pool
 				.submit_one(
 					&BlockId::hash(hash),
@@ -813,42 +813,24 @@ where
 					self.convert_transaction
 						.convert_transaction(transaction.clone()),
 				)
-				.compat()
-				.map(move |_| {
-					if let Some(pending) = pending {
-						if let Ok(locked) = &mut pending.lock() {
-							locked.insert(
-								transaction_hash,
-								PendingTransaction::new(
-									transaction_build(transaction, None, None),
-									UniqueSaturatedInto::<u64>::unique_saturated_into(number),
-								),
-							);
-						}
-					}
-					transaction_hash
-				})
+				.map_ok(move |_| transaction_hash)
 				.map_err(|err| {
 					internal_err(format!("submit transaction to pool failed: {:?}", err))
 				}),
 		)
 	}
 
-	fn send_raw_transaction(&self, bytes: Bytes) -> BoxFuture<H256> {
+	fn send_raw_transaction(&self, bytes: Bytes) -> BoxFuture<Result<H256>> {
 		let transaction = match rlp::decode::<TransactionV0>(&bytes.0[..]) {
 			Ok(transaction) => transaction,
-			Err(_) => {
-				return Box::new(future::result(Err(internal_err(
-					"decode transaction failed",
-				))))
-			}
+			Err(_) => return Box::pin(future::err(internal_err("decode transaction failed"))),
 		};
 		let transaction_hash =
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
 		let hash = self.client.info().best_hash;
 		let number = self.client.info().best_number;
 		let pending = self.pending_transactions.clone();
-		Box::new(
+		Box::pin(
 			self.pool
 				.submit_one(
 					&BlockId::hash(hash),
@@ -856,21 +838,7 @@ where
 					self.convert_transaction
 						.convert_transaction(transaction.clone()),
 				)
-				.compat()
-				.map(move |_| {
-					if let Some(pending) = pending {
-						if let Ok(locked) = &mut pending.lock() {
-							locked.insert(
-								transaction_hash,
-								PendingTransaction::new(
-									transaction_build(transaction, None, None),
-									UniqueSaturatedInto::<u64>::unique_saturated_into(number),
-								),
-							);
-						}
-					}
-					transaction_hash
-				})
+				.map_ok(move |_| transaction_hash)
 				.map_err(|err| {
 					internal_err(format!("submit transaction to pool failed: {:?}", err))
 				}),

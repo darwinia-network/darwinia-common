@@ -11,7 +11,7 @@ version     = "2.7.2"
 
 [dependencies]
 # crates.io
-futures       = { version = "0.3", features = ["compat"] }
+futures       = { version = "0.3" }
 futures-timer = { version = "3.0" }
 log           = { version = "0.4" }
 # darwinia-network

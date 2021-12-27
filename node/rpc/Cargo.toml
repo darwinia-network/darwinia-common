@@ -11,8 +11,8 @@ version     = "2.7.2"
 
 [dependencies]
 # crates.io
-jsonrpc-core   = { version = "15.1" }
-jsonrpc-pubsub = { version = "15.1" }
+jsonrpc-core   = { version = "18.0" }
+jsonrpc-pubsub = { version = "18.0" }
 # darwinia-network
 darwinia-balances-rpc   = { path = "../../frame/balances/rpc" }
 darwinia-fee-market-rpc = { path = "../../frame/fee-market/rpc" }
