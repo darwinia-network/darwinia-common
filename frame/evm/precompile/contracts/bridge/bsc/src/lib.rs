@@ -44,6 +44,8 @@ enum Action {
 	VerifyMultiStorageProof = "verify_multi_storage_proof(address,bytes[],bytes32[],bytes[][])",
 }
 
+const MAX_MULTI_STORAGEKEY_SIZE: usize = 32;
+
 /// The contract address: 0000000000000000000000000000000000000026
 pub struct BscBridge<T> {
 	_marker: PhantomData<T>,
@@ -85,12 +87,16 @@ where
 						ExitError::Other("decode multi storage verify info failed".into())
 					})?;
 				let latest_header = darwinia_bridge_bsc::Pallet::<T>::latest_bsc_header();
-				if params.storage_keys.len() != params.storage_proofs.len() {
+				let key_size = params.storage_keys.len();
+				if key_size != params.storage_proofs.len() {
 					return Err(ExitError::Other(
 						"storage keys not match storage proofs".into(),
 					));
 				}
-				let storage_values: Result<Vec<[u8; 32]>, _> = (0..params.storage_keys.len())
+				if key_size > MAX_MULTI_STORAGEKEY_SIZE {
+					return Err(ExitError::Other("storage keys size too large".into()));
+				}
+				let storage_values: Result<Vec<[u8; 32]>, _> = (0..key_size)
 					.map(|idx| {
 						let storage_key = params.storage_keys[idx];
 						let storage_proof = params.storage_proofs[idx].clone();
@@ -110,7 +116,7 @@ where
 					.collect();
 				(
 					abi_encode_array_bytes32(storage_values?),
-					10000 * params.storage_keys.len() as u64,
+					10000 * key_size as u64,
 				)
 			}
 		};
