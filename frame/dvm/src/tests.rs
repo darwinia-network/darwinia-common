@@ -62,6 +62,9 @@ const WKTON_CONTRACT_BYTECODE: &str = "60806040526040805190810160405280600d81526
 const WITH_DRAW_INPUT: &str = "723908ee9dc8e509d4b93251bd57f68c09bd9d04471c193fabd8f26c54284a4b";
 const WKTON_ADDRESS: &str = "32dcab0ef3fb2de2fce1d2e0799d36239671f04a";
 
+type RingAccount = <Test as darwinia_evm::Config>::RingAccountBasic;
+type KtonAccount = <Test as darwinia_evm::Config>::KtonAccountBasic;
+
 fn creation_contract(code: &str, nonce: u64) -> UnsignedTransaction {
 	UnsignedTransaction {
 		nonce: U256::from(nonce),
@@ -244,10 +247,7 @@ macro_rules! assert_balance {
 	($evm_address:expr, $balance:expr, $left:expr, $right:expr) => {
 		let account_id =
 			<Test as darwinia_evm::Config>::IntoAccountId::into_account_id($evm_address);
-		assert_eq!(
-			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&$evm_address).balance,
-			$balance
-		);
+		assert_eq!(RingAccount::account_basic(&$evm_address).balance, $balance);
 		assert_eq!(Ring::free_balance(&account_id), $left);
 		assert_eq!(
 			<RingRemainBalance as RemainBalanceOp<Test, u64>>::remaining_balance(&account_id),
@@ -274,7 +274,7 @@ fn transaction_should_increment_nonce() {
 			None,
 		));
 		assert_eq!(
-			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&alice.address).nonce,
+			RingAccount::account_basic(&alice.address).nonce,
 			U256::from(1)
 		);
 	});
@@ -703,10 +703,7 @@ fn read_only_call_should_works() {
 		);
 		// Check nonce
 		let source = <Test as self::Config>::PalletId::get().into_h160();
-		assert_eq!(
-			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce,
-			U256::from(0)
-		);
+		assert_eq!(RingAccount::account_basic(&source).nonce, U256::from(0));
 	});
 }
 
@@ -857,16 +854,10 @@ fn internal_transaction_nonce_increase() {
 		// Call foo use internal transaction
 		assert_ok!(Ethereum::internal_transact(contract_address, foo.clone()));
 
-		assert_eq!(
-			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce,
-			U256::from(1)
-		);
+		assert_eq!(RingAccount::account_basic(&source).nonce, U256::from(1));
 
 		assert_ok!(Ethereum::internal_transact(contract_address, foo));
-		assert_eq!(
-			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce,
-			U256::from(2)
-		);
+		assert_eq!(RingAccount::account_basic(&source).nonce, U256::from(2));
 	});
 }
 
@@ -906,10 +897,7 @@ fn internal_transact_dispatch_error() {
 			Ethereum::internal_transact(contract_address, mock_foo),
 			<Error<Test>>::InternalTransactionRevertError
 		);
-		assert_eq!(
-			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce,
-			U256::from(1)
-		);
+		assert_eq!(RingAccount::account_basic(&source).nonce, U256::from(1));
 	});
 }
 
@@ -933,7 +921,7 @@ fn withdraw_with_enough_balance() {
 
 		// Check caller balance
 		assert_eq!(
-			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&alice.address).balance,
+			RingAccount::account_basic(&alice.address).balance,
 			U256::from(70_000_000_000_000_000_000u128)
 		);
 		// Check the target balance
@@ -979,7 +967,7 @@ fn withdraw_without_enough_balance_should_fail() {
 
 		// Check caller balance
 		assert_eq!(
-			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&alice.address).balance,
+			RingAccount::account_basic(&alice.address).balance,
 			U256::from(100000000000000000000u128)
 		);
 		// Check target balance
@@ -1013,7 +1001,7 @@ fn withdraw_with_invalid_input_length_should_failed() {
 
 		// Check caller balance
 		assert_eq!(
-			<Test as darwinia_evm::Config>::RingAccountBasic::account_basic(&alice.address).balance,
+			RingAccount::account_basic(&alice.address).balance,
 			U256::from(100000000000000000000u128)
 		);
 		// Check target balance
@@ -1031,7 +1019,7 @@ fn test_kton_transfer_and_call_works() {
 
 	ext.execute_with(|| {
 		// Give alice some kton token
-		<Test as darwinia_evm::Config>::KtonAccountBasic::mutate_account_basic_balance(
+		KtonAccount::mutate_account_basic_balance(
 			&alice.address,
 			70_000_000_000_000_000_000u128.into(),
 		);
@@ -1039,7 +1027,7 @@ fn test_kton_transfer_and_call_works() {
 		// Create wkton contract
 		deploy_wkton_contract(alice, WKTON_CONTRACT_BYTECODE, 0);
 		assert_eq!(
-			<Test as darwinia_evm::Config>::KtonAccountBasic::account_basic(&alice.address).balance,
+			KtonAccount::account_basic(&alice.address).balance,
 			U256::from(70_000_000_000_000_000_000u128)
 		);
 
@@ -1051,7 +1039,7 @@ fn test_kton_transfer_and_call_works() {
 			1,
 		);
 		assert_eq!(
-			<Test as darwinia_evm::Config>::KtonAccountBasic::account_basic(&alice.address).balance,
+			KtonAccount::account_basic(&alice.address).balance,
 			U256::from(40_000_000_000_000_000_000u128)
 		);
 		assert_eq!(
@@ -1067,7 +1055,7 @@ fn test_kton_transfer_and_call_works() {
 			3,
 		);
 		assert_eq!(
-			<Test as darwinia_evm::Config>::KtonAccountBasic::account_basic(&alice.address).balance,
+			KtonAccount::account_basic(&alice.address).balance,
 			U256::from(10_000_000_000_000_000_000u128)
 		);
 		assert_eq!(
@@ -1084,7 +1072,7 @@ fn test_kton_transfer_and_call_out_of_fund() {
 
 	ext.execute_with(|| {
 		// Give alice some kton token
-		<Test as darwinia_evm::Config>::KtonAccountBasic::mutate_account_basic_balance(
+		KtonAccount::mutate_account_basic_balance(
 			&alice.address,
 			70_000_000_000_000_000_000u128.into(),
 		);
@@ -1092,7 +1080,7 @@ fn test_kton_transfer_and_call_out_of_fund() {
 		// Create wkton contract
 		deploy_wkton_contract(alice, WKTON_CONTRACT_BYTECODE, 0);
 		assert_eq!(
-			<Test as darwinia_evm::Config>::KtonAccountBasic::account_basic(&alice.address).balance,
+			KtonAccount::account_basic(&alice.address).balance,
 			U256::from(70_000_000_000_000_000_000u128)
 		);
 
@@ -1104,7 +1092,7 @@ fn test_kton_transfer_and_call_out_of_fund() {
 			1,
 		);
 		assert_eq!(
-			<Test as darwinia_evm::Config>::KtonAccountBasic::account_basic(&alice.address).balance,
+			KtonAccount::account_basic(&alice.address).balance,
 			U256::from(70_000_000_000_000_000_000u128)
 		);
 		assert_eq!(get_wkton_balance(alice, 2), U256::from(0));
@@ -1118,14 +1106,14 @@ fn test_kton_withdraw() {
 
 	ext.execute_with(|| {
 		// Give alice some kton token
-		<Test as darwinia_evm::Config>::KtonAccountBasic::mutate_account_basic_balance(
+		KtonAccount::mutate_account_basic_balance(
 			&alice.address,
 			70_000_000_000_000_000_000u128.into(),
 		);
 		// Create wkton contract
 		deploy_wkton_contract(alice, WKTON_CONTRACT_BYTECODE, 0);
 		assert_eq!(
-			<Test as darwinia_evm::Config>::KtonAccountBasic::account_basic(&alice.address).balance,
+			KtonAccount::account_basic(&alice.address).balance,
 			U256::from(70_000_000_000_000_000_000u128)
 		);
 
@@ -1137,7 +1125,7 @@ fn test_kton_withdraw() {
 			1,
 		);
 		assert_eq!(
-			<Test as darwinia_evm::Config>::KtonAccountBasic::account_basic(&alice.address).balance,
+			KtonAccount::account_basic(&alice.address).balance,
 			U256::from(40_000_000_000_000_000_000u128)
 		);
 		assert_eq!(
@@ -1158,7 +1146,7 @@ fn test_kton_withdraw() {
 		let to_id =
 			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
 		assert_eq!(
-			<Test as darwinia_evm::Config>::KtonAccountBasic::account_balance(&to_id),
+			KtonAccount::account_balance(&to_id),
 			U256::from(10_000_000_000_000_000_000u128)
 		);
 		assert_eq!(
@@ -1175,14 +1163,14 @@ fn test_kton_withdraw_out_of_fund() {
 
 	ext.execute_with(|| {
 		// Give alice some kton token
-		<Test as darwinia_evm::Config>::KtonAccountBasic::mutate_account_basic_balance(
+		KtonAccount::mutate_account_basic_balance(
 			&alice.address,
 			70_000_000_000_000_000_000u128.into(),
 		);
 		// Create wkton contract
 		deploy_wkton_contract(alice, WKTON_CONTRACT_BYTECODE, 0);
 		assert_eq!(
-			<Test as darwinia_evm::Config>::KtonAccountBasic::account_basic(&alice.address).balance,
+			KtonAccount::account_basic(&alice.address).balance,
 			U256::from(70_000_000_000_000_000_000u128)
 		);
 
@@ -1194,7 +1182,7 @@ fn test_kton_withdraw_out_of_fund() {
 			1,
 		);
 		assert_eq!(
-			<Test as darwinia_evm::Config>::KtonAccountBasic::account_basic(&alice.address).balance,
+			KtonAccount::account_basic(&alice.address).balance,
 			U256::from(40_000_000_000_000_000_000u128)
 		);
 		assert_eq!(
@@ -1214,10 +1202,7 @@ fn test_kton_withdraw_out_of_fund() {
 		);
 		let to_id =
 			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
-		assert_eq!(
-			<Test as darwinia_evm::Config>::KtonAccountBasic::account_balance(&to_id),
-			U256::from(0)
-		);
+		assert_eq!(KtonAccount::account_balance(&to_id), U256::from(0));
 		assert_eq!(
 			get_wkton_balance(alice, 4),
 			U256::from(30_000_000_000_000_000_000u128)
@@ -1231,10 +1216,7 @@ fn mutate_account_works_well() {
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		let origin_balance = U256::from(123_456_789_000_000_090u128);
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
-			&test_addr,
-			origin_balance,
-		);
+		RingAccount::mutate_account_basic_balance(&test_addr, origin_balance);
 
 		assert_balance!(test_addr, origin_balance, 123456789, 90);
 	});
@@ -1247,16 +1229,10 @@ fn mutate_account_inc_balance_by_10() {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		// origin
 		let origin_balance = U256::from(600_000_000_090u128);
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
-			&test_addr,
-			origin_balance,
-		);
+		RingAccount::mutate_account_basic_balance(&test_addr, origin_balance);
 
 		let new_balance = origin_balance.saturating_add(U256::from(10));
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
-			&test_addr,
-			new_balance,
-		);
+		RingAccount::mutate_account_basic_balance(&test_addr, new_balance);
 		assert_balance!(test_addr, new_balance, 600, 100);
 	});
 }
@@ -1268,16 +1244,10 @@ fn mutate_account_inc_balance_by_999_999_910() {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		// origin
 		let origin_balance = U256::from(600_000_000_090u128);
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
-			&test_addr,
-			origin_balance,
-		);
+		RingAccount::mutate_account_basic_balance(&test_addr, origin_balance);
 
 		let new_balance = origin_balance.saturating_add(U256::from(999999910u128));
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
-			&test_addr,
-			new_balance,
-		);
+		RingAccount::mutate_account_basic_balance(&test_addr, new_balance);
 		assert_balance!(test_addr, new_balance, 601, 0);
 	});
 }
@@ -1289,16 +1259,10 @@ fn mutate_account_inc_by_1000_000_000() {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		// origin
 		let origin_balance = U256::from(600_000_000_090u128);
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
-			&test_addr,
-			origin_balance,
-		);
+		RingAccount::mutate_account_basic_balance(&test_addr, origin_balance);
 
 		let new_balance = origin_balance.saturating_add(U256::from(1000_000_000u128));
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
-			&test_addr,
-			new_balance,
-		);
+		RingAccount::mutate_account_basic_balance(&test_addr, new_balance);
 		assert_balance!(test_addr, new_balance, 601, 90);
 	});
 }
@@ -1310,16 +1274,10 @@ fn mutate_account_dec_balance_by_90() {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		// origin
 		let origin_balance = U256::from(600_000_000_090u128);
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
-			&test_addr,
-			origin_balance,
-		);
+		RingAccount::mutate_account_basic_balance(&test_addr, origin_balance);
 
 		let new_balance = origin_balance.saturating_sub(U256::from(90));
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
-			&test_addr,
-			new_balance,
-		);
+		RingAccount::mutate_account_basic_balance(&test_addr, new_balance);
 		assert_balance!(test_addr, new_balance, 600, 0);
 	});
 }
@@ -1330,16 +1288,10 @@ fn mutate_account_dec_balance_by_990() {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		// origin
 		let origin_balance = U256::from(600_000_000_090u128);
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
-			&test_addr,
-			origin_balance,
-		);
+		RingAccount::mutate_account_basic_balance(&test_addr, origin_balance);
 
 		let new_balance = origin_balance.saturating_sub(U256::from(990));
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
-			&test_addr,
-			new_balance,
-		);
+		RingAccount::mutate_account_basic_balance(&test_addr, new_balance);
 		assert_balance!(test_addr, new_balance, 599, 1_000_000_090 - 990);
 	});
 }
@@ -1350,16 +1302,10 @@ fn mutate_account_dec_balance_existential_by_90() {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		// origin
 		let origin_balance = U256::from(500_000_000_090u128);
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
-			&test_addr,
-			origin_balance,
-		);
+		RingAccount::mutate_account_basic_balance(&test_addr, origin_balance);
 
 		let new_balance = origin_balance.saturating_sub(U256::from(90));
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
-			&test_addr,
-			new_balance,
-		);
+		RingAccount::mutate_account_basic_balance(&test_addr, new_balance);
 		assert_balance!(test_addr, new_balance, 500, 0);
 	});
 }
@@ -1370,16 +1316,10 @@ fn mutate_account_dec_balance_existential_by_990() {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		// origin
 		let origin_balance = U256::from(500_000_000_090u128);
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
-			&test_addr,
-			origin_balance,
-		);
+		RingAccount::mutate_account_basic_balance(&test_addr, origin_balance);
 
 		let new_balance = origin_balance.saturating_sub(U256::from(990));
-		<Test as darwinia_evm::Config>::RingAccountBasic::mutate_account_basic_balance(
-			&test_addr,
-			new_balance,
-		);
+		RingAccount::mutate_account_basic_balance(&test_addr, new_balance);
 
 		assert_balance!(test_addr, U256::zero(), 0, 0);
 	});

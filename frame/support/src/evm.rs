@@ -150,3 +150,13 @@ impl DVMTransaction {
 		}
 	}
 }
+
+pub fn decimal_convert(v: u128, p: Option<u128>) -> U256 {
+	if let Some(p) = p {
+		return U256::from(v)
+			.saturating_mul(U256::from(POW_9))
+			.saturating_add(U256::from(p));
+	}
+	U256::from(v).saturating_mul(U256::from(POW_9))
+}
+
