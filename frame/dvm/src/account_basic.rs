@@ -142,7 +142,6 @@ where
 		let target_account = Self::account_basic(target);
 		let new_target_balance = target_account.balance.saturating_add(value);
 		Self::mutate_account_basic_balance(target, new_target_balance);
-
 		Ok(())
 	}
 
@@ -224,16 +223,14 @@ where
 		}
 
 		// Handle existential deposit.
-		let ring_existential_deposit: u128 =
-			<T as Config>::RingCurrency::minimum_balance().saturated_into::<u128>();
-		let kton_existential_deposit: u128 =
-			<T as Config>::KtonCurrency::minimum_balance().saturated_into::<u128>();
-		let ring_existential_deposit = U256::from(ring_existential_deposit) * helper;
-		let kton_existential_deposit = U256::from(kton_existential_deposit) * helper;
+		let ring_min = <T as Config>::RingCurrency::minimum_balance().saturated_into::<u128>();
+		let kton_min = <T as Config>::KtonCurrency::minimum_balance().saturated_into::<u128>();
+		let ring_ed = decimal_convert(ring_min, None);
+		let kton_ed = decimal_convert(kton_min, None);
 
 		let ring_account = T::RingAccountBasic::account_balance(&account_id);
 		let kton_account = T::KtonAccountBasic::account_balance(&account_id);
-		if ring_account < ring_existential_deposit && kton_account < kton_existential_deposit {
+		if ring_account < ring_ed && kton_account < kton_ed {
 			<RingRemainBalance as RemainBalanceOp<T, RingBalance<T>>>::remove_remaining_balance(
 				&account_id,
 			);
