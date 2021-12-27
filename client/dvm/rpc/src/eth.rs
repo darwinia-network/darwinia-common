@@ -1005,11 +1005,13 @@ where
 		};
 
 		if cfg!(feature = "rpc_binary_search_estimate") {
+			const MAX_OOG_PER_ESTIMATE_QUERY: u32 = 2;
 			let mut lower = U256::from(21_000);
 			let mut upper = U256::from(gas_limit);
 			let mut mid = upper;
 			let mut best = mid;
 			let mut old_best: U256;
+			let mut num_oog = 0;
 
 			// if the gas estimation depends on the gas limit, then we want to binary
 			// search until the change is under some threshold. but if not dependent,
@@ -1034,6 +1036,12 @@ where
 					Err(err) => {
 						// if Err == OutofGas, we need more gas
 						if err.code == ErrorCode::ServerError(0) {
+							num_oog += 1;
+							// don't try more than twice if we oog
+							if num_oog >= MAX_OOG_PER_ESTIMATE_QUERY {
+								return Err(err);
+							}
+
 							lower = mid;
 							mid = (lower + upper + 1) / 2;
 							if mid == lower {
