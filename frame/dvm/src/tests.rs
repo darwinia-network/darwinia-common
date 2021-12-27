@@ -28,7 +28,7 @@ use crate::{
 	account_basic::{RemainBalanceOp, RingRemainBalance},
 	Call, *,
 };
-use darwinia_support::evm::{IntoAccountId, IntoH160, TRANSFER_ADDR};
+use darwinia_support::evm::{decimal_convert, IntoAccountId, IntoH160, TRANSFER_ADDR};
 use mock::*;
 // --- paritytech ---
 use frame_support::{assert_err, assert_noop, assert_ok, unsigned::ValidateUnsigned};
@@ -416,7 +416,6 @@ fn invalid_signature_should_be_ignored() {
 fn contract_should_be_created_at_given_address() {
 	let (pairs, mut ext) = new_test_ext(1);
 	let alice = &pairs[0];
-
 	let erc20_address = contract_address(alice.address, 0);
 
 	ext.execute_with(|| {
@@ -439,7 +438,6 @@ fn contract_should_be_created_at_given_address() {
 fn transaction_should_generate_correct_gas_used() {
 	let (pairs, mut ext) = new_test_ext(1);
 	let alice = &pairs[0];
-
 	let expected_gas = U256::from(891328);
 
 	ext.execute_with(|| {
@@ -1019,49 +1017,29 @@ fn test_kton_transfer_and_call_works() {
 
 	ext.execute_with(|| {
 		// Give alice some kton token
-		KtonAccount::mutate_account_basic_balance(
-			&alice.address,
-			70_000_000_000_000_000_000u128.into(),
-		);
+		let origin = U256::from(70_000_000_000_000_000_000u128);
+		KtonAccount::mutate_account_basic_balance(&alice.address, origin);
 
 		// Create wkton contract
 		deploy_wkton_contract(alice, WKTON_CONTRACT_BYTECODE, 0);
-		assert_eq!(
-			KtonAccount::account_basic(&alice.address).balance,
-			U256::from(70_000_000_000_000_000_000u128)
-		);
+		assert_eq!(KtonAccount::account_basic(&alice.address).balance, origin);
 
 		// Transfer and call
-		send_kton_transfer_and_call_tx(
-			alice,
-			H160::from_str(WKTON_ADDRESS).unwrap(),
-			30_000_000_000_000_000_000u128.into(),
-			1,
-		);
+		let transfer = U256::from(30_000_000_000_000_000_000u128);
+		send_kton_transfer_and_call_tx(alice, H160::from_str(WKTON_ADDRESS).unwrap(), transfer, 1);
 		assert_eq!(
 			KtonAccount::account_basic(&alice.address).balance,
-			U256::from(40_000_000_000_000_000_000u128)
+			origin - transfer
 		);
-		assert_eq!(
-			get_wkton_balance(alice, 2),
-			U256::from(30_000_000_000_000_000_000u128)
-		);
+		assert_eq!(get_wkton_balance(alice, 2), transfer);
 
 		// Transfer and call
-		send_kton_transfer_and_call_tx(
-			alice,
-			H160::from_str(WKTON_ADDRESS).unwrap(),
-			30_000_000_000_000_000_000u128.into(),
-			3,
-		);
+		send_kton_transfer_and_call_tx(alice, H160::from_str(WKTON_ADDRESS).unwrap(), transfer, 3);
 		assert_eq!(
 			KtonAccount::account_basic(&alice.address).balance,
-			U256::from(10_000_000_000_000_000_000u128)
+			origin - transfer - transfer
 		);
-		assert_eq!(
-			get_wkton_balance(alice, 4),
-			U256::from(60_000_000_000_000_000_000u128)
-		);
+		assert_eq!(get_wkton_balance(alice, 4), transfer + transfer);
 	});
 }
 
@@ -1072,29 +1050,17 @@ fn test_kton_transfer_and_call_out_of_fund() {
 
 	ext.execute_with(|| {
 		// Give alice some kton token
-		KtonAccount::mutate_account_basic_balance(
-			&alice.address,
-			70_000_000_000_000_000_000u128.into(),
-		);
+		let origin = U256::from(70_000_000_000_000_000_000u128);
+		KtonAccount::mutate_account_basic_balance(&alice.address, origin);
 
 		// Create wkton contract
 		deploy_wkton_contract(alice, WKTON_CONTRACT_BYTECODE, 0);
-		assert_eq!(
-			KtonAccount::account_basic(&alice.address).balance,
-			U256::from(70_000_000_000_000_000_000u128)
-		);
+		assert_eq!(KtonAccount::account_basic(&alice.address).balance, origin);
 
 		// Transfer and call
-		send_kton_transfer_and_call_tx(
-			alice,
-			H160::from_str(WKTON_ADDRESS).unwrap(),
-			90_000_000_000_000_000_000u128.into(),
-			1,
-		);
-		assert_eq!(
-			KtonAccount::account_basic(&alice.address).balance,
-			U256::from(70_000_000_000_000_000_000u128)
-		);
+		let transfer = U256::from(90_000_000_000_000_000_000u128);
+		send_kton_transfer_and_call_tx(alice, H160::from_str(WKTON_ADDRESS).unwrap(), transfer, 1);
+		assert_eq!(KtonAccount::account_basic(&alice.address).balance, origin);
 		assert_eq!(get_wkton_balance(alice, 2), U256::from(0));
 	});
 }
@@ -1106,53 +1072,31 @@ fn test_kton_withdraw() {
 
 	ext.execute_with(|| {
 		// Give alice some kton token
-		KtonAccount::mutate_account_basic_balance(
-			&alice.address,
-			70_000_000_000_000_000_000u128.into(),
-		);
+		let origin = U256::from(70_000_000_000_000_000_000u128);
+		KtonAccount::mutate_account_basic_balance(&alice.address, origin);
 		// Create wkton contract
 		deploy_wkton_contract(alice, WKTON_CONTRACT_BYTECODE, 0);
-		assert_eq!(
-			KtonAccount::account_basic(&alice.address).balance,
-			U256::from(70_000_000_000_000_000_000u128)
-		);
+		assert_eq!(KtonAccount::account_basic(&alice.address).balance, origin);
 
 		// Transfer and call
-		send_kton_transfer_and_call_tx(
-			alice,
-			H160::from_str(WKTON_ADDRESS).unwrap(),
-			30_000_000_000_000_000_000u128.into(),
-			1,
-		);
+		let transfer = U256::from(30_000_000_000_000_000_000u128);
+		send_kton_transfer_and_call_tx(alice, H160::from_str(WKTON_ADDRESS).unwrap(), transfer, 1);
 		assert_eq!(
 			KtonAccount::account_basic(&alice.address).balance,
-			U256::from(40_000_000_000_000_000_000u128)
+			origin - transfer
 		);
-		assert_eq!(
-			get_wkton_balance(alice, 2),
-			U256::from(30_000_000_000_000_000_000u128)
-		);
+		assert_eq!(get_wkton_balance(alice, 2), transfer);
 
 		// withdraw
 		let input_bytes: Vec<u8> = hex2bytes_unchecked(
 			"0x64766d3a00000000000000aa01a1bef0557fa9625581a293f3aa777019263256",
 		);
-		send_kton_withdraw_tx(
-			alice,
-			input_bytes.clone(),
-			U256::from(10_000_000_000_000_000_000u128),
-			3,
-		);
+		let withdraw = U256::from(10_000_000_000_000_000_000u128);
+		send_kton_withdraw_tx(alice, input_bytes.clone(), withdraw, 3);
 		let to_id =
 			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
-		assert_eq!(
-			KtonAccount::account_balance(&to_id),
-			U256::from(10_000_000_000_000_000_000u128)
-		);
-		assert_eq!(
-			get_wkton_balance(alice, 4),
-			U256::from(20_000_000_000_000_000_000u128)
-		);
+		assert_eq!(KtonAccount::account_balance(&to_id), withdraw);
+		assert_eq!(get_wkton_balance(alice, 4), transfer - withdraw);
 	});
 }
 
@@ -1163,50 +1107,30 @@ fn test_kton_withdraw_out_of_fund() {
 
 	ext.execute_with(|| {
 		// Give alice some kton token
-		KtonAccount::mutate_account_basic_balance(
-			&alice.address,
-			70_000_000_000_000_000_000u128.into(),
-		);
+		let origin = U256::from(70_000_000_000_000_000_000u128);
+		KtonAccount::mutate_account_basic_balance(&alice.address, origin);
 		// Create wkton contract
 		deploy_wkton_contract(alice, WKTON_CONTRACT_BYTECODE, 0);
-		assert_eq!(
-			KtonAccount::account_basic(&alice.address).balance,
-			U256::from(70_000_000_000_000_000_000u128)
-		);
+		assert_eq!(KtonAccount::account_basic(&alice.address).balance, origin);
 
 		// Transfer and call
-		send_kton_transfer_and_call_tx(
-			alice,
-			H160::from_str(WKTON_ADDRESS).unwrap(),
-			30_000_000_000_000_000_000u128.into(),
-			1,
-		);
+		let transfer = U256::from(30_000_000_000_000_000_000u128);
+		send_kton_transfer_and_call_tx(alice, H160::from_str(WKTON_ADDRESS).unwrap(), transfer, 1);
 		assert_eq!(
 			KtonAccount::account_basic(&alice.address).balance,
-			U256::from(40_000_000_000_000_000_000u128)
+			origin - transfer
 		);
-		assert_eq!(
-			get_wkton_balance(alice, 2),
-			U256::from(30_000_000_000_000_000_000u128)
-		);
+		assert_eq!(get_wkton_balance(alice, 2), transfer);
 
 		// withdraw
 		let input_bytes: Vec<u8> = hex2bytes_unchecked(
 			"0x64766d3a00000000000000aa01a1bef0557fa9625581a293f3aa777019263256",
 		);
-		send_kton_withdraw_tx(
-			alice,
-			input_bytes.clone(),
-			U256::from(70_000_000_000_000_000_000u128),
-			3,
-		);
+		send_kton_withdraw_tx(alice, input_bytes.clone(), origin, 3);
 		let to_id =
 			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
 		assert_eq!(KtonAccount::account_balance(&to_id), U256::from(0));
-		assert_eq!(
-			get_wkton_balance(alice, 4),
-			U256::from(30_000_000_000_000_000_000u128)
-		);
+		assert_eq!(get_wkton_balance(alice, 4), transfer);
 	});
 }
 
@@ -1215,10 +1139,9 @@ fn mutate_account_works_well() {
 	let (_, mut ext) = new_test_ext(1);
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let origin_balance = U256::from(123_456_789_000_000_090u128);
-		RingAccount::mutate_account_basic_balance(&test_addr, origin_balance);
-
-		assert_balance!(test_addr, origin_balance, 123456789, 90);
+		let origin = decimal_convert(123456789, Some(90));
+		RingAccount::mutate_account_basic_balance(&test_addr, origin);
+		assert_balance!(test_addr, origin, 123456789, 90);
 	});
 }
 
@@ -1227,13 +1150,12 @@ fn mutate_account_inc_balance_by_10() {
 	let (_, mut ext) = new_test_ext(1);
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		// origin
-		let origin_balance = U256::from(600_000_000_090u128);
-		RingAccount::mutate_account_basic_balance(&test_addr, origin_balance);
+		let origin = decimal_convert(600, Some(90));
+		RingAccount::mutate_account_basic_balance(&test_addr, origin);
 
-		let new_balance = origin_balance.saturating_add(U256::from(10));
-		RingAccount::mutate_account_basic_balance(&test_addr, new_balance);
-		assert_balance!(test_addr, new_balance, 600, 100);
+		let new = origin.saturating_add(U256::from(10));
+		RingAccount::mutate_account_basic_balance(&test_addr, new);
+		assert_balance!(test_addr, new, 600, 100);
 	});
 }
 
@@ -1242,13 +1164,12 @@ fn mutate_account_inc_balance_by_999_999_910() {
 	let (_, mut ext) = new_test_ext(1);
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		// origin
-		let origin_balance = U256::from(600_000_000_090u128);
-		RingAccount::mutate_account_basic_balance(&test_addr, origin_balance);
+		let origin = decimal_convert(600, Some(90));
+		RingAccount::mutate_account_basic_balance(&test_addr, origin);
 
-		let new_balance = origin_balance.saturating_add(U256::from(999999910u128));
-		RingAccount::mutate_account_basic_balance(&test_addr, new_balance);
-		assert_balance!(test_addr, new_balance, 601, 0);
+		let new = origin.saturating_add(U256::from(999999910u128));
+		RingAccount::mutate_account_basic_balance(&test_addr, new);
+		assert_balance!(test_addr, new, 601, 0);
 	});
 }
 
@@ -1257,13 +1178,12 @@ fn mutate_account_inc_by_1000_000_000() {
 	let (_, mut ext) = new_test_ext(1);
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		// origin
-		let origin_balance = U256::from(600_000_000_090u128);
-		RingAccount::mutate_account_basic_balance(&test_addr, origin_balance);
+		let origin = decimal_convert(600, Some(90));
+		RingAccount::mutate_account_basic_balance(&test_addr, origin);
 
-		let new_balance = origin_balance.saturating_add(U256::from(1000_000_000u128));
-		RingAccount::mutate_account_basic_balance(&test_addr, new_balance);
-		assert_balance!(test_addr, new_balance, 601, 90);
+		let new = origin.saturating_add(U256::from(1000_000_000u128));
+		RingAccount::mutate_account_basic_balance(&test_addr, new);
+		assert_balance!(test_addr, new, 601, 90);
 	});
 }
 
@@ -1272,13 +1192,12 @@ fn mutate_account_dec_balance_by_90() {
 	let (_, mut ext) = new_test_ext(1);
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		// origin
-		let origin_balance = U256::from(600_000_000_090u128);
-		RingAccount::mutate_account_basic_balance(&test_addr, origin_balance);
+		let origin = decimal_convert(600, Some(90));
+		RingAccount::mutate_account_basic_balance(&test_addr, origin);
 
-		let new_balance = origin_balance.saturating_sub(U256::from(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, new_balance);
-		assert_balance!(test_addr, new_balance, 600, 0);
+		let new = origin.saturating_sub(U256::from(90));
+		RingAccount::mutate_account_basic_balance(&test_addr, new);
+		assert_balance!(test_addr, new, 600, 0);
 	});
 }
 #[test]
@@ -1286,13 +1205,12 @@ fn mutate_account_dec_balance_by_990() {
 	let (_, mut ext) = new_test_ext(1);
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		// origin
-		let origin_balance = U256::from(600_000_000_090u128);
-		RingAccount::mutate_account_basic_balance(&test_addr, origin_balance);
+		let origin = decimal_convert(600, Some(90));
+		RingAccount::mutate_account_basic_balance(&test_addr, origin);
 
-		let new_balance = origin_balance.saturating_sub(U256::from(990));
-		RingAccount::mutate_account_basic_balance(&test_addr, new_balance);
-		assert_balance!(test_addr, new_balance, 599, 1_000_000_090 - 990);
+		let new = origin.saturating_sub(U256::from(990));
+		RingAccount::mutate_account_basic_balance(&test_addr, new);
+		assert_balance!(test_addr, new, 599, 1_000_000_090 - 990);
 	});
 }
 #[test]
@@ -1300,13 +1218,12 @@ fn mutate_account_dec_balance_existential_by_90() {
 	let (_, mut ext) = new_test_ext(1);
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		// origin
-		let origin_balance = U256::from(500_000_000_090u128);
-		RingAccount::mutate_account_basic_balance(&test_addr, origin_balance);
+		let origin = decimal_convert(500, Some(90));
+		RingAccount::mutate_account_basic_balance(&test_addr, origin);
 
-		let new_balance = origin_balance.saturating_sub(U256::from(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, new_balance);
-		assert_balance!(test_addr, new_balance, 500, 0);
+		let new = origin.saturating_sub(U256::from(90));
+		RingAccount::mutate_account_basic_balance(&test_addr, new);
+		assert_balance!(test_addr, new, 500, 0);
 	});
 }
 #[test]
@@ -1314,13 +1231,11 @@ fn mutate_account_dec_balance_existential_by_990() {
 	let (_, mut ext) = new_test_ext(1);
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		// origin
-		let origin_balance = U256::from(500_000_000_090u128);
-		RingAccount::mutate_account_basic_balance(&test_addr, origin_balance);
+		let origin = decimal_convert(500, Some(90));
+		RingAccount::mutate_account_basic_balance(&test_addr, origin);
 
-		let new_balance = origin_balance.saturating_sub(U256::from(990));
-		RingAccount::mutate_account_basic_balance(&test_addr, new_balance);
-
+		let new = origin.saturating_sub(U256::from(990));
+		RingAccount::mutate_account_basic_balance(&test_addr, new);
 		assert_balance!(test_addr, U256::zero(), 0, 0);
 	});
 }
