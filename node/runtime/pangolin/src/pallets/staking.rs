@@ -1,7 +1,6 @@
 // --- paritytech ---
 use frame_election_provider_support::onchain::OnChainSequentialPhragmen;
 use frame_support::PalletId;
-use pallet_election_provider_multi_phase::OnChainConfig;
 use sp_npos_elections::NposSolution;
 use sp_staking::SessionIndex;
 // --- darwinia-network ---
@@ -37,7 +36,7 @@ impl Config for Runtime {
 	type NextNewSession = Session;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type ElectionProvider = ElectionProviderMultiPhase;
-	type GenesisElectionProvider = OnChainSequentialPhragmen<OnChainConfig<Self>>;
+	type GenesisElectionProvider = GenesisElectionOf<Self>;
 	type RingCurrency = Ring;
 	type RingRewardRemainder = Treasury;
 	// send the slashed funds to the treasury.

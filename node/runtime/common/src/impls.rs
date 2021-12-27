@@ -22,8 +22,10 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 // --- paritytech ---
-use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
-use sp_runtime::RuntimeDebug;
+use frame_support::traits::{Currency, Get, Imbalance, OnUnbalanced};
+use sp_io::offchain;
+use sp_npos_elections::ExtendedBalance;
+use sp_runtime::{traits::TrailingZeroInput, RuntimeDebug};
 // --- darwinia-network ---
 use crate::*;
 
@@ -51,6 +53,7 @@ where
 	fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
 		let numeric_amount = amount.peek();
 		let author = <pallet_authorship::Pallet<R>>::author();
+
 		<darwinia_balances::Pallet<R, RingInstance>>::resolve_creating(
 			&<pallet_authorship::Pallet<R>>::author(),
 			amount,
@@ -77,13 +80,35 @@ where
 		if let Some(fees) = fees_then_tips.next() {
 			// for fees, 80% to treasury, 20% to author
 			let mut split = fees.ration(80, 20);
+
 			if let Some(tips) = fees_then_tips.next() {
 				// for tips, if any, 100% to author
 				tips.merge_into(&mut split.1);
 			}
-			use pallet_treasury::Pallet as Treasury;
-			<Treasury<R> as OnUnbalanced<_>>::on_unbalanced(split.0);
+
+			<pallet_treasury::Pallet<R> as OnUnbalanced<_>>::on_unbalanced(split.0);
 			<ToAuthor<R> as OnUnbalanced<_>>::on_unbalanced(split.1);
 		}
+	}
+}
+
+/// A source of random balance for the NPoS Solver, which is meant to be run by the OCW election
+/// miner.
+pub struct OffchainRandomBalancing;
+impl Get<Option<(usize, ExtendedBalance)>> for OffchainRandomBalancing {
+	fn get() -> Option<(usize, ExtendedBalance)> {
+		let iters = match MINER_MAX_ITERATIONS {
+			0 => 0,
+			max @ _ => {
+				let seed = offchain::random_seed();
+				let random = <u32>::decode(&mut TrailingZeroInput::new(&seed))
+					.expect("input is padded with zeroes; qed")
+					% max.saturating_add(1);
+
+				random as usize
+			}
+		};
+
+		Some((iters, 0))
 	}
 }
