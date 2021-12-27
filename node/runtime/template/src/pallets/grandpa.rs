@@ -17,4 +17,5 @@ impl Config for Runtime {
 	)>>::IdentificationTuple;
 	type HandleEquivocation = ();
 	type WeightInfo = ();
+	type MaxAuthorities = MaxAuthorities;
 }
