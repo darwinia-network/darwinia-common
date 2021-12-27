@@ -167,55 +167,55 @@ where
 		let nb = new_balance;
 		match current {
 			cb if cb > nb => {
-				let diff = cb - nb;
-				let (diff_balance, diff_remaining_balance) = diff.div_mod(helper);
+				let diff = cb.saturating_sub(nb);
+				let (diff_main, diff_remaining) = diff.div_mod(helper);
+
 				// If the dvm storage < diff remaining balance, we can not do sub operation directly.
 				// Otherwise, slash Currency, dec dvm storage balance directly.
-				if dvm_balance < diff_remaining_balance {
+				if dvm_balance < diff_remaining {
 					let remaining_balance = dvm_balance
-						.saturating_add(U256::from(1) * helper)
-						.saturating_sub(diff_remaining_balance);
+						.saturating_add(decimal_convert(1, None))
+						.saturating_sub(diff_remaining);
 
 					C::slash(
 						&account_id,
-						(diff_balance + 1).low_u128().unique_saturated_into(),
+						(diff_main + 1).low_u128().unique_saturated_into(),
 					);
 					RB::set_remaining_balance(
 						&account_id,
 						remaining_balance.low_u128().saturated_into(),
 					);
 				} else {
-					C::slash(&account_id, diff_balance.low_u128().unique_saturated_into());
+					C::slash(&account_id, diff_main.low_u128().unique_saturated_into());
 					RB::dec_remaining_balance(
 						&account_id,
-						diff_remaining_balance.low_u128().saturated_into(),
+						diff_remaining.low_u128().saturated_into(),
 					);
 				}
 			}
 			cb if cb < nb => {
-				let diff = nb - cb;
-				let (diff_balance, diff_remaining_balance) = diff.div_mod(helper);
+				let diff = nb.saturating_sub(cb);
+				let (diff_main, diff_remaining) = diff.div_mod(helper);
 
 				// If dvm storage `balance + diff remaining balance > helper`, we must update Currency balance.
-				if dvm_balance + diff_remaining_balance >= helper {
-					let remaining_balance = dvm_balance + diff_remaining_balance - helper;
+				if dvm_balance + diff_remaining >= helper {
+					let remaining_balance = dvm_balance
+						.saturating_add(diff_remaining)
+						.saturating_sub(helper);
 
 					C::deposit_creating(
 						&account_id,
-						(diff_balance + 1).low_u128().unique_saturated_into(),
+						(diff_main + 1).low_u128().unique_saturated_into(),
 					);
 					RB::set_remaining_balance(
 						&account_id,
 						remaining_balance.low_u128().saturated_into(),
 					);
 				} else {
-					C::deposit_creating(
-						&account_id,
-						diff_balance.low_u128().unique_saturated_into(),
-					);
+					C::deposit_creating(&account_id, diff_main.low_u128().unique_saturated_into());
 					RB::inc_remaining_balance(
 						&account_id,
-						diff_remaining_balance.low_u128().saturated_into(),
+						diff_remaining.low_u128().saturated_into(),
 					);
 				}
 			}
