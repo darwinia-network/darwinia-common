@@ -357,7 +357,7 @@ impl<T: Config> Pallet<T> {
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction.tx)).as_slice());
 		let transaction_index = Pending::<T>::get().len() as u32;
 
-		let (to, contract_address, info) = Self::execute(
+		let (to, _contract_address, info) = Self::execute(
 			transaction.source,
 			transaction.tx.input.clone(),
 			transaction.tx.value,
@@ -368,7 +368,7 @@ impl<T: Config> Pallet<T> {
 			None,
 		)?;
 
-		let (reason, status, used_gas) = match info {
+		let (reason, status, used_gas, dest) = match info {
 			CallOrCreateInfo::Call(info) => (
 				info.exit_reason,
 				TransactionStatus {
@@ -385,6 +385,7 @@ impl<T: Config> Pallet<T> {
 					},
 				},
 				info.used_gas,
+				to,
 			),
 			CallOrCreateInfo::Create(info) => (
 				info.exit_reason,
@@ -402,6 +403,7 @@ impl<T: Config> Pallet<T> {
 					},
 				},
 				info.used_gas,
+				Some(info.value),
 			),
 		};
 
@@ -421,7 +423,7 @@ impl<T: Config> Pallet<T> {
 
 		Self::deposit_event(Event::Executed(
 			transaction.source,
-			contract_address.unwrap_or_default(),
+			dest.unwrap_or_default(),
 			transaction_hash,
 			reason.clone(),
 		));
