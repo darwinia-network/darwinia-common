@@ -31,7 +31,7 @@ use frame_support::{
 	weights::{DispatchClass, Pays},
 };
 
-pub struct Dispatch<T: darwinia_evm::Config> {
+pub struct Dispatch<T> {
 	_marker: PhantomData<T>,
 }
 
