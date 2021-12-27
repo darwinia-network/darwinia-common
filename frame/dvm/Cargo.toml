@@ -15,7 +15,6 @@ codec          = { package = "parity-scale-codec", version = "2.2", default-feat
 ethereum       = { version = "0.11", default-features = false, features = ["with-codec"] }
 ethereum-types = { version = "0.12", default-features = false }
 evm            = { version = "0.33", default-features = false, features = ["with-codec"] }
-libsecp256k1   = { version = "0.5", default-features = false, features = ["static-context", "hmac"] }
 log            = { version = "0.4" }
 rlp            = { version = "0.5", default-features = false }
 scale-info     = { version = "1.0", default-features = false, features = ["derive"] }
@@ -39,8 +38,9 @@ sp-std           = { default-features = false, git = "https://github.com/darwini
 
 [dev-dependencies]
 # crates.io
-array-bytes = { version = "1.4" }
-ethabi      = { version = "15.0" }
+array-bytes  = { version = "1.4" }
+ethabi       = { version = "15.0" }
+libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 # darwinia-network
 darwinia-balances                = { path = "../balances" }
 darwinia-evm-precompile-simple   = { path = "../evm/precompile/contracts/simple" }
@@ -55,7 +55,6 @@ std = [
 	"ethereum/std",
 	"ethereum-types/std",
 	"evm/std",
-	"libsecp256k1/std",
 	"rlp/std",
 	"scale-info/std",
 	"serde",
