@@ -14,11 +14,11 @@ impl Contains<Call> for S2sCallFilter {
 	fn contains(c: &Call) -> bool {
 		matches!(
 			c,
-			Call::Substrate2SubstrateIssuing(from_substrate_issuing::Call::register_from_remote(
-				..
-			)) | Call::Substrate2SubstrateIssuing(from_substrate_issuing::Call::issue_from_remote(
-				..
-			))
+			Call::Substrate2SubstrateIssuing(
+				from_substrate_issuing::Call::register_from_remote { .. }
+			) | Call::Substrate2SubstrateIssuing(
+				from_substrate_issuing::Call::issue_from_remote { .. }
+			)
 		)
 	}
 }

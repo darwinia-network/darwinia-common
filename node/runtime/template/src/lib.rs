@@ -398,12 +398,12 @@ sp_api::impl_runtime_apis! {
 			#[cfg(feature = "evm-tracing")]
 			{
 				use dp_evm_tracer::tracer::EvmTracer;
-				use dvm_ethereum::Call::transact;
+
 				// Apply the a subset of extrinsics: all the substrate-specific or ethereum
 				// transactions that preceded the requested transaction.
 				for ext in _extrinsics.into_iter() {
 					let _ = match &ext.function {
-						Call::Ethereum(transact(transaction)) => {
+						Call::Ethereum(Call::transact { transaction }) => {
 							if transaction == _traced_transaction {
 								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
 								return Ok(());
@@ -435,7 +435,6 @@ sp_api::impl_runtime_apis! {
 			{
 				use dp_evm_tracer::tracer::EvmTracer;
 				use sha3::{Digest, Keccak256};
-				use dvm_ethereum::Call::transact;
 
 				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
 				config.estimate = true;
@@ -443,7 +442,7 @@ sp_api::impl_runtime_apis! {
 				// Apply all extrinsics. Ethereum extrinsics are traced.
 				for ext in _extrinsics.into_iter() {
 					match &ext.function {
-						Call::Ethereum(transact(transaction)) => {
+						Call::Ethereum(dvm_ethereum::Call::transact { transaction }) => {
 							let eth_extrinsic_hash =
 								H256::from_slice(Keccak256::digest(&rlp::encode(transaction)).as_slice());
 							if _known_transactions.contains(&eth_extrinsic_hash) {
@@ -473,16 +472,13 @@ sp_api::impl_runtime_apis! {
 pub struct TransactionConverter;
 impl dvm_rpc_runtime_api::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
 	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV0) -> UncheckedExtrinsic {
-		UncheckedExtrinsic::new_unsigned(
-			<dvm_ethereum::Call<Runtime>>::transact(transaction).into(),
-		)
+		UncheckedExtrinsic::new_unsigned(dvm_ethereum::Call::transact { transaction }.into())
 	}
 }
 impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
 	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV0) -> OpaqueExtrinsic {
-		let extrinsic = UncheckedExtrinsic::new_unsigned(
-			<dvm_ethereum::Call<Runtime>>::transact(transaction).into(),
-		);
+		let extrinsic =
+			UncheckedExtrinsic::new_unsigned(dvm_ethereum::Call::transact { transaction }.into());
 		let encoded = extrinsic.encode();
 
 		OpaqueExtrinsic::decode(&mut &encoded[..]).expect("Encoded extrinsic is always valid")

@@ -678,7 +678,7 @@ sp_api::impl_runtime_apis! {
 			xts: Vec<<Block as BlockT>::Extrinsic>,
 		) -> Vec<dvm_ethereum::TransactionV0> {
 			xts.into_iter().filter_map(|xt| match xt.function {
-				Call::Ethereum(dvm_ethereum::Call::transact(t)) => Some(t),
+				Call::Ethereum(dvm_ethereum::Call::transact { transaction }) => Some(transaction),
 				_ => None
 			}).collect()
 		}
