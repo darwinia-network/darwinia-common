@@ -1,5 +1,6 @@
 // --- crates.io ---
 use codec::{Decode, Encode};
+use scale_info::TypeInfo;
 // --- paritytech ---
 use bp_message_dispatch::CallOrigin;
 use bp_messages::{
@@ -37,7 +38,7 @@ pub const PANGORO_S2S_BACKING_PALLET_INDEX: u8 = 20;
 /// Message payload for Pangolin -> Pangoro messages.
 pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessageBridge>;
 
-#[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ToPangoroOutboundPayLoad;
 impl CreatePayload<AccountId, AccountPublic, Signature> for ToPangoroOutboundPayLoad {
 	type Payload = ToPangoroMessagePayload;
@@ -85,7 +86,7 @@ frame_support::parameter_types! {
 }
 
 /// Pangolin -> Pangoro message lane pallet parameters.
-#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum PangolinToPangoroMessagesParameter {
 	/// The conversion formula we use is: `PangolinTokens = PangoroTokens * conversion_rate`.
 	PangoroToPangolinConversionRate(FixedU128),
@@ -112,7 +113,11 @@ impl MessageBridge for WithPangoroMessageBridge {
 	type ThisChain = Pangolin;
 	type BridgedChain = Pangoro;
 
-	fn bridged_balance_to_this_balance(bridged_balance: pangoro_primitives::Balance) -> Balance {
+	fn bridged_balance_to_this_balance(
+		bridged_balance: pangoro_primitives::Balance,
+		// TODO: S2S
+		_bridged_to_this_conversion_rate_override: Option<FixedU128>,
+	) -> Balance {
 		Balance::try_from(
 			PangoroToPangolinConversionRate::get().saturating_mul_int(bridged_balance),
 		)
