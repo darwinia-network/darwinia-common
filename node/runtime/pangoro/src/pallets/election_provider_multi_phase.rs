@@ -72,3 +72,8 @@ impl Config for Runtime {
 	type ForceOrigin = RootOrigin;
 	type BenchmarkingConfig = BenchmarkConfig;
 }
+
+impl onchain::Config for Runtime {
+	type Accuracy = Perbill;
+	type DataProvider = Staking;
+}
