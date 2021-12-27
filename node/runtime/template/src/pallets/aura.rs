@@ -12,7 +12,12 @@ sp_runtime::impl_opaque_keys! {
 	}
 }
 
+frame_support::parameter_types! {
+	pub const MaxAuthorities: u32 = 32;
+}
+
 impl Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
+	type MaxAuthorities = MaxAuthorities;
 }
