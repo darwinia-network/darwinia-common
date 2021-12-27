@@ -30,7 +30,7 @@ use sp_runtime::{
 // --- darwinia-network ---
 use crate::{Config, KtonBalance, RemainingKtonBalance, RemainingRingBalance, RingBalance};
 use darwinia_evm::{Account as EVMAccount, AccountBasic};
-use darwinia_support::evm::{IntoAccountId, POW_9};
+use darwinia_support::evm::{decimal_convert, IntoAccountId, POW_9};
 
 /// The operations for the remaining balance.
 pub trait RemainBalanceOp<T: Config, B> {
@@ -148,22 +148,12 @@ where
 
 	/// Get account balance.
 	fn account_balance(account_id: &T::AccountId) -> U256 {
-		let helper = U256::from(POW_9);
-
-		// Get balance from Currency.
-		let balance: U256 = C::free_balance(&account_id).saturated_into::<u128>().into();
-
-		// Get remaining balance from dvm.
-		let remaining_balance: U256 = RB::remaining_balance(&account_id)
-			.saturated_into::<u128>()
-			.into();
-
-		// Final `balance = balance * 10^9 + remaining_balance`.
-		let final_balance = (balance * helper)
-			.checked_add(remaining_balance)
-			.unwrap_or_default();
-
-		final_balance
+		// Get main balance from Currency.
+		let main_balance = C::free_balance(&account_id).saturated_into::<u128>();
+		// Get remaining balance from Dvm.
+		let remaining_balance = RB::remaining_balance(&account_id).saturated_into::<u128>();
+		// final_balance = balance * 10^9 + remaining_balance.
+		decimal_convert(main_balance, Some(remaining_balance))
 	}
 
 	/// Mutate account balance.
