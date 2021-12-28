@@ -40,11 +40,11 @@ fn nay(x: u8, balance: u64) -> AccountVote<u64> {
 	}
 }
 
-fn the_lock(amount: u64) -> BalanceLock<u64> {
+fn the_lock(amount: u64) -> BalanceLock<Balance, u64> {
 	BalanceLock {
 		id: DEMOCRACY_ID,
-		amount,
-		reasons: pallet_balances::Reasons::Misc,
+		lock_for: LockFor::Common { amount },
+		lock_reasons: darwinia_support::balance::LockReasons::Misc,
 	}
 }
 
@@ -318,11 +318,11 @@ fn multi_consolidation_of_lockvotes_should_be_conservative() {
 
 		fast_forward_to(8);
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5));
-		assert!(Balances::locks(5)[0].amount >= 20);
+		assert!(Balances::locks(5)[0].locked_amount(None) >= 20);
 
 		fast_forward_to(14);
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5));
-		assert!(Balances::locks(5)[0].amount >= 10);
+		assert!(Balances::locks(5)[0].locked_amount(None) >= 10);
 
 		fast_forward_to(26);
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5));
@@ -352,22 +352,22 @@ fn locks_should_persist_from_voting_to_delegation() {
 			20
 		));
 		// locked 20.
-		assert!(Balances::locks(5)[0].amount == 20);
+		assert!(Balances::locks(5)[0].locked_amount(None) == 20);
 
 		assert_ok!(Democracy::undelegate(Origin::signed(5)));
 		// locked 20 until #14
 
 		fast_forward_to(13);
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5));
-		assert!(Balances::locks(5)[0].amount == 20);
+		assert!(Balances::locks(5)[0].locked_amount(None) == 20);
 
 		fast_forward_to(14);
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5));
-		assert!(Balances::locks(5)[0].amount >= 10);
+		assert!(Balances::locks(5)[0].locked_amount(None) >= 10);
 
 		fast_forward_to(25);
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5));
-		assert!(Balances::locks(5)[0].amount >= 10);
+		assert!(Balances::locks(5)[0].locked_amount(None) >= 10);
 
 		fast_forward_to(26);
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5));
@@ -399,15 +399,15 @@ fn locks_should_persist_from_delegation_to_voting() {
 
 		fast_forward_to(8);
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5));
-		assert!(Balances::locks(5)[0].amount >= 20);
+		assert!(Balances::locks(5)[0].locked_amount(None) >= 20);
 
 		fast_forward_to(14);
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5));
-		assert!(Balances::locks(5)[0].amount >= 10);
+		assert!(Balances::locks(5)[0].locked_amount(None) >= 10);
 
 		fast_forward_to(26);
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5));
-		assert!(Balances::locks(5)[0].amount >= 5);
+		assert!(Balances::locks(5)[0].locked_amount(None) >= 5);
 
 		fast_forward_to(48);
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5));
