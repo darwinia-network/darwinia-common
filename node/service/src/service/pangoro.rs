@@ -30,7 +30,7 @@ use sc_consensus::{BasicQueue, DefaultImportQueue, LongestChain};
 use sc_consensus_babe::{
 	BabeBlockImport, BabeLink, BabeParams, Config as BabeConfig, SlotProportion,
 };
-use sc_executor::NativeExecutionDispatch;
+use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch};
 use sc_finality_grandpa::{
 	Config as GrandpaConfig, FinalityProofProvider as GrandpaFinalityProofProvider, GrandpaParams,
 	LinkHalf, SharedVoterState as GrandpaSharedVoterState,
@@ -132,10 +132,16 @@ where
 			Ok((worker, telemetry))
 		})
 		.transpose()?;
+	let executor = <NativeElseWasmExecutor<Executor>>::new(
+		config.wasm_method,
+		config.default_heap_pages,
+		config.max_runtime_instances,
+	);
 	let (client, backend, keystore_container, task_manager) =
-		sc_service::new_full_parts::<Block, RuntimeApi, Executor>(
+		sc_service::new_full_parts::<Block, RuntimeApi, _>(
 			&config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
+			executor,
 		)?;
 	let telemetry = telemetry.map(|(worker, telemetry)| {
 		task_manager.spawn_handle().spawn("telemetry", worker.run());
@@ -482,16 +488,22 @@ where
 		.clone()
 		.filter(|x| !x.is_empty())
 		.map(|endpoints| -> Result<_, sc_telemetry::Error> {
-			let worker = TelemetryWorker::with_transport(16)?;
+			let worker = TelemetryWorker::new(16)?;
 			let telemetry = worker.handle().new_telemetry(endpoints);
 
 			Ok((worker, telemetry))
 		})
 		.transpose()?;
+	let executor = <NativeElseWasmExecutor<Executor>>::new(
+		config.wasm_method,
+		config.default_heap_pages,
+		config.max_runtime_instances,
+	);
 	let (client, backend, keystore_container, mut task_manager, on_demand) =
-		sc_service::new_light_parts::<Block, RuntimeApi, Executor>(
+		sc_service::new_light_parts::<Block, RuntimeApi, _>(
 			&config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
+			executor,
 		)?;
 	let mut telemetry = telemetry.map(|(worker, telemetry)| {
 		task_manager.spawn_handle().spawn("telemetry", worker.run());

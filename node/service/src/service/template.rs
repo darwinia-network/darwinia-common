@@ -30,10 +30,10 @@ use async_trait::async_trait;
 // --- paritytech ---
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
 use sc_consensus_manual_seal as manual_seal;
+use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch};
 use sc_keystore::LocalKeystore;
 use sc_service::{error::Error as ServiceError, BasePath, Configuration, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryWorker};
-use sc_executor::NativeExecutionDispatch;
 use sp_inherents::{InherentData, InherentDataProvider, InherentIdentifier};
 // --- darwinia-network ---
 use crate::service::{
@@ -145,8 +145,13 @@ pub fn new_partial(
 			Ok((worker, telemetry))
 		})
 		.transpose()?;
+	let executor = <NativeElseWasmExecutor<Executor>>::new(
+		config.wasm_method,
+		config.default_heap_pages,
+		config.max_runtime_instances,
+	);
 	let (client, backend, keystore_container, task_manager) =
-		sc_service::new_full_parts::<Block, RuntimeApi, Executor>(
+		sc_service::new_full_parts::<Block, RuntimeApi, _>(
 			&config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 		)?;

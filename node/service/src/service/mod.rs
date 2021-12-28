@@ -78,7 +78,7 @@ type FullGrandpaBlockImport<RuntimeApi, Executor> =
 	GrandpaBlockImport<FullBackend, Block, FullClient<RuntimeApi, Executor>, FullSelectChain>;
 type LightBackend = TLightBackendWithHash<Block, BlakeTwo256>;
 type LightClient<RuntimeApi, Executor> =
-	TLightClientWithBackend<Block, RuntimeApi, Executor, LightBackend>;
+	TLightClientWithBackend<Block, RuntimeApi, NativeElseWasmExecutor<Executor>, LightBackend>;
 
 type RpcResult = Result<RpcExtension, ServiceError>;
 
