@@ -26,7 +26,8 @@ use std::{
 // --- crates.io ---
 use codec::{self, Decode, Encode};
 use ethereum::{
-	BlockV0 as EthereumBlockV0, LegacyTransactionMessage, TransactionAction, TransactionV0,
+	BlockV0 as EthereumBlock, LegacyTransactionMessage, TransactionAction,
+	TransactionV0 as EthereumTransaction,
 };
 use ethereum_types::{H160, H256, H512, H64, U256, U64};
 use futures::{future::TryFutureExt, StreamExt};
@@ -115,7 +116,7 @@ where
 }
 
 fn rich_block_build(
-	block: EthereumBlockV0,
+	block: EthereumBlock,
 	statuses: Vec<Option<TransactionStatus>>,
 	hash: Option<H256>,
 	full_transactions: bool,
@@ -186,8 +187,8 @@ fn rich_block_build(
 }
 
 fn transaction_build(
-	transaction: TransactionV0,
-	block: Option<EthereumBlockV0>,
+	transaction: EthereumTransaction,
+	block: Option<EthereumBlock>,
 	status: Option<TransactionStatus>,
 ) -> Transaction {
 	let pubkey = match public_key(&transaction) {
@@ -359,7 +360,7 @@ where
 fn filter_block_logs<'a>(
 	ret: &'a mut Vec<Log>,
 	filter: &'a Filter,
-	block: EthereumBlockV0,
+	block: EthereumBlock,
 	transaction_statuses: Vec<TransactionStatus>,
 ) -> &'a Vec<Log> {
 	let params = FilteredParams::new(Some(filter.clone()));
@@ -767,6 +768,7 @@ where
 
 		let chain_id = match self.chain_id() {
 			Ok(Some(chain_id)) => chain_id.as_u64(),
+			// TODO: check it later
 			Ok(None) => return Box::pin(future::err(internal_err("chain id not available"))),
 			Err(e) => return Box::pin(future::err(e)),
 		};
@@ -821,7 +823,7 @@ where
 	}
 
 	fn send_raw_transaction(&self, bytes: Bytes) -> BoxFuture<Result<H256>> {
-		let transaction = match rlp::decode::<TransactionV0>(&bytes.0[..]) {
+		let transaction = match rlp::decode::<EthereumTransaction>(&bytes.0[..]) {
 			Ok(transaction) => transaction,
 			Err(_) => return Box::pin(future::err(internal_err("decode transaction failed"))),
 		};

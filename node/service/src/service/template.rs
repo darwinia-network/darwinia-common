@@ -154,7 +154,7 @@ pub fn new_partial(
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
 			&config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
-			executor
+			executor,
 		)?;
 	let client = Arc::new(client);
 	let telemetry = telemetry.map(|(worker, telemetry)| {

@@ -5,9 +5,9 @@ use std::{collections::BTreeMap, iter, marker::PhantomData, sync::Arc};
 // --- crates.io ---
 use dvm_rpc_core::EthPubSubApi::{self as EthPubSubApiT};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
-use ethereum::{BlockV0 as EthereumBlockV0, Log as EthereumLog, ReceiptV0 as EthereumReceiptV0};
+use ethereum::{BlockV0 as EthereumBlock, Log as EthereumLog, ReceiptV0 as EthereumReceiptV0};
 use ethereum_types::{H256, U256};
-use futures::{FutureExt, SinkExt, StreamExt as _};
+use futures::{FutureExt as _, SinkExt as _, StreamExt as _};
 use jsonrpc_core::Result as JsonRpcResult;
 use jsonrpc_pubsub::{
 	manager::{IdProvider, SubscriptionManager},
@@ -98,7 +98,7 @@ impl SubscriptionResult {
 	pub fn new() -> Self {
 		SubscriptionResult {}
 	}
-	pub fn new_heads(&self, block: EthereumBlockV0) -> PubSubResult {
+	pub fn new_heads(&self, block: EthereumBlock) -> PubSubResult {
 		PubSubResult::Header(Box::new(Rich {
 			inner: Header {
 				hash: Some(H256::from_slice(
@@ -129,7 +129,7 @@ impl SubscriptionResult {
 	}
 	pub fn logs(
 		&self,
-		block: EthereumBlockV0,
+		block: EthereumBlock,
 		receipts: Vec<EthereumReceiptV0>,
 		params: &FilteredParams,
 	) -> Vec<Log> {
@@ -173,7 +173,7 @@ impl SubscriptionResult {
 		&self,
 		block_hash: H256,
 		ethereum_log: &EthereumLog,
-		block: &EthereumBlockV0,
+		block: &EthereumBlock,
 		params: &FilteredParams,
 	) -> bool {
 		let log = Log {

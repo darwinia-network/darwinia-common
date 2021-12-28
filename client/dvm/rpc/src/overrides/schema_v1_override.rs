@@ -18,7 +18,7 @@
 use std::{marker::PhantomData, sync::Arc};
 // --- crates.io ---
 use codec::Decode;
-use ethereum::{BlockV0 as EthereumBlockV0, ReceiptV0 as EthereumReceiptV0};
+use ethereum::{BlockV0 as EthereumBlock, ReceiptV0 as EthereumReceipt};
 use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
 use sc_client_api::backend::{AuxStore, Backend, StateBackend, StorageProvider};
@@ -103,16 +103,16 @@ where
 	}
 
 	/// Return the current block.
-	fn current_block(&self, block: &BlockId<Block>) -> Option<EthereumBlockV0> {
-		self.query_storage::<EthereumBlockV0>(
+	fn current_block(&self, block: &BlockId<Block>) -> Option<EthereumBlock> {
+		self.query_storage::<EthereumBlock>(
 			block,
 			&StorageKey(storage_prefix_build(b"Ethereum", b"CurrentBlock")),
 		)
 	}
 
 	/// Return the current receipt.
-	fn current_receipts(&self, block: &BlockId<Block>) -> Option<Vec<EthereumReceiptV0>> {
-		self.query_storage::<Vec<EthereumReceiptV0>>(
+	fn current_receipts(&self, block: &BlockId<Block>) -> Option<Vec<EthereumReceipt>> {
+		self.query_storage::<Vec<EthereumReceipt>>(
 			block,
 			&StorageKey(storage_prefix_build(b"Ethereum", b"CurrentReceipts")),
 		)
