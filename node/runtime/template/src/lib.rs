@@ -361,13 +361,13 @@ sp_api::impl_runtime_apis! {
 			Ethereum::current_block()
 		}
 
-		fn current_receipts() -> Option<Vec<dvm_ethereum::EthereumReceipt>> {
+		fn current_receipts() -> Option<Vec<dvm_ethereum::EthereumReceiptV0>> {
 			Ethereum::current_receipts()
 		}
 
 		fn current_all() -> (
 			Option<dvm_ethereum::EthereumBlockV0>,
-			Option<Vec<dvm_ethereum::EthereumReceipt>>,
+			Option<Vec<dvm_ethereum::EthereumReceiptV0>>,
 			Option<Vec<dvm_rpc_runtime_api::TransactionStatus>>
 		) {
 			(

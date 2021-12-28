@@ -29,7 +29,7 @@ pub mod account_basic;
 use dvm_rpc_runtime_api::TransactionStatus;
 #[doc(no_inline)]
 pub use ethereum::{
-	BlockV0 as EthereumBlockV0, LegacyTransactionMessage, Log, Receipt as EthereumReceipt,
+	BlockV0 as EthereumBlockV0, LegacyTransactionMessage, Log, ReceiptV0 as EthereumReceiptV0,
 	TransactionAction, TransactionSignature, TransactionV0,
 };
 
@@ -277,7 +277,7 @@ pub mod pallet {
 	/// Current building block's transactions and receipts.
 	#[pallet::storage]
 	pub(super) type Pending<T: Config> =
-		StorageValue<_, Vec<(TransactionV0, TransactionStatus, EthereumReceipt)>, ValueQuery>;
+		StorageValue<_, Vec<(TransactionV0, TransactionStatus, EthereumReceiptV0)>, ValueQuery>;
 
 	/// The current Ethereum block.
 	#[pallet::storage]
@@ -285,7 +285,7 @@ pub mod pallet {
 
 	/// The current Ethereum receipts.
 	#[pallet::storage]
-	pub(super) type CurrentReceipts<T: Config> = StorageValue<_, Vec<EthereumReceipt>>;
+	pub(super) type CurrentReceipts<T: Config> = StorageValue<_, Vec<EthereumReceiptV0>>;
 
 	/// The current transaction statuses.
 	#[pallet::storage]
@@ -405,7 +405,7 @@ impl<T: Config> Pallet<T> {
 			),
 		};
 
-		let receipt = EthereumReceipt {
+		let receipt = EthereumReceiptV0 {
 			state_root: match reason {
 				ExitReason::Succeed(_) => H256::from_low_u64_be(1),
 				ExitReason::Error(_) => H256::from_low_u64_le(0),
@@ -443,7 +443,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get receipts by number.
-	pub fn current_receipts() -> Option<Vec<EthereumReceipt>> {
+	pub fn current_receipts() -> Option<Vec<EthereumReceiptV0>> {
 		CurrentReceipts::<T>::get()
 	}
 

@@ -12,7 +12,7 @@ version     = "2.7.2"
 [dependencies]
 # crates.io
 codec    = { package = "parity-scale-codec", version = "2.2", default-features = false, features = ["derive"] }
-ethereum = { version = "0.10", default-features = false, features = ["with-codec"] }
+ethereum = { version = "0.11", default-features = false, features = ["with-codec"] }
 rlp      = { version = "0.5", default-features = false }
 sha3     = { version = "0.9", default-features = false }
 # paritytech

@@ -5,7 +5,7 @@ use std::{collections::BTreeMap, iter, marker::PhantomData, sync::Arc};
 // --- crates.io ---
 use dvm_rpc_core::EthPubSubApi::{self as EthPubSubApiT};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
-use ethereum::{BlockV0 as EthereumBlockV0, Log as EthereumLog, Receipt as EthereumReceipt};
+use ethereum::{BlockV0 as EthereumBlockV0, Log as EthereumLog, ReceiptV0 as EthereumReceiptV0};
 use ethereum_types::{H256, U256};
 use futures::{FutureExt, SinkExt, StreamExt as _};
 use jsonrpc_core::Result as JsonRpcResult;
@@ -130,7 +130,7 @@ impl SubscriptionResult {
 	pub fn logs(
 		&self,
 		block: EthereumBlockV0,
-		receipts: Vec<EthereumReceipt>,
+		receipts: Vec<EthereumReceiptV0>,
 		params: &FilteredParams,
 	) -> Vec<Log> {
 		let block_hash = Some(H256::from_slice(
