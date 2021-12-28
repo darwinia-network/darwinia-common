@@ -453,12 +453,12 @@ fn verify_redeem_deposit() {
 			let controller = AccountId32::from([1; 32]);
 			let _ = Ring::deposit_creating(&expect_account_id, 1);
 
-			assert_ok!(Call::from(<darwinia_staking::Call<Test>>::bond(
-				controller.clone(),
-				StakingBalance::RingBalance(1),
-				RewardDestination::Controller,
-				0,
-			)).dispatch(Origin::signed(expect_account_id.clone())));
+			assert_ok!(Call::from(darwinia_staking::Call::bond {
+				controller: controller.clone(),
+				value: StakingBalance::RingBalance(1),
+				payee: RewardDestination::Controller,
+				promise_month: 0,
+			}).dispatch(Origin::signed(expect_account_id.clone())));
 			assert_ok!(EthereumBacking::redeem(
 				Origin::signed(id1.clone()),
 				RedeemFor::Deposit,
@@ -569,7 +569,7 @@ fn verify_redeem_deposit() {
 			EthereumRelay::confirm_relay_header_parcel_with_reason(relay_header_parcel, vec![]);
 
 			assert_eq!(EthereumBacking::parse_deposit_redeem_proof(&proof_thing).unwrap(), (
-				183.into(),
+				183u32.into(),
 				array_bytes::hex_into_unchecked("08bca3ace88377f5a48a049dbe57815e283fb172f7a771d2756e46ea895b9243"),
 				15940787500000,
 				1543240299,

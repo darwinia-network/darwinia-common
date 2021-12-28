@@ -20,6 +20,7 @@
 
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_election_provider_support::onchain;
 use frame_support::{
@@ -157,9 +158,6 @@ impl darwinia_balances::Config<RingInstance> for Test {
 }
 
 impl onchain::Config for Test {
-	type AccountId = AccountId;
-	type BlockNumber = BlockNumber;
-	type BlockWeights = ();
 	type Accuracy = Perbill;
 	type DataProvider = Staking;
 }
