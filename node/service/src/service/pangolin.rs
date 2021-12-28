@@ -71,15 +71,21 @@ use drml_rpc::{
 };
 use pangolin_runtime::RuntimeApi;
 
-sc_executor::native_executor_instance!(
-	pub Executor,
-	pangolin_runtime::api::dispatch,
-	pangolin_runtime::native_version,
-	(
+pub struct Executor;
+impl NativeExecutionDispatch for Executor {
+	type ExtendHostFunctions = (
 		frame_benchmarking::benchmarking::HostFunctions,
-		dp_evm_trace_ext::dvm_ext::HostFunctions
-	),
-);
+		dp_evm_trace_ext::dvm_ext::HostFunctions,
+	);
+
+	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+		pangolin_runtime::api::dispatch(method, data)
+	}
+
+	fn native_version() -> sc_executor::NativeVersion {
+		pangolin_runtime::native_version()
+	}
+}
 
 // A set of APIs that drml-like runtimes must implement.
 impl_runtime_apis![

@@ -62,12 +62,18 @@ use drml_rpc::{
 };
 use pangoro_runtime::RuntimeApi;
 
-sc_executor::native_executor_instance!(
-	pub Executor,
-	pangoro_runtime::api::dispatch,
-	pangoro_runtime::native_version,
-	frame_benchmarking::benchmarking::HostFunctions,
-);
+pub struct Executor;
+impl NativeExecutionDispatch for Executor {
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+
+	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+		pangoro_runtime::api::dispatch(method, data)
+	}
+
+	fn native_version() -> sc_executor::NativeVersion {
+		pangoro_runtime::native_version()
+	}
+}
 
 impl_runtime_apis![
 	darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>,

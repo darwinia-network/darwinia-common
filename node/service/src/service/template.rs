@@ -33,6 +33,7 @@ use sc_consensus_manual_seal as manual_seal;
 use sc_keystore::LocalKeystore;
 use sc_service::{error::Error as ServiceError, BasePath, Configuration, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryWorker};
+use sc_executor::NativeExecutionDispatch;
 use sp_inherents::{InherentData, InherentDataProvider, InherentIdentifier};
 // --- darwinia-network ---
 use crate::service::{
@@ -46,13 +47,18 @@ use template_runtime::RuntimeApi;
 
 thread_local!(static TIMESTAMP: RefCell<u64> = RefCell::new(0));
 
-// Our native executor instance.
-sc_executor::native_executor_instance!(
-	pub Executor,
-	template_runtime::api::dispatch,
-	template_runtime::native_version,
-	frame_benchmarking::benchmarking::HostFunctions,
-);
+pub struct Executor;
+impl NativeExecutionDispatch for Executor {
+	type ExtendHostFunctions = ();
+
+	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+		template_runtime::api::dispatch(method, data)
+	}
+
+	fn native_version() -> sc_executor::NativeVersion {
+		template_runtime::native_version()
+	}
+}
 
 pub type ConsensusResult = (Arc<FullClient<RuntimeApi, Executor>>, bool);
 
