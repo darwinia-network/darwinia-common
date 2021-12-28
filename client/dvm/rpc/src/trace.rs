@@ -26,26 +26,18 @@
 
 pub use dvm_rpc_core::{FilterRequest, TraceApi as TraceT, TraceApiServer};
 
-// crates.io
+// --- std ---
+use std::{collections::BTreeMap, future::Future, marker::PhantomData, sync::Arc, time::Duration};
+// --- crates.io ---
 use ethereum_types::H256;
 use futures::{future::BoxFuture, select, stream::FuturesUnordered, FutureExt, SinkExt, StreamExt};
 use jsonrpc_core::Result;
-use std::{collections::BTreeMap, future::Future, marker::PhantomData, sync::Arc, time::Duration};
 use tokio::{
 	sync::{mpsc, oneshot, Semaphore},
-	time::delay_for,
+	time::sleep,
 };
 use tracing::{instrument, Instrument};
-// darwinia-network
-use crate::internal_err;
-use dc_tracer::{
-	formatters::ResponseFormatter,
-	types::block::{self, TransactionTrace},
-};
-use dp_evm_trace_apis::DebugRuntimeApi;
-use dp_rpc::{RequestBlockId, RequestBlockTag};
-use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
-// paritytech
+// --- paritytech ---
 use sc_client_api::backend::Backend;
 use sc_utils::mpsc::TracingUnboundedSender;
 use sp_api::{BlockId, Core, HeaderT, ProvideRuntimeApi};
@@ -54,6 +46,15 @@ use sp_blockchain::{
 	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata,
 };
 use sp_runtime::traits::Block as BlockT;
+// --- darwinia-network ---
+use crate::internal_err;
+use dc_tracer::{
+	formatters::ResponseFormatter,
+	types::block::{self, TransactionTrace},
+};
+use dp_evm_trace_apis::DebugRuntimeApi;
+use dp_rpc::{RequestBlockId, RequestBlockTag};
+use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 
 /// RPC handler. Will communicate with a `CacheTask` through a `CacheRequester`.
 pub struct Trace<B, C> {
@@ -483,7 +484,7 @@ where
 								// Cannot be refactored inside `request_stop_batch` because
 								// it has an unnamable type :C
 								batch_expirations.push(async move {
-									delay_for(cache_duration).await;
+									sleep(cache_duration).await;
 									batch_id
 								});
 
