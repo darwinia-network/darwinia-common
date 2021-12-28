@@ -18,11 +18,7 @@ pub use dvm_rpc_core::{DebugApi as DebugT, DebugApiServer, TraceParams};
 
 // crates.io
 use ethereum_types::{H128, H256};
-use futures::{
-	compat::Compat,
-	future::{BoxFuture, TryFutureExt},
-	FutureExt, SinkExt, StreamExt,
-};
+use futures::{future::BoxFuture, FutureExt, SinkExt, StreamExt};
 use jsonrpc_core::Result as RpcResult;
 use std::{future::Future, marker::PhantomData, str::FromStr, sync::Arc};
 use tokio::{

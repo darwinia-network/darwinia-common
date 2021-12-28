@@ -30,10 +30,7 @@ use ethereum::{
 };
 use ethereum_types::{H160, H256, H512, H64, U256, U64};
 use futures::{future::TryFutureExt, StreamExt};
-use jsonrpc_core::{
-	futures::future::{self, Future},
-	BoxFuture, ErrorCode, Result,
-};
+use jsonrpc_core::{futures::future, BoxFuture, ErrorCode, Result};
 use log::warn;
 use sha3::{Digest, Keccak256};
 // --- paritytech ---

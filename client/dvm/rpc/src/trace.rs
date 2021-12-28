@@ -28,13 +28,7 @@ pub use dvm_rpc_core::{FilterRequest, TraceApi as TraceT, TraceApiServer};
 
 // crates.io
 use ethereum_types::H256;
-use futures::{
-	compat::Compat,
-	future::{BoxFuture, TryFutureExt},
-	select,
-	stream::FuturesUnordered,
-	FutureExt, SinkExt, StreamExt,
-};
+use futures::{future::BoxFuture, select, stream::FuturesUnordered, FutureExt, SinkExt, StreamExt};
 use jsonrpc_core::Result;
 use std::{collections::BTreeMap, future::Future, marker::PhantomData, sync::Arc, time::Duration};
 use tokio::{

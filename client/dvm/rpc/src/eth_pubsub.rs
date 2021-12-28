@@ -7,11 +7,8 @@ use dvm_rpc_core::EthPubSubApi::{self as EthPubSubApiT};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 use ethereum::{BlockV0 as EthereumBlockV0, Log as EthereumLog, Receipt as EthereumReceipt};
 use ethereum_types::{H256, U256};
-use futures::{FutureExt, SinkExt, StreamExt as _, TryStreamExt as _};
-use jsonrpc_core::{
-	futures::{Future, Sink},
-	Result as JsonRpcResult,
-};
+use futures::{FutureExt, SinkExt, StreamExt as _};
+use jsonrpc_core::Result as JsonRpcResult;
 use jsonrpc_pubsub::{
 	manager::{IdProvider, SubscriptionManager},
 	typed::Subscriber,

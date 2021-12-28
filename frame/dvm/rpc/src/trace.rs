@@ -21,7 +21,7 @@ use dc_tracer::types::block::TransactionTrace;
 use dp_rpc::RequestBlockId;
 // crates.ip
 use ethereum_types::H160;
-use futures::{compat::Compat, future::BoxFuture};
+use futures::future::BoxFuture;
 use jsonrpc_derive::rpc;
 use serde::Deserialize;
 
