@@ -14,4 +14,6 @@ impl Config for Runtime {
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
 	type WeightInfo = ();
+
+	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
