@@ -22,6 +22,7 @@
 use std::collections::BTreeMap;
 // --- darwinia-network ---
 use crate::*;
+use dc_rpc::EthBlockDataCache;
 
 /// Full client dependencies.
 pub struct FullDeps<C, P, A: ChainApi> {
@@ -134,6 +135,7 @@ where
 		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
 	});
 
+	let block_data_cache = Arc::new(EthBlockDataCache::new(50, 50));
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
@@ -145,6 +147,7 @@ where
 		is_authority,
 		signers,
 		rpc_config.max_past_logs,
+		block_data_cache.clone(),
 	)));
 
 	if let Some(filter_pool) = filter_pool {
@@ -155,6 +158,7 @@ where
 			500 as usize, // max stored filters
 			overrides.clone(),
 			rpc_config.max_past_logs,
+			block_data_cache.clone(),
 		)));
 	}
 
