@@ -2320,7 +2320,6 @@ dependencies = [
  "sc-cli",
  "sc-service",
  "sp-core",
- "sp-trie",
  "structopt",
  "substrate-build-script-utils",
  "try-runtime-cli",
