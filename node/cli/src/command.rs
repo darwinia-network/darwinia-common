@@ -20,9 +20,9 @@
 use std::{env, path::PathBuf};
 // --- paritytech ---
 use sc_cli::{Role, RuntimeVersion, SubstrateCli};
-use sc_service::ChainSpec;
 #[cfg(feature = "try-runtime")]
 use sc_service::TaskManager;
+use sc_service::{ChainSpec, DatabaseSource};
 use sp_core::crypto::Ss58AddressFormat;
 // --- darwinia-network ---
 use crate::cli::*;
@@ -267,7 +267,7 @@ pub fn run() -> sc_cli::Result<()> {
 			if chain_spec.is_pangolin() {
 				runner.sync_run(|config| {
 					// Remove dvm offchain db
-					let dvm_database_config = sc_service::DatabaseConfig::RocksDb {
+					let dvm_database_config = DatabaseSource::RocksDb {
 						path: pangolin_service::dvm_database_dir(&config),
 						cache_size: 0,
 					};
