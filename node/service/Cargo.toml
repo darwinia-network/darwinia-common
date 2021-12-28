@@ -12,7 +12,7 @@ version     = "2.7.2"
 [dependencies]
 # crates.io
 array-bytes = { version = "1.4" }
-codec       = { package = "parity-scale-codec", version = "2.1" }
+codec       = { package = "parity-scale-codec", version = "2.2" }
 futures     = { version = "0.3" }
 log         = { version = "0.4" }
 rand        = { version = "0.8" }

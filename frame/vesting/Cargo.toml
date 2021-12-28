@@ -11,7 +11,7 @@ version     = "2.7.2"
 
 [dependencies]
 # crates.io
-codec      = { package = "parity-scale-codec", version = "2.1", default-features = false, features = ["derive"] }
+codec      = { package = "parity-scale-codec", version = "2.2", default-features = false, features = ["derive"] }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 # darwinia-network
 darwinia-support = { default-features = false, path = "../support" }

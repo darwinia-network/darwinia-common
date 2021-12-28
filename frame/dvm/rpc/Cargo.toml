@@ -11,7 +11,7 @@ version     = "2.7.2"
 
 [dependencies]
 # crates.io
-codec          = { package = "parity-scale-codec", version = "2.1", default-features = false }
+codec          = { package = "parity-scale-codec", version = "2.2", default-features = false }
 ethereum       = { version = "0.10", default-features = false, features = ["with-codec"] }
 ethereum-types = { version = "0.12", default-features = false }
 futures        = { version = "0.3" }
