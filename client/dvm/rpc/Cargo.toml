@@ -43,6 +43,7 @@ sc-client-api           = { git = "https://github.com/darwinia-network/substrate
 sc-network              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sc-rpc                  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sc-service              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sc-transaction-pool     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sc-transaction-pool-api = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sc-utils                = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-api                  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }

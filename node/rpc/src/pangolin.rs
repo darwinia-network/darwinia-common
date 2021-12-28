@@ -26,13 +26,17 @@ use std::collections::BTreeMap;
 use crate::*;
 use drml_common_primitives::Power;
 use dvm_ethereum::EthereumStorageSchema;
+// --- parity-tech ---
+use sc_transaction_pool::{ChainApi, Pool};
 
 /// Full client dependencies.
-pub struct FullDeps<C, P, SC, B> {
+pub struct FullDeps<C, P, SC, B, A: ChainApi> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
 	pub pool: Arc<P>,
+	/// Graph pool instance.
+	pub graph: Arc<Pool<A>>,
 	/// The SelectChain Strategy
 	pub select_chain: SC,
 	/// A copy of the chain spec.
@@ -47,8 +51,6 @@ pub struct FullDeps<C, P, SC, B> {
 	pub is_authority: bool,
 	/// Network service
 	pub network: Arc<sc_network::NetworkService<Block, Hash>>,
-	/// Ethereum pending transactions.
-	pub pending_transactions: dp_rpc::PendingTransactions,
 	/// EthFilterApi pool.
 	pub filter_pool: Option<dp_rpc::FilterPool>,
 	/// Backend.
@@ -72,8 +74,8 @@ pub struct LightDeps<C, F, P> {
 }
 
 /// Instantiate all RPC extensions.
-pub fn create_full<C, P, SC, B>(
-	deps: FullDeps<C, P, SC, B>,
+pub fn create_full<C, P, SC, B, A>(
+	deps: FullDeps<C, P, SC, B, A>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 ) -> RpcResult
 where
@@ -100,6 +102,7 @@ where
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<Hashing>,
+	A: ChainApi<Block = Block> + 'static,
 {
 	// --- crates.io ---
 	use jsonrpc_pubsub::manager::SubscriptionManager;
@@ -125,6 +128,7 @@ where
 	let FullDeps {
 		client,
 		pool,
+		graph,
 		select_chain,
 		chain_spec,
 		deny_unsafe,
@@ -132,7 +136,6 @@ where
 		grandpa,
 		is_authority,
 		network,
-		pending_transactions,
 		filter_pool,
 		backend,
 		tracing_requesters,
@@ -201,10 +204,10 @@ where
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
+		graph,
 		TransactionConverter,
 		network.clone(),
 		overrides.clone(),
-		pending_transactions.clone(),
 		backend.clone(),
 		is_authority,
 		vec![],
