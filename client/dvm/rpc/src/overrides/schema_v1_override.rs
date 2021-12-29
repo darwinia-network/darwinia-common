@@ -18,7 +18,7 @@
 use std::{marker::PhantomData, sync::Arc};
 // --- crates.io ---
 use codec::Decode;
-use ethereum::{BlockV0 as EthereumBlock, ReceiptV0 as EthereumReceipt};
+use ethereum::{BlockV0 as EthereumBlock, Receipt as EthereumReceipt};
 use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
 use sc_client_api::backend::{AuxStore, Backend, StateBackend, StorageProvider};

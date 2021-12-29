@@ -19,7 +19,7 @@
 
 // --- crates.io ---
 use core::marker::PhantomData;
-use evm::{executor::stack::PrecompileOutput, Context, ExitError, ExitSucceed};
+use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 // --- darwinia-network ---
 use darwinia_evm::GasWeightMapping;
 use darwinia_support::evm::IntoAccountId;

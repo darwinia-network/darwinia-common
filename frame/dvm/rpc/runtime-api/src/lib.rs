@@ -20,7 +20,7 @@
 // --- crates.io ---
 use codec::{Decode, Encode};
 use ethereum::{
-	BlockV0 as EthereumBlock, Log, ReceiptV0 as EthereumReceiptV0,
+	BlockV0 as EthereumBlock, Log, Receipt as EthereumReceiptV0,
 	TransactionV0 as EthereumTransactionV0,
 };
 use ethereum_types::Bloom;

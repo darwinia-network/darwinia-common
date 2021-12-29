@@ -1,7 +1,7 @@
 // --- core ---
 use core::marker::PhantomData;
 // --- crates.io ---
-use evm::{executor::stack::PrecompileOutput, Context, ExitError};
+use evm::{executor::PrecompileOutput, Context, ExitError};
 // --- paritytech ---
 use bp_messages::LaneId;
 use codec::{Decode, Encode};

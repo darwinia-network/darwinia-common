@@ -29,7 +29,7 @@ pub use schema_v1_override::SchemaV1Override;
 // --- std ---
 use std::{collections::BTreeMap, marker::PhantomData, sync::Arc};
 // --- crates.io ---
-use ethereum::{BlockV0 as EthereumBlock, ReceiptV0 as EthereumReceipt};
+use ethereum::{BlockV0 as EthereumBlock, Receipt as EthereumReceipt};
 use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
 use sp_api::{BlockId, ProvideRuntimeApi};

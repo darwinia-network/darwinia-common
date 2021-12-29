@@ -29,7 +29,7 @@ pub mod account_basic;
 use dvm_rpc_runtime_api::TransactionStatus;
 #[doc(no_inline)]
 pub use ethereum::{
-	BlockV0 as EthereumBlockV0, LegacyTransactionMessage, Log, ReceiptV0 as EthereumReceiptV0,
+	BlockV0 as EthereumBlockV0, LegacyTransactionMessage, Log, Receipt as EthereumReceiptV0,
 	TransactionAction, TransactionSignature, TransactionV0,
 };
 
@@ -204,12 +204,10 @@ pub mod pallet {
 				);
 				let transaction_cost = match transaction.action {
 					TransactionAction::Call(_) => {
-						// TODO: EVM
-						evm::gasometer::call_transaction_cost(&transaction.input, &[])
+						evm::gasometer::call_transaction_cost(&transaction.input)
 					}
 					TransactionAction::Create => {
-						// TODO: EVM
-						evm::gasometer::create_transaction_cost(&transaction.input, &[])
+						evm::gasometer::create_transaction_cost(&transaction.input)
 					}
 				};
 				if gasometer.record_transaction(transaction_cost).is_err() {

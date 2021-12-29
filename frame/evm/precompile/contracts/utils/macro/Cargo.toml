@@ -14,7 +14,7 @@ proc-macro = true
 
 [dependencies]
 # crates.io
-evm         = { version = "0.33", default-features = false, features = ["with-codec"] }
+evm         = { version = "0.30", default-features = false, features = ["with-codec"] }
 proc-macro2 = { version = "1.0" }
 quote       = { version = "1.0" }
 sha3        = { version = "0.9", default-features = false }
