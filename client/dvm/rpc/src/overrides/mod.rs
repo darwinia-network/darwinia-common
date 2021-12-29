@@ -29,7 +29,7 @@ pub use schema_v1_override::SchemaV1Override;
 // --- std ---
 use std::{collections::BTreeMap, marker::PhantomData, sync::Arc};
 // --- crates.io ---
-use ethereum::{BlockV0 as EthereumBlockV0, ReceiptV0 as EthereumReceiptV0};
+use ethereum::{BlockV0 as EthereumBlock, Receipt as EthereumReceipt};
 use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
 use sp_api::{BlockId, ProvideRuntimeApi};
@@ -55,9 +55,9 @@ pub trait StorageOverride<Block: BlockT> {
 	/// For a given account address and index, returns pallet_evm::AccountStorages.
 	fn storage_at(&self, block: &BlockId<Block>, address: H160, index: U256) -> Option<H256>;
 	/// Return the current block.
-	fn current_block(&self, block: &BlockId<Block>) -> Option<EthereumBlockV0>;
+	fn current_block(&self, block: &BlockId<Block>) -> Option<EthereumBlock>;
 	/// Return the current receipt.
-	fn current_receipts(&self, block: &BlockId<Block>) -> Option<Vec<EthereumReceiptV0>>;
+	fn current_receipts(&self, block: &BlockId<Block>) -> Option<Vec<EthereumReceipt>>;
 	/// Return the current transaction status.
 	fn current_transaction_statuses(
 		&self,
@@ -121,12 +121,12 @@ where
 	}
 
 	/// Return the current block.
-	fn current_block(&self, block: &BlockId<Block>) -> Option<EthereumBlockV0> {
+	fn current_block(&self, block: &BlockId<Block>) -> Option<EthereumBlock> {
 		self.client.runtime_api().current_block(&block).ok()?
 	}
 
 	/// Return the current receipt.
-	fn current_receipts(&self, block: &BlockId<Block>) -> Option<Vec<EthereumReceiptV0>> {
+	fn current_receipts(&self, block: &BlockId<Block>) -> Option<Vec<EthereumReceipt>> {
 		self.client.runtime_api().current_receipts(&block).ok()?
 	}
 

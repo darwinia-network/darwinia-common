@@ -21,7 +21,7 @@ use dc_tracer::types::single;
 use dp_rpc::RequestBlockId;
 // crate.io
 use ethereum_types::H256;
-use futures::{ future::BoxFuture};
+use futures::future::BoxFuture;
 use jsonrpc_core::Result as RpcResult;
 use jsonrpc_derive::rpc;
 use serde::Deserialize;

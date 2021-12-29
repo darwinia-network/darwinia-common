@@ -51,10 +51,7 @@ pub use self::{
 		Peers, PipProtocolInfo, SyncInfo, SyncStatus, TransactionStats,
 	},
 	trace::{RequestBlockId, RequestBlockTag},
-	transaction::{
-		LocalTransactionStatus, PendingTransaction, PendingTransactions, RichRawTransaction,
-		Transaction,
-	},
+	transaction::{LocalTransactionStatus, RichRawTransaction, Transaction},
 	transaction_request::TransactionRequest,
 	work::Work,
 };

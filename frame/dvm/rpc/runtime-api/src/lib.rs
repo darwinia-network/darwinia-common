@@ -20,7 +20,7 @@
 // --- crates.io ---
 use codec::{Decode, Encode};
 use ethereum::{
-	BlockV0 as EthereumBlockV0, Log, ReceiptV0 as EthereumReceiptV0,
+	BlockV0 as EthereumBlock, Log, Receipt as EthereumReceiptV0,
 	TransactionV0 as EthereumTransactionV0,
 };
 use ethereum_types::Bloom;
@@ -80,14 +80,14 @@ sp_api::decl_runtime_apis! {
 			estimate: bool,
 		) -> Result<CreateInfo, DispatchError>;
 		/// Return the current block.
-		fn current_block() -> Option<EthereumBlockV0>;
+		fn current_block() -> Option<EthereumBlock>;
 		/// Return the current receipt.
 		fn current_receipts() -> Option<Vec<EthereumReceiptV0>>;
 		/// Return the current transaction status.
 		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>>;
 		/// Return all the current data for a block in a single runtime call.
 		fn current_all() -> (
-			Option<EthereumBlockV0>,
+			Option<EthereumBlock>,
 			Option<Vec<EthereumReceiptV0>>,
 			Option<Vec<TransactionStatus>>
 		);

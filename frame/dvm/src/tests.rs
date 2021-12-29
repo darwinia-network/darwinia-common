@@ -818,7 +818,7 @@ fn internal_transaction_should_works() {
 		assert_eq!(System::event_count(), 1);
 		System::assert_last_event(mock::Event::Ethereum(crate::Event::Executed(
 			<Test as self::Config>::PalletId::get().into_h160(),
-			H160::default(),
+			contract_address,
 			H256::from_str("0xabdebc2d8a79e4c40d6d66c614bafc2be138d4fc0fd21e28d318f3a032cbee39")
 				.unwrap(),
 			ExitReason::Succeed(ExitSucceed::Returned),
@@ -827,7 +827,7 @@ fn internal_transaction_should_works() {
 		assert_ok!(Ethereum::internal_transact(contract_address, foo));
 		System::assert_last_event(mock::Event::Ethereum(crate::Event::Executed(
 			<Test as self::Config>::PalletId::get().into_h160(),
-			H160::default(),
+			contract_address,
 			H256::from_str("0x2028ce5eef8d4531d4f955c9860b28f9e8cd596b17fea2326d2be49a8d3dc7ac")
 				.unwrap(),
 			ExitReason::Succeed(ExitSucceed::Returned),

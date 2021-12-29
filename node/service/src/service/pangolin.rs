@@ -20,7 +20,7 @@
 
 // --- std ---
 use std::{
-	collections::{BTreeMap, HashMap},
+	collections::BTreeMap,
 	path::PathBuf,
 	sync::{Arc, Mutex},
 	time::Duration,
@@ -63,7 +63,7 @@ use crate::{
 	},
 };
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
-use dp_rpc::{FilterPool, PendingTransactions};
+use dp_rpc::FilterPool;
 use drml_common_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use drml_rpc::{
 	pangolin::{FullDeps, LightDeps},
@@ -330,7 +330,6 @@ where
 	}
 
 	let dvm_backend = open_dvm_backend(&config)?;
-	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 	let tracing_requesters = dvm_tasks::spawn(DvmTasksParams {
 		task_manager: &task_manager,
@@ -338,7 +337,6 @@ where
 		substrate_backend: backend.clone(),
 		dvm_backend: dvm_backend.clone(),
 		filter_pool: filter_pool.clone(),
-		pending_transactions: pending_transactions.clone(),
 		is_archive,
 		rpc_config: rpc_config.clone(),
 	});
@@ -364,6 +362,7 @@ where
 			let deps = FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
+				graph: transaction_pool.pool().clone(),
 				select_chain: select_chain.clone(),
 				chain_spec: chain_spec.cloned_box(),
 				deny_unsafe,
@@ -381,7 +380,6 @@ where
 					subscription_executor,
 					finality_provider: finality_proof_provider.clone(),
 				},
-				pending_transactions: pending_transactions.clone(),
 				backend: dvm_backend.clone(),
 				filter_pool: filter_pool.clone(),
 				tracing_requesters: tracing_requesters.clone(),

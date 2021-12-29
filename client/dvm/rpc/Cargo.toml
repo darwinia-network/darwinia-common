@@ -13,16 +13,18 @@ version     = "2.7.2"
 # crates.io
 array-bytes         = { version = "1.4" }
 codec               = { package = "parity-scale-codec", version = "2.2" }
-ethereum            = { version = "0.11", features = ["with-codec"] }
+ethereum            = { version = "0.10", features = ["with-codec"] }
 ethereum-types      = { version = "0.12" }
-evm                 = { version = "0.33" }
+evm                 = { version = "0.30" }
 futures             = { version = "0.3" }
 jsonrpc-core        = { version = "18.0" }
 jsonrpc-core-client = { version = "18.0" }
 jsonrpc-derive      = { version = "18.0" }
 jsonrpc-pubsub      = { version = "18.0" }
 libsecp256k1        = { version = "0.3" }
+lru                 = { version = "0.6.6" }
 log                 = { version = "0.4" }
+parking_lot         = { version = "0.11.1" }
 rand                = { version = "0.8" }
 rlp                 = { version = "0.5" }
 sha3                = { version = "0.9" }
@@ -43,6 +45,7 @@ sc-client-api           = { git = "https://github.com/darwinia-network/substrate
 sc-network              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sc-rpc                  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sc-service              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sc-transaction-pool     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sc-transaction-pool-api = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sc-utils                = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-api                  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
