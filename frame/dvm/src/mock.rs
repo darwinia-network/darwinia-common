@@ -21,7 +21,7 @@
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
 use ethereum::{TransactionAction, TransactionSignature};
-use evm::{executor::stack::PrecompileOutput, Context, ExitError};
+use evm::{executor::PrecompileOutput, Context, ExitError};
 use rlp::RlpStream;
 use scale_info::TypeInfo;
 // --- paritytech ---
