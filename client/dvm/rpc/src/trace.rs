@@ -243,7 +243,6 @@ where
 		&self,
 		filter: FilterRequest,
 	) -> BoxFuture<'static, jsonrpc_core::Result<Vec<TransactionTrace>>> {
-		// Wraps the async function into futures compatibility layer.
 		self.clone().filter(filter).boxed()
 	}
 }
@@ -545,7 +544,7 @@ where
 				let (unqueue_sender, unqueue_receiver) = oneshot::channel();
 				let client = Arc::clone(&self.client);
 				let backend = Arc::clone(&self.backend);
-				let mut blocking_tx = blocking_tx.clone();
+				let blocking_tx = blocking_tx.clone();
 
 				// Spawn all block caching asynchronously.
 				// It will wait to obtain a permit, then spawn a blocking task.
