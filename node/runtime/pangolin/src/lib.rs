@@ -700,7 +700,7 @@ sp_api::impl_runtime_apis! {
 				// transactions that preceded the requested transaction.
 				for ext in _extrinsics.into_iter() {
 					let _ = match &ext.function {
-						Call::Ethereum(transact(transaction)) => {
+						Call::Ethereum(transact { transaction }) => {
 							if transaction == _traced_transaction {
 								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
 								return Ok(());
@@ -740,7 +740,7 @@ sp_api::impl_runtime_apis! {
 				// Apply all extrinsics. Ethereum extrinsics are traced.
 				for ext in _extrinsics.into_iter() {
 					match &ext.function {
-						Call::Ethereum(transact(transaction)) => {
+						Call::Ethereum(transact { transaction }) => {
 							let eth_extrinsic_hash =
 								H256::from_slice(Keccak256::digest(&rlp::encode(transaction)).as_slice());
 							if _known_transactions.contains(&eth_extrinsic_hash) {
