@@ -21,7 +21,7 @@
 // --- std ---
 use std::{
 	cell::RefCell,
-	collections::{BTreeMap, HashMap},
+	collections::BTreeMap,
 	path::PathBuf,
 	sync::{Arc, Mutex},
 };
@@ -34,7 +34,6 @@ use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch};
 use sc_keystore::LocalKeystore;
 use sc_service::{error::Error as ServiceError, BasePath, Configuration, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryWorker};
-use sc_transaction_pool::{ChainApi, Pool};
 use sp_inherents::{InherentData, InherentDataProvider, InherentIdentifier};
 // --- darwinia-network ---
 use crate::service::{
@@ -279,7 +278,7 @@ pub fn new_full(
 			let deps = FullDeps {
 				client: client.clone(),
 				pool: pool.clone(),
-				graph: transaction_pool.pool().clone(),
+				graph: pool.pool().clone(),
 				deny_unsafe,
 				is_authority,
 				enable_dev_signer,

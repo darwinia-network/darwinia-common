@@ -20,7 +20,7 @@
 
 // --- std ---
 use std::{
-	collections::{BTreeMap, HashMap},
+	collections::BTreeMap,
 	path::PathBuf,
 	sync::{Arc, Mutex},
 	time::Duration,

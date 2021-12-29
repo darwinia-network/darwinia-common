@@ -23,6 +23,8 @@ use std::collections::BTreeMap;
 // --- darwinia-network ---
 use crate::*;
 use dc_rpc::EthBlockDataCache;
+// --- paritytech ---
+use sc_transaction_pool::{ChainApi, Pool};
 
 /// Full client dependencies.
 pub struct FullDeps<C, P, A: ChainApi> {
@@ -54,7 +56,7 @@ pub struct FullDeps<C, P, A: ChainApi> {
 }
 
 /// Instantiate all Full RPC extensions.
-pub fn create_full<C, P, B>(
+pub fn create_full<C, P, B, A>(
 	deps: FullDeps<C, P, A>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 ) -> RpcExtension
