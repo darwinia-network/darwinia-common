@@ -1787,7 +1787,7 @@ fn rebond_emits_right_value_in_event() {
 		// Event emitted should be correct
 		assert_eq!(
 			*staking_events().last().unwrap(),
-			Event::BondRing(100, 45000, 45000)
+			Event::RingBonded(11, 100, 45000, 45000)
 		);
 
 		// Re-bond way more than available
@@ -1807,7 +1807,7 @@ fn rebond_emits_right_value_in_event() {
 		// Event emitted should be correct, only 800
 		assert_eq!(
 			*staking_events().last().unwrap(),
-			Event::BondRing(800, 45000, 45000)
+			Event::RingBonded(11, 800, 45000, 45000)
 		);
 	});
 }

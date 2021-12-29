@@ -439,17 +439,17 @@ pub mod pallet {
 		///
 		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
 		/// it will not be emitted for staking rewards when they are added to stake.
-		BondRing(RingBalance<T>, TsInMs, TsInMs),
+		RingBonded(AccountId<T>, RingBalance<T>, TsInMs, TsInMs),
 		/// An account has bonded this amount. \[amount, start, end\]
 		///
 		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
 		/// it will not be emitted for staking rewards when they are added to stake.
-		BondKton(KtonBalance<T>),
+		KtonBonded(AccountId<T>, KtonBalance<T>),
 
-		/// An account has unbonded this amount. \[amount, now\]
-		UnbondRing(RingBalance<T>, BlockNumberFor<T>),
-		/// An account has unbonded this amount. [amount, now\]
-		UnbondKton(KtonBalance<T>, BlockNumberFor<T>),
+		/// An account has unbonded this amount. \[amount\]
+		RingUnbonded(AccountId<T>, RingBalance<T>),
+		/// An account has unbonded this amount. \[amount\]
+		KtonUnbonded(AccountId<T>, KtonBalance<T>),
 
 		/// A nominator has been kicked from a validator. \[nominator, stash\]
 		Kicked(AccountId<T>, AccountId<T>),
@@ -1063,14 +1063,14 @@ pub mod pallet {
 					let (start_time, expire_time) =
 						Self::bond_ring(&stash, &controller, value, promise_month, ledger)?;
 
-					Self::deposit_event(Event::BondRing(value, start_time, expire_time));
+					Self::deposit_event(Event::RingBonded(stash, value, start_time, expire_time));
 				}
 				StakingBalance::KtonBalance(value) => {
 					let stash_balance = T::KtonCurrency::free_balance(&stash);
 					let value = value.min(stash_balance);
 
 					Self::bond_kton(&controller, value, ledger)?;
-					Self::deposit_event(Event::BondKton(value));
+					Self::deposit_event(Event::KtonBonded(stash, value));
 				}
 			}
 
@@ -1114,7 +1114,12 @@ pub mod pallet {
 						let (start_time, expire_time) =
 							Self::bond_ring(&stash, &controller, extra, promise_month, ledger)?;
 
-						Self::deposit_event(Event::BondRing(extra, start_time, expire_time));
+						Self::deposit_event(Event::RingBonded(
+							stash,
+							extra,
+							start_time,
+							expire_time,
+						));
 					}
 				}
 				StakingBalance::KtonBalance(max_additional) => {
@@ -1126,7 +1131,7 @@ pub mod pallet {
 						let extra = extra.min(max_additional);
 
 						Self::bond_kton(&controller, extra, ledger)?;
-						Self::deposit_event(Event::BondKton(extra));
+						Self::deposit_event(Event::KtonBonded(stash, extra));
 					}
 				}
 			}
@@ -1168,7 +1173,6 @@ pub mod pallet {
 			let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
 			let mut ledger = Self::clear_mature_deposits(ledger).0;
 			let StakingLedger {
-				stash,
 				active_ring,
 				active_deposit_ring,
 				deposit_items,
@@ -1192,7 +1196,7 @@ pub mod pallet {
 			});
 
 			<Ledger<T>>::insert(&controller, ledger);
-			Self::deposit_event(Event::BondRing(value, start_time, expire_time));
+			Self::deposit_event(Event::RingBonded(stash, value, start_time, expire_time));
 
 			Ok(())
 		}
@@ -1296,7 +1300,7 @@ pub mod pallet {
 							})
 							.expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
-						Self::deposit_event(Event::UnbondRing(unbond_ring, now));
+						Self::deposit_event(Event::RingUnbonded(stash.to_owned(), unbond_ring));
 
 						if !unbond_kton.is_zero() {
 							kton_staking_lock
@@ -1307,7 +1311,7 @@ pub mod pallet {
 								})
 								.expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
-							Self::deposit_event(Event::UnbondKton(unbond_kton, now));
+							Self::deposit_event(Event::KtonUnbonded(stash.to_owned(), unbond_kton));
 						}
 					}
 				}
@@ -1336,7 +1340,7 @@ pub mod pallet {
 							})
 							.expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
-						Self::deposit_event(Event::UnbondKton(unbond_kton, now));
+						Self::deposit_event(Event::KtonUnbonded(stash.to_owned(), unbond_kton));
 
 						if !unbond_ring.is_zero() {
 							ring_staking_lock
@@ -1347,7 +1351,7 @@ pub mod pallet {
 								})
 								.expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
-							Self::deposit_event(Event::UnbondRing(unbond_ring, now));
+							Self::deposit_event(Event::RingUnbonded(stash.to_owned(), unbond_ring));
 						}
 					}
 				}
@@ -2007,10 +2011,15 @@ pub mod pallet {
 			if !rebonded_ring.is_zero() {
 				let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 
-				Self::deposit_event(Event::BondRing(rebonded_ring, now, now));
+				Self::deposit_event(Event::RingBonded(
+					ledger.stash.clone(),
+					rebonded_ring,
+					now,
+					now,
+				));
 			}
 			if !rebonded_kton.is_zero() {
-				Self::deposit_event(Event::BondKton(rebonded_kton));
+				Self::deposit_event(Event::KtonBonded(ledger.stash, rebonded_kton));
 			}
 
 			let removed_unbondings = 1.saturating_add(initial_unbondings).saturating_sub(

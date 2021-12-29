@@ -599,7 +599,7 @@ fn punished_claim_should_work() {
 			..Default::default()
 		};
 
-		// will emit Event::BondRing
+		// will emit Event::RingBonded
 		assert_ok!(Staking::bond(
 			Origin::signed(stash),
 			controller,
@@ -2210,6 +2210,6 @@ fn rebond_event_should_work() {
 					..Default::default()
 				})
 			);
-			System::assert_has_event(Event::BondRing(200, 36000, 36000).into());
+			System::assert_has_event(Event::RingBonded(11, 200, 36000, 36000).into());
 		});
 }

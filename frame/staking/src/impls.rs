@@ -1519,7 +1519,12 @@ impl<T: Config> OnDepositRedeem<AccountId<T>, RingBalance<T>> for Pallet<T> {
 			Self::update_ledger(controller, &mut ledger);
 		};
 
-		Self::deposit_event(Event::BondRing(amount, start_time, expire_time));
+		Self::deposit_event(Event::RingBonded(
+			stash.to_owned(),
+			amount,
+			start_time,
+			expire_time,
+		));
 
 		Ok(())
 	}
