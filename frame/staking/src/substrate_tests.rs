@@ -1727,6 +1727,92 @@ fn rebond_is_fifo() {
 }
 
 #[test]
+fn rebond_emits_right_value_in_event() {
+	// When a user calls rebond with more than can be rebonded, things succeed,
+	// and the rebond event emits the actual value rebonded.
+	ExtBuilder::default().nominate(false).build_and_execute(|| {
+		// Set payee to controller. avoids confusion
+		assert_ok!(Staking::set_payee(
+			Origin::signed(10),
+			RewardDestination::Controller
+		));
+
+		// Give account 11 some large free balance greater than total
+		let _ = Ring::make_free_balance_be(&11, 1000000);
+
+		// confirm that 10 is a normal validator and gets paid at the end of the era.
+		mock::start_active_era(1);
+
+		// Unbond almost all of the funds in stash.
+		Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(900)).unwrap();
+		assert_eq!(
+			Staking::ledger(&10),
+			Some(StakingLedger {
+				stash: 11,
+				active_ring: 100,
+				ring_staking_lock: StakingLock {
+					staking_amount: 100,
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding {
+							amount: 900,
+							until: System::block_number() + BondingDurationInBlockNumber::get()
+						}],
+						None
+					)
+				},
+				..Default::default()
+			})
+		);
+
+		// Re-bond less than the total
+		Staking::rebond(Origin::signed(10), 100, 0).unwrap();
+		assert_eq!(
+			Staking::ledger(&10),
+			Some(StakingLedger {
+				stash: 11,
+				active_ring: 200,
+				ring_staking_lock: StakingLock {
+					staking_amount: 200,
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding {
+							amount: 800,
+							until: System::block_number() + BondingDurationInBlockNumber::get()
+						}],
+						None
+					)
+				},
+				..Default::default()
+			})
+		);
+		// Event emitted should be correct
+		assert_eq!(
+			*staking_events().last().unwrap(),
+			Event::BondRing(100, 45000, 45000)
+		);
+
+		// Re-bond way more than available
+		Staking::rebond(Origin::signed(10), 100_000, 0).unwrap();
+		assert_eq!(
+			Staking::ledger(&10),
+			Some(StakingLedger {
+				stash: 11,
+				active_ring: 1000,
+				ring_staking_lock: StakingLock {
+					staking_amount: 1000,
+					..Default::default()
+				},
+				..Default::default()
+			})
+		);
+		// Event emitted should be correct, only 800
+		assert_eq!(
+			*staking_events().last().unwrap(),
+			Event::BondRing(800, 45000, 45000)
+		);
+	});
+}
+
+#[test]
 fn reward_to_stake_works() {
 	ExtBuilder::default()
 		.nominate(false)

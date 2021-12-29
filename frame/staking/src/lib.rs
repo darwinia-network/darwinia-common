@@ -1990,12 +1990,10 @@ pub mod pallet {
 				<Error<T>>::NoUnlockChunk
 			);
 
-			let origin_active_ring = ledger.active_ring;
-			let origin_active_kton = ledger.active_kton;
 			let initial_unbondings = ledger.ring_staking_lock.unbondings.len() as u32
 				+ ledger.kton_staking_lock.unbondings.len() as u32;
-
-			ledger.rebond(plan_to_rebond_ring, plan_to_rebond_kton);
+			let (rebonded_ring, rebonded_kton) =
+				ledger.rebond(plan_to_rebond_ring, plan_to_rebond_kton);
 
 			// Last check: the new active amount of ledger must be more than ED.
 			ensure!(
@@ -2006,16 +2004,13 @@ pub mod pallet {
 
 			Self::update_ledger(&controller, &mut ledger);
 
-			let rebond_ring = ledger.active_ring.saturating_sub(origin_active_ring);
-			let rebond_kton = ledger.active_kton.saturating_sub(origin_active_kton);
-
-			if !rebond_ring.is_zero() {
+			if !rebonded_ring.is_zero() {
 				let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 
-				Self::deposit_event(Event::BondRing(rebond_ring, now, now));
+				Self::deposit_event(Event::BondRing(rebonded_ring, now, now));
 			}
-			if !rebond_kton.is_zero() {
-				Self::deposit_event(Event::BondKton(rebond_kton));
+			if !rebonded_kton.is_zero() {
+				Self::deposit_event(Event::BondKton(rebonded_kton));
 			}
 
 			let removed_unbondings = 1.saturating_add(initial_unbondings).saturating_sub(

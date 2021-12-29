@@ -130,12 +130,19 @@ where
 	}
 
 	/// Re-bond funds that were scheduled for unlocking.
-	pub fn rebond(&mut self, plan_to_rebond_ring: RingBalance, plan_to_rebond_kton: KtonBalance) {
+	///
+	/// Returns the amount actually rebonded.
+	pub fn rebond(
+		&mut self,
+		plan_to_rebond_ring: RingBalance,
+		plan_to_rebond_kton: KtonBalance,
+	) -> (RingBalance, KtonBalance) {
 		fn update<Balance, _M>(
 			bonded: &mut Balance,
 			lock: &mut StakingLock<Balance, _M>,
 			plan_to_rebond: Balance,
-		) where
+		) -> Balance
+		where
 			Balance: Copy + AtLeast32BitUnsigned + Saturating,
 		{
 			let mut rebonded = Balance::zero();
@@ -160,18 +167,22 @@ where
 					break;
 				}
 			}
+
+			rebonded
 		}
 
-		update(
-			&mut self.active_ring,
-			&mut self.ring_staking_lock,
-			plan_to_rebond_ring,
-		);
-		update(
-			&mut self.active_kton,
-			&mut self.kton_staking_lock,
-			plan_to_rebond_kton,
-		);
+		(
+			update(
+				&mut self.active_ring,
+				&mut self.ring_staking_lock,
+				plan_to_rebond_ring,
+			),
+			update(
+				&mut self.active_kton,
+				&mut self.kton_staking_lock,
+				plan_to_rebond_kton,
+			),
+		)
 	}
 
 	/// Slash the validator for a given amount of balance. This can grow the value
