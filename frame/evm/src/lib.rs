@@ -31,9 +31,9 @@ mod tests;
 pub use crate::runner::Runner;
 #[doc(no_inline)]
 pub use dp_evm::{
-	Account, CallInfo, CreateInfo, ExecutionInfo, LinearCostPrecompile, Log, Precompile,
-	PrecompileSet, Vicinity,
+	Account, CallInfo, CreateInfo, ExecutionInfo, LinearCostPrecompile, Log, Vicinity,
 };
+pub use fp_evm::{Precompile, PrecompileSet};
 
 // --- std ---
 #[cfg(feature = "std")]

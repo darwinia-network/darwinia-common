@@ -25,7 +25,7 @@ use codec::Encode;
 use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{selector, DvmInputParser};
-use dp_evm::Precompile;
+use fp_evm::Precompile;
 
 #[selector]
 enum Action {
