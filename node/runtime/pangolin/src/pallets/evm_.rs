@@ -17,7 +17,7 @@ use darwinia_evm::{runner::stack::Runner, Config, EnsureAddressTruncated, FeeCal
 use darwinia_evm_precompile_bridge_ethereum::EthereumBridge;
 use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 use darwinia_evm_precompile_dispatch::Dispatch;
-use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
+use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::{
 	evm::ConcatConverter,
