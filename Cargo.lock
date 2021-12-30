@@ -1528,6 +1528,7 @@ dependencies = [
  "evm",
  "evm-gasometer",
  "evm-runtime",
+ "fp-evm",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -1546,34 +1547,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-evm-precompile-blake2"
-version = "2.7.2"
-dependencies = [
- "dp-evm",
- "evm",
- "sp-core",
- "sp-io",
-]
-
-[[package]]
-name = "darwinia-evm-precompile-bn128"
-version = "2.7.2"
-dependencies = [
- "dp-evm",
- "evm",
- "sp-core",
- "sp-io",
- "substrate-bn",
-]
-
-[[package]]
 name = "darwinia-evm-precompile-bridge-ethereum"
 version = "2.7.2"
 dependencies = [
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
- "dp-evm",
  "evm",
+ "fp-evm",
  "from-ethereum-issuing",
  "parity-scale-codec",
  "sp-core",
@@ -1591,9 +1571,9 @@ dependencies = [
  "darwinia-evm-precompile-utils",
  "darwinia-support",
  "dp-contract",
- "dp-evm",
  "dp-s2s",
  "evm",
+ "fp-evm",
  "frame-support",
  "from-substrate-issuing",
  "log",
@@ -1604,62 +1584,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-evm-precompile-curve25519"
-version = "2.7.2"
-dependencies = [
- "curve25519-dalek 3.2.0",
- "dp-evm",
- "evm",
- "sp-core",
- "sp-io",
-]
-
-[[package]]
 name = "darwinia-evm-precompile-dispatch"
 version = "2.7.2"
 dependencies = [
  "darwinia-evm",
  "darwinia-support",
- "dp-evm",
  "evm",
+ "fp-evm",
  "frame-support",
  "parity-scale-codec",
  "sp-core",
  "sp-io",
-]
-
-[[package]]
-name = "darwinia-evm-precompile-ed25519"
-version = "2.7.2"
-dependencies = [
- "dp-evm",
- "ed25519-dalek",
- "evm",
- "sp-core",
- "sp-io",
-]
-
-[[package]]
-name = "darwinia-evm-precompile-modexp"
-version = "2.7.2"
-dependencies = [
- "dp-evm",
- "evm",
- "hex",
- "num",
- "sp-core",
- "sp-io",
-]
-
-[[package]]
-name = "darwinia-evm-precompile-sha3fips"
-version = "2.7.2"
-dependencies = [
- "dp-evm",
- "evm",
- "sp-core",
- "sp-io",
- "tiny-keccak",
 ]
 
 [[package]]
@@ -1680,10 +1615,10 @@ dependencies = [
  "array-bytes",
  "darwinia-evm",
  "darwinia-support",
- "dp-evm",
  "ethabi",
  "ethereum-types",
  "evm",
+ "fp-evm",
  "frame-support",
  "frame-system",
  "log",
@@ -4292,9 +4227,6 @@ name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
-dependencies = [
- "spin",
-]
 
 [[package]]
 name = "lazycell"
@@ -5766,6 +5698,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-modexp"
+version = "2.0.0-dev"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.0#ae3f01905e4138f2d07919adede0b0b195d1827f"
+dependencies = [
+ "evm",
+ "fp-evm",
+ "num",
+ "sp-core",
+ "sp-io",
+]
+
+[[package]]
+name = "pallet-evm-precompile-sha3fips"
+version = "2.0.0-dev"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.0#ae3f01905e4138f2d07919adede0b0b195d1827f"
+dependencies = [
+ "evm",
+ "fp-evm",
+ "sp-core",
+ "sp-io",
+ "tiny-keccak",
+]
+
+[[package]]
 name = "pallet-evm-precompile-simple"
 version = "2.0.0-dev"
 source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.0#ae3f01905e4138f2d07919adede0b0b195d1827f"
@@ -6149,6 +6105,7 @@ dependencies = [
  "dvm-rpc-runtime-api",
  "ethereum-primitives",
  "evm",
+ "fp-evm",
  "frame-benchmarking",
  "frame-election-provider-support",
  "frame-executive",
@@ -9572,19 +9529,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "substrate-bn"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72b5bbfa79abbae15dd642ea8176a21a635ff3c00059961d1ea27ad04e5b441c"
-dependencies = [
- "byteorder",
- "crunchy",
- "lazy_static",
- "rand 0.8.4",
- "rustc-hex",
-]
-
-[[package]]
 name = "substrate-build-script-utils"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.0#be15aebefc1e4aa6dfbc3c81b4f4ba2d3c80202a"
@@ -9743,9 +9687,6 @@ dependencies = [
  "common-runtime",
  "darwinia-balances",
  "darwinia-evm",
- "darwinia-evm-precompile-modexp",
- "darwinia-evm-precompile-sha3fips",
- "darwinia-evm-precompile-simple",
  "darwinia-support",
  "dp-evm-trace-apis",
  "dp-evm-trace-events",
@@ -9759,6 +9700,9 @@ dependencies = [
  "frame-system",
  "frame-system-rpc-runtime-api",
  "pallet-aura",
+ "pallet-evm-precompile-modexp",
+ "pallet-evm-precompile-sha3fips",
+ "pallet-evm-precompile-simple",
  "pallet-grandpa",
  "pallet-randomness-collective-flip",
  "pallet-sudo",

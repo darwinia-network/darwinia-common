@@ -41,11 +41,11 @@ pub mod ring;
 pub mod util;
 
 // --- paritytech ---
+use fp_evm::Precompile;
 use sp_std::marker::PhantomData;
 // --- darwinia-network ---
 use darwinia_evm::Config;
 use darwinia_support::{evm::SELECTOR, AccountId};
-use dp_evm::Precompile;
 use kton::Kton;
 use ring::RingBack;
 // --- crates.io ---

@@ -44,14 +44,14 @@ impl Config for Runtime {
 	type BlockHashMapping = dvm_ethereum::EthereumBlockHashMapping<Self>;
 	type Event = Event;
 	type Precompiles = (
-		darwinia_evm_precompile_simple::ECRecover,
-		darwinia_evm_precompile_simple::Sha256,
-		darwinia_evm_precompile_simple::Ripemd160,
-		darwinia_evm_precompile_simple::Identity,
-		darwinia_evm_precompile_modexp::Modexp,
-		darwinia_evm_precompile_simple::ECRecoverPublicKey,
-		darwinia_evm_precompile_sha3fips::Sha3FIPS256,
-		darwinia_evm_precompile_sha3fips::Sha3FIPS512,
+		pallet_evm_precompile_simple::ECRecover,
+		pallet_evm_precompile_simple::Sha256,
+		pallet_evm_precompile_simple::Ripemd160,
+		pallet_evm_precompile_simple::Identity,
+		pallet_evm_precompile_modexp::Modexp,
+		pallet_evm_precompile_simple::ECRecoverPublicKey,
+		pallet_evm_precompile_sha3fips::Sha3FIPS256,
+		pallet_evm_precompile_sha3fips::Sha3FIPS512,
 	);
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
