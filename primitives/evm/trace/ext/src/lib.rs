@@ -29,7 +29,7 @@ use codec::Decode;
 use sp_runtime_interface::runtime_interface;
 use sp_std::vec::Vec;
 // darwinia-network
-use dp_evm_trace_events::{Event, EvmEvent, GasometerEvent, RuntimeEvent};
+use dp_evm_trace_events::{Event, EvmEvent, GasometerEvent, RuntimeEvent, StepEventFilter};
 
 #[runtime_interface]
 pub trait DvmExt {
@@ -66,6 +66,13 @@ pub trait DvmExt {
 		if let Ok(event) = RuntimeEvent::decode(&mut &event[..]) {
 			Event::Runtime(event).emit();
 		}
+	}
+
+	/// Allow the tracing module in the runtime to know how to filter Step event
+	/// content, as cloning the entire data is expensive and most of the time
+	/// not necessary.
+	fn step_event_filter(&self) -> StepEventFilter {
+		dp_evm_trace_events::step_event_filter().unwrap_or_default()
 	}
 
 	/// An event to create a new CallList (currently a new transaction when tracing a block).
