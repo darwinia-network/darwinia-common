@@ -79,7 +79,6 @@ std = [
 	"pallet-evm-precompile-modexp/std",
 	"pallet-evm-precompile-sha3fips/std",
 	"pallet-evm-precompile-sha3fips/std",
-	# "darwinia-evm-precompile-simple/std",
 	"darwinia-support/std",
 	"drml-common-primitives/std",
 	"dvm-ethereum/std",

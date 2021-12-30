@@ -1598,17 +1598,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-evm-precompile-simple"
-version = "2.7.2"
-dependencies = [
- "dp-evm",
- "evm",
- "ripemd160",
- "sp-core",
- "sp-io",
-]
-
-[[package]]
 name = "darwinia-evm-precompile-transfer"
 version = "2.7.2"
 dependencies = [
@@ -2444,7 +2433,6 @@ dependencies = [
  "array-bytes",
  "darwinia-balances",
  "darwinia-evm",
- "darwinia-evm-precompile-simple",
  "darwinia-evm-precompile-transfer",
  "darwinia-support",
  "dp-consensus",
