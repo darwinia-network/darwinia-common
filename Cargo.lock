@@ -1914,8 +1914,9 @@ dependencies = [
 name = "dc-db"
 version = "2.7.2"
 dependencies = [
- "dp-storage",
  "dvm-ethereum",
+ "fp-evm",
+ "fp-storage",
  "kvdb",
  "kvdb-rocksdb",
  "parity-scale-codec",
@@ -1951,13 +1952,13 @@ dependencies = [
  "dp-consensus",
  "dp-evm-trace-apis",
  "dp-rpc",
- "dp-storage",
  "dvm-ethereum",
  "dvm-rpc-core",
  "dvm-rpc-runtime-api",
  "ethereum",
  "ethereum-types",
  "evm",
+ "fp-storage",
  "futures 0.3.19",
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -2230,10 +2231,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dp-storage"
-version = "2.7.2"
-
-[[package]]
 name = "drml"
 version = "2.7.2"
 dependencies = [
@@ -2421,13 +2418,13 @@ dependencies = [
  "darwinia-evm-precompile-transfer",
  "darwinia-support",
  "dp-consensus",
- "dp-storage",
  "dvm-rpc-runtime-api",
  "ethabi",
  "ethereum",
  "ethereum-types",
  "evm",
  "fp-evm",
+ "fp-storage",
  "frame-support",
  "frame-system",
  "libsecp256k1 0.5.0",
@@ -2926,6 +2923,11 @@ dependencies = [
  "sp-core",
  "sp-std",
 ]
+
+[[package]]
+name = "fp-storage"
+version = "2.0.0"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.0#ae3f01905e4138f2d07919adede0b0b195d1827f"
 
 [[package]]
 name = "frame-benchmarking"

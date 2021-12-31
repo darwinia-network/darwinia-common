@@ -36,6 +36,7 @@ use log::warn;
 use lru::LruCache;
 use sha3::{Digest, Keccak256};
 // --- paritytech ---
+use fp_storage::PALLET_ETHEREUM_SCHEMA;
 use sc_client_api::{
 	backend::{AuxStore, Backend, StateBackend, StorageProvider},
 	client::BlockchainEvents,
@@ -60,7 +61,6 @@ use dp_rpc::{
 	FilterPoolItem, FilterType, FilteredParams, Header, Index, Log, PeerCount, Receipt, Rich,
 	RichBlock, SyncInfo, SyncStatus, Transaction, TransactionRequest, Work,
 };
-use dp_storage::PALLET_ETHEREUM_SCHEMA;
 use dvm_ethereum::EthereumStorageSchema;
 use dvm_rpc_core::{
 	EthApi as EthApiT, EthFilterApi as EthFilterApiT, NetApi as NetApiT, Web3Api as Web3ApiT,

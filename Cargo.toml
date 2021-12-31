@@ -64,7 +64,6 @@ members = [
 	"primitives/relay",
 	"primitives/rpc",
 	"primitives/s2s",
-	"primitives/storage",
 ]
 
 [patch.crates-io]

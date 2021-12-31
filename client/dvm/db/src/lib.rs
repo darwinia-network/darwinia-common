@@ -30,10 +30,10 @@ use std::{
 use codec::{Decode, Encode};
 use parking_lot::Mutex;
 // --- paritytech ---
+use fp_storage::PALLET_ETHEREUM_SCHEMA_CACHE;
 use sp_core::H256;
 use sp_runtime::traits::Block as BlockT;
 // --- darwinia-network ---
-use dp_storage::PALLET_ETHEREUM_SCHEMA_CACHE;
 use dvm_ethereum::EthereumStorageSchema;
 
 const DB_HASH_LEN: usize = 32;
