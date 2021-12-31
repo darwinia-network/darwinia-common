@@ -33,9 +33,9 @@ use sp_runtime::traits::Block as BlockT;
 use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use dc_rpc::{CacheTask, DebugTask, EthTask};
 use dp_evm_trace_apis::DebugRuntimeApi;
-use dp_rpc::FilterPool;
 use drml_rpc::{EthApiCmd, RpcConfig, RpcRequesters};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
+use fc_rpc_core::types::FilterPool;
 
 pub fn spawn<B, C, BE>(params: DvmTasksParams<B, C, BE>) -> RpcRequesters
 where

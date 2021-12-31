@@ -30,7 +30,7 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT, UniqueSaturatedInto};
 // --- darwinia-network ---
 use crate::{frontier_backend_client, overrides::OverrideHandle};
-use dp_rpc::{
+use fc_rpc_core::types::{
 	pubsub::{Kind, Params, PubSubSyncStatus, Result as PubSubResult},
 	Bytes, FilteredParams, Header, Log, Rich,
 };

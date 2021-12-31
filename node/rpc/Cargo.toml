@@ -21,7 +21,6 @@ darwinia-staking-rpc    = { path = "../../frame/staking/rpc" }
 dc-db                   = { path = "../../client/dvm/db" }
 dc-rpc                  = { path = "../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }
 dp-evm-trace-apis       = { path = "../../primitives/evm/trace/apis" }
-dp-rpc                  = { path = "../../primitives/rpc" }
 drml-common-primitives  = { path = "../primitives/common" }
 dvm-ethereum            = { path = "../../frame/dvm" }
 dvm-rpc-runtime-api     = { path = "../../frame/dvm/rpc/runtime-api" }
@@ -47,6 +46,8 @@ sp-consensus                   = { git = "https://github.com/darwinia-network/su
 sp-keystore                    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-runtime                     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 substrate-frame-rpc-system     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+# frontier
+fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
 # template
 futures                  = { version = "0.3", optional = true }
 sc-consensus-manual-seal = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }

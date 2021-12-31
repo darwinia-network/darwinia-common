@@ -21,7 +21,7 @@ use ethereum_types::H256;
 use jsonrpc_core::Result;
 use jsonrpc_derive::rpc;
 
-use dp_rpc::Bytes;
+use fc_rpc_core::types::Bytes;
 
 pub use rpc_impl_Web3Api::gen_server::Web3Api as Web3ApiServer;
 

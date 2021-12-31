@@ -53,7 +53,7 @@ pub struct FullDeps<C, P, SC, B, A: ChainApi> {
 	/// Network service
 	pub network: Arc<sc_network::NetworkService<Block, Hash>>,
 	/// EthFilterApi pool.
-	pub filter_pool: Option<dp_rpc::FilterPool>,
+	pub filter_pool: Option<fc_rpc_core::types::FilterPool>,
 	/// Backend.
 	pub backend: Arc<dc_db::Backend<Block>>,
 	/// Rpc requester for evm trace

@@ -17,7 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 //! Net rpc interface.
-use dp_rpc::PeerCount;
+use fc_rpc_core::types::PeerCount;
 use jsonrpc_core::Result;
 use jsonrpc_derive::rpc;
 

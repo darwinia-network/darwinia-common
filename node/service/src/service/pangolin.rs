@@ -63,12 +63,12 @@ use crate::{
 	},
 };
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
-use dp_rpc::FilterPool;
 use drml_common_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use drml_rpc::{
 	pangolin::{FullDeps, LightDeps},
 	BabeDeps, GrandpaDeps, RpcConfig, SubscriptionTaskExecutor,
 };
+use fc_rpc_core::types::FilterPool;
 use pangolin_runtime::RuntimeApi;
 
 pub struct Executor;

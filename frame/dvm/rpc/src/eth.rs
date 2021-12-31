@@ -19,7 +19,7 @@
 //! Eth rpc interface.
 
 // --- darwinia-network ---
-use dp_rpc::{
+use fc_rpc_core::types::{
 	BlockNumber, Bytes, CallRequest, Filter, FilterChanges, Index, Log, Receipt, RichBlock,
 	SyncStatus, Transaction, TransactionRequest, Work,
 };

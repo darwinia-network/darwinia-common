@@ -14,44 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Open Ethereum. If not, see <http://www.gnu.org/licenses/>.
 
-//! RPC types
-
-mod account_info;
-mod block;
-mod block_number;
-mod bytes;
-mod call_request;
-mod filter;
-mod index;
-mod log;
-mod receipt;
-mod sync;
 mod trace;
-mod transaction;
-mod transaction_request;
-mod work;
 
-pub mod pubsub;
-
-pub use self::{
-	account_info::{AccountInfo, EthAccount, ExtAccountInfo, RecoveredAccount, StorageProof},
-	block::{Block, BlockTransactions, Header, Rich, RichBlock, RichHeader},
-	block_number::BlockNumber,
-	bytes::Bytes,
-	call_request::CallRequest,
-	filter::{
-		Filter, FilterAddress, FilterChanges, FilterPool, FilterPoolItem, FilterType,
-		FilteredParams, Topic, VariadicValue,
-	},
-	index::Index,
-	log::Log,
-	receipt::Receipt,
-	sync::{
-		ChainStatus, EthProtocolInfo, PeerCount, PeerInfo, PeerNetworkInfo, PeerProtocolsInfo,
-		Peers, PipProtocolInfo, SyncInfo, SyncStatus, TransactionStats,
-	},
-	trace::{RequestBlockId, RequestBlockTag},
-	transaction::{LocalTransactionStatus, RichRawTransaction, Transaction},
-	transaction_request::TransactionRequest,
-	work::Work,
-};
+pub use trace::{RequestBlockId, RequestBlockTag};
