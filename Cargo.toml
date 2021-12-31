@@ -55,7 +55,6 @@ members = [
 	"primitives/consensus",
 	"primitives/contract",
 	"primitives/ethereum",
-	"primitives/evm",
 	"primitives/evm/trace/apis",
 	"primitives/evm/trace/events",
 	"primitives/evm/trace/ext",

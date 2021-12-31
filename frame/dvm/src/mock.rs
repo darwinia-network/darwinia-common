@@ -43,7 +43,7 @@ use darwinia_evm::{runner::stack::Runner, EnsureAddressTruncated, FeeCalculator}
 use darwinia_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::IntoAccountId;
-use dp_evm::{Precompile, PrecompileSet};
+use fp_evm::{Precompile, PrecompileSet};
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;

@@ -1524,7 +1524,6 @@ dependencies = [
  "array-bytes",
  "darwinia-balances",
  "darwinia-support",
- "dp-evm",
  "evm",
  "evm-gasometer",
  "evm-runtime",
@@ -2130,18 +2129,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dp-evm"
-version = "2.7.2"
-dependencies = [
- "evm",
- "impl-trait-for-tuples 0.2.1",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-std",
-]
-
-[[package]]
 name = "dp-evm-trace-apis"
 version = "2.7.2"
 dependencies = [
@@ -2436,13 +2423,13 @@ dependencies = [
  "darwinia-evm-precompile-transfer",
  "darwinia-support",
  "dp-consensus",
- "dp-evm",
  "dp-storage",
  "dvm-rpc-runtime-api",
  "ethabi",
  "ethereum",
  "ethereum-types",
  "evm",
+ "fp-evm",
  "frame-support",
  "frame-system",
  "libsecp256k1 0.5.0",
@@ -2465,10 +2452,10 @@ version = "2.7.2"
 dependencies = [
  "darwinia-evm",
  "dc-tracer",
- "dp-evm",
  "dp-rpc",
  "ethereum",
  "ethereum-types",
+ "fp-evm",
  "futures 0.3.19",
  "jsonrpc-core",
  "jsonrpc-derive",
@@ -2488,9 +2475,9 @@ version = "2.7.2"
 dependencies = [
  "darwinia-evm",
  "darwinia-support",
- "dp-evm",
  "ethereum",
  "ethereum-types",
+ "fp-evm",
  "parity-scale-codec",
  "scale-info",
  "sp-api",
@@ -3153,9 +3140,9 @@ dependencies = [
  "darwinia-relay-primitives",
  "darwinia-support",
  "dp-contract",
- "dp-evm",
  "dvm-ethereum",
  "ethereum-primitives",
+ "fp-evm",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -3179,13 +3166,13 @@ dependencies = [
  "darwinia-support",
  "dp-asset",
  "dp-contract",
- "dp-evm",
  "dp-s2s",
  "dvm-ethereum",
  "ethereum",
  "ethereum-primitives",
  "ethereum-types",
  "evm",
+ "fp-evm",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6080,7 +6067,6 @@ dependencies = [
  "darwinia-vesting",
  "dp-asset",
  "dp-contract",
- "dp-evm",
  "dp-evm-trace-apis",
  "dp-evm-trace-events",
  "dp-evm-trace-ext",
