@@ -2392,23 +2392,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dvm-dynamic-fee"
-version = "2.7.2"
-dependencies = [
- "async-trait",
- "darwinia-evm",
- "frame-support",
- "frame-system",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-inherents",
- "sp-io",
- "sp-runtime",
-]
-
-[[package]]
 name = "dvm-ethereum"
 version = "2.7.2"
 dependencies = [
