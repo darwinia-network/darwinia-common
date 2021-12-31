@@ -17,13 +17,10 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// mod precompile;
-
 // crates
 use codec::{Decode, Encode};
 pub use evm::backend::{Basic as Account, Log};
 use evm::ExitReason;
-// pub use precompile::{LinearCostPrecompile, Precompile, PrecompileSet};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 // substrate

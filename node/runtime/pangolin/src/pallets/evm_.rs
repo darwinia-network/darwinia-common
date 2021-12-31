@@ -5,11 +5,13 @@ use evm::{executor::PrecompileOutput, Context, ExitError};
 // --- paritytech ---
 use bp_messages::LaneId;
 use codec::{Decode, Encode};
+use fp_evm::{Precompile, PrecompileSet};
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::{FindAuthor, PalletInfoAccess},
 	ConsensusEngineId,
 };
+use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use sp_core::{crypto::Public, H160, U256};
 // --- darwinia-network ---
 use crate::*;
@@ -26,8 +28,6 @@ use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping,
 };
-use fp_evm::{Precompile, PrecompileSet};
-use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 
 pub struct EthereumFindAuthor<F>(PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
