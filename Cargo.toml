@@ -23,7 +23,6 @@ members = [
 	"frame/claims",
 	"frame/democracy",
 	"frame/dvm",
-	"frame/dvm-dynamic-fee",
 	"frame/dvm/rpc",
 	"frame/dvm/rpc/runtime-api",
 	"frame/elections-phragmen",
