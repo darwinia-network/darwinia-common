@@ -17,9 +17,11 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 //! Net rpc interface.
-use fc_rpc_core::types::PeerCount;
+// --- crates.io ---
 use jsonrpc_core::Result;
 use jsonrpc_derive::rpc;
+// --- paritytech ---
+use fc_rpc_core::types::PeerCount;
 
 pub use rpc_impl_NetApi::gen_server::NetApi as NetApiServer;
 
