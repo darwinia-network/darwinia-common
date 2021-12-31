@@ -31,8 +31,6 @@ darwinia-evm                            = { default-features = false, path = "..
 darwinia-evm-precompile-bridge-ethereum = { default-features = false, path = "../../../frame/evm/precompile/contracts/bridge/ethereum" }
 darwinia-evm-precompile-bridge-s2s      = { default-features = false, path = "../../../frame/evm/precompile/contracts/bridge/s2s" }
 darwinia-evm-precompile-dispatch        = { default-features = false, path = "../../../frame/evm/precompile/contracts/dispatch" }
-
-pallet-evm-precompile-simple            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
 darwinia-evm-precompile-transfer        = { default-features = false, path = "../../../frame/evm/precompile/contracts/transfer" }
 darwinia-fee-market                     = { default-features = false, path = "../../../frame/fee-market" }
 darwinia-fee-market-rpc-runtime-api     = { default-features = false, path = "../../../frame/fee-market/rpc/runtime-api" }
@@ -68,7 +66,6 @@ dp-evm-tracer       = { optional = true, default-features = false, path = "../..
 rlp                 = { version = "0.5", optional = true, default-features = false }
 sha3                = { version = "0.8", optional = true, default-features = false }
 # paritytech
-fp-evm    = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.0" }
 bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.0" }
 bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.0" }
@@ -125,6 +122,9 @@ sp-staking                                 = { default-features = false, git = "
 sp-std                                     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-transaction-pool                        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+# frontier
+fp-evm                       = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
+pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
 
 [build-dependencies]
 # paritytech
@@ -152,7 +152,6 @@ std = [
 	"darwinia-evm-precompile-bridge-ethereum/std",
 	"darwinia-evm-precompile-bridge-s2s/std",
 	"darwinia-evm-precompile-dispatch/std",
-	"pallet-evm-precompile-simple/std",
 	"darwinia-evm-precompile-transfer/std",
 	"darwinia-fee-market/std",
 	"darwinia-fee-market-rpc-runtime-api/std",
@@ -181,7 +180,6 @@ std = [
 	"to-ethereum-backing/std",
 	"to-tron-backing/std",
 	# paritytech
-	"fp-evm/std",
 	"bp-message-dispatch/std",
 	"bp-messages/std",
 	"bp-runtime/std",
@@ -245,6 +243,9 @@ std = [
 	"dp-evm-tracer/std",
 	"rlp/std",
 	"sha3/std",
+	# frontier
+	"fp-evm/std",
+	"pallet-evm-precompile-simple/std",
 ]
 
 runtime-benchmarks = [
