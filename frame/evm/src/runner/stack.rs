@@ -26,6 +26,7 @@ use evm::{
 };
 use sha3::{Digest, Keccak256};
 // --- paritytech ---
+use fp_evm::{CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
 use frame_support::{ensure, traits::Get};
 use sp_core::{H160, H256, U256};
 use sp_runtime::{traits::UniqueSaturatedInto, ArithmeticError, DispatchError};
@@ -36,7 +37,6 @@ use crate::{
 	Config, Error, Event, FeeCalculator, Pallet, PrecompileSet,
 };
 use darwinia_support::evm::IntoAccountId;
-use dp_evm::{CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
 
 #[derive(Default)]
 pub struct Runner<T: Config> {

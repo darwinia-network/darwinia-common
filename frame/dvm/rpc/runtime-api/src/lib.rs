@@ -26,11 +26,10 @@ use ethereum::{
 use ethereum_types::Bloom;
 use scale_info::TypeInfo;
 // --- paritytech ---
+use fp_evm::{Account, CallInfo, CreateInfo};
 use sp_core::{H160, H256, U256};
 use sp_runtime::{traits::Block as BlockT, DispatchError, RuntimeDebug};
 use sp_std::vec::Vec;
-// --- darwinia-network ---
-use dp_evm::{Account, CallInfo, CreateInfo};
 
 #[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct TransactionStatus {

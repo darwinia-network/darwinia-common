@@ -23,7 +23,6 @@ darwinia-evm        = { default-features = false, path = "../../../evm" }
 darwinia-support    = { default-features = false, path = "../../../support" }
 dp-asset            = { default-features = false, path = "../../../../primitives/asset" }
 dp-contract         = { default-features = false, path = "../../../../primitives/contract" }
-dp-evm              = { default-features = false, path = "../../../../primitives/evm" }
 dp-s2s              = { default-features = false, path = "../../../../primitives/s2s" }
 dvm-ethereum        = { default-features = false, path = "../../../dvm" }
 ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum" }
@@ -37,6 +36,8 @@ frame-system        = { default-features = false, git = "https://github.com/darw
 sp-io               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+# frontier
+fp-evm            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
 
 [dev-dependencies]
 # crates.io
@@ -64,7 +65,6 @@ std = [
 	"darwinia-evm/std",
 	"dp-contract/std",
 	"ethereum-primitives/std",
-	"dp-evm/std",
 	"dp-s2s/std",
 	"dvm-ethereum/std",
 	"darwinia-support/std",
@@ -78,6 +78,8 @@ std = [
 	"sp-runtime/std",
 	"sp-std/std",
 	"sp-io/std",
+	# frontier
+	"fp-evm/std",
 ]
 
 runtime-benchmarks = ["frame-benchmarking"]
