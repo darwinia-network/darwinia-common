@@ -33,7 +33,7 @@ dc-mapping-sync                     = { path = "../../client/dvm/mapping-sync" }
 dc-rpc                              = { path = "../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }
 dp-evm-trace-apis                   = { path = "../../primitives/evm/trace/apis" }
 dp-evm-trace-ext                    = { path = "../../primitives/evm/trace/ext" }
-dp-rpc                              = { path = "../../primitives/rpc" }
+# dp-rpc                              = { path = "../../primitives/rpc" }
 drml-common-primitives              = { path = "../primitives/common" }
 drml-rpc                            = { path = "../rpc" }
 dvm-rpc-runtime-api                 = { path = "../../frame/dvm/rpc/runtime-api" }
@@ -76,6 +76,8 @@ sp-timestamp                               = { git = "https://github.com/darwini
 sp-transaction-pool                        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-trie                                    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+# frontier
+fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
 # template
 async-trait              = { version = "0.1", optional = true }
 sc-consensus-aura        = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }

@@ -1958,6 +1958,7 @@ dependencies = [
  "ethereum",
  "ethereum-types",
  "evm",
+ "fc-rpc-core",
  "fp-storage",
  "futures 0.3.19",
  "jsonrpc-core",
@@ -2286,10 +2287,10 @@ dependencies = [
  "dc-db",
  "dc-rpc",
  "dp-evm-trace-apis",
- "dp-rpc",
  "drml-common-primitives",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
+ "fc-rpc-core",
  "futures 0.3.19",
  "jsonrpc-core",
  "jsonrpc-pubsub",
@@ -2337,10 +2338,10 @@ dependencies = [
  "dc-rpc",
  "dp-evm-trace-apis",
  "dp-evm-trace-ext",
- "dp-rpc",
  "drml-common-primitives",
  "drml-rpc",
  "dvm-rpc-runtime-api",
+ "fc-rpc-core",
  "frame-benchmarking",
  "frame-system-rpc-runtime-api",
  "futures 0.3.19",
@@ -2435,6 +2436,7 @@ dependencies = [
  "dp-rpc",
  "ethereum",
  "ethereum-types",
+ "fc-rpc-core",
  "fp-evm",
  "futures 0.3.19",
  "jsonrpc-core",
@@ -2802,6 +2804,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "779d043b6a0b90cc4c0ed7ee380a6504394cee7efd7db050e3774eee387324b2"
 dependencies = [
  "instant",
+]
+
+[[package]]
+name = "fc-rpc-core"
+version = "1.1.0-dev"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.0#ae3f01905e4138f2d07919adede0b0b195d1827f"
+dependencies = [
+ "ethereum-types",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "jsonrpc-pubsub",
+ "rustc-hex",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

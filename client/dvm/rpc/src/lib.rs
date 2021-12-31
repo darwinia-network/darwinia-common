@@ -42,7 +42,7 @@ pub mod frontier_backend_client {
 
 	use super::internal_err;
 
-	use dp_rpc::BlockNumber;
+	use fc_rpc_core::types::BlockNumber;
 	use fp_storage::PALLET_ETHEREUM_SCHEMA;
 	use sc_client_api::backend::{Backend, StateBackend, StorageProvider};
 	use sp_api::{BlockId, HeaderT};
