@@ -28,6 +28,7 @@ use std::{
 // --- crates.io ---
 use futures::StreamExt;
 // --- paritytech ---
+use fc_rpc_core::types::FilterPool;
 use sc_authority_discovery::WorkerConfig;
 use sc_basic_authorship::ProposerFactory;
 use sc_client_api::{ExecutorProvider, RemoteBackend, StateBackendFor};
@@ -68,7 +69,6 @@ use drml_rpc::{
 	pangolin::{FullDeps, LightDeps},
 	BabeDeps, GrandpaDeps, RpcConfig, SubscriptionTaskExecutor,
 };
-use fc_rpc_core::types::FilterPool;
 use pangolin_runtime::RuntimeApi;
 
 pub struct Executor;

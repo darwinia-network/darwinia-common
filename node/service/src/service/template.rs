@@ -29,6 +29,7 @@ use std::{
 use async_trait::async_trait;
 // --- paritytech ---
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
+use fc_rpc_core::types::FilterPool;
 use sc_consensus_manual_seal as manual_seal;
 use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch};
 use sc_keystore::LocalKeystore;
@@ -42,7 +43,6 @@ use crate::service::{
 };
 use drml_common_primitives::{OpaqueBlock as Block, SLOT_DURATION};
 use drml_rpc::{template::FullDeps, RpcConfig, SubscriptionTaskExecutor};
-use fc_rpc_core::types::FilterPool;
 use template_runtime::RuntimeApi;
 
 thread_local!(static TIMESTAMP: RefCell<u64> = RefCell::new(0));

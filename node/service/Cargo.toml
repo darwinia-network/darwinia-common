@@ -33,7 +33,6 @@ dc-mapping-sync                     = { path = "../../client/dvm/mapping-sync" }
 dc-rpc                              = { path = "../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }
 dp-evm-trace-apis                   = { path = "../../primitives/evm/trace/apis" }
 dp-evm-trace-ext                    = { path = "../../primitives/evm/trace/ext" }
-# dp-rpc                              = { path = "../../primitives/rpc" }
 drml-common-primitives              = { path = "../primitives/common" }
 drml-rpc                            = { path = "../rpc" }
 dvm-rpc-runtime-api                 = { path = "../../frame/dvm/rpc/runtime-api" }
