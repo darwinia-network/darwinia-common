@@ -31,8 +31,8 @@ darwinia-staking-rpc-runtime-api    = { path = "../../frame/staking/rpc/runtime-
 dc-db                               = { path = "../../client/dvm/db" }
 dc-mapping-sync                     = { path = "../../client/dvm/mapping-sync" }
 dc-rpc                              = { path = "../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }
-dp-evm-trace-apis                   = { path = "../../primitives/evm/trace/apis" }
-dp-evm-trace-ext                    = { path = "../../primitives/evm/trace/ext" }
+dp-evm-trace-apis                   = { path = "../../primitives/evm-trace/apis" }
+dp-evm-trace-ext                    = { path = "../../primitives/evm-trace/ext" }
 drml-common-primitives              = { path = "../primitives/common" }
 drml-rpc                            = { path = "../rpc" }
 dvm-rpc-runtime-api                 = { path = "../../frame/dvm/rpc/runtime-api" }
