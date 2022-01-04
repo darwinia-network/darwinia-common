@@ -2405,6 +2405,7 @@ dependencies = [
  "frame-system",
  "libsecp256k1 0.5.0",
  "log",
+ "pallet-evm-precompile-simple",
  "pallet-timestamp",
  "parity-scale-codec",
  "rlp",
