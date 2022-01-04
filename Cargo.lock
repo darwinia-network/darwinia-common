@@ -2175,13 +2175,7 @@ name = "dp-evm-trace-rpc"
 version = "2.7.2"
 dependencies = [
  "ethereum-types",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "jsonrpc-pubsub",
- "rustc-hex",
  "serde",
- "serde_json",
 ]
 
 [[package]]
