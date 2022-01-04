@@ -2086,7 +2086,7 @@ dependencies = [
 
 [[package]]
 name = "dc-tracer"
-version = "2.7.1"
+version = "2.7.2"
 dependencies = [
  "dp-evm-trace-apis",
  "dp-evm-trace-events",
@@ -2237,7 +2237,7 @@ dependencies = [
 
 [[package]]
 name = "dp-evm-trace-apis"
-version = "2.7.1"
+version = "2.7.2"
 dependencies = [
  "environmental",
  "ethereum",
@@ -2255,7 +2255,7 @@ dependencies = [
 
 [[package]]
 name = "dp-evm-trace-events"
-version = "2.7.1"
+version = "2.7.2"
 dependencies = [
  "environmental",
  "ethereum",
@@ -2264,11 +2264,12 @@ dependencies = [
  "evm-gasometer",
  "evm-runtime",
  "parity-scale-codec",
+ "sp-runtime-interface",
 ]
 
 [[package]]
 name = "dp-evm-trace-ext"
-version = "2.7.1"
+version = "2.7.2"
 dependencies = [
  "dp-evm-trace-events",
  "ethereum-types",
@@ -2280,7 +2281,7 @@ dependencies = [
 
 [[package]]
 name = "dp-evm-tracer"
-version = "2.7.1"
+version = "2.7.2"
 dependencies = [
  "dp-evm-trace-events",
  "dp-evm-trace-ext",

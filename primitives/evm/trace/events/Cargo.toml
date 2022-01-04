@@ -7,7 +7,7 @@ license     = "Apache-2.0"
 name        = "dp-evm-trace-events"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.7.1"
+version     = "2.7.2"
 
 
 [dependencies]
@@ -19,7 +19,8 @@ evm            = { version = "0.30", default-features = false, features = ["with
 evm-gasometer  = { version = "0.30", default-features = false }
 evm-runtime    = { version = "0.30", default-features = false }
 # paritytech
-codec = { package = "parity-scale-codec", version = "2.2", default-features = false }
+codec                = { package = "parity-scale-codec", version = "2.2", default-features = false }
+sp-runtime-interface = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
 
 
 [features]
@@ -35,6 +36,7 @@ std = [
 	"evm-runtime/std",
 	# paritytech
 	"codec/std",
+	"sp-runtime-interface/std",
 ]
 
 evm-tracing = ["evm-gasometer/tracing", "evm-runtime/tracing", "evm/tracing"]
