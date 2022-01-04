@@ -11,11 +11,5 @@ version     = "2.7.2"
 
 [dependencies]
 # crates.io
-ethereum-types      = { version = "0.12" }
-jsonrpc-core        = { version = "18.0" }
-jsonrpc-core-client = { version = "18.0" }
-jsonrpc-derive      = { version = "18.0" }
-jsonrpc-pubsub      = { version = "18.0" }
-rustc-hex           = { version = "2.1" }
-serde               = { version = "1.0", features = ["derive"] }
-serde_json          = { version = "1.0" }
+ethereum-types = { version = "0.12" }
+serde          = { version = "1.0", features = ["derive"] }
