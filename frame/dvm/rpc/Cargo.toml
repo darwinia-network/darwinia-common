@@ -22,9 +22,9 @@ serde          = { version = "1.0", features = ["derive"] }
 serde_json     = { version = "1.0" }
 
 # darwinia-network
-darwinia-evm = { default-features = false, path = "../../evm" }
-dc-tracer    = { path = "../../../client/dvm/tracer" }
-dp-rpc       = { optional = true, path = "../../../primitives/rpc" }
+darwinia-evm     = { default-features = false, path = "../../evm" }
+dc-tracer        = { path = "../../../client/dvm/tracer" }
+dp-evm-trace-rpc = { optional = true, path = "../../../primitives/evm-trace/rpc" }
 # paritytech
 sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
@@ -44,7 +44,7 @@ std = [
 	"ethereum-types/std",
 	# darwinia-network
 	"darwinia-evm/std",
-	"dp-rpc",
+	"dp-evm-trace-rpc",
 	# paritytech
 	"sp-api/std",
 	"sp-core/std",

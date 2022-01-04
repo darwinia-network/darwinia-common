@@ -57,11 +57,11 @@ members = [
 	"primitives/evm-trace/apis",
 	"primitives/evm-trace/events",
 	"primitives/evm-trace/ext",
+	"primitives/evm-trace/rpc",
 	"primitives/evm-trace/tracer",
 	"primitives/fee-market",
 	"primitives/merkle-patricia-trie",
 	"primitives/relay",
-	"primitives/rpc",
 	"primitives/s2s",
 ]
 

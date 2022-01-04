@@ -1951,7 +1951,7 @@ dependencies = [
  "dc-tracer",
  "dp-consensus",
  "dp-evm-trace-apis",
- "dp-rpc",
+ "dp-evm-trace-rpc",
  "dvm-ethereum",
  "dvm-rpc-core",
  "dvm-rpc-runtime-api",
@@ -2175,6 +2175,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "dp-evm-trace-rpc"
+version = "2.7.2"
+dependencies = [
+ "ethereum-types",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "jsonrpc-pubsub",
+ "rustc-hex",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "dp-evm-tracer"
 version = "2.7.2"
 dependencies = [
@@ -2201,20 +2215,6 @@ dependencies = [
  "scale-info",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "dp-rpc"
-version = "2.7.2"
-dependencies = [
- "ethereum-types",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "jsonrpc-pubsub",
- "rustc-hex",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -2433,7 +2433,7 @@ version = "2.7.2"
 dependencies = [
  "darwinia-evm",
  "dc-tracer",
- "dp-rpc",
+ "dp-evm-trace-rpc",
  "ethereum",
  "ethereum-types",
  "fc-rpc-core",
