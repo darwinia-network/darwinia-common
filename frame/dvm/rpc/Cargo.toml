@@ -1,4 +1,4 @@
-[package]
+	[package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "Runtime primitives for Ethereum RPC (web3) compatibility layer for Darwinia."
 edition     = "2021"
