@@ -23,10 +23,10 @@ drml-common-primitives           = { default-features = false, path = "../../pri
 dvm-ethereum                     = { default-features = false, path = "../../../frame/dvm" }
 dvm-rpc-runtime-api              = { default-features = false, path = "../../../frame/dvm/rpc/runtime-api" }
 # trace
-dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/evm/trace/apis" }
-dp-evm-trace-events = { default-features = false, path = "../../../primitives/evm/trace/events" }
-dp-evm-trace-ext    = { default-features = false, path = "../../../primitives/evm/trace/ext" }
-dp-evm-tracer       = { default-features = false, path = "../../../primitives/evm/trace/tracer" }
+dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/evm-trace/apis" }
+dp-evm-trace-events = { default-features = false, path = "../../../primitives/evm-trace/events" }
+dp-evm-trace-ext    = { default-features = false, path = "../../../primitives/evm-trace/ext" }
+dp-evm-tracer       = { default-features = false, path = "../../../primitives/evm-trace/tracer" }
 rlp                 = { version = "0.5", default-features = false }
 sha3                = { version = "0.8", default-features = false }
 # paritytech
