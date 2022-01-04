@@ -223,7 +223,7 @@ frame_support::construct_runtime! {
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>},
-		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event},
+		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, Origin},
 	}
 }
 

@@ -63,8 +63,8 @@ use pallet_transaction_payment::{ChargeTransactionPayment, FeeDetails, RuntimeDi
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
 	generic,
-	traits::{Block as BlockT, NumberFor},
-	transaction_validity::{TransactionSource, TransactionValidity},
+	traits::{Block as BlockT, Dispatchable, NumberFor, PostDispatchInfoOf},
+	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
 	ApplyExtrinsicResult, MultiAddress, OpaqueExtrinsic,
 };
 use sp_std::prelude::*;
@@ -88,7 +88,11 @@ pub type SignedExtra = (
 	CheckWeight<Runtime>,
 	ChargeTransactionPayment<Runtime>,
 );
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+// pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+pub type UncheckedExtrinsic =
+	fp_self_contained::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+// TODO:
+// pub type CheckedExtrinsic = fp_self_contained::CheckedExtrinsic<AccountId, Call, SignedExtra, H160>;
 pub type Executive =
 	frame_executive::Executive<Runtime, Block, ChainContext<Runtime>, Runtime, AllPallets>;
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
@@ -135,9 +139,46 @@ frame_support::construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 
 		EVM: darwinia_evm::{Pallet, Config, Call, Storage, Event<T>},
-		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned},
+		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
 	}
 );
+
+impl fp_self_contained::SelfContainedCall for Call {
+	type SignedInfo = H160;
+
+	fn is_self_contained(&self) -> bool {
+		match self {
+			Call::Ethereum(call) => call.is_self_contained(),
+			_ => false,
+		}
+	}
+
+	fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.check_self_contained(),
+			_ => None,
+		}
+	}
+
+	fn validate_self_contained(&self, info: &Self::SignedInfo) -> Option<TransactionValidity> {
+		match self {
+			Call::Ethereum(call) => call.validate_self_contained(info),
+			_ => None,
+		}
+	}
+
+	fn apply_self_contained(
+		self,
+		info: Self::SignedInfo,
+	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
+		match self {
+			call @ Call::Ethereum(dvm_ethereum::Call::transact { .. }) => Some(call.dispatch(
+				Origin::from(dvm_ethereum::RawOrigin::EthereumTransaction(info)),
+			)),
+			_ => None,
+		}
+	}
+}
 
 sp_api::impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
@@ -380,7 +421,7 @@ sp_api::impl_runtime_apis! {
 		fn extrinsic_filter(
 			xts: Vec<<Block as BlockT>::Extrinsic>,
 		) -> Vec<dvm_ethereum::TransactionV0> {
-			xts.into_iter().filter_map(|xt| match xt.function {
+			xts.into_iter().filter_map(|xt| match xt.0.function {
 				Call::Ethereum(dvm_ethereum::Call::transact { transaction }) => Some(transaction),
 				_ => None
 			}).collect()

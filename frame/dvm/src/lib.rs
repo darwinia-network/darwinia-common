@@ -52,23 +52,26 @@ use frame_support::storage::unhashed;
 use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
 	ensure,
-	traits::{Currency, Get},
+	traits::{Currency, EnsureOrigin, Get},
 	weights::{Pays, PostDispatchInfo, Weight},
 	PalletId,
 };
-use frame_system::ensure_none;
+use frame_system::pallet_prelude::OriginFor;
+use scale_info::TypeInfo;
 use sp_runtime::{
 	generic::DigestItem,
 	traits::{One, Saturating, UniqueSaturatedInto, Zero},
 	transaction_validity::{
-		InvalidTransaction, TransactionSource, TransactionValidity, ValidTransactionBuilder,
+		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransactionBuilder,
 	},
-	DispatchError,
+	DispatchError, RuntimeDebug,
 };
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use darwinia_evm::{AccountBasic, BlockHashMapping, FeeCalculator, GasWeightMapping, Runner};
-use darwinia_support::evm::{recover_signer, DVMTransaction, IntoH160, INTERNAL_TX_GAS_LIMIT};
+use darwinia_support::evm::{
+	new_internal_transaction, recover_signer, DVMTransaction, IntoH160, INTERNAL_TX_GAS_LIMIT,
+};
 use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 
 /// A type alias for the balance type from this pallet's point of view.
@@ -77,6 +80,144 @@ type RingCurrency<T> = <T as Config>::RingCurrency;
 type KtonCurrency<T> = <T as Config>::KtonCurrency;
 type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
 type KtonBalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::Balance;
+
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
+pub enum RawOrigin {
+	EthereumTransaction(H160),
+}
+
+pub fn ensure_ethereum_transaction<OuterOrigin>(o: OuterOrigin) -> Result<H160, &'static str>
+where
+	OuterOrigin: Into<Result<RawOrigin, OuterOrigin>>,
+{
+	match o.into() {
+		Ok(RawOrigin::EthereumTransaction(n)) => Ok(n),
+		_ => Err("bad origin: expected to be an Ethereum transaction"),
+	}
+}
+
+pub struct EnsureEthereumTransaction;
+impl<O: Into<Result<RawOrigin, O>> + From<RawOrigin>> EnsureOrigin<O>
+	for EnsureEthereumTransaction
+{
+	type Success = H160;
+	fn try_origin(o: O) -> Result<Self::Success, O> {
+		o.into().and_then(|o| match o {
+			RawOrigin::EthereumTransaction(id) => Ok(id),
+		})
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn successful_origin() -> O {
+		O::from(RawOrigin::EthereumTransaction(Default::default()))
+	}
+}
+
+impl<T: Config> Call<T>
+where
+	OriginFor<T>: Into<Result<RawOrigin, OriginFor<T>>>,
+{
+	pub fn is_self_contained(&self) -> bool {
+		match self {
+			Call::transact { .. } => true,
+			_ => false,
+		}
+	}
+
+	pub fn check_self_contained(&self) -> Option<Result<H160, TransactionValidityError>> {
+		if let Call::transact { transaction } = self {
+			let check = || {
+				let origin = recover_signer(&transaction).ok_or_else(|| {
+					InvalidTransaction::Custom(TransactionValidationError::InvalidSignature as u8)
+				})?;
+
+				Ok(origin)
+			};
+
+			Some(check())
+		} else {
+			None
+		}
+	}
+
+	pub fn validate_self_contained(&self, origin: &H160) -> Option<TransactionValidity> {
+		if let Call::transact { transaction } = self {
+			let validate = || {
+				// We must ensure a transaction can pay the cost of its data bytes.
+				// If it can't it should not be included in a block.
+				let mut gasometer = evm::gasometer::Gasometer::new(
+					transaction.gas_limit.low_u64(),
+					<T as darwinia_evm::Config>::config(),
+				);
+				let transaction_cost = match transaction.action {
+					TransactionAction::Call(_) => {
+						evm::gasometer::call_transaction_cost(&transaction.input)
+					}
+					TransactionAction::Create => {
+						evm::gasometer::create_transaction_cost(&transaction.input)
+					}
+				};
+				if gasometer.record_transaction(transaction_cost).is_err() {
+					return InvalidTransaction::Custom(
+						TransactionValidationError::InvalidGasLimit as u8,
+					)
+					.into();
+				}
+
+				if let Some(chain_id) = transaction.signature.chain_id() {
+					if chain_id != T::ChainId::get() {
+						return InvalidTransaction::Custom(
+							TransactionValidationError::InvalidChainId as u8,
+						)
+						.into();
+					}
+				}
+
+				if transaction.gas_limit >= T::BlockGasLimit::get() {
+					return InvalidTransaction::Custom(
+						TransactionValidationError::InvalidGasLimit as u8,
+					)
+					.into();
+				}
+
+				let account_data =
+					<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&origin);
+
+				if transaction.nonce < account_data.nonce {
+					return InvalidTransaction::Stale.into();
+				}
+
+				let fee = transaction.gas_price.saturating_mul(transaction.gas_limit);
+				let total_payment = transaction.value.saturating_add(fee);
+				if account_data.balance < total_payment {
+					return InvalidTransaction::Payment.into();
+				}
+
+				let min_gas_price = T::FeeCalculator::min_gas_price();
+
+				if transaction.gas_price < min_gas_price {
+					return InvalidTransaction::Payment.into();
+				}
+
+				let mut builder = ValidTransactionBuilder::default()
+					.and_provides((origin, transaction.nonce))
+					.priority(transaction.gas_price.unique_saturated_into());
+
+				if transaction.nonce > account_data.nonce {
+					if let Some(prev_nonce) = transaction.nonce.checked_sub(1.into()) {
+						builder = builder.and_requires((origin, prev_nonce))
+					}
+				}
+
+				builder.build()
+			};
+
+			Some(validate())
+		} else {
+			None
+		}
+	}
+}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -103,6 +244,9 @@ pub mod pallet {
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(PhantomData<T>);
+
+	#[pallet::origin]
+	pub type Origin = RawOrigin;
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -132,7 +276,10 @@ pub mod pallet {
 				let PreLog::Block(block) = log;
 
 				for transaction in block.transactions {
-					Self::rpc_transact(transaction).expect(
+					let source = recover_signer(&transaction).expect(
+						"pre-block transaction signature invalid; the block cannot be built",
+					);
+					Self::rpc_transact(source, transaction).expect(
 						"pre-block transaction verification failed; the block cannot be built",
 					);
 				}
@@ -142,16 +289,18 @@ pub mod pallet {
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
+	impl<T: Config> Pallet<T>
+	where
+		OriginFor<T>: Into<Result<RawOrigin, OriginFor<T>>>,
+	{
 		/// Transact an Ethereum transaction.
 		#[pallet::weight(<T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(transaction.gas_limit.unique_saturated_into()))]
 		pub fn transact(
 			origin: OriginFor<T>,
 			transaction: TransactionV0,
 		) -> DispatchResultWithPostInfo {
-			ensure_none(origin)?;
-
-			Self::rpc_transact(transaction)
+			let source = ensure_ethereum_transaction(origin)?;
+			Self::rpc_transact(source, transaction)
 		}
 
 		/// Internal transaction only for root.
@@ -162,7 +311,6 @@ pub mod pallet {
 			input: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-
 			Self::internal_transact(target, input)
 		}
 	}
@@ -188,88 +336,6 @@ pub mod pallet {
 		InternalTransactionFatalError,
 		/// The internal call failed.
 		ReadyOnlyCall,
-	}
-
-	#[pallet::validate_unsigned]
-	impl<T: Config> frame_support::unsigned::ValidateUnsigned for Pallet<T> {
-		type Call = Call<T>;
-
-		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
-			if let Call::transact { transaction } = call {
-				// We must ensure a transaction can pay the cost of its data bytes.
-				// If it can't it should not be included in a block.
-				let mut gasometer = evm::gasometer::Gasometer::new(
-					transaction.gas_limit.low_u64(),
-					<T as darwinia_evm::Config>::config(),
-				);
-				let transaction_cost = match transaction.action {
-					TransactionAction::Call(_) => {
-						evm::gasometer::call_transaction_cost(&transaction.input)
-					}
-					TransactionAction::Create => {
-						evm::gasometer::create_transaction_cost(&transaction.input)
-					}
-				};
-				if gasometer.record_transaction(transaction_cost).is_err() {
-					return InvalidTransaction::Custom(
-						TransactionValidationError::InvalidGasLimit as u8,
-					)
-					.into();
-				}
-
-				// Check chain id correctly
-				if let Some(chain_id) = transaction.signature.chain_id() {
-					if chain_id != T::ChainId::get() {
-						return InvalidTransaction::Custom(
-							TransactionValidationError::InvalidChainId as u8,
-						)
-						.into();
-					}
-				}
-				// Check signature correctly
-				let origin = recover_signer(&transaction).ok_or_else(|| {
-					InvalidTransaction::Custom(TransactionValidationError::InvalidSignature as u8)
-				})?;
-				// Check transaction gas limit correctly
-				if transaction.gas_limit >= T::BlockGasLimit::get() {
-					return InvalidTransaction::Custom(
-						TransactionValidationError::InvalidGasLimit as u8,
-					)
-					.into();
-				}
-				let account_data =
-					<T as darwinia_evm::Config>::RingAccountBasic::account_basic(&origin);
-				// Check sender's nonce correctly
-				if transaction.nonce < account_data.nonce {
-					return InvalidTransaction::Stale.into();
-				}
-				// Check sender's balance correctly
-				let fee = transaction.gas_price.saturating_mul(transaction.gas_limit);
-				let total_payment = transaction.value.saturating_add(fee);
-				if account_data.balance < total_payment {
-					return InvalidTransaction::Payment.into();
-				}
-				// Check transaction gas price correctly
-				let min_gas_price = T::FeeCalculator::min_gas_price();
-				if transaction.gas_price < min_gas_price {
-					return InvalidTransaction::Payment.into();
-				}
-
-				let mut builder = ValidTransactionBuilder::default()
-					.and_provides((origin, transaction.nonce))
-					.priority(transaction.gas_price.unique_saturated_into());
-
-				if transaction.nonce > account_data.nonce {
-					if let Some(prev_nonce) = transaction.nonce.checked_sub(1.into()) {
-						builder = builder.and_requires((origin, prev_nonce))
-					}
-				}
-
-				builder.build()
-			} else {
-				Err(InvalidTransaction::Call.into())
-			}
-		}
 	}
 
 	/// Current building block's transactions and receipts.
@@ -335,34 +401,40 @@ impl<T: Config> Pallet<T> {
 	/// Execute transaction from EthApi(network transaction)
 	/// NOTE: For the rpc transaction, the execution will return ok(..) even when encounters error
 	/// from evm runner
-	pub fn rpc_transact(transaction: TransactionV0) -> DispatchResultWithPostInfo {
-		ensure!(
-			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
-			Error::<T>::PreLogExists,
-		);
-		let transaction = Self::to_dvm_transaction(transaction)?;
-		Self::raw_transact(transaction).map(|(_, used_gas)| {
-			Ok(Some(T::GasWeightMapping::gas_to_weight(
-				used_gas.unique_saturated_into(),
-			))
+	fn rpc_transact(source: H160, transaction: TransactionV0) -> DispatchResultWithPostInfo {
+		Self::raw_transact(source, transaction.into()).map(|(_, used_gas)| {
+			Ok(PostDispatchInfo {
+				actual_weight: Some(T::GasWeightMapping::gas_to_weight(
+					used_gas.unique_saturated_into(),
+				)),
+				pays_fee: Pays::No,
+			}
 			.into())
 		})?
 	}
 
-	/// Execute DVMTransaction in evm runner and save the execution info in Pending
-	fn raw_transact(transaction: DVMTransaction) -> Result<(ExitReason, U256), DispatchError> {
+	// Execute Transaction in evm runner and save the execution info in Pending
+	fn raw_transact(
+		source: H160,
+		dvm_transaction: DVMTransaction,
+	) -> Result<(ExitReason, U256), DispatchError> {
+		ensure!(
+			dp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
+			Error::<T>::PreLogExists,
+		);
+
 		let transaction_hash =
-			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction.tx)).as_slice());
+			H256::from_slice(Keccak256::digest(&rlp::encode(&dvm_transaction.tx)).as_slice());
 		let transaction_index = Pending::<T>::get().len() as u32;
 
-		let (to, _contract_address, info) = Self::execute(
-			transaction.source,
-			transaction.tx.input.clone(),
-			transaction.tx.value,
-			transaction.tx.gas_limit,
-			transaction.gas_price,
-			Some(transaction.tx.nonce),
-			transaction.tx.action,
+		let (to, _, info) = Self::execute(
+			source,
+			dvm_transaction.tx.input.clone(),
+			dvm_transaction.tx.value,
+			dvm_transaction.tx.gas_limit,
+			dvm_transaction.gas_price,
+			Some(dvm_transaction.tx.nonce),
+			dvm_transaction.tx.action,
 			None,
 		)?;
 
@@ -372,7 +444,7 @@ impl<T: Config> Pallet<T> {
 				TransactionStatus {
 					transaction_hash,
 					transaction_index,
-					from: transaction.source,
+					from: source,
 					to,
 					contract_address: None,
 					logs: info.logs.clone(),
@@ -390,7 +462,7 @@ impl<T: Config> Pallet<T> {
 				TransactionStatus {
 					transaction_hash,
 					transaction_index,
-					from: transaction.source,
+					from: source,
 					to,
 					contract_address: Some(info.value),
 					logs: info.logs.clone(),
@@ -404,8 +476,7 @@ impl<T: Config> Pallet<T> {
 				Some(info.value),
 			),
 		};
-
-		let receipt = EthereumReceiptV0 {
+		let receipt = ethereum::Receipt {
 			state_root: match reason {
 				ExitReason::Succeed(_) => H256::from_low_u64_be(1),
 				ExitReason::Error(_) => H256::from_low_u64_le(0),
@@ -413,14 +484,12 @@ impl<T: Config> Pallet<T> {
 				ExitReason::Fatal(_) => H256::from_low_u64_le(0),
 			},
 			used_gas,
-			logs_bloom: status.logs_bloom,
+			logs_bloom: status.clone().logs_bloom,
 			logs: status.clone().logs,
 		};
-
-		Pending::<T>::append((transaction.tx, status, receipt));
-
+		Pending::<T>::append((dvm_transaction.tx, status, receipt));
 		Self::deposit_event(Event::Executed(
-			transaction.source,
+			source,
 			dest.unwrap_or_default(),
 			transaction_hash,
 			reason.clone(),
@@ -489,16 +558,6 @@ impl<T: Config> Pallet<T> {
 				Ok((None, Some(res.value), CallOrCreateInfo::Create(res)))
 			}
 		}
-	}
-
-	/// Transfer rpc transaction to dvm transaction
-	fn to_dvm_transaction(transaction: TransactionV0) -> Result<DVMTransaction, DispatchError> {
-		let source = recover_signer(&transaction).ok_or(Error::<T>::InvalidSignature)?;
-		Ok(DVMTransaction {
-			source,
-			gas_price: Some(transaction.gas_price),
-			tx: transaction,
-		})
 	}
 
 	/// Save ethereum block
@@ -576,15 +635,10 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 	/// NOTE: The difference between the rpc transaction and the internal transaction is that
 	/// The internal transactions will catch and throw evm error comes from runner to caller.
 	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
-		ensure!(
-			dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
-			Error::<T>::PreLogExists,
-		);
-
 		let source = T::PalletId::get().into_h160();
 		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
-		let transaction = DVMTransaction::new_internal_transaction(source, nonce, target, input);
-		Self::raw_transact(transaction).map(|(reason, used_gas)| match reason {
+		let transaction = new_internal_transaction(nonce, target, input);
+		Self::raw_transact(source, transaction).map(|(reason, used_gas)| match reason {
 			// Only when exit_reason is successful, return Ok(...)
 			ExitReason::Succeed(_) => Ok(PostDispatchInfo {
 				actual_weight: Some(T::GasWeightMapping::gas_to_weight(
