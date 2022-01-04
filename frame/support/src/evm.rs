@@ -150,3 +150,13 @@ impl DVMTransaction {
 		}
 	}
 }
+
+/// Decimal conversion from RING/KTON to Ethereum decimal format.
+pub fn decimal_convert(main_balance: u128, remaining_balance: Option<u128>) -> U256 {
+	if let Some(rb) = remaining_balance {
+		return U256::from(main_balance)
+			.saturating_mul(U256::from(POW_9))
+			.saturating_add(U256::from(rb));
+	}
+	U256::from(main_balance).saturating_mul(U256::from(POW_9))
+}

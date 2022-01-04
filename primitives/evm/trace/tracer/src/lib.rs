@@ -24,12 +24,14 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 pub mod tracer {
+	// --- crates.io ---
 	use codec::Encode;
-	use dp_evm_trace_events::{EvmEvent, GasometerEvent, RuntimeEvent};
-
 	use evm::tracing::{using as evm_using, EventListener as EvmListener};
 	use evm_gasometer::tracing::{using as gasometer_using, EventListener as GasometerListener};
 	use evm_runtime::tracing::{using as runtime_using, EventListener as RuntimeListener};
+	// --- darwinia-network ---
+	use dp_evm_trace_events::{EvmEvent, GasometerEvent, RuntimeEvent, StepEventFilter};
+	// --- paritytech ---
 	use sp_std::{cell::RefCell, rc::Rc};
 
 	struct ListenerProxy<T>(pub Rc<RefCell<T>>);
@@ -51,10 +53,14 @@ pub mod tracer {
 		}
 	}
 
-	pub struct EvmTracer;
+	pub struct EvmTracer {
+		step_event_filter: StepEventFilter,
+	}
 	impl EvmTracer {
 		pub fn new() -> Self {
-			Self
+			Self {
+				step_event_filter: dp_evm_trace_ext::dvm_ext::step_event_filter(),
+			}
 		}
 		/// Setup event listeners and execute provided closure.
 		///
@@ -102,7 +108,7 @@ pub mod tracer {
 	impl RuntimeListener for EvmTracer {
 		/// Proxies `evm_runtime::tracing::Event` to the host.
 		fn event(&mut self, event: evm_runtime::tracing::Event) {
-			let event: RuntimeEvent = event.into();
+			let event = RuntimeEvent::from_evm_event(event, self.step_event_filter);
 			let message = event.encode();
 			dp_evm_trace_ext::dvm_ext::runtime_event(message);
 		}
