@@ -17,7 +17,6 @@ ethabi         = { version = "15.0", default-features = false }
 ethereum-types = { version = "0.12", default-features = false }
 evm            = { version = "0.30", default-features = false, features = ["with-codec"] }
 log            = { version = "0.4" }
-ripemd160      = { version = "0.9", default-features = false }
 sha3           = { version = "0.9", default-features = false }
 # darwinia-network
 darwinia-evm     = { default-features = false, path = "../../../" }
@@ -25,10 +24,7 @@ darwinia-support = { default-features = false, path = "../../../../support" }
 # paritytech
 frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
-pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
-sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
-sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 # frontier
 fp-evm  = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
@@ -42,7 +38,6 @@ std = [
 	"ethabi/std",
 	"ethereum-types/std",
 	"evm/std",
-	"ripemd160/std",
 	"sha3/std",
 	# darwinia-network
 	"darwinia-evm/std",
@@ -50,10 +45,7 @@ std = [
 	# paritytech
 	"frame-support/std",
 	"frame-system/std",
-	"pallet-timestamp/std",
 	"sp-core/std",
-	"sp-io/std",
-	"sp-runtime/std",
 	"sp-std/std",
 	# frontier
 	"fp-evm/std",
