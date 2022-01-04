@@ -29,7 +29,7 @@ use tokio::{
 use crate::{frontier_backend_client, internal_err};
 use dc_tracer::{formatters::ResponseFormatter, types::single};
 use dp_evm_trace_apis::{DebugRuntimeApi, TracerInput};
-use dp_rpc::{RequestBlockId, RequestBlockTag};
+use dp_evm_trace_rpc::{RequestBlockId, RequestBlockTag};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 // paritytech
 use sc_client_api::backend::Backend;

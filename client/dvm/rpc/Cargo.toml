@@ -35,8 +35,8 @@ dc-db               = { path = "../db" }
 dc-tracer           = { path = "../tracer" }
 dp-consensus        = { path = "../../../primitives/consensus/" }
 dp-evm-trace-apis   = { path = "../../../primitives/evm-trace/apis" }
+dp-evm-trace-rpc    = { path = "../../../primitives/evm-trace/rpc" }
 dvm-ethereum        = { path = "../../../frame/dvm" }
-dp-rpc              = { path = "../../../primitives/rpc" }
 dvm-rpc-core        = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
 # paritytech

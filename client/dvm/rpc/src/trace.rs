@@ -53,7 +53,7 @@ use dc_tracer::{
 	types::block::{self, TransactionTrace},
 };
 use dp_evm_trace_apis::DebugRuntimeApi;
-use dp_rpc::{RequestBlockId, RequestBlockTag};
+use dp_evm_trace_rpc::{RequestBlockId, RequestBlockTag};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 
 /// RPC handler. Will communicate with a `CacheTask` through a `CacheRequester`.
