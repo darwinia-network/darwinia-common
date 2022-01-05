@@ -1,6 +1,5 @@
 // --- paritytech ---
 use frame_support::{assert_noop, assert_ok};
-use sp_runtime::DispatchError;
 // --- darwinia-network ---
 use crate::mock::*;
 use bsc_primitives::BSCHeader;
@@ -75,18 +74,6 @@ fn extract_authorities_should_work() {
 		.collect::<Vec<_>>();
 
 		assert_eq!(signers, expected_signers);
-	});
-}
-
-#[test]
-fn verify_and_update_authority_set_unsigned_should_fail() {
-	ExtBuilder::default().build().execute_with(|| {
-		let header = BSCHeader::default();
-
-		assert_noop!(
-			BSC::verify_and_update_authority_set_unsigned(Origin::root(), vec![header]),
-			DispatchError::BadOrigin
-		);
 	});
 }
 
@@ -485,29 +472,5 @@ fn verify_and_update_authority_set_signed_should_work() {
 			Origin::signed(1),
 			testnet_headers_9516600_to_9516606,
 		));
-
-		let h9516608 = serde_json::from_str::<BSCHeader>(r#"{
-			"difficulty": "0x2",
-			"extraData": "0xd883010007846765746888676f312e31352e35856c696e75780000001600553df952160a93183da2e06577d3fe37b5bf756ed849473fdc858565ab68f31929960215f00cdfa8703a60e88a8c75b2334c5cb29156a0f24827504fe996b6840f2b00",
-			"gasLimit": "0x1c9c380",
-			"gasUsed": "0x9506",
-			"hash": "0x65b2ed201fe91456ba941b48f0adb6e3cd7777ab5b7135154e40cad34d603db4",
-			"logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000002010000000000000000000000000000000000020000200000000000000000000000000000000000000000000000000000000000000000000000000001000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000100000000000000000",
-			"miner": "0xc89c669357d161d57b0b255c94ea96e179999919",
-			"mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-			"nonce": "0x0000000000000000",
-			"number": "0x913640",
-			"parentHash": "0x3d88dc9a505b0ed2d1d69601b33da491e8820dc2e278b3c25247e16784abea16",
-			"receiptsRoot": "0x7c0cc1be44dfe4c94c680036d7cd041ede16dccadfaa24537f3ccef224fb0f5c",
-			"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-			"size": "0x36d",
-			"stateRoot": "0x72e58f33063d686a2a9f858795b0cc7bdb43f83fb475f29712142409cfdb46dd",
-			"timestamp": "0x60bdbbad",
-			"totalDifficulty": "0x1211b59",
-			"transactionsRoot": "0x23be7c3fcf9d400078755c02a163c26c0382d1b6aaa5ab3e05b003a2489059aa",
-			"uncles": []
-		}"#).unwrap();
-
-		assert_ok!(BSC::verify_header(&h9516608));
 	})
 }
