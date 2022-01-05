@@ -38,8 +38,7 @@ use ethereum_primitives::{
 #[selector]
 enum Action {
 	// account, account_proof, storage_key, storage_proof
-	VerfiySingleStorageProof =
-		"function verify_single_storage_proof(address,bytes[],bytes32,bytes[])",
+	VerfiySingleStorageProof = "verify_single_storage_proof(address,bytes[],bytes32,bytes[])",
 	// account, account_proof, storage_keys, storage_proofs
 	VerifyMultiStorageProof = "verify_multi_storage_proof(address,bytes[],bytes32[],bytes[][])",
 }
