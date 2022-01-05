@@ -210,7 +210,7 @@ where
 }
 
 /// The detail information about slash behavior
-#[derive(Clone, Encode, Decode, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct SlashReport<AccountId, BlockNumber, Balance> {
 	pub lane: LaneId,
 	pub message: MessageNonce,
