@@ -373,12 +373,22 @@ impl fp_self_contained::SelfContainedCall for Call {
 		}
 	}
 
+	fn pre_dispatch_self_contained(
+		&self,
+		info: &Self::SignedInfo,
+	) -> Option<Result<(), TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.pre_dispatch_self_contained(info),
+			_ => None,
+		}
+	}
+
 	fn apply_self_contained(
 		self,
 		info: Self::SignedInfo,
 	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 		match self {
-			call @ Call::Ethereum(pallet_ethereum::Call::transact(_)) => Some(call.dispatch(
+			call @ Call::Ethereum(dvm_ethereum::Call::transact { .. }) => Some(call.dispatch(
 				Origin::from(dvm_ethereum::RawOrigin::EthereumTransaction(info)),
 			)),
 			_ => None,

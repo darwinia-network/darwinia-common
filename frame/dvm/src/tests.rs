@@ -20,19 +20,25 @@
 use array_bytes::{bytes2hex, hex2bytes_unchecked};
 use codec::Decode;
 use ethabi::{Function, Param, ParamType, StateMutability, Token};
-use ethereum::TransactionSignature;
-use evm::ExitSucceed;
+use ethereum::{TransactionAction, TransactionSignature, TransactionV0};
+use evm::{ExitReason, ExitSucceed};
 use std::str::FromStr;
 // --- darwinia-network ---
 use crate::{
 	account_basic::{RemainBalanceOp, RingRemainBalance},
-	Call, *,
+	mock::{Event, *},
+	CallOrCreateInfo, Config, Error, InternalTransactHandler, RawOrigin, ValidTransactionBuilder,
+	H160, H256, U256,
 };
+use darwinia_evm::AccountBasic;
 use darwinia_support::evm::{decimal_convert, IntoAccountId, IntoH160, TRANSFER_ADDR};
-use mock::*;
 // --- paritytech ---
 use frame_support::{assert_err, assert_noop, assert_ok, unsigned::ValidateUnsigned};
-use sp_runtime::transaction_validity::{InvalidTransaction, TransactionSource};
+use sp_runtime::{
+	traits::Applyable,
+	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidityError},
+	DispatchError,
+};
 
 // This ERC-20 contract mints the maximum amount of tokens to the contract creator.
 // pragma solidity ^0.5.0;
@@ -300,56 +306,114 @@ fn transaction_without_enough_gas_should_not_work() {
 	});
 }
 
-// #[test]
-// fn transaction_with_invalid_nonce_should_not_work() {
-// 	let (pairs, mut ext) = new_test_ext(1);
-// 	let alice = &pairs[0];
+#[test]
+fn transaction_with_to_low_nonce_should_not_work() {
+	let (pairs, mut ext) = new_test_ext(1);
+	let alice = &pairs[0];
 
-// 	ext.execute_with(|| {
-// 		// nonce is 0
-// 		let mut transaction = creation_contract(ERC20_CONTRACT_BYTECODE, 0);
-// 		transaction.nonce = U256::from(1);
+	ext.execute_with(|| {
+		// nonce is 0
+		let mut transaction = creation_contract(ERC20_CONTRACT_BYTECODE, 0);
+		transaction.nonce = U256::from(1);
 
-// 		let signed_transaction = transaction.sign(&alice.private_key);
-// 		let call = crate::Call::<Test>::transact { signed_transaction };
-// 		let source = call.check_self_contained().unwrap().unwrap();
+		let signed_transaction = transaction.sign(&alice.private_key);
+		let call = crate::Call::<Test>::transact {
+			transaction: signed_transaction,
+		};
+		let source = call.check_self_contained().unwrap().unwrap();
 
-// 		assert_eq!(
-// 			call.validate_self_contained(&source).unwrap(),
-// 			ValidTransactionBuilder::default()
-// 				.and_provides((alice.address, U256::from(1)))
-// 				.priority(1u64)
-// 				.and_requires((alice.address, U256::from(0)))
-// 				.build()
-// 		);
-// 		let t = sign_transaction(alice, creation_contract(ERC20_CONTRACT_BYTECODE, 0));
+		assert_eq!(
+			call.validate_self_contained(&source).unwrap(),
+			ValidTransactionBuilder::default()
+				.and_provides((alice.address, U256::from(1)))
+				.priority(1u64)
+				.and_requires((alice.address, U256::from(0)))
+				.build()
+		);
+		let t = sign_transaction(alice, creation_contract(ERC20_CONTRACT_BYTECODE, 0));
 
-// 		// nonce is 1
-// 		assert_ok!(Ethereum::execute(
-// 			alice.address,
-// 			t.input,
-// 			t.value,
-// 			t.gas_limit,
-// 			Some(t.gas_price),
-// 			Some(t.nonce),
-// 			t.action,
-// 			None,
-// 		));
+		// nonce is 1
+		assert_ok!(Ethereum::execute(
+			alice.address,
+			t.input,
+			t.value,
+			t.gas_limit,
+			Some(t.gas_price),
+			Some(t.nonce),
+			t.action,
+			None,
+		));
 
-// 		transaction.nonce = U256::from(0);
-// 		let signed_transaction = transaction.sign(&alice.private_key);
+		transaction.nonce = U256::from(0);
+		let signed_transaction_2 = transaction.sign(&alice.private_key);
+		let call2 = crate::Call::<Test>::transact {
+			transaction: signed_transaction_2,
+		};
+		let source2 = call2.check_self_contained().unwrap().unwrap();
 
-// 		assert_err!(
-// 			Ethereum::validate_unsigned(
-// 				TransactionSource::External,
-// 				&Call::transact {
-// 					transaction: signed_transaction
-// 				}
-// 			),
-// 			InvalidTransaction::Stale
-// 		);
-// 	});
-// }
+		assert_err!(
+			call2.validate_self_contained(&source2).unwrap(),
+			InvalidTransaction::Stale
+		);
+	});
+}
+
+#[test]
+fn transaction_with_to_hight_nonce_should_fail_in_block() {
+	let (pairs, mut ext) = new_test_ext(1);
+	let alice = &pairs[0];
+
+	ext.execute_with(|| {
+		let mut transaction = creation_contract(ERC20_CONTRACT_BYTECODE, 0);
+		transaction.nonce = U256::from(1);
+
+		let signed = transaction.sign(&alice.private_key);
+		let call = crate::Call::<Test>::transact {
+			transaction: signed,
+		};
+		let source = call.check_self_contained().unwrap().unwrap();
+		let extrinsic = fp_self_contained::CheckedExtrinsic::<_, _, SignedExtra, _> {
+			signed: fp_self_contained::CheckedSignature::SelfContained(source),
+			function: Call::Ethereum(call),
+		};
+		use frame_support::weights::GetDispatchInfo as _;
+		let dispatch_info = extrinsic.get_dispatch_info();
+		assert_err!(
+			extrinsic.apply::<Test>(&dispatch_info, 0),
+			TransactionValidityError::Invalid(InvalidTransaction::Future)
+		);
+	});
+}
+
+#[test]
+fn transaction_with_invalid_chain_id_should_fail_in_block() {
+	let (pairs, mut ext) = new_test_ext(1);
+	let alice = &pairs[0];
+
+	ext.execute_with(|| {
+		let mut transaction = creation_contract(ERC20_CONTRACT_BYTECODE, 0);
+		transaction.nonce = U256::from(1);
+
+		let signed = transaction.sign_with_chain_id(&alice.private_key, 1);
+
+		let call = crate::Call::<Test>::transact {
+			transaction: signed,
+		};
+		let source = call.check_self_contained().unwrap().unwrap();
+		let extrinsic = fp_self_contained::CheckedExtrinsic::<_, _, SignedExtra, _> {
+			signed: fp_self_contained::CheckedSignature::SelfContained(source),
+			function: Call::Ethereum(call),
+		};
+		use frame_support::weights::GetDispatchInfo as _;
+		let dispatch_info = extrinsic.get_dispatch_info();
+		assert_err!(
+			extrinsic.apply::<Test>(&dispatch_info, 0),
+			TransactionValidityError::Invalid(InvalidTransaction::Custom(
+				crate::TransactionValidationError::InvalidChainId as u8,
+			))
+		);
+	});
+}
 
 #[test]
 fn contract_constructor_should_get_executed() {
@@ -790,7 +854,7 @@ fn internal_transaction_should_works() {
 		// Call foo use internal transaction
 		assert_ok!(Ethereum::internal_transact(contract_address, foo.clone()));
 		assert_eq!(System::event_count(), 1);
-		System::assert_last_event(mock::Event::Ethereum(crate::Event::Executed(
+		System::assert_last_event(Event::Ethereum(crate::Event::Executed(
 			<Test as self::Config>::PalletId::get().into_h160(),
 			contract_address,
 			H256::from_str("0xabdebc2d8a79e4c40d6d66c614bafc2be138d4fc0fd21e28d318f3a032cbee39")
@@ -799,7 +863,7 @@ fn internal_transaction_should_works() {
 		)));
 
 		assert_ok!(Ethereum::internal_transact(contract_address, foo));
-		System::assert_last_event(mock::Event::Ethereum(crate::Event::Executed(
+		System::assert_last_event(Event::Ethereum(crate::Event::Executed(
 			<Test as self::Config>::PalletId::get().into_h160(),
 			contract_address,
 			H256::from_str("0x2028ce5eef8d4531d4f955c9860b28f9e8cd596b17fea2326d2be49a8d3dc7ac")
