@@ -227,14 +227,14 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Verify signed relayed headers and finalize authority set
-		#[pallet::weight(<T as Config>::WeightInfo::verify_and_update_authority_set_signed())]
-		pub fn verify_and_update_authority_set_signed(
+		#[pallet::weight(<T as Config>::WeightInfo::relay_finalized_epoch_header())]
+		pub fn relay_finalized_epoch_header(
 			origin: OriginFor<T>,
-			headers: Vec<BSCHeader>,
+			proof: Vec<BSCHeader>,
 		) -> DispatchResultWithPostInfo {
 			let submitter = frame_system::ensure_signed(origin)?;
 
-			match Self::verify_and_update_authority_set(&headers) {
+			match Self::verify_and_update_authority_set_and_checkpoint(&proof) {
 				Ok(new_authority_set) => {
 					T::OnHeadersSubmitted::on_valid_authority_finalized(
 						submitter,
@@ -415,7 +415,7 @@ pub mod pallet {
 		}
 
 		/// Verify unsigned relayed headers and finalize authority set
-		pub fn verify_and_update_authority_set(
+		pub fn verify_and_update_authority_set_and_checkpoint(
 			headers: &[BSCHeader],
 		) -> Result<Vec<Address>, DispatchError> {
 			// get finalized authority set from storage
