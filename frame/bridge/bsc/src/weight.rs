@@ -53,7 +53,7 @@ use sp_std::marker::PhantomData;
 
 /// Weight functions needed for darwinia_bridge_bsc.
 pub trait WeightInfo {
-	fn verify_and_update_authority_set_signed() -> Weight;
+	fn relay_finalized_epoch_header() -> Weight;
 }
 
 /// Weights for darwinia_bridge_bsc using the Substrate node and recommended hardware.
@@ -63,7 +63,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: BSC FinalizedCheckpoint (r:1 w:1)
 	// Storage: BSC Authorities (r:1 w:1)
 	// Storage: BSC AuthoritiesOfRound (r:0 w:1)
-	fn verify_and_update_authority_set_signed() -> Weight {
+	fn relay_finalized_epoch_header() -> Weight {
 		(1_626_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
@@ -76,7 +76,7 @@ impl WeightInfo for () {
 	// Storage: BSC FinalizedCheckpoint (r:1 w:1)
 	// Storage: BSC Authorities (r:1 w:1)
 	// Storage: BSC AuthoritiesOfRound (r:0 w:1)
-	fn verify_and_update_authority_set_signed() -> Weight {
+	fn relay_finalized_epoch_header() -> Weight {
 		(1_626_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))

@@ -78,7 +78,7 @@ fn extract_authorities_should_work() {
 }
 
 #[test]
-fn verify_and_update_authority_set_signed_should_fail() {
+fn relay_finalized_epoch_header_should_fail() {
 	ExtBuilder::default().build().execute_with(|| {
 		let header = serde_json::from_str::<BSCHeader>(
 			r#"{
@@ -103,14 +103,14 @@ fn verify_and_update_authority_set_signed_should_fail() {
 		).unwrap();
 
 		assert_noop!(
-			BSC::verify_and_update_authority_set_signed(Origin::signed(1), vec![header]),
+			BSC::relay_finalized_epoch_header(Origin::signed(1), vec![header]),
 			BSCError::InvalidHeadersSize
 		);
 	});
 }
 
 #[test]
-fn verify_and_update_authority_set_signed_should_work() {
+fn relay_finalized_epoch_header_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
 		let headers_7706000_to_7706010 = [
 		r#"{
@@ -324,7 +324,7 @@ fn verify_and_update_authority_set_signed_should_work() {
 		}"#,
 	].iter().map(|json| serde_json::from_str(json).unwrap()).collect::<Vec<BSCHeader>>();
 
-		assert_ok!(BSC::verify_and_update_authority_set_signed(
+		assert_ok!(BSC::relay_finalized_epoch_header(
 			Origin::signed(1),
 			headers_7706000_to_7706010,
 		));
@@ -468,7 +468,7 @@ fn verify_and_update_authority_set_signed_should_work() {
 		}"#,
 		].iter().map(|json| serde_json::from_str(json).unwrap()).collect::<Vec<BSCHeader>>();
 
-		assert_ok!(BSC::verify_and_update_authority_set_signed(
+		assert_ok!(BSC::relay_finalized_epoch_header(
 			Origin::signed(1),
 			testnet_headers_9516600_to_9516606,
 		));
