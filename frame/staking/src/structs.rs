@@ -6,6 +6,7 @@ use codec::{Decode, Encode, HasCompact};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 // --- paritytech ---
+use frame_election_provider_support::*;
 use frame_support::WeakBoundedVec;
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, Convert, Saturating, Zero},
@@ -494,5 +495,79 @@ pub struct StashOf<T>(PhantomData<T>);
 impl<T: Config> Convert<AccountId<T>, Option<AccountId<T>>> for StashOf<T> {
 	fn convert(controller: AccountId<T>) -> Option<AccountId<T>> {
 		<Pallet<T>>::ledger(&controller).map(|l| l.stash)
+	}
+}
+
+impl<T: Config> VoteWeightProvider<T::AccountId> for Pallet<T> {
+	fn vote_weight(who: &T::AccountId) -> VoteWeight {
+		Self::weight_of(who)
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn set_vote_weight_of(who: &T::AccountId, weight: VoteWeight) {
+		// this will clearly results in an inconsistent state, but it should not matter for a
+		// benchmark.
+		use sp_std::convert::TryInto;
+		let active: BalanceOf<T> = weight.try_into().map_err(|_| ()).unwrap();
+		let mut ledger = Self::ledger(who).unwrap_or_default();
+		ledger.active = active;
+		<Ledger<T>>::insert(who, ledger);
+		<Bonded<T>>::insert(who, who);
+
+		// also, we play a trick to make sure that a issuance based-`CurrencyToVote` behaves well:
+		// This will make sure that total issuance is zero, thus the currency to vote will be a 1-1
+		// conversion.
+		let imbalance = T::Currency::burn(T::Currency::total_issuance());
+		// kinda ugly, but gets the job done. The fact that this works here is a HUGE exception.
+		// Don't try this pattern in other places.
+		sp_std::mem::forget(imbalance);
+	}
+}
+
+/// A simple voter list implementation that does not require any additional pallets. Note, this
+/// does not provided nominators in sorted ordered. If you desire nominators in a sorted order take
+/// a look at [`pallet-bags-list].
+pub struct UseNominatorsMap<T>(sp_std::marker::PhantomData<T>);
+impl<T: Config> SortedListProvider<T::AccountId> for UseNominatorsMap<T> {
+	type Error = ();
+
+	/// Returns iterator over voter list, which can have `take` called on it.
+	fn iter() -> Box<dyn Iterator<Item = T::AccountId>> {
+		Box::new(<Nominators<T>>::iter().map(|(n, _)| n))
+	}
+	fn count() -> u32 {
+		<CounterForNominators<T>>::get()
+	}
+	fn contains(id: &T::AccountId) -> bool {
+		<Nominators<T>>::contains_key(id)
+	}
+	fn on_insert(_: T::AccountId, _weight: VoteWeight) -> Result<(), Self::Error> {
+		// nothing to do on insert.
+		Ok(())
+	}
+	fn on_update(_: &T::AccountId, _weight: VoteWeight) {
+		// nothing to do on update.
+	}
+	fn on_remove(_: &T::AccountId) {
+		// nothing to do on remove.
+	}
+	fn regenerate(
+		_: impl IntoIterator<Item = T::AccountId>,
+		_: Box<dyn Fn(&T::AccountId) -> VoteWeight>,
+	) -> u32 {
+		// nothing to do upon regenerate.
+		0
+	}
+	fn sanity_check() -> Result<(), &'static str> {
+		Ok(())
+	}
+	fn clear(maybe_count: Option<u32>) -> u32 {
+		<Nominators<T>>::remove_all(maybe_count);
+		if let Some(count) = maybe_count {
+			<CounterForNominators<T>>::mutate(|noms| *noms - count);
+			count
+		} else {
+			<CounterForNominators<T>>::take()
+		}
 	}
 }
