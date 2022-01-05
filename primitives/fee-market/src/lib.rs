@@ -189,7 +189,7 @@ pub struct PriorRelayer<AccountId, BlockNumber, Balance> {
 }
 impl<AccountId, BlockNumber, Balance> PriorRelayer<AccountId, BlockNumber, Balance>
 where
-	BlockNumber: sp_std::ops::Add<Output = BlockNumber> + Clone,
+	BlockNumber: Copy + AtLeast32BitUnsigned,
 {
 	pub fn new(
 		id: AccountId,
@@ -201,7 +201,7 @@ where
 			id,
 			fee,
 			valid_range: Range {
-				start: start_time.clone(),
+				start: start_time,
 				end: start_time + slot_time,
 			},
 		}
