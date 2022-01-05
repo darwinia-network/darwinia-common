@@ -92,7 +92,7 @@ pub fn development_config() -> ChainSpec {
 
 	ChainSpec::from_genesis(
 		"Template",
-		"template",
+		"template_dev",
 		ChainType::Development,
 		genesis,
 		vec![],

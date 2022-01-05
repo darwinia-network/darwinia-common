@@ -581,7 +581,7 @@ pub fn development_config() -> ChainSpec {
 
 	ChainSpec::from_genesis(
 		"Pangolin",
-		"pangolin",
+		"pangolin_dev",
 		ChainType::Development,
 		genesis,
 		vec![],
@@ -800,7 +800,7 @@ pub fn local_testnet_config() -> ChainSpec {
 
 	ChainSpec::from_genesis(
 		"Pangolin",
-		"pangolin",
+		"pangolin_dev",
 		ChainType::Development,
 		genesis,
 		vec![
