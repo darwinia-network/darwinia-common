@@ -213,6 +213,42 @@ where
 	}
 }
 
+/// The detail information about slash behavior
+#[derive(Clone, Encode, Decode, Eq, PartialEq, Debug)]
+pub struct SlashReport<AccountId, BlockNumber, Balance> {
+	pub lane: LaneId,
+	pub message: MessageNonce,
+	pub sent_time: BlockNumber,
+	pub confirm_time: Option<BlockNumber>,
+	pub delay_time: Option<BlockNumber>,
+	pub account_id: AccountId,
+	pub amount: Balance,
+}
+
+impl<AccountId, BlockNumber, Balance> SlashReport<AccountId, BlockNumber, Balance>
+where
+	BlockNumber:
+		Add<Output = BlockNumber> + Copy + AddAssign + PartialOrd + Sub<Output = BlockNumber>,
+	Balance: Copy + PartialOrd + Default,
+	AccountId: Clone + PartialEq,
+{
+	pub fn new(
+		order: &Order<AccountId, BlockNumber, Balance>,
+		account_id: AccountId,
+		amount: Balance,
+	) -> Self {
+		Self {
+			lane: order.lane,
+			message: order.message,
+			sent_time: order.sent_time,
+			confirm_time: order.confirm_time,
+			delay_time: order.delivery_delay(),
+			account_id,
+			amount,
+		}
+	}
+}
+
 #[cfg(test)]
 mod test {
 	use super::*;

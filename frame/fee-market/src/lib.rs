@@ -47,7 +47,7 @@ use darwinia_support::{
 	balance::{LockFor, LockableCurrency},
 	AccountId,
 };
-use dp_fee::{Order, Relayer};
+use dp_fee::{Order, Relayer, SlashReport};
 
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 pub use pallet::*;
@@ -93,9 +93,10 @@ pub mod pallet {
 	}
 
 	#[pallet::event]
-	#[pallet::generate_deposit(fn deposit_event)]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	#[pallet::metadata(
 		T::AccountId = "AccountId",
+		T::BlockNumber = "BlockNumber",
 		RingBalance<T> = "RingBalance",
 	)]
 	pub enum Event<T: Config> {
@@ -111,6 +112,8 @@ pub mod pallet {
 		UpdateCollateralSlashProtect(RingBalance<T>),
 		/// Update market assigned relayers numbers. \[new_assigned_relayers_number\]
 		UpdateAssignedRelayersNumber(u32),
+		/// Slash report
+		FeeMarketSlash(SlashReport<T::AccountId, T::BlockNumber, RingBalance<T>>),
 	}
 
 	#[pallet::error]
@@ -375,7 +378,11 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Update relayer after slash occurred, this will changes RelayersMap storage. (Update market needed)
-	pub(crate) fn update_relayer_after_slash(who: &T::AccountId, new_collateral: RingBalance<T>) {
+	pub(crate) fn update_relayer_after_slash(
+		who: &T::AccountId,
+		new_collateral: RingBalance<T>,
+		report: SlashReport<T::AccountId, T::BlockNumber, RingBalance<T>>,
+	) {
 		T::RingCurrency::set_lock(
 			T::LockId::get(),
 			&who,
@@ -389,6 +396,7 @@ impl<T: Config> Pallet<T> {
 		});
 
 		Self::update_market();
+		Self::deposit_event(<Event<T>>::FeeMarketSlash(report));
 	}
 
 	/// Remove enrolled relayer, then update market fee. (Update market needed)

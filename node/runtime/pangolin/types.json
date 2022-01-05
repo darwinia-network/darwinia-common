@@ -208,6 +208,15 @@
 		"fee": "Balance",
 		"valid_range": "BlockNumber"
 	},
+	"SlashReport": {
+		"lane": "LaneId",
+		"message": "MessageNonce",
+		"sent_time": "BlockNumber",
+		"confirm_time": "BlockNumber",
+		"delay_time": "BlockNumber",
+		"account_id": "AccountId",
+		"amount": "Balance"
+	},
 	"AddressT": "[u8; 20; AddressT]",
 	"__[pallet.header-mmr]__": null,
 	"NodeIndex": "u64",
