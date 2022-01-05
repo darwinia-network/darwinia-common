@@ -21,7 +21,7 @@ use std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 use crate::types::{convert_memory, single::RawStepLog, ContextType};
 use dp_evm_trace_events::{
 	runtime::{Capture, ExitReason},
-	Event, GasometerEvent, Listener as ListenerT, RuntimeEvent,
+	Event, GasometerEvent, Listener as ListenerT, RuntimeEvent, StepEventFilter,
 };
 
 #[derive(Debug)]
@@ -156,12 +156,22 @@ impl Listener {
 						memory: if self.disable_memory {
 							None
 						} else {
-							Some(memory.data.clone())
+							Some(
+								memory
+									.expect("memory data to not be filtered out")
+									.data
+									.clone(),
+							)
 						},
 						stack: if self.disable_stack {
 							None
 						} else {
-							Some(stack.data.clone())
+							Some(
+								stack
+									.expect("stack data to not be filtered out")
+									.data
+									.clone(),
+							)
 						},
 					});
 				}
@@ -289,5 +299,12 @@ impl ListenerT for Listener {
 			Event::Runtime(e) => self.runtime_event(e),
 			_ => {}
 		};
+	}
+
+	fn step_event_filter(&self) -> StepEventFilter {
+		StepEventFilter {
+			enable_memory: !self.disable_memory,
+			enable_stack: !self.disable_stack,
+		}
 	}
 }
