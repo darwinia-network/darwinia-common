@@ -67,7 +67,7 @@ where
 					BscSingleStorageVerifyParams::decode(dvm_parser.input).map_err(|_| {
 						ExitError::Other("decode single storage verify info failed".into())
 					})?;
-				let latest_header = darwinia_bridge_bsc::Pallet::<T>::latest_bsc_header();
+				let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
 				let proof = EthereumStorageProof::new(
 					params.lane_address,
 					params.storage_key,
@@ -75,7 +75,7 @@ where
 					params.storage_proof,
 				);
 				let storage_value =
-					EthereumStorage::<H256>::verify_storage_proof(latest_header.state_root, &proof)
+					EthereumStorage::<H256>::verify_storage_proof(finalized_header.state_root, &proof)
 						.map_err(|_| {
 							ExitError::Other("verify single storage proof failed".into())
 						})?;
@@ -86,7 +86,7 @@ where
 					BscMultiStorageVerifyParams::decode(dvm_parser.input).map_err(|_| {
 						ExitError::Other("decode multi storage verify info failed".into())
 					})?;
-				let latest_header = darwinia_bridge_bsc::Pallet::<T>::latest_bsc_header();
+				let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
 				let key_size = params.storage_keys.len();
 				if key_size != params.storage_proofs.len() {
 					return Err(ExitError::Other(
@@ -107,7 +107,7 @@ where
 							storage_proof,
 						);
 						let storage_value = EthereumStorage::<H256>::verify_storage_proof(
-							latest_header.state_root,
+							finalized_header.state_root,
 							&proof,
 						)
 						.map_err(|_| ExitError::Other("verify storage proof failed".into()))?;

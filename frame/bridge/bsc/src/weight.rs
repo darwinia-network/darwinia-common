@@ -54,7 +54,6 @@ use sp_std::marker::PhantomData;
 /// Weight functions needed for darwinia_bridge_bsc.
 pub trait WeightInfo {
 	fn verify_and_update_authority_set_signed() -> Weight;
-	fn submit_header() -> Weight;
 }
 
 /// Weights for darwinia_bridge_bsc using the Substrate node and recommended hardware.
@@ -69,18 +68,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
-	// Storage: BSC LatestBscHeader (r:1 w:1)
-	// Storage: BSC AuthoritiesOfRound (r:1 w:0)
-	// Storage: BSC Authorities (r:1 w:0)
-	// Storage: System Number (r:1 w:0)
-	// Storage: System ExecutionPhase (r:1 w:0)
-	// Storage: System EventCount (r:1 w:1)
-	// Storage: System Events (r:1 w:1)
-	fn submit_header() -> Weight {
-		(335_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(7 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
-	}
 }
 
 // For backwards compatibility and tests
@@ -93,17 +80,5 @@ impl WeightInfo for () {
 		(1_626_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
-	}
-	// Storage: BSC LatestBscHeader (r:1 w:1)
-	// Storage: BSC AuthoritiesOfRound (r:1 w:0)
-	// Storage: BSC Authorities (r:1 w:0)
-	// Storage: System Number (r:1 w:0)
-	// Storage: System ExecutionPhase (r:1 w:0)
-	// Storage: System EventCount (r:1 w:1)
-	// Storage: System Events (r:1 w:1)
-	fn submit_header() -> Weight {
-		(335_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
 }

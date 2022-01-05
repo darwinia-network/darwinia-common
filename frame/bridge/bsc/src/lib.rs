@@ -66,8 +66,6 @@
 //!    "id": 83
 //! }
 //!```
-//! If you only want to verify a single header, use verify_header fn is enough. The important tip is the header's number you want verify should greater
-//! than genesis header, or the answer will be NO.
 //! According to the official doc of Binance Smart Chain, when the authority set changed at checkpoint header, the new authority set is not taken as finalized immediately.
 //! We will wait(accept and verify) N / 2 blocks(only headers) to make sure it's safe to finalize the new authority set. N is the authority set size.
 
@@ -101,8 +99,6 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// BSC configuration.
 		type BSCConfiguration: Get<BSCConfiguration>;
 		/// Handler for headers submission result.
@@ -179,18 +175,8 @@ pub mod pallet {
 		/// Recover pubkey from signature error
 		RecoverPubkeyFail,
 
-		/// Older header should be rejected
-		RejectOldHeader,
-
 		/// Verfiy Storage Proof Failed
 		VerifyStorageFail,
-	}
-
-	#[pallet::event]
-	#[pallet::generate_deposit(fn deposit_event)]
-	pub enum Event<T: Config> {
-		/// New bsc header submitted \[header\]
-		NewHeaderUpdated(BSCHeader),
 	}
 
 	#[pallet::storage]
@@ -200,10 +186,6 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn finalized_checkpoint)]
 	pub type FinalizedCheckpoint<T> = StorageValue<_, BSCHeader, ValueQuery>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn latest_bsc_header)]
-	pub type LatestBscHeader<T> = StorageValue<_, BSCHeader, ValueQuery>;
 
 	/// [`Authorities`] is the set of qualified authorities that currently active or activated in previous rounds
 	/// this was added to track the older qualified authorities, to make sure we can verify a older header
@@ -244,20 +226,6 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Verify unsigned relayed headers and finalize authority set
-		#[pallet::weight(0)]
-		pub fn verify_and_update_authority_set_unsigned(
-			origin: OriginFor<T>,
-			headers: Vec<BSCHeader>,
-		) -> DispatchResultWithPostInfo {
-			// ensure not signed
-			frame_system::ensure_none(origin)?;
-
-			Self::verify_and_update_authority_set(&headers)?;
-
-			Ok(().into())
-		}
-
 		/// Verify signed relayed headers and finalize authority set
 		#[pallet::weight(<T as Config>::WeightInfo::verify_and_update_authority_set_signed())]
 		pub fn verify_and_update_authority_set_signed(
@@ -280,23 +248,6 @@ pub mod pallet {
 				}
 			}
 
-			Ok(().into())
-		}
-
-		#[pallet::weight(<T as Config>::WeightInfo::submit_header())]
-		pub fn submit_header(
-			origin: OriginFor<T>,
-			header: BSCHeader,
-		) -> DispatchResultWithPostInfo {
-			ensure_signed(origin)?;
-			let latest_header = <LatestBscHeader<T>>::get();
-			ensure!(
-				latest_header.number < header.number,
-				<Error<T>>::RejectOldHeader
-			);
-			Self::verify_header(&header)?;
-			<LatestBscHeader<T>>::put(&header);
-			Self::deposit_event(Event::NewHeaderUpdated(header));
 			Ok(().into())
 		}
 	}
@@ -463,40 +414,6 @@ pub mod pallet {
 			Ok(signers)
 		}
 
-		/// Verify single header
-		/// The header number should in the range `[genesis_header.number, finalized_checkpoint.number + N]`
-		/// Before the first call of verify_and_update_authority_set extrinsic, genesis_header == finalized_checkpoint
-		pub fn verify_header(header: &BSCHeader) -> DispatchResult {
-			let cfg = T::BSCConfiguration::get();
-			// ensure the number is in the range
-			let round = header.number / cfg.epoch_length;
-
-			ensure!(
-				<AuthoritiesOfRound<T>>::contains_key(round),
-				// it could be the signer which signed your header has not been finalized yet
-				// or your header.number is less than the genesis header number
-				<Error::<T>>::RidiculousNumber
-			);
-
-			Self::contextless_checks(&cfg, header)?;
-
-			// get index vec
-			let authorities_of_round = <AuthoritiesOfRound<T>>::get(round);
-			// get all authorities
-			let authorities = <Authorities<T>>::get();
-			// filter authorities of this round out
-			let signers = authorities_of_round
-				.into_iter()
-				.map(|i| authorities[i as usize])
-				.collect::<Vec<_>>();
-			// check signer
-			let signer = Self::recover_creator(cfg.chain_id, header)?;
-
-			ensure!(contains(&signers, signer), <Error::<T>>::InvalidSigner);
-
-			Ok(())
-		}
-
 		/// Verify unsigned relayed headers and finalize authority set
 		pub fn verify_and_update_authority_set(
 			headers: &[BSCHeader],
@@ -653,9 +570,9 @@ pub mod pallet {
 
 	impl<T: Config, S: Decodable> StorageVerifier<S> for Pallet<T> {
 		fn verify_storage(proof: &EthereumStorageProof) -> Result<S, DispatchError> {
-			let latest_header = <LatestBscHeader<T>>::get();
+			let finalized_header = <FinalizedCheckpoint<T>>::get();
 			let storage =
-				EthereumStorage::<S>::verify_storage_proof(latest_header.state_root, proof)
+				EthereumStorage::<S>::verify_storage_proof(finalized_header.state_root, proof)
 					.map_err(|_| <Error<T>>::VerifyStorageFail)?;
 			Ok(storage.0)
 		}
