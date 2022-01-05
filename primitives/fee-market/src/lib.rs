@@ -254,14 +254,20 @@ mod test {
 	const TEST_MESSAGE_NONCE: MessageNonce = 0;
 
 	#[test]
-	fn test_multi_relayers_sort() {
-		let r1 = <Relayer<AccountId, Balance>>::new(1, 100, 30);
-		let r2 = <Relayer<AccountId, Balance>>::new(2, 100, 40);
-		assert!(r1 < r2);
+	fn relayer_ord_should_work() {
+		let mut relayers = vec![
+			<Relayer<AccountId, Balance>>::new(1, 100, 30),
+			<Relayer<AccountId, Balance>>::new(2, 100, 40),
+			<Relayer<AccountId, Balance>>::new(3, 150, 30),
+			<Relayer<AccountId, Balance>>::new(4, 100, 30),
+		];
 
-		let r3 = <Relayer<AccountId, Balance>>::new(3, 150, 30);
-		let r4 = <Relayer<AccountId, Balance>>::new(4, 100, 30);
-		assert!(r3 < r4);
+		relayers.sort();
+
+		assert_eq!(
+			relayers.into_iter().map(|r| r.id).collect::<Vec<_>>(),
+			vec![3, 1, 4, 2]
+		);
 	}
 
 	#[test]
