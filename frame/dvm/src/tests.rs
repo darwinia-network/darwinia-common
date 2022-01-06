@@ -20,7 +20,7 @@
 use array_bytes::{bytes2hex, hex2bytes_unchecked};
 use codec::Decode;
 use ethabi::{Function, Param, ParamType, StateMutability, Token};
-use ethereum::{TransactionAction, TransactionSignature, TransactionV0};
+use ethereum::{TransactionAction, TransactionV0};
 use evm::{ExitReason, ExitSucceed};
 use std::str::FromStr;
 // --- darwinia-network ---
@@ -33,10 +33,10 @@ use crate::{
 use darwinia_evm::AccountBasic;
 use darwinia_support::evm::{decimal_convert, IntoAccountId, IntoH160, TRANSFER_ADDR};
 // --- paritytech ---
-use frame_support::{assert_err, assert_noop, assert_ok, unsigned::ValidateUnsigned};
+use frame_support::{assert_err, assert_ok, weights::GetDispatchInfo as _};
 use sp_runtime::{
 	traits::Applyable,
-	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidityError},
+	transaction_validity::{InvalidTransaction, TransactionValidityError},
 	DispatchError,
 };
 
@@ -359,7 +359,7 @@ fn transaction_with_to_low_nonce_should_not_work() {
 }
 
 #[test]
-fn transaction_with_to_hight_nonce_should_fail_in_block() {
+fn transaction_with_too_high_nonce_should_fail_in_block() {
 	let (pairs, mut ext) = new_test_ext(1);
 	let alice = &pairs[0];
 
@@ -376,7 +376,6 @@ fn transaction_with_to_hight_nonce_should_fail_in_block() {
 			signed: fp_self_contained::CheckedSignature::SelfContained(source),
 			function: Call::Ethereum(call),
 		};
-		use frame_support::weights::GetDispatchInfo as _;
 		let dispatch_info = extrinsic.get_dispatch_info();
 		assert_err!(
 			extrinsic.apply::<Test>(&dispatch_info, 0),
@@ -404,7 +403,6 @@ fn transaction_with_invalid_chain_id_should_fail_in_block() {
 			signed: fp_self_contained::CheckedSignature::SelfContained(source),
 			function: Call::Ethereum(call),
 		};
-		use frame_support::weights::GetDispatchInfo as _;
 		let dispatch_info = extrinsic.get_dispatch_info();
 		assert_err!(
 			extrinsic.apply::<Test>(&dispatch_info, 0),
@@ -451,8 +449,6 @@ fn source_should_be_derived_from_signature() {
 	let alice_storage_address = storage_address(alice.address, H256::zero());
 
 	ext.execute_with(|| {
-		let mut transaction = creation_contract(ERC20_CONTRACT_BYTECODE, 0);
-
 		Ethereum::transact(
 			RawOrigin::EthereumTransaction(alice.address).into(),
 			sign_transaction(alice, creation_contract(ERC20_CONTRACT_BYTECODE, 0)),

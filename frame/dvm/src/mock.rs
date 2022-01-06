@@ -19,7 +19,7 @@
 //! Test utilities
 
 // --- crates.io ---
-use codec::{Decode, Encode, MaxEncodedLen, WrapperTypeDecode, WrapperTypeEncode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use ethereum::{TransactionAction, TransactionSignature};
 use evm::{executor::PrecompileOutput, Context, ExitError};
 use rlp::RlpStream;
@@ -35,7 +35,7 @@ use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup, SignedExtension},
+	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32, Perbill, RuntimeDebug,
 };
 use sp_std::prelude::*;
