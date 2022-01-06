@@ -792,9 +792,7 @@ where
 		};
 
 		let chain_id = match self.chain_id() {
-			Ok(Some(chain_id)) => chain_id.as_u64(),
-			// TODO: check it later
-			Ok(None) => return Box::pin(future::err(internal_err("chain id not available"))),
+			Ok(chain_id) => chain_id,
 			Err(e) => return Box::pin(future::err(e)),
 		};
 
@@ -808,7 +806,7 @@ where
 				Some(to) => TransactionAction::Call(to),
 				None => TransactionAction::Create,
 			},
-			chain_id: Some(chain_id),
+			chain_id: chain_id.map(|s| s.as_u64()),
 		};
 
 		let mut transaction = None;
