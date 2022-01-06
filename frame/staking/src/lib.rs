@@ -452,7 +452,7 @@ pub mod pallet {
 		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
 		/// it will not be emitted for staking rewards when they are added to stake.
 		RingBonded(AccountId<T>, RingBalance<T>, TsInMs, TsInMs),
-		/// An account has bonded this amount. \[amount, start, end\]
+		/// An account has bonded this amount. \[account, amount, start, end\]
 		///
 		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
 		/// it will not be emitted for staking rewards when they are added to stake.
