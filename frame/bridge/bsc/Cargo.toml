@@ -29,9 +29,9 @@ sp-std             = { default-features = false, git = "https://github.com/darwi
 [dev-dependencies]
 # crates.io
 array-bytes = { version = "1.4" }
+serde_json  = { version = "1.0" }
 # paritytech
 pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-serde_json       = { version = "1.0" }
 
 [features]
 default = ["std"]
