@@ -233,9 +233,6 @@ pub mod pallet {
 					Self::apply_validated_transaction(source, transaction).expect(
 						"pre-block transaction execution failed; the block cannot be built",
 					);
-					// Self::rpc_transact(source, transaction).expect(
-					// 	"pre-block transaction verification failed; the block cannot be built",
-					// );
 				}
 			}
 			0
@@ -254,7 +251,6 @@ pub mod pallet {
 			transaction: TransactionV0,
 		) -> DispatchResultWithPostInfo {
 			let source = ensure_ethereum_transaction(origin)?;
-			// Self::rpc_transact(source, transaction)
 			Self::apply_validated_transaction(source, transaction)
 		}
 
@@ -395,9 +391,7 @@ impl<T: Config> Pallet<T> {
 			.into());
 		}
 
-		// let account_data = pallet_evm::Pallet::<T>::account_basic(&origin);
 		let account_data = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&origin);
-
 		let fee = transaction.gas_price.saturating_mul(transaction.gas_limit);
 		let total_payment = transaction.value.saturating_add(fee);
 		if account_data.balance < total_payment {
@@ -405,7 +399,6 @@ impl<T: Config> Pallet<T> {
 		}
 
 		let min_gas_price = T::FeeCalculator::min_gas_price();
-
 		if transaction.gas_price < min_gas_price {
 			return Err(InvalidTransaction::Payment.into());
 		}
@@ -421,7 +414,6 @@ impl<T: Config> Pallet<T> {
 		transaction: &TransactionV0,
 	) -> TransactionValidity {
 		let account_nonce = Self::validate_transaction_common(origin, transaction)?;
-
 		if transaction.nonce < account_nonce {
 			return Err(InvalidTransaction::Stale.into());
 		}
@@ -465,10 +457,9 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	/// Execute transaction from EthApi(network transaction)
+	/// Execute transaction from EthApi or PreLog Block
 	/// NOTE: For the rpc transaction, the execution will return ok(..) even when encounters error
-	/// from evm runner
-	// fn rpc_transact(source: H160, transaction: TransactionV0) -> DispatchResultWithPostInfo {
+	/// 	  from evm runner
 	fn apply_validated_transaction(
 		source: H160,
 		transaction: TransactionV0,

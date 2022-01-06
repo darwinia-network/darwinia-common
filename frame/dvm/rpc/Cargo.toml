@@ -1,4 +1,4 @@
-	[package]
+[package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "Runtime primitives for Ethereum RPC (web3) compatibility layer for Darwinia."
 edition     = "2021"
@@ -31,5 +31,5 @@ sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "
 sp-runtime = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-std     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 # frontier
-fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
-fp-evm      = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
+fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-evm      = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
