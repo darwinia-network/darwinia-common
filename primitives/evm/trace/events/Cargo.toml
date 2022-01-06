@@ -17,7 +17,7 @@ environmental  = { version = "1.1", default-features = false }
 ethereum       = { version = "0.10", default-features = false, features = ["with-codec"] }
 ethereum-types = { version = "0.12", default-features = false }
 evm            = { version = "0.30", default-features = false, features = ["with-codec"] }
-evm-gasometer  = { version = "0.30", default-features = false, features = ["tracing"] }
+evm-gasometer  = { version = "0.30", default-features = false }
 evm-runtime    = { version = "0.30", default-features = false }
 # paritytech
 sp-runtime-interface = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
