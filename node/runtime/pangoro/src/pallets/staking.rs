@@ -38,7 +38,7 @@ impl Config for Runtime {
 	type GenesisElectionProvider = GenesisElectionOf<Self>;
 	// Use the nominator map to iter voter AND no-ops for all SortedListProvider hooks. The migration
 	// to bags-list is a no-op, but the storage version will be updated.
-	type SortedListProvider = darwinia_staking::UseNominatorsMap<Runtime>;
+	type SortedListProvider = darwinia_staking::UseNominatorsMap<Self>;
 	type RingCurrency = Ring;
 	type RingRewardRemainder = ();
 	// send the slashed funds to the treasury.
