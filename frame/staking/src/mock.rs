@@ -270,6 +270,7 @@ impl Config for Test {
 	type Cap = Cap;
 	type TotalPower = TotalPower;
 	type WeightInfo = ();
+	type SortedListProvider = UseNominatorsMap<Self>;
 }
 
 impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
@@ -461,27 +462,27 @@ impl ExtBuilder {
 					11,
 					10,
 					self.balance_factor * 1000,
-					StakerStatus::<AccountId>::Validator,
+					<StakerStatus<AccountId>>::Validator,
 				),
 				(
 					21,
 					20,
 					self.balance_factor * 1000,
-					StakerStatus::<AccountId>::Validator,
+					<StakerStatus<AccountId>>::Validator,
 				),
 				// a loser validator
 				(
 					31,
 					30,
 					self.balance_factor * 500,
-					StakerStatus::<AccountId>::Validator,
+					<StakerStatus<AccountId>>::Validator,
 				),
 				// an idle validator
 				(
 					41,
 					40,
 					self.balance_factor * 1000,
-					StakerStatus::<AccountId>::Idle,
+					<StakerStatus<AccountId>>::Idle,
 				),
 			];
 			// optionally add a nominator
@@ -490,7 +491,7 @@ impl ExtBuilder {
 					101,
 					100,
 					self.balance_factor * 500,
-					StakerStatus::<AccountId>::Nominator(vec![11, 21]),
+					<StakerStatus<AccountId>>::Nominator(vec![11, 21]),
 				))
 			}
 			// replace any of the status if needed.
@@ -630,8 +631,14 @@ fn post_conditions() {
 fn check_count() {
 	let nominator_count = <Nominators<Test>>::iter().count() as u32;
 	let validator_count = <Validators<Test>>::iter().count() as u32;
+
 	assert_eq!(nominator_count, <CounterForNominators<Test>>::get());
 	assert_eq!(validator_count, <CounterForValidators<Test>>::get());
+
+	// the voters that the `SortedListProvider` list is storing for us.
+	let external_voters = <Test as Config>::SortedListProvider::count();
+
+	assert_eq!(external_voters, nominator_count);
 }
 
 fn check_ledgers() {

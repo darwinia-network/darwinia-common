@@ -340,7 +340,7 @@ pub fn development_config() -> ChainSpec {
 
 	ChainSpec::from_genesis(
 		"Pangoro",
-		"pangoro",
+		"pangoro_dev",
 		ChainType::Development,
 		genesis,
 		vec![],

@@ -101,6 +101,13 @@
 //!
 //! An account can become a nominator via the [`nominate`](Call::nominate) call.
 //!
+//! #### Voting
+//!
+//! Staking is closely related to elections; actual validators are chosen from among all potential
+//! validators via election by the potential validators and nominators. To reduce use of the phrase
+//! "potential validators and nominators", we often use the term **voters**, who are simply
+//! the union of potential validators and nominators.
+//!
 //! #### Rewards and Slash
 //!
 //! The **reward and slashing** procedure is the core of the Staking pallet, attempting to _embrace
@@ -303,7 +310,7 @@ pub use weights::*;
 #[frame_support::pallet]
 pub mod pallet {
 	// --- paritytech ---
-	use frame_election_provider_support::ElectionProvider;
+	use frame_election_provider_support::{ElectionProvider, *};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{Currency, EstimateNextNewSession, OnUnbalanced, UnixTime},
@@ -378,6 +385,11 @@ pub mod pallet {
 		/// their reward. This used to limit the i/o cost for the nominator payout.
 		#[pallet::constant]
 		type MaxNominatorRewardedPerValidator: Get<u32>;
+
+		/// Something that can provide a sorted list of voters in a somewhat sorted way. The
+		/// original use case for this was designed with [`pallet_bags_list::Pallet`] in mind. If
+		/// the bags-list is not desired, [`impls::UseNominatorsMap`] is likely the desired option.
+		type SortedListProvider: SortedListProvider<Self::AccountId>;
 
 		/// Number of eras that staked funds must remain bonded for.
 		#[pallet::constant]
@@ -895,6 +907,13 @@ pub mod pallet {
 			<PayoutFraction<T>>::put(self.payout_fraction);
 
 			for (stash, controller, ring_to_be_bonded, status) in &self.stakers {
+				log!(
+					trace,
+					"inserting genesis staker: {:?} => {:?} => {:?}",
+					stash,
+					ring_to_be_bonded,
+					status
+				);
 				assert!(
 					T::RingCurrency::free_balance(&stash) >= *ring_to_be_bonded,
 					"Stash does not have enough balance to bond.",
@@ -926,6 +945,13 @@ pub mod pallet {
 					T::RingCurrency::minimum_balance(),
 				);
 			}
+
+			// all voters are reported to the `SortedListProvider`.
+			assert_eq!(
+				T::SortedListProvider::count(),
+				<CounterForNominators<T>>::get(),
+				"not all genesis stakers were inserted into sorted list provider, something is wrong."
+			);
 		}
 	}
 
@@ -1115,7 +1141,7 @@ pub mod pallet {
 							Self::bond_ring(&stash, &controller, extra, promise_month, ledger)?;
 
 						Self::deposit_event(Event::RingBonded(
-							stash,
+							stash.clone(),
 							extra,
 							start_time,
 							expire_time,
@@ -1131,9 +1157,15 @@ pub mod pallet {
 						let extra = extra.min(max_additional);
 
 						Self::bond_kton(&controller, extra, ledger)?;
-						Self::deposit_event(Event::KtonBonded(stash, extra));
+						Self::deposit_event(Event::KtonBonded(stash.clone(), extra));
 					}
 				}
+			}
+
+			// update this staker in the sorted list, if they exist in it.
+			if T::SortedListProvider::contains(&stash) {
+				T::SortedListProvider::on_update(&stash, Self::weight_of(&stash));
+				debug_assert_eq!(T::SortedListProvider::sanity_check(), Ok(()));
 			}
 
 			Ok(())
@@ -1358,6 +1390,11 @@ pub mod pallet {
 			}
 
 			Self::update_ledger(&controller, &mut ledger);
+
+			// update this staker in the sorted list, if they exist in it.
+			if T::SortedListProvider::contains(&ledger.stash) {
+				T::SortedListProvider::on_update(&ledger.stash, Self::weight_of(&ledger.stash));
+			}
 
 			// TODO: https://github.com/darwinia-network/darwinia-common/issues/96
 			// FIXME: https://github.com/darwinia-network/darwinia-common/issues/121
@@ -2008,7 +2045,10 @@ pub mod pallet {
 
 			Self::update_ledger(&controller, &mut ledger);
 
-			if !rebonded_ring.is_zero() {
+			let ring_rebonded = !rebonded_ring.is_zero();
+			let kton_rebonded = !rebonded_kton.is_zero();
+
+			if ring_rebonded {
 				let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 
 				Self::deposit_event(Event::RingBonded(
@@ -2018,8 +2058,13 @@ pub mod pallet {
 					now,
 				));
 			}
-			if !rebonded_kton.is_zero() {
-				Self::deposit_event(Event::KtonBonded(ledger.stash, rebonded_kton));
+			if kton_rebonded {
+				Self::deposit_event(Event::KtonBonded(ledger.stash.clone(), rebonded_kton));
+			}
+			if ring_rebonded && kton_rebonded {
+				if T::SortedListProvider::contains(&ledger.stash) {
+					T::SortedListProvider::on_update(&ledger.stash, Self::weight_of(&ledger.stash));
+				}
 			}
 
 			let removed_unbondings = 1.saturating_add(initial_unbondings).saturating_sub(
@@ -2203,9 +2248,6 @@ pub mod pallet {
 		///
 		/// This can be helpful if bond requirements are updated, and we need to remove old users
 		/// who do not satisfy these requirements.
-		///
-		// TODO: Maybe we can deprecate `chill` in the future.
-		// https://github.com/paritytech/substrate/issues/9111
 		#[pallet::weight(T::WeightInfo::chill_other())]
 		pub fn chill_other(origin: OriginFor<T>, controller: T::AccountId) -> DispatchResult {
 			// Anyone can call this function.

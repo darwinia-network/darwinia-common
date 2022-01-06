@@ -16,26 +16,23 @@
 // limitations under the License.
 #![cfg_attr(not(feature = "std"), no_std)]
 
+// --- core ---
+use core::{cmp::Ordering, ops::Range};
 // --- crates.io ---
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 // --- paritytech ---
 use bp_messages::{LaneId, MessageNonce};
-use frame_support::Parameter;
-use sp_std::{
-	cmp::{Ord, Ordering, PartialEq},
-	default::Default,
-	ops::{Add, AddAssign, Range, Sub},
-	vec::Vec,
-};
+use sp_runtime::{traits::AtLeast32BitUnsigned, RuntimeDebug};
+use sp_std::vec::Vec;
+
 /// Relayer who has enrolled the fee market
-#[derive(Clone, Debug, Eq, Encode, Decode, TypeInfo)]
+#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct Relayer<AccountId, Balance> {
 	pub id: AccountId,
 	pub collateral: Balance,
 	pub fee: Balance,
 }
-
 impl<AccountId, Balance> Relayer<AccountId, Balance> {
 	pub fn new(id: AccountId, collateral: Balance, fee: Balance) -> Relayer<AccountId, Balance> {
 		Relayer {
@@ -45,43 +42,39 @@ impl<AccountId, Balance> Relayer<AccountId, Balance> {
 		}
 	}
 }
-
-impl<AccountId: Parameter, Balance: PartialOrd> PartialOrd for Relayer<AccountId, Balance> {
+impl<AccountId, Balance> PartialOrd for Relayer<AccountId, Balance>
+where
+	AccountId: PartialEq,
+	Balance: Ord,
+{
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-		if self.fee == other.fee {
-			return other.collateral.partial_cmp(&self.collateral);
-		}
-		self.fee.partial_cmp(&other.fee)
+		Some(match self.fee.cmp(&other.fee) {
+			// We reverse the order here to turn the collateral value into rank.
+			//
+			// Use `other.cmp(self)` instead of `self.cmp(other)`.
+			Ordering::Equal => other.collateral.cmp(&self.collateral),
+			ordering => ordering,
+		})
 	}
 }
-
-impl<AccountId: Parameter, Balance: Ord> Ord for Relayer<AccountId, Balance> {
+impl<AccountId, Balance> Ord for Relayer<AccountId, Balance>
+where
+	AccountId: Eq,
+	Balance: Ord,
+{
 	fn cmp(&self, other: &Self) -> Ordering {
-		if self.fee == other.fee {
-			return self.collateral.cmp(&other.collateral);
-		}
-		self.fee.cmp(&other.fee)
-	}
-}
-
-impl<AccountId: PartialEq, Balance: PartialEq> PartialEq for Relayer<AccountId, Balance> {
-	fn eq(&self, other: &Self) -> bool {
-		self.fee == other.fee && self.id == other.id && self.collateral == other.collateral
-	}
-}
-
-impl<AccountId: Default, Balance: Default> Default for Relayer<AccountId, Balance> {
-	fn default() -> Self {
-		Relayer {
-			id: AccountId::default(),
-			collateral: Balance::default(),
-			fee: Balance::default(),
+		match self.fee.cmp(&other.fee) {
+			// We reverse the order here to turn the collateral value into rank.
+			//
+			// Use `other.cmp(self)` instead of `self.cmp(other)`.
+			Ordering::Equal => other.collateral.cmp(&self.collateral),
+			ordering => ordering,
 		}
 	}
 }
 
 /// Order represent cross-chain message relay task. Only support sub-sub message for now.
-#[derive(Clone, Debug, Default, Encode, Decode, TypeInfo)]
+#[derive(Clone, Default, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct Order<AccountId, BlockNumber, Balance> {
 	pub lane: LaneId,
 	pub message: MessageNonce,
@@ -90,13 +83,11 @@ pub struct Order<AccountId, BlockNumber, Balance> {
 	pub locked_collateral: Balance,
 	pub relayers: Vec<PriorRelayer<AccountId, BlockNumber, Balance>>,
 }
-
 impl<AccountId, BlockNumber, Balance> Order<AccountId, BlockNumber, Balance>
 where
-	BlockNumber:
-		Add<Output = BlockNumber> + Copy + AddAssign + PartialOrd + Sub<Output = BlockNumber>,
-	Balance: Copy + PartialOrd + Default,
-	AccountId: Clone + PartialEq,
+	AccountId: Clone,
+	BlockNumber: Copy + AtLeast32BitUnsigned,
+	Balance: Copy + Default,
 {
 	pub fn new(
 		lane: LaneId,
@@ -176,7 +167,10 @@ where
 	}
 
 	#[cfg(test)]
-	pub fn relayer_valid_range(&self, id: AccountId) -> Option<Range<BlockNumber>> {
+	pub fn relayer_valid_range(&self, id: AccountId) -> Option<Range<BlockNumber>>
+	where
+		AccountId: Clone + PartialEq,
+	{
 		for prior_relayer in self.relayers.iter() {
 			if prior_relayer.id == id {
 				return Some(prior_relayer.valid_range.clone());
@@ -194,10 +188,9 @@ pub struct PriorRelayer<AccountId, BlockNumber, Balance> {
 	pub fee: Balance,
 	pub valid_range: Range<BlockNumber>,
 }
-
-impl<'a, AccountId, BlockNumber, Balance> PriorRelayer<AccountId, BlockNumber, Balance>
+impl<AccountId, BlockNumber, Balance> PriorRelayer<AccountId, BlockNumber, Balance>
 where
-	BlockNumber: sp_std::ops::Add<Output = BlockNumber> + Clone,
+	BlockNumber: Copy + AtLeast32BitUnsigned,
 {
 	pub fn new(
 		id: AccountId,
@@ -209,9 +202,43 @@ where
 			id,
 			fee,
 			valid_range: Range {
-				start: start_time.clone(),
+				start: start_time,
 				end: start_time + slot_time,
 			},
+		}
+	}
+}
+
+/// The detail information about slash behavior
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+pub struct SlashReport<AccountId, BlockNumber, Balance> {
+	pub lane: LaneId,
+	pub message: MessageNonce,
+	pub sent_time: BlockNumber,
+	pub confirm_time: Option<BlockNumber>,
+	pub delay_time: Option<BlockNumber>,
+	pub account_id: AccountId,
+	pub amount: Balance,
+}
+impl<AccountId, BlockNumber, Balance> SlashReport<AccountId, BlockNumber, Balance>
+where
+	AccountId: Clone,
+	BlockNumber: Copy + AtLeast32BitUnsigned,
+	Balance: Copy + Default,
+{
+	pub fn new(
+		order: &Order<AccountId, BlockNumber, Balance>,
+		account_id: AccountId,
+		amount: Balance,
+	) -> Self {
+		Self {
+			lane: order.lane,
+			message: order.message,
+			sent_time: order.sent_time,
+			confirm_time: order.confirm_time,
+			delay_time: order.delivery_delay(),
+			account_id,
+			amount,
 		}
 	}
 }
@@ -220,68 +247,77 @@ where
 mod test {
 	use super::*;
 
-	pub type AccountId = u64;
-	pub type Balance = u64;
-	pub const TEST_LANE_ID: LaneId = [0, 0, 0, 1];
-	pub const TEST_MESSAGE_NONCE: MessageNonce = 0;
+	type AccountId = u32;
+	type BlockNumber = u32;
+	type Balance = u128;
+
+	const TEST_LANE_ID: LaneId = [0, 0, 0, 1];
+	const TEST_MESSAGE_NONCE: MessageNonce = 0;
 
 	#[test]
-	fn test_multi_relayers_sort() {
-		let r1 = Relayer::<AccountId, Balance>::new(1, 100, 30);
-		let r2 = Relayer::<AccountId, Balance>::new(2, 100, 40);
-		assert!(r1 < r2);
+	fn relayer_ord_should_work() {
+		let mut relayers = vec![
+			<Relayer<AccountId, Balance>>::new(1, 100, 30),
+			<Relayer<AccountId, Balance>>::new(2, 100, 40),
+			<Relayer<AccountId, Balance>>::new(3, 150, 30),
+			<Relayer<AccountId, Balance>>::new(4, 100, 30),
+		];
 
-		let r3 = Relayer::<AccountId, Balance>::new(3, 150, 30);
-		let r4 = Relayer::<AccountId, Balance>::new(4, 100, 30);
-		assert!(r3 < r4);
+		relayers.sort();
+
+		assert_eq!(
+			relayers.into_iter().map(|r| r.id).collect::<Vec<_>>(),
+			vec![3, 1, 4, 2]
+		);
 	}
 
 	#[test]
 	fn test_assign_order_relayers_one() {
-		let mut assigned_relayers = Vec::new();
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30));
-		let order = Order::new(
+		let order = <Order<AccountId, BlockNumber, Balance>>::new(
 			TEST_LANE_ID,
 			TEST_MESSAGE_NONCE,
 			100,
 			100,
-			assigned_relayers,
+			vec![<Relayer<AccountId, Balance>>::new(1, 100, 30)],
 			50,
 		);
+
 		assert_eq!(order.relayer_valid_range(1).unwrap(), (100..150));
 	}
 
 	#[test]
 	fn test_assign_order_relayers_two() {
-		let mut assigned_relayers = Vec::new();
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30));
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(2, 100, 30));
-		let order = Order::new(
+		let order = <Order<AccountId, BlockNumber, Balance>>::new(
 			TEST_LANE_ID,
 			TEST_MESSAGE_NONCE,
 			100,
 			100,
-			assigned_relayers,
+			vec![
+				<Relayer<AccountId, Balance>>::new(1, 100, 30),
+				<Relayer<AccountId, Balance>>::new(2, 100, 30),
+			],
 			50,
 		);
+
 		assert_eq!(order.relayer_valid_range(1).unwrap(), (100..150));
 		assert_eq!(order.relayer_valid_range(2).unwrap(), (150..200));
 	}
 
 	#[test]
 	fn test_assign_order_relayers_three() {
-		let mut assigned_relayers = Vec::new();
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30));
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(2, 100, 40));
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(3, 100, 80));
-		let order = Order::new(
+		let order = <Order<AccountId, BlockNumber, Balance>>::new(
 			TEST_LANE_ID,
 			TEST_MESSAGE_NONCE,
 			100,
 			100,
-			assigned_relayers,
+			vec![
+				<Relayer<AccountId, Balance>>::new(1, 100, 30),
+				<Relayer<AccountId, Balance>>::new(2, 100, 40),
+				<Relayer<AccountId, Balance>>::new(3, 100, 80),
+			],
 			50,
 		);
+
 		assert_eq!(order.relayer_valid_range(1).unwrap(), (100..150));
 		assert_eq!(order.relayer_valid_range(2).unwrap(), (150..200));
 		assert_eq!(order.relayer_valid_range(3).unwrap(), (200..250));
@@ -291,19 +327,20 @@ mod test {
 
 	#[test]
 	fn test_assign_order_relayers_four() {
-		let mut assigned_relayers = Vec::new();
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(1, 100, 30));
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(2, 100, 30));
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(3, 100, 30));
-		assigned_relayers.push(Relayer::<AccountId, Balance>::new(4, 100, 30));
-		let order = Order::new(
+		let order = <Order<AccountId, BlockNumber, Balance>>::new(
 			TEST_LANE_ID,
 			TEST_MESSAGE_NONCE,
 			100,
 			100,
-			assigned_relayers,
+			vec![
+				<Relayer<AccountId, Balance>>::new(1, 100, 30),
+				<Relayer<AccountId, Balance>>::new(2, 100, 30),
+				<Relayer<AccountId, Balance>>::new(3, 100, 30),
+				<Relayer<AccountId, Balance>>::new(4, 100, 30),
+			],
 			50,
 		);
+
 		assert_eq!(order.relayer_valid_range(1).unwrap(), (100..150));
 		assert_eq!(order.relayer_valid_range(2).unwrap(), (150..200));
 		assert_eq!(order.relayer_valid_range(3).unwrap(), (200..250));
