@@ -460,7 +460,7 @@ pub mod pallet {
 
 		/// An account has unbonded this amount. \[amount\]
 		RingUnbonded(AccountId<T>, RingBalance<T>),
-		/// An account has unbonded this amount. \[amount\]
+		/// An account has unbonded this amount. \[account, amount\]
 		KtonUnbonded(AccountId<T>, KtonBalance<T>),
 
 		/// A nominator has been kicked from a validator. \[nominator, stash\]
