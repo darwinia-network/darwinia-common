@@ -233,9 +233,6 @@ pub mod pallet {
 					Self::apply_validated_transaction(source, transaction).expect(
 						"pre-block transaction execution failed; the block cannot be built",
 					);
-					// Self::rpc_transact(source, transaction).expect(
-					// 	"pre-block transaction verification failed; the block cannot be built",
-					// );
 				}
 			}
 			0
