@@ -58,7 +58,7 @@ where
 		input: &[u8],
 		_target_gas: Option<u64>,
 		_context: &Context,
-	) -> core::result::Result<PrecompileOutput, ExitError> {
+	) -> Result<PrecompileOutput, ExitError> {
 		let dvm_parser = DvmInputParser::new(&input)?;
 		let (output, cost) = match Action::from_u32(dvm_parser.selector)? {
 			Action::VerfiySingleStorageProof => {
