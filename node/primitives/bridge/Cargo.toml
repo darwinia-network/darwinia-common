@@ -11,6 +11,7 @@ version     = "2.7.2"
 
 [dependencies]
 # darwinia-network
+common-runtime         = { default-features = false, path = "../../runtime/common" }
 darwinia-fee-market    = { default-features = false, path = "../../../frame/fee-market" }
 drml-common-primitives = { default-features = false, path = "../common" }
 # paritytech
@@ -30,6 +31,7 @@ default = ["std"]
 
 std = [
 	# darwinia-network
+	"common-runtime/std",
 	"darwinia-fee-market/std",
 	"drml-common-primitives/std",
 	# paritytech
