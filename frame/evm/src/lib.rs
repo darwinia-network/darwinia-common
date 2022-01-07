@@ -164,8 +164,17 @@ pub mod pallet {
 		fn build(&self) {
 			let extra_genesis_builder: fn(&Self) = |config: &GenesisConfig| {
 				for (address, account) in &config.accounts {
+					let account_id = T::IntoAccountId::into_account_id(*address);
+
+					// ASSUME: in one single EVM transaction, the nonce will not increase more than
+					// `u128::max_value()`.
+					for _ in 0..account.nonce.low_u128() {
+						frame_system::Pallet::<T>::inc_account_nonce(&account_id);
+					}
+
 					T::RingAccountBasic::mutate_account_basic_balance(&address, account.balance);
 					T::KtonAccountBasic::mutate_account_basic_balance(&address, account.balance);
+
 					AccountCodes::<T>::insert(address, &account.code);
 					for (index, value) in &account.storage {
 						AccountStorages::<T>::insert(address, index, value);
