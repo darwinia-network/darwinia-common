@@ -2348,7 +2348,6 @@ dependencies = [
  "bp-messages",
  "bp-runtime",
  "bridge-runtime-common",
- "common-runtime",
  "darwinia-fee-market",
  "drml-common-primitives",
  "frame-support",

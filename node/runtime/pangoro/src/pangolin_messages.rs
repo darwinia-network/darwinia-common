@@ -10,7 +10,7 @@ use bp_messages::{
 	target_chain::{ProvedMessages, SourceHeaderChain},
 	InboundLaneData, LaneId, Message, MessageNonce, Parameter as MessagesParameter,
 };
-use bp_runtime::{messages::DispatchFeePayment, Chain, ChainId};
+use bp_runtime::{messages::DispatchFeePayment, ChainId};
 use bridge_runtime_common::messages::{
 	self,
 	source::{self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload},
@@ -195,13 +195,13 @@ impl messages::ChainWithMessages for Pangolin {
 }
 impl messages::BridgedChainWithMessages for Pangolin {
 	fn maximal_extrinsic_size() -> u32 {
-		drml_bridge_primitives::Pangolin::max_extrinsic_size()
+		pangolin_runtime_system_params::max_extrinsic_size()
 	}
 
 	fn message_weight_limits(_message_payload: &[u8]) -> RangeInclusive<Weight> {
 		// we don't want to relay too large messages + keep reserve for future upgrades
 		let upper_limit = messages::target::maximal_incoming_message_dispatch_weight(
-			drml_bridge_primitives::Pangolin::max_extrinsic_weight(),
+			pangolin_runtime_system_params::max_extrinsic_weight(),
 		);
 
 		// we're charging for payload bytes in `WithPangolinMessageBridge::transaction_payment` function
