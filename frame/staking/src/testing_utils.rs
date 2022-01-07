@@ -40,7 +40,7 @@ pub fn create_stash_controller<T: Config>(
 	let controller_lookup: <T::Lookup as StaticLookup>::Source =
 		T::Lookup::unlookup(controller.clone());
 	let amount = T::RingCurrency::minimum_balance() * (balance_factor / 10).max(1).into();
-	Staking::<T>::bond(
+	<Staking<T>>::bond(
 		RawOrigin::Signed(stash.clone()).into(),
 		controller_lookup,
 		StakingBalance::RingBalance(amount),

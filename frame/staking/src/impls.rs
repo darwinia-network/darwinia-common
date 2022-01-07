@@ -11,6 +11,7 @@ use frame_support::{
 	},
 	weights::{DispatchClass, Weight},
 };
+use frame_system::pallet_prelude::BlockNumberFor;
 use sp_runtime::{
 	helpers_128bit,
 	traits::{AccountIdConversion, Bounded, Convert, Saturating, Zero},
@@ -162,12 +163,16 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	pub fn stake_of(stash: &AccountId<T>) -> (RingBalance<T>, KtonBalance<T>) {
+	pub fn stake_of(who: &AccountId<T>) -> (RingBalance<T>, KtonBalance<T>) {
 		// Weight note: consider making the stake accessible through stash.
-		Self::bonded(stash)
+		Self::bonded(who)
 			.and_then(Self::ledger)
 			.map(|l| (l.active_ring, l.active_kton))
 			.unwrap_or_default()
+	}
+
+	pub fn weight_of(who: &AccountId<T>) -> VoteWeight {
+		Self::power_of(who) as _
 	}
 
 	pub fn do_payout_stakers(
@@ -264,7 +269,7 @@ impl<T: Config> Pallet<T> {
 			Perbill::from_rational(exposure.own_power, exposure.total_power);
 		let validator_staking_payout = validator_exposure_part * validator_leftover_payout;
 
-		Self::deposit_event(Event::<T>::PayoutStarted(era, ledger.stash.clone()));
+		Self::deposit_event(<Event<T>>::PayoutStarted(era, ledger.stash.clone()));
 
 		// Due to the `payout * percent` there might be some losses
 		let mut actual_payout = <RingPositiveImbalance<T>>::zero();
@@ -904,64 +909,104 @@ impl<T: Config> Pallet<T> {
 
 	/// Get all of the voters that are eligible for the npos election.
 	///
-	/// This will use all on-chain nominators, and all the validators will inject a self vote.
+	/// `maybe_max_len` can imposes a cap on the number of voters returned; First all the validator
+	/// are included in no particular order, then remainder is taken from the nominators, as
+	/// returned by [`Config::SortedListProvider`].
+	///
+	/// This will use nominators, and all the validators will inject a self vote.
 	///
 	/// This function is self-weighing as [`DispatchClass::Mandatory`].
 	///
 	/// ### Slashing
 	///
 	/// All nominations that have been submitted before the last non-zero slash of the validator are
-	/// auto-chilled.
-	pub fn get_npos_voters() -> Vec<(AccountId<T>, VoteWeight, Vec<AccountId<T>>)> {
-		let weight_of =
-			|account_id: &AccountId<T>| -> VoteWeight { Self::power_of(account_id) as _ };
-		let mut all_voters = Vec::new();
-		let mut validator_count = 0u32;
+	/// auto-chilled, but still count towards the limit imposed by `maybe_max_len`.
+	pub fn get_npos_voters(
+		maybe_max_len: Option<usize>,
+	) -> Vec<(AccountId<T>, VoteWeight, Vec<AccountId<T>>)> {
+		let max_allowed_len = {
+			let nominator_count = <CounterForNominators<T>>::get() as usize;
+			let validator_count = <CounterForValidators<T>>::get() as usize;
+			let all_voter_count = validator_count.saturating_add(nominator_count);
 
-		for (validator, _) in <Validators<T>>::iter() {
-			// Append self vote
+			maybe_max_len
+				.unwrap_or(all_voter_count)
+				.min(all_voter_count)
+		};
+		let mut all_voters = <Vec<_>>::with_capacity(max_allowed_len);
+		// first, grab all validators in no particular order, capped by the maximum allowed length.
+		let mut validators_taken = 0u32;
+
+		for (validator, _) in <Validators<T>>::iter().take(max_allowed_len) {
+			// Append self vote.
 			let self_vote = (
 				validator.clone(),
-				weight_of(&validator),
+				Self::weight_of(&validator),
 				vec![validator.clone()],
 			);
-
 			all_voters.push(self_vote);
-			validator_count.saturating_inc();
+			validators_taken.saturating_inc();
 		}
 
-		// Collect all slashing spans into a BTreeMap for further queries.
+		// .. and grab whatever we have left from nominators.
+		let nominators_quota = (max_allowed_len as u32).saturating_sub(validators_taken);
 		let slashing_spans = <SlashingSpans<T>>::iter().collect::<BTreeMap<_, _>>();
-		let mut nominator_count = 0u32;
+		// track the count of nominators added to `all_voters
+		let mut nominators_taken = 0u32;
+		// track every nominator iterated over, but not necessarily added to `all_voters`
+		let mut nominators_seen = 0u32;
+		let mut nominators_iter = T::SortedListProvider::iter();
 
-		for (nominator, nominations) in <Nominators<T>>::iter() {
-			let Nominations {
+		while nominators_taken < nominators_quota && nominators_seen < nominators_quota * 2 {
+			let nominator = match nominators_iter.next() {
+				Some(nominator) => {
+					nominators_seen.saturating_inc();
+					nominator
+				}
+				None => break,
+			};
+
+			if let Some(Nominations {
 				submitted_in,
 				mut targets,
 				suppressed: _,
-			} = nominations;
+			}) = <Nominators<T>>::get(&nominator)
+			{
+				targets.retain(|stash| {
+					slashing_spans
+						.get(stash)
+						.map_or(true, |spans| submitted_in >= spans.last_nonzero_slash())
+				});
 
-			// Filter out nomination targets which were nominated before the most recent
-			// slashing span.
-			targets.retain(|stash| {
-				slashing_spans
-					.get(stash)
-					.map_or(true, |spans| submitted_in >= spans.last_nonzero_slash())
-			});
-
-			if !targets.is_empty() {
-				let vote_weight = weight_of(&nominator);
-
-				all_voters.push((nominator, vote_weight, targets));
-				nominator_count.saturating_inc();
+				if !targets.len().is_zero() {
+					all_voters.push((nominator.clone(), Self::weight_of(&nominator), targets));
+					nominators_taken.saturating_inc();
+				}
+			} else {
+				log!(
+					error,
+					"invalid item in `SortedListProvider`: {:?}",
+					nominator
+				)
 			}
 		}
 
+		// all_voters should have not re-allocated.
+		debug_assert!(all_voters.capacity() == max_allowed_len);
+
 		Self::register_weight(T::WeightInfo::get_npos_voters(
-			validator_count,
-			nominator_count,
+			validators_taken,
+			nominators_taken,
 			slashing_spans.len() as u32,
 		));
+
+		log!(
+			info,
+			"generated {} npos voters, {} from validators and {} nominators",
+			all_voters.len(),
+			validators_taken,
+			nominators_taken
+		);
 
 		all_voters
 	}
@@ -971,7 +1016,7 @@ impl<T: Config> Pallet<T> {
 	/// This function is self-weighing as [`DispatchClass::Mandatory`].
 	pub fn get_npos_targets() -> Vec<AccountId<T>> {
 		let mut validator_count = 0u32;
-		let targets = Validators::<T>::iter()
+		let targets = <Validators<T>>::iter()
 			.map(|(v, _)| {
 				validator_count.saturating_inc();
 
@@ -985,41 +1030,66 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// This function will add a nominator to the `Nominators` storage map,
-	/// and keep track of the `CounterForNominators`.
+	/// [`SortedListProvider`] and keep track of the `CounterForNominators`.
 	///
 	/// If the nominator already exists, their nominations will be updated.
+	///
+	/// NOTE: you must ALWAYS use this function to add nominator or update their targets. Any access
+	/// to `Nominators`, its counter, or `VoterList` outside of this function is almost certainly
+	/// wrong.
 	pub fn do_add_nominator(who: &T::AccountId, nominations: Nominations<T::AccountId>) {
 		if !<Nominators<T>>::contains_key(who) {
-			<CounterForNominators<T>>::mutate(|x| x.saturating_inc())
+			// maybe update the counter.
+			<CounterForNominators<T>>::mutate(|x| x.saturating_inc());
+
+			// maybe update sorted list. Error checking is defensive-only - this should never fail.
+			if T::SortedListProvider::on_insert(who.clone(), Self::weight_of(who)).is_err() {
+				log!(warn, "attempt to insert duplicate nominator ({:#?})", who);
+				debug_assert!(false, "attempt to insert duplicate nominator");
+			};
+
+			debug_assert_eq!(T::SortedListProvider::sanity_check(), Ok(()));
 		}
 
 		<Nominators<T>>::insert(who, nominations);
 	}
 
 	/// This function will remove a nominator from the `Nominators` storage map,
-	/// and keep track of the `CounterForNominators`.
+	/// [`SortedListProvider`] and keep track of the `CounterForNominators`.
 	///
 	/// Returns true if `who` was removed from `Nominators`, otherwise false.
+	///
+	/// NOTE: you must ALWAYS use this function to remove a nominator from the system. Any access to
+	/// `Nominators`, its counter, or `VoterList` outside of this function is almost certainly
+	/// wrong.
 	pub fn do_remove_nominator(who: &T::AccountId) -> bool {
 		if <Nominators<T>>::contains_key(who) {
 			<Nominators<T>>::remove(who);
 			<CounterForNominators<T>>::mutate(|x| x.saturating_dec());
-
+			T::SortedListProvider::on_remove(who);
+			debug_assert_eq!(T::SortedListProvider::sanity_check(), Ok(()));
+			debug_assert_eq!(
+				<CounterForNominators<T>>::get(),
+				T::SortedListProvider::count()
+			);
 			true
 		} else {
 			false
 		}
 	}
 
-	/// This function will add a validator to the `Validators` storage map,
-	/// and keep track of the `CounterForValidators`.
+	/// This function will add a validator to the `Validators` storage map, and keep track of the
+	/// `CounterForValidators`.
 	///
 	/// If the validator already exists, their preferences will be updated.
+	///
+	/// NOTE: you must ALWAYS use this function to add a validator to the system. Any access to
+	/// `Validators`, its counter, or `VoterList` outside of this function is almost certainly
+	/// wrong.
 	pub fn do_add_validator(who: &T::AccountId, prefs: ValidatorPrefs) {
 		if !<Validators<T>>::contains_key(who) {
 			<CounterForValidators<T>>::mutate(|x| x.saturating_inc())
 		}
-
 		<Validators<T>>::insert(who, prefs);
 	}
 
@@ -1027,6 +1097,10 @@ impl<T: Config> Pallet<T> {
 	/// and keep track of the `CounterForValidators`.
 	///
 	/// Returns true if `who` was removed from `Validators`, otherwise false.
+	///
+	/// NOTE: you must ALWAYS use this function to remove a validator from the system. Any access to
+	/// `Validators`, its counter, or `VoterList` outside of this function is almost certainly
+	/// wrong.
 	pub fn do_remove_validator(who: &T::AccountId) -> bool {
 		if <Validators<T>>::contains_key(who) {
 			<Validators<T>>::remove(who);
@@ -1048,7 +1122,7 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-impl<T: Config> ElectionDataProvider<AccountId<T>, T::BlockNumber> for Pallet<T> {
+impl<T: Config> ElectionDataProvider<AccountId<T>, BlockNumberFor<T>> for Pallet<T> {
 	const MAXIMUM_VOTES_PER_VOTER: u32 = T::MAX_NOMINATIONS;
 
 	fn desired_targets() -> data_provider::Result<u32> {
@@ -1060,37 +1134,33 @@ impl<T: Config> ElectionDataProvider<AccountId<T>, T::BlockNumber> for Pallet<T>
 	fn voters(
 		maybe_max_len: Option<usize>,
 	) -> data_provider::Result<Vec<(AccountId<T>, VoteWeight, Vec<AccountId<T>>)>> {
-		let nominator_count = <CounterForNominators<T>>::get();
-		let validator_count = <CounterForValidators<T>>::get();
-		let voter_count = nominator_count.saturating_add(validator_count) as usize;
-
 		debug_assert!(<Nominators<T>>::iter().count() as u32 == <CounterForNominators<T>>::get());
 		debug_assert!(<Validators<T>>::iter().count() as u32 == <CounterForValidators<T>>::get());
+		debug_assert_eq!(
+			<CounterForNominators<T>>::get(),
+			T::SortedListProvider::count(),
+			"voter_count must be accurate",
+		);
 
-		// register the extra 2 reads
-		Self::register_weight(T::DbWeight::get().reads(2));
+		// This can never fail -- if `maybe_max_len` is `Some(_)` we handle it.
+		let voters = Self::get_npos_voters(maybe_max_len);
+		debug_assert!(maybe_max_len.map_or(true, |max| voters.len() <= max));
 
-		if maybe_max_len.map_or(false, |max_len| voter_count > max_len) {
-			return Err("Voter snapshot too big");
-		}
-
-		Ok(Self::get_npos_voters())
+		Ok(voters)
 	}
 
-	fn targets(maybe_max_len: Option<usize>) -> data_provider::Result<Vec<AccountId<T>>> {
-		let target_count = <CounterForValidators<T>>::get() as usize;
+	fn targets(maybe_max_len: Option<usize>) -> data_provider::Result<Vec<T::AccountId>> {
+		let target_count = <CounterForValidators<T>>::get();
 
-		// register the extra 1 read
-		Self::register_weight(T::DbWeight::get().reads(1));
-
-		if maybe_max_len.map_or(false, |max_len| target_count > max_len) {
+		// We can't handle this case yet -- return an error.
+		if maybe_max_len.map_or(false, |max_len| target_count > max_len as u32) {
 			return Err("Target snapshot too big");
 		}
 
 		Ok(Self::get_npos_targets())
 	}
 
-	fn next_election_prediction(now: T::BlockNumber) -> T::BlockNumber {
+	fn next_election_prediction(now: BlockNumberFor<T>) -> BlockNumberFor<T> {
 		let current_era = Self::current_era().unwrap_or(0);
 		let current_session = Self::current_planned_session();
 		let current_era_start_session_index =
@@ -1103,7 +1173,7 @@ impl<T: Config> ElectionDataProvider<AccountId<T>, T::BlockNumber> for Pallet<T>
 			.unwrap_or_default()
 			.saturating_sub(now);
 		let session_length = T::NextNewSession::average_session_length();
-		let sessions_left: T::BlockNumber = match <ForceEra<T>>::get() {
+		let sessions_left: BlockNumberFor<T> = match <ForceEra<T>>::get() {
 			Forcing::ForceNone => Bounded::max_value(),
 			Forcing::ForceNew | Forcing::ForceAlways => Zero::zero(),
 			Forcing::NotForcing if era_progress >= T::SessionsPerEra::get() => Zero::zero(),
@@ -1178,6 +1248,9 @@ impl<T: Config> ElectionDataProvider<AccountId<T>, T::BlockNumber> for Pallet<T>
 		<Ledger<T>>::remove_all(None);
 		<Validators<T>>::remove_all(None);
 		<Nominators<T>>::remove_all(None);
+		<CounterForNominators<T>>::kill();
+		<CounterForValidators<T>>::kill();
+		let _ = T::SortedListProvider::clear(None);
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
@@ -1534,14 +1607,14 @@ impl<T: Config> OnDepositRedeem<AccountId<T>, RingBalance<T>> for Pallet<T> {
 /// * 20 points to the block producer for producing a (non-uncle) block in the relay chain,
 /// * 2 points to the block producer for each reference to a previously unreferenced uncle, and
 /// * 1 point to the producer of each referenced uncle block.
-impl<T> pallet_authorship::EventHandler<AccountId<T>, T::BlockNumber> for Pallet<T>
+impl<T> pallet_authorship::EventHandler<AccountId<T>, BlockNumberFor<T>> for Pallet<T>
 where
 	T: Config + pallet_authorship::Config + pallet_session::Config,
 {
 	fn note_author(author: AccountId<T>) {
 		Self::reward_by_ids(vec![(author, 20)]);
 	}
-	fn note_uncle(author: AccountId<T>, _age: T::BlockNumber) {
+	fn note_uncle(author: AccountId<T>, _age: BlockNumberFor<T>) {
 		Self::reward_by_ids(vec![
 			(<pallet_authorship::Pallet<T>>::author(), 2),
 			(author, 1),

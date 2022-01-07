@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -180,6 +180,7 @@ impl darwinia_staking::Config for Test {
 	type MaxNominatorRewardedPerValidator = ();
 	type ElectionProvider = onchain::OnChainSequentialPhragmen<Self>;
 	type GenesisElectionProvider = Self::ElectionProvider;
+	type SortedListProvider = darwinia_staking::UseNominatorsMap<Self>;
 	type RingCurrency = Ring;
 	type RingRewardRemainder = ();
 	type RingSlash = ();

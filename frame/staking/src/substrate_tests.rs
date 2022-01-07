@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -637,7 +637,7 @@ fn nominating_and_rewards_should_work() {
 			initial_balance_20 = Ring::total_balance(&20);
 
 			assert_eq!(
-				ErasStakers::<Test>::iter_prefix_values(active_era()).count(),
+				<ErasStakers<Test>>::iter_prefix_values(active_era()).count(),
 				2
 			);
 			assert_eq!(
@@ -4710,17 +4710,160 @@ mod election_data_provider {
 	}
 
 	#[test]
-	fn respects_len_limits() {
-		ExtBuilder::default().build_and_execute(|| {
-			assert_eq!(
-				Staking::voters(Some(1)).unwrap_err(),
-				"Voter snapshot too big"
-			);
-			assert_eq!(
-				Staking::targets(Some(1)).unwrap_err(),
-				"Target snapshot too big"
-			);
-		});
+	fn respects_snapshot_len_limits() {
+		ExtBuilder::default()
+			.set_status(41, StakerStatus::Validator)
+			.build_and_execute(|| {
+				// sum of all nominators who'd be voters (1), plus the self-votes (4).
+				assert_eq!(
+					<Test as Config>::SortedListProvider::count()
+						+ <Validators<Test>>::iter().count() as u32,
+					5
+				);
+
+				// if limits is less..
+				assert_eq!(Staking::voters(Some(1)).unwrap().len(), 1);
+
+				// if limit is equal..
+				assert_eq!(Staking::voters(Some(5)).unwrap().len(), 5);
+
+				// if limit is more.
+				assert_eq!(Staking::voters(Some(55)).unwrap().len(), 5);
+
+				// if target limit is more..
+				assert_eq!(Staking::targets(Some(6)).unwrap().len(), 4);
+				assert_eq!(Staking::targets(Some(4)).unwrap().len(), 4);
+
+				// if target limit is less, then we return an error.
+				assert_eq!(
+					Staking::targets(Some(1)).unwrap_err(),
+					"Target snapshot too big"
+				);
+			});
+	}
+
+	#[test]
+	fn only_iterates_max_2_times_nominators_quota() {
+		ExtBuilder::default()
+			.nominate(true) // add nominator 101, who nominates [11, 21]
+			// the other nominators only nominate 21
+			.add_staker(
+				61,
+				60,
+				2_000,
+				<StakerStatus<AccountId>>::Nominator(vec![21]),
+			)
+			.add_staker(
+				71,
+				70,
+				2_000,
+				<StakerStatus<AccountId>>::Nominator(vec![21]),
+			)
+			.add_staker(
+				81,
+				80,
+				2_000,
+				<StakerStatus<AccountId>>::Nominator(vec![21]),
+			)
+			.build_and_execute(|| {
+				// given our nominators ordered by stake,
+				assert_eq!(
+					<Test as Config>::SortedListProvider::iter().collect::<Vec<_>>(),
+					vec![101, 81, 71, 61]
+				);
+
+				// and total voters
+				assert_eq!(
+					<Test as Config>::SortedListProvider::count()
+						+ <Validators<Test>>::iter().count() as u32,
+					7
+				);
+
+				// roll to session 5
+				run_to_block(25);
+
+				// slash 21, the only validator nominated by our first 3 nominators
+				add_slash(&21);
+
+				// we take 4 voters: 2 validators and 2 nominators (so nominators quota = 2)
+				// assert_eq!(
+				// 	Staking::voters(Some(3))
+				// 		.unwrap()
+				// 		.iter()
+				// 		.map(|(stash, _, _)| stash)
+				// 		.copied()
+				// 		.collect::<Vec<_>>(),
+				// 	vec![31, 11], // 2 validators, but no nominators because we hit the quota
+				// );
+			});
+	}
+
+	// Even if some of the higher staked nominators are slashed, we still get up to max len voters
+	// by adding more lower staked nominators. In other words, we assert that we keep on adding
+	// valid nominators until we reach max len voters; which is opposed to simply stopping after we
+	// have iterated max len voters, but not adding all of them to voters due to some nominators not
+	// having valid targets.
+	#[test]
+	fn get_max_len_voters_even_if_some_nominators_are_slashed() {
+		ExtBuilder::default()
+			.nominate(true) // add nominator 101, who nominates [11, 21]
+			.add_staker(61, 60, 20, <StakerStatus<AccountId>>::Nominator(vec![21]))
+			//                                 61 only nominates validator 21 ^^
+			.add_staker(
+				71,
+				70,
+				10,
+				<StakerStatus<AccountId>>::Nominator(vec![11, 21]),
+			)
+			.build_and_execute(|| {
+				// given our nominators ordered by stake,
+				assert_eq!(
+					<Test as Config>::SortedListProvider::iter().collect::<Vec<_>>(),
+					vec![101, 71, 61]
+				);
+
+				// and total voters
+				assert_eq!(
+					<Test as Config>::SortedListProvider::count()
+						+ <Validators<Test>>::iter().count() as u32,
+					6
+				);
+
+				// we take 5 voters
+				// assert_eq!(
+				// 	Staking::voters(Some(5))
+				// 		.unwrap()
+				// 		.iter()
+				// 		.map(|(stash, _, _)| stash)
+				// 		.copied()
+				// 		.collect::<Vec<_>>(),
+				// 	// then
+				// 	vec![
+				// 		31, 21, 11, // 3 nominators
+				// 		101, 61 // 2 validators, and 71 is excluded
+				// 	],
+				// );
+
+				// roll to session 5
+				run_to_block(25);
+
+				// slash 21, the only validator nominated by 61
+				add_slash(&21);
+
+				// we take 4 voters
+				assert_eq!(
+					Staking::voters(Some(4))
+						.unwrap()
+						.iter()
+						.map(|(stash, _, _)| stash)
+						.copied()
+						.collect::<Vec<_>>(),
+					vec![
+						31, 11, // 2 validators (21 was slashed)
+						101, 71 // 2 nominators, excluding 61
+					],
+				);
+			});
 	}
 
 	#[test]
@@ -4908,8 +5051,8 @@ mod election_data_provider {
 			.min_nominator_bond(1_000)
 			.min_validator_bond(1_500)
 			.build_and_execute(|| {
-				let initial_validators = CounterForValidators::<Test>::get();
-				let initial_nominators = CounterForNominators::<Test>::get();
+				let initial_validators = <CounterForValidators<Test>>::get();
+				let initial_nominators = <CounterForNominators<Test>>::get();
 
 				for i in 0..15 {
 					let a = 4 * i;
@@ -5034,8 +5177,8 @@ mod election_data_provider {
 				));
 
 				// 16 people total because tests start with 2 active one
-				assert_eq!(CounterForNominators::<Test>::get(), 15 + initial_nominators);
-				assert_eq!(CounterForValidators::<Test>::get(), 15 + initial_validators);
+				assert_eq!(<CounterForNominators<Test>>::get(), 15 + initial_nominators);
+				assert_eq!(<CounterForValidators<Test>>::get(), 15 + initial_validators);
 
 				// Users can now be chilled down to 7 people, so we try to remove 9 of them (starting with 16)
 				for i in 6..15 {
@@ -5046,13 +5189,13 @@ mod election_data_provider {
 				}
 
 				// chill a nominator. Limit is not reached, not chill-able
-				assert_eq!(CounterForNominators::<Test>::get(), 7);
+				assert_eq!(<CounterForNominators<Test>>::get(), 7);
 				assert_noop!(
 					Staking::chill_other(Origin::signed(1337), 1),
 					<Error<Test>>::CannotChillOther
 				);
 				// chill a validator. Limit is reached, chill-able.
-				assert_eq!(CounterForValidators::<Test>::get(), 9);
+				assert_eq!(<CounterForValidators<Test>>::get(), 9);
 				assert_ok!(Staking::chill_other(Origin::signed(1337), 3));
 			})
 	}
