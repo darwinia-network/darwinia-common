@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -29,7 +29,7 @@ pub mod account_basic;
 use dvm_rpc_runtime_api::TransactionStatus;
 #[doc(no_inline)]
 pub use ethereum::{
-	BlockV0 as EthereumBlockV0, LegacyTransactionMessage, Log, Receipt as EthereumReceipt,
+	BlockV0 as EthereumBlockV0, LegacyTransactionMessage, Log, Receipt as EthereumReceiptV0,
 	TransactionAction, TransactionSignature, TransactionV0,
 };
 
@@ -195,7 +195,7 @@ pub mod pallet {
 		type Call = Call<T>;
 
 		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
-			if let Call::transact(transaction) = call {
+			if let Call::transact { transaction } = call {
 				// We must ensure a transaction can pay the cost of its data bytes.
 				// If it can't it should not be included in a block.
 				let mut gasometer = evm::gasometer::Gasometer::new(
@@ -275,7 +275,7 @@ pub mod pallet {
 	/// Current building block's transactions and receipts.
 	#[pallet::storage]
 	pub(super) type Pending<T: Config> =
-		StorageValue<_, Vec<(TransactionV0, TransactionStatus, EthereumReceipt)>, ValueQuery>;
+		StorageValue<_, Vec<(TransactionV0, TransactionStatus, EthereumReceiptV0)>, ValueQuery>;
 
 	/// The current Ethereum block.
 	#[pallet::storage]
@@ -283,7 +283,7 @@ pub mod pallet {
 
 	/// The current Ethereum receipts.
 	#[pallet::storage]
-	pub(super) type CurrentReceipts<T: Config> = StorageValue<_, Vec<EthereumReceipt>>;
+	pub(super) type CurrentReceipts<T: Config> = StorageValue<_, Vec<EthereumReceiptV0>>;
 
 	/// The current transaction statuses.
 	#[pallet::storage]
@@ -355,7 +355,7 @@ impl<T: Config> Pallet<T> {
 			H256::from_slice(Keccak256::digest(&rlp::encode(&transaction.tx)).as_slice());
 		let transaction_index = Pending::<T>::get().len() as u32;
 
-		let (to, contract_address, info) = Self::execute(
+		let (to, _contract_address, info) = Self::execute(
 			transaction.source,
 			transaction.tx.input.clone(),
 			transaction.tx.value,
@@ -366,7 +366,7 @@ impl<T: Config> Pallet<T> {
 			None,
 		)?;
 
-		let (reason, status, used_gas) = match info {
+		let (reason, status, used_gas, dest) = match info {
 			CallOrCreateInfo::Call(info) => (
 				info.exit_reason,
 				TransactionStatus {
@@ -383,6 +383,7 @@ impl<T: Config> Pallet<T> {
 					},
 				},
 				info.used_gas,
+				to,
 			),
 			CallOrCreateInfo::Create(info) => (
 				info.exit_reason,
@@ -400,10 +401,11 @@ impl<T: Config> Pallet<T> {
 					},
 				},
 				info.used_gas,
+				Some(info.value),
 			),
 		};
 
-		let receipt = EthereumReceipt {
+		let receipt = EthereumReceiptV0 {
 			state_root: match reason {
 				ExitReason::Succeed(_) => H256::from_low_u64_be(1),
 				ExitReason::Error(_) => H256::from_low_u64_le(0),
@@ -419,7 +421,7 @@ impl<T: Config> Pallet<T> {
 
 		Self::deposit_event(Event::Executed(
 			transaction.source,
-			contract_address.unwrap_or_default(),
+			dest.unwrap_or_default(),
 			transaction_hash,
 			reason.clone(),
 		));
@@ -441,7 +443,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get receipts by number.
-	pub fn current_receipts() -> Option<Vec<EthereumReceipt>> {
+	pub fn current_receipts() -> Option<Vec<EthereumReceiptV0>> {
 		CurrentReceipts::<T>::get()
 	}
 
@@ -623,16 +625,8 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 	}
 }
 
-/// Returns the Ethereum block hash by number.
-pub struct EthereumBlockHashMapping<T>(PhantomData<T>);
-impl<T: Config> BlockHashMapping for EthereumBlockHashMapping<T> {
-	fn block_hash(number: u32) -> H256 {
-		BlockHash::<T>::get(U256::from(number))
-	}
-}
-
 /// The schema version for Pallet Ethereum's storage
-#[derive(Clone, Copy, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
 pub enum EthereumStorageSchema {
 	Undefined,
 	V1,
@@ -650,6 +644,14 @@ enum TransactionValidationError {
 	InvalidChainId,
 	InvalidSignature,
 	InvalidGasLimit,
+}
+
+/// Returns the Ethereum block hash by number.
+pub struct EthereumBlockHashMapping<T>(PhantomData<T>);
+impl<T: Config> BlockHashMapping for EthereumBlockHashMapping<T> {
+	fn block_hash(number: u32) -> H256 {
+		BlockHash::<T>::get(U256::from(number))
+	}
 }
 
 /// Returned the Ethereum block state root.

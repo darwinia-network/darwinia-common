@@ -17,8 +17,8 @@ evm         = { version = "0.30", default-features = false, features = ["with-co
 tiny-keccak = { version = "2.0", features = ["fips202"] }
 # darwinia-network
 # paritytech
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-io   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-io   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 
 [features]
 default = ["std"]

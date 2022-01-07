@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -29,6 +29,8 @@ use codec::{Decode, Encode};
 use ethbloom::Bloom;
 #[cfg(any(feature = "full-rlp", test))]
 use rlp::{DecoderError, Encodable, Rlp, RlpStream};
+#[cfg(any(feature = "full-codec", test))]
+use scale_info::TypeInfo;
 use sp_debug_derive::RuntimeDebug;
 // --- darwinia-network ---
 #[cfg(any(feature = "full-rlp", test))]
@@ -39,7 +41,7 @@ use merkle_patricia_trie::{trie::Trie, MerklePatriciaTrie, Proof};
 
 pub type TransactionIndex = (H256, u64);
 
-#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode, TypeInfo))]
 #[derive(Clone, PartialEq, Eq, RuntimeDebug)]
 pub enum TypedReceipt {
 	Legacy(LegacyReceipt),
@@ -102,7 +104,7 @@ impl TypedReceipt {
 	}
 }
 
-#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode, TypeInfo))]
 #[derive(Clone, PartialEq, Eq, RuntimeDebug)]
 pub struct LegacyReceipt {
 	/// The total gas used in the block following execution of the transaction.
@@ -176,7 +178,7 @@ impl Encodable for LegacyReceipt {
 	}
 }
 
-#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode, TypeInfo))]
 #[derive(Clone, PartialEq, Eq, RuntimeDebug)]
 pub enum TransactionOutcome {
 	/// Status and state root are unknown under EIP-98 rules.
@@ -187,7 +189,7 @@ pub enum TransactionOutcome {
 	StatusCode(u8),
 }
 
-#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode, TypeInfo))]
 #[cfg_attr(any(feature = "full-serde", test), derive(serde::Deserialize))]
 #[derive(Clone, PartialEq, Eq, RuntimeDebug)]
 pub struct ReceiptProof {

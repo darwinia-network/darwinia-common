@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -21,6 +21,7 @@ use core::fmt::Debug;
 // --- crates.io ---
 use codec::{FullCodec, MaxEncodedLen};
 use impl_trait_for_tuples::impl_for_tuples;
+use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::traits::{Currency, Get, LockIdentifier, WithdrawReasons};
 use sp_runtime::{DispatchError, DispatchResult};
@@ -125,7 +126,7 @@ pub trait OnDepositRedeem<AccountId, Balance> {
 }
 
 pub trait EthereumReceipt<AccountId, Balance> {
-	type EthereumReceiptProofThing: Clone + Debug + PartialEq + FullCodec;
+	type EthereumReceiptProofThing: Clone + Debug + PartialEq + FullCodec + TypeInfo;
 
 	fn account_id() -> AccountId;
 

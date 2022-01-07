@@ -13,8 +13,8 @@ version     = "2.7.2"
 [dependencies]
 # crates.io
 ethereum-types = { version = "0.12.0" }
-hex            = { version = "0.4", features = ["serde"]}
-log            = { version = "0.4"}
+hex            = { version = "0.4", features = ["serde"] }
+log            = { version = "0.4" }
 serde          = { version = "1.0", features = ["derive"] }
 serde_json     = { version = "1.0" }
 # darwinia-network
@@ -22,4 +22,4 @@ dp-evm-trace-apis   = { path = "../../../primitives/evm/trace/apis" }
 dp-evm-trace-events = { path = "../../../primitives/evm/trace/events" }
 # paritytech
 codec  = { package = "parity-scale-codec", version = "2.2", default-features = false }
-sp-std = { git = "https://github.com/darwinia-network/substrate",branch = "darwinia-v0.11.8" }
+sp-std = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }

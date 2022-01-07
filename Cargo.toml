@@ -76,9 +76,9 @@ members = [
 ]
 
 [patch.crates-io]
-evm           = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.11.8" }
-evm-gasometer = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.11.8" }
-evm-runtime   = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.11.8" }
+evm           = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.12.0" }
+evm-gasometer = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.12.0" }
+evm-runtime   = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.12.0" }
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates
 # that are suspected to be CPU-intensive, and that are unlikely to require debugging (as some of

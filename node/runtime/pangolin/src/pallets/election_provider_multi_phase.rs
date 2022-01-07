@@ -1,5 +1,8 @@
 // --- paritytech ---
-use pallet_election_provider_multi_phase::{Config, FallbackStrategy};
+use frame_election_provider_support::{onchain, SequentialPhragmen};
+use pallet_election_provider_multi_phase::{
+	BenchmarkingConfig, Config, NoFallback, SolutionAccuracyOf,
+};
 use sp_runtime::{transaction_validity::TransactionPriority, PerU16, Perbill};
 // --- darwinia-network ---
 use crate::*;
@@ -13,17 +16,18 @@ sp_npos_elections::generate_solution_type!(
 	>(24)
 );
 
-/// The numbers configured here should always be more than the the maximum limits of staking pallet
-/// to ensure election snapshot will not run out of memory.
+/// The numbers configured here could always be more than the the maximum limits of staking pallet
+/// to ensure election snapshot will not run out of memory. For now, we set them to smaller values
+/// since the staking is bounded and the weight pipeline takes hours for this single pallet.
 pub struct BenchmarkConfig;
-impl pallet_election_provider_multi_phase::BenchmarkingConfig for BenchmarkConfig {
-	const VOTERS: [u32; 2] = [5_000, 10_000];
-	const TARGETS: [u32; 2] = [1_000, 2_000];
-	const ACTIVE_VOTERS: [u32; 2] = [1000, 4_000];
-	const DESIRED_TARGETS: [u32; 2] = [400, 800];
-	const SNAPSHOT_MAXIMUM_VOTERS: u32 = 25_000;
-	const MINER_MAXIMUM_VOTERS: u32 = 15_000;
-	const MAXIMUM_TARGETS: u32 = 2000;
+impl BenchmarkingConfig for BenchmarkConfig {
+	const VOTERS: [u32; 2] = [1000, 2000];
+	const TARGETS: [u32; 2] = [500, 1000];
+	const ACTIVE_VOTERS: [u32; 2] = [500, 800];
+	const DESIRED_TARGETS: [u32; 2] = [200, 400];
+	const SNAPSHOT_MAXIMUM_VOTERS: u32 = 1000;
+	const MINER_MAXIMUM_VOTERS: u32 = 1000;
+	const MAXIMUM_TARGETS: u32 = 300;
 }
 
 frame_support::parameter_types! {
@@ -37,15 +41,16 @@ frame_support::parameter_types! {
 	pub const SignedDepositBase: Balance = 1 * MILLI;
 	pub const SignedDepositByte: Balance = 1 * MICRO;
 
-	// fallback: no on-chain fallback.
-	pub const Fallback: FallbackStrategy = FallbackStrategy::Nothing;
-
 	pub SolutionImprovementThreshold: Perbill = Perbill::from_rational(5u32, 10_000);
 
 	// miner configs
 	pub NposSolutionPriority: TransactionPriority = Perbill::from_percent(90) * TransactionPriority::max_value();
-	pub const MinerMaxIterations: u32 = 10;
 	pub const OffchainRepeat: BlockNumber = 5;
+
+	/// Whilst `UseNominatorsAndUpdateBagsList` or `UseNominatorsMap` is in use, this can still be a
+	/// very large value. Once the `BagsList` is in full motion, staking might open its door to many
+	/// more nominators, and this value should instead be what is a "safe" number (e.g. 22500).
+	pub const VoterSnapshotPerBlock: u32 = 22_500;
 }
 
 impl Config for Runtime {
@@ -55,7 +60,6 @@ impl Config for Runtime {
 	type SignedPhase = SignedPhase;
 	type UnsignedPhase = UnsignedPhase;
 	type SolutionImprovementThreshold = SolutionImprovementThreshold;
-	type MinerMaxIterations = MinerMaxIterations;
 	type MinerMaxWeight = OffchainSolutionWeightLimit;
 	type MinerMaxLength = OffchainSolutionLengthLimit; // For now use the one from staking.
 	type OffchainRepeat = OffchainRepeat;
@@ -69,10 +73,16 @@ impl Config for Runtime {
 	type SlashHandler = (); // burn slashes
 	type RewardHandler = (); // nothing to do upon rewards
 	type DataProvider = Staking;
-	type OnChainAccuracy = Perbill;
 	type Solution = NposCompactSolution24;
-	type Fallback = Fallback;
-	type WeightInfo = ();
+	type Fallback = NoFallback<Self>;
+	type Solver = SequentialPhragmen<AccountId, SolutionAccuracyOf<Self>, OffchainRandomBalancing>;
 	type ForceOrigin = EnsureRootOrHalfCouncil;
 	type BenchmarkingConfig = BenchmarkConfig;
+	type WeightInfo = ();
+	type VoterSnapshotPerBlock = VoterSnapshotPerBlock;
+}
+
+impl onchain::Config for Runtime {
+	type Accuracy = Perbill;
+	type DataProvider = Staking;
 }

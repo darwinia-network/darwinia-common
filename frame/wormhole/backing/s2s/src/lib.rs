@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -124,7 +124,6 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(fn deposit_event)]
-	#[pallet::metadata(AccountId<T> = "AccountId", RingBalance<T> = "RingBalance")]
 	pub enum Event<T: Config> {
 		/// Token registered \[token metadata, sender\]
 		TokenRegistered(TokenMetadata, AccountId<T>),

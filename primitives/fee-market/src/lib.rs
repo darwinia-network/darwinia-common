@@ -20,13 +20,14 @@
 use core::{cmp::Ordering, ops::Range};
 // --- crates.io ---
 use codec::{Decode, Encode};
+use scale_info::TypeInfo;
 // --- paritytech ---
 use bp_messages::{LaneId, MessageNonce};
 use sp_runtime::{traits::AtLeast32BitUnsigned, RuntimeDebug};
 use sp_std::vec::Vec;
 
 /// Relayer who has enrolled the fee market
-#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct Relayer<AccountId, Balance> {
 	pub id: AccountId,
 	pub collateral: Balance,
@@ -73,7 +74,7 @@ where
 }
 
 /// Order represent cross-chain message relay task. Only support sub-sub message for now.
-#[derive(Clone, Default, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, Default, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct Order<AccountId, BlockNumber, Balance> {
 	pub lane: LaneId,
 	pub message: MessageNonce,
@@ -181,7 +182,7 @@ where
 
 /// Relayers selected by the fee market. Each prior relayer has a valid slot, if the order can finished in time,
 /// will be rewarded with more percentage. PriorRelayer are responsible for the messages relay in most time.
-#[derive(Clone, Encode, Decode, Default, Debug)]
+#[derive(Clone, Debug, Default, Encode, Decode, TypeInfo)]
 pub struct PriorRelayer<AccountId, BlockNumber, Balance> {
 	pub id: AccountId,
 	pub fee: Balance,
@@ -209,7 +210,7 @@ where
 }
 
 /// The detail information about slash behavior
-#[derive(Clone, Encode, Decode, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct SlashReport<AccountId, BlockNumber, Balance> {
 	pub lane: LaneId,
 	pub message: MessageNonce,

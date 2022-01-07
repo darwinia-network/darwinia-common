@@ -1,4 +1,4 @@
-// Copyright 2019-2021 PureStake Inc.
+// Copyright 2019-2022 PureStake Inc.
 // This file is part of Moonbeam.
 
 // Moonbeam is free software: you can redistribute it and/or modify
@@ -18,11 +18,7 @@ pub use dvm_rpc_core::{DebugApi as DebugT, DebugApiServer, TraceParams};
 
 // crates.io
 use ethereum_types::{H128, H256};
-use futures::{
-	compat::Compat,
-	future::{BoxFuture, TryFutureExt},
-	FutureExt, SinkExt, StreamExt,
-};
+use futures::{future::BoxFuture, FutureExt, SinkExt, StreamExt};
 use jsonrpc_core::Result as RpcResult;
 use std::{future::Future, marker::PhantomData, str::FromStr, sync::Arc};
 use tokio::{
@@ -37,13 +33,13 @@ use dp_rpc::{RequestBlockId, RequestBlockTag};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 // paritytech
 use sc_client_api::backend::Backend;
+use sc_utils::mpsc::TracingUnboundedSender;
 use sp_api::{BlockId, Core, HeaderT, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{
 	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata,
 };
 use sp_runtime::traits::{Block as BlockT, UniqueSaturatedInto};
-use sp_utils::mpsc::TracingUnboundedSender;
 
 pub enum RequesterInput {
 	Transaction(H256),
@@ -76,7 +72,7 @@ impl DebugT for Debug {
 		&self,
 		transaction_hash: H256,
 		params: Option<TraceParams>,
-	) -> Compat<BoxFuture<'static, RpcResult<single::TransactionTrace>>> {
+	) -> BoxFuture<'static, RpcResult<single::TransactionTrace>> {
 		let mut requester = self.requester.clone();
 
 		async move {
@@ -103,14 +99,13 @@ impl DebugT for Debug {
 				})
 		}
 		.boxed()
-		.compat()
 	}
 
 	fn trace_block(
 		&self,
 		id: RequestBlockId,
 		params: Option<TraceParams>,
-	) -> Compat<BoxFuture<'static, RpcResult<Vec<single::TransactionTrace>>>> {
+	) -> BoxFuture<'static, RpcResult<Vec<single::TransactionTrace>>> {
 		let mut requester = self.requester.clone();
 
 		async move {
@@ -137,7 +132,6 @@ impl DebugT for Debug {
 				})
 		}
 		.boxed()
-		.compat()
 	}
 }
 
@@ -163,7 +157,7 @@ where
 		permit_pool: Arc<Semaphore>,
 	) -> (impl Future<Output = ()>, DebugRequester) {
 		let (tx, mut rx): (DebugRequester, _) =
-			sp_utils::mpsc::tracing_unbounded("debug-requester");
+			sc_utils::mpsc::tracing_unbounded("debug-requester");
 
 		let fut = async move {
 			loop {
@@ -422,6 +416,7 @@ where
 			client.as_ref(),
 			frontier_backend.as_ref(),
 			transaction_hash,
+			false,
 		) {
 			Ok(Some((hash, index))) => (hash, index as usize),
 			Ok(None) => return Err(internal_err("Transaction hash not found".to_string())),

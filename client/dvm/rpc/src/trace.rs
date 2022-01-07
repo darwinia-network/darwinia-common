@@ -1,4 +1,4 @@
-// Copyright 2019-2021 PureStake Inc.
+// Copyright 2019-2022 PureStake Inc.
 // This file is part of Moonbeam.
 
 // Moonbeam is free software: you can redistribute it and/or modify
@@ -26,23 +26,27 @@
 
 pub use dvm_rpc_core::{FilterRequest, TraceApi as TraceT, TraceApiServer};
 
-// crates.io
-use ethereum_types::H256;
-use futures::{
-	compat::Compat,
-	future::{BoxFuture, TryFutureExt},
-	select,
-	stream::FuturesUnordered,
-	FutureExt, SinkExt, StreamExt,
-};
-use jsonrpc_core::Result;
+// --- std ---
 use std::{collections::BTreeMap, future::Future, marker::PhantomData, sync::Arc, time::Duration};
+// --- crates.io ---
+use ethereum_types::H256;
+use futures::{future::BoxFuture, select, stream::FuturesUnordered, FutureExt, SinkExt, StreamExt};
+use jsonrpc_core::Result;
 use tokio::{
 	sync::{mpsc, oneshot, Semaphore},
-	time::delay_for,
+	time::sleep,
 };
 use tracing::{instrument, Instrument};
-// darwinia-network
+// --- paritytech ---
+use sc_client_api::backend::Backend;
+use sc_utils::mpsc::TracingUnboundedSender;
+use sp_api::{BlockId, Core, HeaderT, ProvideRuntimeApi};
+use sp_block_builder::BlockBuilder;
+use sp_blockchain::{
+	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata,
+};
+use sp_runtime::traits::Block as BlockT;
+// --- darwinia-network ---
 use crate::internal_err;
 use dc_tracer::{
 	formatters::ResponseFormatter,
@@ -51,15 +55,6 @@ use dc_tracer::{
 use dp_evm_trace_apis::DebugRuntimeApi;
 use dp_rpc::{RequestBlockId, RequestBlockTag};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
-// paritytech
-use sc_client_api::backend::Backend;
-use sp_api::{BlockId, Core, HeaderT, ProvideRuntimeApi};
-use sp_block_builder::BlockBuilder;
-use sp_blockchain::{
-	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata,
-};
-use sp_runtime::traits::Block as BlockT;
-use sp_utils::mpsc::TracingUnboundedSender;
 
 /// RPC handler. Will communicate with a `CacheTask` through a `CacheRequester`.
 pub struct Trace<B, C> {
@@ -247,9 +242,8 @@ where
 	fn filter(
 		&self,
 		filter: FilterRequest,
-	) -> Compat<BoxFuture<'static, jsonrpc_core::Result<Vec<TransactionTrace>>>> {
-		// Wraps the async function into futures compatibility layer.
-		self.clone().filter(filter).boxed().compat()
+	) -> BoxFuture<'static, jsonrpc_core::Result<Vec<TransactionTrace>>> {
+		self.clone().filter(filter).boxed()
 	}
 }
 
@@ -451,16 +445,15 @@ where
 	) -> (impl Future<Output = ()>, CacheRequester) {
 		// Communication with the outside world :
 		let (requester_tx, mut requester_rx) =
-			sp_utils::mpsc::tracing_unbounded("trace-filter-cache");
+			sc_utils::mpsc::tracing_unbounded("trace-filter-cache");
 
 		// Task running in the service.
 		let task = async move {
 			// The following variables are polled by the select! macro, and thus cannot be
 			// part of Self without introducing borrowing issues.
 			let mut batch_expirations = FuturesUnordered::new();
-			let (blocking_tx, blocking_rx) =
+			let (blocking_tx, mut blocking_rx) =
 				mpsc::channel(blocking_permits.available_permits() * 2);
-			let mut blocking_rx = blocking_rx.fuse();
 
 			// Contains the inner state of the cache task, excluding the pooled futures/channels.
 			// Having this object allow to refactor each event into its own function, simplifying
@@ -490,7 +483,7 @@ where
 								// Cannot be refactored inside `request_stop_batch` because
 								// it has an unnamable type :C
 								batch_expirations.push(async move {
-									delay_for(cache_duration).await;
+									sleep(cache_duration).await;
 									batch_id
 								});
 
@@ -498,7 +491,7 @@ where
 							},
 						}
 					},
-					message = blocking_rx.next() => {
+					message = blocking_rx.recv().fuse() => {
 						match message {
 							None => (),
 							Some(BlockingTaskMessage::Started { block_hash })
@@ -551,7 +544,7 @@ where
 				let (unqueue_sender, unqueue_receiver) = oneshot::channel();
 				let client = Arc::clone(&self.client);
 				let backend = Arc::clone(&self.backend);
-				let mut blocking_tx = blocking_tx.clone();
+				let blocking_tx = blocking_tx.clone();
 
 				// Spawn all block caching asynchronously.
 				// It will wait to obtain a permit, then spawn a blocking task.

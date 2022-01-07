@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -20,9 +20,9 @@
 use std::{env, path::PathBuf};
 // --- paritytech ---
 use sc_cli::{Role, RuntimeVersion, SubstrateCli};
-use sc_service::ChainSpec;
 #[cfg(feature = "try-runtime")]
 use sc_service::TaskManager;
+use sc_service::{ChainSpec, DatabaseSource};
 use sp_core::crypto::Ss58AddressFormat;
 // --- darwinia-network ---
 use crate::cli::*;
@@ -267,7 +267,7 @@ pub fn run() -> sc_cli::Result<()> {
 			if chain_spec.is_pangolin() {
 				runner.sync_run(|config| {
 					// Remove dvm offchain db
-					let dvm_database_config = sc_service::DatabaseConfig::RocksDb {
+					let dvm_database_config = DatabaseSource::RocksDb {
 						path: pangolin_service::dvm_database_dir(&config),
 						cache_size: 0,
 					};
@@ -300,7 +300,7 @@ pub fn run() -> sc_cli::Result<()> {
 					// we don't need any of the components of new_partial, just a runtime, or a task
 					// manager to do `async_run`.
 					let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
-					let task_manager = TaskManager::new(config.task_executor.clone(), registry)
+					let task_manager = TaskManager::new(config.tokio_handle.clone(), registry)
 						.map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
 
 					Ok((
@@ -313,7 +313,7 @@ pub fn run() -> sc_cli::Result<()> {
 					// we don't need any of the components of new_partial, just a runtime, or a task
 					// manager to do `async_run`.
 					let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
-					let task_manager = TaskManager::new(config.task_executor.clone(), registry)
+					let task_manager = TaskManager::new(config.tokio_handle.clone(), registry)
 						.map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
 
 					Ok((

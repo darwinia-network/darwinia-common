@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -599,7 +599,7 @@ fn punished_claim_should_work() {
 			..Default::default()
 		};
 
-		// will emit Event::BondRing
+		// will emit Event::RingBonded
 		assert_ok!(Staking::bond(
 			Origin::signed(stash),
 			controller,
@@ -2210,6 +2210,6 @@ fn rebond_event_should_work() {
 					..Default::default()
 				})
 			);
-			System::assert_has_event(Event::BondRing(200, 36000, 36000).into());
+			System::assert_has_event(Event::RingBonded(11, 200, 36000, 36000).into());
 		});
 }

@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 
 // --- std ---
 use std::{
-	collections::{BTreeMap, HashMap},
+	collections::BTreeMap,
 	path::PathBuf,
 	sync::{Arc, Mutex},
 	time::Duration,
@@ -35,7 +35,7 @@ use sc_consensus::{BasicQueue, DefaultImportQueue, LongestChain};
 use sc_consensus_babe::{
 	BabeBlockImport, BabeLink, BabeParams, Config as BabeConfig, SlotProportion,
 };
-use sc_executor::NativeExecutionDispatch;
+use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch};
 use sc_finality_grandpa::{
 	warp_proof::NetworkProvider, Config as GrandpaConfig,
 	FinalityProofProvider as GrandpaFinalityProofProvider, GrandpaParams, LinkHalf,
@@ -63,7 +63,7 @@ use crate::{
 	},
 };
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
-use dp_rpc::{FilterPool, PendingTransactions};
+use dp_rpc::FilterPool;
 use drml_common_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use drml_rpc::{
 	pangolin::{FullDeps, LightDeps},
@@ -71,15 +71,21 @@ use drml_rpc::{
 };
 use pangolin_runtime::RuntimeApi;
 
-sc_executor::native_executor_instance!(
-	pub Executor,
-	pangolin_runtime::api::dispatch,
-	pangolin_runtime::native_version,
-	(
+pub struct Executor;
+impl NativeExecutionDispatch for Executor {
+	type ExtendHostFunctions = (
 		frame_benchmarking::benchmarking::HostFunctions,
-		dp_evm_trace_ext::dvm_ext::HostFunctions
-	),
-);
+		dp_evm_trace_ext::dvm_ext::HostFunctions,
+	);
+
+	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+		pangolin_runtime::api::dispatch(method, data)
+	}
+
+	fn native_version() -> sc_executor::NativeVersion {
+		pangolin_runtime::native_version()
+	}
+}
 
 // A set of APIs that drml-like runtimes must implement.
 impl_runtime_apis![
@@ -162,10 +168,16 @@ where
 			Ok((worker, telemetry))
 		})
 		.transpose()?;
+	let executor = <NativeElseWasmExecutor<Executor>>::new(
+		config.wasm_method,
+		config.default_heap_pages,
+		config.max_runtime_instances,
+	);
 	let (client, backend, keystore_container, task_manager) =
-		sc_service::new_full_parts::<Block, RuntimeApi, Executor>(
-			&config,
+		sc_service::new_full_parts::<Block, RuntimeApi, _>(
+			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
+			executor,
 		)?;
 	let telemetry = telemetry.map(|(worker, telemetry)| {
 		task_manager.spawn_handle().spawn("telemetry", worker.run());
@@ -318,7 +330,6 @@ where
 	}
 
 	let dvm_backend = open_dvm_backend(&config)?;
-	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 	let tracing_requesters = dvm_tasks::spawn(DvmTasksParams {
 		task_manager: &task_manager,
@@ -326,7 +337,6 @@ where
 		substrate_backend: backend.clone(),
 		dvm_backend: dvm_backend.clone(),
 		filter_pool: filter_pool.clone(),
-		pending_transactions: pending_transactions.clone(),
 		is_archive,
 		rpc_config: rpc_config.clone(),
 	});
@@ -352,6 +362,7 @@ where
 			let deps = FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
+				graph: transaction_pool.pool().clone(),
 				select_chain: select_chain.clone(),
 				chain_spec: chain_spec.cloned_box(),
 				deny_unsafe,
@@ -369,7 +380,6 @@ where
 					subscription_executor,
 					finality_provider: finality_proof_provider.clone(),
 				},
-				pending_transactions: pending_transactions.clone(),
 				backend: dvm_backend.clone(),
 				filter_pool: filter_pool.clone(),
 				tracing_requesters: tracing_requesters.clone(),
@@ -382,7 +392,7 @@ where
 	};
 	let rpc_handlers = sc_service::spawn_tasks(SpawnTasksParams {
 		config,
-		backend: backend.clone(),
+		backend,
 		client: client.clone(),
 		keystore: keystore_container.sync_keystore(),
 		network: network.clone(),
@@ -548,22 +558,22 @@ where
 		.clone()
 		.filter(|x| !x.is_empty())
 		.map(|endpoints| -> Result<_, sc_telemetry::Error> {
-			#[cfg(feature = "browser")]
-			let transport = Some(sc_telemetry::ExtTransport::new(
-				libp2p_wasm_ext::ffi::websocket_transport(),
-			));
-			#[cfg(not(feature = "browser"))]
-			let transport = None;
-
-			let worker = TelemetryWorker::with_transport(16, transport)?;
+			let worker = TelemetryWorker::new(16)?;
 			let telemetry = worker.handle().new_telemetry(endpoints);
+
 			Ok((worker, telemetry))
 		})
 		.transpose()?;
+	let executor = <NativeElseWasmExecutor<Executor>>::new(
+		config.wasm_method,
+		config.default_heap_pages,
+		config.max_runtime_instances,
+	);
 	let (client, backend, keystore_container, mut task_manager, on_demand) =
-		sc_service::new_light_parts::<Block, RuntimeApi, Executor>(
+		sc_service::new_light_parts::<Block, RuntimeApi, _>(
 			&config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
+			executor,
 		)?;
 	let mut telemetry = telemetry.map(|(worker, telemetry)| {
 		task_manager.spawn_handle().spawn("telemetry", worker.run());
@@ -602,7 +612,7 @@ where
 		babe_block_import,
 		Some(Box::new(justification_import)),
 		client.clone(),
-		select_chain.clone(),
+		select_chain,
 		move |_, ()| async move {
 			let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 			let slot =

@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -21,6 +21,7 @@ use std::str::FromStr;
 // --- crates.io ---
 use array_bytes::hex2bytes_unchecked;
 use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 // --- paritytech ---
 use bp_messages::source_chain::SendMessageArtifacts;
 use bp_runtime::{derive_account_id, SourceAccount};

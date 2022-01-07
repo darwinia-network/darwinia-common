@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -236,8 +236,8 @@ fn pre_verify_should_work() {
 			<CheckEthereumRelayHeaderParcel<Test> as SignedExtension>::pre_dispatch(
 				CheckEthereumRelayHeaderParcel(Default::default()),
 				&Default::default(),
-				&Call::EthereumRelay(darwinia_bridge_ethereum::Call::affirm(
-					EthereumRelayHeaderParcel {
+				&Call::EthereumRelay(darwinia_bridge_ethereum::Call::affirm {
+					ethereum_relay_header_parcel: EthereumRelayHeaderParcel {
 						header: EthereumHeader {
 							parent_hash: Default::default(),
 							timestamp: Default::default(),
@@ -258,8 +258,8 @@ fn pre_verify_should_work() {
 						},
 						parent_mmr_root: Default::default(),
 					},
-					None,
-				)),
+					optional_ethereum_relay_proofs: None,
+				}),
 				&Default::default(),
 				Default::default(),
 			),

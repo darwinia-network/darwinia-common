@@ -14,7 +14,7 @@ impl Contains<Call> for S2sCallFilter {
 	fn contains(c: &Call) -> bool {
 		matches!(
 			c,
-			Call::Substrate2SubstrateBacking(to_substrate_backing::Call::unlock_from_remote(..))
+			Call::Substrate2SubstrateBacking(to_substrate_backing::Call::unlock_from_remote { .. })
 		)
 	}
 }

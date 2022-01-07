@@ -1,3 +1,20 @@
+// This file is part of Substrate.
+
+// Copyright (C) 2019-2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 //! # Phragmén Election Module.
 //!
 //! An election module based on sequential phragmen.
@@ -91,6 +108,7 @@ use frame_support::{
 	},
 	weights::Weight,
 };
+use scale_info::TypeInfo;
 use sp_npos_elections::{ElectionResult, ExtendedBalance};
 use sp_runtime::{
 	traits::{Saturating, StaticLookup, Zero},
@@ -116,7 +134,7 @@ type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
 >>::NegativeImbalance;
 
 /// An indication that the renouncing account currently has which of the below roles.
-#[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug)]
+#[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug, TypeInfo)]
 pub enum Renouncing {
 	/// A member is renouncing.
 	Member,
@@ -127,7 +145,7 @@ pub enum Renouncing {
 }
 
 /// An active voter.
-#[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
+#[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, TypeInfo)]
 pub struct Voter<AccountId, Balance> {
 	/// The members being backed.
 	pub votes: Vec<AccountId>,
@@ -140,7 +158,7 @@ pub struct Voter<AccountId, Balance> {
 }
 
 /// A holder of a seat as either a member or a runner-up.
-#[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
+#[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, TypeInfo)]
 pub struct SeatHolder<AccountId, Balance> {
 	/// The holder.
 	pub who: AccountId,
@@ -487,7 +505,7 @@ pub mod pallet {
 		#[pallet::weight(if *has_replacement {
 			T::WeightInfo::remove_member_with_replacement()
 		} else {
-			T::BlockWeights::get().max_block
+			T::WeightInfo::remove_member_without_replacement()
 		})]
 		pub fn remove_member(
 			origin: OriginFor<T>,
@@ -544,11 +562,6 @@ pub mod pallet {
 	}
 
 	#[pallet::event]
-	#[pallet::metadata(
-		<T as frame_system::Config>::AccountId = "AccountId",
-		BalanceOf<T> = "Balance",
-		Vec<(<T as frame_system::Config>::AccountId, BalanceOf<T>)> = "Vec<(AccountId, Balance)>",
-	)]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// A new term with \[new_members\]. This indicates that enough candidates existed to run

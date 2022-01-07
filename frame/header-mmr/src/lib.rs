@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -69,10 +69,11 @@ pub mod pallet {
 	pub use types::*;
 
 	// --- crates.io ---
+	use scale_info::TypeInfo;
 	#[cfg(feature = "std")]
 	use serde::Serialize;
 	// --- paritytech ---
-	use frame_support::pallet_prelude::*;
+	use frame_support::{log, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
 	use sp_runtime::generic::DigestItem;
 	#[cfg(any(test, feature = "easy-testing"))]
@@ -183,7 +184,7 @@ pub mod pallet {
 	}
 
 	#[cfg_attr(feature = "std", derive(Serialize))]
-	#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
+	#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 	pub struct MerkleMountainRangeRootLog<Hash> {
 		/// Specific prefix to identify the mmr root log in the digest items with Other type.
 		pub prefix: [u8; 4],

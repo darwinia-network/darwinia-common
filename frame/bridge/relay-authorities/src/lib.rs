@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -71,7 +71,7 @@ mod types {
 use codec::Encode;
 // --- paritytech ---
 use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage, ensure,
+	decl_error, decl_event, decl_module, decl_storage, ensure, log,
 	traits::{Currency, EnsureOrigin, Get, LockIdentifier, WithdrawReasons},
 	weights::Weight,
 	StorageValue,

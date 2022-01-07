@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -23,6 +23,7 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use ethereum::{TransactionAction, TransactionSignature};
 use evm::{executor::PrecompileOutput, Context, ExitError};
 use rlp::RlpStream;
+use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{
 	traits::{Everything, FindAuthor, GenesisBuild},

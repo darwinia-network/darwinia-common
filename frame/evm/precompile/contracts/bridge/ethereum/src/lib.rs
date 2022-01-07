@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -53,17 +53,17 @@ where
 		let output = match Action::from_u32(dvm_parser.selector)? {
 			Action::BurnAndRemoteUnlock => {
 				let call: T::Call =
-					from_ethereum_issuing::Call::<T>::deposit_burn_token_event_from_precompile(
-						dvm_parser.input.to_vec(),
-					)
+					from_ethereum_issuing::Call::<T>::deposit_burn_token_event_from_precompile {
+						input: dvm_parser.input.to_vec(),
+					}
 					.into();
 				call.encode()
 			}
 			Action::TokenRegisterResponse => {
 				let call: T::Call =
-					from_ethereum_issuing::Call::<T>::register_response_from_contract(
-						dvm_parser.input.to_vec(),
-					)
+					from_ethereum_issuing::Call::<T>::register_response_from_contract {
+						input: dvm_parser.input.to_vec(),
+					}
 					.into();
 				call.encode()
 			}

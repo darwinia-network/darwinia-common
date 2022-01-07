@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -100,6 +100,13 @@
 //! lose funds if they vote poorly.
 //!
 //! An account can become a nominator via the [`nominate`](Call::nominate) call.
+//!
+//! #### Voting
+//!
+//! Staking is closely related to elections; actual validators are chosen from among all potential
+//! validators via election by the potential validators and nominators. To reduce use of the phrase
+//! "potential validators and nominators", we often use the term **voters**, who are simply
+//! the union of potential validators and nominators.
 //!
 //! #### Rewards and Slash
 //!
@@ -303,7 +310,7 @@ pub use weights::*;
 #[frame_support::pallet]
 pub mod pallet {
 	// --- paritytech ---
-	use frame_election_provider_support::ElectionProvider;
+	use frame_election_provider_support::{ElectionProvider, *};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{Currency, EstimateNextNewSession, OnUnbalanced, UnixTime},
@@ -315,7 +322,7 @@ pub mod pallet {
 		Perbill, Percent, SaturatedConversion,
 	};
 	use sp_staking::SessionIndex;
-	use sp_std::prelude::*;
+	use sp_std::{borrow::ToOwned, prelude::*};
 	// --- darwinia-network ---
 	use crate::*;
 	use darwinia_support::balance::*;
@@ -379,6 +386,11 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxNominatorRewardedPerValidator: Get<u32>;
 
+		/// Something that can provide a sorted list of voters in a somewhat sorted way. The
+		/// original use case for this was designed with [`pallet_bags_list::Pallet`] in mind. If
+		/// the bags-list is not desired, [`impls::UseNominatorsMap`] is likely the desired option.
+		type SortedListProvider: SortedListProvider<Self::AccountId>;
+
 		/// Number of eras that staked funds must remain bonded for.
 		#[pallet::constant]
 		type BondingDurationInEra: Get<EraIndex>;
@@ -416,12 +428,6 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	#[pallet::metadata(
-		AccountId<T> = "AccountId",
-		BlockNumberFor<T> = "BlockNumber",
-		RingBalance<T> = "RingBalance",
-		KtonBalance<T> = "KtonBalance",
-	)]
 	pub enum Event<T: Config> {
 		/// The era payout has been set; the first balance is the validator-payout; the second is
 		/// the remainder from the maximum amount of reward.
@@ -445,17 +451,17 @@ pub mod pallet {
 		///
 		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
 		/// it will not be emitted for staking rewards when they are added to stake.
-		BondRing(RingBalance<T>, TsInMs, TsInMs),
-		/// An account has bonded this amount. \[amount, start, end\]
+		RingBonded(AccountId<T>, RingBalance<T>, TsInMs, TsInMs),
+		/// An account has bonded this amount. \[account, amount, start, end\]
 		///
 		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
 		/// it will not be emitted for staking rewards when they are added to stake.
-		BondKton(KtonBalance<T>),
+		KtonBonded(AccountId<T>, KtonBalance<T>),
 
-		/// An account has unbonded this amount. \[amount, now\]
-		UnbondRing(RingBalance<T>, BlockNumberFor<T>),
-		/// An account has unbonded this amount. [amount, now\]
-		UnbondKton(KtonBalance<T>, BlockNumberFor<T>),
+		/// An account has unbonded this amount. \[amount\]
+		RingUnbonded(AccountId<T>, RingBalance<T>),
+		/// An account has unbonded this amount. \[account, amount\]
+		KtonUnbonded(AccountId<T>, KtonBalance<T>),
 
 		/// A nominator has been kicked from a validator. \[nominator, stash\]
 		Kicked(AccountId<T>, AccountId<T>),
@@ -901,18 +907,26 @@ pub mod pallet {
 			<PayoutFraction<T>>::put(self.payout_fraction);
 
 			for (stash, controller, ring_to_be_bonded, status) in &self.stakers {
+				log!(
+					trace,
+					"inserting genesis staker: {:?} => {:?} => {:?}",
+					stash,
+					ring_to_be_bonded,
+					status
+				);
 				assert!(
 					T::RingCurrency::free_balance(&stash) >= *ring_to_be_bonded,
 					"Stash does not have enough balance to bond.",
 				);
-				let _ = <Pallet<T>>::bond(
+
+				frame_support::assert_ok!(<Pallet<T>>::bond(
 					T::Origin::from(Some(stash.to_owned()).into()),
 					T::Lookup::unlookup(controller.to_owned()),
 					StakingBalance::RingBalance(*ring_to_be_bonded),
 					RewardDestination::Staked,
 					0,
-				);
-				let _ = match status {
+				));
+				frame_support::assert_ok!(match status {
 					StakerStatus::Validator => <Pallet<T>>::validate(
 						T::Origin::from(Some(controller.to_owned()).into()),
 						Default::default(),
@@ -925,12 +939,19 @@ pub mod pallet {
 							.collect(),
 					),
 					_ => Ok(()),
-				};
-				let _ = T::RingCurrency::make_free_balance_be(
+				});
+				T::RingCurrency::make_free_balance_be(
 					&<Pallet<T>>::account_id(),
 					T::RingCurrency::minimum_balance(),
 				);
 			}
+
+			// all voters are reported to the `SortedListProvider`.
+			assert_eq!(
+				T::SortedListProvider::count(),
+				<CounterForNominators<T>>::get(),
+				"not all genesis stakers were inserted into sorted list provider, something is wrong."
+			);
 		}
 	}
 
@@ -1068,14 +1089,14 @@ pub mod pallet {
 					let (start_time, expire_time) =
 						Self::bond_ring(&stash, &controller, value, promise_month, ledger)?;
 
-					Self::deposit_event(Event::BondRing(value, start_time, expire_time));
+					Self::deposit_event(Event::RingBonded(stash, value, start_time, expire_time));
 				}
 				StakingBalance::KtonBalance(value) => {
 					let stash_balance = T::KtonCurrency::free_balance(&stash);
 					let value = value.min(stash_balance);
 
 					Self::bond_kton(&controller, value, ledger)?;
-					Self::deposit_event(Event::BondKton(value));
+					Self::deposit_event(Event::KtonBonded(stash, value));
 				}
 			}
 
@@ -1119,7 +1140,12 @@ pub mod pallet {
 						let (start_time, expire_time) =
 							Self::bond_ring(&stash, &controller, extra, promise_month, ledger)?;
 
-						Self::deposit_event(Event::BondRing(extra, start_time, expire_time));
+						Self::deposit_event(Event::RingBonded(
+							stash.clone(),
+							extra,
+							start_time,
+							expire_time,
+						));
 					}
 				}
 				StakingBalance::KtonBalance(max_additional) => {
@@ -1131,9 +1157,15 @@ pub mod pallet {
 						let extra = extra.min(max_additional);
 
 						Self::bond_kton(&controller, extra, ledger)?;
-						Self::deposit_event(Event::BondKton(extra));
+						Self::deposit_event(Event::KtonBonded(stash.clone(), extra));
 					}
 				}
+			}
+
+			// update this staker in the sorted list, if they exist in it.
+			if T::SortedListProvider::contains(&stash) {
+				T::SortedListProvider::on_update(&stash, Self::weight_of(&stash));
+				debug_assert_eq!(T::SortedListProvider::sanity_check(), Ok(()));
 			}
 
 			Ok(())
@@ -1173,7 +1205,6 @@ pub mod pallet {
 			let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
 			let mut ledger = Self::clear_mature_deposits(ledger).0;
 			let StakingLedger {
-				stash,
 				active_ring,
 				active_deposit_ring,
 				deposit_items,
@@ -1197,7 +1228,7 @@ pub mod pallet {
 			});
 
 			<Ledger<T>>::insert(&controller, ledger);
-			Self::deposit_event(Event::BondRing(value, start_time, expire_time));
+			Self::deposit_event(Event::RingBonded(stash, value, start_time, expire_time));
 
 			Ok(())
 		}
@@ -1301,7 +1332,7 @@ pub mod pallet {
 							})
 							.expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
-						Self::deposit_event(Event::UnbondRing(unbond_ring, now));
+						Self::deposit_event(Event::RingUnbonded(stash.to_owned(), unbond_ring));
 
 						if !unbond_kton.is_zero() {
 							kton_staking_lock
@@ -1312,7 +1343,7 @@ pub mod pallet {
 								})
 								.expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
-							Self::deposit_event(Event::UnbondKton(unbond_kton, now));
+							Self::deposit_event(Event::KtonUnbonded(stash.to_owned(), unbond_kton));
 						}
 					}
 				}
@@ -1341,7 +1372,7 @@ pub mod pallet {
 							})
 							.expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
-						Self::deposit_event(Event::UnbondKton(unbond_kton, now));
+						Self::deposit_event(Event::KtonUnbonded(stash.to_owned(), unbond_kton));
 
 						if !unbond_ring.is_zero() {
 							ring_staking_lock
@@ -1352,13 +1383,18 @@ pub mod pallet {
 								})
 								.expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
-							Self::deposit_event(Event::UnbondRing(unbond_ring, now));
+							Self::deposit_event(Event::RingUnbonded(stash.to_owned(), unbond_ring));
 						}
 					}
 				}
 			}
 
 			Self::update_ledger(&controller, &mut ledger);
+
+			// update this staker in the sorted list, if they exist in it.
+			if T::SortedListProvider::contains(&ledger.stash) {
+				T::SortedListProvider::on_update(&ledger.stash, Self::weight_of(&ledger.stash));
+			}
 
 			// TODO: https://github.com/darwinia-network/darwinia-common/issues/96
 			// FIXME: https://github.com/darwinia-network/darwinia-common/issues/121
@@ -1995,12 +2031,10 @@ pub mod pallet {
 				<Error<T>>::NoUnlockChunk
 			);
 
-			let origin_active_ring = ledger.active_ring;
-			let origin_active_kton = ledger.active_kton;
 			let initial_unbondings = ledger.ring_staking_lock.unbondings.len() as u32
 				+ ledger.kton_staking_lock.unbondings.len() as u32;
-
-			ledger.rebond(plan_to_rebond_ring, plan_to_rebond_kton);
+			let (rebonded_ring, rebonded_kton) =
+				ledger.rebond(plan_to_rebond_ring, plan_to_rebond_kton);
 
 			// Last check: the new active amount of ledger must be more than ED.
 			ensure!(
@@ -2011,16 +2045,26 @@ pub mod pallet {
 
 			Self::update_ledger(&controller, &mut ledger);
 
-			let rebond_ring = ledger.active_ring.saturating_sub(origin_active_ring);
-			let rebond_kton = ledger.active_kton.saturating_sub(origin_active_kton);
+			let ring_rebonded = !rebonded_ring.is_zero();
+			let kton_rebonded = !rebonded_kton.is_zero();
 
-			if !rebond_ring.is_zero() {
+			if ring_rebonded {
 				let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 
-				Self::deposit_event(Event::BondRing(rebond_ring, now, now));
+				Self::deposit_event(Event::RingBonded(
+					ledger.stash.clone(),
+					rebonded_ring,
+					now,
+					now,
+				));
 			}
-			if !rebond_kton.is_zero() {
-				Self::deposit_event(Event::BondKton(rebond_kton));
+			if kton_rebonded {
+				Self::deposit_event(Event::KtonBonded(ledger.stash.clone(), rebonded_kton));
+			}
+			if ring_rebonded && kton_rebonded {
+				if T::SortedListProvider::contains(&ledger.stash) {
+					T::SortedListProvider::on_update(&ledger.stash, Self::weight_of(&ledger.stash));
+				}
 			}
 
 			let removed_unbondings = 1.saturating_add(initial_unbondings).saturating_sub(
@@ -2204,9 +2248,6 @@ pub mod pallet {
 		///
 		/// This can be helpful if bond requirements are updated, and we need to remove old users
 		/// who do not satisfy these requirements.
-		///
-		// TODO: Maybe we can deprecate `chill` in the future.
-		// https://github.com/paritytech/substrate/issues/9111
 		#[pallet::weight(T::WeightInfo::chill_other())]
 		pub fn chill_other(origin: OriginFor<T>, controller: T::AccountId) -> DispatchResult {
 			// Anyone can call this function.

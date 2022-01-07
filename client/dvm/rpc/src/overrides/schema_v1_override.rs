@@ -14,20 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
 
-use super::{blake2_128_extend, storage_prefix_build, StorageOverride};
-// --- darwinia-network ---
-use dvm_rpc_runtime_api::TransactionStatus;
+// --- std ---
+use std::{marker::PhantomData, sync::Arc};
+// --- crates.io ---
+use codec::Decode;
+use ethereum::{BlockV0 as EthereumBlock, Receipt as EthereumReceipt};
+use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
 use sc_client_api::backend::{AuxStore, Backend, StateBackend, StorageProvider};
 use sp_api::BlockId;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use sp_storage::StorageKey;
-// --- std ---
-use codec::Decode;
-use ethereum::BlockV0 as EthereumBlockV0;
-use ethereum_types::{H160, H256, U256};
-use std::{marker::PhantomData, sync::Arc};
+// --- darwinia-network ---
+use super::{blake2_128_extend, storage_prefix_build, StorageOverride};
+use dvm_rpc_runtime_api::TransactionStatus;
 
 /// An override for runtimes that use Schema V1
 pub struct SchemaV1Override<B: BlockT, C, BE> {
@@ -102,16 +103,16 @@ where
 	}
 
 	/// Return the current block.
-	fn current_block(&self, block: &BlockId<Block>) -> Option<EthereumBlockV0> {
-		self.query_storage::<EthereumBlockV0>(
+	fn current_block(&self, block: &BlockId<Block>) -> Option<EthereumBlock> {
+		self.query_storage::<EthereumBlock>(
 			block,
 			&StorageKey(storage_prefix_build(b"Ethereum", b"CurrentBlock")),
 		)
 	}
 
 	/// Return the current receipt.
-	fn current_receipts(&self, block: &BlockId<Block>) -> Option<Vec<ethereum::Receipt>> {
-		self.query_storage::<Vec<ethereum::Receipt>>(
+	fn current_receipts(&self, block: &BlockId<Block>) -> Option<Vec<EthereumReceipt>> {
+		self.query_storage::<Vec<EthereumReceipt>>(
 			block,
 			&StorageKey(storage_prefix_build(b"Ethereum", b"CurrentReceipts")),
 		)

@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@ use dc_tracer::types::block::TransactionTrace;
 use dp_rpc::RequestBlockId;
 // crates.ip
 use ethereum_types::H160;
-use futures::{compat::Compat, future::BoxFuture};
+use futures::future::BoxFuture;
 use jsonrpc_derive::rpc;
 use serde::Deserialize;
 
@@ -33,7 +33,7 @@ pub trait TraceApi {
 	fn filter(
 		&self,
 		filter: FilterRequest,
-	) -> Compat<BoxFuture<'static, jsonrpc_core::Result<Vec<TransactionTrace>>>>;
+	) -> BoxFuture<'static, jsonrpc_core::Result<Vec<TransactionTrace>>>;
 }
 
 #[derive(Clone, Eq, PartialEq, Debug, Deserialize)]

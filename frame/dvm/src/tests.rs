@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -291,7 +291,10 @@ fn transaction_without_enough_gas_should_not_work() {
 		transaction.gas_price = U256::from(11_000_000);
 
 		assert_err!(
-			Ethereum::validate_unsigned(TransactionSource::External, &Call::transact(transaction)),
+			Ethereum::validate_unsigned(
+				TransactionSource::External,
+				&Call::transact { transaction }
+			),
 			InvalidTransaction::Payment
 		);
 	});
@@ -307,10 +310,15 @@ fn transaction_with_invalid_nonce_should_not_work() {
 		let mut transaction = creation_contract(ERC20_CONTRACT_BYTECODE, 0);
 		transaction.nonce = U256::from(1);
 
-		let signed = transaction.sign(&alice.private_key);
+		let signed_transaction = transaction.sign(&alice.private_key);
 
 		assert_eq!(
-			Ethereum::validate_unsigned(TransactionSource::External, &Call::transact(signed)),
+			Ethereum::validate_unsigned(
+				TransactionSource::External,
+				&Call::transact {
+					transaction: signed_transaction
+				}
+			),
 			ValidTransactionBuilder::default()
 				.and_provides((alice.address, U256::from(1)))
 				.priority(1u64)
@@ -332,10 +340,15 @@ fn transaction_with_invalid_nonce_should_not_work() {
 		));
 
 		transaction.nonce = U256::from(0);
-		let signed2 = transaction.sign(&alice.private_key);
+		let signed_transaction = transaction.sign(&alice.private_key);
 
 		assert_err!(
-			Ethereum::validate_unsigned(TransactionSource::External, &Call::transact(signed2)),
+			Ethereum::validate_unsigned(
+				TransactionSource::External,
+				&Call::transact {
+					transaction: signed_transaction
+				}
+			),
 			InvalidTransaction::Stale
 		);
 	});
@@ -800,7 +813,7 @@ fn internal_transaction_should_works() {
 		assert_eq!(System::event_count(), 1);
 		System::assert_last_event(mock::Event::Ethereum(crate::Event::Executed(
 			<Test as self::Config>::PalletId::get().into_h160(),
-			H160::default(),
+			contract_address,
 			H256::from_str("0xabdebc2d8a79e4c40d6d66c614bafc2be138d4fc0fd21e28d318f3a032cbee39")
 				.unwrap(),
 			ExitReason::Succeed(ExitSucceed::Returned),
@@ -809,7 +822,7 @@ fn internal_transaction_should_works() {
 		assert_ok!(Ethereum::internal_transact(contract_address, foo));
 		System::assert_last_event(mock::Event::Ethereum(crate::Event::Executed(
 			<Test as self::Config>::PalletId::get().into_h160(),
-			H160::default(),
+			contract_address,
 			H256::from_str("0x2028ce5eef8d4531d4f955c9860b28f9e8cd596b17fea2326d2be49a8d3dc7ac")
 				.unwrap(),
 			ExitReason::Succeed(ExitSucceed::Returned),

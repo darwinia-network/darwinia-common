@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@ use dc_tracer::types::single;
 use dp_rpc::RequestBlockId;
 // crate.io
 use ethereum_types::H256;
-use futures::{compat::Compat, future::BoxFuture};
+use futures::future::BoxFuture;
 use jsonrpc_core::Result as RpcResult;
 use jsonrpc_derive::rpc;
 use serde::Deserialize;
@@ -46,11 +46,11 @@ pub trait DebugApi {
 		&self,
 		transaction_hash: H256,
 		params: Option<TraceParams>,
-	) -> Compat<BoxFuture<'static, RpcResult<single::TransactionTrace>>>;
+	) -> BoxFuture<'static, RpcResult<single::TransactionTrace>>;
 	#[rpc(name = "debug_traceBlockByNumber", alias("debug_traceBlockByHash"))]
 	fn trace_block(
 		&self,
 		id: RequestBlockId,
 		params: Option<TraceParams>,
-	) -> Compat<BoxFuture<'static, RpcResult<Vec<single::TransactionTrace>>>>;
+	) -> BoxFuture<'static, RpcResult<Vec<single::TransactionTrace>>>;
 }

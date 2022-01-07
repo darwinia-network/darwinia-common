@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -33,7 +33,7 @@ use sp_runtime::traits::Block as BlockT;
 use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use dc_rpc::{CacheTask, DebugTask, EthTask};
 use dp_evm_trace_apis::DebugRuntimeApi;
-use dp_rpc::{FilterPool, PendingTransactions};
+use dp_rpc::FilterPool;
 use drml_rpc::{EthApiCmd, RpcConfig, RpcRequesters};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 
@@ -54,22 +54,9 @@ where
 		substrate_backend,
 		dvm_backend,
 		filter_pool,
-		pending_transactions,
 		is_archive,
 		rpc_config,
 	} = params;
-	// Spawn pending transactions maintenance task (as essential, otherwise we leak).
-	if let Some(pending_transactions) = pending_transactions {
-		const TRANSACTION_RETAIN_THRESHOLD: u64 = 5;
-		task_manager.spawn_essential_handle().spawn(
-			"frontier-pending-transactions",
-			EthTask::pending_transaction_task(
-				Arc::clone(&client),
-				pending_transactions,
-				TRANSACTION_RETAIN_THRESHOLD,
-			),
-		);
-	}
 
 	// Spawn schema cache maintenance task.
 	task_manager.spawn_essential_handle().spawn(
@@ -166,7 +153,6 @@ pub struct DvmTasksParams<'a, B: BlockT, C, BE> {
 	pub substrate_backend: Arc<BE>,
 	pub dvm_backend: Arc<dc_db::Backend<B>>,
 	pub filter_pool: Option<FilterPool>,
-	pub pending_transactions: PendingTransactions,
 	pub is_archive: bool,
 	pub rpc_config: RpcConfig,
 }

@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -21,9 +21,13 @@
 #![allow(unused)]
 
 // --- std ---
-use std::{cell::RefCell, collections::HashSet};
+use std::{
+	cell::RefCell,
+	collections::{BTreeMap, HashSet},
+};
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_election_provider_support::*;
 use frame_support::{
@@ -224,9 +228,6 @@ impl darwinia_balances::Config<KtonInstance> for Test {
 }
 
 impl onchain::Config for Test {
-	type AccountId = AccountId;
-	type BlockNumber = BlockNumber;
-	type BlockWeights = BlockWeights;
 	type Accuracy = Perbill;
 	type DataProvider = Staking;
 }
@@ -269,6 +270,7 @@ impl Config for Test {
 	type Cap = Cap;
 	type TotalPower = TotalPower;
 	type WeightInfo = ();
+	type SortedListProvider = UseNominatorsMap<Self>;
 }
 
 impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
@@ -297,17 +299,18 @@ frame_support::construct_runtime! {
 }
 
 pub struct ExtBuilder {
-	validator_pool: bool,
 	nominate: bool,
 	validator_count: u32,
 	minimum_validator_count: u32,
-	fair: bool,
-	num_validators: Option<u32>,
 	invulnerables: Vec<AccountId>,
 	has_stakers: bool,
 	initialize_first_session: bool,
 	min_nominator_bond: Balance,
 	min_validator_bond: Balance,
+	balance_factor: Balance,
+	status: BTreeMap<AccountId, StakerStatus<AccountId>>,
+	stakes: BTreeMap<AccountId, Balance>,
+	stakers: Vec<(AccountId, AccountId, Balance, StakerStatus<AccountId>)>,
 	init_kton: bool,
 }
 impl ExtBuilder {
@@ -321,10 +324,6 @@ impl ExtBuilder {
 	}
 	pub fn existential_deposit(self, existential_deposit: Balance) -> Self {
 		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow_mut() = existential_deposit);
-		self
-	}
-	pub fn validator_pool(mut self, validator_pool: bool) -> Self {
-		self.validator_pool = validator_pool;
 		self
 	}
 	pub fn nominate(mut self, nominate: bool) -> Self {
@@ -343,24 +342,12 @@ impl ExtBuilder {
 		SLASH_DEFER_DURATION.with(|v| *v.borrow_mut() = eras);
 		self
 	}
-	pub fn fair(mut self, is_fair: bool) -> Self {
-		self.fair = is_fair;
-		self
-	}
-	pub fn num_validators(mut self, num_validators: u32) -> Self {
-		self.num_validators = Some(num_validators);
-		self
-	}
 	pub fn invulnerables(mut self, invulnerables: Vec<AccountId>) -> Self {
 		self.invulnerables = invulnerables;
 		self
 	}
 	pub fn has_stakers(mut self, has: bool) -> Self {
 		self.has_stakers = has;
-		self
-	}
-	pub fn init_kton(mut self, init: bool) -> Self {
-		self.init_kton = init;
 		self
 	}
 	pub fn initialize_first_session(mut self, init: bool) -> Self {
@@ -379,71 +366,85 @@ impl ExtBuilder {
 		self.min_validator_bond = amount;
 		self
 	}
+	pub fn balance_factor(mut self, factor: Balance) -> Self {
+		self.balance_factor = factor;
+		self
+	}
+	pub fn set_status(mut self, who: AccountId, status: StakerStatus<AccountId>) -> Self {
+		self.status.insert(who, status);
+		self
+	}
+	pub fn set_stake(mut self, who: AccountId, stake: Balance) -> Self {
+		self.stakes.insert(who, stake);
+		self
+	}
+	pub fn add_staker(
+		mut self,
+		stash: AccountId,
+		ctrl: AccountId,
+		stake: Balance,
+		status: StakerStatus<AccountId>,
+	) -> Self {
+		self.stakers.push((stash, ctrl, stake, status));
+		self
+	}
+	pub fn init_kton(mut self, init: bool) -> Self {
+		self.init_kton = init;
+		self
+	}
 	pub fn build(self) -> sp_io::TestExternalities {
 		sp_tracing::try_init_simple();
+
 		let mut storage = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
-
-		let balance_factor = if ExistentialDeposit::get() > 1 {
-			256
-		} else {
-			1
-		};
-
-		let num_validators = self.num_validators.unwrap_or(self.validator_count);
-		// Check that the number of validators is sensible.
-		assert!(num_validators <= 8);
-		let validators = (0..num_validators)
-			.map(|x| ((x + 1) * 10 + 1) as AccountId)
-			.collect::<Vec<_>>();
-
 		let _ = darwinia_balances::GenesisConfig::<Test, RingInstance> {
 			balances: vec![
-				(1, 10 * balance_factor),
-				(2, 20 * balance_factor),
-				(3, 300 * balance_factor),
-				(4, 400 * balance_factor),
-				(10, balance_factor),
-				(11, balance_factor * 1000),
-				(20, balance_factor),
-				(21, balance_factor * 2000),
-				(30, balance_factor),
-				(31, balance_factor * 2000),
-				(40, balance_factor),
-				(41, balance_factor * 2000),
-				(50, balance_factor),
-				(51, balance_factor * 2000),
-				(60, balance_factor),
-				(61, balance_factor * 2000),
-				(70, balance_factor),
-				(71, balance_factor * 2000),
-				(80, balance_factor),
-				(81, balance_factor * 2000),
-				(100, 2000 * balance_factor),
-				(101, 2000 * balance_factor),
+				(1, 10 * self.balance_factor),
+				(2, 20 * self.balance_factor),
+				(3, 300 * self.balance_factor),
+				(4, 400 * self.balance_factor),
+				(10, self.balance_factor),
+				(11, 1000 * self.balance_factor),
+				(20, self.balance_factor),
+				(21, 2000 * self.balance_factor),
+				(30, self.balance_factor),
+				(31, 2000 * self.balance_factor),
+				(40, self.balance_factor),
+				(41, 2000 * self.balance_factor),
+				(50, self.balance_factor),
+				(51, 2000 * self.balance_factor),
+				(60, self.balance_factor),
+				(61, 2000 * self.balance_factor),
+				(70, self.balance_factor),
+				(71, 2000 * self.balance_factor),
+				(80, self.balance_factor),
+				(81, 2000 * self.balance_factor),
+				(100, 2000 * self.balance_factor),
+				(101, 2000 * self.balance_factor),
 				// This allows us to have a total_payout different from 0.
 				(999, 1_000_000_000_000),
 			],
 		}
 		.assimilate_storage(&mut storage);
+
 		if self.init_kton {
 			let _ = darwinia_balances::GenesisConfig::<Test, KtonInstance> {
 				balances: vec![
-					(1, 10 * balance_factor),
-					(2, 20 * balance_factor),
-					(3, 300 * balance_factor),
-					(4, 400 * balance_factor),
-					(10, balance_factor),
-					(11, balance_factor * 1000),
-					(20, balance_factor),
-					(21, balance_factor * 2000),
-					(30, balance_factor),
-					(31, balance_factor * 2000),
-					(40, balance_factor),
-					(41, balance_factor * 2000),
-					(100, 2000 * balance_factor),
-					(101, 2000 * balance_factor),
+					(1, 10 * self.balance_factor),
+					(2, 20 * self.balance_factor),
+					(3, 300 * self.balance_factor),
+					(4, 400 * self.balance_factor),
+					(10, self.balance_factor),
+					(11, 1000 * self.balance_factor),
+					(20, self.balance_factor),
+					(21, 2000 * self.balance_factor),
+					(30, self.balance_factor),
+					(31, 2000 * self.balance_factor),
+					(40, self.balance_factor),
+					(41, 2000 * self.balance_factor),
+					(100, 2000 * self.balance_factor),
+					(101, 2000 * self.balance_factor),
 					// This allows us to have a total_payout different from 0.
 					(999, 1_000_000_000_000),
 				],
@@ -452,38 +453,65 @@ impl ExtBuilder {
 		}
 
 		let mut stakers = vec![];
+
 		if self.has_stakers {
-			let stake_21 = if self.fair { 1000 } else { 2000 };
-			let stake_31 = if self.validator_pool {
-				balance_factor * 1000
-			} else {
-				1
-			};
-			let status_41 = if self.validator_pool {
-				StakerStatus::<AccountId>::Validator
-			} else {
-				StakerStatus::<AccountId>::Idle
-			};
-			let nominated = if self.nominate { vec![11, 21] } else { vec![] };
 			stakers = vec![
-				// (stash, controller, staked_amount, status)
+				// (stash, ctrl, stake, status)
+				// these two will be elected in the default test where we elect 2.
 				(
 					11,
 					10,
-					balance_factor * 1000,
-					StakerStatus::<AccountId>::Validator,
+					self.balance_factor * 1000,
+					<StakerStatus<AccountId>>::Validator,
 				),
-				(21, 20, stake_21, StakerStatus::<AccountId>::Validator),
-				(31, 30, stake_31, StakerStatus::<AccountId>::Validator),
-				(41, 40, balance_factor * 1000, status_41),
-				// nominator
 				(
-					101,
-					100,
-					balance_factor * 500,
-					StakerStatus::<AccountId>::Nominator(nominated),
+					21,
+					20,
+					self.balance_factor * 1000,
+					<StakerStatus<AccountId>>::Validator,
+				),
+				// a loser validator
+				(
+					31,
+					30,
+					self.balance_factor * 500,
+					<StakerStatus<AccountId>>::Validator,
+				),
+				// an idle validator
+				(
+					41,
+					40,
+					self.balance_factor * 1000,
+					<StakerStatus<AccountId>>::Idle,
 				),
 			];
+			// optionally add a nominator
+			if self.nominate {
+				stakers.push((
+					101,
+					100,
+					self.balance_factor * 500,
+					<StakerStatus<AccountId>>::Nominator(vec![11, 21]),
+				))
+			}
+			// replace any of the status if needed.
+			self.status.into_iter().for_each(|(stash, status)| {
+				let (_, _, _, ref mut prev_status) = stakers
+					.iter_mut()
+					.find(|s| s.0 == stash)
+					.expect("set_status staker should exist; qed");
+				*prev_status = status;
+			});
+			// replaced any of the stakes if needed.
+			self.stakes.into_iter().for_each(|(stash, stake)| {
+				let (_, _, ref mut prev_stake, _) = stakers
+					.iter_mut()
+					.find(|s| s.0 == stash)
+					.expect("set_stake staker should exits; qed.");
+				*prev_stake = stake;
+			});
+			// extend stakers if needed.
+			stakers.extend(self.stakers);
 		}
 		let _ = darwinia_staking::GenesisConfig::<Test> {
 			history_depth: 84,
@@ -498,24 +526,28 @@ impl ExtBuilder {
 			..Default::default()
 		}
 		.assimilate_storage(&mut storage);
-
 		let _ = pallet_session::GenesisConfig::<Test> {
-			keys: validators
-				.iter()
-				.map(|x| {
-					(
-						*x,
-						*x,
-						SessionKeys {
-							other: UintAuthorityId(*x as u64),
-						},
-					)
-				})
-				.collect(),
+			keys: if self.has_stakers {
+				// genesis election will overwrite this, no worries.
+				Default::default()
+			} else {
+				// set some dummy validators in genesis.
+				(0..self.validator_count as u64)
+					.map(|x| {
+						(
+							x,
+							x,
+							SessionKeys {
+								other: UintAuthorityId(x as u64),
+							},
+						)
+					})
+					.collect()
+			},
 		}
 		.assimilate_storage(&mut storage);
-
 		let mut ext = sp_io::TestExternalities::from(storage);
+
 		ext.execute_with(|| {
 			let validators = Session::validators();
 			SESSION_VALIDATORS.with(|x| *x.borrow_mut() = (validators.clone(), HashSet::new()));
@@ -544,17 +576,18 @@ impl ExtBuilder {
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self {
-			validator_pool: false,
 			nominate: true,
 			validator_count: 2,
 			minimum_validator_count: 0,
-			fair: true,
-			num_validators: None,
 			invulnerables: vec![],
 			has_stakers: true,
 			initialize_first_session: true,
 			min_nominator_bond: ExistentialDeposit::get(),
 			min_validator_bond: ExistentialDeposit::get(),
+			balance_factor: 1,
+			status: Default::default(),
+			stakes: Default::default(),
+			stakers: Default::default(),
 			init_kton: false,
 		}
 	}
@@ -598,8 +631,14 @@ fn post_conditions() {
 fn check_count() {
 	let nominator_count = <Nominators<Test>>::iter().count() as u32;
 	let validator_count = <Validators<Test>>::iter().count() as u32;
+
 	assert_eq!(nominator_count, <CounterForNominators<Test>>::get());
 	assert_eq!(validator_count, <CounterForValidators<Test>>::get());
+
+	// the voters that the `SortedListProvider` list is storing for us.
+	let external_voters = <Test as Config>::SortedListProvider::count();
+
+	assert_eq!(external_voters, nominator_count);
 }
 
 fn check_ledgers() {

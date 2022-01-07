@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -30,7 +30,7 @@ pub mod s2s;
 pub mod weight;
 pub use weight::WeightInfo;
 
-// --- substrate ---
+// --- paritytech ---
 use bp_messages::{LaneId, MessageNonce};
 use frame_support::{
 	ensure,
@@ -39,8 +39,10 @@ use frame_support::{
 	transactional, PalletId,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use num_traits::Zero;
-use sp_runtime::{traits::Saturating, Permill, SaturatedConversion};
+use sp_runtime::{
+	traits::{Saturating, Zero},
+	Permill, SaturatedConversion,
+};
 use sp_std::vec::Vec;
 // --- darwinia-network ---
 use darwinia_support::{
@@ -94,11 +96,6 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	#[pallet::metadata(
-		T::AccountId = "AccountId",
-		T::BlockNumber = "BlockNumber",
-		RingBalance<T> = "RingBalance",
-	)]
 	pub enum Event<T: Config> {
 		/// Relayer enrollment. \[account_id, locked_collateral, relay_fee\]
 		Enroll(T::AccountId, RingBalance<T>, RingBalance<T>),

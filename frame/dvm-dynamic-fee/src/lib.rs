@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -26,6 +26,8 @@
 pub mod pallet {
 	// --- core ---
 	use core::cmp;
+	// --- crates.io ---
+	use scale_info::TypeInfo;
 	// --- paritytech ---
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
@@ -113,7 +115,7 @@ pub mod pallet {
 
 		fn create_inherent(data: &InherentData) -> Option<Self::Call> {
 			let target = data.get_data::<InherentType>(&INHERENT_IDENTIFIER).ok()??;
-			Some(Call::note_min_gas_price_target(target))
+			Some(Call::note_min_gas_price_target { target })
 		}
 
 		fn check_inherent(_call: &Self::Call, _data: &InherentData) -> Result<(), Self::Error> {
@@ -126,7 +128,7 @@ pub mod pallet {
 	}
 
 	/// Errors that can occur while checking the price inherent.
-	#[derive(Encode, Decode, RuntimeDebug)]
+	#[derive(Encode, Decode, RuntimeDebug, TypeInfo)]
 	pub enum InherentError {}
 	impl IsFatalError for InherentError {
 		fn is_fatal_error(&self) -> bool {

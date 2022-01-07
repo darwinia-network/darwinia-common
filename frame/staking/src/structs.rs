@@ -1,10 +1,12 @@
 // --- core ---
 use core::{marker::PhantomData, mem};
+use scale_info::TypeInfo;
 // --- crates.io ---
 use codec::{Decode, Encode, HasCompact};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 // --- paritytech ---
+use frame_election_provider_support::*;
 use frame_support::WeakBoundedVec;
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, Convert, Saturating, Zero},
@@ -28,7 +30,9 @@ impl<T: Config> Convert<AccountId<T>, Option<ExposureT<T>>> for ExposureOf<T> {
 	}
 }
 /// A snapshot of the stake backing a single validator in the system.
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, Default, RuntimeDebug)]
+#[derive(
+	Clone, Default, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, RuntimeDebug, TypeInfo,
+)]
 pub struct Exposure<AccountId, RingBalance, KtonBalance>
 where
 	RingBalance: HasCompact,
@@ -46,7 +50,7 @@ where
 	pub others: Vec<IndividualExposure<AccountId, RingBalance, KtonBalance>>,
 }
 /// The amount of exposure (to slashing) than an individual nominator has.
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct IndividualExposure<AccountId, RingBalance, KtonBalance>
 where
 	RingBalance: HasCompact,
@@ -63,7 +67,7 @@ where
 }
 
 /// Information regarding the active era (era in used in session).
-#[derive(Encode, Decode, RuntimeDebug)]
+#[derive(Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ActiveEraInfo {
 	/// Index of era.
 	pub index: EraIndex,
@@ -75,7 +79,7 @@ pub struct ActiveEraInfo {
 }
 
 /// The ledger of a (bonded) stash.
-#[derive(PartialEq, Eq, Clone, Default, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct StakingLedger<AccountId, RingBalance, KtonBalance, BlockNumber>
 where
 	RingBalance: HasCompact,
@@ -127,12 +131,19 @@ where
 	}
 
 	/// Re-bond funds that were scheduled for unlocking.
-	pub fn rebond(&mut self, plan_to_rebond_ring: RingBalance, plan_to_rebond_kton: KtonBalance) {
+	///
+	/// Returns the amount actually rebonded.
+	pub fn rebond(
+		&mut self,
+		plan_to_rebond_ring: RingBalance,
+		plan_to_rebond_kton: KtonBalance,
+	) -> (RingBalance, KtonBalance) {
 		fn update<Balance, _M>(
 			bonded: &mut Balance,
 			lock: &mut StakingLock<Balance, _M>,
 			plan_to_rebond: Balance,
-		) where
+		) -> Balance
+		where
 			Balance: Copy + AtLeast32BitUnsigned + Saturating,
 		{
 			let mut rebonded = Balance::zero();
@@ -157,18 +168,22 @@ where
 					break;
 				}
 			}
+
+			rebonded
 		}
 
-		update(
-			&mut self.active_ring,
-			&mut self.ring_staking_lock,
-			plan_to_rebond_ring,
-		);
-		update(
-			&mut self.active_kton,
-			&mut self.kton_staking_lock,
-			plan_to_rebond_kton,
-		);
+		(
+			update(
+				&mut self.active_ring,
+				&mut self.ring_staking_lock,
+				plan_to_rebond_ring,
+			),
+			update(
+				&mut self.active_kton,
+				&mut self.kton_staking_lock,
+				plan_to_rebond_kton,
+			),
+		)
 	}
 
 	/// Slash the validator for a given amount of balance. This can grow the value
@@ -308,7 +323,7 @@ where
 	}
 }
 /// The *RING* under deposit.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct TimeDepositItem<RingBalance: HasCompact> {
 	#[codec(compact)]
 	pub value: RingBalance,
@@ -319,7 +334,7 @@ pub struct TimeDepositItem<RingBalance: HasCompact> {
 }
 
 /// A destination account for payment.
-#[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum RewardDestination<AccountId> {
 	/// Pay into the stash account, increasing the amount at stake accordingly.
 	Staked,
@@ -339,7 +354,7 @@ impl<AccountId> Default for RewardDestination<AccountId> {
 }
 
 /// Preference of what happens regarding validation.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ValidatorPrefs {
 	/// Reward that validator takes up-front; only the rest is split between themselves and
 	/// nominators.
@@ -360,7 +375,7 @@ impl Default for ValidatorPrefs {
 }
 
 /// A record of the nominations made by a specific account.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct Nominations<AccountId> {
 	/// The targets of nomination.
 	pub targets: Vec<AccountId>,
@@ -378,7 +393,7 @@ pub struct Nominations<AccountId> {
 /// Reward points of an era. Used to split era total payout between validators.
 ///
 /// This points will be used to reward validators and their respective nominators.
-#[derive(PartialEq, Encode, Decode, Default, Debug)]
+#[derive(Debug, Default, PartialEq, Encode, Decode, TypeInfo)]
 pub struct EraRewardPoints<AccountId: Ord> {
 	/// Total number of points. Equals the sum of reward points for each validator.
 	pub total: RewardPoint,
@@ -387,7 +402,7 @@ pub struct EraRewardPoints<AccountId: Ord> {
 }
 
 /// Mode of era-forcing.
-#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Forcing {
 	/// Not forcing anything - just let whatever happen.
@@ -409,7 +424,7 @@ impl Default for Forcing {
 
 /// A pending slash record. The value of the slash has been computed but not applied yet,
 /// rather deferred for several eras.
-#[derive(Encode, Decode, Default, RuntimeDebug)]
+#[derive(Default, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct UnappliedSlash<AccountId, RingBalance, KtonBalance> {
 	/// The stash ID of the offending validator.
 	pub validator: AccountId,
@@ -426,7 +441,7 @@ pub struct UnappliedSlash<AccountId, RingBalance, KtonBalance> {
 // A value placed in storage that represents the current version of the Staking storage. This value
 // is used by the `on_runtime_upgrade` logic to determine whether we run storage migration logic.
 // This should match directly with the semantic versions of the Rust crate.
-#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug)]
+#[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum Releases {
 	V1_0_0Ancient,
 	V2_0_0,
@@ -443,7 +458,7 @@ impl Default for Releases {
 }
 
 /// Indicates the initial status of the staker.
-#[derive(RuntimeDebug)]
+#[derive(RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum StakerStatus<AccountId> {
 	/// Chilling.
@@ -455,7 +470,7 @@ pub enum StakerStatus<AccountId> {
 }
 
 /// To unify *RING* and *KTON* balances.
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum StakingBalance<RingBalance, KtonBalance>
 where
 	RingBalance: HasCompact,
@@ -480,5 +495,79 @@ pub struct StashOf<T>(PhantomData<T>);
 impl<T: Config> Convert<AccountId<T>, Option<AccountId<T>>> for StashOf<T> {
 	fn convert(controller: AccountId<T>) -> Option<AccountId<T>> {
 		<Pallet<T>>::ledger(&controller).map(|l| l.stash)
+	}
+}
+
+impl<T: Config> VoteWeightProvider<T::AccountId> for Pallet<T> {
+	fn vote_weight(who: &T::AccountId) -> VoteWeight {
+		Self::weight_of(who)
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn set_vote_weight_of(who: &T::AccountId, weight: VoteWeight) {
+		// this will clearly results in an inconsistent state, but it should not matter for a
+		// benchmark.
+		use sp_std::convert::TryInto;
+		let active: BalanceOf<T> = weight.try_into().map_err(|_| ()).unwrap();
+		let mut ledger = Self::ledger(who).unwrap_or_default();
+		ledger.active = active;
+		<Ledger<T>>::insert(who, ledger);
+		<Bonded<T>>::insert(who, who);
+
+		// also, we play a trick to make sure that a issuance based-`CurrencyToVote` behaves well:
+		// This will make sure that total issuance is zero, thus the currency to vote will be a 1-1
+		// conversion.
+		let imbalance = T::Currency::burn(T::Currency::total_issuance());
+		// kinda ugly, but gets the job done. The fact that this works here is a HUGE exception.
+		// Don't try this pattern in other places.
+		sp_std::mem::forget(imbalance);
+	}
+}
+
+/// A simple voter list implementation that does not require any additional pallets. Note, this
+/// does not provided nominators in sorted ordered. If you desire nominators in a sorted order take
+/// a look at [`pallet-bags-list].
+pub struct UseNominatorsMap<T>(sp_std::marker::PhantomData<T>);
+impl<T: Config> SortedListProvider<T::AccountId> for UseNominatorsMap<T> {
+	type Error = ();
+
+	/// Returns iterator over voter list, which can have `take` called on it.
+	fn iter() -> Box<dyn Iterator<Item = T::AccountId>> {
+		Box::new(<Nominators<T>>::iter().map(|(n, _)| n))
+	}
+	fn count() -> u32 {
+		<CounterForNominators<T>>::get()
+	}
+	fn contains(id: &T::AccountId) -> bool {
+		<Nominators<T>>::contains_key(id)
+	}
+	fn on_insert(_: T::AccountId, _weight: VoteWeight) -> Result<(), Self::Error> {
+		// nothing to do on insert.
+		Ok(())
+	}
+	fn on_update(_: &T::AccountId, _weight: VoteWeight) {
+		// nothing to do on update.
+	}
+	fn on_remove(_: &T::AccountId) {
+		// nothing to do on remove.
+	}
+	fn regenerate(
+		_: impl IntoIterator<Item = T::AccountId>,
+		_: Box<dyn Fn(&T::AccountId) -> VoteWeight>,
+	) -> u32 {
+		// nothing to do upon regenerate.
+		0
+	}
+	fn sanity_check() -> Result<(), &'static str> {
+		Ok(())
+	}
+	fn clear(maybe_count: Option<u32>) -> u32 {
+		<Nominators<T>>::remove_all(maybe_count);
+		if let Some(count) = maybe_count {
+			<CounterForNominators<T>>::mutate(|noms| *noms - count);
+			count
+		} else {
+			<CounterForNominators<T>>::take()
+		}
 	}
 }

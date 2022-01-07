@@ -5,6 +5,7 @@ use codec::{Decode, Encode};
 // --- github.com ---
 use mmr::{Error, MMRStore, Merge, MerkleProof, Result as MMRResult};
 // --- paritytech ---
+use frame_support::log;
 use sp_core::offchain::StorageKind;
 use sp_io::{offchain, offchain_index};
 use sp_runtime::traits::Hash;

@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -35,7 +35,7 @@ macro_rules! impl_account_data {
 		use darwinia_support::balance::BalanceInfo;
 
 		$(#[$attr])*
-		#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, MaxEncodedLen)]
+		#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 		pub struct $sname<Balance$(, $($gtype)*)?>
 		$(
 		where

@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -17,14 +17,22 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 #![cfg_attr(not(feature = "std"), no_std)]
 
+// --- crates.io ---
 use codec::{Decode, Encode};
-use ethereum::{BlockV0 as EthereumBlockV0, Log};
+use ethereum::{
+	BlockV0 as EthereumBlock, Log, Receipt as EthereumReceiptV0,
+	TransactionV0 as EthereumTransactionV0,
+};
 use ethereum_types::Bloom;
+use scale_info::TypeInfo;
+// --- paritytech ---
 use sp_core::{H160, H256, U256};
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::{traits::Block as BlockT, DispatchError, RuntimeDebug};
 use sp_std::vec::Vec;
+// --- darwinia-network ---
+use dp_evm::{Account, CallInfo, CreateInfo};
 
-#[derive(Eq, PartialEq, Clone, Encode, Decode, sp_runtime::RuntimeDebug)]
+#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct TransactionStatus {
 	pub transaction_hash: H256,
 	pub transaction_index: u32,
@@ -35,27 +43,13 @@ pub struct TransactionStatus {
 	pub logs_bloom: Bloom,
 }
 
-impl Default for TransactionStatus {
-	fn default() -> Self {
-		TransactionStatus {
-			transaction_hash: H256::default(),
-			transaction_index: 0 as u32,
-			from: H160::default(),
-			to: None,
-			contract_address: None,
-			logs: Vec::new(),
-			logs_bloom: Bloom::default(),
-		}
-	}
-}
-
 sp_api::decl_runtime_apis! {
 	/// API necessary for Ethereum-compatibility layer.
 	pub trait EthereumRuntimeRPCApi {
 		/// Returns runtime defined darwinia_evm::ChainId.
 		fn chain_id() -> u64;
 		/// Returns darwinia_evm::Accounts by address.
-		fn account_basic(address: H160) -> dp_evm::Account;
+		fn account_basic(address: H160) -> Account;
 		/// Returns FixedGasPrice::min_gas_price
 		fn gas_price() -> U256;
 		/// For a given account address, returns darwinia_evm::AccountCodes.
@@ -74,7 +68,7 @@ sp_api::decl_runtime_apis! {
 			gas_price: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
-		) -> Result<dp_evm::CallInfo, sp_runtime::DispatchError>;
+		) -> Result<CallInfo, DispatchError>;
 		/// Returns a frame_ethereum::create response.
 		fn create(
 			from: H160,
@@ -84,26 +78,26 @@ sp_api::decl_runtime_apis! {
 			gas_price: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
-		) -> Result<dp_evm::CreateInfo, sp_runtime::DispatchError>;
+		) -> Result<CreateInfo, DispatchError>;
 		/// Return the current block.
-		fn current_block() -> Option<EthereumBlockV0>;
+		fn current_block() -> Option<EthereumBlock>;
 		/// Return the current receipt.
-		fn current_receipts() -> Option<Vec<ethereum::Receipt>>;
+		fn current_receipts() -> Option<Vec<EthereumReceiptV0>>;
 		/// Return the current transaction status.
 		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>>;
 		/// Return all the current data for a block in a single runtime call.
 		fn current_all() -> (
-			Option<EthereumBlockV0>,
-			Option<Vec<ethereum::Receipt>>,
+			Option<EthereumBlock>,
+			Option<Vec<EthereumReceiptV0>>,
 			Option<Vec<TransactionStatus>>
 		);
 		/// Receives a `Vec<OpaqueExtrinsic>` and filters all the ethereum transactions.
 		fn extrinsic_filter(
 			xts: Vec<<Block as BlockT>::Extrinsic>,
-		) -> Vec<ethereum::TransactionV0>;
+		) -> Vec<EthereumTransactionV0>;
 	}
 }
 
 pub trait ConvertTransaction<E> {
-	fn convert_transaction(&self, transaction: ethereum::TransactionV0) -> E;
+	fn convert_transaction(&self, transaction: EthereumTransactionV0) -> E;
 }
