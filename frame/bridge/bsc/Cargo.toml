@@ -56,6 +56,6 @@ std = [
 ]
 
 runtime-benchmarks = [
-	"frame-benchmarking",
 	"array-bytes",
+	"frame-benchmarking",
 ]
