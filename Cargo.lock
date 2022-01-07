@@ -2250,6 +2250,7 @@ dependencies = [
  "darwinia-fee-market",
  "drml-common-primitives",
  "frame-support",
+ "frame-system",
  "pallet-bridge-dispatch",
  "sp-api",
  "sp-core",

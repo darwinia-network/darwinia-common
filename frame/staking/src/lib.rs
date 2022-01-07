@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -452,7 +452,7 @@ pub mod pallet {
 		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
 		/// it will not be emitted for staking rewards when they are added to stake.
 		RingBonded(AccountId<T>, RingBalance<T>, TsInMs, TsInMs),
-		/// An account has bonded this amount. \[amount, start, end\]
+		/// An account has bonded this amount. \[account, amount, start, end\]
 		///
 		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
 		/// it will not be emitted for staking rewards when they are added to stake.
@@ -460,7 +460,7 @@ pub mod pallet {
 
 		/// An account has unbonded this amount. \[amount\]
 		RingUnbonded(AccountId<T>, RingBalance<T>),
-		/// An account has unbonded this amount. \[amount\]
+		/// An account has unbonded this amount. \[account, amount\]
 		KtonUnbonded(AccountId<T>, KtonBalance<T>),
 
 		/// A nominator has been kicked from a validator. \[nominator, stash\]
