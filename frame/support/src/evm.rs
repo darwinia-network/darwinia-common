@@ -27,7 +27,7 @@ use sp_runtime::{traits::AccountIdConversion, AccountId32};
 use sp_std::{marker::PhantomData, vec::Vec};
 
 pub const POW_9: u32 = 1_000_000_000;
-/// The default gas price for the internal transaction
+/// The default gas limit for the internal transaction
 pub const INTERNAL_TX_GAS_LIMIT: u32 = 300_000_000;
 /// The action selector used in transfer pre-compile
 pub const SELECTOR: usize = 4;
