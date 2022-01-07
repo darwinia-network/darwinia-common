@@ -19,9 +19,9 @@
 // --- crates.io ---
 use codec::Decode;
 use ethabi::{Function, Param, ParamType, StateMutability, Token};
-use evm::{executor::PrecompileOutput, Context, ExitError, ExitReason, ExitSucceed};
 use sha3::Digest;
 // --- paritytech ---
+use fp_evm::{Context, ExitError, ExitReason, ExitSucceed, PrecompileOutput};
 use frame_support::ensure;
 use sp_core::{H160, U256};
 use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
