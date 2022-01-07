@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -30,7 +30,7 @@ pub mod s2s;
 pub mod weight;
 pub use weight::WeightInfo;
 
-// --- substrate ---
+// --- paritytech ---
 use bp_messages::{LaneId, MessageNonce};
 use frame_support::{
 	ensure,
@@ -39,15 +39,17 @@ use frame_support::{
 	transactional, PalletId,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
-use num_traits::Zero;
-use sp_runtime::{traits::Saturating, Permill, SaturatedConversion};
+use sp_runtime::{
+	traits::{Saturating, Zero},
+	Permill, SaturatedConversion,
+};
 use sp_std::vec::Vec;
 // --- darwinia-network ---
 use darwinia_support::{
 	balance::{LockFor, LockableCurrency},
 	AccountId,
 };
-use dp_fee::{Order, Relayer};
+use dp_fee::{Order, Relayer, SlashReport};
 
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 pub use pallet::*;
@@ -93,11 +95,7 @@ pub mod pallet {
 	}
 
 	#[pallet::event]
-	#[pallet::generate_deposit(fn deposit_event)]
-	#[pallet::metadata(
-		T::AccountId = "AccountId",
-		RingBalance<T> = "RingBalance",
-	)]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Relayer enrollment. \[account_id, locked_collateral, relay_fee\]
 		Enroll(T::AccountId, RingBalance<T>, RingBalance<T>),
@@ -111,6 +109,8 @@ pub mod pallet {
 		UpdateCollateralSlashProtect(RingBalance<T>),
 		/// Update market assigned relayers numbers. \[new_assigned_relayers_number\]
 		UpdateAssignedRelayersNumber(u32),
+		/// Slash report
+		FeeMarketSlash(SlashReport<T::AccountId, T::BlockNumber, RingBalance<T>>),
 	}
 
 	#[pallet::error]
@@ -375,7 +375,11 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Update relayer after slash occurred, this will changes RelayersMap storage. (Update market needed)
-	pub(crate) fn update_relayer_after_slash(who: &T::AccountId, new_collateral: RingBalance<T>) {
+	pub(crate) fn update_relayer_after_slash(
+		who: &T::AccountId,
+		new_collateral: RingBalance<T>,
+		report: SlashReport<T::AccountId, T::BlockNumber, RingBalance<T>>,
+	) {
 		T::RingCurrency::set_lock(
 			T::LockId::get(),
 			&who,
@@ -389,6 +393,7 @@ impl<T: Config> Pallet<T> {
 		});
 
 		Self::update_market();
+		Self::deposit_event(<Event<T>>::FeeMarketSlash(report));
 	}
 
 	/// Remove enrolled relayer, then update market fee. (Update market needed)

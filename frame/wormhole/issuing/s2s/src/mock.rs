@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -16,9 +16,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+// --- std ---
+use std::str::FromStr;
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
-use std::str::FromStr;
+use ethereum::{TransactionAction, TransactionSignature, TransactionV0};
+use rlp::RlpStream;
+use scale_info::TypeInfo;
+use sha3::{Digest, Keccak256};
+// --- paritytech ---
+use frame_support::{
+	traits::{Everything, GenesisBuild},
+	PalletId,
+};
+use frame_system::mocking::*;
+use sp_runtime::{
+	testing::Header,
+	traits::{BlakeTwo256, IdentityLookup},
+	AccountId32, RuntimeDebug,
+};
 // --- darwinia-network ---
 use crate::{
 	*, {self as s2s_issuing},
@@ -32,21 +48,6 @@ use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
 };
-// --- paritytech ---
-use frame_support::{
-	traits::{Everything, GenesisBuild},
-	PalletId,
-};
-use frame_system::mocking::*;
-use sp_runtime::{
-	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32, RuntimeDebug,
-};
-
-use ethereum::{TransactionAction, TransactionSignature, TransactionV0};
-use rlp::RlpStream;
-use sha3::{Digest, Keccak256};
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;

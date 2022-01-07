@@ -1,20 +1,19 @@
-// This file is part of Darwinia.
+// This file is part of Substrate.
+
+// Copyright (C) 2022 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-// Copyright (C) 2018-2021 Darwinia Network
-// SPDX-License-Identifier: GPL-3.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
-// Darwinia is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Darwinia is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 //! # Balances Pallet
 //!
@@ -519,6 +518,7 @@ pub mod pallet {
 
 	// --- crates.io ---
 	use codec::{Codec, EncodeLike, MaxEncodedLen};
+	use scale_info::TypeInfo;
 	// --- paritytech ---
 	use frame_support::{
 		ensure,
@@ -558,7 +558,8 @@ pub mod pallet {
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ Debug
-			+ MaxEncodedLen;
+			+ MaxEncodedLen
+			+ TypeInfo;
 
 		/// Handler for the unbalanced reduction when removing a dust account.
 		type DustRemoval: OnUnbalanced<NegativeImbalance<Self, I>>;
@@ -596,7 +597,8 @@ pub mod pallet {
 			+ Codec
 			+ Clone
 			+ Default
-			+ EncodeLike;
+			+ EncodeLike
+			+ TypeInfo;
 
 		// A handle to check if other currencies drop below existential deposit.
 		type OtherCurrencies: DustCollector<Self::AccountId>;
@@ -604,7 +606,6 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	#[pallet::metadata(T::AccountId = "AccountId", T::Balance = "Balance")]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
 		/// An account was created with some free balance. \[account, free_balance\]
 		Endowed(T::AccountId, T::Balance),
@@ -932,7 +933,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			dest: <T::Lookup as StaticLookup>::Source,
 			keep_alive: bool,
-		) -> DispatchResultWithPostInfo {
+		) -> DispatchResult {
 			let transactor = ensure_signed(origin)?;
 			let reducible_balance = Self::reducible_balance(&transactor, keep_alive);
 			let dest = T::Lookup::lookup(dest)?;
@@ -941,13 +942,30 @@ pub mod pallet {
 			} else {
 				ExistenceRequirement::AllowDeath
 			};
+
 			<Self as Currency<_>>::transfer(
 				&transactor,
 				&dest,
 				reducible_balance,
 				keep_alive.into(),
 			)?;
-			Ok(().into())
+
+			Ok(())
+		}
+
+		/// Unreserve some balance from a user by force.
+		///
+		/// Can only be called by ROOT.
+		#[pallet::weight(T::WeightInfo::force_unreserve())]
+		pub fn force_unreserve(
+			origin: OriginFor<T>,
+			who: <T::Lookup as StaticLookup>::Source,
+			amount: T::Balance,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			let who = T::Lookup::lookup(who)?;
+			let _leftover = <Self as ReservableCurrency<_>>::unreserve(&who, amount);
+			Ok(())
 		}
 	}
 
@@ -2199,7 +2217,7 @@ pub mod pallet {
 	// A value placed in storage that represents the current version of the Balances storage.
 	// This value is used by the `on_runtime_upgrade` logic to determine whether we run
 	// storage migration logic. This should match directly with the semantic versions of the Rust crate.
-	#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, MaxEncodedLen)]
+	#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 	pub enum Releases {
 		V1_0_0,
 		V2_0_0,
@@ -2211,7 +2229,7 @@ pub mod pallet {
 	}
 
 	/// Store named reserved balance.
-	#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, MaxEncodedLen)]
+	#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 	pub struct ReserveData<ReserveIdentifier, Balance> {
 		/// The identifier for the named reserve.
 		pub id: ReserveIdentifier,

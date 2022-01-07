@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -22,13 +22,18 @@
 use std::collections::BTreeMap;
 // --- darwinia-network ---
 use crate::*;
+use dc_rpc::EthBlockDataCache;
+// --- paritytech ---
+use sc_transaction_pool::{ChainApi, Pool};
 
 /// Full client dependencies.
-pub struct FullDeps<C, P> {
+pub struct FullDeps<C, P, A: ChainApi> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
 	pub pool: Arc<P>,
+	/// Graph pool instance.
+	pub graph: Arc<Pool<A>>,
 	/// Whether to deny unsafe calls
 	pub deny_unsafe: DenyUnsafe,
 	/// The Node authority flag
@@ -37,22 +42,22 @@ pub struct FullDeps<C, P> {
 	pub enable_dev_signer: bool,
 	/// Network service
 	pub network: Arc<sc_network::NetworkService<Block, Hash>>,
-	/// Ethereum pending transactions.
-	pub pending_transactions: dp_rpc::PendingTransactions,
 	/// EthFilterApi pool.
 	pub filter_pool: Option<dp_rpc::FilterPool>,
 	/// Backend.
 	pub backend: Arc<dc_db::Backend<Block>>,
-	/// Maximum number of logs in a query.
-	pub max_past_logs: u32,
+	/// Rpc requester for evm trace
+	pub tracing_requesters: RpcRequesters,
+	/// Rpc Config
+	pub rpc_config: RpcConfig,
 	/// Manual seal command sink
 	pub command_sink:
 		Option<futures::channel::mpsc::Sender<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>>,
 }
 
 /// Instantiate all Full RPC extensions.
-pub fn create_full<C, P, B>(
-	deps: FullDeps<C, P>,
+pub fn create_full<C, P, B, A>(
+	deps: FullDeps<C, P, A>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 ) -> RpcExtension
 where
@@ -68,10 +73,12 @@ where
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: sp_block_builder::BlockBuilder<Block>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
+	C::Api: dp_evm_trace_apis::DebugRuntimeApi<Block>,
 	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
 	P: 'static + sc_transaction_pool_api::TransactionPool<Block = Block>,
 	B: 'static + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<Hashing>,
+	A: ChainApi<Block = Block> + 'static,
 {
 	// --- crates.io ---
 	use jsonrpc_pubsub::manager::SubscriptionManager;
@@ -81,9 +88,10 @@ where
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
 	// --- darwinia-network ---
 	use dc_rpc::{
-		EthApi, EthApiServer, EthDevSigner, EthFilterApi, EthFilterApiServer, EthPubSubApi,
-		EthPubSubApiServer, EthSigner, HexEncodedIdProvider, NetApi, NetApiServer, OverrideHandle,
-		RuntimeApiStorageOverride, SchemaV1Override, StorageOverride, Web3Api, Web3ApiServer,
+		Debug, DebugApiServer, EthApi, EthApiServer, EthDevSigner, EthFilterApi,
+		EthFilterApiServer, EthPubSubApi, EthPubSubApiServer, EthSigner, HexEncodedIdProvider,
+		NetApi, NetApiServer, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override,
+		StorageOverride, Trace, TraceApiServer, Web3Api, Web3ApiServer,
 	};
 	use dvm_ethereum::EthereumStorageSchema;
 	use template_runtime::TransactionConverter;
@@ -92,15 +100,16 @@ where
 	let FullDeps {
 		client,
 		pool,
+		graph,
 		deny_unsafe,
 		is_authority,
 		enable_dev_signer,
 		network,
-		pending_transactions,
 		filter_pool,
 		command_sink,
 		backend,
-		max_past_logs,
+		tracing_requesters,
+		rpc_config,
 	} = deps;
 
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(
@@ -128,17 +137,19 @@ where
 		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
 	});
 
+	let block_data_cache = Arc::new(EthBlockDataCache::new(50, 50));
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
+		graph,
 		TransactionConverter,
 		network.clone(),
 		overrides.clone(),
-		pending_transactions.clone(),
 		backend.clone(),
 		is_authority,
 		signers,
-		max_past_logs,
+		rpc_config.max_past_logs,
+		block_data_cache.clone(),
 	)));
 
 	if let Some(filter_pool) = filter_pool {
@@ -148,7 +159,8 @@ where
 			filter_pool.clone(),
 			500 as usize, // max stored filters
 			overrides.clone(),
-			max_past_logs,
+			rpc_config.max_past_logs,
+			block_data_cache.clone(),
 		)));
 	}
 
@@ -181,6 +193,22 @@ where
 			);
 		}
 		_ => {}
+	}
+
+	let ethapi_cmd = rpc_config.ethapi.clone();
+
+	if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
+		if let Some(trace_filter_requester) = tracing_requesters.trace {
+			io.extend_with(TraceApiServer::to_delegate(Trace::new(
+				client,
+				trace_filter_requester,
+				rpc_config.ethapi_trace_max_count,
+			)));
+		}
+
+		if let Some(debug_requester) = tracing_requesters.debug {
+			io.extend_with(DebugApiServer::to_delegate(Debug::new(debug_requester)));
+		}
 	}
 
 	io

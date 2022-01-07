@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -25,9 +25,11 @@ use frame_support::{assert_noop, assert_ok};
 use mock::{Event, *};
 use sp_runtime::traits::BadOrigin;
 
-const BALANCE_TRANSFER: &<Test as frame_system::Config>::Call = &mock::Call::Balances(
-	darwinia_balances::Call::<Test, RingInstance>::transfer(ALICE, 10),
-);
+const BALANCE_TRANSFER: &<Test as frame_system::Config>::Call =
+	&mock::Call::Balances(darwinia_balances::Call::<Test, RingInstance>::transfer {
+		dest: ALICE,
+		value: 10,
+	});
 
 #[test]
 fn pause_transaction_work() {

@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -149,4 +149,14 @@ impl DVMTransaction {
 			tx: transaction,
 		}
 	}
+}
+
+/// Decimal conversion from RING/KTON to Ethereum decimal format.
+pub fn decimal_convert(main_balance: u128, remaining_balance: Option<u128>) -> U256 {
+	if let Some(rb) = remaining_balance {
+		return U256::from(main_balance)
+			.saturating_mul(U256::from(POW_9))
+			.saturating_add(U256::from(rb));
+	}
+	U256::from(main_balance).saturating_mul(U256::from(POW_9))
 }

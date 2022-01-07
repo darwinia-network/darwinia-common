@@ -12,6 +12,7 @@ members = [
 	"client/dvm/db",
 	"client/dvm/mapping-sync",
 	"client/dvm/rpc",
+	"client/dvm/tracer",
 	"frame/balances",
 	"frame/balances/rpc",
 	"frame/balances/rpc/runtime-api",
@@ -63,6 +64,10 @@ members = [
 	"primitives/contract",
 	"primitives/ethereum",
 	"primitives/evm",
+	"primitives/evm/trace/apis",
+	"primitives/evm/trace/events",
+	"primitives/evm/trace/ext",
+	"primitives/evm/trace/tracer",
 	"primitives/fee-market",
 	"primitives/merkle-patricia-trie",
 	"primitives/relay",
@@ -70,6 +75,11 @@ members = [
 	"primitives/s2s",
 	"primitives/storage",
 ]
+
+[patch.crates-io]
+evm           = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.12.0" }
+evm-gasometer = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.12.0" }
+evm-runtime   = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.12.0" }
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates
 # that are suspected to be CPU-intensive, and that are unlikely to require debugging (as some of

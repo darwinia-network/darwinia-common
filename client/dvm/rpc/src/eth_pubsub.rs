@@ -5,13 +5,10 @@ use std::{collections::BTreeMap, iter, marker::PhantomData, sync::Arc};
 // --- crates.io ---
 use dvm_rpc_core::EthPubSubApi::{self as EthPubSubApiT};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
-use ethereum::{BlockV0 as EthereumBlockV0, Log as EthereumLog, Receipt as EthereumReceipt};
+use ethereum::{BlockV0 as EthereumBlock, Log as EthereumLog, Receipt as EthereumReceiptV0};
 use ethereum_types::{H256, U256};
-use futures::{StreamExt as _, TryStreamExt as _};
-use jsonrpc_core::{
-	futures::{Future, Sink},
-	Result as JsonRpcResult,
-};
+use futures::{FutureExt as _, SinkExt as _, StreamExt as _};
+use jsonrpc_core::Result as JsonRpcResult;
 use jsonrpc_pubsub::{
 	manager::{IdProvider, SubscriptionManager},
 	typed::Subscriber,
@@ -101,7 +98,7 @@ impl SubscriptionResult {
 	pub fn new() -> Self {
 		SubscriptionResult {}
 	}
-	pub fn new_heads(&self, block: EthereumBlockV0) -> PubSubResult {
+	pub fn new_heads(&self, block: EthereumBlock) -> PubSubResult {
 		PubSubResult::Header(Box::new(Rich {
 			inner: Header {
 				hash: Some(H256::from_slice(
@@ -132,8 +129,8 @@ impl SubscriptionResult {
 	}
 	pub fn logs(
 		&self,
-		block: EthereumBlockV0,
-		receipts: Vec<EthereumReceipt>,
+		block: EthereumBlock,
+		receipts: Vec<EthereumReceiptV0>,
 		params: &FilteredParams,
 	) -> Vec<Log> {
 		let block_hash = Some(H256::from_slice(
@@ -176,7 +173,7 @@ impl SubscriptionResult {
 		&self,
 		block_hash: H256,
 		ethereum_log: &EthereumLog,
-		block: &EthereumBlockV0,
+		block: &EthereumBlock,
 		params: &FilteredParams,
 	) -> bool {
 		let log = Log {
@@ -274,10 +271,11 @@ where
 							return Ok::<Result<PubSubResult, jsonrpc_core::types::error::Error>, ()>(
 								Ok(PubSubResult::Log(Box::new(x))),
 							);
-						})
-						.compat();
-					sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e))
-						.send_all(stream)
+						});
+					stream
+						.forward(
+							sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e)),
+						)
 						.map(|_| ())
 				});
 			}
@@ -306,10 +304,11 @@ where
 						})
 						.map(|block| {
 							return Ok::<_, ()>(Ok(SubscriptionResult::new().new_heads(block)));
-						})
-						.compat();
-					sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e))
-						.send_all(stream)
+						});
+					stream
+						.forward(
+							sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e)),
+						)
 						.map(|_| ())
 				});
 			}
@@ -345,10 +344,11 @@ where
 									Keccak256::digest(&rlp::encode(&transaction)).as_slice(),
 								))),
 							);
-						})
-						.compat();
-					sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e))
-						.send_all(stream)
+						});
+					stream
+						.forward(
+							sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e)),
+						)
 						.map(|_| ())
 				});
 			}
@@ -370,10 +370,11 @@ where
 							return Ok::<Result<PubSubResult, jsonrpc_core::types::error::Error>, ()>(
 								Ok(PubSubResult::SyncState(PubSubSyncStatus { syncing })),
 							);
-						})
-						.compat();
-					sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e))
-						.send_all(stream)
+						});
+					stream
+						.forward(
+							sink.sink_map_err(|e| warn!("Error sending notifications: {:?}", e)),
+						)
 						.map(|_| ())
 				});
 			}

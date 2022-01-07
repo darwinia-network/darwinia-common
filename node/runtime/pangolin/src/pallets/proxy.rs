@@ -1,5 +1,6 @@
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::traits::InstanceFilter;
 use pallet_proxy::Config;
@@ -9,7 +10,17 @@ use crate::*;
 
 /// The type used to represent the kinds of proxying allowed.
 #[derive(
-	Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug, MaxEncodedLen,
+	Copy,
+	Clone,
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	Encode,
+	Decode,
+	RuntimeDebug,
+	MaxEncodedLen,
+	TypeInfo,
 )]
 pub enum ProxyType {
 	Any,
@@ -49,18 +60,18 @@ impl InstanceFilter<Call> for ProxyType {
 							Call::Bounties(..) |
 							Call::Sudo(..) |
 							// Specifically omitting Vesting `vested_transfer`, and `force_vested_transfer`
-							Call::Vesting(darwinia_vesting::Call::vest(..)) |
-							Call::Vesting(darwinia_vesting::Call::vest_other(..)) |
+							Call::Vesting(darwinia_vesting::Call::vest{ .. }) |
+							Call::Vesting(darwinia_vesting::Call::vest_other{ .. }) |
 							Call::Utility(..)|
 							Call::Identity(..)|
 							Call::Society(..)|
 							// Specifically omitting Recovery `create_recovery`, `initiate_recovery`
-							Call::Recovery(pallet_recovery::Call::as_recovered(..)) |
-							Call::Recovery(pallet_recovery::Call::vouch_recovery(..)) |
-							Call::Recovery(pallet_recovery::Call::claim_recovery(..)) |
-							Call::Recovery(pallet_recovery::Call::close_recovery(..)) |
-							Call::Recovery(pallet_recovery::Call::remove_recovery(..)) |
-							Call::Recovery(pallet_recovery::Call::cancel_recovered(..)) |
+							Call::Recovery(pallet_recovery::Call::as_recovered{ .. }) |
+							Call::Recovery(pallet_recovery::Call::vouch_recovery{ .. }) |
+							Call::Recovery(pallet_recovery::Call::claim_recovery{ .. }) |
+							Call::Recovery(pallet_recovery::Call::close_recovery{ .. }) |
+							Call::Recovery(pallet_recovery::Call::remove_recovery{ .. }) |
+							Call::Recovery(pallet_recovery::Call::cancel_recovered{ .. }) |
 							Call::Scheduler(..)|
 							Call::Proxy(..)|
 							Call::Multisig(..)|

@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -33,9 +33,17 @@ use bridge_runtime_common::messages::{
 	},
 	AccountIdOf, BalanceOf, MessageBridge, ThisChain, ThisChainWithMessages,
 };
-use frame_support::{weights::Weight, Parameter};
+use frame_support::{
+	parameter_types,
+	weights::{
+		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
+		DispatchClass, Weight,
+	},
+	Parameter,
+};
+use frame_system::limits;
 use sp_core::H256;
-use sp_runtime::{traits::Convert, RuntimeDebug};
+use sp_runtime::{traits::Convert, Perbill, RuntimeDebug};
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use darwinia_fee_market::RingBalance;
@@ -145,7 +153,55 @@ pub const TO_PANGORO_LATEST_RECEIVED_NONCE_METHOD: &str =
 
 /// Name of the `PangoroFinalityApi::best_finalized` runtime method.
 pub const BEST_FINALIZED_PANGORO_HEADER_METHOD: &str = "PangoroFinalityApi_best_finalized";
+
+/// All Polkadot-like chains allow normal extrinsics to fill block up to 75 percent.
+///
+/// This is a copy-paste from the Polkadot repo's `polkadot-runtime-common` crate.
+const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+
+/// All Polkadot-like chains allow 2 seconds of compute with a 6-second average block time.
+///
+/// This is a copy-paste from the Polkadot repo's `polkadot-runtime-common` crate.
+pub const MAXIMUM_BLOCK_WEIGHT: Weight = 2 * WEIGHT_PER_SECOND;
+
+/// All Polkadot-like chains assume that an on-initialize consumes 1 percent of the weight on
+/// average, hence a single extrinsic will not be allowed to consume more than
+/// `AvailableBlockRatio - 1 percent`.
+///
+/// This is a copy-paste from the Polkadot repo's `polkadot-runtime-common` crate.
+pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(1);
 // === end
+
+parameter_types! {
+	/// All Polkadot-like chains have maximal block size set to 5MB.
+	///
+	/// This is a copy-paste from the Polkadot repo's `polkadot-runtime-common` crate.
+	pub BlockLength: limits::BlockLength = limits::BlockLength::max_with_normal_ratio(
+		5 * 1024 * 1024,
+		NORMAL_DISPATCH_RATIO,
+	);
+	/// All Polkadot-like chains have the same block weights.
+	///
+	/// This is a copy-paste from the Polkadot repo's `polkadot-runtime-common` crate.
+	pub BlockWeights: limits::BlockWeights = limits::BlockWeights::builder()
+		.base_block(BlockExecutionWeight::get())
+		.for_class(DispatchClass::all(), |weights| {
+			weights.base_extrinsic = ExtrinsicBaseWeight::get();
+		})
+		.for_class(DispatchClass::Normal, |weights| {
+			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
+		})
+		.for_class(DispatchClass::Operational, |weights| {
+			weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
+			// Operational transactions have an extra reserved space, so that they
+			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
+			weights.reserved = Some(
+				MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT,
+			);
+		})
+		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
+		.build_or_panic();
+}
 
 /// Convert a 256-bit hash into an AccountId.
 pub struct AccountIdConverter;
@@ -166,6 +222,17 @@ impl Chain for Pangoro {
 	type Balance = Balance;
 	type Index = Nonce;
 	type Signature = Signature;
+
+	fn max_extrinsic_size() -> u32 {
+		*BlockLength::get().max.get(DispatchClass::Normal)
+	}
+
+	fn max_extrinsic_weight() -> Weight {
+		BlockWeights::get()
+			.get(DispatchClass::Normal)
+			.max_extrinsic
+			.unwrap_or(Weight::MAX)
+	}
 }
 
 /// Pangolin chain.
@@ -180,6 +247,17 @@ impl Chain for Pangolin {
 	type Balance = Balance;
 	type Index = Nonce;
 	type Signature = Signature;
+
+	fn max_extrinsic_size() -> u32 {
+		*BlockLength::get().max.get(DispatchClass::Normal)
+	}
+
+	fn max_extrinsic_weight() -> Weight {
+		BlockWeights::get()
+			.get(DispatchClass::Normal)
+			.max_extrinsic
+			.unwrap_or(Weight::MAX)
+	}
 }
 
 /// Message verifier that is doing all basic checks.

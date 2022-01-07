@@ -11,13 +11,13 @@ version     = "2.7.2"
 
 [dependencies]
 # crates.io
-codec               = { package = "parity-scale-codec", version = "2.1" }
-jsonrpc-core        = { version = "15.1" }
-jsonrpc-core-client = { version = "15.1" }
-jsonrpc-derive      = { version = "15.1" }
+codec               = { package = "parity-scale-codec", version = "2.2" }
+jsonrpc-core        = { version = "18.0" }
+jsonrpc-core-client = { version = "18.0" }
+jsonrpc-derive      = { version = "18.0" }
 # darwinia-network
 darwinia-balances-rpc-runtime-api = { path = "./runtime-api" }
 # paritytech
-sp-api        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-blockchain = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-runtime    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+sp-api        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-blockchain = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-runtime    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }

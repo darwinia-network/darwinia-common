@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -35,6 +35,8 @@ use keccak_hash::keccak;
 use keccak_hash::{KECCAK_EMPTY_LIST_RLP, KECCAK_NULL_RLP};
 #[cfg(any(feature = "full-rlp", test))]
 use rlp::{DecoderError, Encodable, Rlp, RlpStream};
+#[cfg(any(feature = "full-codec", test))]
+use scale_info::TypeInfo;
 #[cfg(any(feature = "full-serde", test))]
 use serde::{
 	de::{Error, IgnoredAny, MapAccess, Visitor},
@@ -56,7 +58,7 @@ enum Seal {
 	Without,
 }
 
-#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode, TypeInfo))]
 #[derive(Clone, Eq, RuntimeDebug)]
 pub struct Header {
 	pub parent_hash: H256,

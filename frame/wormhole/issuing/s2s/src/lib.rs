@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -35,7 +35,7 @@ use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
 use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId};
 use frame_support::{
-	ensure,
+	ensure, log,
 	pallet_prelude::*,
 	traits::{Currency, Get},
 	transactional, PalletId,
@@ -230,7 +230,6 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	#[pallet::metadata(AccountId<T> = "AccountId")]
 	pub enum Event<T: Config> {
 		/// Create new token
 		/// [user, backing_address, original_token, mapping_token]

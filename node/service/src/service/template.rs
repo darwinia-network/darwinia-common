@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 // --- std ---
 use std::{
 	cell::RefCell,
-	collections::{BTreeMap, HashMap},
+	collections::BTreeMap,
 	path::PathBuf,
 	sync::{Arc, Mutex},
 };
@@ -30,6 +30,7 @@ use async_trait::async_trait;
 // --- paritytech ---
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
 use sc_consensus_manual_seal as manual_seal;
+use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch};
 use sc_keystore::LocalKeystore;
 use sc_service::{error::Error as ServiceError, BasePath, Configuration, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryWorker};
@@ -39,20 +40,25 @@ use crate::service::{
 	dvm_tasks::{self, DvmTasksParams},
 	FullBackend, FullClient, FullSelectChain,
 };
-use dp_rpc::{FilterPool, PendingTransactions};
+use dp_rpc::FilterPool;
 use drml_common_primitives::{OpaqueBlock as Block, SLOT_DURATION};
-use drml_rpc::{template::FullDeps, SubscriptionTaskExecutor};
+use drml_rpc::{template::FullDeps, RpcConfig, SubscriptionTaskExecutor};
 use template_runtime::RuntimeApi;
 
 thread_local!(static TIMESTAMP: RefCell<u64> = RefCell::new(0));
 
-// Our native executor instance.
-sc_executor::native_executor_instance!(
-	pub Executor,
-	template_runtime::api::dispatch,
-	template_runtime::native_version,
-	frame_benchmarking::benchmarking::HostFunctions,
-);
+pub struct Executor;
+impl NativeExecutionDispatch for Executor {
+	type ExtendHostFunctions = ();
+
+	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+		template_runtime::api::dispatch(method, data)
+	}
+
+	fn native_version() -> sc_executor::NativeVersion {
+		template_runtime::native_version()
+	}
+}
 
 pub type ConsensusResult = (Arc<FullClient<RuntimeApi, Executor>>, bool);
 
@@ -115,7 +121,6 @@ pub fn new_partial(
 		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
 		(
 			ConsensusResult,
-			PendingTransactions,
 			Option<FilterPool>,
 			Arc<dc_db::Backend<Block>>,
 			Option<Telemetry>,
@@ -139,10 +144,16 @@ pub fn new_partial(
 			Ok((worker, telemetry))
 		})
 		.transpose()?;
+	let executor = <NativeElseWasmExecutor<Executor>>::new(
+		config.wasm_method,
+		config.default_heap_pages,
+		config.max_runtime_instances,
+	);
 	let (client, backend, keystore_container, task_manager) =
-		sc_service::new_full_parts::<Block, RuntimeApi, Executor>(
-			&config,
+		sc_service::new_full_parts::<Block, RuntimeApi, _>(
+			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
+			executor,
 		)?;
 	let client = Arc::new(client);
 	let telemetry = telemetry.map(|(worker, telemetry)| {
@@ -157,7 +168,6 @@ pub fn new_partial(
 		task_manager.spawn_essential_handle(),
 		client.clone(),
 	);
-	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 	let frontier_backend = open_frontier_backend(config)?;
 	let import_queue = sc_consensus_manual_seal::import_queue(
@@ -176,7 +186,6 @@ pub fn new_partial(
 		transaction_pool,
 		other: (
 			(client, is_manual_sealing),
-			pending_transactions,
 			filter_pool,
 			frontier_backend,
 			telemetry,
@@ -196,7 +205,7 @@ pub fn new_full(
 	config: Configuration,
 	is_manual_sealing: bool,
 	enable_dev_signer: bool,
-	max_past_logs: u32,
+	rpc_config: RpcConfig,
 ) -> Result<TaskManager, ServiceError> {
 	let sc_service::PartialComponents {
 		client,
@@ -206,8 +215,7 @@ pub fn new_full(
 		mut keystore_container,
 		select_chain,
 		transaction_pool,
-		other:
-			(consensus_result, pending_transactions, filter_pool, frontier_backend, mut telemetry),
+		other: (consensus_result, filter_pool, frontier_backend, mut telemetry),
 	} = new_partial(&config, is_manual_sealing)?;
 
 	if let Some(url) = &config.keystore_remote {
@@ -233,7 +241,6 @@ pub fn new_full(
 			block_announce_validator_builder: None,
 			warp_sync: None,
 		})?;
-
 	// Channel for the rpc handler to communicate with the authorship task.
 	let (command_sink, commands_stream) = futures::channel::mpsc::channel(1000);
 
@@ -246,17 +253,24 @@ pub fn new_full(
 		);
 	}
 
+	let is_archive = config.state_pruning.is_archive();
+	let tracing_requesters = dvm_tasks::spawn(DvmTasksParams {
+		task_manager: &task_manager,
+		client: client.clone(),
+		substrate_backend: backend.clone(),
+		dvm_backend: frontier_backend.clone(),
+		filter_pool: filter_pool.clone(),
+		rpc_config: rpc_config.clone(),
+		is_archive,
+	});
 	let role = config.role.clone();
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let is_authority = config.role.is_authority();
-	let is_archive = config.state_pruning.is_archive();
 	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
-
 	let rpc_extensions_builder = {
 		let client = client.clone();
 		let pool = transaction_pool.clone();
 		let network = network.clone();
-		let pending = pending_transactions.clone();
 		let filter_pool = filter_pool.clone();
 		let frontier_backend = frontier_backend.clone();
 
@@ -264,14 +278,15 @@ pub fn new_full(
 			let deps = FullDeps {
 				client: client.clone(),
 				pool: pool.clone(),
+				graph: pool.pool().clone(),
 				deny_unsafe,
 				is_authority,
 				enable_dev_signer,
 				network: network.clone(),
-				pending_transactions: pending.clone(),
 				filter_pool: filter_pool.clone(),
 				backend: frontier_backend.clone(),
-				max_past_logs,
+				tracing_requesters: tracing_requesters.clone(),
+				rpc_config: rpc_config.clone(),
 				command_sink: Some(command_sink.clone()),
 			};
 
@@ -281,7 +296,6 @@ pub fn new_full(
 			))
 		})
 	};
-
 	let _ = sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		network: network.clone(),
 		client: client.clone(),
@@ -296,18 +310,6 @@ pub fn new_full(
 		config,
 		telemetry: telemetry.as_mut(),
 	})?;
-
-	// Spawn dvm related tasks
-	dvm_tasks::spawn(DvmTasksParams {
-		task_manager: &task_manager,
-		client: client.clone(),
-		substrate_backend: backend,
-		dvm_backend: frontier_backend,
-		filter_pool,
-		pending_transactions,
-		is_archive,
-	});
-
 	let (block_import, is_manual_sealing) = consensus_result;
 
 	if role.is_authority() {

@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -16,21 +16,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- substrate ---
+// --- paritytech ---
 use bp_messages::{
 	source_chain::{MessageDeliveryAndDispatchPayment, Sender},
 	MessageNonce, UnrewardedRelayer,
 };
-use frame_support::traits::{Currency as CurrencyT, ExistenceRequirement, Get};
-use sp_runtime::traits::{AccountIdConversion, Saturating};
+use frame_support::{
+	log,
+	traits::{Currency as CurrencyT, ExistenceRequirement, Get},
+};
+use sp_runtime::traits::{AccountIdConversion, Saturating, Zero};
 use sp_std::{
 	collections::{btree_map::BTreeMap, vec_deque::VecDeque},
 	ops::RangeInclusive,
 };
 // --- darwinia-network ---
 use crate::{Config, Orders, Pallet, *};
-// --- std ---
-use num_traits::Zero;
 
 pub struct FeeMarketPayment<T, I, Currency, GetConfirmationFee, RootAccount> {
 	_phantom: sp_std::marker::PhantomData<(T, I, Currency, GetConfirmationFee, RootAccount)>,
@@ -183,8 +184,13 @@ where
 					// Slash order's assigned relayers
 					let mut assigned_relayers_slash = RingBalance::<T>::zero();
 					for assigned_relayer in order.relayers_slice() {
-						let slashed =
-							do_slash::<T>(&assigned_relayer.id, relayer_fund_account, amount);
+						let report = SlashReport::new(&order, assigned_relayer.id.clone(), amount);
+						let slashed = do_slash::<T>(
+							&assigned_relayer.id,
+							relayer_fund_account,
+							amount,
+							report,
+						);
 						assigned_relayers_slash += slashed;
 					}
 					total_slash += assigned_relayers_slash;
@@ -219,6 +225,7 @@ pub(crate) fn do_slash<T: Config>(
 	who: &T::AccountId,
 	fund_account: &T::AccountId,
 	amount: RingBalance<T>,
+	report: SlashReport<T::AccountId, T::BlockNumber, RingBalance<T>>,
 ) -> RingBalance<T> {
 	let locked_collateral = Pallet::<T>::relayer(&who).collateral;
 	T::RingCurrency::remove_lock(T::LockId::get(), &who);
@@ -236,14 +243,15 @@ pub(crate) fn do_slash<T: Config>(
 	match pay_result {
 		Ok(_) => {
 			crate::Pallet::<T>::update_relayer_after_slash(
-				&who,
+				who,
 				locked_collateral.saturating_sub(amount),
+				report,
 			);
 			log::trace!("Slash {:?} amount: {:?}", who, amount);
 			return amount;
 		}
 		Err(e) => {
-			crate::Pallet::<T>::update_relayer_after_slash(&who, locked_collateral);
+			crate::Pallet::<T>::update_relayer_after_slash(who, locked_collateral, report);
 			log::error!("Slash {:?} amount {:?}, err {:?}", who, amount, e)
 		}
 	}

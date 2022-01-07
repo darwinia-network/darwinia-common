@@ -14,18 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Substrate. If not, see <http://www.gnu.org/licenses/>.
 
+mod debug;
 mod eth;
 mod eth_pubsub;
 mod overrides;
+mod trace;
 
+pub use debug::{Debug, DebugApiServer, DebugRequester, DebugTask};
 pub use eth::{
-	EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthTask, NetApi, NetApiServer, Web3Api,
-	Web3ApiServer,
+	EthApi, EthApiServer, EthBlockDataCache, EthFilterApi, EthFilterApiServer, EthTask, NetApi,
+	NetApiServer, Web3Api, Web3ApiServer,
 };
 pub use eth_pubsub::{EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider};
 pub use overrides::{OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride};
+pub use trace::{CacheRequester, CacheTask, Trace, TraceApiServer};
 
-use ethereum::{LegacyTransactionMessage, TransactionSignature, TransactionV0};
+use ethereum::{
+	LegacyTransactionMessage as EthereumTransactionMessage, TransactionSignature,
+	TransactionV0 as EthereumTransaction,
+};
 use ethereum_types::{H160, H256};
 use evm::{ExitError, ExitReason};
 use jsonrpc_core::{Error, ErrorCode, Value};
@@ -156,6 +163,7 @@ pub mod frontier_backend_client {
 		client: &C,
 		backend: &dc_db::Backend<B>,
 		transaction_hash: H256,
+		only_canonical: bool,
 	) -> RpcResult<Option<(H256, u32)>>
 	where
 		B: BlockT,
@@ -168,25 +176,22 @@ pub mod frontier_backend_client {
 			.transaction_metadata(&transaction_hash)
 			.map_err(|err| internal_err(format!("fetch aux store failed: {:?}", err)))?;
 
-		if transaction_metadata.len() == 1 {
-			Ok(Some((
-				transaction_metadata[0].ethereum_block_hash,
-				transaction_metadata[0].ethereum_index,
-			)))
-		} else if transaction_metadata.len() > 1 {
-			transaction_metadata
-				.iter()
-				.find(|meta| is_canon::<B, C>(client, meta.block_hash))
-				.map_or(
-					Ok(Some((
-						transaction_metadata[0].ethereum_block_hash,
-						transaction_metadata[0].ethereum_index,
-					))),
-					|meta| Ok(Some((meta.ethereum_block_hash, meta.ethereum_index))),
-				)
-		} else {
-			Ok(None)
-		}
+		transaction_metadata
+			.iter()
+			.find(|meta| is_canon::<B, C>(client, meta.block_hash))
+			.map_or_else(
+				|| {
+					if !only_canonical && transaction_metadata.len() > 0 {
+						Ok(Some((
+							transaction_metadata[0].ethereum_block_hash,
+							transaction_metadata[0].ethereum_index,
+						)))
+					} else {
+						Ok(None)
+					}
+				},
+				|meta| Ok(Some((meta.ethereum_block_hash, meta.ethereum_index))),
+			)
 	}
 }
 
@@ -241,13 +246,13 @@ pub fn error_on_execution_failure(reason: &ExitReason, data: &[u8]) -> Result<()
 	}
 }
 
-pub fn public_key(transaction: &TransactionV0) -> Result<[u8; 64], sp_io::EcdsaVerifyError> {
+pub fn public_key(transaction: &EthereumTransaction) -> Result<[u8; 64], sp_io::EcdsaVerifyError> {
 	let mut sig = [0u8; 65];
 	let mut msg = [0u8; 32];
 	sig[0..32].copy_from_slice(&transaction.signature.r()[..]);
 	sig[32..64].copy_from_slice(&transaction.signature.s()[..]);
 	sig[64] = transaction.signature.standard_v();
-	msg.copy_from_slice(&LegacyTransactionMessage::from(transaction.clone()).hash()[..]);
+	msg.copy_from_slice(&EthereumTransactionMessage::from(transaction.clone()).hash()[..]);
 
 	sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg)
 }
@@ -259,9 +264,9 @@ pub trait EthSigner: Send + Sync {
 	/// Sign a transaction message using the given account in message.
 	fn sign(
 		&self,
-		message: LegacyTransactionMessage,
+		message: EthereumTransactionMessage,
 		address: &H160,
-	) -> Result<TransactionV0, Error>;
+	) -> Result<EthereumTransaction, Error>;
 }
 
 pub struct EthDevSigner {
@@ -297,9 +302,9 @@ impl EthSigner for EthDevSigner {
 
 	fn sign(
 		&self,
-		message: LegacyTransactionMessage,
+		message: EthereumTransactionMessage,
 		address: &H160,
-	) -> Result<TransactionV0, Error> {
+	) -> Result<EthereumTransaction, Error> {
 		let mut transaction = None;
 
 		for secret in &self.keys {
@@ -323,7 +328,7 @@ impl EthSigner for EthDevSigner {
 				let r = H256::from_slice(&rs[0..32]);
 				let s = H256::from_slice(&rs[32..64]);
 
-				transaction = Some(TransactionV0 {
+				transaction = Some(EthereumTransaction {
 					nonce: message.nonce,
 					gas_price: message.gas_price,
 					gas_limit: message.gas_limit,

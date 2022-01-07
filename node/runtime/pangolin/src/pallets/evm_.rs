@@ -59,11 +59,11 @@ impl RelayMessageSender for ToPangoroMessageSender {
 			_ if message_pallet_index as usize
 				== <BridgePangoroMessages as PalletInfoAccess>::index() =>
 			{
-				BridgeMessagesCall::<Runtime, WithPangoroMessages>::send_message(
+				BridgeMessagesCall::<Runtime, WithPangoroMessages>::send_message {
 					lane_id,
 					payload,
-					fee.saturated_into(),
-				)
+					delivery_and_dispatch_fee: fee.saturated_into(),
+				}
 				.into()
 			}
 			_ => {

@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -22,11 +22,13 @@ use codec::{Decode, Encode};
 use ethbloom::Input;
 #[cfg(any(feature = "full-rlp", test))]
 use rlp_derive::{RlpDecodable, RlpEncodable};
+#[cfg(any(feature = "full-codec", test))]
+use scale_info::TypeInfo;
 use sp_debug_derive::RuntimeDebug;
 // --- darwinia-network ---
 use crate::*;
 
-#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode))]
+#[cfg_attr(any(feature = "full-codec", test), derive(Encode, Decode, TypeInfo))]
 #[cfg_attr(any(feature = "full-rlp", test), derive(RlpEncodable, RlpDecodable))]
 #[derive(Clone, PartialEq, Eq, RuntimeDebug)]
 pub struct LogEntry {

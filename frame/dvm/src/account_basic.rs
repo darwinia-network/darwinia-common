@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -30,7 +30,7 @@ use sp_runtime::{
 // --- darwinia-network ---
 use crate::{Config, KtonBalance, RemainingKtonBalance, RemainingRingBalance, RingBalance};
 use darwinia_evm::{Account as EVMAccount, AccountBasic};
-use darwinia_support::evm::{IntoAccountId, POW_9};
+use darwinia_support::evm::{decimal_convert, IntoAccountId, POW_9};
 
 /// The operations for the remaining balance.
 pub trait RemainBalanceOp<T: Config, B> {
@@ -142,28 +142,17 @@ where
 		let target_account = Self::account_basic(target);
 		let new_target_balance = target_account.balance.saturating_add(value);
 		Self::mutate_account_basic_balance(target, new_target_balance);
-
 		Ok(())
 	}
 
 	/// Get account balance.
 	fn account_balance(account_id: &T::AccountId) -> U256 {
-		let helper = U256::from(POW_9);
-
-		// Get balance from Currency.
-		let balance: U256 = C::free_balance(&account_id).saturated_into::<u128>().into();
-
-		// Get remaining balance from dvm.
-		let remaining_balance: U256 = RB::remaining_balance(&account_id)
-			.saturated_into::<u128>()
-			.into();
-
-		// Final `balance = balance * 10^9 + remaining_balance`.
-		let final_balance = (balance * helper)
-			.checked_add(remaining_balance)
-			.unwrap_or_default();
-
-		final_balance
+		// Get main balance from Currency.
+		let main_balance = C::free_balance(&account_id).saturated_into::<u128>();
+		// Get remaining balance from Dvm.
+		let remaining_balance = RB::remaining_balance(&account_id).saturated_into::<u128>();
+		// final_balance = balance * 10^9 + remaining_balance.
+		decimal_convert(main_balance, Some(remaining_balance))
 	}
 
 	/// Mutate account balance.
@@ -178,55 +167,55 @@ where
 		let nb = new_balance;
 		match current {
 			cb if cb > nb => {
-				let diff = cb - nb;
-				let (diff_balance, diff_remaining_balance) = diff.div_mod(helper);
+				let diff = cb.saturating_sub(nb);
+				let (diff_main, diff_remaining) = diff.div_mod(helper);
+
 				// If the dvm storage < diff remaining balance, we can not do sub operation directly.
 				// Otherwise, slash Currency, dec dvm storage balance directly.
-				if dvm_balance < diff_remaining_balance {
+				if dvm_balance < diff_remaining {
 					let remaining_balance = dvm_balance
-						.saturating_add(U256::from(1) * helper)
-						.saturating_sub(diff_remaining_balance);
+						.saturating_add(decimal_convert(1, None))
+						.saturating_sub(diff_remaining);
 
 					C::slash(
 						&account_id,
-						(diff_balance + 1).low_u128().unique_saturated_into(),
+						(diff_main + 1).low_u128().unique_saturated_into(),
 					);
 					RB::set_remaining_balance(
 						&account_id,
 						remaining_balance.low_u128().saturated_into(),
 					);
 				} else {
-					C::slash(&account_id, diff_balance.low_u128().unique_saturated_into());
+					C::slash(&account_id, diff_main.low_u128().unique_saturated_into());
 					RB::dec_remaining_balance(
 						&account_id,
-						diff_remaining_balance.low_u128().saturated_into(),
+						diff_remaining.low_u128().saturated_into(),
 					);
 				}
 			}
 			cb if cb < nb => {
-				let diff = nb - cb;
-				let (diff_balance, diff_remaining_balance) = diff.div_mod(helper);
+				let diff = nb.saturating_sub(cb);
+				let (diff_main, diff_remaining) = diff.div_mod(helper);
 
 				// If dvm storage `balance + diff remaining balance > helper`, we must update Currency balance.
-				if dvm_balance + diff_remaining_balance >= helper {
-					let remaining_balance = dvm_balance + diff_remaining_balance - helper;
+				if dvm_balance + diff_remaining >= helper {
+					let remaining_balance = dvm_balance
+						.saturating_add(diff_remaining)
+						.saturating_sub(helper);
 
 					C::deposit_creating(
 						&account_id,
-						(diff_balance + 1).low_u128().unique_saturated_into(),
+						(diff_main + 1).low_u128().unique_saturated_into(),
 					);
 					RB::set_remaining_balance(
 						&account_id,
 						remaining_balance.low_u128().saturated_into(),
 					);
 				} else {
-					C::deposit_creating(
-						&account_id,
-						diff_balance.low_u128().unique_saturated_into(),
-					);
+					C::deposit_creating(&account_id, diff_main.low_u128().unique_saturated_into());
 					RB::inc_remaining_balance(
 						&account_id,
-						diff_remaining_balance.low_u128().saturated_into(),
+						diff_remaining.low_u128().saturated_into(),
 					);
 				}
 			}
@@ -234,16 +223,14 @@ where
 		}
 
 		// Handle existential deposit.
-		let ring_existential_deposit: u128 =
-			<T as Config>::RingCurrency::minimum_balance().saturated_into::<u128>();
-		let kton_existential_deposit: u128 =
-			<T as Config>::KtonCurrency::minimum_balance().saturated_into::<u128>();
-		let ring_existential_deposit = U256::from(ring_existential_deposit) * helper;
-		let kton_existential_deposit = U256::from(kton_existential_deposit) * helper;
+		let ring_min = <T as Config>::RingCurrency::minimum_balance().saturated_into::<u128>();
+		let kton_min = <T as Config>::KtonCurrency::minimum_balance().saturated_into::<u128>();
+		let ring_ed = decimal_convert(ring_min, None);
+		let kton_ed = decimal_convert(kton_min, None);
 
 		let ring_account = T::RingAccountBasic::account_balance(&account_id);
 		let kton_account = T::KtonAccountBasic::account_balance(&account_id);
-		if ring_account < ring_existential_deposit && kton_account < kton_existential_deposit {
+		if ring_account < ring_ed && kton_account < kton_ed {
 			<RingRemainBalance as RemainBalanceOp<T, RingBalance<T>>>::remove_remaining_balance(
 				&account_id,
 			);

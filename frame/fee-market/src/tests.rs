@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -16,7 +16,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- substrate ---
+// --- std ---
+use std::{collections::VecDeque, ops::RangeInclusive};
+// --- crates.io ---
+use bitvec::prelude::*;
+use scale_info::TypeInfo;
+// --- paritytech ---
 use bp_messages::{
 	source_chain::{
 		LaneMessageVerifier, MessageDeliveryAndDispatchPayment, Sender, TargetHeaderChain,
@@ -41,9 +46,6 @@ use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup, UniqueSaturatedInto},
 	FixedU128, Permill, RuntimeDebug,
 };
-// --- std ---
-use bitvec::prelude::*;
-use std::{collections::VecDeque, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::{
 	self as darwinia_fee_market,
@@ -136,7 +138,7 @@ pub const REGULAR_PAYLOAD: TestPayload = message_payload(0, 50);
 /// Vec of proved messages, grouped by lane.
 pub type MessagesByLaneVec = Vec<(LaneId, ProvedLaneMessages<Message<TestMessageFee>>)>;
 
-#[derive(Decode, Encode, Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, TypeInfo)]
 pub struct TestPayload {
 	/// Field that may be used to identify messages.
 	pub id: u64,
@@ -166,7 +168,7 @@ pub const fn message_payload(id: u64, declared_weight: Weight) -> TestPayload {
 }
 
 /// Test messages proof.
-#[derive(Debug, Encode, Decode, Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, TypeInfo)]
 pub struct TestMessagesProof {
 	pub result: Result<MessagesByLaneVec, ()>,
 }
@@ -177,7 +179,7 @@ impl Size for TestMessagesProof {
 }
 
 /// Messages delivery proof used in tests.
-#[derive(Debug, Encode, Decode, Eq, Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, TypeInfo)]
 pub struct TestMessagesDeliveryProof(pub Result<(LaneId, InboundLaneData<TestRelayer>), ()>);
 impl Size for TestMessagesDeliveryProof {
 	fn size_hint(&self) -> u32 {
@@ -185,7 +187,7 @@ impl Size for TestMessagesDeliveryProof {
 	}
 }
 
-#[derive(Debug, Clone, Encode, Decode, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, TypeInfo)]
 pub enum TestMessagesParameter {
 	TokenConversionRate(FixedU128),
 }
@@ -1096,6 +1098,75 @@ fn test_payment_slash_with_protect() {
 			TEST_RELAYER_A,
 			200
 		));
+	});
+}
+
+#[test]
+fn test_payment_slash_event() {
+	new_test_ext().execute_with(|| {
+		// Send message
+		System::set_block_number(2);
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(6), 400, Some(30));
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(7), 400, Some(50));
+		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(8), 400, Some(100));
+		assert_eq!(FeeMarket::relayer(&6).collateral, 400);
+		let market_fee = FeeMarket::market_fee().unwrap();
+		let (_, _) = send_regular_message(market_fee);
+		assert_ok!(FeeMarket::set_slash_protect(Origin::root(), 50));
+
+		// Receive delivery message proof
+		System::set_block_number(2000);
+		assert_ok!(Messages::receive_messages_delivery_proof(
+			Origin::signed(5),
+			TestMessagesDeliveryProof(Ok((
+				TEST_LANE_ID,
+				InboundLaneData {
+					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
+						.into_iter()
+						.collect(),
+					..Default::default()
+				}
+			))),
+			UnrewardedRelayersState {
+				unrewarded_relayer_entries: 1,
+				total_messages: 1,
+				..Default::default()
+			},
+		));
+
+		System::assert_has_event(Event::FeeMarket(crate::Event::FeeMarketSlash(
+			SlashReport {
+				lane: TEST_LANE_ID,
+				message: 1,
+				sent_time: 2,
+				confirm_time: Some(2000),
+				delay_time: Some(1848),
+				account_id: 6,
+				amount: 50,
+			},
+		)));
+		System::assert_has_event(Event::FeeMarket(crate::Event::FeeMarketSlash(
+			SlashReport {
+				lane: TEST_LANE_ID,
+				message: 1,
+				sent_time: 2,
+				confirm_time: Some(2000),
+				delay_time: Some(1848),
+				account_id: 7,
+				amount: 50,
+			},
+		)));
+		System::assert_has_event(Event::FeeMarket(crate::Event::FeeMarketSlash(
+			SlashReport {
+				lane: TEST_LANE_ID,
+				message: 1,
+				sent_time: 2,
+				confirm_time: Some(2000),
+				delay_time: Some(1848),
+				account_id: 8,
+				amount: 50,
+			},
+		)));
 	});
 }
 

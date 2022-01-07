@@ -2,6 +2,7 @@
 
 // --- crates.io ---
 use codec::{Decode, Encode};
+use scale_info::TypeInfo;
 // --- paritytech ---
 use bp_message_dispatch::CallOrigin;
 use bp_messages::{
@@ -9,7 +10,7 @@ use bp_messages::{
 	target_chain::{ProvedMessages, SourceHeaderChain},
 	InboundLaneData, LaneId, Message, MessageNonce, Parameter as MessagesParameter,
 };
-use bp_runtime::{messages::DispatchFeePayment, ChainId};
+use bp_runtime::{messages::DispatchFeePayment, Chain, ChainId};
 use bridge_runtime_common::messages::{
 	self,
 	source::{self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload},
@@ -40,7 +41,7 @@ pub type ToPangolinMessagePayload = FromThisChainMessagePayload<WithPangolinMess
 /// The s2s issuing pallet index in the pangolin chain runtime
 pub const PANGOLIN_S2S_ISSUING_PALLET_INDEX: u8 = 49;
 
-#[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ToPangolinOutboundPayload;
 impl CreatePayload<AccountId, AccountPublic, Signature> for ToPangolinOutboundPayload {
 	type Payload = ToPangolinMessagePayload;
@@ -88,7 +89,7 @@ frame_support::parameter_types! {
 }
 
 /// Pangoro -> Pangolin message lane pallet parameters.
-#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum PangoroToPangolinMessagesParameter {
 	/// The conversion formula we use is: `PangoroTokens = PangolinTokens * conversion_rate`.
 	PangolinToPangoroConversionRate(FixedU128),
@@ -117,6 +118,8 @@ impl MessageBridge for WithPangolinMessageBridge {
 
 	fn bridged_balance_to_this_balance(
 		bridged_balance: pangolin_primitives::Balance,
+		// TODO: S2S
+		_bridged_to_this_conversion_rate_override: Option<FixedU128>,
 	) -> pangoro_primitives::Balance {
 		pangoro_primitives::Balance::try_from(
 			PangolinToPangoroConversionRate::get().saturating_mul_int(bridged_balance),
@@ -192,13 +195,13 @@ impl messages::ChainWithMessages for Pangolin {
 }
 impl messages::BridgedChainWithMessages for Pangolin {
 	fn maximal_extrinsic_size() -> u32 {
-		pangolin_runtime_system_params::max_extrinsic_size()
+		drml_bridge_primitives::Pangolin::max_extrinsic_size()
 	}
 
 	fn message_weight_limits(_message_payload: &[u8]) -> RangeInclusive<Weight> {
 		// we don't want to relay too large messages + keep reserve for future upgrades
 		let upper_limit = messages::target::maximal_incoming_message_dispatch_weight(
-			pangolin_runtime_system_params::max_extrinsic_weight(),
+			drml_bridge_primitives::Pangolin::max_extrinsic_weight(),
 		);
 
 		// we're charging for payload bytes in `WithPangolinMessageBridge::transaction_payment` function

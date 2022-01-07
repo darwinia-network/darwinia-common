@@ -1,7 +1,5 @@
 // --- paritytech ---
-use frame_election_provider_support::onchain::OnChainSequentialPhragmen;
 use frame_support::PalletId;
-use pallet_election_provider_multi_phase::OnChainConfig;
 use sp_npos_elections::NposSolution;
 use sp_staking::SessionIndex;
 // --- darwinia-network ---
@@ -37,7 +35,10 @@ impl Config for Runtime {
 	type NextNewSession = Session;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type ElectionProvider = ElectionProviderMultiPhase;
-	type GenesisElectionProvider = OnChainSequentialPhragmen<OnChainConfig<Self>>;
+	type GenesisElectionProvider = GenesisElectionOf<Self>;
+	// Use the nominator map to iter voter AND no-ops for all SortedListProvider hooks. The migration
+	// to bags-list is a no-op, but the storage version will be updated.
+	type SortedListProvider = darwinia_staking::UseNominatorsMap<Self>;
 	type RingCurrency = Ring;
 	type RingRewardRemainder = ();
 	// send the slashed funds to the treasury.

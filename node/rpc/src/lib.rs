@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -27,6 +27,7 @@ pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 // --- std ---
 use std::{error::Error, sync::Arc};
 // --- darwinia-network ---
+use dc_rpc::{CacheRequester as TraceFilterCacheRequester, DebugRequester};
 use drml_common_primitives::{
 	AccountId, Balance, BlockNumber, Hash, Hashing, Nonce, OpaqueBlock as Block,
 };
@@ -59,4 +60,44 @@ pub struct GrandpaDeps<B> {
 	pub subscription_executor: sc_rpc::SubscriptionTaskExecutor,
 	/// Finality proof provider.
 	pub finality_provider: Arc<sc_finality_grandpa::FinalityProofProvider<B, Block>>,
+}
+
+#[derive(Clone)]
+pub struct RpcRequesters {
+	pub debug: Option<DebugRequester>,
+	pub trace: Option<TraceFilterCacheRequester>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct RpcConfig {
+	pub ethapi: Vec<EthApiCmd>,
+	pub ethapi_max_permits: u32,
+	pub ethapi_trace_max_count: u32,
+	pub ethapi_trace_cache_duration: u64,
+	pub eth_log_block_cache: usize,
+	pub max_past_logs: u32,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum EthApiCmd {
+	Debug,
+	Trace,
+}
+
+use std::str::FromStr;
+impl FromStr for EthApiCmd {
+	type Err = String;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		Ok(match s {
+			"debug" => Self::Debug,
+			"trace" => Self::Trace,
+			_ => {
+				return Err(format!(
+					"`{}` is not recognized as a supported Ethereum Api",
+					s
+				))
+			}
+		})
+	}
 }

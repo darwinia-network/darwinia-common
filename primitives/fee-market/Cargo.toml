@@ -11,12 +11,13 @@ version     = "2.7.2"
 
 [dependencies]
 # crates.io
-codec = { package = "parity-scale-codec", version = "2.1", default-features = false, features = ["derive"] }
+codec      = { package = "parity-scale-codec", version = "2.2", default-features = false, features = ["derive"] }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 # paritytech
-bp-messages   = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.8" }
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+bp-messages   = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.0" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 
 [features]
 default = ["std"]
@@ -24,6 +25,7 @@ default = ["std"]
 std = [
 	# crates.io
 	"codec/std",
+	"scale-info/std",
 	# paritytech
 	"bp-messages/std",
 	"frame-support/std",

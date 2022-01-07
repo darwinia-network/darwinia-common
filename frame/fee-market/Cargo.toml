@@ -12,25 +12,24 @@ version     = "2.7.2"
 [dependencies]
 # crates.io
 bitvec     = { version = "0.20", default-features = false, features = ["alloc"] }
-codec      = { package = "parity-scale-codec", version = "2.1.1", default-features = false }
-log        = { version = "0.4", default-features = false }
-num-traits = { version = "0.2", default-features = false }
+codec      = { package = "parity-scale-codec", version = "2.2", default-features = false }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 # darwinia-network
 darwinia-support = { default-features = false, path = "../support" }
 dp-fee           = { default-features = false, path = "../../primitives/fee-market" }
 # paritytech
-frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-frame-support      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-frame-system       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-pallet-timestamp   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-core            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-io              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-runtime         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
-sp-std             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.11.8" }
+frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+frame-support      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+frame-system       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+pallet-timestamp   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-core            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-io              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-runtime         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-std             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 # parity-bridges-common
-bp-messages            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.8" }
-bp-runtime             = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.8" }
-pallet-bridge-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.11.8" }
+bp-messages            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.0" }
+bp-runtime             = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.0" }
+pallet-bridge-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.0" }
 
 [dev-dependencies]
 darwinia-balances = { path = "../balances" }
@@ -42,8 +41,7 @@ std = [
 	# crates.io
 	"bitvec/std",
 	"codec/std",
-	"log/std",
-	"num-traits/std",
+	"scale-info/std",
 	# darwinia-network
 	"darwinia-support/std",
 	"dp-fee/std",

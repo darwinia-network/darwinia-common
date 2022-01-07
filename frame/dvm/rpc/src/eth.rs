@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -114,11 +114,11 @@ pub trait EthApi {
 	/// Sends transaction; will block waiting for signer to return the
 	/// transaction hash.
 	#[rpc(name = "eth_sendTransaction")]
-	fn send_transaction(&self, _: TransactionRequest) -> BoxFuture<H256>;
+	fn send_transaction(&self, _: TransactionRequest) -> BoxFuture<Result<H256>>;
 
 	/// Sends signed transaction, returning its hash.
 	#[rpc(name = "eth_sendRawTransaction")]
-	fn send_raw_transaction(&self, _: Bytes) -> BoxFuture<H256>;
+	fn send_raw_transaction(&self, _: Bytes) -> BoxFuture<Result<H256>>;
 
 	/// Call contract, returning the output data.
 	#[rpc(name = "eth_call")]

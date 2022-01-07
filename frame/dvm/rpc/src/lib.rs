@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -16,12 +16,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+mod debug;
 mod eth;
 mod eth_pubsub;
 mod net;
+mod trace;
 mod web3;
 
+pub use debug::{DebugApi, DebugApiServer, TraceParams};
 pub use eth::{EthApi, EthApiServer, EthFilterApi, EthFilterApiServer};
 pub use eth_pubsub::{EthPubSubApi, EthPubSubApiServer};
 pub use net::{NetApi, NetApiServer};
+pub use trace::{FilterRequest, TraceApi, TraceApiServer};
 pub use web3::{Web3Api, Web3ApiServer};

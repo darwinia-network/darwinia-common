@@ -1,6 +1,6 @@
 // This file is part of Darwinia.
 //
-// Copyright (C) 2018-2021 Darwinia Network
+// Copyright (C) 2018-2022 Darwinia Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Darwinia is free software: you can redistribute it and/or modify
@@ -52,8 +52,10 @@ pub mod pallet {
 
 	// --- crates.io ---
 	use ethabi::{Event as EthEvent, EventParam as EthEventParam, ParamType, RawLog};
+	use scale_info::TypeInfo;
 	// --- paritytech ---
 	use frame_support::{
+		log,
 		pallet_prelude::*,
 		traits::{Currency, ExistenceRequirement},
 		PalletId,
@@ -121,11 +123,6 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(fn deposit_event)]
-	#[pallet::metadata(
-		AccountId<T> = "AccountId",
-		RingBalance<T> = "RingBalance",
-		KtonBalance<T> = "KtonBalance",
-	)]
 	pub enum Event<T: Config> {
 		/// Someone redeem some *RING*. \[account, amount, transaction index\]
 		RedeemRing(AccountId<T>, Balance, EthereumTransactionIndex),
@@ -1050,7 +1047,7 @@ pub mod pallet {
 		}
 	}
 
-	#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
+	#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
 	pub enum RedeemFor {
 		Token,
 		Deposit,
