@@ -1549,6 +1549,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-evm-precompile-bridge-bsc"
+version = "2.7.1"
+dependencies = [
+ "darwinia-bridge-bsc",
+ "darwinia-evm-precompile-utils",
+ "dp-contract",
+ "ethereum-primitives",
+ "evm",
+ "fp-evm",
+ "sp-std",
+]
+
+[[package]]
 name = "darwinia-evm-precompile-bridge-ethereum"
 version = "2.7.2"
 dependencies = [

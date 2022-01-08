@@ -29,11 +29,12 @@ use dp_contract::{
 	abi_util::{abi_encode_array_bytes32, abi_encode_bytes32},
 	bsc_light_client::{BscMultiStorageVerifyParams, BscSingleStorageVerifyParams},
 };
-use dp_evm::Precompile;
 use ethereum_primitives::{
 	storage::{EthereumStorage, EthereumStorageProof},
 	H256,
 };
+// --- paritytech ---
+use fp_evm::Precompile;
 
 #[selector]
 enum Action {
@@ -73,11 +74,11 @@ where
 					params.account_proof,
 					params.storage_proof,
 				);
-				let storage_value =
-					EthereumStorage::<H256>::verify_storage_proof(finalized_header.state_root, &proof)
-						.map_err(|_| {
-							ExitError::Other("verify single storage proof failed".into())
-						})?;
+				let storage_value = EthereumStorage::<H256>::verify_storage_proof(
+					finalized_header.state_root,
+					&proof,
+				)
+				.map_err(|_| ExitError::Other("verify single storage proof failed".into()))?;
 				(abi_encode_bytes32(storage_value.0.into()), 10000u64)
 			}
 			Action::VerifyMultiStorageProof => {
