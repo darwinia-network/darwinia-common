@@ -25,6 +25,7 @@ use evm::{executor::PrecompileOutput, Context, ExitError};
 use rlp::RlpStream;
 use scale_info::TypeInfo;
 // --- paritytech ---
+use fp_evm::{Precompile, PrecompileSet};
 use frame_support::{
 	traits::{Everything, FindAuthor, GenesisBuild},
 	ConsensusEngineId, PalletId,
@@ -40,10 +41,9 @@ use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::{self as dvm_ethereum, account_basic::*, *};
 use darwinia_evm::{runner::stack::Runner, EnsureAddressTruncated, FeeCalculator};
-use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::IntoAccountId;
-use fp_evm::{Precompile, PrecompileSet};
+use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
