@@ -23,9 +23,9 @@ use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 // --- darwinia-network ---
 use darwinia_evm::GasWeightMapping;
 use darwinia_support::evm::IntoAccountId;
-use dp_evm::Precompile;
 // --- paritytech ---
 use codec::Decode;
+use fp_evm::Precompile;
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	weights::{DispatchClass, Pays},

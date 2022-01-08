@@ -1,17 +1,15 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "Storage key for ethereum schema"
+description = "RPC traits of Ethereum."
 edition     = "2021"
 homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
-name        = "dp-storage"
+name        = "dp-evm-trace-rpc"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
 version     = "2.7.2"
 
 [dependencies]
-
-[features]
-default = ["std"]
-
-std = []
+# crates.io
+ethereum-types = { version = "0.12" }
+serde          = { version = "1.0", features = ["derive"] }

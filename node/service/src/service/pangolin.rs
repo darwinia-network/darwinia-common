@@ -28,6 +28,7 @@ use std::{
 // --- crates.io ---
 use futures::StreamExt;
 // --- paritytech ---
+use fc_rpc_core::types::FilterPool;
 use sc_authority_discovery::WorkerConfig;
 use sc_basic_authorship::ProposerFactory;
 use sc_client_api::{ExecutorProvider, RemoteBackend, StateBackendFor};
@@ -63,7 +64,6 @@ use crate::{
 	},
 };
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
-use dp_rpc::FilterPool;
 use drml_common_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
 use drml_rpc::{
 	pangolin::{FullDeps, LightDeps},

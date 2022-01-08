@@ -15,16 +15,14 @@ codec          = { package = "parity-scale-codec", version = "2.2", default-feat
 ethereum       = { version = "0.10", default-features = false, features = ["with-codec"] }
 ethereum-types = { version = "0.12", default-features = false }
 scale-info     = { version = "1.0", default-features = false, features = ["derive"] }
-# darwinia-network
-darwinia-evm     = { default-features = false, path = "../../../evm" }
-darwinia-support = { default-features = false, path = "../../../support" }
-dp-evm           = { default-features = false, path = "../../../../primitives/evm" }
 # paritytech
 sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+# frontier
+fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
 
 [features]
 default = ["std"]
@@ -35,14 +33,12 @@ std = [
 	"ethereum/std",
 	"ethereum-types/std",
 	"scale-info/std",
-	# darwinia-network
-	"darwinia-evm/std",
-	"darwinia-support/std",
-	"dp-evm/std",
 	# paritytech
 	"sp-api/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	# frontier
+	"fp-evm/std",
 ]

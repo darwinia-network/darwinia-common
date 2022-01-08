@@ -130,4 +130,3 @@ frame_support::parameter_types! {
 		.max
 		.get(DispatchClass::Normal);
 }
-

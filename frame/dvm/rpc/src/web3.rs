@@ -17,11 +17,13 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 //! Web3 rpc interface.
+
+// --- crates.io ---
 use ethereum_types::H256;
 use jsonrpc_core::Result;
 use jsonrpc_derive::rpc;
-
-use dp_rpc::Bytes;
+// --- paritytech ---
+use fc_rpc_core::types::Bytes;
 
 pub use rpc_impl_Web3Api::gen_server::Web3Api as Web3ApiServer;
 

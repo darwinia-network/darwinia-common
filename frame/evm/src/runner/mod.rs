@@ -21,11 +21,11 @@
 pub mod stack;
 
 // --- paritytech ---
+use fp_evm::{CallInfo, CreateInfo};
 use sp_core::{H160, H256, U256};
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::Config;
-use dp_evm::{CallInfo, CreateInfo};
 
 /// A trait defines the fundamental interfaces for evm execution.
 pub trait Runner<T: Config> {

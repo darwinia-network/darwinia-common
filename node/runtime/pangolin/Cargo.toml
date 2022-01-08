@@ -32,7 +32,6 @@ darwinia-evm-precompile-bridge-bsc      = { default-features = false, path = "..
 darwinia-evm-precompile-bridge-ethereum = { default-features = false, path = "../../../frame/evm/precompile/contracts/bridge/ethereum" }
 darwinia-evm-precompile-bridge-s2s      = { default-features = false, path = "../../../frame/evm/precompile/contracts/bridge/s2s" }
 darwinia-evm-precompile-dispatch        = { default-features = false, path = "../../../frame/evm/precompile/contracts/dispatch" }
-darwinia-evm-precompile-simple          = { default-features = false, path = "../../../frame/evm/precompile/contracts/simple" }
 darwinia-evm-precompile-transfer        = { default-features = false, path = "../../../frame/evm/precompile/contracts/transfer" }
 darwinia-fee-market                     = { default-features = false, path = "../../../frame/fee-market" }
 darwinia-fee-market-rpc-runtime-api     = { default-features = false, path = "../../../frame/fee-market/rpc/runtime-api" }
@@ -47,7 +46,6 @@ darwinia-support                        = { default-features = false, path = "..
 darwinia-vesting                        = { default-features = false, path = "../../../frame/vesting" }
 dp-asset                                = { default-features = false, path = "../../../primitives/asset" }
 dp-contract                             = { default-features = false, path = "../../../primitives/contract" }
-dp-evm                                  = { default-features = false, path = "../../../primitives/evm" }
 dp-fee                                  = { default-features = false, path = "../../../primitives/fee-market" }
 dp-s2s                                  = { default-features = false, path = "../../../primitives/s2s" }
 drml-bridge-primitives                  = { default-features = false, path = "../../primitives/bridge" }
@@ -61,10 +59,10 @@ module-transaction-pause                = { default-features = false, path = "..
 to-ethereum-backing                     = { default-features = false, path = "../../../frame/wormhole/backing/ethereum" }
 to-tron-backing                         = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
 # dvm trace
-dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/evm/trace/apis" }
-dp-evm-trace-events = { optional = true, default-features = false, path = "../../../primitives/evm/trace/events" }
-dp-evm-trace-ext    = { default-features = false, path = "../../../primitives/evm/trace/ext" }
-dp-evm-tracer       = { optional = true, default-features = false, path = "../../../primitives/evm/trace/tracer" }
+dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/evm-trace/apis" }
+dp-evm-trace-events = { optional = true, default-features = false, path = "../../../primitives/evm-trace/events" }
+dp-evm-trace-ext    = { default-features = false, path = "../../../primitives/evm-trace/ext" }
+dp-evm-tracer       = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
 rlp                 = { version = "0.5", optional = true, default-features = false }
 sha3                = { version = "0.8", optional = true, default-features = false }
 # paritytech
@@ -124,6 +122,9 @@ sp-staking                                 = { default-features = false, git = "
 sp-std                                     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-transaction-pool                        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+# frontier
+fp-evm                       = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
+pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
 
 [build-dependencies]
 # paritytech
@@ -152,7 +153,6 @@ std = [
 	"darwinia-evm-precompile-bridge-ethereum/std",
 	"darwinia-evm-precompile-bridge-s2s/std",
 	"darwinia-evm-precompile-dispatch/std",
-	"darwinia-evm-precompile-simple/std",
 	"darwinia-evm-precompile-transfer/std",
 	"darwinia-fee-market/std",
 	"darwinia-fee-market-rpc-runtime-api/std",
@@ -167,7 +167,6 @@ std = [
 	"darwinia-vesting/std",
 	"dp-asset/std",
 	"dp-contract/std",
-	"dp-evm/std",
 	"dp-fee/std",
 	"dp-s2s/std",
 	"drml-bridge-primitives/std",
@@ -244,6 +243,9 @@ std = [
 	"dp-evm-tracer/std",
 	"rlp/std",
 	"sha3/std",
+	# frontier
+	"fp-evm/std",
+	"pallet-evm-precompile-simple/std",
 ]
 
 runtime-benchmarks = [

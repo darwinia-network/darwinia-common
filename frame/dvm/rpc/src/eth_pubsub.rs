@@ -17,11 +17,12 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 //! Eth PUB-SUB rpc interface.
 
+// --- crates.io ---
 use jsonrpc_core::Result;
 use jsonrpc_derive::rpc;
 use jsonrpc_pubsub::{typed, SubscriptionId};
-
-use dp_rpc::pubsub;
+// --- paritytech ---
+use fc_rpc_core::types::pubsub;
 
 pub use rpc_impl_EthPubSubApi::gen_server::EthPubSubApi as EthPubSubApiServer;
 
