@@ -99,12 +99,12 @@ jobs:
           restore-keys: sccache-${{ matrix.action }}-${{ matrix.task.target }}-${{ env.GITHUB_CACHE_VERSION }}-
 
       - name: Action ${{ matrix.action }}
-        run: cargo ${{ matrix.action }} ${{ matrix.flags }} --release --locked
+        run: cargo ${{ matrix.action }} ${{ matrix.flags }} --locked
 
       - name: Compress ${{ matrix.task.target }}
         if: matrix.action != 'test'
         run: |
-          mv target/release/${{ matrix.task.target }} .
+          mv target/debug/${{ matrix.task.target }} .
           tar cf ${{ matrix.task.target }}.tar.zst ${{ matrix.task.target }} -I pzstd
 
       - name: Upload ${{ matrix.task.target }}
@@ -146,7 +146,10 @@ jobs:
 
       - name: Launch drml
         if: matrix.task.target == 'darwinia'
-        run: drml --unsafe-ws-external --unsafe-rpc-external --rpc-cors all --rpc-methods unsafe --chain pangolin-dev --alice &
+        run: |
+          drml --unsafe-ws-external --unsafe-rpc-external --rpc-cors all --rpc-methods unsafe --chain pangolin-dev --alice &
+          # Need some time to start the non-optimized node
+          sleep 60
 
       - name: Install nodejs ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v1
