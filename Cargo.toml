@@ -141,5 +141,6 @@ yamux             = { opt-level = 3 }
 zeroize           = { opt-level = 3 }
 
 [profile.release]
+lto = true
 # Darwinia runtime requires unwinding.
 panic = "unwind"
