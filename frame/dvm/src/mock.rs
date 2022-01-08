@@ -31,6 +31,7 @@ use frame_support::{
 	ConsensusEngineId, PalletId,
 };
 use frame_system::mocking::*;
+use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
@@ -43,7 +44,6 @@ use crate::{self as dvm_ethereum, account_basic::*, *};
 use darwinia_evm::{runner::stack::Runner, EnsureAddressTruncated, FeeCalculator};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::IntoAccountId;
-use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
