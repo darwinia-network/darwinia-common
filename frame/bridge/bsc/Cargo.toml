@@ -11,17 +11,21 @@ version     = "2.7.2"
 
 [dependencies]
 # crates.io
-codec      = { package = "parity-scale-codec", version = "2.2", default-features = false }
-scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+array-bytes = { version = "1.4", optional = true }
+codec       = { package = "parity-scale-codec", version = "2.2", default-features = false }
+rlp         = { version = "0.5", default-features = false }
+scale-info  = { version = "1.0", default-features = false, features = ["derive"] }
 # darwinia-network
-bsc-primitives = { default-features = false, path = "../../../primitives/bsc" }
+bsc-primitives      = { default-features = false, path = "../../../primitives/bsc" }
+ethereum-primitives = { default-features = false, features = ["full-codec", "full-rlp"], path = "../../../primitives/ethereum" }
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
-sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
-sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+frame-support      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+frame-system       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-core            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-io              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-runtime         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-std             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 
 [dev-dependencies]
 # crates.io
@@ -36,14 +40,22 @@ default = ["std"]
 std = [
 	# crates.io
 	"codec/std",
+	"rlp/std",
 	"scale-info/std",
 	# darwinia-network
 	"bsc-primitives/std",
+	"ethereum-primitives/std",
 	# paritytech
+	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
+]
+
+runtime-benchmarks = [
+	"array-bytes",
+	"frame-benchmarking",
 ]
