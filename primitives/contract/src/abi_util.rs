@@ -49,3 +49,12 @@ pub fn abi_encode_bytes(data: &[u8]) -> Vec<u8> {
 pub fn abi_encode_u64(data: u64) -> Vec<u8> {
 	ethabi::encode(&[Token::Uint(data.into())])
 }
+
+pub fn abi_encode_bytes32(data: [u8; 32]) -> Vec<u8> {
+	ethabi::encode(&[Token::FixedBytes(data.to_vec())])
+}
+
+pub fn abi_encode_array_bytes32(data: Vec<[u8; 32]>) -> Vec<u8> {
+	let array = data.iter().map(|v| Token::FixedBytes(v.to_vec())).collect();
+	ethabi::encode(&[Token::Array(array)])
+}

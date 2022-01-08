@@ -21,12 +21,16 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc;
 
+#[cfg(test)]
+mod tests;
+
 pub mod error;
 pub mod ethashproof;
 pub mod header;
 pub mod log_entry;
 pub mod pow;
 pub mod receipt;
+pub mod storage;
 pub mod transaction_id;
 
 pub use crate::{BlockNumber as EthereumBlockNumber, Network as EthereumNetwork};

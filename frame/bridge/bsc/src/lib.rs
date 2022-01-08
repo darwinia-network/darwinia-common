@@ -66,23 +66,26 @@
 //!    "id": 83
 //! }
 //!```
-//! If you only want to verify a single header, use verify_header fn is enough. The important tip is the header's number you want verify should greater
-//! than genesis header, or the answer will be NO.
 //! According to the official doc of Binance Smart Chain, when the authority set changed at checkpoint header, the new authority set is not taken as finalized immediately.
 //! We will wait(accept and verify) N / 2 blocks(only headers) to make sure it's safe to finalize the new authority set. N is the authority set size.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod tests;
 
+pub mod weight;
+
 #[frame_support::pallet]
 pub mod pallet {
 	// --- paritytech ---
-	use frame_support::{pallet_prelude::*, traits::UnixTime};
+	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
+	use rlp::Decodable;
 	use sp_core::U256;
 	use sp_io::crypto;
 	use sp_runtime::{DispatchError, DispatchResult, RuntimeDebug};
@@ -90,15 +93,20 @@ pub mod pallet {
 	use sp_std::borrow::ToOwned;
 	use sp_std::{collections::btree_set::BTreeSet, prelude::*};
 	// --- darwinia-network ---
+	pub use super::weight::WeightInfo;
 	use bsc_primitives::*;
+	use ethereum_primitives::storage::{EthereumStorage, EthereumStorageProof};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type UnixTime: UnixTime;
 		/// BSC configuration.
 		type BSCConfiguration: Get<BSCConfiguration>;
 		/// Handler for headers submission result.
 		type OnHeadersSubmitted: OnHeadersSubmitted<Self::AccountId>;
+		/// Max epoch length stored, cannot verify header older than this epoch length
+		type EpochInStorage: Get<u64>;
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::error]
@@ -166,6 +174,9 @@ pub mod pallet {
 		///
 		/// Recover pubkey from signature error
 		RecoverPubkeyFail,
+
+		/// Verfiy Storage Proof Failed
+		VerifyStorageFail,
 	}
 
 	#[pallet::storage]
@@ -215,29 +226,15 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Verify unsigned relayed headers and finalize authority set
-		#[pallet::weight(0)]
-		pub fn verify_and_update_authority_set_unsigned(
-			origin: OriginFor<T>,
-			headers: Vec<BSCHeader>,
-		) -> DispatchResultWithPostInfo {
-			// ensure not signed
-			frame_system::ensure_none(origin)?;
-
-			Self::verify_and_update_authority_set(&headers)?;
-
-			Ok(().into())
-		}
-
 		/// Verify signed relayed headers and finalize authority set
-		#[pallet::weight(0)]
-		pub fn verify_and_update_authority_set_signed(
+		#[pallet::weight(<T as Config>::WeightInfo::relay_finalized_epoch_header())]
+		pub fn relay_finalized_epoch_header(
 			origin: OriginFor<T>,
-			headers: Vec<BSCHeader>,
+			proof: Vec<BSCHeader>,
 		) -> DispatchResultWithPostInfo {
 			let submitter = frame_system::ensure_signed(origin)?;
 
-			match Self::verify_and_update_authority_set(&headers) {
+			match Self::verify_and_update_authority_set_and_checkpoint(&proof) {
 				Ok(new_authority_set) => {
 					T::OnHeadersSubmitted::on_valid_authority_finalized(
 						submitter,
@@ -255,11 +252,6 @@ pub mod pallet {
 		}
 	}
 	impl<T: Config> Pallet<T> {
-		/// Return true if the header's timestamp greater or equal than current on-chain time
-		pub fn is_timestamp_ahead(timestamp: u64) -> bool {
-			T::UnixTime::now().as_millis() as u64 <= timestamp
-		}
-
 		/// Perform basic checks that only require header itself.
 		pub fn contextless_checks(config: &BSCConfiguration, header: &BSCHeader) -> DispatchResult {
 			// he genesis block is the always valid dead-end
@@ -297,12 +289,6 @@ pub mod pallet {
 
 			// Ensure that the mix digest is zero as we don't have fork protection currently
 			ensure!(header.mix_digest.is_zero(), <Error<T>>::InvalidMixDigest);
-
-			// Don't waste time checking blocks from the future
-			ensure!(
-				!Self::is_timestamp_ahead(header.timestamp),
-				<Error<T>>::HeaderTimestampIsAhead
-			);
 
 			// Check that the extra-data contains the vanity, validators and signature.
 			ensure!(
@@ -428,42 +414,8 @@ pub mod pallet {
 			Ok(signers)
 		}
 
-		/// Verify single header
-		/// The header number should in the range `[genesis_header.number, finalized_checkpoint.number + N]`
-		/// Before the first call of verify_and_update_authority_set extrinsic, genesis_header == finalized_checkpoint
-		pub fn verify_header(header: &BSCHeader) -> DispatchResult {
-			let cfg = T::BSCConfiguration::get();
-			// ensure the number is in the range
-			let round = header.number / cfg.epoch_length;
-
-			ensure!(
-				<AuthoritiesOfRound<T>>::contains_key(round),
-				// it could be the signer which signed your header has not been finalized yet
-				// or your header.number is less than the genesis header number
-				<Error::<T>>::RidiculousNumber
-			);
-
-			Self::contextless_checks(&cfg, header)?;
-
-			// get index vec
-			let authorities_of_round = <AuthoritiesOfRound<T>>::get(round);
-			// get all authorities
-			let authorities = <Authorities<T>>::get();
-			// filter authorities of this round out
-			let signers = authorities_of_round
-				.into_iter()
-				.map(|i| authorities[i as usize])
-				.collect::<Vec<_>>();
-			// check signer
-			let signer = Self::recover_creator(cfg.chain_id, header)?;
-
-			ensure!(contains(&signers, signer), <Error::<T>>::InvalidSigner);
-
-			Ok(())
-		}
-
 		/// Verify unsigned relayed headers and finalize authority set
-		pub fn verify_and_update_authority_set(
+		pub fn verify_and_update_authority_set_and_checkpoint(
 			headers: &[BSCHeader],
 		) -> Result<Vec<Address>, DispatchError> {
 			// get finalized authority set from storage
@@ -553,7 +505,13 @@ pub mod pallet {
 
 					<Authorities<T>>::put(authorities);
 					// insert this epoch's authority indexes
-					<AuthoritiesOfRound<T>>::insert(checkpoint.number / cfg.epoch_length, indexes);
+					let epoch = checkpoint.number / cfg.epoch_length;
+					<AuthoritiesOfRound<T>>::insert(epoch, indexes);
+					if epoch > T::EpochInStorage::get()
+						&& <AuthoritiesOfRound<T>>::contains_key(epoch - T::EpochInStorage::get())
+					{
+						<AuthoritiesOfRound<T>>::remove(epoch - T::EpochInStorage::get());
+					}
 
 					// skip the rest submitted headers
 					return Ok(new_authority_set);
@@ -604,6 +562,20 @@ pub mod pallet {
 	/// check if the signer address in a set of qualified signers
 	fn contains(signers: &[Address], signer: Address) -> bool {
 		signers.iter().any(|i| *i == signer)
+	}
+
+	pub trait StorageVerifier<S> {
+		fn verify_storage(proof: &EthereumStorageProof) -> Result<S, DispatchError>;
+	}
+
+	impl<T: Config, S: Decodable> StorageVerifier<S> for Pallet<T> {
+		fn verify_storage(proof: &EthereumStorageProof) -> Result<S, DispatchError> {
+			let finalized_header = <FinalizedCheckpoint<T>>::get();
+			let storage =
+				EthereumStorage::<S>::verify_storage_proof(finalized_header.state_root, proof)
+					.map_err(|_| <Error<T>>::VerifyStorageFail)?;
+			Ok(storage.0)
+		}
 	}
 }
 pub use pallet::*;

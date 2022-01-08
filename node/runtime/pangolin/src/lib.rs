@@ -856,6 +856,7 @@ sp_api::impl_runtime_apis! {
 			list_benchmark!(list, extra, from_substrate_issuing, Substrate2SubstrateIssuing);
 			list_benchmark!(list, extra, from_ethereum_issuing, EthereumIssuing);
 			list_benchmark!(list, extra, darwinia_fee_market, FeeMarket);
+			list_benchmark!(list, extra, darwinia_bridge_bsc, BSC);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -879,6 +880,7 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
 			add_benchmark!(params, batches, from_ethereum_issuing, EthereumIssuing);
 			add_benchmark!(params, batches, darwinia_fee_market, FeeMarket);
+			add_benchmark!(params, batches, darwinia_bridge_bsc, BSC);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 

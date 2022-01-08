@@ -80,11 +80,13 @@ frame_support::parameter_types! {
 		period: 0x03,
 		epoch_length: 0xc8,
 	};
+	pub const EpochInStorage: u64 = 128;
 }
 impl Config for Test {
+	type WeightInfo = ();
 	type BSCConfiguration = Configuration;
-	type UnixTime = Timestamp;
 	type OnHeadersSubmitted = ();
+	type EpochInStorage = EpochInStorage;
 }
 
 frame_support::construct_runtime! {

@@ -1417,10 +1417,13 @@ version = "2.7.2"
 dependencies = [
  "array-bytes",
  "bsc-primitives",
+ "ethereum-primitives",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-timestamp",
  "parity-scale-codec",
+ "rlp",
  "scale-info",
  "serde_json",
  "sp-core",
@@ -1564,6 +1567,19 @@ dependencies = [
  "sp-core",
  "sp-io",
  "substrate-bn",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-bridge-bsc"
+version = "2.7.1"
+dependencies = [
+ "darwinia-bridge-bsc",
+ "darwinia-evm-precompile-utils",
+ "dp-contract",
+ "dp-evm",
+ "ethereum-primitives",
+ "evm",
+ "sp-std",
 ]
 
 [[package]]
@@ -6083,6 +6099,7 @@ dependencies = [
  "darwinia-democracy",
  "darwinia-elections-phragmen",
  "darwinia-evm",
+ "darwinia-evm-precompile-bridge-bsc",
  "darwinia-evm-precompile-bridge-ethereum",
  "darwinia-evm-precompile-bridge-s2s",
  "darwinia-evm-precompile-dispatch",
