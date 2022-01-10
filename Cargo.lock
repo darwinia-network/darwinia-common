@@ -3216,6 +3216,7 @@ dependencies = [
  "ethereum-types",
  "evm",
  "fp-evm",
+ "fp-self-contained",
  "frame-benchmarking",
  "frame-support",
  "frame-system",

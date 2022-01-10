@@ -48,6 +48,8 @@ rlp          = { version = "0.5" }
 # darwinia-network
 darwinia-balances = { path = "../../../balances" }
 pallet-timestamp  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+# frontier
+fp-self-contained = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 
 [features]
 default = ["std"]
