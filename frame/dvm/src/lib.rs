@@ -701,7 +701,9 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 		let source = T::PalletId::get().into_h160();
 		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
 		let transaction = new_internal_transaction(nonce, target, input);
-		// TODO: add more check about internal transaction
+		debug_assert_eq!(transaction.tx.nonce, nonce);
+		debug_assert_eq!(transaction.gas_price, None);
+
 		let (reason, used_gas) = Self::raw_transact(source, transaction);
 		match reason {
 			// Only when exit_reason is successful, return Ok(...)
