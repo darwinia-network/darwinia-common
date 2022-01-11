@@ -42,7 +42,7 @@ use frame_support::{
 };
 use frame_system::ensure_signed;
 use sp_runtime::{traits::Convert, DispatchError, MultiSignature, MultiSigner};
-use sp_std::{str, vec::Vec};
+use sp_std::{str, vec, vec::Vec};
 // --- darwinia-network ---
 use bp_runtime::ChainId;
 use darwinia_support::{
@@ -110,6 +110,11 @@ pub mod pallet {
 	#[pallet::getter(fn remote_backing_account)]
 	pub type RemoteBackingAccount<T: Config> = StorageValue<_, AccountId<T>, ValueQuery>;
 
+	/// Remote Backing Contract Address, this used to verify the remote caller
+	#[pallet::storage]
+	#[pallet::getter(fn remote_backing_contract_account)]
+	pub type RemoteBackingContractAccount<T: Config> = StorageValue<_, AccountId<T>, ValueQuery>;
+
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(PhantomData<T>);
@@ -130,7 +135,10 @@ pub mod pallet {
 			let user = ensure_signed(origin)?;
 			ensure_source_account::<T::AccountId, T::BridgedAccountIdConverter>(
 				T::BridgedChainId::get(),
-				<RemoteBackingAccount<T>>::get(),
+				vec![
+					<RemoteBackingAccount<T>>::get(),
+					<RemoteBackingContractAccount<T>>::get(),
+				],
 				&user,
 			)?;
 
@@ -180,7 +188,10 @@ pub mod pallet {
 			// here only we need is to check the sender is root
 			ensure_source_account::<T::AccountId, T::BridgedAccountIdConverter>(
 				T::BridgedChainId::get(),
-				<RemoteBackingAccount<T>>::get(),
+				vec![
+					<RemoteBackingAccount<T>>::get(),
+					<RemoteBackingContractAccount<T>>::get(),
+				],
 				&user,
 			)?;
 
@@ -226,6 +237,17 @@ pub mod pallet {
 			Self::deposit_event(Event::RemoteBackingAccountUpdated(account));
 			Ok(().into())
 		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::set_remote_backing_account())]
+		pub fn set_remote_backing_contract_account(
+			origin: OriginFor<T>,
+			account: AccountId<T>,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			<RemoteBackingContractAccount<T>>::put(account.clone());
+			Self::deposit_event(Event::RemoteBackingContractAccountUpdated(account));
+			Ok(().into())
+		}
 	}
 
 	#[pallet::event]
@@ -242,6 +264,8 @@ pub mod pallet {
 		MappingFactoryAddressUpdated(H160, H160),
 		/// Update remote backing address \[account\]
 		RemoteBackingAccountUpdated(AccountId<T>),
+		/// Update remote backing address \[account\]
+		RemoteBackingContractAccountUpdated(AccountId<T>),
 	}
 
 	#[pallet::error]

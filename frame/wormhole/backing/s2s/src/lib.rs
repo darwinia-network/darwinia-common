@@ -51,14 +51,16 @@ use sp_runtime::{
 	traits::{AccountIdConversion, Convert, Saturating, Zero},
 	DispatchErrorWithPostInfo, MultiSignature, MultiSigner, SaturatedConversion,
 };
-use sp_std::prelude::*;
+use sp_std::{prelude::*, vec};
 // --- darwinia-network ---
 use darwinia_support::{
 	s2s::{ensure_source_account, LatestMessageNoncer},
 	AccountId,
 };
 use dp_asset::TokenMetadata;
+use dp_contract::s2s_backing::Sub2SubBacking;
 use dp_s2s::{CallParams, CreatePayload};
+use dvm_ethereum::InternalTransactHandler;
 
 pub type Balance = u128;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
@@ -98,6 +100,9 @@ pub mod pallet {
 
 		/// The bridged chain id
 		type BridgedChainId: Get<ChainId>;
+
+		/// The handler for internal transaction.
+		type InternalTransactHandler: InternalTransactHandler;
 
 		/// Outbound payload creator used for s2s message
 		type OutboundPayloadCreator: Parameter
@@ -158,6 +163,8 @@ pub mod pallet {
 		UnsupportedToken,
 		/// Invalid recipient
 		InvalidRecipient,
+		/// Encode Unlock Error
+		ErrEncodeUnlock,
 	}
 
 	/// Period between security limitation. Zero means there is no period limitation.
@@ -187,6 +194,10 @@ pub mod pallet {
 	#[pallet::getter(fn remote_mapping_token_factory_account)]
 	pub type RemoteMappingTokenFactoryAccount<T: Config> =
 		StorageValue<_, AccountId<T>, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn backing_address)]
+	pub type BackingAddress<T: Config> = StorageValue<_, H160, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
@@ -349,53 +360,15 @@ pub mod pallet {
 			// Check call origin
 			ensure_source_account::<T::AccountId, T::BridgedAccountIdConverter>(
 				T::BridgedChainId::get(),
-				<RemoteMappingTokenFactoryAccount<T>>::get(),
+				vec![<RemoteMappingTokenFactoryAccount<T>>::get()],
 				&user,
 			)?;
 			// Check call params
-			ensure!(
-				token_address == T::RingMetadata::get().address,
-				<Error<T>>::UnsupportedToken
-			);
-
-			let amount = amount.low_u128().saturated_into();
-			// Make sure the total transfer is less than the security limitation
-			{
-				let (used, limitation) = <SecureLimitedRingAmount<T>>::get();
-				ensure!(
-					<SecureLimitedPeriod<T>>::get().is_zero()
-						|| used.saturating_add(amount) <= limitation,
-					<Error<T>>::RingDailyLimited
-				);
+			if token_address == T::RingMetadata::get().address {
+				Self::unlock_native_token(token_address, amount, recipient)?;
+			} else {
+				Self::unlock_erc20_token(token_address, amount, recipient)?;
 			}
-			// Make sure the user's balance is enough to lock
-			ensure!(
-				T::RingCurrency::free_balance(&Self::pallet_account_id()) > amount,
-				<Error<T>>::InsufficientBalance
-			);
-
-			// Make sure the recipient is valid(AccountId32).
-			ensure!(recipient.len() == 32, Error::<T>::InvalidRecipient);
-			let recipient_id = T::AccountId::decode(&mut &recipient[..])
-				.map_err(|_| Error::<T>::InvalidRecipient)?;
-
-			T::RingCurrency::transfer(
-				&Self::pallet_account_id(),
-				&recipient_id,
-				amount,
-				KeepAlive,
-			)?;
-			<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = used.saturating_add(amount));
-			let message_nonce =
-				T::MessageNoncer::inbound_latest_received_nonce(T::MessageLaneId::get()) + 1;
-			Self::deposit_event(Event::TokenUnlocked(
-				T::MessageLaneId::get(),
-				message_nonce,
-				token_address,
-				recipient_id,
-				amount,
-			));
-
 			Ok(().into())
 		}
 
@@ -439,6 +412,76 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn pallet_account_id() -> T::AccountId {
 			T::PalletId::get().into_account()
+		}
+
+		pub fn unlock_native_token(
+			token_address: H160,
+			amount: U256,
+			recipient: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let amount = amount.low_u128().saturated_into();
+			// Make sure the total transfer is less than the security limitation
+			{
+				let (used, limitation) = <SecureLimitedRingAmount<T>>::get();
+				ensure!(
+					<SecureLimitedPeriod<T>>::get().is_zero()
+						|| used.saturating_add(amount) <= limitation,
+					<Error<T>>::RingDailyLimited
+				);
+			}
+			// Make sure the user's balance is enough to lock
+			ensure!(
+				T::RingCurrency::free_balance(&Self::pallet_account_id()) > amount,
+				<Error<T>>::InsufficientBalance
+			);
+
+			// Make sure the recipient is valid(AccountId32).
+			ensure!(recipient.len() == 32, Error::<T>::InvalidRecipient);
+			let recipient_id = T::AccountId::decode(&mut &recipient[..])
+				.map_err(|_| Error::<T>::InvalidRecipient)?;
+
+			T::RingCurrency::transfer(
+				&Self::pallet_account_id(),
+				&recipient_id,
+				amount,
+				KeepAlive,
+			)?;
+			<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = used.saturating_add(amount));
+			let message_nonce =
+				T::MessageNoncer::inbound_latest_received_nonce(T::MessageLaneId::get()) + 1;
+			Self::deposit_event(Event::TokenUnlocked(
+				T::MessageLaneId::get(),
+				message_nonce,
+				token_address,
+				recipient_id,
+				amount,
+			));
+
+			Ok(().into())
+		}
+
+		pub fn unlock_erc20_token(
+			token_address: H160,
+			amount: U256,
+			recipient: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			ensure!(recipient.len() == 20, Error::<T>::InvalidRecipient);
+			let input = Sub2SubBacking::encode_unlock_from_remote(
+				token_address,
+				H160::from_slice(recipient.as_slice()),
+				amount,
+			)
+			.map_err(|_| Error::<T>::ErrEncodeUnlock)?;
+			Self::transact_backing(input)?;
+			Ok(().into())
+		}
+
+		/// Make a transaction call to backing sol contract
+		///
+		/// Note: this a internal transaction
+		pub fn transact_backing(input: Vec<u8>) -> DispatchResultWithPostInfo {
+			let contract = BackingAddress::<T>::get();
+			T::InternalTransactHandler::internal_transact(contract, input)
 		}
 	}
 

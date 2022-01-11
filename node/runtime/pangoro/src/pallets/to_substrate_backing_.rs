@@ -42,6 +42,8 @@ impl Config for Runtime {
 	type RingCurrency = Ring;
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangolinChainId;
+	// TODO
+	//type InternalTransactHandler = Ethereum;
 	type OutboundPayloadCreator = ToPangolinOutboundPayload;
 	type MessageNoncer = PangolinMessageNoncer;
 	type MessageLaneId = BridgePangolinLaneId;

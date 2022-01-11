@@ -88,17 +88,27 @@ pub mod s2s {
 
 	pub fn ensure_source_account<AccountId, Converter>(
 		chain_id: ChainId,
-		source_account: AccountId,
+		source_accounts: Vec<AccountId>,
 		derived_account: &AccountId,
 	) -> Result<(), DispatchError>
 	where
-		AccountId: PartialEq + Encode,
+		AccountId: PartialEq + Encode + Clone,
 		Converter: Convert<H256, AccountId>,
 	{
-		let hex_id =
-			derive_account_id::<AccountId>(chain_id, SourceAccount::Account(source_account));
-		let target_id = Converter::convert(hex_id);
-		ensure!(&target_id == derived_account, BadOrigin);
+		ensure!(
+			source_accounts
+				.iter()
+				.find(|&acc| {
+					let hex_id = derive_account_id::<AccountId>(
+						chain_id,
+						SourceAccount::Account(acc.clone()),
+					);
+					let target_id = Converter::convert(hex_id);
+					return &target_id == derived_account;
+				})
+				.is_some(),
+			BadOrigin
+		);
 		Ok(())
 	}
 }
