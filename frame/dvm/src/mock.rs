@@ -21,11 +21,10 @@
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
 use ethereum::{TransactionAction, TransactionSignature};
-use evm::{executor::PrecompileOutput, Context, ExitError};
 use rlp::RlpStream;
 use scale_info::TypeInfo;
 // --- paritytech ---
-use fp_evm::{Precompile, PrecompileSet};
+use fp_evm::{Context, ExitError, Precompile, PrecompileOutput, PrecompileSet};
 use frame_support::{
 	traits::{Everything, FindAuthor, GenesisBuild},
 	ConsensusEngineId, PalletId,

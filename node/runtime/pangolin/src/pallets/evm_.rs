@@ -1,11 +1,9 @@
 // --- core ---
 use core::marker::PhantomData;
-// --- crates.io ---
-use evm::{executor::PrecompileOutput, Context, ExitError};
 // --- paritytech ---
 use bp_messages::LaneId;
 use codec::{Decode, Encode};
-use fp_evm::{Precompile, PrecompileSet};
+use fp_evm::{Context, ExitError, Precompile, PrecompileOutput, PrecompileSet};
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::{FindAuthor, PalletInfoAccess},

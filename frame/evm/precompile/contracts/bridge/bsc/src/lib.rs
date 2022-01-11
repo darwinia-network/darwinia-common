@@ -20,9 +20,6 @@
 
 // --- core ---
 use core::marker::PhantomData;
-// --- crates.io ---
-use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
-use sp_std::vec::Vec;
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{selector, DvmInputParser};
 use dp_contract::{
@@ -34,7 +31,8 @@ use ethereum_primitives::{
 	H256,
 };
 // --- paritytech ---
-use fp_evm::Precompile;
+use fp_evm::{Context, ExitError, ExitSucceed, Precompile, PrecompileOutput};
+use sp_std::vec::Vec;
 
 #[selector]
 enum Action {
