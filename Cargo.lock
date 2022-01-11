@@ -1596,6 +1596,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-std",
+ "to-substrate-backing",
 ]
 
 [[package]]

@@ -21,6 +21,7 @@ darwinia-support              = { default-features = false, path = "../../../../
 dp-contract                   = { default-features = false, path = "../../../../../../primitives/contract" }
 dp-s2s                        = { default-features = false, path = "../../../../../../primitives/s2s" }
 from-substrate-issuing        = { default-features = false, path = "../../../../../wormhole/issuing/s2s" }
+to-substrate-backing          = { default-features = false, path = "../../../../../wormhole/backing/s2s" }
 # paritytech
 bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.0" }
 bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.0" }
@@ -45,6 +46,7 @@ std = [
 	"dp-contract/std",
 	"dp-s2s/std",
 	"from-substrate-issuing/std",
+	"to-substrate-backing/std",
 	# paritytech
 	"bp-message-dispatch/std",
 	"bp-runtime/std",

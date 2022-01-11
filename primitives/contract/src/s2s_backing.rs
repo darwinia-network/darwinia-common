@@ -22,11 +22,12 @@ pub use ethabi::{Event, Log};
 
 // --- crates.io ---
 use ethabi::{
-	param_type::ParamType, token::Token, Bytes, Function, Param, Result as AbiResult,
+	param_type::ParamType, token::Token, Bytes, Error, Function, Param, Result as AbiResult,
 	StateMutability,
 };
-
 use ethereum_types::{H160, U256};
+// --- darwinia ---
+use dp_asset::TokenMetadata;
 // --- paritytech ---
 use bp_messages::{LaneId, MessageNonce};
 use sp_std::vec;
@@ -114,5 +115,103 @@ impl Sub2SubBacking {
 			]
 			.as_slice(),
 		)
+	}
+}
+
+pub struct S2sRegisterTokenParams {
+	pub spec_version: u32,
+	pub weight: u64,
+	pub token_metadata: TokenMetadata,
+}
+
+impl S2sRegisterTokenParams {
+	pub fn abi_decode(data: &[u8]) -> AbiResult<Self> {
+		let tokens = ethabi::decode(
+			&[
+				ParamType::Uint(256),
+				ParamType::Uint(256),
+				ParamType::Uint(256),
+				ParamType::Address,
+				ParamType::String,
+				ParamType::String,
+				ParamType::Uint(256),
+			],
+			&data,
+		)?;
+		match (
+			tokens[0].clone(),
+			tokens[1].clone(),
+			tokens[2].clone(),
+			tokens[3].clone(),
+			tokens[4].clone(),
+			tokens[5].clone(),
+			tokens[6].clone(),
+		) {
+			(
+				Token::Uint(spec_version),
+				Token::Uint(weight),
+				Token::Uint(token_type),
+				Token::Address(original_token),
+				Token::String(name),
+				Token::String(symbol),
+				Token::Uint(decimals),
+			) => Ok(Self {
+				spec_version: spec_version.low_u32(),
+				weight: weight.low_u64(),
+				token_metadata: TokenMetadata::new(
+					token_type.low_u32(),
+					original_token,
+					name.as_bytes().to_vec(),
+					symbol.as_bytes().to_vec(),
+					decimals.low_u32() as u8,
+				),
+			}),
+			_ => Err(Error::InvalidData),
+		}
+	}
+}
+
+pub struct S2sIssueTokenParams {
+	pub spec_version: u32,
+	pub weight: u64,
+	pub token: H160,
+	pub recipient: H160,
+	pub amount: U256,
+}
+
+impl S2sIssueTokenParams {
+	pub fn abi_decode(data: &[u8]) -> AbiResult<Self> {
+		let tokens = ethabi::decode(
+			&[
+				ParamType::Uint(256),
+				ParamType::Uint(256),
+				ParamType::Address,
+				ParamType::Address,
+				ParamType::Uint(256),
+			],
+			&data,
+		)?;
+		match (
+			tokens[0].clone(),
+			tokens[1].clone(),
+			tokens[2].clone(),
+			tokens[3].clone(),
+			tokens[4].clone(),
+		) {
+			(
+				Token::Uint(spec_version),
+				Token::Uint(weight),
+				Token::Address(token),
+				Token::Address(recipient),
+				Token::Uint(amount),
+			) => Ok(Self {
+				spec_version: spec_version.low_u32(),
+				weight: weight.low_u64(),
+				token,
+				recipient,
+				amount,
+			}),
+			_ => Err(Error::InvalidData),
+		}
 	}
 }
