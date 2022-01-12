@@ -905,24 +905,90 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 	}
 }
 
+const TECHNICAL_MEMBERSHIP_OLD_PREFIX: &str = "Instance1Membership";
+const TIPS_OLD_PREFIX: &str = "Treasury";
+const COUNCIL_OLD_PREFIX: &str = "Instance1Collective";
+const TECHNICAL_COMMITTEE_OLD_PREFIX: &str = "Instance2Collective";
+
 fn migrate() -> Weight {
+	// --- paritytech ---
+	use frame_support::traits::PalletInfo;
+
 	// TODO: Move to S2S
 	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
 	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
 
-	0
-	// RuntimeBlockWeights::get().max_block
+	if let Some(name) = <Runtime as frame_system::Config>::PalletInfo::name::<TechnicalMembership>()
+	{
+		pallet_membership::migrations::v4::migrate::<Runtime, TechnicalMembership, _>(
+			TECHNICAL_MEMBERSHIP_OLD_PREFIX,
+			name,
+		);
+	}
+
+	pallet_tips::migrations::v4::migrate::<Runtime, Tips, _>(TIPS_OLD_PREFIX);
+	pallet_collective::migrations::v4::migrate::<Runtime, Council, _>(COUNCIL_OLD_PREFIX);
+	pallet_collective::migrations::v4::migrate::<Runtime, TechnicalCommittee, _>(
+		TECHNICAL_COMMITTEE_OLD_PREFIX,
+	);
+
+	// 0
+	RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
+		// --- paritytech ---
+		// use frame_support::traits::PalletInfo;
+
+		// I have no idea with this
+		// I don't know why the `pre_migrate` failed
+		// And the log below doesn't print anything under the new prefix
+
+		for v in frame_support::storage::KeyPrefixIterator::new(
+			b"Tips".to_vec(),
+			b"Tips".to_vec(),
+			|key| Ok(key.to_vec()),
+		) {
+			frame_support::log::error!("{:?}", v);
+		}
+
+		// let name = <Runtime as frame_system::Config>::PalletInfo::name::<TechnicalMembership>()
+		// .expect("TechnicalMembership is part of runtime, so it has a name; qed");
+
+		// pallet_membership::migrations::v4::pre_migrate::<TechnicalMembership, _>(
+		// 	TECHNICAL_MEMBERSHIP_OLD_PREFIX,
+		// 	name,
+		// );
+		// pallet_tips::migrations::v4::pre_migrate::<Runtime, Tips, _>(TIPS_OLD_PREFIX);
+		// pallet_collective::migrations::v4::pre_migrate::<Council, _>(COUNCIL_OLD_PREFIX);
+		// pallet_collective::migrations::v4::pre_migrate::<TechnicalCommittee, _>(
+		// 	TECHNICAL_COMMITTEE_OLD_PREFIX,
+		// );
+
 		Ok(())
 	}
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
+		// --- paritytech ---
+		use frame_support::traits::PalletInfo;
+
+		let name = <Runtime as frame_system::Config>::PalletInfo::name::<TechnicalMembership>()
+			.expect("TechnicalMembership is part of runtime, so it has a name; qed");
+
+		pallet_membership::migrations::v4::post_migrate::<TechnicalMembership, _>(
+			TECHNICAL_MEMBERSHIP_OLD_PREFIX,
+			name,
+		);
+		pallet_tips::migrations::v4::post_migrate::<Runtime, Tips, _>(TIPS_OLD_PREFIX);
+		pallet_collective::migrations::v4::post_migrate::<Council, _>(COUNCIL_OLD_PREFIX);
+		pallet_collective::migrations::v4::post_migrate::<TechnicalCommittee, _>(
+			TECHNICAL_COMMITTEE_OLD_PREFIX,
+		);
+
 		Ok(())
 	}
 
