@@ -198,7 +198,6 @@ frame_support::construct_runtime! {
 	{
 		// Basic stuff; balances is uncallable initially.
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 0,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 1,
 
 		// Must be before session.
 		Babe: pallet_babe::{Pallet, Call, Storage, Config, ValidateUnsigned} = 2,
@@ -932,6 +931,11 @@ fn migrate() -> Weight {
 		TECHNICAL_COMMITTEE_OLD_PREFIX,
 	);
 
+	frame_support::migrations::migrate_from_pallet_version_to_storage_version::<AllPalletsWithSystem>(
+		&RocksDbWeight::get(),
+	);
+	migration::remove_storage_prefix(b"RandomnessCollectiveFlip", b"RandomMaterial", b"");
+
 	// 0
 	RuntimeBlockWeights::get().max_block
 }
@@ -940,27 +944,6 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		// --- paritytech ---
-		// use frame_support::traits::PalletInfo;
-
-		// I have no idea with this
-		// I don't know why the `pre_migrate` failed
-		// And the log below doesn't print anything under the new prefix
-
-
-		// let name = <Runtime as frame_system::Config>::PalletInfo::name::<TechnicalMembership>()
-		// .expect("TechnicalMembership is part of runtime, so it has a name; qed");
-
-		// pallet_membership::migrations::v4::pre_migrate::<TechnicalMembership, _>(
-		// 	TECHNICAL_MEMBERSHIP_OLD_PREFIX,
-		// 	name,
-		// );
-		// pallet_tips::migrations::v4::pre_migrate::<Runtime, Tips, _>(TIPS_OLD_PREFIX);
-		// pallet_collective::migrations::v4::pre_migrate::<Council, _>(COUNCIL_OLD_PREFIX);
-		// pallet_collective::migrations::v4::pre_migrate::<TechnicalCommittee, _>(
-		// 	TECHNICAL_COMMITTEE_OLD_PREFIX,
-		// );
-
 		Ok(())
 	}
 

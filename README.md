@@ -95,3 +95,10 @@ target/release/drml \
 	--alice \
 	--base-path tests/local-testnet/alice
 ```
+
+## Build
+### NixOS
+```sh
+nix-shell
+cargo build [-p drml] [--release] [--features template]
+```
