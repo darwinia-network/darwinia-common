@@ -947,13 +947,6 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 		// I don't know why the `pre_migrate` failed
 		// And the log below doesn't print anything under the new prefix
 
-		for v in frame_support::storage::KeyPrefixIterator::new(
-			b"Tips".to_vec(),
-			b"Tips".to_vec(),
-			|key| Ok(key.to_vec()),
-		) {
-			frame_support::log::error!("{:?}", v);
-		}
 
 		// let name = <Runtime as frame_system::Config>::PalletInfo::name::<TechnicalMembership>()
 		// .expect("TechnicalMembership is part of runtime, so it has a name; qed");
