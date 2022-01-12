@@ -97,7 +97,7 @@ target/release/drml \
 ```
 
 ## Build
-### NixOs
+### NixOS
 ```[shell]
 nix-shell
 cargo build [-p drml] [--release]
