@@ -572,8 +572,12 @@ sp_api::impl_runtime_apis! {
 }
 
 fn migrate() -> Weight {
-	0
-	// RuntimeBlockWeights::get().max_block
+	frame_support::migrations::migrate_from_pallet_version_to_storage_version::<AllPalletsWithSystem>(
+		&RocksDbWeight::get(),
+	);
+
+	// 0
+	RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;

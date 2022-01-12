@@ -932,6 +932,10 @@ fn migrate() -> Weight {
 		TECHNICAL_COMMITTEE_OLD_PREFIX,
 	);
 
+	frame_support::migrations::migrate_from_pallet_version_to_storage_version::<AllPalletsWithSystem>(
+		&RocksDbWeight::get(),
+	);
+
 	// 0
 	RuntimeBlockWeights::get().max_block
 }
@@ -941,32 +945,20 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
 		// --- paritytech ---
-		// use frame_support::traits::PalletInfo;
+		use frame_support::traits::PalletInfo;
 
-		// I have no idea with this
-		// I don't know why the `pre_migrate` failed
-		// And the log below doesn't print anything under the new prefix
+		let name = <Runtime as frame_system::Config>::PalletInfo::name::<TechnicalMembership>()
+			.expect("TechnicalMembership is part of runtime, so it has a name; qed");
 
-		for v in frame_support::storage::KeyPrefixIterator::new(
-			b"Tips".to_vec(),
-			b"Tips".to_vec(),
-			|key| Ok(key.to_vec()),
-		) {
-			frame_support::log::error!("{:?}", v);
-		}
-
-		// let name = <Runtime as frame_system::Config>::PalletInfo::name::<TechnicalMembership>()
-		// .expect("TechnicalMembership is part of runtime, so it has a name; qed");
-
-		// pallet_membership::migrations::v4::pre_migrate::<TechnicalMembership, _>(
-		// 	TECHNICAL_MEMBERSHIP_OLD_PREFIX,
-		// 	name,
-		// );
-		// pallet_tips::migrations::v4::pre_migrate::<Runtime, Tips, _>(TIPS_OLD_PREFIX);
-		// pallet_collective::migrations::v4::pre_migrate::<Council, _>(COUNCIL_OLD_PREFIX);
-		// pallet_collective::migrations::v4::pre_migrate::<TechnicalCommittee, _>(
-		// 	TECHNICAL_COMMITTEE_OLD_PREFIX,
-		// );
+		pallet_membership::migrations::v4::pre_migrate::<TechnicalMembership, _>(
+			TECHNICAL_MEMBERSHIP_OLD_PREFIX,
+			name,
+		);
+		pallet_tips::migrations::v4::pre_migrate::<Runtime, Tips, _>(TIPS_OLD_PREFIX);
+		pallet_collective::migrations::v4::pre_migrate::<Council, _>(COUNCIL_OLD_PREFIX);
+		pallet_collective::migrations::v4::pre_migrate::<TechnicalCommittee, _>(
+			TECHNICAL_COMMITTEE_OLD_PREFIX,
+		);
 
 		Ok(())
 	}
