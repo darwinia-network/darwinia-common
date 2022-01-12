@@ -96,7 +96,8 @@ target/release/drml \
 	--base-path tests/local-testnet/alice
 ```
 
-#### Build in Nixos
+## Build
+### Nixos
 ```[shell]
 nix-shell
 cargo build [-p drml] [--release]
