@@ -931,10 +931,14 @@ fn migrate() -> Weight {
 		TECHNICAL_COMMITTEE_OLD_PREFIX,
 	);
 
+	migration::remove_storage_prefix(b"RandomnessCollectiveFlip", b"RandomMaterial", b"");
+
+	// Migrate the version to new style.
+	// But this will also update the version.
+	// To bypass the check `if on_chain_storage_version < 4 {`, put this to the last one.
 	frame_support::migrations::migrate_from_pallet_version_to_storage_version::<AllPalletsWithSystem>(
 		&RocksDbWeight::get(),
 	);
-	migration::remove_storage_prefix(b"RandomnessCollectiveFlip", b"RandomMaterial", b"");
 
 	// 0
 	RuntimeBlockWeights::get().max_block
@@ -945,11 +949,20 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
 		// --- paritytech ---
-		use frame_support::traits::PalletInfo;
+		use frame_support::traits::{PalletInfo, StorageVersion};
 
-		frame_support::migrations::migrate_from_pallet_version_to_storage_version::<
-			AllPalletsWithSystem,
-		>(&RocksDbWeight::get());
+		{
+			// Presume we have already migrated the version to the new style.
+			frame_support::migrations::migrate_from_pallet_version_to_storage_version::<
+				AllPalletsWithSystem,
+			>(&RocksDbWeight::get());
+
+			// Revert the version.
+			StorageVersion::new(3).put::<TechnicalMembership>();
+			StorageVersion::new(3).put::<Tips>();
+			StorageVersion::new(3).put::<Council>();
+			StorageVersion::new(3).put::<TechnicalCommittee>();
+		}
 
 		let name = <Runtime as frame_system::Config>::PalletInfo::name::<TechnicalMembership>()
 			.expect("TechnicalMembership is part of runtime, so it has a name; qed");
