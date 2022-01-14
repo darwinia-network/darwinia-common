@@ -172,7 +172,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 0,
-	spec_version: 2_7_02_0,
+	spec_version: 2_8_00_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -202,7 +202,6 @@ frame_support::construct_runtime! {
 	{
 		// Basic stuff; balances is uncallable initially.
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 0,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 1,
 
 		// Must be before session.
 		Babe: pallet_babe::{Pallet, Call, Storage, Config, ValidateUnsigned} = 2,
@@ -956,24 +955,100 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 	}
 }
 
+const TECHNICAL_MEMBERSHIP_OLD_PREFIX: &str = "Instance1Membership";
+const TIPS_OLD_PREFIX: &str = "Treasury";
+const COUNCIL_OLD_PREFIX: &str = "Instance1Collective";
+const TECHNICAL_COMMITTEE_OLD_PREFIX: &str = "Instance2Collective";
+
 fn migrate() -> Weight {
+	// --- paritytech ---
+	use frame_support::traits::PalletInfo;
+
 	// TODO: Move to S2S
 	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
 	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
 
-	0
-	// RuntimeBlockWeights::get().max_block
+	if let Some(name) = <Runtime as frame_system::Config>::PalletInfo::name::<TechnicalMembership>()
+	{
+		pallet_membership::migrations::v4::migrate::<Runtime, TechnicalMembership, _>(
+			TECHNICAL_MEMBERSHIP_OLD_PREFIX,
+			name,
+		);
+	}
+
+	pallet_tips::migrations::v4::migrate::<Runtime, Tips, _>(TIPS_OLD_PREFIX);
+	pallet_collective::migrations::v4::migrate::<Runtime, Council, _>(COUNCIL_OLD_PREFIX);
+	pallet_collective::migrations::v4::migrate::<Runtime, TechnicalCommittee, _>(
+		TECHNICAL_COMMITTEE_OLD_PREFIX,
+	);
+
+	migration::remove_storage_prefix(b"RandomnessCollectiveFlip", b"RandomMaterial", b"");
+
+	// Migrate the version to new style.
+	// But this will also update the version.
+	// To bypass the check `if on_chain_storage_version < 4 {`, put this to the last one.
+	frame_support::migrations::migrate_from_pallet_version_to_storage_version::<AllPalletsWithSystem>(
+		&RocksDbWeight::get(),
+	);
+
+	// 0
+	RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
+		// --- paritytech ---
+		use frame_support::traits::{PalletInfo, StorageVersion};
+
+		{
+			// Presume we have already migrated the version to the new style.
+			frame_support::migrations::migrate_from_pallet_version_to_storage_version::<
+				AllPalletsWithSystem,
+			>(&RocksDbWeight::get());
+
+			// Revert the version.
+			StorageVersion::new(3).put::<TechnicalMembership>();
+			StorageVersion::new(3).put::<Tips>();
+			StorageVersion::new(3).put::<Council>();
+			StorageVersion::new(3).put::<TechnicalCommittee>();
+		}
+
+		let name = <Runtime as frame_system::Config>::PalletInfo::name::<TechnicalMembership>()
+			.expect("TechnicalMembership is part of runtime, so it has a name; qed");
+
+		pallet_membership::migrations::v4::pre_migrate::<TechnicalMembership, _>(
+			TECHNICAL_MEMBERSHIP_OLD_PREFIX,
+			name,
+		);
+		pallet_tips::migrations::v4::pre_migrate::<Runtime, Tips, _>(TIPS_OLD_PREFIX);
+		pallet_collective::migrations::v4::pre_migrate::<Council, _>(COUNCIL_OLD_PREFIX);
+		pallet_collective::migrations::v4::pre_migrate::<TechnicalCommittee, _>(
+			TECHNICAL_COMMITTEE_OLD_PREFIX,
+		);
+
 		Ok(())
 	}
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
+		// --- paritytech ---
+		use frame_support::traits::PalletInfo;
+
+		let name = <Runtime as frame_system::Config>::PalletInfo::name::<TechnicalMembership>()
+			.expect("TechnicalMembership is part of runtime, so it has a name; qed");
+
+		pallet_membership::migrations::v4::post_migrate::<TechnicalMembership, _>(
+			TECHNICAL_MEMBERSHIP_OLD_PREFIX,
+			name,
+		);
+		pallet_tips::migrations::v4::post_migrate::<Runtime, Tips, _>(TIPS_OLD_PREFIX);
+		pallet_collective::migrations::v4::post_migrate::<Council, _>(COUNCIL_OLD_PREFIX);
+		pallet_collective::migrations::v4::post_migrate::<TechnicalCommittee, _>(
+			TECHNICAL_COMMITTEE_OLD_PREFIX,
+		);
+
 		Ok(())
 	}
 
