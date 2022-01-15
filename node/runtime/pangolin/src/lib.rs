@@ -107,8 +107,11 @@ use sp_consensus_babe::{AllowedSlots, BabeEpochConfiguration};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
 	generic,
-	traits::{Block as BlockT, Extrinsic, NumberFor, SaturatedConversion, StaticLookup, Verify},
-	transaction_validity::{TransactionSource, TransactionValidity},
+	traits::{
+		Block as BlockT, Dispatchable, Extrinsic, NumberFor, PostDispatchInfoOf,
+		SaturatedConversion, StaticLookup, Verify,
+	},
+	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
 	ApplyExtrinsicResult, MultiAddress, OpaqueExtrinsic,
 };
 use sp_std::prelude::*;
@@ -145,7 +148,8 @@ pub type SignedExtra = (
 	CheckEthereumRelayHeaderParcel<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+pub type UncheckedExtrinsic =
+	fp_self_contained::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
@@ -271,7 +275,7 @@ frame_support::construct_runtime! {
 		TronBacking: to_tron_backing::{Pallet, Config<T>} = 39,
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
-		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
+		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, Origin} = 41,
 		// DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Inherent} = 47,
 
 		BridgePangoroDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
@@ -339,6 +343,53 @@ where
 {
 	type Extrinsic = UncheckedExtrinsic;
 	type OverarchingCall = Call;
+}
+
+impl fp_self_contained::SelfContainedCall for Call {
+	type SignedInfo = H160;
+
+	fn is_self_contained(&self) -> bool {
+		match self {
+			Call::Ethereum(call) => call.is_self_contained(),
+			_ => false,
+		}
+	}
+
+	fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.check_self_contained(),
+			_ => None,
+		}
+	}
+
+	fn validate_self_contained(&self, info: &Self::SignedInfo) -> Option<TransactionValidity> {
+		match self {
+			Call::Ethereum(call) => call.validate_self_contained(info),
+			_ => None,
+		}
+	}
+
+	fn pre_dispatch_self_contained(
+		&self,
+		info: &Self::SignedInfo,
+	) -> Option<Result<(), TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.pre_dispatch_self_contained(info),
+			_ => None,
+		}
+	}
+
+	fn apply_self_contained(
+		self,
+		info: Self::SignedInfo,
+	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
+		match self {
+			call @ Call::Ethereum(dvm_ethereum::Call::transact { .. }) => Some(call.dispatch(
+				Origin::from(dvm_ethereum::RawOrigin::EthereumTransaction(info)),
+			)),
+			_ => None,
+		}
+	}
 }
 
 sp_api::impl_runtime_apis! {
@@ -676,7 +727,7 @@ sp_api::impl_runtime_apis! {
 		fn extrinsic_filter(
 			xts: Vec<<Block as BlockT>::Extrinsic>,
 		) -> Vec<dvm_ethereum::TransactionV0> {
-			xts.into_iter().filter_map(|xt| match xt.function {
+			xts.into_iter().filter_map(|xt| match xt.0.function {
 				Call::Ethereum(dvm_ethereum::Call::transact { transaction }) => Some(transaction),
 				_ => None
 			}).collect()
@@ -698,7 +749,7 @@ sp_api::impl_runtime_apis! {
 				// Apply the a subset of extrinsics: all the substrate-specific or ethereum
 				// transactions that preceded the requested transaction.
 				for ext in _extrinsics.into_iter() {
-					let _ = match &ext.function {
+					let _ = match &ext.0.function {
 						Call::Ethereum(transact { transaction }) => {
 							if transaction == _traced_transaction {
 								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
@@ -738,7 +789,7 @@ sp_api::impl_runtime_apis! {
 
 				// Apply all extrinsics. Ethereum extrinsics are traced.
 				for ext in _extrinsics.into_iter() {
-					match &ext.function {
+					match &ext.0.function {
 						Call::Ethereum(transact { transaction }) => {
 							let eth_extrinsic_hash =
 								H256::from_slice(Keccak256::digest(&rlp::encode(transaction)).as_slice());
