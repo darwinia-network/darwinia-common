@@ -271,6 +271,12 @@ pub mod pallet {
 			input: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
+			// Disable transact functionality if PreLog exist.
+			ensure!(
+				dp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
+				Error::<T>::PreLogExists,
+			);
+
 			Self::internal_transact(target, input)
 		}
 	}
