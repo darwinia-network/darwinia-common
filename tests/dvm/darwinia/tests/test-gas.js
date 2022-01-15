@@ -28,7 +28,7 @@ describe("Test gas", function () {
 				from: addressFrom,
 				data: TEST_CONTRACT_BYTECODE,
 			})
-		).to.equal(91019);
+		).to.equal(84014);
 	});
 
 	it("eth_estimateGas for contract call", async function () {
@@ -36,6 +36,6 @@ describe("Test gas", function () {
 			from: addressFrom,
 		});
 
-		expect(await contract.methods.multiply(3).estimateGas()).to.equal(21204);
+		expect(await contract.methods.multiply(3).estimateGas()).to.equal(22331);
 	});
 });
