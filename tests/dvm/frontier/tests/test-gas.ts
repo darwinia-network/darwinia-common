@@ -17,7 +17,7 @@ describeWithFrontier("Frontier RPC (Gas)", (context) => {
 				from: GENESIS_ACCOUNT,
 				data: Test.bytecode,
 			})
-		).to.equal(196657);
+		).to.equal(197690);
 	});
 
 	it.skip("block gas limit over 5M", async function () {
@@ -47,7 +47,7 @@ describeWithFrontier("Frontier RPC (Gas)", (context) => {
 			gasPrice: "0x01",
 		});
 
-		expect(await contract.methods.multiply(3).estimateGas()).to.equal(21204);
+		expect(await contract.methods.multiply(3).estimateGas()).to.equal(22331);
 	});
 
 	it("eth_estimateGas without gas_limit should pass", async function () {
@@ -55,7 +55,7 @@ describeWithFrontier("Frontier RPC (Gas)", (context) => {
 			from: GENESIS_ACCOUNT
 		});
 
-		expect(await contract.methods.multiply(3).estimateGas()).to.equal(21204);
+		expect(await contract.methods.multiply(3).estimateGas()).to.equal(22331);
 	});
 
 });
