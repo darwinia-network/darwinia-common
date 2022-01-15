@@ -473,18 +473,22 @@ impl<T: Config> Pallet<T> {
 		source: H160,
 		transaction: TransactionV0,
 	) -> DispatchResultWithPostInfo {
-		let (_, used_gas) = Self::raw_transact(source, transaction.into());
-		Ok(PostDispatchInfo {
-			actual_weight: Some(T::GasWeightMapping::gas_to_weight(
-				used_gas.unique_saturated_into(),
-			)),
-			pays_fee: Pays::No,
-		}
-		.into())
+		Self::raw_transact(source, transaction.into()).map(|(_, used_gas)| {
+			Ok(PostDispatchInfo {
+				actual_weight: Some(T::GasWeightMapping::gas_to_weight(
+					used_gas.unique_saturated_into(),
+				)),
+				pays_fee: Pays::No,
+			}
+			.into())
+		})?
 	}
 
 	// Execute Transaction in evm runner and save the execution info in Pending
-	fn raw_transact(source: H160, dvm_transaction: DVMTransaction) -> (ExitReason, U256) {
+	fn raw_transact(
+		source: H160,
+		dvm_transaction: DVMTransaction,
+	) -> Result<(ExitReason, U256), DispatchError> {
 		let transaction_hash =
 			H256::from_slice(Keccak256::digest(&rlp::encode(&dvm_transaction.tx)).as_slice());
 		let transaction_index = Pending::<T>::get().len() as u32;
@@ -498,8 +502,7 @@ impl<T: Config> Pallet<T> {
 			Some(dvm_transaction.tx.nonce),
 			dvm_transaction.tx.action,
 			None,
-		)
-		.expect("transaction is already validated; error indicates that the block is invalid");
+		)?;
 
 		let (reason, status, used_gas, dest) = match info {
 			CallOrCreateInfo::Call(info) => (
@@ -557,7 +560,7 @@ impl<T: Config> Pallet<T> {
 			transaction_hash,
 			reason.clone(),
 		));
-		(reason, used_gas)
+		Ok((reason, used_gas))
 	}
 
 	/// Get the transaction status with given index.
@@ -704,8 +707,7 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 		debug_assert_eq!(transaction.tx.nonce, nonce);
 		debug_assert_eq!(transaction.gas_price, None);
 
-		let (reason, used_gas) = Self::raw_transact(source, transaction);
-		match reason {
+		Self::raw_transact(source, transaction).map(|(reason, used_gas)| match reason {
 			// Only when exit_reason is successful, return Ok(...)
 			ExitReason::Succeed(_) => Ok(PostDispatchInfo {
 				actual_weight: Some(T::GasWeightMapping::gas_to_weight(
@@ -716,7 +718,7 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 			ExitReason::Error(_) => Err(<Error<T>>::InternalTransactionExitError.into()),
 			ExitReason::Revert(_) => Err(<Error<T>>::InternalTransactionRevertError.into()),
 			ExitReason::Fatal(_) => Err(<Error<T>>::InternalTransactionFatalError.into()),
-		}
+		})?
 	}
 
 	/// Pure read-only call to contract, the sender is pallet dvm account.
