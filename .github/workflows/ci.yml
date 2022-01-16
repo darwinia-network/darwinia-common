@@ -48,7 +48,7 @@ jobs:
           - target: drml
             repository: darwinia-network/darwinia-common
           - target: subalfred
-            repository: l2ust/subalfred
+            repository: hack-ink/subalfred
         exclude:
           - action: test
             task:
@@ -185,7 +185,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Run checker
-        run: subalfred ci default-features -p ../darwinia-common
+        run: subalfred check default-features -p ../darwinia-common
 
   runtime-checks:
     name: Task check runtime
@@ -213,7 +213,7 @@ jobs:
       - id: check-pangolin-runtime-version
         name: Check Pangolin runtime version
         run: |
-          OUTPUT=$(subalfred ci runtime-version -c Pangolin -e drml)
+          OUTPUT=$(subalfred check runtime-version -e drml -c pangolin -r https://pangolin-rpc.darwinia.network)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
@@ -222,7 +222,7 @@ jobs:
       - id: check-pangolin-storage-prefix
         name: Check Pangolin storage prefix
         run: |
-          OUTPUT=$(subalfred ci storage-prefix -c Pangolin -e drml)
+          OUTPUT=$(subalfred check storage-prefix -e drml -c pangolin -r https://pangolin-rpc.darwinia.network)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
@@ -231,7 +231,7 @@ jobs:
       - id: check-pangoro-runtime-version
         name: Check Pangoro runtime version
         run: |
-          OUTPUT=$(subalfred ci runtime-version -c Pangoro -e drml)
+          OUTPUT=$(subalfred check runtime-version -e drml -c pangoro -r https://pangolin-rpc.darwinia.network)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
@@ -240,7 +240,7 @@ jobs:
       - id: check-pangoro-storage-prefix
         name: Check Pangoro storage prefix
         run: |
-          OUTPUT=$(subalfred ci storage-prefix -c Pangoro -e drml)
+          OUTPUT=$(subalfred check storage-prefix -e drml -c pangoro -r https://pangolin-rpc.darwinia.network)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
