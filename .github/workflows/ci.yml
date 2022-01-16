@@ -231,7 +231,7 @@ jobs:
       - id: check-pangoro-runtime-version
         name: Check Pangoro runtime version
         run: |
-          OUTPUT=$(subalfred check runtime-version -e drml -c pangoro -r https://pangolin-rpc.darwinia.network)
+          OUTPUT=$(subalfred check runtime-version -e drml -c pangoro -r https://pangoro-rpc.darwinia.network)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
@@ -240,7 +240,7 @@ jobs:
       - id: check-pangoro-storage-prefix
         name: Check Pangoro storage prefix
         run: |
-          OUTPUT=$(subalfred check storage-prefix -e drml -c pangoro -r https://pangolin-rpc.darwinia.network)
+          OUTPUT=$(subalfred check storage-prefix -e drml -c pangoro -r https://pangoro-rpc.darwinia.network)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
