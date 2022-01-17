@@ -51,7 +51,9 @@ use sp_trie::PrefixedMemoryDB;
 use crate::{
 	client::PangoroClient,
 	service::{
-		self, FullBackend, FullClient, FullGrandpaBlockImport, FullSelectChain, LightBackend,
+		self,
+		dvm_tasks::{self, DvmTasksParams},
+		FullBackend, FullClient, FullGrandpaBlockImport, FullSelectChain, LightBackend,
 		LightClient, RpcResult,
 	},
 };
@@ -64,7 +66,10 @@ use pangoro_runtime::RuntimeApi;
 
 pub struct Executor;
 impl NativeExecutionDispatch for Executor {
-	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+	type ExtendHostFunctions = (
+		frame_benchmarking::benchmarking::HostFunctions,
+		dp_evm_trace_ext::dvm_ext::HostFunctions,
+	);
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		pangoro_runtime::api::dispatch(method, data)
@@ -77,8 +82,31 @@ impl NativeExecutionDispatch for Executor {
 
 impl_runtime_apis![
 	darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>,
-	darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance>
+	darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance>,
+	dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
+	dp_evm_trace_apis::DebugRuntimeApi<Block>
 ];
+
+pub fn dvm_database_dir(config: &Configuration) -> PathBuf {
+	let config_dir = config
+		.base_path
+		.as_ref()
+		.map(|base_path| base_path.config_dir(config.chain_spec.id()))
+		.unwrap_or_else(|| {
+			BasePath::from_project("", "", "pangolin").config_dir(config.chain_spec.id())
+		});
+
+	config_dir.join("dvm").join("db")
+}
+
+fn open_dvm_backend(config: &Configuration) -> Result<Arc<Backend<Block>>, String> {
+	Ok(Arc::new(Backend::<Block>::new(&DatabaseSettings {
+		source: DatabaseSettingsSrc::RocksDb {
+			path: dvm_database_dir(&config),
+			cache_size: 0,
+		},
+	})?))
+}
 
 #[cfg(feature = "full-node")]
 fn new_partial<RuntimeApi, Executor>(
@@ -332,6 +360,18 @@ where
 			network.clone(),
 		);
 	}
+
+	let dvm_backend = open_dvm_backend(&config)?;
+	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
+	let tracing_requesters = dvm_tasks::spawn(DvmTasksParams {
+		task_manager: &task_manager,
+		client: client.clone(),
+		substrate_backend: backend.clone(),
+		dvm_backend: dvm_backend.clone(),
+		filter_pool: filter_pool.clone(),
+		is_archive,
+		rpc_config: rpc_config.clone(),
+	});
 
 	let rpc_handlers = sc_service::spawn_tasks(SpawnTasksParams {
 		config,

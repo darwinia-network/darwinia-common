@@ -2298,6 +2298,7 @@ dependencies = [
  "jsonrpc-pubsub",
  "pallet-transaction-payment-rpc",
  "pangolin-runtime",
+ "pangoro-runtime",
  "sc-chain-spec",
  "sc-client-api",
  "sc-consensus-babe",
