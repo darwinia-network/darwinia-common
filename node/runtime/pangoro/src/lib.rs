@@ -59,12 +59,12 @@ use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
 use pallet_transaction_payment::{ChargeTransactionPayment, FeeDetails, RuntimeDispatchInfo};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::{AllowedSlots, BabeEpochConfiguration};
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
 	generic,
-	traits::{Block as BlockT, Extrinsic, NumberFor, StaticLookup, Verify},
-	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, MultiAddress, SaturatedConversion,
+	traits::{Block as BlockT, Extrinsic, NumberFor, PostDispatchInfoOf, StaticLookup, Verify},
+	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
+	ApplyExtrinsicResult, MultiAddress, OpaqueExtrinsic, SaturatedConversion,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -167,6 +167,9 @@ frame_support::construct_runtime!(
 		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 23,
 
 		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
+
+		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 25,
+		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, Origin} = 26,
 	}
 );
 
@@ -221,6 +224,53 @@ where
 {
 	type Extrinsic = UncheckedExtrinsic;
 	type OverarchingCall = Call;
+}
+
+impl fp_self_contained::SelfContainedCall for Call {
+	type SignedInfo = H160;
+
+	fn is_self_contained(&self) -> bool {
+		match self {
+			Call::Ethereum(call) => call.is_self_contained(),
+			_ => false,
+		}
+	}
+
+	fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.check_self_contained(),
+			_ => None,
+		}
+	}
+
+	fn validate_self_contained(&self, info: &Self::SignedInfo) -> Option<TransactionValidity> {
+		match self {
+			Call::Ethereum(call) => call.validate_self_contained(info),
+			_ => None,
+		}
+	}
+
+	fn pre_dispatch_self_contained(
+		&self,
+		info: &Self::SignedInfo,
+	) -> Option<Result<(), TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.pre_dispatch_self_contained(info),
+			_ => None,
+		}
+	}
+
+	fn apply_self_contained(
+		self,
+		info: Self::SignedInfo,
+	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
+		match self {
+			call @ Call::Ethereum(dvm_ethereum::Call::transact { .. }) => Some(call.dispatch(
+				Origin::from(dvm_ethereum::RawOrigin::EthereumTransaction(info)),
+			)),
+			_ => None,
+		}
+	}
 }
 
 sp_api::impl_runtime_apis! {
@@ -487,6 +537,209 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block> for Runtime {
+		fn chain_id() -> u64 {
+			<Runtime as darwinia_evm::Config>::ChainId::get()
+		}
+
+		fn gas_price() -> U256 {
+			<Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price()
+		}
+
+		fn account_basic(address: H160) -> darwinia_evm::Account {
+			<Runtime as darwinia_evm::Config>::RingAccountBasic::account_basic(&address)
+		}
+
+		fn account_code_at(address: H160) -> Vec<u8> {
+			darwinia_evm::Pallet::<Runtime>::account_codes(address)
+		}
+
+		fn author() -> H160 {
+			<darwinia_evm::Pallet<Runtime>>::find_author()
+		}
+
+		fn storage_at(address: H160, index: U256) -> H256 {
+			let mut tmp = [0u8; 32];
+			index.to_big_endian(&mut tmp);
+			darwinia_evm::Pallet::<Runtime>::account_storages(address, H256::from_slice(&tmp[..]))
+		}
+
+		fn call(
+			from: H160,
+			to: H160,
+			data: Vec<u8>,
+			value: U256,
+			gas_limit: U256,
+			gas_price: Option<U256>,
+			nonce: Option<U256>,
+			estimate: bool,
+		) -> Result<darwinia_evm::CallInfo, sp_runtime::DispatchError> {
+			let config = if estimate {
+				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
+				config.estimate = true;
+				Some(config)
+			} else {
+				None
+			};
+
+			<Runtime as darwinia_evm::Config>::Runner::call(
+				from,
+				to,
+				data,
+				value,
+				gas_limit.low_u64(),
+				gas_price,
+				nonce,
+				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
+			).map_err(|err| err.into())
+		}
+
+		fn create(
+			from: H160,
+			data: Vec<u8>,
+			value: U256,
+			gas_limit: U256,
+			gas_price: Option<U256>,
+			nonce: Option<U256>,
+			estimate: bool,
+		) -> Result<darwinia_evm::CreateInfo, sp_runtime::DispatchError> {
+			let config = if estimate {
+				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
+				config.estimate = true;
+				Some(config)
+			} else {
+				None
+			};
+
+			<Runtime as darwinia_evm::Config>::Runner::create(
+				from,
+				data,
+				value,
+				gas_limit.low_u64(),
+				gas_price,
+				nonce,
+				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
+			).map_err(|err| err.into())
+		}
+
+
+		fn current_transaction_statuses() -> Option<Vec<dvm_rpc_runtime_api::TransactionStatus>> {
+			Ethereum::current_transaction_statuses()
+		}
+
+		fn current_block() -> Option<dvm_ethereum::EthereumBlockV0> {
+			Ethereum::current_block()
+		}
+
+		fn current_receipts() -> Option<Vec<dvm_ethereum::EthereumReceiptV0>> {
+			Ethereum::current_receipts()
+		}
+
+		fn current_all() -> (
+			Option<dvm_ethereum::EthereumBlockV0>,
+			Option<Vec<dvm_ethereum::EthereumReceiptV0>>,
+			Option<Vec<dvm_rpc_runtime_api::TransactionStatus>>
+		) {
+			(
+				Ethereum::current_block(),
+				Ethereum::current_receipts(),
+				Ethereum::current_transaction_statuses()
+			)
+		}
+
+		fn extrinsic_filter(
+			xts: Vec<<Block as BlockT>::Extrinsic>,
+		) -> Vec<dvm_ethereum::TransactionV0> {
+			xts.into_iter().filter_map(|xt| match xt.0.function {
+				Call::Ethereum(dvm_ethereum::Call::transact { transaction }) => Some(transaction),
+				_ => None
+			}).collect()
+		}
+	}
+
+	impl dp_evm_trace_apis::DebugRuntimeApi<Block> for Runtime {
+		fn trace_transaction(
+			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+			_traced_transaction: &dvm_ethereum::TransactionV0,
+		) -> Result<
+			(),
+			sp_runtime::DispatchError,
+		> {
+			#[cfg(feature = "evm-tracing")]
+			{
+				use dp_evm_tracer::tracer::EvmTracer;
+				use dvm_ethereum::Call::transact;
+				// Apply the a subset of extrinsics: all the substrate-specific or ethereum
+				// transactions that preceded the requested transaction.
+				for ext in _extrinsics.into_iter() {
+					let _ = match &ext.0.function {
+						Call::Ethereum(transact { transaction }) => {
+							if transaction == _traced_transaction {
+								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
+								return Ok(());
+							} else {
+								Executive::apply_extrinsic(ext)
+							}
+						}
+						_ => Executive::apply_extrinsic(ext),
+					};
+				}
+
+				Err(sp_runtime::DispatchError::Other(
+					"Failed to find Ethereum transaction among the extrinsics.",
+				))
+			}
+			#[cfg(not(feature = "evm-tracing"))]
+			Err(sp_runtime::DispatchError::Other(
+				"Missing `evm-tracing` compile time feature flag.",
+			))
+		}
+		fn trace_block(
+			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+			_known_transactions: Vec<H256>,
+		) -> Result<
+			(),
+			sp_runtime::DispatchError,
+		> {
+			#[cfg(feature = "evm-tracing")]
+			{
+				use dp_evm_tracer::tracer::EvmTracer;
+				use sha3::{Digest, Keccak256};
+				use dvm_ethereum::Call::transact;
+
+				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
+				config.estimate = true;
+
+				// Apply all extrinsics. Ethereum extrinsics are traced.
+				for ext in _extrinsics.into_iter() {
+					match &ext.0.function {
+						Call::Ethereum(transact { transaction }) => {
+							let eth_extrinsic_hash =
+								H256::from_slice(Keccak256::digest(&rlp::encode(transaction)).as_slice());
+							if _known_transactions.contains(&eth_extrinsic_hash) {
+								// Each known extrinsic is a new call stack.
+								EvmTracer::emit_new();
+								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
+							} else {
+								let _ = Executive::apply_extrinsic(ext);
+							}
+						}
+						_ => {
+							let _ = Executive::apply_extrinsic(ext);
+						}
+					};
+				}
+
+				Ok(())
+			}
+			#[cfg(not(feature = "evm-tracing"))]
+			Err(sp_runtime::DispatchError::Other(
+				"Missing `evm-tracing` compile time feature flag.",
+			))
+		}
+	}
+
+
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade() -> (Weight, Weight) {
@@ -543,6 +796,22 @@ sp_api::impl_runtime_apis! {
 
 			Ok(batches)
 		}
+	}
+}
+
+pub struct TransactionConverter;
+impl dvm_rpc_runtime_api::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
+	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV0) -> UncheckedExtrinsic {
+		UncheckedExtrinsic::new_unsigned(dvm_ethereum::Call::transact { transaction }.into())
+	}
+}
+impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
+	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV0) -> OpaqueExtrinsic {
+		let extrinsic =
+			UncheckedExtrinsic::new_unsigned(dvm_ethereum::Call::transact { transaction }.into());
+		let encoded = extrinsic.encode();
+
+		OpaqueExtrinsic::decode(&mut &encoded[..]).expect("Encoded extrinsic is always valid")
 	}
 }
 
