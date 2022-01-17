@@ -81,15 +81,21 @@ impl LatestMessageNoncer for ToPangoroMessageSender {
 	}
 }
 
-pub struct PangolinPrecompiles<R>(PhantomData<R>);
-impl<R> PrecompileSet for PangolinPrecompiles<R>
+pub struct PangolinPrecompiles<Runtime>(PhantomData<Runtime>);
+impl<Runtime> PrecompileSet for PangolinPrecompiles<Runtime>
 where
-	R: from_substrate_issuing::Config + from_ethereum_issuing::Config,
-	R: darwinia_evm::Config,
-	R: darwinia_bridge_bsc::Config,
-	R::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Encode + Decode,
-	<R::Call as Dispatchable>::Origin: From<Option<R::AccountId>>,
-	R::Call: From<from_ethereum_issuing::Call<R>> + From<from_substrate_issuing::Call<R>>,
+	Runtime: from_substrate_issuing::Config + from_ethereum_issuing::Config,
+	Runtime: darwinia_evm::Config,
+	Runtime: darwinia_bridge_bsc::Config,
+	Runtime::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Encode + Decode,
+	<Runtime::Call as Dispatchable>::Origin: From<Option<Runtime::AccountId>>,
+	Runtime::Call:
+		From<from_ethereum_issuing::Call<Runtime>> + From<from_substrate_issuing::Call<Runtime>>,
+	Transfer<
+		Runtime,
+		DvmAccountBasic<Runtime, Ring, RingRemainBalance>,
+		DvmAccountBasic<Runtime, Kton, KtonRemainBalance>,
+	>: Precompile,
 {
 	fn execute(
 		address: H160,
@@ -106,15 +112,25 @@ where
 			_ if address == addr(3) => Some(Ripemd160::execute(input, target_gas, context)),
 			_ if address == addr(4) => Some(Identity::execute(input, target_gas, context)),
 			// Darwinia precompiles
-			_ if address == addr(21) => Some(<Transfer<R>>::execute(input, target_gas, context)),
-			_ if address == addr(23) => {
-				Some(<EthereumBridge<R>>::execute(input, target_gas, context))
-			}
-			_ if address == addr(24) => Some(<Sub2SubBridge<R, ToPangoroMessageSender>>::execute(
+			_ if address == addr(21) => Some(<Transfer<
+				Runtime,
+				DvmAccountBasic<Runtime, Ring, RingRemainBalance>,
+				DvmAccountBasic<Runtime, Kton, KtonRemainBalance>,
+			>>::execute(input, target_gas, context)),
+			_ if address == addr(23) => Some(<EthereumBridge<Runtime>>::execute(
 				input, target_gas, context,
 			)),
-			_ if address == addr(25) => Some(<Dispatch<R>>::execute(input, target_gas, context)),
-			_ if address == addr(26) => Some(<BscBridge<R>>::execute(input, target_gas, context)),
+			_ if address == addr(24) => {
+				Some(<Sub2SubBridge<Runtime, ToPangoroMessageSender>>::execute(
+					input, target_gas, context,
+				))
+			}
+			_ if address == addr(25) => {
+				Some(<Dispatch<Runtime>>::execute(input, target_gas, context))
+			}
+			_ if address == addr(26) => {
+				Some(<BscBridge<Runtime>>::execute(input, target_gas, context))
+			}
 			_ => None,
 		}
 	}
@@ -144,6 +160,5 @@ impl Config for Runtime {
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
-	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type Runner = Runner<Self>;
 }

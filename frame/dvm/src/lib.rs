@@ -25,6 +25,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod account_basic;
+pub mod remain_balance;
 
 use dvm_rpc_runtime_api::TransactionStatus;
 #[doc(no_inline)]

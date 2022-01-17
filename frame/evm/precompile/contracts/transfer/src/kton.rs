@@ -24,7 +24,7 @@ use sha3::Digest;
 use fp_evm::{Context, ExitError, ExitReason, ExitSucceed, PrecompileOutput};
 use frame_support::ensure;
 use sp_core::{H160, U256};
-use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
+use sp_std::{borrow::ToOwned, marker::PhantomData, prelude::*, vec::Vec};
 // --- darwinia-network ---
 use crate::{util, AccountId};
 use darwinia_evm::{runner::Runner, AccountBasic, Config, Pallet};
@@ -33,20 +33,25 @@ use darwinia_support::evm::{SELECTOR, TRANSFER_ADDR};
 const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,uint256)";
 const WITHDRAW_ACTION: &[u8] = b"withdraw(bytes32,uint256)";
 
-pub enum Kton<T: frame_system::Config> {
+pub enum Kton<Runtime: frame_system::Config, KtonAccountBasic> {
 	/// Transfer from substrate account to wkton contract
 	TransferAndCall(CallData),
 	/// Withdraw from wkton contract to substrate account
-	Withdraw(WithdrawData<T>),
+	Withdraw(WithdrawData<Runtime>),
+	_Maker(PhantomData<KtonAccountBasic>),
 }
 
-impl<T: Config> Kton<T> {
+impl<Runtime, KtonAccountBasic> Kton<Runtime, KtonAccountBasic>
+where
+	Runtime: darwinia_evm::Config,
+	KtonAccountBasic: darwinia_evm::AccountBasic<Runtime>,
+{
 	pub fn transfer(
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
 	) -> core::result::Result<PrecompileOutput, ExitError> {
-		let action = which_action::<T>(&input)?;
+		let action = which_action::<Runtime, KtonAccountBasic>(&input)?;
 
 		match action {
 			Kton::TransferAndCall(call_data) => {
@@ -54,7 +59,7 @@ impl<T: Config> Kton<T> {
 					(context.caller, call_data.wkton_address, call_data.value);
 				// Ensure wkton is a contract
 				ensure!(
-					!<Pallet<T>>::is_contract_code_empty(&wkton),
+					!<Pallet<Runtime>>::is_contract_code_empty(&wkton),
 					ExitError::Other("Wkton must be a contract!".into())
 				);
 				// Ensure context's apparent_value is zero, since the transfer value is encoded in input field
@@ -64,15 +69,15 @@ impl<T: Config> Kton<T> {
 				);
 				// Ensure caller's balance is enough
 				ensure!(
-					T::KtonAccountBasic::account_basic(&caller).balance >= value,
+					KtonAccountBasic::account_basic(&caller).balance >= value,
 					ExitError::OutOfFund
 				);
 
 				// Transfer kton from sender to KTON wrapped contract
-				T::KtonAccountBasic::transfer(&caller, &wkton, value)?;
+				KtonAccountBasic::transfer(&caller, &wkton, value)?;
 				// Call WKTON wrapped contract deposit
 				let raw_input = make_call_data(caller, value)?;
-				if let Ok(call_res) = T::Runner::call(
+				if let Ok(call_res) = Runtime::Runner::call(
 					array_bytes::hex_try_into(TRANSFER_ADDR)
 						.map_err(|_| ExitError::Other("Invalid transfer address".into()))?,
 					wkton,
@@ -81,7 +86,7 @@ impl<T: Config> Kton<T> {
 					target_gas.unwrap_or_default(),
 					None,
 					None,
-					T::config(),
+					Runtime::config(),
 				) {
 					match call_res.exit_reason {
 						ExitReason::Succeed(_) => {
@@ -102,7 +107,7 @@ impl<T: Config> Kton<T> {
 				let (source, to, value) = (context.caller, wd.to_account_id, wd.kton_value);
 				// Ensure wkton is a contract
 				ensure!(
-					!<Pallet<T>>::is_contract_code_empty(&source),
+					!<Pallet<Runtime>>::is_contract_code_empty(&source),
 					ExitError::Other("The caller must be wkton contract!".into())
 				);
 				// Ensure context's apparent_value is zero
@@ -111,16 +116,16 @@ impl<T: Config> Kton<T> {
 					ExitError::Other("The value in tx must be zero!".into())
 				);
 				// Ensure source's balance is enough
-				let source_kton = T::KtonAccountBasic::account_basic(&source);
+				let source_kton = KtonAccountBasic::account_basic(&source);
 				ensure!(source_kton.balance >= value, ExitError::OutOfFund);
 
 				// Transfer
 				let new_source_kton_balance = source_kton.balance.saturating_sub(value);
-				T::KtonAccountBasic::mutate_account_basic_balance(&source, new_source_kton_balance);
+				KtonAccountBasic::mutate_account_basic_balance(&source, new_source_kton_balance);
 
-				let target_kton = T::KtonAccountBasic::account_balance(&to);
+				let target_kton = KtonAccountBasic::account_balance(&to);
 				let new_target_kton_balance = target_kton.saturating_add(value);
-				T::KtonAccountBasic::mutate_account_balance(&to, new_target_kton_balance);
+				KtonAccountBasic::mutate_account_balance(&to, new_target_kton_balance);
 				Ok(PrecompileOutput {
 					exit_status: ExitSucceed::Returned,
 					cost: 20000,
@@ -128,12 +133,15 @@ impl<T: Config> Kton<T> {
 					logs: Default::default(),
 				})
 			}
+			_ => todo!(),
 		}
 	}
 }
 
 /// which action depends on the function selector
-pub fn which_action<T: Config>(input_data: &[u8]) -> Result<Kton<T>, ExitError> {
+pub fn which_action<Runtime: darwinia_evm::Config, KtonAccountBasic>(
+	input_data: &[u8],
+) -> Result<Kton<Runtime, KtonAccountBasic>, ExitError> {
 	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..SELECTOR];
 	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..SELECTOR];
 	if &input_data[0..SELECTOR] == transfer_and_call_action {

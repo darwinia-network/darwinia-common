@@ -27,11 +27,13 @@ use darwinia_support::evm::TRANSFER_ADDR;
 // --- crates.io ---
 use codec::Decode;
 
-pub struct RingBack<T> {
-	_maker: PhantomData<T>,
-}
+pub struct RingBack<Runtime, RingAccountBasic>(PhantomData<(Runtime, RingAccountBasic)>);
 
-impl<T: Config> RingBack<T> {
+impl<Runtime, RingAccountBasic> RingBack<Runtime, RingAccountBasic>
+where
+	Runtime: darwinia_evm::Config,
+	RingAccountBasic: darwinia_evm::AccountBasic<Runtime>,
+{
 	/// The Withdraw process is divided into two part:
 	/// 1. parse the withdrawal address from the input parameter and get the contract address and value from the context
 	/// 2. transfer from the contract address to withdrawal address
@@ -43,9 +45,9 @@ impl<T: Config> RingBack<T> {
 		context: &Context,
 	) -> core::result::Result<PrecompileOutput, ExitError> {
 		// Decode input data
-		let input = InputData::<T>::decode(&input)?;
+		let input = InputData::<Runtime>::decode(&input)?;
 		let (source, to, value) = (context.address, input.dest, context.apparent_value);
-		let source_account = T::RingAccountBasic::account_basic(&source);
+		let source_account = RingAccountBasic::account_basic(&source);
 
 		// Ensure the context address should be precompile address
 		let transfer_addr = array_bytes::hex_try_into(TRANSFER_ADDR)
@@ -59,11 +61,11 @@ impl<T: Config> RingBack<T> {
 
 		// Transfer
 		let new_source_balance = source_account.balance.saturating_sub(value);
-		T::RingAccountBasic::mutate_account_basic_balance(&source, new_source_balance);
+		RingAccountBasic::mutate_account_basic_balance(&source, new_source_balance);
 
-		let target_balance = T::RingAccountBasic::account_balance(&to);
+		let target_balance = RingAccountBasic::account_balance(&to);
 		let new_target_balance = target_balance.saturating_add(value);
-		T::RingAccountBasic::mutate_account_balance(&to, new_target_balance);
+		RingAccountBasic::mutate_account_balance(&to, new_target_balance);
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,

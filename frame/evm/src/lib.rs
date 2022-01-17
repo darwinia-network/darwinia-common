@@ -90,8 +90,6 @@ pub mod pallet {
 
 		/// *RING* account basic
 		type RingAccountBasic: AccountBasic<Self>;
-		/// *KTON* account basic
-		type KtonAccountBasic: AccountBasic<Self>;
 
 		/// Precompiles associated with this EVM engine.
 		type Precompiles: PrecompileSet;
@@ -170,7 +168,6 @@ pub mod pallet {
 				}
 
 				T::RingAccountBasic::mutate_account_basic_balance(&address, account.balance);
-				T::KtonAccountBasic::mutate_account_basic_balance(&address, account.balance);
 
 				AccountCodes::<T>::insert(address, &account.code);
 				for (index, value) in &account.storage {
