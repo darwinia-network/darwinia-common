@@ -28,7 +28,7 @@ describe("Test gas", function () {
 				from: addressFrom,
 				data: TEST_CONTRACT_BYTECODE,
 			})
-		).to.equal(84014);
+		).to.equal(91890);
 	});
 
 	it("eth_estimateGas for contract call", async function () {
