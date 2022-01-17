@@ -17,6 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- paritytech ---
+use fp_evm::{Context, ExitError, ExitSucceed, PrecompileOutput};
 use frame_support::ensure;
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
@@ -25,7 +26,6 @@ use darwinia_evm::{AccountBasic, Config};
 use darwinia_support::evm::TRANSFER_ADDR;
 // --- crates.io ---
 use codec::Decode;
-use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 
 pub struct RingBack<T> {
 	_maker: PhantomData<T>,

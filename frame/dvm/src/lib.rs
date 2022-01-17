@@ -219,6 +219,9 @@ pub mod pallet {
 
 		fn on_initialize(_block_number: T::BlockNumber) -> Weight {
 			Pending::<T>::kill();
+
+			// If the digest contain an existing ethereum block(encoded as PreLog), If contains,
+			// execute the imported block firstly and disable transact dispatch function.
 			if let Ok(log) = dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()) {
 				let PreLog::Block(block) = log;
 
@@ -251,6 +254,12 @@ pub mod pallet {
 			transaction: TransactionV0,
 		) -> DispatchResultWithPostInfo {
 			let source = ensure_ethereum_transaction(origin)?;
+			// Disable transact functionality if PreLog exist.
+			ensure!(
+				dp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
+				Error::<T>::PreLogExists,
+			);
+
 			Self::apply_validated_transaction(source, transaction)
 		}
 
@@ -262,6 +271,12 @@ pub mod pallet {
 			input: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
+			// Disable transact functionality if PreLog exist.
+			ensure!(
+				dp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
+				Error::<T>::PreLogExists,
+			);
+
 			Self::internal_transact(target, input)
 		}
 	}
@@ -480,11 +495,6 @@ impl<T: Config> Pallet<T> {
 		source: H160,
 		dvm_transaction: DVMTransaction,
 	) -> Result<(ExitReason, U256), DispatchError> {
-		ensure!(
-			dp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
-			Error::<T>::PreLogExists,
-		);
-
 		let transaction_hash =
 			H256::from_slice(Keccak256::digest(&rlp::encode(&dvm_transaction.tx)).as_slice());
 		let transaction_index = Pending::<T>::get().len() as u32;
@@ -700,6 +710,9 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 		let source = T::PalletId::get().into_h160();
 		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
 		let transaction = new_internal_transaction(nonce, target, input);
+		debug_assert_eq!(transaction.tx.nonce, nonce);
+		debug_assert_eq!(transaction.gas_price, None);
+
 		Self::raw_transact(source, transaction).map(|(reason, used_gas)| match reason {
 			// Only when exit_reason is successful, return Ok(...)
 			ExitReason::Succeed(_) => Ok(PostDispatchInfo {

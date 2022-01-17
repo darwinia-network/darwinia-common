@@ -30,8 +30,9 @@ use ethereum::{
 	TransactionV0 as EthereumTransaction,
 };
 use ethereum_types::{H160, H256, H512, H64, U256, U64};
+use evm::{ExitError, ExitReason};
 use futures::{future::TryFutureExt, StreamExt};
-use jsonrpc_core::{futures::future, BoxFuture, ErrorCode, Result};
+use jsonrpc_core::{futures::future, BoxFuture, Result};
 use log::warn;
 use lru::LruCache;
 use sha3::{Digest, Keccak256};
@@ -43,7 +44,7 @@ use fc_rpc_core::types::{
 };
 use fp_storage::PALLET_ETHEREUM_SCHEMA;
 use sc_client_api::{
-	backend::{AuxStore, Backend, StateBackend, StorageProvider},
+	backend::{Backend, StateBackend, StorageProvider},
 	client::BlockchainEvents,
 };
 use sc_network::{ExHashT, NetworkService};
@@ -285,7 +286,7 @@ where
 	let address_bloom_filter = FilteredParams::adresses_bloom_filter(&filter.address);
 	let topics_bloom_filter = FilteredParams::topics_bloom_filter(&topics_input);
 
-	// Get schema cache. A single AuxStore read before the block range iteration.
+	// Get schema cache. A single read before the block range iteration.
 	// This prevents having to do an extra DB read per block range iteration to get the actual schema.
 	let mut local_cache: BTreeMap<NumberFor<B>, EthereumStorageSchema> = BTreeMap::new();
 	if let Ok(Some(schema_cache)) = frontier_backend_client::load_cached_schema::<B>(backend) {
@@ -429,7 +430,7 @@ fn filter_block_logs<'a>(
 
 impl<B, C, P, CT, BE, H: ExHashT, A> EthApiT for EthApi<B, C, P, CT, BE, H, A>
 where
-	C: ProvideRuntimeApi<B> + StorageProvider<B, BE> + AuxStore,
+	C: ProvideRuntimeApi<B> + StorageProvider<B, BE>,
 	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
 	C::Api: EthereumRuntimeRPCApi<B>,
 	BE: Backend<B> + 'static,
@@ -945,8 +946,33 @@ where
 	}
 
 	fn estimate_gas(&self, request: CallRequest, _: Option<BlockNumber>) -> Result<U256> {
-		let gas_limit = {
-			// query current block's gas limit
+		// Define the lower bound of estimate
+		const MIN_GAS_PER_TX: U256 = U256([21_000, 0, 0, 0]);
+		// Get best hash
+		let best_hash = self.client.info().best_hash;
+
+		// For simple transfer to simple account, return MIN_GAS_PER_TX directly
+		let is_simple_transfer = match &request.data {
+			None => true,
+			Some(vec) => vec.0.is_empty(),
+		};
+		if is_simple_transfer {
+			if let Some(to) = request.to {
+				let to_code = self
+					.client
+					.runtime_api()
+					.account_code_at(&BlockId::Hash(best_hash), to)
+					.map_err(|err| internal_err(format!("runtime error: {:?}", err)))?;
+				if to_code.is_empty() {
+					return Ok(MIN_GAS_PER_TX);
+				}
+			}
+		}
+
+		// Get gas price
+		let gas_price = request.gas_price.unwrap_or_default();
+
+		let get_current_block_gas_limit = || -> Result<U256> {
 			let substrate_hash = self.client.info().best_hash;
 			let id = BlockId::Hash(substrate_hash);
 			let schema =
@@ -956,18 +982,62 @@ where
 				.schemas
 				.get(&schema)
 				.unwrap_or(&self.overrides.fallback);
-
 			let block = self.block_data_cache.current_block(handler, substrate_hash);
 			if let Some(block) = block {
-				block.header.gas_limit
+				Ok(block.header.gas_limit)
 			} else {
 				return Err(internal_err("block unavailable, cannot query gas limit"));
 			}
 		};
 
-		let calculate_gas_used = |request, gas_limit| -> Result<U256> {
-			let hash = self.client.info().best_hash;
+		// Determine the highest possible gas limits
+		let mut highest = match request.gas {
+			Some(gas) => gas,
+			None => {
+				// query current block's gas limit
+				get_current_block_gas_limit()?
+			}
+		};
 
+		// Recap the highest gas allowance with account's balance.
+		if let Some(from) = request.from {
+			if gas_price > U256::zero() {
+				let balance = self
+					.client
+					.runtime_api()
+					.account_basic(&BlockId::Hash(best_hash), from)
+					.map_err(|err| internal_err(format!("runtime error: {:?}", err)))?
+					.balance;
+				let mut available = balance;
+				if let Some(value) = request.value {
+					if value > available {
+						return Err(internal_err("insufficient funds for transfer"));
+					}
+					available -= value;
+				}
+				let allowance = available / gas_price;
+				if highest > allowance {
+					log::warn!(
+						"Gas estimation capped by limited funds original {} balance {} sent {} feecap {} fundable {}",
+						highest,
+						balance,
+						request.value.unwrap_or_default(),
+						gas_price,
+						allowance
+					);
+					highest = allowance;
+				}
+			}
+		}
+
+		struct ExecutableResult {
+			data: Vec<u8>,
+			exit_reason: ExitReason,
+			used_gas: U256,
+		}
+
+		// Create a helper to check if a gas allowance results in an executable transaction
+		let executable = move |request: CallRequest, gas_limit| -> Result<ExecutableResult> {
 			let CallRequest {
 				from,
 				to,
@@ -977,17 +1047,19 @@ where
 				data,
 				nonce,
 			} = request;
+
 			// Use request gas limit only if it less than gas_limit parameter
 			let gas_limit = core::cmp::min(gas.unwrap_or(gas_limit), gas_limit);
+
 			let data = data.map(|d| d.0).unwrap_or_default();
 
-			let used_gas = match to {
+			let (exit_reason, data, used_gas) = match to {
 				Some(to) => {
 					let info = self
 						.client
 						.runtime_api()
 						.call(
-							&BlockId::Hash(hash),
+							&BlockId::Hash(best_hash),
 							from.unwrap_or_default(),
 							to,
 							data,
@@ -1000,16 +1072,14 @@ where
 						.map_err(|err| internal_err(format!("runtime error: {:?}", err)))?
 						.map_err(|err| internal_err(format!("execution fatal: {:?}", err)))?;
 
-					error_on_execution_failure(&info.exit_reason, &info.value)?;
-
-					info.used_gas
+					(info.exit_reason, info.value, info.used_gas)
 				}
 				None => {
 					let info = self
 						.client
 						.runtime_api()
 						.create(
-							&BlockId::Hash(hash),
+							&BlockId::Hash(best_hash),
 							from.unwrap_or_default(),
 							data,
 							value.unwrap_or_default(),
@@ -1021,107 +1091,105 @@ where
 						.map_err(|err| internal_err(format!("runtime error: {:?}", err)))?
 						.map_err(|err| internal_err(format!("execution fatal: {:?}", err)))?;
 
-					error_on_execution_failure(&info.exit_reason, &[])?;
-
-					info.used_gas
+					(info.exit_reason, Vec::new(), info.used_gas)
 				}
 			};
-			Ok(used_gas)
+
+			Ok(ExecutableResult {
+				exit_reason,
+				data,
+				used_gas,
+			})
 		};
 
-		if cfg!(feature = "rpc_binary_search_estimate") {
-			const MAX_OOG_PER_ESTIMATE_QUERY: u32 = 2;
-			let mut lower = U256::from(21_000);
-			let mut upper = U256::from(gas_limit);
-			let mut mid = upper;
-			let mut best = mid;
-			let mut old_best: U256;
-			let mut num_oog = 0;
-
-			// if the gas estimation depends on the gas limit, then we want to binary
-			// search until the change is under some threshold. but if not dependent,
-			// we want to stop immediately.
-			let mut change_pct = U256::from(100);
-			let threshold_pct = U256::from(10);
-
-			// invariant: lower <= mid <= upper
-			while change_pct > threshold_pct {
-				let mut test_request = request.clone();
-				test_request.gas = Some(mid);
-				match calculate_gas_used(test_request, gas_limit) {
-					// if Ok -- try to reduce the gas used
-					Ok(used_gas) => {
-						old_best = best;
-						best = used_gas;
-						change_pct = (U256::from(100) * (old_best - best)) / old_best;
-						upper = mid;
-						mid = (lower + upper + 1) / 2;
-					}
-					// if Err -- we need more gas
-					Err(err) => {
-						// if Err == OutofGas, we need more gas
-						if err.code == ErrorCode::ServerError(0) {
-							num_oog += 1;
-							// don't try more than twice if we oog
-							if num_oog >= MAX_OOG_PER_ESTIMATE_QUERY {
-								return Err(err);
-							}
-
-							lower = mid;
-							mid = (lower + upper + 1) / 2;
-							if mid == lower {
-								break;
-							}
-						} else {
-							// Other errors, return directly
-							return Err(err);
+		// Verify that the transaction succeed with highest capacity
+		let cap = highest;
+		let ExecutableResult {
+			data,
+			exit_reason,
+			used_gas,
+		} = executable(request.clone(), highest)?;
+		match exit_reason {
+			ExitReason::Succeed(_) => (),
+			ExitReason::Error(ExitError::OutOfGas) => {
+				return Err(internal_err(format!(
+					"gas required exceeds allowance {}",
+					cap
+				)))
+			}
+			// If the transaction reverts, there are two possible cases,
+			// it can revert because the called contract feels that it does not have enough
+			// gas left to continue, or it can revert for another reason unrelated to gas.
+			ExitReason::Revert(revert) => {
+				if request.gas.is_some() || request.gas_price.is_some() {
+					// If the user has provided a gas limit or a gas price, then we have executed
+					// with less block gas limit, so we must reexecute with block gas limit to
+					// know if the revert is due to a lack of gas or not.
+					let ExecutableResult {
+						data,
+						exit_reason,
+						used_gas: _,
+					} = executable(request.clone(), get_current_block_gas_limit()?)?;
+					match exit_reason {
+						ExitReason::Succeed(_) => {
+							return Err(internal_err(format!(
+								"gas required exceeds allowance {}",
+								cap
+							)))
 						}
+						// The execution has been done with block gas limit, so it is not a lack of gas from the user.
+						other => error_on_execution_failure(&other, &data)?,
 					}
+				} else {
+					// The execution has already been done with block gas limit, so it is not a lack of gas from the user.
+					error_on_execution_failure(&ExitReason::Revert(revert), &data)?
 				}
 			}
-			Ok(best)
-		} else {
-			calculate_gas_used(request, gas_limit)
+			other => error_on_execution_failure(&other, &data)?,
+		};
+
+		#[cfg(not(feature = "rpc_binary_search_estimate"))]
+		{
+			Ok(used_gas)
+		}
+		#[cfg(feature = "rpc_binary_search_estimate")]
+		{
+			// Define the lower bound of the binary search
+			let mut lowest = MIN_GAS_PER_TX;
+
+			// Start close to the used gas for faster binary search
+			let mut mid = std::cmp::min(used_gas * 3, (highest + lowest) / 2);
+
+			// Execute the binary search and hone in on an executable gas limit.
+			let mut previous_highest = highest;
+			while (highest - lowest) > U256::one() {
+				let ExecutableResult {
+					data,
+					exit_reason,
+					used_gas: _,
+				} = executable(request.clone(), mid)?;
+				match exit_reason {
+					ExitReason::Succeed(_) => {
+						highest = mid;
+						// If the variation in the estimate is less than 10%,
+						// then the estimate is considered sufficiently accurate.
+						if (previous_highest - highest) * 10 / previous_highest < U256::one() {
+							return Ok(highest);
+						}
+						previous_highest = highest;
+					}
+					ExitReason::Revert(_) | ExitReason::Error(ExitError::OutOfGas) => {
+						lowest = mid;
+					}
+					other => error_on_execution_failure(&other, &data)?,
+				}
+				mid = (highest + lowest) / 2;
+			}
+
+			Ok(highest)
 		}
 	}
-
 	fn transaction_by_hash(&self, hash: H256) -> Result<Option<Transaction>> {
-		let mut xts: Vec<<B as BlockT>::Extrinsic> = Vec::new();
-		// Collect transactions in the ready validated pool.
-		xts.extend(
-			self.graph
-				.validated_pool()
-				.ready()
-				.map(|in_pool_tx| in_pool_tx.data().clone())
-				.collect::<Vec<<B as BlockT>::Extrinsic>>(),
-		);
-
-		// Collect transactions in the future validated pool.
-		xts.extend(
-			self.graph
-				.validated_pool()
-				.futures()
-				.iter()
-				.map(|(_hash, extrinsic)| extrinsic.clone())
-				.collect::<Vec<<B as BlockT>::Extrinsic>>(),
-		);
-
-		let best_block: BlockId<B> = BlockId::Hash(self.client.info().best_hash);
-		let ethereum_transactions: Vec<ethereum::TransactionV0> = self
-			.client
-			.runtime_api()
-			.extrinsic_filter(&best_block, xts)
-			.map_err(|err| {
-				internal_err(format!("fetch runtime extrinsic filter failed: {:?}", err))
-			})?;
-
-		for txn in ethereum_transactions {
-			let inner_hash = H256::from_slice(Keccak256::digest(&rlp::encode(&txn)).as_slice());
-			if hash == inner_hash {
-				return Ok(Some(transaction_build(txn, None, None)));
-			}
-		}
-
 		let (hash, index) = match frontier_backend_client::load_transactions::<B, C>(
 			self.client.as_ref(),
 			self.backend.as_ref(),
@@ -1131,7 +1199,48 @@ where
 		.map_err(|err| internal_err(format!("{:?}", err)))?
 		{
 			Some((hash, index)) => (hash, index as usize),
-			None => return Ok(None),
+			None => {
+				// If the transaction is not yet mapped in the frontier db,
+				// check for it in the transaction pool.
+				let mut xts: Vec<<B as BlockT>::Extrinsic> = Vec::new();
+				// Collect transactions in the ready validated pool.
+				xts.extend(
+					self.graph
+						.validated_pool()
+						.ready()
+						.map(|in_pool_tx| in_pool_tx.data().clone())
+						.collect::<Vec<<B as BlockT>::Extrinsic>>(),
+				);
+
+				// Collect transactions in the future validated pool.
+				xts.extend(
+					self.graph
+						.validated_pool()
+						.futures()
+						.iter()
+						.map(|(_hash, extrinsic)| extrinsic.clone())
+						.collect::<Vec<<B as BlockT>::Extrinsic>>(),
+				);
+
+				let best_block: BlockId<B> = BlockId::Hash(self.client.info().best_hash);
+				let ethereum_transactions: Vec<ethereum::TransactionV0> = self
+					.client
+					.runtime_api()
+					.extrinsic_filter(&best_block, xts)
+					.map_err(|err| {
+						internal_err(format!("fetch runtime extrinsic filter failed: {:?}", err))
+					})?;
+
+				for txn in ethereum_transactions {
+					let inner_hash =
+						H256::from_slice(Keccak256::digest(&rlp::encode(&txn)).as_slice());
+					if hash == inner_hash {
+						return Ok(Some(transaction_build(txn, None, None)));
+					}
+				}
+				// Unknown transaction.
+				return Ok(None);
+			}
 		};
 
 		let id = match frontier_backend_client::load_hash::<B>(self.backend.as_ref(), hash)
@@ -1468,10 +1577,9 @@ impl<B: BlockT, BE, C, H: ExHashT> NetApi<B, BE, C, H> {
 	}
 }
 
-// impl<B, BE, C> NetApiT for NetApi<B, BE, C>
 impl<B: BlockT, BE, C, H: ExHashT> NetApiT for NetApi<B, BE, C, H>
 where
-	C: ProvideRuntimeApi<B> + StorageProvider<B, BE> + AuxStore,
+	C: ProvideRuntimeApi<B> + StorageProvider<B, BE>,
 	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
 	C::Api: EthereumRuntimeRPCApi<B>,
 	BE: Backend<B> + 'static,
@@ -1518,7 +1626,7 @@ impl<B, C> Web3Api<B, C> {
 
 impl<B, C> Web3ApiT for Web3Api<B, C>
 where
-	C: ProvideRuntimeApi<B> + AuxStore,
+	C: ProvideRuntimeApi<B>,
 	C::Api: EthereumRuntimeRPCApi<B>,
 	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
 	C: Send + Sync + 'static,
@@ -1892,7 +2000,7 @@ where
 							// Decode the wrapped blob which's type is known.
 							let new_schema: EthereumStorageSchema =
 								Decode::decode(&mut &data.0[..]).unwrap();
-							// Cache new entry and overwrite the AuxStore value.
+							// Cache new entry and overwrite the old database value.
 							if let Ok(Some(old_cache)) =
 								frontier_backend_client::load_cached_schema::<B>(backend.as_ref())
 							{
@@ -1900,7 +2008,7 @@ where
 								match &new_cache[..] {
 									[.., (schema, _)] if *schema == new_schema => {
 										warn!(
-											"Schema version already in AuxStore, ignoring: {:?}",
+											"Schema version already in Frontier database, ignoring: {:?}",
 											new_schema
 										);
 									}
