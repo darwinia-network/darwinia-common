@@ -31,40 +31,16 @@ pub use bridges::*;
 pub mod wasm {
 	//! Make the WASM binary available.
 
-	#[cfg(all(
-		feature = "std",
-		any(target_arch = "x86_64", target_arch = "x86", target_vendor = "apple")
-	))]
 	include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
-
-	#[cfg(all(
-		feature = "std",
-		not(any(target_arch = "x86_64", target_arch = "x86", target_vendor = "apple"))
-	))]
-	pub const WASM_BINARY: &[u8] = include_bytes!("../../../../wasm/pangolin_runtime.compact.wasm");
-	#[cfg(all(
-		feature = "std",
-		not(any(target_arch = "x86_64", target_arch = "x86", target_vendor = "apple"))
-	))]
-	pub const WASM_BINARY_BLOATY: &[u8] = include_bytes!("../../../../wasm/pangolin_runtime.wasm");
 
 	/// Wasm binary unwrapped. If built with `BUILD_DUMMY_WASM_BINARY`, the function panics.
 	#[cfg(feature = "std")]
 	pub fn wasm_binary_unwrap() -> &'static [u8] {
-		#[cfg(all(
-			feature = "std",
-			any(target_arch = "x86_64", target_arch = "x86", target_vendor = "apple")
-		))]
 		return WASM_BINARY.expect(
 			"Development wasm binary is not available. This means the client is \
 			built with `SKIP_WASM_BUILD` flag and it is only usable for \
 			production chains. Please rebuild with the flag disabled.",
 		);
-		#[cfg(all(
-			feature = "std",
-			not(any(target_arch = "x86_64", target_arch = "x86", target_vendor = "apple"))
-		))]
-		return WASM_BINARY;
 	}
 }
 #[cfg(not(feature = "no-wasm"))]

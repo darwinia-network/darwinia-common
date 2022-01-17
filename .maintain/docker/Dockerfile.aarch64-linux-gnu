@@ -26,4 +26,4 @@ RUN apt update && apt install -y \
 	libc6-dev-i386 \
 	# compiler
 	gcc-aarch64-linux-gnu gcc-5-aarch64-linux-gnu g++-aarch64-linux-gnu g++-5-aarch64-linux-gnu \
-	clang llvm libclang-dev
+	clang-4.0
