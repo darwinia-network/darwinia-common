@@ -14,10 +14,6 @@ use sp_core::{crypto::Public, H160, U256};
 // --- darwinia-network ---
 use crate::*;
 use darwinia_evm::{runner::stack::Runner, Config, EnsureAddressTruncated, FeeCalculator};
-use darwinia_evm_precompile_bridge_bsc::BscBridge;
-use darwinia_evm_precompile_bridge_ethereum::EthereumBridge;
-use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
-use darwinia_evm_precompile_dispatch::Dispatch;
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::{
 	evm::ConcatConverter,
@@ -46,12 +42,9 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 pub struct PangolinPrecompiles<R>(PhantomData<R>);
 impl<R> PrecompileSet for PangolinPrecompiles<R>
 where
-	R: from_substrate_issuing::Config + from_ethereum_issuing::Config,
 	R: darwinia_evm::Config,
-	R: darwinia_bridge_bsc::Config,
 	R::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Encode + Decode,
 	<R::Call as Dispatchable>::Origin: From<Option<R::AccountId>>,
-	R::Call: From<from_ethereum_issuing::Call<R>> + From<from_substrate_issuing::Call<R>>,
 {
 	fn execute(
 		address: H160,
@@ -69,7 +62,7 @@ where
 			_ if address == addr(4) => Some(Identity::execute(input, target_gas, context)),
 			// Darwinia precompiles
 			_ if address == addr(21) => Some(<Transfer<R>>::execute(input, target_gas, context)),
-
+			_ => None,
 		}
 	}
 }

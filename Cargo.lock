@@ -6186,6 +6186,7 @@ dependencies = [
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-evm",
+ "darwinia-evm-precompile-transfer",
  "darwinia-fee-market",
  "darwinia-fee-market-rpc-runtime-api",
  "darwinia-staking",

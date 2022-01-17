@@ -34,6 +34,7 @@ dvm-ethereum                            = { default-features = false, path = "..
 dvm-rpc-runtime-api                     = { default-features = false, path = "../../../frame/dvm/rpc/runtime-api" }
 module-transaction-pause            = { default-features = false, path = "../../../frame/transaction-pause" }
 to-substrate-backing                = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
+darwinia-evm-precompile-transfer        = { default-features = false, path = "../../../frame/evm/precompile/contracts/transfer" }
 # dvm trace
 dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/evm-trace/apis" }
 dp-evm-trace-events = { optional = true, default-features = false, path = "../../../primitives/evm-trace/events" }
@@ -124,6 +125,7 @@ std = [
 	"drml-common-primitives/std",
 	"module-transaction-pause/std",
 	"to-substrate-backing/std",
+	"darwinia-evm-precompile-transfer/std",
 	# paritytech
 	"bp-header-chain/std",
 	"bp-message-dispatch/std",
@@ -203,3 +205,10 @@ try-runtime = [
 ]
 
 no-wasm = []
+
+evm-tracing = [
+	"dp-evm-trace-events",
+	"dp-evm-tracer",
+	"rlp",
+	"sha3",
+]

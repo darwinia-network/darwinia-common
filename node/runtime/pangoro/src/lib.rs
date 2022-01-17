@@ -42,7 +42,7 @@ pub use pallet_bridge_messages::Call as BridgeMessagesCall;
 pub use pallet_sudo::Call as SudoCall;
 
 // --- crates.io ---
-use codec::Encode;
+use codec::{Decode, Encode};
 // --- paritytech ---
 #[allow(unused)]
 use frame_support::{log, migration};
@@ -62,7 +62,10 @@ use sp_consensus_babe::{AllowedSlots, BabeEpochConfiguration};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
 	generic,
-	traits::{Block as BlockT, Extrinsic, NumberFor, PostDispatchInfoOf, StaticLookup, Verify},
+	traits::{
+		Block as BlockT, Dispatchable, Extrinsic, NumberFor, PostDispatchInfoOf, StaticLookup,
+		Verify,
+	},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
 	ApplyExtrinsicResult, MultiAddress, OpaqueExtrinsic, SaturatedConversion,
 };
@@ -73,6 +76,7 @@ use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use common_runtime::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
+use darwinia_evm::{AccountBasic, FeeCalculator, Runner};
 use darwinia_fee_market_rpc_runtime_api::{Fee, InProcessOrders};
 use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use drml_common_primitives::*;
@@ -89,7 +93,9 @@ pub type SignedExtra = (
 	CheckWeight<Runtime>,
 	ChargeTransactionPayment<Runtime>,
 );
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+// pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+pub type UncheckedExtrinsic =
+	fp_self_contained::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 pub type Executive = frame_executive::Executive<
 	Runtime,
 	Block,
