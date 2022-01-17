@@ -547,13 +547,8 @@ sp_api::impl_runtime_apis! {
 }
 
 fn migrate() -> Weight {
-	frame_support::migrations::migrate_from_pallet_version_to_storage_version::<AllPalletsWithSystem>(
-		&RocksDbWeight::get(),
-	);
-	migration::remove_storage_prefix(b"RandomnessCollectiveFlip", b"RandomMaterial", b"");
-
-	// 0
-	RuntimeBlockWeights::get().max_block
+	0
+	// RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
