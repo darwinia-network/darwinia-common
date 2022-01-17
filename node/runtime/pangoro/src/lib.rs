@@ -93,7 +93,6 @@ pub type SignedExtra = (
 	CheckWeight<Runtime>,
 	ChargeTransactionPayment<Runtime>,
 );
-// pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 pub type UncheckedExtrinsic =
 	fp_self_contained::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 pub type Executive = frame_executive::Executive<

@@ -1,12 +1,11 @@
 // --- core ---
 use core::marker::PhantomData;
 // --- paritytech ---
-use bp_messages::LaneId;
 use codec::{Decode, Encode};
 use fp_evm::{Context, ExitError, Precompile, PrecompileOutput, PrecompileSet};
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
-	traits::{FindAuthor, PalletInfoAccess},
+	traits::FindAuthor,
 	ConsensusEngineId,
 };
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
@@ -15,10 +14,7 @@ use sp_core::{crypto::Public, H160, U256};
 use crate::*;
 use darwinia_evm::{runner::stack::Runner, Config, EnsureAddressTruncated, FeeCalculator};
 use darwinia_evm_precompile_transfer::Transfer;
-use darwinia_support::{
-	evm::ConcatConverter,
-	s2s::{LatestMessageNoncer, RelayMessageSender},
-};
+use darwinia_support::evm::ConcatConverter;
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping,
@@ -39,8 +35,8 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 }
 
 // TODO: rename
-pub struct PangolinPrecompiles<R>(PhantomData<R>);
-impl<R> PrecompileSet for PangolinPrecompiles<R>
+pub struct PangoroPrecompiles<R>(PhantomData<R>);
+impl<R> PrecompileSet for PangoroPrecompiles<R>
 where
 	R: darwinia_evm::Config,
 	R::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Encode + Decode,
@@ -88,7 +84,7 @@ impl Config for Runtime {
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type BlockHashMapping = EthereumBlockHashMapping<Self>;
 	type Event = Event;
-	type Precompiles = PangolinPrecompiles<Self>;
+	type Precompiles = PangoroPrecompiles<Self>;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
