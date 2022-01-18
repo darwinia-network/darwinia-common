@@ -932,10 +932,6 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 }
 
 fn migrate() -> Weight {
-	// TODO: Move to S2S
-	// const CrabBackingPalletId: PalletId = PalletId(*b"da/crabk");
-	// const CrabIssuingPalletId: PalletId = PalletId(*b"da/crais");
-
 	0
 	// RuntimeBlockWeights::get().max_block
 }
