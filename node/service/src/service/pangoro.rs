@@ -19,10 +19,16 @@
 //! Pangoro service. Specialized wrapper over substrate service.
 
 // --- std ---
-use std::{sync::Arc, time::Duration};
+use std::{
+	collections::BTreeMap,
+	path::PathBuf,
+	sync::{Arc, Mutex},
+	time::Duration,
+};
 // --- crates.io ---
 use futures::stream::StreamExt;
 // --- paritytech ---
+use fc_rpc_core::types::FilterPool;
 use sc_authority_discovery::WorkerConfig;
 use sc_basic_authorship::ProposerFactory;
 use sc_client_api::{ExecutorProvider, RemoteBackend, StateBackendFor};
@@ -38,7 +44,7 @@ use sc_finality_grandpa::{
 };
 use sc_network::Event;
 use sc_service::{
-	config::KeystoreConfig, BuildNetworkParams, Configuration, Error as ServiceError,
+	config::KeystoreConfig, BasePath, BuildNetworkParams, Configuration, Error as ServiceError,
 	NoopRpcExtensionBuilder, PartialComponents, RpcHandlers, SpawnTasksParams, TaskManager,
 };
 use sc_telemetry::{Telemetry, TelemetryWorker};
@@ -57,10 +63,11 @@ use crate::{
 		LightClient, RpcResult,
 	},
 };
+use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
 use drml_common_primitives::{AccountId, Balance, Nonce, OpaqueBlock as Block};
 use drml_rpc::{
 	pangoro::{FullDeps, LightDeps},
-	BabeDeps, DenyUnsafe, GrandpaDeps, SubscriptionTaskExecutor,
+	BabeDeps, DenyUnsafe, GrandpaDeps, RpcConfig, SubscriptionTaskExecutor,
 };
 use pangoro_runtime::RuntimeApi;
 
@@ -241,13 +248,16 @@ where
 		let select_chain = select_chain.clone();
 		let chain_spec = config.chain_spec.cloned_box();
 
-		move |deny_unsafe, subscription_executor| -> RpcResult {
+		move |deny_unsafe, is_authority, network, subscription_executor| -> RpcResult {
 			let deps = FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
+				graph: transaction_pool.pool().clone(),
 				select_chain: select_chain.clone(),
 				chain_spec: chain_spec.cloned_box(),
 				deny_unsafe,
+				is_authority,
+				network,
 				babe: BabeDeps {
 					babe_config: babe_config.clone(),
 					shared_epoch_changes: shared_epoch_changes.clone(),
@@ -260,9 +270,14 @@ where
 					subscription_executor,
 					finality_provider: finality_proof_provider.clone(),
 				},
+				backend: dvm_backend.clone(),
+				filter_pool: filter_pool.clone(),
+				tracing_requesters: tracing_requesters.clone(),
+				rpc_config: rpc_config.clone(),
 			};
 
-			drml_rpc::pangoro::create_full(deps).map_err(Into::into)
+			drml_rpc::pangoro::create_full(deps, subscription_task_executor.clone())
+				.map_err(Into::into)
 		}
 	};
 
@@ -282,6 +297,7 @@ where
 fn new_full<RuntimeApi, Executor>(
 	mut config: Configuration,
 	authority_discovery_disabled: bool,
+	rpc_config: RpcConfig,
 ) -> Result<
 	(
 		TaskManager,
@@ -299,6 +315,7 @@ where
 {
 	let role = config.role.clone();
 	let is_authority = role.is_authority();
+	let is_archive = config.state_pruning.is_archive();
 	let force_authoring = config.force_authoring;
 	let backoff_authoring_blocks =
 		Some(sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging::default());
@@ -711,6 +728,7 @@ where
 pub fn pangoro_new_full(
 	config: Configuration,
 	authority_discovery_disabled: bool,
+	rpc_config: RpcConfig,
 ) -> Result<
 	(
 		TaskManager,
@@ -720,7 +738,7 @@ pub fn pangoro_new_full(
 	ServiceError,
 > {
 	let (components, client, rpc_handlers) =
-		new_full::<RuntimeApi, Executor>(config, authority_discovery_disabled)?;
+		new_full::<RuntimeApi, Executor>(config, authority_discovery_disabled, rpc_config)?;
 
 	Ok((components, client, rpc_handlers))
 }
