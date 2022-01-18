@@ -34,7 +34,6 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 	}
 }
 
-// TODO: rename
 pub struct PangoroPrecompiles<R>(PhantomData<R>);
 impl<R> PrecompileSet for PangoroPrecompiles<R>
 where
@@ -70,9 +69,8 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
-// TODO: Update chain id
 frame_support::parameter_types! {
-	pub const ChainId: u64 = 43;
+	pub const ChainId: u64 = 45;
 	pub BlockGasLimit: U256 = u32::MAX.into();
 }
 
