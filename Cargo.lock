@@ -6205,6 +6205,7 @@ dependencies = [
  "dvm-rpc-runtime-api",
  "fp-evm",
  "fp-self-contained",
+ "fp-storage",
  "frame-benchmarking",
  "frame-election-provider-support",
  "frame-executive",

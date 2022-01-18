@@ -92,6 +92,7 @@ sp-version                                 = { default-features = false, git = "
 # frontier
 fp-evm                       = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 fp-self-contained            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-storage                   = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 
 
@@ -182,6 +183,7 @@ std = [
 	# frontier
 	"fp-evm/std",
 	"fp-self-contained/std",
+	"fp-storage/std",
 	"pallet-evm-precompile-simple/std",
 ]
 
