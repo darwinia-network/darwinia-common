@@ -224,10 +224,12 @@ pub fn run() -> sc_cli::Result<()> {
 					match config.role {
 						Role::Light => pangoro_service::pangoro_new_light(config)
 							.map(|(task_manager, _)| task_manager),
-						_ => {
-							pangoro_service::pangoro_new_full(config, authority_discovery_disabled)
-								.map(|(task_manager, _, _)| task_manager)
-						}
+						_ => pangoro_service::pangoro_new_full(
+							config,
+							authority_discovery_disabled,
+							rpc_config,
+						)
+						.map(|(task_manager, _, _)| task_manager),
 					}
 					.map_err(sc_cli::Error::Service)
 				})

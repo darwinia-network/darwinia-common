@@ -25,7 +25,6 @@ use std::collections::BTreeMap;
 // --- darwinia-network ---
 use crate::*;
 use dc_rpc::EthBlockDataCache;
-use drml_common_primitives::Power;
 use dvm_ethereum::EthereumStorageSchema;
 // --- parity-tech ---
 use sc_transaction_pool::{ChainApi, Pool};
@@ -94,8 +93,6 @@ where
 	C::Api: sc_consensus_babe::BabeApi<Block>,
 	C::Api: sp_block_builder::BlockBuilder<Block>,
 	C::Api: darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
-	C::Api: darwinia_header_mmr_rpc::HeaderMMRRuntimeApi<Block, Hash>,
-	C::Api: darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
 	C::Api: darwinia_fee_market_rpc::FeeMarketRuntimeApi<Block, Balance>,
 	C::Api: dp_evm_trace_apis::DebugRuntimeApi<Block>,
 	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
