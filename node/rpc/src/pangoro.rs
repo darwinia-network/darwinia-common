@@ -239,7 +239,6 @@ where
 	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client.clone())));
 
 	let ethapi_cmd = rpc_config.ethapi.clone();
-
 	if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
 		if let Some(trace_filter_requester) = tracing_requesters.trace {
 			io.extend_with(TraceApiServer::to_delegate(Trace::new(
