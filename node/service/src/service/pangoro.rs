@@ -64,11 +64,8 @@ use crate::{
 	},
 };
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
-use drml_common_primitives::{AccountId, Balance, Nonce, OpaqueBlock as Block};
-use drml_rpc::{
-	pangoro::{FullDeps, LightDeps},
-	BabeDeps, GrandpaDeps, RpcConfig, SubscriptionTaskExecutor,
-};
+use drml_common_primitives::{AccountId, Balance, Nonce, OpaqueBlock as Block, Power};
+use drml_rpc::{BabeDeps, FullDeps, GrandpaDeps, LightDeps, RpcConfig, SubscriptionTaskExecutor};
 use pangoro_runtime::RuntimeApi;
 
 pub struct Executor;
@@ -89,6 +86,7 @@ impl NativeExecutionDispatch for Executor {
 
 impl_runtime_apis![
 	darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>,
+	darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>,
 	darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance>,
 	dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
 	dp_evm_trace_apis::DebugRuntimeApi<Block>

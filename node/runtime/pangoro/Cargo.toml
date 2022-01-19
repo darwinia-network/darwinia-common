@@ -25,6 +25,7 @@ darwinia-evm-precompile-transfer    = { default-features = false, path = "../../
 darwinia-fee-market                 = { default-features = false, path = "../../../frame/fee-market" }
 darwinia-fee-market-rpc-runtime-api = { default-features = false, path = "../../../frame/fee-market/rpc/runtime-api" }
 darwinia-staking                    = { default-features = false, path = "../../../frame/staking" }
+darwinia-staking-rpc-runtime-api    = { default-features = false, path = "../../../frame/staking/rpc/runtime-api" }
 darwinia-support                    = { default-features = false, path = "../../../frame/support" }
 dp-asset                            = { default-features = false, path = "../../../primitives/asset" }
 dp-fee                              = { default-features = false, path = "../../../primitives/fee-market" }
@@ -116,6 +117,7 @@ std = [
 	"darwinia-fee-market/std",
 	"darwinia-fee-market-rpc-runtime-api/std",
 	"darwinia-staking/std",
+	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",
 	"dp-asset/std",
 	"dp-fee/std",

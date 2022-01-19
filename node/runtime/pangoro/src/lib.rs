@@ -78,6 +78,7 @@ use common_runtime::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_evm::{AccountBasic, FeeCalculator, Runner};
 use darwinia_fee_market_rpc_runtime_api::{Fee, InProcessOrders};
+use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use drml_common_primitives::*;
 
@@ -465,6 +466,12 @@ sp_api::impl_runtime_apis! {
 				1 => Kton::usable_balance_rpc(account),
 				_ => Default::default()
 			}
+		}
+	}
+
+	impl darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power> for Runtime {
+		fn power_of(account: AccountId) -> StakingRuntimeDispatchInfo<Power> {
+			Staking::power_of_rpc(account)
 		}
 	}
 
