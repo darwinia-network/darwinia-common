@@ -78,6 +78,7 @@ use common_runtime::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_evm::{AccountBasic, FeeCalculator, Runner};
 use darwinia_fee_market_rpc_runtime_api::{Fee, InProcessOrders};
+use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use drml_common_primitives::*;
 
@@ -468,6 +469,12 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power> for Runtime {
+		fn power_of(account: AccountId) -> StakingRuntimeDispatchInfo<Power> {
+			Staking::power_of_rpc(account)
+		}
+	}
+
 	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
 		fn market_fee() -> Option<Fee<Balance>> {
 			if let Some(fee) = FeeMarket::market_fee() {
@@ -804,6 +811,7 @@ sp_api::impl_runtime_apis! {
 	}
 }
 
+#[derive(Clone)]
 pub struct TransactionConverter;
 impl dvm_rpc_runtime_api::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
 	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV0) -> UncheckedExtrinsic {
