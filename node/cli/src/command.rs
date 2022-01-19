@@ -267,20 +267,16 @@ pub fn run() -> sc_cli::Result<()> {
 
 			set_default_ss58_version(chain_spec);
 
-			if chain_spec.is_pangolin() {
-				runner.sync_run(|config| {
-					// Remove dvm offchain db
-					let dvm_database_config = DatabaseSource::RocksDb {
-						path: drml_service::dvm_database_dir(&config),
-						cache_size: 0,
-					};
-					cmd.run(dvm_database_config)?;
+			runner.sync_run(|config| {
+				// Remove dvm offchain db
+				let dvm_database_config = DatabaseSource::RocksDb {
+					path: drml_service::dvm_database_dir(&config),
+					cache_size: 0,
+				};
 
-					cmd.run(config.database)
-				})
-			} else {
-				runner.sync_run(|config| cmd.run(config.database))
-			}
+				cmd.run(dvm_database_config)?;
+				cmd.run(config.database)
+			})
 		}
 		Some(Subcommand::Revert(cmd)) => {
 			async_run!(|cmd, cli, config, client, backend, _import_queue| Ok(
