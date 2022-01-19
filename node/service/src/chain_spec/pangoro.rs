@@ -17,7 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- std ---
-use std::str::FromStr;
+use std::{collections::BTreeMap, str::FromStr};
 // --- crates.io ---
 use rand::{seq::SliceRandom, Rng};
 // --- paritytech ---
@@ -31,6 +31,7 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::Perbill;
 // --- darwinia-network ---
 use super::*;
+use darwinia_evm::GenesisAccount;
 use darwinia_staking::StakerStatus;
 use drml_common_primitives::*;
 use pangoro_runtime::*;
@@ -38,6 +39,18 @@ use pangoro_runtime::*;
 pub type ChainSpec = GenericChainSpec<GenesisConfig, Extensions>;
 
 const PANGORO_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
+
+const EVM_ACCOUNTS: &[&str] = &[
+	"0x68898db1012808808c903f390909c52d9f706749",
+	"0x6be02d1d3665660d22ff9624b7be0551ee1ac91b",
+	"0xB90168C8CBcd351D069ffFdA7B71cd846924d551",
+	// Echo
+	"0x0f14341A7f464320319025540E8Fe48Ad0fe5aec",
+	// for External Project
+	"0x7682Ba569E3823Ca1B7317017F5769F8Aa8842D4",
+	// Subswap
+	"0xbB3E51d20CA651fBE19b1a1C2a6C8B1A4d950437",
+];
 
 const A_FEW_COINS: Balance = 1 << 44;
 const MANY_COINS: Balance = A_FEW_COINS << 6;
@@ -124,6 +137,22 @@ pub fn genesis_config() -> ChainSpec {
 			),
 		];
 		let initial_nominators = <Vec<AccountId>>::new();
+
+		let evm_accounts = {
+			let mut map = BTreeMap::new();
+
+			for account in EVM_ACCOUNTS.iter() {
+				map.insert(
+					array_bytes::hex_into_unchecked(account),
+					GenesisAccount {
+						balance: (MANY_COINS * (10 as Balance).pow(9)).into(),
+						..Default::default()
+					},
+				);
+			}
+
+			map
+		};
 
 		GenesisConfig {
 			system: SystemConfig {
@@ -234,6 +263,10 @@ pub fn genesis_config() -> ChainSpec {
 				secure_limited_ring_amount: 1_000_000 * COIN,
 				remote_mapping_token_factory_account: Default::default(),
 			},
+			evm: EVMConfig {
+				accounts: evm_accounts,
+			},
+			ethereum: Default::default(),
 		}
 	}
 
@@ -280,6 +313,22 @@ pub fn development_config() -> ChainSpec {
 				.map(|m| array_bytes::hex_into_unchecked(m)),
 		)
 		.collect::<Vec<_>>();
+
+		let evm_accounts = {
+			let mut map = BTreeMap::new();
+
+			for account in EVM_ACCOUNTS.iter() {
+				map.insert(
+					array_bytes::hex_into_unchecked(account),
+					GenesisAccount {
+						balance: (123_456_789_000_000_000_000_090 as Balance).into(),
+						..Default::default()
+					},
+				);
+			}
+
+			map
+		};
 
 		GenesisConfig {
 			system: SystemConfig {
@@ -335,6 +384,10 @@ pub fn development_config() -> ChainSpec {
 				secure_limited_ring_amount: 100_000 * COIN,
 				remote_mapping_token_factory_account: Default::default(),
 			},
+			evm: EVMConfig {
+				accounts: evm_accounts,
+			},
+			ethereum: Default::default(),
 		}
 	}
 

@@ -101,7 +101,6 @@ use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDis
 use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
 use darwinia_evm::{AccountBasic, FeeCalculator, Runner};
 use darwinia_fee_market_rpc_runtime_api::{Fee, InProcessOrders};
-use darwinia_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use drml_common_primitives::*;
@@ -559,15 +558,6 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl darwinia_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash> for Runtime {
-		fn gen_proof(
-			block_number_of_member_leaf: u64,
-			block_number_of_last_leaf: u64
-		) -> HeaderMMRRuntimeDispatchInfo<Hash> {
-			HeaderMMR::gen_proof_rpc(block_number_of_member_leaf, block_number_of_last_leaf)
-		}
-	}
-
 	impl darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power> for Runtime {
 		fn power_of(account: AccountId) -> StakingRuntimeDispatchInfo<Power> {
 			Staking::power_of_rpc(account)
@@ -915,6 +905,7 @@ sp_api::impl_runtime_apis! {
 	}
 }
 
+#[derive(Clone)]
 pub struct TransactionConverter;
 impl dvm_rpc_runtime_api::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
 	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV0) -> UncheckedExtrinsic {
