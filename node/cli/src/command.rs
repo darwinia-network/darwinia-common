@@ -108,36 +108,6 @@ impl SubstrateCli for Cli {
 	}
 }
 
-fn get_exec_name() -> Option<String> {
-	env::current_exe()
-		.ok()
-		.and_then(|pb| pb.file_name().map(|s| s.to_os_string()))
-		.and_then(|s| s.into_string().ok())
-}
-
-fn set_default_ss58_version(spec: &Box<dyn ChainSpec>) {
-	let ss58_version = if spec.is_pangoro() {
-		Ss58AddressFormat::DarwiniaAccount
-	} else {
-		Ss58AddressFormat::SubstrateAccount
-	};
-
-	sp_core::crypto::set_default_ss58_version(ss58_version);
-}
-
-fn validate_trace_environment(cli: &Cli) -> sc_cli::Result<()> {
-	if (cli.run.dvm_args.ethapi.contains(&EthApiCmd::Debug)
-		|| cli.run.dvm_args.ethapi.contains(&EthApiCmd::Trace))
-		&& cli.run.base.import_params.wasm_runtime_overrides.is_none()
-	{
-		return Err(
-			"`debug` or `trace` namespaces requires `--wasm-runtime-overrides /path/to/overrides`."
-				.into(),
-		);
-	}
-	Ok(())
-}
-
 /// Parse command line arguments into service configuration.
 pub fn run() -> sc_cli::Result<()> {
 	macro_rules! async_run {
@@ -149,7 +119,7 @@ pub fn run() -> sc_cli::Result<()> {
 
 			if chain_spec.is_pangolin() {
 				runner.async_run(|mut $config| {
-					let ($client, $backend, $import_queue, task_manager) = pangolin_service::new_chain_ops::<
+					let ($client, $backend, $import_queue, task_manager) = drml_service::new_chain_ops::<
 						pangolin_runtime::RuntimeApi,
 						PangolinExecutor,
 					>(&mut $config)?;
@@ -158,7 +128,7 @@ pub fn run() -> sc_cli::Result<()> {
 				})
 			} else {
 				runner.async_run(|mut $config| {
-					let ($client, $backend, $import_queue, task_manager) = pangoro_service::new_chain_ops::<
+					let ($client, $backend, $import_queue, task_manager) = drml_service::new_chain_ops::<
 						pangoro_runtime::RuntimeApi,
 						PangoroExecutor,
 					>(&mut $config)?;
@@ -208,9 +178,9 @@ pub fn run() -> sc_cli::Result<()> {
 			if chain_spec.is_pangolin() {
 				runner.run_node_until_exit(|config| async move {
 					match config.role {
-						Role::Light => pangolin_service::pangolin_new_light(config)
+						Role::Light => pangolin_service::new_light(config)
 							.map(|(task_manager, _)| task_manager),
-						_ => pangolin_service::pangolin_new_full(
+						_ => pangolin_service::new_full(
 							config,
 							authority_discovery_disabled,
 							rpc_config,
@@ -222,12 +192,15 @@ pub fn run() -> sc_cli::Result<()> {
 			} else {
 				runner.run_node_until_exit(|config| async move {
 					match config.role {
-						Role::Light => pangoro_service::pangoro_new_light(config)
-							.map(|(task_manager, _)| task_manager),
-						_ => {
-							pangoro_service::pangoro_new_full(config, authority_discovery_disabled)
-								.map(|(task_manager, _, _)| task_manager)
+						Role::Light => {
+							pangoro_service::new_light(config).map(|(task_manager, _)| task_manager)
 						}
+						_ => pangoro_service::new_full(
+							config,
+							authority_discovery_disabled,
+							rpc_config,
+						)
+						.map(|(task_manager, _, _)| task_manager),
 					}
 					.map_err(sc_cli::Error::Service)
 				})
@@ -264,20 +237,16 @@ pub fn run() -> sc_cli::Result<()> {
 
 			set_default_ss58_version(chain_spec);
 
-			if chain_spec.is_pangolin() {
-				runner.sync_run(|config| {
-					// Remove dvm offchain db
-					let dvm_database_config = DatabaseSource::RocksDb {
-						path: pangolin_service::dvm_database_dir(&config),
-						cache_size: 0,
-					};
-					cmd.run(dvm_database_config)?;
+			runner.sync_run(|config| {
+				// Remove dvm offchain db
+				let dvm_database_config = DatabaseSource::RocksDb {
+					path: drml_service::dvm_database_dir(&config),
+					cache_size: 0,
+				};
 
-					cmd.run(config.database)
-				})
-			} else {
-				runner.sync_run(|config| cmd.run(config.database))
-			}
+				cmd.run(dvm_database_config)?;
+				cmd.run(config.database)
+			})
 		}
 		Some(Subcommand::Revert(cmd)) => {
 			async_run!(|cmd, cli, config, client, backend, _import_queue| Ok(
@@ -338,4 +307,34 @@ pub fn run() -> sc_cli::Result<()> {
 			}
 		}
 	}
+}
+
+fn get_exec_name() -> Option<String> {
+	env::current_exe()
+		.ok()
+		.and_then(|pb| pb.file_name().map(|s| s.to_os_string()))
+		.and_then(|s| s.into_string().ok())
+}
+
+fn set_default_ss58_version(spec: &Box<dyn ChainSpec>) {
+	let ss58_version = if spec.is_pangoro() {
+		Ss58AddressFormat::DarwiniaAccount
+	} else {
+		Ss58AddressFormat::SubstrateAccount
+	};
+
+	sp_core::crypto::set_default_ss58_version(ss58_version);
+}
+
+fn validate_trace_environment(cli: &Cli) -> sc_cli::Result<()> {
+	if (cli.run.dvm_args.ethapi.contains(&EthApiCmd::Debug)
+		|| cli.run.dvm_args.ethapi.contains(&EthApiCmd::Trace))
+		&& cli.run.base.import_params.wasm_runtime_overrides.is_none()
+	{
+		return Err(
+			"`debug` or `trace` namespaces requires `--wasm-runtime-overrides /path/to/overrides`."
+				.into(),
+		);
+	}
+	Ok(())
 }

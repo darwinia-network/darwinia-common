@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "drml-rpc"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.8.0"
+version     = "2.8.1"
 
 [dependencies]
 # crates.io
@@ -16,7 +16,6 @@ jsonrpc-pubsub = { version = "18.0" }
 # darwinia-network
 darwinia-balances-rpc   = { path = "../../frame/balances/rpc" }
 darwinia-fee-market-rpc = { path = "../../frame/fee-market/rpc" }
-darwinia-header-mmr-rpc = { path = "../../frame/header-mmr/rpc" }
 darwinia-staking-rpc    = { path = "../../frame/staking/rpc" }
 dc-db                   = { path = "../../client/dvm/db" }
 dc-rpc                  = { path = "../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }
@@ -25,6 +24,7 @@ drml-common-primitives  = { path = "../primitives/common" }
 dvm-ethereum            = { path = "../../frame/dvm" }
 dvm-rpc-runtime-api     = { path = "../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime        = { path = "../runtime/pangolin" }
+pangoro-runtime         = { path = "../runtime/pangoro" }
 # paritytech
 pallet-transaction-payment-rpc = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sc-chain-spec                  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
