@@ -29,10 +29,7 @@ pub use chain_spec::{
 pub mod service;
 #[cfg(feature = "template")]
 pub use service::template as template_service;
-pub use service::{
-	pangolin as pangolin_service, pangoro as pangoro_service, IdentifyVariant, PangolinExecutor,
-	PangoroExecutor,
-};
+pub use service::{pangolin as pangolin_service, pangoro as pangoro_service, *};
 
 pub use pangolin_runtime::{self, RuntimeApi as PangolinRuntimeApi};
 pub use pangoro_runtime::{self, RuntimeApi as PangoroRuntimeApi};

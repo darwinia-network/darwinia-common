@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "dvm-rpc-core"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.7.2"
+version     = "2.8.0"
 
 [dependencies]
 # crates.io
@@ -31,5 +31,5 @@ sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "
 sp-runtime = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-std     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 # frontier
-fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
-fp-evm      = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
+fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-evm      = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }

@@ -7,7 +7,7 @@ license    = "GPL-3.0"
 name       = "pangolin-runtime"
 readme     = "README.md"
 repository = "https://github.com/darwinia-network/darwinia-common"
-version    = "2.7.2"
+version    = "2.8.0"
 
 [dependencies]
 # crates.io
@@ -36,7 +36,6 @@ darwinia-evm-precompile-transfer        = { default-features = false, path = "..
 darwinia-fee-market                     = { default-features = false, path = "../../../frame/fee-market" }
 darwinia-fee-market-rpc-runtime-api     = { default-features = false, path = "../../../frame/fee-market/rpc/runtime-api" }
 darwinia-header-mmr                     = { default-features = false, path = "../../../frame/header-mmr" }
-darwinia-header-mmr-rpc-runtime-api     = { default-features = false, path = "../../../frame/header-mmr/rpc/runtime-api" }
 darwinia-relay-authorities              = { default-features = false, path = "../../../frame/bridge/relay-authorities" }
 darwinia-relay-primitives               = { default-features = false, path = "../../../primitives/relay" }
 darwinia-relayer-game                   = { default-features = false, path = "../../../frame/bridge/relayer-game" }
@@ -94,7 +93,6 @@ pallet-membership                          = { default-features = false, git = "
 pallet-multisig                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 pallet-offences                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 pallet-proxy                               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
-pallet-randomness-collective-flip          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 pallet-recovery                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 pallet-scheduler                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 pallet-session                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
@@ -123,8 +121,9 @@ sp-std                                     = { default-features = false, git = "
 sp-transaction-pool                        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 # frontier
-fp-evm                       = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
-pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
+fp-evm                       = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-self-contained            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 
 [build-dependencies]
 # paritytech
@@ -157,7 +156,6 @@ std = [
 	"darwinia-fee-market/std",
 	"darwinia-fee-market-rpc-runtime-api/std",
 	"darwinia-header-mmr/std",
-	"darwinia-header-mmr-rpc-runtime-api/std",
 	"darwinia-relay-authorities/std",
 	"darwinia-relay-primitives/std",
 	"darwinia-relayer-game/std",
@@ -208,7 +206,6 @@ std = [
 	"pallet-multisig/std",
 	"pallet-offences/std",
 	"pallet-proxy/std",
-	"pallet-randomness-collective-flip/std",
 	"pallet-recovery/std",
 	"pallet-scheduler/std",
 	"pallet-session/std",
@@ -245,6 +242,7 @@ std = [
 	"sha3/std",
 	# frontier
 	"fp-evm/std",
+	"fp-self-contained/std",
 	"pallet-evm-precompile-simple/std",
 ]
 

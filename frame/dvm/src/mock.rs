@@ -21,11 +21,10 @@
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
 use ethereum::{TransactionAction, TransactionSignature};
-use evm::{executor::PrecompileOutput, Context, ExitError};
 use rlp::RlpStream;
 use scale_info::TypeInfo;
 // --- paritytech ---
-use fp_evm::{Precompile, PrecompileSet};
+use fp_evm::{Context, ExitError, Precompile, PrecompileOutput, PrecompileSet};
 use frame_support::{
 	traits::{Everything, FindAuthor, GenesisBuild},
 	ConsensusEngineId, PalletId,
@@ -46,7 +45,8 @@ use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::IntoAccountId;
 
 type Block = MockBlock<Test>;
-type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
 type Balance = u64;
 
 darwinia_support::impl_test_account_data! {}
@@ -223,7 +223,55 @@ frame_support::construct_runtime! {
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>},
-		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event},
+		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, Origin},
+	}
+}
+
+impl fp_self_contained::SelfContainedCall for Call {
+	type SignedInfo = H160;
+
+	fn is_self_contained(&self) -> bool {
+		match self {
+			Call::Ethereum(call) => call.is_self_contained(),
+			_ => false,
+		}
+	}
+
+	fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.check_self_contained(),
+			_ => None,
+		}
+	}
+
+	fn validate_self_contained(&self, info: &Self::SignedInfo) -> Option<TransactionValidity> {
+		match self {
+			Call::Ethereum(call) => call.validate_self_contained(info),
+			_ => None,
+		}
+	}
+
+	fn pre_dispatch_self_contained(
+		&self,
+		info: &Self::SignedInfo,
+	) -> Option<Result<(), TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.pre_dispatch_self_contained(info),
+			_ => None,
+		}
+	}
+
+	fn apply_self_contained(
+		self,
+		info: Self::SignedInfo,
+	) -> Option<sp_runtime::DispatchResultWithInfo<sp_runtime::traits::PostDispatchInfoOf<Self>>> {
+		use sp_runtime::traits::Dispatchable as _;
+		match self {
+			call @ Call::Ethereum(crate::Call::transact { .. }) => {
+				Some(call.dispatch(Origin::from(crate::RawOrigin::EthereumTransaction(info))))
+			}
+			_ => None,
+		}
 	}
 }
 
@@ -262,6 +310,10 @@ impl UnsignedTransaction {
 	}
 
 	pub fn sign(&self, key: &H256) -> TransactionV0 {
+		self.sign_with_chain_id(key, ChainId::get())
+	}
+
+	pub fn sign_with_chain_id(&self, key: &H256, chain_id: u64) -> TransactionV0 {
 		let hash = self.signing_hash();
 		let msg = libsecp256k1::Message::parse(hash.as_fixed_bytes());
 		let s = libsecp256k1::sign(
@@ -271,7 +323,7 @@ impl UnsignedTransaction {
 		let sig = s.0.serialize();
 
 		let sig = TransactionSignature::new(
-			s.1.serialize() as u64 % 2 + ChainId::get() * 2 + 35,
+			s.1.serialize() as u64 % 2 + chain_id * 2 + 35,
 			H256::from_slice(&sig[0..32]),
 			H256::from_slice(&sig[32..64]),
 		)

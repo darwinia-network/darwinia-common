@@ -22,7 +22,6 @@
 use core::marker::PhantomData;
 // --- crates.io ---
 use codec::Encode;
-use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::DvmInputParser;
 use darwinia_support::{
@@ -38,7 +37,7 @@ use dp_s2s::{CallParams, CreatePayload};
 // --- paritytech ---
 use bp_message_dispatch::CallOrigin;
 use bp_runtime::messages::DispatchFeePayment;
-use fp_evm::Precompile;
+use fp_evm::{Context, ExitError, ExitSucceed, Precompile, PrecompileOutput};
 use frame_support::sp_runtime::SaturatedConversion;
 use sp_core::H160;
 use sp_std::vec::Vec;

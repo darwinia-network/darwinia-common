@@ -41,15 +41,13 @@ pub mod ring;
 pub mod util;
 
 // --- paritytech ---
-use fp_evm::Precompile;
+use fp_evm::{Context, ExitError, Precompile, PrecompileOutput};
 use sp_std::marker::PhantomData;
 // --- darwinia-network ---
 use darwinia_evm::Config;
 use darwinia_support::{evm::SELECTOR, AccountId};
 use kton::Kton;
 use ring::RingBack;
-// --- crates.io ---
-use evm::{executor::PrecompileOutput, Context, ExitError};
 
 /// Transfer Precompile Contract, used to support the exchange of KTON and RING transfer.
 pub enum Transfer<T> {

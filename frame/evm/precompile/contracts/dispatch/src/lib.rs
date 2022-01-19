@@ -19,13 +19,12 @@
 
 // --- crates.io ---
 use core::marker::PhantomData;
-use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 // --- darwinia-network ---
 use darwinia_evm::GasWeightMapping;
 use darwinia_support::evm::IntoAccountId;
 // --- paritytech ---
 use codec::Decode;
-use fp_evm::Precompile;
+use fp_evm::{Context, ExitError, ExitSucceed, Precompile, PrecompileOutput};
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	weights::{DispatchClass, Pays},

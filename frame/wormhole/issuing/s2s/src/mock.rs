@@ -46,11 +46,12 @@ use darwinia_support::{
 };
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
-	IntermediateStateRoot,
+	IntermediateStateRoot, RawOrigin,
 };
 
 type Block = MockBlock<Test>;
-type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
 type Balance = u64;
 
 /*
@@ -291,7 +292,55 @@ frame_support::construct_runtime! {
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		S2sIssuing: s2s_issuing::{Pallet, Call, Storage, Config, Event<T>},
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>},
-		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config},
+		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Origin},
+	}
+}
+
+impl fp_self_contained::SelfContainedCall for Call {
+	type SignedInfo = H160;
+
+	fn is_self_contained(&self) -> bool {
+		match self {
+			Call::Ethereum(call) => call.is_self_contained(),
+			_ => false,
+		}
+	}
+
+	fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.check_self_contained(),
+			_ => None,
+		}
+	}
+
+	fn validate_self_contained(&self, info: &Self::SignedInfo) -> Option<TransactionValidity> {
+		match self {
+			Call::Ethereum(call) => call.validate_self_contained(info),
+			_ => None,
+		}
+	}
+
+	fn pre_dispatch_self_contained(
+		&self,
+		info: &Self::SignedInfo,
+	) -> Option<Result<(), TransactionValidityError>> {
+		match self {
+			Call::Ethereum(call) => call.pre_dispatch_self_contained(info),
+			_ => None,
+		}
+	}
+
+	fn apply_self_contained(
+		self,
+		info: Self::SignedInfo,
+	) -> Option<sp_runtime::DispatchResultWithInfo<sp_runtime::traits::PostDispatchInfoOf<Self>>> {
+		use sp_runtime::traits::Dispatchable as _;
+		match self {
+			call @ Call::Ethereum(dvm_ethereum::Call::transact { .. }) => {
+				Some(call.dispatch(Origin::from(RawOrigin::EthereumTransaction(info))))
+			}
+			_ => None,
+		}
 	}
 }
 

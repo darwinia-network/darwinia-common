@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "dc-db"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.7.2"
+version     = "2.8.0"
 
 [dependencies]
 # crates.io
@@ -22,5 +22,5 @@ sp-core     = { git = "https://github.com/darwinia-network/substrate", branch = 
 sp-database = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-runtime  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 # frontier
-fp-evm     = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
-fp-storage = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.0" }
+fp-evm     = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-storage = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }

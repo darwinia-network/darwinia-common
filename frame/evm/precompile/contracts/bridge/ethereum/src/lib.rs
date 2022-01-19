@@ -22,11 +22,10 @@
 use core::marker::PhantomData;
 // --- crates.io ---
 use codec::Encode;
-use evm::{executor::PrecompileOutput, Context, ExitError, ExitSucceed};
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{selector, DvmInputParser};
 // --- paritytech ---
-use fp_evm::Precompile;
+use fp_evm::{Context, ExitError, ExitSucceed, Precompile, PrecompileOutput};
 
 #[selector]
 enum Action {

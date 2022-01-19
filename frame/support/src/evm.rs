@@ -27,7 +27,7 @@ use sp_runtime::{traits::AccountIdConversion, AccountId32};
 use sp_std::{marker::PhantomData, vec::Vec};
 
 pub const POW_9: u32 = 1_000_000_000;
-/// The default gas price for the internal transaction
+/// The default gas limit for the internal transaction
 pub const INTERNAL_TX_GAS_LIMIT: u32 = 300_000_000;
 /// The action selector used in transfer pre-compile
 pub const SELECTOR: usize = 4;
@@ -105,49 +105,45 @@ pub fn recover_signer(transaction: &ethereum::TransactionV0) -> Option<H160> {
 
 /// The dvm transaction used by inner pallets, such as ethereum-issuing.
 pub struct DVMTransaction {
-	/// source of the transaction
-	pub source: H160,
 	/// gas price wrapped by Option
 	pub gas_price: Option<U256>,
 	/// the transaction defined in ethereum lib
 	pub tx: ethereum::TransactionV0,
 }
 
-impl DVMTransaction {
-	/// the internal transaction usually used by pallets
-	/// the source account is specified by pallet dvm account
-	/// gas_price is None means no need for gas fee
-	/// a default signature which will not be verified
-	pub fn new_internal_transaction(
-		source: H160,
-		nonce: U256,
-		target: H160,
-		input: Vec<u8>,
-	) -> Self {
-		let transaction = ethereum::TransactionV0 {
-			nonce,
-			// Not used, and will be overwritten by None later.
-			gas_price: U256::zero(),
-			gas_limit: U256::from(INTERNAL_TX_GAS_LIMIT),
-			action: ethereum::TransactionAction::Call(target),
-			value: U256::zero(),
-			input,
-			signature: ethereum::TransactionSignature::new(
-				// Reference https://github.com/ethereum/EIPs/issues/155
-				//
-				// But this transaction is sent by darwinia-issuing system from `0x0`
-				// So ignore signature checking, simply set `chain_id` to `1`
-				1 * 2 + 36,
-				H256::from_slice(&[55u8; 32]),
-				H256::from_slice(&[55u8; 32]),
-			)
-			.unwrap(),
-		};
+impl From<ethereum::TransactionV0> for DVMTransaction {
+	fn from(transaction: ethereum::TransactionV0) -> Self {
 		Self {
-			source,
-			gas_price: None,
+			gas_price: Some(transaction.gas_price),
 			tx: transaction,
 		}
+	}
+}
+
+pub fn new_internal_transaction(nonce: U256, target: H160, input: Vec<u8>) -> DVMTransaction {
+	let transaction = ethereum::TransactionV0 {
+		nonce,
+		// Not used, and will be overwritten by None later.
+		gas_price: U256::zero(),
+		gas_limit: U256::from(INTERNAL_TX_GAS_LIMIT),
+		action: ethereum::TransactionAction::Call(target),
+		value: U256::zero(),
+		input,
+		signature: ethereum::TransactionSignature::new(
+			// Reference https://github.com/ethereum/EIPs/issues/155
+			//
+			// But this transaction is sent by darwinia-issuing system from `0x0`
+			// So ignore signature checking, simply set `chain_id` to `1`
+			1 * 2 + 36,
+			H256::from_slice(&[55u8; 32]),
+			H256::from_slice(&[55u8; 32]),
+		)
+		.unwrap(),
+	};
+
+	DVMTransaction {
+		gas_price: None,
+		tx: transaction,
 	}
 }
 

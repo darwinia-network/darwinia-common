@@ -1,9 +1,6 @@
 pub mod system;
 pub use system::*;
 
-pub mod randomness_collective_flip;
-pub use randomness_collective_flip::*;
-
 pub mod babe;
 pub use babe::*;
 
@@ -69,3 +66,9 @@ pub use transaction_pause::*;
 
 pub mod to_substrate_backing_;
 pub use to_substrate_backing_::*;
+
+pub mod evm;
+pub use evm::*;
+
+pub mod dvm;
+pub use dvm::*;
