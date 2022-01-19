@@ -149,7 +149,7 @@ pub fn run() -> sc_cli::Result<()> {
 
 			if chain_spec.is_pangolin() {
 				runner.async_run(|mut $config| {
-					let ($client, $backend, $import_queue, task_manager) = pangolin_service::new_chain_ops::<
+					let ($client, $backend, $import_queue, task_manager) = drml_service::new_chain_ops::<
 						pangolin_runtime::RuntimeApi,
 						PangolinExecutor,
 					>(&mut $config)?;
@@ -158,7 +158,7 @@ pub fn run() -> sc_cli::Result<()> {
 				})
 			} else {
 				runner.async_run(|mut $config| {
-					let ($client, $backend, $import_queue, task_manager) = pangoro_service::new_chain_ops::<
+					let ($client, $backend, $import_queue, task_manager) = drml_service::new_chain_ops::<
 						pangoro_runtime::RuntimeApi,
 						PangoroExecutor,
 					>(&mut $config)?;
@@ -208,9 +208,9 @@ pub fn run() -> sc_cli::Result<()> {
 			if chain_spec.is_pangolin() {
 				runner.run_node_until_exit(|config| async move {
 					match config.role {
-						Role::Light => pangolin_service::pangolin_new_light(config)
+						Role::Light => pangolin_service::new_light(config)
 							.map(|(task_manager, _)| task_manager),
-						_ => pangolin_service::pangolin_new_full(
+						_ => pangolin_service::new_full(
 							config,
 							authority_discovery_disabled,
 							rpc_config,
@@ -222,9 +222,10 @@ pub fn run() -> sc_cli::Result<()> {
 			} else {
 				runner.run_node_until_exit(|config| async move {
 					match config.role {
-						Role::Light => pangoro_service::pangoro_new_light(config)
-							.map(|(task_manager, _)| task_manager),
-						_ => pangoro_service::pangoro_new_full(
+						Role::Light => {
+							pangoro_service::new_light(config).map(|(task_manager, _)| task_manager)
+						}
+						_ => pangoro_service::new_full(
 							config,
 							authority_discovery_disabled,
 							rpc_config,
@@ -270,7 +271,7 @@ pub fn run() -> sc_cli::Result<()> {
 				runner.sync_run(|config| {
 					// Remove dvm offchain db
 					let dvm_database_config = DatabaseSource::RocksDb {
-						path: pangolin_service::dvm_database_dir(&config),
+						path: drml_service::dvm_database_dir(&config),
 						cache_size: 0,
 					};
 					cmd.run(dvm_database_config)?;
