@@ -316,10 +316,11 @@ where
 }
 
 #[cfg(feature = "full-node")]
-fn new_full<RuntimeApi, Executor>(
+fn new_full<RuntimeApi, Executor, CT>(
 	mut config: Configuration,
 	authority_discovery_disabled: bool,
 	rpc_config: RpcConfig,
+	eth_transaction_convertor: CT,
 ) -> Result<
 	(
 		TaskManager,
@@ -334,6 +335,11 @@ where
 		'static + Send + Sync + ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>>,
 	RuntimeApi::RuntimeApi:
 		RuntimeApiCollection<StateBackend = StateBackendFor<FullBackend, Block>>,
+	CT: 'static
+		+ Clone
+		+ Send
+		+ Sync
+		+ dvm_rpc_runtime_api::ConvertTransaction<sp_runtime::OpaqueExtrinsic>,
 {
 	let role = config.role.clone();
 	let is_authority = role.is_authority();
@@ -427,38 +433,41 @@ where
 		let select_chain = select_chain.clone();
 		let chain_spec = config.chain_spec.cloned_box();
 		let shared_voter_state = shared_voter_state.clone();
+		let network = network.clone();
 
-		move |deny_unsafe, is_authority, network, subscription_executor| -> RpcResult {
-			let deps = FullDeps {
-				client: client.clone(),
-				pool: transaction_pool.clone(),
-				graph: transaction_pool.pool().clone(),
-				select_chain: select_chain.clone(),
-				chain_spec: chain_spec.cloned_box(),
-				deny_unsafe,
-				is_authority,
-				network,
-				babe: BabeDeps {
-					babe_config: babe_config.clone(),
-					shared_epoch_changes: shared_epoch_changes.clone(),
-					keystore: keystore.clone(),
+		Box::new(move |deny_unsafe, subscription_executor| -> RpcResult {
+			drml_rpc::create_full(
+				FullDeps {
+					client: client.clone(),
+					pool: transaction_pool.clone(),
+					graph: transaction_pool.pool().clone(),
+					select_chain: select_chain.clone(),
+					chain_spec: chain_spec.cloned_box(),
+					deny_unsafe,
+					is_authority,
+					network: network.clone(),
+					babe: BabeDeps {
+						babe_config: babe_config.clone(),
+						shared_epoch_changes: shared_epoch_changes.clone(),
+						keystore: keystore.clone(),
+					},
+					grandpa: GrandpaDeps {
+						shared_voter_state: shared_voter_state.clone(),
+						shared_authority_set: shared_authority_set.clone(),
+						justification_stream: justification_stream.clone(),
+						subscription_executor,
+						finality_provider: finality_proof_provider.clone(),
+					},
+					backend: dvm_backend.clone(),
+					filter_pool: filter_pool.clone(),
+					tracing_requesters: tracing_requesters.clone(),
+					rpc_config: rpc_config.clone(),
 				},
-				grandpa: GrandpaDeps {
-					shared_voter_state: shared_voter_state.clone(),
-					shared_authority_set: shared_authority_set.clone(),
-					justification_stream: justification_stream.clone(),
-					subscription_executor,
-					finality_provider: finality_proof_provider.clone(),
-				},
-				backend: dvm_backend.clone(),
-				filter_pool: filter_pool.clone(),
-				tracing_requesters: tracing_requesters.clone(),
-				rpc_config: rpc_config.clone(),
-			};
-
-			drml_rpc::pangoro::create_full(deps, subscription_task_executor.clone())
-				.map_err(Into::into)
-		}
+				subscription_task_executor.clone(),
+				eth_transaction_convertor.clone(),
+			)
+			.map_err(Into::into)
+		})
 	};
 	let rpc_handlers = sc_service::spawn_tasks(SpawnTasksParams {
 		config,
@@ -466,21 +475,7 @@ where
 		client: client.clone(),
 		keystore: keystore_container.sync_keystore(),
 		network: network.clone(),
-		rpc_extensions_builder: {
-			let network = network.clone();
-			let wrap_rpc_extensions_builder = {
-				move |deny_unsafe, subscription_executor| -> RpcResult {
-					rpc_extensions_builder(
-						deny_unsafe,
-						is_authority,
-						network.clone(),
-						subscription_executor,
-					)
-				}
-			};
-
-			Box::new(wrap_rpc_extensions_builder)
-		},
+		rpc_extensions_builder,
 		transaction_pool: transaction_pool.clone(),
 		task_manager: &mut task_manager,
 		on_demand: None,
@@ -750,7 +745,7 @@ where
 		client: client.clone(),
 		pool: transaction_pool.clone(),
 	};
-	let rpc_extension = drml_rpc::pangolin::create_light(light_deps);
+	let rpc_extension = drml_rpc::create_light(light_deps);
 	let rpc_handlers = sc_service::spawn_tasks(SpawnTasksParams {
 		on_demand: Some(on_demand),
 		remote_blockchain: Some(backend.remote_blockchain()),

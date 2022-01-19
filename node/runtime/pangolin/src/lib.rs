@@ -905,6 +905,7 @@ sp_api::impl_runtime_apis! {
 	}
 }
 
+#[derive(Clone)]
 pub struct TransactionConverter;
 impl dvm_rpc_runtime_api::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
 	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV0) -> UncheckedExtrinsic {
