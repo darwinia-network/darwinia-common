@@ -116,7 +116,7 @@ jobs:
 
       - name: Purge large cache
         if: matrix.task.target == 'drml'
-        run: .maintain/purge-large-cache.sh
+        run: .github/purge-large-cache.sh
 
   dvm-checks:
     name: Task test ${{ matrix.task.target }} DVM testcases
