@@ -27,6 +27,7 @@ bp-runtime          = { default-features = false, git = "https://github.com/darw
 frame-support       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-core             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-io               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 # frontier
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
@@ -51,6 +52,7 @@ std = [
 	"frame-support/std",
 	"sp-core/std",
 	"sp-io/std",
+	"sp-runtime/std",
 	"sp-std/std",
 	# frontier
 	"fp-evm/std",

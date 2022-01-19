@@ -19,6 +19,7 @@ use bridge_runtime_common::messages::{
 	MessageBridge, MessageTransaction,
 };
 use frame_support::{
+	traits::PalletInfoAccess,
 	weights::{DispatchClass, Weight},
 	RuntimeDebug,
 };
@@ -27,6 +28,7 @@ use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
+use darwinia_support::s2s::{LatestMessageNoncer, RelayMessageSender};
 use dp_s2s::{CallParams, CreatePayload};
 use drml_bridge_primitives::{
 	FromThisChainMessageVerifier, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE,
@@ -39,8 +41,8 @@ pub const PANGORO_S2S_BACKING_PALLET_INDEX: u8 = 20;
 pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessageBridge>;
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
-pub struct ToPangoroOutboundPayLoad;
-impl CreatePayload<AccountId, AccountPublic, Signature> for ToPangoroOutboundPayLoad {
+pub struct ToPangoroMessageSender;
+impl CreatePayload<AccountId, AccountPublic, Signature> for ToPangoroMessageSender {
 	type Payload = ToPangoroMessagePayload;
 
 	fn create(
@@ -58,6 +60,45 @@ impl CreatePayload<AccountId, AccountPublic, Signature> for ToPangoroOutboundPay
 			call,
 			dispatch_fee_payment,
 		})
+	}
+}
+
+impl RelayMessageSender for ToPangoroMessageSender {
+	fn encode_send_message(
+		message_pallet_index: u32,
+		lane_id: LaneId,
+		payload: Vec<u8>,
+		fee: u128,
+	) -> Result<Vec<u8>, &'static str> {
+		let payload = ToPangoroMessagePayload::decode(&mut payload.as_slice())
+			.map_err(|_| "decode pangoro payload failed")?;
+
+		let call: Call = match message_pallet_index {
+			_ if message_pallet_index as usize
+				== <BridgePangoroMessages as PalletInfoAccess>::index() =>
+			{
+				BridgeMessagesCall::<Runtime, WithPangoroMessages>::send_message {
+					lane_id,
+					payload,
+					delivery_and_dispatch_fee: fee.saturated_into(),
+				}
+				.into()
+			}
+			_ => {
+				return Err("invalid pallet index".into());
+			}
+		};
+		Ok(call.encode())
+	}
+}
+
+impl LatestMessageNoncer for ToPangoroMessageSender {
+	fn outbound_latest_generated_nonce(lane_id: LaneId) -> u64 {
+		BridgePangoroMessages::outbound_latest_generated_nonce(lane_id).into()
+	}
+
+	fn inbound_latest_received_nonce(lane_id: LaneId) -> u64 {
+		BridgePangoroMessages::inbound_latest_received_nonce(lane_id).into()
 	}
 }
 

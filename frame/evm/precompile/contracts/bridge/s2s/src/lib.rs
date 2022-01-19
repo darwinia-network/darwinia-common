@@ -40,6 +40,7 @@ use bp_runtime::messages::DispatchFeePayment;
 use fp_evm::{Context, ExitError, ExitSucceed, Precompile, PrecompileOutput};
 use frame_support::sp_runtime::SaturatedConversion;
 use sp_core::H160;
+use sp_runtime::{MultiSignature, MultiSigner};
 use sp_std::vec::Vec;
 
 #[darwinia_evm_precompile_utils::selector]
@@ -52,8 +53,9 @@ enum Action {
 	EncodeUnlockFromRemoteDispatchCall =
 		"encode_unlock_from_remote_dispatch_call(uint32,uint64,uint32,address,bytes,uint256)",
 	// backing used
-	EncodeRegisterFromRemoteDispatchCall = "encode_register_from_remote_dispatch_call",
-	EncodeIssueFromRemoteDispatchCall = "encode_issue_from_remote_dispatch_call",
+	EncodeRegisterFromRemoteDispatchCall = "encode_register_from_remote_dispatch_call(uint32,uint64,uint32,address,string,string,uint8)",
+	EncodeIssueFromRemoteDispatchCall =
+		"encode_issue_from_remote_dispatch_call(uint32,uint64,address,address,uint256)",
 }
 
 /// The contract address: 0000000000000000000000000000000000000018
@@ -63,9 +65,10 @@ pub struct Sub2SubBridge<T, S> {
 
 impl<T, S> Precompile for Sub2SubBridge<T, S>
 where
-	T: from_substrate_issuing::Config,
-	T: to_substrate_backing::Config,
-	S: RelayMessageSender + LatestMessageNoncer,
+	T: darwinia_evm::Config,
+	S: RelayMessageSender
+		+ LatestMessageNoncer
+		+ CreatePayload<T::AccountId, MultiSigner, MultiSignature>,
 {
 	fn execute(
 		input: &[u8],
@@ -105,9 +108,10 @@ where
 
 impl<T, S> Sub2SubBridge<T, S>
 where
-	T: from_substrate_issuing::Config,
-	T: to_substrate_backing::Config,
-	S: RelayMessageSender + LatestMessageNoncer,
+	T: darwinia_evm::Config,
+	S: RelayMessageSender
+		+ LatestMessageNoncer
+		+ CreatePayload<T::AccountId, MultiSigner, MultiSignature>,
 {
 	fn outbound_latest_generated_nonce(dvm_parser: &DvmInputParser) -> Result<Vec<u8>, ExitError> {
 		let lane_id = abi_decode_bytes4(dvm_parser.input)
@@ -129,7 +133,7 @@ where
 	) -> Result<Vec<u8>, ExitError> {
 		let unlock_info = S2sRemoteUnlockInfo::abi_decode(dvm_parser.input)
 			.map_err(|_| ExitError::Other("decode unlock info failed".into()))?;
-		let payload = <T as from_substrate_issuing::Config>::OutboundPayloadCreator::create(
+		let payload = <S as CreatePayload<T::AccountId, MultiSigner, MultiSignature>>::create(
 			CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(caller)),
 			unlock_info.spec_version,
 			unlock_info.weight,
@@ -165,7 +169,7 @@ where
 	) -> Result<Vec<u8>, ExitError> {
 		let register_info = S2sRegisterTokenParams::abi_decode(dvm_parser.input)
 			.map_err(|_| ExitError::Other("decode register info failed".into()))?;
-		let payload = <T as to_substrate_backing::Config>::OutboundPayloadCreator::create(
+		let payload = <S as CreatePayload<T::AccountId, MultiSigner, MultiSignature>>::create(
 			CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(caller)),
 			register_info.spec_version,
 			register_info.weight,
@@ -182,7 +186,7 @@ where
 	) -> Result<Vec<u8>, ExitError> {
 		let issue_info = S2sIssueTokenParams::abi_decode(dvm_parser.input)
 			.map_err(|_| ExitError::Other("decode register info failed".into()))?;
-		let payload = <T as to_substrate_backing::Config>::OutboundPayloadCreator::create(
+		let payload = <S as CreatePayload<T::AccountId, MultiSigner, MultiSignature>>::create(
 			CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(caller)),
 			issue_info.spec_version,
 			issue_info.weight,

@@ -1,28 +1,24 @@
 // --- core ---
 use core::marker::PhantomData;
 // --- paritytech ---
-use bp_messages::LaneId;
 use codec::{Decode, Encode};
 use fp_evm::{Context, ExitError, Precompile, PrecompileOutput, PrecompileSet};
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
-	traits::{FindAuthor, PalletInfoAccess},
+	traits::FindAuthor,
 	ConsensusEngineId,
 };
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use sp_core::{crypto::Public, H160, U256};
 // --- darwinia-network ---
-use crate::*;
+use crate::{pangoro_messages::ToPangoroMessageSender, *};
 use darwinia_evm::{runner::stack::Runner, Config, EnsureAddressTruncated, FeeCalculator};
 use darwinia_evm_precompile_bridge_bsc::BscBridge;
 use darwinia_evm_precompile_bridge_ethereum::EthereumBridge;
 use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 use darwinia_evm_precompile_dispatch::Dispatch;
 use darwinia_evm_precompile_transfer::Transfer;
-use darwinia_support::{
-	evm::ConcatConverter,
-	s2s::{LatestMessageNoncer, RelayMessageSender},
-};
+use darwinia_support::evm::ConcatConverter;
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping,
@@ -42,54 +38,16 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 	}
 }
 
-pub struct ToPangoroMessageSender;
-impl RelayMessageSender for ToPangoroMessageSender {
-	fn encode_send_message(
-		message_pallet_index: u32,
-		lane_id: LaneId,
-		payload: Vec<u8>,
-		fee: u128,
-	) -> Result<Vec<u8>, &'static str> {
-		let payload = ToPangoroMessagePayload::decode(&mut payload.as_slice())
-			.map_err(|_| "decode pangoro payload failed")?;
-
-		let call: Call = match message_pallet_index {
-			_ if message_pallet_index as usize
-				== <BridgePangoroMessages as PalletInfoAccess>::index() =>
-			{
-				BridgeMessagesCall::<Runtime, WithPangoroMessages>::send_message {
-					lane_id,
-					payload,
-					delivery_and_dispatch_fee: fee.saturated_into(),
-				}
-				.into()
-			}
-			_ => {
-				return Err("invalid pallet index".into());
-			}
-		};
-		Ok(call.encode())
-	}
-}
-impl LatestMessageNoncer for ToPangoroMessageSender {
-	fn outbound_latest_generated_nonce(lane_id: LaneId) -> u64 {
-		BridgePangoroMessages::outbound_latest_generated_nonce(lane_id).into()
-	}
-
-	fn inbound_latest_received_nonce(lane_id: LaneId) -> u64 {
-		BridgePangoroMessages::inbound_latest_received_nonce(lane_id).into()
-	}
-}
-
 pub struct PangolinPrecompiles<R>(PhantomData<R>);
 impl<R> PrecompileSet for PangolinPrecompiles<R>
 where
-	R: from_substrate_issuing::Config + from_ethereum_issuing::Config,
+	R: from_ethereum_issuing::Config,
 	R: darwinia_evm::Config,
 	R: darwinia_bridge_bsc::Config,
 	R::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Encode + Decode,
 	<R::Call as Dispatchable>::Origin: From<Option<R::AccountId>>,
-	R::Call: From<from_ethereum_issuing::Call<R>> + From<from_substrate_issuing::Call<R>>,
+	R::Call: From<from_ethereum_issuing::Call<R>>,
+	Sub2SubBridge<R, ToPangoroMessageSender>: Precompile,
 {
 	fn execute(
 		address: H160,
