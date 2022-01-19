@@ -21,6 +21,7 @@ common-runtime                      = { default-features = false, path = "../com
 darwinia-balances                   = { default-features = false, path = "../../../frame/balances" }
 darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
 darwinia-evm                        = { default-features = false, path = "../../../frame/evm" }
+darwinia-evm-precompile-transfer    = { default-features = false, path = "../../../frame/evm/precompile/contracts/transfer" }
 darwinia-fee-market                 = { default-features = false, path = "../../../frame/fee-market" }
 darwinia-fee-market-rpc-runtime-api = { default-features = false, path = "../../../frame/fee-market/rpc/runtime-api" }
 darwinia-staking                    = { default-features = false, path = "../../../frame/staking" }
@@ -30,8 +31,17 @@ dp-fee                              = { default-features = false, path = "../../
 dp-s2s                              = { default-features = false, path = "../../../primitives/s2s" }
 drml-bridge-primitives              = { default-features = false, path = "../../primitives/bridge" }
 drml-common-primitives              = { default-features = false, path = "../../primitives/common" }
+dvm-ethereum                        = { default-features = false, path = "../../../frame/dvm" }
+dvm-rpc-runtime-api                 = { default-features = false, path = "../../../frame/dvm/rpc/runtime-api" }
 module-transaction-pause            = { default-features = false, path = "../../../frame/transaction-pause" }
 to-substrate-backing                = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
+# dvm trace
+dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/evm-trace/apis" }
+dp-evm-trace-events = { optional = true, default-features = false, path = "../../../primitives/evm-trace/events" }
+dp-evm-trace-ext    = { default-features = false, path = "../../../primitives/evm-trace/ext" }
+dp-evm-tracer       = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
+rlp                 = { version = "0.5", optional = true, default-features = false }
+sha3                = { version = "0.8", optional = true, default-features = false }
 # paritytech
 bp-header-chain                            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.0" }
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.0" }
@@ -79,6 +89,12 @@ sp-std                                     = { default-features = false, git = "
 sp-transaction-pool                        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-trie                                    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+# frontier
+fp-evm                       = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-self-contained            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-storage                   = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+
 
 [build-dependencies]
 # paritytech
@@ -96,6 +112,7 @@ std = [
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
 	"darwinia-evm/std",
+	"darwinia-evm-precompile-transfer/std",
 	"darwinia-fee-market/std",
 	"darwinia-fee-market-rpc-runtime-api/std",
 	"darwinia-staking/std",
@@ -105,6 +122,8 @@ std = [
 	"dp-s2s/std",
 	"drml-bridge-primitives/std",
 	"drml-common-primitives/std",
+	"dvm-ethereum/std",
+	"dvm-rpc-runtime-api/std",
 	"module-transaction-pause/std",
 	"to-substrate-backing/std",
 	# paritytech
@@ -154,6 +173,18 @@ std = [
 	"sp-transaction-pool/std",
 	"sp-trie/std",
 	"sp-version/std",
+	# trace
+	"dp-evm-trace-apis/std",
+	"dp-evm-trace-events/std",
+	"dp-evm-trace-ext/std",
+	"dp-evm-tracer/std",
+	"rlp/std",
+	"sha3/std",
+	# frontier
+	"fp-evm/std",
+	"fp-self-contained/std",
+	"fp-storage/std",
+	"pallet-evm-precompile-simple/std",
 ]
 
 runtime-benchmarks = [
@@ -175,3 +206,10 @@ try-runtime = [
 ]
 
 no-wasm = []
+
+evm-tracing = [
+	"dp-evm-trace-events",
+	"dp-evm-tracer",
+	"rlp",
+	"sha3",
+]

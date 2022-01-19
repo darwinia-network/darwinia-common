@@ -25,6 +25,7 @@ drml-common-primitives  = { path = "../primitives/common" }
 dvm-ethereum            = { path = "../../frame/dvm" }
 dvm-rpc-runtime-api     = { path = "../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime        = { path = "../runtime/pangolin" }
+pangoro-runtime         = { path = "../runtime/pangoro" }
 # paritytech
 pallet-transaction-payment-rpc = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
 sc-chain-spec                  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }

@@ -20,15 +20,23 @@
 
 #![warn(missing_docs)]
 
+// --- std ---
+use std::collections::BTreeMap;
 // --- darwinia-network ---
 use crate::*;
+use dc_rpc::EthBlockDataCache;
+use dvm_ethereum::EthereumStorageSchema;
+// --- parity-tech ---
+use sc_transaction_pool::{ChainApi, Pool};
 
 /// Full client dependencies
-pub struct FullDeps<C, P, SC, B> {
+pub struct FullDeps<C, P, SC, B, A: ChainApi> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
 	pub pool: Arc<P>,
+	/// Graph pool instance.
+	pub graph: Arc<Pool<A>>,
 	/// The SelectChain Strategy
 	pub select_chain: SC,
 	/// A copy of the chain spec.
@@ -39,6 +47,18 @@ pub struct FullDeps<C, P, SC, B> {
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
 	pub grandpa: GrandpaDeps<B>,
+	/// The Node authority flag
+	pub is_authority: bool,
+	/// Network service
+	pub network: Arc<sc_network::NetworkService<Block, Hash>>,
+	/// EthFilterApi pool.
+	pub filter_pool: Option<fc_rpc_core::types::FilterPool>,
+	/// Backend.
+	pub backend: Arc<dc_db::Backend<Block>>,
+	/// Rpc requester for evm trace
+	pub tracing_requesters: RpcRequesters,
+	/// Rpc Config
+	pub rpc_config: RpcConfig,
 }
 
 /// Light client extra dependencies.
@@ -54,26 +74,36 @@ pub struct LightDeps<C, F, P> {
 }
 
 /// Instantiate all RPC extensions.
-pub fn create_full<C, P, SC, B>(deps: FullDeps<C, P, SC, B>) -> RpcResult
+pub fn create_full<C, P, SC, B, A>(
+	deps: FullDeps<C, P, SC, B, A>,
+	subscription_task_executor: SubscriptionTaskExecutor,
+) -> RpcResult
 where
 	C: 'static
 		+ Send
 		+ Sync
 		+ sc_client_api::AuxStore
+		+ sc_client_api::BlockchainEvents<Block>
+		+ sc_client_api::StorageProvider<Block, B>
 		+ sp_api::ProvideRuntimeApi<Block>
 		+ sp_blockchain::HeaderBackend<Block>
 		+ sp_blockchain::HeaderMetadata<Block, Error = sp_blockchain::Error>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-	C::Api: darwinia_fee_market_rpc::FeeMarketRuntimeApi<Block, Balance>,
 	C::Api: sc_consensus_babe::BabeApi<Block>,
 	C::Api: sp_block_builder::BlockBuilder<Block>,
 	C::Api: darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
-	P: 'static + sc_transaction_pool_api::TransactionPool,
+	C::Api: darwinia_fee_market_rpc::FeeMarketRuntimeApi<Block, Balance>,
+	C::Api: dp_evm_trace_apis::DebugRuntimeApi<Block>,
+	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
+	P: 'static + Sync + Send + sc_transaction_pool_api::TransactionPool<Block = Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<Hashing>,
+	A: ChainApi<Block = Block> + 'static,
 {
+	// --- crates.io ---
+	use jsonrpc_pubsub::manager::SubscriptionManager;
 	// --- paritytech ---
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use sc_consensus_babe_rpc::{BabeApi, BabeRpcHandler};
@@ -83,21 +113,35 @@ where
 	// --- darwinia-network ---
 	use darwinia_balances_rpc::{Balances, BalancesApi};
 	use darwinia_fee_market_rpc::{FeeMarket, FeeMarketApi};
+	use dc_rpc::{
+		Debug, DebugApiServer, EthApi, EthApiServer, EthFilterApi, EthFilterApiServer,
+		EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider, NetApi, NetApiServer,
+		OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride, Trace,
+		TraceApiServer, Web3Api, Web3ApiServer,
+	};
+	use pangoro_runtime::TransactionConverter;
 
 	let FullDeps {
 		client,
 		pool,
+		graph,
 		select_chain,
 		chain_spec,
 		deny_unsafe,
 		babe,
 		grandpa,
+		is_authority,
+		network,
+		filter_pool,
+		backend,
+		tracing_requesters,
+		rpc_config,
 	} = deps;
 	let mut io = jsonrpc_core::IoHandler::default();
 
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(
 		client.clone(),
-		pool,
+		pool.clone(),
 		deny_unsafe,
 	)));
 	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
@@ -138,7 +182,76 @@ where
 		deny_unsafe,
 	)?));
 	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
-	io.extend_with(FeeMarketApi::to_delegate(FeeMarket::new(client)));
+	io.extend_with(FeeMarketApi::to_delegate(FeeMarket::new(client.clone())));
+
+	let mut overrides_map = BTreeMap::new();
+	overrides_map.insert(
+		EthereumStorageSchema::V1,
+		Box::new(SchemaV1Override::new(client.clone()))
+			as Box<dyn StorageOverride<_> + Send + Sync>,
+	);
+	let overrides = Arc::new(OverrideHandle {
+		schemas: overrides_map,
+		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
+	});
+
+	let block_data_cache = Arc::new(EthBlockDataCache::new(50, 50));
+	io.extend_with(EthApiServer::to_delegate(EthApi::new(
+		client.clone(),
+		pool.clone(),
+		graph,
+		TransactionConverter,
+		network.clone(),
+		overrides.clone(),
+		backend.clone(),
+		is_authority,
+		vec![],
+		rpc_config.max_past_logs,
+		block_data_cache.clone(),
+	)));
+	if let Some(filter_pool) = filter_pool {
+		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
+			client.clone(),
+			backend,
+			filter_pool.clone(),
+			500 as usize, // max stored filters
+			overrides.clone(),
+			rpc_config.max_past_logs,
+			block_data_cache.clone(),
+		)));
+	}
+	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
+		pool,
+		client.clone(),
+		network.clone(),
+		SubscriptionManager::<HexEncodedIdProvider>::with_id_provider(
+			HexEncodedIdProvider::default(),
+			Arc::new(subscription_task_executor),
+		),
+		overrides,
+	)));
+	io.extend_with(NetApiServer::to_delegate(NetApi::new(
+		client.clone(),
+		network,
+		// Whether to format the `peer_count` response as Hex (default) or not.
+		true,
+	)));
+	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client.clone())));
+
+	let ethapi_cmd = rpc_config.ethapi.clone();
+	if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
+		if let Some(trace_filter_requester) = tracing_requesters.trace {
+			io.extend_with(TraceApiServer::to_delegate(Trace::new(
+				client,
+				trace_filter_requester,
+				rpc_config.ethapi_trace_max_count,
+			)));
+		}
+
+		if let Some(debug_requester) = tracing_requesters.debug {
+			io.extend_with(DebugApiServer::to_delegate(Debug::new(debug_requester)));
+		}
+	}
 
 	Ok(io)
 }
