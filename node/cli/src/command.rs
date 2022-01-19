@@ -108,36 +108,6 @@ impl SubstrateCli for Cli {
 	}
 }
 
-fn get_exec_name() -> Option<String> {
-	env::current_exe()
-		.ok()
-		.and_then(|pb| pb.file_name().map(|s| s.to_os_string()))
-		.and_then(|s| s.into_string().ok())
-}
-
-fn set_default_ss58_version(spec: &Box<dyn ChainSpec>) {
-	let ss58_version = if spec.is_pangoro() {
-		Ss58AddressFormat::DarwiniaAccount
-	} else {
-		Ss58AddressFormat::SubstrateAccount
-	};
-
-	sp_core::crypto::set_default_ss58_version(ss58_version);
-}
-
-fn validate_trace_environment(cli: &Cli) -> sc_cli::Result<()> {
-	if (cli.run.dvm_args.ethapi.contains(&EthApiCmd::Debug)
-		|| cli.run.dvm_args.ethapi.contains(&EthApiCmd::Trace))
-		&& cli.run.base.import_params.wasm_runtime_overrides.is_none()
-	{
-		return Err(
-			"`debug` or `trace` namespaces requires `--wasm-runtime-overrides /path/to/overrides`."
-				.into(),
-		);
-	}
-	Ok(())
-}
-
 /// Parse command line arguments into service configuration.
 pub fn run() -> sc_cli::Result<()> {
 	macro_rules! async_run {
@@ -337,4 +307,34 @@ pub fn run() -> sc_cli::Result<()> {
 			}
 		}
 	}
+}
+
+fn get_exec_name() -> Option<String> {
+	env::current_exe()
+		.ok()
+		.and_then(|pb| pb.file_name().map(|s| s.to_os_string()))
+		.and_then(|s| s.into_string().ok())
+}
+
+fn set_default_ss58_version(spec: &Box<dyn ChainSpec>) {
+	let ss58_version = if spec.is_pangoro() {
+		Ss58AddressFormat::DarwiniaAccount
+	} else {
+		Ss58AddressFormat::SubstrateAccount
+	};
+
+	sp_core::crypto::set_default_ss58_version(ss58_version);
+}
+
+fn validate_trace_environment(cli: &Cli) -> sc_cli::Result<()> {
+	if (cli.run.dvm_args.ethapi.contains(&EthApiCmd::Debug)
+		|| cli.run.dvm_args.ethapi.contains(&EthApiCmd::Trace))
+		&& cli.run.base.import_params.wasm_runtime_overrides.is_none()
+	{
+		return Err(
+			"`debug` or `trace` namespaces requires `--wasm-runtime-overrides /path/to/overrides`."
+				.into(),
+		);
+	}
+	Ok(())
 }
