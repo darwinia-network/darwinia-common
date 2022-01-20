@@ -107,29 +107,29 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_finalize(_: BlockNumberFor<T>) {
-			let parent_hash = <frame_system::Pallet<T>>::parent_hash();
-			let mut mmr = <Mmr<RuntimeStorage, T>>::new();
-			let _ = mmr.push(parent_hash);
+	// #[pallet::hooks]
+	// impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+	// 	fn on_finalize(_: BlockNumberFor<T>) {
+	// 		let parent_hash = <frame_system::Pallet<T>>::parent_hash();
+	// 		let mut mmr = <Mmr<RuntimeStorage, T>>::new();
+	// 		let _ = mmr.push(parent_hash);
 
-			match mmr.finalize() {
-				Ok(parent_mmr_root) => {
-					let mmr_root_log = MerkleMountainRangeRootLog::<T::Hash> {
-						prefix: LOG_PREFIX,
-						parent_mmr_root,
-					};
-					let mmr_item = DigestItem::Other(mmr_root_log.encode());
+	// 		match mmr.finalize() {
+	// 			Ok(parent_mmr_root) => {
+	// 				let mmr_root_log = MerkleMountainRangeRootLog::<T::Hash> {
+	// 					prefix: LOG_PREFIX,
+	// 					parent_mmr_root,
+	// 				};
+	// 				let mmr_item = DigestItem::Other(mmr_root_log.encode());
 
-					<frame_system::Pallet<T>>::deposit_log(mmr_item.into());
-				}
-				Err(e) => {
-					log::error!("Failed to finalize MMR due to {}", e);
-				}
-			}
-		}
-	}
+	// 				<frame_system::Pallet<T>>::deposit_log(mmr_item.into());
+	// 			}
+	// 			Err(e) => {
+	// 				log::error!("Failed to finalize MMR due to {}", e);
+	// 			}
+	// 		}
+	// 	}
+	// }
 	impl<T: Config> Pallet<T> {
 		pub fn offchain_key(position: NodeIndex) -> Vec<u8> {
 			(T::INDEXING_PREFIX, position).encode()
