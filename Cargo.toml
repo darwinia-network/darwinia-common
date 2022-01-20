@@ -37,8 +37,6 @@ members = [
 	"frame/fee-market/rpc",
 	"frame/fee-market/rpc/runtime-api",
 	"frame/header-mmr",
-	"frame/header-mmr/rpc",
-	"frame/header-mmr/rpc/runtime-api",
 	"frame/staking",
 	"frame/staking/rpc",
 	"frame/staking/rpc/runtime-api",

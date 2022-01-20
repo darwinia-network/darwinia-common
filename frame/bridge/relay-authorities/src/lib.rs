@@ -100,6 +100,7 @@ pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {
 	type AddOrigin: EnsureOrigin<Self::Origin>;
 	type RemoveOrigin: EnsureOrigin<Self::Origin>;
 	type ResetOrigin: EnsureOrigin<Self::Origin>;
+	// TODO: use `pallet-mmr`
 	type DarwiniaMMR: MMR<Self::BlockNumber, Self::Hash>;
 	type Sign: Sign<Self::BlockNumber>;
 	type OpCodes: Get<(OpCode, OpCode)>;
@@ -765,6 +766,7 @@ where
 		Ok(())
 	}
 
+	// TODO: use `pallet-mmr`
 	pub fn prepare_mmr_root_to_sign(block_number: BlockNumberFor<T>) {
 		if let Some(schedule) = <MmrRootsToSignKeys<T, I>>::get()
 			.into_iter()
