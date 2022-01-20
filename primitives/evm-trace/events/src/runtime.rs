@@ -16,12 +16,17 @@
 
 extern crate alloc;
 
-use super::{opcodes_string, Context};
-use crate::StepEventFilter;
+pub use evm::{ExitError, ExitReason, ExitSucceed, Opcode};
+
+// --- alloc ---
 use alloc::vec::Vec;
+// --- crates.io ---
 use codec::{Decode, Encode};
 use ethereum_types::{H160, H256, U256};
-pub use evm::{ExitError, ExitReason, ExitSucceed, Opcode};
+// --- darwinia-network ---
+use crate::Context;
+#[cfg(feature = "evm-tracing")]
+use crate::{opcodes_string, StepEventFilter};
 
 #[derive(Clone, Debug, Encode, Decode, PartialEq, Eq)]
 pub struct Stack {
