@@ -22,4 +22,4 @@ dp-evm-trace-apis   = { path = "../../../primitives/evm-trace/apis" }
 dp-evm-trace-events = { path = "../../../primitives/evm-trace/events" }
 # paritytech
 codec  = { package = "parity-scale-codec", version = "2.2", default-features = false }
-sp-std = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-std = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
