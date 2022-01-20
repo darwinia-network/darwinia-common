@@ -90,6 +90,8 @@ pub mod pallet {
 
 		/// *RING* account basic
 		type RingAccountBasic: AccountBasic<Self>;
+		/// *KTON* account basic
+		type KtonAccountBasic: AccountBasic<Self>;
 
 		/// Precompiles associated with this EVM engine.
 		type Precompiles: PrecompileSet;

@@ -60,4 +60,5 @@ impl Config for Runtime {
 	type BlockGasLimit = BlockGasLimit;
 	type Runner = Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 }
