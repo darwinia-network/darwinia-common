@@ -21,6 +21,7 @@ use bridge_runtime_common::messages::{
 	MessageBridge, MessageTransaction,
 };
 use frame_support::{
+	traits::PalletInfoAccess,
 	weights::{DispatchClass, Weight},
 	RuntimeDebug,
 };
@@ -30,6 +31,7 @@ use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
 pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
+use darwinia_support::s2s::{LatestMessageNoncer, RelayMessageSender};
 use dp_s2s::{CallParams, CreatePayload};
 use drml_bridge_primitives::{
 	FromThisChainMessageVerifier, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE,
@@ -42,8 +44,8 @@ pub type ToPangolinMessagePayload = FromThisChainMessagePayload<WithPangolinMess
 pub const PANGOLIN_S2S_ISSUING_PALLET_INDEX: u8 = 49;
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
-pub struct ToPangolinOutboundPayload;
-impl CreatePayload<AccountId, AccountPublic, Signature> for ToPangolinOutboundPayload {
+pub struct ToPangolinMessageSender;
+impl CreatePayload<AccountId, AccountPublic, Signature> for ToPangolinMessageSender {
 	type Payload = ToPangolinMessagePayload;
 
 	fn create(
@@ -61,6 +63,45 @@ impl CreatePayload<AccountId, AccountPublic, Signature> for ToPangolinOutboundPa
 			call,
 			dispatch_fee_payment,
 		});
+	}
+}
+
+impl RelayMessageSender for ToPangolinMessageSender {
+	fn encode_send_message(
+		message_pallet_index: u32,
+		lane_id: LaneId,
+		payload: Vec<u8>,
+		fee: u128,
+	) -> Result<Vec<u8>, &'static str> {
+		let payload = ToPangolinMessagePayload::decode(&mut payload.as_slice())
+			.map_err(|_| "decode pangolin payload failed")?;
+
+		let call: Call = match message_pallet_index {
+			_ if message_pallet_index as usize
+				== <BridgePangolinMessages as PalletInfoAccess>::index() =>
+			{
+				BridgeMessagesCall::<Runtime, WithPangolinMessages>::send_message {
+					lane_id,
+					payload,
+					delivery_and_dispatch_fee: fee.saturated_into(),
+				}
+				.into()
+			}
+			_ => {
+				return Err("invalid pallet index".into());
+			}
+		};
+		Ok(call.encode())
+	}
+}
+
+impl LatestMessageNoncer for ToPangolinMessageSender {
+	fn outbound_latest_generated_nonce(lane_id: LaneId) -> u64 {
+		BridgePangolinMessages::outbound_latest_generated_nonce(lane_id).into()
+	}
+
+	fn inbound_latest_received_nonce(lane_id: LaneId) -> u64 {
+		BridgePangolinMessages::inbound_latest_received_nonce(lane_id).into()
 	}
 }
 

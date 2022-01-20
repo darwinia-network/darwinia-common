@@ -3,7 +3,7 @@ use bp_messages::LaneId;
 use bp_runtime::ChainId;
 use frame_support::PalletId;
 // --- darwinia-network ---
-use crate::{pangolin_messages::ToPangolinOutboundPayload, *};
+use crate::{pangolin_messages::ToPangolinMessageSender, *};
 use darwinia_support::{evm::IntoH160, s2s::LatestMessageNoncer};
 use dp_asset::{TokenMetadata, NATIVE_TOKEN_TYPE};
 use drml_bridge_primitives::{AccountIdConverter, PANGORO_PANGOLIN_LANE};
@@ -43,7 +43,7 @@ impl Config for Runtime {
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangolinChainId;
 	type InternalTransactHandler = Ethereum;
-	type OutboundPayloadCreator = ToPangolinOutboundPayload;
+	type OutboundPayloadCreator = ToPangolinMessageSender;
 	type MessageNoncer = PangolinMessageNoncer;
 	type MessageLaneId = BridgePangolinLaneId;
 	type MessagesBridge = BridgePangolinMessages;
