@@ -7,7 +7,10 @@ use sp_core::crypto::Public;
 use crate::*;
 use darwinia_evm::{runner::stack::Runner, Config, EnsureAddressTruncated};
 use darwinia_support::evm::ConcatConverter;
-use dvm_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
+use dvm_ethereum::{
+	account_basic::DvmAccountBasic,
+	remain_balance::{KtonRemainBalance, RingRemainBalance},
+};
 
 pub struct FixedGasPrice;
 impl FeeCalculator for FixedGasPrice {

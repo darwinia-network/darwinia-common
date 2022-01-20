@@ -24,10 +24,10 @@ use darwinia_support::{
 	s2s::{LatestMessageNoncer, RelayMessageSender},
 };
 use dvm_ethereum::{
-	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
+	account_basic::DvmAccountBasic,
+	remain_balance::{KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping,
 };
-
 pub struct EthereumFindAuthor<F>(PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 	fn find_author<'a, I>(digests: I) -> Option<H160>

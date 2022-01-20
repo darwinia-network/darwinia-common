@@ -43,26 +43,21 @@ pub trait RemainBalanceOp<T: Config, B> {
 /// The Remaining *RING* balance.
 pub struct RingRemainBalance;
 impl<T: Config> RemainBalanceOp<T, RingBalance<T>> for RingRemainBalance {
-	/// Get the remaining balance.
 	fn remaining_balance(account_id: &T::AccountId) -> RingBalance<T> {
 		<RemainingRingBalance<T>>::get(account_id)
 	}
-	/// Set the remaining balance.
 	fn set_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
 		<RemainingRingBalance<T>>::insert(account_id, value)
 	}
-	/// Remove the remaining balance.
 	fn remove_remaining_balance(account_id: &T::AccountId) {
 		<RemainingRingBalance<T>>::remove(account_id)
 	}
-	/// Inc remaining balance.
 	fn inc_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
 		let remain_balance =
 			<Self as RemainBalanceOp<T, RingBalance<T>>>::remaining_balance(account_id);
 		let updated_balance = remain_balance.saturating_add(value);
 		<RemainingRingBalance<T>>::insert(account_id, updated_balance);
 	}
-	/// Dec remaining balance.
 	fn dec_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
 		let remain_balance =
 			<Self as RemainBalanceOp<T, RingBalance<T>>>::remaining_balance(account_id);
@@ -74,26 +69,21 @@ impl<T: Config> RemainBalanceOp<T, RingBalance<T>> for RingRemainBalance {
 /// The Remaining *KTON* balance.
 pub struct KtonRemainBalance;
 impl<T: Config> RemainBalanceOp<T, KtonBalance<T>> for KtonRemainBalance {
-	/// Get the remaining balance.
 	fn remaining_balance(account_id: &T::AccountId) -> KtonBalance<T> {
 		<RemainingKtonBalance<T>>::get(account_id)
 	}
-	/// Set the remaining balance.
 	fn set_remaining_balance(account_id: &T::AccountId, value: KtonBalance<T>) {
 		<RemainingKtonBalance<T>>::insert(account_id, value)
 	}
-	/// Remove the remaining balance.
 	fn remove_remaining_balance(account_id: &T::AccountId) {
 		<RemainingKtonBalance<T>>::remove(account_id)
 	}
-	/// Inc remaining balance.
 	fn inc_remaining_balance(account_id: &T::AccountId, value: KtonBalance<T>) {
 		let remain_balance =
 			<Self as RemainBalanceOp<T, KtonBalance<T>>>::remaining_balance(account_id);
 		let updated_balance = remain_balance.saturating_add(value);
 		<RemainingKtonBalance<T>>::insert(account_id, updated_balance);
 	}
-	/// Dec remaining balance.
 	fn dec_remaining_balance(account_id: &T::AccountId, value: KtonBalance<T>) {
 		let remain_balance =
 			<Self as RemainBalanceOp<T, KtonBalance<T>>>::remaining_balance(account_id);

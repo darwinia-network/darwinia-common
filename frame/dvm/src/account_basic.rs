@@ -21,7 +21,7 @@
 // --- crates.io ---
 use evm::ExitError;
 // --- paritytech ---
-use frame_support::{ensure, traits::Currency};
+use frame_support::{ensure, traits::Currency as CurrencyT};
 use sp_core::{H160, U256};
 use sp_runtime::{
 	traits::{Saturating, UniqueSaturatedInto},
@@ -32,16 +32,22 @@ use crate::{remain_balance::RemainBalanceOp, Config, RingBalance};
 use darwinia_evm::{Account as EVMAccount, AccountBasic};
 use darwinia_support::evm::{decimal_convert, IntoAccountId, POW_9};
 /// The basic management of RING and KTON balance for dvm account.
-pub struct DvmAccountBasic<T, C, RB>(sp_std::marker::PhantomData<(T, C, RB)>);
-impl<T: Config, C, RB> AccountBasic<T> for DvmAccountBasic<T, C, RB>
+pub struct DvmAccountBasic<Runtime, Currency, RemainBalance>(
+	sp_std::marker::PhantomData<(Runtime, Currency, RemainBalance)>,
+);
+
+impl<Runtime, Currency, RemainBalance> AccountBasic<Runtime>
+	for DvmAccountBasic<Runtime, Currency, RemainBalance>
 where
-	RB: RemainBalanceOp<T, C::Balance>,
-	C: Currency<T::AccountId>,
+	Runtime: Config,
+	Currency: CurrencyT<Runtime::AccountId>,
+	RemainBalance: RemainBalanceOp<Runtime, Currency::Balance>,
 {
 	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> EVMAccount {
-		let account_id = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(*address);
-		let nonce = <frame_system::Pallet<T>>::account_nonce(&account_id);
+		let account_id =
+			<Runtime as darwinia_evm::Config>::IntoAccountId::into_account_id(*address);
+		let nonce = <frame_system::Pallet<Runtime>>::account_nonce(&account_id);
 
 		EVMAccount {
 			nonce: nonce.saturated_into::<u128>().into(),
@@ -51,7 +57,8 @@ where
 
 	/// Mutate the basic account.
 	fn mutate_account_basic_balance(address: &H160, new_balance: U256) {
-		let account_id = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(*address);
+		let account_id =
+			<Runtime as darwinia_evm::Config>::IntoAccountId::into_account_id(*address);
 		Self::mutate_account_balance(&account_id, new_balance)
 	}
 
@@ -69,21 +76,22 @@ where
 	}
 
 	/// Get account balance.
-	fn account_balance(account_id: &T::AccountId) -> U256 {
+	fn account_balance(account_id: &Runtime::AccountId) -> U256 {
 		// Get main balance from Currency.
-		let main_balance = C::free_balance(&account_id).saturated_into::<u128>();
+		let main_balance = Currency::free_balance(&account_id).saturated_into::<u128>();
 		// Get remaining balance from Dvm.
-		let remaining_balance = RB::remaining_balance(&account_id).saturated_into::<u128>();
+		let remaining_balance =
+			RemainBalance::remaining_balance(&account_id).saturated_into::<u128>();
 		// final_balance = balance * 10^9 + remaining_balance.
 		decimal_convert(main_balance, Some(remaining_balance))
 	}
 
 	/// Mutate account balance.
-	fn mutate_account_balance(account_id: &T::AccountId, new_balance: U256) {
+	fn mutate_account_balance(account_id: &Runtime::AccountId, new_balance: U256) {
 		let helper = U256::from(POW_9);
 
 		let current = Self::account_balance(account_id);
-		let dvm_balance: U256 = RB::remaining_balance(&account_id)
+		let dvm_balance: U256 = RemainBalance::remaining_balance(&account_id)
 			.saturated_into::<u128>()
 			.into();
 
@@ -100,17 +108,17 @@ where
 						.saturating_add(decimal_convert(1, None))
 						.saturating_sub(diff_remaining);
 
-					C::slash(
+					Currency::slash(
 						&account_id,
 						(diff_main + 1).low_u128().unique_saturated_into(),
 					);
-					RB::set_remaining_balance(
+					RemainBalance::set_remaining_balance(
 						&account_id,
 						remaining_balance.low_u128().saturated_into(),
 					);
 				} else {
-					C::slash(&account_id, diff_main.low_u128().unique_saturated_into());
-					RB::dec_remaining_balance(
+					Currency::slash(&account_id, diff_main.low_u128().unique_saturated_into());
+					RemainBalance::dec_remaining_balance(
 						&account_id,
 						diff_remaining.low_u128().saturated_into(),
 					);
@@ -126,17 +134,20 @@ where
 						.saturating_add(diff_remaining)
 						.saturating_sub(helper);
 
-					C::deposit_creating(
+					Currency::deposit_creating(
 						&account_id,
 						(diff_main + 1).low_u128().unique_saturated_into(),
 					);
-					RB::set_remaining_balance(
+					RemainBalance::set_remaining_balance(
 						&account_id,
 						remaining_balance.low_u128().saturated_into(),
 					);
 				} else {
-					C::deposit_creating(&account_id, diff_main.low_u128().unique_saturated_into());
-					RB::inc_remaining_balance(
+					Currency::deposit_creating(
+						&account_id,
+						diff_main.low_u128().unique_saturated_into(),
+					);
+					RemainBalance::inc_remaining_balance(
 						&account_id,
 						diff_remaining.low_u128().saturated_into(),
 					);
@@ -146,20 +157,11 @@ where
 		}
 
 		// Handle existential deposit.
-		let ring_min = <T as Config>::RingCurrency::minimum_balance().saturated_into::<u128>();
-		let kton_min = <T as Config>::KtonCurrency::minimum_balance().saturated_into::<u128>();
-		let ring_ed = decimal_convert(ring_min, None);
-		let kton_ed = decimal_convert(kton_min, None);
-
-		// let ring_account = T::RingAccountBasic::account_balance(&account_id);
-		// let kton_account = T::KtonAccountBasic::account_balance(&account_id);
-		// if ring_account < ring_ed && kton_account < kton_ed {
-		// 	<RingRemainBalance as RemainBalanceOp<T, RingBalance<T>>>::remove_remaining_balance(
-		// 		&account_id,
-		// 	);
-		// 	<KtonRemainBalance as RemainBalanceOp<T, KtonBalance<T>>>::remove_remaining_balance(
-		// 		&account_id,
-		// 	);
-		// }
+		let currency_min = Currency::minimum_balance().saturated_into::<u128>();
+		let currency_ed = decimal_convert(currency_min, None);
+		let account_balance = Self::account_balance(&account_id);
+		if currency_ed < account_balance {
+			RemainBalance::remove_remaining_balance(account_id);
+		}
 	}
 }
