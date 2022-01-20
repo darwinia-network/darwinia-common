@@ -197,6 +197,7 @@ frame_support::construct_runtime! {
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
 		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Config} = 15,
 		HeaderMMR: darwinia_header_mmr::{Pallet, Storage} = 16,
+		Mmr: pallet_mmr::{Pallet, Storage} = 55,
 
 		// Governance stuff; uncallable initially.
 		Democracy: darwinia_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 17,
@@ -238,9 +239,6 @@ frame_support::construct_runtime! {
 		// Multisig module. Late addition.
 		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 32,
 
-		// CrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config} = 33,
-		// CrabBacking: darwinia_crab_backing::{Pallet, Storage, Config<T>} = 34,
-
 		EthereumRelay: darwinia_bridge_ethereum::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
 		EthereumBacking: to_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
 		EthereumIssuing: from_ethereum_issuing::{Pallet, Call, Storage, Config, Event<T>} = 42,
@@ -251,7 +249,6 @@ frame_support::construct_runtime! {
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, Origin} = 41,
-		// DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Inherent} = 47,
 
 		BridgePangoroDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
 		BridgePangoroGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,

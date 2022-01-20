@@ -43,6 +43,9 @@ pub use authority_discovery::*;
 pub mod header_mmr;
 pub use header_mmr::*;
 
+pub mod mmr;
+pub use mmr::*;
+
 pub mod democracy;
 pub use democracy::*;
 
