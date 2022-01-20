@@ -28,7 +28,10 @@ use sp_runtime::{
 	SaturatedConversion,
 };
 // --- darwinia-network ---
-use crate::{remain_balance::RemainBalanceOp, Config, RingBalance};
+use crate::{
+	remain_balance::{KtonRemainBalance, RemainBalanceOp, RingRemainBalance},
+	Config, KtonBalance, RingBalance,
+};
 use darwinia_evm::{Account as EVMAccount, AccountBasic};
 use darwinia_support::evm::{decimal_convert, IntoAccountId, POW_9};
 /// The basic management of RING and KTON balance for dvm account.
@@ -157,11 +160,22 @@ where
 		}
 
 		// Handle existential deposit.
-		let currency_min = Currency::minimum_balance().saturated_into::<u128>();
-		let currency_ed = decimal_convert(currency_min, None);
-		let account_balance = Self::account_balance(&account_id);
-		if currency_ed < account_balance {
-			RemainBalance::remove_remaining_balance(account_id);
+		let ring_min =
+			<Runtime as Config>::RingCurrency::minimum_balance().saturated_into::<u128>();
+		let kton_min =
+			<Runtime as Config>::KtonCurrency::minimum_balance().saturated_into::<u128>();
+		let ring_ed = decimal_convert(ring_min, None);
+		let kton_ed = decimal_convert(kton_min, None);
+
+		let ring_account = Runtime::RingAccountBasic::account_balance(&account_id);
+		let kton_account = Runtime::KtonAccountBasic::account_balance(&account_id);
+		if ring_account < ring_ed && kton_account < kton_ed {
+			<RingRemainBalance as RemainBalanceOp<Runtime, RingBalance<Runtime>>>::remove_remaining_balance(
+				&account_id,
+			);
+			<KtonRemainBalance as RemainBalanceOp<Runtime, KtonBalance<Runtime>>>::remove_remaining_balance(
+				&account_id,
+			);
 		}
 	}
 }

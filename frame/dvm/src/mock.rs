@@ -39,7 +39,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia-network ---
-use crate::{self as dvm_ethereum, account_basic::*, *};
+use crate::{self as dvm_ethereum, account_basic::*, remain_balance::*, *};
 use darwinia_evm::{runner::stack::Runner, EnsureAddressTruncated, FeeCalculator};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::IntoAccountId;
@@ -160,6 +160,11 @@ pub struct MockPrecompiles<R>(PhantomData<R>);
 impl<R> PrecompileSet for MockPrecompiles<R>
 where
 	R: darwinia_evm::Config,
+	Transfer<
+		R,
+		DvmAccountBasic<R, Ring, RingRemainBalance>,
+		DvmAccountBasic<R, Kton, KtonRemainBalance>,
+	>: Precompile,
 {
 	fn execute(
 		address: H160,
@@ -176,9 +181,11 @@ where
 			_ if address == to_address(3) => Some(Ripemd160::execute(input, target_gas, context)),
 			_ if address == to_address(4) => Some(Identity::execute(input, target_gas, context)),
 			// Darwinia precompiles
-			_ if address == to_address(21) => {
-				Some(<Transfer<R>>::execute(input, target_gas, context))
-			}
+			_ if address == to_address(21) => Some(<Transfer<
+				R,
+				DvmAccountBasic<R, Ring, RingRemainBalance>,
+				DvmAccountBasic<R, Kton, KtonRemainBalance>,
+			>>::execute(input, target_gas, context)),
 			_ => None,
 		}
 	}
