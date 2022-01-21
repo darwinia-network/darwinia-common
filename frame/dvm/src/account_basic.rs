@@ -28,7 +28,9 @@ use sp_runtime::{
 	SaturatedConversion,
 };
 // --- darwinia-network ---
-use crate::{Config, KtonBalance, RemainingKtonBalance, RemainingRingBalance, RingBalance};
+use crate::{
+	Config, Event, KtonBalance, Pallet, RemainingKtonBalance, RemainingRingBalance, RingBalance,
+};
 use darwinia_evm::{Account as EVMAccount, AccountBasic};
 use darwinia_support::evm::{decimal_convert, IntoAccountId, POW_9};
 
@@ -142,6 +144,7 @@ where
 		let target_account = Self::account_basic(target);
 		let new_target_balance = target_account.balance.saturating_add(value);
 		Self::mutate_account_basic_balance(target, new_target_balance);
+		Pallet::<T>::deposit_event(Event::Transfer(*source, *target, value));
 		Ok(())
 	}
 

@@ -287,6 +287,8 @@ pub mod pallet {
 	pub enum Event {
 		/// An ethereum transaction was successfully executed. [from, to/contract_address, transaction_hash, exit_reason]
 		Executed(H160, H160, H256, ExitReason),
+		/// Transfer succeeded. \[from, to, value\]
+		Transfer(H160, H160, U256),
 	}
 
 	#[pallet::error]
