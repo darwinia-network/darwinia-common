@@ -42,6 +42,7 @@ pub type RpcResult = Result<RpcExtension, Box<dyn Error + Send + Sync>>;
 /// Full client dependencies.
 pub struct FullDeps<C, P, SC, B, A>
 where
+	B: sp_api::BlockT,
 	A: sc_transaction_pool::ChainApi,
 {
 	/// The client instance to use.
@@ -60,6 +61,8 @@ where
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
 	pub grandpa: GrandpaDeps<B>,
+	/// BEEFY specific dependencies.
+	pub beefy: BeefyDeps<B>,
 	/// The Node authority flag
 	pub is_authority: bool,
 	/// Network service
@@ -108,7 +111,18 @@ pub struct GrandpaDeps<B> {
 	/// Executor to drive the subscription manager in the Grandpa RPC handler.
 	pub subscription_executor: sc_rpc::SubscriptionTaskExecutor,
 	/// Finality proof provider.
-	pub finality_provider: Arc<sc_finality_grandpa::FinalityProofProvider<B, Block>>,
+	pub finality_proof_provider: Arc<sc_finality_grandpa::FinalityProofProvider<B, Block>>,
+}
+
+/// Extra dependencies for BEEFY
+pub struct BeefyDeps<B>
+where
+	B: sp_api::BlockT,
+{
+	/// Receives notifications about signed commitments from BEEFY.
+	pub signed_commitment_stream: beefy_gadget::notification::BeefySignedCommitmentStream<B>,
+	/// Executor to drive the subscription manager in the BEEFY RPC handler.
+	pub subscription_executor: sc_rpc::SubscriptionTaskExecutor,
 }
 
 #[derive(Clone)]
@@ -166,6 +180,7 @@ where
 		+ sp_blockchain::HeaderBackend<Block>
 		+ sp_blockchain::HeaderMetadata<Block, Error = sp_blockchain::Error>,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
+	C::Api: pallet_mmr_rpc::MmrRuntimeApi<Block, <Block as sp_api::BlockT>::Hash>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: sc_consensus_babe::BabeApi<Block>,
 	C::Api: sp_block_builder::BlockBuilder<Block>,
@@ -176,7 +191,7 @@ where
 	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
 	P: 'static + Sync + Send + sc_transaction_pool_api::TransactionPool<Block = Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,
-	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
+	B: 'static + Send + Sync + sc_client_api::Backend<Block> + sp_api::BlockT,
 	B::State: sc_client_api::StateBackend<Hashing>,
 	A: sc_transaction_pool::ChainApi<Block = Block> + 'static,
 	CT: 'static
@@ -187,6 +202,8 @@ where
 	// --- crates.io ---
 	use jsonrpc_pubsub::manager::SubscriptionManager;
 	// --- paritytech ---
+	use beefy_gadget_rpc::{BeefyApi, BeefyRpcHandler};
+	use pallet_mmr_rpc::{Mmr, MmrApi};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use sc_consensus_babe_rpc::{BabeApi, BabeRpcHandler};
 	use sc_finality_grandpa_rpc::{GrandpaApi, GrandpaRpcHandler};
@@ -210,8 +227,24 @@ where
 		select_chain,
 		chain_spec,
 		deny_unsafe,
-		babe,
-		grandpa,
+		babe: BabeDeps {
+			keystore,
+			babe_config,
+			shared_epoch_changes,
+		},
+		grandpa:
+			GrandpaDeps {
+				shared_voter_state,
+				shared_authority_set,
+				justification_stream,
+				subscription_executor: grandpa_subscription_executor,
+				finality_proof_provider,
+			},
+		beefy:
+			BeefyDeps {
+				signed_commitment_stream,
+				subscription_executor: beefy_subscription_executor,
+			},
 		is_authority,
 		network,
 		filter_pool,
@@ -226,14 +259,10 @@ where
 		pool.clone(),
 		deny_unsafe,
 	)));
+	io.extend_with(MmrApi::to_delegate(Mmr::new(client.clone())));
 	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
 		client.clone(),
 	)));
-	let BabeDeps {
-		keystore,
-		babe_config,
-		shared_epoch_changes,
-	} = babe;
 	io.extend_with(BabeApi::to_delegate(BabeRpcHandler::new(
 		client.clone(),
 		shared_epoch_changes.clone(),
@@ -242,19 +271,16 @@ where
 		select_chain,
 		deny_unsafe,
 	)));
-	let GrandpaDeps {
-		shared_voter_state,
-		shared_authority_set,
-		justification_stream,
-		subscription_executor,
-		finality_provider,
-	} = grandpa;
 	io.extend_with(GrandpaApi::to_delegate(GrandpaRpcHandler::new(
 		shared_authority_set.clone(),
 		shared_voter_state,
 		justification_stream,
-		subscription_executor,
-		finality_provider,
+		grandpa_subscription_executor,
+		finality_proof_provider,
+	)));
+	io.extend_with(BeefyApi::to_delegate(BeefyRpcHandler::new(
+		signed_commitment_stream,
+		beefy_subscription_executor,
 	)));
 	io.extend_with(SyncStateRpcApi::to_delegate(SyncStateRpcHandler::new(
 		chain_spec,
