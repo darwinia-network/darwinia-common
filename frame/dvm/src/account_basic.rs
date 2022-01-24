@@ -144,7 +144,7 @@ where
 		let target_account = Self::account_basic(target);
 		let new_target_balance = target_account.balance.saturating_add(value);
 		Self::mutate_account_basic_balance(target, new_target_balance);
-		Pallet::<T>::deposit_event(Event::Transfer(*source, *target, value));
+		Pallet::<T>::deposit_event(Event::DVMTransfer(*source, *target, value));
 		Ok(())
 	}
 
