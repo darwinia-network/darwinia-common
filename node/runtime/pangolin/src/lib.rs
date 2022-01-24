@@ -77,7 +77,6 @@ use frame_system::{
 };
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
 use pallet_transaction_payment::{ChargeTransactionPayment, FeeDetails};
-use pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo as TransactionPaymentRuntimeDispatchInfo;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::{AllowedSlots, BabeEpochConfiguration};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
@@ -97,11 +96,7 @@ use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use bridges::substrate::pangoro_messages::{ToPangoroMessagePayload, WithPangoroMessageBridge};
 use common_runtime::*;
-use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
-use darwinia_evm::{AccountBasic, FeeCalculator, Runner};
-use darwinia_fee_market_rpc_runtime_api::{Fee, InProcessOrders};
-use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use drml_common_primitives::*;
 
@@ -194,6 +189,9 @@ frame_support::construct_runtime! {
 		Historical: pallet_session_historical::{Pallet} = 11,
 		Session: pallet_session::{Pallet, Call, Storage, Config<T>, Event} = 12,
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 13,
+		Beefy: pallet_beefy::{Pallet, Storage, Config<T>} = 55,
+		Mmr: pallet_mmr::{Pallet, Storage} = 56,
+		MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 57,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
 		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Config} = 15,
 		HeaderMMR: darwinia_header_mmr::{Pallet, Storage} = 16,
@@ -411,56 +409,6 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
-		fn validate_transaction(
-			source: TransactionSource,
-			tx: <Block as BlockT>::Extrinsic,
-			block_hash: <Block as BlockT>::Hash,
-		) -> TransactionValidity {
-			Executive::validate_transaction(source, tx, block_hash)
-		}
-	}
-
-	impl sp_offchain::OffchainWorkerApi<Block> for Runtime {
-		fn offchain_worker(header: &<Block as BlockT>::Header) {
-			Executive::offchain_worker(header)
-		}
-	}
-
-	impl fg_primitives::GrandpaApi<Block> for Runtime {
-		fn grandpa_authorities() -> GrandpaAuthorityList {
-			Grandpa::grandpa_authorities()
-		}
-
-		fn current_set_id() -> fg_primitives::SetId {
-			Grandpa::current_set_id()
-		}
-
-		fn submit_report_equivocation_unsigned_extrinsic(
-			equivocation_proof: fg_primitives::EquivocationProof<
-				<Block as BlockT>::Hash,
-				NumberFor<Block>,
-			>,
-			key_owner_proof: fg_primitives::OpaqueKeyOwnershipProof,
-		) -> Option<()> {
-			let key_owner_proof = key_owner_proof.decode()?;
-
-			Grandpa::submit_unsigned_equivocation_report(
-				equivocation_proof,
-				key_owner_proof,
-			)
-		}
-
-		fn generate_key_ownership_proof(
-			_set_id: fg_primitives::SetId,
-			authority_id: GrandpaId,
-		) -> Option<fg_primitives::OpaqueKeyOwnershipProof> {
-			Historical::prove((fg_primitives::KEY_TYPE, authority_id))
-				.map(|p| p.encode())
-				.map(fg_primitives::OpaqueKeyOwnershipProof::new)
-		}
-	}
-
 	impl sp_consensus_babe::BabeApi<Block> for Runtime {
 		fn configuration() -> sp_consensus_babe::BabeGenesisConfiguration {
 			// The choice of `c` parameter (where `1 - c` represents the
@@ -512,6 +460,62 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
+		fn validate_transaction(
+			source: TransactionSource,
+			tx: <Block as BlockT>::Extrinsic,
+			block_hash: <Block as BlockT>::Hash,
+		) -> TransactionValidity {
+			Executive::validate_transaction(source, tx, block_hash)
+		}
+	}
+
+	impl sp_offchain::OffchainWorkerApi<Block> for Runtime {
+		fn offchain_worker(header: &<Block as BlockT>::Header) {
+			Executive::offchain_worker(header)
+		}
+	}
+
+	impl fg_primitives::GrandpaApi<Block> for Runtime {
+		fn grandpa_authorities() -> GrandpaAuthorityList {
+			Grandpa::grandpa_authorities()
+		}
+
+		fn current_set_id() -> fg_primitives::SetId {
+			Grandpa::current_set_id()
+		}
+
+		fn submit_report_equivocation_unsigned_extrinsic(
+			equivocation_proof: fg_primitives::EquivocationProof<
+				<Block as BlockT>::Hash,
+				NumberFor<Block>,
+			>,
+			key_owner_proof: fg_primitives::OpaqueKeyOwnershipProof,
+		) -> Option<()> {
+			let key_owner_proof = key_owner_proof.decode()?;
+
+			Grandpa::submit_unsigned_equivocation_report(
+				equivocation_proof,
+				key_owner_proof,
+			)
+		}
+
+		fn generate_key_ownership_proof(
+			_set_id: fg_primitives::SetId,
+			authority_id: GrandpaId,
+		) -> Option<fg_primitives::OpaqueKeyOwnershipProof> {
+			Historical::prove((fg_primitives::KEY_TYPE, authority_id))
+				.map(|p| p.encode())
+				.map(fg_primitives::OpaqueKeyOwnershipProof::new)
+		}
+	}
+
+	impl beefy_primitives::BeefyApi<Block> for Runtime {
+		fn validator_set() -> beefy_primitives::ValidatorSet<BeefyId> {
+			Beefy::validator_set()
+		}
+	}
+
 	impl sp_authority_discovery::AuthorityDiscoveryApi<Block> for Runtime {
 		fn authorities() -> Vec<AuthorityDiscoveryId> {
 			AuthorityDiscovery::authorities()
@@ -540,7 +544,9 @@ sp_api::impl_runtime_apis! {
 		Block,
 		Balance,
 	> for Runtime {
-		fn query_info(uxt: <Block as BlockT>::Extrinsic, len: u32) -> TransactionPaymentRuntimeDispatchInfo<Balance> {
+		fn query_info(uxt: <Block as BlockT>::Extrinsic, len: u32)
+			-> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance>
+		{
 			TransactionPayment::query_info(uxt, len)
 		}
 		fn query_fee_details(uxt: <Block as BlockT>::Extrinsic, len: u32) -> FeeDetails<Balance> {
@@ -549,7 +555,9 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance> for Runtime {
-		fn usable_balance(instance: u8, account: AccountId) -> BalancesRuntimeDispatchInfo<Balance> {
+		fn usable_balance(instance: u8, account: AccountId)
+			-> darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo<Balance>
+		{
 			match instance {
 				0 => Ring::usable_balance_rpc(account),
 				1 => Kton::usable_balance_rpc(account),
@@ -559,22 +567,22 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power> for Runtime {
-		fn power_of(account: AccountId) -> StakingRuntimeDispatchInfo<Power> {
+		fn power_of(account: AccountId) -> darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo<Power> {
 			Staking::power_of_rpc(account)
 		}
 	}
 
 	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
-		fn market_fee() -> Option<Fee<Balance>> {
+		fn market_fee() -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
 			if let Some(fee) = FeeMarket::market_fee() {
-				return Some(Fee {
+				return Some(darwinia_fee_market_rpc_runtime_api::Fee {
 					amount: fee,
 				});
 			}
 			None
 		}
-		fn in_process_orders() -> InProcessOrders {
-			return InProcessOrders {
+		fn in_process_orders() -> darwinia_fee_market_rpc_runtime_api::InProcessOrders {
+			return darwinia_fee_market_rpc_runtime_api::InProcessOrders {
 				orders: FeeMarket::in_process_orders(),
 			}
 		}
@@ -586,10 +594,16 @@ sp_api::impl_runtime_apis! {
 		}
 
 		fn gas_price() -> U256 {
+			// --- darwinia-network ---
+			use darwinia_evm::FeeCalculator;
+
 			<Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price()
 		}
 
 		fn account_basic(address: H160) -> darwinia_evm::Account {
+			// --- darwinia-network ---
+			use darwinia_evm::AccountBasic;
+
 			<Runtime as darwinia_evm::Config>::RingAccountBasic::account_basic(&address)
 		}
 
@@ -617,6 +631,9 @@ sp_api::impl_runtime_apis! {
 			nonce: Option<U256>,
 			estimate: bool,
 		) -> Result<darwinia_evm::CallInfo, sp_runtime::DispatchError> {
+			// --- darwinia-network ---
+			use darwinia_evm::Runner;
+
 			let config = if estimate {
 				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
 				config.estimate = true;
@@ -646,6 +663,9 @@ sp_api::impl_runtime_apis! {
 			nonce: Option<U256>,
 			estimate: bool,
 		) -> Result<darwinia_evm::CreateInfo, sp_runtime::DispatchError> {
+			// --- darwinia-network ---
+			use darwinia_evm::Runner;
+
 			let config = if estimate {
 				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
 				config.estimate = true;
