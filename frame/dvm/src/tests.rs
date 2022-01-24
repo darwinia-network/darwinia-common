@@ -849,7 +849,6 @@ fn internal_transaction_should_works() {
 
 		// Call foo use internal transaction
 		assert_ok!(Ethereum::internal_transact(contract_address, foo.clone()));
-		assert_eq!(System::event_count(), 1);
 		System::assert_last_event(Event::Ethereum(crate::Event::Executed(
 			<Test as self::Config>::PalletId::get().into_h160(),
 			contract_address,
@@ -866,7 +865,6 @@ fn internal_transaction_should_works() {
 				.unwrap(),
 			ExitReason::Succeed(ExitSucceed::Returned),
 		)));
-		assert_eq!(System::event_count(), 2);
 	});
 }
 
