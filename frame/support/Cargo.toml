@@ -16,8 +16,10 @@ ethereum              = { version = "0.10", default-features = false, features =
 impl-trait-for-tuples = { version = "0.2" }
 scale-info            = { version = "1.0", default-features = false, features = ["derive"] }
 sha3                  = { version = "0.9", default-features = false }
+
 # darwinia-network
 ethereum-primitives = { default-features = false, path = "../../primitives/ethereum" }
+
 # paritytech
 bp-messages   = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.1" }
 bp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.1" }

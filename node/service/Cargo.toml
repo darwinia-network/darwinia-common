@@ -19,6 +19,7 @@ rand        = { version = "0.8" }
 serde       = { version = "1.0", features = ["derive"] }
 serde_json  = { version = "1.0" }
 tokio       = { version = "1.15" }
+
 # darwinia-network
 darwinia-balances-rpc-runtime-api   = { path = "../../frame/balances/rpc/runtime-api" }
 darwinia-bridge-ethereum            = { path = "../../frame/bridge/ethereum" }
@@ -37,6 +38,7 @@ drml-rpc                            = { path = "../rpc" }
 dvm-rpc-runtime-api                 = { path = "../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
 pangoro-runtime                     = { path = "../runtime/pangoro" }
+
 # paritytech
 frame-benchmarking                         = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -74,8 +76,10 @@ sp-timestamp                               = { git = "https://github.com/darwini
 sp-transaction-pool                        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-trie                                    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+
 # frontier
 fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+
 # template
 async-trait              = { version = "0.1", optional = true }
 sc-consensus-aura        = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -83,7 +87,6 @@ sc-consensus-manual-seal = { optional = true, git = "https://github.com/darwinia
 sp-consensus-aura        = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-inherents             = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 template-runtime         = { optional = true, path = "../runtime/template" }
-
 
 [features]
 default = [

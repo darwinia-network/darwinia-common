@@ -15,12 +15,14 @@ codec          = { package = "parity-scale-codec", version = "2.2", default-feat
 ethereum       = { version = "0.10", default-features = false, features = ["with-codec"] }
 ethereum-types = { version = "0.12", default-features = false }
 scale-info     = { version = "1.0", default-features = false, features = ["derive"] }
+
 # paritytech
 sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+
 # frontier
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 

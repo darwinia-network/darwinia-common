@@ -18,11 +18,13 @@ name = "drml"
 # crates.io
 log       = { version = "0.4" }
 structopt = { version = "0.3", optional = true }
+
 # darwinia-network
 bsc-primitives = { path = "../../primitives/bsc" }
 dp-consensus   = { path = "../../primitives/consensus" }
 drml-rpc       = { default-features = false, path = "../rpc" }
 drml-service   = { default-features = false, path = "../service" }
+
 # paritytech
 frame-benchmarking-cli = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sc-cli                 = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

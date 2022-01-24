@@ -20,12 +20,14 @@ rlp            = { version = "0.5", default-features = false }
 scale-info     = { version = "1.0", default-features = false, features = ["derive"] }
 serde          = { version = "1.0", optional = true }
 serde_json     = { version = "1.0", optional = true }
+
 # darwinia-network
 ckb-merkle-mountain-range = { default-features = false, git = "https://github.com/darwinia-network/merkle-mountain-range" }
 darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
 darwinia-relayer-game     = { default-features = false, path = "../relayer-game" }
 darwinia-support          = { default-features = false, path = "../../support" }
 ethereum-primitives       = { default-features = false, features = ["full-codec", "full-rlp"], path = "../../../primitives/ethereum" }
+
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -37,6 +39,7 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 # darwinia-network
 darwinia-balances   = { path = "../../balances" }
 ethereum-primitives = { features = ["full-serde"], path = "../../../primitives/ethereum" }
+
 # paritytech
 sp-core = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-io   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

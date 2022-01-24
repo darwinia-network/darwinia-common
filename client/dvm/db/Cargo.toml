@@ -15,12 +15,15 @@ codec        = { package = "parity-scale-codec", version = "2.2", features = ["d
 kvdb         = { version = "0.10" }
 kvdb-rocksdb = { version = "0.14" }
 parking_lot  = { version = "0.11" }
+
 # darwinia-network
 dvm-ethereum = { path = "../../../frame/dvm" }
+
 # paritytech
 sp-core     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-database = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-runtime  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+
 # frontier
 fp-evm     = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 fp-storage = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }

@@ -18,6 +18,7 @@ scale-info     = { version = "1.0", default-features = false, features = ["deriv
 serde          = { version = "1.0", optional = true }
 serde_json     = { version = "1.0", optional = true }
 sha3           = { version = "0.9", default-features = false }
+
 # darwinia-network
 darwinia-evm        = { default-features = false, path = "../../../evm" }
 darwinia-support    = { default-features = false, path = "../../../support" }
@@ -26,6 +27,7 @@ dp-contract         = { default-features = false, path = "../../../../primitives
 dp-s2s              = { default-features = false, path = "../../../../primitives/s2s" }
 dvm-ethereum        = { default-features = false, path = "../../../dvm" }
 ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum" }
+
 # paritytech
 bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.1" }
 bp-messages         = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.1" }
@@ -36,6 +38,7 @@ frame-system        = { default-features = false, git = "https://github.com/darw
 sp-io               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+
 # frontier
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 
@@ -45,9 +48,11 @@ ethereum     = { version = "0.10", features = ["with-codec"] }
 evm          = { version = "0.30", features = ["with-codec"] }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 rlp          = { version = "0.5" }
+
 # darwinia-network
 darwinia-balances = { path = "../../../balances" }
 pallet-timestamp  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+
 # frontier
 fp-self-contained = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 

@@ -16,6 +16,7 @@ codec       = { package = "parity-scale-codec", version = "2.2", default-feature
 scale-info  = { version = "1.0", default-features = false, features = ["derive"] }
 serde       = { version = "1.0", features = ["derive"], optional = true }
 smallvec    = { version = "1.7" }
+
 # darwinia-network
 common-runtime                      = { default-features = false, path = "../common" }
 darwinia-balances                   = { default-features = false, path = "../../../frame/balances" }
@@ -36,6 +37,7 @@ dvm-ethereum                        = { default-features = false, path = "../../
 dvm-rpc-runtime-api                 = { default-features = false, path = "../../../frame/dvm/rpc/runtime-api" }
 module-transaction-pause            = { default-features = false, path = "../../../frame/transaction-pause" }
 to-substrate-backing                = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
+
 # dvm trace
 dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/evm-trace/apis" }
 dp-evm-trace-events = { optional = true, default-features = false, path = "../../../primitives/evm-trace/events" }
@@ -43,6 +45,7 @@ dp-evm-trace-ext    = { default-features = false, path = "../../../primitives/ev
 dp-evm-tracer       = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
 rlp                 = { version = "0.5", optional = true, default-features = false }
 sha3                = { version = "0.8", optional = true, default-features = false }
+
 # paritytech
 bp-header-chain                            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.1" }
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.1" }
@@ -90,12 +93,12 @@ sp-std                                     = { default-features = false, git = "
 sp-transaction-pool                        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-trie                                    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+
 # frontier
 fp-evm                       = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 fp-self-contained            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 fp-storage                   = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
-
 
 [build-dependencies]
 # paritytech

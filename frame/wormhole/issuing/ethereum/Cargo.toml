@@ -15,6 +15,7 @@ array-bytes = { version = "1.4" }
 codec       = { package = "parity-scale-codec", version = "2.2", default-features = false, features = ["derive"] }
 scale-info  = { version = "1.0", default-features = false, features = ["derive"] }
 sha3        = { version = "0.9", default-features = false }
+
 # darwinia-network
 darwinia-bridge-ethereum  = { default-features = false, path = "../../../bridge/ethereum" }
 darwinia-evm              = { default-features = false, path = "../../../evm" }
@@ -23,12 +24,14 @@ darwinia-support          = { default-features = false, path = "../../../support
 dp-contract               = { default-features = false, path = "../../../../primitives/contract" }
 dvm-ethereum              = { default-features = false, path = "../../../dvm" }
 ethereum-primitives       = { default-features = false, features = ["full-codec"], path = "../../../../primitives/ethereum" }
+
 # paritytech
 frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 frame-support      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 frame-system       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-runtime         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-std             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+
 # frontier
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 

@@ -15,8 +15,10 @@ codec               = { package = "parity-scale-codec", version = "2.2" }
 jsonrpc-core        = { version = "18.0" }
 jsonrpc-core-client = { version = "18.0" }
 jsonrpc-derive      = { version = "18.0" }
+
 # darwinia-network
 darwinia-fee-market-rpc-runtime-api = { path = "./runtime-api" }
+
 # paritytech
 sp-api        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-blockchain = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

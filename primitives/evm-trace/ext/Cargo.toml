@@ -12,8 +12,10 @@ version     = "2.8.1"
 [dependencies]
 # crates.io
 ethereum-types = { version = "0.12.0", default-features = false }
+
 # darwinia-network
 dp-evm-trace-events = { path = "../events", default-features = false }
+
 # paritytech
 codec                = { package = "parity-scale-codec", version = "2.2", default-features = false }
 sp-externalities     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

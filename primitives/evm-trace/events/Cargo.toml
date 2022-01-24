@@ -9,7 +9,6 @@ readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
 version     = "2.8.1"
 
-
 [dependencies]
 # crates.io
 codec          = { package = "parity-scale-codec", version = "2.2", default-features = false }
@@ -19,9 +18,9 @@ ethereum-types = { version = "0.12", default-features = false }
 evm            = { version = "0.30", default-features = false, features = ["with-codec"] }
 evm-gasometer  = { version = "0.30", default-features = false }
 evm-runtime    = { version = "0.30", default-features = false }
+
 # paritytech
 sp-runtime-interface = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
-
 
 [features]
 default = ["std"]
