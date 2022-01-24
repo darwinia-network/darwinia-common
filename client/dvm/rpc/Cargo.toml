@@ -54,8 +54,8 @@ sp-io                   = { git = "https://github.com/darwinia-network/substrate
 sp-runtime              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-storage              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
-fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
-fp-storage  = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
+fp-storage  = { git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 
 [features]
 rpc_binary_search_estimate = []
