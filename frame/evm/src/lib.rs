@@ -31,7 +31,8 @@ mod tests;
 pub use crate::runner::Runner;
 #[doc(no_inline)]
 pub use fp_evm::{
-	Account, CallInfo, CreateInfo, ExecutionInfo, Log, Precompile, PrecompileSet, Vicinity,
+	Account, CallInfo, CreateInfo, ExecutionInfo, Log, Precompile, PrecompileFailure,
+	PrecompileOutput, PrecompileResult, PrecompileSet, Vicinity,
 };
 
 // --- std ---
@@ -94,7 +95,8 @@ pub mod pallet {
 		type KtonAccountBasic: AccountBasic<Self>;
 
 		/// Precompiles associated with this EVM engine.
-		type Precompiles: PrecompileSet;
+		type PrecompilesType: PrecompileSet;
+		type PrecompilesValue: Get<Self::PrecompilesType>;
 		/// EVM execution runner.
 		type Runner: Runner<Self>;
 
@@ -192,8 +194,10 @@ pub mod pallet {
 			input: Vec<u8>,
 			value: U256,
 			gas_limit: u64,
-			gas_price: U256,
+			max_fee_per_gas: U256,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
+			access_list: Vec<(H160, Vec<H256>)>,
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
@@ -203,8 +207,10 @@ pub mod pallet {
 				input,
 				value,
 				gas_limit,
-				Some(gas_price),
+				Some(max_fee_per_gas),
+				max_priority_fee_per_gas,
 				nonce,
+				access_list,
 				T::config(),
 			)?;
 
@@ -234,8 +240,10 @@ pub mod pallet {
 			init: Vec<u8>,
 			value: U256,
 			gas_limit: u64,
-			gas_price: U256,
+			max_fee_per_gas: U256,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
+			access_list: Vec<(H160, Vec<H256>)>,
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
@@ -244,8 +252,10 @@ pub mod pallet {
 				init,
 				value,
 				gas_limit,
-				Some(gas_price),
+				Some(max_fee_per_gas),
+				max_priority_fee_per_gas,
 				nonce,
+				access_list,
 				T::config(),
 			)?;
 			match info {
@@ -282,8 +292,10 @@ pub mod pallet {
 			salt: H256,
 			value: U256,
 			gas_limit: u64,
-			gas_price: U256,
+			max_fee_per_gas: U256,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
+			access_list: Vec<(H160, Vec<H256>)>,
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
@@ -293,8 +305,10 @@ pub mod pallet {
 				salt,
 				value,
 				gas_limit,
-				Some(gas_price),
+				Some(max_fee_per_gas),
+				max_priority_fee_per_gas,
 				nonce,
+				access_list,
 				T::config(),
 			)?;
 			match info {
@@ -393,6 +407,9 @@ pub mod pallet {
 	}
 }
 pub use pallet::*;
+
+// TODO: FIX ME
+// fn pay_priority_fee(tip: U256);
 
 /// A trait to perform origin check.
 pub trait EnsureAddressOrigin<OuterOrigin> {

@@ -116,7 +116,7 @@ pub struct FixedGasPrice;
 impl FeeCalculator for FixedGasPrice {
 	fn min_gas_price() -> U256 {
 		// Gas price is always one token per gas.
-		0.into()
+		1_000_000_000u128.into()
 	}
 }
 
@@ -173,7 +173,8 @@ impl Config for Test {
 	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
 	type FindAuthor = FindAuthorTruncated;
 	type Event = Event;
-	type Precompiles = ();
+	type PrecompilesType = ();
+	type PrecompilesValue = ();
 	type ChainId = ();
 	type BlockGasLimit = ();
 	type Runner = Runner<Self>;
@@ -224,11 +225,30 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		},
 	);
 
-	<darwinia_evm::GenesisConfig as GenesisBuild<Test>>::assimilate_storage(
-		&darwinia_evm::GenesisConfig { accounts },
-		&mut t,
-	)
-	.unwrap();
+	accounts.insert(
+		H160::default(), // root
+		GenesisAccount {
+			nonce: U256::from(1),
+			balance: U256::max_value(),
+			storage: Default::default(),
+			code: vec![],
+		},
+	);
+
+	// <darwinia_evm::GenesisConfig as GenesisBuild<Test>>::assimilate_storage(
+	// 	&darwinia_evm::GenesisConfig { accounts },
+	// 	&mut t,
+	// )
+	// .unwrap();
+	pallet_balances::GenesisConfig::<Test> {
+		// Create the block author account with some balance.
+		balances: vec![(
+			H160::from_str("0x1234500000000000000000000000000000000000").unwrap(),
+			12345,
+		)],
+	}
+	.assimilate_storage(&mut t)
+	.expect("Pallet balances storage can be assimilated");
 	t.into()
 }
 
@@ -242,8 +262,10 @@ fn fail_call_return_ok() {
 			Vec::new(),
 			U256::default(),
 			1000000,
-			U256::default(),
+			U256::from(1_000_000_000),
 			None,
+			None,
+			Vec::new(),
 		));
 
 		assert_ok!(EVM::call(
@@ -253,8 +275,113 @@ fn fail_call_return_ok() {
 			Vec::new(),
 			U256::default(),
 			1000000,
+			U256::from(1_000_000_000),
+			None,
+			None,
+			Vec::new(),
+		));
+	});
+}
+
+#[test]
+fn author_should_get_tip() {
+	new_test_ext().execute_with(|| {
+		let author = EVM::find_author();
+		let before_tip = EVM::account_basic(&author).balance;
+		let _ = EVM::call(
+			Origin::root(),
+			H160::default(),
+			H160::from_str("1000000000000000000000000000000000000001").unwrap(),
+			Vec::new(),
+			U256::from(1),
+			1000000,
+			U256::from(1_000_000_000),
+			Some(U256::from(1)),
+			None,
+			Vec::new(),
+		);
+		let after_tip = EVM::account_basic(&author).balance;
+		assert_eq!(after_tip, (before_tip + 21000));
+	});
+}
+
+#[test]
+fn author_same_balance_without_tip() {
+	new_test_ext().execute_with(|| {
+		let author = EVM::find_author();
+		let before_tip = EVM::account_basic(&author).balance;
+		let _ = EVM::call(
+			Origin::root(),
+			H160::default(),
+			H160::from_str("1000000000000000000000000000000000000001").unwrap(),
+			Vec::new(),
+			U256::default(),
+			1000000,
 			U256::default(),
 			None,
-		));
+			None,
+			Vec::new(),
+		);
+		let after_tip = EVM::account_basic(&author).balance;
+		assert_eq!(after_tip, before_tip);
+	});
+}
+
+#[test]
+fn refunds_should_work() {
+	new_test_ext().execute_with(|| {
+		let before_call = EVM::account_basic(&H160::default()).balance;
+		// Gas price is not part of the actual fee calculations anymore, only the base fee.
+		//
+		// Because we first deduct max_fee_per_gas * gas_limit (2_000_000_000 * 1000000) we need
+		// to ensure that the difference (max fee VS base fee) is refunded.
+		let _ = EVM::call(
+			Origin::root(),
+			H160::default(),
+			H160::from_str("1000000000000000000000000000000000000001").unwrap(),
+			Vec::new(),
+			U256::from(1),
+			1000000,
+			U256::from(2_000_000_000),
+			None,
+			None,
+			Vec::new(),
+		);
+		let total_cost =
+			(U256::from(21_000) * <Test as Config>::FeeCalculator::min_gas_price()) + U256::from(1);
+		let after_call = EVM::account_basic(&H160::default()).balance;
+		assert_eq!(after_call, before_call - total_cost);
+	});
+}
+
+#[test]
+fn refunds_and_priority_should_work() {
+	new_test_ext().execute_with(|| {
+		let author = EVM::find_author();
+		let before_tip = EVM::account_basic(&author).balance;
+		let before_call = EVM::account_basic(&H160::default()).balance;
+		let tip = 5;
+		// The tip is deducted but never refunded to the caller.
+		let _ = EVM::call(
+			Origin::root(),
+			H160::default(),
+			H160::from_str("1000000000000000000000000000000000000001").unwrap(),
+			Vec::new(),
+			U256::from(1),
+			1000000,
+			U256::from(2_000_000_000),
+			Some(U256::from(tip)),
+			None,
+			Vec::new(),
+		);
+		let tip = tip * 21000;
+		let total_cost = (U256::from(21_000) * <Test as Config>::FeeCalculator::min_gas_price())
+			+ U256::from(1)
+			+ U256::from(tip);
+		let after_call = EVM::account_basic(&H160::default()).balance;
+		assert_eq!(after_call, before_call - total_cost);
+
+		let after_tip = EVM::account_basic(&author).balance;
+		assert_eq!(after_tip, (before_tip + tip));
 	});
 }
