@@ -21,13 +21,9 @@ use std::{collections::BTreeMap, marker::PhantomData, str::FromStr};
 // --- crates.io ---
 use rand::{seq::SliceRandom, Rng};
 // --- paritytech ---
-use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_chain_spec::{ChainType, GenericChainSpec, Properties};
 use sc_telemetry::TelemetryEndpoints;
-use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
-use sp_consensus_babe::AuthorityId as BabeId;
 use sp_core::{crypto::UncheckedInto, sr25519};
-use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::Perbill;
 // --- darwinia-network ---
 use super::*;
@@ -66,21 +62,23 @@ const ETHEREUM_RELAY_AUTHORITY_SIGNER: &str = "0x68898db1012808808c903f390909c52
 const MAPPING_FACTORY_ADDRESS: &str = "0xE1586e744b99bF8e4C981DfE4dD4369d6f8Ed88A";
 const ETHEREUM_BACKING_ADDRESS: &str = "0xb2Bea2358d817dAE01B0FD0DC3aECB25910E65AA";
 
-fn session_keys(
+pub fn session_keys(
 	babe: BabeId,
 	grandpa: GrandpaId,
+	beefy: BeefyId,
 	im_online: ImOnlineId,
 	authority_discovery: AuthorityDiscoveryId,
 ) -> SessionKeys {
 	SessionKeys {
 		babe,
 		grandpa,
+		beefy,
 		im_online,
 		authority_discovery,
 	}
 }
 
-fn properties() -> Properties {
+pub fn properties() -> Properties {
 	let mut properties = Properties::new();
 
 	properties.insert("ss58Format".into(), 42.into());
@@ -110,6 +108,8 @@ pub fn genesis_config() -> ChainSpec {
 					session: session_keys(
 						sr25519.unchecked_into(),
 						ed25519.unchecked_into(),
+						// TODO: beefy
+						Default::default(),
 						sr25519.unchecked_into(),
 						sr25519.unchecked_into(),
 					),
@@ -257,6 +257,7 @@ pub fn genesis_config() -> ChainSpec {
 					.collect(),
 			},
 			grandpa: Default::default(),
+			beefy: Default::default(),
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			democracy: Default::default(),
@@ -465,10 +466,11 @@ pub fn development_config() -> ChainSpec {
 				keys: initial_authorities
 					.iter()
 					.cloned()
-					.map(|x| (x.0.clone(), x.0, session_keys(x.2, x.3, x.4, x.5)))
+					.map(|x| (x.0.clone(), x.0, session_keys(x.2, x.3, x.4, x.5, x.6)))
 					.collect(),
 			},
 			grandpa: Default::default(),
+			beefy: Default::default(),
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			democracy: Default::default(),
@@ -684,10 +686,11 @@ pub fn local_testnet_config() -> ChainSpec {
 				keys: initial_authorities
 					.iter()
 					.cloned()
-					.map(|x| (x.0.clone(), x.0, session_keys(x.2, x.3, x.4, x.5)))
+					.map(|x| (x.0.clone(), x.0, session_keys(x.2, x.3, x.4, x.5, x.6)))
 					.collect(),
 			},
 			grandpa: Default::default(),
+			beefy: Default::default(),
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			democracy: Default::default(),

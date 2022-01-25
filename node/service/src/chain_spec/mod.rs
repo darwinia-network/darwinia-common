@@ -27,16 +27,18 @@ pub mod template;
 #[cfg(feature = "template")]
 pub use template::ChainSpec as TemplateChainSpec;
 
+pub use beefy_primitives::crypto::AuthorityId as BeefyId;
+pub use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
+pub use sc_finality_grandpa::AuthorityId as GrandpaId;
+pub use sp_consensus_babe::AuthorityId as BabeId;
+
 // --- crates.io ---
 use serde::{Deserialize, Serialize};
 // --- paritytech ---
-use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_chain_spec::ChainSpecExtension;
 use sc_client_api::{BadBlocks, ForkBlocks};
-use sc_finality_grandpa::AuthorityId as GrandpaId;
 use sc_sync_state_rpc::LightSyncStateExtension;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
-use sp_consensus_babe::AuthorityId as BabeId;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::IdentifyAccount;
 // --- darwinia-network ---
@@ -107,6 +109,7 @@ pub fn get_authority_keys_from_seed(
 	AccountId,
 	BabeId,
 	GrandpaId,
+	BeefyId,
 	ImOnlineId,
 	AuthorityDiscoveryId,
 ) {
@@ -115,6 +118,7 @@ pub fn get_authority_keys_from_seed(
 		get_account_id_from_seed::<sr25519::Public>(seed),
 		get_from_seed::<BabeId>(seed),
 		get_from_seed::<GrandpaId>(seed),
+		get_from_seed::<BeefyId>(seed),
 		get_from_seed::<ImOnlineId>(seed),
 		get_from_seed::<AuthorityDiscoveryId>(seed),
 	)

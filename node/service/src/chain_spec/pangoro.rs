@@ -21,13 +21,9 @@ use std::{collections::BTreeMap, str::FromStr};
 // --- crates.io ---
 use rand::{seq::SliceRandom, Rng};
 // --- paritytech ---
-use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_chain_spec::{ChainType, GenericChainSpec, Properties};
 use sc_telemetry::TelemetryEndpoints;
-use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
-use sp_consensus_babe::AuthorityId as BabeId;
 use sp_core::{crypto::UncheckedInto, sr25519};
-use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::Perbill;
 // --- darwinia-network ---
 use super::*;
@@ -56,21 +52,23 @@ const A_FEW_COINS: Balance = 1 << 44;
 const MANY_COINS: Balance = A_FEW_COINS << 6;
 const BUNCH_OF_COINS: Balance = MANY_COINS << 6;
 
-fn session_keys(
+pub fn session_keys(
 	babe: BabeId,
 	grandpa: GrandpaId,
+	beefy: BeefyId,
 	im_online: ImOnlineId,
 	authority_discovery: AuthorityDiscoveryId,
 ) -> SessionKeys {
 	SessionKeys {
 		babe,
 		grandpa,
+		beefy,
 		im_online,
 		authority_discovery,
 	}
 }
 
-fn properties() -> Properties {
+pub fn properties() -> Properties {
 	let mut properties = Properties::new();
 
 	properties.insert("ss58Format".into(), 18.into());
@@ -100,6 +98,8 @@ pub fn genesis_config() -> ChainSpec {
 					session: session_keys(
 						sr25519.unchecked_into(),
 						ed25519.unchecked_into(),
+						// TODO: beefy
+						Default::default(),
 						sr25519.unchecked_into(),
 						sr25519.unchecked_into(),
 					),
@@ -254,6 +254,7 @@ pub fn genesis_config() -> ChainSpec {
 					.collect(),
 			},
 			grandpa: Default::default(),
+			beefy: Default::default(),
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			treasury: Default::default(),
@@ -371,10 +372,11 @@ pub fn development_config() -> ChainSpec {
 				keys: initial_authorities
 					.iter()
 					.cloned()
-					.map(|x| (x.0.clone(), x.0, session_keys(x.2, x.3, x.4, x.5)))
+					.map(|x| (x.0.clone(), x.0, session_keys(x.2, x.3, x.4, x.5, x.6)))
 					.collect(),
 			},
 			grandpa: Default::default(),
+			beefy: Default::default(),
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			treasury: Default::default(),
