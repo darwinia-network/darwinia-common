@@ -5,7 +5,7 @@ use std::{collections::BTreeMap, iter, marker::PhantomData, sync::Arc};
 // --- crates.io ---
 use dvm_rpc_core::EthPubSubApi::{self as EthPubSubApiT};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
-use ethereum::{BlockV0 as EthereumBlock, Log as EthereumLog, Receipt as EthereumReceiptV0};
+use ethereum::{BlockV2 as EthereumBlock, Log as EthereumLog, Receipt as EthereumReceiptV0};
 use ethereum_types::{H256, U256};
 use futures::{FutureExt as _, SinkExt as _, StreamExt as _};
 use jsonrpc_core::Result as JsonRpcResult;

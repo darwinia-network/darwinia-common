@@ -15,7 +15,7 @@ array-bytes         = { version = "1.4" }
 codec               = { package = "parity-scale-codec", version = "2.2" }
 ethereum            = { version = "0.10", features = ["with-codec"] }
 ethereum-types      = { version = "0.12" }
-evm                 = { version = "0.30" }
+evm                 = { version = "0.33" }
 futures             = { version = "0.3" }
 jsonrpc-core        = { version = "18.0" }
 jsonrpc-core-client = { version = "18.0" }
