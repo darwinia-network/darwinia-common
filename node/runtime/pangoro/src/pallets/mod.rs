@@ -34,6 +34,15 @@ pub use session::*;
 pub mod grandpa;
 pub use grandpa::*;
 
+pub mod beefy;
+pub use beefy::*;
+
+pub mod mmr;
+pub use mmr::*;
+
+pub mod beefy_mmr;
+pub use beefy_mmr::*;
+
 pub mod im_online;
 pub use im_online::*;
 

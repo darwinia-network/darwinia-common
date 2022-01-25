@@ -56,7 +56,7 @@ use frame_system::{
 	CheckWeight, EnsureRoot,
 };
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
-use pallet_transaction_payment::{ChargeTransactionPayment, FeeDetails, RuntimeDispatchInfo};
+use pallet_transaction_payment::ChargeTransactionPayment;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::{AllowedSlots, BabeEpochConfiguration};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
@@ -75,10 +75,6 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use common_runtime::*;
-use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
-use darwinia_evm::{AccountBasic, FeeCalculator, Runner};
-use darwinia_fee_market_rpc_runtime_api::{Fee, InProcessOrders};
-use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use drml_common_primitives::*;
 
@@ -156,6 +152,9 @@ frame_support::construct_runtime!(
 		Historical: pallet_session_historical::{Pallet} = 11,
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 12,
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event} = 13,
+		Beefy: pallet_beefy::{Pallet, Storage, Config<T>} = 27,
+		Mmr: pallet_mmr::{Pallet, Storage} = 28,
+		MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 29,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
 		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Config} = 15,
 
@@ -321,25 +320,15 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce> for Runtime {
-		fn account_nonce(account: AccountId) -> Nonce {
-			System::account_nonce(account)
+	impl sp_session::SessionKeys<Block> for Runtime {
+		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
+			SessionKeys::generate(seed)
 		}
-	}
 
-	impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
-		fn validate_transaction(
-			source: TransactionSource,
-			tx: <Block as BlockT>::Extrinsic,
-			block_hash: <Block as BlockT>::Hash,
-		) -> TransactionValidity {
-			Executive::validate_transaction(source, tx, block_hash)
-		}
-	}
-
-	impl sp_offchain::OffchainWorkerApi<Block> for Runtime {
-		fn offchain_worker(header: &<Block as BlockT>::Header) {
-			Executive::offchain_worker(header)
+		fn decode_session_keys(
+			encoded: Vec<u8>,
+		) -> Option<Vec<(Vec<u8>, sp_core::crypto::KeyTypeId)>> {
+			SessionKeys::decode_into_raw_public_keys(&encoded)
 		}
 	}
 
@@ -428,22 +417,37 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl beefy_primitives::BeefyApi<Block> for Runtime {
+		fn validator_set() -> beefy_primitives::ValidatorSet<BeefyId> {
+			Beefy::validator_set()
+		}
+	}
+
 	impl sp_authority_discovery::AuthorityDiscoveryApi<Block> for Runtime {
 		fn authorities() -> Vec<AuthorityDiscoveryId> {
 			AuthorityDiscovery::authorities()
 		}
 	}
 
-
-	impl sp_session::SessionKeys<Block> for Runtime {
-		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
-			SessionKeys::generate(seed)
+	impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce> for Runtime {
+		fn account_nonce(account: AccountId) -> Nonce {
+			System::account_nonce(account)
 		}
+	}
 
-		fn decode_session_keys(
-			encoded: Vec<u8>,
-		) -> Option<Vec<(Vec<u8>, sp_core::crypto::KeyTypeId)>> {
-			SessionKeys::decode_into_raw_public_keys(&encoded)
+	impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
+		fn validate_transaction(
+			source: TransactionSource,
+			tx: <Block as BlockT>::Extrinsic,
+			block_hash: <Block as BlockT>::Hash,
+		) -> TransactionValidity {
+			Executive::validate_transaction(source, tx, block_hash)
+		}
+	}
+
+	impl sp_offchain::OffchainWorkerApi<Block> for Runtime {
+		fn offchain_worker(header: &<Block as BlockT>::Header) {
+			Executive::offchain_worker(header)
 		}
 	}
 
@@ -451,16 +455,22 @@ sp_api::impl_runtime_apis! {
 		Block,
 		Balance,
 	> for Runtime {
-		fn query_info(uxt: <Block as BlockT>::Extrinsic, len: u32) -> RuntimeDispatchInfo<Balance> {
+		fn query_info(uxt: <Block as BlockT>::Extrinsic, len: u32)
+			-> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance>
+		{
 			TransactionPayment::query_info(uxt, len)
 		}
-		fn query_fee_details(uxt: <Block as BlockT>::Extrinsic, len: u32) -> FeeDetails<Balance> {
+		fn query_fee_details(uxt: <Block as BlockT>::Extrinsic, len: u32)
+			-> pallet_transaction_payment_rpc_runtime_api::FeeDetails<Balance>
+		{
 			TransactionPayment::query_fee_details(uxt, len)
 		}
 	}
 
 	impl darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance> for Runtime {
-		fn usable_balance(instance: u8, account: AccountId) -> BalancesRuntimeDispatchInfo<Balance> {
+		fn usable_balance(instance: u8, account: AccountId)
+			-> darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo<Balance>
+		{
 			match instance {
 				0 => Ring::usable_balance_rpc(account),
 				1 => Kton::usable_balance_rpc(account),
@@ -470,82 +480,27 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power> for Runtime {
-		fn power_of(account: AccountId) -> StakingRuntimeDispatchInfo<Power> {
+		fn power_of(account: AccountId)
+			-> darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo<Power>
+		{
 			Staking::power_of_rpc(account)
 		}
 	}
 
 	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
-		fn market_fee() -> Option<Fee<Balance>> {
+		fn market_fee() -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
 			if let Some(fee) = FeeMarket::market_fee() {
-				return Some(Fee {
+				return Some(darwinia_fee_market_rpc_runtime_api::Fee {
 					amount: fee,
 				});
 			}
 			None
 		}
 
-		fn in_process_orders() -> InProcessOrders {
-			return InProcessOrders {
+		fn in_process_orders() -> darwinia_fee_market_rpc_runtime_api::InProcessOrders {
+			return darwinia_fee_market_rpc_runtime_api::InProcessOrders {
 				orders: FeeMarket::in_process_orders(),
 			}
-		}
-	}
-
-	impl drml_bridge_primitives::PangolinFinalityApi<Block> for Runtime {
-		fn best_finalized() -> (pangolin_primitives::BlockNumber, pangolin_primitives::Hash) {
-			let header = BridgePangolinGrandpa::best_finalized();
-			(header.number, header.hash())
-		}
-
-		fn is_known_header(hash: pangolin_primitives::Hash) -> bool {
-			BridgePangolinGrandpa::is_known_header(hash)
-		}
-	}
-
-	impl drml_bridge_primitives::ToPangolinOutboundLaneApi<Block, Balance, ToPangolinMessagePayload> for Runtime {
-		// fn estimate_message_delivery_and_dispatch_fee(
-		// 	_lane_id: bp_messages::LaneId,
-		// 	payload: ToPangolinMessagePayload,
-		// ) -> Option<Balance> {
-		// 	bridge_runtime_common::messages::source::estimate_message_dispatch_and_delivery_fee::<WithPangolinMessageBridge>(
-		// 		&payload,
-		// 		WithPangolinMessageBridge::RELAYER_FEE_PERCENT,
-		// 	).ok()
-		// }
-
-		fn message_details(
-			lane: bp_messages::LaneId,
-			begin: bp_messages::MessageNonce,
-			end: bp_messages::MessageNonce,
-		) -> Vec<bp_messages::MessageDetails<Balance>> {
-			bridge_runtime_common::messages_api::outbound_message_details::<
-				Runtime,
-				WithPangolinMessages,
-				WithPangolinMessageBridge,
-			>(lane, begin, end)
-		}
-
-		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgePangolinMessages::outbound_latest_received_nonce(lane)
-		}
-
-		fn latest_generated_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgePangolinMessages::outbound_latest_generated_nonce(lane)
-		}
-	}
-
-	impl drml_bridge_primitives::FromPangolinInboundLaneApi<Block> for Runtime {
-		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgePangolinMessages::inbound_latest_received_nonce(lane)
-		}
-
-		fn latest_confirmed_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgePangolinMessages::inbound_latest_confirmed_nonce(lane)
-		}
-
-		fn unrewarded_relayers_state(lane: bp_messages::LaneId) -> bp_messages::UnrewardedRelayersState {
-			BridgePangolinMessages::inbound_unrewarded_relayers_state(lane)
 		}
 	}
 
@@ -555,10 +510,16 @@ sp_api::impl_runtime_apis! {
 		}
 
 		fn gas_price() -> U256 {
+			// --- darwinia-network ---
+			use darwinia_evm::FeeCalculator;
+
 			<Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price()
 		}
 
 		fn account_basic(address: H160) -> darwinia_evm::Account {
+			// --- darwinia-network ---
+			use darwinia_evm::AccountBasic;
+
 			<Runtime as darwinia_evm::Config>::RingAccountBasic::account_basic(&address)
 		}
 
@@ -586,6 +547,9 @@ sp_api::impl_runtime_apis! {
 			nonce: Option<U256>,
 			estimate: bool,
 		) -> Result<darwinia_evm::CallInfo, sp_runtime::DispatchError> {
+			// --- darwinia-network ---
+			use darwinia_evm::Runner;
+
 			let config = if estimate {
 				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
 				config.estimate = true;
@@ -615,6 +579,9 @@ sp_api::impl_runtime_apis! {
 			nonce: Option<U256>,
 			estimate: bool,
 		) -> Result<darwinia_evm::CreateInfo, sp_runtime::DispatchError> {
+			// --- darwinia-network ---
+			use darwinia_evm::Runner;
+
 			let config = if estimate {
 				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
 				config.estimate = true;
@@ -751,6 +718,62 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl drml_bridge_primitives::PangolinFinalityApi<Block> for Runtime {
+		fn best_finalized() -> (pangolin_primitives::BlockNumber, pangolin_primitives::Hash) {
+			let header = BridgePangolinGrandpa::best_finalized();
+			(header.number, header.hash())
+		}
+
+		fn is_known_header(hash: pangolin_primitives::Hash) -> bool {
+			BridgePangolinGrandpa::is_known_header(hash)
+		}
+	}
+
+	impl drml_bridge_primitives::ToPangolinOutboundLaneApi<Block, Balance, ToPangolinMessagePayload> for Runtime {
+		// fn estimate_message_delivery_and_dispatch_fee(
+		// 	_lane_id: bp_messages::LaneId,
+		// 	payload: ToPangolinMessagePayload,
+		// ) -> Option<Balance> {
+		// 	bridge_runtime_common::messages::source::estimate_message_dispatch_and_delivery_fee::<WithPangolinMessageBridge>(
+		// 		&payload,
+		// 		WithPangolinMessageBridge::RELAYER_FEE_PERCENT,
+		// 	).ok()
+		// }
+
+		fn message_details(
+			lane: bp_messages::LaneId,
+			begin: bp_messages::MessageNonce,
+			end: bp_messages::MessageNonce,
+		) -> Vec<bp_messages::MessageDetails<Balance>> {
+			bridge_runtime_common::messages_api::outbound_message_details::<
+				Runtime,
+				WithPangolinMessages,
+				WithPangolinMessageBridge,
+			>(lane, begin, end)
+		}
+
+		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgePangolinMessages::outbound_latest_received_nonce(lane)
+		}
+
+		fn latest_generated_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgePangolinMessages::outbound_latest_generated_nonce(lane)
+		}
+	}
+
+	impl drml_bridge_primitives::FromPangolinInboundLaneApi<Block> for Runtime {
+		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgePangolinMessages::inbound_latest_received_nonce(lane)
+		}
+
+		fn latest_confirmed_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgePangolinMessages::inbound_latest_confirmed_nonce(lane)
+		}
+
+		fn unrewarded_relayers_state(lane: bp_messages::LaneId) -> bp_messages::UnrewardedRelayersState {
+			BridgePangolinMessages::inbound_unrewarded_relayers_state(lane)
+		}
+	}
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {

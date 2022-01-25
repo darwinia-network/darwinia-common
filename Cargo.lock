@@ -6397,6 +6397,7 @@ name = "pangoro-runtime"
 version = "2.8.1"
 dependencies = [
  "array-bytes",
+ "beefy-primitives",
  "bp-header-chain",
  "bp-message-dispatch",
  "bp-messages",
@@ -6438,6 +6439,8 @@ dependencies = [
  "pallet-authority-discovery",
  "pallet-authorship",
  "pallet-babe",
+ "pallet-beefy",
+ "pallet-beefy-mmr",
  "pallet-bridge-dispatch",
  "pallet-bridge-grandpa",
  "pallet-bridge-messages",
@@ -6445,6 +6448,8 @@ dependencies = [
  "pallet-evm-precompile-simple",
  "pallet-grandpa",
  "pallet-im-online",
+ "pallet-mmr",
+ "pallet-mmr-primitives",
  "pallet-offences",
  "pallet-scheduler",
  "pallet-session",
