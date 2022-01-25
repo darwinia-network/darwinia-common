@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-//! DRML Client meta trait
+//! DRML Client meta trait.
 
 /// DRML client abstraction, this super trait only pulls in functionality required for
 pub trait DrmlClient<Block, Backend, Runtime>:
