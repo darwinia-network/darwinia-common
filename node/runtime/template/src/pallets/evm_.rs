@@ -9,6 +9,23 @@ use darwinia_evm::{runner::stack::Runner, Config, EnsureAddressTruncated};
 use darwinia_support::evm::ConcatConverter;
 use dvm_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
 
+pub struct FrontierPrecompiles<R>(PhantomData<R>);
+
+impl<R> FrontierPrecompiles<R>
+where
+	R: pallet_evm::Config,
+{
+	pub fn new() -> Self {
+		Self(Default::default())
+	}
+	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
+		sp_std::vec![1, 2, 3, 4, 5, 1024, 1025]
+			.into_iter()
+			.map(|x| hash(x))
+			.collect()
+	}
+}
+
 pub struct FixedGasPrice;
 impl FeeCalculator for FixedGasPrice {
 	fn min_gas_price() -> U256 {
@@ -33,26 +50,19 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 frame_support::parameter_types! {
 	pub const ChainId: u64 = 42;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
+	pub PrecompilesValue: FrontierPrecompiles<Runtime> = FrontierPrecompiles::<_>::new();
 }
 
 impl Config for Runtime {
-	type FeeCalculator = FixedGasPrice;
+	type FeeCalculator = BaseFee;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type IntoAccountId = ConcatConverter<Self::AccountId>;
 	type FindAuthor = FindAuthorTruncated<Aura>;
 	type BlockHashMapping = dvm_ethereum::EthereumBlockHashMapping<Self>;
 	type Event = Event;
-	type Precompiles = (
-		pallet_evm_precompile_simple::ECRecover,
-		pallet_evm_precompile_simple::Sha256,
-		pallet_evm_precompile_simple::Ripemd160,
-		pallet_evm_precompile_simple::Identity,
-		pallet_evm_precompile_modexp::Modexp,
-		pallet_evm_precompile_simple::ECRecoverPublicKey,
-		pallet_evm_precompile_sha3fips::Sha3FIPS256,
-		pallet_evm_precompile_sha3fips::Sha3FIPS512,
-	);
+	type PrecompilesType = FrontierPrecompiles<Self>;
+	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
 	type Runner = Runner<Self>;

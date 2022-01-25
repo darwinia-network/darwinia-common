@@ -9,6 +9,9 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub mod pallets;
 pub use pallets::*;
 
+mod precompiles;
+use precompiles::FrontierPrecompiles;
+
 pub mod wasm {
 	//! Make the WASM binary available.
 
@@ -112,6 +115,7 @@ frame_support::construct_runtime!(
 
 		EVM: darwinia_evm::{Pallet, Config, Call, Storage, Event<T>},
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
+		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event},
 	}
 );
 
@@ -324,7 +328,8 @@ sp_api::impl_runtime_apis! {
 			data: Vec<u8>,
 			value: U256,
 			gas_limit: U256,
-			gas_price: Option<U256>,
+			max_fee_per_gas: Option<U256>,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
 		) -> Result<darwinia_evm::CallInfo, sp_runtime::DispatchError> {
@@ -342,8 +347,10 @@ sp_api::impl_runtime_apis! {
 				data,
 				value,
 				gas_limit.low_u64(),
-				gas_price,
+				max_fee_per_gas,
+				max_priority_fee_per_gas,
 				nonce,
+				Vec::new(),
 				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
@@ -353,7 +360,8 @@ sp_api::impl_runtime_apis! {
 			data: Vec<u8>,
 			value: U256,
 			gas_limit: U256,
-			gas_price: Option<U256>,
+			max_fee_per_gas: Option<U256>,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
 		) -> Result<darwinia_evm::CreateInfo, sp_runtime::DispatchError> {
@@ -370,8 +378,10 @@ sp_api::impl_runtime_apis! {
 				data,
 				value,
 				gas_limit.low_u64(),
-				gas_price,
+				max_fee_per_gas,
+				max_priority_fee_per_gas,
 				nonce,
+				Vec::new(),
 				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}

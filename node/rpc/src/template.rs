@@ -131,6 +131,11 @@ where
 		Box::new(SchemaV1Override::new(client.clone()))
 			as Box<dyn StorageOverride<_> + Send + Sync>,
 	);
+	overrides_map.insert(
+		EthereumStorageSchema::V2,
+		Box::new(SchemaV2Override::new(client.clone()))
+			as Box<dyn StorageOverride<_> + Send + Sync>,
+	);
 
 	let overrides = Arc::new(OverrideHandle {
 		schemas: overrides_map,
