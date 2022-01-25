@@ -262,10 +262,12 @@ pub mod pallet {
 		OriginFor<T>: Into<Result<RawOrigin, OriginFor<T>>>,
 	{
 		/// Transact an Ethereum transaction.
-		#[pallet::weight(<T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(Pallet::<T>::transaction_data(transaction).gas_limit.unique_saturated_into()))]
+		#[pallet::weight(<T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(
+			Pallet::<T>::transaction_data(transaction).gas_limit.unique_saturated_into()
+		))]
 		pub fn transact(
 			origin: OriginFor<T>,
-			transaction: TransactionV0,
+			transaction: Transaction,
 		) -> DispatchResultWithPostInfo {
 			let source = ensure_ethereum_transaction(origin)?;
 			// Disable transact functionality if PreLog exist.
@@ -321,11 +323,11 @@ pub mod pallet {
 	/// Current building block's transactions and receipts.
 	#[pallet::storage]
 	pub(super) type Pending<T: Config> =
-		StorageValue<_, Vec<(TransactionV0, TransactionStatus, EthereumReceiptV0)>, ValueQuery>;
+		StorageValue<_, Vec<(Transaction, TransactionStatus, EthereumReceiptV0)>, ValueQuery>;
 
 	/// The current Ethereum block.
 	#[pallet::storage]
-	pub(super) type CurrentBlock<T: Config> = StorageValue<_, EthereumBlockV2>;
+	pub(super) type CurrentBlock<T: Config> = StorageValue<_, ethereum::BlockV2>;
 
 	/// The current Ethereum receipts.
 	#[pallet::storage]
@@ -435,6 +437,7 @@ impl<T: Config> Pallet<T> {
 		transaction_data: &TransactionData,
 	) -> Result<(U256, u64), TransactionValidityError> {
 		let gas_limit = transaction_data.gas_limit;
+
 		// We must ensure a transaction can pay the cost of its data bytes.
 		// If it can't it should not be included in a block.
 		let mut gasometer = evm::gasometer::Gasometer::new(
@@ -474,10 +477,8 @@ impl<T: Config> Pallet<T> {
 			.into());
 		}
 
-		// let account_data = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&origin);
 		let base_fee = T::FeeCalculator::min_gas_price();
 		let mut priority = 0;
-
 		let gas_price = if let Some(gas_price) = transaction_data.gas_price {
 			// Legacy and EIP-2930 transactions.
 			// Handle priority here. On legacy transaction everything in gas_price except
@@ -490,14 +491,10 @@ impl<T: Config> Pallet<T> {
 		} else {
 			return Err(InvalidTransaction::Payment.into());
 		};
-		// let fee = transaction.gas_price.saturating_mul(transaction.gas_limit);
-		// let total_payment = transaction.value.saturating_add(fee);
-		// if account_data.balance < total_payment {
 		if gas_price < base_fee {
 			return Err(InvalidTransaction::Payment.into());
 		}
 
-		// let min_gas_price = T::FeeCalculator::min_gas_price();
 		let mut fee = gas_price.saturating_mul(gas_limit);
 		if let Some(max_priority_fee_per_gas) = transaction_data.max_priority_fee_per_gas {
 			// EIP-1559 transaction priority is determined by `max_priority_fee_per_gas`.
@@ -506,12 +503,12 @@ impl<T: Config> Pallet<T> {
 			// Add the priority tip to the payable fee.
 			fee = fee.saturating_add(max_priority_fee_per_gas.saturating_mul(gas_limit));
 		}
-		let account_data = pallet_evm::Pallet::<T>::account_basic(&origin);
+
+		let account_data = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&origin);
 		let total_payment = transaction_data.value.saturating_add(fee);
 		if account_data.balance < total_payment {
 			return Err(InvalidTransaction::Payment.into());
 		}
-
 		Ok((account_data.nonce, priority))
 	}
 
@@ -847,7 +844,8 @@ impl<T: Config> Pallet<T> {
 			mix_hash: H256::default(),
 			nonce: H64::default(),
 		};
-		let block = EthereumBlockV0::new(partial_header, transactions, ommers);
+		// let block = EthereumBlockV0::new(partial_header, transactions, ommers);
+		let block = ethereum::Block::new(partial_header, transactions.clone(), ommers);
 
 		CurrentBlock::<T>::put(block.clone());
 		CurrentReceipts::<T>::put(receipts);
