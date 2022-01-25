@@ -16,6 +16,68 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+macro_rules! impl_authority_keys {
+	() => {
+		pub struct AuthorityKeys {
+			stash_key: AccountId,
+			session_keys: SessionKeys,
+		}
+		impl AuthorityKeys {
+			pub fn new(sr25519: &str, ed25519: &str, ecdsa: &str) -> Self {
+				let sr25519 = array_bytes::hex2array_unchecked(sr25519);
+				let ed25519 = array_bytes::hex2array_unchecked(ed25519);
+				let ecdsa = array_bytes::hex2array_unchecked(ecdsa);
+
+				Self {
+					stash_key: sr25519.into(),
+					session_keys: session_keys(
+						sr25519.unchecked_into(),
+						ed25519.unchecked_into(),
+						ecdsa.unchecked_into(),
+						sr25519.unchecked_into(),
+						sr25519.unchecked_into(),
+					),
+				}
+			}
+
+			pub fn testnet_authorities() -> Vec<Self> {
+				vec![
+					AuthorityKeys::new(
+						"0x9c43c00407c0a51e0d88ede9d531f165e370013b648e6b62f4b3bcff4689df02",
+						"0x63e122d962a835020bef656ad5a80dbcc994bb48a659f1af955552f4b3c27b09",
+						"0x021842ca1a9aff1549b811126a9c1171d18ffddbd4434478675606f840cfc2fd09",
+					),
+					AuthorityKeys::new(
+						"0x741a9f507722713ec0a5df1558ac375f62469b61d1f60fa60f5dedfc85425b2e",
+						"0x8a50704f41448fca63f608575debb626639ac00ad151a1db08af1368be9ccb1d",
+						"0x0312aed9a712318917535314973525902d09d298cb04520f7c9ed9959fe69678f3",
+					),
+					AuthorityKeys::new(
+						"0x2276a3162f1b63c21b3396c5846d43874c5b8ba69917d756142d460b2d70d036",
+						"0xb28fade2d023f08c0d5a131eac7d64a107a2660f22a0aca09b37a3f321259ef6",
+						"0x0374704a3dd21e01cff4d47e53f84fa4a91a0971ebde83007ef6b567b183344558",
+					),
+					AuthorityKeys::new(
+						"0x7a8b265c416eab5fdf8e5a1b3c7635131ca7164fbe6f66d8a70feeeba7c4dd7f",
+						"0x305bafd512366e7fd535fdc144c7034b8683e1814d229c84a116f3cb27a97643",
+						"0x034a972603f389797cad3705eacb90584c55aa004cf973206811b1e53e56a02f5a",
+					),
+					AuthorityKeys::new(
+						"0xe446c1f1f419cc0927ad3319e141501b02844dee6252d905aae406f0c7097d1a",
+						"0xc3c9880f6821b6e906c4396e54137297b1ee6c4c448b6a98abc5e29ffcdcec81",
+						"0x02c37d0a990ce8248ac385cbb2fd5a4a083a7b1b49871c6b9eac48d540070f41b5",
+					),
+					AuthorityKeys::new(
+						"0xae05263d9508581f657ce584184721884ee2886eb66765db0c4f5195aa1d4e21",
+						"0x1ed7de3855ffcce134d718b570febb49bbbbeb32ebbc8c319f44fb9f5690643a",
+						"0x03cf8fd69287acba352911e8f969be5f836fa280c2c00041f9a17e017e2eb5f613",
+					),
+				]
+			}
+		}
+	};
+}
+
 pub mod pangolin;
 pub use pangolin::ChainSpec as PangolinChainSpec;
 
