@@ -1,49 +1,42 @@
 macro_rules! impl_runtime_apis {
-	($($extra_apis:path),*) => {
+	($api:path,$($extra_apis:path),*;$($bound:tt)*) => {
 		/// A set of APIs that darwinia-like runtimes must implement.
 		pub trait RuntimeApiCollection:
-			sp_api::ApiExt<Block>
-			+ sp_api::Metadata<Block>
-			+ sp_authority_discovery::AuthorityDiscoveryApi<Block>
-			+ sp_block_builder::BlockBuilder<Block>
-			+ sp_consensus_babe::BabeApi<Block>
-			+ sp_finality_grandpa::GrandpaApi<Block>
-			+ sp_offchain::OffchainWorkerApi<Block>
-			+ sp_session::SessionKeys<Block>
-			+ sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
-			+ frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
-			+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
+			$api
 			$(+ $extra_apis)*
 		where
-			<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
+			$($bound)*
 		{
 		}
 		impl<Api> RuntimeApiCollection for Api
 		where
-			Api: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
-				+ sp_api::ApiExt<Block>
-				+ sp_api::Metadata<Block>
-				+ sp_authority_discovery::AuthorityDiscoveryApi<Block>
-				+ sp_block_builder::BlockBuilder<Block>
-				+ sp_consensus_babe::BabeApi<Block>
-				+ sp_finality_grandpa::GrandpaApi<Block>
-				+ sp_offchain::OffchainWorkerApi<Block>
-				+ sp_session::SessionKeys<Block>
-				+ frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
-				+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
+			Api: $api
 				$(+ $extra_apis)*,
-			<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
+			$($bound)*
 		{
 		}
 	};
 }
 
 impl_runtime_apis![
+	sp_api::ApiExt<Block>,
+	sp_api::Metadata<Block>,
+	sp_block_builder::BlockBuilder<Block>,
+	sp_session::SessionKeys<Block>,
+	sp_consensus_babe::BabeApi<Block>,
+	sp_finality_grandpa::GrandpaApi<Block>,
+	beefy_primitives::BeefyApi<Block>,
+	sp_authority_discovery::AuthorityDiscoveryApi<Block>,
+	sp_offchain::OffchainWorkerApi<Block>,
+	sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>,
+	frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>,
+	pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>,
 	darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>,
 	darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>,
 	darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance>,
 	dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
-	dp_evm_trace_apis::DebugRuntimeApi<Block>
+	dp_evm_trace_apis::DebugRuntimeApi<Block>;
+	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 ];
 
 pub mod dvm_tasks;
@@ -70,6 +63,7 @@ use std::{
 use codec::Codec;
 use futures::stream::StreamExt;
 // --- paritytech ---
+use beefy_gadget::{notification::BeefySignedCommitmentStream, BeefyParams};
 use fc_rpc_core::types::FilterPool;
 use sc_authority_discovery::WorkerConfig;
 use sc_basic_authorship::ProposerFactory;
@@ -105,7 +99,8 @@ use crate::service::dvm_tasks::DvmTasksParams;
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
 use drml_common_primitives::{AccountId, Balance, Nonce, OpaqueBlock as Block, Power};
 use drml_rpc::{
-	BabeDeps, FullDeps, GrandpaDeps, LightDeps, RpcConfig, RpcExtension, SubscriptionTaskExecutor,
+	BabeDeps, BeefyDeps, FullDeps, GrandpaDeps, LightDeps, RpcConfig, RpcExtension,
+	SubscriptionTaskExecutor,
 };
 
 type FullBackend = TFullBackend<Block>;
@@ -117,7 +112,6 @@ type FullGrandpaBlockImport<RuntimeApi, Executor> =
 type LightBackend = TLightBackendWithHash<Block, BlakeTwo256>;
 type LightClient<RuntimeApi, Executor> =
 	TLightClientWithBackend<Block, RuntimeApi, NativeElseWasmExecutor<Executor>, LightBackend>;
-
 type RpcResult = Result<RpcExtension, ServiceError>;
 
 pub trait RuntimeExtrinsic: 'static + Send + Sync + Codec {}
@@ -421,6 +415,7 @@ where
 	let babe_config = babe_link.config().clone();
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
 	let justification_stream = grandpa_link.justification_stream();
+	let (beefy_link, beefy_commitment_stream) = BeefySignedCommitmentStream::channel();
 	let shared_authority_set = grandpa_link.shared_authority_set().clone();
 	let finality_proof_provider = GrandpaFinalityProofProvider::new_for_service(
 		backend.clone(),
@@ -435,43 +430,49 @@ where
 		let shared_voter_state = shared_voter_state.clone();
 		let network = network.clone();
 
-		Box::new(move |deny_unsafe, subscription_executor| -> RpcResult {
-			drml_rpc::create_full(
-				FullDeps {
-					client: client.clone(),
-					pool: transaction_pool.clone(),
-					graph: transaction_pool.pool().clone(),
-					select_chain: select_chain.clone(),
-					chain_spec: chain_spec.cloned_box(),
-					deny_unsafe,
-					is_authority,
-					network: network.clone(),
-					babe: BabeDeps {
-						babe_config: babe_config.clone(),
-						shared_epoch_changes: shared_epoch_changes.clone(),
-						keystore: keystore.clone(),
+		Box::new(
+			move |deny_unsafe, subscription_executor: SubscriptionTaskExecutor| -> RpcResult {
+				drml_rpc::create_full(
+					FullDeps {
+						client: client.clone(),
+						pool: transaction_pool.clone(),
+						graph: transaction_pool.pool().clone(),
+						select_chain: select_chain.clone(),
+						chain_spec: chain_spec.cloned_box(),
+						deny_unsafe,
+						is_authority,
+						network: network.clone(),
+						babe: BabeDeps {
+							babe_config: babe_config.clone(),
+							shared_epoch_changes: shared_epoch_changes.clone(),
+							keystore: keystore.clone(),
+						},
+						grandpa: GrandpaDeps {
+							shared_voter_state: shared_voter_state.clone(),
+							shared_authority_set: shared_authority_set.clone(),
+							justification_stream: justification_stream.clone(),
+							subscription_executor: subscription_executor.clone(),
+							finality_proof_provider: finality_proof_provider.clone(),
+						},
+						beefy: BeefyDeps {
+							beefy_commitment_stream: beefy_commitment_stream.clone(),
+							subscription_executor,
+						},
+						backend: dvm_backend.clone(),
+						filter_pool: filter_pool.clone(),
+						tracing_requesters: tracing_requesters.clone(),
+						rpc_config: rpc_config.clone(),
 					},
-					grandpa: GrandpaDeps {
-						shared_voter_state: shared_voter_state.clone(),
-						shared_authority_set: shared_authority_set.clone(),
-						justification_stream: justification_stream.clone(),
-						subscription_executor,
-						finality_provider: finality_proof_provider.clone(),
-					},
-					backend: dvm_backend.clone(),
-					filter_pool: filter_pool.clone(),
-					tracing_requesters: tracing_requesters.clone(),
-					rpc_config: rpc_config.clone(),
-				},
-				subscription_task_executor.clone(),
-				eth_transaction_convertor.clone(),
-			)
-			.map_err(Into::into)
-		})
+					subscription_task_executor.clone(),
+					eth_transaction_convertor.clone(),
+				)
+				.map_err(Into::into)
+			},
+		)
 	};
 	let rpc_handlers = sc_service::spawn_tasks(SpawnTasksParams {
 		config,
-		backend,
+		backend: backend.clone(),
 		client: client.clone(),
 		keystore: keystore_container.sync_keystore(),
 		network: network.clone(),
@@ -571,21 +572,32 @@ where
 	} else {
 		None
 	};
-	let grandpa_config = GrandpaConfig {
-		// FIXME substrate#1578 make this available through chainspec
-		gossip_duration: Duration::from_millis(1000),
-		justification_period: 512,
-		name: Some(name),
-		observer_enabled: false,
-		keystore,
-		local_role: role,
-		telemetry: telemetry.as_ref().map(|x| x.handle()),
-	};
-	let enable_grandpa = !disable_grandpa;
 
-	if enable_grandpa {
+	task_manager.spawn_essential_handle().spawn_blocking(
+		"beefy-gadget",
+		beefy_gadget::start_beefy_gadget::<_, _, _, _>(BeefyParams {
+			client: client.clone(),
+			backend: backend.clone(),
+			key_store: keystore.clone(),
+			network: network.clone(),
+			signed_commitment_sender: beefy_link,
+			min_block_delta: 4,
+			prometheus_registry: prometheus_registry.clone(),
+		}),
+	);
+
+	if !disable_grandpa {
 		let grandpa_config = GrandpaParams {
-			config: grandpa_config,
+			config: GrandpaConfig {
+				// FIXME substrate#1578 make this available through chainspec
+				gossip_duration: Duration::from_millis(1000),
+				justification_period: 512,
+				name: Some(name),
+				observer_enabled: false,
+				keystore,
+				local_role: role,
+				telemetry: telemetry.as_ref().map(|x| x.handle()),
+			},
 			link: grandpa_link,
 			network,
 			telemetry: telemetry.as_ref().map(|x| x.handle()),
@@ -648,6 +660,10 @@ where
 		.network
 		.extra_sets
 		.push(sc_finality_grandpa::grandpa_peers_set_config());
+	config
+		.network
+		.extra_sets
+		.push(beefy_gadget::beefy_peers_set_config());
 
 	let select_chain = LongestChain::new(backend.clone());
 	let transaction_pool = Arc::new(BasicPool::new_light(
