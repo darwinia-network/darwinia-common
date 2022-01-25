@@ -19,6 +19,7 @@
 //! DRML Client meta trait.
 
 /// DRML client abstraction, this super trait only pulls in functionality required for
+/// DRML internal crates like DRML-collator.
 pub trait DrmlClient<Block, Backend, Runtime>:
 	Sized
 	+ Send
