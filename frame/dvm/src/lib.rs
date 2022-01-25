@@ -293,7 +293,9 @@ pub mod pallet {
 				Error::<T>::PreLogExists,
 			);
 
-			Self::internal_transact(target, input)
+			Ok(().into())
+
+			// Self::internal_transact(target, input)
 		}
 	}
 
@@ -517,7 +519,7 @@ impl<T: Config> Pallet<T> {
 	// the function `validate_transaction_common`.
 	fn validate_transaction_in_pool(
 		origin: H160,
-		transaction: &TransactionV0,
+		transaction: &Transaction,
 	) -> TransactionValidity {
 		let transaction_data = Pallet::<T>::transaction_data(&transaction);
 		let transaction_nonce = transaction_data.nonce;
@@ -574,7 +576,7 @@ impl<T: Config> Pallet<T> {
 	/// 	  from evm runner
 	fn apply_validated_transaction(
 		source: H160,
-		transaction: TransactionV0,
+		transaction: Transaction,
 	) -> DispatchResultWithPostInfo {
 		Self::raw_transact(source, transaction.into()).map(|(_, used_gas)| {
 			Ok(PostDispatchInfo {
@@ -590,10 +592,11 @@ impl<T: Config> Pallet<T> {
 	// Execute Transaction in evm runner and save the execution info in Pending
 	fn raw_transact(
 		source: H160,
-		dvm_transaction: DVMTransaction,
+		dvm_transaction: Transaction,
 	) -> Result<(ExitReason, U256), DispatchError> {
+		// TODO: use hash() directly
 		let transaction_hash =
-			H256::from_slice(Keccak256::digest(&rlp::encode(&dvm_transaction.tx)).as_slice());
+			H256::from_slice(Keccak256::digest(&rlp::encode(&dvm_transaction)).as_slice());
 		let transaction_index = Pending::<T>::get().len() as u32;
 
 		// let (to, _, info) = Self::execute(
@@ -606,7 +609,8 @@ impl<T: Config> Pallet<T> {
 		// 	dvm_transaction.tx.action,
 		// 	None,
 		// )?;
-		let (to, _, info) = Self::execute(source, &transaction, None)
+		// TODO: Rename the param field later
+		let (to, _, info) = Self::execute(source, &dvm_transaction, None)
 			.expect("transaction is already validated; error indicates that the block is invalid");
 
 		let (reason, status, used_gas, dest) = match info {
@@ -658,7 +662,8 @@ impl<T: Config> Pallet<T> {
 			logs_bloom: status.clone().logs_bloom,
 			logs: status.clone().logs,
 		};
-		Pending::<T>::append((dvm_transaction.tx, status, receipt));
+		// Pending::<T>::append((dvm_transaction.tx, status, receipt));
+		Pending::<T>::append((dvm_transaction, status, receipt));
 		Self::deposit_event(Event::Executed(
 			source,
 			dest.unwrap_or_default(),
@@ -690,12 +695,6 @@ impl<T: Config> Pallet<T> {
 	/// Execute an Ethereum transaction
 	pub fn execute(
 		from: H160,
-		// input: Vec<u8>,
-		// value: U256,
-		// gas_limit: U256,
-		// gas_price: Option<U256>,
-		// nonce: Option<U256>,
-		// action: TransactionAction,
 		transaction: &Transaction,
 		config: Option<evm::Config>,
 	) -> Result<(Option<H160>, Option<H160>, CallOrCreateInfo), DispatchError> {
@@ -879,57 +878,57 @@ pub trait InternalTransactHandler {
 	fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError>;
 }
 
-impl<T: Config> InternalTransactHandler for Pallet<T> {
-	/// Execute transaction from pallet(internal transaction)
-	/// NOTE: The difference between the rpc transaction and the internal transaction is that
-	/// The internal transactions will catch and throw evm error comes from runner to caller.
-	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
-		let source = T::PalletId::get().into_h160();
-		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
-		let transaction = new_internal_transaction(nonce, target, input);
-		debug_assert_eq!(transaction.tx.nonce, nonce);
-		debug_assert_eq!(transaction.gas_price, None);
+// impl<T: Config> InternalTransactHandler for Pallet<T> {
+// 	/// Execute transaction from pallet(internal transaction)
+// 	/// NOTE: The difference between the rpc transaction and the internal transaction is that
+// 	/// The internal transactions will catch and throw evm error comes from runner to caller.
+// 	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
+// 		let source = T::PalletId::get().into_h160();
+// 		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
+// 		let transaction = new_internal_transaction(nonce, target, input);
+// 		debug_assert_eq!(transaction.tx.nonce, nonce);
+// 		debug_assert_eq!(transaction.gas_price, None);
 
-		Self::raw_transact(source, transaction).map(|(reason, used_gas)| match reason {
-			// Only when exit_reason is successful, return Ok(...)
-			ExitReason::Succeed(_) => Ok(PostDispatchInfo {
-				actual_weight: Some(T::GasWeightMapping::gas_to_weight(
-					used_gas.unique_saturated_into(),
-				)),
-				pays_fee: Pays::No,
-			}),
-			ExitReason::Error(_) => Err(<Error<T>>::InternalTransactionExitError.into()),
-			ExitReason::Revert(_) => Err(<Error<T>>::InternalTransactionRevertError.into()),
-			ExitReason::Fatal(_) => Err(<Error<T>>::InternalTransactionFatalError.into()),
-		})?
-	}
+// 		Self::raw_transact(source, transaction).map(|(reason, used_gas)| match reason {
+// 			// Only when exit_reason is successful, return Ok(...)
+// 			ExitReason::Succeed(_) => Ok(PostDispatchInfo {
+// 				actual_weight: Some(T::GasWeightMapping::gas_to_weight(
+// 					used_gas.unique_saturated_into(),
+// 				)),
+// 				pays_fee: Pays::No,
+// 			}),
+// 			ExitReason::Error(_) => Err(<Error<T>>::InternalTransactionExitError.into()),
+// 			ExitReason::Revert(_) => Err(<Error<T>>::InternalTransactionRevertError.into()),
+// 			ExitReason::Fatal(_) => Err(<Error<T>>::InternalTransactionFatalError.into()),
+// 		})?
+// 	}
 
-	/// Pure read-only call to contract, the sender is pallet dvm account.
-	/// NOTE: You should never use raw call for any non-read-only operation, be carefully.
-	fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
-		sp_io::storage::start_transaction();
-		let (_, _, info) = Self::execute(
-			T::PalletId::get().into_h160(),
-			input,
-			U256::zero(),
-			U256::from(INTERNAL_TX_GAS_LIMIT),
-			None,
-			None,
-			TransactionAction::Call(contract),
-			None,
-		)?;
-		sp_io::storage::rollback_transaction();
-		match info {
-			CallOrCreateInfo::Call(info) => match info.exit_reason {
-				ExitReason::Succeed(_) => Ok(info.value),
-				ExitReason::Error(_) => Err(<Error<T>>::InternalTransactionExitError.into()),
-				ExitReason::Revert(_) => Err(<Error<T>>::InternalTransactionRevertError.into()),
-				ExitReason::Fatal(_) => Err(<Error<T>>::InternalTransactionFatalError.into()),
-			},
-			_ => Err(<Error<T>>::ReadyOnlyCall.into()),
-		}
-	}
-}
+// 	/// Pure read-only call to contract, the sender is pallet dvm account.
+// 	/// NOTE: You should never use raw call for any non-read-only operation, be carefully.
+// 	fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
+// 		sp_io::storage::start_transaction();
+// 		let (_, _, info) = Self::execute(
+// 			T::PalletId::get().into_h160(),
+// 			input,
+// 			U256::zero(),
+// 			U256::from(INTERNAL_TX_GAS_LIMIT),
+// 			None,
+// 			None,
+// 			TransactionAction::Call(contract),
+// 			None,
+// 		)?;
+// 		sp_io::storage::rollback_transaction();
+// 		match info {
+// 			CallOrCreateInfo::Call(info) => match info.exit_reason {
+// 				ExitReason::Succeed(_) => Ok(info.value),
+// 				ExitReason::Error(_) => Err(<Error<T>>::InternalTransactionExitError.into()),
+// 				ExitReason::Revert(_) => Err(<Error<T>>::InternalTransactionRevertError.into()),
+// 				ExitReason::Fatal(_) => Err(<Error<T>>::InternalTransactionFatalError.into()),
+// 			},
+// 			_ => Err(<Error<T>>::ReadyOnlyCall.into()),
+// 		}
+// 	}
+// }
 
 /// The schema version for Pallet Ethereum's storage
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
