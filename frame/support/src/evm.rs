@@ -92,10 +92,26 @@ where
 pub fn recover_signer(transaction: &ethereum::TransactionV0) -> Option<H160> {
 	let mut sig = [0u8; 65];
 	let mut msg = [0u8; 32];
-	sig[0..32].copy_from_slice(&transaction.signature.r()[..]);
-	sig[32..64].copy_from_slice(&transaction.signature.s()[..]);
-	sig[64] = transaction.signature.standard_v();
-	msg.copy_from_slice(&LegacyTransactionMessage::from(transaction.clone()).hash()[..]);
+	match transaction {
+		Transaction::Legacy(t) => {
+			sig[0..32].copy_from_slice(&t.signature.r()[..]);
+			sig[32..64].copy_from_slice(&t.signature.s()[..]);
+			sig[64] = t.signature.standard_v();
+			msg.copy_from_slice(&ethereum::LegacyTransactionMessage::from(t.clone()).hash()[..]);
+		}
+		Transaction::EIP2930(t) => {
+			sig[0..32].copy_from_slice(&t.r[..]);
+			sig[32..64].copy_from_slice(&t.s[..]);
+			sig[64] = t.odd_y_parity as u8;
+			msg.copy_from_slice(&ethereum::EIP2930TransactionMessage::from(t.clone()).hash()[..]);
+		}
+		Transaction::EIP1559(t) => {
+			sig[0..32].copy_from_slice(&t.r[..]);
+			sig[32..64].copy_from_slice(&t.s[..]);
+			sig[64] = t.odd_y_parity as u8;
+			msg.copy_from_slice(&ethereum::EIP1559TransactionMessage::from(t.clone()).hash()[..]);
+		}
+	}
 
 	let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg).ok()?;
 	Some(H160::from(H256::from_slice(
