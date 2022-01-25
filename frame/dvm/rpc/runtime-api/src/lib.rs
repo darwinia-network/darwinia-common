@@ -19,10 +19,7 @@
 
 // --- crates.io ---
 use codec::{Decode, Encode};
-use ethereum::{
-	Log, Receipt as EthereumReceiptV0,
-	TransactionV0 as EthereumTransactionV0,
-};
+use ethereum::{Log, Receipt as EthereumReceiptV0, TransactionV0 as EthereumTransactionV0};
 use ethereum_types::Bloom;
 use scale_info::TypeInfo;
 // --- paritytech ---
