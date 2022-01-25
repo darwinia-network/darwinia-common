@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "bsc-primitives"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.8.0"
+version     = "2.8.1"
 
 [dependencies]
 # crates.io
@@ -22,9 +22,9 @@ scale-info      = { version = "1.0", default-features = false, features = ["deri
 serde           = { version = "1.0", optional = true }
 triehash        = { version = "0.8", default-features = false }
 # paritytech
-sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.0" }
+sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 
 [dev-dependencies]
 # crates.io

@@ -170,8 +170,6 @@ pub mod pallet {
 				}
 
 				T::RingAccountBasic::mutate_account_basic_balance(&address, account.balance);
-				T::KtonAccountBasic::mutate_account_basic_balance(&address, account.balance);
-
 				AccountCodes::<T>::insert(address, &account.code);
 				for (index, value) in &account.storage {
 					AccountStorages::<T>::insert(address, index, value);
