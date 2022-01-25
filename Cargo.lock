@@ -2373,7 +2373,6 @@ dependencies = [
  "futures 0.3.19",
  "jsonrpc-core",
  "jsonrpc-pubsub",
- "pallet-mmr-rpc",
  "pallet-transaction-payment-rpc",
  "pangolin-runtime",
  "pangoro-runtime",
@@ -2406,6 +2405,8 @@ version = "2.8.1"
 dependencies = [
  "array-bytes",
  "async-trait",
+ "beefy-gadget",
+ "beefy-primitives",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-bridge-ethereum",
  "darwinia-claims",
@@ -6017,23 +6018,6 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "pallet-mmr-rpc"
-version = "3.0.0"
-source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#b404e3d8ec7f53574a4a40aaa15d683e13cfb0ce"
-dependencies = [
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "pallet-mmr-primitives",
- "parity-scale-codec",
- "serde",
- "sp-api",
- "sp-blockchain",
- "sp-core",
- "sp-runtime",
 ]
 
 [[package]]
