@@ -69,7 +69,7 @@ impl<T: Config> Runner<T> {
 		// Gas price check is skipped when performing a gas estimation.
 		let max_fee_per_gas = match max_fee_per_gas {
 			Some(max_fee_per_gas) => {
-				ensure!(max_fee_per_gas >= base_fee, Error::<T>::GasPriceTooLow);
+				ensure!(max_fee_per_gas >= base_fee, <Error<T>>::GasPriceTooLow);
 				max_fee_per_gas
 			}
 			None => Default::default(),
@@ -83,6 +83,7 @@ impl<T: Config> Runner<T> {
 		let metadata = StackSubstateMetadata::new(gas_limit, &config);
 		let state = SubstrateStackState::new(&vicinity, metadata);
 		let mut executor = StackExecutor::new_with_precompiles(state, config, precompiles);
+
 		// After eip-1559 we make sure the account can pay both the evm execution and priority fees.
 		let max_base_fee = max_fee_per_gas
 			.checked_mul(U256::from(gas_limit))
@@ -90,14 +91,13 @@ impl<T: Config> Runner<T> {
 		let max_priority_fee = if let Some(max_priority_fee) = max_priority_fee_per_gas {
 			max_priority_fee
 				.checked_mul(U256::from(gas_limit))
-				.ok_or(Error::<T>::FeeOverflow)?
+				.ok_or(<Error<T>>::FeeOverflow)?
 		} else {
 			U256::zero()
 		};
-
 		let total_fee = max_base_fee
 			.checked_add(max_priority_fee)
-			.ok_or(Error::<T>::FeeOverflow)?;
+			.ok_or(<Error<T>>::FeeOverflow)?;
 
 		let total_payment = value
 			.checked_add(total_fee)
@@ -113,6 +113,9 @@ impl<T: Config> Runner<T> {
 		}
 
 		Pallet::<T>::withdraw_fee(&source, total_fee);
+		// let fee = T::OnChargeTransaction::withdraw_fee(&source, total_fee)?;
+
+		// Execute the EVM call.
 		let (reason, retv) = f(&mut executor);
 
 		let used_gas = U256::from(executor.used_gas());
@@ -281,7 +284,6 @@ impl<T: Config> RunnerT<T> for Runner<T> {
 			source,
 			value,
 			gas_limit,
-			gas_price,
 			max_fee_per_gas,
 			max_priority_fee_per_gas,
 			nonce,

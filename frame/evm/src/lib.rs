@@ -129,6 +129,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Not enough balance to perform action
 		BalanceLow,
+		/// Calculating total fee overflowed
+		FeeOverflow,
 		/// Withdraw fee failed
 		WithdrawFailed,
 		/// Gas price is too low.
