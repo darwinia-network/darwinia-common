@@ -17,7 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- crates.io ---
-use ethereum::LegacyTransactionMessage;
+use ethereum::TransactionV2 as Transaction;
 use sha3::{Digest, Keccak256};
 // --- darwinia-network ---
 use ethereum_primitives::{H160, H256, U256};
@@ -89,7 +89,7 @@ where
 	}
 }
 
-pub fn recover_signer(transaction: &ethereum::TransactionV0) -> Option<H160> {
+pub fn recover_signer(transaction: &Transaction) -> Option<H160> {
 	let mut sig = [0u8; 65];
 	let mut msg = [0u8; 32];
 	match transaction {

@@ -34,7 +34,7 @@ use fp_storage::PALLET_ETHEREUM_SCHEMA_CACHE;
 use sp_core::H256;
 use sp_runtime::traits::Block as BlockT;
 // --- darwinia-network ---
-use dvm_ethereum::EthereumStorageSchema;
+use pallet_ethereum ::EthereumStorageSchema;
 
 const DB_HASH_LEN: usize = 32;
 /// Hash type that this backend uses for the database.
