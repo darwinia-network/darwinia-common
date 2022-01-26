@@ -20,7 +20,6 @@ log       = { version = "0.4" }
 structopt = { version = "0.3", optional = true }
 # darwinia-network
 bsc-primitives = { path = "../../primitives/bsc" }
-dp-consensus   = { path = "../../primitives/consensus" }
 drml-rpc       = { default-features = false, path = "../rpc" }
 drml-service   = { default-features = false, path = "../service" }
 # paritytech
@@ -29,6 +28,8 @@ sc-cli                 = { optional = true, git = "https://github.com/darwinia-n
 sc-service             = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-core                = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 try-runtime-cli        = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+# frontier
+fp-consensus      = { git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 
 [build-dependencies]
 # paritytech

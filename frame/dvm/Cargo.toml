@@ -23,7 +23,6 @@ sha3           = { version = "0.9", default-features = false }
 # darwinia-network
 darwinia-evm        = { default-features = false, path = "../evm" }
 darwinia-support    = { default-features = false, path = "../support" }
-dp-consensus        = { default-features = false, path = "../../primitives/consensus" }
 dvm-rpc-runtime-api = { default-features = false, path = "rpc/runtime-api" }
 # paritytech
 frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -38,6 +37,7 @@ fp-evm            = { default-features = false, git = "https://github.com/darwin
 fp-self-contained = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 fp-storage        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 pallet-evm        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
+fp-consensus = { git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 
 [dev-dependencies]
 # crates.io
@@ -66,7 +66,6 @@ std = [
 	# darwinia-network
 	"darwinia-evm/std",
 	"darwinia-support/std",
-	"dp-consensus/std",
 	"dvm-rpc-runtime-api/std",
 	# paritytech
 	"frame-support/std",
@@ -78,6 +77,7 @@ std = [
 	"sp-std/std",
 	# frontier
 	"fp-evm/std",
+	"fp-consensus/std",
 	"fp-self-contained/std",
 	"fp-storage/std",
 	"pallet-evm/std",

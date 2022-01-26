@@ -73,7 +73,7 @@ use darwinia_evm::{AccountBasic, BlockHashMapping, GasWeightMapping, Runner};
 use darwinia_support::evm::{
 	new_internal_transaction, recover_signer, DVMTransaction, IntoH160, INTERNAL_TX_GAS_LIMIT,
 };
-use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
+use fp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 
 /// A type alias for the balance type from this pallet's point of view.
 type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -214,7 +214,7 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_finalize(n: T::BlockNumber) {
 			<Pallet<T>>::store_block(
-				dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
+				fp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()).is_err(),
 				U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
 					frame_system::Pallet::<T>::block_number(),
 				)),
@@ -237,7 +237,7 @@ pub mod pallet {
 
 			// If the digest contain an existing ethereum block(encoded as PreLog), If contains,
 			// execute the imported block firstly and disable transact dispatch function.
-			if let Ok(log) = dp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()) {
+			if let Ok(log) = fp_consensus::find_pre_log(&<frame_system::Pallet<T>>::digest()) {
 				let PreLog::Block(block) = log;
 
 				for transaction in block.transactions {
@@ -273,7 +273,7 @@ pub mod pallet {
 			let source = ensure_ethereum_transaction(origin)?;
 			// Disable transact functionality if PreLog exist.
 			ensure!(
-				dp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
+				fp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
 				Error::<T>::PreLogExists,
 			);
 
@@ -290,7 +290,7 @@ pub mod pallet {
 			ensure_root(origin)?;
 			// Disable transact functionality if PreLog exist.
 			ensure!(
-				dp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
+				fp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
 				Error::<T>::PreLogExists,
 			);
 
@@ -855,7 +855,7 @@ impl<T: Config> Pallet<T> {
 		if post_log {
 			let digest = DigestItem::<T::Hash>::Consensus(
 				FRONTIER_ENGINE_ID,
-				PostLog::Hashes(dp_consensus::Hashes::from_block(block)).encode(),
+				PostLog::Hashes(fp_consensus::Hashes::from_block(block)).encode(),
 			);
 			<frame_system::Pallet<T>>::deposit_log(digest);
 		}
