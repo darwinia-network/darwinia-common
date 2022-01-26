@@ -851,15 +851,37 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 	}
 }
 
-fn migrate() -> Weight {
-	// --- darwinia ---
-	use dvm_ethereum::EthereumStorageSchema;
-	use fp_storage::PALLET_ETHEREUM_SCHEMA;
+sp_runtime::impl_opaque_keys! {
+	pub struct OldSessionKeys {
+		pub babe: Babe,
+		pub grandpa: Grandpa,
+		pub im_online: ImOnline,
+		pub authority_discovery: AuthorityDiscovery,
+	}
+}
 
-	frame_support::storage::unhashed::put::<EthereumStorageSchema>(
-		&PALLET_ETHEREUM_SCHEMA,
-		&EthereumStorageSchema::V1,
-	);
+fn transform_session_keys(v: AccountId, old: OldSessionKeys) -> SessionKeys {
+	SessionKeys {
+		babe: old.babe,
+		grandpa: old.grandpa,
+		beefy: {
+			// We need to produce a dummy value that's unique for the validator.
+			let mut id = BeefyId::default();
+			let id_raw: &mut [u8] = id.as_mut();
+
+			id_raw.copy_from_slice(v.as_ref());
+			id_raw[0..4].copy_from_slice(b"beef");
+
+			id
+		},
+		im_online: old.im_online,
+		authority_discovery: old.authority_discovery,
+	}
+}
+
+fn migrate() -> Weight {
+	Session::upgrade_keys::<OldSessionKeys, _>(transform_session_keys);
+
 	// 0
 	RuntimeBlockWeights::get().max_block
 }
