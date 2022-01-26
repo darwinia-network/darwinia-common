@@ -37,7 +37,7 @@ fp-evm            = { default-features = false, git = "https://github.com/darwin
 fp-self-contained = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 fp-storage        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 pallet-evm        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
-fp-consensus = { git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
+fp-consensus      = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 
 [dev-dependencies]
 # crates.io
