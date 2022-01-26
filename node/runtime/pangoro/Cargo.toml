@@ -95,6 +95,8 @@ fp-evm                       = { default-features = false, git = "https://github
 fp-self-contained            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 fp-storage                   = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
+pallet-base-fee              = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
+pallet-evm              = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 
 
 [build-dependencies]
@@ -187,6 +189,8 @@ std = [
 	"fp-self-contained/std",
 	"fp-storage/std",
 	"pallet-evm-precompile-simple/std",
+	"pallet-base-fee/std",
+	"pallet-evm/std",
 ]
 
 runtime-benchmarks = [

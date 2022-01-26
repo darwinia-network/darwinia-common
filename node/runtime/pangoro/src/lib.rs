@@ -55,6 +55,7 @@ use frame_system::{
 	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
 	CheckWeight, EnsureRoot,
 };
+use pallet_evm::FeeCalculator;
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
 use pallet_transaction_payment::{ChargeTransactionPayment, FeeDetails, RuntimeDispatchInfo};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
@@ -76,7 +77,7 @@ use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use common_runtime::*;
 use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
-use darwinia_evm::{AccountBasic, FeeCalculator, Runner};
+use darwinia_evm::{AccountBasic, Runner};
 use darwinia_fee_market_rpc_runtime_api::{Fee, InProcessOrders};
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
@@ -176,6 +177,7 @@ frame_support::construct_runtime!(
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 25,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, Origin} = 26,
+		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 27,
 	}
 );
 
@@ -582,7 +584,8 @@ sp_api::impl_runtime_apis! {
 			data: Vec<u8>,
 			value: U256,
 			gas_limit: U256,
-			gas_price: Option<U256>,
+			max_fee_per_gas: Option<U256>,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
 		) -> Result<darwinia_evm::CallInfo, sp_runtime::DispatchError> {
@@ -600,8 +603,10 @@ sp_api::impl_runtime_apis! {
 				data,
 				value,
 				gas_limit.low_u64(),
-				gas_price,
+				max_fee_per_gas,
+				max_priority_fee_per_gas,
 				nonce,
+				Vec::new(),
 				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
@@ -611,7 +616,8 @@ sp_api::impl_runtime_apis! {
 			data: Vec<u8>,
 			value: U256,
 			gas_limit: U256,
-			gas_price: Option<U256>,
+			max_fee_per_gas: Option<U256>,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
 		) -> Result<darwinia_evm::CreateInfo, sp_runtime::DispatchError> {
@@ -628,8 +634,10 @@ sp_api::impl_runtime_apis! {
 				data,
 				value,
 				gas_limit.low_u64(),
-				gas_price,
+				max_fee_per_gas,
+				max_priority_fee_per_gas,
 				nonce,
+				Vec::new(),
 				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
@@ -639,7 +647,7 @@ sp_api::impl_runtime_apis! {
 			Ethereum::current_transaction_statuses()
 		}
 
-		fn current_block() -> Option<dvm_ethereum::EthereumBlockV0> {
+		fn current_block() -> Option<dvm_ethereum::Block> {
 			Ethereum::current_block()
 		}
 
@@ -648,7 +656,7 @@ sp_api::impl_runtime_apis! {
 		}
 
 		fn current_all() -> (
-			Option<dvm_ethereum::EthereumBlockV0>,
+			Option<dvm_ethereum::Block>,
 			Option<Vec<dvm_ethereum::EthereumReceiptV0>>,
 			Option<Vec<dvm_rpc_runtime_api::TransactionStatus>>
 		) {
@@ -661,7 +669,7 @@ sp_api::impl_runtime_apis! {
 
 		fn extrinsic_filter(
 			xts: Vec<<Block as BlockT>::Extrinsic>,
-		) -> Vec<dvm_ethereum::TransactionV0> {
+		) -> Vec<dvm_ethereum::Transaction> {
 			xts.into_iter().filter_map(|xt| match xt.0.function {
 				Call::Ethereum(dvm_ethereum::Call::transact { transaction }) => Some(transaction),
 				_ => None
@@ -672,7 +680,7 @@ sp_api::impl_runtime_apis! {
 	impl dp_evm_trace_apis::DebugRuntimeApi<Block> for Runtime {
 		fn trace_transaction(
 			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
-			_traced_transaction: &dvm_ethereum::TransactionV0,
+			_traced_transaction: &dvm_ethereum::Transaction,
 		) -> Result<
 			(),
 			sp_runtime::DispatchError,
@@ -814,12 +822,12 @@ sp_api::impl_runtime_apis! {
 #[derive(Clone)]
 pub struct TransactionConverter;
 impl dvm_rpc_runtime_api::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV0) -> UncheckedExtrinsic {
+	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> UncheckedExtrinsic {
 		UncheckedExtrinsic::new_unsigned(dvm_ethereum::Call::transact { transaction }.into())
 	}
 }
 impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV0) -> OpaqueExtrinsic {
+	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> OpaqueExtrinsic {
 		let extrinsic =
 			UncheckedExtrinsic::new_unsigned(dvm_ethereum::Call::transact { transaction }.into());
 		let encoded = extrinsic.encode();
