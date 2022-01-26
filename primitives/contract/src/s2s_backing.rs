@@ -76,7 +76,7 @@ impl Sub2SubBacking {
 		)
 	}
 
-	pub fn confirm_remote_lock_or_register(
+	pub fn encode_confirm_remote_lock_or_register(
 		lane_id: &LaneId,
 		message_nonce: MessageNonce,
 		result: bool,

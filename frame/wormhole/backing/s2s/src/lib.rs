@@ -147,6 +147,8 @@ pub mod pallet {
 		TokenLockedConfirmed(LaneId, MessageNonce, AccountId<T>, RingBalance<T>, bool),
 		/// Update remote mapping token factory address \[account\]
 		RemoteMappingFactoryAddressUpdated(AccountId<T>),
+		/// Update local backing contract address
+		BackingAddressUpdated(H160),
 	}
 
 	#[pallet::error]
@@ -407,6 +409,18 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::set_backing_contract_address())]
+		pub fn set_backing_contract_address(
+			origin: OriginFor<T>,
+			contract: H160,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			<BackingAddress<T>>::put(contract.clone());
+			Self::deposit_event(Event::BackingAddressUpdated(contract));
+
+			Ok(().into())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -483,6 +497,16 @@ pub mod pallet {
 			let contract = BackingAddress::<T>::get();
 			T::InternalTransactHandler::internal_transact(contract, input)
 		}
+
+		pub fn confirm_remote_lock_or_register(lane: &LaneId, nonce: MessageNonce, result: bool) {
+			if let Ok(input) =
+				Sub2SubBacking::encode_confirm_remote_lock_or_register(lane, nonce, result)
+			{
+				if let Err(e) = Self::transact_backing(input) {
+					log::error!("confirm remote lock or register failed, err {:?}", e);
+				}
+			}
+		}
 	}
 
 	impl<T: Config> OnDeliveryConfirmed for Pallet<T> {
@@ -509,6 +533,9 @@ pub mod pallet {
 					Self::deposit_event(Event::TokenLockedConfirmed(
 						*lane, nonce, user, amount, result,
 					));
+				} else {
+					// other response deliver to contract
+					Self::confirm_remote_lock_or_register(lane, nonce, result);
 				}
 			}
 			// TODO: The returned weight should be more accurately. See: https://github.com/darwinia-network/darwinia-common/issues/911
