@@ -50,6 +50,7 @@ use frame_support::{
 	weights::{PostDispatchInfo, Weight},
 };
 use frame_system::RawOrigin;
+use pallet_evm::FeeCalculator;
 use sp_core::{H160, H256, U256};
 use sp_runtime::traits::{BadOrigin, UniqueSaturatedInto};
 use sp_std::{marker::PhantomData, prelude::*};
@@ -448,15 +449,15 @@ pub trait AccountBasic<T: frame_system::Config> {
 }
 
 /// A trait for output the current transaction gas price.
-pub trait FeeCalculator {
-	/// Return the minimal required gas price.
-	fn min_gas_price() -> U256;
-}
-impl FeeCalculator for () {
-	fn min_gas_price() -> U256 {
-		U256::zero()
-	}
-}
+// pub trait FeeCalculator {
+// 	/// Return the minimal required gas price.
+// 	fn min_gas_price() -> U256;
+// }
+// impl FeeCalculator for () {
+// 	fn min_gas_price() -> U256 {
+// 		U256::zero()
+// 	}
+// }
 
 /// A mapping function that converts Ethereum gas to Substrate weight.
 pub trait GasWeightMapping {

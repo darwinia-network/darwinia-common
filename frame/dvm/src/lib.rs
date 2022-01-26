@@ -57,6 +57,7 @@ use frame_support::{
 	PalletId,
 };
 use frame_system::pallet_prelude::OriginFor;
+use pallet_evm::FeeCalculator;
 use scale_info::TypeInfo;
 use sp_runtime::{
 	generic::DigestItem,
@@ -68,7 +69,7 @@ use sp_runtime::{
 };
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
-use darwinia_evm::{AccountBasic, BlockHashMapping, FeeCalculator, GasWeightMapping, Runner};
+use darwinia_evm::{AccountBasic, BlockHashMapping, GasWeightMapping, Runner};
 use darwinia_support::evm::{
 	new_internal_transaction, recover_signer, DVMTransaction, IntoH160, INTERNAL_TX_GAS_LIMIT,
 };

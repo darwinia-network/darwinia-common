@@ -25,7 +25,10 @@ use codec::Encode;
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{selector, DvmInputParser};
 // --- paritytech ---
-use fp_evm::{Context, ExitError, ExitSucceed, Precompile, PrecompileOutput};
+use fp_evm::{
+	Context, ExitError, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
+	PrecompileResult,
+};
 
 #[selector]
 enum Action {
@@ -48,7 +51,8 @@ where
 		input: &[u8],
 		_target_gas: Option<u64>,
 		_context: &Context,
-	) -> core::result::Result<PrecompileOutput, ExitError> {
+		_is_static: bool,
+	) -> PrecompileResult {
 		let dvm_parser = DvmInputParser::new(&input)?;
 		let output = match Action::from_u32(dvm_parser.selector)? {
 			Action::BurnAndRemoteUnlock => {

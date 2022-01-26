@@ -1547,6 +1547,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
+ "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec",
  "primitive-types",
@@ -2430,6 +2431,7 @@ dependencies = [
  "frame-system",
  "libsecp256k1 0.5.0",
  "log",
+ "pallet-evm",
  "pallet-evm-precompile-simple",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -3056,7 +3058,7 @@ source = "git+https://github.com/darwinia-network/frontier?branch=bear-eip1559#6
 [[package]]
 name = "frame-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#545b7961342f223782a54cda1a8678d32d12391a"
+source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#b404e3d8ec7f53574a4a40aaa15d683e13cfb0ce"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3205,7 +3207,7 @@ dependencies = [
 [[package]]
 name = "frame-system"
 version = "4.0.0-dev"
-source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#545b7961342f223782a54cda1a8678d32d12391a"
+source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#b404e3d8ec7f53574a4a40aaa15d683e13cfb0ce"
 dependencies = [
  "frame-support",
  "log",
@@ -5640,7 +5642,7 @@ dependencies = [
 [[package]]
 name = "pallet-balances"
 version = "4.0.0-dev"
-source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#545b7961342f223782a54cda1a8678d32d12391a"
+source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#b404e3d8ec7f53574a4a40aaa15d683e13cfb0ce"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5650,6 +5652,21 @@ dependencies = [
  "scale-info",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-base-fee"
+version = "1.0.0"
+source = "git+https://github.com/darwinia-network/frontier?branch=bear-eip1559#69947365bfafbd01dfd543b511fad67ffdf6198f"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-evm",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -6058,7 +6075,7 @@ dependencies = [
 [[package]]
 name = "pallet-timestamp"
 version = "4.0.0-dev"
-source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#545b7961342f223782a54cda1a8678d32d12391a"
+source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#b404e3d8ec7f53574a4a40aaa15d683e13cfb0ce"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8841,7 +8858,7 @@ dependencies = [
 [[package]]
 name = "sp-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#545b7961342f223782a54cda1a8678d32d12391a"
+source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#b404e3d8ec7f53574a4a40aaa15d683e13cfb0ce"
 dependencies = [
  "hash-db",
  "log",
@@ -8858,7 +8875,7 @@ dependencies = [
 [[package]]
 name = "sp-api-proc-macro"
 version = "4.0.0-dev"
-source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#545b7961342f223782a54cda1a8678d32d12391a"
+source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#b404e3d8ec7f53574a4a40aaa15d683e13cfb0ce"
 dependencies = [
  "blake2-rfc",
  "proc-macro-crate 1.1.0",
@@ -9407,7 +9424,7 @@ dependencies = [
 [[package]]
 name = "sp-timestamp"
 version = "4.0.0-dev"
-source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#545b7961342f223782a54cda1a8678d32d12391a"
+source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#b404e3d8ec7f53574a4a40aaa15d683e13cfb0ce"
 dependencies = [
  "async-trait",
  "futures-timer 3.0.2",
@@ -9481,7 +9498,7 @@ dependencies = [
 [[package]]
 name = "sp-version"
 version = "4.0.0-dev"
-source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#545b7961342f223782a54cda1a8678d32d12391a"
+source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#b404e3d8ec7f53574a4a40aaa15d683e13cfb0ce"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
@@ -9497,7 +9514,7 @@ dependencies = [
 [[package]]
 name = "sp-version-proc-macro"
 version = "4.0.0-dev"
-source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#545b7961342f223782a54cda1a8678d32d12391a"
+source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#b404e3d8ec7f53574a4a40aaa15d683e13cfb0ce"
 dependencies = [
  "parity-scale-codec",
  "proc-macro2",
@@ -9797,6 +9814,7 @@ dependencies = [
  "frame-system",
  "frame-system-rpc-runtime-api",
  "pallet-aura",
+ "pallet-base-fee",
  "pallet-evm-precompile-modexp",
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",

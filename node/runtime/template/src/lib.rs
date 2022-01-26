@@ -8,10 +8,6 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod pallets;
 pub use pallets::*;
-
-mod precompiles;
-use precompiles::FrontierPrecompiles;
-
 pub mod wasm {
 	//! Make the WASM binary available.
 
@@ -504,12 +500,12 @@ sp_api::impl_runtime_apis! {
 
 pub struct TransactionConverter;
 impl dvm_rpc_runtime_api::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV0) -> UncheckedExtrinsic {
+	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV2) -> UncheckedExtrinsic {
 		UncheckedExtrinsic::new_unsigned(dvm_ethereum::Call::transact { transaction }.into())
 	}
 }
 impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV0) -> OpaqueExtrinsic {
+	fn convert_transaction(&self, transaction: dvm_ethereum::TransactionV2) -> OpaqueExtrinsic {
 		let extrinsic =
 			UncheckedExtrinsic::new_unsigned(dvm_ethereum::Call::transact { transaction }.into());
 		let encoded = extrinsic.encode();

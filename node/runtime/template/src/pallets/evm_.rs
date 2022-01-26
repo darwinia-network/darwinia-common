@@ -13,7 +13,7 @@ pub struct FrontierPrecompiles<R>(PhantomData<R>);
 
 impl<R> FrontierPrecompiles<R>
 where
-	R: pallet_evm::Config,
+	R: darwinia_evm::Config,
 {
 	pub fn new() -> Self {
 		Self(Default::default())
@@ -25,14 +25,44 @@ where
 			.collect()
 	}
 }
+impl<R> PrecompileSet for FrontierPrecompiles<R>
+where
+	R: darwinia_evm::Config,
+{
+	fn execute(
+		&self,
+		address: H160,
+		input: &[u8],
+		target_gas: Option<u64>,
+		context: &Context,
+		is_static: bool,
+	) -> Option<PrecompileResult> {
+		match address {
+			// Ethereum precompiles :
+			a if a == hash(1) => Some(ECRecover::execute(input, target_gas, context, is_static)),
+			a if a == hash(2) => Some(Sha256::execute(input, target_gas, context, is_static)),
+			a if a == hash(3) => Some(Ripemd160::execute(input, target_gas, context, is_static)),
+			a if a == hash(4) => Some(Identity::execute(input, target_gas, context, is_static)),
+			a if a == hash(5) => Some(Modexp::execute(input, target_gas, context, is_static)),
+			// Non-Frontier specific nor Ethereum precompiles :
+			a if a == hash(1024) => {
+				Some(Sha3FIPS256::execute(input, target_gas, context, is_static))
+			}
+			a if a == hash(1025) => Some(ECRecoverPublicKey::execute(
+				input, target_gas, context, is_static,
+			)),
+			_ => None,
+		}
+	}
 
-pub struct FixedGasPrice;
-impl FeeCalculator for FixedGasPrice {
-	fn min_gas_price() -> U256 {
-		U256::from(1)
+	fn is_precompile(&self, address: H160) -> bool {
+		Self::used_addresses().contains(&address)
 	}
 }
 
+fn hash(a: u64) -> H160 {
+	H160::from_low_u64_be(a)
+}
 pub struct FindAuthorTruncated<F>(PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 	fn find_author<'a, I>(digests: I) -> Option<H160>

@@ -37,6 +37,7 @@ sp-std           = { default-features = false, git = "https://github.com/darwini
 fp-evm            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 fp-self-contained = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 fp-storage        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
+pallet-evm        = { git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 
 [dev-dependencies]
 # crates.io
@@ -79,6 +80,7 @@ std = [
 	"fp-evm/std",
 	"fp-self-contained/std",
 	"fp-storage/std",
+	"pallet-evm/std",
 ]
 
 try-runtime = [
