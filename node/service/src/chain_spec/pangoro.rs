@@ -267,6 +267,7 @@ pub fn genesis_config() -> ChainSpec {
 				accounts: evm_accounts,
 			},
 			ethereum: Default::default(),
+			base_fee: Default::default(),
 		}
 	}
 
@@ -388,6 +389,7 @@ pub fn development_config() -> ChainSpec {
 				accounts: evm_accounts,
 			},
 			ethereum: Default::default(),
+			base_fee: Default::default(),
 		}
 	}
 

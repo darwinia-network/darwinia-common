@@ -987,6 +987,7 @@ where
 			}
 		};
 		let transaction_hash = transaction.hash();
+		let hash = self.client.info().best_hash;
 		Box::pin(
 			self.pool
 				.submit_one(
@@ -2222,7 +2223,7 @@ where
 	/// Task that caches at which best hash a new EthereumStorageSchema was inserted in the Runtime Storage.
 	pub async fn ethereum_schema_cache_task(
 		client: Arc<C>,
-		backend: Arc<fc_db::Backend<B>>,
+		backend: Arc<dc_db::Backend<B>>,
 		genesis_schema_version: EthereumStorageSchema,
 	) {
 		if let Ok(None) = frontier_backend_client::load_cached_schema::<B>(backend.as_ref()) {

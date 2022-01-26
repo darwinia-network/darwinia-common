@@ -1936,11 +1936,11 @@ dependencies = [
 name = "dc-db"
 version = "2.8.1"
 dependencies = [
+ "dvm-ethereum",
  "fp-evm",
  "fp-storage",
  "kvdb",
  "kvdb-rocksdb",
- "pallet-ethereum",
  "parity-scale-codec",
  "parking_lot 0.11.2",
  "sp-core",
@@ -1981,6 +1981,7 @@ dependencies = [
  "ethereum-types",
  "evm 0.33.1",
  "fc-rpc-core",
+ "fp-rpc",
  "fp-storage",
  "futures 0.3.19",
  "jsonrpc-core",
@@ -2355,6 +2356,7 @@ dependencies = [
  "dp-evm-trace-ext",
  "drml-common-primitives",
  "drml-rpc",
+ "dvm-ethereum",
  "dvm-rpc-runtime-api",
  "fc-rpc-core",
  "frame-benchmarking",
@@ -2988,20 +2990,6 @@ checksum = "5fc25a87fa4fd2094bffb06925852034d90a17f0d1e05197d4956d3555752191"
 dependencies = [
  "matches",
  "percent-encoding 2.1.0",
-]
-
-[[package]]
-name = "fp-consensus"
-version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=bear-eip1559#69947365bfafbd01dfd543b511fad67ffdf6198f"
-dependencies = [
- "ethereum",
- "parity-scale-codec",
- "rlp",
- "sha3 0.8.2",
- "sp-core",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -5781,35 +5769,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "static_assertions",
-]
-
-[[package]]
-name = "pallet-ethereum"
-version = "4.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=bear-eip1559#69947365bfafbd01dfd543b511fad67ffdf6198f"
-dependencies = [
- "ethereum",
- "ethereum-types",
- "evm 0.33.1",
- "fp-consensus",
- "fp-evm",
- "fp-rpc",
- "fp-self-contained",
- "fp-storage",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "pallet-evm",
- "pallet-timestamp",
- "parity-scale-codec",
- "rlp",
- "rustc-hex",
- "scale-info",
- "serde",
- "sha3 0.8.2",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]

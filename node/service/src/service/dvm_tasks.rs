@@ -64,7 +64,7 @@ where
 		EthTask::ethereum_schema_cache_task(
 			Arc::clone(&client),
 			Arc::clone(&dvm_backend),
-			pallet_ethereum::EthereumStorageSchema::V2,
+			dvm_ethereum::EthereumStorageSchema::V2,
 		),
 	);
 

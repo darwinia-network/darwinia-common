@@ -104,7 +104,7 @@ where
 
 	/// Return the current block.
 	fn current_block(&self, block: &BlockId<Block>) -> Option<ethereum::BlockV2> {
-		self.query_storage::<EthereumBlock>(
+		self.query_storage::<ethereum::BlockV0>(
 			block,
 			&StorageKey(storage_prefix_build(b"Ethereum", b"CurrentBlock")),
 		)

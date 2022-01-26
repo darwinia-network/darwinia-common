@@ -22,6 +22,7 @@
 // 4. Insert the new implementor to the `overrides` BTreeMap and upgrade the node client.
 
 mod schema_v1_override;
+mod schema_v2_override;
 
 pub use dvm_rpc_core::{EthApiServer, NetApiServer};
 pub use schema_v1_override::SchemaV1Override;
