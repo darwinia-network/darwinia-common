@@ -26,7 +26,10 @@ use dp_contract::{
 	abi_util::{abi_encode_array_bytes, abi_encode_bytes},
 	bsc_light_client::{BscMultiStorageVerifyParams, BscSingleStorageVerifyParams},
 };
-use ethereum_primitives::storage::{EthereumStorage, EthereumStorageProof};
+use ethereum_primitives::{
+	error::{Error::Proof as StorageProofError, ProofError},
+	storage::{EthereumStorage, EthereumStorageProof},
+};
 // --- paritytech ---
 use fp_evm::{Context, ExitError, ExitSucceed, Precompile, PrecompileOutput};
 use sp_std::{vec, vec::Vec};
@@ -109,8 +112,14 @@ where
 							Ok(value) => {
 								return Ok(value.0.clone());
 							}
-							Err(_) => {
-								return Ok(vec![]);
+							Err(err) => {
+								// if the key not exist, we should return Zero Value due to the
+								// Zero Value will not be stored.
+								if err == StorageProofError(ProofError::TrieKeyNotExist) {
+									return Ok(vec![]);
+								} else {
+									return Err(ExitError::Other("verfiy storage failed".into()));
+								}
 							}
 						}
 					})
