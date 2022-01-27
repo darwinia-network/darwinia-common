@@ -62,7 +62,7 @@ where
 		_context: &Context,
 		_is_static: bool,
 	) -> PrecompileResult {
-		let dvm_parser = DvmInputParser::new(&input)?;
+		let dvm_parser = DvmInputParser::new(input)?;
 		let (output, cost) = match Action::from_u32(dvm_parser.selector)? {
 			Action::VerfiySingleStorageProof => {
 				let params =

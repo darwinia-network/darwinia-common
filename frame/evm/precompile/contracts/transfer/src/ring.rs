@@ -99,7 +99,6 @@ impl<T: frame_system::Config> InputData<T> {
 					})?,
 			});
 		}
-		// Err(ExitError::Other("Invalid input data length".into()))
 		Err(PrecompileFailure::Error {
 			exit_status: ExitError::Other("Invalid input data length".into()),
 		})

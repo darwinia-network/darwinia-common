@@ -106,7 +106,7 @@ pub mod s2s {
 pub mod mapping_token {
 	use super::*;
 	pub fn mapping_token_name(original_name: Vec<u8>, backing_chain_name: Vec<u8>) -> Vec<u8> {
-		let mut mapping_name = original_name.clone();
+		let mut mapping_name = original_name;
 		mapping_name.push(b'[');
 		mapping_name.extend(backing_chain_name);
 		mapping_name.push(b'>');

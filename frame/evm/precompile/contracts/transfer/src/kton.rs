@@ -246,7 +246,6 @@ pub struct WithdrawData<T: frame_system::Config> {
 impl<T: frame_system::Config> WithdrawData<T> {
 	pub fn decode(data: &[u8]) -> Result<Self, PrecompileFailure> {
 		let tokens = ethabi::decode(&[ParamType::FixedBytes(32), ParamType::Uint(256)], &data)
-			// .map_err(|_| ExitError::Other("ethabi decoded error".into()))?;
 			.map_err(|_| PrecompileFailure::Error {
 				exit_status: ExitError::Other("ethabi decoded error".into()),
 			})?;
