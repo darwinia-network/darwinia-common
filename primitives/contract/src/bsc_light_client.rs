@@ -41,7 +41,7 @@ impl BscSingleStorageVerifyParams {
 	pub fn decode(data: &[u8]) -> AbiResult<Self> {
 		let tokens = ethabi::decode(
 			&[
-				ParamType::FixedBytes(20),
+				ParamType::Address,
 				ParamType::Array(Box::new(ParamType::Bytes)),
 				ParamType::FixedBytes(32),
 				ParamType::Array(Box::new(ParamType::Bytes)),
@@ -55,13 +55,11 @@ impl BscSingleStorageVerifyParams {
 			tokens[3].clone(),
 		) {
 			(
-				Token::FixedBytes(lane_address),
+				Token::Address(lane_address),
 				Token::Array(account_proof),
 				Token::FixedBytes(storage_key),
 				Token::Array(storage_proof),
 			) => {
-				let lane_address: [u8; 20] =
-					lane_address.try_into().map_err(|_| Error::InvalidData)?;
 				let account_proof: AbiResult<MerkleProof> = account_proof
 					.iter()
 					.map(|proof| match proof {
@@ -79,7 +77,7 @@ impl BscSingleStorageVerifyParams {
 					})
 					.collect();
 				Ok(Self {
-					lane_address: lane_address.into(),
+					lane_address,
 					account_proof: account_proof?,
 					storage_key: storage_key.into(),
 					storage_proof: storage_proof?,
@@ -102,7 +100,7 @@ impl BscMultiStorageVerifyParams {
 	pub fn decode(data: &[u8]) -> AbiResult<Self> {
 		let tokens = ethabi::decode(
 			&[
-				ParamType::FixedBytes(20),
+				ParamType::Address,
 				ParamType::Array(Box::new(ParamType::Bytes)),
 				ParamType::Array(Box::new(ParamType::FixedBytes(32))),
 				ParamType::Array(Box::new(ParamType::Array(Box::new(ParamType::Bytes)))),
@@ -116,13 +114,11 @@ impl BscMultiStorageVerifyParams {
 			tokens[3].clone(),
 		) {
 			(
-				Token::FixedBytes(lane_address),
+				Token::Address(lane_address),
 				Token::Array(account_proof),
 				Token::Array(storage_keys),
 				Token::Array(storage_proofs),
 			) => {
-				let lane_address: [u8; 20] =
-					lane_address.try_into().map_err(|_| Error::InvalidData)?;
 				let account_proof: AbiResult<MerkleProof> = account_proof
 					.iter()
 					.map(|proof| match proof {
@@ -157,7 +153,7 @@ impl BscMultiStorageVerifyParams {
 					})
 					.collect();
 				Ok(Self {
-					lane_address: lane_address.into(),
+					lane_address,
 					storage_keys: storage_keys?,
 					account_proof: account_proof?,
 					storage_proofs: storage_proofs?,
