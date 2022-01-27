@@ -34,7 +34,7 @@ use sp_std::{collections::btree_set::BTreeSet, marker::PhantomData, mem, prelude
 // --- darwinia-network ---
 use crate::{
 	runner::Runner as RunnerT, AccountBasic, AccountCodes, AccountStorages, BlockHashMapping,
-	Config, Error, Event, FeeCalculator, Pallet, PrecompileSet,
+	Config, Error, Event, FeeCalculator, OnChargeEVMTransaction, Pallet, PrecompileSet,
 };
 use darwinia_support::evm::IntoAccountId;
 
@@ -101,7 +101,7 @@ impl<T: Config> Runner<T> {
 
 		let total_payment = value
 			.checked_add(total_fee)
-			.ok_or(ArithmeticError::Overflow)?;
+			.ok_or(Error::<T>::PaymentOverflow)?;
 		let source_account = T::RingAccountBasic::account_basic(&source);
 		ensure!(
 			source_account.balance >= total_payment,
@@ -112,8 +112,7 @@ impl<T: Config> Runner<T> {
 			ensure!(source_account.nonce == nonce, <Error<T>>::InvalidNonce);
 		}
 
-		Pallet::<T>::withdraw_fee(&source, total_fee);
-		// let fee = T::OnChargeTransaction::withdraw_fee(&source, total_fee)?;
+		let fee = T::OnChargeTransaction::withdraw_fee(&source, total_fee)?;
 
 		// Execute the EVM call.
 		let (reason, retv) = f(&mut executor);
@@ -162,12 +161,10 @@ impl<T: Config> Runner<T> {
 		// Refunded 320 - 40 = 280.
 		// Tip 5 * 6 = 30.
 		// Burned 320 - (280 + 30) = 10. Which is equivalent to gas_used * base_fee.
-		// T::OnChargeTransaction::correct_and_deposit_fee(&source, actual_fee, fee);
-		// if let Some(actual_priority_fee) = actual_priority_fee {
-		// 	T::OnChargeTransaction::pay_priority_fee(actual_priority_fee);
-		// }
-		// TODO: FIX this
-		Pallet::<T>::deposit_fee(&source, total_fee.saturating_sub(actual_fee));
+		T::OnChargeTransaction::correct_and_deposit_fee(&source, actual_fee, fee);
+		if let Some(actual_priority_fee) = actual_priority_fee {
+			T::OnChargeTransaction::pay_priority_fee(actual_priority_fee);
+		}
 
 		let state = executor.into_state();
 

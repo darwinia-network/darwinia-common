@@ -101,6 +101,11 @@ pub mod pallet {
 		/// EVM execution runner.
 		type Runner: Runner<Self>;
 
+		/// To handle fee deduction for EVM transactions. An example is this pallet being used by `pallet_ethereum`
+		/// where the chain implementing `pallet_ethereum` should be able to configure what happens to the fees
+		/// Similar to `OnChargeTransaction` of `pallet_transaction_payment`
+		type OnChargeTransaction: OnChargeEVMTransaction<Self>;
+
 		/// EVM config used in the Pallet.
 		fn config() -> &'static EvmConfig {
 			&ISTANBUL_CONFIG
@@ -132,6 +137,8 @@ pub mod pallet {
 		BalanceLow,
 		/// Calculating total fee overflowed
 		FeeOverflow,
+		/// Calculating total payment overflowed
+		PaymentOverflow,
 		/// Withdraw fee failed
 		WithdrawFailed,
 		/// Gas price is too low.
@@ -384,22 +391,6 @@ pub mod pallet {
 			}
 		}
 
-		/// Withdraw fee.
-		pub fn withdraw_fee(address: &H160, value: U256) {
-			let account = T::RingAccountBasic::account_basic(address);
-			let new_account_balance = account.balance.saturating_sub(value);
-
-			T::RingAccountBasic::mutate_account_basic_balance(&address, new_account_balance);
-		}
-
-		/// Deposit fee.
-		pub fn deposit_fee(address: &H160, value: U256) {
-			let account = T::RingAccountBasic::account_basic(address);
-			let new_account_balance = account.balance.saturating_add(value);
-
-			T::RingAccountBasic::mutate_account_basic_balance(&address, new_account_balance);
-		}
-
 		/// Get the author using the FindAuthor trait.
 		pub fn find_author() -> H160 {
 			let digest = <frame_system::Pallet<T>>::digest();
@@ -411,8 +402,63 @@ pub mod pallet {
 }
 pub use pallet::*;
 
-// TODO: FIX ME
-// fn pay_priority_fee(tip: U256);
+/// Handle withdrawing, refunding and depositing of transaction fees.
+/// Similar to `OnChargeTransaction` of `pallet_transaction_payment`
+pub trait OnChargeEVMTransaction<T: Config> {
+	type LiquidityInfo: Default;
+
+	/// Before the transaction is executed the payment of the transaction fees
+	/// need to be secured.
+	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, Error<T>>;
+
+	/// After the transaction was executed the actual fee can be calculated.
+	/// This function should refund any overpaid fees and optionally deposit
+	/// the corrected amount.
+	fn correct_and_deposit_fee(
+		who: &H160,
+		corrected_fee: U256,
+		already_withdrawn: Self::LiquidityInfo,
+	);
+
+	/// Introduced in EIP1559 to handle the priority tip payment to the block Author.
+	fn pay_priority_fee(tip: U256);
+}
+
+/// Implements the transaction payment for a pallet implementing the `Currency`
+/// trait (eg. the pallet_balances) using an unbalance handler (implementing
+/// `OnUnbalanced`).
+/// Similar to `CurrencyAdapter` of `pallet_transaction_payment`
+pub struct EVMCurrencyAdapter<C, OU>(sp_std::marker::PhantomData<(C, OU)>);
+
+impl<T, C, OU> OnChargeEVMTransaction<T> for EVMCurrencyAdapter<C, OU>
+where
+	T: Config,
+{
+	// Kept type as Option to satisfy bound of Default
+	// TODO: Update this type
+	type LiquidityInfo = U256;
+
+	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, Error<T>> {
+		let account = T::RingAccountBasic::account_basic(who);
+		let new_account_balance = account.balance.saturating_sub(fee);
+		T::RingAccountBasic::mutate_account_basic_balance(&who, new_account_balance);
+		Ok(fee)
+	}
+
+	fn correct_and_deposit_fee(
+		who: &H160,
+		corrected_fee: U256,
+		already_withdrawn: Self::LiquidityInfo,
+	) {
+		let account = T::RingAccountBasic::account_basic(who);
+		// TODO	: check for this
+		let new_account_balance = account.balance.saturating_add(corrected_fee);
+
+		T::RingAccountBasic::mutate_account_basic_balance(&who, new_account_balance);
+	}
+
+	fn pay_priority_fee(tip: U256) {}
+}
 
 /// A trait to perform origin check.
 pub trait EnsureAddressOrigin<OuterOrigin> {
