@@ -22,8 +22,8 @@ pub use worker::{MappingSyncWorker, SyncStrategy};
 
 // --- darwinia-network ---
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
-use fp_consensus::FindLogError;
 // --- paritytech ---
+use fp_consensus::FindLogError;
 use sc_client_api::BlockOf;
 use sp_api::{ApiExt, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
