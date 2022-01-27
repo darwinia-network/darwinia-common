@@ -21,8 +21,8 @@ scale-info     = { version = "1.0", default-features = false, features = ["deriv
 serde          = { version = "1.0", optional = true }
 sha3           = { version = "0.9", default-features = false }
 # darwinia-network
-darwinia-evm        = { default-features = false, path = "../evm" }
-darwinia-support    = { default-features = false, path = "../support" }
+darwinia-evm     = { default-features = false, path = "../evm" }
+darwinia-support = { default-features = false, path = "../support" }
 # paritytech
 frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

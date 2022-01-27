@@ -25,7 +25,7 @@ use scale_info::TypeInfo;
 use frame_support::{
 	assert_ok,
 	traits::{Everything, GenesisBuild},
-	ConsensusEngineId,
+	ConsensusEngineId, PalletId,
 };
 use frame_system::mocking::*;
 use sp_core::H256;
@@ -34,13 +34,13 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32, RuntimeDebug,
 };
+use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::{self as darwinia_evm, runner::stack::Runner, *};
 use darwinia_support::evm::ConcatConverter;
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
-
 type Balance = u64;
 
 darwinia_support::impl_test_account_data! {}
@@ -126,29 +126,9 @@ impl FindAuthor<H160> for FindAuthorTruncated {
 	where
 		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
 	{
-		Some(H160::default())
+		Some(H160::from_str("1234500000000000000000000000000000000000").unwrap())
 	}
 }
-
-pub struct RawAccountBasic<T>(sp_std::marker::PhantomData<T>);
-impl<T: Config> AccountBasic<T> for RawAccountBasic<T> {
-	/// Get the account basic in EVM format.
-	fn account_basic(_address: &H160) -> Account {
-		Account::default()
-	}
-
-	fn mutate_account_basic_balance(_address: &H160, _new_balance: U256) {}
-
-	fn transfer(_source: &H160, _target: &H160, _value: U256) -> Result<(), ExitError> {
-		Ok(())
-	}
-
-	fn account_balance(_account_id: &T::AccountId) -> U256 {
-		U256::default()
-	}
-	fn mutate_account_balance(_account_id: &T::AccountId, _balance: U256) {}
-}
-
 /// Ensure that the origin is root.
 pub struct EnsureAddressRoot<AccountId>(sp_std::marker::PhantomData<AccountId>);
 impl<OuterOrigin, AccountId> EnsureAddressOrigin<OuterOrigin> for EnsureAddressRoot<AccountId>
@@ -165,6 +145,39 @@ where
 	}
 }
 
+pub struct MockAccountBasic<T>(sp_std::marker::PhantomData<T>);
+impl<T: Config> AccountBasic<T> for MockAccountBasic<T> {
+	fn account_basic(address: &H160) -> Account {
+		let account_id = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(*address);
+		let balance =
+			frame_support::storage::unhashed::get(&account_id.encode()).unwrap_or_default();
+		Account {
+			balance,
+			nonce: U256::zero(),
+		}
+	}
+	fn mutate_account_basic_balance(address: &H160, new_balance: U256) {
+		let account_id = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(*address);
+		Self::mutate_account_balance(&account_id, new_balance)
+	}
+	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError> {
+		let source_account = Self::account_basic(source);
+		let new_source_balance = source_account.balance.saturating_sub(value);
+		Self::mutate_account_basic_balance(source, new_source_balance);
+
+		let target_account = Self::account_basic(target);
+		let new_target_balance = target_account.balance.saturating_add(value);
+		Self::mutate_account_basic_balance(target, new_target_balance);
+		Ok(())
+	}
+	fn account_balance(account_id: &T::AccountId) -> U256 {
+		frame_support::storage::unhashed::get(&account_id.encode()).unwrap_or_default()
+	}
+	fn mutate_account_balance(account_id: &T::AccountId, balance: U256) {
+		frame_support::storage::unhashed::put(&account_id.encode(), &balance);
+	}
+}
+
 impl Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
@@ -178,8 +191,9 @@ impl Config for Test {
 	type ChainId = ();
 	type BlockGasLimit = ();
 	type Runner = Runner<Self>;
-	type RingAccountBasic = RawAccountBasic<Test>;
-	type KtonAccountBasic = RawAccountBasic<Test>;
+	type RingAccountBasic = MockAccountBasic<Self>;
+	type KtonAccountBasic = MockAccountBasic<Self>;
+	type OnChargeTransaction = EVMCurrencyAdapter;
 }
 
 frame_support::construct_runtime! {
@@ -235,26 +249,22 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		},
 	);
 
-	// <darwinia_evm::GenesisConfig as GenesisBuild<Test>>::assimilate_storage(
-	// 	&darwinia_evm::GenesisConfig { accounts },
-	// 	&mut t,
-	// )
-	// .unwrap();
-	pallet_balances::GenesisConfig::<Test> {
-		// Create the block author account with some balance.
-		balances: vec![(
-			H160::from_str("0x1234500000000000000000000000000000000000").unwrap(),
-			12345,
-		)],
-	}
-	.assimilate_storage(&mut t)
-	.expect("Pallet balances storage can be assimilated");
+	<darwinia_evm::GenesisConfig as GenesisBuild<Test>>::assimilate_storage(
+		&darwinia_evm::GenesisConfig { accounts },
+		&mut t,
+	)
+	.unwrap();
 	t.into()
 }
 
 #[test]
 fn fail_call_return_ok() {
 	new_test_ext().execute_with(|| {
+		<Test as Config>::RingAccountBasic::mutate_account_basic_balance(
+			&H160::default(),
+			U256::max_value(),
+		);
+
 		assert_ok!(EVM::call(
 			Origin::root(),
 			H160::default(),
@@ -284,10 +294,54 @@ fn fail_call_return_ok() {
 }
 
 #[test]
+fn fee_deduction() {
+	new_test_ext().execute_with(|| {
+		// Create an EVM address and the corresponding Substrate address that will be charged fees and refunded
+		let evm_addr = H160::from_str("1000000000000000000000000000000000000003").unwrap();
+		let account_id = <Test as Config>::IntoAccountId::into_account_id(evm_addr);
+
+		// Seed account
+		<Test as Config>::RingAccountBasic::mutate_account_basic_balance(
+			&evm_addr,
+			U256::from(100),
+		);
+		assert_eq!(
+			<Test as Config>::RingAccountBasic::account_basic(&evm_addr).balance,
+			U256::from(100)
+		);
+
+		// Deduct fees as 10 units
+		let imbalance = <<Test as Config>::OnChargeTransaction as OnChargeEVMTransaction<Test>>::withdraw_fee(&evm_addr, U256::from(10)).unwrap();
+		assert_eq!(
+			<Test as Config>::RingAccountBasic::account_basic(&evm_addr).balance,
+			U256::from(90)
+		);
+
+		// Refund fees as 5 units
+		<<Test as Config>::OnChargeTransaction as OnChargeEVMTransaction<Test>>::correct_and_deposit_fee(&evm_addr, U256::from(5), imbalance);
+		assert_eq!(
+			<Test as Config>::RingAccountBasic::account_basic(&evm_addr).balance,
+			U256::from(95)
+		);
+	});
+}
+
+#[test]
+fn find_author() {
+	new_test_ext().execute_with(|| {
+		let author = EVM::find_author();
+		assert_eq!(
+			author,
+			H160::from_str("1234500000000000000000000000000000000000").unwrap()
+		);
+	});
+}
+
+#[test]
 fn author_should_get_tip() {
 	new_test_ext().execute_with(|| {
 		let author = EVM::find_author();
-		let before_tip = EVM::account_basic(&author).balance;
+		let before_tip = <Test as Config>::RingAccountBasic::account_basic(&author).balance;
 		let _ = EVM::call(
 			Origin::root(),
 			H160::default(),
@@ -300,7 +354,7 @@ fn author_should_get_tip() {
 			None,
 			Vec::new(),
 		);
-		let after_tip = EVM::account_basic(&author).balance;
+		let after_tip = <Test as Config>::RingAccountBasic::account_basic(&author).balance;
 		assert_eq!(after_tip, (before_tip + 21000));
 	});
 }
@@ -309,7 +363,7 @@ fn author_should_get_tip() {
 fn author_same_balance_without_tip() {
 	new_test_ext().execute_with(|| {
 		let author = EVM::find_author();
-		let before_tip = EVM::account_basic(&author).balance;
+		let before_tip = <Test as Config>::RingAccountBasic::account_basic(&author).balance;
 		let _ = EVM::call(
 			Origin::root(),
 			H160::default(),
@@ -322,7 +376,7 @@ fn author_same_balance_without_tip() {
 			None,
 			Vec::new(),
 		);
-		let after_tip = EVM::account_basic(&author).balance;
+		let after_tip = <Test as Config>::RingAccountBasic::account_basic(&author).balance;
 		assert_eq!(after_tip, before_tip);
 	});
 }
@@ -330,7 +384,8 @@ fn author_same_balance_without_tip() {
 #[test]
 fn refunds_should_work() {
 	new_test_ext().execute_with(|| {
-		let before_call = EVM::account_basic(&H160::default()).balance;
+		let before_call =
+			<Test as Config>::RingAccountBasic::account_basic(&H160::default()).balance;
 		// Gas price is not part of the actual fee calculations anymore, only the base fee.
 		//
 		// Because we first deduct max_fee_per_gas * gas_limit (2_000_000_000 * 1000000) we need
@@ -349,7 +404,8 @@ fn refunds_should_work() {
 		);
 		let total_cost =
 			(U256::from(21_000) * <Test as Config>::FeeCalculator::min_gas_price()) + U256::from(1);
-		let after_call = EVM::account_basic(&H160::default()).balance;
+		let after_call =
+			<Test as Config>::RingAccountBasic::account_basic(&H160::default()).balance;
 		assert_eq!(after_call, before_call - total_cost);
 	});
 }
@@ -358,8 +414,9 @@ fn refunds_should_work() {
 fn refunds_and_priority_should_work() {
 	new_test_ext().execute_with(|| {
 		let author = EVM::find_author();
-		let before_tip = EVM::account_basic(&author).balance;
-		let before_call = EVM::account_basic(&H160::default()).balance;
+		let before_tip = <Test as Config>::RingAccountBasic::account_basic(&author).balance;
+		let before_call =
+			<Test as Config>::RingAccountBasic::account_basic(&H160::default()).balance;
 		let tip = 5;
 		// The tip is deducted but never refunded to the caller.
 		let _ = EVM::call(
@@ -378,10 +435,11 @@ fn refunds_and_priority_should_work() {
 		let total_cost = (U256::from(21_000) * <Test as Config>::FeeCalculator::min_gas_price())
 			+ U256::from(1)
 			+ U256::from(tip);
-		let after_call = EVM::account_basic(&H160::default()).balance;
+		let after_call =
+			<Test as Config>::RingAccountBasic::account_basic(&H160::default()).balance;
 		assert_eq!(after_call, before_call - total_cost);
 
-		let after_tip = EVM::account_basic(&author).balance;
+		let after_tip = <Test as Config>::RingAccountBasic::account_basic(&author).balance;
 		assert_eq!(after_tip, (before_tip + tip));
 	});
 }
