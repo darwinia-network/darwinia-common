@@ -25,7 +25,7 @@ use scale_info::TypeInfo;
 use frame_support::{
 	assert_ok,
 	traits::{Everything, GenesisBuild},
-	ConsensusEngineId, PalletId,
+	ConsensusEngineId,
 };
 use frame_system::mocking::*;
 use sp_core::H256;
@@ -298,8 +298,6 @@ fn fee_deduction() {
 	new_test_ext().execute_with(|| {
 		// Create an EVM address and the corresponding Substrate address that will be charged fees and refunded
 		let evm_addr = H160::from_str("1000000000000000000000000000000000000003").unwrap();
-		let account_id = <Test as Config>::IntoAccountId::into_account_id(evm_addr);
-
 		// Seed account
 		<Test as Config>::RingAccountBasic::mutate_account_basic_balance(
 			&evm_addr,
