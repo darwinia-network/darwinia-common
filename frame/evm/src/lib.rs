@@ -424,18 +424,9 @@ pub trait OnChargeEVMTransaction<T: Config> {
 	fn pay_priority_fee(tip: U256);
 }
 
-/// Implements the transaction payment for a pallet implementing the `Currency`
-/// trait (eg. the pallet_balances) using an unbalance handler (implementing
-/// `OnUnbalanced`).
-/// Similar to `CurrencyAdapter` of `pallet_transaction_payment`
-pub struct EVMCurrencyAdapter<C, OU>(sp_std::marker::PhantomData<(C, OU)>);
+pub struct EVMCurrencyAdapter;
 
-impl<T, C, OU> OnChargeEVMTransaction<T> for EVMCurrencyAdapter<C, OU>
-where
-	T: Config,
-{
-	// Kept type as Option to satisfy bound of Default
-	// TODO: Update this type
+impl<T: Config> OnChargeEVMTransaction<T> for EVMCurrencyAdapter {
 	type LiquidityInfo = U256;
 
 	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, Error<T>> {
@@ -451,13 +442,17 @@ where
 		already_withdrawn: Self::LiquidityInfo,
 	) {
 		let account = T::RingAccountBasic::account_basic(who);
-		// TODO	: check for this
-		let new_account_balance = account.balance.saturating_add(corrected_fee);
-
+		let refund = already_withdrawn.saturating_sub(corrected_fee);
+		let new_account_balance = account.balance.saturating_add(refund);
 		T::RingAccountBasic::mutate_account_basic_balance(&who, new_account_balance);
 	}
 
-	fn pay_priority_fee(tip: U256) {}
+	fn pay_priority_fee(tip: U256) {
+		let account_id = T::IntoAccountId::into_account_id(<Pallet<T>>::find_author());
+		let account_balance = T::RingAccountBasic::account_balance(&account_id);
+		let new_account_balance = account_balance.saturating_add(tip);
+		T::RingAccountBasic::mutate_account_balance(&account_id, new_account_balance);
+	}
 }
 
 /// A trait to perform origin check.

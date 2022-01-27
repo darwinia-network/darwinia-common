@@ -34,7 +34,7 @@ use sp_std::{collections::btree_set::BTreeSet, marker::PhantomData, mem, prelude
 // --- darwinia-network ---
 use crate::{
 	runner::Runner as RunnerT, AccountBasic, AccountCodes, AccountStorages, BlockHashMapping,
-	Config, Error, Event, FeeCalculator, OnChargeEVMTransaction, Pallet, PrecompileSet,
+	Config, Error, Event, FeeCalculator, OnChargeEVMTransaction, Pallet,
 };
 use darwinia_support::evm::IntoAccountId;
 
