@@ -24,7 +24,6 @@ members = [
 	"frame/democracy",
 	"frame/dvm",
 	"frame/dvm/rpc",
-	"frame/dvm/rpc/runtime-api",
 	"frame/elections-phragmen",
 	"frame/evm",
 	"frame/evm/precompile/contracts/dispatch",

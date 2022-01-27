@@ -16,9 +16,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-// --- darwinia-network ---
-use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 // --- paritytech ---
+use fp_rpc::EthereumRuntimeRPCApi;
 use sc_client_api::{BlockOf, ImportNotifications};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;

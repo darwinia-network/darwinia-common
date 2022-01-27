@@ -35,7 +35,7 @@ use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use dc_rpc::{CacheTask, DebugTask, EthTask};
 use dp_evm_trace_apis::DebugRuntimeApi;
 use drml_rpc::{EthApiCmd, RpcConfig, RpcRequesters};
-use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
+use fp_rpc::EthereumRuntimeRPCApi;
 
 pub fn spawn<B, C, BE>(params: DvmTasksParams<B, C, BE>) -> RpcRequesters
 where

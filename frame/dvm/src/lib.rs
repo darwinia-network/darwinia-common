@@ -26,12 +26,12 @@
 
 pub mod account_basic;
 
-use dvm_rpc_runtime_api::TransactionStatus;
 #[doc(no_inline)]
 pub use ethereum::{
 	BlockV2 as Block, LegacyTransactionMessage, Log, Receipt as EthereumReceiptV0,
 	TransactionAction, TransactionSignature, TransactionV2 as Transaction,
 };
+use fp_rpc::TransactionStatus;
 
 #[cfg(all(feature = "std", test))]
 mod mock;

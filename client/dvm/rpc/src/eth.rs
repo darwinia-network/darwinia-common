@@ -42,6 +42,7 @@ use fc_rpc_core::types::{
 	FilterPoolItem, FilterType, FilteredParams, Header, Index, Log, PeerCount, Receipt, Rich,
 	RichBlock, SyncInfo, SyncStatus, Transaction, TransactionMessage, TransactionRequest, Work,
 };
+use fp_rpc::{ConvertTransaction, EthereumRuntimeRPCApi, TransactionStatus};
 use fp_storage::PALLET_ETHEREUM_SCHEMA;
 use sc_client_api::{
 	backend::{Backend, StateBackend, StorageProvider},
@@ -66,7 +67,6 @@ use dvm_ethereum::EthereumStorageSchema;
 use dvm_rpc_core::{
 	EthApi as EthApiT, EthFilterApi as EthFilterApiT, NetApi as NetApiT, Web3Api as Web3ApiT,
 };
-use dvm_rpc_runtime_api::{ConvertTransaction, EthereumRuntimeRPCApi, TransactionStatus};
 
 pub struct EthApi<B: BlockT, C, P, CT, BE, H: ExHashT, A: ChainApi> {
 	pool: Arc<P>,

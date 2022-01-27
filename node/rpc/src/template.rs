@@ -74,7 +74,7 @@ where
 	C::Api: sp_block_builder::BlockBuilder<Block>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: dp_evm_trace_apis::DebugRuntimeApi<Block>,
-	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
+	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	P: 'static + sc_transaction_pool_api::TransactionPool<Block = Block>,
 	B: 'static + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<Hashing>,

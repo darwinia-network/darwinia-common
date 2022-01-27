@@ -30,8 +30,8 @@ use crate::{frontier_backend_client, internal_err};
 use dc_tracer::{formatters::ResponseFormatter, types::single};
 use dp_evm_trace_apis::{DebugRuntimeApi, TracerInput};
 use dp_evm_trace_rpc::{RequestBlockId, RequestBlockTag};
-use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 // paritytech
+use fp_rpc::EthereumRuntimeRPCApi;
 use sc_client_api::backend::Backend;
 use sc_utils::mpsc::TracingUnboundedSender;
 use sp_api::{BlockId, Core, HeaderT, ProvideRuntimeApi};

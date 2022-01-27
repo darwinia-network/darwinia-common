@@ -173,16 +173,13 @@ where
 	C::Api: darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
 	C::Api: darwinia_fee_market_rpc::FeeMarketRuntimeApi<Block, Balance>,
 	C::Api: dp_evm_trace_apis::DebugRuntimeApi<Block>,
-	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
+	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	P: 'static + Sync + Send + sc_transaction_pool_api::TransactionPool<Block = Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<Hashing>,
 	A: sc_transaction_pool::ChainApi<Block = Block> + 'static,
-	CT: 'static
-		+ Send
-		+ Sync
-		+ dvm_rpc_runtime_api::ConvertTransaction<sp_runtime::OpaqueExtrinsic>,
+	CT: 'static + Send + Sync + fp_rpc::ConvertTransaction<sp_runtime::OpaqueExtrinsic>,
 {
 	// --- crates.io ---
 	use jsonrpc_pubsub::manager::SubscriptionManager;

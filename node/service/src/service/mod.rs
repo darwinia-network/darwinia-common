@@ -42,7 +42,7 @@ impl_runtime_apis![
 	darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>,
 	darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>,
 	darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance>,
-	dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
+	fp_rpc::EthereumRuntimeRPCApi<Block>,
 	dp_evm_trace_apis::DebugRuntimeApi<Block>
 ];
 
@@ -335,11 +335,7 @@ where
 		'static + Send + Sync + ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>>,
 	RuntimeApi::RuntimeApi:
 		RuntimeApiCollection<StateBackend = StateBackendFor<FullBackend, Block>>,
-	CT: 'static
-		+ Clone
-		+ Send
-		+ Sync
-		+ dvm_rpc_runtime_api::ConvertTransaction<sp_runtime::OpaqueExtrinsic>,
+	CT: 'static + Clone + Send + Sync + fp_rpc::ConvertTransaction<sp_runtime::OpaqueExtrinsic>,
 {
 	let role = config.role.clone();
 	let is_authority = role.is_authority();

@@ -582,7 +582,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block> for Runtime {
+	impl fp_rpc::EthereumRuntimeRPCApi<Block> for Runtime {
 		fn chain_id() -> u64 {
 			<Runtime as darwinia_evm::Config>::ChainId::get()
 		}
@@ -674,7 +674,7 @@ sp_api::impl_runtime_apis! {
 		}
 
 
-		fn current_transaction_statuses() -> Option<Vec<dvm_rpc_runtime_api::TransactionStatus>> {
+		fn current_transaction_statuses() -> Option<Vec<fp_rpc::TransactionStatus>> {
 			Ethereum::current_transaction_statuses()
 		}
 
@@ -689,7 +689,7 @@ sp_api::impl_runtime_apis! {
 		fn current_all() -> (
 			Option<dvm_ethereum::Block>,
 			Option<Vec<dvm_ethereum::EthereumReceiptV0>>,
-			Option<Vec<dvm_rpc_runtime_api::TransactionStatus>>
+			Option<Vec<fp_rpc::TransactionStatus>>
 		) {
 			(
 				Ethereum::current_block(),
@@ -915,12 +915,12 @@ sp_api::impl_runtime_apis! {
 
 #[derive(Clone)]
 pub struct TransactionConverter;
-impl dvm_rpc_runtime_api::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
+impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
 	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> UncheckedExtrinsic {
 		UncheckedExtrinsic::new_unsigned(dvm_ethereum::Call::transact { transaction }.into())
 	}
 }
-impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
+impl fp_rpc::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
 	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> OpaqueExtrinsic {
 		let extrinsic =
 			UncheckedExtrinsic::new_unsigned(dvm_ethereum::Call::transact { transaction }.into());

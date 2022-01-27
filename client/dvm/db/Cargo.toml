@@ -22,5 +22,5 @@ sp-core     = { git = "https://github.com/darwinia-network/substrate", branch = 
 sp-database = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-runtime  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
-fp-evm          = { git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
-fp-storage      = { git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
+fp-evm     = { git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
+fp-storage = { git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }

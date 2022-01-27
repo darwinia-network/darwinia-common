@@ -34,12 +34,12 @@ use std::{collections::BTreeMap, marker::PhantomData, sync::Arc};
 use ethereum::{BlockV2 as EthereumBlock, Receipt as EthereumReceipt};
 use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
+use fp_rpc::{EthereumRuntimeRPCApi, TransactionStatus};
 use sp_api::{ApiExt, BlockId, ProvideRuntimeApi};
 use sp_io::hashing::{blake2_128, twox_128};
 use sp_runtime::traits::Block as BlockT;
 // --- darwinia-network ---
 use dvm_ethereum::EthereumStorageSchema;
-use dvm_rpc_runtime_api::{EthereumRuntimeRPCApi, TransactionStatus};
 
 pub struct OverrideHandle<Block: BlockT> {
 	pub schemas: BTreeMap<EthereumStorageSchema, Box<dyn StorageOverride<Block> + Send + Sync>>,

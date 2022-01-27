@@ -16,7 +16,6 @@ futures-timer = { version = "3.0" }
 log           = { version = "0.4" }
 # darwinia-network
 dc-db               = { path = "../db" }
-dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
 # paritytech
 sc-client-api = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-api        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -24,4 +23,4 @@ sp-blockchain = { git = "https://github.com/darwinia-network/substrate", branch 
 sp-runtime    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
 fp-consensus = { git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
-
+fp-rpc       = { git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
