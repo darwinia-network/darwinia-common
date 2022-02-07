@@ -829,7 +829,7 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 }
 
 fn migrate() -> Weight {
-	<darwinia_staking::MinimumValidatorCount<Runtime>>::put(1);
+	<darwinia_staking::MinimumValidatorCount<Runtime>>::put(2);
 
 	// 0
 	RuntimeBlockWeights::get().max_block
