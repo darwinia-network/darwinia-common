@@ -16,10 +16,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-
-//! Consensus extension module tests for BABE consensus.
-
 use super::*;
+use darwinia_evm::AccountBasic;
 
 fn eip2930_erc20_creation_unsigned_transaction() -> EIP2930UnsignedTransaction {
 	EIP2930UnsignedTransaction {
@@ -44,7 +42,10 @@ fn transaction_should_increment_nonce() {
 	ext.execute_with(|| {
 		let t = eip2930_erc20_creation_transaction(alice);
 		assert_ok!(Ethereum::execute(alice.address, &t, None,));
-		assert_eq!(EVM::account_basic(&alice.address).nonce, U256::from(1));
+		assert_eq!(
+			RingAccount::account_basic(&alice.address).nonce,
+			U256::from(1)
+		);
 	});
 }
 
