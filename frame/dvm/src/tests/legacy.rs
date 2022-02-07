@@ -16,29 +16,33 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-// --- crates.io ---
-use array_bytes::{bytes2hex, hex2bytes_unchecked};
-use codec::Decode;
-use ethabi::{Function, Param, ParamType, StateMutability, Token};
-use ethereum::{TransactionAction, TransactionV0};
-use evm::{ExitReason, ExitSucceed};
-use std::str::FromStr;
-// --- darwinia-network ---
-use crate::{
-	account_basic::{RemainBalanceOp, RingRemainBalance},
-	mock::{Event, *},
-	CallOrCreateInfo, Config, Error, InternalTransactHandler, RawOrigin, ValidTransactionBuilder,
-	H160, H256, U256,
-};
+use super::*;
 use darwinia_evm::AccountBasic;
-use darwinia_support::evm::{decimal_convert, IntoAccountId, IntoH160, TRANSFER_ADDR};
-// --- paritytech ---
+
+// // --- crates.io ---
+use array_bytes::{bytes2hex, hex2bytes_unchecked};
+// use codec::Decode;
+// use ethabi::{Function, Param, ParamType, StateMutability, Token};
+// use ethereum::{TransactionAction, TransactionV0};
+// use evm::{ExitReason, ExitSucceed};
+use std::str::FromStr;
+// // --- darwinia-network ---
+// use crate::{
+// 	account_basic::{RemainBalanceOp, RingRemainBalance},
+// 	mock::{Event, *},
+// 	tests::RingAccount,
+// 	CallOrCreateInfo, Config, Error, InternalTransactHandler, RawOrigin, ValidTransactionBuilder,
+// 	H160, H256, U256,
+// };
+// use darwinia_evm::AccountBasic;
+// use darwinia_support::evm::{decimal_convert, IntoAccountId, IntoH160, TRANSFER_ADDR};
+// // --- paritytech ---
 use frame_support::{assert_err, assert_noop, assert_ok, weights::GetDispatchInfo as _};
-use sp_runtime::{
-	traits::Applyable,
-	transaction_validity::{InvalidTransaction, TransactionValidityError},
-	DispatchError,
-};
+// use sp_runtime::{
+// 	traits::Applyable,
+// 	transaction_validity::{InvalidTransaction, TransactionValidityError},
+// 	DispatchError,
+// };
 
 // This ERC-20 contract mints the maximum amount of tokens to the contract creator.
 // pragma solidity ^0.5.0;
@@ -68,198 +72,200 @@ const WKTON_CONTRACT_BYTECODE: &str = "60806040526040805190810160405280600d81526
 const WITH_DRAW_INPUT: &str = "723908ee9dc8e509d4b93251bd57f68c09bd9d04471c193fabd8f26c54284a4b";
 const WKTON_ADDRESS: &str = "32dcab0ef3fb2de2fce1d2e0799d36239671f04a";
 
-
-
-fn creation_contract(code: &str, nonce: u64) -> UnsignedTransaction {
-	UnsignedTransaction {
-		nonce: U256::from(nonce),
+fn legacy_erc20_creation_unsigned_transaction() -> LegacyUnsignedTransaction {
+	LegacyUnsignedTransaction {
+		nonce: U256::zero(),
 		gas_price: U256::from(1),
 		gas_limit: U256::from(0x100000),
 		action: ethereum::TransactionAction::Create,
 		value: U256::zero(),
-		input: hex2bytes_unchecked(code),
+		input: FromHex::from_hex(ERC20_CONTRACT_BYTECODE).unwrap(),
 	}
 }
 
-fn default_withdraw_unsigned_transaction() -> UnsignedTransaction {
-	UnsignedTransaction {
-		nonce: U256::zero(),
-		gas_price: U256::from(1),
-		gas_limit: U256::from(0x100000),
-		action: ethereum::TransactionAction::Call(H160::from_str(TRANSFER_ADDR).unwrap()),
-		value: U256::from(30000000000000000000u128),
-		input: hex2bytes_unchecked(WITH_DRAW_INPUT),
-	}
+fn legacy_erc20_creation_transaction(account: &AccountInfo) -> Transaction {
+	legacy_erc20_creation_unsigned_transaction().sign(&account.private_key)
 }
 
-fn deploy_wkton_contract(account: &AccountInfo, code: &str, nonce: u64) {
-	let raw_tx = creation_contract(code, nonce);
-	let t = sign_transaction(account, raw_tx);
-	assert_ok!(Ethereum::execute(
-		account.address,
-		t.input,
-		t.value,
-		t.gas_limit,
-		Some(t.gas_price),
-		Some(t.nonce),
-		t.action,
-		None,
-	));
-}
+// fn default_withdraw_unsigned_transaction() -> LegacyUnsignedTransaction {
+// 	LegacyUnsignedTransaction {
+// 		nonce: U256::zero(),
+// 		gas_price: U256::from(1),
+// 		gas_limit: U256::from(0x100000),
+// 		action: ethereum::TransactionAction::Call(H160::from_str(TRANSFER_ADDR).unwrap()),
+// 		value: U256::from(30000000000000000000u128),
+// 		input: hex2bytes_unchecked(WITH_DRAW_INPUT),
+// 	}
+// }
 
-fn send_kton_transfer_and_call_tx(sender: &AccountInfo, address: H160, value: U256, nonce: u64) {
-	let raw_tx = UnsignedTransaction {
-		nonce: U256::from(nonce),
-		gas_price: U256::from(1),
-		gas_limit: U256::from(0x300000),
-		action: ethereum::TransactionAction::Call(H160::from_str(TRANSFER_ADDR).unwrap()),
-		value: U256::from(0),
-		input: transfer_and_call(address, value),
-	};
-	let t = sign_transaction(sender, raw_tx);
-	assert_ok!(Ethereum::execute(
-		sender.address,
-		t.input.clone(),
-		t.value,
-		t.gas_limit,
-		None,
-		Some(t.nonce),
-		t.action,
-		None,
-	));
-}
+// fn deploy_wkton_contract(account: &AccountInfo, code: &str, nonce: u64) {
+// 	let raw_tx = creation_contract(code, nonce);
+// 	let t = sign_transaction(account, raw_tx);
+// 	assert_ok!(Ethereum::execute(
+// 		account.address,
+// 		t.input,
+// 		t.value,
+// 		t.gas_limit,
+// 		Some(t.gas_price),
+// 		Some(t.nonce),
+// 		t.action,
+// 		None,
+// 	));
+// }
 
-fn send_kton_withdraw_tx(sender: &AccountInfo, to_id: Vec<u8>, value: U256, nonce: u64) {
-	let data = withdraw(to_id, value);
-	let raw_tx = UnsignedTransaction {
-		nonce: U256::from(nonce),
-		gas_price: U256::from(1),
-		gas_limit: U256::from(0x300000),
-		action: ethereum::TransactionAction::Call(H160::from_str(WKTON_ADDRESS).unwrap()),
-		value: U256::from(0),
-		input: data,
-	};
-	let t = sign_transaction(sender, raw_tx);
-	assert_ok!(Ethereum::execute(
-		sender.address,
-		t.input.clone(),
-		t.value,
-		t.gas_limit,
-		None,
-		Some(t.nonce),
-		t.action,
-		None,
-	));
-}
+// fn send_kton_transfer_and_call_tx(sender: &AccountInfo, address: H160, value: U256, nonce: u64) {
+// 	let raw_tx = UnsignedTransaction {
+// 		nonce: U256::from(nonce),
+// 		gas_price: U256::from(1),
+// 		gas_limit: U256::from(0x300000),
+// 		action: ethereum::TransactionAction::Call(H160::from_str(TRANSFER_ADDR).unwrap()),
+// 		value: U256::from(0),
+// 		input: transfer_and_call(address, value),
+// 	};
+// 	let t = sign_transaction(sender, raw_tx);
+// 	assert_ok!(Ethereum::execute(
+// 		sender.address,
+// 		t.input.clone(),
+// 		t.value,
+// 		t.gas_limit,
+// 		None,
+// 		Some(t.nonce),
+// 		t.action,
+// 		None,
+// 	));
+// }
 
-fn get_wkton_balance(sender: &AccountInfo, nonce: u64) -> U256 {
-	let raw_tx = UnsignedTransaction {
-		nonce: U256::from(nonce),
-		gas_price: U256::from(1),
-		gas_limit: U256::from(0x300000),
-		action: ethereum::TransactionAction::Call(H160::from_str(WKTON_ADDRESS).unwrap()),
-		value: U256::from(0),
-		input: hex2bytes_unchecked(bytes2hex("0x", wkton_balance_input(sender.address))),
-	};
-	let t = sign_transaction(sender, raw_tx);
-	if let Ok((_, _, res)) = Ethereum::execute(
-		sender.address,
-		t.input.clone(),
-		t.value,
-		t.gas_limit,
-		None,
-		Some(t.nonce),
-		t.action,
-		None,
-	) {
-		match res {
-			CallOrCreateInfo::Call(info) => return U256::from_big_endian(&info.value),
-			CallOrCreateInfo::Create(_) => return U256::default(),
-		};
-	}
-	U256::default()
-}
+// fn send_kton_withdraw_tx(sender: &AccountInfo, to_id: Vec<u8>, value: U256, nonce: u64) {
+// 	let data = withdraw(to_id, value);
+// 	let raw_tx = UnsignedTransaction {
+// 		nonce: U256::from(nonce),
+// 		gas_price: U256::from(1),
+// 		gas_limit: U256::from(0x300000),
+// 		action: ethereum::TransactionAction::Call(H160::from_str(WKTON_ADDRESS).unwrap()),
+// 		value: U256::from(0),
+// 		input: data,
+// 	};
+// 	let t = sign_transaction(sender, raw_tx);
+// 	assert_ok!(Ethereum::execute(
+// 		sender.address,
+// 		t.input.clone(),
+// 		t.value,
+// 		t.gas_limit,
+// 		None,
+// 		Some(t.nonce),
+// 		t.action,
+// 		None,
+// 	));
+// }
 
-fn wkton_balance_input(address: H160) -> Vec<u8> {
-	#[allow(deprecated)]
-	let func = Function {
-		name: "balanceOf".to_owned(),
-		inputs: vec![Param {
-			name: "address".to_owned(),
-			kind: ParamType::Address,
-			internal_type: Some("address".into()),
-		}],
-		outputs: vec![],
-		constant: true,
-		state_mutability: StateMutability::NonPayable,
-	};
-	func.encode_input(&[Token::Address(address)]).unwrap()
-}
+// fn get_wkton_balance(sender: &AccountInfo, nonce: u64) -> U256 {
+// 	let raw_tx = UnsignedTransaction {
+// 		nonce: U256::from(nonce),
+// 		gas_price: U256::from(1),
+// 		gas_limit: U256::from(0x300000),
+// 		action: ethereum::TransactionAction::Call(H160::from_str(WKTON_ADDRESS).unwrap()),
+// 		value: U256::from(0),
+// 		input: hex2bytes_unchecked(bytes2hex("0x", wkton_balance_input(sender.address))),
+// 	};
+// 	let t = sign_transaction(sender, raw_tx);
+// 	if let Ok((_, _, res)) = Ethereum::execute(
+// 		sender.address,
+// 		t.input.clone(),
+// 		t.value,
+// 		t.gas_limit,
+// 		None,
+// 		Some(t.nonce),
+// 		t.action,
+// 		None,
+// 	) {
+// 		match res {
+// 			CallOrCreateInfo::Call(info) => return U256::from_big_endian(&info.value),
+// 			CallOrCreateInfo::Create(_) => return U256::default(),
+// 		};
+// 	}
+// 	U256::default()
+// }
 
-fn transfer_and_call(address: H160, value: U256) -> Vec<u8> {
-	#[allow(deprecated)]
-	let func = Function {
-		name: "transfer_and_call".to_owned(),
-		inputs: vec![
-			Param {
-				name: "address".to_owned(),
-				kind: ParamType::Address,
-				internal_type: Some("address".into()),
-			},
-			Param {
-				name: "value".to_owned(),
-				kind: ParamType::Uint(256),
-				internal_type: Some("uint256".into()),
-			},
-		],
-		outputs: vec![],
-		constant: false,
-		state_mutability: StateMutability::NonPayable,
-	};
-	func.encode_input(&[Token::Address(address), Token::Uint(value)])
-		.unwrap()
-}
+// fn wkton_balance_input(address: H160) -> Vec<u8> {
+// 	#[allow(deprecated)]
+// 	let func = Function {
+// 		name: "balanceOf".to_owned(),
+// 		inputs: vec![Param {
+// 			name: "address".to_owned(),
+// 			kind: ParamType::Address,
+// 			internal_type: Some("address".into()),
+// 		}],
+// 		outputs: vec![],
+// 		constant: true,
+// 		state_mutability: StateMutability::NonPayable,
+// 	};
+// 	func.encode_input(&[Token::Address(address)]).unwrap()
+// }
 
-fn withdraw(to: Vec<u8>, value: U256) -> Vec<u8> {
-	#[allow(deprecated)]
-	let func = Function {
-		name: "withdraw".to_owned(),
-		inputs: vec![
-			Param {
-				name: "to".to_owned(),
-				kind: ParamType::FixedBytes(32),
-				internal_type: Some("bytes32".into()),
-			},
-			Param {
-				name: "value".to_owned(),
-				kind: ParamType::Uint(256),
-				internal_type: Some("uint256".into()),
-			},
-		],
-		outputs: vec![],
-		constant: false,
-		state_mutability: StateMutability::NonPayable,
-	};
-	func.encode_input(&[Token::FixedBytes(to), Token::Uint(value)])
-		.unwrap()
-}
+// fn transfer_and_call(address: H160, value: U256) -> Vec<u8> {
+// 	#[allow(deprecated)]
+// 	let func = Function {
+// 		name: "transfer_and_call".to_owned(),
+// 		inputs: vec![
+// 			Param {
+// 				name: "address".to_owned(),
+// 				kind: ParamType::Address,
+// 				internal_type: Some("address".into()),
+// 			},
+// 			Param {
+// 				name: "value".to_owned(),
+// 				kind: ParamType::Uint(256),
+// 				internal_type: Some("uint256".into()),
+// 			},
+// 		],
+// 		outputs: vec![],
+// 		constant: false,
+// 		state_mutability: StateMutability::NonPayable,
+// 	};
+// 	func.encode_input(&[Token::Address(address), Token::Uint(value)])
+// 		.unwrap()
+// }
 
-fn sign_transaction(account: &AccountInfo, unsign_tx: UnsignedTransaction) -> TransactionV0 {
-	unsign_tx.sign(&account.private_key)
-}
+// fn withdraw(to: Vec<u8>, value: U256) -> Vec<u8> {
+// 	#[allow(deprecated)]
+// 	let func = Function {
+// 		name: "withdraw".to_owned(),
+// 		inputs: vec![
+// 			Param {
+// 				name: "to".to_owned(),
+// 				kind: ParamType::FixedBytes(32),
+// 				internal_type: Some("bytes32".into()),
+// 			},
+// 			Param {
+// 				name: "value".to_owned(),
+// 				kind: ParamType::Uint(256),
+// 				internal_type: Some("uint256".into()),
+// 			},
+// 		],
+// 		outputs: vec![],
+// 		constant: false,
+// 		state_mutability: StateMutability::NonPayable,
+// 	};
+// 	func.encode_input(&[Token::FixedBytes(to), Token::Uint(value)])
+// 		.unwrap()
+// }
 
-macro_rules! assert_balance {
-	($evm_address:expr, $balance:expr, $left:expr, $right:expr) => {
-		let account_id =
-			<Test as darwinia_evm::Config>::IntoAccountId::into_account_id($evm_address);
-		assert_eq!(RingAccount::account_basic(&$evm_address).balance, $balance);
-		assert_eq!(Ring::free_balance(&account_id), $left);
-		assert_eq!(
-			<RingRemainBalance as RemainBalanceOp<Test, u64>>::remaining_balance(&account_id),
-			$right
-		);
-	};
-}
+// fn sign_transaction(account: &AccountInfo, unsign_tx: LegacyUnsignedTransaction) -> Transaction {
+// 	unsign_tx.sign(&account.private_key)
+// }
+
+// macro_rules! assert_balance {
+// 	($evm_address:expr, $balance:expr, $left:expr, $right:expr) => {
+// 		let account_id =
+// 			<Test as darwinia_evm::Config>::IntoAccountId::into_account_id($evm_address);
+// 		assert_eq!(RingAccount::account_basic(&$evm_address).balance, $balance);
+// 		assert_eq!(Ring::free_balance(&account_id), $left);
+// 		assert_eq!(
+// 			<RingRemainBalance as RemainBalanceOp<Test, u64>>::remaining_balance(&account_id),
+// 			$right
+// 		);
+// 	};
+// }
 
 #[test]
 fn transaction_should_increment_nonce() {
@@ -267,17 +273,9 @@ fn transaction_should_increment_nonce() {
 	let alice = &pairs[0];
 
 	ext.execute_with(|| {
-		let t = sign_transaction(alice, creation_contract(ERC20_CONTRACT_BYTECODE, 0));
-		assert_ok!(Ethereum::execute(
-			alice.address,
-			t.input,
-			t.value,
-			t.gas_limit,
-			Some(t.gas_price),
-			Some(t.nonce),
-			t.action,
-			None,
-		));
+		// let t = sign_transaction(alice, creation_contract(ERC20_CONTRACT_BYTECODE, 0));
+		let t = legacy_erc20_creation_transaction(alice);
+		assert_ok!(Ethereum::execute(alice.address, &t, None,));
 		assert_eq!(
 			RingAccount::account_basic(&alice.address).nonce,
 			U256::from(1)
@@ -291,10 +289,11 @@ fn transaction_without_enough_gas_should_not_work() {
 	let alice = &pairs[0];
 
 	ext.execute_with(|| {
-		let mut transaction =
-			sign_transaction(alice, creation_contract(ERC20_CONTRACT_BYTECODE, 0));
-		transaction.gas_price = U256::from(11_000_000);
-
+		let mut transaction = legacy_erc20_creation_transaction(alice);
+		match &mut transaction {
+			Transaction::Legacy(t) => t.gas_price = U256::from(11_000_000),
+			_ => {}
+		}
 		let call = crate::Call::<Test>::transact { transaction };
 		let source = call.check_self_contained().unwrap().unwrap();
 
@@ -312,12 +311,12 @@ fn transaction_with_to_low_nonce_should_not_work() {
 
 	ext.execute_with(|| {
 		// nonce is 0
-		let mut transaction = creation_contract(ERC20_CONTRACT_BYTECODE, 0);
+		let mut transaction = legacy_erc20_creation_unsigned_transaction();
 		transaction.nonce = U256::from(1);
 
-		let signed_transaction = transaction.sign(&alice.private_key);
+		let signed = transaction.sign(&alice.private_key);
 		let call = crate::Call::<Test>::transact {
-			transaction: signed_transaction,
+			transaction: signed,
 		};
 		let source = call.check_self_contained().unwrap().unwrap();
 
@@ -325,28 +324,19 @@ fn transaction_with_to_low_nonce_should_not_work() {
 			call.validate_self_contained(&source).unwrap(),
 			ValidTransactionBuilder::default()
 				.and_provides((alice.address, U256::from(1)))
-				.priority(1u64)
+				.priority(0u64)
 				.and_requires((alice.address, U256::from(0)))
 				.build()
 		);
-		let t = sign_transaction(alice, creation_contract(ERC20_CONTRACT_BYTECODE, 0));
+		let t = legacy_erc20_creation_transaction(alice);
 
 		// nonce is 1
-		assert_ok!(Ethereum::execute(
-			alice.address,
-			t.input,
-			t.value,
-			t.gas_limit,
-			Some(t.gas_price),
-			Some(t.nonce),
-			t.action,
-			None,
-		));
-
+		assert_ok!(Ethereum::execute(alice.address, &t, None,));
 		transaction.nonce = U256::from(0);
-		let signed_transaction_2 = transaction.sign(&alice.private_key);
+
+		let signed2 = transaction.sign(&alice.private_key);
 		let call2 = crate::Call::<Test>::transact {
-			transaction: signed_transaction_2,
+			transaction: signed2,
 		};
 		let source2 = call2.check_self_contained().unwrap().unwrap();
 
@@ -363,7 +353,7 @@ fn transaction_with_too_high_nonce_should_fail_in_block() {
 	let alice = &pairs[0];
 
 	ext.execute_with(|| {
-		let mut transaction = creation_contract(ERC20_CONTRACT_BYTECODE, 0);
+		let mut transaction = legacy_erc20_creation_unsigned_transaction();
 		transaction.nonce = U256::from(1);
 
 		let signed = transaction.sign(&alice.private_key);
@@ -389,10 +379,8 @@ fn transaction_with_invalid_chain_id_should_fail_in_block() {
 	let alice = &pairs[0];
 
 	ext.execute_with(|| {
-		let mut transaction = creation_contract(ERC20_CONTRACT_BYTECODE, 0);
-		transaction.nonce = U256::from(1);
-
-		let signed = transaction.sign_with_chain_id(&alice.private_key, 1);
+		let signed =
+			legacy_erc20_creation_unsigned_transaction().sign_with_chain_id(&alice.private_key, 1);
 
 		let call = crate::Call::<Test>::transact {
 			transaction: signed,
@@ -420,17 +408,9 @@ fn contract_constructor_should_get_executed() {
 	let alice_storage_address = storage_address(alice.address, H256::zero());
 
 	ext.execute_with(|| {
-		let t = sign_transaction(alice, creation_contract(ERC20_CONTRACT_BYTECODE, 0));
-		assert_ok!(Ethereum::execute(
-			alice.address,
-			t.input,
-			t.value,
-			t.gas_limit,
-			Some(t.gas_price),
-			Some(t.nonce),
-			t.action,
-			None,
-		));
+		let t = legacy_erc20_creation_transaction(alice);
+
+		assert_ok!(Ethereum::execute(alice.address, &t, None,));
 		assert_eq!(
 			EVM::account_storages(erc20_address, alice_storage_address),
 			H256::from_str("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
@@ -450,7 +430,7 @@ fn source_should_be_derived_from_signature() {
 	ext.execute_with(|| {
 		Ethereum::transact(
 			RawOrigin::EthereumTransaction(alice.address).into(),
-			sign_transaction(alice, creation_contract(ERC20_CONTRACT_BYTECODE, 0)),
+			legacy_erc20_creation_transaction(alice),
 		)
 		.expect("Failed to execute transaction");
 
@@ -470,17 +450,8 @@ fn contract_should_be_created_at_given_address() {
 	let erc20_address = contract_address(alice.address, 0);
 
 	ext.execute_with(|| {
-		let t = sign_transaction(alice, creation_contract(ERC20_CONTRACT_BYTECODE, 0));
-		assert_ok!(Ethereum::execute(
-			alice.address,
-			t.input,
-			t.value,
-			t.gas_limit,
-			Some(t.gas_price),
-			Some(t.nonce),
-			t.action,
-			None,
-		));
+		let t = legacy_erc20_creation_transaction(alice);
+		assert_ok!(Ethereum::execute(alice.address, &t, None,));
 		assert_ne!(EVM::account_codes(erc20_address).len(), 0);
 	});
 }
@@ -492,18 +463,8 @@ fn transaction_should_generate_correct_gas_used() {
 	let expected_gas = U256::from(891328);
 
 	ext.execute_with(|| {
-		let t = sign_transaction(alice, creation_contract(ERC20_CONTRACT_BYTECODE, 0));
-		let (_, _, info) = Ethereum::execute(
-			alice.address,
-			t.input,
-			t.value,
-			t.gas_limit,
-			Some(t.gas_price),
-			Some(t.nonce),
-			t.action,
-			None,
-		)
-		.unwrap();
+		let t = legacy_erc20_creation_transaction(alice);
+		let (_, _, info) = Ethereum::execute(alice.address, &t, None).unwrap();
 
 		match info {
 			CallOrCreateInfo::Create(info) => {
@@ -520,7 +481,7 @@ fn call_should_handle_errors() {
 	let alice = &pairs[0];
 
 	ext.execute_with(|| {
-		let t = UnsignedTransaction {
+		let t = LegacyUnsignedTransaction {
 			nonce: U256::zero(),
 			gas_price: U256::from(1),
 			gas_limit: U256::from(0x100000),
@@ -529,34 +490,25 @@ fn call_should_handle_errors() {
 			input: hex2bytes_unchecked(TEST_CONTRACT_BYTECODE),
 		}
 		.sign(&alice.private_key);
-		assert_ok!(Ethereum::execute(
-			alice.address,
-			t.input,
-			t.value,
-			t.gas_limit,
-			Some(t.gas_price),
-			Some(t.nonce),
-			t.action,
-			None,
-		));
+		assert_ok!(Ethereum::execute(alice.address, &t, None,));
 
 		let contract_address: Vec<u8> =
 			hex2bytes_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
 		let foo: Vec<u8> = hex2bytes_unchecked("c2985578");
 		let bar: Vec<u8> = hex2bytes_unchecked("febb0f7e");
 
+		let t2 = LegacyUnsignedTransaction {
+			nonce: U256::from(1),
+			gas_price: U256::from(1),
+			gas_limit: U256::from(0x100000),
+			action: TransactionAction::Call(H160::from_slice(&contract_address)),
+			value: U256::zero(),
+			input: foo,
+		}
+		.sign(&alice.private_key);
+
 		// calling foo will succeed
-		let (_, _, info) = Ethereum::execute(
-			alice.address,
-			foo,
-			U256::zero(),
-			U256::from(1048576),
-			Some(U256::from(1)),
-			Some(U256::from(1)),
-			TransactionAction::Call(H160::from_slice(&contract_address)),
-			None,
-		)
-		.unwrap();
+		let (_, _, info) = Ethereum::execute(alice.address, &t2, None).unwrap();
 		match info {
 			CallOrCreateInfo::Call(info) => {
 				assert_eq!(
@@ -567,19 +519,17 @@ fn call_should_handle_errors() {
 			CallOrCreateInfo::Create(_) => panic!("expected call info"),
 		}
 
+		let t3 = LegacyUnsignedTransaction {
+			nonce: U256::from(2),
+			gas_price: U256::from(1),
+			gas_limit: U256::from(0x100000),
+			action: TransactionAction::Call(H160::from_slice(&contract_address)),
+			value: U256::zero(),
+			input: bar,
+		}
+		.sign(&alice.private_key);
 		// calling should always succeed even if the inner EVM execution fails.
-		Ethereum::execute(
-			alice.address,
-			bar,
-			U256::zero(),
-			U256::from(1048576),
-			Some(U256::from(1)),
-			Some(U256::from(2)),
-			TransactionAction::Call(H160::from_slice(&contract_address)),
-			None,
-		)
-		.ok()
-		.unwrap();
+		Ethereum::execute(alice.address, &t3, None).ok().unwrap();
 	});
 }
 
@@ -1190,119 +1140,119 @@ fn call_should_handle_errors() {
 // 	});
 // }
 
-#[test]
-fn mutate_account_works_well() {
-	let (_, mut ext) = new_test_ext(1);
-	ext.execute_with(|| {
-		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let origin = decimal_convert(123456789, Some(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, origin);
-		assert_balance!(test_addr, origin, 123456789, 90);
-	});
-}
+// #[test]
+// fn mutate_account_works_well() {
+// 	let (_, mut ext) = new_test_ext(1);
+// 	ext.execute_with(|| {
+// 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+// 		let origin = decimal_convert(123456789, Some(90));
+// 		RingAccount::mutate_account_basic_balance(&test_addr, origin);
+// 		assert_balance!(test_addr, origin, 123456789, 90);
+// 	});
+// }
 
-#[test]
-fn mutate_account_inc_balance_by_10() {
-	let (_, mut ext) = new_test_ext(1);
-	ext.execute_with(|| {
-		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let origin = decimal_convert(600, Some(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, origin);
+// #[test]
+// fn mutate_account_inc_balance_by_10() {
+// 	let (_, mut ext) = new_test_ext(1);
+// 	ext.execute_with(|| {
+// 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+// 		let origin = decimal_convert(600, Some(90));
+// 		RingAccount::mutate_account_basic_balance(&test_addr, origin);
 
-		let new = origin.saturating_add(U256::from(10));
-		RingAccount::mutate_account_basic_balance(&test_addr, new);
-		assert_balance!(test_addr, new, 600, 100);
-	});
-}
+// 		let new = origin.saturating_add(U256::from(10));
+// 		RingAccount::mutate_account_basic_balance(&test_addr, new);
+// 		assert_balance!(test_addr, new, 600, 100);
+// 	});
+// }
 
-#[test]
-fn mutate_account_inc_balance_by_999_999_910() {
-	let (_, mut ext) = new_test_ext(1);
-	ext.execute_with(|| {
-		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let origin = decimal_convert(600, Some(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, origin);
+// #[test]
+// fn mutate_account_inc_balance_by_999_999_910() {
+// 	let (_, mut ext) = new_test_ext(1);
+// 	ext.execute_with(|| {
+// 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+// 		let origin = decimal_convert(600, Some(90));
+// 		RingAccount::mutate_account_basic_balance(&test_addr, origin);
 
-		let new = origin.saturating_add(U256::from(999999910u128));
-		RingAccount::mutate_account_basic_balance(&test_addr, new);
-		assert_balance!(test_addr, new, 601, 0);
-	});
-}
+// 		let new = origin.saturating_add(U256::from(999999910u128));
+// 		RingAccount::mutate_account_basic_balance(&test_addr, new);
+// 		assert_balance!(test_addr, new, 601, 0);
+// 	});
+// }
 
-#[test]
-fn mutate_account_inc_by_1000_000_000() {
-	let (_, mut ext) = new_test_ext(1);
-	ext.execute_with(|| {
-		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let origin = decimal_convert(600, Some(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, origin);
+// #[test]
+// fn mutate_account_inc_by_1000_000_000() {
+// 	let (_, mut ext) = new_test_ext(1);
+// 	ext.execute_with(|| {
+// 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+// 		let origin = decimal_convert(600, Some(90));
+// 		RingAccount::mutate_account_basic_balance(&test_addr, origin);
 
-		let new = origin.saturating_add(U256::from(1000_000_000u128));
-		RingAccount::mutate_account_basic_balance(&test_addr, new);
-		assert_balance!(test_addr, new, 601, 90);
-	});
-}
+// 		let new = origin.saturating_add(U256::from(1000_000_000u128));
+// 		RingAccount::mutate_account_basic_balance(&test_addr, new);
+// 		assert_balance!(test_addr, new, 601, 90);
+// 	});
+// }
 
-#[test]
-fn mutate_account_dec_balance_by_90() {
-	let (_, mut ext) = new_test_ext(1);
-	ext.execute_with(|| {
-		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let origin = decimal_convert(600, Some(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, origin);
+// #[test]
+// fn mutate_account_dec_balance_by_90() {
+// 	let (_, mut ext) = new_test_ext(1);
+// 	ext.execute_with(|| {
+// 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+// 		let origin = decimal_convert(600, Some(90));
+// 		RingAccount::mutate_account_basic_balance(&test_addr, origin);
 
-		let new = origin.saturating_sub(U256::from(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, new);
-		assert_balance!(test_addr, new, 600, 0);
-	});
-}
-#[test]
-fn mutate_account_dec_balance_by_990() {
-	let (_, mut ext) = new_test_ext(1);
-	ext.execute_with(|| {
-		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let origin = decimal_convert(600, Some(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, origin);
+// 		let new = origin.saturating_sub(U256::from(90));
+// 		RingAccount::mutate_account_basic_balance(&test_addr, new);
+// 		assert_balance!(test_addr, new, 600, 0);
+// 	});
+// }
+// #[test]
+// fn mutate_account_dec_balance_by_990() {
+// 	let (_, mut ext) = new_test_ext(1);
+// 	ext.execute_with(|| {
+// 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+// 		let origin = decimal_convert(600, Some(90));
+// 		RingAccount::mutate_account_basic_balance(&test_addr, origin);
 
-		let new = origin.saturating_sub(U256::from(990));
-		RingAccount::mutate_account_basic_balance(&test_addr, new);
-		assert_balance!(test_addr, new, 599, 1_000_000_090 - 990);
-	});
-}
-#[test]
-fn mutate_account_dec_balance_existential_by_90() {
-	let (_, mut ext) = new_test_ext(1);
-	ext.execute_with(|| {
-		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let origin = decimal_convert(500, Some(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, origin);
+// 		let new = origin.saturating_sub(U256::from(990));
+// 		RingAccount::mutate_account_basic_balance(&test_addr, new);
+// 		assert_balance!(test_addr, new, 599, 1_000_000_090 - 990);
+// 	});
+// }
+// #[test]
+// fn mutate_account_dec_balance_existential_by_90() {
+// 	let (_, mut ext) = new_test_ext(1);
+// 	ext.execute_with(|| {
+// 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+// 		let origin = decimal_convert(500, Some(90));
+// 		RingAccount::mutate_account_basic_balance(&test_addr, origin);
 
-		let new = origin.saturating_sub(U256::from(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, new);
-		assert_balance!(test_addr, new, 500, 0);
-	});
-}
-#[test]
-fn mutate_account_dec_balance_existential_by_990() {
-	let (_, mut ext) = new_test_ext(1);
-	ext.execute_with(|| {
-		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let origin = decimal_convert(500, Some(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, origin);
+// 		let new = origin.saturating_sub(U256::from(90));
+// 		RingAccount::mutate_account_basic_balance(&test_addr, new);
+// 		assert_balance!(test_addr, new, 500, 0);
+// 	});
+// }
+// #[test]
+// fn mutate_account_dec_balance_existential_by_990() {
+// 	let (_, mut ext) = new_test_ext(1);
+// 	ext.execute_with(|| {
+// 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+// 		let origin = decimal_convert(500, Some(90));
+// 		RingAccount::mutate_account_basic_balance(&test_addr, origin);
 
-		let new = origin.saturating_sub(U256::from(990));
-		RingAccount::mutate_account_basic_balance(&test_addr, new);
-		assert_balance!(test_addr, U256::zero(), 0, 0);
-	});
-}
+// 		let new = origin.saturating_sub(U256::from(990));
+// 		RingAccount::mutate_account_basic_balance(&test_addr, new);
+// 		assert_balance!(test_addr, U256::zero(), 0, 0);
+// 	});
+// }
 
-#[test]
-fn test_pallet_id_to_dvm_address() {
-	let (_, mut ext) = new_test_ext(1);
-	ext.execute_with(|| {
-		assert_eq!(
-			<Test as self::Config>::PalletId::get().into_h160(),
-			H160::from_str("0x6d6f646c6461722f64766d700000000000000000").unwrap()
-		)
-	})
-}
+// #[test]
+// fn test_pallet_id_to_dvm_address() {
+// 	let (_, mut ext) = new_test_ext(1);
+// 	ext.execute_with(|| {
+// 		assert_eq!(
+// 			<Test as self::Config>::PalletId::get().into_h160(),
+// 			H160::from_str("0x6d6f646c6461722f64766d700000000000000000").unwrap()
+// 		)
+// 	})
+// }

@@ -15,7 +15,7 @@ use std::str::FromStr;
 
 mod eip1559;
 mod eip2930;
-// mod legacy;
+mod legacy;
 
 // This ERC-20 contract mints the maximum amount of tokens to the contract creator.
 // pragma solidity ^0.5.0;`
