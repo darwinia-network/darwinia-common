@@ -35,7 +35,7 @@ use fp_evm::{
 	Context, ExitError, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
 	PrecompileResult,
 };
-use sp_std::vec::Vec;
+use sp_std::{vec, vec::Vec};
 
 #[selector]
 enum Action {
@@ -136,7 +136,11 @@ where
 								if err == StorageProofError(ProofError::TrieKeyNotExist) {
 									return Ok(vec![]);
 								} else {
-									return Err(ExitError::Other("verfiy storage failed".into()));
+									return Err(PrecompileFailure::Error {
+										exit_status: ExitError::Other(
+											"verfiy storage failed".into(),
+										),
+									});
 								}
 							}
 						}
