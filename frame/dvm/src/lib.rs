@@ -496,6 +496,7 @@ impl<T: Config> Pallet<T> {
 		} else {
 			return Err(InvalidTransaction::Payment.into());
 		};
+
 		if gas_price < base_fee {
 			return Err(InvalidTransaction::Payment.into());
 		}

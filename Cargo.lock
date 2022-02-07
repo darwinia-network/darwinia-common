@@ -2424,6 +2424,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "rlp",
+ "rustc-hex",
  "scale-info",
  "serde",
  "sha3 0.9.1",

@@ -1,23 +1,23 @@
-// SPDX-License-Identifier: Apache-2.0
-// This file is part of Frontier.
+// This file is part of Darwinia.
 //
-// Copyright (c) 2020 Parity Technologies (UK) Ltd.
+// Copyright (C) 2018-2022 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// 	http://www.apache.org/licenses/LICENSE-2.0
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
 //
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-//! Consensus extension module tests for BABE consensus.
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 use super::*;
+use darwinia_evm::AccountBasic;
 
 fn eip1559_erc20_creation_unsigned_transaction() -> EIP1559UnsignedTransaction {
 	EIP1559UnsignedTransaction {
@@ -43,7 +43,10 @@ fn transaction_should_increment_nonce() {
 	ext.execute_with(|| {
 		let t = eip1559_erc20_creation_transaction(alice);
 		assert_ok!(Ethereum::execute(alice.address, &t, None,));
-		assert_eq!(EVM::account_basic(&alice.address).nonce, U256::from(1));
+		assert_eq!(
+			RingAccount::account_basic(&alice.address).nonce,
+			U256::from(1)
+		);
 	});
 }
 
@@ -60,6 +63,7 @@ fn transaction_without_enough_gas_should_not_work() {
 		}
 
 		let call = crate::Call::<Test>::transact { transaction };
+		// TODO: the source is not alice's address, the signature is incorrect, fix it later in upstream repo
 		let source = call.check_self_contained().unwrap().unwrap();
 
 		assert_err!(
@@ -126,6 +130,7 @@ fn transaction_with_to_hight_nonce_should_fail_in_block() {
 		let call = crate::Call::<Test>::transact {
 			transaction: signed,
 		};
+
 		let source = call.check_self_contained().unwrap().unwrap();
 		let extrinsic = fp_self_contained::CheckedExtrinsic::<_, _, SignedExtra, _> {
 			signed: fp_self_contained::CheckedSignature::SelfContained(source),

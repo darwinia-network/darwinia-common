@@ -14,8 +14,8 @@ use sp_runtime::{
 use std::str::FromStr;
 
 mod eip1559;
-mod eip2930;
-mod legacy;
+// mod eip2930;
+// mod legacy;
 
 // This ERC-20 contract mints the maximum amount of tokens to the contract creator.
 // pragma solidity ^0.5.0;`
@@ -24,3 +24,6 @@ mod legacy;
 //	 constructor() public { _mint(msg.sender, 2**256 - 1); }
 // }
 pub const ERC20_CONTRACT_BYTECODE: &str = include_str!("./res/erc20_contract_bytecode.txt");
+
+pub type RingAccount = <Test as darwinia_evm::Config>::RingAccountBasic;
+pub type KtonAccount = <Test as darwinia_evm::Config>::KtonAccountBasic;

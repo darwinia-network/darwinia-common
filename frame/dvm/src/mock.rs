@@ -24,12 +24,13 @@ use ethereum::{TransactionAction, TransactionSignature};
 use rlp::RlpStream;
 use scale_info::TypeInfo;
 // --- paritytech ---
-use fp_evm::{Context, ExitError, Precompile, PrecompileOutput, PrecompileSet};
+use fp_evm::{Context, ExitError, Precompile, PrecompileOutput, PrecompileResult, PrecompileSet};
 use frame_support::{
 	traits::{Everything, FindAuthor, GenesisBuild},
 	ConsensusEngineId, PalletId,
 };
 use frame_system::mocking::*;
+use pallet_evm::FeeCalculator;
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
@@ -40,7 +41,7 @@ use sp_runtime::{
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::{self as dvm_ethereum, account_basic::*, *};
-use darwinia_evm::{runner::stack::Runner, EnsureAddressTruncated, FeeCalculator};
+use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::IntoAccountId;
 
@@ -154,33 +155,62 @@ frame_support::parameter_types! {
 	pub const TransactionByteFee: u64 = 1;
 	pub const ChainId: u64 = 42;
 	pub const BlockGasLimit: U256 = U256::MAX;
+	pub PrecompilesValue: MockPrecompiles<Test> = MockPrecompiles::<_>::new();
 }
 
 pub struct MockPrecompiles<R>(PhantomData<R>);
+impl<R> MockPrecompiles<R>
+where
+	R: darwinia_evm::Config,
+{
+	pub fn new() -> Self {
+		Self(Default::default())
+	}
+	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
+		sp_std::vec![1, 2, 3, 4, 21]
+			.into_iter()
+			.map(|x| H160::from_low_u64_be(x))
+			.collect()
+	}
+}
+
 impl<R> PrecompileSet for MockPrecompiles<R>
 where
 	R: darwinia_evm::Config,
 {
 	fn execute(
+		&self,
 		address: H160,
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
-	) -> Option<Result<PrecompileOutput, ExitError>> {
+		is_static: bool,
+	) -> Option<PrecompileResult> {
 		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
 
 		match address {
 			// Ethereum precompiles
-			_ if address == to_address(1) => Some(ECRecover::execute(input, target_gas, context)),
-			_ if address == to_address(2) => Some(Sha256::execute(input, target_gas, context)),
-			_ if address == to_address(3) => Some(Ripemd160::execute(input, target_gas, context)),
-			_ if address == to_address(4) => Some(Identity::execute(input, target_gas, context)),
-			// Darwinia precompiles
-			_ if address == to_address(21) => {
-				Some(<Transfer<R>>::execute(input, target_gas, context))
+			_ if address == to_address(1) => {
+				Some(ECRecover::execute(input, target_gas, context, is_static))
 			}
+			_ if address == to_address(2) => {
+				Some(Sha256::execute(input, target_gas, context, is_static))
+			}
+			_ if address == to_address(3) => {
+				Some(Ripemd160::execute(input, target_gas, context, is_static))
+			}
+			_ if address == to_address(4) => {
+				Some(Identity::execute(input, target_gas, context, is_static))
+			}
+			// Darwinia precompiles
+			_ if address == to_address(21) => Some(<Transfer<R>>::execute(
+				input, target_gas, context, is_static,
+			)),
 			_ => None,
 		}
+	}
+	fn is_precompile(&self, address: H160) -> bool {
+		Self::used_addresses().contains(&address)
 	}
 }
 
@@ -190,8 +220,8 @@ impl darwinia_evm::Config for Test {
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type IntoAccountId = HashedConverter;
 	type Event = Event;
-	type PrecompilesType = ();
-	type PrecompilesValue = ();
+	type PrecompilesType = MockPrecompiles<Self>;
+	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
 	type FindAuthor = FindAuthorTruncated;
@@ -199,6 +229,7 @@ impl darwinia_evm::Config for Test {
 	type Runner = Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
+	type OnChargeTransaction = EVMCurrencyAdapter;
 }
 
 frame_support::parameter_types! {
@@ -310,11 +341,11 @@ impl LegacyUnsignedTransaction {
 		H256::from_slice(&Keccak256::digest(&stream.out()).as_slice())
 	}
 
-	pub fn sign(&self, key: &H256) -> TransactionV0 {
+	pub fn sign(&self, key: &H256) -> Transaction {
 		self.sign_with_chain_id(key, ChainId::get())
 	}
 
-	pub fn sign_with_chain_id(&self, key: &H256, chain_id: u64) -> TransactionV0 {
+	pub fn sign_with_chain_id(&self, key: &H256, chain_id: u64) -> Transaction {
 		let hash = self.signing_hash();
 		let msg = libsecp256k1::Message::parse(hash.as_fixed_bytes());
 		let s = libsecp256k1::sign(
