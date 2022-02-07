@@ -138,14 +138,6 @@ pub fn genesis_config() -> ChainSpec {
 				"0x7a8b265c416eab5fdf8e5a1b3c7635131ca7164fbe6f66d8a70feeeba7c4dd7f",
 				"0x305bafd512366e7fd535fdc144c7034b8683e1814d229c84a116f3cb27a97643",
 			),
-			Keys::new(
-				"0xe446c1f1f419cc0927ad3319e141501b02844dee6252d905aae406f0c7097d1a",
-				"0xc3c9880f6821b6e906c4396e54137297b1ee6c4c448b6a98abc5e29ffcdcec81",
-			),
-			Keys::new(
-				"0xae05263d9508581f657ce584184721884ee2886eb66765db0c4f5195aa1d4e21",
-				"0x1ed7de3855ffcce134d718b570febb49bbbbeb32ebbc8c319f44fb9f5690643a",
-			),
 		];
 		let initial_nominators = <Vec<AccountId>>::new();
 		let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
@@ -218,8 +210,8 @@ pub fn genesis_config() -> ChainSpec {
 					.collect()
 			},
 			staking: StakingConfig {
-				minimum_validator_count: 6,
-				validator_count: 6,
+				minimum_validator_count: 2,
+				validator_count: 4,
 				stakers: initial_authorities
 					.iter()
 					.map(|Keys { stash, .. }| (
@@ -372,8 +364,6 @@ pub fn genesis_config() -> ChainSpec {
 			"/dns4/t2.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWHf1v45q3u1qPrkwSUq7ybzNfXf5ELPcpoBTJ4k49axfk",
 			"/dns4/t3.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWCXW7Ds6invyE1rF4BSfwpMgNKzzBxbnEGGjcqZ6cSgap",
 			"/dns4/t4.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWHokmaoAJp2vVPkw2YG3HFa799RUAJvdfy4dcaEzBdkGw",
-			"/dns4/t5.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWGJM9oAV95rM67Vad7j7jZGcH7mRoXM4R3gFNYGWE8Nsj",
-			"/dns4/t6.pangolin-p2p.darwinia.network/tcp/30333/p2p/12D3KooWKhUXATik7HPz7EC3865dd7XihbnbCA3ciVjuvPv3YXwr"
 		]
 		.iter()
 		.filter_map(|s| FromStr::from_str(s).ok())
@@ -601,8 +591,6 @@ pub fn local_testnet_config() -> ChainSpec {
 			get_authority_keys_from_seed("Bob"),
 			get_authority_keys_from_seed("Charlie"),
 			get_authority_keys_from_seed("Dave"),
-			get_authority_keys_from_seed("Eve"),
-			get_authority_keys_from_seed("Ferdie"),
 		];
 		let endowed_accounts = vec![
 			get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -613,10 +601,6 @@ pub fn local_testnet_config() -> ChainSpec {
 			get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
 			get_account_id_from_seed::<sr25519::Public>("Dave"),
 			get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-			get_account_id_from_seed::<sr25519::Public>("Eve"),
-			get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-			get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-			get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 			s2s_relayer,
 		]
 		.into_iter()
@@ -667,8 +651,8 @@ pub fn local_testnet_config() -> ChainSpec {
 					.collect()
 			},
 			staking: StakingConfig {
-				minimum_validator_count: 6,
-				validator_count: 6,
+				minimum_validator_count: 2,
+				validator_count: 4,
 				stakers: initial_authorities
 					.iter()
 					.cloned()
@@ -814,12 +798,6 @@ pub fn local_testnet_config() -> ChainSpec {
 				.parse()
 				.unwrap(),
 			"/ip4/127.0.0.1/tcp/30336/p2p/12D3KooWSsChzF81YDUKpe9Uk5AHV5oqAaXAcWNSPYgoLauUk4st"
-				.parse()
-				.unwrap(),
-			"/ip4/127.0.0.1/tcp/30337/p2p/12D3KooWSuTq6MG9gPt7qZqLFKkYrfxMewTZhj9nmRHJkPwzWDG2"
-				.parse()
-				.unwrap(),
-			"/ip4/127.0.0.1/tcp/30338/p2p/12D3KooWMz5U7fR8mF5DNhZSSyFN8c19kU63xYopzDSNCzoFigYk"
 				.parse()
 				.unwrap(),
 		],
