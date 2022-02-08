@@ -1,5 +1,5 @@
 [package]
-authors     = ["Darwinia Network <tianyi.song@itering.com>"]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
 description = "Primitives of BSC(Binance Smart Chain) Bridge module."
 edition     = "2021"
 homepage    = "https://darwinia.network"
