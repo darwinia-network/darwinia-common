@@ -261,3 +261,14 @@ fn internal_transaction_should_works() {
 		)));
 	});
 }
+
+#[test]
+fn test_pallet_id_to_dvm_address() {
+	let (_, mut ext) = new_test_ext(1);
+	ext.execute_with(|| {
+		assert_eq!(
+			<Test as self::Config>::PalletId::get().into_h160(),
+			H160::from_str("0x6d6f646c6461722f64766d700000000000000000").unwrap()
+		)
+	})
+}
