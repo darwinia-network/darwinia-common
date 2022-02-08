@@ -13,10 +13,11 @@ use sp_runtime::{
 };
 use std::str::FromStr;
 
+mod account_basic;
 mod eip1559;
 mod eip2930;
-mod legacy;
 mod internal;
+mod legacy;
 
 // This ERC-20 contract mints the maximum amount of tokens to the contract creator.
 // pragma solidity ^0.5.0;`
