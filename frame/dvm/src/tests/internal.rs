@@ -18,8 +18,8 @@
 
 // --- crates.io ---
 use array_bytes::{bytes2hex, hex2bytes_unchecked};
-use std::str::FromStr;
 use fp_evm::{ExitReason, ExitSucceed};
+use std::str::FromStr;
 // --- darwinia-network ---
 use super::*;
 use crate::{Config, InternalTransactHandler};
