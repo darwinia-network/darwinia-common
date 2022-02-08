@@ -115,7 +115,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangoro"),
 	impl_name: sp_runtime::create_runtime_str!("Pangoro"),
 	authoring_version: 0,
-	spec_version: 2_8_01_0,
+	spec_version: 2_8_02_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -837,14 +837,8 @@ impl fp_rpc::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
 }
 
 fn migrate() -> Weight {
-	// --- darwinia ---
-	use dvm_ethereum::EthereumStorageSchema;
-	use fp_storage::PALLET_ETHEREUM_SCHEMA;
+	<darwinia_staking::MinimumValidatorCount<Runtime>>::put(2);
 
-	frame_support::storage::unhashed::put::<EthereumStorageSchema>(
-		&PALLET_ETHEREUM_SCHEMA,
-		&EthereumStorageSchema::V1,
-	);
 	// 0
 	RuntimeBlockWeights::get().max_block
 }
