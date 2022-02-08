@@ -42,7 +42,6 @@ mod tests;
 use codec::{Decode, Encode};
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
-use sha3::{Digest, Keccak256};
 // --- paritytech ---
 use fp_evm::CallOrCreateInfo;
 #[cfg(feature = "std")]

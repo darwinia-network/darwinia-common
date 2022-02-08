@@ -42,7 +42,7 @@ pub mod util;
 
 // --- paritytech ---
 use fp_evm::{
-	Context, ExitError, Precompile, PrecompileFailure, PrecompileOutput, PrecompileResult,
+	Context, ExitError, Precompile, PrecompileFailure, PrecompileResult,
 };
 use sp_std::marker::PhantomData;
 // --- darwinia-network ---

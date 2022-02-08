@@ -176,7 +176,6 @@ fn wkton_creation_transaction(account: &AccountInfo) -> Transaction {
 }
 
 fn transfer_and_call_transaction(
-	sender: &AccountInfo,
 	address: H160,
 	value: U256,
 	nonce: u64,
@@ -207,13 +206,8 @@ fn kton_currency_transfer_and_call_works() {
 
 		// Transfer and call 1
 		let transfer = decimal_convert(30_000_000_000, None);
-		let t = transfer_and_call_transaction(
-			alice,
-			H160::from_str(WKTON_ADDRESS).unwrap(),
-			transfer,
-			1,
-		)
-		.sign(&alice.private_key);
+		let t = transfer_and_call_transaction(H160::from_str(WKTON_ADDRESS).unwrap(), transfer, 1)
+			.sign(&alice.private_key);
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 		assert_eq!(
 			KtonAccount::account_basic(&alice.address).balance,
@@ -222,13 +216,8 @@ fn kton_currency_transfer_and_call_works() {
 		assert_eq!(query_contract_balance(alice, 2), transfer);
 
 		// Transfer and call 2
-		let t = transfer_and_call_transaction(
-			alice,
-			H160::from_str(WKTON_ADDRESS).unwrap(),
-			transfer,
-			3,
-		)
-		.sign(&alice.private_key);
+		let t = transfer_and_call_transaction(H160::from_str(WKTON_ADDRESS).unwrap(), transfer, 3)
+			.sign(&alice.private_key);
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 		assert_eq!(
 			KtonAccount::account_basic(&alice.address).balance,
@@ -254,13 +243,8 @@ fn kton_currency_transfer_and_call_out_of_fund() {
 		// Transfer and call
 		let transfer = decimal_convert(90_000_000_000, None);
 		// send_kton_transfer_and_call_tx(alice, H160::from_str(WKTON_ADDRESS).unwrap(), transfer, 1);
-		let t = transfer_and_call_transaction(
-			alice,
-			H160::from_str(WKTON_ADDRESS).unwrap(),
-			transfer,
-			1,
-		)
-		.sign(&alice.private_key);
+		let t = transfer_and_call_transaction(H160::from_str(WKTON_ADDRESS).unwrap(), transfer, 1)
+			.sign(&alice.private_key);
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 
 		// Check balances
@@ -323,13 +307,8 @@ fn kton_currency_withdraw() {
 
 		// Transfer and call
 		let transfer = decimal_convert(30_000_000_000, None);
-		let t = transfer_and_call_transaction(
-			alice,
-			H160::from_str(WKTON_ADDRESS).unwrap(),
-			transfer,
-			1,
-		)
-		.sign(&alice.private_key);
+		let t = transfer_and_call_transaction(H160::from_str(WKTON_ADDRESS).unwrap(), transfer, 1)
+			.sign(&alice.private_key);
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 
 		// withdraw
@@ -362,13 +341,8 @@ fn kton_currency_withdraw_out_of_fund() {
 
 		// Transfer and call
 		let transfer = decimal_convert(30_000_000_000, None);
-		let t = transfer_and_call_transaction(
-			alice,
-			H160::from_str(WKTON_ADDRESS).unwrap(),
-			transfer,
-			1,
-		)
-		.sign(&alice.private_key);
+		let t = transfer_and_call_transaction(H160::from_str(WKTON_ADDRESS).unwrap(), transfer, 1)
+			.sign(&alice.private_key);
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 		assert_eq!(query_contract_balance(alice, 2), transfer);
 

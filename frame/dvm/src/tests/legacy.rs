@@ -16,15 +16,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-use super::*;
-use darwinia_evm::AccountBasic;
-
 // --- crates.io ---
 use array_bytes::{bytes2hex, hex2bytes_unchecked};
 use std::str::FromStr;
 // --- darwinia-network ---
+use super::*;
+use darwinia_evm::AccountBasic;
 // --- paritytech ---
-use frame_support::{assert_err, assert_noop, assert_ok, weights::GetDispatchInfo as _};
+use frame_support::{assert_err, assert_ok, weights::GetDispatchInfo as _};
 
 // This ERC-20 contract mints the maximum amount of tokens to the contract creator.
 // pragma solidity ^0.5.0;

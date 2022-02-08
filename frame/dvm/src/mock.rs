@@ -24,7 +24,7 @@ use ethereum::{TransactionAction, TransactionSignature};
 use rlp::RlpStream;
 use scale_info::TypeInfo;
 // --- paritytech ---
-use fp_evm::{Context, ExitError, Precompile, PrecompileOutput, PrecompileResult, PrecompileSet};
+use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
 	traits::{Everything, FindAuthor, GenesisBuild},
 	ConsensusEngineId, PalletId,

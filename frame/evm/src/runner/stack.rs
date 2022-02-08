@@ -66,7 +66,10 @@ impl<T: Config> Runner<T> {
 		) -> (ExitReason, R),
 	{
 		println!("bear: stack runner: max_fee_per_gas {:?}", max_fee_per_gas);
-		println!("bear: stack runner: max_priority_fee_per_gas {:?}", max_priority_fee_per_gas);
+		println!(
+			"bear: stack runner: max_priority_fee_per_gas {:?}",
+			max_priority_fee_per_gas
+		);
 		let base_fee = T::FeeCalculator::min_gas_price();
 		// Gas price check is skipped when performing a gas estimation.
 		let max_fee_per_gas = match max_fee_per_gas {
@@ -98,11 +101,14 @@ impl<T: Config> Runner<T> {
 		} else {
 			U256::zero()
 		};
-		println!("bear: stack runner: max_priority_fee {:?}", max_priority_fee);
+		println!(
+			"bear: stack runner: max_priority_fee {:?}",
+			max_priority_fee
+		);
 		let total_fee = max_base_fee
 			.checked_add(max_priority_fee)
 			.ok_or(<Error<T>>::FeeOverflow)?;
-			println!("bear: stack runner: total_fee {:?}", total_fee);
+		println!("bear: stack runner: total_fee {:?}", total_fee);
 
 		let total_payment = value
 			.checked_add(total_fee)
@@ -113,7 +119,10 @@ impl<T: Config> Runner<T> {
 			source_account.balance >= total_payment,
 			<Error<T>>::BalanceLow
 		);
-		println!("bear: stack runner: source_account.balance {:?}", source_account.balance);
+		println!(
+			"bear: stack runner: source_account.balance {:?}",
+			source_account.balance
+		);
 
 		if let Some(nonce) = nonce {
 			ensure!(source_account.nonce == nonce, <Error<T>>::InvalidNonce);
@@ -139,8 +148,11 @@ impl<T: Config> Runner<T> {
 			} else {
 				(executor.fee(base_fee), None)
 			};
-			println!("bear: stack runner: actual_fee {:?}", actual_fee);
-			println!("bear: stack runner: actual_priority_fee {:?}", actual_priority_fee);
+		println!("bear: stack runner: actual_fee {:?}", actual_fee);
+		println!(
+			"bear: stack runner: actual_priority_fee {:?}",
+			actual_priority_fee
+		);
 		log::debug!(
 			target: "evm",
 			"Execution {:?} [source: {:?}, value: {}, gas_limit: {}, actual_fee: {}]",

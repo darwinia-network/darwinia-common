@@ -17,7 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- crates.io ---
-use array_bytes::{bytes2hex, hex2bytes_unchecked};
+use array_bytes::hex2bytes_unchecked;
 use fp_evm::{ExitReason, ExitSucceed};
 use std::str::FromStr;
 // --- darwinia-network ---
