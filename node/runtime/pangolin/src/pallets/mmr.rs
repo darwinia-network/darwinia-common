@@ -1,9 +1,9 @@
 // --- paritytech ---
-use pallet_beefy_mmr::DepositBeefyDigest;
 use pallet_mmr::Config;
 use sp_runtime::traits::{Hash, Keccak256};
 // --- darwinia-network ---
 use crate::*;
+use darwinia_beefy_primitives::DepositBeefyDigest;
 
 pub type MmrHash = <Keccak256 as Hash>::Output;
 

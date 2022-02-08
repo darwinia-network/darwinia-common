@@ -22,6 +22,7 @@ static_assertions = { version = "1.1" }
 common-runtime                          = { default-features = false, path = "../common" }
 darwinia-balances                       = { default-features = false, path = "../../../frame/balances" }
 darwinia-balances-rpc-runtime-api       = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
+darwinia-beefy-primitives               = { default-features = false, path = "../../../primitives/beefy" }
 darwinia-bridge-bsc                     = { default-features = false, path = "../../../frame/bridge/bsc" }
 darwinia-bridge-ethereum                = { default-features = false, path = "../../../frame/bridge/ethereum" }
 darwinia-claims                         = { default-features = false, path = "../../../frame/claims" }
@@ -146,6 +147,7 @@ std = [
 	"common-runtime/std",
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
+	"darwinia-beefy-primitives/std",
 	"darwinia-bridge-bsc/std",
 	"darwinia-claims/std",
 	"darwinia-democracy/std",

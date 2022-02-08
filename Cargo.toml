@@ -51,6 +51,7 @@ members = [
 	"frame/wormhole/issuing/ethereum",
 	"frame/wormhole/issuing/s2s",
 	"primitives/asset",
+	"primitives/beefy",
 	"primitives/bsc",
 	"primitives/consensus",
 	"primitives/contract",
