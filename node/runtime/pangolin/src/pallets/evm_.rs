@@ -3,7 +3,7 @@ use core::marker::PhantomData;
 // --- paritytech ---
 use bp_messages::LaneId;
 use codec::{Decode, Encode};
-use fp_evm::{Context, ExitError, Precompile, PrecompileOutput, PrecompileResult, PrecompileSet};
+use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
 	traits::{FindAuthor, PalletInfoAccess},
@@ -13,7 +13,7 @@ use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use sp_core::{crypto::Public, H160, U256};
 // --- darwinia-network ---
 use crate::*;
-use darwinia_evm::{runner::stack::Runner, Config, EnsureAddressTruncated};
+use darwinia_evm::{runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated};
 use darwinia_evm_precompile_bridge_bsc::BscBridge;
 use darwinia_evm_precompile_bridge_ethereum::EthereumBridge;
 use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
@@ -212,6 +212,7 @@ impl Config for Runtime {
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type Runner = Runner<Self>;
+	type OnChargeTransaction = EVMCurrencyAdapter;
 }
 
 fn hash(a: u64) -> H160 {

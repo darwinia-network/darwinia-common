@@ -11,7 +11,8 @@ use sp_core::crypto::Public;
 // --- darwinia-network ---
 use crate::*;
 use darwinia_evm::{
-	runner::stack::Runner, Config, EnsureAddressTruncated, Precompile, PrecompileSet,
+	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, Precompile,
+	PrecompileSet,
 };
 use darwinia_support::evm::ConcatConverter;
 use dvm_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
@@ -105,4 +106,5 @@ impl Config for Runtime {
 	type Runner = Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
+	type OnChargeTransaction = EVMCurrencyAdapter;
 }

@@ -33,7 +33,6 @@ pub use overrides::{
 pub use trace::{CacheRequester, CacheTask, Trace, TraceApiServer};
 
 pub use ethereum::TransactionV2 as EthereumTransaction;
-use ethereum::{LegacyTransactionMessage as EthereumTransactionMessage, TransactionSignature};
 use ethereum_types::{H160, H256};
 use evm::{ExitError, ExitReason};
 use jsonrpc_core::{Error, ErrorCode, Value};

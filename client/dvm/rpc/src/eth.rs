@@ -25,10 +25,7 @@ use std::{
 };
 // --- crates.io ---
 use codec::{self, Decode, Encode};
-use ethereum::{
-	BlockV2 as EthereumBlock, LegacyTransactionMessage, TransactionAction,
-	TransactionV2 as EthereumTransaction,
-};
+use ethereum::{BlockV2 as EthereumBlock, TransactionV2 as EthereumTransaction};
 use ethereum_types::{H160, H256, H512, H64, U256, U64};
 use evm::{ExitError, ExitReason};
 use futures::{future::TryFutureExt, StreamExt};
