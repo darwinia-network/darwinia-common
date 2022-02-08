@@ -595,31 +595,9 @@ impl<T: Config> Pallet<T> {
 		source: H160,
 		advanced_transaction: AdvancedTransaction,
 	) -> Result<(ExitReason, U256), DispatchError> {
-		// match advanced_transaction {
-		// 	AdvancedTransaction::EthereumTransaction(t) => {
-		// 		let transaction_hash = t.hash();
-		// 	}
-		// 	AdvancedTransaction::InternalTransaction(t) => {
-		// 		let transaction_hash = t.hash();
-		// 	}
-		// }
-		// let transaction_hash =
-		// 	H256::from_slice(Keccak256::digest(&rlp::encode(&transaction)).as_slice());
-		// TODO: use hash() directly
 		let transaction_hash = advanced_transaction.hash();
-
 		let transaction_index = Pending::<T>::get().len() as u32;
-		// let (to, _, info) = Self::execute(
-		// 	source,
-		// 	dvm_transaction.tx.input.clone(),
-		// 	dvm_transaction.tx.value,
-		// 	dvm_transaction.tx.gas_limit,
-		// 	dvm_transaction.gas_price,
-		// 	Some(dvm_transaction.tx.nonce),
-		// 	dvm_transaction.tx.action,
-		// 	None,
-		// )?;
-		// TODO: Rename the param field later
+
 		let (to, _, info) = Self::execute(source, &advanced_transaction, None)
 			.expect("transaction is already validated; error indicates that the block is invalid");
 
@@ -672,8 +650,7 @@ impl<T: Config> Pallet<T> {
 			logs_bloom: status.clone().logs_bloom,
 			logs: status.clone().logs,
 		};
-		// Pending::<T>::append((dvm_transaction.tx, status, receipt));
-		Pending::<T>::append((advanced_transaction.tx(), status, receipt));
+		Pending::<T>::append((advanced_transaction.transaction(), status, receipt));
 		Self::deposit_event(Event::Executed(
 			source,
 			dest.unwrap_or_default(),
@@ -718,7 +695,7 @@ impl<T: Config> Pallet<T> {
 			action,
 			access_list,
 		) = match advanced_transaction {
-			AdvancedTransaction::EthereumTransaction(transaction) => {
+			AdvancedTransaction::Ethereum(transaction) => {
 				match transaction {
 					// max_fee_per_gas and max_priority_fee_per_gas in legacy and 2930 transactions is
 					// the provided gas_price.
@@ -780,7 +757,7 @@ impl<T: Config> Pallet<T> {
 					}
 				}
 			}
-			AdvancedTransaction::InternalTransaction(t) => (
+			AdvancedTransaction::Internal(t) => (
 				t.input.clone(),
 				t.value,
 				t.gas_limit,
@@ -908,8 +885,6 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 		let source = T::PalletId::get().into_h160();
 		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
 		let transaction = internal_transaction(nonce, target, input);
-		// debug_assert_eq!(transaction.tx.nonce, nonce);
-		// debug_assert_eq!(transaction.gas_price, None);
 
 		Self::raw_transact(source, transaction).map(|(reason, used_gas)| match reason {
 			// Only when exit_reason is successful, return Ok(...)
@@ -932,16 +907,7 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 		let source = T::PalletId::get().into_h160();
 		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
 		let transaction = internal_transaction(nonce, contract, input);
-		// let (_, _, info) = Self::execute(
-		// 	T::PalletId::get().into_h160(),
-		// 	input,
-		// 	U256::zero(),
-		// 	U256::from(INTERNAL_TX_GAS_LIMIT),
-		// 	None,
-		// 	None,
-		// 	TransactionAction::Call(contract),
-		// 	None,
-		// )?;
+
 		let (_, _, info) = Self::execute(source, &transaction, None)?;
 		sp_io::storage::rollback_transaction();
 		match info {
@@ -1008,29 +974,30 @@ pub mod migration {
 }
 
 pub enum AdvancedTransaction {
-	EthereumTransaction(Transaction),
-	InternalTransaction(ethereum::TransactionV0),
+	Ethereum(Transaction),
+	// The internal transaction is an special LegacyTransaction
+	Internal(ethereum::TransactionV0),
 }
 
 impl AdvancedTransaction {
 	fn hash(&self) -> H256 {
 		match self {
-			Self::EthereumTransaction(t) => t.hash(),
-			Self::InternalTransaction(t) => t.hash(),
+			Self::Ethereum(t) => t.hash(),
+			Self::Internal(t) => t.hash(),
 		}
 	}
 
-	fn tx(&self) -> Transaction {
+	fn transaction(&self) -> Transaction {
 		match self {
-			Self::EthereumTransaction(t) => t.clone(),
-			Self::InternalTransaction(t) => Transaction::Legacy(t.clone()),
+			Self::Ethereum(t) => t.clone(),
+			Self::Internal(t) => Transaction::Legacy(t.clone()),
 		}
 	}
 }
 
 impl From<Transaction> for AdvancedTransaction {
 	fn from(t: Transaction) -> Self {
-		Self::EthereumTransaction(t)
+		Self::Ethereum(t)
 	}
 }
 
@@ -1055,5 +1022,5 @@ pub fn internal_transaction(nonce: U256, target: H160, input: Vec<u8>) -> Advanc
 		.unwrap(),
 	};
 
-	AdvancedTransaction::InternalTransaction(transaction)
+	AdvancedTransaction::Internal(transaction)
 }
