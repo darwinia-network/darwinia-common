@@ -8,6 +8,7 @@ const account = web3.eth.accounts.wallet.add(conf.privKey);
 const opcodes = new web3.eth.Contract(opcode.abi);
 opcodes.options.from = conf.address;
 opcodes.options.gas = conf.gas;
+opcodes.options.gasPrice = 1000000000;
 
 describe("Test Solidity OpCodes", function () {
 

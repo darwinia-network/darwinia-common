@@ -8,6 +8,7 @@ const account = web3.eth.accounts.wallet.add(conf.privKey);
 const jsontest = new web3.eth.Contract(conf.abi);
 jsontest.options.from = conf.address;
 jsontest.options.gas = conf.gas;
+jsontest.options.gasPrice = 1000000000;
 
 describe("Test Contract Log", function () {
 
@@ -20,7 +21,7 @@ describe("Test Contract Log", function () {
 			.send();
 		jsontest.options.address = instance.options.address;
 		conf.jsontestAddress = jsontest.options.address;
-	}).timeout(10000);
+	}).timeout(120000);
 
 	it("Get default bool value", async function () {
 		const data = await jsontest.methods.getBool().call();
