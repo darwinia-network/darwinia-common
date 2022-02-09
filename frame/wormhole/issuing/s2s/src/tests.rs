@@ -85,16 +85,6 @@ fn register_and_issue_from_remote_success() {
 			input: hex2bytes_unchecked(TEST_CONTRACT_BYTECODE),
 		}
 		.sign(&alice.private_key);
-		// assert_ok!(Ethereum::execute(
-		// 	alice.address,
-		// 	t.input,
-		// 	t.value,
-		// 	t.gas_limit,
-		// 	Some(t.gas_price),
-		// 	Some(t.nonce),
-		// 	t.action,
-		// 	None,
-		// ));
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 		let mapping_token_factory_address: H160 =
 			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");

@@ -96,7 +96,7 @@ fp-self-contained            = { default-features = false, git = "https://github
 fp-storage                   = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 pallet-base-fee              = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
-pallet-evm              = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
+pallet-evm                   = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 
 
 [build-dependencies]

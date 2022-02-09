@@ -18,7 +18,6 @@ darwinia-support                    = { default-features = false, path = "../../
 # frontier
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 
-
 [features]
 default = ["std"]
 

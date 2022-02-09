@@ -7,7 +7,6 @@ use pallet_evm_precompile_modexp::Modexp;
 use pallet_evm_precompile_sha3fips::Sha3FIPS256;
 use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripemd160, Sha256};
 use sp_core::crypto::Public;
-
 // --- darwinia-network ---
 use crate::*;
 use darwinia_evm::{
@@ -29,7 +28,7 @@ where
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
 		sp_std::vec![1, 2, 3, 4, 5, 1024, 1025]
 			.into_iter()
-			.map(|x| hash(x))
+			.map(|x| addr(x))
 			.collect()
 	}
 }
@@ -47,16 +46,16 @@ where
 	) -> Option<PrecompileResult> {
 		match address {
 			// Ethereum precompiles :
-			a if a == hash(1) => Some(ECRecover::execute(input, target_gas, context, is_static)),
-			a if a == hash(2) => Some(Sha256::execute(input, target_gas, context, is_static)),
-			a if a == hash(3) => Some(Ripemd160::execute(input, target_gas, context, is_static)),
-			a if a == hash(4) => Some(Identity::execute(input, target_gas, context, is_static)),
-			a if a == hash(5) => Some(Modexp::execute(input, target_gas, context, is_static)),
+			a if a == addr(1) => Some(ECRecover::execute(input, target_gas, context, is_static)),
+			a if a == addr(2) => Some(Sha256::execute(input, target_gas, context, is_static)),
+			a if a == addr(3) => Some(Ripemd160::execute(input, target_gas, context, is_static)),
+			a if a == addr(4) => Some(Identity::execute(input, target_gas, context, is_static)),
+			a if a == addr(5) => Some(Modexp::execute(input, target_gas, context, is_static)),
 			// Non-Frontier specific nor Ethereum precompiles :
-			a if a == hash(1024) => {
+			a if a == addr(1024) => {
 				Some(Sha3FIPS256::execute(input, target_gas, context, is_static))
 			}
-			a if a == hash(1025) => Some(ECRecoverPublicKey::execute(
+			a if a == addr(1025) => Some(ECRecoverPublicKey::execute(
 				input, target_gas, context, is_static,
 			)),
 			_ => None,
@@ -66,10 +65,6 @@ where
 	fn is_precompile(&self, address: H160) -> bool {
 		Self::used_addresses().contains(&address)
 	}
-}
-
-fn hash(a: u64) -> H160 {
-	H160::from_low_u64_be(a)
 }
 pub struct FindAuthorTruncated<F>(PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
@@ -107,4 +102,8 @@ impl Config for Runtime {
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter;
+}
+
+fn addr(a: u64) -> H160 {
+	H160::from_low_u64_be(a)
 }

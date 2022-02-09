@@ -45,7 +45,7 @@ where
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
 		sp_std::vec![1, 2, 3, 4, 21]
 			.into_iter()
-			.map(|x| hash(x))
+			.map(|x| addr(x))
 			.collect()
 	}
 }
@@ -64,8 +64,6 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> Option<PrecompileResult> {
-		let addr = |n: u64| -> H160 { H160::from_low_u64_be(n) };
-
 		match address {
 			// Ethereum precompiles
 			_ if address == addr(1) => {
@@ -91,34 +89,6 @@ where
 	}
 }
 
-// pub struct PangoroPrecompiles<R>(PhantomData<R>);
-// impl<R> PrecompileSet for PangoroPrecompiles<R>
-// where
-// 	R: darwinia_evm::Config,
-// 	R::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Encode + Decode,
-// 	<R::Call as Dispatchable>::Origin: From<Option<R::AccountId>>,
-// {
-// 	fn execute(
-// 		address: H160,
-// 		input: &[u8],
-// 		target_gas: Option<u64>,
-// 		context: &Context,
-// 	) -> Option<Result<PrecompileOutput, ExitError>> {
-// 		let addr = |n: u64| -> H160 { H160::from_low_u64_be(n) };
-
-// 		match address {
-// 			// Ethereum precompiles
-// 			_ if address == addr(1) => Some(ECRecover::execute(input, target_gas, context)),
-// 			_ if address == addr(2) => Some(Sha256::execute(input, target_gas, context)),
-// 			_ if address == addr(3) => Some(Ripemd160::execute(input, target_gas, context)),
-// 			_ if address == addr(4) => Some(Identity::execute(input, target_gas, context)),
-// 			// Darwinia precompiles
-// 			_ if address == addr(21) => Some(<Transfer<R>>::execute(input, target_gas, context)),
-// 			_ => None,
-// 		}
-// 	}
-// }
-
 frame_support::parameter_types! {
 	pub const ChainId: u64 = 45;
 	pub BlockGasLimit: U256 = u32::MAX.into();
@@ -143,6 +113,6 @@ impl Config for Runtime {
 	type OnChargeTransaction = EVMCurrencyAdapter;
 }
 
-fn hash(a: u64) -> H160 {
+fn addr(a: u64) -> H160 {
 	H160::from_low_u64_be(a)
 }
