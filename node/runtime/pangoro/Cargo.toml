@@ -20,7 +20,9 @@ smallvec    = { version = "1.7" }
 common-runtime                      = { default-features = false, path = "../common" }
 darwinia-balances                   = { default-features = false, path = "../../../frame/balances" }
 darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
+darwinia-bridge-bsc                 = { default-features = false, path = "../../../frame/bridge/bsc" }
 darwinia-evm                        = { default-features = false, path = "../../../frame/evm" }
+darwinia-evm-precompile-bridge-bsc  = { default-features = false, path = "../../../frame/evm/precompile/contracts/bridge/bsc" }
 darwinia-evm-precompile-transfer    = { default-features = false, path = "../../../frame/evm/precompile/contracts/transfer" }
 darwinia-fee-market                 = { default-features = false, path = "../../../frame/fee-market" }
 darwinia-fee-market-rpc-runtime-api = { default-features = false, path = "../../../frame/fee-market/rpc/runtime-api" }
@@ -112,7 +114,10 @@ std = [
 	"common-runtime/std",
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
+	"darwinia-bridge-bsc/std",
+
 	"darwinia-evm/std",
+	"darwinia-evm-precompile-bridge-bsc/std",
 	"darwinia-evm-precompile-transfer/std",
 	"darwinia-fee-market/std",
 	"darwinia-fee-market-rpc-runtime-api/std",
@@ -196,6 +201,7 @@ runtime-benchmarks = [
 	"frame-system/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	# darwinia-network
+	"darwinia-bridge-bsc/runtime-benchmarks",
 	"darwinia-evm/runtime-benchmarks",
 	"to-substrate-backing/runtime-benchmarks",
 ]

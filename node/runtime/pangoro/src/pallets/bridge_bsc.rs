@@ -14,6 +14,7 @@ frame_support::parameter_types! {
 	};
 	pub const EpochInStorage: u64 = 128;
 }
+
 impl Config for Runtime {
 	type BSCConfiguration = Configuration;
 	type OnHeadersSubmitted = ();

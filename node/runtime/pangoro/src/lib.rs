@@ -176,6 +176,8 @@ frame_support::construct_runtime!(
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 25,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, Origin} = 26,
+
+		Bsc: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
 	}
 );
 
@@ -782,6 +784,7 @@ sp_api::impl_runtime_apis! {
 
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, to_substrate_backing, Substrate2SubstrateBacking);
+			list_benchmark!(list, extra, darwinia_bridge_bsc, Bsc);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -803,6 +806,7 @@ sp_api::impl_runtime_apis! {
 
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, to_substrate_backing, Substrate2SubstrateBacking);
+			add_benchmark!(params, batches, darwinia_bridge_bsc, Bsc);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 

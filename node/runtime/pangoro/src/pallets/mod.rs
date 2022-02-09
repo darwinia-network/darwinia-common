@@ -72,3 +72,6 @@ pub use evm::*;
 
 pub mod dvm;
 pub use dvm::*;
+
+pub mod bridge_bsc;
+pub use bridge_bsc::*;
