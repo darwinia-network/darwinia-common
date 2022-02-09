@@ -23,6 +23,7 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use ethereum::{TransactionAction, TransactionSignature};
 use rlp::RlpStream;
 use scale_info::TypeInfo;
+use sha3::{Digest, Keccak256};
 // --- paritytech ---
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{

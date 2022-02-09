@@ -3277,6 +3277,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "libsecp256k1 0.5.0",
+ "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec",
  "rlp",

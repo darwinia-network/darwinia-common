@@ -50,6 +50,7 @@ darwinia-balances = { path = "../../../balances" }
 pallet-timestamp  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
 fp-self-contained = { git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
+pallet-evm        = { git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 
 [features]
 default = ["std"]
