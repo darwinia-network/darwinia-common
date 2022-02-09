@@ -59,10 +59,10 @@ pub trait WeightInfo {
 /// Weights for darwinia_bridge_bsc using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-	// Storage: BSC FinalizedAuthority (r:1 w:1)
-	// Storage: BSC FinalizedCheckpoint (r:1 w:1)
-	// Storage: BSC Authorities (r:1 w:1)
-	// Storage: BSC AuthoritiesOfRound (r:0 w:1)
+	// Storage: Bsc FinalizedAuthorities (r:1 w:1)
+	// Storage: Bsc FinalizedCheckpoint (r:1 w:1)
+	// Storage: Bsc Authorities (r:1 w:1)
+	// Storage: Bsc AuthoritiesOfRound (r:0 w:1)
 	fn relay_finalized_epoch_header() -> Weight {
 		(1_626_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
@@ -72,10 +72,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	// Storage: BSC FinalizedAuthority (r:1 w:1)
-	// Storage: BSC FinalizedCheckpoint (r:1 w:1)
-	// Storage: BSC Authorities (r:1 w:1)
-	// Storage: BSC AuthoritiesOfRound (r:0 w:1)
+	// Storage: Bsc FinalizedAuthorities (r:1 w:1)
+	// Storage: Bsc FinalizedCheckpoint (r:1 w:1)
+	// Storage: Bsc Authorities (r:1 w:1)
+	// Storage: Bsc AuthoritiesOfRound (r:0 w:1)
 	fn relay_finalized_epoch_header() -> Weight {
 		(1_626_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))

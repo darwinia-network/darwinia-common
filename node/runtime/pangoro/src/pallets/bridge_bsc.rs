@@ -2,10 +2,10 @@
 use sp_core::U256;
 // --- darwinia-network ---
 use crate::*;
-use darwinia_bridge_bsc::{BSCConfiguration, Config};
+use darwinia_bridge_bsc::{BscConfiguration, Config};
 
 frame_support::parameter_types! {
-	pub Configuration: BSCConfiguration = BSCConfiguration {
+	pub Configuration: BscConfiguration = BscConfiguration {
 		chain_id: 97,
 		min_gas_limit: 0x1388.into(),
 		max_gas_limit: U256::max_value(),
@@ -16,7 +16,7 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	type BSCConfiguration = Configuration;
+	type BscConfiguration = Configuration;
 	type OnHeadersSubmitted = ();
 	type EpochInStorage = EpochInStorage;
 	type WeightInfo = ();

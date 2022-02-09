@@ -928,7 +928,7 @@ fn migrate() -> Weight {
 		b"FinalizedAuthority",
 		&[],
 	);
-	migration::take_storage_value::<bsc_primitives::BSCHeader>(module, b"FinalizedCheckpoint", &[]);
+	migration::take_storage_value::<bsc_primitives::BscHeader>(module, b"FinalizedCheckpoint", &[]);
 	migration::take_storage_value::<Vec<bsc_primitives::Address>>(module, b"Authorities", &[]);
 
 	migration::remove_storage_prefix(module, b"FinalizedAuthority", &[]);
