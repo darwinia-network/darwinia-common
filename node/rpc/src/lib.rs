@@ -196,8 +196,8 @@ where
 	use dc_rpc::{
 		Debug, DebugApiServer, EthApi, EthApiServer, EthFilterApi, EthFilterApiServer,
 		EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider, NetApi, NetApiServer,
-		OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride, Trace,
-		TraceApiServer, Web3Api, Web3ApiServer,
+		OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, SchemaV2Override,
+		StorageOverride, Trace, TraceApiServer, Web3Api, Web3ApiServer,
 	};
 
 	let FullDeps {
