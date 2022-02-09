@@ -921,7 +921,20 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 }
 
 fn migrate() -> Weight {
-	<darwinia_staking::MinimumValidatorCount<Runtime>>::put(2);
+	let module = b"BSC";
+
+	migration::take_storage_value::<Vec<bsc_primitives::Address>>(
+		module,
+		b"FinalizedAuthority",
+		&[],
+	);
+	migration::take_storage_value::<bsc_primitives::BSCHeader>(module, b"FinalizedCheckpoint", &[]);
+	migration::take_storage_value::<Vec<bsc_primitives::Address>>(module, b"Authorities", &[]);
+
+	migration::remove_storage_prefix(module, b"FinalizedAuthority", &[]);
+	migration::remove_storage_prefix(module, b"FinalizedCheckpoint", &[]);
+	migration::remove_storage_prefix(module, b"Authorities", &[]);
+	migration::remove_storage_prefix(module, b"AuthoritiesOfRound", &[]);
 
 	// 0
 	RuntimeBlockWeights::get().max_block
