@@ -264,11 +264,17 @@ where
 	io.extend_with(StakingApi::to_delegate(Staking::new(client.clone())));
 	io.extend_with(FeeMarketApi::to_delegate(FeeMarket::new(client.clone())));
 
-	let overrides_map = BTreeMap::from([(
+	let mut overrides_map = BTreeMap::new();
+	overrides_map.insert(
 		EthereumStorageSchema::V1,
 		Box::new(SchemaV1Override::new(client.clone()))
 			as Box<dyn StorageOverride<_> + Send + Sync>,
-	)]);
+	);
+	overrides_map.insert(
+		EthereumStorageSchema::V2,
+		Box::new(SchemaV2Override::new(client.clone()))
+			as Box<dyn StorageOverride<_> + Send + Sync>,
+	);
 	let overrides = Arc::new(OverrideHandle {
 		schemas: overrides_map,
 		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),

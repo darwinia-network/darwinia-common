@@ -839,7 +839,6 @@ impl<T: Config> Pallet<T> {
 			mix_hash: H256::default(),
 			nonce: H64::default(),
 		};
-		// let block = EthereumBlockV0::new(partial_header, transactions, ommers);
 		let block = ethereum::Block::new(partial_header, transactions.clone(), ommers);
 
 		CurrentBlock::<T>::put(block.clone());
