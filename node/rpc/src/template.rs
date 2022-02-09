@@ -91,9 +91,8 @@ where
 		Debug, DebugApiServer, EthApi, EthApiServer, EthDevSigner, EthFilterApi,
 		EthFilterApiServer, EthPubSubApi, EthPubSubApiServer, EthSigner, HexEncodedIdProvider,
 		NetApi, NetApiServer, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override,
-		StorageOverride, Trace, TraceApiServer, Web3Api, Web3ApiServer,
+		SchemaV2Override, StorageOverride, Trace, TraceApiServer, Web3Api, Web3ApiServer,
 	};
-	use dvm_ethereum::EthereumStorageSchema;
 	use template_runtime::TransactionConverter;
 
 	let mut io = jsonrpc_core::IoHandler::default();
