@@ -25,7 +25,7 @@ describeWithFrontier("Frontier RPC (Constant)", (context) => {
 	});
 
 	it("should gas price", async function () {
-		expect(await context.web3.eth.getGasPrice()).to.equal("1");
+		expect(await context.web3.eth.getGasPrice()).to.equal("1000000000");
 	});
 
 	it("should protocal version is 1", async function () {

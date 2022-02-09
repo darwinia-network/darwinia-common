@@ -133,7 +133,7 @@ export async function startFrontierNode(provider?: string): Promise<{ web3: Web3
 		web3 = new Web3(`ws://127.0.0.1:${WS_PORT}`);
 	}
 
-	let ethersjs = new ethers.providers.StaticJsonRpcProvider(`http://localhost:${RPC_PORT}`, {
+	let ethersjs = new ethers.providers.StaticJsonRpcProvider(`http://127.0.0.1:${RPC_PORT}`, {
 		chainId: 42,
 		name: "frontier-dev",
 	});
@@ -149,6 +149,7 @@ export function describeWithFrontier(title: string, cb: (context: { web3: Web3 }
 		before("Starting Frontier Test Node", async function () {
 			this.timeout(SPAWNING_TIME);
 			const init = await startFrontierNode(provider);
+			context.web3 = init.web3;
 			context.ethersjs = init.ethersjs;
 			binary = init.binary;
 		});
