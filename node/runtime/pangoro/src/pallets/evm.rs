@@ -13,6 +13,7 @@ use sp_core::{crypto::Public, H160, U256};
 // --- darwinia-network ---
 use crate::*;
 use darwinia_evm::{runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated};
+use darwinia_evm_precompile_bridge_bsc::BscBridge;
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::ConcatConverter;
 use dvm_ethereum::{
@@ -77,8 +78,12 @@ where
 				Some(Identity::execute(input, target_gas, context, is_static))
 			}
 			// Darwinia precompiles
-			_ if address == addr(21) => Some(<Transfer<R>>::execute(input, target_gas, context)),
-			_ if address == addr(26) => Some(<BscBridge<R>>::execute(input, target_gas, context)),
+			_ if address == addr(21) => Some(<Transfer<R>>::execute(
+				input, target_gas, context, is_static,
+			)),
+			_ if address == addr(26) => Some(<BscBridge<R>>::execute(
+				input, target_gas, context, is_static,
+			)),
 			_ => None,
 		}
 	}

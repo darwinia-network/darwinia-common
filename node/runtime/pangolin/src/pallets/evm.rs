@@ -14,7 +14,6 @@ use sp_core::{crypto::Public, H160, U256};
 // --- darwinia-network ---
 use crate::*;
 use darwinia_evm::{runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated};
-use darwinia_evm_precompile_bridge_bsc::BscBridge;
 use darwinia_evm_precompile_bridge_ethereum::EthereumBridge;
 use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 use darwinia_evm_precompile_dispatch::Dispatch;
@@ -135,9 +134,6 @@ where
 				input, target_gas, context, is_static,
 			)),
 			_ if address == addr(25) => Some(<Dispatch<R>>::execute(
-				input, target_gas, context, is_static,
-			)),
-			_ if address == addr(26) => Some(<BscBridge<R>>::execute(
 				input, target_gas, context, is_static,
 			)),
 			_ => None,
