@@ -19,8 +19,8 @@ pub use grandpa::*;
 pub mod sudo;
 pub use sudo::*;
 
-pub mod evm_;
-pub use evm_::*;
+pub mod evm;
+pub use evm::*;
 
 pub mod dvm;
 pub use dvm::*;

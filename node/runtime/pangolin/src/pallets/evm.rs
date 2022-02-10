@@ -99,9 +99,7 @@ where
 
 impl<R> PrecompileSet for PangolinPrecompiles<R>
 where
-	R: from_substrate_issuing::Config + from_ethereum_issuing::Config,
-	R: darwinia_evm::Config,
-	R: darwinia_bridge_bsc::Config,
+	R: from_substrate_issuing::Config + from_ethereum_issuing::Config + darwinia_evm::Config,
 	R::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Encode + Decode,
 	<R::Call as Dispatchable>::Origin: From<Option<R::AccountId>>,
 	R::Call: From<from_ethereum_issuing::Call<R>> + From<from_substrate_issuing::Call<R>>,

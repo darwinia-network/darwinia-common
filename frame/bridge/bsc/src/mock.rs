@@ -25,7 +25,7 @@ use sp_core::U256;
 use sp_io::TestExternalities;
 // --- darwinia-network ---
 use crate::{self as darwinia_bridge_bsc, *};
-use bsc_primitives::BSCHeader;
+use bsc_primitives::BscHeader;
 
 pub type Block = MockBlock<Test>;
 pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
@@ -33,7 +33,7 @@ pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 pub type AccountId = u64;
 pub type BlockNumber = u64;
 
-pub type BSCError = Error<Test>;
+pub type BscError = Error<Test>;
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
@@ -72,7 +72,7 @@ impl pallet_timestamp::Config for Test {
 }
 
 frame_support::parameter_types! {
-	pub static Configuration: BSCConfiguration = BSCConfiguration {
+	pub static Configuration: BscConfiguration = BscConfiguration {
 		// Mainnet
 		chain_id: 56,
 		min_gas_limit: 0x1388.into(),
@@ -84,7 +84,7 @@ frame_support::parameter_types! {
 }
 impl Config for Test {
 	type WeightInfo = ();
-	type BSCConfiguration = Configuration;
+	type BscConfiguration = Configuration;
 	type OnHeadersSubmitted = ();
 	type EpochInStorage = EpochInStorage;
 }
@@ -98,24 +98,24 @@ frame_support::construct_runtime! {
 	{
 		System: frame_system::{Pallet, Call, Storage, Config},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		BSC: darwinia_bridge_bsc::{Pallet, Storage, Call},
+		Bsc: darwinia_bridge_bsc::{Pallet, Storage, Call},
 	}
 }
 
 pub struct ExtBuilder {
 	mainnet: bool,
-	genesis_header: BSCHeader,
+	genesis_header: BscHeader,
 }
 impl ExtBuilder {
 	#[allow(unused)]
-	pub fn genesis_header(mut self, genesis_header: BSCHeader) -> Self {
+	pub fn genesis_header(mut self, genesis_header: BscHeader) -> Self {
 		self.genesis_header = genesis_header;
 
 		self
 	}
 
 	pub fn testnet(mut self) -> Self {
-		let genesis_header = serde_json::from_str::<BSCHeader>(
+		let genesis_header = serde_json::from_str::<BscHeader>(
 			r#"{
 				"difficulty": "0x2",
 				"extraData": "0xd883010100846765746888676f312e31352e35856c696e75780000001600553d1284214b9b9c85549ab3d2b972df0deef66ac2c935552c16704d214347f29fa77f77da6d75d7c7523679479c2402e921db00923e014cd439c606c5967a1a4ad9cc746a70ee58568466f7996dd0ace4e896c5d20b2a975c050e4220be276ace4892f4b41a980a75ecd1309ea12fa2ed87a8744fbfc9b863d5a2959d3f95eae5dc7d70144ce1b73b403b7eb6e0b71b214cb885500844365e95cd9942c7276e7fd8c89c669357d161d57b0b255c94ea96e179999919e625dd7ad2f7b88723857946a41af646c589c3362af12db7da187b9d47f600a1e0c15639d477674640fa9d5fbf9dfaf1d84525f128a3c90b7480be53ad77703837dfead0b31186c4103b85ea08e2c37006e7c41301",
@@ -145,7 +145,7 @@ impl ExtBuilder {
 	pub fn set_associated_constants(&self) {
 		if !self.mainnet {
 			CONFIGURATION.with(|v| {
-				*v.borrow_mut() = BSCConfiguration {
+				*v.borrow_mut() = BscConfiguration {
 					// Testnet
 					chain_id: 97,
 					min_gas_limit: 0x1388.into(),

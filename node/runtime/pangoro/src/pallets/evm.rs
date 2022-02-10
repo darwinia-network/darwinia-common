@@ -52,7 +52,7 @@ where
 
 impl<R> PrecompileSet for PangoroPrecompiles<R>
 where
-	R: darwinia_evm::Config,
+	R: darwinia_evm::Config + darwinia_bridge_bsc::Config,
 	R::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Encode + Decode,
 	<R::Call as Dispatchable>::Origin: From<Option<R::AccountId>>,
 {
@@ -77,9 +77,8 @@ where
 				Some(Identity::execute(input, target_gas, context, is_static))
 			}
 			// Darwinia precompiles
-			_ if address == addr(21) => Some(<Transfer<R>>::execute(
-				input, target_gas, context, is_static,
-			)),
+			_ if address == addr(21) => Some(<Transfer<R>>::execute(input, target_gas, context)),
+			_ if address == addr(26) => Some(<BscBridge<R>>::execute(input, target_gas, context)),
 			_ => None,
 		}
 	}
