@@ -11,9 +11,9 @@ version     = "2.8.2"
 [dependencies]
 # crates.io
 ethereum-types = { version = "0.12.0", default-features = false }
-evm            = { version = "0.30", default-features = false, features = ["with-codec"] }
-evm-gasometer  = { version = "0.30", default-features = false }
-evm-runtime    = { version = "0.30", default-features = false }
+evm            = { version = "0.33", default-features = false, features = ["with-codec"] }
+evm-gasometer  = { version = "0.33", default-features = false }
+evm-runtime    = { version = "0.33", default-features = false }
 # darwinia-network
 dp-evm-trace-events = { path = "../events", default-features = false, features = ["evm-tracing"] }
 dp-evm-trace-ext    = { path = "../ext", default-features = false }

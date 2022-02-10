@@ -371,18 +371,6 @@ dependencies = [
 
 [[package]]
 name = "auto_impl"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42cbf586c80ada5e5ccdecae80d3ef0854f224e2dd74435f8d87e6831b8d0a38"
-dependencies = [
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "auto_impl"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7862e21c893d65a1650125d157eaeec691439379a1cee17ee49031b79236ada4"
@@ -1539,9 +1527,9 @@ dependencies = [
  "array-bytes",
  "darwinia-balances",
  "darwinia-support",
- "evm 0.33.1",
- "evm-gasometer 0.33.0",
- "evm-runtime 0.33.0",
+ "evm",
+ "evm-gasometer",
+ "evm-runtime",
  "fp-evm",
  "frame-benchmarking",
  "frame-support",
@@ -1569,7 +1557,7 @@ dependencies = [
  "darwinia-evm-precompile-utils",
  "dp-contract",
  "ethereum-primitives",
- "evm 0.33.1",
+ "evm",
  "fp-evm",
  "sp-std",
 ]
@@ -1647,7 +1635,7 @@ version = "2.8.2"
 dependencies = [
  "darwinia-evm-precompile-utils-macro",
  "darwinia-support",
- "evm 0.33.1",
+ "evm",
  "fp-evm",
 ]
 
@@ -1655,7 +1643,7 @@ dependencies = [
 name = "darwinia-evm-precompile-utils-macro"
 version = "2.8.2"
 dependencies = [
- "evm 0.30.1",
+ "evm",
  "proc-macro2",
  "quote",
  "sha3 0.9.1",
@@ -1977,7 +1965,7 @@ dependencies = [
  "dvm-rpc-core",
  "ethereum",
  "ethereum-types",
- "evm 0.33.1",
+ "evm",
  "fc-rpc-core",
  "fp-consensus",
  "fp-rpc",
@@ -2164,9 +2152,9 @@ dependencies = [
  "environmental",
  "ethereum",
  "ethereum-types",
- "evm 0.30.1",
- "evm-gasometer 0.30.0",
- "evm-runtime 0.30.0",
+ "evm",
+ "evm-gasometer",
+ "evm-runtime",
  "parity-scale-codec",
  "sp-runtime-interface",
 ]
@@ -2198,9 +2186,9 @@ dependencies = [
  "dp-evm-trace-events",
  "dp-evm-trace-ext",
  "ethereum-types",
- "evm 0.30.1",
- "evm-gasometer 0.30.0",
- "evm-runtime 0.30.0",
+ "evm",
+ "evm-gasometer",
+ "evm-runtime",
  "parity-scale-codec",
  "sp-core",
  "sp-io",
@@ -2409,7 +2397,7 @@ dependencies = [
  "ethabi",
  "ethereum",
  "ethereum-types",
- "evm 0.33.1",
+ "evm",
  "fp-consensus",
  "fp-evm",
  "fp-rpc",
@@ -2715,36 +2703,16 @@ checksum = "f7531096570974c3a9dcf9e4b8e1cede1ec26cf5046219fb3b9d897503b9be59"
 
 [[package]]
 name = "evm"
-version = "0.30.1"
-source = "git+https://github.com/darwinia-network/evm?branch=v0.30.1#099ff79fb4a790570b0494b727f345142163b8f0"
-dependencies = [
- "auto_impl 0.4.1",
- "environmental",
- "ethereum",
- "evm-core 0.30.0",
- "evm-gasometer 0.30.0",
- "evm-runtime 0.30.0",
- "log",
- "parity-scale-codec",
- "primitive-types",
- "rlp",
- "scale-info",
- "serde",
- "sha3 0.8.2",
-]
-
-[[package]]
-name = "evm"
 version = "0.33.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "408ffdd509e16de15ea9b51f5333748f6086601f29d445d2ba53dd7e95565574"
 dependencies = [
- "auto_impl 0.5.0",
+ "auto_impl",
  "environmental",
  "ethereum",
- "evm-core 0.33.0",
- "evm-gasometer 0.33.0",
- "evm-runtime 0.33.0",
+ "evm-core",
+ "evm-gasometer",
+ "evm-runtime",
  "log",
  "parity-scale-codec",
  "primitive-types",
@@ -2752,18 +2720,6 @@ dependencies = [
  "scale-info",
  "serde",
  "sha3 0.8.2",
-]
-
-[[package]]
-name = "evm-core"
-version = "0.30.0"
-source = "git+https://github.com/darwinia-network/evm?branch=v0.30.1#099ff79fb4a790570b0494b727f345142163b8f0"
-dependencies = [
- "funty",
- "parity-scale-codec",
- "primitive-types",
- "scale-info",
- "serde",
 ]
 
 [[package]]
@@ -2781,36 +2737,14 @@ dependencies = [
 
 [[package]]
 name = "evm-gasometer"
-version = "0.30.0"
-source = "git+https://github.com/darwinia-network/evm?branch=v0.30.1#099ff79fb4a790570b0494b727f345142163b8f0"
-dependencies = [
- "environmental",
- "evm-core 0.30.0",
- "evm-runtime 0.30.0",
- "primitive-types",
-]
-
-[[package]]
-name = "evm-gasometer"
 version = "0.33.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c446679607eacac4e8c8738e20c97ea9b3c86eddd8b43666744b05f416037bd9"
 dependencies = [
  "environmental",
- "evm-core 0.33.0",
- "evm-runtime 0.33.0",
+ "evm-core",
+ "evm-runtime",
  "primitive-types",
-]
-
-[[package]]
-name = "evm-runtime"
-version = "0.30.0"
-source = "git+https://github.com/darwinia-network/evm?branch=v0.30.1#099ff79fb4a790570b0494b727f345142163b8f0"
-dependencies = [
- "environmental",
- "evm-core 0.30.0",
- "primitive-types",
- "sha3 0.8.2",
 ]
 
 [[package]]
@@ -2820,7 +2754,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "419e8434ac6e850a8a4bc09a19406264582d1940913b2920be2af948f4ffc49b"
 dependencies = [
  "environmental",
- "evm-core 0.33.0",
+ "evm-core",
  "primitive-types",
  "sha3 0.8.2",
 ]
@@ -2982,7 +2916,7 @@ name = "fp-evm"
 version = "3.0.0-dev"
 source = "git+https://github.com/darwinia-network/frontier?branch=bear-eip1559#69947365bfafbd01dfd543b511fad67ffdf6198f"
 dependencies = [
- "evm 0.33.1",
+ "evm",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -3270,7 +3204,7 @@ dependencies = [
  "ethereum",
  "ethereum-primitives",
  "ethereum-types",
- "evm 0.30.1",
+ "evm",
  "fp-evm",
  "fp-self-contained",
  "frame-benchmarking",
@@ -5762,9 +5696,9 @@ name = "pallet-evm"
 version = "6.0.0-dev"
 source = "git+https://github.com/darwinia-network/frontier?branch=bear-eip1559#69947365bfafbd01dfd543b511fad67ffdf6198f"
 dependencies = [
- "evm 0.33.1",
- "evm-gasometer 0.33.0",
- "evm-runtime 0.33.0",
+ "evm",
+ "evm-gasometer",
+ "evm-runtime",
  "fp-evm",
  "frame-benchmarking",
  "frame-support",
@@ -6173,7 +6107,7 @@ dependencies = [
  "drml-common-primitives",
  "dvm-ethereum",
  "ethereum-primitives",
- "evm 0.30.1",
+ "evm",
  "fp-evm",
  "fp-rpc",
  "fp-self-contained",
@@ -11003,3 +10937,18 @@ dependencies = [
  "cc",
  "libc",
 ]
+
+[[patch.unused]]
+name = "evm"
+version = "0.30.1"
+source = "git+https://github.com/darwinia-network/evm?branch=v0.30.1#099ff79fb4a790570b0494b727f345142163b8f0"
+
+[[patch.unused]]
+name = "evm-gasometer"
+version = "0.30.0"
+source = "git+https://github.com/darwinia-network/evm?branch=v0.30.1#099ff79fb4a790570b0494b727f345142163b8f0"
+
+[[patch.unused]]
+name = "evm-runtime"
+version = "0.30.0"
+source = "git+https://github.com/darwinia-network/evm?branch=v0.30.1#099ff79fb4a790570b0494b727f345142163b8f0"
