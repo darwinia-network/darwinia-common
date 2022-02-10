@@ -931,13 +931,7 @@ impl fp_rpc::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
 }
 
 fn migrate() -> Weight {
-	<darwinia_staking::MinimumValidatorCount<Runtime>>::put(2);
-	frame_support::storage::unhashed::put::<EthereumStorageSchema>(
-		&PALLET_ETHEREUM_SCHEMA,
-		&EthereumStorageSchema::V2,
-	);
 	let module = b"BSC";
-
 	migration::take_storage_value::<Vec<bsc_primitives::Address>>(
 		module,
 		b"FinalizedAuthority",
@@ -950,6 +944,11 @@ fn migrate() -> Weight {
 	migration::remove_storage_prefix(module, b"FinalizedCheckpoint", &[]);
 	migration::remove_storage_prefix(module, b"Authorities", &[]);
 	migration::remove_storage_prefix(module, b"AuthoritiesOfRound", &[]);
+
+	frame_support::storage::unhashed::put::<EthereumStorageSchema>(
+		&PALLET_ETHEREUM_SCHEMA,
+		&EthereumStorageSchema::V2,
+	);
 
 	// 0
 	RuntimeBlockWeights::get().max_block

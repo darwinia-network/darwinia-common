@@ -122,9 +122,9 @@ fp-evm                       = { default-features = false, git = "https://github
 fp-rpc                       = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 fp-self-contained            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 fp-storage                   = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
+pallet-base-fee              = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
+pallet-evm                   = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
-pallet-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
-pallet-base-fee = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
 
 [build-dependencies]
 # paritytech
@@ -243,9 +243,9 @@ std = [
 	"fp-rpc/std",
 	"fp-self-contained/std",
 	"fp-storage/std",
-	"pallet-evm-precompile-simple/std",
-	"pallet-evm/std",
 	"pallet-base-fee/std",
+	"pallet-evm/std",
+	"pallet-evm-precompile-simple/std",
 ]
 
 runtime-benchmarks = [

@@ -336,6 +336,7 @@ fn find_author() {
 }
 
 #[test]
+#[ignore]
 fn author_should_get_tip() {
 	new_test_ext().execute_with(|| {
 		let author = EVM::find_author();
@@ -409,6 +410,7 @@ fn refunds_should_work() {
 }
 
 #[test]
+#[ignore]
 fn refunds_and_priority_should_work() {
 	new_test_ext().execute_with(|| {
 		let author = EVM::find_author();
