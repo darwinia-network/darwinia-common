@@ -44,6 +44,7 @@ pub use pallet_sudo::Call as SudoCall;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
+use fp_storage::PALLET_ETHEREUM_SCHEMA;
 #[allow(unused)]
 use frame_support::{log, migration};
 use frame_support::{
@@ -82,6 +83,7 @@ use darwinia_fee_market_rpc_runtime_api::{Fee, InProcessOrders};
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use drml_common_primitives::*;
+use dvm_ethereum::EthereumStorageSchema;
 
 pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
@@ -838,6 +840,10 @@ impl fp_rpc::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
 
 fn migrate() -> Weight {
 	<darwinia_staking::MinimumValidatorCount<Runtime>>::put(2);
+	frame_support::storage::unhashed::put::<EthereumStorageSchema>(
+		&PALLET_ETHEREUM_SCHEMA,
+		&EthereumStorageSchema::V2,
+	);
 
 	// 0
 	RuntimeBlockWeights::get().max_block
