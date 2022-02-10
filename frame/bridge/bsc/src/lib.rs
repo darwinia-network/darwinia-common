@@ -34,7 +34,7 @@
 //!
 //! ### Terminology
 //!
-//! - [`BSCHeader`]: The header structure of Binance Smart Chain.
+//! - [`BscHeader`]: The header structure of Binance Smart Chain.
 //!
 //! - `genesis_header` The initial header which set to this pallet before it accepts the headers submitted by relayers.
 //!   We extract the initial authority set from this header and verify the headers submitted later with the extracted initial
@@ -100,7 +100,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// BSC configuration.
-		type BSCConfiguration: Get<BSCConfiguration>;
+		type BscConfiguration: Get<BscConfiguration>;
 		/// Handler for headers submission result.
 		type OnHeadersSubmitted: OnHeadersSubmitted<Self::AccountId>;
 		/// Max epoch length stored, cannot verify header older than this epoch length
@@ -181,11 +181,11 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn finalized_authority)]
-	pub type FinalizedAuthority<T> = StorageValue<_, Vec<Address>, ValueQuery>;
+	pub type FinalizedAuthorities<T> = StorageValue<_, Vec<Address>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn finalized_checkpoint)]
-	pub type FinalizedCheckpoint<T> = StorageValue<_, BSCHeader, ValueQuery>;
+	pub type FinalizedCheckpoint<T> = StorageValue<_, BscHeader, ValueQuery>;
 
 	/// [`Authorities`] is the set of qualified authorities that currently active or activated in previous rounds
 	/// this was added to track the older qualified authorities, to make sure we can verify a older header
@@ -204,7 +204,7 @@ pub mod pallet {
 	#[cfg_attr(feature = "std", derive(Default))]
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
-		pub genesis_header: BSCHeader,
+		pub genesis_header: BscHeader,
 	}
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
@@ -213,10 +213,10 @@ pub mod pallet {
 				<Pallet<T>>::extract_authorities(&self.genesis_header).unwrap();
 
 			<Authorities<T>>::put(&initial_authority_set);
-			<FinalizedAuthority<T>>::put(&initial_authority_set);
+			<FinalizedAuthorities<T>>::put(&initial_authority_set);
 			<FinalizedCheckpoint<T>>::put(&self.genesis_header);
 			<AuthoritiesOfRound<T>>::insert(
-				&self.genesis_header.number / T::BSCConfiguration::get().epoch_length,
+				&self.genesis_header.number / T::BscConfiguration::get().epoch_length,
 				(0u32..initial_authority_set.len() as u32).collect::<Vec<u32>>(),
 			);
 		}
@@ -230,7 +230,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::relay_finalized_epoch_header())]
 		pub fn relay_finalized_epoch_header(
 			origin: OriginFor<T>,
-			proof: Vec<BSCHeader>,
+			proof: Vec<BscHeader>,
 		) -> DispatchResultWithPostInfo {
 			let submitter = frame_system::ensure_signed(origin)?;
 
@@ -253,7 +253,7 @@ pub mod pallet {
 	}
 	impl<T: Config> Pallet<T> {
 		/// Perform basic checks that only require header itself.
-		pub fn contextless_checks(config: &BSCConfiguration, header: &BSCHeader) -> DispatchResult {
+		pub fn contextless_checks(config: &BscConfiguration, header: &BscHeader) -> DispatchResult {
 			// he genesis block is the always valid dead-end
 			if header.number == 0 {
 				return Ok(());
@@ -324,9 +324,9 @@ pub mod pallet {
 
 		/// Perform checks that require access to parent header.
 		pub fn contextual_checks(
-			config: &BSCConfiguration,
-			header: &BSCHeader,
-			parent: &BSCHeader,
+			config: &BscConfiguration,
+			header: &BscHeader,
+			parent: &BscHeader,
 		) -> DispatchResult {
 			// parent sanity check
 			if parent.compute_hash() != header.parent_hash || parent.number + 1 != header.number {
@@ -345,7 +345,7 @@ pub mod pallet {
 		/// Recover block creator from signature
 		pub fn recover_creator(
 			chain_id: u64,
-			header: &BSCHeader,
+			header: &BscHeader,
 		) -> Result<Address, DispatchError> {
 			let data = &header.extra_data;
 
@@ -385,7 +385,7 @@ pub mod pallet {
 		/// Signers: N * 32 bytes as hex encoded (20 characters)
 		/// Signature: 65 bytes
 		/// --
-		pub fn extract_authorities(header: &BSCHeader) -> Result<Vec<Address>, DispatchError> {
+		pub fn extract_authorities(header: &BscHeader) -> Result<Vec<Address>, DispatchError> {
 			let data = &header.extra_data;
 
 			ensure!(
@@ -416,10 +416,10 @@ pub mod pallet {
 
 		/// Verify unsigned relayed headers and finalize authority set
 		pub fn verify_and_update_authority_set_and_checkpoint(
-			headers: &[BSCHeader],
+			headers: &[BscHeader],
 		) -> Result<Vec<Address>, DispatchError> {
 			// get finalized authority set from storage
-			let last_authority_set = <FinalizedAuthority<T>>::get();
+			let last_authority_set = <FinalizedAuthorities<T>>::get();
 
 			// ensure valid length
 			// we should submit at least `N / 2 + 1` headers
@@ -430,7 +430,7 @@ pub mod pallet {
 
 			let last_checkpoint = <FinalizedCheckpoint<T>>::get();
 			let checkpoint = &headers[0];
-			let cfg = T::BSCConfiguration::get();
+			let cfg = T::BscConfiguration::get();
 
 			// ensure valid header number
 			// the first group headers that relayer submitted should exactly follow the initial checkpoint
@@ -485,7 +485,7 @@ pub mod pallet {
 				if recently.len() == last_authority_set.len() / 2 {
 					// already have `N / 2` valid headers signed by different authority separately
 					// do finalize new authority set
-					<FinalizedAuthority<T>>::put(&new_authority_set);
+					<FinalizedAuthorities<T>>::put(&new_authority_set);
 					<FinalizedCheckpoint<T>>::put(checkpoint);
 
 					let mut authorities = <Authorities<T>>::get();
@@ -530,7 +530,7 @@ pub mod pallet {
 		/// could produce and submit multiple valid headers (without relaying them to other peers) and
 		/// get rewarded. Instead, the provider could track submitters and stop rewarding if too many
 		/// headers have been submitted without finalization.
-		fn on_valid_headers_submitted(submitter: AccountId, headers: &[BSCHeader]);
+		fn on_valid_headers_submitted(submitter: AccountId, headers: &[BscHeader]);
 		/// Called when invalid headers have been submitted.
 		fn on_invalid_headers_submitted(submitter: AccountId);
 		/// Called when earlier submitted headers have been finalized.
@@ -539,14 +539,14 @@ pub mod pallet {
 		fn on_valid_authority_finalized(submitter: AccountId, finalized: &[Address]);
 	}
 	impl<AccountId> OnHeadersSubmitted<AccountId> for () {
-		fn on_valid_headers_submitted(_: AccountId, _: &[BSCHeader]) {}
+		fn on_valid_headers_submitted(_: AccountId, _: &[BscHeader]) {}
 		fn on_invalid_headers_submitted(_: AccountId) {}
 		fn on_valid_authority_finalized(_: AccountId, _: &[Address]) {}
 	}
 
 	/// BSC pallet configuration parameters.
 	#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug)]
-	pub struct BSCConfiguration {
+	pub struct BscConfiguration {
 		/// Chain ID
 		pub chain_id: u64,
 		/// Minimum gas limit.

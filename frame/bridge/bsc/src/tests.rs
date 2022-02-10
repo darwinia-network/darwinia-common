@@ -2,19 +2,19 @@
 use frame_support::{assert_noop, assert_ok};
 // --- darwinia-network ---
 use crate::mock::*;
-use bsc_primitives::BSCHeader;
+use bsc_primitives::BscHeader;
 
 #[test]
 fn recover_creator_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		let header = BSC::finalized_checkpoint();
-		let creator = BSC::recover_creator(Configuration::get().chain_id, &header).unwrap();
+		let header = Bsc::finalized_checkpoint();
+		let creator = Bsc::recover_creator(Configuration::get().chain_id, &header).unwrap();
 
 		assert_eq!(header.coinbase, creator);
 	});
 	ExtBuilder::default().testnet().build().execute_with(|| {
-		let header = BSC::finalized_checkpoint();
-		let creator = BSC::recover_creator(97, &header).unwrap();
+		let header = Bsc::finalized_checkpoint();
+		let creator = Bsc::recover_creator(97, &header).unwrap();
 
 		assert_eq!(header.coinbase, creator);
 	});
@@ -23,8 +23,8 @@ fn recover_creator_should_work() {
 #[test]
 fn extract_authorities_should_work() {
 	ExtBuilder::default().build().execute_with(|| {
-		let header = BSC::finalized_checkpoint();
-		let signers = BSC::extract_authorities(&header).unwrap();
+		let header = Bsc::finalized_checkpoint();
+		let signers = Bsc::extract_authorities(&header).unwrap();
 		let expected_signers = [
 			"0x2465176c461afb316ebc773c61faee85a6515daa",
 			"0x295e26495cef6f69dfa69911d9d8e4f3bbadb89b",
@@ -55,8 +55,8 @@ fn extract_authorities_should_work() {
 		assert_eq!(signers, expected_signers);
 	});
 	ExtBuilder::default().testnet().build().execute_with(|| {
-		let header = BSC::finalized_checkpoint();
-		let signers = BSC::extract_authorities(&header).unwrap();
+		let header = Bsc::finalized_checkpoint();
+		let signers = Bsc::extract_authorities(&header).unwrap();
 		let expected_signers = [
 			"0x1284214b9b9c85549ab3d2b972df0deef66ac2c9",
 			"0x35552c16704d214347f29fa77f77da6d75d7c752",
@@ -80,7 +80,7 @@ fn extract_authorities_should_work() {
 #[test]
 fn relay_finalized_epoch_header_should_fail() {
 	ExtBuilder::default().build().execute_with(|| {
-		let header = serde_json::from_str::<BSCHeader>(
+		let header = serde_json::from_str::<BscHeader>(
 			r#"{
 			"difficulty": "0x2",
 			"extraData": "0xd883010100846765746888676f312e31352e35856c696e7578000000fc3ca6b72465176c461afb316ebc773c61faee85a6515daa295e26495cef6f69dfa69911d9d8e4f3bbadb89b29a97c6effb8a411dabc6adeefaa84f5067c8bbe2d4c407bbe49438ed859fe965b140dcf1aab71a93f349bbafec1551819b8be1efea2fc46ca749aa14430b3230294d12c6ab2aac5c2cd68e80b16b581685b1ded8013785d6623cc18d214320b6bb6475970f657164e5b75689b64b7fd1fa275f334f28e1872b61c6014342d914470ec7ac2975be345796c2b7ae2f5b9e386cd1b50a4550696d957cb4900f03a8b6c8fd93d6f4cea42bbb345dbc6f0dfdb5bec739bb832254baf4e8b4cc26bd2b52b31389b56e98b9f8ccdafcc39f3c7d6ebf637c9151673cbc36b88a6f79b60359f141df90a0c745125b131caaffd12b8f7166496996a7da21cf1f1b04d9b3e26a3d077be807dddb074639cd9fa61b47676c064fc50d62cce2fd7544e0b2cc94692d4a704debef7bcb61328e2d3a739effcd3a99387d015e260eefac72ebea1e9ae3261a475a27bb1028f140bc2a7c843318afdea0a6e3c511bbd10f4519ece37dc24887e11b55dee226379db83cffc681495730c11fdde79ba4c0c675b589d9452d45327429ff925359ca25b1cc0245ffb869dbbcffb5a0d3c72f103a1dcb28b105926c636747dbc265f8dda0090784be3febffdd7909aa6f416d200",
@@ -103,8 +103,8 @@ fn relay_finalized_epoch_header_should_fail() {
 		).unwrap();
 
 		assert_noop!(
-			BSC::relay_finalized_epoch_header(Origin::signed(1), vec![header]),
-			BSCError::InvalidHeadersSize
+			Bsc::relay_finalized_epoch_header(Origin::signed(1), vec![header]),
+			BscError::InvalidHeadersSize
 		);
 	});
 }
@@ -322,9 +322,9 @@ fn relay_finalized_epoch_header_should_work() {
 			"totalDifficulty": "0xea4b94",
 			"transactionsRoot": "0x11736117a52862926a62053b793cfb8a0e02ca668b9c3299134aaa17fde9bee5"
 		}"#,
-	].iter().map(|json| serde_json::from_str(json).unwrap()).collect::<Vec<BSCHeader>>();
+	].iter().map(|json| serde_json::from_str(json).unwrap()).collect::<Vec<BscHeader>>();
 
-		assert_ok!(BSC::relay_finalized_epoch_header(
+		assert_ok!(Bsc::relay_finalized_epoch_header(
 			Origin::signed(1),
 			headers_7706000_to_7706010,
 		));
@@ -466,9 +466,9 @@ fn relay_finalized_epoch_header_should_work() {
 			"totalDifficulty": "0x1211b55",
 			"transactionsRoot": "0xd3200ece531adcd5fc7e5b8342647507e1fc123da5fb706dddc6b5f75ffa2c4d"
 		}"#,
-		].iter().map(|json| serde_json::from_str(json).unwrap()).collect::<Vec<BSCHeader>>();
+		].iter().map(|json| serde_json::from_str(json).unwrap()).collect::<Vec<BscHeader>>();
 
-		assert_ok!(BSC::relay_finalized_epoch_header(
+		assert_ok!(Bsc::relay_finalized_epoch_header(
 			Origin::signed(1),
 			testnet_headers_9516600_to_9516606,
 		));

@@ -13,6 +13,7 @@ use sp_core::{crypto::Public, H160, U256};
 // --- darwinia-network ---
 use crate::*;
 use darwinia_evm::{runner::stack::Runner, Config, EnsureAddressTruncated, FeeCalculator};
+use darwinia_evm_precompile_bridge_bsc::BscBridge;
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::ConcatConverter;
 use dvm_ethereum::{
@@ -37,7 +38,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 pub struct PangoroPrecompiles<R>(PhantomData<R>);
 impl<R> PrecompileSet for PangoroPrecompiles<R>
 where
-	R: darwinia_evm::Config,
+	R: darwinia_evm::Config + darwinia_bridge_bsc::Config,
 	R::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Encode + Decode,
 	<R::Call as Dispatchable>::Origin: From<Option<R::AccountId>>,
 {
@@ -57,6 +58,7 @@ where
 			_ if address == addr(4) => Some(Identity::execute(input, target_gas, context)),
 			// Darwinia precompiles
 			_ if address == addr(21) => Some(<Transfer<R>>::execute(input, target_gas, context)),
+			_ if address == addr(26) => Some(<BscBridge<R>>::execute(input, target_gas, context)),
 			_ => None,
 		}
 	}

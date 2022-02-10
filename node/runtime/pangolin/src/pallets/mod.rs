@@ -112,8 +112,8 @@ pub use relay_authorities::*;
 pub mod to_tron_backing_;
 pub use to_tron_backing_::*;
 
-pub mod evm_;
-pub use evm_::*;
+pub mod evm;
+pub use evm::*;
 
 pub mod dvm;
 pub use dvm::*;
@@ -135,6 +135,3 @@ pub use transaction_pause::*;
 
 pub mod from_substrate_issuing_;
 pub use from_substrate_issuing_::*;
-
-pub mod bridge_bsc;
-pub use bridge_bsc::*;

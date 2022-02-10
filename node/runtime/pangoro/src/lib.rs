@@ -176,6 +176,8 @@ frame_support::construct_runtime!(
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 25,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, Origin} = 26,
+
+		Bsc: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
 	}
 );
 
@@ -782,6 +784,7 @@ sp_api::impl_runtime_apis! {
 
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, to_substrate_backing, Substrate2SubstrateBacking);
+			list_benchmark!(list, extra, darwinia_bridge_bsc, Bsc);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -803,6 +806,7 @@ sp_api::impl_runtime_apis! {
 
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, to_substrate_backing, Substrate2SubstrateBacking);
+			add_benchmark!(params, batches, darwinia_bridge_bsc, Bsc);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 
@@ -829,7 +833,21 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 }
 
 fn migrate() -> Weight {
-	<darwinia_staking::MinimumValidatorCount<Runtime>>::put(2);
+	if let Ok(bytes) = array_bytes::hex2bytes(
+		"0x5cb4b6631001facd57be810d5d1383ee23a31257d2430f097291d25fc1446d4f1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347e9ae3261a475a27bb1028f140bc2a7c843318afda6cd7017374dfe102e82d2b3b8a43dbe1d41cc0e4569f3dc45db6c4e687949ae657f5876113ac9abe5cf0460aa8d6b3b53abfc336cea4ab3ee594586f8b584ca1bfba16a9e34a12ff7c4b88be484ccd8065b90abea026f6c1f97c257fdb4ad2b2c30123db854d838c878e978cd2117896aa092e4ce08f078424e9ec7f2312f1909b35e579fb2702d571a3be04a8f01328e51af205100a7c32e3dd8faf8222fcf03f3545655314abf91c4c0d80cea6aa46f122c2a9c596c6a99d5842786d40667eb195877bbbb128890a824506c81a9e5623d4355e08a16f384bf709bf4db598bbcb88150abcd4ceba89cc798000bdccf5cf4d58d50828d3b7dc2bc5d8a928a32d24b845857da0b5bcf2c5dec8230643d4bec452491ba1260806a9e68a4a530de612e5c2676955a17400ce1d4fd6ff458bc38a8b1826e1c1d24b9516ef84ea6d8721344502a6c732ed7f861bb0ea017d520bad5fa53cfc67c678a2e6f6693c8ee0200000000000000000000000000000000000000000000000000000000000000c8947500000000007af38f030000000000000000000000000000000000000000000000000000000017403601000000000000000000000000000000000000000000000000000000003771ac60000000001508d883010100846765746888676f312e31352e35856c696e7578000000fc3ca6b72465176c461afb316ebc773c61faee85a6515daa295e26495cef6f69dfa69911d9d8e4f3bbadb89b29a97c6effb8a411dabc6adeefaa84f5067c8bbe2d4c407bbe49438ed859fe965b140dcf1aab71a93f349bbafec1551819b8be1efea2fc46ca749aa14430b3230294d12c6ab2aac5c2cd68e80b16b581685b1ded8013785d6623cc18d214320b6bb6475970f657164e5b75689b64b7fd1fa275f334f28e1872b61c6014342d914470ec7ac2975be345796c2b7ae2f5b9e386cd1b50a4550696d957cb4900f03a8b6c8fd93d6f4cea42bbb345dbc6f0dfdb5bec739bb832254baf4e8b4cc26bd2b52b31389b56e98b9f8ccdafcc39f3c7d6ebf637c9151673cbc36b88a6f79b60359f141df90a0c745125b131caaffd12b8f7166496996a7da21cf1f1b04d9b3e26a3d077be807dddb074639cd9fa61b47676c064fc50d62cce2fd7544e0b2cc94692d4a704debef7bcb61328e2d3a739effcd3a99387d015e260eefac72ebea1e9ae3261a475a27bb1028f140bc2a7c843318afdea0a6e3c511bbd10f4519ece37dc24887e11b55dee226379db83cffc681495730c11fdde79ba4c0c0670403d7dfc4c816a313885fe04b850f96f27b2e9fd88b147c882ad7caf9b964abfe6543625fcca73b56fe29d3046831574b0681d52bf5383d6f2187b6276c1000000000000000000000000000000000000000000000000000000000000000000200000000000000000"
+	) {
+		if let Ok(genesis_header) = bsc_primitives::BscHeader::decode(&mut &*bytes) {
+			let initial_authority_set = <darwinia_bridge_bsc::Pallet<Runtime>>::extract_authorities(&genesis_header).unwrap();
+
+			<darwinia_bridge_bsc::Authorities<Runtime>>::put(&initial_authority_set);
+			<darwinia_bridge_bsc::FinalizedAuthorities<Runtime>>::put(&initial_authority_set);
+			<darwinia_bridge_bsc::FinalizedCheckpoint<Runtime>>::put(&genesis_header);
+			<darwinia_bridge_bsc::AuthoritiesOfRound<Runtime>>::insert(
+				&genesis_header.number / <Runtime as darwinia_bridge_bsc::Config>::BscConfiguration::get().epoch_length,
+				(0u32..initial_authority_set.len() as u32).collect::<Vec<u32>>(),
+			);
+		}
+	}
 
 	// 0
 	RuntimeBlockWeights::get().max_block
