@@ -88,7 +88,6 @@ impl<T: Config> Kton<T> {
 					raw_input.to_vec(),
 					U256::zero(),
 					target_gas.unwrap_or_default(),
-					// TODO: Check this later
 					None,
 					None,
 					None,

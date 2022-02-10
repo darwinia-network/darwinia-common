@@ -21,7 +21,7 @@ describe("Test Contract Log", function () {
 			.send();
 		jsontest.options.address = instance.options.address;
 		conf.jsontestAddress = jsontest.options.address;
-	}).timeout(120000);
+	}).timeout(80000);
 
 	it("Get default bool value", async function () {
 		const data = await jsontest.methods.getBool().call();

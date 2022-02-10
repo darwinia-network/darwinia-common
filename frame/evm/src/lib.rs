@@ -447,11 +447,12 @@ impl<T: Config> OnChargeEVMTransaction<T> for EVMCurrencyAdapter {
 		T::RingAccountBasic::mutate_account_basic_balance(&who, new_account_balance);
 	}
 
-	fn pay_priority_fee(tip: U256) {
-		let account_id = T::IntoAccountId::into_account_id(<Pallet<T>>::find_author());
-		let account_balance = T::RingAccountBasic::account_balance(&account_id);
-		let new_account_balance = account_balance.saturating_add(tip);
-		T::RingAccountBasic::mutate_account_balance(&account_id, new_account_balance);
+	fn pay_priority_fee(_tip: U256) {
+		// TODO: FIX ME. See https://github.com/darwinia-network/darwinia-common/issues/1074
+		// let account_id = T::IntoAccountId::into_account_id(<Pallet<T>>::find_author());
+		// let account_balance = T::RingAccountBasic::account_balance(&account_id);
+		// let new_account_balance = account_balance.saturating_add(tip);
+		// T::RingAccountBasic::mutate_account_balance(&account_id, new_account_balance);
 	}
 }
 
