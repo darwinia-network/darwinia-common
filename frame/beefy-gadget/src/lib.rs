@@ -69,7 +69,6 @@ use core::marker::PhantomData;
 use codec::Encode;
 // --- paritytech ---
 use beefy_primitives::{ConsensusLog, BEEFY_ENGINE_ID};
-#[cfg(feature = "std")]
 use frame_support::log;
 use pallet_mmr::primitives::{LeafDataProvider, OnNewRoot};
 use sp_core::H256;
@@ -80,6 +79,8 @@ use sp_std::{borrow::ToOwned, prelude::*};
 use darwinia_beefy_primitives::network_ids::AsciiId;
 use dp_contract::beefy;
 use dvm_ethereum::InternalTransactHandler;
+
+pub const LOG_TARGET: &str = "runtime::beefy-gadget";
 
 #[derive(Encode)]
 pub struct BeefyPayload {
@@ -125,17 +126,21 @@ where
 		let encoded_next_authority_set = <pallet_beefy_mmr::Pallet<T>>::leaf_data()
 			.beefy_next_authority_set
 			.encode();
-		#[cfg(feature = "std")]
-		{
-			log::debug!(target: "beefy", "network_id: {:?}", network_id);
-			log::debug!(target: "beefy", "mmr_root: {:?}", mmr_root);
-			log::debug!(target: "beefy", "message_root: {:?}", message_root);
-			log::debug!(
-				target: "beefy",
-				"encoded_next_authority_set: {:?}",
-				encoded_next_authority_set
-			);
-		}
+
+		log::debug!(
+			target: LOG_TARGET,
+			"\
+			🥩 network_id: {:?}\
+			🥩 mmr_root: {:?}\
+			🥩 message_root: {:?}\
+			🥩 encoded_next_authority_set: {:?}\
+			",
+			network_id,
+			mmr_root,
+			message_root,
+			encoded_next_authority_set
+		);
+
 		let encoded_payload = BeefyPayload {
 			network_id,
 			mmr_root,
@@ -144,11 +149,16 @@ where
 		}
 		.encode();
 		let payload_hash = hashing::keccak_256(&encoded_payload).into();
-		#[cfg(feature = "std")]
-		{
-			log::debug!(target: "beefy", "encoded_payload: {:?}", encoded_payload);
-			log::debug!(target: "beefy", "payload_hash: {:?}", payload_hash);
-		}
+
+		log::debug!(
+			target: LOG_TARGET,
+			"\
+			🥩 encoded_payload: {:?}\
+			🥩 payload_hash: {:?}\
+			",
+			encoded_payload,
+			payload_hash
+		);
 
 		<frame_system::Pallet<T>>::deposit_log(DigestItem::Consensus(
 			BEEFY_ENGINE_ID,
