@@ -13,12 +13,12 @@ version    = "2.8.1"
 # crates.io
 array-bytes       = { version = "1.4" }
 codec             = { package = "parity-scale-codec", version = "2.2", default-features = false }
-evm               = { version = "0.30", default-features = false, features = ["with-codec"] }
 scale-info        = { version = "1.0", default-features = false, features = ["derive"] }
 serde             = { version = "1.0", optional = true }
 smallvec          = { version = "1.7" }
 static_assertions = { version = "1.1" }
 # darwinia-network
+bsc-primitives                          = { default-features = false, path = "../../../primitives/bsc" }
 common-runtime                          = { default-features = false, path = "../common" }
 darwinia-balances                       = { default-features = false, path = "../../../frame/balances" }
 darwinia-balances-rpc-runtime-api       = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
@@ -30,7 +30,6 @@ darwinia-claims                         = { default-features = false, path = "..
 darwinia-democracy                      = { default-features = false, path = "../../../frame/democracy" }
 darwinia-elections-phragmen             = { default-features = false, path = "../../../frame/elections-phragmen" }
 darwinia-evm                            = { default-features = false, path = "../../../frame/evm" }
-darwinia-evm-precompile-bridge-bsc      = { default-features = false, path = "../../../frame/evm/precompile/contracts/bridge/bsc" }
 darwinia-evm-precompile-bridge-ethereum = { default-features = false, path = "../../../frame/evm/precompile/contracts/bridge/ethereum" }
 darwinia-evm-precompile-bridge-s2s      = { default-features = false, path = "../../../frame/evm/precompile/contracts/bridge/s2s" }
 darwinia-evm-precompile-dispatch        = { default-features = false, path = "../../../frame/evm/precompile/contracts/dispatch" }
@@ -141,10 +140,10 @@ default = ["std"]
 std = [
 	# crates.io
 	"codec/std",
-	"evm/std",
 	"serde",
 	"scale-info/std",
 	# darwinia-network
+	"bsc-primitives/std",
 	"common-runtime/std",
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
@@ -155,7 +154,6 @@ std = [
 	"darwinia-elections-phragmen/std",
 	"darwinia-bridge-ethereum/std",
 	"darwinia-evm/std",
-	"darwinia-evm-precompile-bridge-bsc/std",
 	"darwinia-evm-precompile-bridge-ethereum/std",
 	"darwinia-evm-precompile-bridge-s2s/std",
 	"darwinia-evm-precompile-dispatch/std",
@@ -270,7 +268,6 @@ runtime-benchmarks = [
 	"darwinia-fee-market/runtime-benchmarks",
 	"from-ethereum-issuing/runtime-benchmarks",
 	"from-substrate-issuing/runtime-benchmarks",
-	"darwinia-bridge-bsc/runtime-benchmarks",
 ]
 
 try-runtime = [

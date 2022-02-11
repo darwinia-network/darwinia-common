@@ -33,7 +33,7 @@ if [[ "$CHAIN" == "pangoro" ]] ; then
   index=200
 fi
 
-for validator in alice bob charlie dave eve ferdie
+for validator in alice bob charlie dave
 do
   echo "Purge $validator's \`db\`, \`network\`, \`dvm\`"
   rm -rf $DATA_DIR/$validator/chains/$CHAIN/db

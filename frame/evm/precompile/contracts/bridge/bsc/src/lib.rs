@@ -23,16 +23,16 @@ use core::marker::PhantomData;
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{selector, DvmInputParser};
 use dp_contract::{
-	abi_util::{abi_encode_array_bytes32, abi_encode_bytes32},
+	abi_util::{abi_encode_array_bytes, abi_encode_bytes},
 	bsc_light_client::{BscMultiStorageVerifyParams, BscSingleStorageVerifyParams},
 };
 use ethereum_primitives::{
+	error::{Error::Proof as StorageProofError, ProofError},
 	storage::{EthereumStorage, EthereumStorageProof},
-	H256,
 };
 // --- paritytech ---
 use fp_evm::{Context, ExitError, ExitSucceed, Precompile, PrecompileOutput};
-use sp_std::vec::Vec;
+use sp_std::{vec, vec::Vec};
 
 #[selector]
 enum Action {
@@ -72,12 +72,12 @@ where
 					params.account_proof,
 					params.storage_proof,
 				);
-				let storage_value = EthereumStorage::<H256>::verify_storage_proof(
+				let storage_value = EthereumStorage::<Vec<u8>>::verify_storage_proof(
 					finalized_header.state_root,
 					&proof,
 				)
 				.map_err(|_| ExitError::Other("verify single storage proof failed".into()))?;
-				(abi_encode_bytes32(storage_value.0.into()), 10000u64)
+				(abi_encode_bytes(storage_value.0.as_slice()), 10000u64)
 			}
 			Action::VerifyMultiStorageProof => {
 				let params =
@@ -94,7 +94,7 @@ where
 				if key_size > MAX_MULTI_STORAGEKEY_SIZE {
 					return Err(ExitError::Other("storage keys size too large".into()));
 				}
-				let storage_values: Result<Vec<[u8; 32]>, _> = (0..key_size)
+				let storage_values: Result<Vec<Vec<u8>>, _> = (0..key_size)
 					.map(|idx| {
 						let storage_key = params.storage_keys[idx];
 						let storage_proof = params.storage_proofs[idx].clone();
@@ -104,16 +104,28 @@ where
 							params.account_proof.clone(),
 							storage_proof,
 						);
-						let storage_value = EthereumStorage::<H256>::verify_storage_proof(
+						let storage_value = EthereumStorage::<Vec<u8>>::verify_storage_proof(
 							finalized_header.state_root,
 							&proof,
-						)
-						.map_err(|_| ExitError::Other("verify storage proof failed".into()))?;
-						Ok(storage_value.0.into())
+						);
+						match storage_value {
+							Ok(value) => {
+								return Ok(value.0.clone());
+							}
+							Err(err) => {
+								// if the key not exist, we should return Zero Value due to the
+								// Zero Value will not be stored.
+								if err == StorageProofError(ProofError::TrieKeyNotExist) {
+									return Ok(vec![]);
+								} else {
+									return Err(ExitError::Other("verfiy storage failed".into()));
+								}
+							}
+						}
 					})
 					.collect();
 				(
-					abi_encode_array_bytes32(storage_values?),
+					abi_encode_array_bytes(storage_values?),
 					10000 * key_size as u64,
 				)
 			}

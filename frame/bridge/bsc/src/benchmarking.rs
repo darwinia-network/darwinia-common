@@ -22,7 +22,7 @@ use super::*;
 use crate::Pallet as BscBridge;
 
 use array_bytes::hex2bytes_unchecked;
-use bsc_primitives::BSCHeader;
+use bsc_primitives::BscHeader;
 use codec::Decode;
 use frame_benchmarking::benchmarks;
 use frame_support::{assert_ok, traits::Get};
@@ -39,16 +39,16 @@ const SUBMIT_HEADER_BYTES: &'static str = "0x3d88dc9a505b0ed2d1d69601b33da491e88
 
 benchmarks! {
 	relay_finalized_epoch_header {
-		let genesis_header = BSCHeader::decode(&mut hex2bytes_unchecked(GENSIS_HEADER_BYTES).as_slice()).unwrap();
-		let header = Vec::<BSCHeader>::decode(&mut hex2bytes_unchecked(VERIFIED_HEADERS_BYTES).as_slice()).unwrap();
+		let genesis_header = BscHeader::decode(&mut hex2bytes_unchecked(GENSIS_HEADER_BYTES).as_slice()).unwrap();
+		let header = Vec::<BscHeader>::decode(&mut hex2bytes_unchecked(VERIFIED_HEADERS_BYTES).as_slice()).unwrap();
 		let initial_authority_set =
 				<BscBridge<T>>::extract_authorities(&genesis_header).unwrap();
 
 		Authorities::<T>::put(&initial_authority_set);
-		FinalizedAuthority::<T>::put(&initial_authority_set);
+		FinalizedAuthorities::<T>::put(&initial_authority_set);
 		FinalizedCheckpoint::<T>::put(&genesis_header);
 		AuthoritiesOfRound::<T>::insert(
-			&genesis_header.number / T::BSCConfiguration::get().epoch_length,
+			&genesis_header.number / T::BscConfiguration::get().epoch_length,
 			(0u32..initial_authority_set.len() as u32).collect::<Vec<u32>>(),
 			);
 		let caller: T::AccountId = T::AccountId::decode(&mut &[0; 32][..]).unwrap_or_default();
@@ -56,17 +56,17 @@ benchmarks! {
 	}:_(RawOrigin::Signed(caller), header)
 
 	submit_header {
-		let genesis_header = BSCHeader::decode(&mut hex2bytes_unchecked(GENSIS_HEADER_BYTES).as_slice()).unwrap();
-		let update_headers = Vec::<BSCHeader>::decode(&mut hex2bytes_unchecked(VERIFIED_HEADERS_BYTES).as_slice()).unwrap();
-		let submited_header = BSCHeader::decode(&mut hex2bytes_unchecked(SUBMIT_HEADER_BYTES).as_slice()).unwrap();
+		let genesis_header = BscHeader::decode(&mut hex2bytes_unchecked(GENSIS_HEADER_BYTES).as_slice()).unwrap();
+		let update_headers = Vec::<BscHeader>::decode(&mut hex2bytes_unchecked(VERIFIED_HEADERS_BYTES).as_slice()).unwrap();
+		let submited_header = BscHeader::decode(&mut hex2bytes_unchecked(SUBMIT_HEADER_BYTES).as_slice()).unwrap();
 		let initial_authority_set =
 				<BscBridge<T>>::extract_authorities(&genesis_header).unwrap();
 
 		Authorities::<T>::put(&initial_authority_set);
-		FinalizedAuthority::<T>::put(&initial_authority_set);
+		FinalizedAuthorities::<T>::put(&initial_authority_set);
 		FinalizedCheckpoint::<T>::put(&genesis_header);
 		AuthoritiesOfRound::<T>::insert(
-			&genesis_header.number / T::BSCConfiguration::get().epoch_length,
+			&genesis_header.number / T::BscConfiguration::get().epoch_length,
 			(0u32..initial_authority_set.len() as u32).collect::<Vec<u32>>(),
 			);
 		let caller: T::AccountId = T::AccountId::decode(&mut &[0; 32][..]).unwrap_or_default();

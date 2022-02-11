@@ -142,7 +142,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 0,
-	spec_version: 2_8_01_0,
+	spec_version: 2_8_02_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -261,7 +261,7 @@ frame_support::construct_runtime! {
 
 		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 
-		BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
+		// BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
 	}
 }
 
@@ -895,7 +895,6 @@ sp_api::impl_runtime_apis! {
 			list_benchmark!(list, extra, from_substrate_issuing, Substrate2SubstrateIssuing);
 			list_benchmark!(list, extra, from_ethereum_issuing, EthereumIssuing);
 			list_benchmark!(list, extra, darwinia_fee_market, FeeMarket);
-			list_benchmark!(list, extra, darwinia_bridge_bsc, BSC);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -919,7 +918,6 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
 			add_benchmark!(params, batches, from_ethereum_issuing, EthereumIssuing);
 			add_benchmark!(params, batches, darwinia_fee_market, FeeMarket);
-			add_benchmark!(params, batches, darwinia_bridge_bsc, BSC);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 
