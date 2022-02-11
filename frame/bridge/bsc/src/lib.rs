@@ -180,7 +180,7 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
-	#[pallet::getter(fn finalized_authority)]
+	#[pallet::getter(fn finalized_authorities)]
 	pub type FinalizedAuthorities<T> = StorageValue<_, Vec<Address>, ValueQuery>;
 
 	#[pallet::storage]
