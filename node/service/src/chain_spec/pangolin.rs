@@ -128,6 +128,7 @@ pub fn genesis_config() -> ChainSpec {
 				authorities: vec![],
 				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG)
 			},
+			beefy_gadget: Default::default(),
 			balances: BalancesConfig {
 				balances: vec![
 					(root.clone(), BUNCH_OF_COINS),
@@ -388,6 +389,7 @@ pub fn development_config() -> ChainSpec {
 				authorities: vec![],
 				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG)
 			},
+			beefy_gadget: Default::default(),
 			balances: BalancesConfig {
 				balances: endowed_accounts
 					.clone()
@@ -404,7 +406,7 @@ pub fn development_config() -> ChainSpec {
 			},
 			staking: StakingConfig {
 				minimum_validator_count: 1,
-				validator_count: 2,
+				validator_count: 1,
 				stakers: initial_authorities
 					.iter()
 					.cloned()
@@ -608,6 +610,7 @@ pub fn local_testnet_config() -> ChainSpec {
 				authorities: vec![],
 				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG)
 			},
+			beefy_gadget: Default::default(),
 			balances: BalancesConfig {
 				balances: endowed_accounts
 					.clone()

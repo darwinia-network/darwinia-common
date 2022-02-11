@@ -37,6 +37,9 @@ pub use grandpa::*;
 pub mod beefy;
 pub use beefy::*;
 
+pub mod beefy_gadget;
+pub use beefy_gadget::*;
+
 pub mod mmr;
 pub use mmr::*;
 

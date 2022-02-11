@@ -190,6 +190,7 @@ frame_support::construct_runtime! {
 		Session: pallet_session::{Pallet, Call, Storage, Config<T>, Event} = 12,
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 13,
 		Beefy: pallet_beefy::{Pallet, Storage, Config<T>} = 55,
+		BeefyGadget: darwinia_beefy_gadget::{Pallet, Call, Storage, Config} = 58,
 		Mmr: pallet_mmr::{Pallet, Storage} = 56,
 		MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 57,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
@@ -964,7 +965,7 @@ fn transform_session_keys(v: AccountId, old: OldSessionKeys) -> SessionKeys {
 
 			id_raw.copy_from_slice(v.as_ref());
 			id_raw[0..4].copy_from_slice(b"beef");
-			
+
 			id
 		},
 		im_online: old.im_online,

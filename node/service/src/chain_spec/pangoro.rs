@@ -117,6 +117,7 @@ pub fn genesis_config() -> ChainSpec {
 				authorities: vec![],
 				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG),
 			},
+			beefy_gadget: Default::default(),
 			balances: BalancesConfig {
 				balances: vec![
 					(root.clone(), BUNCH_OF_COINS),
@@ -305,6 +306,7 @@ pub fn development_config() -> ChainSpec {
 				authorities: vec![],
 				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG),
 			},
+			beefy_gadget: Default::default(),
 			balances: BalancesConfig {
 				balances: endowed_accounts
 					.clone()

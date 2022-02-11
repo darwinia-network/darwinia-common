@@ -16,6 +16,7 @@ members = [
 	"frame/balances",
 	"frame/balances/rpc",
 	"frame/balances/rpc/runtime-api",
+	"frame/beefy-gadget",
 	"frame/bridge/bsc",
 	"frame/bridge/ethereum",
 	"frame/bridge/relayer-game",
