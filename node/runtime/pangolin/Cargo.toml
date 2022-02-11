@@ -24,7 +24,6 @@ darwinia-balances                       = { default-features = false, path = "..
 darwinia-balances-rpc-runtime-api       = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
 darwinia-beefy-gadget                   = { default-features = false, path = "../../../frame/beefy-gadget" }
 darwinia-beefy-primitives               = { path = "../../../primitives/beefy" }
-darwinia-bridge-bsc                     = { default-features = false, path = "../../../frame/bridge/bsc" }
 darwinia-bridge-ethereum                = { default-features = false, path = "../../../frame/bridge/ethereum" }
 darwinia-claims                         = { default-features = false, path = "../../../frame/claims" }
 darwinia-democracy                      = { default-features = false, path = "../../../frame/democracy" }
@@ -148,7 +147,6 @@ std = [
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
 	"darwinia-beefy-gadget/std",
-	"darwinia-bridge-bsc/std",
 	"darwinia-claims/std",
 	"darwinia-democracy/std",
 	"darwinia-elections-phragmen/std",

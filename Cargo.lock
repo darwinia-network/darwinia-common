@@ -6278,7 +6278,6 @@ dependencies = [
  "darwinia-balances-rpc-runtime-api",
  "darwinia-beefy-gadget",
  "darwinia-beefy-primitives",
- "darwinia-bridge-bsc",
  "darwinia-bridge-ethereum",
  "darwinia-claims",
  "darwinia-democracy",
