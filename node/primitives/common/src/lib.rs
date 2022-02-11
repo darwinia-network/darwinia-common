@@ -123,9 +123,9 @@ pub const DAYS: BlockNumber = 24 * HOURS;
 pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
 
 /// Session length of Pangolin.
-pub const PANGOLIN_BLOCKS_PER_SESSION: BlockNumber = 1 * MINUTES;
+pub const PANGOLIN_BLOCKS_PER_SESSION: BlockNumber = 30 * MINUTES;
 /// Era length of Pangolin.
-pub const PANGOLIN_SESSIONS_PER_ERA: BlockNumber = 1;
+pub const PANGOLIN_SESSIONS_PER_ERA: BlockNumber = 3;
 /// Session length of Pangoro.
 pub const PANGORO_BLOCKS_PER_SESSION: BlockNumber = 2 * HOURS;
 /// Era length of Pangoro.
