@@ -1,6 +1,6 @@
 // --- paritytech ---
-use pallet_beefy_mmr::{BeefyEcdsaToEthereum, Config};
 use beefy_primitives::mmr::MmrLeafVersion;
+use pallet_beefy_mmr::{BeefyEcdsaToEthereum, Config};
 // --- darwinia-network ---
 use crate::*;
 

@@ -19,10 +19,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod abi_util;
+pub mod beefy;
 pub mod bsc_light_client;
 pub mod ethereum_backing;
 pub mod mapping_token_factory;
-pub mod beefy;
 
 #[cfg(test)]
 mod tests;
