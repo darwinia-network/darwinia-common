@@ -2115,6 +2115,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "dp-contract"
+version = "2.8.3"
+dependencies = [
+ "array-bytes",
+ "bp-messages",
+ "dp-asset",
+ "ethabi",
+ "ethereum-primitives",
+ "ethereum-types",
+ "sp-std",
+]
+
+[[package]]
 name = "dp-evm-trace-apis"
 version = "2.8.3"
 dependencies = [
@@ -2434,25 +2447,6 @@ dependencies = [
 ]
 
 [[package]]
-<<<<<<< HEAD
-=======
-name = "dvm-rpc-runtime-api"
-version = "2.8.3"
-dependencies = [
- "ethereum 0.10.0",
- "ethereum-types",
- "fp-evm",
- "parity-scale-codec",
- "scale-info",
- "sp-api",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
->>>>>>> main
 name = "dyn-clonable"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
