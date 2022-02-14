@@ -60,6 +60,8 @@ where
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
 	pub grandpa: GrandpaDeps<B>,
+	/// BEEFY specific dependencies.
+	pub beefy: BeefyDeps,
 	/// The Node authority flag
 	pub is_authority: bool,
 	/// Network service
@@ -108,7 +110,15 @@ pub struct GrandpaDeps<B> {
 	/// Executor to drive the subscription manager in the Grandpa RPC handler.
 	pub subscription_executor: sc_rpc::SubscriptionTaskExecutor,
 	/// Finality proof provider.
-	pub finality_provider: Arc<sc_finality_grandpa::FinalityProofProvider<B, Block>>,
+	pub finality_proof_provider: Arc<sc_finality_grandpa::FinalityProofProvider<B, Block>>,
+}
+
+/// Extra dependencies for BEEFY
+pub struct BeefyDeps {
+	/// Receives notifications about signed commitment events from BEEFY.
+	pub beefy_commitment_stream: beefy_gadget::notification::BeefySignedCommitmentStream<Block>,
+	/// Executor to drive the subscription manager in the BEEFY RPC handler.
+	pub subscription_executor: sc_rpc::SubscriptionTaskExecutor,
 }
 
 #[derive(Clone)]
@@ -184,6 +194,7 @@ where
 	// --- crates.io ---
 	use jsonrpc_pubsub::manager::SubscriptionManager;
 	// --- paritytech ---
+	use beefy_gadget_rpc::{BeefyApi, BeefyRpcHandler};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use sc_consensus_babe_rpc::{BabeApi, BabeRpcHandler};
 	use sc_finality_grandpa_rpc::{GrandpaApi, GrandpaRpcHandler};
@@ -207,8 +218,24 @@ where
 		select_chain,
 		chain_spec,
 		deny_unsafe,
-		babe,
-		grandpa,
+		babe: BabeDeps {
+			keystore,
+			babe_config,
+			shared_epoch_changes,
+		},
+		grandpa:
+			GrandpaDeps {
+				shared_voter_state,
+				shared_authority_set,
+				justification_stream,
+				subscription_executor: grandpa_subscription_executor,
+				finality_proof_provider,
+			},
+		beefy:
+			BeefyDeps {
+				beefy_commitment_stream,
+				subscription_executor: beefy_subscription_executor,
+			},
 		is_authority,
 		network,
 		filter_pool,
@@ -226,11 +253,6 @@ where
 	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
 		client.clone(),
 	)));
-	let BabeDeps {
-		keystore,
-		babe_config,
-		shared_epoch_changes,
-	} = babe;
 	io.extend_with(BabeApi::to_delegate(BabeRpcHandler::new(
 		client.clone(),
 		shared_epoch_changes.clone(),
@@ -239,19 +261,16 @@ where
 		select_chain,
 		deny_unsafe,
 	)));
-	let GrandpaDeps {
-		shared_voter_state,
-		shared_authority_set,
-		justification_stream,
-		subscription_executor,
-		finality_provider,
-	} = grandpa;
 	io.extend_with(GrandpaApi::to_delegate(GrandpaRpcHandler::new(
 		shared_authority_set.clone(),
 		shared_voter_state,
 		justification_stream,
-		subscription_executor,
-		finality_provider,
+		grandpa_subscription_executor,
+		finality_proof_provider,
+	)));
+	io.extend_with(BeefyApi::to_delegate(BeefyRpcHandler::new(
+		beefy_commitment_stream,
+		beefy_subscription_executor,
 	)));
 	io.extend_with(SyncStateRpcApi::to_delegate(SyncStateRpcHandler::new(
 		chain_spec,

@@ -16,13 +16,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
 
-pub mod abi_util;
-pub mod beefy;
-pub mod bsc_light_client;
-pub mod ethereum_backing;
-pub mod mapping_token_factory;
-
-#[cfg(test)]
-mod tests;
+pub mod network_ids;

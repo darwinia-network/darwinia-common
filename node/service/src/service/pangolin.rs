@@ -25,7 +25,7 @@ use sc_executor::NativeExecutionDispatch;
 use sc_service::{Configuration, Error as ServiceError, RpcHandlers, TaskManager};
 // --- darwinia-network ---
 use crate::{
-	client::PangolinClient,
+	client::DrmlClient,
 	service::{self, FullBackend},
 };
 use drml_common_primitives::OpaqueBlock as Block;
@@ -57,7 +57,7 @@ pub fn new_full(
 ) -> Result<
 	(
 		TaskManager,
-		Arc<impl PangolinClient<Block, FullBackend, RuntimeApi>>,
+		Arc<impl DrmlClient<Block, FullBackend, RuntimeApi>>,
 		RpcHandlers,
 	),
 	ServiceError,

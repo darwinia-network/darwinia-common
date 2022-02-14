@@ -78,8 +78,7 @@ use frame_system::{
 };
 use pallet_evm::FeeCalculator;
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
-use pallet_transaction_payment::{ChargeTransactionPayment, FeeDetails};
-use pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo as TransactionPaymentRuntimeDispatchInfo;
+use pallet_transaction_payment::ChargeTransactionPayment;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::{AllowedSlots, BabeEpochConfiguration};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
@@ -99,11 +98,7 @@ use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use bridges::substrate::pangoro_messages::{ToPangoroMessagePayload, WithPangoroMessageBridge};
 use common_runtime::*;
-use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
-use darwinia_evm::{AccountBasic, Runner};
-use darwinia_fee_market_rpc_runtime_api::{Fee, InProcessOrders};
-use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use drml_common_primitives::*;
 use dvm_ethereum::EthereumStorageSchema;
@@ -197,6 +192,10 @@ frame_support::construct_runtime! {
 		Historical: pallet_session_historical::{Pallet} = 11,
 		Session: pallet_session::{Pallet, Call, Storage, Config<T>, Event} = 12,
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 13,
+		Beefy: pallet_beefy::{Pallet, Storage, Config<T>} = 55,
+		BeefyGadget: darwinia_beefy_gadget::{Pallet, Call, Storage, Config} = 58,
+		Mmr: pallet_mmr::{Pallet, Storage} = 56,
+		MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 57,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
 		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Config} = 15,
 		HeaderMMR: darwinia_header_mmr::{Pallet, Storage} = 16,
@@ -254,7 +253,7 @@ frame_support::construct_runtime! {
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, Origin} = 41,
-		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 55,
+		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 59,
 		// DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Inherent} = 47,
 
 		BridgePangoroDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
@@ -415,53 +414,15 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
-		fn validate_transaction(
-			source: TransactionSource,
-			tx: <Block as BlockT>::Extrinsic,
-			block_hash: <Block as BlockT>::Hash,
-		) -> TransactionValidity {
-			Executive::validate_transaction(source, tx, block_hash)
-		}
-	}
-
-	impl sp_offchain::OffchainWorkerApi<Block> for Runtime {
-		fn offchain_worker(header: &<Block as BlockT>::Header) {
-			Executive::offchain_worker(header)
-		}
-	}
-
-	impl fg_primitives::GrandpaApi<Block> for Runtime {
-		fn grandpa_authorities() -> GrandpaAuthorityList {
-			Grandpa::grandpa_authorities()
+	impl sp_session::SessionKeys<Block> for Runtime {
+		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
+			SessionKeys::generate(seed)
 		}
 
-		fn current_set_id() -> fg_primitives::SetId {
-			Grandpa::current_set_id()
-		}
-
-		fn submit_report_equivocation_unsigned_extrinsic(
-			equivocation_proof: fg_primitives::EquivocationProof<
-				<Block as BlockT>::Hash,
-				NumberFor<Block>,
-			>,
-			key_owner_proof: fg_primitives::OpaqueKeyOwnershipProof,
-		) -> Option<()> {
-			let key_owner_proof = key_owner_proof.decode()?;
-
-			Grandpa::submit_unsigned_equivocation_report(
-				equivocation_proof,
-				key_owner_proof,
-			)
-		}
-
-		fn generate_key_ownership_proof(
-			_set_id: fg_primitives::SetId,
-			authority_id: GrandpaId,
-		) -> Option<fg_primitives::OpaqueKeyOwnershipProof> {
-			Historical::prove((fg_primitives::KEY_TYPE, authority_id))
-				.map(|p| p.encode())
-				.map(fg_primitives::OpaqueKeyOwnershipProof::new)
+		fn decode_session_keys(
+			encoded: Vec<u8>,
+		) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
+			SessionKeys::decode_into_raw_public_keys(&encoded)
 		}
 	}
 
@@ -516,21 +477,49 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl sp_authority_discovery::AuthorityDiscoveryApi<Block> for Runtime {
-		fn authorities() -> Vec<AuthorityDiscoveryId> {
-			AuthorityDiscovery::authorities()
+	impl fg_primitives::GrandpaApi<Block> for Runtime {
+		fn grandpa_authorities() -> GrandpaAuthorityList {
+			Grandpa::grandpa_authorities()
+		}
+
+		fn current_set_id() -> fg_primitives::SetId {
+			Grandpa::current_set_id()
+		}
+
+		fn submit_report_equivocation_unsigned_extrinsic(
+			equivocation_proof: fg_primitives::EquivocationProof<
+				<Block as BlockT>::Hash,
+				NumberFor<Block>,
+			>,
+			key_owner_proof: fg_primitives::OpaqueKeyOwnershipProof,
+		) -> Option<()> {
+			let key_owner_proof = key_owner_proof.decode()?;
+
+			Grandpa::submit_unsigned_equivocation_report(
+				equivocation_proof,
+				key_owner_proof,
+			)
+		}
+
+		fn generate_key_ownership_proof(
+			_set_id: fg_primitives::SetId,
+			authority_id: GrandpaId,
+		) -> Option<fg_primitives::OpaqueKeyOwnershipProof> {
+			Historical::prove((fg_primitives::KEY_TYPE, authority_id))
+				.map(|p| p.encode())
+				.map(fg_primitives::OpaqueKeyOwnershipProof::new)
 		}
 	}
 
-	impl sp_session::SessionKeys<Block> for Runtime {
-		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
-			SessionKeys::generate(seed)
+	impl beefy_primitives::BeefyApi<Block> for Runtime {
+		fn validator_set() -> beefy_primitives::ValidatorSet<BeefyId> {
+			Beefy::validator_set()
 		}
+	}
 
-		fn decode_session_keys(
-			encoded: Vec<u8>,
-		) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
-			SessionKeys::decode_into_raw_public_keys(&encoded)
+	impl sp_authority_discovery::AuthorityDiscoveryApi<Block> for Runtime {
+		fn authorities() -> Vec<AuthorityDiscoveryId> {
+			AuthorityDiscovery::authorities()
 		}
 	}
 
@@ -540,20 +529,42 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
+		fn validate_transaction(
+			source: TransactionSource,
+			tx: <Block as BlockT>::Extrinsic,
+			block_hash: <Block as BlockT>::Hash,
+		) -> TransactionValidity {
+			Executive::validate_transaction(source, tx, block_hash)
+		}
+	}
+
+	impl sp_offchain::OffchainWorkerApi<Block> for Runtime {
+		fn offchain_worker(header: &<Block as BlockT>::Header) {
+			Executive::offchain_worker(header)
+		}
+	}
+
 	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<
 		Block,
 		Balance,
 	> for Runtime {
-		fn query_info(uxt: <Block as BlockT>::Extrinsic, len: u32) -> TransactionPaymentRuntimeDispatchInfo<Balance> {
+		fn query_info(uxt: <Block as BlockT>::Extrinsic, len: u32)
+			-> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance>
+		{
 			TransactionPayment::query_info(uxt, len)
 		}
-		fn query_fee_details(uxt: <Block as BlockT>::Extrinsic, len: u32) -> FeeDetails<Balance> {
+		fn query_fee_details(uxt: <Block as BlockT>::Extrinsic, len: u32)
+			-> pallet_transaction_payment_rpc_runtime_api::FeeDetails<Balance>
+		{
 			TransactionPayment::query_fee_details(uxt, len)
 		}
 	}
 
 	impl darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance> for Runtime {
-		fn usable_balance(instance: u8, account: AccountId) -> BalancesRuntimeDispatchInfo<Balance> {
+		fn usable_balance(instance: u8, account: AccountId)
+			-> darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo<Balance>
+		{
 			match instance {
 				0 => Ring::usable_balance_rpc(account),
 				1 => Kton::usable_balance_rpc(account),
@@ -563,22 +574,22 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power> for Runtime {
-		fn power_of(account: AccountId) -> StakingRuntimeDispatchInfo<Power> {
+		fn power_of(account: AccountId) -> darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo<Power> {
 			Staking::power_of_rpc(account)
 		}
 	}
 
 	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
-		fn market_fee() -> Option<Fee<Balance>> {
+		fn market_fee() -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
 			if let Some(fee) = FeeMarket::market_fee() {
-				return Some(Fee {
+				return Some(darwinia_fee_market_rpc_runtime_api::Fee {
 					amount: fee,
 				});
 			}
 			None
 		}
-		fn in_process_orders() -> InProcessOrders {
-			return InProcessOrders {
+		fn in_process_orders() -> darwinia_fee_market_rpc_runtime_api::InProcessOrders {
+			return darwinia_fee_market_rpc_runtime_api::InProcessOrders {
 				orders: FeeMarket::in_process_orders(),
 			}
 		}
@@ -594,6 +605,9 @@ sp_api::impl_runtime_apis! {
 		}
 
 		fn account_basic(address: H160) -> darwinia_evm::Account {
+			// --- darwinia-network ---
+			use darwinia_evm::AccountBasic;
+
 			<Runtime as darwinia_evm::Config>::RingAccountBasic::account_basic(&address)
 		}
 
@@ -622,6 +636,9 @@ sp_api::impl_runtime_apis! {
 			nonce: Option<U256>,
 			estimate: bool,
 		) -> Result<darwinia_evm::CallInfo, sp_runtime::DispatchError> {
+			// --- darwinia-network ---
+			use darwinia_evm::Runner;
+
 			let config = if estimate {
 				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
 				config.estimate = true;
@@ -654,6 +671,9 @@ sp_api::impl_runtime_apis! {
 			nonce: Option<U256>,
 			estimate: bool,
 		) -> Result<darwinia_evm::CreateInfo, sp_runtime::DispatchError> {
+			// --- darwinia-network ---
+			use darwinia_evm::Runner;
+
 			let config = if estimate {
 				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
 				config.estimate = true;
@@ -930,7 +950,37 @@ impl fp_rpc::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
 	}
 }
 
+sp_runtime::impl_opaque_keys! {
+	pub struct OldSessionKeys {
+		pub babe: Babe,
+		pub grandpa: Grandpa,
+		pub im_online: ImOnline,
+		pub authority_discovery: AuthorityDiscovery,
+	}
+}
+
+fn transform_session_keys(v: AccountId, old: OldSessionKeys) -> SessionKeys {
+	SessionKeys {
+		babe: old.babe,
+		grandpa: old.grandpa,
+		beefy: {
+			// We need to produce a dummy value that's unique for the validator.
+			let mut id = BeefyId::default();
+			let id_raw: &mut [u8] = id.as_mut();
+
+			id_raw.copy_from_slice(v.as_ref());
+			id_raw[0..4].copy_from_slice(b"beef");
+
+			id
+		},
+		im_online: old.im_online,
+		authority_discovery: old.authority_discovery,
+	}
+}
+
 fn migrate() -> Weight {
+	Session::upgrade_keys::<OldSessionKeys, _>(transform_session_keys);
+
 	frame_support::storage::unhashed::put::<EthereumStorageSchema>(
 		&PALLET_ETHEREUM_SCHEMA,
 		&EthereumStorageSchema::V2,
