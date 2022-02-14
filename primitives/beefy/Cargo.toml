@@ -1,0 +1,17 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Primitives of Darwinia BEEFY."
+edition     = "2021"
+homepage    = "https://darwinia.network"
+license     = "GPL-3.0"
+name        = "darwinia-beefy-primitives"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common"
+version     = "2.8.2"
+
+[dependencies]
+
+[dev-dependencies]
+array-bytes = { version = "1.4" }
+
+[features]

@@ -1,0 +1,56 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Darwinia BEEFY Customization."
+edition     = "2021"
+homepage    = "https://darwinia.network"
+license     = "GPL-3.0"
+name        = "darwinia-beefy-gadget"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common"
+version     = "2.8.2"
+
+[dependencies]
+# crates.io
+codec      = { package = "parity-scale-codec", version = "2.2", default-features = false }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+# darwinia-network
+darwinia-beefy-primitives = { path = "../../primitives/beefy" }
+dp-contract               = { default-features = false, path = "../../primitives/contract" }
+dvm-ethereum              = { default-features = false, path = "../dvm" }
+# paritytech
+beefy-primitives = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+pallet-beefy     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+pallet-beefy-mmr = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+pallet-mmr       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+
+[dev-dependencies]
+array-bytes = { version = "1.4" }
+
+[features]
+default = ["std"]
+
+std = [
+	# crates.io
+	"codec/std",
+	"scale-info/std",
+	# darwinia-network
+	"dp-contract/std",
+	"dvm-ethereum/std",
+	# paritytech
+	"beefy-primitives/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-beefy/std",
+	"pallet-beefy-mmr/std",
+	"pallet-mmr/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"sp-std/std",
+]

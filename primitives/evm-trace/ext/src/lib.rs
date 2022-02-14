@@ -24,12 +24,16 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// paritytech
+// --- crates.io ---
+#[cfg(feature = "std")]
 use codec::Decode;
+// --- paritytech ---
 use sp_runtime_interface::runtime_interface;
 use sp_std::vec::Vec;
-// darwinia-network
-use dp_evm_trace_events::{Event, EvmEvent, GasometerEvent, RuntimeEvent, StepEventFilter};
+//  --- darwinia-network ---
+use dp_evm_trace_events::StepEventFilter;
+#[cfg(feature = "std")]
+use dp_evm_trace_events::{Event, EvmEvent, GasometerEvent, RuntimeEvent};
 
 #[runtime_interface]
 pub trait DvmExt {

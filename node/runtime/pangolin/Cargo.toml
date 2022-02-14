@@ -22,6 +22,8 @@ bsc-primitives                          = { default-features = false, path = "..
 common-runtime                          = { default-features = false, path = "../common" }
 darwinia-balances                       = { default-features = false, path = "../../../frame/balances" }
 darwinia-balances-rpc-runtime-api       = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
+darwinia-beefy-gadget                   = { default-features = false, path = "../../../frame/beefy-gadget" }
+darwinia-beefy-primitives               = { path = "../../../primitives/beefy" }
 darwinia-bridge-ethereum                = { default-features = false, path = "../../../frame/bridge/ethereum" }
 darwinia-claims                         = { default-features = false, path = "../../../frame/claims" }
 darwinia-democracy                      = { default-features = false, path = "../../../frame/democracy" }
@@ -63,6 +65,7 @@ dp-evm-tracer       = { optional = true, default-features = false, path = "../..
 rlp                 = { version = "0.5", optional = true, default-features = false }
 sha3                = { version = "0.8", optional = true, default-features = false }
 # paritytech
+beefy-primitives                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.1" }
 bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.1" }
 bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.1" }
@@ -78,6 +81,8 @@ frame-try-runtime                          = { default-features = false, optiona
 pallet-authority-discovery                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 pallet-authorship                          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 pallet-babe                                = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+pallet-beefy                               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+pallet-beefy-mmr                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 pallet-bounties                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 pallet-bridge-dispatch                     = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.1" }
 pallet-bridge-grandpa                      = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.1" }
@@ -88,6 +93,8 @@ pallet-grandpa                             = { default-features = false, git = "
 pallet-identity                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 pallet-im-online                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 pallet-membership                          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+pallet-mmr                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+pallet-mmr-primitives                      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 pallet-multisig                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 pallet-offences                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 pallet-proxy                               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -103,7 +110,6 @@ pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "
 pallet-treasury                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 pallet-utility                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-api                                     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
-sp-application-crypto                      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-authority-discovery                     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-block-builder                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-consensus-babe                          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -140,6 +146,7 @@ std = [
 	"common-runtime/std",
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
+	"darwinia-beefy-gadget/std",
 	"darwinia-claims/std",
 	"darwinia-democracy/std",
 	"darwinia-elections-phragmen/std",
@@ -174,6 +181,7 @@ std = [
 	"to-ethereum-backing/std",
 	"to-tron-backing/std",
 	# paritytech
+	"beefy-primitives/std",
 	"bp-message-dispatch/std",
 	"bp-messages/std",
 	"bp-runtime/std",
@@ -189,6 +197,8 @@ std = [
 	"pallet-authority-discovery/std",
 	"pallet-authorship/std",
 	"pallet-babe/std",
+	"pallet-beefy/std",
+	"pallet-beefy-mmr/std",
 	"pallet-bounties/std",
 	"pallet-bridge-dispatch/std",
 	"pallet-bridge-grandpa/std",
@@ -199,6 +209,8 @@ std = [
 	"pallet-identity/std",
 	"pallet-im-online/std",
 	"pallet-membership/std",
+	"pallet-mmr/std",
+	"pallet-mmr-primitives/std",
 	"pallet-multisig/std",
 	"pallet-offences/std",
 	"pallet-proxy/std",
@@ -214,7 +226,6 @@ std = [
 	"pallet-treasury/std",
 	"pallet-utility/std",
 	"sp-api/std",
-	"sp-application-crypto/std",
 	"sp-authority-discovery/std",
 	"sp-block-builder/std",
 	"sp-consensus-babe/std",

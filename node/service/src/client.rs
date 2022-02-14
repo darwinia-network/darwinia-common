@@ -16,11 +16,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-//! DRML Client meta trait
+//! DRML Client meta trait.
 
-/// Pangolin client abstraction, this super trait only pulls in functionality required for
-/// Pangolin internal crates like Pangolin-collator.
-pub trait PangolinClient<Block, Backend, Runtime>:
+/// DRML client abstraction, this super trait only pulls in functionality required for
+/// DRML internal crates like DRML-collator.
+pub trait DrmlClient<Block, Backend, Runtime>:
 	Sized
 	+ Send
 	+ Sync
@@ -34,38 +34,7 @@ where
 	Runtime: sp_api::ConstructRuntimeApi<Block, Self>,
 {
 }
-impl<Block, Backend, Runtime, Client> PangolinClient<Block, Backend, Runtime> for Client
-where
-	Backend: sc_client_api::Backend<Block>,
-	Block: sp_runtime::traits::Block,
-	Client: Sized
-		+ Send
-		+ Sync
-		+ sp_api::CallApiAt<Block>
-		+ sp_api::ProvideRuntimeApi<Block, Api = Runtime::RuntimeApi>
-		+ sp_blockchain::HeaderBackend<Block>
-		+ sc_client_api::BlockchainEvents<Block>,
-	Runtime: sp_api::ConstructRuntimeApi<Block, Self>,
-{
-}
-
-/// Pangoro client abstraction, this super trait only pulls in functionality required for
-/// Pangoro internal crates like Pangoro-collator.
-pub trait PangoroClient<Block, Backend, Runtime>:
-	Sized
-	+ Send
-	+ Sync
-	+ sc_client_api::BlockchainEvents<Block>
-	+ sp_api::CallApiAt<Block>
-	+ sp_api::ProvideRuntimeApi<Block, Api = Runtime::RuntimeApi>
-	+ sp_blockchain::HeaderBackend<Block>
-where
-	Backend: sc_client_api::Backend<Block>,
-	Block: sp_runtime::traits::Block,
-	Runtime: sp_api::ConstructRuntimeApi<Block, Self>,
-{
-}
-impl<Block, Backend, Runtime, Client> PangoroClient<Block, Backend, Runtime> for Client
+impl<Block, Backend, Runtime, Client> DrmlClient<Block, Backend, Runtime> for Client
 where
 	Backend: sc_client_api::Backend<Block>,
 	Block: sp_runtime::traits::Block,

@@ -16,13 +16,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
+// --- crates.io ---
+use ethabi::{Bytes, Function, Param, ParamType, Result, StateMutability};
+use sp_std::vec;
 
-pub mod abi_util;
-pub mod beefy;
-pub mod bsc_light_client;
-pub mod ethereum_backing;
-pub mod mapping_token_factory;
-
-#[cfg(test)]
-mod tests;
+pub fn commitment() -> Result<Bytes> {
+	#[allow(deprecated)]
+	Function {
+		name: "commitment".into(),
+		inputs: vec![],
+		outputs: vec![Param {
+			name: "hash".into(),
+			kind: ParamType::FixedBytes(32),
+			internal_type: Some("bytes4".into()),
+		}],
+		constant: true,
+		state_mutability: StateMutability::View,
+	}
+	.encode_input(&[])
+}
