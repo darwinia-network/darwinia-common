@@ -595,9 +595,7 @@ impl<T: Config> Pallet<T> {
 		let transaction_hash = advanced_transaction.hash();
 		let transaction_index = Pending::<T>::get().len() as u32;
 
-		let (to, _, info) = Self::execute(source, &advanced_transaction, None)
-			.expect("transaction is already validated; error indicates that the block is invalid");
-
+		let (to, _, info) = Self::execute(source, &advanced_transaction, None)?;
 		let (reason, status, used_gas, dest) = match info {
 			CallOrCreateInfo::Call(info) => (
 				info.exit_reason,
@@ -874,7 +872,7 @@ pub trait InternalTransactHandler {
 }
 
 impl<T: Config> InternalTransactHandler for Pallet<T> {
-	/// Execute transaction from pallet(internal transaction)
+	/// Execute transaction from other pallets(internal transaction)
 	/// NOTE: The difference between the rpc transaction and the internal transaction is that
 	/// The internal transactions will catch and throw evm error comes from runner to caller.
 	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
