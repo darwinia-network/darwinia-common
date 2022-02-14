@@ -150,7 +150,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 0,
-	spec_version: 2_8_02_0,
+	spec_version: 2_8_03_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -931,20 +931,6 @@ impl fp_rpc::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
 }
 
 fn migrate() -> Weight {
-	let module = b"BSC";
-	migration::take_storage_value::<Vec<bsc_primitives::Address>>(
-		module,
-		b"FinalizedAuthority",
-		&[],
-	);
-	migration::take_storage_value::<bsc_primitives::BscHeader>(module, b"FinalizedCheckpoint", &[]);
-	migration::take_storage_value::<Vec<bsc_primitives::Address>>(module, b"Authorities", &[]);
-
-	migration::remove_storage_prefix(module, b"FinalizedAuthority", &[]);
-	migration::remove_storage_prefix(module, b"FinalizedCheckpoint", &[]);
-	migration::remove_storage_prefix(module, b"Authorities", &[]);
-	migration::remove_storage_prefix(module, b"AuthoritiesOfRound", &[]);
-
 	frame_support::storage::unhashed::put::<EthereumStorageSchema>(
 		&PALLET_ETHEREUM_SCHEMA,
 		&EthereumStorageSchema::V2,
