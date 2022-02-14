@@ -16,6 +16,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+// --- crates.io ---
+use array_bytes::{bytes2hex, hex2bytes};
+// --- darwinia-network ---
 use super::*;
 use darwinia_evm::AccountBasic;
 
@@ -27,7 +30,7 @@ fn eip1559_erc20_creation_unsigned_transaction() -> EIP1559UnsignedTransaction {
 		gas_limit: U256::from(0x100000),
 		action: ethereum::TransactionAction::Create,
 		value: U256::zero(),
-		input: FromHex::from_hex(ERC20_CONTRACT_BYTECODE).unwrap(),
+		input: hex2bytes(ERC20_CONTRACT_BYTECODE).unwrap(),
 	}
 }
 
@@ -259,7 +262,7 @@ fn call_should_handle_errors() {
 	// 			require(false, "error_msg");
 	// 		}
 	// 	}
-	let contract: &str = "608060405234801561001057600080fd5b50610113806100206000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c8063c2985578146037578063febb0f7e146057575b600080fd5b603d605f565b604051808215151515815260200191505060405180910390f35b605d6068565b005b60006001905090565b600060db576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260098152602001807f6572726f725f6d7367000000000000000000000000000000000000000000000081525060200191505060405180910390fd5b56fea2646970667358221220fde68a3968e0e99b16fabf9b2997a78218b32214031f8e07e2c502daf603a69e64736f6c63430006060033";
+	let contract: &str = "0x608060405234801561001057600080fd5b50610113806100206000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c8063c2985578146037578063febb0f7e146057575b600080fd5b603d605f565b604051808215151515815260200191505060405180910390f35b605d6068565b005b60006001905090565b600060db576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260098152602001807f6572726f725f6d7367000000000000000000000000000000000000000000000081525060200191505060405180910390fd5b56fea2646970667358221220fde68a3968e0e99b16fabf9b2997a78218b32214031f8e07e2c502daf603a69e64736f6c63430006060033";
 
 	let (pairs, mut ext) = new_test_ext(1);
 	let alice = &pairs[0];
@@ -272,15 +275,15 @@ fn call_should_handle_errors() {
 			gas_limit: U256::from(0x100000),
 			action: ethereum::TransactionAction::Create,
 			value: U256::zero(),
-			input: FromHex::from_hex(contract).unwrap(),
+			input: hex2bytes(contract).unwrap(),
 		}
 		.sign(&alice.private_key, None);
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 
 		let contract_address: Vec<u8> =
-			FromHex::from_hex("32dcab0ef3fb2de2fce1d2e0799d36239671f04a").unwrap();
-		let foo: Vec<u8> = FromHex::from_hex("c2985578").unwrap();
-		let bar: Vec<u8> = FromHex::from_hex("febb0f7e").unwrap();
+			hex2bytes("0x32dcab0ef3fb2de2fce1d2e0799d36239671f04a").unwrap();
+		let foo: Vec<u8> = hex2bytes("0xc2985578").unwrap();
+		let bar: Vec<u8> = hex2bytes("0xfebb0f7e").unwrap();
 
 		let t2 = EIP1559UnsignedTransaction {
 			nonce: U256::from(1),
@@ -299,7 +302,7 @@ fn call_should_handle_errors() {
 		match info {
 			CallOrCreateInfo::Call(info) => {
 				assert_eq!(
-					info.value.to_hex::<String>(),
+					bytes2hex("", info.value),
 					"0000000000000000000000000000000000000000000000000000000000000001".to_owned()
 				);
 			}

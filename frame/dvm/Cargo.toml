@@ -44,7 +44,6 @@ pallet-evm        = { default-features = false, git = "https://github.com/darwin
 array-bytes  = { version = "1.4" }
 ethabi       = { version = "15.0" }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
-rustc-hex    = { version = "2.1.0", default-features = false }
 # darwinia-network
 darwinia-balances                = { path = "../balances" }
 darwinia-evm-precompile-transfer = { path = "../evm/precompile/contracts/transfer" }

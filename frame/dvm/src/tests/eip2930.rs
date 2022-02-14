@@ -16,6 +16,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+// --- crates.io ---
+use array_bytes::{bytes2hex, hex2bytes};
+// --- darwinia-network ---
 use super::*;
 use darwinia_evm::AccountBasic;
 
@@ -26,7 +29,7 @@ fn eip2930_erc20_creation_unsigned_transaction() -> EIP2930UnsignedTransaction {
 		gas_limit: U256::from(0x100000),
 		action: ethereum::TransactionAction::Create,
 		value: U256::zero(),
-		input: FromHex::from_hex(ERC20_CONTRACT_BYTECODE).unwrap(),
+		input: hex2bytes(ERC20_CONTRACT_BYTECODE).unwrap(),
 	}
 }
 
@@ -269,15 +272,15 @@ fn call_should_handle_errors() {
 			gas_limit: U256::from(0x100000),
 			action: ethereum::TransactionAction::Create,
 			value: U256::zero(),
-			input: FromHex::from_hex(contract).unwrap(),
+			input: hex2bytes(contract).unwrap(),
 		}
 		.sign(&alice.private_key, None);
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 
 		let contract_address: Vec<u8> =
-			FromHex::from_hex("32dcab0ef3fb2de2fce1d2e0799d36239671f04a").unwrap();
-		let foo: Vec<u8> = FromHex::from_hex("c2985578").unwrap();
-		let bar: Vec<u8> = FromHex::from_hex("febb0f7e").unwrap();
+			hex2bytes("0x32dcab0ef3fb2de2fce1d2e0799d36239671f04a").unwrap();
+		let foo: Vec<u8> = hex2bytes("0xc2985578").unwrap();
+		let bar: Vec<u8> = hex2bytes("0xfebb0f7e").unwrap();
 
 		let t2 = EIP2930UnsignedTransaction {
 			nonce: U256::from(1),
@@ -295,7 +298,7 @@ fn call_should_handle_errors() {
 		match info {
 			CallOrCreateInfo::Call(info) => {
 				assert_eq!(
-					info.value.to_hex::<String>(),
+					bytes2hex("", info.value),
 					"0000000000000000000000000000000000000000000000000000000000000001".to_owned()
 				);
 			}
