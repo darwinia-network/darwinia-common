@@ -132,9 +132,9 @@ pub type Executive = frame_executive::Executive<
 /// The payload being signed in transactions.
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
-type Ring = Balances;
-
 pub type RootOrigin = EnsureRoot<AccountId>;
+
+type Ring = Balances;
 
 /// This runtime version.
 #[sp_version::runtime_version]
@@ -142,7 +142,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 0,
-	spec_version: 2_8_03_0,
+	spec_version: 2_8_04_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
