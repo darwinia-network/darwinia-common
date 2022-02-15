@@ -42,12 +42,10 @@ dvm-rpc-runtime-api                 = { default-features = false, path = "../../
 module-transaction-pause            = { default-features = false, path = "../../../frame/transaction-pause" }
 to-substrate-backing                = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 # dvm trace
-dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/evm-trace/apis" }
-dp-evm-trace-events = { optional = true, default-features = false, path = "../../../primitives/evm-trace/events" }
-dp-evm-trace-ext    = { default-features = false, path = "../../../primitives/evm-trace/ext" }
-dp-evm-tracer       = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
-rlp                 = { version = "0.5", optional = true, default-features = false }
-sha3                = { version = "0.8", optional = true, default-features = false }
+dp-evm-trace-apis = { default-features = false, path = "../../../primitives/evm-trace/apis" }
+dp-evm-tracer     = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
+rlp               = { version = "0.5", optional = true, default-features = false }
+sha3              = { version = "0.8", optional = true, default-features = false }
 # paritytech
 beefy-primitives                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 bp-header-chain                            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.1" }
@@ -196,11 +194,6 @@ std = [
 	"sp-version/std",
 	# trace
 	"dp-evm-trace-apis/std",
-	"dp-evm-trace-events/std",
-	"dp-evm-trace-ext/std",
-	"dp-evm-tracer/std",
-	"rlp/std",
-	"sha3/std",
 	# frontier
 	"fp-evm/std",
 	"fp-self-contained/std",
@@ -230,7 +223,6 @@ try-runtime = [
 no-wasm = []
 
 evm-tracing = [
-	"dp-evm-trace-events",
 	"dp-evm-tracer",
 	"rlp",
 	"sha3",
