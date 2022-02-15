@@ -1,13 +1,8 @@
 // --- core ---
 use core::marker::PhantomData;
 // --- paritytech ---
-use codec::{Decode, Encode};
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
-use frame_support::{
-	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
-	traits::FindAuthor,
-	ConsensusEngineId,
-};
+use frame_support::{traits::FindAuthor, ConsensusEngineId};
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use sp_core::{crypto::Public, H160, U256};
 // --- darwinia-network ---
@@ -53,9 +48,9 @@ where
 
 impl<R> PrecompileSet for PangoroPrecompiles<R>
 where
-	R: darwinia_evm::Config + darwinia_bridge_bsc::Config,
-	R::Call: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo + Encode + Decode,
-	<R::Call as Dispatchable>::Origin: From<Option<R::AccountId>>,
+	Transfer<R>: Precompile,
+	BscBridge<R>: Precompile,
+	R: darwinia_evm::Config,
 {
 	fn execute(
 		&self,
@@ -67,21 +62,15 @@ where
 	) -> Option<PrecompileResult> {
 		match address {
 			// Ethereum precompiles
-			_ if address == addr(1) => {
-				Some(ECRecover::execute(input, target_gas, context, is_static))
-			}
-			_ if address == addr(2) => Some(Sha256::execute(input, target_gas, context, is_static)),
-			_ if address == addr(3) => {
-				Some(Ripemd160::execute(input, target_gas, context, is_static))
-			}
-			_ if address == addr(4) => {
-				Some(Identity::execute(input, target_gas, context, is_static))
-			}
+			a if a == addr(1) => Some(ECRecover::execute(input, target_gas, context, is_static)),
+			a if a == addr(2) => Some(Sha256::execute(input, target_gas, context, is_static)),
+			a if a == addr(3) => Some(Ripemd160::execute(input, target_gas, context, is_static)),
+			a if a == addr(4) => Some(Identity::execute(input, target_gas, context, is_static)),
 			// Darwinia precompiles
-			_ if address == addr(21) => Some(<Transfer<R>>::execute(
+			a if a == addr(21) => Some(<Transfer<R>>::execute(
 				input, target_gas, context, is_static,
 			)),
-			_ if address == addr(26) => Some(<BscBridge<R>>::execute(
+			a if a == addr(26) => Some(<BscBridge<R>>::execute(
 				input, target_gas, context, is_static,
 			)),
 			_ => None,
