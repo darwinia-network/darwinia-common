@@ -102,21 +102,35 @@ where
 {
 	fn on_new_root(root: &<T as pallet_mmr::Config>::Hash) {
 		macro_rules! unwrap_or_exit {
-			($r:expr) => {
+			($r:expr, $err_msg:expr) => {
 				if let Ok(r) = $r {
 					r
 				} else {
+					log::error!(target: LOG_TARGET, "{}", $err_msg);
+
 					return;
 				}
 			};
 		}
 
-		let raw_message_root = unwrap_or_exit!(<dvm_ethereum::Pallet<T>>::read_only_call(
-			<CommitmentContract<T>>::get(),
-			unwrap_or_exit!(beefy::commitment())
-		));
+		let raw_message_root = unwrap_or_exit!(
+			<dvm_ethereum::Pallet<T>>::read_only_call(
+				<CommitmentContract<T>>::get(),
+				unwrap_or_exit!(
+					beefy::commitment(),
+					"Fail to encode `commitment` ABI, exit."
+				)
+			),
+			"Fail to read message root from DVM, exit."
+		);
 
 		if raw_message_root.len() != 32 {
+			log::error!(
+				target: LOG_TARGET,
+				"Invalid raw message root: {:?}, exit.",
+				raw_message_root
+			);
+
 			return;
 		}
 
