@@ -105,15 +105,15 @@ pub type Executive = frame_executive::Executive<
 >;
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
-pub type Ring = Balances;
-
 pub type RootOrigin = EnsureRoot<AccountId>;
+
+type Ring = Balances;
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangoro"),
 	impl_name: sp_runtime::create_runtime_str!("Pangoro"),
 	authoring_version: 0,
-	spec_version: 2_8_03_0,
+	spec_version: 2_8_04_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
