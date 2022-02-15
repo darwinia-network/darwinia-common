@@ -132,9 +132,9 @@ pub type Executive = frame_executive::Executive<
 /// The payload being signed in transactions.
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
-type Ring = Balances;
-
 pub type RootOrigin = EnsureRoot<AccountId>;
+
+type Ring = Balances;
 
 /// This runtime version.
 #[sp_version::runtime_version]
