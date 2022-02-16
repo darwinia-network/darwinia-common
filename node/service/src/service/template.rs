@@ -254,6 +254,7 @@ pub fn new_full(
 	}
 
 	let is_archive = config.state_pruning.is_archive();
+	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
 	let tracing_requesters = dvm_tasks::spawn(DvmTasksParams {
 		task_manager: &task_manager,
 		client: client.clone(),
@@ -261,6 +262,7 @@ pub fn new_full(
 		dvm_backend: frontier_backend.clone(),
 		filter_pool: filter_pool.clone(),
 		rpc_config: rpc_config.clone(),
+		fee_history_cache: fee_history_cache.clone(),
 		is_archive,
 	});
 	let role = config.role.clone();

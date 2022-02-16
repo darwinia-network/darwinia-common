@@ -22,7 +22,7 @@ use std::{sync::Arc, time::Duration};
 use futures::StreamExt;
 use tokio::sync::Semaphore;
 // --- paritytech ---
-use fc_rpc_core::types::FilterPool;
+use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use sc_client_api::{backend::Backend, BlockOf, BlockchainEvents};
 use sc_service::TaskManager;
 use sp_api::{HeaderT, ProvideRuntimeApi};
@@ -56,6 +56,7 @@ where
 		filter_pool,
 		is_archive,
 		rpc_config,
+		fee_history_cache,
 	} = params;
 
 	// Spawn schema cache maintenance task.
@@ -71,7 +72,7 @@ where
 			Arc::clone(&client),
 			Arc::clone(&overrides),
 			fee_history_cache,
-			fee_history_limit,
+			rpc_config.fee_history_limit,
 		),
 	);
 
@@ -166,4 +167,5 @@ pub struct DvmTasksParams<'a, B: BlockT, C, BE> {
 	pub filter_pool: Option<FilterPool>,
 	pub is_archive: bool,
 	pub rpc_config: RpcConfig,
+	pub fee_history_cache: FeeHistoryCache,
 }
