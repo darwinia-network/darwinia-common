@@ -57,7 +57,7 @@ use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use darwinia_support::evm::IntoAccountId;
 
-static ISTANBUL_CONFIG: EvmConfig = EvmConfig::istanbul();
+static LONDON_CONFIG: EvmConfig = EvmConfig::london();
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -108,7 +108,7 @@ pub mod pallet {
 
 		/// EVM config used in the Pallet.
 		fn config() -> &'static EvmConfig {
-			&ISTANBUL_CONFIG
+			&LONDON_CONFIG
 		}
 	}
 
