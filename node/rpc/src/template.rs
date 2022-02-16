@@ -50,6 +50,10 @@ pub struct FullDeps<C, P, A: ChainApi> {
 	pub tracing_requesters: RpcRequesters,
 	/// Rpc Config
 	pub rpc_config: RpcConfig,
+	/// Maximum fee history cache size.
+	pub fee_history_limit: u64,
+	/// Fee history cache.
+	pub fee_history_cache: FeeHistoryCache,
 	/// Manual seal command sink
 	pub command_sink:
 		Option<futures::channel::mpsc::Sender<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>>,
@@ -59,6 +63,7 @@ pub struct FullDeps<C, P, A: ChainApi> {
 pub fn create_full<C, P, B, A>(
 	deps: FullDeps<C, P, A>,
 	subscription_task_executor: SubscriptionTaskExecutor,
+	overrides: Arc<OverrideHandle<Block>>,
 ) -> RpcExtension
 where
 	C: 'static
@@ -109,6 +114,8 @@ where
 		backend,
 		tracing_requesters,
 		rpc_config,
+		fee_history_limit,
+		fee_history_cache,
 	} = deps;
 
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(
@@ -124,22 +131,6 @@ where
 	if enable_dev_signer {
 		signers.push(Box::new(EthDevSigner::new()) as Box<dyn EthSigner>);
 	}
-	let mut overrides_map = BTreeMap::new();
-	overrides_map.insert(
-		EthereumStorageSchema::V1,
-		Box::new(SchemaV1Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
-	);
-	overrides_map.insert(
-		EthereumStorageSchema::V2,
-		Box::new(SchemaV2Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
-	);
-
-	let overrides = Arc::new(OverrideHandle {
-		schemas: overrides_map,
-		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
-	});
 
 	let block_data_cache = Arc::new(EthBlockDataCache::new(50, 50));
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
@@ -154,6 +145,8 @@ where
 		signers,
 		rpc_config.max_past_logs,
 		block_data_cache.clone(),
+		fee_history_limit,
+		fee_history_cache,
 	)));
 
 	if let Some(filter_pool) = filter_pool {
@@ -216,4 +209,31 @@ where
 	}
 
 	io
+}
+
+pub fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
+where
+	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
+	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
+	C: Send + Sync + 'static,
+	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
+	BE: Backend<Block> + 'static,
+	BE::State: StateBackend<BlakeTwo256>,
+{
+	let mut overrides_map = BTreeMap::new();
+	overrides_map.insert(
+		EthereumStorageSchema::V1,
+		Box::new(SchemaV1Override::new(client.clone()))
+			as Box<dyn StorageOverride<_> + Send + Sync>,
+	);
+	overrides_map.insert(
+		EthereumStorageSchema::V2,
+		Box::new(SchemaV2Override::new(client.clone()))
+			as Box<dyn StorageOverride<_> + Send + Sync>,
+	);
+
+	Arc::new(OverrideHandle {
+		schemas: overrides_map,
+		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
+	})
 }

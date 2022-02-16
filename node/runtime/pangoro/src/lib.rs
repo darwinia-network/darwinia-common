@@ -644,6 +644,10 @@ sp_api::impl_runtime_apis! {
 				_ => None
 			}).collect()
 		}
+
+		fn elasticity() -> Option<Permill> {
+			Some(BaseFee::elasticity())
+		}
 	}
 
 	impl dp_evm_trace_apis::DebugRuntimeApi<Block> for Runtime {
