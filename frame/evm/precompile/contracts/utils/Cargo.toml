@@ -16,7 +16,7 @@ evm = { version = "0.33", default-features = false, features = ["with-codec"] }
 darwinia-evm-precompile-utils-macro = { path = "macro" }
 darwinia-support                    = { default-features = false, path = "../../../../support" }
 # frontier
-fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
+fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
 
 [features]
 default = ["std"]

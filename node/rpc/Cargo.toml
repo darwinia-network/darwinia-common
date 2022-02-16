@@ -48,8 +48,8 @@ sp-keystore                    = { git = "https://github.com/darwinia-network/su
 sp-runtime                     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 substrate-frame-rpc-system     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
-fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
-fp-rpc      = { git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
+fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
+fp-rpc      = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
 # template
 futures                  = { version = "0.3", optional = true }
 sc-consensus-manual-seal = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

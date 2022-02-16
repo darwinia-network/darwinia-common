@@ -20,7 +20,7 @@ darwinia-evm-precompile-utils = { default-features = false, path = "../../utils"
 dp-contract                   = { default-features = false, path = "../../../../../../primitives/contract" }
 ethereum-primitives           = { default-features = false, features = ["full-codec", "full-rlp"], path = "../../../../../../primitives/ethereum" }
 # frontier
-fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "bear-eip1559" }
+fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
 
 [features]
 default = ["std"]
