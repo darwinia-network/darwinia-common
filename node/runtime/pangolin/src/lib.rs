@@ -961,8 +961,8 @@ fn transform_session_keys(v: AccountId, old: OldSessionKeys) -> SessionKeys {
 			let mut id = BeefyId::default();
 			let id_raw: &mut [u8] = id.as_mut();
 
-			id_raw.copy_from_slice(v.as_ref());
-			id_raw[0..4].copy_from_slice(b"beef");
+			id_raw[1..].copy_from_slice(v.as_ref());
+			id_raw[1..5].copy_from_slice(b"beef");
 
 			id
 		},
