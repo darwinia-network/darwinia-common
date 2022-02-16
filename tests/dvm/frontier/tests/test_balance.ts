@@ -24,8 +24,12 @@ describeWithFrontier("Frontier RPC (Balance)", (context) => {
 			gas: "0x100000",
 		}, GENESIS_ACCOUNT_PRIVATE_KEY);
 		await customRequest(context.web3, "eth_sendRawTransaction", [tx.rawTransaction]);
+		const expectedGenesisBalance = "340282366920938463463374586431768210443";
+		const expectedTestBalance = "12";
+		expect(await context.web3.eth.getBalance(GENESIS_ACCOUNT, "pending")).to.equal(expectedGenesisBalance);
+		expect(await context.web3.eth.getBalance(TEST_ACCOUNT, "pending")).to.equal(expectedTestBalance);
 		await createAndFinalizeBlock(context.web3);
-		expect(await context.web3.eth.getBalance(GENESIS_ACCOUNT)).to.equal("340282366920938463463374586431768210943");
-		expect(await context.web3.eth.getBalance(TEST_ACCOUNT)).to.equal("512");
+		expect(await context.web3.eth.getBalance(GENESIS_ACCOUNT)).to.equal(expectedGenesisBalance);
+		expect(await context.web3.eth.getBalance(TEST_ACCOUNT)).to.equal(expectedTestBalance);
 	});
 });
