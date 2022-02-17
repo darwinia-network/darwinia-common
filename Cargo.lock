@@ -2029,7 +2029,6 @@ dependencies = [
 name = "dc-db"
 version = "2.8.4"
 dependencies = [
- "dvm-ethereum",
  "fp-evm",
  "fp-storage",
  "kvdb",
@@ -2066,7 +2065,6 @@ dependencies = [
  "dc-tracer",
  "dp-evm-trace-apis",
  "dp-evm-trace-rpc",
- "dvm-ethereum",
  "dvm-rpc-core",
  "ethereum 0.11.1",
  "ethereum-types",

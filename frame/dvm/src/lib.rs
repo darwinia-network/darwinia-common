@@ -46,7 +46,7 @@ use fp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use fp_evm::CallOrCreateInfo;
 use fp_rpc::TransactionStatus;
 #[cfg(feature = "std")]
-use fp_storage::PALLET_ETHEREUM_SCHEMA;
+use fp_storage::{EthereumStorageSchema, PALLET_ETHEREUM_SCHEMA};
 #[cfg(feature = "std")]
 use frame_support::storage::unhashed;
 use frame_support::{
@@ -951,20 +951,6 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 			},
 			_ => Err(<Error<T>>::ReadyOnlyCall.into()),
 		}
-	}
-}
-
-/// The schema version for Pallet Ethereum's storage
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
-pub enum EthereumStorageSchema {
-	Undefined,
-	V1,
-	V2,
-	V3,
-}
-impl Default for EthereumStorageSchema {
-	fn default() -> Self {
-		Self::Undefined
 	}
 }
 
