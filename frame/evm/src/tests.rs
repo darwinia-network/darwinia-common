@@ -449,8 +449,8 @@ fn handle_sufficient_reference() {
 	new_test_ext().execute_with(|| {
 		let addr = H160::from_str("1230000000000000000000000000000000000001").unwrap();
 		let addr_2 = H160::from_str("1234000000000000000000000000000000000001").unwrap();
-		let substrate_addr = <Test as Config>::AddressMapping::into_account_id(addr);
-		let substrate_addr_2 = <Test as Config>::AddressMapping::into_account_id(addr_2);
+		let substrate_addr = <Test as darwinia_evm::Config>::IntoAccountId::into_account_id(addr);
+		let substrate_addr_2 = <Test as darwinia_evm::Config>::IntoAccountId::into_account_id(addr_2);
 
 		// Sufficients should increase when creating EVM accounts.
 		let _ = <crate::AccountCodes<Test>>::insert(addr, &vec![0]);
@@ -460,7 +460,7 @@ fn handle_sufficient_reference() {
 
 		// Using the create / remove account functions is the correct way to handle it.
 		EVM::create_account(addr_2, vec![1, 2, 3]);
-		let account_2 = frame_system::Account::<Test>::get(substrate_addr_2);
+		let account_2 = frame_system::Account::<Test>::get(substrate_addr_2.clone());
 		// We increased the sufficient reference by 1.
 		assert_eq!(account_2.sufficients, 1);
 		EVM::remove_account(&addr_2);

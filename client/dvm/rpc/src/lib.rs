@@ -15,9 +15,6 @@
 // along with Substrate. If not, see <http://www.gnu.org/licenses/>.
 
 mod debug;
-mod eth;
-mod eth_pubsub;
-mod overrides;
 mod trace;
 
 pub use debug::{Debug, DebugApiServer, DebugRequester, DebugTask};
