@@ -47,8 +47,8 @@ use sc_client_api::{
 	backend::{Backend, StateBackend, StorageProvider},
 	client::BlockchainEvents,
 };
-use sc_service::SpawnTaskHandle;
 use sc_network::{ExHashT, NetworkService};
+use sc_service::SpawnTaskHandle;
 use sc_transaction_pool::{ChainApi, Pool};
 use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
 use sp_api::{ApiExt, BlockId, Core, HeaderT, ProvideRuntimeApi};
@@ -409,8 +409,8 @@ where
 				&& FilteredParams::topics_in_bloom(block.header.logs_bloom, &topics_bloom_filter)
 			{
 				let statuses = block_data_cache
-				.current_transaction_statuses(schema, substrate_hash)
-				.await;
+					.current_transaction_statuses(schema, substrate_hash)
+					.await;
 				if let Some(statuses) = statuses {
 					filter_block_logs(ret, filter, block, statuses);
 				}
@@ -706,23 +706,23 @@ where
 				.expect_block_hash_from_id(&id)
 				.map_err(|_| internal_err(format!("Expect block number from id: {}", id)))?;
 
-				let schema =
+			let schema =
 				frontier_backend_client::onchain_storage_schema::<B, C, BE>(client.as_ref(), id);
 			let handler = overrides
 				.schemas
 				.get(&schema)
 				.unwrap_or(&overrides.fallback);
 
-				let block = block_data_cache.current_block(schema, substrate_hash).await;
-				let statuses = block_data_cache
-					.current_transaction_statuses(schema, substrate_hash)
-					.await;
+			let block = block_data_cache.current_block(schema, substrate_hash).await;
+			let statuses = block_data_cache
+				.current_transaction_statuses(schema, substrate_hash)
+				.await;
 
-					let base_fee = handler.base_fee(&id);
-					let is_eip1559 = handler.is_eip1559(&id);
+			let base_fee = handler.base_fee(&id);
+			let is_eip1559 = handler.is_eip1559(&id);
 
-					match (block, statuses) {
-						(Some(block), Some(statuses)) => Ok(Some(rich_block_build(
+			match (block, statuses) {
+				(Some(block), Some(statuses)) => Ok(Some(rich_block_build(
 					block,
 					statuses.into_iter().map(|s| Some(s)).collect(),
 					Some(hash),

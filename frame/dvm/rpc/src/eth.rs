@@ -207,7 +207,7 @@ pub trait EthFilterApi {
 	/// Returns filter changes since last poll.
 	#[rpc(name = "eth_getFilterChanges")]
 	fn filter_changes(&self, _: Index) -> BoxFuture<Result<FilterChanges>>;
-	
+
 	/// Returns all logs matching given filter (in a range 'from' - 'to').
 	#[rpc(name = "eth_getFilterLogs")]
 	fn filter_logs(&self, _: Index) -> BoxFuture<Result<Vec<Log>>>;
