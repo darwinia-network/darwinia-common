@@ -57,13 +57,16 @@ pub struct FullDeps<C, P, A: ChainApi> {
 	/// Manual seal command sink
 	pub command_sink:
 		Option<futures::channel::mpsc::Sender<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>>,
+	/// Ethereum data access overrides.
+	pub overrides: Arc<OverrideHandle<Block>>,
+	/// Cache for Ethereum block data.
+	pub block_data_cache: Arc<EthBlockDataCache<Block>>,
 }
 
 /// Instantiate all Full RPC extensions.
 pub fn create_full<C, P, B, A>(
 	deps: FullDeps<C, P, A>,
 	subscription_task_executor: SubscriptionTaskExecutor,
-	overrides: Arc<OverrideHandle<Block>>,
 ) -> RpcExtension
 where
 	C: 'static
@@ -116,6 +119,8 @@ where
 		rpc_config,
 		fee_history_limit,
 		fee_history_cache,
+		overrides,
+		block_data_cache,
 	} = deps;
 
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(

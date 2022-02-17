@@ -16,9 +16,10 @@
 
 pub use dvm_rpc_core::{EthApiServer, EthFilterApiServer, NetApiServer, Web3ApiServer};
 
+use tokio::sync::{mpsc, oneshot};
 // --- std ---
 use std::{
-	collections::BTreeMap,
+	collections::{BTreeMap, HashMap},
 	marker::PhantomData,
 	sync::{Arc, Mutex},
 	time,
@@ -46,6 +47,7 @@ use sc_client_api::{
 	backend::{Backend, StateBackend, StorageProvider},
 	client::BlockchainEvents,
 };
+use sc_service::SpawnTaskHandle;
 use sc_network::{ExHashT, NetworkService};
 use sc_transaction_pool::{ChainApi, Pool};
 use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
@@ -320,10 +322,9 @@ where
 	Ok(api)
 }
 
-fn filter_range_logs<B: BlockT, C, BE>(
+async fn filter_range_logs<B: BlockT, C, BE>(
 	client: &C,
 	backend: &dc_db::Backend<B>,
-	overrides: &OverrideHandle<B>,
 	block_data_cache: &EthBlockDataCache<B>,
 	ret: &mut Vec<Log>,
 	max_past_logs: u32,
@@ -402,19 +403,14 @@ where
 				}
 			}
 		};
-		let handler = overrides
-			.schemas
-			.get(&schema)
-			.unwrap_or(&overrides.fallback);
-
-		let block = block_data_cache.current_block(handler, substrate_hash);
-
+		let block = block_data_cache.current_block(schema, substrate_hash).await;
 		if let Some(block) = block {
 			if FilteredParams::address_in_bloom(block.header.logs_bloom, &address_bloom_filter)
 				&& FilteredParams::topics_in_bloom(block.header.logs_bloom, &topics_bloom_filter)
 			{
-				let statuses =
-					block_data_cache.current_transaction_statuses(handler, substrate_hash);
+				let statuses = block_data_cache
+				.current_transaction_statuses(schema, substrate_hash)
+				.await;
 				if let Some(statuses) = statuses {
 					filter_block_logs(ret, filter, block, statuses);
 				}
@@ -693,92 +689,106 @@ where
 		}
 	}
 
-	fn block_by_hash(&self, hash: H256, full: bool) -> Result<Option<RichBlock>> {
-		let id = match frontier_backend_client::load_hash::<B>(self.backend.as_ref(), hash)
-			.map_err(|err| internal_err(format!("{:?}", err)))?
-		{
-			Some(hash) => hash,
-			_ => return Ok(None),
-		};
-		let substrate_hash = self
-			.client
-			.expect_block_hash_from_id(&id)
-			.map_err(|_| internal_err(format!("Expect block number from id: {}", id)))?;
+	fn block_by_hash(&self, hash: H256, full: bool) -> BoxFuture<Result<Option<RichBlock>>> {
+		let client = Arc::clone(&self.client);
+		let overrides = Arc::clone(&self.overrides);
+		let block_data_cache = Arc::clone(&self.block_data_cache);
+		let backend = Arc::clone(&self.backend);
 
-		let schema =
-			frontier_backend_client::onchain_storage_schema::<B, C, BE>(self.client.as_ref(), id);
-		let handler = self
-			.overrides
-			.schemas
-			.get(&schema)
-			.unwrap_or(&self.overrides.fallback);
+		Box::pin(async move {
+			let id = match frontier_backend_client::load_hash::<B>(backend.as_ref(), hash)
+				.map_err(|err| internal_err(format!("{:?}", err)))?
+			{
+				Some(hash) => hash,
+				_ => return Ok(None),
+			};
+			let substrate_hash = client
+				.expect_block_hash_from_id(&id)
+				.map_err(|_| internal_err(format!("Expect block number from id: {}", id)))?;
 
-		let block = self.block_data_cache.current_block(handler, substrate_hash);
-		let statuses = self
-			.block_data_cache
-			.current_transaction_statuses(handler, substrate_hash);
-		let base_fee = handler.base_fee(&id);
-		let is_eip1559 = handler.is_eip1559(&id);
+				let schema =
+				frontier_backend_client::onchain_storage_schema::<B, C, BE>(client.as_ref(), id);
+			let handler = overrides
+				.schemas
+				.get(&schema)
+				.unwrap_or(&overrides.fallback);
 
-		match (block, statuses) {
-			(Some(block), Some(statuses)) => Ok(Some(rich_block_build(
-				block,
-				statuses.into_iter().map(|s| Some(s)).collect(),
-				Some(hash),
-				full,
-				base_fee,
-				is_eip1559,
-			))),
-			_ => Ok(None),
-		}
-	}
+				let block = block_data_cache.current_block(schema, substrate_hash).await;
+				let statuses = block_data_cache
+					.current_transaction_statuses(schema, substrate_hash)
+					.await;
 
-	fn block_by_number(&self, number: BlockNumber, full: bool) -> Result<Option<RichBlock>> {
-		let id = match frontier_backend_client::native_block_id::<B, C>(
-			self.client.as_ref(),
-			self.backend.as_ref(),
-			Some(number),
-		)? {
-			Some(id) => id,
-			None => return Ok(None),
-		};
-		let substrate_hash = self
-			.client
-			.expect_block_hash_from_id(&id)
-			.map_err(|_| internal_err(format!("Expect block number from id: {}", id)))?;
+					let base_fee = handler.base_fee(&id);
+					let is_eip1559 = handler.is_eip1559(&id);
 
-		let schema =
-			frontier_backend_client::onchain_storage_schema::<B, C, BE>(self.client.as_ref(), id);
-		let handler = self
-			.overrides
-			.schemas
-			.get(&schema)
-			.unwrap_or(&self.overrides.fallback);
-
-		let block = self.block_data_cache.current_block(handler, substrate_hash);
-		let statuses = self
-			.block_data_cache
-			.current_transaction_statuses(handler, substrate_hash);
-
-		let base_fee = handler.base_fee(&id);
-		let is_eip1559 = handler.is_eip1559(&id);
-
-		match (block, statuses) {
-			(Some(block), Some(statuses)) => {
-				let hash =
-					H256::from_slice(Keccak256::digest(&rlp::encode(&block.header)).as_slice());
-
-				Ok(Some(rich_block_build(
+					match (block, statuses) {
+						(Some(block), Some(statuses)) => Ok(Some(rich_block_build(
 					block,
 					statuses.into_iter().map(|s| Some(s)).collect(),
 					Some(hash),
 					full,
 					base_fee,
 					is_eip1559,
-				)))
+				))),
+				_ => Ok(None),
 			}
-			_ => Ok(None),
-		}
+		})
+	}
+	fn block_by_number(
+		&self,
+		number: BlockNumber,
+		full: bool,
+	) -> BoxFuture<Result<Option<RichBlock>>> {
+		let client = Arc::clone(&self.client);
+		let overrides = Arc::clone(&self.overrides);
+		let block_data_cache = Arc::clone(&self.block_data_cache);
+		let backend = Arc::clone(&self.backend);
+
+		Box::pin(async move {
+			let id = match frontier_backend_client::native_block_id::<B, C>(
+				client.as_ref(),
+				backend.as_ref(),
+				Some(number),
+			)? {
+				Some(id) => id,
+				None => return Ok(None),
+			};
+			let substrate_hash = client
+				.expect_block_hash_from_id(&id)
+				.map_err(|_| internal_err(format!("Expect block number from id: {}", id)))?;
+
+			let schema =
+				frontier_backend_client::onchain_storage_schema::<B, C, BE>(client.as_ref(), id);
+			let handler = overrides
+				.schemas
+				.get(&schema)
+				.unwrap_or(&overrides.fallback);
+
+			let block = block_data_cache.current_block(schema, substrate_hash).await;
+			let statuses = block_data_cache
+				.current_transaction_statuses(schema, substrate_hash)
+				.await;
+
+			let base_fee = handler.base_fee(&id);
+			let is_eip1559 = handler.is_eip1559(&id);
+
+			match (block, statuses) {
+				(Some(block), Some(statuses)) => {
+					let hash =
+						H256::from_slice(Keccak256::digest(&rlp::encode(&block.header)).as_slice());
+
+					Ok(Some(rich_block_build(
+						block,
+						statuses.into_iter().map(|s| Some(s)).collect(),
+						Some(hash),
+						full,
+						base_fee,
+						is_eip1559,
+					)))
+				}
+				_ => Ok(None),
+			}
+		})
 	}
 
 	fn transaction_count(&self, address: H160, number: Option<BlockNumber>) -> Result<U256> {
