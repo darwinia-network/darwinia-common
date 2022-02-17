@@ -22,7 +22,7 @@ describeWithFrontier("Frontier RPC (Transaction Version)", (context) => {
 	}
 
 	step("should handle EIP-2930 transaction type 1", async function () {
-		const tx_hash = (await sendTransaction(context, {
+		let tx = {
 			from: GENESIS_ACCOUNT,
 			data: TEST_CONTRACT_BYTECODE,
 			value: "0x00",
@@ -31,8 +31,9 @@ describeWithFrontier("Frontier RPC (Transaction Version)", (context) => {
 			accessList: [],
 			nonce: 0,
 			gasLimit: "0x100000",
-			chainId: 42
-		})).hash;
+			chainId: 42,
+		};
+		const tx_hash = (await sendTransaction(context, tx)).hash;
 		await createAndFinalizeBlock(context.web3);
 		const latest = await context.web3.eth.getBlock("latest");
 		expect(latest.transactions.length).to.be.eq(1);
@@ -43,7 +44,7 @@ describeWithFrontier("Frontier RPC (Transaction Version)", (context) => {
 	});
 
 	step("should handle EIP-1559 transaction type 2", async function () {
-		const tx_hash = (await sendTransaction(context, {
+		let tx = {
 			from: GENESIS_ACCOUNT,
 			data: TEST_CONTRACT_BYTECODE,
 			value: "0x00",
@@ -52,8 +53,9 @@ describeWithFrontier("Frontier RPC (Transaction Version)", (context) => {
 			accessList: [],
 			nonce: 1,
 			gasLimit: "0x100000",
-			chainId: 42
-		})).hash;
+			chainId: 42,
+		};
+		const tx_hash = (await sendTransaction(context, tx)).hash;
 		await createAndFinalizeBlock(context.web3);
 		const latest = await context.web3.eth.getBlock("latest");
 		expect(latest.transactions.length).to.be.eq(1);
