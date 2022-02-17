@@ -3,6 +3,10 @@ pub use sp_runtime::{Perbill, Permill};
 // --- darwinia-network ---
 use crate::*;
 
+frame_support::parameter_types! {
+	pub IsActive: bool = true;
+}
+
 pub struct BaseFeeThreshold;
 impl pallet_base_fee::BaseFeeThreshold for BaseFeeThreshold {
 	fn lower() -> Permill {
@@ -19,4 +23,5 @@ impl pallet_base_fee::BaseFeeThreshold for BaseFeeThreshold {
 impl pallet_base_fee::Config for Runtime {
 	type Event = Event;
 	type Threshold = BaseFeeThreshold;
+	type IsActive = IsActive;
 }
