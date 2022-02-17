@@ -551,6 +551,7 @@ sp_api::impl_runtime_apis! {
 			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
+			access_list: Option<Vec<(H160, Vec<H256>)>>,
 		) -> Result<darwinia_evm::CallInfo, sp_runtime::DispatchError> {
 			// --- darwinia-network ---
 			use darwinia_evm::Runner;
@@ -572,7 +573,7 @@ sp_api::impl_runtime_apis! {
 				max_fee_per_gas,
 				max_priority_fee_per_gas,
 				nonce,
-				Vec::new(),
+				access_list.unwrap_or_default(),
 				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
@@ -586,6 +587,7 @@ sp_api::impl_runtime_apis! {
 			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
+			access_list: Option<Vec<(H160, Vec<H256>)>>,
 		) -> Result<darwinia_evm::CreateInfo, sp_runtime::DispatchError> {
 			// --- darwinia-network ---
 			use darwinia_evm::Runner;
@@ -606,7 +608,7 @@ sp_api::impl_runtime_apis! {
 				max_fee_per_gas,
 				max_priority_fee_per_gas,
 				nonce,
-				Vec::new(),
+				access_list.unwrap_or_default(),
 				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}

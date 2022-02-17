@@ -28,7 +28,8 @@ pub use eth::{
 pub use eth_pubsub::{EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider};
 pub use fc_rpc_core::types::TransactionMessage;
 pub use overrides::{
-	OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, SchemaV2Override, StorageOverride,
+	OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, SchemaV2Override,
+	SchemaV3Override, StorageOverride,
 };
 pub use trace::{CacheRequester, CacheTask, Trace, TraceApiServer};
 

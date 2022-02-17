@@ -1967,7 +1967,7 @@ version = "2.8.4"
 dependencies = [
  "bp-messages",
  "bp-runtime",
- "ethereum",
+ "ethereum 0.10.0",
  "ethereum-primitives",
  "frame-support",
  "frame-system",
@@ -2068,7 +2068,7 @@ dependencies = [
  "dp-evm-trace-rpc",
  "dvm-ethereum",
  "dvm-rpc-core",
- "ethereum",
+ "ethereum 0.11.1",
  "ethereum-types",
  "evm",
  "fc-rpc-core",
@@ -2237,7 +2237,7 @@ name = "dp-evm-trace-apis"
 version = "2.8.4"
 dependencies = [
  "environmental",
- "ethereum",
+ "ethereum 0.10.0",
  "ethereum-types",
  "hex",
  "parity-scale-codec",
@@ -2255,7 +2255,7 @@ name = "dp-evm-trace-events"
 version = "2.8.4"
 dependencies = [
  "environmental",
- "ethereum",
+ "ethereum 0.10.0",
  "ethereum-types",
  "evm",
  "evm-gasometer",
@@ -2504,7 +2504,7 @@ dependencies = [
  "darwinia-evm-precompile-transfer",
  "darwinia-support",
  "ethabi",
- "ethereum",
+ "ethereum 0.11.1",
  "ethereum-types",
  "evm",
  "fp-consensus",
@@ -2537,7 +2537,7 @@ dependencies = [
  "darwinia-evm",
  "dc-tracer",
  "dp-evm-trace-rpc",
- "ethereum",
+ "ethereum 0.10.0",
  "ethereum-types",
  "fc-rpc-core",
  "fp-evm",
@@ -2753,6 +2753,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "ethereum"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "34c90e0a755da706ce0970ec0fa8cc48aabcc8e8efa1245336acf718dab06ffe"
+dependencies = [
+ "bytes 1.1.0",
+ "ethereum-types",
+ "hash-db",
+ "hash256-std-hasher",
+ "parity-scale-codec",
+ "rlp",
+ "rlp-derive",
+ "scale-info",
+ "serde",
+ "sha3 0.9.1",
+ "triehash",
+]
+
+[[package]]
 name = "ethereum-primitives"
 version = "2.8.4"
 dependencies = [
@@ -2804,7 +2823,7 @@ checksum = "408ffdd509e16de15ea9b51f5333748f6086601f29d445d2ba53dd7e95565574"
 dependencies = [
  "auto_impl",
  "environmental",
- "ethereum",
+ "ethereum 0.10.0",
  "evm-core",
  "evm-gasometer",
  "evm-runtime",
@@ -2889,7 +2908,7 @@ name = "fc-rpc-core"
 version = "1.1.0-dev"
 source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#69947365bfafbd01dfd543b511fad67ffdf6198f"
 dependencies = [
- "ethereum",
+ "ethereum 0.10.0",
  "ethereum-types",
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -2997,7 +3016,7 @@ name = "fp-consensus"
 version = "2.0.0-dev"
 source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#69947365bfafbd01dfd543b511fad67ffdf6198f"
 dependencies = [
- "ethereum",
+ "ethereum 0.10.0",
  "parity-scale-codec",
  "rlp",
  "sha3 0.8.2",
@@ -3023,7 +3042,7 @@ name = "fp-rpc"
 version = "3.0.0-dev"
 source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#69947365bfafbd01dfd543b511fad67ffdf6198f"
 dependencies = [
- "ethereum",
+ "ethereum 0.10.0",
  "ethereum-types",
  "fp-evm",
  "parity-scale-codec",
@@ -3040,7 +3059,7 @@ name = "fp-self-contained"
 version = "1.0.0-dev"
 source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#69947365bfafbd01dfd543b511fad67ffdf6198f"
 dependencies = [
- "ethereum",
+ "ethereum 0.10.0",
  "frame-support",
  "parity-scale-codec",
  "parity-util-mem",
@@ -3296,7 +3315,7 @@ dependencies = [
  "dp-contract",
  "dp-s2s",
  "dvm-ethereum",
- "ethereum",
+ "ethereum 0.10.0",
  "ethereum-primitives",
  "ethereum-types",
  "evm",
