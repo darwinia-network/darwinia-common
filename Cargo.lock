@@ -2026,42 +2026,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "dc-db"
-version = "2.8.4"
-dependencies = [
- "fp-evm",
- "fp-storage",
- "kvdb",
- "kvdb-rocksdb",
- "parity-scale-codec",
- "parking_lot 0.11.2",
- "sp-core",
- "sp-database",
- "sp-runtime",
-]
-
-[[package]]
-name = "dc-mapping-sync"
-version = "2.8.4"
-dependencies = [
- "dc-db",
- "fp-consensus",
- "fp-rpc",
- "futures 0.3.21",
- "futures-timer 3.0.2",
- "log",
- "sc-client-api",
- "sp-api",
- "sp-blockchain",
- "sp-runtime",
-]
-
-[[package]]
 name = "dc-rpc"
 version = "2.8.4"
 dependencies = [
  "array-bytes",
- "dc-db",
  "dc-tracer",
  "dp-evm-trace-apis",
  "dp-evm-trace-rpc",
@@ -2379,7 +2347,6 @@ dependencies = [
  "darwinia-balances-rpc",
  "darwinia-fee-market-rpc",
  "darwinia-staking-rpc",
- "dc-db",
  "dc-rpc",
  "dp-evm-trace-apis",
  "drml-common-primitives",
@@ -2430,8 +2397,6 @@ dependencies = [
  "darwinia-fee-market-rpc-runtime-api",
  "darwinia-staking",
  "darwinia-staking-rpc-runtime-api",
- "dc-db",
- "dc-mapping-sync",
  "dc-rpc",
  "dp-evm-trace-apis",
  "dp-evm-trace-ext",
