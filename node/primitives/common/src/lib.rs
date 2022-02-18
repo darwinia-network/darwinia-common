@@ -32,7 +32,7 @@ use sp_runtime::{
 };
 
 macro_rules! development_or_production {
-	($name:ident, $type:ty, $production_value:expr, $development_value:expr) => {
+	($name:ident, $type:ty, $development_value:expr, $production_value:expr) => {
 		#[cfg(feature = "fast-runtime")]
 		pub const $name: $type = $development_value;
 		#[cfg(not(feature = "fast-runtime"))]
