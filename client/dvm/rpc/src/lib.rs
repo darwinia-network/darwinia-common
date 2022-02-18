@@ -18,6 +18,4 @@ mod debug;
 mod trace;
 
 pub use debug::{Debug, DebugApiServer, DebugRequester, DebugTask};
-pub use ethereum::TransactionV2 as EthereumTransaction;
-pub use fc_rpc_core::types::TransactionMessage;
 pub use trace::{CacheRequester, CacheTask, Trace, TraceApiServer};
