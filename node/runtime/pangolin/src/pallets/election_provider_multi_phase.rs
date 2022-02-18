@@ -1,8 +1,10 @@
 // --- paritytech ---
+#[cfg(feature = "fast-runtime")]
+use frame_election_provider_support::onchain::OnChainSequentialPhragmen;
 use frame_election_provider_support::{onchain, SequentialPhragmen};
-use pallet_election_provider_multi_phase::{
-	BenchmarkingConfig, Config, NoFallback, SolutionAccuracyOf,
-};
+#[cfg(not(feature = "fast-runtime"))]
+use pallet_election_provider_multi_phase::NoFallback;
+use pallet_election_provider_multi_phase::{BenchmarkingConfig, Config, SolutionAccuracyOf};
 use sp_runtime::{transaction_validity::TransactionPriority, PerU16, Perbill};
 // --- darwinia-network ---
 use crate::*;
@@ -15,6 +17,11 @@ sp_npos_elections::generate_solution_type!(
 		Accuracy = PerU16,
 	>(24)
 );
+
+#[cfg(feature = "fast-runtime")]
+type Fallback = OnChainSequentialPhragmen<Runtime>;
+#[cfg(not(feature = "fast-runtime"))]
+type Fallback = NoFallback<Runtime>;
 
 /// The numbers configured here could always be more than the the maximum limits of staking pallet
 /// to ensure election snapshot will not run out of memory. For now, we set them to smaller values
@@ -74,7 +81,7 @@ impl Config for Runtime {
 	type RewardHandler = (); // nothing to do upon rewards
 	type DataProvider = Staking;
 	type Solution = NposCompactSolution24;
-	type Fallback = NoFallback<Self>;
+	type Fallback = Fallback;
 	type Solver = SequentialPhragmen<AccountId, SolutionAccuracyOf<Self>, OffchainRandomBalancing>;
 	type ForceOrigin = EnsureRootOrHalfCouncil;
 	type BenchmarkingConfig = BenchmarkConfig;

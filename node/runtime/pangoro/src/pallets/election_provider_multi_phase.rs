@@ -9,11 +9,6 @@ use sp_runtime::{transaction_validity::TransactionPriority, PerU16, Perbill};
 // --- darwinia-network ---
 use crate::*;
 
-#[cfg(feature = "fast-runtime")]
-type Fallback = OnChainSequentialPhragmen<Runtime>;
-#[cfg(not(feature = "fast-runtime"))]
-type Fallback = NoFallback<Runtime>;
-
 sp_npos_elections::generate_solution_type!(
 	#[compact]
 	pub struct NposCompactSolution16::<
@@ -22,6 +17,11 @@ sp_npos_elections::generate_solution_type!(
 		Accuracy = PerU16,
 	>(16)
 );
+
+#[cfg(feature = "fast-runtime")]
+type Fallback = OnChainSequentialPhragmen<Runtime>;
+#[cfg(not(feature = "fast-runtime"))]
+type Fallback = NoFallback<Runtime>;
 
 /// The numbers configured here could always be more than the the maximum limits of staking pallet
 /// to ensure election snapshot will not run out of memory. For now, we set them to smaller values
