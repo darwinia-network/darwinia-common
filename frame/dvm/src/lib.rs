@@ -642,6 +642,7 @@ impl<T: Config> Pallet<T> {
 				Some(info.value),
 			),
 		};
+
 		let receipt = {
 			let status_code: u8 = match reason {
 				ExitReason::Succeed(_) => 1,
@@ -658,20 +659,29 @@ impl<T: Config> Pallet<T> {
 			} else {
 				used_gas
 			};
-			match &transaction {
-				Transaction::Legacy(_) => Receipt::Legacy(ethereum::EIP658ReceiptData {
-					status_code,
-					used_gas: cumulative_gas_used,
-					logs_bloom,
-					logs,
-				}),
-				Transaction::EIP2930(_) => Receipt::EIP2930(ethereum::EIP2930ReceiptData {
-					status_code,
-					used_gas: cumulative_gas_used,
-					logs_bloom,
-					logs,
-				}),
-				Transaction::EIP1559(_) => Receipt::EIP1559(ethereum::EIP2930ReceiptData {
+
+			match advanced_transaction {
+				AdvancedTransaction::Ethereum(ref transaction) => match &transaction {
+					Transaction::Legacy(_) => Receipt::Legacy(ethereum::EIP658ReceiptData {
+						status_code,
+						used_gas: cumulative_gas_used,
+						logs_bloom,
+						logs,
+					}),
+					Transaction::EIP2930(_) => Receipt::EIP2930(ethereum::EIP2930ReceiptData {
+						status_code,
+						used_gas: cumulative_gas_used,
+						logs_bloom,
+						logs,
+					}),
+					Transaction::EIP1559(_) => Receipt::EIP1559(ethereum::EIP2930ReceiptData {
+						status_code,
+						used_gas: cumulative_gas_used,
+						logs_bloom,
+						logs,
+					}),
+				},
+				AdvancedTransaction::Internal(_) => Receipt::Legacy(ethereum::EIP658ReceiptData {
 					status_code,
 					used_gas: cumulative_gas_used,
 					logs_bloom,

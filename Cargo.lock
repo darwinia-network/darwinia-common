@@ -1967,7 +1967,7 @@ version = "2.8.4"
 dependencies = [
  "bp-messages",
  "bp-runtime",
- "ethereum 0.10.0",
+ "ethereum",
  "ethereum-primitives",
  "frame-support",
  "frame-system",
@@ -2034,7 +2034,7 @@ dependencies = [
  "dp-evm-trace-apis",
  "dp-evm-trace-rpc",
  "dvm-rpc-core",
- "ethereum 0.11.1",
+ "ethereum",
  "ethereum-types",
  "evm",
  "fc-rpc-core",
@@ -2203,7 +2203,7 @@ name = "dp-evm-trace-apis"
 version = "2.8.4"
 dependencies = [
  "environmental",
- "ethereum 0.10.0",
+ "ethereum",
  "ethereum-types",
  "hex",
  "parity-scale-codec",
@@ -2221,7 +2221,7 @@ name = "dp-evm-trace-events"
 version = "2.8.4"
 dependencies = [
  "environmental",
- "ethereum 0.10.0",
+ "ethereum",
  "ethereum-types",
  "evm",
  "evm-gasometer",
@@ -2467,7 +2467,7 @@ dependencies = [
  "darwinia-evm-precompile-transfer",
  "darwinia-support",
  "ethabi",
- "ethereum 0.11.1",
+ "ethereum",
  "ethereum-types",
  "evm",
  "fp-consensus",
@@ -2500,7 +2500,7 @@ dependencies = [
  "darwinia-evm",
  "dc-tracer",
  "dp-evm-trace-rpc",
- "ethereum 0.10.0",
+ "ethereum",
  "ethereum-types",
  "fc-rpc-core",
  "fp-evm",
@@ -2699,25 +2699,6 @@ dependencies = [
 
 [[package]]
 name = "ethereum"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81fb916554a4dba293ea69c69ad5653e21d770a9d0c2496b5fa0a1f5a3946d87"
-dependencies = [
- "bytes 1.1.0",
- "ethereum-types",
- "hash-db",
- "hash256-std-hasher",
- "parity-scale-codec",
- "rlp",
- "rlp-derive",
- "scale-info",
- "serde",
- "sha3 0.9.1",
- "triehash",
-]
-
-[[package]]
-name = "ethereum"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "34c90e0a755da706ce0970ec0fa8cc48aabcc8e8efa1245336acf718dab06ffe"
@@ -2787,7 +2768,7 @@ checksum = "408ffdd509e16de15ea9b51f5333748f6086601f29d445d2ba53dd7e95565574"
 dependencies = [
  "auto_impl",
  "environmental",
- "ethereum 0.10.0",
+ "ethereum",
  "evm-core",
  "evm-gasometer",
  "evm-runtime",
@@ -2870,9 +2851,9 @@ dependencies = [
 [[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#ca6a6a84b5ed08ea73ed59c10a5f3260a3b1bd73"
 dependencies = [
- "ethereum 0.10.0",
+ "ethereum",
  "ethereum-types",
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -2978,9 +2959,9 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#ca6a6a84b5ed08ea73ed59c10a5f3260a3b1bd73"
 dependencies = [
- "ethereum 0.10.0",
+ "ethereum",
  "parity-scale-codec",
  "rlp",
  "sha3 0.8.2",
@@ -2992,7 +2973,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#ca6a6a84b5ed08ea73ed59c10a5f3260a3b1bd73"
 dependencies = [
  "evm",
  "parity-scale-codec",
@@ -3004,9 +2985,9 @@ dependencies = [
 [[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#ca6a6a84b5ed08ea73ed59c10a5f3260a3b1bd73"
 dependencies = [
- "ethereum 0.10.0",
+ "ethereum",
  "ethereum-types",
  "fp-evm",
  "parity-scale-codec",
@@ -3021,9 +3002,9 @@ dependencies = [
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#ca6a6a84b5ed08ea73ed59c10a5f3260a3b1bd73"
 dependencies = [
- "ethereum 0.10.0",
+ "ethereum",
  "frame-support",
  "parity-scale-codec",
  "parity-util-mem",
@@ -3038,7 +3019,10 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#ca6a6a84b5ed08ea73ed59c10a5f3260a3b1bd73"
+dependencies = [
+ "parity-scale-codec",
+]
 
 [[package]]
 name = "frame-benchmarking"
@@ -3279,7 +3263,7 @@ dependencies = [
  "dp-contract",
  "dp-s2s",
  "dvm-ethereum",
- "ethereum 0.10.0",
+ "ethereum",
  "ethereum-primitives",
  "ethereum-types",
  "evm",
@@ -5679,7 +5663,7 @@ dependencies = [
 [[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
-source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#ca6a6a84b5ed08ea73ed59c10a5f3260a3b1bd73"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5850,7 +5834,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#ca6a6a84b5ed08ea73ed59c10a5f3260a3b1bd73"
 dependencies = [
  "evm",
  "evm-gasometer",
@@ -5878,7 +5862,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-modexp"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#ca6a6a84b5ed08ea73ed59c10a5f3260a3b1bd73"
 dependencies = [
  "fp-evm",
  "num",
@@ -5889,7 +5873,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-sha3fips"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#ca6a6a84b5ed08ea73ed59c10a5f3260a3b1bd73"
 dependencies = [
  "fp-evm",
  "sp-core",
@@ -5900,7 +5884,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-simple"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#ca6a6a84b5ed08ea73ed59c10a5f3260a3b1bd73"
 dependencies = [
  "fp-evm",
  "ripemd160",
