@@ -36,6 +36,7 @@ macro_rules! development_or_production {
 		#[doc = $doc]
 		#[cfg(feature = "fast-runtime")]
 		pub const $name: $type = $development_value;
+		#[doc = $doc]
 		#[cfg(not(feature = "fast-runtime"))]
 		pub const $name: $type = $production_value;
 	};
