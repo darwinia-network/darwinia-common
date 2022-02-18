@@ -450,7 +450,8 @@ fn handle_sufficient_reference() {
 		let addr = H160::from_str("1230000000000000000000000000000000000001").unwrap();
 		let addr_2 = H160::from_str("1234000000000000000000000000000000000001").unwrap();
 		let substrate_addr = <Test as darwinia_evm::Config>::IntoAccountId::into_account_id(addr);
-		let substrate_addr_2 = <Test as darwinia_evm::Config>::IntoAccountId::into_account_id(addr_2);
+		let substrate_addr_2 =
+			<Test as darwinia_evm::Config>::IntoAccountId::into_account_id(addr_2);
 
 		// Sufficients should increase when creating EVM accounts.
 		let _ = <crate::AccountCodes<Test>>::insert(addr, &vec![0]);

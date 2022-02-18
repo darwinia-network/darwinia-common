@@ -393,13 +393,13 @@ sp_api::impl_runtime_apis! {
 			Ethereum::current_block()
 		}
 
-		fn current_receipts() -> Option<Vec<dvm_ethereum::EthereumReceiptV0>> {
+		fn current_receipts() -> Option<Vec<dvm_ethereum::Receipt>> {
 			Ethereum::current_receipts()
 		}
 
 		fn current_all() -> (
 			Option<dvm_ethereum::Block>,
-			Option<Vec<dvm_ethereum::EthereumReceiptV0>>,
+			Option<Vec<dvm_ethereum::Receipt>>,
 			Option<Vec<fp_rpc::TransactionStatus>>
 		) {
 			(
@@ -424,9 +424,9 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
-		fn convert_transaction(transaction: EthereumTransaction) -> <Block as BlockT>::Extrinsic {
+		fn convert_transaction(transaction: dvm_ethereum::Transaction) -> <Block as BlockT>::Extrinsic {
 			UncheckedExtrinsic::new_unsigned(
-				pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
+				dvm_ethereum::Call::<Runtime>::transact { transaction }.into(),
 			)
 		}
 	}

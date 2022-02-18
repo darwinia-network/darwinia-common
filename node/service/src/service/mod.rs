@@ -96,12 +96,12 @@ use sp_trie::PrefixedMemoryDB;
 use substrate_prometheus_endpoint::Registry;
 // --- darwinia-network ---
 use crate::service::dvm_tasks::DvmTasksParams;
-use fc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
 use drml_common_primitives::{AccountId, Balance, Nonce, OpaqueBlock as Block, Power};
 use drml_rpc::{
 	BabeDeps, BeefyDeps, FullDeps, GrandpaDeps, LightDeps, RpcConfig, RpcExtension,
 	SubscriptionTaskExecutor,
 };
+use fc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
 
 type FullBackend = TFullBackend<Block>;
 type FullSelectChain = LongestChain<FullBackend, Block>;
