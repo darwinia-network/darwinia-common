@@ -111,6 +111,7 @@ substrate-wasm-builder = { git = "https://github.com/darwinia-network/substrate"
 
 [features]
 default = ["std"]
+
 std = [
 	# crates.io
 	"codec/std",
@@ -200,6 +201,8 @@ std = [
 	"fp-storage/std",
 	"pallet-evm-precompile-simple/std",
 ]
+
+fast-runtime = ["drml-common-primitives/fast-runtime"]
 
 runtime-benchmarks = [
 	# paritytech

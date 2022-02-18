@@ -246,6 +246,8 @@ std = [
 	"pallet-evm-precompile-simple/std",
 ]
 
+fast-runtime = ["drml-common-primitives/fast-runtime"]
+
 runtime-benchmarks = [
 	# paritytech
 	"frame-benchmarking",

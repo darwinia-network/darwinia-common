@@ -57,6 +57,8 @@ full-node = ["drml-service/full-node"]
 
 wasmtime = ["sc-cli/wasmtime"]
 
+fast-runtime = ["drml-service/fast-runtime"]
+
 evm-tracing = ["drml-service/evm-tracing"]
 
 template = ["drml-service/template"]
