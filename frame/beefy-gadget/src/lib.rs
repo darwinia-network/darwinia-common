@@ -73,8 +73,8 @@ use frame_support::log;
 use pallet_mmr::primitives::{LeafDataProvider, OnNewRoot};
 use sp_core::H256;
 use sp_io::hashing;
-use sp_runtime::generic::DigestItem;
-use sp_std::{borrow::ToOwned, prelude::*};
+use sp_runtime::{generic::DigestItem, RuntimeDebug};
+use sp_std::borrow::ToOwned;
 // --- darwinia-network ---
 use darwinia_beefy_primitives::network_ids::AsciiId;
 use dp_contract::beefy;
@@ -82,12 +82,15 @@ use dvm_ethereum::InternalTransactHandler;
 
 pub const LOG_TARGET: &str = "runtime::beefy-gadget";
 
-#[derive(Encode)]
-pub struct BeefyPayload {
+#[derive(Encode, RuntimeDebug)]
+pub struct BeefyPayload<T>
+where
+	T: Encode,
+{
 	network_id: [u8; 32],
 	mmr_root: H256,
 	message_root: H256,
-	encoded_next_authority_set: Vec<u8>,
+	next_authority_set: T,
 }
 
 pub struct DepositBeefyDigest<T, A>(PhantomData<(T, A)>);
@@ -134,34 +137,16 @@ where
 			return;
 		}
 
-		let network_id = A::ascii_id();
-		let mmr_root = root.to_owned();
-		let message_root = H256::from_slice(&raw_message_root);
-		let encoded_next_authority_set = <pallet_beefy_mmr::Pallet<T>>::leaf_data()
-			.beefy_next_authority_set
-			.encode();
+		let beefy_payload = BeefyPayload {
+			network_id: A::ascii_id(),
+			mmr_root: root.to_owned(),
+			message_root: H256::from_slice(&raw_message_root),
+			next_authority_set: <pallet_beefy_mmr::Pallet<T>>::leaf_data().beefy_next_authority_set,
+		};
 
-		log::debug!(
-			target: LOG_TARGET,
-			"\
-			🥩 network_id: {:?}\
-			🥩 mmr_root: {:?}\
-			🥩 message_root: {:?}\
-			🥩 encoded_next_authority_set: {:?}\
-			",
-			network_id,
-			mmr_root,
-			message_root,
-			encoded_next_authority_set
-		);
+		log::debug!(target: LOG_TARGET, "🥩 beefy_payload: {:?}", beefy_payload);
 
-		let encoded_payload = BeefyPayload {
-			network_id,
-			mmr_root,
-			message_root,
-			encoded_next_authority_set,
-		}
-		.encode();
+		let encoded_payload = beefy_payload.encode();
 		let payload_hash = hashing::keccak_256(&encoded_payload).into();
 
 		log::debug!(
