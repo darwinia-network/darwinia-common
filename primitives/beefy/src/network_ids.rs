@@ -23,7 +23,7 @@ pub trait AsciiId {
 }
 
 macro_rules! impl_network_ids {
-	($($network:ident: $ascii_id:expr),+) => {
+	($($network:ident: $ascii_id:expr),+,) => {
 		$(
 			pub struct $network;
 			impl AsciiId for $network {
@@ -36,21 +36,21 @@ macro_rules! impl_network_ids {
 }
 impl_network_ids![
 	Darwinia: [
-		68, 65, 82, 87, 73, 78, 73, 65, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		68, 97, 114, 119, 105, 110, 105, 97, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0,
 	],
 	Crab: [
-		67, 82, 65, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0,
+		67, 114, 97, 98, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0,
 	],
 	Pangoro: [
-		80, 65, 78, 71, 79, 82, 79, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0,
+		80, 97, 110, 103, 111, 114, 111, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0,
 	],
-	Pangolin:  [
-		80, 65, 78, 71, 79, 76, 73, 78, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0,
-	]
+	Pangolin: [
+		80, 97, 110, 103, 111, 108, 105, 110, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0,
+	],
 ];
 
 pub fn convert(name: &[u8]) -> NetworkId {
@@ -68,19 +68,19 @@ fn network_ascii_should_work() {
 	for (network_id, network_id_hex) in [
 		(
 			Darwinia::ascii_id(),
-			"0x44415257494e4941000000000000000000000000000000000000000000000000",
+			"0x44617277696e6961000000000000000000000000000000000000000000000000",
 		),
 		(
 			Crab::ascii_id(),
-			"0x4352414200000000000000000000000000000000000000000000000000000000",
+			"0x4372616200000000000000000000000000000000000000000000000000000000",
 		),
 		(
 			Pangoro::ascii_id(),
-			"0x50414e474f524f00000000000000000000000000000000000000000000000000",
+			"0x50616e676f726f00000000000000000000000000000000000000000000000000",
 		),
 		(
 			Pangolin::ascii_id(),
-			"0x50414e474f4c494e000000000000000000000000000000000000000000000000",
+			"0x50616e676f6c696e000000000000000000000000000000000000000000000000",
 		),
 	]
 	.iter()
@@ -88,12 +88,12 @@ fn network_ascii_should_work() {
 		assert_eq!(&array_bytes::bytes2hex("0x", network_id), network_id_hex);
 	}
 
-	// dbg!(convert(b"DARWINIA"));
-	// dbg!(array_bytes::bytes2hex("0x", Darwinia.ascii_id()));
-	// dbg!(convert(b"CRAB"));
-	// dbg!(array_bytes::bytes2hex("0x", Crab.ascii_id()));
-	// dbg!(convert(b"PANGORO"));
-	// dbg!(array_bytes::bytes2hex("0x", Pangoro.ascii_id()));
-	// dbg!(convert(b"PANGOLIN"));
-	// dbg!(array_bytes::bytes2hex("0x", Pangolin.ascii_id()));
+	// dbg!(convert(b"Darwinia"));
+	// dbg!(array_bytes::bytes2hex("0x", Darwinia::ascii_id()));
+	// dbg!(convert(b"Crab"));
+	// dbg!(array_bytes::bytes2hex("0x", Crab::ascii_id()));
+	// dbg!(convert(b"Pangoro"));
+	// dbg!(array_bytes::bytes2hex("0x", Pangoro::ascii_id()));
+	// dbg!(convert(b"Pangolin"));
+	// dbg!(array_bytes::bytes2hex("0x", Pangolin::ascii_id()));
 }
