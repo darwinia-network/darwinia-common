@@ -44,7 +44,7 @@ pub use pallet_sudo::Call as SudoCall;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
-use fp_storage::PALLET_ETHEREUM_SCHEMA;
+use fp_storage::{EthereumStorageSchema, PALLET_ETHEREUM_SCHEMA};
 #[allow(unused)]
 use frame_support::{log, migration};
 use frame_support::{
@@ -79,7 +79,6 @@ use sp_version::RuntimeVersion;
 use common_runtime::*;
 use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use drml_common_primitives::*;
-use dvm_ethereum::EthereumStorageSchema;
 
 pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
@@ -622,13 +621,13 @@ sp_api::impl_runtime_apis! {
 			Ethereum::current_block()
 		}
 
-		fn current_receipts() -> Option<Vec<dvm_ethereum::EthereumReceiptV0>> {
+		fn current_receipts() -> Option<Vec<dvm_ethereum::Receipt>> {
 			Ethereum::current_receipts()
 		}
 
 		fn current_all() -> (
 			Option<dvm_ethereum::Block>,
-			Option<Vec<dvm_ethereum::EthereumReceiptV0>>,
+			Option<Vec<dvm_ethereum::Receipt>>,
 			Option<Vec<fp_rpc::TransactionStatus>>
 		) {
 			(
@@ -649,6 +648,14 @@ sp_api::impl_runtime_apis! {
 
 		fn elasticity() -> Option<Permill> {
 			Some(BaseFee::elasticity())
+		}
+	}
+
+	impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
+		fn convert_transaction(transaction: dvm_ethereum::Transaction) -> <Block as BlockT>::Extrinsic {
+			UncheckedExtrinsic::new_unsigned(
+				dvm_ethereum::Call::<Runtime>::transact { transaction }.into(),
+			)
 		}
 	}
 
