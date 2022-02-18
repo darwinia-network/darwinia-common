@@ -863,6 +863,10 @@ fn migrate() -> Weight {
 	migration::remove_storage_prefix(mmr_module, b"NumberOfLeaves", &[]);
 	migration::remove_storage_prefix(mmr_module, b"Nodes", &[]);
 
+	// Reset BEEFY
+	migration::put_storage_value(b"Beefy", b"ValidatorSetId", &[], 0u64);
+	<pallet_beefy_mmr::BeefyNextAuthorities<Runtime>>::kill();
+
 	// 0
 	RuntimeBlockWeights::get().max_block
 }
