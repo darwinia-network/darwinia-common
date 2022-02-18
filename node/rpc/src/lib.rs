@@ -69,7 +69,7 @@ where
 	/// EthFilterApi pool.
 	pub filter_pool: Option<fc_rpc_core::types::FilterPool>,
 	/// Backend.
-	pub backend: Arc<dc_db::Backend<Block>>,
+	pub backend: Arc<fc_db::Backend<Block>>,
 	/// Rpc requester for evm trace
 	pub tracing_requesters: RpcRequesters,
 	/// Rpc Config

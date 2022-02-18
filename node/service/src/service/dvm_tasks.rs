@@ -163,7 +163,7 @@ pub struct DvmTasksParams<'a, B: BlockT, C, BE> {
 	pub task_manager: &'a TaskManager,
 	pub client: Arc<C>,
 	pub substrate_backend: Arc<BE>,
-	pub dvm_backend: Arc<dc_db::Backend<B>>,
+	pub dvm_backend: Arc<fc_db::Backend<B>>,
 	pub filter_pool: Option<FilterPool>,
 	pub is_archive: bool,
 	pub rpc_config: RpcConfig,

@@ -2029,16 +2029,15 @@ dependencies = [
 name = "dc-rpc"
 version = "2.8.4"
 dependencies = [
- "array-bytes",
  "dc-tracer",
  "dp-evm-trace-apis",
  "dp-evm-trace-rpc",
  "dvm-rpc-core",
  "ethereum",
  "ethereum-types",
- "evm",
+ "fc-db",
+ "fc-rpc",
  "fc-rpc-core",
- "fp-consensus",
  "fp-rpc",
  "fp-storage",
  "futures 0.3.21",
@@ -2046,27 +2045,14 @@ dependencies = [
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
- "libsecp256k1 0.3.5",
- "log",
- "lru",
  "parity-scale-codec",
- "parking_lot 0.11.2",
- "rand 0.8.4",
- "rlp",
  "sc-client-api",
- "sc-network",
- "sc-rpc",
- "sc-service",
- "sc-transaction-pool",
- "sc-transaction-pool-api",
  "sc-utils",
- "sha3 0.9.1",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
  "sp-io",
  "sp-runtime",
- "sp-storage",
  "tokio",
  "tracing",
 ]
@@ -2846,6 +2832,92 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3fcf0cee53519c866c09b5de1f6c56ff9d647101f81c1964fa632e148896cdf"
 dependencies = [
  "instant",
+]
+
+[[package]]
+name = "fc-consensus"
+version = "2.0.0-dev"
+source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#ca6a6a84b5ed08ea73ed59c10a5f3260a3b1bd73"
+dependencies = [
+ "async-trait",
+ "fc-db",
+ "fp-consensus",
+ "fp-rpc",
+ "futures 0.3.21",
+ "log",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-consensus",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-timestamp",
+ "substrate-prometheus-endpoint",
+ "thiserror",
+]
+
+[[package]]
+name = "fc-db"
+version = "2.0.0-dev"
+source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#ca6a6a84b5ed08ea73ed59c10a5f3260a3b1bd73"
+dependencies = [
+ "fp-storage",
+ "kvdb",
+ "kvdb-rocksdb",
+ "parity-scale-codec",
+ "parking_lot 0.11.2",
+ "sp-core",
+ "sp-database",
+ "sp-runtime",
+]
+
+[[package]]
+name = "fc-rpc"
+version = "2.0.0-dev"
+source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#ca6a6a84b5ed08ea73ed59c10a5f3260a3b1bd73"
+dependencies = [
+ "ethereum",
+ "ethereum-types",
+ "evm",
+ "fc-consensus",
+ "fc-db",
+ "fc-rpc-core",
+ "fp-consensus",
+ "fp-evm",
+ "fp-rpc",
+ "fp-storage",
+ "futures 0.3.21",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "jsonrpc-pubsub",
+ "libsecp256k1 0.3.5",
+ "log",
+ "lru",
+ "parity-scale-codec",
+ "parking_lot 0.11.2",
+ "rand 0.7.3",
+ "rlp",
+ "rustc-hex",
+ "sc-client-api",
+ "sc-network",
+ "sc-rpc",
+ "sc-service",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "sha3 0.8.2",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-io",
+ "sp-runtime",
+ "sp-storage",
+ "sp-transaction-pool",
+ "tokio",
 ]
 
 [[package]]

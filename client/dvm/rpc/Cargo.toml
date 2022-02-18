@@ -11,49 +11,32 @@ version     = "2.8.4"
 
 [dependencies]
 # crates.io
-array-bytes         = { version = "1.4" }
 codec               = { package = "parity-scale-codec", version = "2.2" }
 ethereum            = { version = "0.11.1", features = ["with-codec"] }
 ethereum-types      = { version = "0.12" }
-evm                 = { version = "0.33.1" }
 futures             = { version = "0.3" }
 jsonrpc-core        = { version = "18.0" }
 jsonrpc-core-client = { version = "18.0" }
 jsonrpc-derive      = { version = "18.0" }
 jsonrpc-pubsub      = { version = "18.0" }
-libsecp256k1        = { version = "0.3" }
-log                 = { version = "0.4" }
-lru                 = { version = "0.6.6" }
-parking_lot         = { version = "0.11.1" }
-rand                = { version = "0.8" }
-rlp                 = { version = "0.5" }
-sha3                = { version = "0.9" }
 tokio               = { version = "1.15" }
 tracing             = { version = "0.1" }
 # darwinia-network
-# dc-db               = { path = "../db" }
 dc-tracer           = { path = "../tracer" }
 dp-evm-trace-apis   = { path = "../../../primitives/evm-trace/apis" }
 dp-evm-trace-rpc    = { path = "../../../primitives/evm-trace/rpc" }
-# dvm-ethereum        = { path = "../../../frame/dvm" }
 dvm-rpc-core        = { path = "../../../frame/dvm/rpc" }
 # paritytech
 sc-client-api           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
-sc-network              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
-sc-rpc                  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
-sc-service              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
-sc-transaction-pool     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
-sc-transaction-pool-api = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sc-utils                = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-api                  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-block-builder        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-blockchain           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-io                   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-runtime              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
-sp-storage              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
-# frontier
-fp-consensus = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
 fp-rpc       = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
+fc-db        = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
+fc-rpc        = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
 fc-rpc-core  = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
 fp-storage   = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
 

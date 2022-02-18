@@ -38,6 +38,7 @@ use tokio::{
 };
 use tracing::{instrument, Instrument};
 // --- paritytech ---
+use fc_rpc::internal_err;
 use fp_rpc::EthereumRuntimeRPCApi;
 use sc_client_api::backend::Backend;
 use sc_utils::mpsc::TracingUnboundedSender;
@@ -48,7 +49,6 @@ use sp_blockchain::{
 };
 use sp_runtime::traits::Block as BlockT;
 // --- darwinia-network ---
-use crate::internal_err;
 use dc_tracer::{
 	formatters::ResponseFormatter,
 	types::block::{self, TransactionTrace},
