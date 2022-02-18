@@ -97,6 +97,13 @@ db = ["sc-service/db"]
 
 full-node = []
 
+fast-runtime = [
+	"pangolin-runtime/fast-runtime",
+	"pangoro-runtime/fast-runtime",
+]
+
+evm-tracing = ["pangolin-runtime/evm-tracing"]
+
 template = [
 	"drml-rpc/template",
 	"async-trait",
@@ -107,9 +114,10 @@ template = [
 	"template-runtime",
 ]
 
-evm-tracing = ["pangolin-runtime/evm-tracing"]
-
-runtime-benchmarks = ["pangolin-runtime/runtime-benchmarks"]
+runtime-benchmarks = [
+	"pangolin-runtime/runtime-benchmarks",
+	"pangoro-runtime/runtime-benchmarks",
+]
 
 try-runtime = [
 	"pangolin-runtime/try-runtime",

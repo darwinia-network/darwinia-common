@@ -116,19 +116,37 @@ pub const MILLISECS_PER_BLOCK: Moment = 6000;
 /// Minute in Pangoro/Pangolin.
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 /// Hour in Pangoro/Pangolin.
+#[cfg(feature = "fast-runtime")]
+pub const HOURS: BlockNumber = 2 * MINUTES;
+#[cfg(not(feature = "fast-runtime"))]
 pub const HOURS: BlockNumber = 60 * MINUTES;
 /// Day in Pangoro/Pangolin.
+#[cfg(feature = "fast-runtime")]
+pub const DAYS: BlockNumber = 2 * HOURS;
+#[cfg(not(feature = "fast-runtime"))]
 pub const DAYS: BlockNumber = 24 * HOURS;
+
 /// Slot duration in Pangoro/Pangolin.
 pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
-
 /// Session length of Pangolin.
+#[cfg(feature = "fast-runtime")]
+pub const PANGOLIN_BLOCKS_PER_SESSION: BlockNumber = MINUTES / 2;
+#[cfg(not(feature = "fast-runtime"))]
 pub const PANGOLIN_BLOCKS_PER_SESSION: BlockNumber = 30 * MINUTES;
 /// Era length of Pangolin.
+#[cfg(feature = "fast-runtime")]
+pub const PANGOLIN_SESSIONS_PER_ERA: BlockNumber = 1;
+#[cfg(not(feature = "fast-runtime"))]
 pub const PANGOLIN_SESSIONS_PER_ERA: BlockNumber = 3;
 /// Session length of Pangoro.
+#[cfg(feature = "fast-runtime")]
+pub const PANGORO_BLOCKS_PER_SESSION: BlockNumber = MINUTES / 2;
+#[cfg(not(feature = "fast-runtime"))]
 pub const PANGORO_BLOCKS_PER_SESSION: BlockNumber = 2 * HOURS;
 /// Era length of Pangoro.
+#[cfg(feature = "fast-runtime")]
+pub const PANGORO_SESSIONS_PER_ERA: BlockNumber = 1;
+#[cfg(not(feature = "fast-runtime"))]
 pub const PANGORO_SESSIONS_PER_ERA: BlockNumber = 3;
 
 /// 1 in 4 blocks (on average, not counting collisions) will be primary BABE blocks.
