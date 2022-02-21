@@ -857,18 +857,8 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 }
 
 fn migrate() -> Weight {
-	// Reset Mmr
-	let mmr_module = b"Mmr";
-	migration::remove_storage_prefix(mmr_module, b"RootHash", &[]);
-	migration::remove_storage_prefix(mmr_module, b"NumberOfLeaves", &[]);
-	migration::remove_storage_prefix(mmr_module, b"Nodes", &[]);
-
-	// Reset BEEFY
-	migration::put_storage_value(b"Beefy", b"ValidatorSetId", &[], 0u64);
-	<pallet_beefy_mmr::BeefyNextAuthorities<Runtime>>::kill();
-
-	// 0
-	RuntimeBlockWeights::get().max_block
+	0
+	// RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
