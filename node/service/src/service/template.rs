@@ -29,7 +29,7 @@ use std::{
 use async_trait::async_trait;
 // --- paritytech ---
 use fc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
-use fc_rpc_core::types::FilterPool;
+use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use sc_consensus_manual_seal as manual_seal;
 use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch};
 use sc_keystore::LocalKeystore;
@@ -254,6 +254,13 @@ pub fn new_full(
 	}
 
 	let is_archive = config.state_pruning.is_archive();
+	let overrides = drml_rpc::overrides_handle(client.clone());
+	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCache::new(
+		task_manager.spawn_handle(),
+		overrides.clone(),
+		50,
+		50,
+	));
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
 	let tracing_requesters = dvm_tasks::spawn(DvmTasksParams {
 		task_manager: &task_manager,
@@ -261,9 +268,10 @@ pub fn new_full(
 		substrate_backend: backend.clone(),
 		dvm_backend: frontier_backend.clone(),
 		filter_pool: filter_pool.clone(),
+		is_archive,
 		rpc_config: rpc_config.clone(),
 		fee_history_cache: fee_history_cache.clone(),
-		is_archive,
+		overrides: overrides.clone(),
 	});
 	let role = config.role.clone();
 	let prometheus_registry = config.prometheus_registry().cloned();
@@ -289,7 +297,10 @@ pub fn new_full(
 				backend: frontier_backend.clone(),
 				tracing_requesters: tracing_requesters.clone(),
 				rpc_config: rpc_config.clone(),
+				fee_history_cache: fee_history_cache.clone(),
 				command_sink: Some(command_sink.clone()),
+				overrides: overrides.clone(),
+				block_data_cache: block_data_cache.clone(),
 			};
 
 			Ok(drml_rpc::template::create_full(

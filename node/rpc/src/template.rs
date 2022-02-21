@@ -18,8 +18,6 @@
 
 //! A collection of node-specific RPC methods.
 
-// --- std ---
-use std::collections::BTreeMap;
 // --- crates.io ---
 use futures::channel::mpsc::Sender;
 // --- darwinia-network ---
@@ -31,8 +29,7 @@ use fc_db::Backend as FrontierBackend;
 use fc_rpc::{
 	EthApi, EthApiServer, EthBlockDataCache, EthDevSigner, EthFilterApi, EthFilterApiServer,
 	EthPubSubApi, EthPubSubApiServer, EthSigner, HexEncodedIdProvider, NetApi, NetApiServer,
-	OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, SchemaV2Override,
-	SchemaV3Override, StorageOverride, Web3Api, Web3ApiServer,
+	OverrideHandle, Web3Api, Web3ApiServer,
 };
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use jsonrpc_pubsub::manager::SubscriptionManager;
@@ -40,9 +37,6 @@ use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 use sc_consensus_manual_seal::rpc::{EngineCommand, ManualSeal, ManualSealApi};
 use sc_network::NetworkService;
 use sc_transaction_pool::{ChainApi, Pool};
-use sp_blockchain::Error as BlockChainError;
-use sp_runtime::traits::BlakeTwo256;
-use substrate_frame_rpc_system::{FullSystem, SystemApi};
 
 /// Full client dependencies.
 pub struct FullDeps<C, P, A: ChainApi> {
@@ -68,8 +62,6 @@ pub struct FullDeps<C, P, A: ChainApi> {
 	pub tracing_requesters: RpcRequesters,
 	/// Rpc Config
 	pub rpc_config: RpcConfig,
-	/// Maximum fee history cache size.
-	pub fee_history_limit: u64,
 	/// Fee history cache.
 	pub fee_history_cache: FeeHistoryCache,
 	/// Manual seal command sink
@@ -120,7 +112,6 @@ where
 		backend,
 		tracing_requesters,
 		rpc_config,
-		fee_history_limit,
 		fee_history_cache,
 		overrides,
 		block_data_cache,
@@ -152,7 +143,7 @@ where
 		is_authority,
 		rpc_config.max_past_logs,
 		block_data_cache.clone(),
-		fee_history_limit,
+		rpc_config.fee_history_limit,
 		fee_history_cache,
 	)));
 
