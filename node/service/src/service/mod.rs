@@ -64,7 +64,7 @@ use codec::Codec;
 use futures::stream::StreamExt;
 // --- paritytech ---
 use beefy_gadget::{notification::BeefySignedCommitmentStream, BeefyParams};
-use fc_rpc_core::types::FilterPool;
+use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use sc_authority_discovery::WorkerConfig;
 use sc_basic_authorship::ProposerFactory;
 use sc_client_api::{ExecutorProvider, RemoteBackend, StateBackendFor};
@@ -397,6 +397,14 @@ where
 
 	let dvm_backend = open_dvm_backend(&config)?;
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
+	let overrides = drml_rpc::overrides_handle(client.clone());
+	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCache::new(
+		task_manager.spawn_handle(),
+		overrides.clone(),
+		50,
+		50,
+	));
+	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
 	let tracing_requesters = dvm_tasks::spawn(DvmTasksParams {
 		task_manager: &task_manager,
 		client: client.clone(),
@@ -405,6 +413,8 @@ where
 		filter_pool: filter_pool.clone(),
 		is_archive,
 		rpc_config: rpc_config.clone(),
+		fee_history_cache: fee_history_cache.clone(),
+		overrides: overrides.clone(),
 	});
 	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let shared_voter_state = GrandpaSharedVoterState::empty();
@@ -438,6 +448,8 @@ where
 						deny_unsafe,
 						is_authority,
 						network: network.clone(),
+						// TODO: FIX ME
+						enable_dev_signer: true,
 						babe: BabeDeps {
 							babe_config: babe_config.clone(),
 							shared_epoch_changes: shared_epoch_changes.clone(),
@@ -458,6 +470,9 @@ where
 						filter_pool: filter_pool.clone(),
 						tracing_requesters: tracing_requesters.clone(),
 						rpc_config: rpc_config.clone(),
+						fee_history_cache: fee_history_cache.clone(),
+						overrides: overrides.clone(),
+						block_data_cache: block_data_cache.clone(),
 					},
 					subscription_task_executor.clone(),
 					eth_transaction_convertor.clone(),

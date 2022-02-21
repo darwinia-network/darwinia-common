@@ -22,24 +22,25 @@ use std::{sync::Arc, time::Duration};
 use futures::StreamExt;
 use tokio::sync::Semaphore;
 // --- paritytech ---
+use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
+use fp_rpc::EthereumRuntimeRPCApi;
 use sc_client_api::{backend::Backend, BlockOf, BlockchainEvents};
 use sc_service::TaskManager;
 use sp_api::{HeaderT, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_core::H256;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 // --- darwinia-network ---
-use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
-use dc_rpc::{CacheTask, DebugTask, EthTask};
+use dc_rpc::{CacheTask, DebugTask};
 use dp_evm_trace_apis::DebugRuntimeApi;
 use drml_rpc::{EthApiCmd, RpcConfig, RpcRequesters};
-use fp_rpc::EthereumRuntimeRPCApi;
+use fc_rpc::{EthTask, OverrideHandle};
 
 pub fn spawn<B, C, BE>(params: DvmTasksParams<B, C, BE>) -> RpcRequesters
 where
-	C: ProvideRuntimeApi<B> + BlockOf,
+	C: ProvideRuntimeApi<B> + BlockOf + sc_client_api::backend::StorageProvider<B, BE>,
 	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
 	C: BlockchainEvents<B>,
 	C::Api: EthereumRuntimeRPCApi<B> + DebugRuntimeApi<B>,
@@ -47,6 +48,7 @@ where
 	B: BlockT<Hash = H256> + Send + Sync + 'static,
 	B::Header: HeaderT<Number = u32>,
 	BE: Backend<B> + 'static,
+	BE::State: sc_client_api::backend::StateBackend<BlakeTwo256>,
 {
 	let DvmTasksParams {
 		task_manager,
@@ -57,6 +59,7 @@ where
 		is_archive,
 		rpc_config,
 		fee_history_cache,
+		overrides,
 	} = params;
 
 	// Spawn schema cache maintenance task.
@@ -168,4 +171,5 @@ pub struct DvmTasksParams<'a, B: BlockT, C, BE> {
 	pub is_archive: bool,
 	pub rpc_config: RpcConfig,
 	pub fee_history_cache: FeeHistoryCache,
+	pub overrides: Arc<OverrideHandle<B>>,
 }

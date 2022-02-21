@@ -2336,7 +2336,6 @@ dependencies = [
  "dc-rpc",
  "dp-evm-trace-apis",
  "drml-common-primitives",
- "dvm-ethereum",
  "fc-db",
  "fc-rpc",
  "fc-rpc-core",
@@ -2346,8 +2345,6 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpc-pubsub",
  "pallet-transaction-payment-rpc",
- "pangolin-runtime",
- "pangoro-runtime",
  "sc-chain-spec",
  "sc-client-api",
  "sc-consensus-babe",
@@ -2392,6 +2389,9 @@ dependencies = [
  "drml-common-primitives",
  "drml-rpc",
  "dvm-ethereum",
+ "fc-db",
+ "fc-mapping-sync",
+ "fc-rpc",
  "fc-rpc-core",
  "fp-rpc",
  "frame-benchmarking",
@@ -2875,6 +2875,24 @@ dependencies = [
  "parking_lot 0.11.2",
  "sp-core",
  "sp-database",
+ "sp-runtime",
+]
+
+[[package]]
+name = "fc-mapping-sync"
+version = "2.0.0-dev"
+source = "git+https://github.com/darwinia-network/frontier?branch=udpate-tmp#ca6a6a84b5ed08ea73ed59c10a5f3260a3b1bd73"
+dependencies = [
+ "fc-consensus",
+ "fc-db",
+ "fp-consensus",
+ "fp-rpc",
+ "futures 0.3.21",
+ "futures-timer 3.0.2",
+ "log",
+ "sc-client-api",
+ "sp-api",
+ "sp-blockchain",
  "sp-runtime",
 ]
 

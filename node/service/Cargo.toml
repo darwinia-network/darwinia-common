@@ -75,8 +75,11 @@ sp-transaction-pool                        = { git = "https://github.com/darwini
 sp-trie                                    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
-fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
-fp-rpc      = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
+fc-db           = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
+fc-rpc          = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
+fc-rpc-core     = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
+fc-mapping-sync = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
+fp-rpc          = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
 # template
 async-trait              = { version = "0.1", optional = true }
 sc-consensus-aura        = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
