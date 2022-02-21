@@ -20,11 +20,14 @@
 
 // --- std ---
 use std::collections::BTreeMap;
+// --- crates.io ---
+use futures::channel::mpsc::Sender;
 // --- darwinia-network ---
 use crate::*;
 use dc_rpc::{Debug, DebugApiServer, Trace, TraceApiServer};
 use template_runtime::TransactionConverter;
 // --- paritytech ---
+use fc_db::Backend as FrontierBackend;
 use fc_rpc::{
 	EthApi, EthApiServer, EthBlockDataCache, EthDevSigner, EthFilterApi, EthFilterApiServer,
 	EthPubSubApi, EthPubSubApiServer, EthSigner, HexEncodedIdProvider, NetApi, NetApiServer,
@@ -34,15 +37,10 @@ use fc_rpc::{
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use jsonrpc_pubsub::manager::SubscriptionManager;
 use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
-use sc_client_api::{
-	backend::{AuxStore, Backend, StateBackend, StorageProvider},
-	client::BlockchainEvents,
-};
 use sc_consensus_manual_seal::rpc::{EngineCommand, ManualSeal, ManualSealApi};
 use sc_network::NetworkService;
 use sc_transaction_pool::{ChainApi, Pool};
-use sp_api::ProvideRuntimeApi;
-use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
+use sp_blockchain::Error as BlockChainError;
 use sp_runtime::traits::BlakeTwo256;
 use substrate_frame_rpc_system::{FullSystem, SystemApi};
 
@@ -65,7 +63,7 @@ pub struct FullDeps<C, P, A: ChainApi> {
 	/// EthFilterApi pool.
 	pub filter_pool: Option<FilterPool>,
 	/// Backend.
-	pub backend: Arc<fc_db::Backend<Block>>,
+	pub backend: Arc<FrontierBackend<Block>>,
 	/// Rpc requester for evm trace
 	pub tracing_requesters: RpcRequesters,
 	/// Rpc Config
@@ -75,7 +73,7 @@ pub struct FullDeps<C, P, A: ChainApi> {
 	/// Fee history cache.
 	pub fee_history_cache: FeeHistoryCache,
 	/// Manual seal command sink
-	pub command_sink: Option<futures::channel::mpsc::Sender<EngineCommand<Hash>>>,
+	pub command_sink: Option<Sender<EngineCommand<Hash>>>,
 	/// Ethereum data access overrides.
 	pub overrides: Arc<OverrideHandle<Block>>,
 	/// Cache for Ethereum block data.
@@ -215,38 +213,4 @@ where
 	}
 
 	io
-}
-
-pub fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
-where
-	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
-	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
-	C: Send + Sync + 'static,
-	C::Api: sp_api::ApiExt<Block>
-		+ fp_rpc::EthereumRuntimeRPCApi<Block>
-		+ fp_rpc::ConvertTransactionRuntimeApi<Block>,
-	BE: Backend<Block> + 'static,
-	BE::State: StateBackend<BlakeTwo256>,
-{
-	let mut overrides_map = BTreeMap::new();
-	overrides_map.insert(
-		EthereumStorageSchema::V1,
-		Box::new(SchemaV1Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
-	);
-	overrides_map.insert(
-		EthereumStorageSchema::V2,
-		Box::new(SchemaV2Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
-	);
-	overrides_map.insert(
-		EthereumStorageSchema::V3,
-		Box::new(SchemaV3Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
-	);
-
-	Arc::new(OverrideHandle {
-		schemas: overrides_map,
-		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
-	})
 }
