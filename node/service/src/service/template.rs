@@ -28,7 +28,7 @@ use std::{
 // --- crates.io ---
 use async_trait::async_trait;
 // --- paritytech ---
-use fc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
+use fc_db::{Backend as FrontierBackend, DatabaseSettings, DatabaseSettingsSrc};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use sc_consensus_manual_seal as manual_seal;
 use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch};
@@ -122,7 +122,7 @@ pub fn new_partial(
 		(
 			ConsensusResult,
 			Option<FilterPool>,
-			Arc<fc_db::Backend<Block>>,
+			Arc<FrontierBackend<Block>>,
 			Option<Telemetry>,
 		),
 	>,

@@ -22,6 +22,7 @@ use std::{sync::Arc, time::Duration};
 use futures::StreamExt;
 use tokio::sync::Semaphore;
 // --- paritytech ---
+use fc_db::Backend as DvmBackend;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use fc_rpc::{EthTask, OverrideHandle};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
@@ -166,7 +167,7 @@ pub struct DvmTasksParams<'a, B: BlockT, C, BE> {
 	pub task_manager: &'a TaskManager,
 	pub client: Arc<C>,
 	pub substrate_backend: Arc<BE>,
-	pub dvm_backend: Arc<fc_db::Backend<B>>,
+	pub dvm_backend: Arc<DvmBackend<B>>,
 	pub filter_pool: Option<FilterPool>,
 	pub is_archive: bool,
 	pub rpc_config: RpcConfig,

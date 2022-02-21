@@ -65,6 +65,8 @@ use codec::Codec;
 use futures::stream::StreamExt;
 // --- paritytech ---
 use beefy_gadget::{notification::BeefySignedCommitmentStream, BeefyParams};
+use fc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
+use fc_rpc::EthBlockDataCache;
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use sc_authority_discovery::WorkerConfig;
 use sc_basic_authorship::ProposerFactory;
@@ -99,10 +101,9 @@ use substrate_prometheus_endpoint::Registry;
 use crate::service::dvm_tasks::DvmTasksParams;
 use drml_common_primitives::{AccountId, Balance, Nonce, OpaqueBlock as Block, Power};
 use drml_rpc::{
-	BabeDeps, BeefyDeps, FullDeps, GrandpaDeps, LightDeps, RpcConfig, RpcExtension, RpcHelper,
-	SubscriptionTaskExecutor,
+	overrides_handle, BabeDeps, BeefyDeps, FullDeps, GrandpaDeps, LightDeps, RpcConfig,
+	RpcExtension, RpcHelper, SubscriptionTaskExecutor,
 };
-use fc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
 
 type FullBackend = TFullBackend<Block>;
 type FullSelectChain = LongestChain<FullBackend, Block>;
@@ -398,8 +399,8 @@ where
 
 	let dvm_backend = open_dvm_backend(&config)?;
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
-	let overrides = drml_rpc::overrides_handle(client.clone());
-	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCache::new(
+	let overrides = overrides_handle(client.clone());
+	let block_data_cache = Arc::new(EthBlockDataCache::new(
 		task_manager.spawn_handle(),
 		overrides.clone(),
 		50,
