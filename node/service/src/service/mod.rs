@@ -35,6 +35,7 @@ impl_runtime_apis![
 	darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>,
 	darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance>,
 	fp_rpc::EthereumRuntimeRPCApi<Block>,
+	fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	dp_evm_trace_apis::DebugRuntimeApi<Block>;
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 ];
