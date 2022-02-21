@@ -449,8 +449,6 @@ where
 						deny_unsafe,
 						is_authority,
 						network: network.clone(),
-						// TODO: FIX ME
-						enable_dev_signer: true,
 						babe: BabeDeps {
 							babe_config: babe_config.clone(),
 							shared_epoch_changes: shared_epoch_changes.clone(),

@@ -30,10 +30,10 @@ use jsonrpc_pubsub::manager::SubscriptionManager;
 use beefy_gadget_rpc::{BeefyApi, BeefyRpcHandler};
 use fc_db::Backend as FrontierBackend;
 use fc_rpc::{
-	EthApi, EthApiServer, EthBlockDataCache, EthDevSigner, EthFilterApi, EthFilterApiServer,
-	EthPubSubApi, EthPubSubApiServer, EthSigner, HexEncodedIdProvider, NetApi, NetApiServer,
-	OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, SchemaV2Override,
-	SchemaV3Override, StorageOverride, Web3Api, Web3ApiServer,
+	EthApi, EthApiServer, EthBlockDataCache, EthFilterApi, EthFilterApiServer, EthPubSubApi,
+	EthPubSubApiServer, HexEncodedIdProvider, NetApi, NetApiServer, OverrideHandle,
+	RuntimeApiStorageOverride, SchemaV1Override, SchemaV2Override, SchemaV3Override,
+	StorageOverride, Web3Api, Web3ApiServer,
 };
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use fp_storage::EthereumStorageSchema;
@@ -88,8 +88,6 @@ where
 	pub beefy: BeefyDeps,
 	/// The Node authority flag
 	pub is_authority: bool,
-	/// Whether to enable dev signer
-	pub enable_dev_signer: bool,
 	/// Network service
 	pub network: Arc<NetworkService<Block, Hash>>,
 	/// EthFilterApi pool.
@@ -251,7 +249,6 @@ where
 				subscription_executor: beefy_subscription_executor,
 			},
 		is_authority,
-		enable_dev_signer,
 		network,
 		filter_pool,
 		backend,
@@ -301,17 +298,13 @@ where
 	io.extend_with(StakingApi::to_delegate(Staking::new(client.clone())));
 	io.extend_with(FeeMarketApi::to_delegate(FeeMarket::new(client.clone())));
 
-	let mut signers = Vec::new();
-	if enable_dev_signer {
-		signers.push(Box::new(EthDevSigner::new()) as Box<dyn EthSigner>);
-	}
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
 		graph,
 		Some(eth_transaction_convertor),
 		network.clone(),
-		signers,
+		vec![],
 		overrides.clone(),
 		backend.clone(),
 		is_authority,
