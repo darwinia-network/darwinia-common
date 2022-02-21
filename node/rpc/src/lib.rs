@@ -28,7 +28,7 @@ use jsonrpc_core::IoHandler;
 use jsonrpc_pubsub::manager::SubscriptionManager;
 // --- paritytech ---
 use beefy_gadget_rpc::{BeefyApi, BeefyRpcHandler};
-use fc_db::Backend as FrontierBackend;
+use fc_db::Backend as DvmBackend;
 use fc_rpc::{
 	EthApi, EthApiServer, EthBlockDataCache, EthFilterApi, EthFilterApiServer, EthPubSubApi,
 	EthPubSubApiServer, HexEncodedIdProvider, NetApi, NetApiServer, OverrideHandle,
@@ -72,8 +72,6 @@ where
 	pub client: Arc<C>,
 	/// Transaction pool instance.
 	pub pool: Arc<P>,
-	/// Graph pool instance.
-	pub graph: Arc<sc_transaction_pool::Pool<A>>,
 	/// The SelectChain Strategy
 	pub select_chain: SC,
 	/// A copy of the chain spec.
@@ -86,24 +84,10 @@ where
 	pub grandpa: GrandpaDeps<B>,
 	/// BEEFY specific dependencies.
 	pub beefy: BeefyDeps,
-	/// The Node authority flag
-	pub is_authority: bool,
-	/// Network service
-	pub network: Arc<NetworkService<Block, Hash>>,
-	/// EthFilterApi pool.
-	pub filter_pool: Option<FilterPool>,
-	/// Backend.
-	pub backend: Arc<FrontierBackend<Block>>,
 	/// Rpc requester for evm trace
 	pub tracing_requesters: RpcRequesters,
-	/// Rpc Config
-	pub rpc_config: RpcConfig,
-	/// Fee history cache.
-	pub fee_history_cache: FeeHistoryCache,
-	/// Ethereum data access overrides.
-	pub overrides: Arc<OverrideHandle<Block>>,
-	/// Cache for Ethereum block data.
-	pub block_data_cache: Arc<EthBlockDataCache<Block>>,
+	/// DVM related rpc helper
+	pub rpc_helper: RpcHelper<A>,
 }
 
 /// Light client extra dependencies.
@@ -226,7 +210,6 @@ where
 	let FullDeps {
 		client,
 		pool,
-		graph,
 		select_chain,
 		chain_spec,
 		deny_unsafe,
@@ -248,16 +231,22 @@ where
 				beefy_commitment_stream,
 				subscription_executor: beefy_subscription_executor,
 			},
+		tracing_requesters,
+		rpc_helper,
+	} = deps;
+
+	let RpcHelper {
+		rpc_config,
+		graph,
 		is_authority,
 		network,
 		filter_pool,
 		backend,
-		tracing_requesters,
-		rpc_config,
 		fee_history_cache,
 		overrides,
 		block_data_cache,
-	} = deps;
+	} = rpc_helper;
+
 	let mut io = jsonrpc_core::IoHandler::default();
 
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(
@@ -425,4 +414,25 @@ where
 		schemas: overrides_map,
 		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
 	})
+}
+
+pub struct RpcHelper<A: sc_transaction_pool::ChainApi> {
+	/// DVM related Rpc Config
+	pub rpc_config: RpcConfig,
+	/// Graph pool instance.
+	pub graph: Arc<sc_transaction_pool::Pool<A>>,
+	/// The Node authority flag
+	pub is_authority: bool,
+	/// Network service
+	pub network: Arc<NetworkService<Block, Hash>>,
+	/// EthFilterApi pool.
+	pub filter_pool: Option<FilterPool>,
+	/// DVM Backend.
+	pub backend: Arc<DvmBackend<Block>>,
+	/// Fee history cache.
+	pub fee_history_cache: FeeHistoryCache,
+	/// Ethereum data access overrides.
+	pub overrides: Arc<OverrideHandle<Block>>,
+	// Cache for Ethereum block data.
+	pub block_data_cache: Arc<EthBlockDataCache<Block>>,
 }

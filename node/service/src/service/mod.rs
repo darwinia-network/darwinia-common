@@ -99,7 +99,7 @@ use substrate_prometheus_endpoint::Registry;
 use crate::service::dvm_tasks::DvmTasksParams;
 use drml_common_primitives::{AccountId, Balance, Nonce, OpaqueBlock as Block, Power};
 use drml_rpc::{
-	BabeDeps, BeefyDeps, FullDeps, GrandpaDeps, LightDeps, RpcConfig, RpcExtension,
+	BabeDeps, BeefyDeps, FullDeps, GrandpaDeps, LightDeps, RpcConfig, RpcExtension, RpcHelper,
 	SubscriptionTaskExecutor,
 };
 use fc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
@@ -443,12 +443,9 @@ where
 					FullDeps {
 						client: client.clone(),
 						pool: transaction_pool.clone(),
-						graph: transaction_pool.pool().clone(),
 						select_chain: select_chain.clone(),
 						chain_spec: chain_spec.cloned_box(),
 						deny_unsafe,
-						is_authority,
-						network: network.clone(),
 						babe: BabeDeps {
 							babe_config: babe_config.clone(),
 							shared_epoch_changes: shared_epoch_changes.clone(),
@@ -465,13 +462,18 @@ where
 							beefy_commitment_stream: beefy_commitment_stream.clone(),
 							subscription_executor,
 						},
-						backend: dvm_backend.clone(),
-						filter_pool: filter_pool.clone(),
 						tracing_requesters: tracing_requesters.clone(),
-						rpc_config: rpc_config.clone(),
-						fee_history_cache: fee_history_cache.clone(),
-						overrides: overrides.clone(),
-						block_data_cache: block_data_cache.clone(),
+						rpc_helper: RpcHelper {
+							is_authority,
+							rpc_config: rpc_config.clone(),
+							graph: transaction_pool.pool().clone(),
+							network: network.clone(),
+							filter_pool: filter_pool.clone(),
+							backend: dvm_backend.clone(),
+							fee_history_cache: fee_history_cache.clone(),
+							overrides: overrides.clone(),
+							block_data_cache: block_data_cache.clone(),
+						},
 					},
 					subscription_task_executor.clone(),
 					eth_transaction_convertor.clone(),

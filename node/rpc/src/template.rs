@@ -25,7 +25,7 @@ use crate::*;
 use dc_rpc::{Debug, DebugApiServer, Trace, TraceApiServer};
 use template_runtime::TransactionConverter;
 // --- paritytech ---
-use fc_db::Backend as FrontierBackend;
+use fc_db::Backend as DvmBackend;
 use fc_rpc::{
 	EthApi, EthApiServer, EthBlockDataCache, EthDevSigner, EthFilterApi, EthFilterApiServer,
 	EthPubSubApi, EthPubSubApiServer, EthSigner, HexEncodedIdProvider, NetApi, NetApiServer,
@@ -57,7 +57,7 @@ pub struct FullDeps<C, P, A: ChainApi> {
 	/// EthFilterApi pool.
 	pub filter_pool: Option<FilterPool>,
 	/// Backend.
-	pub backend: Arc<FrontierBackend<Block>>,
+	pub backend: Arc<DvmBackend<Block>>,
 	/// Rpc requester for evm trace
 	pub tracing_requesters: RpcRequesters,
 	/// Rpc Config
