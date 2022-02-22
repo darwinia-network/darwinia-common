@@ -312,11 +312,10 @@ where
 }
 
 #[cfg(feature = "full-node")]
-fn new_full<RuntimeApi, Executor, CT>(
+fn new_full<RuntimeApi, Executor>(
 	mut config: Configuration,
 	authority_discovery_disabled: bool,
 	rpc_config: RpcConfig,
-	eth_transaction_convertor: CT,
 ) -> Result<
 	(
 		TaskManager,
@@ -331,7 +330,6 @@ where
 		'static + Send + Sync + ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>>,
 	RuntimeApi::RuntimeApi:
 		RuntimeApiCollection<StateBackend = StateBackendFor<FullBackend, Block>>,
-	CT: 'static + Clone + Send + Sync + fp_rpc::ConvertTransaction<sp_runtime::OpaqueExtrinsic>,
 {
 	let role = config.role.clone();
 	let is_authority = role.is_authority();
@@ -477,7 +475,6 @@ where
 						},
 					},
 					subscription_task_executor.clone(),
-					eth_transaction_convertor.clone(),
 				)
 				.map_err(Into::into)
 			},

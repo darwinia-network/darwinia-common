@@ -36,6 +36,7 @@ use fc_rpc::{
 	StorageOverride, Web3Api, Web3ApiServer,
 };
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
+use fp_rpc::NoTransactionConverter;
 use fp_storage::EthereumStorageSchema;
 use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 use sc_consensus_babe_rpc::{BabeApi, BabeRpcHandler};
@@ -175,10 +176,9 @@ impl FromStr for EthApiCmd {
 }
 
 /// Instantiate all RPC extensions.
-pub fn create_full<C, P, SC, B, A, CT>(
+pub fn create_full<C, P, SC, B, A>(
 	deps: FullDeps<C, P, SC, B, A>,
 	subscription_task_executor: SubscriptionTaskExecutor,
-	eth_transaction_convertor: CT,
 ) -> RpcResult
 where
 	C: 'static
@@ -205,7 +205,6 @@ where
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<Hashing>,
 	A: sc_transaction_pool::ChainApi<Block = Block> + 'static,
-	CT: 'static + Send + Sync + fp_rpc::ConvertTransaction<sp_runtime::OpaqueExtrinsic>,
 {
 	let FullDeps {
 		client,
@@ -287,11 +286,12 @@ where
 	io.extend_with(StakingApi::to_delegate(Staking::new(client.clone())));
 	io.extend_with(FeeMarketApi::to_delegate(FeeMarket::new(client.clone())));
 
+	let convert_transaction: Option<NoTransactionConverter> = None;
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
 		graph,
-		Some(eth_transaction_convertor),
+		convert_transaction,
 		network.clone(),
 		vec![],
 		overrides.clone(),

@@ -2336,6 +2336,7 @@ dependencies = [
  "dc-rpc",
  "dp-evm-trace-apis",
  "drml-common-primitives",
+ "dvm-ethereum",
  "fc-db",
  "fc-rpc",
  "fc-rpc-core",
