@@ -100,13 +100,17 @@ pub fn frontier_database_dir(config: &Configuration) -> PathBuf {
 	config_dir.join("frontier").join("db")
 }
 
-pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<Backend<Block>>, String> {
-	Ok(Arc::new(Backend::<Block>::new(&DatabaseSettings {
-		source: DatabaseSettingsSrc::RocksDb {
-			path: frontier_database_dir(&config),
-			cache_size: 0,
+pub fn open_frontier_backend(
+	config: &Configuration,
+) -> Result<Arc<FrontierBackend<Block>>, String> {
+	Ok(Arc::new(FrontierBackend::<Block>::new(
+		&DatabaseSettings {
+			source: DatabaseSettingsSrc::RocksDb {
+				path: frontier_database_dir(&config),
+				cache_size: 0,
+			},
 		},
-	})?))
+	)?))
 }
 
 pub fn new_partial(

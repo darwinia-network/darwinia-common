@@ -28,7 +28,7 @@ dvm-ethereum                        = { path = "../../frame/dvm" }
 darwinia-fee-market-rpc-runtime-api = { path = "../../frame/fee-market/rpc/runtime-api" }
 darwinia-staking                    = { path = "../../frame/staking" }
 darwinia-staking-rpc-runtime-api    = { path = "../../frame/staking/rpc/runtime-api" }
-dc-rpc                              = { path = "../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }
+dc-rpc                              = { path = "../../client/dvm/rpc" }
 dp-evm-trace-apis                   = { path = "../../primitives/evm-trace/apis" }
 dp-evm-trace-ext                    = { path = "../../primitives/evm-trace/ext" }
 drml-common-primitives              = { path = "../primitives/common" }
@@ -76,7 +76,7 @@ sp-trie                                    = { git = "https://github.com/darwini
 substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
 fc-db           = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
-fc-rpc          = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
+fc-rpc          = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp", features = ["rpc_binary_search_estimate"] }
 fc-rpc-core     = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
 fc-mapping-sync = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
 fp-rpc          = { git = "https://github.com/darwinia-network/frontier", branch = "udpate-tmp" }
