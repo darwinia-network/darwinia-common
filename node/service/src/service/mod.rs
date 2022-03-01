@@ -401,8 +401,8 @@ where
 	let block_data_cache = Arc::new(EthBlockDataCache::new(
 		task_manager.spawn_handle(),
 		overrides.clone(),
-		50,
-		50,
+		rpc_config.eth_log_block_cache,
+		rpc_config.eth_log_block_cache,
 	));
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
 	let tracing_requesters = dvm_tasks::spawn(DvmTasksParams {
