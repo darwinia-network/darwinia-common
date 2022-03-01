@@ -979,7 +979,7 @@ fn migrate() -> Weight {
 
 	frame_support::storage::unhashed::put::<EthereumStorageSchema>(
 		&PALLET_ETHEREUM_SCHEMA,
-		&EthereumStorageSchema::V2,
+		&EthereumStorageSchema::V3,
 	);
 
 	// 0
