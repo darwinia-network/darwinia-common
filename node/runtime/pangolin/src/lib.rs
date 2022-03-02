@@ -144,7 +144,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 0,
-	spec_version: 2_8_04_0,
+	spec_version: 2_8_05_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -955,28 +955,7 @@ sp_runtime::impl_opaque_keys! {
 	}
 }
 
-fn transform_session_keys(v: AccountId, old: OldSessionKeys) -> SessionKeys {
-	SessionKeys {
-		babe: old.babe,
-		grandpa: old.grandpa,
-		beefy: {
-			// We need to produce a dummy value that's unique for the validator.
-			let mut id = BeefyId::default();
-			let id_raw: &mut [u8] = id.as_mut();
-
-			id_raw.copy_from_slice(v.as_ref());
-			id_raw[0..4].copy_from_slice(b"beef");
-
-			id
-		},
-		im_online: old.im_online,
-		authority_discovery: old.authority_discovery,
-	}
-}
-
 fn migrate() -> Weight {
-	Session::upgrade_keys::<OldSessionKeys, _>(transform_session_keys);
-
 	frame_support::storage::unhashed::put::<EthereumStorageSchema>(
 		&PALLET_ETHEREUM_SCHEMA,
 		&EthereumStorageSchema::V3,

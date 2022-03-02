@@ -31,6 +31,17 @@ use sp_runtime::{
 	MultiSignature, OpaqueExtrinsic,
 };
 
+macro_rules! development_or_production {
+	($doc:expr, $name:ident, $type:ty, $development_value:expr, $production_value:expr) => {
+		#[doc = $doc]
+		#[cfg(feature = "fast-runtime")]
+		pub const $name: $type = $development_value;
+		#[doc = $doc]
+		#[cfg(not(feature = "fast-runtime"))]
+		pub const $name: $type = $production_value;
+	};
+}
+
 /// An index to a block.
 /// 32-bits will allow for 136 years of blocks assuming 1 block per second.
 pub type BlockNumber = u32;
@@ -115,21 +126,52 @@ pub const MILLISECS_PER_BLOCK: Moment = 6000;
 
 /// Minute in Pangoro/Pangolin.
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-/// Hour in Pangoro/Pangolin.
-pub const HOURS: BlockNumber = 60 * MINUTES;
-/// Day in Pangoro/Pangolin.
-pub const DAYS: BlockNumber = 24 * HOURS;
+development_or_production! {
+	"Hour in Pangoro/Pangolin.",
+	HOURS,
+	BlockNumber,
+	2 * MINUTES,
+	60 * MINUTES
+}
+development_or_production! {
+	"Day in Pangoro/Pangolin.",
+	DAYS,
+	BlockNumber,
+	2 * HOURS,
+	24 * HOURS
+}
+
 /// Slot duration in Pangoro/Pangolin.
 pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
 
-/// Session length of Pangolin.
-pub const PANGOLIN_BLOCKS_PER_SESSION: BlockNumber = 30 * MINUTES;
-/// Era length of Pangolin.
-pub const PANGOLIN_SESSIONS_PER_ERA: BlockNumber = 3;
-/// Session length of Pangoro.
-pub const PANGORO_BLOCKS_PER_SESSION: BlockNumber = 2 * HOURS;
-/// Era length of Pangoro.
-pub const PANGORO_SESSIONS_PER_ERA: BlockNumber = 3;
+development_or_production! {
+	"Session length of Pangolin.",
+	PANGOLIN_BLOCKS_PER_SESSION,
+	BlockNumber,
+	MINUTES / 2,
+	30 * MINUTES
+}
+development_or_production! {
+	"Era length of Pangolin.",
+	PANGOLIN_SESSIONS_PER_ERA,
+	BlockNumber,
+	1,
+	3
+}
+development_or_production! {
+	"Session length of Pangoro.",
+	PANGORO_BLOCKS_PER_SESSION,
+	BlockNumber,
+	MINUTES / 2,
+	2 * HOURS
+}
+development_or_production! {
+	"Era length of Pangoro.",
+	PANGORO_SESSIONS_PER_ERA,
+	BlockNumber,
+	1,
+	3
+}
 
 /// 1 in 4 blocks (on average, not counting collisions) will be primary BABE blocks.
 pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
