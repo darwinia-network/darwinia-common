@@ -946,15 +946,6 @@ sp_api::impl_runtime_apis! {
 	}
 }
 
-sp_runtime::impl_opaque_keys! {
-	pub struct OldSessionKeys {
-		pub babe: Babe,
-		pub grandpa: Grandpa,
-		pub im_online: ImOnline,
-		pub authority_discovery: AuthorityDiscovery,
-	}
-}
-
 fn migrate() -> Weight {
 	frame_support::storage::unhashed::put::<EthereumStorageSchema>(
 		&PALLET_ETHEREUM_SCHEMA,

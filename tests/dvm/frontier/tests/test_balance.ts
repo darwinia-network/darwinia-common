@@ -19,11 +19,7 @@ describeWithFrontier("Frontier RPC (Balance)", (context) => {
 		const tx = await context.web3.eth.accounts.signTransaction({
 			from: GENESIS_ACCOUNT,
 			to: TEST_ACCOUNT,
-<<<<<<< HEAD
 			value: "0x200",
-=======
-			value: "0x200", // Must me higher than ExistentialDeposit (500)
->>>>>>> main
 			gasPrice: "0x3B9ACA00",
 			gas: "0x100000",
 		}, GENESIS_ACCOUNT_PRIVATE_KEY);
@@ -33,12 +29,7 @@ describeWithFrontier("Frontier RPC (Balance)", (context) => {
 		expect(await context.web3.eth.getBalance(GENESIS_ACCOUNT, "pending")).to.equal(expectedGenesisBalance);
 		expect(await context.web3.eth.getBalance(TEST_ACCOUNT, "pending")).to.equal(expectedTestBalance);
 		await createAndFinalizeBlock(context.web3);
-<<<<<<< HEAD
 		expect(await context.web3.eth.getBalance(GENESIS_ACCOUNT)).to.equal(expectedGenesisBalance);
 		expect(await context.web3.eth.getBalance(TEST_ACCOUNT)).to.equal(expectedTestBalance);
-=======
-		expect(await context.web3.eth.getBalance(GENESIS_ACCOUNT)).to.equal("340282366920938463463374586431768210943");
-		expect(await context.web3.eth.getBalance(TEST_ACCOUNT)).to.equal("512");
->>>>>>> main
 	});
 });

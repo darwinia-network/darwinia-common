@@ -22,11 +22,7 @@ describeWithFrontier("Frontier RPC (Transaction Version)", (context) => {
 	}
 
 	step("should handle EIP-2930 transaction type 1", async function () {
-<<<<<<< HEAD
 		let tx = {
-=======
-		const tx_hash = (await sendTransaction(context, {
->>>>>>> main
 			from: GENESIS_ACCOUNT,
 			data: TEST_CONTRACT_BYTECODE,
 			value: "0x00",
@@ -35,19 +31,13 @@ describeWithFrontier("Frontier RPC (Transaction Version)", (context) => {
 			accessList: [],
 			nonce: 0,
 			gasLimit: "0x100000",
-<<<<<<< HEAD
 			chainId: 42,
 		};
 		const tx_hash = (await sendTransaction(context, tx)).hash;
-=======
-			chainId: 42
-		})).hash;
->>>>>>> main
 		await createAndFinalizeBlock(context.web3);
 		const latest = await context.web3.eth.getBlock("latest");
 		expect(latest.transactions.length).to.be.eq(1);
 		expect(latest.transactions[0]).to.be.eq(tx_hash);
-<<<<<<< HEAD
 
 		let receipt = await context.web3.eth.getTransactionReceipt(tx_hash);
 		expect(receipt.transactionHash).to.be.eq(tx_hash);
@@ -55,12 +45,6 @@ describeWithFrontier("Frontier RPC (Transaction Version)", (context) => {
 
 	step("should handle EIP-1559 transaction type 2", async function () {
 		let tx = {
-=======
-	});
-
-	step("should handle EIP-1559 transaction type 2", async function () {
-		const tx_hash = (await sendTransaction(context, {
->>>>>>> main
 			from: GENESIS_ACCOUNT,
 			data: TEST_CONTRACT_BYTECODE,
 			value: "0x00",
@@ -69,23 +53,15 @@ describeWithFrontier("Frontier RPC (Transaction Version)", (context) => {
 			accessList: [],
 			nonce: 1,
 			gasLimit: "0x100000",
-<<<<<<< HEAD
 			chainId: 42,
 		};
 		const tx_hash = (await sendTransaction(context, tx)).hash;
-=======
-			chainId: 42
-		})).hash;
->>>>>>> main
 		await createAndFinalizeBlock(context.web3);
 		const latest = await context.web3.eth.getBlock("latest");
 		expect(latest.transactions.length).to.be.eq(1);
 		expect(latest.transactions[0]).to.be.eq(tx_hash);
-<<<<<<< HEAD
 
 		let receipt = await context.web3.eth.getTransactionReceipt(tx_hash);
 		expect(receipt.transactionHash).to.be.eq(tx_hash);
-=======
->>>>>>> main
 	});
 });
