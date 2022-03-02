@@ -21,7 +21,7 @@ describeWithFrontier("Frontier RPC (Revert Reason)", (context) => {
 				from: GENESIS_ACCOUNT,
 				data: REVERT_W_MESSAGE_BYTECODE,
 				value: "0x00",
-				gasPrice: "0x01",
+				gasPrice: "0x3B9ACA00",
 				gas: "0x100000",
 			},
 			GENESIS_ACCOUNT_PRIVATE_KEY
@@ -36,7 +36,7 @@ describeWithFrontier("Frontier RPC (Revert Reason)", (context) => {
 		this.timeout(15000);
 		const contract = new context.web3.eth.Contract(TEST_CONTRACT_ABI, contractAddress, {
 			from: GENESIS_ACCOUNT,
-			gasPrice: "0x01",
+			gasPrice: "0x3B9ACA00",
 		});
 		try {
 			await contract.methods.max10(30).call();

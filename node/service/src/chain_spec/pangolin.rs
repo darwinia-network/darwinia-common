@@ -293,6 +293,7 @@ pub fn genesis_config() -> ChainSpec {
 			},
 			evm: EVMConfig { accounts: evm_accounts },
 			ethereum: Default::default(),
+			base_fee: Default::default(),
 			substrate_2_substrate_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
@@ -491,6 +492,7 @@ pub fn development_config() -> ChainSpec {
 			},
 			evm: EVMConfig { accounts: evm_accounts },
 			ethereum: Default::default(),
+			base_fee: Default::default(),
 			substrate_2_substrate_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
@@ -687,6 +689,7 @@ pub fn local_testnet_config() -> ChainSpec {
 			},
 			evm: EVMConfig { accounts: evm_accounts },
 			ethereum: Default::default(),
+			base_fee: Default::default(),
 			substrate_2_substrate_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},

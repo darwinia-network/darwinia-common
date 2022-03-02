@@ -130,6 +130,9 @@ pub use evm::*;
 pub mod dvm;
 pub use dvm::*;
 
+pub mod base_fee;
+pub use base_fee::*;
+
 pub mod bridge_messages;
 pub use bridge_messages::*;
 

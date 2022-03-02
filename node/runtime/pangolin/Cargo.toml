@@ -50,7 +50,6 @@ dp-s2s                                  = { default-features = false, path = "..
 drml-bridge-primitives                  = { default-features = false, path = "../../primitives/bridge" }
 drml-common-primitives                  = { default-features = false, path = "../../primitives/common" }
 dvm-ethereum                            = { default-features = false, path = "../../../frame/dvm" }
-dvm-rpc-runtime-api                     = { default-features = false, path = "../../../frame/dvm/rpc/runtime-api" }
 ethereum-primitives                     = { default-features = false, path = "../../../primitives/ethereum" }
 from-ethereum-issuing                   = { default-features = false, path = "../../../frame/wormhole/issuing/ethereum" }
 from-substrate-issuing                  = { default-features = false, path = "../../../frame/wormhole/issuing/s2s" }
@@ -124,7 +123,11 @@ sp-transaction-pool                        = { default-features = false, git = "
 sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
 fp-evm                       = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-rpc                       = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 fp-self-contained            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-storage                   = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+pallet-base-fee              = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+pallet-evm                   = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 
 [build-dependencies]
@@ -171,7 +174,6 @@ std = [
 	"drml-bridge-primitives/std",
 	"drml-common-primitives/std",
 	"dvm-ethereum/std",
-	"dvm-rpc-runtime-api/std",
 	"ethereum-primitives/std",
 	"from-ethereum-issuing/std",
 	"from-substrate-issuing/std",
@@ -242,7 +244,11 @@ std = [
 	"dp-evm-trace-apis/std",
 	# frontier
 	"fp-evm/std",
+	"fp-rpc/std",
 	"fp-self-contained/std",
+	"fp-storage/std",
+	"pallet-base-fee/std",
+	"pallet-evm/std",
 	"pallet-evm-precompile-simple/std",
 ]
 

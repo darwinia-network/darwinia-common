@@ -21,7 +21,10 @@ use codec::Decode;
 use ethabi::{Function, Param, ParamType, StateMutability, Token};
 use sha3::Digest;
 // --- paritytech ---
-use fp_evm::{Context, ExitError, ExitReason, ExitSucceed, PrecompileOutput};
+use fp_evm::{
+	Context, ExitError, ExitReason, ExitSucceed, PrecompileFailure, PrecompileOutput,
+	PrecompileResult,
+};
 use frame_support::ensure;
 use sp_core::{H160, U256};
 use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
@@ -41,11 +44,7 @@ pub enum Kton<T: frame_system::Config> {
 }
 
 impl<T: Config> Kton<T> {
-	pub fn transfer(
-		input: &[u8],
-		target_gas: Option<u64>,
-		context: &Context,
-	) -> core::result::Result<PrecompileOutput, ExitError> {
+	pub fn transfer(input: &[u8], target_gas: Option<u64>, context: &Context) -> PrecompileResult {
 		let action = which_action::<T>(&input)?;
 
 		match action {
@@ -55,39 +54,57 @@ impl<T: Config> Kton<T> {
 				// Ensure wkton is a contract
 				ensure!(
 					!<Pallet<T>>::is_contract_code_empty(&wkton),
-					ExitError::Other("Wkton must be a contract!".into())
+					PrecompileFailure::Error {
+						exit_status: ExitError::Other("Wkton must be a contract!".into()),
+					}
 				);
 				// Ensure context's apparent_value is zero, since the transfer value is encoded in input field
 				ensure!(
 					context.apparent_value == U256::zero(),
-					ExitError::Other("The value in tx must be zero!".into())
+					PrecompileFailure::Error {
+						exit_status: ExitError::Other("The value in tx must be zero!".into()),
+					}
 				);
 				// Ensure caller's balance is enough
 				ensure!(
 					T::KtonAccountBasic::account_basic(&caller).balance >= value,
-					ExitError::OutOfFund
+					PrecompileFailure::Error {
+						exit_status: ExitError::OutOfFund,
+					}
 				);
 
 				// Transfer kton from sender to KTON wrapped contract
-				T::KtonAccountBasic::transfer(&caller, &wkton, value)?;
+				T::KtonAccountBasic::transfer(&caller, &wkton, value)
+					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 				// Call WKTON wrapped contract deposit
 				let raw_input = make_call_data(caller, value)?;
 				if let Ok(call_res) = T::Runner::call(
-					array_bytes::hex_try_into(TRANSFER_ADDR)
-						.map_err(|_| ExitError::Other("Invalid transfer address".into()))?,
+					array_bytes::hex_try_into(TRANSFER_ADDR).map_err(|_| {
+						PrecompileFailure::Error {
+							exit_status: ExitError::Other("Invalid transfer address".into()),
+						}
+					})?,
 					wkton,
 					raw_input.to_vec(),
 					U256::zero(),
 					target_gas.unwrap_or_default(),
 					None,
 					None,
+					None,
+					Vec::new(),
 					T::config(),
 				) {
 					match call_res.exit_reason {
 						ExitReason::Succeed(_) => {
 							log::debug!("Transfer and call execute success.");
 						}
-						_ => return Err(ExitError::Other("Call in Kton precompile failed".into())),
+						_ => {
+							return Err(PrecompileFailure::Error {
+								exit_status: ExitError::Other(
+									"Call in Kton precompile failed".into(),
+								),
+							})
+						}
 					}
 				}
 
@@ -103,16 +120,25 @@ impl<T: Config> Kton<T> {
 				// Ensure wkton is a contract
 				ensure!(
 					!<Pallet<T>>::is_contract_code_empty(&source),
-					ExitError::Other("The caller must be wkton contract!".into())
+					PrecompileFailure::Error {
+						exit_status: ExitError::Other("The caller must be wkton contract!".into()),
+					}
 				);
 				// Ensure context's apparent_value is zero
 				ensure!(
 					context.apparent_value == U256::zero(),
-					ExitError::Other("The value in tx must be zero!".into())
+					PrecompileFailure::Error {
+						exit_status: ExitError::Other("The value in tx must be zero!".into()),
+					}
 				);
 				// Ensure source's balance is enough
 				let source_kton = T::KtonAccountBasic::account_basic(&source);
-				ensure!(source_kton.balance >= value, ExitError::OutOfFund);
+				ensure!(
+					source_kton.balance >= value,
+					PrecompileFailure::Error {
+						exit_status: ExitError::OutOfFund,
+					}
+				);
 
 				// Transfer
 				let new_source_kton_balance = source_kton.balance.saturating_sub(value);
@@ -133,7 +159,7 @@ impl<T: Config> Kton<T> {
 }
 
 /// which action depends on the function selector
-pub fn which_action<T: Config>(input_data: &[u8]) -> Result<Kton<T>, ExitError> {
+pub fn which_action<T: Config>(input_data: &[u8]) -> Result<Kton<T>, PrecompileFailure> {
 	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..SELECTOR];
 	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..SELECTOR];
 	if &input_data[0..SELECTOR] == transfer_and_call_action {
@@ -143,7 +169,9 @@ pub fn which_action<T: Config>(input_data: &[u8]) -> Result<Kton<T>, ExitError> 
 		let decoded_data = WithdrawData::decode(&input_data[SELECTOR..])?;
 		return Ok(Kton::Withdraw(decoded_data));
 	}
-	Err(ExitError::Other("Invalid Action！".into()))
+	Err(PrecompileFailure::Error {
+		exit_status: ExitError::Other("Invalid Action！".into()),
+	})
 }
 pub fn is_kton_transfer(data: &[u8]) -> bool {
 	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..SELECTOR];
@@ -154,7 +182,7 @@ pub fn is_kton_transfer(data: &[u8]) -> bool {
 fn make_call_data(
 	sp_address: sp_core::H160,
 	sp_value: sp_core::U256,
-) -> Result<Vec<u8>, ExitError> {
+) -> Result<Vec<u8>, PrecompileFailure> {
 	let eth_address = util::s2e_address(sp_address);
 	let eth_value = util::s2e_u256(sp_value);
 	#[allow(deprecated)]
@@ -177,7 +205,9 @@ fn make_call_data(
 		state_mutability: StateMutability::NonPayable,
 	};
 	func.encode_input(&[Token::Address(eth_address), Token::Uint(eth_value)])
-		.map_err(|_| ExitError::Other("Make call data error happened".into()))
+		.map_err(|_| PrecompileFailure::Error {
+			exit_status: ExitError::Other("Make call data error happened".into()),
+		})
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -187,15 +217,21 @@ pub struct CallData {
 }
 
 impl CallData {
-	pub fn decode(data: &[u8]) -> Result<Self, ExitError> {
-		let tokens = ethabi::decode(&[ParamType::Address, ParamType::Uint(256)], &data)
-			.map_err(|_| ExitError::Other("ethabi decoded error".into()))?;
+	pub fn decode(data: &[u8]) -> Result<Self, PrecompileFailure> {
+		let tokens =
+			ethabi::decode(&[ParamType::Address, ParamType::Uint(256)], &data).map_err(|_| {
+				PrecompileFailure::Error {
+					exit_status: ExitError::Other("ethabi decoded error".into()),
+				}
+			})?;
 		match (tokens[0].clone(), tokens[1].clone()) {
 			(Token::Address(eth_wkton_address), Token::Uint(eth_value)) => Ok(CallData {
 				wkton_address: util::e2s_address(eth_wkton_address),
 				value: util::e2s_u256(eth_value),
 			}),
-			_ => Err(ExitError::Other("Invlid call data".into())),
+			_ => Err(PrecompileFailure::Error {
+				exit_status: ExitError::Other("Invlid call data".into()),
+			}),
 		}
 	}
 }
@@ -207,18 +243,24 @@ pub struct WithdrawData<T: frame_system::Config> {
 }
 
 impl<T: frame_system::Config> WithdrawData<T> {
-	pub fn decode(data: &[u8]) -> Result<Self, ExitError> {
+	pub fn decode(data: &[u8]) -> Result<Self, PrecompileFailure> {
 		let tokens = ethabi::decode(&[ParamType::FixedBytes(32), ParamType::Uint(256)], &data)
-			.map_err(|_| ExitError::Other("ethabi decoded error".into()))?;
+			.map_err(|_| PrecompileFailure::Error {
+				exit_status: ExitError::Other("ethabi decoded error".into()),
+			})?;
 		match (tokens[0].clone(), tokens[1].clone()) {
 			(Token::FixedBytes(address), Token::Uint(eth_value)) => Ok(WithdrawData {
 				to_account_id: <T as frame_system::Config>::AccountId::decode(
 					&mut address.as_ref(),
 				)
-				.map_err(|_| ExitError::Other("Invalid destination address".into()))?,
+				.map_err(|_| PrecompileFailure::Error {
+					exit_status: ExitError::Other("Invalid destination address".into()),
+				})?,
 				kton_value: util::e2s_u256(eth_value),
 			}),
-			_ => Err(ExitError::Other("Invlid withdraw input data".into())),
+			_ => Err(PrecompileFailure::Error {
+				exit_status: ExitError::Other("Invalid withdraw input data".into()),
+			}),
 		}
 	}
 }

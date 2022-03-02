@@ -234,6 +234,7 @@ pub fn genesis_config() -> ChainSpec {
 				accounts: evm_accounts,
 			},
 			ethereum: Default::default(),
+			base_fee: Default::default(),
 			bsc: BscConfig {
 				genesis_header: serde_json::from_str(r#"{
 					"difficulty": "0x2",
@@ -375,6 +376,7 @@ pub fn development_config() -> ChainSpec {
 				accounts: evm_accounts,
 			},
 			ethereum: Default::default(),
+			base_fee: Default::default(),
 			bsc: BscConfig {
 				genesis_header: serde_json::from_str(r#"{
 					"difficulty": "0x2",

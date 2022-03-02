@@ -76,7 +76,7 @@ fn register_and_issue_from_remote_success() {
 	let (pairs, mut ext) = new_test_ext(1);
 	let alice = &pairs[0];
 	ext.execute_with(|| {
-		let t = UnsignedTransaction {
+		let t = LegacyUnsignedTransaction {
 			nonce: U256::zero(),
 			gas_price: U256::from(1),
 			gas_limit: U256::from(0x100000),
@@ -85,16 +85,7 @@ fn register_and_issue_from_remote_success() {
 			input: hex2bytes_unchecked(TEST_CONTRACT_BYTECODE),
 		}
 		.sign(&alice.private_key);
-		assert_ok!(Ethereum::execute(
-			alice.address,
-			t.input,
-			t.value,
-			t.gas_limit,
-			Some(t.gas_price),
-			Some(t.nonce),
-			t.action,
-			None,
-		));
+		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 		let mapping_token_factory_address: H160 =
 			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
 		assert_ok!(S2sIssuing::set_mapping_factory_address(

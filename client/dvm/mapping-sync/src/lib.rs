@@ -20,10 +20,9 @@ mod worker;
 
 pub use worker::{MappingSyncWorker, SyncStrategy};
 
-// --- darwinia-network ---
-use dp_consensus::FindLogError;
-use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 // --- paritytech ---
+use fp_consensus::FindLogError;
+use fp_rpc::EthereumRuntimeRPCApi;
 use sc_client_api::BlockOf;
 use sp_api::{ApiExt, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
@@ -36,7 +35,7 @@ pub fn sync_block<Block: BlockT>(
 	backend: &dc_db::Backend<Block>,
 	header: &Block::Header,
 ) -> Result<(), String> {
-	match dp_consensus::find_log(header.digest()) {
+	match fp_consensus::find_log(header.digest()) {
 		Ok(log) => {
 			let post_hashes = log.into_hashes();
 

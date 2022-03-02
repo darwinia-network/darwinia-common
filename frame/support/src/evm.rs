@@ -17,14 +17,14 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- crates.io ---
-use ethereum::LegacyTransactionMessage;
+use ethereum::TransactionV2 as Transaction;
 use sha3::{Digest, Keccak256};
 // --- darwinia-network ---
 use ethereum_primitives::{H160, H256, U256};
 // --- paritytech ---
 use frame_support::PalletId;
 use sp_runtime::{traits::AccountIdConversion, AccountId32};
-use sp_std::{marker::PhantomData, vec::Vec};
+use sp_std::marker::PhantomData;
 
 pub const POW_9: u32 = 1_000_000_000;
 /// The default gas limit for the internal transaction
@@ -89,62 +89,34 @@ where
 	}
 }
 
-pub fn recover_signer(transaction: &ethereum::TransactionV0) -> Option<H160> {
+pub fn recover_signer(transaction: &Transaction) -> Option<H160> {
 	let mut sig = [0u8; 65];
 	let mut msg = [0u8; 32];
-	sig[0..32].copy_from_slice(&transaction.signature.r()[..]);
-	sig[32..64].copy_from_slice(&transaction.signature.s()[..]);
-	sig[64] = transaction.signature.standard_v();
-	msg.copy_from_slice(&LegacyTransactionMessage::from(transaction.clone()).hash()[..]);
+	match transaction {
+		Transaction::Legacy(t) => {
+			sig[0..32].copy_from_slice(&t.signature.r()[..]);
+			sig[32..64].copy_from_slice(&t.signature.s()[..]);
+			sig[64] = t.signature.standard_v();
+			msg.copy_from_slice(&ethereum::LegacyTransactionMessage::from(t.clone()).hash()[..]);
+		}
+		Transaction::EIP2930(t) => {
+			sig[0..32].copy_from_slice(&t.r[..]);
+			sig[32..64].copy_from_slice(&t.s[..]);
+			sig[64] = t.odd_y_parity as u8;
+			msg.copy_from_slice(&ethereum::EIP2930TransactionMessage::from(t.clone()).hash()[..]);
+		}
+		Transaction::EIP1559(t) => {
+			sig[0..32].copy_from_slice(&t.r[..]);
+			sig[32..64].copy_from_slice(&t.s[..]);
+			sig[64] = t.odd_y_parity as u8;
+			msg.copy_from_slice(&ethereum::EIP1559TransactionMessage::from(t.clone()).hash()[..]);
+		}
+	}
 
 	let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg).ok()?;
 	Some(H160::from(H256::from_slice(
 		Keccak256::digest(&pubkey).as_slice(),
 	)))
-}
-
-/// The dvm transaction used by inner pallets, such as ethereum-issuing.
-pub struct DVMTransaction {
-	/// gas price wrapped by Option
-	pub gas_price: Option<U256>,
-	/// the transaction defined in ethereum lib
-	pub tx: ethereum::TransactionV0,
-}
-
-impl From<ethereum::TransactionV0> for DVMTransaction {
-	fn from(transaction: ethereum::TransactionV0) -> Self {
-		Self {
-			gas_price: Some(transaction.gas_price),
-			tx: transaction,
-		}
-	}
-}
-
-pub fn new_internal_transaction(nonce: U256, target: H160, input: Vec<u8>) -> DVMTransaction {
-	let transaction = ethereum::TransactionV0 {
-		nonce,
-		// Not used, and will be overwritten by None later.
-		gas_price: U256::zero(),
-		gas_limit: U256::from(INTERNAL_TX_GAS_LIMIT),
-		action: ethereum::TransactionAction::Call(target),
-		value: U256::zero(),
-		input,
-		signature: ethereum::TransactionSignature::new(
-			// Reference https://github.com/ethereum/EIPs/issues/155
-			//
-			// But this transaction is sent by darwinia-issuing system from `0x0`
-			// So ignore signature checking, simply set `chain_id` to `1`
-			1 * 2 + 36,
-			H256::from_slice(&[55u8; 32]),
-			H256::from_slice(&[55u8; 32]),
-		)
-		.unwrap(),
-	};
-
-	DVMTransaction {
-		gas_price: None,
-		tx: transaction,
-	}
 }
 
 /// Decimal conversion from RING/KTON to Ethereum decimal format.

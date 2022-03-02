@@ -20,7 +20,7 @@
 use std::str::FromStr;
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
-use ethereum::{TransactionAction, TransactionSignature, TransactionV0};
+use ethereum::{TransactionAction, TransactionSignature};
 use rlp::RlpStream;
 use scale_info::TypeInfo;
 use sha3::{Digest, Keccak256};
@@ -30,6 +30,7 @@ use frame_support::{
 	PalletId,
 };
 use frame_system::mocking::*;
+use pallet_evm::FeeCalculator;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -39,14 +40,14 @@ use sp_runtime::{
 use crate::{
 	*, {self as s2s_issuing},
 };
-use darwinia_evm::{EnsureAddressTruncated, FeeCalculator, SubstrateBlockHashMapping};
+use darwinia_evm::{EVMCurrencyAdapter, EnsureAddressTruncated, SubstrateBlockHashMapping};
 use darwinia_support::{
 	evm::IntoAccountId,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
 };
 use dvm_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
-	IntermediateStateRoot, RawOrigin,
+	IntermediateStateRoot, RawOrigin, Transaction,
 };
 
 type Block = MockBlock<Test>;
@@ -212,7 +213,8 @@ impl darwinia_evm::Config for Test {
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type IntoAccountId = HashedConverter;
 	type Event = ();
-	type Precompiles = ();
+	type PrecompilesType = ();
+	type PrecompilesValue = ();
 	type FindAuthor = ();
 	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
 	type ChainId = ChainId;
@@ -220,6 +222,7 @@ impl darwinia_evm::Config for Test {
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
+	type OnChargeTransaction = EVMCurrencyAdapter;
 }
 
 frame_support::parameter_types! {
@@ -350,7 +353,7 @@ pub struct AccountInfo {
 	pub private_key: H256,
 }
 
-pub struct UnsignedTransaction {
+pub struct LegacyUnsignedTransaction {
 	pub nonce: U256,
 	pub gas_price: U256,
 	pub gas_limit: U256,
@@ -358,7 +361,7 @@ pub struct UnsignedTransaction {
 	pub value: U256,
 	pub input: Vec<u8>,
 }
-impl UnsignedTransaction {
+impl LegacyUnsignedTransaction {
 	fn signing_rlp_append(&self, s: &mut RlpStream) {
 		s.begin_list(9);
 		s.append(&self.nonce);
@@ -378,7 +381,7 @@ impl UnsignedTransaction {
 		H256::from_slice(&Keccak256::digest(&stream.out()).as_slice())
 	}
 
-	pub fn sign(&self, key: &H256) -> TransactionV0 {
+	pub fn sign(&self, key: &H256) -> Transaction {
 		let hash = self.signing_hash();
 		let msg = libsecp256k1::Message::parse(hash.as_fixed_bytes());
 		let s = libsecp256k1::sign(
@@ -394,7 +397,7 @@ impl UnsignedTransaction {
 		)
 		.unwrap();
 
-		TransactionV0 {
+		Transaction::Legacy(ethereum::LegacyTransaction {
 			nonce: self.nonce,
 			gas_price: self.gas_price,
 			gas_limit: self.gas_limit,
@@ -402,7 +405,7 @@ impl UnsignedTransaction {
 			value: self.value,
 			input: self.input.clone(),
 			signature: sig,
-		}
+		})
 	}
 }
 

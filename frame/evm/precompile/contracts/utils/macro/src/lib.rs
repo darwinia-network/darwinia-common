@@ -78,10 +78,12 @@ pub fn selector(_: TokenStream, input: TokenStream) -> TokenStream {
 		}
 
 		impl #ident {
-			pub fn from_u32(value: u32) -> Result<Self, ExitError> {
+			pub fn from_u32(value: u32) -> Result<Self, PrecompileFailure> {
 				match value {
 					#(#variant_expressions => Ok(#ident::#ident_expressions),)*
-					_ => Err(ExitError::Other("mismatch the enum value".into()))
+					_ => Err(PrecompileFailure::Error {
+						exit_status: ExitError::Other("mismatch the enum value".into()),
+					})
 				}
 			}
 		}

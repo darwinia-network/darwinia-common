@@ -22,7 +22,6 @@ dc-rpc                  = { path = "../../client/dvm/rpc", features = ["rpc_bina
 dp-evm-trace-apis       = { path = "../../primitives/evm-trace/apis" }
 drml-common-primitives  = { path = "../primitives/common" }
 dvm-ethereum            = { path = "../../frame/dvm" }
-dvm-rpc-runtime-api     = { path = "../../frame/dvm/rpc/runtime-api" }
 pangolin-runtime        = { path = "../runtime/pangolin" }
 pangoro-runtime         = { path = "../runtime/pangoro" }
 # paritytech
@@ -50,6 +49,7 @@ sp-runtime                     = { git = "https://github.com/darwinia-network/su
 substrate-frame-rpc-system     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
 fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-rpc      = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 # template
 futures                  = { version = "0.3", optional = true }
 sc-consensus-manual-seal = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

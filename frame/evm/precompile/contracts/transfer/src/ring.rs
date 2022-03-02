@@ -17,7 +17,9 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- paritytech ---
-use fp_evm::{Context, ExitError, ExitSucceed, PrecompileOutput};
+use fp_evm::{
+	Context, ExitError, ExitSucceed, PrecompileFailure, PrecompileOutput, PrecompileResult,
+};
 use frame_support::ensure;
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
@@ -37,25 +39,30 @@ impl<T: Config> RingBack<T> {
 	/// 2. transfer from the contract address to withdrawal address
 	///
 	/// Input data: 32-bit substrate withdrawal public key
-	pub fn transfer(
-		input: &[u8],
-		_: Option<u64>,
-		context: &Context,
-	) -> core::result::Result<PrecompileOutput, ExitError> {
+	pub fn transfer(input: &[u8], _: Option<u64>, context: &Context) -> PrecompileResult {
 		// Decode input data
 		let input = InputData::<T>::decode(&input)?;
 		let (source, to, value) = (context.address, input.dest, context.apparent_value);
 		let source_account = T::RingAccountBasic::account_basic(&source);
 
 		// Ensure the context address should be precompile address
-		let transfer_addr = array_bytes::hex_try_into(TRANSFER_ADDR)
-			.map_err(|_| ExitError::Other("Invalid transfer address".into()))?;
+		let transfer_addr =
+			array_bytes::hex_try_into(TRANSFER_ADDR).map_err(|_| PrecompileFailure::Error {
+				exit_status: ExitError::Other("Invalid transfer address".into()),
+			})?;
 		ensure!(
 			source == transfer_addr,
-			ExitError::Other("Invalid context address".into())
+			PrecompileFailure::Error {
+				exit_status: ExitError::Other("Invalid context address".into()),
+			}
 		);
 		// Ensure the context address balance is enough
-		ensure!(source_account.balance >= value, ExitError::OutOfFund);
+		ensure!(
+			source_account.balance >= value,
+			PrecompileFailure::Error {
+				exit_status: ExitError::OutOfFund,
+			}
+		);
 
 		// Transfer
 		let new_source_balance = source_account.balance.saturating_sub(value);
@@ -80,16 +87,20 @@ pub struct InputData<T: frame_system::Config> {
 }
 
 impl<T: frame_system::Config> InputData<T> {
-	pub fn decode(data: &[u8]) -> Result<Self, ExitError> {
+	pub fn decode(data: &[u8]) -> Result<Self, PrecompileFailure> {
 		if data.len() == 32 {
 			let mut dest_bytes = [0u8; 32];
 			dest_bytes.copy_from_slice(&data[0..32]);
 
 			return Ok(InputData {
 				dest: <T as frame_system::Config>::AccountId::decode(&mut dest_bytes.as_ref())
-					.map_err(|_| ExitError::Other("Invalid destination address".into()))?,
+					.map_err(|_| PrecompileFailure::Error {
+						exit_status: ExitError::Other("Invalid destination address".into()),
+					})?,
 			});
 		}
-		Err(ExitError::Other("Invalid input data length".into()))
+		Err(PrecompileFailure::Error {
+			exit_status: ExitError::Other("Invalid input data length".into()),
+		})
 	}
 }

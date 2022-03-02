@@ -35,7 +35,7 @@ use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use dc_rpc::{CacheTask, DebugTask, EthTask};
 use dp_evm_trace_apis::DebugRuntimeApi;
 use drml_rpc::{EthApiCmd, RpcConfig, RpcRequesters};
-use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
+use fp_rpc::EthereumRuntimeRPCApi;
 
 pub fn spawn<B, C, BE>(params: DvmTasksParams<B, C, BE>) -> RpcRequesters
 where
@@ -61,7 +61,11 @@ where
 	// Spawn schema cache maintenance task.
 	task_manager.spawn_essential_handle().spawn(
 		"frontier-schema-cache-task",
-		EthTask::ethereum_schema_cache_task(Arc::clone(&client), Arc::clone(&dvm_backend)),
+		EthTask::ethereum_schema_cache_task(
+			Arc::clone(&client),
+			Arc::clone(&dvm_backend),
+			dvm_ethereum::EthereumStorageSchema::V2,
+		),
 	);
 
 	// Spawn mapping sync worker task.

@@ -87,6 +87,7 @@ pub fn development_config() -> ChainSpec {
 				},
 			},
 			ethereum: EthereumConfig {},
+			base_fee: Default::default(),
 		}
 	}
 

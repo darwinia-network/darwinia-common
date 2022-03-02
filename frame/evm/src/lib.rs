@@ -31,7 +31,8 @@ mod tests;
 pub use crate::runner::Runner;
 #[doc(no_inline)]
 pub use fp_evm::{
-	Account, CallInfo, CreateInfo, ExecutionInfo, Log, Precompile, PrecompileSet, Vicinity,
+	Account, CallInfo, CreateInfo, ExecutionInfo, Log, Precompile, PrecompileFailure,
+	PrecompileOutput, PrecompileResult, PrecompileSet, Vicinity,
 };
 
 // --- std ---
@@ -49,6 +50,7 @@ use frame_support::{
 	weights::{PostDispatchInfo, Weight},
 };
 use frame_system::RawOrigin;
+use pallet_evm::FeeCalculator;
 use sp_core::{H160, H256, U256};
 use sp_runtime::traits::{BadOrigin, UniqueSaturatedInto};
 use sp_std::{marker::PhantomData, prelude::*};
@@ -94,9 +96,15 @@ pub mod pallet {
 		type KtonAccountBasic: AccountBasic<Self>;
 
 		/// Precompiles associated with this EVM engine.
-		type Precompiles: PrecompileSet;
+		type PrecompilesType: PrecompileSet;
+		type PrecompilesValue: Get<Self::PrecompilesType>;
 		/// EVM execution runner.
 		type Runner: Runner<Self>;
+
+		/// To handle fee deduction for EVM transactions. An example is this pallet being used by `pallet_ethereum`
+		/// where the chain implementing `pallet_ethereum` should be able to configure what happens to the fees
+		/// Similar to `OnChargeTransaction` of `pallet_transaction_payment`
+		type OnChargeTransaction: OnChargeEVMTransaction<Self>;
 
 		/// EVM config used in the Pallet.
 		fn config() -> &'static EvmConfig {
@@ -127,6 +135,10 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Not enough balance to perform action
 		BalanceLow,
+		/// Calculating total fee overflowed
+		FeeOverflow,
+		/// Calculating total payment overflowed
+		PaymentOverflow,
 		/// Withdraw fee failed
 		WithdrawFailed,
 		/// Gas price is too low.
@@ -192,8 +204,10 @@ pub mod pallet {
 			input: Vec<u8>,
 			value: U256,
 			gas_limit: u64,
-			gas_price: U256,
+			max_fee_per_gas: U256,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
+			access_list: Vec<(H160, Vec<H256>)>,
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
@@ -203,8 +217,10 @@ pub mod pallet {
 				input,
 				value,
 				gas_limit,
-				Some(gas_price),
+				Some(max_fee_per_gas),
+				max_priority_fee_per_gas,
 				nonce,
+				access_list,
 				T::config(),
 			)?;
 
@@ -234,8 +250,10 @@ pub mod pallet {
 			init: Vec<u8>,
 			value: U256,
 			gas_limit: u64,
-			gas_price: U256,
+			max_fee_per_gas: U256,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
+			access_list: Vec<(H160, Vec<H256>)>,
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
@@ -244,8 +262,10 @@ pub mod pallet {
 				init,
 				value,
 				gas_limit,
-				Some(gas_price),
+				Some(max_fee_per_gas),
+				max_priority_fee_per_gas,
 				nonce,
+				access_list,
 				T::config(),
 			)?;
 			match info {
@@ -282,8 +302,10 @@ pub mod pallet {
 			salt: H256,
 			value: U256,
 			gas_limit: u64,
-			gas_price: U256,
+			max_fee_per_gas: U256,
+			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
+			access_list: Vec<(H160, Vec<H256>)>,
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
@@ -293,8 +315,10 @@ pub mod pallet {
 				salt,
 				value,
 				gas_limit,
-				Some(gas_price),
+				Some(max_fee_per_gas),
+				max_priority_fee_per_gas,
 				nonce,
+				access_list,
 				T::config(),
 			)?;
 			match info {
@@ -367,22 +391,6 @@ pub mod pallet {
 			}
 		}
 
-		/// Withdraw fee.
-		pub fn withdraw_fee(address: &H160, value: U256) {
-			let account = T::RingAccountBasic::account_basic(address);
-			let new_account_balance = account.balance.saturating_sub(value);
-
-			T::RingAccountBasic::mutate_account_basic_balance(&address, new_account_balance);
-		}
-
-		/// Deposit fee.
-		pub fn deposit_fee(address: &H160, value: U256) {
-			let account = T::RingAccountBasic::account_basic(address);
-			let new_account_balance = account.balance.saturating_add(value);
-
-			T::RingAccountBasic::mutate_account_basic_balance(&address, new_account_balance);
-		}
-
 		/// Get the author using the FindAuthor trait.
 		pub fn find_author() -> H160 {
 			let digest = <frame_system::Pallet<T>>::digest();
@@ -393,6 +401,60 @@ pub mod pallet {
 	}
 }
 pub use pallet::*;
+
+/// Handle withdrawing, refunding and depositing of transaction fees.
+/// Similar to `OnChargeTransaction` of `pallet_transaction_payment`
+pub trait OnChargeEVMTransaction<T: Config> {
+	type LiquidityInfo: Default;
+
+	/// Before the transaction is executed the payment of the transaction fees
+	/// need to be secured.
+	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, Error<T>>;
+
+	/// After the transaction was executed the actual fee can be calculated.
+	/// This function should refund any overpaid fees and optionally deposit
+	/// the corrected amount.
+	fn correct_and_deposit_fee(
+		who: &H160,
+		corrected_fee: U256,
+		already_withdrawn: Self::LiquidityInfo,
+	);
+
+	/// Introduced in EIP1559 to handle the priority tip payment to the block Author.
+	fn pay_priority_fee(tip: U256);
+}
+
+pub struct EVMCurrencyAdapter;
+
+impl<T: Config> OnChargeEVMTransaction<T> for EVMCurrencyAdapter {
+	type LiquidityInfo = U256;
+
+	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, Error<T>> {
+		let account = T::RingAccountBasic::account_basic(who);
+		let new_account_balance = account.balance.saturating_sub(fee);
+		T::RingAccountBasic::mutate_account_basic_balance(&who, new_account_balance);
+		Ok(fee)
+	}
+
+	fn correct_and_deposit_fee(
+		who: &H160,
+		corrected_fee: U256,
+		already_withdrawn: Self::LiquidityInfo,
+	) {
+		let account = T::RingAccountBasic::account_basic(who);
+		let refund = already_withdrawn.saturating_sub(corrected_fee);
+		let new_account_balance = account.balance.saturating_add(refund);
+		T::RingAccountBasic::mutate_account_basic_balance(&who, new_account_balance);
+	}
+
+	fn pay_priority_fee(_tip: U256) {
+		// TODO: FIX ME. See https://github.com/darwinia-network/darwinia-common/issues/1074
+		// let account_id = T::IntoAccountId::into_account_id(<Pallet<T>>::find_author());
+		// let account_balance = T::RingAccountBasic::account_balance(&account_id);
+		// let new_account_balance = account_balance.saturating_add(tip);
+		// T::RingAccountBasic::mutate_account_balance(&account_id, new_account_balance);
+	}
+}
 
 /// A trait to perform origin check.
 pub trait EnsureAddressOrigin<OuterOrigin> {
@@ -426,17 +488,6 @@ pub trait AccountBasic<T: frame_system::Config> {
 	fn account_balance(account_id: &T::AccountId) -> U256;
 	/// Mutate account balance.
 	fn mutate_account_balance(account_id: &T::AccountId, balance: U256);
-}
-
-/// A trait for output the current transaction gas price.
-pub trait FeeCalculator {
-	/// Return the minimal required gas price.
-	fn min_gas_price() -> U256;
-}
-impl FeeCalculator for () {
-	fn min_gas_price() -> U256 {
-		U256::zero()
-	}
 }
 
 /// A mapping function that converts Ethereum gas to Substrate weight.

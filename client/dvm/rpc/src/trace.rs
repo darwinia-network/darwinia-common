@@ -38,6 +38,7 @@ use tokio::{
 };
 use tracing::{instrument, Instrument};
 // --- paritytech ---
+use fp_rpc::EthereumRuntimeRPCApi;
 use sc_client_api::backend::Backend;
 use sc_utils::mpsc::TracingUnboundedSender;
 use sp_api::{BlockId, Core, HeaderT, ProvideRuntimeApi};
@@ -54,7 +55,6 @@ use dc_tracer::{
 };
 use dp_evm_trace_apis::DebugRuntimeApi;
 use dp_evm_trace_rpc::{RequestBlockId, RequestBlockTag};
-use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 
 /// RPC handler. Will communicate with a `CacheTask` through a `CacheRequester`.
 pub struct Trace<B, C> {

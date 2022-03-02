@@ -38,7 +38,6 @@ dp-s2s                              = { default-features = false, path = "../../
 drml-bridge-primitives              = { default-features = false, path = "../../primitives/bridge" }
 drml-common-primitives              = { default-features = false, path = "../../primitives/common" }
 dvm-ethereum                        = { default-features = false, path = "../../../frame/dvm" }
-dvm-rpc-runtime-api                 = { default-features = false, path = "../../../frame/dvm/rpc/runtime-api" }
 module-transaction-pause            = { default-features = false, path = "../../../frame/transaction-pause" }
 to-substrate-backing                = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 # dvm trace
@@ -100,8 +99,11 @@ sp-trie                                    = { default-features = false, git = "
 sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
 fp-evm                       = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-rpc                       = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 fp-self-contained            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 fp-storage                   = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+pallet-base-fee              = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+pallet-evm                   = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 
 
@@ -138,7 +140,6 @@ std = [
 	"drml-bridge-primitives/std",
 	"drml-common-primitives/std",
 	"dvm-ethereum/std",
-	"dvm-rpc-runtime-api/std",
 	"module-transaction-pause/std",
 	"to-substrate-backing/std",
 	# paritytech
@@ -197,9 +198,12 @@ std = [
 	"dp-evm-trace-apis/std",
 	# frontier
 	"fp-evm/std",
+	"fp-rpc/std",
 	"fp-self-contained/std",
 	"fp-storage/std",
 	"pallet-evm-precompile-simple/std",
+	"pallet-base-fee/std",
+	"pallet-evm/std",
 ]
 
 fast-runtime = ["drml-common-primitives/fast-runtime"]

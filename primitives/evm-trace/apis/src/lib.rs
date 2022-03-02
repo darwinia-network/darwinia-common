@@ -18,7 +18,7 @@
 
 // --- crates.io ---
 use codec::{Decode, Encode};
-use ethereum::TransactionV0 as Transaction;
+use ethereum::TransactionV2 as Transaction;
 use ethereum_types::H256;
 // --- paritytech ---
 use sp_std::vec::Vec;

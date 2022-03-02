@@ -74,7 +74,7 @@ where
 	C::Api: sp_block_builder::BlockBuilder<Block>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: dp_evm_trace_apis::DebugRuntimeApi<Block>,
-	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
+	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	P: 'static + sc_transaction_pool_api::TransactionPool<Block = Block>,
 	B: 'static + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<Hashing>,
@@ -91,9 +91,8 @@ where
 		Debug, DebugApiServer, EthApi, EthApiServer, EthDevSigner, EthFilterApi,
 		EthFilterApiServer, EthPubSubApi, EthPubSubApiServer, EthSigner, HexEncodedIdProvider,
 		NetApi, NetApiServer, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override,
-		StorageOverride, Trace, TraceApiServer, Web3Api, Web3ApiServer,
+		SchemaV2Override, StorageOverride, Trace, TraceApiServer, Web3Api, Web3ApiServer,
 	};
-	use dvm_ethereum::EthereumStorageSchema;
 	use template_runtime::TransactionConverter;
 
 	let mut io = jsonrpc_core::IoHandler::default();
@@ -129,6 +128,11 @@ where
 	overrides_map.insert(
 		EthereumStorageSchema::V1,
 		Box::new(SchemaV1Override::new(client.clone()))
+			as Box<dyn StorageOverride<_> + Send + Sync>,
+	);
+	overrides_map.insert(
+		EthereumStorageSchema::V2,
+		Box::new(SchemaV2Override::new(client.clone()))
 			as Box<dyn StorageOverride<_> + Send + Sync>,
 	);
 

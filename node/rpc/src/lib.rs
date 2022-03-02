@@ -183,16 +183,13 @@ where
 	C::Api: darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
 	C::Api: darwinia_fee_market_rpc::FeeMarketRuntimeApi<Block, Balance>,
 	C::Api: dp_evm_trace_apis::DebugRuntimeApi<Block>,
-	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
+	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	P: 'static + Sync + Send + sc_transaction_pool_api::TransactionPool<Block = Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<Hashing>,
 	A: sc_transaction_pool::ChainApi<Block = Block> + 'static,
-	CT: 'static
-		+ Send
-		+ Sync
-		+ dvm_rpc_runtime_api::ConvertTransaction<sp_runtime::OpaqueExtrinsic>,
+	CT: 'static + Send + Sync + fp_rpc::ConvertTransaction<sp_runtime::OpaqueExtrinsic>,
 {
 	// --- crates.io ---
 	use jsonrpc_pubsub::manager::SubscriptionManager;
@@ -210,8 +207,8 @@ where
 	use dc_rpc::{
 		Debug, DebugApiServer, EthApi, EthApiServer, EthFilterApi, EthFilterApiServer,
 		EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider, NetApi, NetApiServer,
-		OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, StorageOverride, Trace,
-		TraceApiServer, Web3Api, Web3ApiServer,
+		OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, SchemaV2Override,
+		StorageOverride, Trace, TraceApiServer, Web3Api, Web3ApiServer,
 	};
 
 	let FullDeps {
@@ -286,11 +283,17 @@ where
 	io.extend_with(StakingApi::to_delegate(Staking::new(client.clone())));
 	io.extend_with(FeeMarketApi::to_delegate(FeeMarket::new(client.clone())));
 
-	let overrides_map = BTreeMap::from([(
+	let mut overrides_map = BTreeMap::new();
+	overrides_map.insert(
 		EthereumStorageSchema::V1,
 		Box::new(SchemaV1Override::new(client.clone()))
 			as Box<dyn StorageOverride<_> + Send + Sync>,
-	)]);
+	);
+	overrides_map.insert(
+		EthereumStorageSchema::V2,
+		Box::new(SchemaV2Override::new(client.clone()))
+			as Box<dyn StorageOverride<_> + Send + Sync>,
+	);
 	let overrides = Arc::new(OverrideHandle {
 		schemas: overrides_map,
 		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),

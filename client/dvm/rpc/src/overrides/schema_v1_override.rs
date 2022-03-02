@@ -18,9 +18,10 @@
 use std::{marker::PhantomData, sync::Arc};
 // --- crates.io ---
 use codec::Decode;
-use ethereum::{BlockV0 as EthereumBlock, Receipt as EthereumReceipt};
+use ethereum::Receipt as EthereumReceipt;
 use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
+use fp_rpc::TransactionStatus;
 use sc_client_api::backend::{AuxStore, Backend, StateBackend, StorageProvider};
 use sp_api::BlockId;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
@@ -28,7 +29,6 @@ use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 use sp_storage::StorageKey;
 // --- darwinia-network ---
 use super::{blake2_128_extend, storage_prefix_build, StorageOverride};
-use dvm_rpc_runtime_api::TransactionStatus;
 
 /// An override for runtimes that use Schema V1
 pub struct SchemaV1Override<B: BlockT, C, BE> {
@@ -103,11 +103,12 @@ where
 	}
 
 	/// Return the current block.
-	fn current_block(&self, block: &BlockId<Block>) -> Option<EthereumBlock> {
-		self.query_storage::<EthereumBlock>(
+	fn current_block(&self, block: &BlockId<Block>) -> Option<ethereum::BlockV2> {
+		self.query_storage::<ethereum::BlockV0>(
 			block,
 			&StorageKey(storage_prefix_build(b"Ethereum", b"CurrentBlock")),
 		)
+		.map(Into::into)
 	}
 
 	/// Return the current receipt.
@@ -130,5 +131,13 @@ where
 				b"CurrentTransactionStatuses",
 			)),
 		)
+	}
+	/// Prior to eip-1559 there is no base fee.
+	fn base_fee(&self, _block: &BlockId<Block>) -> Option<U256> {
+		None
+	}
+
+	fn is_eip1559(&self, _block: &BlockId<Block>) -> bool {
+		false
 	}
 }

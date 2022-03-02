@@ -15,7 +15,7 @@ array-bytes         = { version = "1.4" }
 codec               = { package = "parity-scale-codec", version = "2.2" }
 ethereum            = { version = "0.10", features = ["with-codec"] }
 ethereum-types      = { version = "0.12" }
-evm                 = { version = "0.30" }
+evm                 = { version = "0.33" }
 futures             = { version = "0.3" }
 jsonrpc-core        = { version = "18.0" }
 jsonrpc-core-client = { version = "18.0" }
@@ -31,14 +31,12 @@ sha3                = { version = "0.9" }
 tokio               = { version = "1.15" }
 tracing             = { version = "0.1" }
 # darwinia-network
-dc-db               = { path = "../db" }
-dc-tracer           = { path = "../tracer" }
-dp-consensus        = { path = "../../../primitives/consensus/" }
-dp-evm-trace-apis   = { path = "../../../primitives/evm-trace/apis" }
-dp-evm-trace-rpc    = { path = "../../../primitives/evm-trace/rpc" }
-dvm-ethereum        = { path = "../../../frame/dvm" }
-dvm-rpc-core        = { path = "../../../frame/dvm/rpc" }
-dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
+dc-db             = { path = "../db" }
+dc-tracer         = { path = "../tracer" }
+dp-evm-trace-apis = { path = "../../../primitives/evm-trace/apis" }
+dp-evm-trace-rpc  = { path = "../../../primitives/evm-trace/rpc" }
+dvm-ethereum      = { path = "../../../frame/dvm" }
+dvm-rpc-core      = { path = "../../../frame/dvm/rpc" }
 # paritytech
 sc-client-api           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sc-network              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -54,8 +52,10 @@ sp-io                   = { git = "https://github.com/darwinia-network/substrate
 sp-runtime              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-storage              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
-fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
-fp-storage  = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fc-rpc-core  = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-consensus = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-rpc       = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-storage   = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 
 [features]
 rpc_binary_search_estimate = []

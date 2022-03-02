@@ -42,7 +42,7 @@ fp-evm = { default-features = false, git = "https://github.com/darwinia-network/
 [dev-dependencies]
 # crates.io
 ethereum     = { version = "0.10", features = ["with-codec"] }
-evm          = { version = "0.30", features = ["with-codec"] }
+evm          = { version = "0.33", features = ["with-codec"] }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 rlp          = { version = "0.5" }
 # darwinia-network
@@ -50,6 +50,7 @@ darwinia-balances = { path = "../../../balances" }
 pallet-timestamp  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
 fp-self-contained = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+pallet-evm        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 
 [features]
 default = ["std"]

@@ -36,7 +36,10 @@ use dp_s2s::{CallParams, CreatePayload};
 // --- paritytech ---
 use bp_message_dispatch::CallOrigin;
 use bp_runtime::messages::DispatchFeePayment;
-use fp_evm::{Context, ExitError, ExitSucceed, Precompile, PrecompileOutput};
+use fp_evm::{
+	Context, ExitError, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
+	PrecompileResult,
+};
 use frame_support::sp_runtime::SaturatedConversion;
 use sp_core::H160;
 use sp_std::vec::Vec;
@@ -65,7 +68,8 @@ where
 		input: &[u8],
 		_target_gas: Option<u64>,
 		context: &Context,
-	) -> core::result::Result<PrecompileOutput, ExitError> {
+		_is_static: bool,
+	) -> PrecompileResult {
 		let dvm_parser = DvmInputParser::new(&input)?;
 
 		let output = match Action::from_u32(dvm_parser.selector)? {
@@ -96,16 +100,24 @@ where
 	T: from_substrate_issuing::Config,
 	S: RelayMessageSender + LatestMessageNoncer,
 {
-	fn outbound_latest_generated_nonce(dvm_parser: &DvmInputParser) -> Result<Vec<u8>, ExitError> {
-		let lane_id = abi_decode_bytes4(dvm_parser.input)
-			.map_err(|_| ExitError::Other("decode lane id failed".into()))?;
+	fn outbound_latest_generated_nonce(
+		dvm_parser: &DvmInputParser,
+	) -> Result<Vec<u8>, PrecompileFailure> {
+		let lane_id =
+			abi_decode_bytes4(dvm_parser.input).map_err(|_| PrecompileFailure::Error {
+				exit_status: ExitError::Other("decode lane id failed".into()),
+			})?;
 		let nonce = <S as LatestMessageNoncer>::outbound_latest_generated_nonce(lane_id);
 		Ok(abi_encode_u64(nonce))
 	}
 
-	fn inbound_latest_received_nonce(dvm_parser: &DvmInputParser) -> Result<Vec<u8>, ExitError> {
-		let lane_id = abi_decode_bytes4(dvm_parser.input)
-			.map_err(|_| ExitError::Other("decode lane id failed".into()))?;
+	fn inbound_latest_received_nonce(
+		dvm_parser: &DvmInputParser,
+	) -> Result<Vec<u8>, PrecompileFailure> {
+		let lane_id =
+			abi_decode_bytes4(dvm_parser.input).map_err(|_| PrecompileFailure::Error {
+				exit_status: ExitError::Other("decode lane id failed".into()),
+			})?;
 		let nonce = <S as LatestMessageNoncer>::inbound_latest_received_nonce(lane_id);
 		Ok(abi_encode_u64(nonce))
 	}
@@ -113,9 +125,12 @@ where
 	fn encode_unlock_from_remote_dispatch_call(
 		dvm_parser: &DvmInputParser,
 		caller: H160,
-	) -> Result<Vec<u8>, ExitError> {
-		let unlock_info = S2sRemoteUnlockInfo::abi_decode(dvm_parser.input)
-			.map_err(|_| ExitError::Other("decode unlock info failed".into()))?;
+	) -> Result<Vec<u8>, PrecompileFailure> {
+		let unlock_info = S2sRemoteUnlockInfo::abi_decode(dvm_parser.input).map_err(|_| {
+			PrecompileFailure::Error {
+				exit_status: ExitError::Other("decode unlock info failed".into()),
+			}
+		})?;
 		let payload = <T as from_substrate_issuing::Config>::OutboundPayloadCreator::create(
 			CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(caller)),
 			unlock_info.spec_version,
@@ -127,22 +142,29 @@ where
 			),
 			DispatchFeePayment::AtSourceChain,
 		)
-		.map_err(|_| ExitError::Other("encode remote unlock failed".into()))?;
+		.map_err(|_| PrecompileFailure::Error {
+			exit_status: ExitError::Other("decode remote unlock failed".into()),
+		})?;
 		Ok(abi_encode_bytes(payload.encode().as_slice()))
 	}
 
 	fn encode_send_message_dispatch_call(
 		dvm_parser: &DvmInputParser,
-	) -> Result<Vec<u8>, ExitError> {
-		let params = S2sSendMessageParams::decode(dvm_parser.input)
-			.map_err(|_| ExitError::Other("decode send message info failed".into()))?;
+	) -> Result<Vec<u8>, PrecompileFailure> {
+		let params = S2sSendMessageParams::decode(dvm_parser.input).map_err(|_| {
+			PrecompileFailure::Error {
+				exit_status: ExitError::Other("decode send message info failed".into()),
+			}
+		})?;
 		let encoded = <S as RelayMessageSender>::encode_send_message(
 			params.pallet_index,
 			params.lane_id,
 			params.payload,
 			params.fee.low_u128().saturated_into(),
 		)
-		.map_err(|_| ExitError::Other("encode send message call failed".into()))?;
+		.map_err(|_| PrecompileFailure::Error {
+			exit_status: ExitError::Other("encode send message call failed".into()),
+		})?;
 		Ok(abi_encode_bytes(encoded.as_slice()))
 	}
 }
