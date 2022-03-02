@@ -8,6 +8,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod pallets;
 pub use pallets::*;
+
 pub mod wasm {
 	//! Make the WASM binary available.
 
