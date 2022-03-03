@@ -782,7 +782,7 @@ sp_api::impl_runtime_apis! {
 		}
 		fn trace_block(
 			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
-			_known_transactions: Vec<H256>,
+			known_transactions: Vec<H256>,
 		) -> Result<
 			(),
 			sp_runtime::DispatchError,
@@ -790,7 +790,6 @@ sp_api::impl_runtime_apis! {
 			#[cfg(feature = "evm-tracing")]
 			{
 				use dp_evm_tracer::tracer::EvmTracer;
-				use sha3::{Digest, Keccak256};
 				use dvm_ethereum::Call::transact;
 
 				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
@@ -800,9 +799,7 @@ sp_api::impl_runtime_apis! {
 				for ext in _extrinsics.into_iter() {
 					match &ext.0.function {
 						Call::Ethereum(transact { transaction }) => {
-							let eth_extrinsic_hash =
-								H256::from_slice(Keccak256::digest(&rlp::encode(transaction)).as_slice());
-							if _known_transactions.contains(&eth_extrinsic_hash) {
+							if known_transactions.contains(&transaction.hash()) {
 								// Each known extrinsic is a new call stack.
 								EvmTracer::emit_new();
 								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
