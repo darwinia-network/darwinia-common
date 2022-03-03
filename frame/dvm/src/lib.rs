@@ -869,6 +869,8 @@ impl<T: Config> Pallet<T> {
 		let receipts_root =
 			ethereum::util::ordered_trie_root(receipts.iter().map(|r| rlp::encode(r)));
 		let partial_header = ethereum::PartialHeader {
+			// Instead of using current_block(), obtain the parent block hash from BlockHash storage to avoid Block type upgrade failures
+			// See: https://github.com/paritytech/frontier/pull/570
 			parent_hash: if block_number > U256::zero() {
 				BlockHash::<T>::get(block_number - 1)
 			} else {
