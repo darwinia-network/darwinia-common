@@ -2840,7 +2840,7 @@ dependencies = [
 [[package]]
 name = "fc-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=update-tmp-2#a00d4af792594aeebda367d384f938bd437a2653"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "async-trait",
  "fc-db",
@@ -2866,7 +2866,7 @@ dependencies = [
 [[package]]
 name = "fc-db"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=update-tmp-2#a00d4af792594aeebda367d384f938bd437a2653"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "fp-storage",
  "kvdb",
@@ -2881,7 +2881,7 @@ dependencies = [
 [[package]]
 name = "fc-mapping-sync"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=update-tmp-2#a00d4af792594aeebda367d384f938bd437a2653"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "fc-consensus",
  "fc-db",
@@ -2899,7 +2899,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=update-tmp-2#a00d4af792594aeebda367d384f938bd437a2653"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2944,7 +2944,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=update-tmp-2#a00d4af792594aeebda367d384f938bd437a2653"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3052,7 +3052,7 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=update-tmp-2#a00d4af792594aeebda367d384f938bd437a2653"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "ethereum",
  "parity-scale-codec",
@@ -3066,7 +3066,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=update-tmp-2#a00d4af792594aeebda367d384f938bd437a2653"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "evm",
  "parity-scale-codec",
@@ -3078,7 +3078,7 @@ dependencies = [
 [[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=update-tmp-2#a00d4af792594aeebda367d384f938bd437a2653"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3095,7 +3095,7 @@ dependencies = [
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=update-tmp-2#a00d4af792594aeebda367d384f938bd437a2653"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "ethereum",
  "frame-support",
@@ -3112,7 +3112,7 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/darwinia-network/frontier?branch=update-tmp-2#a00d4af792594aeebda367d384f938bd437a2653"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "parity-scale-codec",
 ]
@@ -5756,7 +5756,7 @@ dependencies = [
 [[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
-source = "git+https://github.com/darwinia-network/frontier?branch=update-tmp-2#a00d4af792594aeebda367d384f938bd437a2653"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5927,7 +5927,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=update-tmp-2#a00d4af792594aeebda367d384f938bd437a2653"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "evm",
  "evm-gasometer",
@@ -5955,7 +5955,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-modexp"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=update-tmp-2#a00d4af792594aeebda367d384f938bd437a2653"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "fp-evm",
  "num",
@@ -5966,7 +5966,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-sha3fips"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=update-tmp-2#a00d4af792594aeebda367d384f938bd437a2653"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "fp-evm",
  "sp-core",
@@ -5977,7 +5977,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-simple"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=update-tmp-2#a00d4af792594aeebda367d384f938bd437a2653"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "fp-evm",
  "ripemd160",

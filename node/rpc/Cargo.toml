@@ -45,11 +45,11 @@ sp-keystore                    = { git = "https://github.com/darwinia-network/su
 sp-runtime                     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 substrate-frame-rpc-system     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
-fc-db       = { git = "https://github.com/darwinia-network/frontier", branch = "update-tmp-2" }
-fc-rpc      = { git = "https://github.com/darwinia-network/frontier", branch = "update-tmp-2", features = ["rpc_binary_search_estimate"] }
-fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "update-tmp-2" }
-fp-rpc      = { git = "https://github.com/darwinia-network/frontier", branch = "update-tmp-2" }
-fp-storage  = { git = "https://github.com/darwinia-network/frontier", branch = "update-tmp-2" }
+fc-db       = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fc-rpc      = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev", features = ["rpc_binary_search_estimate"] }
+fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fp-rpc      = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fp-storage  = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 # template
 futures                  = { version = "0.3", optional = true }
 sc-consensus-manual-seal = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

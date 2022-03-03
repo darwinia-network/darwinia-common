@@ -32,12 +32,12 @@ sp-io            = { default-features = false, git = "https://github.com/darwini
 sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
-fp-evm            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "update-tmp-2" }
-fp-consensus      = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "update-tmp-2" }
-fp-self-contained = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "update-tmp-2" }
-fp-rpc            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "update-tmp-2" }
-fp-storage        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "update-tmp-2" }
-pallet-evm        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "update-tmp-2" }
+fp-evm            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fp-consensus      = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fp-self-contained = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fp-rpc            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fp-storage        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+pallet-evm        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 
 [dev-dependencies]
 # crates.io
@@ -48,7 +48,7 @@ libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 darwinia-balances                = { path = "../balances" }
 darwinia-evm-precompile-transfer = { path = "../evm/precompile/contracts/transfer" }
 # frontier
-pallet-evm-precompile-simple = { git = "https://github.com/darwinia-network/frontier", branch = "update-tmp-2" }
+pallet-evm-precompile-simple = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 
 [features]
 default = ["std"]
