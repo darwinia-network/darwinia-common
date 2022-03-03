@@ -16,6 +16,8 @@ describeWithFrontier("Frontier RPC (Balance)", (context) => {
 	step("balance to be updated after transfer", async function () {
 		this.timeout(15000);
 
+		// Finalize one block firstly to avoid pending runtime api panic
+		await createAndFinalizeBlock(context.web3);
 		const tx = await context.web3.eth.accounts.signTransaction({
 			from: GENESIS_ACCOUNT,
 			to: TEST_ACCOUNT,
