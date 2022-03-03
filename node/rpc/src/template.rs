@@ -37,6 +37,7 @@ use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 use sc_consensus_manual_seal::rpc::{EngineCommand, ManualSeal, ManualSealApi};
 use sc_network::NetworkService;
 use sc_transaction_pool::{ChainApi, Pool};
+use substrate_frame_rpc_system::FullSystem;
 
 /// Full client dependencies.
 pub struct FullDeps<C, P, A: ChainApi> {
