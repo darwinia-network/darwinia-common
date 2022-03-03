@@ -42,9 +42,9 @@ pub use pallet_bridge_messages::Call as BridgeMessagesCall;
 pub use pallet_sudo::Call as SudoCall;
 
 // --- crates.io ---
-use codec::{Decode, Encode};
+use codec::Encode;
 // --- paritytech ---
-use fp_storage::PALLET_ETHEREUM_SCHEMA;
+use fp_storage::{EthereumStorageSchema, PALLET_ETHEREUM_SCHEMA};
 #[allow(unused)]
 use frame_support::{log, migration};
 use frame_support::{
@@ -69,7 +69,7 @@ use sp_runtime::{
 		Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
-	ApplyExtrinsicResult, MultiAddress, OpaqueExtrinsic, SaturatedConversion,
+	ApplyExtrinsicResult, MultiAddress, SaturatedConversion,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -79,7 +79,6 @@ use sp_version::RuntimeVersion;
 use common_runtime::*;
 use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use drml_common_primitives::*;
-use dvm_ethereum::EthereumStorageSchema;
 
 pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
@@ -551,6 +550,7 @@ sp_api::impl_runtime_apis! {
 			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
+			access_list: Option<Vec<(H160, Vec<H256>)>>,
 		) -> Result<darwinia_evm::CallInfo, sp_runtime::DispatchError> {
 			// --- darwinia-network ---
 			use darwinia_evm::Runner;
@@ -572,7 +572,7 @@ sp_api::impl_runtime_apis! {
 				max_fee_per_gas,
 				max_priority_fee_per_gas,
 				nonce,
-				Vec::new(),
+				access_list.unwrap_or_default(),
 				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
@@ -586,6 +586,7 @@ sp_api::impl_runtime_apis! {
 			max_priority_fee_per_gas: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
+			access_list: Option<Vec<(H160, Vec<H256>)>>,
 		) -> Result<darwinia_evm::CreateInfo, sp_runtime::DispatchError> {
 			// --- darwinia-network ---
 			use darwinia_evm::Runner;
@@ -606,7 +607,7 @@ sp_api::impl_runtime_apis! {
 				max_fee_per_gas,
 				max_priority_fee_per_gas,
 				nonce,
-				Vec::new(),
+				access_list.unwrap_or_default(),
 				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
@@ -620,13 +621,13 @@ sp_api::impl_runtime_apis! {
 			Ethereum::current_block()
 		}
 
-		fn current_receipts() -> Option<Vec<dvm_ethereum::EthereumReceiptV0>> {
+		fn current_receipts() -> Option<Vec<dvm_ethereum::Receipt>> {
 			Ethereum::current_receipts()
 		}
 
 		fn current_all() -> (
 			Option<dvm_ethereum::Block>,
-			Option<Vec<dvm_ethereum::EthereumReceiptV0>>,
+			Option<Vec<dvm_ethereum::Receipt>>,
 			Option<Vec<fp_rpc::TransactionStatus>>
 		) {
 			(
@@ -643,6 +644,18 @@ sp_api::impl_runtime_apis! {
 				Call::Ethereum(dvm_ethereum::Call::transact { transaction }) => Some(transaction),
 				_ => None
 			}).collect()
+		}
+
+		fn elasticity() -> Option<Permill> {
+			Some(BaseFee::elasticity())
+		}
+	}
+
+	impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
+		fn convert_transaction(transaction: dvm_ethereum::Transaction) -> <Block as BlockT>::Extrinsic {
+			UncheckedExtrinsic::new_unsigned(
+				dvm_ethereum::Call::<Runtime>::transact { transaction }.into(),
+			)
 		}
 	}
 
@@ -846,27 +859,10 @@ sp_api::impl_runtime_apis! {
 	}
 }
 
-#[derive(Clone)]
-pub struct TransactionConverter;
-impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> UncheckedExtrinsic {
-		UncheckedExtrinsic::new_unsigned(dvm_ethereum::Call::transact { transaction }.into())
-	}
-}
-impl fp_rpc::ConvertTransaction<OpaqueExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: dvm_ethereum::Transaction) -> OpaqueExtrinsic {
-		let extrinsic =
-			UncheckedExtrinsic::new_unsigned(dvm_ethereum::Call::transact { transaction }.into());
-		let encoded = extrinsic.encode();
-
-		OpaqueExtrinsic::decode(&mut &encoded[..]).expect("Encoded extrinsic is always valid")
-	}
-}
-
 fn migrate() -> Weight {
 	frame_support::storage::unhashed::put::<EthereumStorageSchema>(
 		&PALLET_ETHEREUM_SCHEMA,
-		&EthereumStorageSchema::V2,
+		&EthereumStorageSchema::V3,
 	);
 
 	// 0

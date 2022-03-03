@@ -5,7 +5,7 @@ import { step } from "mocha-steps";
 import { createAndFinalizeBlock, describeWithFrontier, customRequest } from "./util";
 
 // We use ethers library in this test as apparently web3js's types are not fully EIP-1559 compliant yet.
-describeWithFrontier("Frontier RPC (Transaction Version)", (context) => {
+describeWithFrontier("Frontier RPC (Fee History)", (context) => {
 
 	const GENESIS_ACCOUNT = "0x6be02d1d3665660d22ff9624b7be0551ee1ac91b";
 	const GENESIS_ACCOUNT_PRIVATE_KEY = "0x99B3C12287537E38C90A9219D4CB074A89A16E9CDB20BF85728EBD97C343E342";
@@ -21,47 +21,89 @@ describeWithFrontier("Frontier RPC (Transaction Version)", (context) => {
 		return tx;
 	}
 
-	step("should handle EIP-2930 transaction type 1", async function () {
-		let tx = {
-			from: GENESIS_ACCOUNT,
-			data: TEST_CONTRACT_BYTECODE,
-			value: "0x00",
-			gasPrice: "0x3B9ACA00",
-			type: 1,
-			accessList: [],
-			nonce: 0,
-			gasLimit: "0x100000",
-			chainId: 42,
-		};
-		const tx_hash = (await sendTransaction(context, tx)).hash;
-		await createAndFinalizeBlock(context.web3);
-		const latest = await context.web3.eth.getBlock("latest");
-		expect(latest.transactions.length).to.be.eq(1);
-		expect(latest.transactions[0]).to.be.eq(tx_hash);
+	let nonce = 0;
 
-		let receipt = await context.web3.eth.getTransactionReceipt(tx_hash);
-		expect(receipt.transactionHash).to.be.eq(tx_hash);
+	function get_percentile(percentile, array) {
+		array.sort(function (a, b) { return a - b; });
+		let index = ((percentile/100) * (array.length))-1;
+		if (Math.floor(index) == index) {
+			return array[index];
+		}
+		else {
+			return Math.ceil((array[Math.floor(index)] + array[Math.ceil(index)])/2);
+		}
+	}
+
+	async function createBlocks(block_count, reward_percentiles, priority_fees) {
+		for(var b = 0; b < block_count; b++) {
+			for(var p = 0; p < priority_fees.length; p++) {
+				await sendTransaction(context, {
+					from: GENESIS_ACCOUNT,
+					data: TEST_CONTRACT_BYTECODE,
+					value: "0x00",
+					maxFeePerGas: "0x3B9ACA00",
+					maxPriorityFeePerGas: context.web3.utils.numberToHex(priority_fees[p]),
+					accessList: [],
+					nonce: nonce,
+					gasLimit: "0x100000",
+					chainId: 42
+				});
+				nonce++;
+			}
+			await createAndFinalizeBlock(context.web3);
+		}
+	}
+
+	step("should return error on non-existent blocks", async function () {
+		this.timeout(100000);
+		let result = customRequest(context.web3, "eth_feeHistory", ["0x0", "0x1", []])
+		.then(() => {
+			return Promise.reject({ message: "Execution succeeded but should have failed" });
+		})
+		.catch((err) =>
+			expect(err.message).to.equal("Error getting header at BlockId::Number(1)")
+		);
 	});
 
-	step("should handle EIP-1559 transaction type 2", async function () {
-		let tx = {
-			from: GENESIS_ACCOUNT,
-			data: TEST_CONTRACT_BYTECODE,
-			value: "0x00",
-			maxFeePerGas: "0x3B9ACA00",
-			maxPriorityFeePerGas: "0x01",
-			accessList: [],
-			nonce: 1,
-			gasLimit: "0x100000",
-			chainId: 42,
-		};
-		const tx_hash = (await sendTransaction(context, tx)).hash;
-		await createAndFinalizeBlock(context.web3);
-		const latest = await context.web3.eth.getBlock("latest");
-		expect(latest.transactions.length).to.be.eq(1);
-		expect(latest.transactions[0]).to.be.eq(tx_hash);
+	step("result lenght should match spec", async function () {
+		this.timeout(100000);
+		let block_count = 2;
+		let reward_percentiles = [20,50,70];
+		let priority_fees = [1, 2, 3];
+		await createBlocks(block_count, reward_percentiles, priority_fees);
+		let result = (await customRequest(context.web3, "eth_feeHistory", ["0x2", "latest", reward_percentiles])).result;
 
-		let receipt = await context.web3.eth.getTransactionReceipt(tx_hash);
-		expect(receipt.transactionHash).to.be.eq(tx_hash);
+		// baseFeePerGas is always the requested block range + 1 (the next derived base fee).
+		expect(result.baseFeePerGas.length).to.be.eq(block_count + 1);
+		// gasUsedRatio for the requested block range.
+		expect(result.gasUsedRatio.length).to.be.eq(block_count);
+		// two-dimensional reward list for the requested block range.
+		expect(result.reward.length).to.be.eq(block_count);
+		// each block has a reward list which's size is the requested percentile list.
+		for(let i = 0; i < block_count; i++) {
+			expect(result.reward[i].length).to.be.eq(reward_percentiles.length);
+		}
+	});
+
+	step("should calculate percentiles", async function () {
+		this.timeout(100000);
+		let block_count = 11;
+		let reward_percentiles = [20,50,70,85,100];
+		let priority_fees = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+		await createBlocks(block_count, reward_percentiles, priority_fees);
+		let result = (await customRequest(context.web3, "eth_feeHistory", ["0xA", "latest", reward_percentiles])).result;
+
+		// Calculate the percentiles in javascript.
+		let local_rewards = [];
+		for(let i = 0; i < reward_percentiles.length; i++) {
+			local_rewards.push(get_percentile(reward_percentiles[i], priority_fees));
+		}
+		// Compare the rpc result with the javascript percentiles.
+		for(let i = 0; i < result.reward.length; i++) {
+			expect(result.reward[i].length).to.be.eq(local_rewards.length);
+			for(let j = 0; j < local_rewards.length; j++) {
+				expect(context.web3.utils.hexToNumber(result.reward[i][j])).to.be.eq(local_rewards[j]);
+			}
+		}
 	});
 });

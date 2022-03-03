@@ -37,20 +37,20 @@ sp-io               = { default-features = false, git = "https://github.com/darw
 sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
-fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 
 [dev-dependencies]
 # crates.io
-ethereum     = { version = "0.10", features = ["with-codec"] }
-evm          = { version = "0.33", features = ["with-codec"] }
+ethereum     = { version = "0.11.1", features = ["with-codec"] }
+evm          = { version = "0.33.1", features = ["with-codec"] }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 rlp          = { version = "0.5" }
 # darwinia-network
 darwinia-balances = { path = "../../../balances" }
 pallet-timestamp  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
-fp-self-contained = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
-pallet-evm        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-self-contained = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+pallet-evm        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 
 [features]
 default = ["std"]

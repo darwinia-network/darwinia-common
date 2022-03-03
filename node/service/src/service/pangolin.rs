@@ -30,7 +30,7 @@ use crate::{
 };
 use drml_common_primitives::OpaqueBlock as Block;
 use drml_rpc::RpcConfig;
-use pangolin_runtime::{RuntimeApi, TransactionConverter};
+use pangolin_runtime::RuntimeApi;
 
 pub struct Executor;
 impl NativeExecutionDispatch for Executor {
@@ -62,11 +62,10 @@ pub fn new_full(
 	),
 	ServiceError,
 > {
-	let (components, client, rpc_handlers) = service::new_full::<RuntimeApi, Executor, _>(
+	let (components, client, rpc_handlers) = service::new_full::<RuntimeApi, Executor>(
 		config,
 		authority_discovery_disabled,
 		rpc_config,
-		TransactionConverter,
 	)?;
 
 	Ok((components, client, rpc_handlers))

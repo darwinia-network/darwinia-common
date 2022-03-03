@@ -15,6 +15,9 @@ describeWithFrontier("Frontier RPC (Contract)", (context) => {
 
 	it("contract creation should return transaction hash", async function () {
 		this.timeout(15000);
+		
+		// Finalize one block firstly to avoid pending runtime api panic
+		await createAndFinalizeBlock(context.web3);
 		const tx = await context.web3.eth.accounts.signTransaction(
 			{
 				from: GENESIS_ACCOUNT,
@@ -38,6 +41,13 @@ describeWithFrontier("Frontier RPC (Contract)", (context) => {
 			result: "0x",
 		});
 
+		// Verify the contract is in the pending state
+		expect(await customRequest(context.web3, "eth_getCode", [FIRST_CONTRACT_ADDRESS, "pending"])).to.deep.equal({
+			id: 1,
+			jsonrpc: "2.0",
+			result: TEST_CONTRACT_DEPLOYED_BYTECODE,
+		});
+
 		// Verify the contract is stored after the block is produced
 		await createAndFinalizeBlock(context.web3);
 		expect(await customRequest(context.web3, "eth_getCode", [FIRST_CONTRACT_ADDRESS])).to.deep.equal({
@@ -46,5 +56,11 @@ describeWithFrontier("Frontier RPC (Contract)", (context) => {
 			result:
 			TEST_CONTRACT_DEPLOYED_BYTECODE,
 		});
+	});
+
+	it("eth_call contract create should return code", async function () {
+		expect(await context.web3.eth.call({
+			data: TEST_CONTRACT_BYTECODE
+		})).to.be.eq(TEST_CONTRACT_DEPLOYED_BYTECODE);
 	});
 });

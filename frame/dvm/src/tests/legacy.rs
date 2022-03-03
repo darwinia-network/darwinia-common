@@ -232,7 +232,7 @@ fn contract_should_be_created_at_given_address() {
 fn transaction_should_generate_correct_gas_used() {
 	let (pairs, mut ext) = new_test_ext(1);
 	let alice = &pairs[0];
-	let expected_gas = U256::from(891328);
+	let expected_gas = U256::from(893928);
 
 	ext.execute_with(|| {
 		let t = legacy_erc20_creation_transaction(alice);

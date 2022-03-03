@@ -35,6 +35,7 @@ impl_runtime_apis![
 	darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>,
 	darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance>,
 	fp_rpc::EthereumRuntimeRPCApi<Block>,
+	fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	dp_evm_trace_apis::DebugRuntimeApi<Block>;
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 ];
@@ -64,7 +65,9 @@ use codec::Codec;
 use futures::stream::StreamExt;
 // --- paritytech ---
 use beefy_gadget::{notification::BeefySignedCommitmentStream, BeefyParams};
-use fc_rpc_core::types::FilterPool;
+use fc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
+use fc_rpc::EthBlockDataCache;
+use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use sc_authority_discovery::WorkerConfig;
 use sc_basic_authorship::ProposerFactory;
 use sc_client_api::{ExecutorProvider, RemoteBackend, StateBackendFor};
@@ -96,11 +99,10 @@ use sp_trie::PrefixedMemoryDB;
 use substrate_prometheus_endpoint::Registry;
 // --- darwinia-network ---
 use crate::service::dvm_tasks::DvmTasksParams;
-use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
 use drml_common_primitives::{AccountId, Balance, Nonce, OpaqueBlock as Block, Power};
 use drml_rpc::{
-	BabeDeps, BeefyDeps, FullDeps, GrandpaDeps, LightDeps, RpcConfig, RpcExtension,
-	SubscriptionTaskExecutor,
+	overrides_handle, BabeDeps, BeefyDeps, FullDeps, GrandpaDeps, LightDeps, RpcConfig,
+	RpcExtension, RpcHelper, SubscriptionTaskExecutor,
 };
 
 type FullBackend = TFullBackend<Block>;
@@ -310,11 +312,10 @@ where
 }
 
 #[cfg(feature = "full-node")]
-fn new_full<RuntimeApi, Executor, CT>(
+fn new_full<RuntimeApi, Executor>(
 	mut config: Configuration,
 	authority_discovery_disabled: bool,
 	rpc_config: RpcConfig,
-	eth_transaction_convertor: CT,
 ) -> Result<
 	(
 		TaskManager,
@@ -329,7 +330,6 @@ where
 		'static + Send + Sync + ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>>,
 	RuntimeApi::RuntimeApi:
 		RuntimeApiCollection<StateBackend = StateBackendFor<FullBackend, Block>>,
-	CT: 'static + Clone + Send + Sync + fp_rpc::ConvertTransaction<sp_runtime::OpaqueExtrinsic>,
 {
 	let role = config.role.clone();
 	let is_authority = role.is_authority();
@@ -401,6 +401,14 @@ where
 
 	let dvm_backend = open_dvm_backend(&config)?;
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
+	let overrides = overrides_handle(client.clone());
+	let block_data_cache = Arc::new(EthBlockDataCache::new(
+		task_manager.spawn_handle(),
+		overrides.clone(),
+		rpc_config.eth_log_block_cache,
+		rpc_config.eth_log_block_cache,
+	));
+	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
 	let tracing_requesters = dvm_tasks::spawn(DvmTasksParams {
 		task_manager: &task_manager,
 		client: client.clone(),
@@ -409,6 +417,8 @@ where
 		filter_pool: filter_pool.clone(),
 		is_archive,
 		rpc_config: rpc_config.clone(),
+		fee_history_cache: fee_history_cache.clone(),
+		overrides: overrides.clone(),
 	});
 	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let shared_voter_state = GrandpaSharedVoterState::empty();
@@ -436,12 +446,9 @@ where
 					FullDeps {
 						client: client.clone(),
 						pool: transaction_pool.clone(),
-						graph: transaction_pool.pool().clone(),
 						select_chain: select_chain.clone(),
 						chain_spec: chain_spec.cloned_box(),
 						deny_unsafe,
-						is_authority,
-						network: network.clone(),
 						babe: BabeDeps {
 							babe_config: babe_config.clone(),
 							shared_epoch_changes: shared_epoch_changes.clone(),
@@ -458,13 +465,20 @@ where
 							beefy_commitment_stream: beefy_commitment_stream.clone(),
 							subscription_executor,
 						},
-						backend: dvm_backend.clone(),
-						filter_pool: filter_pool.clone(),
 						tracing_requesters: tracing_requesters.clone(),
-						rpc_config: rpc_config.clone(),
+						rpc_helper: RpcHelper {
+							is_authority,
+							rpc_config: rpc_config.clone(),
+							graph: transaction_pool.pool().clone(),
+							network: network.clone(),
+							filter_pool: filter_pool.clone(),
+							backend: dvm_backend.clone(),
+							fee_history_cache: fee_history_cache.clone(),
+							overrides: overrides.clone(),
+							block_data_cache: block_data_cache.clone(),
+						},
 					},
 					subscription_task_executor.clone(),
-					eth_transaction_convertor.clone(),
 				)
 				.map_err(Into::into)
 			},

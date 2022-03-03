@@ -9,8 +9,6 @@ members = [
 	"node/runtime/pangoro",
 	"node/runtime/template",
 	"node/service",
-	"client/dvm/db",
-	"client/dvm/mapping-sync",
 	"client/dvm/rpc",
 	"client/dvm/tracer",
 	"frame/balances",

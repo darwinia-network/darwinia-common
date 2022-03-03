@@ -28,7 +28,7 @@ pub mod account_basic;
 
 #[doc(no_inline)]
 pub use ethereum::{
-	BlockV2 as Block, LegacyTransactionMessage, Log, Receipt as EthereumReceiptV0,
+	AccessListItem, BlockV2 as Block, LegacyTransactionMessage, Log, ReceiptV3 as Receipt,
 	TransactionAction, TransactionSignature, TransactionV2 as Transaction,
 };
 
@@ -46,7 +46,7 @@ use fp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
 use fp_evm::CallOrCreateInfo;
 use fp_rpc::TransactionStatus;
 #[cfg(feature = "std")]
-use fp_storage::PALLET_ETHEREUM_SCHEMA;
+use fp_storage::{EthereumStorageSchema, PALLET_ETHEREUM_SCHEMA};
 #[cfg(feature = "std")]
 use frame_support::storage::unhashed;
 use frame_support::{
@@ -56,7 +56,7 @@ use frame_support::{
 	weights::{Pays, PostDispatchInfo, Weight},
 	PalletId,
 };
-use frame_system::pallet_prelude::OriginFor;
+use frame_system::{pallet_prelude::OriginFor, WeightInfo};
 use pallet_evm::FeeCalculator;
 use scale_info::TypeInfo;
 use sp_runtime::{
@@ -231,6 +231,7 @@ pub mod pallet {
 
 		fn on_initialize(_block_number: T::BlockNumber) -> Weight {
 			Pending::<T>::kill();
+			let mut weight = T::SystemWeightInfo::kill_storage(1);
 
 			// If the digest contain an existing ethereum block(encoded as PreLog), If contains,
 			// execute the imported block firstly and disable transact dispatch function.
@@ -245,12 +246,18 @@ pub mod pallet {
 					Self::validate_transaction_in_block(source, &transaction).expect(
 						"pre-block transaction verification failed; the block cannot be built",
 					);
-					Self::apply_validated_transaction(source, transaction).expect(
+					let r = Self::apply_validated_transaction(source, transaction).expect(
 						"pre-block transaction execution failed; the block cannot be built",
 					);
+					weight = weight.saturating_add(r.actual_weight.unwrap_or(0 as Weight));
 				}
 			}
-			0
+			// Account for `on_finalize` weight:
+			//	- read: frame_system::Pallet::<T>::digest()
+			//	- read: frame_system::Pallet::<T>::block_number()
+			//	- write: <Pallet<T>>::store_block()
+			//	- write: <BlockHash<T>>::remove()
+			weight.saturating_add(T::DbWeight::get().reads_writes(2, 2))
 		}
 	}
 
@@ -322,7 +329,7 @@ pub mod pallet {
 	/// Current building block's transactions and receipts.
 	#[pallet::storage]
 	pub(super) type Pending<T: Config> =
-		StorageValue<_, Vec<(Transaction, TransactionStatus, EthereumReceiptV0)>, ValueQuery>;
+		StorageValue<_, Vec<(Transaction, TransactionStatus, Receipt)>, ValueQuery>;
 
 	/// The current Ethereum block.
 	#[pallet::storage]
@@ -330,7 +337,7 @@ pub mod pallet {
 
 	/// The current Ethereum receipts.
 	#[pallet::storage]
-	pub(super) type CurrentReceipts<T: Config> = StorageValue<_, Vec<EthereumReceiptV0>>;
+	pub(super) type CurrentReceipts<T: Config> = StorageValue<_, Vec<Receipt>>;
 
 	/// The current transaction statuses.
 	#[pallet::storage]
@@ -369,7 +376,7 @@ pub mod pallet {
 				<Pallet<T>>::store_block(false, U256::zero());
 				unhashed::put::<EthereumStorageSchema>(
 					&PALLET_ETHEREUM_SCHEMA,
-					&EthereumStorageSchema::V2,
+					&EthereumStorageSchema::V3,
 				);
 			};
 			extra_genesis_builder(self);
@@ -592,8 +599,9 @@ impl<T: Config> Pallet<T> {
 		source: H160,
 		advanced_transaction: AdvancedTransaction,
 	) -> Result<(ExitReason, U256), DispatchError> {
+		let pending = Pending::<T>::get();
 		let transaction_hash = advanced_transaction.hash();
-		let transaction_index = Pending::<T>::get().len() as u32;
+		let transaction_index = pending.len() as u32;
 
 		let (to, _, info) = Self::execute(source, &advanced_transaction, None)?;
 		let (reason, status, used_gas, dest) = match info {
@@ -634,16 +642,52 @@ impl<T: Config> Pallet<T> {
 				Some(info.value),
 			),
 		};
-		let receipt = ethereum::Receipt {
-			state_root: match reason {
-				ExitReason::Succeed(_) => H256::from_low_u64_be(1),
-				ExitReason::Error(_) => H256::from_low_u64_le(0),
-				ExitReason::Revert(_) => H256::from_low_u64_le(0),
-				ExitReason::Fatal(_) => H256::from_low_u64_le(0),
-			},
-			used_gas,
-			logs_bloom: status.clone().logs_bloom,
-			logs: status.clone().logs,
+
+		let receipt = {
+			let status_code: u8 = match reason {
+				ExitReason::Succeed(_) => 1,
+				_ => 0,
+			};
+			let logs_bloom = status.clone().logs_bloom;
+			let logs = status.clone().logs;
+			let cumulative_gas_used = if let Some((_, _, receipt)) = pending.last() {
+				match receipt {
+					Receipt::Legacy(d) | Receipt::EIP2930(d) | Receipt::EIP1559(d) => {
+						d.used_gas.saturating_add(used_gas)
+					}
+				}
+			} else {
+				used_gas
+			};
+
+			match advanced_transaction {
+				AdvancedTransaction::Ethereum(ref transaction) => match &transaction {
+					Transaction::Legacy(_) => Receipt::Legacy(ethereum::EIP658ReceiptData {
+						status_code,
+						used_gas: cumulative_gas_used,
+						logs_bloom,
+						logs,
+					}),
+					Transaction::EIP2930(_) => Receipt::EIP2930(ethereum::EIP2930ReceiptData {
+						status_code,
+						used_gas: cumulative_gas_used,
+						logs_bloom,
+						logs,
+					}),
+					Transaction::EIP1559(_) => Receipt::EIP1559(ethereum::EIP2930ReceiptData {
+						status_code,
+						used_gas: cumulative_gas_used,
+						logs_bloom,
+						logs,
+					}),
+				},
+				AdvancedTransaction::Internal(_) => Receipt::Legacy(ethereum::EIP658ReceiptData {
+					status_code,
+					used_gas: cumulative_gas_used,
+					logs_bloom,
+					logs,
+				}),
+			}
 		};
 		Pending::<T>::append((advanced_transaction.transaction(), status, receipt));
 		Self::deposit_event(Event::Executed(
@@ -670,7 +714,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Get receipts by number.
-	pub fn current_receipts() -> Option<Vec<EthereumReceiptV0>> {
+	pub fn current_receipts() -> Option<Vec<Receipt>> {
 		CurrentReceipts::<T>::get()
 	}
 
@@ -807,18 +851,31 @@ impl<T: Config> Pallet<T> {
 		let mut statuses = Vec::new();
 		let mut receipts = Vec::new();
 		let mut logs_bloom = Bloom::default();
+		let mut cumulative_gas_used = U256::zero();
 		for (transaction, status, receipt) in Pending::<T>::get() {
 			transactions.push(transaction);
 			statuses.push(status);
 			receipts.push(receipt.clone());
-			Self::logs_bloom(receipt.logs.clone(), &mut logs_bloom);
+			let (logs, used_gas) = match receipt {
+				Receipt::Legacy(d) | Receipt::EIP2930(d) | Receipt::EIP1559(d) => {
+					(d.logs.clone(), d.used_gas)
+				}
+			};
+			cumulative_gas_used = used_gas;
+			Self::logs_bloom(logs, &mut logs_bloom);
 		}
 
 		let ommers = Vec::<ethereum::Header>::new();
 		let receipts_root =
 			ethereum::util::ordered_trie_root(receipts.iter().map(|r| rlp::encode(r)));
 		let partial_header = ethereum::PartialHeader {
-			parent_hash: Self::current_block_hash().unwrap_or_default(),
+			// Instead of using current_block(), obtain the parent block hash from BlockHash storage to avoid Block type upgrade failures
+			// See: https://github.com/paritytech/frontier/pull/570
+			parent_hash: if block_number > U256::zero() {
+				BlockHash::<T>::get(block_number - 1)
+			} else {
+				H256::default()
+			},
 			beneficiary: darwinia_evm::Pallet::<T>::find_author(),
 			state_root: T::StateRoot::get(),
 			receipts_root,
@@ -826,10 +883,7 @@ impl<T: Config> Pallet<T> {
 			difficulty: U256::zero(),
 			number: block_number,
 			gas_limit: T::BlockGasLimit::get(),
-			gas_used: receipts
-				.clone()
-				.into_iter()
-				.fold(U256::zero(), |acc, r| acc + r.used_gas),
+			gas_used: cumulative_gas_used,
 			timestamp: UniqueSaturatedInto::<u64>::unique_saturated_into(
 				<pallet_timestamp::Pallet<T>>::get(),
 			),
@@ -913,19 +967,6 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 			},
 			_ => Err(<Error<T>>::ReadyOnlyCall.into()),
 		}
-	}
-}
-
-/// The schema version for Pallet Ethereum's storage
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Encode, Decode)]
-pub enum EthereumStorageSchema {
-	Undefined,
-	V1,
-	V2,
-}
-impl Default for EthereumStorageSchema {
-	fn default() -> Self {
-		Self::Undefined
 	}
 }
 

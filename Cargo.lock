@@ -2026,53 +2026,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "dc-db"
-version = "2.8.5"
-dependencies = [
- "dvm-ethereum",
- "fp-evm",
- "fp-storage",
- "kvdb",
- "kvdb-rocksdb",
- "parity-scale-codec",
- "parking_lot 0.11.2",
- "sp-core",
- "sp-database",
- "sp-runtime",
-]
-
-[[package]]
-name = "dc-mapping-sync"
-version = "2.8.5"
-dependencies = [
- "dc-db",
- "fp-consensus",
- "fp-rpc",
- "futures 0.3.21",
- "futures-timer 3.0.2",
- "log",
- "sc-client-api",
- "sp-api",
- "sp-blockchain",
- "sp-runtime",
-]
-
-[[package]]
 name = "dc-rpc"
 version = "2.8.5"
 dependencies = [
- "array-bytes",
- "dc-db",
  "dc-tracer",
  "dp-evm-trace-apis",
  "dp-evm-trace-rpc",
- "dvm-ethereum",
  "dvm-rpc-core",
  "ethereum",
  "ethereum-types",
- "evm",
+ "fc-db",
+ "fc-rpc",
  "fc-rpc-core",
- "fp-consensus",
  "fp-rpc",
  "fp-storage",
  "futures 0.3.21",
@@ -2080,27 +2045,14 @@ dependencies = [
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
- "libsecp256k1 0.3.5",
- "log",
- "lru",
  "parity-scale-codec",
- "parking_lot 0.11.2",
- "rand 0.8.4",
- "rlp",
  "sc-client-api",
- "sc-network",
- "sc-rpc",
- "sc-service",
- "sc-transaction-pool",
- "sc-transaction-pool-api",
  "sc-utils",
- "sha3 0.9.1",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
  "sp-io",
  "sp-runtime",
- "sp-storage",
  "tokio",
  "tracing",
 ]
@@ -2381,19 +2333,19 @@ dependencies = [
  "darwinia-balances-rpc",
  "darwinia-fee-market-rpc",
  "darwinia-staking-rpc",
- "dc-db",
  "dc-rpc",
  "dp-evm-trace-apis",
  "drml-common-primitives",
  "dvm-ethereum",
+ "fc-db",
+ "fc-rpc",
  "fc-rpc-core",
  "fp-rpc",
+ "fp-storage",
  "futures 0.3.21",
  "jsonrpc-core",
  "jsonrpc-pubsub",
  "pallet-transaction-payment-rpc",
- "pangolin-runtime",
- "pangoro-runtime",
  "sc-chain-spec",
  "sc-client-api",
  "sc-consensus-babe",
@@ -2432,14 +2384,15 @@ dependencies = [
  "darwinia-fee-market-rpc-runtime-api",
  "darwinia-staking",
  "darwinia-staking-rpc-runtime-api",
- "dc-db",
- "dc-mapping-sync",
  "dc-rpc",
  "dp-evm-trace-apis",
  "dp-evm-trace-ext",
  "drml-common-primitives",
  "drml-rpc",
  "dvm-ethereum",
+ "fc-db",
+ "fc-mapping-sync",
+ "fc-rpc",
  "fc-rpc-core",
  "fp-rpc",
  "frame-benchmarking",
@@ -2735,9 +2688,9 @@ dependencies = [
 
 [[package]]
 name = "ethereum"
-version = "0.10.0"
+version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81fb916554a4dba293ea69c69ad5653e21d770a9d0c2496b5fa0a1f5a3946d87"
+checksum = "34c90e0a755da706ce0970ec0fa8cc48aabcc8e8efa1245336acf718dab06ffe"
 dependencies = [
  "bytes 1.1.0",
  "ethereum-types",
@@ -2885,9 +2838,113 @@ dependencies = [
 ]
 
 [[package]]
+name = "fc-consensus"
+version = "2.0.0-dev"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
+dependencies = [
+ "async-trait",
+ "fc-db",
+ "fp-consensus",
+ "fp-rpc",
+ "futures 0.3.21",
+ "log",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-consensus",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-timestamp",
+ "substrate-prometheus-endpoint",
+ "thiserror",
+]
+
+[[package]]
+name = "fc-db"
+version = "2.0.0-dev"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
+dependencies = [
+ "fp-storage",
+ "kvdb",
+ "kvdb-rocksdb",
+ "parity-scale-codec",
+ "parking_lot 0.11.2",
+ "sp-core",
+ "sp-database",
+ "sp-runtime",
+]
+
+[[package]]
+name = "fc-mapping-sync"
+version = "2.0.0-dev"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
+dependencies = [
+ "fc-consensus",
+ "fc-db",
+ "fp-consensus",
+ "fp-rpc",
+ "futures 0.3.21",
+ "futures-timer 3.0.2",
+ "log",
+ "sc-client-api",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime",
+]
+
+[[package]]
+name = "fc-rpc"
+version = "2.0.0-dev"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
+dependencies = [
+ "ethereum",
+ "ethereum-types",
+ "evm",
+ "fc-consensus",
+ "fc-db",
+ "fc-rpc-core",
+ "fp-consensus",
+ "fp-evm",
+ "fp-rpc",
+ "fp-storage",
+ "futures 0.3.21",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "jsonrpc-pubsub",
+ "libsecp256k1 0.3.5",
+ "log",
+ "lru",
+ "parity-scale-codec",
+ "parking_lot 0.11.2",
+ "rand 0.7.3",
+ "rlp",
+ "rustc-hex",
+ "sc-client-api",
+ "sc-network",
+ "sc-rpc",
+ "sc-service",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "sha3 0.8.2",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-io",
+ "sp-runtime",
+ "sp-storage",
+ "sp-transaction-pool",
+ "tokio",
+]
+
+[[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2995,7 +3052,7 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "ethereum",
  "parity-scale-codec",
@@ -3009,7 +3066,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "evm",
  "parity-scale-codec",
@@ -3021,7 +3078,7 @@ dependencies = [
 [[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3038,7 +3095,7 @@ dependencies = [
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "ethereum",
  "frame-support",
@@ -3055,7 +3112,10 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
+dependencies = [
+ "parity-scale-codec",
+]
 
 [[package]]
 name = "frame-benchmarking"
@@ -5696,7 +5756,7 @@ dependencies = [
 [[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5867,7 +5927,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "evm",
  "evm-gasometer",
@@ -5895,7 +5955,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-modexp"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "fp-evm",
  "num",
@@ -5906,7 +5966,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-sha3fips"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "fp-evm",
  "sp-core",
@@ -5917,7 +5977,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-simple"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#69947365bfafbd01dfd543b511fad67ffdf6198f"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#a00d4af792594aeebda367d384f938bd437a2653"
 dependencies = [
  "fp-evm",
  "ripemd160",

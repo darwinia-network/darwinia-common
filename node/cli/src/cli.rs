@@ -150,6 +150,10 @@ pub struct DvmArgs {
 	#[structopt(long, default_value = "10000")]
 	pub max_past_logs: u32,
 
+	/// Maximum fee history cache size.
+	#[structopt(long, default_value = "2048")]
+	pub fee_history_limit: u64,
+
 	/// Choose sealing method.
 	#[cfg(feature = "template")]
 	#[structopt(long = "sealing", default_value)]

@@ -17,13 +17,10 @@ jsonrpc-pubsub = { version = "18.0" }
 darwinia-balances-rpc   = { path = "../../frame/balances/rpc" }
 darwinia-fee-market-rpc = { path = "../../frame/fee-market/rpc" }
 darwinia-staking-rpc    = { path = "../../frame/staking/rpc" }
-dc-db                   = { path = "../../client/dvm/db" }
-dc-rpc                  = { path = "../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }
+dc-rpc                  = { path = "../../client/dvm/rpc" }
 dp-evm-trace-apis       = { path = "../../primitives/evm-trace/apis" }
 drml-common-primitives  = { path = "../primitives/common" }
 dvm-ethereum            = { path = "../../frame/dvm" }
-pangolin-runtime        = { path = "../runtime/pangolin" }
-pangoro-runtime         = { path = "../runtime/pangoro" }
 # paritytech
 beefy-gadget                   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 beefy-gadget-rpc               = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -48,8 +45,11 @@ sp-keystore                    = { git = "https://github.com/darwinia-network/su
 sp-runtime                     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 substrate-frame-rpc-system     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
-fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
-fp-rpc      = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fc-db       = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fc-rpc      = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev", features = ["rpc_binary_search_estimate"] }
+fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fp-rpc      = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fp-storage  = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 # template
 futures                  = { version = "0.3", optional = true }
 sc-consensus-manual-seal = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

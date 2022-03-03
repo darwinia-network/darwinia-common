@@ -16,7 +16,7 @@
 
 pub use dvm_rpc_core::{DebugApi as DebugT, DebugApiServer, TraceParams};
 
-// crates.io
+// --- crates.io ---
 use ethereum_types::{H128, H256};
 use futures::{future::BoxFuture, FutureExt, SinkExt, StreamExt};
 use jsonrpc_core::Result as RpcResult;
@@ -25,12 +25,12 @@ use tokio::{
 	self,
 	sync::{oneshot, Semaphore},
 };
-// darwinia-network
-use crate::{frontier_backend_client, internal_err};
+// --- darwinia-network ---
 use dc_tracer::{formatters::ResponseFormatter, types::single};
 use dp_evm_trace_apis::{DebugRuntimeApi, TracerInput};
 use dp_evm_trace_rpc::{RequestBlockId, RequestBlockTag};
-// paritytech
+// --- paritytech --
+use fc_rpc::{frontier_backend_client, internal_err};
 use fp_rpc::EthereumRuntimeRPCApi;
 use sc_client_api::backend::Backend;
 use sc_utils::mpsc::TracingUnboundedSender;
@@ -153,7 +153,7 @@ where
 	pub fn task(
 		client: Arc<C>,
 		backend: Arc<BE>,
-		frontier_backend: Arc<dc_db::Backend<B>>,
+		frontier_backend: Arc<fc_db::Backend<B>>,
 		permit_pool: Arc<Semaphore>,
 	) -> (impl Future<Output = ()>, DebugRequester) {
 		let (tx, mut rx): (DebugRequester, _) =
@@ -298,7 +298,7 @@ where
 	fn handle_block_request(
 		client: Arc<C>,
 		backend: Arc<BE>,
-		frontier_backend: Arc<dc_db::Backend<B>>,
+		frontier_backend: Arc<fc_db::Backend<B>>,
 		request_block_id: RequestBlockId,
 		params: Option<TraceParams>,
 	) -> RpcResult<Response> {
@@ -409,7 +409,7 @@ where
 	fn handle_transaction_request(
 		client: Arc<C>,
 		backend: Arc<BE>,
-		frontier_backend: Arc<dc_db::Backend<B>>,
+		frontier_backend: Arc<fc_db::Backend<B>>,
 		transaction_hash: H256,
 		params: Option<TraceParams>,
 	) -> RpcResult<Response> {

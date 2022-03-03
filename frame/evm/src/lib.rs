@@ -57,7 +57,7 @@ use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use darwinia_support::evm::IntoAccountId;
 
-static ISTANBUL_CONFIG: EvmConfig = EvmConfig::istanbul();
+static LONDON_CONFIG: EvmConfig = EvmConfig::london();
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -108,7 +108,7 @@ pub mod pallet {
 
 		/// EVM config used in the Pallet.
 		fn config() -> &'static EvmConfig {
-			&ISTANBUL_CONFIG
+			&LONDON_CONFIG
 		}
 	}
 
@@ -182,7 +182,7 @@ pub mod pallet {
 				}
 
 				T::RingAccountBasic::mutate_account_basic_balance(&address, account.balance);
-				AccountCodes::<T>::insert(address, &account.code);
+				Pallet::<T>::create_account(*address, account.code.clone());
 				for (index, value) in &account.storage {
 					AccountStorages::<T>::insert(address, index, value);
 				}
@@ -350,7 +350,7 @@ pub mod pallet {
 		pub fn remove_account(address: &H160) {
 			if AccountCodes::<T>::contains_key(address) {
 				let account_id = T::IntoAccountId::into_account_id(*address);
-				let _ = <frame_system::Pallet<T>>::dec_consumers(&account_id);
+				let _ = frame_system::Pallet::<T>::dec_sufficients(&account_id);
 			}
 
 			AccountCodes::<T>::remove(address);
@@ -365,7 +365,7 @@ pub mod pallet {
 
 			if !AccountCodes::<T>::contains_key(&address) {
 				let account_id = T::IntoAccountId::into_account_id(address);
-				let _ = <frame_system::Pallet<T>>::inc_consumers(&account_id);
+				let _ = frame_system::Pallet::<T>::inc_sufficients(&account_id);
 			}
 
 			AccountCodes::<T>::insert(address, code);

@@ -22,31 +22,33 @@ use std::{sync::Arc, time::Duration};
 use futures::StreamExt;
 use tokio::sync::Semaphore;
 // --- paritytech ---
-use fc_rpc_core::types::FilterPool;
-use sc_client_api::{backend::Backend, BlockOf, BlockchainEvents};
+use fc_db::Backend as DvmBackend;
+use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
+use fc_rpc::{EthTask, OverrideHandle};
+use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
+use sc_client_api::BlockchainEvents;
 use sc_service::TaskManager;
-use sp_api::{HeaderT, ProvideRuntimeApi};
-use sp_block_builder::BlockBuilder;
-use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
+use sp_blockchain::Error as BlockChainError;
 use sp_core::H256;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 // --- darwinia-network ---
-use dc_mapping_sync::{MappingSyncWorker, SyncStrategy};
-use dc_rpc::{CacheTask, DebugTask, EthTask};
-use dp_evm_trace_apis::DebugRuntimeApi;
+use dc_rpc::{CacheTask, DebugTask};
 use drml_rpc::{EthApiCmd, RpcConfig, RpcRequesters};
-use fp_rpc::EthereumRuntimeRPCApi;
 
 pub fn spawn<B, C, BE>(params: DvmTasksParams<B, C, BE>) -> RpcRequesters
 where
-	C: ProvideRuntimeApi<B> + BlockOf,
-	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
+	C: sp_api::ProvideRuntimeApi<B>,
+	C: sc_client_api::BlockOf + sc_client_api::backend::StorageProvider<B, BE>,
+	C: sp_blockchain::HeaderBackend<B>,
+	C: sp_blockchain::HeaderMetadata<B, Error = BlockChainError> + 'static,
 	C: BlockchainEvents<B>,
-	C::Api: EthereumRuntimeRPCApi<B> + DebugRuntimeApi<B>,
-	C::Api: BlockBuilder<B>,
+	C::Api: fp_rpc::EthereumRuntimeRPCApi<B>,
+	C::Api: dp_evm_trace_apis::DebugRuntimeApi<B>,
+	C::Api: sp_block_builder::BlockBuilder<B>,
 	B: BlockT<Hash = H256> + Send + Sync + 'static,
-	B::Header: HeaderT<Number = u32>,
-	BE: Backend<B> + 'static,
+	B::Header: sp_api::HeaderT<Number = u32>,
+	BE: sc_client_api::backend::Backend<B> + 'static,
+	BE::State: sc_client_api::backend::StateBackend<BlakeTwo256>,
 {
 	let DvmTasksParams {
 		task_manager,
@@ -56,20 +58,27 @@ where
 		filter_pool,
 		is_archive,
 		rpc_config,
+		fee_history_cache,
+		overrides,
 	} = params;
 
-	// Spawn schema cache maintenance task.
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-schema-cache-task",
-		EthTask::ethereum_schema_cache_task(
-			Arc::clone(&client),
-			Arc::clone(&dvm_backend),
-			dvm_ethereum::EthereumStorageSchema::V2,
-		),
-	);
-
-	// Spawn mapping sync worker task.
 	if is_archive {
+		// Spawn schema cache maintenance task.
+		task_manager.spawn_essential_handle().spawn(
+			"frontier-schema-cache-task",
+			EthTask::ethereum_schema_cache_task(Arc::clone(&client), Arc::clone(&dvm_backend)),
+		);
+		// Spawn Frontier FeeHistory cache maintenance task.
+		task_manager.spawn_essential_handle().spawn(
+			"frontier-fee-history",
+			EthTask::fee_history_task(
+				Arc::clone(&client),
+				Arc::clone(&overrides),
+				fee_history_cache,
+				rpc_config.fee_history_limit,
+			),
+		);
+		// Spawn mapping sync worker task.
 		task_manager.spawn_essential_handle().spawn(
 			"frontier-mapping-sync-worker",
 			MappingSyncWorker::new(
@@ -82,16 +91,19 @@ where
 			)
 			.for_each(|()| futures::future::ready(())),
 		);
-	}
-
-	// Spawn EthFilterApi maintenance task.
-	if let Some(filter_pool) = filter_pool {
-		// Each filter is allowed to stay in the pool for 100 blocks.
-		const FILTER_RETAIN_THRESHOLD: u64 = 100;
-		task_manager.spawn_essential_handle().spawn(
-			"frontier-filter-pool",
-			EthTask::filter_pool_task(Arc::clone(&client), filter_pool, FILTER_RETAIN_THRESHOLD),
-		);
+		// Spawn EthFilterApi maintenance task.
+		if let Some(filter_pool) = filter_pool {
+			// Each filter is allowed to stay in the pool for 100 blocks.
+			const FILTER_RETAIN_THRESHOLD: u64 = 100;
+			task_manager.spawn_essential_handle().spawn(
+				"frontier-filter-pool",
+				EthTask::filter_pool_task(
+					Arc::clone(&client),
+					filter_pool,
+					FILTER_RETAIN_THRESHOLD,
+				),
+			);
+		}
 	}
 
 	let cmd = rpc_config.ethapi.clone();
@@ -155,8 +167,10 @@ pub struct DvmTasksParams<'a, B: BlockT, C, BE> {
 	pub task_manager: &'a TaskManager,
 	pub client: Arc<C>,
 	pub substrate_backend: Arc<BE>,
-	pub dvm_backend: Arc<dc_db::Backend<B>>,
+	pub dvm_backend: Arc<DvmBackend<B>>,
 	pub filter_pool: Option<FilterPool>,
 	pub is_archive: bool,
 	pub rpc_config: RpcConfig,
+	pub fee_history_cache: FeeHistoryCache,
+	pub overrides: Arc<OverrideHandle<B>>,
 }

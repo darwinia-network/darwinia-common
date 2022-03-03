@@ -148,6 +148,7 @@ pub fn run() -> sc_cli::Result<()> {
 		ethapi_trace_cache_duration: cli.run.dvm_args.ethapi_trace_cache_duration,
 		eth_log_block_cache: cli.run.dvm_args.eth_log_block_cache,
 		max_past_logs: cli.run.dvm_args.max_past_logs,
+		fee_history_limit: cli.run.dvm_args.fee_history_limit,
 	};
 
 	match &cli.subcommand {
