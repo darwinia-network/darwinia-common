@@ -11,7 +11,7 @@ version     = "2.7.2"
 
 [dependencies]
 # crates.io
-evm = { version = "0.33", default-features = false, features = ["with-codec"] }
+evm = { version = "0.33.1", default-features = false, features = ["with-codec"] }
 # paritytech
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # darwinia-network
