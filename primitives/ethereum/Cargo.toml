@@ -12,7 +12,7 @@ version     = "2.8.5"
 [dependencies]
 # crates.io
 array-bytes     = { version = "1.4" }
-codec           = { package = "parity-scale-codec", version = "2.2", optional = true, default-features = false, features = ["derive"] }
+codec           = { package = "parity-scale-codec", version = "2.3", optional = true, default-features = false, features = ["derive"] }
 ethbloom        = { version = "0.11", default-features = false }
 ethereum-types  = { version = "0.12", default-features = false }
 keccak-hash     = { version = "0.8", default-features = false }
@@ -29,7 +29,7 @@ merkle-patricia-trie = { default-features = false, path = "../merkle-patricia-tr
 [dev-dependencies]
 # crates.io
 array-bytes    = { version = "1.4", features = ["serde"] }
-codec          = { package = "parity-scale-codec", version = "2.2", features = ["derive"] }
+codec          = { package = "parity-scale-codec", version = "2.3", features = ["derive"] }
 ethbloom       = { version = "0.11", features = ["codec"] }
 ethereum-types = { version = "0.12", features = ["codec"] }
 keccak-hasher  = { version = "0.15" }
