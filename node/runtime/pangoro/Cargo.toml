@@ -102,9 +102,9 @@ fp-evm                       = { default-features = false, git = "https://github
 fp-rpc                       = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 fp-self-contained            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 fp-storage                   = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
-pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 pallet-base-fee              = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 pallet-evm                   = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 
 
 [build-dependencies]
@@ -196,6 +196,9 @@ std = [
 	"sp-version/std",
 	# trace
 	"dp-evm-trace-apis/std",
+	"dp-evm-tracer/std",
+	"rlp/std",
+	"sha3/std",
 	# frontier
 	"fp-evm/std",
 	"fp-rpc/std",

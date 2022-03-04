@@ -241,7 +241,10 @@ std = [
 	"sp-transaction-pool/std",
 	"sp-version/std",
 	# trace
+	"dp-evm-tracer/std",
 	"dp-evm-trace-apis/std",
+	"rlp/std",
+	"sha3/std",
 	# frontier
 	"fp-evm/std",
 	"fp-rpc/std",
