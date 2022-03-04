@@ -116,6 +116,7 @@ where
 					Arc::clone(&substrate_backend),
 					Duration::from_secs(rpc_config.ethapi_trace_cache_duration),
 					Arc::clone(&permit_pool),
+					Arc::clone(&overrides),
 				);
 				(Some(trace_filter_task), Some(trace_filter_requester))
 			} else {
@@ -128,6 +129,7 @@ where
 				Arc::clone(&substrate_backend),
 				Arc::clone(&dvm_backend),
 				Arc::clone(&permit_pool),
+				Arc::clone(&overrides),
 			);
 			(Some(debug_task), Some(debug_requester))
 		} else {
