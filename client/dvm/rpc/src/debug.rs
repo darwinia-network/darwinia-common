@@ -259,15 +259,19 @@ where
 				tracer: Some(tracer),
 				..
 			}) => {
-				let hash: H128 = sp_io::hashing::twox_128(&tracer.as_bytes()).into();
-				let blockscout_hash = H128::from_str("0x94d9f08796f91eb13a2e82a6066882f7").unwrap();
-				let tracer = if hash == blockscout_hash {
-					Some(TracerInput::Blockscout)
-				} else if tracer == "callTracer" {
-					Some(TracerInput::CallTracer)
-				} else {
-					None
-				};
+				const BLOCKSCOUT_JS_CODE_HASH: [u8; 16] =
+					hex_literal::hex!("94d9f08796f91eb13a2e82a6066882f7");
+				const BLOCKSCOUT_JS_CODE_HASH_V2: [u8; 16] =
+					hex_literal::hex!("89db13694675692951673a1e6e18ff02");
+				let hash = sp_io::hashing::twox_128(&tracer.as_bytes());
+				let tracer =
+					if hash == BLOCKSCOUT_JS_CODE_HASH || hash == BLOCKSCOUT_JS_CODE_HASH_V2 {
+						Some(TracerInput::Blockscout)
+					} else if tracer == "callTracer" {
+						Some(TracerInput::CallTracer)
+					} else {
+						None
+					};
 				if let Some(tracer) = tracer {
 					Ok((tracer, single::TraceType::CallList))
 				} else {
