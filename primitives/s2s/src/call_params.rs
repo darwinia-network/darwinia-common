@@ -71,6 +71,7 @@ pub enum CallParams {
 
 #[cfg(test)]
 mod test {
+	// --- darwinia-network ---
 	use super::*;
 	use dp_asset::TokenMetadata;
 
@@ -133,7 +134,7 @@ mod test {
 	#[test]
 	fn test_pangoro_runtime_call_encode() {
 		let expected_encoded_call = PangoroRuntime::Sub2SubBacking(
-			S2SBackingCall::unlock_from_remote(0.into(), 0.into(), vec![1; 32]),
+			S2SBackingCall::unlock_from_remote(H160::zero(), U256::zero(), vec![1; 32]),
 		)
 		.encode();
 
@@ -141,7 +142,7 @@ mod test {
 			CallOrigin::SourceRoot,
 			0,
 			0,
-			CallParams::S2sBackingPalletUnlockFromRemote(0.into(), 0.into(), vec![1; 32]),
+			CallParams::S2sBackingPalletUnlockFromRemote(H160::zero(), U256::zero(), vec![1; 32]),
 			DispatchFeePayment::AtSourceChain,
 		)
 		.unwrap();
@@ -150,7 +151,7 @@ mod test {
 
 	#[test]
 	fn test_pangolin_runtime_call_encode() {
-		let mock_token = TokenMetadata::new(1, 0.into(), vec![1, 2, 3], vec![1, 2, 3], 9);
+		let mock_token = TokenMetadata::new(1, H160::zero(), vec![1, 2, 3], vec![1, 2, 3], 9);
 
 		let expected_encoded_call = PangolinRuntime::Sub2SubIssuing(
 			S2SIssuingCall::register_from_remote(mock_token.clone()),
@@ -167,14 +168,14 @@ mod test {
 		assert_eq!(expected_encoded_call, encoded);
 
 		let expected_encoded_call = PangolinRuntime::Sub2SubIssuing(
-			S2SIssuingCall::issue_from_remote(0.into(), 0.into(), 0.into()),
+			S2SIssuingCall::issue_from_remote(H160::zero(), U256::zero(), H160::zero()),
 		)
 		.encode();
 		let encoded = MockPangolinPayloadCreator::create(
 			CallOrigin::SourceRoot,
 			0,
 			0,
-			CallParams::S2sIssuingPalletIssueFromRemote(0.into(), 0.into(), 0.into()),
+			CallParams::S2sIssuingPalletIssueFromRemote(H160::zero(), U256::zero(), H160::zero()),
 			DispatchFeePayment::AtSourceChain,
 		)
 		.unwrap();
