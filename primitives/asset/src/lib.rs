@@ -16,14 +16,18 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 //! Token Primitives
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
+// --- alloc ---
+use alloc::vec::Vec;
 // --- crates.io ---
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 // --- darwinia-network ---
 use ethereum_types::H160;
-use sp_std::vec::Vec;
 
 pub const NATIVE_TOKEN_TYPE: u32 = 0;
 pub const ERC20_TOKEN_TYPE: u32 = 1;

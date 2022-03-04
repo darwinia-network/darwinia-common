@@ -16,25 +16,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+// --- crates.io ---
+use codec::{Decode, Encode};
 // --- paritytech ---
 use bp_message_dispatch::CallOrigin;
 use bp_runtime::messages::DispatchFeePayment;
 use sp_core::{H160, U256};
 use sp_std::{vec, vec::Vec};
 // --- darwinia-network ---
-use codec::{Decode, Encode};
 use dp_asset::TokenMetadata;
 
-/// The parameters box for the pallet runtime call.
-#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
-pub enum CallParams {
-	#[codec(index = 0)]
-	S2sIssuingPalletRegisterFromRemote(TokenMetadata),
-	#[codec(index = 1)]
-	S2sIssuingPalletIssueFromRemote(H160, U256, H160),
-	#[codec(index = 2)]
-	S2sBackingPalletUnlockFromRemote(H160, U256, Vec<u8>),
-}
 /// Creating a concrete message payload which would be relay to target chain.
 pub trait CreatePayload<SourceChainAccountId, TargetChainAccountPublic, TargetChainSignature> {
 	type Payload: Encode;
@@ -65,6 +56,17 @@ impl<AccountId, Signer, Signature> CreatePayload<AccountId, Signer, Signature> f
 	) -> Result<Self::Payload, &'static str> {
 		Ok(())
 	}
+}
+
+/// The parameters box for the pallet runtime call.
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+pub enum CallParams {
+	#[codec(index = 0)]
+	S2sIssuingPalletRegisterFromRemote(TokenMetadata),
+	#[codec(index = 1)]
+	S2sIssuingPalletIssueFromRemote(H160, U256, H160),
+	#[codec(index = 2)]
+	S2sBackingPalletUnlockFromRemote(H160, U256, Vec<u8>),
 }
 
 #[cfg(test)]
@@ -131,7 +133,7 @@ mod test {
 	#[test]
 	fn test_pangoro_runtime_call_encode() {
 		let expected_encoded_call = PangoroRuntime::Sub2SubBacking(
-			S2SBackingCall::unlock_from_remote(H160::zero(), U256::zero(), [1; 32].to_vec()),
+			S2SBackingCall::unlock_from_remote(0.into(), 0.into(), vec![1; 32]),
 		)
 		.encode();
 
@@ -139,11 +141,7 @@ mod test {
 			CallOrigin::SourceRoot,
 			0,
 			0,
-			CallParams::S2sBackingPalletUnlockFromRemote(
-				H160::zero(),
-				U256::zero(),
-				[1; 32].to_vec(),
-			),
+			CallParams::S2sBackingPalletUnlockFromRemote(0.into(), 0.into(), vec![1; 32]),
 			DispatchFeePayment::AtSourceChain,
 		)
 		.unwrap();
@@ -152,7 +150,7 @@ mod test {
 
 	#[test]
 	fn test_pangolin_runtime_call_encode() {
-		let mock_token = TokenMetadata::new(1, H160::zero(), vec![1, 2, 3], vec![1, 2, 3], 9);
+		let mock_token = TokenMetadata::new(1, 0.into(), vec![1, 2, 3], vec![1, 2, 3], 9);
 
 		let expected_encoded_call = PangolinRuntime::Sub2SubIssuing(
 			S2SIssuingCall::register_from_remote(mock_token.clone()),
@@ -169,14 +167,14 @@ mod test {
 		assert_eq!(expected_encoded_call, encoded);
 
 		let expected_encoded_call = PangolinRuntime::Sub2SubIssuing(
-			S2SIssuingCall::issue_from_remote(H160::zero(), U256::zero(), H160::zero()),
+			S2SIssuingCall::issue_from_remote(0.into(), 0.into(), 0.into()),
 		)
 		.encode();
 		let encoded = MockPangolinPayloadCreator::create(
 			CallOrigin::SourceRoot,
 			0,
 			0,
-			CallParams::S2sIssuingPalletIssueFromRemote(H160::zero(), U256::zero(), H160::zero()),
+			CallParams::S2sIssuingPalletIssueFromRemote(0.into(), 0.into(), 0.into()),
 			DispatchFeePayment::AtSourceChain,
 		)
 		.unwrap();
