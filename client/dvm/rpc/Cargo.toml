@@ -26,7 +26,7 @@ tracing             = { version = "0.1" }
 dc-tracer         = { path = "../tracer" }
 dp-evm-trace-apis = { path = "../../../primitives/evm-trace/apis" }
 dp-evm-trace-rpc  = { path = "../../../primitives/evm-trace/rpc" }
-dvm-rpc-core      = { path = "../../../frame/dvm/rpc" }
+dawainiw-rpc-core = { path = "../../rpc-core" }
 # paritytech
 sc-client-api    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sc-utils         = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
