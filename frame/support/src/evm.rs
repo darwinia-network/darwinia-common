@@ -38,8 +38,6 @@ pub const TRANSFER_ADDR: &'static str = "0x0000000000000000000000000000000000000
 pub trait IntoH160 {
 	fn into_h160(&self) -> H160;
 }
-
-// Convert palletId to H160
 impl IntoH160 for PalletId {
 	fn into_h160(&self) -> H160 {
 		let account_id: AccountId32 = self.into_account();
@@ -47,7 +45,6 @@ impl IntoH160 for PalletId {
 		H160::from_slice(&bytes[0..20])
 	}
 }
-
 impl IntoH160 for &[u8] {
 	fn into_h160(&self) -> H160 {
 		let mut address: [u8; 20] = Default::default();
@@ -63,9 +60,8 @@ pub trait IntoAccountId<AccountId> {
 
 /// Darwinia network address mapping.
 pub struct ConcatConverter<AccountId>(PhantomData<AccountId>);
-
 /// The ConcatConverter used for transfer from evm 20-length to substrate 32-length address
-/// The concat rule inclued three parts:
+/// The concat rule included three parts:
 /// 1. AccountId Prefix: concat("dvm", "0x00000000000000"), length: 11 byetes
 /// 2. EVM address: the original evm address, length: 20 bytes
 /// 3. CheckSum:  byte_xor(AccountId Prefix + EVM address), length: 1 bytes
@@ -127,4 +123,24 @@ pub fn decimal_convert(main_balance: u128, remaining_balance: Option<u128>) -> U
 			.saturating_add(U256::from(rb));
 	}
 	U256::from(main_balance).saturating_mul(U256::from(POW_9))
+}
+
+#[test]
+fn const_pow_9_should_work() {
+	assert_eq!(U256::from(10).checked_pow(9.into()).unwrap(), POW_9.into())
+}
+
+#[test]
+fn test_into_dvm_account() {
+	// --- std ---
+	use std::str::FromStr;
+
+	assert_eq!(
+		H160::from_str("726f6f7400000000000000000000000000000000").unwrap(),
+		(&b"root"[..]).into_h160()
+	);
+	assert_eq!(
+		(&b"longbytes..longbytes..longbytes..longbytes"[..]).into_h160(),
+		(&b"longbytes..longbytes"[..]).into_h160()
+	);
 }

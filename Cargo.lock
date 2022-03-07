@@ -2168,7 +2168,6 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sha3 0.9.1",
- "sp-std",
 ]
 
 [[package]]

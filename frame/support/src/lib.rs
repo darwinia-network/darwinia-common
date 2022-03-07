@@ -18,9 +18,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(all(feature = "std", test))]
-pub mod tests;
-
 pub mod evm;
 pub mod macros;
 pub mod structs;
