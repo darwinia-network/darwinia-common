@@ -782,7 +782,7 @@ sp_api::impl_runtime_apis! {
 		}
 		fn trace_block(
 			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
-			known_transactions: Vec<H256>,
+			_known_transactions: Vec<H256>,
 		) -> Result<
 			(),
 			sp_runtime::DispatchError,
@@ -799,7 +799,7 @@ sp_api::impl_runtime_apis! {
 				for ext in _extrinsics.into_iter() {
 					match &ext.0.function {
 						Call::Ethereum(transact { transaction }) => {
-							if known_transactions.contains(&transaction.hash()) {
+							if _known_transactions.contains(&transaction.hash()) {
 								// Each known extrinsic is a new call stack.
 								EvmTracer::emit_new();
 								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
