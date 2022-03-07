@@ -11,7 +11,7 @@ version     = "2.8.5"
 
 [dependencies]
 # crates.io
-codec               = { package = "parity-scale-codec", version = "2.2" }
+codec               = { package = "parity-scale-codec", version = "2.3" }
 ethereum            = { version = "0.11.1", features = ["with-codec"] }
 ethereum-types      = { version = "0.12" }
 futures             = { version = "0.3" }
@@ -36,10 +36,10 @@ sp-blockchain    = { git = "https://github.com/darwinia-network/substrate", bran
 sp-io            = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-runtime       = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
-fp-rpc      = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 fc-db       = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 fc-rpc      = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev", features = ["rpc_binary_search_estimate"] }
 fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fp-rpc      = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 fp-storage  = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 
 [features]
