@@ -882,7 +882,8 @@ where
 
 		let mut proxy = dc_tracer::listeners::CallList::default();
 		proxy.using(f)?;
-		let mut traces: Vec<_> = dc_tracer::formatters::TraceFilter::format(proxy).unwrap();
+		let mut traces: Vec<_> = dc_tracer::formatters::TraceFilter::format(proxy)
+			.ok_or(internal_err("Fail to format proxy"))?;
 		// Fill missing data.
 		for trace in traces.iter_mut() {
 			trace.block_hash = eth_block_hash;
