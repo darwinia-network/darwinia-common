@@ -25,7 +25,7 @@ use bp_messages::{
 	source_chain::{LaneMessageVerifier, Sender},
 	LaneId, MessageDetails, MessageNonce, OutboundLaneData, UnrewardedRelayersState,
 };
-use bp_runtime::{Chain, ChainId};
+use bp_runtime::{Chain, ChainId, IndexOf};
 use bridge_runtime_common::messages::{
 	source::{
 		FromThisChainMessagePayload, BAD_ORIGIN, OUTBOUND_LANE_DISABLED, TOO_LOW_FEE,
@@ -239,6 +239,32 @@ impl Chain for Pangoro {
 #[derive(RuntimeDebug)]
 pub struct Pangolin;
 impl Chain for Pangolin {
+	type BlockNumber = BlockNumber;
+	type Hash = Hash;
+	type Hasher = Hashing;
+	type Header = Header;
+	type AccountId = AccountId;
+	type Balance = Balance;
+	type Index = Nonce;
+	type Signature = Signature;
+
+	fn max_extrinsic_size() -> u32 {
+		*BlockLength::get().max.get(DispatchClass::Normal)
+	}
+
+	fn max_extrinsic_weight() -> Weight {
+		BlockWeights::get()
+			.get(DispatchClass::Normal)
+			.max_extrinsic
+			.unwrap_or(Weight::MAX)
+	}
+}
+
+/// Rococo chain
+#[derive(RuntimeDebug)]
+pub struct Rococo;
+
+impl Chain for Rococo {
 	type BlockNumber = BlockNumber;
 	type Hash = Hash;
 	type Hasher = Hashing;

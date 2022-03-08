@@ -1,7 +1,7 @@
 pub use pallet_bridge_grandpa::Instance2 as WithRococoGrandpa;
 
 // --- paritytech ---
-use drml_bridge_primitives::Pangoro;
+use drml_bridge_primitives::Rococo;
 use pallet_bridge_grandpa::Config;
 // --- darwinia-network ---
 use crate::*;
@@ -21,7 +21,7 @@ frame_support::parameter_types! {
 }
 
 impl Config<WithRococoGrandpa> for Runtime {
-	type BridgedChain = Pangoro;
+	type BridgedChain = Rococo;
 	type MaxRequests = MaxRequests;
 	type HeadersToKeep = HeadersToKeep;
 	type WeightInfo = ();
