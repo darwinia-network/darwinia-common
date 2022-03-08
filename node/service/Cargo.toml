@@ -27,7 +27,7 @@ darwinia-evm                        = { path = "../../frame/evm" }
 darwinia-fee-market-rpc-runtime-api = { path = "../../frame/fee-market/rpc/runtime-api" }
 darwinia-staking                    = { path = "../../frame/staking" }
 darwinia-staking-rpc-runtime-api    = { path = "../../frame/staking/rpc/runtime-api" }
-dc-rpc                              = { path = "../../client/dvm/rpc" }
+dc-rpc                              = { path = "../../client/rpc" }
 dp-evm-trace-apis                   = { path = "../../primitives/evm-trace/apis" }
 dp-evm-trace-ext                    = { path = "../../primitives/evm-trace/ext" }
 drml-common-primitives              = { path = "../primitives/common" }

@@ -1906,6 +1906,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-rpc-core"
+version = "2.8.5"
+dependencies = [
+ "darwinia-evm",
+ "dc-tracer",
+ "dp-evm-trace-rpc",
+ "ethereum",
+ "ethereum-types",
+ "fc-rpc-core",
+ "fp-evm",
+ "futures 0.3.21",
+ "jsonrpc-core",
+ "jsonrpc-derive",
+ "jsonrpc-pubsub",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "darwinia-staking"
 version = "2.8.5"
 dependencies = [
@@ -2029,10 +2053,10 @@ dependencies = [
 name = "dc-rpc"
 version = "2.8.5"
 dependencies = [
+ "darwinia-rpc-core",
  "dc-tracer",
  "dp-evm-trace-apis",
  "dp-evm-trace-rpc",
- "dvm-rpc-core",
  "ethereum",
  "ethereum-types",
  "fc-db",
@@ -2479,30 +2503,6 @@ dependencies = [
  "sha3 0.9.1",
  "sp-core",
  "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "dvm-rpc-core"
-version = "2.8.5"
-dependencies = [
- "darwinia-evm",
- "dc-tracer",
- "dp-evm-trace-rpc",
- "ethereum",
- "ethereum-types",
- "fc-rpc-core",
- "fp-evm",
- "futures 0.3.21",
- "jsonrpc-core",
- "jsonrpc-derive",
- "jsonrpc-pubsub",
- "parity-scale-codec",
- "serde",
- "serde_json",
- "sp-api",
- "sp-core",
  "sp-runtime",
  "sp-std",
 ]

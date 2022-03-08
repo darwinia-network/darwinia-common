@@ -24,7 +24,7 @@
 //! - For each traced block an async task responsible to wait for a permit, spawn a blocking
 //!   task and waiting for the result, then send it to the main `CacheTask`.
 
-pub use dvm_rpc_core::{FilterRequest, TraceApi as TraceT, TraceApiServer};
+pub use darwinia_rpc_core::{FilterRequest, TraceApi as TraceT, TraceApiServer};
 
 // --- std ---
 use std::{collections::BTreeMap, future::Future, marker::PhantomData, sync::Arc, time::Duration};
