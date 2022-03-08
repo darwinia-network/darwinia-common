@@ -266,9 +266,9 @@ runtime-benchmarks = [
 	"pallet-collective/runtime-benchmarks",
 	"pallet-society/runtime-benchmarks",
 	# darwinia-network
+	"darwinia-ethereum/runtime-benchmarks",
 	"darwinia-evm/runtime-benchmarks",
 	"darwinia-fee-market/runtime-benchmarks",
-	"dvm-ethereum/runtime-benchmarks",
 	"from-ethereum-issuing/runtime-benchmarks",
 	"from-substrate-issuing/runtime-benchmarks",
 ]
