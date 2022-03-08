@@ -22,7 +22,7 @@
 use futures::channel::mpsc::Sender;
 // --- darwinia-network ---
 use crate::*;
-use dc_rpc::{Debug, DebugApiServer, Trace, TraceApiServer};
+use darwinia_rpc::{Debug, DebugApiServer, Trace, TraceApiServer};
 use template_runtime::TransactionConverter;
 // --- paritytech ---
 use fc_db::Backend as DvmBackend;
