@@ -279,9 +279,9 @@ try-runtime = [
 	# darwinia-network
 	"darwinia-balances/try-runtime",
 	"darwinia-elections-phragmen/try-runtime",
+	"darwinia-ethereum/try-runtime",
 	"darwinia-header-mmr/try-runtime",
 	"darwinia-staking/try-runtime",
-	"darwinia-ethereum/try-runtime",
 	"to-ethereum-backing/try-runtime",
 ]
 
