@@ -24,7 +24,7 @@ use frame_benchmarking::benchmarks;
 use rlp::RlpStream;
 use sha3::{Digest, Keccak256};
 use sp_core::{H160, U256};
-use sp_std::vec;
+use sp_std::prelude::*;
 
 benchmarks! {
 
@@ -69,7 +69,9 @@ benchmarks! {
 			value,
 			gas_limit_create,
 			None,
+			None,
 			Some(nonce_as_u256),
+			Vec::new(),
 			T::config(),
 		);
 		assert_eq!(create_runner_results.is_ok(), true, "create() failed");
@@ -98,7 +100,9 @@ benchmarks! {
 			value,
 			gas_limit_call,
 			None,
+			None,
 			Some(nonce_as_u256),
+			Vec::new(),
 			T::config(),
 		);
 		assert_eq!(call_runner_results.is_ok(), true, "call() failed");

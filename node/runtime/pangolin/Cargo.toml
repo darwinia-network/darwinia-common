@@ -268,6 +268,7 @@ runtime-benchmarks = [
 	# darwinia-network
 	"darwinia-evm/runtime-benchmarks",
 	"darwinia-fee-market/runtime-benchmarks",
+	"dvm-ethereum/runtime-benchmarks",
 	"from-ethereum-issuing/runtime-benchmarks",
 	"from-substrate-issuing/runtime-benchmarks",
 ]
