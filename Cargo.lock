@@ -1757,6 +1757,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-evm-tracer"
+version = "2.8.5"
+dependencies = [
+ "dp-evm-trace-apis",
+ "dp-evm-trace-events",
+ "ethereum-types",
+ "hex",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-std",
+]
+
+[[package]]
 name = "darwinia-fee-market"
 version = "2.8.5"
 dependencies = [
@@ -1909,8 +1924,8 @@ dependencies = [
 name = "darwinia-rpc"
 version = "2.8.5"
 dependencies = [
+ "darwinia-evm-tracer",
  "darwinia-rpc-core",
- "darwinia-tracer",
  "dp-evm-trace-apis",
  "dp-evm-trace-rpc",
  "ethereum",
@@ -1943,7 +1958,7 @@ name = "darwinia-rpc-core"
 version = "2.8.5"
 dependencies = [
  "darwinia-evm",
- "darwinia-tracer",
+ "darwinia-evm-tracer",
  "dp-evm-trace-rpc",
  "ethereum",
  "ethereum-types",
@@ -2035,21 +2050,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "darwinia-tracer"
-version = "2.8.5"
-dependencies = [
- "dp-evm-trace-apis",
- "dp-evm-trace-events",
- "ethereum-types",
- "hex",
- "log",
- "parity-scale-codec",
- "serde",
- "serde_json",
  "sp-std",
 ]
 

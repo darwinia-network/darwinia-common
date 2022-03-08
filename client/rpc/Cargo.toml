@@ -23,7 +23,7 @@ jsonrpc-pubsub      = { version = "18.0" }
 tokio               = { version = "1.15" }
 tracing             = { version = "0.1" }
 # darwinia-network
-darwinia-tracer   = { path = "../tracer" }
+darwinia-evm-tracer   = { path = "../evm-tracer" }
 dp-evm-trace-apis = { path = "../../primitives/evm-trace/apis" }
 dp-evm-trace-rpc  = { path = "../../primitives/evm-trace/rpc" }
 darwinia-rpc-core = { path = "../rpc-core" }

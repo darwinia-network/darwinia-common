@@ -49,7 +49,7 @@ use sp_blockchain::{
 };
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 // --- darwinia-network ---
-use darwinia_tracer::{
+use darwinia_evm_tracer::{
 	formatters::ResponseFormatter,
 	types::block::{self, TransactionTrace},
 };
@@ -880,9 +880,9 @@ where
 			Ok(dp_evm_trace_apis::Response::Block)
 		};
 
-		let mut proxy = darwinia_tracer::listeners::CallList::default();
+		let mut proxy = darwinia_evm_tracer::listeners::CallList::default();
 		proxy.using(f)?;
-		let mut traces: Vec<_> = darwinia_tracer::formatters::TraceFilter::format(proxy)
+		let mut traces: Vec<_> = darwinia_evm_tracer::formatters::TraceFilter::format(proxy)
 			.ok_or(internal_err("Fail to format proxy"))?;
 		// Fill missing data.
 		for trace in traces.iter_mut() {
