@@ -24,9 +24,9 @@ darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../
 darwinia-beefy-gadget               = { default-features = false, path = "../../../frame/beefy-gadget" }
 darwinia-beefy-primitives           = { path = "../../../primitives/beefy" }
 darwinia-bridge-bsc                 = { default-features = false, path = "../../../frame/bridge/bsc" }
-darwinia-evm                        = { default-features = false, path = "../../../frame/evm" }
-darwinia-evm-precompile-bridge-bsc  = { default-features = false, path = "../../../frame/evm/precompile/contracts/bridge/bsc" }
-darwinia-evm-precompile-transfer    = { default-features = false, path = "../../../frame/evm/precompile/contracts/transfer" }
+darwinia-evm                        = { default-features = false, path = "../../../frame/dvm1/evm" }
+darwinia-evm-precompile-bridge-bsc  = { default-features = false, path = "../../../frame/dvm1/evm/precompile/contracts/bridge/bsc" }
+darwinia-evm-precompile-transfer    = { default-features = false, path = "../../../frame/dvm1/evm/precompile/contracts/transfer" }
 darwinia-fee-market                 = { default-features = false, path = "../../../frame/fee-market" }
 darwinia-fee-market-rpc-runtime-api = { default-features = false, path = "../../../frame/fee-market/rpc/runtime-api" }
 darwinia-staking                    = { default-features = false, path = "../../../frame/staking" }

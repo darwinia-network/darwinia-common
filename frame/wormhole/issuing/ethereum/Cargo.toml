@@ -17,7 +17,7 @@ scale-info  = { version = "1.0", default-features = false, features = ["derive"]
 sha3        = { version = "0.9", default-features = false }
 # darwinia-network
 darwinia-bridge-ethereum  = { default-features = false, path = "../../../bridge/ethereum" }
-darwinia-evm              = { default-features = false, path = "../../../evm" }
+darwinia-evm              = { default-features = false, path = "../../../dvm1/evm" }
 darwinia-relay-primitives = { default-features = false, path = "../../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../../support" }
 dp-contract               = { default-features = false, path = "../../../../primitives/contract" }

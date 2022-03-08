@@ -19,7 +19,7 @@ serde          = { version = "1.0", optional = true }
 serde_json     = { version = "1.0", optional = true }
 sha3           = { version = "0.9", default-features = false }
 # darwinia-network
-darwinia-evm        = { default-features = false, path = "../../../evm" }
+darwinia-evm        = { default-features = false, path = "../../../dvm1/evm" }
 darwinia-support    = { default-features = false, path = "../../../support" }
 dp-asset            = { default-features = false, path = "../../../../primitives/asset" }
 dp-contract         = { default-features = false, path = "../../../../primitives/contract" }
