@@ -149,4 +149,8 @@ pub mod transaction_pause;
 pub use transaction_pause::*;
 
 pub mod from_substrate_issuing_;
+
+mod bridge_rococo_grandpa;
+pub use bridge_rococo_grandpa::*;
+
 pub use from_substrate_issuing_::*;
