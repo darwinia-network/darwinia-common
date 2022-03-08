@@ -220,6 +220,7 @@ runtime-benchmarks = [
 	# darwinia-network
 	"darwinia-bridge-bsc/runtime-benchmarks",
 	"darwinia-evm/runtime-benchmarks",
+	"dvm-ethereum/runtime-benchmarks",
 	"to-substrate-backing/runtime-benchmarks",
 ]
 
