@@ -713,14 +713,14 @@ fn assert_is_stash(acc: AccountId) {
 pub fn assert_ledger_consistent(controller: AccountId) {
 	let ledger = Staking::ledger(controller).unwrap();
 
-	assert_eq!(ledger.active_ring, ledger.ring_staking_lock.staking_amount);
+	assert_eq!(ledger.active, ledger.ring_staking_lock.staking_amount);
 	assert_eq!(ledger.active_kton, ledger.kton_staking_lock.staking_amount);
 
 	let real_total_ring: Balance = ledger
 		.ring_staking_lock
 		.unbondings
 		.iter()
-		.fold(ledger.active_ring, |a, c| a + c.amount);
+		.fold(ledger.active, |a, c| a + c.amount);
 	let real_total_kton: Balance = ledger
 		.kton_staking_lock
 		.unbondings
@@ -728,12 +728,12 @@ pub fn assert_ledger_consistent(controller: AccountId) {
 		.fold(ledger.active_kton, |a, c| a + c.amount);
 
 	assert!(
-		ledger.active_ring >= Ring::minimum_balance()
+		ledger.active >= Ring::minimum_balance()
 			|| ledger.active_kton >= Kton::minimum_balance()
-			|| (ledger.active_ring == 0 && ledger.active_kton == 0),
+			|| (ledger.active == 0 && ledger.active_kton == 0),
 		"{}: active ledger amount ({}/{}) must be greater than ED {}/{}",
 		controller,
-		ledger.active_ring,
+		ledger.active,
 		ledger.active_kton,
 		Ring::minimum_balance(),
 		Kton::minimum_balance()
