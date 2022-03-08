@@ -4,7 +4,7 @@ description = "Ethereum RPC (web3) compatibility layer for Darwinia."
 edition     = "2021"
 homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
-name        = "dc-rpc"
+name        = "darwinia-rpc"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
 version     = "2.8.5"
@@ -23,7 +23,7 @@ jsonrpc-pubsub      = { version = "18.0" }
 tokio               = { version = "1.15" }
 tracing             = { version = "0.1" }
 # darwinia-network
-dc-tracer         = { path = "../dvm/tracer" }
+darwinia-tracer   = { path = "../tracer" }
 dp-evm-trace-apis = { path = "../../primitives/evm-trace/apis" }
 dp-evm-trace-rpc  = { path = "../../primitives/evm-trace/rpc" }
 darwinia-rpc-core = { path = "../rpc-core" }

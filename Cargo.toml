@@ -11,7 +11,7 @@ members = [
 	"node/service",
 	"client/rpc",
 	"client/rpc-core",
-	"client/dvm/tracer",
+	"client/tracer",
 	"frame/balances",
 	"frame/balances/rpc",
 	"frame/balances/rpc/runtime-api",

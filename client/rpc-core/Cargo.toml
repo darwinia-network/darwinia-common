@@ -23,7 +23,7 @@ serde_json     = { version = "1.0" }
 
 # darwinia-network
 darwinia-evm     = { path = "../../frame/evm" }
-dc-tracer        = { path = "../dvm/tracer" }
+darwinia-tracer  = { path = "../tracer" }
 dp-evm-trace-rpc = { path = "../../primitives/evm-trace/rpc" }
 # paritytech
 sp-api     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

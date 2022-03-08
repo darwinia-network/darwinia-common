@@ -23,7 +23,7 @@ use jsonrpc_core::Result as RpcResult;
 use jsonrpc_derive::rpc;
 use serde::Deserialize;
 // --- darwinia-network ---
-use dc_tracer::types::single;
+use darwinia_tracer::types::single;
 use dp_evm_trace_rpc::RequestBlockId;
 
 pub use rpc_impl_DebugApi::gen_server::DebugApi as DebugApiServer;

@@ -26,7 +26,7 @@ use tokio::{
 	sync::{oneshot, Semaphore},
 };
 // --- darwinia-network ---
-use dc_tracer::{formatters::ResponseFormatter, types::single};
+use darwinia_tracer::{formatters::ResponseFormatter, types::single};
 use dp_evm_trace_apis::{DebugRuntimeApi, TracerInput};
 use dp_evm_trace_rpc::{RequestBlockId, RequestBlockTag};
 // --- paritytech --
@@ -389,13 +389,15 @@ where
 
 		return match trace_type {
 			single::TraceType::CallList => {
-				let mut proxy = dc_tracer::listeners::CallList::default();
+				let mut proxy = darwinia_tracer::listeners::CallList::default();
 				proxy.using(f)?;
 				proxy.finish_transaction();
 				let response = match tracer_input {
-					TracerInput::CallTracer => dc_tracer::formatters::CallTracer::format(proxy)
-						.ok_or("Trace result is empty.")
-						.map_err(|e| internal_err(format!("{:?}", e))),
+					TracerInput::CallTracer => {
+						darwinia_tracer::formatters::CallTracer::format(proxy)
+							.ok_or("Trace result is empty.")
+							.map_err(|e| internal_err(format!("{:?}", e)))
+					}
 					_ => Err(internal_err(format!(
 						"Bug: failed to resolve the tracer format."
 					))),
@@ -541,31 +543,32 @@ where
 						disable_memory,
 						disable_stack,
 					} => {
-						let mut proxy = dc_tracer::listeners::Raw::new(
+						let mut proxy = darwinia_tracer::listeners::Raw::new(
 							disable_storage,
 							disable_memory,
 							disable_stack,
 						);
 						proxy.using(f)?;
 						Ok(Response::Single(
-							dc_tracer::formatters::Raw::format(proxy)
+							darwinia_tracer::formatters::Raw::format(proxy)
 								.ok_or(internal_err("Fail to format proxy"))?,
 						))
 					}
 					single::TraceType::CallList => {
-						let mut proxy = dc_tracer::listeners::CallList::default();
+						let mut proxy = darwinia_tracer::listeners::CallList::default();
 						proxy.using(f)?;
 						proxy.finish_transaction();
 						let response = match tracer_input {
 							TracerInput::Blockscout => {
-								dc_tracer::formatters::Blockscout::format(proxy)
+								darwinia_tracer::formatters::Blockscout::format(proxy)
 									.ok_or("Trace result is empty.")
 									.map_err(|e| internal_err(format!("{:?}", e)))
 							}
 							TracerInput::CallTracer => {
-								let mut res = dc_tracer::formatters::CallTracer::format(proxy)
-									.ok_or("Trace result is empty.")
-									.map_err(|e| internal_err(format!("{:?}", e)))?;
+								let mut res =
+									darwinia_tracer::formatters::CallTracer::format(proxy)
+										.ok_or("Trace result is empty.")
+										.map_err(|e| internal_err(format!("{:?}", e)))?;
 								Ok(res.pop().expect("Trace result is empty."))
 							}
 							_ => Err(internal_err(format!(

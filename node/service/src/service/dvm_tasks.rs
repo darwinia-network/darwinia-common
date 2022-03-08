@@ -32,7 +32,7 @@ use sp_blockchain::Error as BlockChainError;
 use sp_core::H256;
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 // --- darwinia-network ---
-use dc_rpc::{CacheTask, DebugTask};
+use darwinia_rpc::{CacheTask, DebugTask};
 use drml_rpc::{EthApiCmd, RpcConfig, RpcRequesters};
 
 pub fn spawn<B, C, BE>(params: DvmTasksParams<B, C, BE>) -> RpcRequesters

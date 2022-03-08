@@ -40,7 +40,7 @@ use sp_blockchain::Error as BlockChainError;
 use sp_runtime::traits::BlakeTwo256;
 use substrate_frame_rpc_system::SystemApi;
 // --- darwinia-network ---
-use dc_rpc::{CacheRequester as TraceFilterCacheRequester, DebugRequester};
+use darwinia_rpc::{CacheRequester as TraceFilterCacheRequester, DebugRequester};
 use drml_common_primitives::{
 	AccountId, Balance, BlockNumber, Hash, Hashing, Nonce, OpaqueBlock as Block, Power,
 };
@@ -208,8 +208,8 @@ where
 	// --- darwinia-network ---
 	use darwinia_balances_rpc::{Balances, BalancesApi};
 	use darwinia_fee_market_rpc::{FeeMarket, FeeMarketApi};
+	use darwinia_rpc::{Debug, DebugApiServer, Trace, TraceApiServer};
 	use darwinia_staking_rpc::{Staking, StakingApi};
-	use dc_rpc::{Debug, DebugApiServer, Trace, TraceApiServer};
 
 	let FullDeps {
 		client,

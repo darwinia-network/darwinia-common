@@ -1906,11 +1906,44 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-rpc"
+version = "2.8.5"
+dependencies = [
+ "darwinia-rpc-core",
+ "darwinia-tracer",
+ "dp-evm-trace-apis",
+ "dp-evm-trace-rpc",
+ "ethereum",
+ "ethereum-types",
+ "fc-db",
+ "fc-rpc",
+ "fc-rpc-core",
+ "fp-rpc",
+ "fp-storage",
+ "futures 0.3.21",
+ "hex-literal",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "jsonrpc-pubsub",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-utils",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-io",
+ "sp-runtime",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "darwinia-rpc-core"
 version = "2.8.5"
 dependencies = [
  "darwinia-evm",
- "dc-tracer",
+ "darwinia-tracer",
  "dp-evm-trace-rpc",
  "ethereum",
  "ethereum-types",
@@ -2006,6 +2039,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-tracer"
+version = "2.8.5"
+dependencies = [
+ "dp-evm-trace-apis",
+ "dp-evm-trace-events",
+ "ethereum-types",
+ "hex",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-std",
+]
+
+[[package]]
 name = "darwinia-vesting"
 version = "2.8.5"
 dependencies = [
@@ -2047,54 +2095,6 @@ checksum = "a5bbed42daaa95e780b60a50546aa345b8413a1e46f9a40a12907d3598f038db"
 dependencies = [
  "data-encoding",
  "syn",
-]
-
-[[package]]
-name = "dc-rpc"
-version = "2.8.5"
-dependencies = [
- "darwinia-rpc-core",
- "dc-tracer",
- "dp-evm-trace-apis",
- "dp-evm-trace-rpc",
- "ethereum",
- "ethereum-types",
- "fc-db",
- "fc-rpc",
- "fc-rpc-core",
- "fp-rpc",
- "fp-storage",
- "futures 0.3.21",
- "hex-literal",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "jsonrpc-pubsub",
- "parity-scale-codec",
- "sc-client-api",
- "sc-utils",
- "sp-api",
- "sp-block-builder",
- "sp-blockchain",
- "sp-io",
- "sp-runtime",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "dc-tracer"
-version = "2.8.5"
-dependencies = [
- "dp-evm-trace-apis",
- "dp-evm-trace-events",
- "ethereum-types",
- "hex",
- "log",
- "parity-scale-codec",
- "serde",
- "serde_json",
- "sp-std",
 ]
 
 [[package]]
@@ -2356,8 +2356,8 @@ dependencies = [
  "beefy-gadget-rpc",
  "darwinia-balances-rpc",
  "darwinia-fee-market-rpc",
+ "darwinia-rpc",
  "darwinia-staking-rpc",
- "dc-rpc",
  "dp-evm-trace-apis",
  "drml-common-primitives",
  "dvm-ethereum",
@@ -2406,9 +2406,9 @@ dependencies = [
  "darwinia-claims",
  "darwinia-evm",
  "darwinia-fee-market-rpc-runtime-api",
+ "darwinia-rpc",
  "darwinia-staking",
  "darwinia-staking-rpc-runtime-api",
- "dc-rpc",
  "dp-evm-trace-apis",
  "dp-evm-trace-ext",
  "drml-common-primitives",

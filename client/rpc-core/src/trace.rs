@@ -22,7 +22,7 @@ use futures::future::BoxFuture;
 use jsonrpc_derive::rpc;
 use serde::Deserialize;
 // --- darwinia-network ---
-use dc_tracer::types::block::TransactionTrace;
+use darwinia_tracer::types::block::TransactionTrace;
 use dp_evm_trace_rpc::RequestBlockId;
 
 pub use rpc_impl_TraceApi::gen_server::TraceApi as TraceApiServer;

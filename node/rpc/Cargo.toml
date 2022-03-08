@@ -17,7 +17,7 @@ jsonrpc-pubsub = { version = "18.0" }
 darwinia-balances-rpc   = { path = "../../frame/balances/rpc" }
 darwinia-fee-market-rpc = { path = "../../frame/fee-market/rpc" }
 darwinia-staking-rpc    = { path = "../../frame/staking/rpc" }
-dc-rpc                  = { path = "../../client/rpc" }
+darwinia-rpc            = { path = "../../client/rpc" }
 dp-evm-trace-apis       = { path = "../../primitives/evm-trace/apis" }
 drml-common-primitives  = { path = "../primitives/common" }
 dvm-ethereum            = { path = "../../frame/dvm" }
