@@ -41,7 +41,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia-network ---
-use crate::{self as dvm_ethereum, account_basic::*, *};
+use crate::{self as darwinia_ethereum, account_basic::*, *};
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::IntoAccountId;
@@ -237,7 +237,7 @@ frame_support::parameter_types! {
 	pub const MockPalletId: PalletId = PalletId(*b"dar/dvmp");
 }
 
-impl dvm_ethereum::Config for Test {
+impl darwinia_ethereum::Config for Test {
 	type PalletId = MockPalletId;
 	type Event = Event;
 	type StateRoot = IntermediateStateRoot;
@@ -256,7 +256,7 @@ frame_support::construct_runtime! {
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>},
-		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, Origin},
+		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event, Origin},
 	}
 }
 

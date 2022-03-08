@@ -57,7 +57,7 @@ use dp_contract::{
 		ethereum2darwinia::{E2dRemoteUnlockInfo, TokenRegisterInfo},
 	},
 };
-use dvm_ethereum::InternalTransactHandler;
+use darwinia_ethereum::InternalTransactHandler;
 use ethereum_primitives::{
 	log_entry::LogEntry, receipt::EthereumTransactionIndex, EthereumAddress, U256,
 };

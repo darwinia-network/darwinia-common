@@ -11,7 +11,7 @@ use darwinia_evm::{runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddr
 use darwinia_evm_precompile_bridge_bsc::BscBridge;
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::ConcatConverter;
-use dvm_ethereum::{
+use darwinia_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping,
 };

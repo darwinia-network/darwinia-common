@@ -2,7 +2,7 @@
 use frame_support::PalletId;
 // --- darwinia-network ---
 use crate::*;
-use dvm_ethereum::{Config, IntermediateStateRoot};
+use darwinia_ethereum::{Config, IntermediateStateRoot};
 
 frame_support::parameter_types! {
 	pub const DvmPalletId: PalletId = PalletId(*b"dar/dvmp");

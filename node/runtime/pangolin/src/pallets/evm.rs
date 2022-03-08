@@ -21,7 +21,7 @@ use darwinia_support::{
 	evm::ConcatConverter,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
 };
-use dvm_ethereum::{
+use darwinia_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping,
 };

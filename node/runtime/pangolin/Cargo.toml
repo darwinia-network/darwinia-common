@@ -49,7 +49,7 @@ dp-fee                                  = { default-features = false, path = "..
 dp-s2s                                  = { default-features = false, path = "../../../primitives/s2s" }
 drml-bridge-primitives                  = { default-features = false, path = "../../primitives/bridge" }
 drml-common-primitives                  = { default-features = false, path = "../../primitives/common" }
-dvm-ethereum                            = { default-features = false, path = "../../../frame/dvm/ethereum" }
+darwinia-ethereum                            = { default-features = false, path = "../../../frame/dvm/ethereum" }
 ethereum-primitives                     = { default-features = false, path = "../../../primitives/ethereum" }
 from-ethereum-issuing                   = { default-features = false, path = "../../../frame/wormhole/issuing/ethereum" }
 from-substrate-issuing                  = { default-features = false, path = "../../../frame/wormhole/issuing/s2s" }
@@ -173,7 +173,7 @@ std = [
 	"dp-s2s/std",
 	"drml-bridge-primitives/std",
 	"drml-common-primitives/std",
-	"dvm-ethereum/std",
+	"darwinia-ethereum/std",
 	"ethereum-primitives/std",
 	"from-ethereum-issuing/std",
 	"from-substrate-issuing/std",
@@ -281,7 +281,7 @@ try-runtime = [
 	"darwinia-elections-phragmen/try-runtime",
 	"darwinia-header-mmr/try-runtime",
 	"darwinia-staking/try-runtime",
-	"dvm-ethereum/try-runtime",
+	"darwinia-ethereum/try-runtime",
 	"to-ethereum-backing/try-runtime",
 ]
 

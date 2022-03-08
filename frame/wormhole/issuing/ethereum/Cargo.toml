@@ -21,7 +21,7 @@ darwinia-evm              = { default-features = false, path = "../../../dvm/evm
 darwinia-relay-primitives = { default-features = false, path = "../../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../../support" }
 dp-contract               = { default-features = false, path = "../../../../primitives/contract" }
-dvm-ethereum              = { default-features = false, path = "../../../dvm/ethereum" }
+darwinia-ethereum              = { default-features = false, path = "../../../dvm/ethereum" }
 ethereum-primitives       = { default-features = false, features = ["full-codec"], path = "../../../../primitives/ethereum" }
 # paritytech
 frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -47,7 +47,7 @@ std = [
 	"darwinia-relay-primitives/std",
 	"darwinia-support/std",
 	"dp-contract/std",
-	"dvm-ethereum/std",
+	"darwinia-ethereum/std",
 	# paritytech
 	"frame-benchmarking/std",
 	"frame-support/std",

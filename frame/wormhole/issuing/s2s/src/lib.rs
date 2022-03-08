@@ -55,7 +55,7 @@ use dp_contract::mapping_token_factory::{
 	basic::BasicMappingTokenFactory as bmtf, s2s::Sub2SubMappingTokenFactory as smtf,
 };
 use dp_s2s::CreatePayload;
-use dvm_ethereum::InternalTransactHandler;
+use darwinia_ethereum::InternalTransactHandler;
 
 pub use pallet::*;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;

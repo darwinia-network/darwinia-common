@@ -14,7 +14,7 @@ use darwinia_evm::{
 	PrecompileSet,
 };
 use darwinia_support::evm::ConcatConverter;
-use dvm_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
+use darwinia_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
 
 pub struct FrontierPrecompiles<R>(PhantomData<R>);
 
@@ -92,7 +92,7 @@ impl Config for Runtime {
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type IntoAccountId = ConcatConverter<Self::AccountId>;
 	type FindAuthor = FindAuthorTruncated<Aura>;
-	type BlockHashMapping = dvm_ethereum::EthereumBlockHashMapping<Self>;
+	type BlockHashMapping = darwinia_ethereum::EthereumBlockHashMapping<Self>;
 	type Event = Event;
 	type PrecompilesType = FrontierPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
