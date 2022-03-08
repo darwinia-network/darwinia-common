@@ -23,16 +23,16 @@ tokio       = { version = "1.15" }
 darwinia-balances-rpc-runtime-api   = { path = "../../frame/balances/rpc/runtime-api" }
 darwinia-bridge-ethereum            = { path = "../../frame/bridge/ethereum" }
 darwinia-claims                     = { path = "../../frame/claims" }
+darwinia-ethereum                   = { path = "../../frame/dvm/ethereum" }
 darwinia-evm                        = { path = "../../frame/dvm/evm" }
 darwinia-fee-market-rpc-runtime-api = { path = "../../frame/fee-market/rpc/runtime-api" }
+darwinia-rpc                        = { path = "../../client/rpc" }
 darwinia-staking                    = { path = "../../frame/staking" }
 darwinia-staking-rpc-runtime-api    = { path = "../../frame/staking/rpc/runtime-api" }
-darwinia-rpc                        = { path = "../../client/rpc" }
 dp-evm-trace-apis                   = { path = "../../primitives/evm-trace/apis" }
 dp-evm-trace-ext                    = { path = "../../primitives/evm-trace/ext" }
 drml-common-primitives              = { path = "../primitives/common" }
 drml-rpc                            = { path = "../rpc" }
-darwinia-ethereum                        = { path = "../../frame/dvm/ethereum" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
 pangoro-runtime                     = { path = "../runtime/pangoro" }
 # paritytech

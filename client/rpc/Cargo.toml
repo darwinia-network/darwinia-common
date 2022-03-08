@@ -23,10 +23,10 @@ jsonrpc-pubsub      = { version = "18.0" }
 tokio               = { version = "1.15" }
 tracing             = { version = "0.1" }
 # darwinia-network
-darwinia-evm-tracer   = { path = "../evm-tracer" }
-dp-evm-trace-apis = { path = "../../primitives/evm-trace/apis" }
-dp-evm-trace-rpc  = { path = "../../primitives/evm-trace/rpc" }
-darwinia-rpc-core = { path = "../rpc-core" }
+darwinia-evm-tracer = { path = "../evm-tracer" }
+dp-evm-trace-apis   = { path = "../../primitives/evm-trace/apis" }
+dp-evm-trace-rpc    = { path = "../../primitives/evm-trace/rpc" }
+darwinia-rpc-core   = { path = "../rpc-core" }
 # paritytech
 sc-client-api    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sc-utils         = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

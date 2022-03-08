@@ -15,8 +15,8 @@ codec      = { package = "parity-scale-codec", version = "2.3", default-features
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 # darwinia-network
 darwinia-beefy-primitives = { path = "../../primitives/beefy" }
+darwinia-ethereum         = { default-features = false, path = "../dvm/ethereum" }
 dp-contract               = { default-features = false, path = "../../primitives/contract" }
-darwinia-ethereum              = { default-features = false, path = "../dvm/ethereum" }
 # paritytech
 beefy-primitives = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -40,8 +40,8 @@ std = [
 	"codec/std",
 	"scale-info/std",
 	# darwinia-network
-	"dp-contract/std",
 	"darwinia-ethereum/std",
+	"dp-contract/std",
 	# paritytech
 	"beefy-primitives/std",
 	"frame-support/std",
