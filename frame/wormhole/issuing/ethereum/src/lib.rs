@@ -45,6 +45,7 @@ use sp_runtime::{
 };
 use sp_std::{str, vec::Vec};
 // --- darwinia-network ---
+use darwinia_ethereum::InternalTransactHandler;
 use darwinia_evm::GasWeightMapping;
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{
@@ -57,7 +58,6 @@ use dp_contract::{
 		ethereum2darwinia::{E2dRemoteUnlockInfo, TokenRegisterInfo},
 	},
 };
-use darwinia_ethereum::InternalTransactHandler;
 use ethereum_primitives::{
 	log_entry::LogEntry, receipt::EthereumTransactionIndex, EthereumAddress, U256,
 };

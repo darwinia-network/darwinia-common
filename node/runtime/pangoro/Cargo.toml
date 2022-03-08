@@ -25,8 +25,8 @@ darwinia-beefy-gadget               = { default-features = false, path = "../../
 darwinia-beefy-primitives           = { path = "../../../primitives/beefy" }
 darwinia-bridge-bsc                 = { default-features = false, path = "../../../frame/bridge/bsc" }
 darwinia-evm                        = { default-features = false, path = "../../../frame/dvm/evm" }
-darwinia-evm-precompile-bridge-bsc  = { default-features = false, path = "../../../frame/dvm/evm/precompile/contracts/bridge/bsc" }
-darwinia-evm-precompile-transfer    = { default-features = false, path = "../../../frame/dvm/evm/precompile/contracts/transfer" }
+darwinia-evm-precompile-bridge-bsc  = { default-features = false, path = "../../../frame/dvm/evm/precompiles/bridge/bsc" }
+darwinia-evm-precompile-transfer    = { default-features = false, path = "../../../frame/dvm/evm/precompiles/transfer" }
 darwinia-fee-market                 = { default-features = false, path = "../../../frame/fee-market" }
 darwinia-fee-market-rpc-runtime-api = { default-features = false, path = "../../../frame/fee-market/rpc/runtime-api" }
 darwinia-staking                    = { default-features = false, path = "../../../frame/staking" }

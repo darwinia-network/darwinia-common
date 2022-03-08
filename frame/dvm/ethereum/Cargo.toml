@@ -46,7 +46,7 @@ ethabi       = { version = "15.0" }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 # darwinia-network
 darwinia-balances                = { path = "../../balances" }
-darwinia-evm-precompile-transfer = { path = "../evm/precompile/contracts/transfer" }
+darwinia-evm-precompile-transfer = { path = "../evm/precompiles/transfer" }
 # frontier
 pallet-evm-precompile-simple = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 

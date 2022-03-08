@@ -40,14 +40,14 @@ use sp_runtime::{
 use crate::{
 	*, {self as s2s_issuing},
 };
+use darwinia_ethereum::{
+	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
+	IntermediateStateRoot, RawOrigin, Transaction,
+};
 use darwinia_evm::{EVMCurrencyAdapter, EnsureAddressTruncated, SubstrateBlockHashMapping};
 use darwinia_support::{
 	evm::IntoAccountId,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
-};
-use darwinia_ethereum::{
-	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
-	IntermediateStateRoot, RawOrigin, Transaction,
 };
 
 type Block = MockBlock<Test>;

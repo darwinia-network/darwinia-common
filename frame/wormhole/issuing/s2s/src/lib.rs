@@ -45,6 +45,7 @@ use sp_runtime::{traits::Convert, DispatchError, MultiSignature, MultiSigner};
 use sp_std::{str, vec::Vec};
 // --- darwinia-network ---
 use bp_runtime::ChainId;
+use darwinia_ethereum::InternalTransactHandler;
 use darwinia_support::{
 	mapping_token::*,
 	s2s::{ensure_source_account, ToEthAddress},
@@ -55,7 +56,6 @@ use dp_contract::mapping_token_factory::{
 	basic::BasicMappingTokenFactory as bmtf, s2s::Sub2SubMappingTokenFactory as smtf,
 };
 use dp_s2s::CreatePayload;
-use darwinia_ethereum::InternalTransactHandler;
 
 pub use pallet::*;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;

@@ -9,12 +9,12 @@ use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripe
 use sp_core::crypto::Public;
 // --- darwinia-network ---
 use crate::*;
+use darwinia_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
 use darwinia_evm::{
 	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, Precompile,
 	PrecompileSet,
 };
 use darwinia_support::evm::ConcatConverter;
-use darwinia_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
 
 pub struct FrontierPrecompiles<R>(PhantomData<R>);
 

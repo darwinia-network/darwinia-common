@@ -77,8 +77,8 @@ use sp_runtime::{generic::DigestItem, RuntimeDebug};
 use sp_std::borrow::ToOwned;
 // --- darwinia-network ---
 use darwinia_beefy_primitives::network_ids::AsciiId;
-use dp_contract::beefy;
 use darwinia_ethereum::InternalTransactHandler;
+use dp_contract::beefy;
 
 pub const LOG_TARGET: &str = "runtime::beefy-gadget";
 
