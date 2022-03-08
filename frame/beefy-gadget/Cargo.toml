@@ -16,7 +16,7 @@ scale-info = { version = "1.0", default-features = false, features = ["derive"] 
 # darwinia-network
 darwinia-beefy-primitives = { path = "../../primitives/beefy" }
 dp-contract               = { default-features = false, path = "../../primitives/contract" }
-dvm-ethereum              = { default-features = false, path = "../dvm" }
+dvm-ethereum              = { default-features = false, path = "../dvm1/ethereum" }
 # paritytech
 beefy-primitives = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

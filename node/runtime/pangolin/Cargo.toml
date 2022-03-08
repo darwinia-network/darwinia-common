@@ -49,7 +49,7 @@ dp-fee                                  = { default-features = false, path = "..
 dp-s2s                                  = { default-features = false, path = "../../../primitives/s2s" }
 drml-bridge-primitives                  = { default-features = false, path = "../../primitives/bridge" }
 drml-common-primitives                  = { default-features = false, path = "../../primitives/common" }
-dvm-ethereum                            = { default-features = false, path = "../../../frame/dvm" }
+dvm-ethereum                            = { default-features = false, path = "../../../frame/dvm1/ethereum" }
 ethereum-primitives                     = { default-features = false, path = "../../../primitives/ethereum" }
 from-ethereum-issuing                   = { default-features = false, path = "../../../frame/wormhole/issuing/ethereum" }
 from-substrate-issuing                  = { default-features = false, path = "../../../frame/wormhole/issuing/s2s" }

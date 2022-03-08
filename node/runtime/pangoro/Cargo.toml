@@ -37,7 +37,7 @@ dp-fee                              = { default-features = false, path = "../../
 dp-s2s                              = { default-features = false, path = "../../../primitives/s2s" }
 drml-bridge-primitives              = { default-features = false, path = "../../primitives/bridge" }
 drml-common-primitives              = { default-features = false, path = "../../primitives/common" }
-dvm-ethereum                        = { default-features = false, path = "../../../frame/dvm" }
+dvm-ethereum                        = { default-features = false, path = "../../../frame/dvm1/ethereum" }
 module-transaction-pause            = { default-features = false, path = "../../../frame/transaction-pause" }
 to-substrate-backing                = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 # dvm trace
