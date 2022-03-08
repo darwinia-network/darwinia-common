@@ -17,11 +17,11 @@ scale-info  = { version = "1.0", default-features = false, features = ["derive"]
 sha3        = { version = "0.9", default-features = false }
 # darwinia-network
 darwinia-bridge-ethereum  = { default-features = false, path = "../../../bridge/ethereum" }
-darwinia-evm              = { default-features = false, path = "../../../dvm1/evm" }
+darwinia-evm              = { default-features = false, path = "../../../dvm/evm" }
 darwinia-relay-primitives = { default-features = false, path = "../../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../../support" }
 dp-contract               = { default-features = false, path = "../../../../primitives/contract" }
-dvm-ethereum              = { default-features = false, path = "../../../dvm1/ethereum" }
+dvm-ethereum              = { default-features = false, path = "../../../dvm/ethereum" }
 ethereum-primitives       = { default-features = false, features = ["full-codec"], path = "../../../../primitives/ethereum" }
 # paritytech
 frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

@@ -19,12 +19,12 @@ serde          = { version = "1.0", optional = true }
 serde_json     = { version = "1.0", optional = true }
 sha3           = { version = "0.9", default-features = false }
 # darwinia-network
-darwinia-evm        = { default-features = false, path = "../../../dvm1/evm" }
+darwinia-evm        = { default-features = false, path = "../../../dvm/evm" }
 darwinia-support    = { default-features = false, path = "../../../support" }
 dp-asset            = { default-features = false, path = "../../../../primitives/asset" }
 dp-contract         = { default-features = false, path = "../../../../primitives/contract" }
 dp-s2s              = { default-features = false, path = "../../../../primitives/s2s" }
-dvm-ethereum        = { default-features = false, path = "../../../dvm1/ethereum" }
+dvm-ethereum        = { default-features = false, path = "../../../dvm/ethereum" }
 ethereum-primitives = { default-features = false, path = "../../../../primitives/ethereum" }
 # paritytech
 bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.1" }

@@ -17,10 +17,10 @@ serde      = { version = "1.0", optional = true, features = ["derive"] }
 # darwinia-network
 common-runtime         = { default-features = false, path = "../common" }
 darwinia-balances      = { default-features = false, path = "../../../frame/balances" }
-darwinia-evm           = { default-features = false, path = "../../../frame/dvm1/evm" }
+darwinia-evm           = { default-features = false, path = "../../../frame/dvm/evm" }
 darwinia-support       = { default-features = false, path = "../../../frame/support" }
 drml-common-primitives = { default-features = false, path = "../../primitives/common" }
-dvm-ethereum           = { default-features = false, path = "../../../frame/dvm1/ethereum" }
+dvm-ethereum           = { default-features = false, path = "../../../frame/dvm/ethereum" }
 # trace
 dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/evm-trace/apis" }
 dp-evm-trace-events = { default-features = false, path = "../../../primitives/evm-trace/events" }
