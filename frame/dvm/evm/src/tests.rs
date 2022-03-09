@@ -193,7 +193,7 @@ impl Config for Test {
 	type Runner = Runner<Self>;
 	type RingAccountBasic = MockAccountBasic<Self>;
 	type KtonAccountBasic = MockAccountBasic<Self>;
-	type OnChargeTransaction = EVMCurrencyAdapter;
+	type OnChargeTransaction = EVMCurrencyAdapter<()>;
 }
 
 frame_support::construct_runtime! {
