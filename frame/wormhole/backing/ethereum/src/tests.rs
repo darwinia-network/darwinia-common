@@ -472,7 +472,7 @@ fn verify_redeem_deposit() {
 			let staking_ledger = Staking::ledger(&controller);
 			assert_eq!(staking_ledger, Some(StakingLedger {
 				stash: expect_account_id,
-				active_ring: 1001000000001,
+				active: 1001000000001,
 				active_deposit_ring: 1001000000000,
 				deposit_items: vec![TimeDepositItem {
 					value: 1001000000000,
