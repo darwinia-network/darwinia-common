@@ -117,7 +117,7 @@ fn basic_setup_works() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 1000,
+				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -130,7 +130,7 @@ fn basic_setup_works() {
 			Staking::ledger(&20),
 			Some(StakingLedger {
 				stash: 21,
-				active_ring: 1000,
+				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -155,7 +155,7 @@ fn basic_setup_works() {
 			Staking::ledger(100),
 			Some(StakingLedger {
 				stash: 101,
-				active_ring: 500,
+				active: 500,
 				ring_staking_lock: StakingLock {
 					staking_amount: 500,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -438,7 +438,7 @@ fn staking_should_work() {
 			Staking::ledger(&4),
 			Some(StakingLedger {
 				stash: 3,
-				active_ring: 1500,
+				active: 1500,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1500,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -746,9 +746,9 @@ fn nominators_also_get_slashed_pro_rata() {
 		assert_eq!(initial_exposure.others.first().unwrap().who, 101);
 
 		// staked values;
-		let nominator_stake = Staking::ledger(100).unwrap().active_ring;
+		let nominator_stake = Staking::ledger(100).unwrap().active;
 		let nominator_balance = ring_balances(&101).0;
-		let validator_stake = Staking::ledger(10).unwrap().active_ring;
+		let validator_stake = Staking::ledger(10).unwrap().active;
 		let validator_balance = ring_balances(&11).0;
 		let exposed_stake = initial_exposure.total_power;
 		let exposed_validator = initial_exposure.own_power;
@@ -764,8 +764,8 @@ fn nominators_also_get_slashed_pro_rata() {
 		);
 
 		// both stakes must have been decreased.
-		assert!(Staking::ledger(100).unwrap().active_ring < nominator_stake);
-		assert!(Staking::ledger(10).unwrap().active_ring < validator_stake);
+		assert!(Staking::ledger(100).unwrap().active < nominator_stake);
+		assert!(Staking::ledger(10).unwrap().active < validator_stake);
 
 		let slash_amount = slash_percent * exposed_stake;
 		let validator_share =
@@ -784,12 +784,12 @@ fn nominators_also_get_slashed_pro_rata() {
 			Perbill::from_rational(validator_share, exposed_stake) * validator_stake;
 
 		assert_eq_error_rate!(
-			Staking::ledger(100).unwrap().active_ring,
+			Staking::ledger(100).unwrap().active,
 			nominator_stake - nominator_share,
 			10,
 		);
 		assert_eq_error_rate!(
-			Staking::ledger(10).unwrap().active_ring,
+			Staking::ledger(10).unwrap().active,
 			validator_stake - validator_share,
 			10,
 		);
@@ -1113,7 +1113,7 @@ fn reward_destination_works() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 1000,
+				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000,
 					..Default::default()
@@ -1138,7 +1138,7 @@ fn reward_destination_works() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 1000 + total_payout_0,
+				active: 1000 + total_payout_0,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000 + total_payout_0,
 					..Default::default()
@@ -1172,7 +1172,7 @@ fn reward_destination_works() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 1000 + total_payout_0,
+				active: 1000 + total_payout_0,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000 + total_payout_0,
 					..Default::default()
@@ -1204,7 +1204,7 @@ fn reward_destination_works() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 1000 + total_payout_0,
+				active: 1000 + total_payout_0,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000 + total_payout_0,
 					..Default::default()
@@ -1286,7 +1286,7 @@ fn bond_extra_works() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 1000,
+				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000,
 					..Default::default()
@@ -1309,7 +1309,7 @@ fn bond_extra_works() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 1000 + 100,
+				active: 1000 + 100,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000 + 100,
 					..Default::default()
@@ -1329,7 +1329,7 @@ fn bond_extra_works() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 1000000,
+				active: 1000000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000000,
 					..Default::default()
@@ -1410,7 +1410,7 @@ fn rebond_works() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 1000,
+				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -1434,7 +1434,7 @@ fn rebond_works() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 100,
+				active: 100,
 				ring_staking_lock: StakingLock {
 					staking_amount: 100,
 					unbondings: WeakBoundedVec::force_from(
@@ -1455,7 +1455,7 @@ fn rebond_works() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 1000,
+				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -1470,7 +1470,7 @@ fn rebond_works() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 100,
+				active: 100,
 				ring_staking_lock: StakingLock {
 					staking_amount: 100,
 					unbondings: WeakBoundedVec::force_from(
@@ -1491,7 +1491,7 @@ fn rebond_works() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 600,
+				active: 600,
 				ring_staking_lock: StakingLock {
 					staking_amount: 600,
 					unbondings: WeakBoundedVec::force_from(
@@ -1512,7 +1512,7 @@ fn rebond_works() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 1000,
+				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -1529,7 +1529,7 @@ fn rebond_works() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 100,
+				active: 100,
 				ring_staking_lock: StakingLock {
 					staking_amount: 100,
 					unbondings: WeakBoundedVec::force_from(
@@ -1560,7 +1560,7 @@ fn rebond_works() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 600,
+				active: 600,
 				ring_staking_lock: StakingLock {
 					staking_amount: 600,
 					unbondings: WeakBoundedVec::force_from(
@@ -1603,7 +1603,7 @@ fn rebond_is_fifo() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 1000,
+				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -1620,7 +1620,7 @@ fn rebond_is_fifo() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 600,
+				active: 600,
 				ring_staking_lock: StakingLock {
 					staking_amount: 600,
 					unbondings: WeakBoundedVec::force_from(
@@ -1643,7 +1643,7 @@ fn rebond_is_fifo() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 300,
+				active: 300,
 				ring_staking_lock: StakingLock {
 					staking_amount: 300,
 					unbondings: WeakBoundedVec::force_from(
@@ -1672,7 +1672,7 @@ fn rebond_is_fifo() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 100,
+				active: 100,
 				ring_staking_lock: StakingLock {
 					staking_amount: 100,
 					unbondings: WeakBoundedVec::force_from(
@@ -1703,7 +1703,7 @@ fn rebond_is_fifo() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 500,
+				active: 500,
 				ring_staking_lock: StakingLock {
 					staking_amount: 500,
 					unbondings: WeakBoundedVec::force_from(
@@ -1749,7 +1749,7 @@ fn rebond_emits_right_value_in_event() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 100,
+				active: 100,
 				ring_staking_lock: StakingLock {
 					staking_amount: 100,
 					unbondings: WeakBoundedVec::force_from(
@@ -1770,7 +1770,7 @@ fn rebond_emits_right_value_in_event() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 200,
+				active: 200,
 				ring_staking_lock: StakingLock {
 					staking_amount: 200,
 					unbondings: WeakBoundedVec::force_from(
@@ -1796,7 +1796,7 @@ fn rebond_emits_right_value_in_event() {
 			Staking::ledger(&10),
 			Some(StakingLedger {
 				stash: 11,
-				active_ring: 1000,
+				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1000,
 					..Default::default()
@@ -1872,7 +1872,7 @@ fn reward_to_stake_works() {
 				&20,
 				StakingLedger {
 					stash: 21,
-					active_ring: 69,
+					active: 69,
 					..Default::default()
 				},
 			);
@@ -2388,7 +2388,7 @@ fn bond_with_duplicate_vote_should_be_ignored_by_election_provider_elected() {
 			// ensure all have equal stake.
 			assert_eq!(
 				<Validators<Test>>::iter()
-					.map(|(v, _)| (v, Staking::ledger(v - 1).unwrap().active_ring))
+					.map(|(v, _)| (v, Staking::ledger(v - 1).unwrap().active))
 					.collect::<Vec<_>>(),
 				vec![(31, 1000), (21, 1000), (11, 1000)],
 			);
@@ -3873,7 +3873,7 @@ fn test_payout_stakers() {
 				Staking::ledger(&10),
 				Some(StakingLedger {
 					stash: 11,
-					active_ring: 1000,
+					active: 1000,
 					ring_staking_lock: StakingLock {
 						staking_amount: 1000,
 						unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -3898,7 +3898,7 @@ fn test_payout_stakers() {
 				Staking::ledger(&10),
 				Some(StakingLedger {
 					stash: 11,
-					active_ring: 1000,
+					active: 1000,
 					ring_staking_lock: StakingLock {
 						staking_amount: 1000,
 						unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -3922,7 +3922,7 @@ fn test_payout_stakers() {
 				Staking::ledger(&10),
 				Some(StakingLedger {
 					stash: 11,
-					active_ring: 1000,
+					active: 1000,
 					ring_staking_lock: StakingLock {
 						staking_amount: 1000,
 						unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -3940,7 +3940,7 @@ fn test_payout_stakers() {
 				Staking::ledger(&10),
 				Some(StakingLedger {
 					stash: 11,
-					active_ring: 1000,
+					active: 1000,
 					ring_staking_lock: StakingLock {
 						staking_amount: 1000,
 						unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -4184,7 +4184,7 @@ fn bond_during_era_correctly_populates_claimed_rewards() {
 				Staking::ledger(&8),
 				Some(StakingLedger {
 					stash: 9,
-					active_ring: 1000,
+					active: 1000,
 					ring_staking_lock: StakingLock {
 						staking_amount: 1000,
 						unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -4198,7 +4198,7 @@ fn bond_during_era_correctly_populates_claimed_rewards() {
 				Staking::ledger(&10),
 				Some(StakingLedger {
 					stash: 11,
-					active_ring: 1000,
+					active: 1000,
 					ring_staking_lock: StakingLock {
 						staking_amount: 1000,
 						unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -4213,7 +4213,7 @@ fn bond_during_era_correctly_populates_claimed_rewards() {
 				Staking::ledger(&12),
 				Some(StakingLedger {
 					stash: 13,
-					active_ring: 1000,
+					active: 1000,
 					ring_staking_lock: StakingLock {
 						staking_amount: 1000,
 						unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -4460,7 +4460,7 @@ fn cannot_rebond_to_lower_than_ed() {
 				Staking::ledger(&20).unwrap(),
 				StakingLedger {
 					stash: 21,
-					active_ring: 10 * 1000,
+					active: 10 * 1000,
 					ring_staking_lock: StakingLock {
 						staking_amount: 10 * 1000,
 						unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -4479,7 +4479,7 @@ fn cannot_rebond_to_lower_than_ed() {
 				Staking::ledger(&20).unwrap(),
 				StakingLedger {
 					stash: 21,
-					active_ring: 0,
+					active: 0,
 					ring_staking_lock: StakingLock {
 						staking_amount: 0,
 						unbondings: WeakBoundedVec::force_from(
@@ -4513,7 +4513,7 @@ fn cannot_bond_extra_to_lower_than_ed() {
 				Staking::ledger(&20).unwrap(),
 				StakingLedger {
 					stash: 21,
-					active_ring: 10 * 1000,
+					active: 10 * 1000,
 					ring_staking_lock: StakingLock {
 						staking_amount: 10 * 1000,
 						unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -4532,7 +4532,7 @@ fn cannot_bond_extra_to_lower_than_ed() {
 				Staking::ledger(&20).unwrap(),
 				StakingLedger {
 					stash: 21,
-					active_ring: 0,
+					active: 0,
 					ring_staking_lock: StakingLock {
 						staking_amount: 0,
 						unbondings: WeakBoundedVec::force_from(
@@ -4567,7 +4567,7 @@ fn do_not_die_when_active_is_ed() {
 				Staking::ledger(&20).unwrap(),
 				StakingLedger {
 					stash: 21,
-					active_ring: 1000 * ed,
+					active: 1000 * ed,
 					ring_staking_lock: StakingLock {
 						staking_amount: 1000 * ed,
 						..Default::default()
@@ -4588,7 +4588,7 @@ fn do_not_die_when_active_is_ed() {
 				Staking::ledger(&20).unwrap(),
 				StakingLedger {
 					stash: 21,
-					active_ring: ed,
+					active: ed,
 					ring_staking_lock: StakingLock {
 						staking_amount: 10,
 						unbondings: WeakBoundedVec::force_from(
