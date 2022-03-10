@@ -22,33 +22,44 @@ use std::{sync::Arc, time::Duration};
 use futures::StreamExt;
 use tokio::sync::Semaphore;
 // --- paritytech ---
-use fc_db::Backend as DvmBackend;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
-use fc_rpc::{EthTask, OverrideHandle};
-use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
-use sc_client_api::BlockchainEvents;
-use sc_service::TaskManager;
-use sp_blockchain::Error as BlockChainError;
-use sp_core::H256;
-use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
+use fc_rpc::EthTask;
 // --- darwinia-network ---
 use dc_rpc::{CacheTask, DebugTask};
+use drml_common_primitives::*;
 use drml_rpc::{EthApiCmd, RpcConfig, RpcRequesters};
+
+pub struct DvmTasksParams<'a, B, C, BE>
+where
+	B: sp_runtime::traits::Block,
+{
+	pub task_manager: &'a sc_service::TaskManager,
+	pub client: Arc<C>,
+	pub substrate_backend: Arc<BE>,
+	pub dvm_backend: Arc<fc_db::Backend<B>>,
+	pub filter_pool: Option<fc_rpc_core::types::FilterPool>,
+	pub is_archive: bool,
+	pub rpc_config: RpcConfig,
+	pub fee_history_cache: fc_rpc_core::types::FeeHistoryCache,
+	pub overrides: Arc<fc_rpc::OverrideHandle<B>>,
+}
 
 pub fn spawn<B, C, BE>(params: DvmTasksParams<B, C, BE>) -> RpcRequesters
 where
-	C: sp_api::ProvideRuntimeApi<B>,
-	C: sc_client_api::BlockOf + sc_client_api::backend::StorageProvider<B, BE>,
-	C: sp_blockchain::HeaderBackend<B>,
-	C: sp_blockchain::HeaderMetadata<B, Error = BlockChainError> + 'static,
-	C: BlockchainEvents<B>,
-	C::Api: fp_rpc::EthereumRuntimeRPCApi<B>,
-	C::Api: dp_evm_trace_apis::DebugRuntimeApi<B>,
-	C::Api: sp_block_builder::BlockBuilder<B>,
-	B: BlockT<Hash = H256> + Send + Sync + 'static,
-	B::Header: sp_api::HeaderT<Number = u32>,
-	BE: sc_client_api::backend::Backend<B> + 'static,
-	BE::State: sc_client_api::backend::StateBackend<BlakeTwo256>,
+	C: 'static
+		+ sc_client_api::BlockOf
+		+ sc_client_api::BlockchainEvents<B>
+		+ sc_client_api::backend::StorageProvider<B, BE>
+		+ sp_api::ProvideRuntimeApi<B>
+		+ sp_blockchain::HeaderBackend<B>
+		+ sp_blockchain::HeaderMetadata<B, Error = sp_blockchain::Error>,
+	C::Api: sp_block_builder::BlockBuilder<B>
+		+ fp_rpc::EthereumRuntimeRPCApi<B>
+		+ dp_evm_trace_apis::DebugRuntimeApi<B>,
+	B: 'static + Send + Sync + sp_runtime::traits::Block<Hash = Hash>,
+	B::Header: sp_api::HeaderT<Number = BlockNumber>,
+	BE: 'static + sc_client_api::backend::Backend<B>,
+	BE::State: sc_client_api::backend::StateBackend<Hashing>,
 {
 	let DvmTasksParams {
 		task_manager,
@@ -57,7 +68,14 @@ where
 		dvm_backend,
 		filter_pool,
 		is_archive,
-		rpc_config,
+		rpc_config:
+			RpcConfig {
+				ethapi,
+				ethapi_max_permits,
+				ethapi_trace_cache_duration,
+				fee_history_limit,
+				..
+			},
 		fee_history_cache,
 		overrides,
 	} = params;
@@ -72,10 +90,10 @@ where
 		task_manager.spawn_essential_handle().spawn(
 			"frontier-fee-history",
 			EthTask::fee_history_task(
-				Arc::clone(&client),
-				Arc::clone(&overrides),
+				client.clone(),
+				overrides.clone(),
 				fee_history_cache,
-				rpc_config.fee_history_limit,
+				fee_history_limit,
 			),
 		);
 		// Spawn mapping sync worker task.
@@ -89,7 +107,7 @@ where
 				dvm_backend.clone(),
 				SyncStrategy::Normal,
 			)
-			.for_each(|()| futures::future::ready(())),
+			.for_each(|_| futures::future::ready(())),
 		);
 		// Spawn EthFilterApi maintenance task.
 		if let Some(filter_pool) = filter_pool {
@@ -97,40 +115,39 @@ where
 			const FILTER_RETAIN_THRESHOLD: u64 = 100;
 			task_manager.spawn_essential_handle().spawn(
 				"frontier-filter-pool",
-				EthTask::filter_pool_task(
-					Arc::clone(&client),
-					filter_pool,
-					FILTER_RETAIN_THRESHOLD,
-				),
+				EthTask::filter_pool_task(client.clone(), filter_pool, FILTER_RETAIN_THRESHOLD),
 			);
 		}
 	}
 
-	let cmd = rpc_config.ethapi.clone();
-	if cmd.contains(&EthApiCmd::Debug) || cmd.contains(&EthApiCmd::Trace) {
-		let permit_pool = Arc::new(Semaphore::new(rpc_config.ethapi_max_permits as usize));
-		let (trace_filter_task, trace_filter_requester) =
-			if rpc_config.ethapi.contains(&EthApiCmd::Trace) {
-				let (trace_filter_task, trace_filter_requester) = CacheTask::create(
-					Arc::clone(&client),
-					Arc::clone(&substrate_backend),
-					Duration::from_secs(rpc_config.ethapi_trace_cache_duration),
-					Arc::clone(&permit_pool),
-					Arc::clone(&overrides),
-				);
-				(Some(trace_filter_task), Some(trace_filter_requester))
-			} else {
-				(None, None)
-			};
-
-		let (debug_task, debug_requester) = if rpc_config.ethapi.contains(&EthApiCmd::Debug) {
-			let (debug_task, debug_requester) = DebugTask::task(
-				Arc::clone(&client),
-				Arc::clone(&substrate_backend),
-				Arc::clone(&dvm_backend),
-				Arc::clone(&permit_pool),
-				Arc::clone(&overrides),
+	if ethapi
+		.iter()
+		.any(|api| matches!(api, EthApiCmd::Trace | EthApiCmd::Debug))
+	{
+		let permit_pool = Arc::new(Semaphore::new(ethapi_max_permits as _));
+		let (trace_filter_task, trace_filter_requester) = if ethapi.contains(&EthApiCmd::Trace) {
+			let (trace_filter_task, trace_filter_requester) = CacheTask::create(
+				client.clone(),
+				substrate_backend.clone(),
+				Duration::from_secs(ethapi_trace_cache_duration),
+				permit_pool.clone(),
+				overrides.clone(),
 			);
+
+			(Some(trace_filter_task), Some(trace_filter_requester))
+		} else {
+			(None, None)
+		};
+
+		let (debug_task, debug_requester) = if ethapi.contains(&EthApiCmd::Debug) {
+			let (debug_task, debug_requester) = DebugTask::task(
+				client.clone(),
+				substrate_backend.clone(),
+				dvm_backend.clone(),
+				permit_pool.clone(),
+				overrides.clone(),
+			);
+
 			(Some(debug_task), Some(debug_requester))
 		} else {
 			(None, None)
@@ -154,25 +171,14 @@ where
 				.spawn("ethapi-debug", debug_task);
 		}
 
-		return RpcRequesters {
+		RpcRequesters {
 			debug: debug_requester,
 			trace: trace_filter_requester,
-		};
+		}
+	} else {
+		RpcRequesters {
+			debug: None,
+			trace: None,
+		}
 	}
-	RpcRequesters {
-		debug: None,
-		trace: None,
-	}
-}
-
-pub struct DvmTasksParams<'a, B: BlockT, C, BE> {
-	pub task_manager: &'a TaskManager,
-	pub client: Arc<C>,
-	pub substrate_backend: Arc<BE>,
-	pub dvm_backend: Arc<DvmBackend<B>>,
-	pub filter_pool: Option<FilterPool>,
-	pub is_archive: bool,
-	pub rpc_config: RpcConfig,
-	pub fee_history_cache: FeeHistoryCache,
-	pub overrides: Arc<OverrideHandle<B>>,
 }
