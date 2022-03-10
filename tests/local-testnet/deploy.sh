@@ -6,10 +6,15 @@ DIR="$( cd "$( dirname "$0" )" && pwd )"
 REPO_PATH="$( cd "$( dirname "$0" )" && cd ../../ && pwd )"
 
 CHAIN=$1
+EXECUTION=$2
 
 if [[ "$CHAIN" != "pangolin" ]] && [[ "$CHAIN" != "pangoro" ]] ; then
   echo "Missing chain name or not support chain, only supports [pangolin] or [pangoro]"
   exit 1
+fi
+
+if [ -z $EXECUTION ]; then
+  EXECUTION=native
 fi
 
 LOG_DIR=$DIR/log
@@ -21,7 +26,7 @@ mkdir -p $DATA_DIR
 EXECUTABLE=$REPO_PATH/target/release/drml
 
 echo "Build \`drml\`"
-cargo build --release
+# cargo build --release
 
 index=100
 
@@ -49,7 +54,7 @@ do
     --unsafe-ws-external \
     --rpc-methods unsafe \
     --rpc-cors all \
-    --execution native \
+    --execution $EXECUTION \
     --chain $CHAIN-local \
     -d $DATA_DIR/$validator \
     --$validator \
