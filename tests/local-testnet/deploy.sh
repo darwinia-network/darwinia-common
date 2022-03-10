@@ -26,7 +26,7 @@ mkdir -p $DATA_DIR
 EXECUTABLE=$REPO_PATH/target/release/drml
 
 echo "Build \`drml\`"
-# cargo build --release
+cargo build --release
 
 index=100
 
