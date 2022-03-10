@@ -49,6 +49,7 @@ do
     --unsafe-ws-external \
     --rpc-methods unsafe \
     --rpc-cors all \
+    --execution native \
     --chain $CHAIN-local \
     -d $DATA_DIR/$validator \
     --$validator \
