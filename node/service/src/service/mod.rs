@@ -101,8 +101,8 @@ use substrate_prometheus_endpoint::Registry;
 use crate::service::dvm_tasks::DvmTasksParams;
 use drml_common_primitives::{AccountId, Balance, Nonce, OpaqueBlock as Block, Power};
 use drml_rpc::{
-	overrides_handle, BabeDeps, BeefyDeps, FullDeps, GrandpaDeps, LightDeps, RpcConfig,
-	RpcExtension, RpcHelper, SubscriptionTaskExecutor,
+	overrides_handle, BabeDeps, BeefyDeps, EthRpcConfig, EthRpcHelper, FullDeps, GrandpaDeps,
+	LightDeps, RpcExtension, SubscriptionTaskExecutor,
 };
 
 type FullBackend = TFullBackend<Block>;
@@ -315,7 +315,7 @@ where
 fn new_full<RuntimeApi, Executor>(
 	mut config: Configuration,
 	authority_discovery_disabled: bool,
-	rpc_config: RpcConfig,
+	eth_rpc_config: EthRpcConfig,
 ) -> Result<
 	(
 		TaskManager,
@@ -405,8 +405,8 @@ where
 	let block_data_cache = Arc::new(EthBlockDataCache::new(
 		task_manager.spawn_handle(),
 		overrides.clone(),
-		rpc_config.eth_log_block_cache,
-		rpc_config.eth_log_block_cache,
+		eth_rpc_config.eth_log_block_cache,
+		eth_rpc_config.eth_log_block_cache,
 	));
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
 	let tracing_requesters = dvm_tasks::spawn(DvmTasksParams {
@@ -416,7 +416,7 @@ where
 		dvm_backend: dvm_backend.clone(),
 		filter_pool: filter_pool.clone(),
 		is_archive,
-		rpc_config: rpc_config.clone(),
+		eth_rpc_config: eth_rpc_config.clone(),
 		fee_history_cache: fee_history_cache.clone(),
 		overrides: overrides.clone(),
 	});
@@ -466,9 +466,9 @@ where
 							subscription_executor,
 						},
 						tracing_requesters: tracing_requesters.clone(),
-						rpc_helper: RpcHelper {
+						eth_rpc_helper: EthRpcHelper {
 							is_authority,
-							rpc_config: rpc_config.clone(),
+							eth_rpc_config: eth_rpc_config.clone(),
 							graph: transaction_pool.pool().clone(),
 							network: network.clone(),
 							filter_pool: filter_pool.clone(),

@@ -27,7 +27,7 @@ use fc_rpc::EthTask;
 // --- darwinia-network ---
 use dc_rpc::{CacheTask, DebugTask};
 use drml_common_primitives::*;
-use drml_rpc::{EthApiCmd, RpcConfig, RpcRequesters};
+use drml_rpc::{EthApiCmd, EthRpcConfig, EthRpcRequesters};
 
 pub struct DvmTasksParams<'a, B, C, BE>
 where
@@ -39,12 +39,12 @@ where
 	pub dvm_backend: Arc<fc_db::Backend<B>>,
 	pub filter_pool: Option<fc_rpc_core::types::FilterPool>,
 	pub is_archive: bool,
-	pub rpc_config: RpcConfig,
+	pub eth_rpc_config: EthRpcConfig,
 	pub fee_history_cache: fc_rpc_core::types::FeeHistoryCache,
 	pub overrides: Arc<fc_rpc::OverrideHandle<B>>,
 }
 
-pub fn spawn<B, C, BE>(params: DvmTasksParams<B, C, BE>) -> RpcRequesters
+pub fn spawn<B, C, BE>(params: DvmTasksParams<B, C, BE>) -> EthRpcRequesters
 where
 	C: 'static
 		+ sc_client_api::BlockOf
@@ -68,8 +68,8 @@ where
 		dvm_backend,
 		filter_pool,
 		is_archive,
-		rpc_config:
-			RpcConfig {
+		eth_rpc_config:
+			EthRpcConfig {
 				ethapi,
 				ethapi_max_permits,
 				ethapi_trace_cache_duration,
@@ -171,12 +171,12 @@ where
 				.spawn("ethapi-debug", debug_task);
 		}
 
-		RpcRequesters {
+		EthRpcRequesters {
 			debug: debug_requester,
 			trace: trace_filter_requester,
 		}
 	} else {
-		RpcRequesters {
+		EthRpcRequesters {
 			debug: None,
 			trace: None,
 		}

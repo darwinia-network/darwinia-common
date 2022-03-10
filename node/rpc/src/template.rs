@@ -59,10 +59,10 @@ pub struct FullDeps<C, P, A: ChainApi> {
 	pub filter_pool: Option<FilterPool>,
 	/// Backend.
 	pub backend: Arc<DvmBackend<Block>>,
-	/// Rpc requester for evm trace
-	pub tracing_requesters: RpcRequesters,
-	/// Rpc Config
-	pub rpc_config: RpcConfig,
+	/// RPC requester for evm trace
+	pub tracing_requesters: EthRpcRequesters,
+	/// Ethereum RPC Config
+	pub eth_rpc_config: EthRpcConfig,
 	/// Fee history cache.
 	pub fee_history_cache: FeeHistoryCache,
 	/// Manual seal command sink
@@ -112,7 +112,7 @@ where
 		command_sink,
 		backend,
 		tracing_requesters,
-		rpc_config,
+		eth_rpc_config,
 		fee_history_cache,
 		overrides,
 		block_data_cache,
@@ -142,9 +142,9 @@ where
 		overrides.clone(),
 		backend.clone(),
 		is_authority,
-		rpc_config.max_past_logs,
+		eth_rpc_config.max_past_logs,
 		block_data_cache.clone(),
-		rpc_config.fee_history_limit,
+		eth_rpc_config.fee_history_limit,
 		fee_history_cache,
 	)));
 
@@ -154,7 +154,7 @@ where
 			backend,
 			filter_pool.clone(),
 			500 as usize, // max stored filters
-			rpc_config.max_past_logs,
+			eth_rpc_config.max_past_logs,
 			block_data_cache.clone(),
 		)));
 	}
@@ -189,13 +189,13 @@ where
 		_ => {}
 	}
 
-	let ethapi_cmd = rpc_config.ethapi.clone();
+	let ethapi_cmd = eth_rpc_config.ethapi.clone();
 	if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
 		if let Some(trace_filter_requester) = tracing_requesters.trace {
 			io.extend_with(TraceApiServer::to_delegate(Trace::new(
 				client,
 				trace_filter_requester,
-				rpc_config.ethapi_trace_max_count,
+				eth_rpc_config.ethapi_trace_max_count,
 			)));
 		}
 

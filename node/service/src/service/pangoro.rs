@@ -29,7 +29,7 @@ use crate::{
 	service::{self, FullBackend},
 };
 use drml_common_primitives::OpaqueBlock as Block;
-use drml_rpc::RpcConfig;
+use drml_rpc::EthRpcConfig;
 use pangoro_runtime::RuntimeApi;
 
 pub struct Executor;
@@ -53,7 +53,7 @@ impl NativeExecutionDispatch for Executor {
 pub fn new_full(
 	config: Configuration,
 	authority_discovery_disabled: bool,
-	rpc_config: RpcConfig,
+	eth_rpc_config: EthRpcConfig,
 ) -> Result<
 	(
 		TaskManager,
@@ -65,7 +65,7 @@ pub fn new_full(
 	let (components, client, rpc_handlers) = service::new_full::<RuntimeApi, Executor>(
 		config,
 		authority_discovery_disabled,
-		rpc_config,
+		eth_rpc_config,
 	)?;
 
 	Ok((components, client, rpc_handlers))

@@ -71,10 +71,10 @@ where
 	pub grandpa: GrandpaDeps<B>,
 	/// BEEFY specific dependencies.
 	pub beefy: BeefyDeps,
-	/// Rpc requester for evm trace
-	pub tracing_requesters: RpcRequesters,
+	/// RPC requester for evm trace
+	pub tracing_requesters: EthRpcRequesters,
 	/// DVM related rpc helper
-	pub rpc_helper: RpcHelper<A>,
+	pub eth_rpc_helper: EthRpcHelper<A>,
 }
 
 /// Light client extra dependencies.
@@ -123,13 +123,13 @@ pub struct BeefyDeps {
 }
 
 #[derive(Clone)]
-pub struct RpcRequesters {
+pub struct EthRpcRequesters {
 	pub debug: Option<DebugRequester>,
 	pub trace: Option<TraceFilterCacheRequester>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct RpcConfig {
+pub struct EthRpcConfig {
 	pub ethapi: Vec<EthApiCmd>,
 	pub ethapi_max_permits: u32,
 	pub ethapi_trace_max_count: u32,
@@ -176,21 +176,21 @@ where
 		+ sp_api::ProvideRuntimeApi<Block>
 		+ sp_blockchain::HeaderBackend<Block>
 		+ sp_blockchain::HeaderMetadata<Block, Error = sp_blockchain::Error>,
-	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
-	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-	C::Api: sc_consensus_babe::BabeApi<Block>,
-	C::Api: sp_block_builder::BlockBuilder<Block>,
-	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
-	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
-	C::Api: darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
-	C::Api: darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
-	C::Api: darwinia_fee_market_rpc::FeeMarketRuntimeApi<Block, Balance>,
-	C::Api: dp_evm_trace_apis::DebugRuntimeApi<Block>,
+	C::Api: sc_consensus_babe::BabeApi<Block>
+		+ sp_block_builder::BlockBuilder<Block>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
+		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
+		+ fp_rpc::EthereumRuntimeRPCApi<Block>
+		+ fp_rpc::ConvertTransactionRuntimeApi<Block>
+		+ darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>
+		+ darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>
+		+ darwinia_fee_market_rpc::FeeMarketRuntimeApi<Block, Balance>
+		+ dp_evm_trace_apis::DebugRuntimeApi<Block>,
 	P: 'static + Sync + Send + sc_transaction_pool_api::TransactionPool<Block = Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<Hashing>,
-	A: sc_transaction_pool::ChainApi<Block = Block> + 'static,
+	A: 'static + sc_transaction_pool::ChainApi<Block = Block>,
 {
 	// --- crates.io ---
 	use jsonrpc_pubsub::manager::SubscriptionManager;
@@ -236,11 +236,11 @@ where
 				subscription_executor: beefy_subscription_executor,
 			},
 		tracing_requesters,
-		rpc_helper,
+		eth_rpc_helper,
 	} = deps;
 
-	let RpcHelper {
-		rpc_config,
+	let EthRpcHelper {
+		eth_rpc_config,
 		graph,
 		is_authority,
 		network,
@@ -249,7 +249,7 @@ where
 		fee_history_cache,
 		overrides,
 		block_data_cache,
-	} = rpc_helper;
+	} = eth_rpc_helper;
 
 	let mut io = jsonrpc_core::IoHandler::default();
 
@@ -302,9 +302,9 @@ where
 		overrides.clone(),
 		backend.clone(),
 		is_authority,
-		rpc_config.max_past_logs,
+		eth_rpc_config.max_past_logs,
 		block_data_cache.clone(),
-		rpc_config.fee_history_limit,
+		eth_rpc_config.fee_history_limit,
 		fee_history_cache,
 	)));
 	if let Some(filter_pool) = filter_pool {
@@ -313,7 +313,7 @@ where
 			backend,
 			filter_pool.clone(),
 			500 as usize, // max stored filters
-			rpc_config.max_past_logs,
+			eth_rpc_config.max_past_logs,
 			block_data_cache.clone(),
 		)));
 	}
@@ -335,13 +335,13 @@ where
 	)));
 	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client.clone())));
 
-	let ethapi_cmd = rpc_config.ethapi.clone();
+	let ethapi_cmd = eth_rpc_config.ethapi.clone();
 	if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
 		if let Some(trace_filter_requester) = tracing_requesters.trace {
 			io.extend_with(TraceApiServer::to_delegate(Trace::new(
 				client,
 				trace_filter_requester,
-				rpc_config.ethapi_trace_max_count,
+				eth_rpc_config.ethapi_trace_max_count,
 			)));
 		}
 
@@ -421,9 +421,9 @@ where
 	})
 }
 
-pub struct RpcHelper<A: sc_transaction_pool::ChainApi> {
-	/// DVM related Rpc Config
-	pub rpc_config: RpcConfig,
+pub struct EthRpcHelper<A: sc_transaction_pool::ChainApi> {
+	/// DVM related RPC Config
+	pub eth_rpc_config: EthRpcConfig,
 	/// Graph pool instance.
 	pub graph: Arc<sc_transaction_pool::Pool<A>>,
 	/// The Node authority flag

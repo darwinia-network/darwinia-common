@@ -26,7 +26,7 @@ use sc_service::{ChainSpec, DatabaseSource};
 use sp_core::crypto::Ss58AddressFormat;
 // --- darwinia-network ---
 use crate::cli::*;
-use drml_rpc::{EthApiCmd, RpcConfig};
+use drml_rpc::{EthApiCmd, EthRpcConfig};
 use drml_service::*;
 
 impl SubstrateCli for Cli {
@@ -141,7 +141,7 @@ pub fn run() -> sc_cli::Result<()> {
 
 	let cli = Cli::from_args();
 	let _ = validate_trace_environment(&cli)?;
-	let rpc_config = RpcConfig {
+	let eth_rpc_config = EthRpcConfig {
 		ethapi: cli.run.dvm_args.ethapi.clone(),
 		ethapi_max_permits: cli.run.dvm_args.ethapi_max_permits,
 		ethapi_trace_max_count: cli.run.dvm_args.ethapi_trace_max_count,
@@ -170,7 +170,7 @@ pub fn run() -> sc_cli::Result<()> {
 							config,
 							is_manual_sealing,
 							enable_dev_signer,
-							rpc_config,
+							eth_rpc_config,
 						)
 					})
 					.map_err(sc_cli::Error::Service);
@@ -184,7 +184,7 @@ pub fn run() -> sc_cli::Result<()> {
 						_ => pangolin_service::new_full(
 							config,
 							authority_discovery_disabled,
-							rpc_config,
+							eth_rpc_config,
 						)
 						.map(|(task_manager, _, _)| task_manager),
 					}
@@ -199,7 +199,7 @@ pub fn run() -> sc_cli::Result<()> {
 						_ => pangoro_service::new_full(
 							config,
 							authority_discovery_disabled,
-							rpc_config,
+							eth_rpc_config,
 						)
 						.map(|(task_manager, _, _)| task_manager),
 					}

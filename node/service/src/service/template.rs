@@ -42,7 +42,7 @@ use crate::service::{
 	FullBackend, FullClient, FullSelectChain,
 };
 use drml_common_primitives::{OpaqueBlock as Block, SLOT_DURATION};
-use drml_rpc::{template::FullDeps, RpcConfig, SubscriptionTaskExecutor};
+use drml_rpc::{template::FullDeps, EthRpcConfig, SubscriptionTaskExecutor};
 use template_runtime::RuntimeApi;
 
 thread_local!(static TIMESTAMP: RefCell<u64> = RefCell::new(0));
@@ -209,7 +209,7 @@ pub fn new_full(
 	config: Configuration,
 	is_manual_sealing: bool,
 	enable_dev_signer: bool,
-	rpc_config: RpcConfig,
+	eth_rpc_config: EthRpcConfig,
 ) -> Result<TaskManager, ServiceError> {
 	let sc_service::PartialComponents {
 		client,
@@ -273,7 +273,7 @@ pub fn new_full(
 		dvm_backend: frontier_backend.clone(),
 		filter_pool: filter_pool.clone(),
 		is_archive,
-		rpc_config: rpc_config.clone(),
+		eth_rpc_config: eth_rpc_config.clone(),
 		fee_history_cache: fee_history_cache.clone(),
 		overrides: overrides.clone(),
 	});
@@ -300,7 +300,7 @@ pub fn new_full(
 				filter_pool: filter_pool.clone(),
 				backend: frontier_backend.clone(),
 				tracing_requesters: tracing_requesters.clone(),
-				rpc_config: rpc_config.clone(),
+				eth_rpc_config: eth_rpc_config.clone(),
 				fee_history_cache: fee_history_cache.clone(),
 				command_sink: Some(command_sink.clone()),
 				overrides: overrides.clone(),
