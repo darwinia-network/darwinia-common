@@ -1,18 +1,15 @@
 macro_rules! impl_runtime_apis {
-	($api:path,$($extra_apis:path),*;$($bound:tt)*) => {
+	($api:path,$($extra_apis:path),*,) => {
 		/// A set of APIs that darwinia-like runtimes must implement.
 		pub trait RuntimeApiCollection:
 			$api
 			$(+ $extra_apis)*
-		where
-			$($bound)*
 		{
 		}
 		impl<Api> RuntimeApiCollection for Api
 		where
 			Api: $api
-				$(+ $extra_apis)*,
-			$($bound)*
+				$(+ $extra_apis)*
 		{
 		}
 	};
@@ -36,8 +33,7 @@ impl_runtime_apis![
 	darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance>,
 	fp_rpc::EthereumRuntimeRPCApi<Block>,
 	fp_rpc::ConvertTransactionRuntimeApi<Block>,
-	dp_evm_trace_apis::DebugRuntimeApi<Block>;
-	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
+	dp_evm_trace_apis::DebugRuntimeApi<Block>,
 ];
 
 pub mod dvm_tasks;

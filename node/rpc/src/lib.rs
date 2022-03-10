@@ -191,6 +191,7 @@ where
 	// --- paritytech ---
 	use beefy_gadget_rpc::*;
 	use fc_rpc::*;
+	use fp_rpc::*;
 	use pallet_transaction_payment_rpc::*;
 	use sc_consensus_babe_rpc::*;
 	use sc_finality_grandpa_rpc::*;
