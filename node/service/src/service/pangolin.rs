@@ -70,8 +70,3 @@ pub fn new_full(
 
 	Ok((components, client, rpc_handlers))
 }
-
-/// Create a new Pangolin service for a light client.
-pub fn new_light(config: Configuration) -> Result<(TaskManager, RpcHandlers), ServiceError> {
-	service::new_light::<RuntimeApi, Executor>(config)
-}

@@ -77,18 +77,6 @@ where
 	pub eth_rpc_helper: EthRpcHelper<A>,
 }
 
-/// Light client extra dependencies.
-pub struct LightDeps<C, F, P> {
-	/// The client instance to use.
-	pub client: Arc<C>,
-	/// Transaction pool instance.
-	pub pool: Arc<P>,
-	/// Remote access to the blockchain (async).
-	pub remote_blockchain: Arc<dyn sc_client_api::RemoteBlockchain<Block>>,
-	/// Fetcher instance.
-	pub fetcher: Arc<F>,
-}
-
 /// Extra dependencies for BABE.
 pub struct BabeDeps {
 	/// BABE protocol config.
@@ -351,37 +339,6 @@ where
 	}
 
 	Ok(io)
-}
-
-/// Instantiate all RPC extensions for light node.
-pub fn create_light<C, P, F>(deps: LightDeps<C, F, P>) -> RpcExtension
-where
-	C: 'static
-		+ Send
-		+ Sync
-		+ sp_api::ProvideRuntimeApi<Block>
-		+ sp_blockchain::HeaderBackend<Block>,
-	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
-	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-	P: 'static + sc_transaction_pool_api::TransactionPool,
-	F: 'static + sc_client_api::Fetcher<Block>,
-{
-	// --- paritytech ---
-	use substrate_frame_rpc_system::LightSystem;
-
-	let LightDeps {
-		client,
-		pool,
-		remote_blockchain,
-		fetcher,
-	} = deps;
-	let mut io = jsonrpc_core::IoHandler::default();
-
-	io.extend_with(SystemApi::<Hash, AccountId, Nonce>::to_delegate(
-		LightSystem::new(client, remote_blockchain, fetcher, pool),
-	));
-
-	io
 }
 
 pub fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<OverrideHandle<Block>>

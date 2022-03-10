@@ -179,8 +179,7 @@ pub fn run() -> sc_cli::Result<()> {
 			if chain_spec.is_pangolin() {
 				runner.run_node_until_exit(|config| async move {
 					match config.role {
-						Role::Light => pangolin_service::new_light(config)
-							.map(|(task_manager, _)| task_manager),
+						Role::Light => panic!("Not support light client"),
 						_ => pangolin_service::new_full(
 							config,
 							authority_discovery_disabled,
@@ -193,9 +192,7 @@ pub fn run() -> sc_cli::Result<()> {
 			} else {
 				runner.run_node_until_exit(|config| async move {
 					match config.role {
-						Role::Light => {
-							pangoro_service::new_light(config).map(|(task_manager, _)| task_manager)
-						}
+						Role::Light => panic!("Not support light client"),
 						_ => pangoro_service::new_full(
 							config,
 							authority_discovery_disabled,
