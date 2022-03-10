@@ -142,7 +142,7 @@ pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
 	let _ = validate_trace_environment(&cli)?;
 	let eth_rpc_config = EthRpcConfig {
-		ethapi: cli.run.dvm_args.ethapi.clone(),
+		ethapi_cmds: cli.run.dvm_args.ethapi_cmds.clone(),
 		ethapi_max_permits: cli.run.dvm_args.ethapi_max_permits,
 		ethapi_trace_max_count: cli.run.dvm_args.ethapi_trace_max_count,
 		ethapi_trace_cache_duration: cli.run.dvm_args.ethapi_trace_cache_duration,
@@ -325,8 +325,8 @@ fn set_default_ss58_version(spec: &Box<dyn ChainSpec>) {
 }
 
 fn validate_trace_environment(cli: &Cli) -> sc_cli::Result<()> {
-	if (cli.run.dvm_args.ethapi.contains(&EthApiCmd::Debug)
-		|| cli.run.dvm_args.ethapi.contains(&EthApiCmd::Trace))
+	if (cli.run.dvm_args.ethapi_cmds.contains(&EthApiCmd::Debug)
+		|| cli.run.dvm_args.ethapi_cmds.contains(&EthApiCmd::Trace))
 		&& cli.run.base.import_params.wasm_runtime_overrides.is_none()
 	{
 		return Err(

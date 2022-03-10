@@ -26,24 +26,12 @@ use std::{collections::BTreeMap, error::Error, str::FromStr, sync::Arc};
 // --- crates.io ---
 use jsonrpc_core::IoHandler;
 // --- paritytech ---
-use fc_db::Backend as DvmBackend;
-use fc_rpc::{
-	EthBlockDataCache, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override,
-	SchemaV2Override, SchemaV3Override, StorageOverride,
-};
-use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
+use fc_rpc::OverrideHandle;
 use fp_rpc::NoTransactionConverter;
 use fp_storage::EthereumStorageSchema;
-use sc_network::NetworkService;
 use sc_rpc::Metadata;
-use sp_blockchain::Error as BlockChainError;
-use sp_runtime::traits::BlakeTwo256;
-use substrate_frame_rpc_system::SystemApi;
 // --- darwinia-network ---
-use dc_rpc::{CacheRequester as TraceFilterCacheRequester, DebugRequester};
-use drml_common_primitives::{
-	AccountId, Balance, BlockNumber, Hash, Hashing, Nonce, OpaqueBlock as Block, Power,
-};
+use drml_common_primitives::{OpaqueBlock as Block, *};
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = IoHandler<Metadata>;
@@ -112,13 +100,13 @@ pub struct BeefyDeps {
 
 #[derive(Clone)]
 pub struct EthRpcRequesters {
-	pub debug: Option<DebugRequester>,
-	pub trace: Option<TraceFilterCacheRequester>,
+	pub debug: Option<dc_rpc::DebugRequester>,
+	pub trace: Option<dc_rpc::CacheRequester>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct EthRpcConfig {
-	pub ethapi: Vec<EthApiCmd>,
+	pub ethapi_cmds: Vec<EthApiCmd>,
 	pub ethapi_max_permits: u32,
 	pub ethapi_trace_max_count: u32,
 	pub ethapi_trace_cache_duration: u64,
@@ -147,6 +135,30 @@ impl FromStr for EthApiCmd {
 			}
 		})
 	}
+}
+
+pub struct EthRpcHelper<A>
+where
+	A: sc_transaction_pool::ChainApi,
+{
+	/// DVM related RPC Config
+	pub eth_rpc_config: EthRpcConfig,
+	/// Graph pool instance.
+	pub graph: Arc<sc_transaction_pool::Pool<A>>,
+	/// The Node authority flag
+	pub is_authority: bool,
+	/// Network service
+	pub network: Arc<sc_network::NetworkService<Block, Hash>>,
+	/// EthFilterApi pool.
+	pub filter_pool: Option<fc_rpc_core::types::FilterPool>,
+	/// DVM Backend.
+	pub backend: Arc<fc_db::Backend<Block>>,
+	/// Fee history cache.
+	pub fee_history_cache: fc_rpc_core::types::FeeHistoryCache,
+	/// Ethereum data access overrides.
+	pub overrides: Arc<fc_rpc::OverrideHandle<Block>>,
+	// Cache for Ethereum block data.
+	pub block_data_cache: Arc<fc_rpc::EthBlockDataCache<Block>>,
 }
 
 /// Instantiate all RPC extensions.
@@ -183,21 +195,18 @@ where
 	// --- crates.io ---
 	use jsonrpc_pubsub::manager::SubscriptionManager;
 	// --- paritytech ---
-	use beefy_gadget_rpc::{BeefyApi, BeefyRpcHandler};
-	use fc_rpc::{
-		EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi, EthPubSubApiServer,
-		HexEncodedIdProvider, NetApi, NetApiServer, Web3Api, Web3ApiServer,
-	};
-	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
-	use sc_consensus_babe_rpc::{BabeApi, BabeRpcHandler};
-	use sc_finality_grandpa_rpc::{GrandpaApi, GrandpaRpcHandler};
-	use sc_sync_state_rpc::{SyncStateRpcApi, SyncStateRpcHandler};
-	use substrate_frame_rpc_system::FullSystem;
+	use beefy_gadget_rpc::*;
+	use fc_rpc::*;
+	use pallet_transaction_payment_rpc::*;
+	use sc_consensus_babe_rpc::*;
+	use sc_finality_grandpa_rpc::*;
+	use sc_sync_state_rpc::*;
+	use substrate_frame_rpc_system::*;
 	// --- darwinia-network ---
-	use darwinia_balances_rpc::{Balances, BalancesApi};
-	use darwinia_fee_market_rpc::{FeeMarket, FeeMarketApi};
-	use darwinia_staking_rpc::{Staking, StakingApi};
-	use dc_rpc::{Debug, DebugApiServer, Trace, TraceApiServer};
+	use darwinia_balances_rpc::*;
+	use darwinia_fee_market_rpc::*;
+	use darwinia_staking_rpc::*;
+	use dc_rpc::*;
 
 	let FullDeps {
 		client,
@@ -226,9 +235,15 @@ where
 		tracing_requesters,
 		eth_rpc_helper,
 	} = deps;
-
 	let EthRpcHelper {
-		eth_rpc_config,
+		eth_rpc_config:
+			EthRpcConfig {
+				ethapi_cmds,
+				ethapi_trace_max_count,
+				max_past_logs,
+				fee_history_limit,
+				..
+			},
 		graph,
 		is_authority,
 		network,
@@ -278,21 +293,19 @@ where
 	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
 	io.extend_with(StakingApi::to_delegate(Staking::new(client.clone())));
 	io.extend_with(FeeMarketApi::to_delegate(FeeMarket::new(client.clone())));
-
-	let convert_transaction: Option<NoTransactionConverter> = None;
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
 		graph,
-		convert_transaction,
+		<Option<NoTransactionConverter>>::None,
 		network.clone(),
 		vec![],
 		overrides.clone(),
 		backend.clone(),
 		is_authority,
-		eth_rpc_config.max_past_logs,
+		max_past_logs,
 		block_data_cache.clone(),
-		eth_rpc_config.fee_history_limit,
+		fee_history_limit,
 		fee_history_cache,
 	)));
 	if let Some(filter_pool) = filter_pool {
@@ -301,7 +314,7 @@ where
 			backend,
 			filter_pool.clone(),
 			500 as usize, // max stored filters
-			eth_rpc_config.max_past_logs,
+			max_past_logs,
 			block_data_cache.clone(),
 		)));
 	}
@@ -323,13 +336,15 @@ where
 	)));
 	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client.clone())));
 
-	let ethapi_cmd = eth_rpc_config.ethapi.clone();
-	if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
+	if ethapi_cmds
+		.iter()
+		.any(|cmd| matches!(cmd, EthApiCmd::Debug | EthApiCmd::Trace))
+	{
 		if let Some(trace_filter_requester) = tracing_requesters.trace {
 			io.extend_with(TraceApiServer::to_delegate(Trace::new(
 				client,
 				trace_filter_requester,
-				eth_rpc_config.ethapi_trace_max_count,
+				ethapi_trace_max_count,
 			)));
 		}
 
@@ -343,58 +358,44 @@ where
 
 pub fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
 where
-	C: sp_api::ProvideRuntimeApi<Block>,
-	C: sc_client_api::backend::StorageProvider<Block, BE>,
-	C: sc_client_api::backend::AuxStore,
-	C: sp_blockchain::HeaderBackend<Block>,
-	C: sp_blockchain::HeaderMetadata<Block, Error = BlockChainError>,
-	C: Send + Sync + 'static,
-	C::Api: sp_api::ApiExt<Block>,
-	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
-	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
-	BE: sc_client_api::backend::Backend<Block> + 'static,
-	BE::State: sc_client_api::backend::StateBackend<BlakeTwo256>,
+	C: 'static
+		+ Send
+		+ Sync
+		+ sc_client_api::backend::AuxStore
+		+ sc_client_api::backend::StorageProvider<Block, BE>
+		+ sp_api::ProvideRuntimeApi<Block>
+		+ sp_blockchain::HeaderBackend<Block>
+		+ sp_blockchain::HeaderMetadata<Block, Error = sp_blockchain::Error>,
+	C::Api: sp_api::ApiExt<Block>
+		+ fp_rpc::EthereumRuntimeRPCApi<Block>
+		+ fp_rpc::ConvertTransactionRuntimeApi<Block>,
+	BE: 'static + sc_client_api::backend::Backend<Block>,
+	BE::State: sc_client_api::backend::StateBackend<Hashing>,
 {
-	let mut overrides_map = BTreeMap::new();
-	overrides_map.insert(
-		EthereumStorageSchema::V1,
-		Box::new(SchemaV1Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
-	);
-	overrides_map.insert(
-		EthereumStorageSchema::V2,
-		Box::new(SchemaV2Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
-	);
-	overrides_map.insert(
-		EthereumStorageSchema::V3,
-		Box::new(SchemaV3Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
-	);
+	// --- paritytech ---
+	use fc_rpc::{
+		RuntimeApiStorageOverride, SchemaV1Override, SchemaV2Override, SchemaV3Override,
+		StorageOverride,
+	};
 
 	Arc::new(OverrideHandle {
-		schemas: overrides_map,
-		fallback: Box::new(RuntimeApiStorageOverride::new(client.clone())),
+		schemas: BTreeMap::from_iter([
+			(
+				EthereumStorageSchema::V1,
+				Box::new(SchemaV1Override::new(client.clone()))
+					as Box<dyn StorageOverride<_> + Send + Sync>,
+			),
+			(
+				EthereumStorageSchema::V2,
+				Box::new(SchemaV2Override::new(client.clone()))
+					as Box<dyn StorageOverride<_> + Send + Sync>,
+			),
+			(
+				EthereumStorageSchema::V3,
+				Box::new(SchemaV3Override::new(client.clone()))
+					as Box<dyn StorageOverride<_> + Send + Sync>,
+			),
+		]),
+		fallback: Box::new(RuntimeApiStorageOverride::new(client)),
 	})
-}
-
-pub struct EthRpcHelper<A: sc_transaction_pool::ChainApi> {
-	/// DVM related RPC Config
-	pub eth_rpc_config: EthRpcConfig,
-	/// Graph pool instance.
-	pub graph: Arc<sc_transaction_pool::Pool<A>>,
-	/// The Node authority flag
-	pub is_authority: bool,
-	/// Network service
-	pub network: Arc<NetworkService<Block, Hash>>,
-	/// EthFilterApi pool.
-	pub filter_pool: Option<FilterPool>,
-	/// DVM Backend.
-	pub backend: Arc<DvmBackend<Block>>,
-	/// Fee history cache.
-	pub fee_history_cache: FeeHistoryCache,
-	/// Ethereum data access overrides.
-	pub overrides: Arc<OverrideHandle<Block>>,
-	// Cache for Ethereum block data.
-	pub block_data_cache: Arc<EthBlockDataCache<Block>>,
 }

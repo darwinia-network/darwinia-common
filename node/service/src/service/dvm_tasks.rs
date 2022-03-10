@@ -70,7 +70,7 @@ where
 		is_archive,
 		eth_rpc_config:
 			EthRpcConfig {
-				ethapi,
+				ethapi_cmds,
 				ethapi_max_permits,
 				ethapi_trace_cache_duration,
 				fee_history_limit,
@@ -120,12 +120,12 @@ where
 		}
 	}
 
-	if ethapi
+	if ethapi_cmds
 		.iter()
-		.any(|api| matches!(api, EthApiCmd::Trace | EthApiCmd::Debug))
+		.any(|cmd| matches!(cmd, EthApiCmd::Trace | EthApiCmd::Debug))
 	{
 		let permit_pool = Arc::new(Semaphore::new(ethapi_max_permits as _));
-		let (trace_filter_task, trace_filter_requester) = if ethapi.contains(&EthApiCmd::Trace) {
+		let (trace_filter_task, trace_filter_requester) = if ethapi_cmds.contains(&EthApiCmd::Trace) {
 			let (trace_filter_task, trace_filter_requester) = CacheTask::create(
 				client.clone(),
 				substrate_backend.clone(),
@@ -139,7 +139,7 @@ where
 			(None, None)
 		};
 
-		let (debug_task, debug_requester) = if ethapi.contains(&EthApiCmd::Debug) {
+		let (debug_task, debug_requester) = if ethapi_cmds.contains(&EthApiCmd::Debug) {
 			let (debug_task, debug_requester) = DebugTask::task(
 				client.clone(),
 				substrate_backend.clone(),
@@ -168,7 +168,7 @@ where
 			params
 				.task_manager
 				.spawn_essential_handle()
-				.spawn("ethapi-debug", debug_task);
+				.spawn("ethapi_cmds-debug", debug_task);
 		}
 
 		EthRpcRequesters {
