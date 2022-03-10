@@ -38,7 +38,7 @@ use sc_telemetry::{Telemetry, TelemetryWorker};
 use sp_inherents::{InherentData, InherentDataProvider, InherentIdentifier};
 // --- darwinia-network ---
 use crate::service::{
-	dvm_tasks::{self, DvmTasksParams},
+	dvm_tasks::{self, DvmTaskParams},
 	FullBackend, FullClient, FullSelectChain,
 };
 use drml_common_primitives::{OpaqueBlock as Block, SLOT_DURATION};
@@ -266,7 +266,7 @@ pub fn new_full(
 		50,
 	));
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
-	let tracing_requesters = dvm_tasks::spawn(DvmTasksParams {
+	let tracing_requesters = dvm_tasks::spawn(DvmTaskParams {
 		task_manager: &task_manager,
 		client: client.clone(),
 		substrate_backend: backend.clone(),

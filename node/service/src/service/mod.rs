@@ -1,42 +1,7 @@
-macro_rules! impl_runtime_apis {
-	($api:path,$($extra_apis:path),*,) => {
-		/// A set of APIs that darwinia-like runtimes must implement.
-		pub trait RuntimeApiCollection:
-			$api
-			$(+ $extra_apis)*
-		{
-		}
-		impl<Api> RuntimeApiCollection for Api
-		where
-			Api: $api
-				$(+ $extra_apis)*
-		{
-		}
-	};
-}
+pub mod api;
+use api::*;
 
-impl_runtime_apis![
-	sp_api::ApiExt<Block>,
-	sp_api::Metadata<Block>,
-	sp_block_builder::BlockBuilder<Block>,
-	sp_session::SessionKeys<Block>,
-	sp_consensus_babe::BabeApi<Block>,
-	sp_finality_grandpa::GrandpaApi<Block>,
-	beefy_primitives::BeefyApi<Block>,
-	sp_authority_discovery::AuthorityDiscoveryApi<Block>,
-	sp_offchain::OffchainWorkerApi<Block>,
-	sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>,
-	frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>,
-	pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>,
-	darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>,
-	darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>,
-	darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance>,
-	fp_rpc::EthereumRuntimeRPCApi<Block>,
-	fp_rpc::ConvertTransactionRuntimeApi<Block>,
-	dp_evm_trace_apis::DebugRuntimeApi<Block>,
-];
-
-pub mod dvm_tasks;
+pub mod dvm;
 
 pub mod pangolin;
 pub use pangolin::Executor as PangolinExecutor;
@@ -50,65 +15,24 @@ pub mod template;
 pub use template::Executor as TemplateExecutor;
 
 // --- std ---
-use std::{
-	collections::BTreeMap,
-	path::PathBuf,
-	sync::{Arc, Mutex},
-	time::Duration,
-};
-// --- crates.io ---
-use codec::Codec;
-use futures::stream::StreamExt;
-// --- paritytech ---
-use beefy_gadget::{notification::BeefySignedCommitmentStream, BeefyParams};
-use fc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
-use fc_rpc::EthBlockDataCache;
-use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
-use sc_authority_discovery::WorkerConfig;
-use sc_basic_authorship::ProposerFactory;
-use sc_client_api::{ExecutorProvider, StateBackendFor};
-use sc_consensus::{BasicQueue, DefaultImportQueue, LongestChain};
-use sc_consensus_babe::{
-	BabeBlockImport, BabeLink, BabeParams, Config as BabeConfig, SlotProportion,
-};
-use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch};
-use sc_finality_grandpa::{
-	warp_proof::NetworkProvider, Config as GrandpaConfig,
-	FinalityProofProvider as GrandpaFinalityProofProvider, GrandpaBlockImport, GrandpaParams,
-	LinkHalf, SharedVoterState as GrandpaSharedVoterState,
-	VotingRulesBuilder as GrandpaVotingRulesBuilder,
-};
-use sc_keystore::LocalKeystore;
-use sc_network::Event;
-use sc_service::{
-	config::{KeystoreConfig, PrometheusConfig},
-	BuildNetworkParams, ChainSpec, Configuration, Error as ServiceError, PartialComponents,
-	RpcHandlers, SpawnTasksParams, TFullBackend, TFullClient, TaskManager,
-};
-use sc_telemetry::{Telemetry, TelemetryWorker};
-use sc_transaction_pool::{BasicPool, FullPool};
-use sp_api::ConstructRuntimeApi;
-use sp_consensus::CanAuthorWithNativeVersion;
-use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
-use sp_trie::PrefixedMemoryDB;
-use substrate_prometheus_endpoint::Registry;
+use std::sync::Arc;
 // --- darwinia-network ---
-use crate::service::dvm_tasks::DvmTasksParams;
 use drml_common_primitives::{OpaqueBlock as Block, *};
-use drml_rpc::*;
 
-type FullBackend = TFullBackend<Block>;
-type FullSelectChain = LongestChain<FullBackend, Block>;
+type FullBackend = sc_service::TFullBackend<Block>;
+type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 type FullClient<RuntimeApi, Executor> =
-	TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>;
-type FullGrandpaBlockImport<RuntimeApi, Executor> =
-	GrandpaBlockImport<FullBackend, Block, FullClient<RuntimeApi, Executor>, FullSelectChain>;
-type RpcResult = Result<RpcExtension, ServiceError>;
+	sc_service::TFullClient<Block, RuntimeApi, sc_executor::NativeElseWasmExecutor<Executor>>;
+type FullGrandpaBlockImport<RuntimeApi, Executor> = sc_finality_grandpa::GrandpaBlockImport<
+	FullBackend,
+	Block,
+	FullClient<RuntimeApi, Executor>,
+	FullSelectChain,
+>;
+type ServiceResult<T> = Result<T, sc_service::Error>;
+type RpcServiceResult = ServiceResult<drml_rpc::RpcExtension>;
 
-pub trait RuntimeExtrinsic: 'static + Send + Sync + Codec {}
-impl<E> RuntimeExtrinsic for E where E: 'static + Send + Sync + Codec {}
-
-/// Can be called for a `Configuration` to check the network type.
+/// Can be called for a `sc_service::Configuration` to check the network type.
 pub trait IdentifyVariant {
 	/// Returns if this is a configuration for the `Pangolin` network.
 	fn is_pangolin(&self) -> bool;
@@ -123,7 +47,7 @@ pub trait IdentifyVariant {
 	/// Returns true if this configuration is for a development network.
 	fn is_dev(&self) -> bool;
 }
-impl IdentifyVariant for Box<dyn ChainSpec> {
+impl IdentifyVariant for Box<dyn sc_service::ChainSpec> {
 	fn is_pangolin(&self) -> bool {
 		self.id().starts_with("pangolin")
 	}
@@ -145,21 +69,23 @@ impl IdentifyVariant for Box<dyn ChainSpec> {
 /// Builds a new object suitable for chain operations.
 #[cfg(feature = "full-node")]
 pub fn new_chain_ops<Runtime, Dispatch>(
-	config: &mut Configuration,
-) -> Result<
-	(
-		Arc<FullClient<Runtime, Dispatch>>,
-		Arc<FullBackend>,
-		BasicQueue<Block, PrefixedMemoryDB<BlakeTwo256>>,
-		TaskManager,
-	),
-	ServiceError,
->
+	config: &mut sc_service::Configuration,
+) -> ServiceResult<(
+	Arc<FullClient<Runtime, Dispatch>>,
+	Arc<FullBackend>,
+	sc_consensus::BasicQueue<Block, sp_trie::PrefixedMemoryDB<Hashing>>,
+	sc_service::TaskManager,
+)>
 where
-	Dispatch: 'static + NativeExecutionDispatch,
-	Runtime: 'static + Send + Sync + ConstructRuntimeApi<Block, FullClient<Runtime, Dispatch>>,
-	Runtime::RuntimeApi: RuntimeApiCollection<StateBackend = StateBackendFor<FullBackend, Block>>,
+	Dispatch: 'static + sc_executor::NativeExecutionDispatch,
+	Runtime:
+		'static + Send + Sync + sp_api::ConstructRuntimeApi<Block, FullClient<Runtime, Dispatch>>,
+	Runtime::RuntimeApi:
+		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
 {
+	// --- paritytech ---
+	use sc_service::{config::KeystoreConfig, PartialComponents};
+
 	config.keystore = KeystoreConfig::InMemory;
 
 	let PartialComponents {
@@ -175,36 +101,52 @@ where
 
 #[cfg(feature = "full-node")]
 fn new_partial<RuntimeApi, Executor>(
-	config: &mut Configuration,
-) -> Result<
-	PartialComponents<
+	config: &mut sc_service::Configuration,
+) -> ServiceResult<
+	sc_service::PartialComponents<
 		FullClient<RuntimeApi, Executor>,
 		FullBackend,
 		FullSelectChain,
-		DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
-		FullPool<Block, FullClient<RuntimeApi, Executor>>,
+		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
+		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
 		(
 			(
-				BabeBlockImport<
+				sc_consensus_babe::BabeBlockImport<
 					Block,
 					FullClient<RuntimeApi, Executor>,
 					FullGrandpaBlockImport<RuntimeApi, Executor>,
 				>,
-				LinkHalf<Block, FullClient<RuntimeApi, Executor>, FullSelectChain>,
-				BabeLink<Block>,
+				sc_finality_grandpa::LinkHalf<
+					Block,
+					FullClient<RuntimeApi, Executor>,
+					FullSelectChain,
+				>,
+				sc_consensus_babe::BabeLink<Block>,
 			),
-			Option<Telemetry>,
+			Option<sc_telemetry::Telemetry>,
 		),
 	>,
-	ServiceError,
 >
 where
-	Executor: 'static + NativeExecutionDispatch,
-	RuntimeApi:
-		'static + Send + Sync + ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>>,
+	Executor: 'static + sc_executor::NativeExecutionDispatch,
+	RuntimeApi: 'static
+		+ Send
+		+ Sync
+		+ sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>>,
 	RuntimeApi::RuntimeApi:
-		RuntimeApiCollection<StateBackend = StateBackendFor<FullBackend, Block>>,
+		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
 {
+	// --- paritytech ---
+	use sc_client_api::ExecutorProvider;
+	use sc_consensus::LongestChain;
+	use sc_consensus_babe::Config as BabeConfig;
+	use sc_executor::NativeElseWasmExecutor;
+	use sc_service::{Error as ServiceError, PartialComponents};
+	use sc_telemetry::{Error as TelemetryError, TelemetryWorker};
+	use sc_transaction_pool::BasicPool;
+	use sp_consensus::CanAuthorWithNativeVersion;
+	use sp_runtime::traits::Block as BlockT;
+
 	if config.keystore_remote.is_some() {
 		return Err(ServiceError::Other(format!(
 			"Remote Keystores are not supported."
@@ -217,9 +159,10 @@ where
 		.telemetry_endpoints
 		.clone()
 		.filter(|x| !x.is_empty())
-		.map(|endpoints| -> Result<_, sc_telemetry::Error> {
+		.map(|endpoints| -> Result<_, TelemetryError> {
 			let worker = TelemetryWorker::new(16)?;
 			let telemetry = worker.handle().new_telemetry(endpoints);
+
 			Ok((worker, telemetry))
 		})
 		.transpose()?;
@@ -302,24 +245,48 @@ where
 
 #[cfg(feature = "full-node")]
 fn new_full<RuntimeApi, Executor>(
-	mut config: Configuration,
+	mut config: sc_service::Configuration,
 	authority_discovery_disabled: bool,
-	eth_rpc_config: EthRpcConfig,
-) -> Result<
-	(
-		TaskManager,
-		Arc<FullClient<RuntimeApi, Executor>>,
-		RpcHandlers,
-	),
-	ServiceError,
->
+	eth_rpc_config: drml_rpc::EthRpcConfig,
+) -> ServiceResult<(
+	sc_service::TaskManager,
+	Arc<FullClient<RuntimeApi, Executor>>,
+	sc_service::RpcHandlers,
+)>
 where
-	Executor: 'static + NativeExecutionDispatch,
-	RuntimeApi:
-		'static + Send + Sync + ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>>,
+	Executor: 'static + sc_executor::NativeExecutionDispatch,
+	RuntimeApi: 'static
+		+ Send
+		+ Sync
+		+ sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>>,
 	RuntimeApi::RuntimeApi:
-		RuntimeApiCollection<StateBackend = StateBackendFor<FullBackend, Block>>,
+		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
 {
+	// -- std ---
+	use std::{collections::BTreeMap, sync::Mutex, time::Duration};
+	// --- crates.io ---
+	use futures::stream::StreamExt;
+	// --- paritytech ---
+	use beefy_gadget::{notification::BeefySignedCommitmentStream, BeefyParams};
+	use fc_rpc::EthBlockDataCache;
+	use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
+	use sc_authority_discovery::WorkerConfig;
+	use sc_basic_authorship::ProposerFactory;
+	use sc_client_api::ExecutorProvider;
+	use sc_consensus_babe::{BabeParams, SlotProportion};
+	use sc_finality_grandpa::{
+		warp_proof::NetworkProvider, Config as GrandpaConfig,
+		FinalityProofProvider as GrandpaFinalityProofProvider, GrandpaParams,
+		SharedVoterState as GrandpaSharedVoterState,
+		VotingRulesBuilder as GrandpaVotingRulesBuilder,
+	};
+	use sc_network::Event;
+	use sc_service::{BuildNetworkParams, PartialComponents, SpawnTasksParams};
+	use sp_consensus::CanAuthorWithNativeVersion;
+	// --- darwinia-network ---
+	use drml_rpc::*;
+	use dvm::DvmTaskParams;
+
 	let role = config.role.clone();
 	let is_authority = role.is_authority();
 	let is_archive = config.state_pruning.is_archive();
@@ -344,24 +311,24 @@ where
 		client,
 		backend,
 		mut task_manager,
-		mut keystore_container,
+		keystore_container,
 		select_chain,
 		import_queue,
 		transaction_pool,
 		other: ((babe_import, grandpa_link, babe_link), mut telemetry),
 	} = new_partial::<RuntimeApi, Executor>(&mut config)?;
 
-	if let Some(url) = &config.keystore_remote {
-		match remote_keystore(url) {
-			Ok(k) => keystore_container.set_remote_keystore(k),
-			Err(e) => {
-				return Err(ServiceError::Other(format!(
-					"Error hooking up remote keystore for {}: {}",
-					url, e
-				)))
-			}
-		};
-	}
+	// if let Some(url) = &config.keystore_remote {
+	// 	match remote_keystore(url) {
+	// 		Ok(k) => keystore_container.set_remote_keystore(k),
+	// 		Err(e) => {
+	// 			return Err(ServiceError::Other(format!(
+	// 				"Error hooking up remote keystore for {}: {}",
+	// 				url, e
+	// 			)))
+	// 		}
+	// 	};
+	// }
 
 	let warp_sync = Arc::new(NetworkProvider::new(
 		backend.clone(),
@@ -388,9 +355,9 @@ where
 		);
 	}
 
-	let dvm_backend = open_dvm_backend(&config)?;
+	let dvm_backend = dvm::open_backend(&config)?;
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
-	let overrides = overrides_handle(client.clone());
+	let overrides = drml_rpc::overrides_handle(client.clone());
 	let block_data_cache = Arc::new(EthBlockDataCache::new(
 		task_manager.spawn_handle(),
 		overrides.clone(),
@@ -398,7 +365,7 @@ where
 		eth_rpc_config.eth_log_block_cache,
 	));
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
-	let tracing_requesters = dvm_tasks::spawn(DvmTasksParams {
+	let tracing_requesters = DvmTaskParams {
 		task_manager: &task_manager,
 		client: client.clone(),
 		substrate_backend: backend.clone(),
@@ -408,7 +375,8 @@ where
 		eth_rpc_config: eth_rpc_config.clone(),
 		fee_history_cache: fee_history_cache.clone(),
 		overrides: overrides.clone(),
-	});
+	}
+	.spawn_task();
 	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let shared_voter_state = GrandpaSharedVoterState::empty();
 	let babe_config = babe_link.config().clone();
@@ -430,7 +398,7 @@ where
 		let network = network.clone();
 
 		Box::new(
-			move |deny_unsafe, subscription_executor: SubscriptionTaskExecutor| -> RpcResult {
+			move |deny_unsafe, subscription_executor: SubscriptionTaskExecutor| -> RpcServiceResult {
 				drml_rpc::create_full(
 					FullDeps {
 						client: client.clone(),
@@ -621,7 +589,11 @@ where
 }
 
 // If we're using prometheus, use a registry with a prefix of `drml`.
-fn set_prometheus_registry(config: &mut Configuration) -> Result<(), ServiceError> {
+fn set_prometheus_registry(config: &mut sc_service::Configuration) -> ServiceResult<()> {
+	// --- paritytech ---
+	use sc_service::config::PrometheusConfig;
+	use substrate_prometheus_endpoint::Registry;
+
 	if let Some(PrometheusConfig { registry, .. }) = config.prometheus_config.as_mut() {
 		*registry = Registry::new_custom(Some("drml".into()), None)?;
 	}
@@ -629,29 +601,9 @@ fn set_prometheus_registry(config: &mut Configuration) -> Result<(), ServiceErro
 	Ok(())
 }
 
-fn remote_keystore(_url: &String) -> Result<Arc<LocalKeystore>, &'static str> {
-	// FIXME: here would the concrete keystore be built,
-	//        must return a concrete type (NOT `LocalKeystore`) that
-	//        implements `CryptoStore` and `SyncCryptoStore`
-	Err("Remote Keystore not supported.")
-}
-
-pub fn dvm_database_dir(config: &Configuration) -> PathBuf {
-	let chain_id = config.chain_spec.id();
-	let config_dir = config
-		.base_path
-		.as_ref()
-		.map(|base_path| base_path.config_dir(chain_id))
-		.expect("Config dir must be set.");
-
-	config_dir.join("dvm").join("db")
-}
-
-fn open_dvm_backend(config: &Configuration) -> Result<Arc<Backend<Block>>, String> {
-	Ok(Arc::new(Backend::<Block>::new(&DatabaseSettings {
-		source: DatabaseSettingsSrc::RocksDb {
-			path: dvm_database_dir(&config),
-			cache_size: 0,
-		},
-	})?))
-}
+// fn remote_keystore(_url: &String) -> Result<Arc<LocalKeystore>, &'static str> {
+// 	// FIXME: here would the concrete keystore be built,
+// 	//        must return a concrete type (NOT `LocalKeystore`) that
+// 	//        implements `CryptoStore` and `SyncCryptoStore`
+// 	Err("Remote Keystore not supported.")
+// }

@@ -238,7 +238,7 @@ pub fn run() -> sc_cli::Result<()> {
 			runner.sync_run(|config| {
 				// Remove dvm offchain db
 				let dvm_database_config = DatabaseSource::RocksDb {
-					path: drml_service::dvm_database_dir(&config),
+					path: drml_service::dvm::db_path(&config),
 					cache_size: 0,
 				};
 
