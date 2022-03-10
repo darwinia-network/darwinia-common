@@ -23,18 +23,12 @@ pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 
 // --- std ---
 use std::{collections::BTreeMap, error::Error, str::FromStr, sync::Arc};
-// --- crates.io ---
-use jsonrpc_core::IoHandler;
 // --- paritytech ---
-use fc_rpc::OverrideHandle;
-use fp_rpc::NoTransactionConverter;
-use fp_storage::EthereumStorageSchema;
-use sc_rpc::Metadata;
 // --- darwinia-network ---
 use drml_common_primitives::{OpaqueBlock as Block, *};
 
 /// A type representing all RPC extensions.
-pub type RpcExtension = IoHandler<Metadata>;
+pub type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
 /// RPC result.
 pub type RpcResult = Result<RpcExtension, Box<dyn Error + Send + Sync>>;
 
@@ -52,7 +46,7 @@ where
 	/// A copy of the chain spec.
 	pub chain_spec: Box<dyn sc_chain_spec::ChainSpec>,
 	/// Whether to deny unsafe calls
-	pub deny_unsafe: DenyUnsafe,
+	pub deny_unsafe: sc_rpc::DenyUnsafe,
 	/// BABE specific dependencies.
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
@@ -164,7 +158,7 @@ where
 /// Instantiate all RPC extensions.
 pub fn create_full<C, P, SC, B, A>(
 	deps: FullDeps<C, P, SC, B, A>,
-	subscription_task_executor: SubscriptionTaskExecutor,
+	subscription_task_executor: sc_rpc::SubscriptionTaskExecutor,
 ) -> RpcResult
 where
 	C: 'static
@@ -356,7 +350,7 @@ where
 	Ok(io)
 }
 
-pub fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
+pub fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<fc_rpc::OverrideHandle<Block>>
 where
 	C: 'static
 		+ Send
@@ -373,10 +367,8 @@ where
 	BE::State: sc_client_api::backend::StateBackend<Hashing>,
 {
 	// --- paritytech ---
-	use fc_rpc::{
-		RuntimeApiStorageOverride, SchemaV1Override, SchemaV2Override, SchemaV3Override,
-		StorageOverride,
-	};
+	use fc_rpc::*;
+	use fp_storage::EthereumStorageSchema;
 
 	Arc::new(OverrideHandle {
 		schemas: BTreeMap::from_iter([
