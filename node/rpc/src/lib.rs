@@ -22,15 +22,14 @@ pub mod template;
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 
 // --- std ---
-use std::{collections::BTreeMap, error::Error, str::FromStr, sync::Arc};
-// --- paritytech ---
+use std::sync::Arc;
 // --- darwinia-network ---
 use drml_common_primitives::{OpaqueBlock as Block, *};
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
 /// RPC result.
-pub type RpcResult = Result<RpcExtension, Box<dyn Error + Send + Sync>>;
+pub type RpcResult = Result<RpcExtension, Box<dyn std::error::Error + Send + Sync>>;
 
 /// Full client dependencies.
 pub struct FullDeps<C, P, SC, B, A>
@@ -53,10 +52,8 @@ where
 	pub grandpa: GrandpaDeps<B>,
 	/// BEEFY specific dependencies.
 	pub beefy: BeefyDeps,
-	/// RPC requester for evm trace
-	pub tracing_requesters: EthRpcRequesters,
-	/// DVM related rpc helper
-	pub eth_rpc_helper: EthRpcHelper<A>,
+	/// DVM related rpc helper.
+	pub eth: EthDeps<A>,
 }
 
 /// Extra dependencies for BABE.
@@ -92,51 +89,12 @@ pub struct BeefyDeps {
 	pub subscription_executor: sc_rpc::SubscriptionTaskExecutor,
 }
 
-#[derive(Clone)]
-pub struct EthRpcRequesters {
-	pub debug: Option<dc_rpc::DebugRequester>,
-	pub trace: Option<dc_rpc::CacheRequester>,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct EthRpcConfig {
-	pub ethapi_cmds: Vec<EthApiCmd>,
-	pub ethapi_max_permits: u32,
-	pub ethapi_trace_max_count: u32,
-	pub ethapi_trace_cache_duration: u64,
-	pub eth_log_block_cache: usize,
-	pub max_past_logs: u32,
-	pub fee_history_limit: u64,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum EthApiCmd {
-	Debug,
-	Trace,
-}
-impl FromStr for EthApiCmd {
-	type Err = String;
-
-	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		Ok(match s {
-			"debug" => Self::Debug,
-			"trace" => Self::Trace,
-			_ => {
-				return Err(format!(
-					"`{}` is not recognized as a supported Ethereum Api",
-					s
-				))
-			}
-		})
-	}
-}
-
-pub struct EthRpcHelper<A>
+pub struct EthDeps<A>
 where
 	A: sc_transaction_pool::ChainApi,
 {
 	/// DVM related RPC Config
-	pub eth_rpc_config: EthRpcConfig,
+	pub config: EthRpcConfig,
 	/// Graph pool instance.
 	pub graph: Arc<sc_transaction_pool::Pool<A>>,
 	/// The Node authority flag
@@ -153,6 +111,25 @@ where
 	pub overrides: Arc<fc_rpc::OverrideHandle<Block>>,
 	// Cache for Ethereum block data.
 	pub block_data_cache: Arc<fc_rpc::EthBlockDataCache<Block>>,
+	/// RPC requester for evm trace.
+	pub rpc_requesters: EthRpcRequesters,
+}
+
+#[derive(Clone)]
+pub struct EthRpcConfig {
+	pub ethapi_debug_targets: Vec<String>,
+	pub ethapi_max_permits: u32,
+	pub ethapi_trace_max_count: u32,
+	pub ethapi_trace_cache_duration: u64,
+	pub eth_log_block_cache: usize,
+	pub max_past_logs: u32,
+	pub fee_history_limit: u64,
+}
+
+#[derive(Clone)]
+pub struct EthRpcRequesters {
+	pub debug: Option<dc_rpc::DebugRequester>,
+	pub trace: Option<dc_rpc::CacheRequester>,
 }
 
 /// Instantiate all RPC extensions.
@@ -227,13 +204,12 @@ where
 				beefy_commitment_stream,
 				subscription_executor: beefy_subscription_executor,
 			},
-		tracing_requesters,
-		eth_rpc_helper,
+		eth,
 	} = deps;
-	let EthRpcHelper {
-		eth_rpc_config:
+	let EthDeps {
+		config:
 			EthRpcConfig {
-				ethapi_cmds,
+				ethapi_debug_targets,
 				ethapi_trace_max_count,
 				max_past_logs,
 				fee_history_limit,
@@ -247,8 +223,8 @@ where
 		fee_history_cache,
 		overrides,
 		block_data_cache,
-	} = eth_rpc_helper;
-
+		rpc_requesters,
+	} = eth;
 	let mut io = jsonrpc_core::IoHandler::default();
 
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(
@@ -331,19 +307,19 @@ where
 	)));
 	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client.clone())));
 
-	if ethapi_cmds
+	if ethapi_debug_targets
 		.iter()
-		.any(|cmd| matches!(cmd, EthApiCmd::Debug | EthApiCmd::Trace))
+		.any(|cmd| matches!(cmd.as_str(), "debug" | "trace"))
 	{
-		if let Some(trace_filter_requester) = tracing_requesters.trace {
+		if let Some(trace_requester) = rpc_requesters.trace {
 			io.extend_with(TraceApiServer::to_delegate(Trace::new(
 				client,
-				trace_filter_requester,
+				trace_requester,
 				ethapi_trace_max_count,
 			)));
 		}
 
-		if let Some(debug_requester) = tracing_requesters.debug {
+		if let Some(debug_requester) = rpc_requesters.debug {
 			io.extend_with(DebugApiServer::to_delegate(Debug::new(debug_requester)));
 		}
 	}
@@ -367,6 +343,8 @@ where
 	BE: 'static + sc_client_api::backend::Backend<Block>,
 	BE::State: sc_client_api::backend::StateBackend<Hashing>,
 {
+	// --- std ---
+	use std::collections::BTreeMap;
 	// --- paritytech ---
 	use fc_rpc::*;
 	use fp_storage::EthereumStorageSchema;

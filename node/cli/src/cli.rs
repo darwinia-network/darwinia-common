@@ -20,10 +20,6 @@
 #[cfg(feature = "template")]
 use structopt::clap::arg_enum;
 use structopt::StructOpt;
-// --- paritytech ---
-use sc_cli::{KeySubcommand, SignCmd, VanityCmd, VerifyCmd};
-// --- darwinia-network ---
-use drml_rpc::EthApiCmd;
 
 /// An overarching CLI command definition.
 #[derive(Debug, StructOpt)]
@@ -99,16 +95,16 @@ pub enum Subcommand {
 	Revert(sc_cli::RevertCmd),
 
 	/// Key management cli utilities
-	Key(KeySubcommand),
+	Key(sc_cli::KeySubcommand),
 
 	/// Verify a signature for a message, provided on STDIN, with a given (public or secret) key.
-	Verify(VerifyCmd),
+	Verify(sc_cli::VerifyCmd),
 
 	/// Generate a seed that provides a vanity address.
-	Vanity(VanityCmd),
+	Vanity(sc_cli::VanityCmd),
 
 	/// Sign a message, with a given (secret) key.
-	Sign(SignCmd),
+	Sign(sc_cli::SignCmd),
 
 	/// The custom benchmark subcommand benchmarking runtime pallets.
 	#[cfg(feature = "runtime-benchmarks")]
@@ -124,8 +120,13 @@ pub enum Subcommand {
 #[derive(Debug, StructOpt)]
 pub struct DvmArgs {
 	/// Enable EVM tracing module on a non-authority node.
-	#[structopt(long, conflicts_with = "validator", require_delimiter = true)]
-	pub ethapi_cmds: Vec<EthApiCmd>,
+	#[structopt(
+			long,
+			conflicts_with = "validator",
+			require_delimiter = true,
+			possible_values = &["debug", "trace"]
+	)]
+	pub ethapi_debug_targets: Vec<String>,
 
 	/// Number of concurrent tracing tasks. Meant to be shared by both "debug" and "trace" modules.
 	#[structopt(long, default_value = "10")]
@@ -162,6 +163,22 @@ pub struct DvmArgs {
 	#[cfg(feature = "template")]
 	#[structopt(long = "enable-dev-signer")]
 	pub enable_dev_signer: bool,
+}
+impl DvmArgs {
+	pub fn build_eth_rpc_config(&self) -> drml_rpc::EthRpcConfig {
+		// --- darwinia-network ---
+		use drml_rpc::EthRpcConfig;
+
+		EthRpcConfig {
+			ethapi_debug_targets: self.ethapi_debug_targets.clone(),
+			ethapi_max_permits: self.ethapi_max_permits,
+			ethapi_trace_max_count: self.ethapi_trace_max_count,
+			ethapi_trace_cache_duration: self.ethapi_trace_cache_duration,
+			eth_log_block_cache: self.eth_log_block_cache,
+			max_past_logs: self.max_past_logs,
+			fee_history_limit: self.fee_history_limit,
+		}
+	}
 }
 
 #[cfg(feature = "template")]

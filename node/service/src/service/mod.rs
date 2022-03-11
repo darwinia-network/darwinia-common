@@ -365,7 +365,7 @@ where
 		eth_rpc_config.eth_log_block_cache,
 	));
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
-	let tracing_requesters = DvmTaskParams {
+	let rpc_requesters = DvmTaskParams {
 		task_manager: &task_manager,
 		client: client.clone(),
 		substrate_backend: backend.clone(),
@@ -398,7 +398,9 @@ where
 		let network = network.clone();
 
 		Box::new(
-			move |deny_unsafe, subscription_executor: SubscriptionTaskExecutor| -> RpcServiceResult {
+			move |deny_unsafe,
+			      subscription_executor: SubscriptionTaskExecutor|
+			      -> RpcServiceResult {
 				drml_rpc::create_full(
 					FullDeps {
 						client: client.clone(),
@@ -422,17 +424,17 @@ where
 							beefy_commitment_stream: beefy_commitment_stream.clone(),
 							subscription_executor,
 						},
-						tracing_requesters: tracing_requesters.clone(),
-						eth_rpc_helper: EthRpcHelper {
-							is_authority,
-							eth_rpc_config: eth_rpc_config.clone(),
+						eth: EthDeps {
+							config: eth_rpc_config.clone(),
 							graph: transaction_pool.pool().clone(),
+							is_authority,
 							network: network.clone(),
 							filter_pool: filter_pool.clone(),
 							backend: dvm_backend.clone(),
 							fee_history_cache: fee_history_cache.clone(),
 							overrides: overrides.clone(),
 							block_data_cache: block_data_cache.clone(),
+							rpc_requesters: rpc_requesters.clone(),
 						},
 					},
 					subscription_task_executor.clone(),

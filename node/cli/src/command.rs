@@ -19,14 +19,13 @@
 // --- std ---
 use std::{env, path::PathBuf};
 // --- paritytech ---
-use sc_cli::{Role, RuntimeVersion, SubstrateCli};
+use sc_cli::{Result as CliResult, Role, RuntimeVersion, SubstrateCli};
 #[cfg(feature = "try-runtime")]
 use sc_service::TaskManager;
 use sc_service::{ChainSpec, DatabaseSource};
 use sp_core::crypto::Ss58AddressFormat;
 // --- darwinia-network ---
 use crate::cli::*;
-use drml_rpc::{EthApiCmd, EthRpcConfig};
 use drml_service::*;
 
 impl SubstrateCli for Cli {
@@ -109,7 +108,7 @@ impl SubstrateCli for Cli {
 }
 
 /// Parse command line arguments into service configuration.
-pub fn run() -> sc_cli::Result<()> {
+pub fn run() -> CliResult<()> {
 	macro_rules! async_run {
 		(|$cmd:ident, $cli:ident, $config:ident, $client:ident, $backend:ident, $import_queue:ident| $($code:tt)*) => {{
 			let runner = $cli.create_runner($cmd)?;
@@ -141,23 +140,15 @@ pub fn run() -> sc_cli::Result<()> {
 
 	let cli = Cli::from_args();
 	let _ = validate_trace_environment(&cli)?;
-	let eth_rpc_config = EthRpcConfig {
-		ethapi_cmds: cli.run.dvm_args.ethapi_cmds.clone(),
-		ethapi_max_permits: cli.run.dvm_args.ethapi_max_permits,
-		ethapi_trace_max_count: cli.run.dvm_args.ethapi_trace_max_count,
-		ethapi_trace_cache_duration: cli.run.dvm_args.ethapi_trace_cache_duration,
-		eth_log_block_cache: cli.run.dvm_args.eth_log_block_cache,
-		max_past_logs: cli.run.dvm_args.max_past_logs,
-		fee_history_limit: cli.run.dvm_args.fee_history_limit,
-	};
 
 	match &cli.subcommand {
 		None => {
-			let authority_discovery_disabled = cli.run.authority_discovery_disabled;
 			let runner = cli.create_runner(&cli.run.base)?;
 			let chain_spec = &runner.config().chain_spec;
 
 			set_default_ss58_version(chain_spec);
+
+			let eth_rpc_config = cli.run.dvm_args.build_eth_rpc_config();
 
 			#[cfg(feature = "template")]
 			if chain_spec.is_template() {
@@ -175,6 +166,8 @@ pub fn run() -> sc_cli::Result<()> {
 					})
 					.map_err(sc_cli::Error::Service);
 			}
+
+			let authority_discovery_disabled = cli.run.authority_discovery_disabled;
 
 			if chain_spec.is_pangolin() {
 				runner.run_node_until_exit(|config| async move {
@@ -324,15 +317,20 @@ fn set_default_ss58_version(spec: &Box<dyn ChainSpec>) {
 	sp_core::crypto::set_default_ss58_version(ss58_version);
 }
 
-fn validate_trace_environment(cli: &Cli) -> sc_cli::Result<()> {
-	if (cli.run.dvm_args.ethapi_cmds.contains(&EthApiCmd::Debug)
-		|| cli.run.dvm_args.ethapi_cmds.contains(&EthApiCmd::Trace))
+fn validate_trace_environment(cli: &Cli) -> CliResult<()> {
+	if cli
+		.run
+		.dvm_args
+		.ethapi_debug_targets
+		.iter()
+		.any(|target| matches!(target.as_str(), "debug" | "trace"))
 		&& cli.run.base.import_params.wasm_runtime_overrides.is_none()
 	{
-		return Err(
+		Err(
 			"`debug` or `trace` namespaces requires `--wasm-runtime-overrides /path/to/overrides`."
 				.into(),
-		);
+		)
+	} else {
+		Ok(())
 	}
-	Ok(())
 }

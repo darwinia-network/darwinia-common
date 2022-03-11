@@ -66,7 +66,7 @@ where
 		use fc_rpc::EthTask;
 		// --- darwinia-network ---
 		use dc_rpc::{CacheTask, DebugTask};
-		use drml_rpc::{EthApiCmd, EthRpcConfig, EthRpcRequesters};
+		use drml_rpc::{EthRpcConfig, EthRpcRequesters};
 
 		let DvmTaskParams {
 			task_manager,
@@ -77,7 +77,7 @@ where
 			is_archive,
 			eth_rpc_config:
 				EthRpcConfig {
-					ethapi_cmds,
+					ethapi_debug_targets,
 					ethapi_max_permits,
 					ethapi_trace_cache_duration,
 					fee_history_limit,
@@ -127,27 +127,32 @@ where
 			}
 		}
 
-		if ethapi_cmds
+		if ethapi_debug_targets
 			.iter()
-			.any(|cmd| matches!(cmd, EthApiCmd::Trace | EthApiCmd::Debug))
+			.any(|cmd| matches!(cmd.as_str(), "debug" | "trace"))
 		{
 			let permit_pool = Arc::new(Semaphore::new(ethapi_max_permits as _));
-			let (trace_filter_task, trace_filter_requester) =
-				if ethapi_cmds.contains(&EthApiCmd::Trace) {
-					let (trace_filter_task, trace_filter_requester) = CacheTask::create(
-						client.clone(),
-						substrate_backend.clone(),
-						Duration::from_secs(ethapi_trace_cache_duration),
-						permit_pool.clone(),
-						overrides.clone(),
-					);
+			let (trace_filter_task, trace_filter_requester) = if ethapi_debug_targets
+				.iter()
+				.any(|target| target.as_str() == "trace")
+			{
+				let (trace_filter_task, trace_filter_requester) = CacheTask::create(
+					client.clone(),
+					substrate_backend.clone(),
+					Duration::from_secs(ethapi_trace_cache_duration),
+					permit_pool.clone(),
+					overrides.clone(),
+				);
 
-					(Some(trace_filter_task), Some(trace_filter_requester))
-				} else {
-					(None, None)
-				};
+				(Some(trace_filter_task), Some(trace_filter_requester))
+			} else {
+				(None, None)
+			};
 
-			let (debug_task, debug_requester) = if ethapi_cmds.contains(&EthApiCmd::Debug) {
+			let (debug_task, debug_requester) = if ethapi_debug_targets
+				.iter()
+				.any(|target| target.as_str() == "debug")
+			{
 				let (debug_task, debug_requester) = DebugTask::task(
 					client.clone(),
 					substrate_backend.clone(),
@@ -174,7 +179,7 @@ where
 			if let Some(debug_task) = debug_task {
 				task_manager
 					.spawn_essential_handle()
-					.spawn("ethapi_cmds-debug", debug_task);
+					.spawn("ethapi-debug", debug_task);
 			}
 
 			EthRpcRequesters {

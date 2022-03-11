@@ -1319,10 +1319,7 @@ pub mod pallet {
 
 						// Make sure that the user maintains enough active bond for their role.
 						// If a user runs into this error, they should chill first.
-						ensure!(
-							*active >= min_active_bond,
-							<Error<T>>::InsufficientBond
-						);
+						ensure!(*active >= min_active_bond, <Error<T>>::InsufficientBond);
 
 						ring_staking_lock
 							.unbondings
