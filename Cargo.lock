@@ -673,7 +673,7 @@ dependencies = [
 [[package]]
 name = "bp-header-chain"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=darwinia-v0.12.1#55b88ea4a0a675535dc05cf17c0b027df999524a"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=nada-parachain-pallet#c75f307d214d925d3286d64efb9a06e376eb0cea"
 dependencies = [
  "finality-grandpa",
  "frame-support",
@@ -689,7 +689,7 @@ dependencies = [
 [[package]]
 name = "bp-message-dispatch"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=darwinia-v0.12.1#55b88ea4a0a675535dc05cf17c0b027df999524a"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=nada-parachain-pallet#c75f307d214d925d3286d64efb9a06e376eb0cea"
 dependencies = [
  "bp-runtime",
  "frame-support",
@@ -701,7 +701,7 @@ dependencies = [
 [[package]]
 name = "bp-messages"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=darwinia-v0.12.1#55b88ea4a0a675535dc05cf17c0b027df999524a"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=nada-parachain-pallet#c75f307d214d925d3286d64efb9a06e376eb0cea"
 dependencies = [
  "bitvec",
  "bp-runtime",
@@ -716,9 +716,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "bp-polkadot-core"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=nada-parachain-pallet#c75f307d214d925d3286d64efb9a06e376eb0cea"
+dependencies = [
+ "bp-messages",
+ "bp-runtime",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "sp-version",
+]
+
+[[package]]
 name = "bp-runtime"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=darwinia-v0.12.1#55b88ea4a0a675535dc05cf17c0b027df999524a"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=nada-parachain-pallet#c75f307d214d925d3286d64efb9a06e376eb0cea"
 dependencies = [
  "frame-support",
  "hash-db",
@@ -736,7 +754,7 @@ dependencies = [
 [[package]]
 name = "bp-test-utils"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=darwinia-v0.12.1#55b88ea4a0a675535dc05cf17c0b027df999524a"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=nada-parachain-pallet#c75f307d214d925d3286d64efb9a06e376eb0cea"
 dependencies = [
  "bp-header-chain",
  "ed25519-dalek",
@@ -751,7 +769,7 @@ dependencies = [
 [[package]]
 name = "bridge-runtime-common"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=darwinia-v0.12.1#55b88ea4a0a675535dc05cf17c0b027df999524a"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=nada-parachain-pallet#c75f307d214d925d3286d64efb9a06e376eb0cea"
 dependencies = [
  "bp-message-dispatch",
  "bp-messages",
@@ -5835,7 +5853,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-dispatch"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=darwinia-v0.12.1#55b88ea4a0a675535dc05cf17c0b027df999524a"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=nada-parachain-pallet#c75f307d214d925d3286d64efb9a06e376eb0cea"
 dependencies = [
  "bp-message-dispatch",
  "bp-runtime",
@@ -5852,7 +5870,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=darwinia-v0.12.1#55b88ea4a0a675535dc05cf17c0b027df999524a"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=nada-parachain-pallet#c75f307d214d925d3286d64efb9a06e376eb0cea"
 dependencies = [
  "bp-header-chain",
  "bp-runtime",
@@ -5874,7 +5892,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-messages"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=darwinia-v0.12.1#55b88ea4a0a675535dc05cf17c0b027df999524a"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=nada-parachain-pallet#c75f307d214d925d3286d64efb9a06e376eb0cea"
 dependencies = [
  "bitvec",
  "bp-message-dispatch",
@@ -5890,6 +5908,25 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-bridge-parachains"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/parity-bridges-common?branch=nada-parachain-pallet#c75f307d214d925d3286d64efb9a06e376eb0cea"
+dependencies = [
+ "bp-polkadot-core",
+ "bp-runtime",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-bridge-grandpa",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "sp-trie",
 ]
 
 [[package]]
@@ -6404,6 +6441,7 @@ dependencies = [
  "pallet-bridge-dispatch",
  "pallet-bridge-grandpa",
  "pallet-bridge-messages",
+ "pallet-bridge-parachains",
  "pallet-collective",
  "pallet-election-provider-multi-phase",
  "pallet-evm",

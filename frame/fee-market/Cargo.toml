@@ -27,9 +27,9 @@ sp-io              = { default-features = false, git = "https://github.com/darwi
 sp-runtime         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-std             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # parity-bridges-common
-bp-messages            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.1" }
-bp-runtime             = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.1" }
-pallet-bridge-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "darwinia-v0.12.1" }
+bp-messages            = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "nada-parachain-pallet" }
+bp-runtime             = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "nada-parachain-pallet" }
+pallet-bridge-messages = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "nada-parachain-pallet" }
 
 [dev-dependencies]
 darwinia-balances = { path = "../balances" }
