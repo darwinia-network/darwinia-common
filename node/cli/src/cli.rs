@@ -120,12 +120,7 @@ pub enum Subcommand {
 #[derive(Debug, StructOpt)]
 pub struct DvmArgs {
 	/// Enable EVM tracing module on a non-authority node.
-	#[structopt(
-			long,
-			conflicts_with = "validator",
-			require_delimiter = true,
-			possible_values = &["debug", "trace"]
-	)]
+	#[structopt(long, conflicts_with = "validator", require_delimiter = true)]
 	pub ethapi_debug_targets: Vec<String>,
 
 	/// Number of concurrent tracing tasks. Meant to be shared by both "debug" and "trace" modules.
