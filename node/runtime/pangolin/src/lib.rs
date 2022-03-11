@@ -58,6 +58,7 @@ pub use darwinia_balances::Call as BalancesCall;
 pub use darwinia_fee_market::Call as FeeMarketCall;
 pub use frame_system::Call as SystemCall;
 pub use pallet_bridge_grandpa::Call as BridgeGrandpaCall;
+pub use pallet_bridge_parachains::Call as BridgeParachainsCall;
 pub use pallet_bridge_messages::Call as BridgeMessagesCall;
 pub use pallet_sudo::Call as SudoCall;
 
@@ -265,6 +266,8 @@ frame_support::construct_runtime! {
 		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 
 		BridgeRococoGrandpa: pallet_bridge_grandpa::<Instance2>::{Pallet, Call, Storage} = 60,
+
+		BridgeRococoParachains: pallet_bridge_parachains::{Pallet, Call, Storage} = 61,
 
 		// BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
 	}

@@ -150,7 +150,10 @@ pub use transaction_pause::*;
 
 pub mod from_substrate_issuing_;
 
-mod bridge_rococo_grandpa;
+pub mod bridge_rococo_grandpa;
 pub use bridge_rococo_grandpa::*;
 
 pub use from_substrate_issuing_::*;
+
+pub mod bridge_pangolin_parachain;
+pub use bridge_pangolin_parachain::*;
