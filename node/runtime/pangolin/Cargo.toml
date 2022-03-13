@@ -204,6 +204,7 @@ std = [
 	"pallet-bridge-dispatch/std",
 	"pallet-bridge-grandpa/std",
 	"pallet-bridge-messages/std",
+	"pallet-bridge-parachains/std",
 	"pallet-collective/std",
 	"pallet-election-provider-multi-phase/std",
 	"pallet-grandpa/std",
