@@ -139,10 +139,11 @@ pub fn run() -> CliResult<()> {
 	}
 
 	let cli = Cli::from_args();
-	let _ = validate_trace_environment(&cli)?;
 
 	match &cli.subcommand {
 		None => {
+			validate_trace_environment(&cli)?;
+
 			let runner = cli.create_runner(&cli.run.base)?;
 			let chain_spec = &runner.config().chain_spec;
 
