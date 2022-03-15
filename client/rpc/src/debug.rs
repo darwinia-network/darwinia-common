@@ -566,9 +566,11 @@ where
 							}
 							TracerInput::CallTracer => {
 								let mut res =
-									darwinia_client_evm_tracer::formatters::CallTracer::format(proxy)
-										.ok_or("Trace result is empty.")
-										.map_err(|e| internal_err(format!("{:?}", e)))?;
+									darwinia_client_evm_tracer::formatters::CallTracer::format(
+										proxy,
+									)
+									.ok_or("Trace result is empty.")
+									.map_err(|e| internal_err(format!("{:?}", e)))?;
 								Ok(res.pop().expect("Trace result is empty."))
 							}
 							_ => Err(internal_err(format!(
