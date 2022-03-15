@@ -24,6 +24,9 @@ sp-api                 = { default-features = false, git = "https://github.com/d
 sp-core                = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-runtime             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-std                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+# TODO: re-organize the runtime dependencies
+# runtimes
+drml-common-runtime = { default-features = false, path = "../../runtime/common" }
 
 [features]
 default = ["std"]
@@ -43,4 +46,6 @@ std = [
 	"sp-core/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	# runtimes
+	"drml-common-runtime/std",
 ]

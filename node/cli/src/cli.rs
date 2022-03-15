@@ -27,7 +27,7 @@ use sc_cli::*;
 #[cfg(feature = "try-runtime")]
 use try_runtime_cli::TryRuntimeCmd;
 // --- darwinia-network ---
-use darwinia_rpc::EthRpcConfig;
+use drml_rpc::EthRpcConfig;
 
 /// An overarching CLI command definition.
 #[derive(Debug, StructOpt)]

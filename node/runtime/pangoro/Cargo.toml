@@ -18,7 +18,6 @@ serde       = { version = "1.0", features = ["derive"], optional = true }
 smallvec    = { version = "1.7" }
 # darwinia-network
 bsc-primitives                      = { default-features = false, path = "../../../primitives/bsc" }
-common-runtime                      = { default-features = false, path = "../common" }
 darwinia-balances                   = { default-features = false, path = "../../../frame/balances" }
 darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
 darwinia-beefy-gadget               = { default-features = false, path = "../../../frame/beefy-gadget" }
@@ -37,6 +36,7 @@ dp-fee                              = { default-features = false, path = "../../
 dp-s2s                              = { default-features = false, path = "../../../primitives/s2s" }
 drml-bridge-primitives              = { default-features = false, path = "../../primitives/bridge" }
 drml-common-primitives              = { default-features = false, path = "../../primitives/common" }
+drml-common-runtime                 = { default-features = false, path = "../common" }
 dvm-ethereum                        = { default-features = false, path = "../../../frame/dvm" }
 module-transaction-pause            = { default-features = false, path = "../../../frame/transaction-pause" }
 to-substrate-backing                = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
@@ -121,7 +121,7 @@ std = [
 	"serde",
 	# darwinia-network
 	"bsc-primitives/std",
-	"common-runtime/std",
+	"drml-common-runtime/std",
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
 	"darwinia-beefy-gadget/std",

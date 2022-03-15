@@ -18,12 +18,10 @@ sp_npos_elections::generate_solution_type!(
 	>(16)
 );
 
-<<<<<<< Updated upstream
 #[cfg(feature = "fast-runtime")]
 type Fallback = OnChainSequentialPhragmen<Runtime>;
 #[cfg(not(feature = "fast-runtime"))]
 type Fallback = NoFallback<Runtime>;
-
 
 frame_support::parameter_types! {
 	// no signed phase for now, just unsigned.

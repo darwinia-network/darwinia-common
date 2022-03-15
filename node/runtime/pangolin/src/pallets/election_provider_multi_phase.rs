@@ -18,7 +18,6 @@ sp_npos_elections::generate_solution_type!(
 	>(24)
 );
 
-<<<<<<< Updated upstream
 #[cfg(feature = "fast-runtime")]
 type Fallback = OnChainSequentialPhragmen<Runtime>;
 #[cfg(not(feature = "fast-runtime"))]

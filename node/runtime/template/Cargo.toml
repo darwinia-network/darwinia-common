@@ -15,11 +15,11 @@ codec      = { package = "parity-scale-codec", version = "2.3", default-features
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 serde      = { version = "1.0", optional = true, features = ["derive"] }
 # darwinia-network
-common-runtime         = { default-features = false, path = "../common" }
 darwinia-balances      = { default-features = false, path = "../../../frame/balances" }
 darwinia-evm           = { default-features = false, path = "../../../frame/evm" }
 darwinia-support       = { default-features = false, path = "../../../frame/support" }
 drml-common-primitives = { default-features = false, path = "../../primitives/common" }
+drml-common-runtime    = { default-features = false, path = "../common" }
 dvm-ethereum           = { default-features = false, path = "../../../frame/dvm" }
 # trace
 dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/evm-trace/apis" }
@@ -73,7 +73,7 @@ std = [
 	"scale-info/std",
 	"serde/std",
 	# darwinia-network
-	"common-runtime/std",
+	"drml-common-runtime/std",
 	"darwinia-balances/std",
 	"darwinia-evm/std",
 	"darwinia-support/std",
