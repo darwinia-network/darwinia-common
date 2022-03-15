@@ -42,8 +42,13 @@ impl<T: Config> RingBack<T> {
 	pub fn transfer(input: &[u8], _: Option<u64>, context: &Context) -> PrecompileResult {
 		// Decode input data
 		let input = InputData::<T>::decode(&input)?;
-		let (source, to, value) = (context.address, input.dest, context.apparent_value);
-		let source_account = T::RingAccountBasic::account_basic(&source);
+		let (caller, address, to, value) = (
+			context.caller,
+			context.address,
+			input.dest,
+			context.apparent_value,
+		);
+		let source_account = T::RingAccountBasic::account_basic(&address);
 
 		// Ensure the context address should be precompile address
 		let transfer_addr =
@@ -51,7 +56,7 @@ impl<T: Config> RingBack<T> {
 				exit_status: ExitError::Other("Invalid transfer address".into()),
 			})?;
 		ensure!(
-			source == transfer_addr,
+			address == transfer_addr,
 			PrecompileFailure::Error {
 				exit_status: ExitError::Other("Invalid context address".into()),
 			}
@@ -66,12 +71,13 @@ impl<T: Config> RingBack<T> {
 
 		// Transfer
 		let new_source_balance = source_account.balance.saturating_sub(value);
-		T::RingAccountBasic::mutate_account_basic_balance(&source, new_source_balance);
+		T::RingAccountBasic::mutate_account_basic_balance(&address, new_source_balance);
 
 		let target_balance = T::RingAccountBasic::account_balance(&to);
 		let new_target_balance = target_balance.saturating_add(value);
 		T::RingAccountBasic::mutate_account_balance(&to, new_target_balance);
 
+		<darwinia_evm::Pallet<T>>::deposit_event(darwinia_evm::Event::RingBack(caller, to, value));
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
 			cost: 20000,

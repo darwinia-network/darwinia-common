@@ -113,7 +113,7 @@ pub mod pallet {
 	}
 
 	#[pallet::event]
-	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	#[pallet::generate_deposit(pub fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Ethereum events from contracts.
 		Log(Log),
@@ -129,6 +129,12 @@ pub mod pallet {
 		BalanceDeposit(T::AccountId, H160, U256),
 		/// A withdrawal has been made from a given address. \[sender, address, value\]
 		BalanceWithdraw(T::AccountId, H160, U256),
+		/// Withdraw RING from DVM to darwinia account. \[sender, destination, value\]
+		RingBack(H160, T::AccountId, U256),
+		/// Transfer substrate account KTON to WKTON contract.
+		TransferToWKTON(H160, U256),
+		/// Withdraw from WKON contract to substrate account.
+		WithdrawFromWKTON(T::AccountId, U256),
 	}
 
 	#[pallet::error]

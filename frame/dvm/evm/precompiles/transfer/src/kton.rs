@@ -108,6 +108,9 @@ impl<T: Config> Kton<T> {
 					}
 				}
 
+				<darwinia_evm::Pallet<T>>::deposit_event(darwinia_evm::Event::TransferToWKTON(
+					caller, value,
+				));
 				Ok(PrecompileOutput {
 					exit_status: ExitSucceed::Returned,
 					cost: 20000,
@@ -147,6 +150,10 @@ impl<T: Config> Kton<T> {
 				let target_kton = T::KtonAccountBasic::account_balance(&to);
 				let new_target_kton_balance = target_kton.saturating_add(value);
 				T::KtonAccountBasic::mutate_account_balance(&to, new_target_kton_balance);
+
+				<darwinia_evm::Pallet<T>>::deposit_event(darwinia_evm::Event::WithdrawFromWKTON(
+					to, value,
+				));
 				Ok(PrecompileOutput {
 					exit_status: ExitSucceed::Returned,
 					cost: 20000,
