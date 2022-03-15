@@ -164,6 +164,7 @@ where
 	A: 'static + sc_transaction_pool::ChainApi<Block = Block>,
 {
 	// --- crates.io ---
+	use jsonrpc_core::IoHandler;
 	use jsonrpc_pubsub::manager::SubscriptionManager;
 	// --- paritytech ---
 	use beefy_gadget_rpc::*;
@@ -204,28 +205,28 @@ where
 				beefy_commitment_stream,
 				subscription_executor: beefy_subscription_executor,
 			},
-		eth,
-	} = deps;
-	let EthDeps {
-		config:
-			EthRpcConfig {
-				ethapi_debug_targets,
-				ethapi_trace_max_count,
-				max_past_logs,
-				fee_history_limit,
-				..
+		eth:
+			EthDeps {
+				config:
+					EthRpcConfig {
+						ethapi_debug_targets,
+						ethapi_trace_max_count,
+						max_past_logs,
+						fee_history_limit,
+						..
+					},
+				graph,
+				is_authority,
+				network,
+				filter_pool,
+				backend,
+				fee_history_cache,
+				overrides,
+				block_data_cache,
+				rpc_requesters,
 			},
-		graph,
-		is_authority,
-		network,
-		filter_pool,
-		backend,
-		fee_history_cache,
-		overrides,
-		block_data_cache,
-		rpc_requesters,
-	} = eth;
-	let mut io = jsonrpc_core::IoHandler::default();
+	} = deps;
+	let mut io = IoHandler::default();
 
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(
 		client.clone(),
