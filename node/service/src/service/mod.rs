@@ -365,7 +365,7 @@ where
 		eth_rpc_config.eth_log_block_cache,
 	));
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
-	let rpc_requesters = DvmTaskParams {
+	let eth_rpc_requesters = DvmTaskParams {
 		task_manager: &task_manager,
 		client: client.clone(),
 		substrate_backend: backend.clone(),
@@ -434,7 +434,7 @@ where
 							fee_history_cache: fee_history_cache.clone(),
 							overrides: overrides.clone(),
 							block_data_cache: block_data_cache.clone(),
-							rpc_requesters: rpc_requesters.clone(),
+							rpc_requesters: eth_rpc_requesters.clone(),
 						},
 					},
 					subscription_task_executor.clone(),
