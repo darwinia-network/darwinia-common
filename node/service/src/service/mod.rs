@@ -372,7 +372,7 @@ where
 		dvm_backend: dvm_backend.clone(),
 		filter_pool: filter_pool.clone(),
 		is_archive,
-		eth_rpc_config: eth_rpc_config.clone(),
+		rpc_config: eth_rpc_config.clone(),
 		fee_history_cache: fee_history_cache.clone(),
 		overrides: overrides.clone(),
 	}
