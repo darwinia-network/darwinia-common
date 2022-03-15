@@ -18,66 +18,38 @@
 
 //! A collection of node-specific RPC methods.
 
-// --- crates.io ---
-use futures::channel::mpsc::Sender;
+// -- -std ---
+use std::sync::Arc;
 // --- darwinia-network ---
-use crate::*;
-use darwinia_rpc::{Debug, DebugApiServer, Trace, TraceApiServer};
+use crate::EthDeps;
+use drml_common_primitives::{OpaqueBlock as Block, *};
 use template_runtime::TransactionConverter;
-// --- paritytech ---
-use fc_db::Backend as DvmBackend;
-use fc_rpc::{
-	EthApi, EthApiServer, EthBlockDataCache, EthDevSigner, EthFilterApi, EthFilterApiServer,
-	EthPubSubApi, EthPubSubApiServer, EthSigner, HexEncodedIdProvider, NetApi, NetApiServer,
-	OverrideHandle, Web3Api, Web3ApiServer,
-};
-use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
-use jsonrpc_pubsub::manager::SubscriptionManager;
-use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
-use sc_consensus_manual_seal::rpc::{EngineCommand, ManualSeal, ManualSealApi};
-use sc_network::NetworkService;
-use sc_transaction_pool::{ChainApi, Pool};
-use substrate_frame_rpc_system::FullSystem;
 
 /// Full client dependencies.
-pub struct FullDeps<C, P, A: ChainApi> {
+pub struct FullDeps<C, P, A>
+where
+	A: sc_transaction_pool::ChainApi,
+{
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
 	pub pool: Arc<P>,
-	/// Graph pool instance.
-	pub graph: Arc<Pool<A>>,
 	/// Whether to deny unsafe calls
-	pub deny_unsafe: DenyUnsafe,
-	/// The Node authority flag
-	pub is_authority: bool,
+	pub deny_unsafe: sc_rpc::DenyUnsafe,
+	/// DVM related rpc helper.
+	pub eth: EthDeps<A>,
 	/// Whether to enable dev signer
 	pub enable_dev_signer: bool,
-	/// Network service
-	pub network: Arc<NetworkService<Block, Hash>>,
-	/// EthFilterApi pool.
-	pub filter_pool: Option<FilterPool>,
-	/// Backend.
-	pub backend: Arc<DvmBackend<Block>>,
-	/// Rpc requester for evm trace
-	pub tracing_requesters: RpcRequesters,
-	/// Rpc Config
-	pub rpc_config: RpcConfig,
-	/// Fee history cache.
-	pub fee_history_cache: FeeHistoryCache,
 	/// Manual seal command sink
-	pub command_sink: Option<Sender<EngineCommand<Hash>>>,
-	/// Ethereum data access overrides.
-	pub overrides: Arc<OverrideHandle<Block>>,
-	/// Cache for Ethereum block data.
-	pub block_data_cache: Arc<EthBlockDataCache<Block>>,
+	pub command_sink:
+		Option<futures::channel::mpsc::Sender<sc_consensus_manual_seal::EngineCommand<Hash>>>,
 }
 
 /// Instantiate all Full RPC extensions.
 pub fn create_full<C, P, B, A>(
 	deps: FullDeps<C, P, A>,
-	subscription_task_executor: SubscriptionTaskExecutor,
-) -> RpcExtension
+	subscription_task_executor: sc_rpc::SubscriptionTaskExecutor,
+) -> crate::RpcExtension
 where
 	C: 'static
 		+ Send
@@ -88,35 +60,56 @@ where
 		+ sp_api::ProvideRuntimeApi<Block>
 		+ sp_blockchain::HeaderBackend<Block>
 		+ sp_blockchain::HeaderMetadata<Block, Error = sp_blockchain::Error>,
-	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
-	C::Api: sp_block_builder::BlockBuilder<Block>,
-	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
-	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
-	C::Api: dp_evm_trace_apis::DebugRuntimeApi<Block>,
+	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
+		+ sp_block_builder::BlockBuilder<Block>
+		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
+		+ fp_rpc::EthereumRuntimeRPCApi<Block>
+		+ fp_rpc::ConvertTransactionRuntimeApi<Block>
+		+ dp_evm_trace_apis::DebugRuntimeApi<Block>,
 	P: 'static + sc_transaction_pool_api::TransactionPool<Block = Block>,
 	B: 'static + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<Hashing>,
-	A: ChainApi<Block = Block> + 'static,
+	A: 'static + sc_transaction_pool::ChainApi<Block = Block>,
 {
-	let mut io = jsonrpc_core::IoHandler::default();
+	// --- crates.io ---
+	use jsonrpc_pubsub::manager::SubscriptionManager;
+	// --- paritytech ---
+	use fc_rpc::*;
+	use pallet_transaction_payment_rpc::*;
+	use sc_consensus_manual_seal::rpc::*;
+	use substrate_frame_rpc_system::*;
+	// --- darwinia-network ---
+	use crate::EthRpcConfig;
+	use dc_rpc::*;
+
 	let FullDeps {
 		client,
 		pool,
-		graph,
 		deny_unsafe,
-		is_authority,
+		eth,
 		enable_dev_signer,
+		command_sink,
+	} = deps;
+	let EthDeps {
+		config:
+			EthRpcConfig {
+				ethapi_debug_targets,
+				ethapi_trace_max_count,
+				max_past_logs,
+				fee_history_limit,
+				..
+			},
+		graph,
+		is_authority,
 		network,
 		filter_pool,
-		command_sink,
 		backend,
-		tracing_requesters,
-		rpc_config,
 		fee_history_cache,
 		overrides,
 		block_data_cache,
-	} = deps;
+		rpc_requesters,
+	} = eth;
+	let mut io = jsonrpc_core::IoHandler::default();
 
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(
 		client.clone(),
@@ -142,9 +135,9 @@ where
 		overrides.clone(),
 		backend.clone(),
 		is_authority,
-		rpc_config.max_past_logs,
+		max_past_logs,
 		block_data_cache.clone(),
-		rpc_config.fee_history_limit,
+		fee_history_limit,
 		fee_history_cache,
 	)));
 
@@ -154,7 +147,7 @@ where
 			backend,
 			filter_pool.clone(),
 			500 as usize, // max stored filters
-			rpc_config.max_past_logs,
+			max_past_logs,
 			block_data_cache.clone(),
 		)));
 	}
@@ -178,28 +171,27 @@ where
 		overrides,
 	)));
 
-	match command_sink {
-		Some(command_sink) => {
-			io.extend_with(
-				// We provide the rpc handler with the sending end of the channel to allow the rpc
-				// send EngineCommands to the background block authorship task.
-				ManualSealApi::to_delegate(ManualSeal::new(command_sink)),
-			);
-		}
-		_ => {}
+	if let Some(command_sink) = command_sink {
+		io.extend_with(
+			// We provide the rpc handler with the sending end of the channel to allow the rpc
+			// send EngineCommands to the background block authorship task.
+			ManualSealApi::to_delegate(ManualSeal::new(command_sink)),
+		);
 	}
 
-	let ethapi_cmd = rpc_config.ethapi.clone();
-	if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
-		if let Some(trace_filter_requester) = tracing_requesters.trace {
+	if ethapi_debug_targets
+		.iter()
+		.any(|cmd| matches!(cmd.as_str(), "debug" | "trace"))
+	{
+		if let Some(trace_filter_requester) = rpc_requesters.trace {
 			io.extend_with(TraceApiServer::to_delegate(Trace::new(
 				client,
 				trace_filter_requester,
-				rpc_config.ethapi_trace_max_count,
+				ethapi_trace_max_count,
 			)));
 		}
 
-		if let Some(debug_requester) = tracing_requesters.debug {
+		if let Some(debug_requester) = rpc_requesters.debug {
 			io.extend_with(DebugApiServer::to_delegate(Debug::new(debug_requester)));
 		}
 	}
