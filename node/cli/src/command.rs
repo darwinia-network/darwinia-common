@@ -121,7 +121,7 @@ pub fn run() -> CliResult<()> {
 			if chain_spec.is_pangolin() {
 				runner.async_run(|mut $config| {
 					let ($client, $backend, $import_queue, task_manager) = drml_service::new_chain_ops::<
-						pangolin_runtime::RuntimeApi,
+						PangoroRuntimeApi,
 						PangolinExecutor,
 					>(&mut $config)?;
 
@@ -130,7 +130,7 @@ pub fn run() -> CliResult<()> {
 			} else {
 				runner.async_run(|mut $config| {
 					let ($client, $backend, $import_queue, task_manager) = drml_service::new_chain_ops::<
-						pangoro_runtime::RuntimeApi,
+						PangolinRuntimeApi,
 						PangoroExecutor,
 					>(&mut $config)?;
 
