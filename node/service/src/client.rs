@@ -24,20 +24,21 @@ pub trait DrmlClient<Block, Backend, Runtime>:
 	Sized
 	+ Send
 	+ Sync
-	+ sc_client_api::BlockchainEvents<Block>
 	+ sp_api::CallApiAt<Block>
 	+ sp_api::ProvideRuntimeApi<Block, Api = Runtime::RuntimeApi>
 	+ sp_blockchain::HeaderBackend<Block>
+	+ sc_client_api::BlockchainEvents<Block>
 where
-	Backend: sc_client_api::Backend<Block>,
 	Block: sp_runtime::traits::Block,
+	Backend: sc_client_api::Backend<Block>,
 	Runtime: sp_api::ConstructRuntimeApi<Block, Self>,
 {
 }
 impl<Block, Backend, Runtime, Client> DrmlClient<Block, Backend, Runtime> for Client
 where
-	Backend: sc_client_api::Backend<Block>,
 	Block: sp_runtime::traits::Block,
+	Backend: sc_client_api::Backend<Block>,
+	Runtime: sp_api::ConstructRuntimeApi<Block, Self>,
 	Client: Sized
 		+ Send
 		+ Sync
@@ -45,6 +46,5 @@ where
 		+ sp_api::ProvideRuntimeApi<Block, Api = Runtime::RuntimeApi>
 		+ sp_blockchain::HeaderBackend<Block>
 		+ sc_client_api::BlockchainEvents<Block>,
-	Runtime: sp_api::ConstructRuntimeApi<Block, Self>,
 {
 }

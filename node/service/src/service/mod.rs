@@ -77,11 +77,11 @@ pub fn new_chain_ops<Runtime, Dispatch>(
 	sc_service::TaskManager,
 )>
 where
-	Dispatch: 'static + sc_executor::NativeExecutionDispatch,
 	Runtime:
 		'static + Send + Sync + sp_api::ConstructRuntimeApi<Block, FullClient<Runtime, Dispatch>>,
 	Runtime::RuntimeApi:
 		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
+	Dispatch: 'static + sc_executor::NativeExecutionDispatch,
 {
 	// --- paritytech ---
 	use sc_service::{config::KeystoreConfig, PartialComponents};
@@ -128,13 +128,13 @@ fn new_partial<RuntimeApi, Executor>(
 	>,
 >
 where
-	Executor: 'static + sc_executor::NativeExecutionDispatch,
 	RuntimeApi: 'static
 		+ Send
 		+ Sync
 		+ sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>>,
 	RuntimeApi::RuntimeApi:
 		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
+	Executor: 'static + sc_executor::NativeExecutionDispatch,
 {
 	// --- paritytech ---
 	use sc_client_api::ExecutorProvider;
@@ -254,13 +254,13 @@ fn new_full<RuntimeApi, Executor>(
 	sc_service::RpcHandlers,
 )>
 where
-	Executor: 'static + sc_executor::NativeExecutionDispatch,
 	RuntimeApi: 'static
 		+ Send
 		+ Sync
 		+ sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>>,
 	RuntimeApi::RuntimeApi:
 		RuntimeApiCollection<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
+	Executor: 'static + sc_executor::NativeExecutionDispatch,
 {
 	// -- std ---
 	use std::{collections::BTreeMap, sync::Mutex, time::Duration};
@@ -388,7 +388,7 @@ where
 		backend.clone(),
 		Some(shared_authority_set.clone()),
 	);
-	let rpc_extensions_builder = {
+	let rpc_extensions_builder = Box::new({
 		let client = client.clone();
 		let keystore = keystore_container.sync_keystore();
 		let transaction_pool = transaction_pool.clone();
@@ -397,52 +397,48 @@ where
 		let shared_voter_state = shared_voter_state.clone();
 		let network = network.clone();
 
-		Box::new(
-			move |deny_unsafe,
-			      subscription_executor: SubscriptionTaskExecutor|
-			      -> RpcServiceResult {
-				drml_rpc::create_full(
-					FullDeps {
-						client: client.clone(),
-						pool: transaction_pool.clone(),
-						select_chain: select_chain.clone(),
-						chain_spec: chain_spec.cloned_box(),
-						deny_unsafe,
-						babe: BabeDeps {
-							babe_config: babe_config.clone(),
-							shared_epoch_changes: shared_epoch_changes.clone(),
-							keystore: keystore.clone(),
-						},
-						grandpa: GrandpaDeps {
-							shared_voter_state: shared_voter_state.clone(),
-							shared_authority_set: shared_authority_set.clone(),
-							justification_stream: justification_stream.clone(),
-							subscription_executor: subscription_executor.clone(),
-							finality_proof_provider: finality_proof_provider.clone(),
-						},
-						beefy: BeefyDeps {
-							beefy_commitment_stream: beefy_commitment_stream.clone(),
-							subscription_executor,
-						},
-						eth: EthDeps {
-							config: eth_rpc_config.clone(),
-							graph: transaction_pool.pool().clone(),
-							is_authority,
-							network: network.clone(),
-							filter_pool: filter_pool.clone(),
-							backend: dvm_backend.clone(),
-							fee_history_cache: fee_history_cache.clone(),
-							overrides: overrides.clone(),
-							block_data_cache: block_data_cache.clone(),
-							rpc_requesters: eth_rpc_requesters.clone(),
-						},
+		move |deny_unsafe, subscription_executor: SubscriptionTaskExecutor| -> RpcServiceResult {
+			drml_rpc::create_full(
+				FullDeps {
+					client: client.clone(),
+					pool: transaction_pool.clone(),
+					select_chain: select_chain.clone(),
+					chain_spec: chain_spec.cloned_box(),
+					deny_unsafe,
+					babe: BabeDeps {
+						babe_config: babe_config.clone(),
+						shared_epoch_changes: shared_epoch_changes.clone(),
+						keystore: keystore.clone(),
 					},
-					subscription_task_executor.clone(),
-				)
-				.map_err(Into::into)
-			},
-		)
-	};
+					grandpa: GrandpaDeps {
+						shared_voter_state: shared_voter_state.clone(),
+						shared_authority_set: shared_authority_set.clone(),
+						justification_stream: justification_stream.clone(),
+						subscription_executor: subscription_executor.clone(),
+						finality_proof_provider: finality_proof_provider.clone(),
+					},
+					beefy: BeefyDeps {
+						beefy_commitment_stream: beefy_commitment_stream.clone(),
+						subscription_executor,
+					},
+					eth: EthDeps {
+						config: eth_rpc_config.clone(),
+						graph: transaction_pool.pool().clone(),
+						is_authority,
+						network: network.clone(),
+						filter_pool: filter_pool.clone(),
+						backend: dvm_backend.clone(),
+						fee_history_cache: fee_history_cache.clone(),
+						overrides: overrides.clone(),
+						block_data_cache: block_data_cache.clone(),
+						rpc_requesters: eth_rpc_requesters.clone(),
+					},
+				},
+				subscription_task_executor.clone(),
+			)
+			.map_err(Into::into)
+		}
+	});
 	let rpc_handlers = sc_service::spawn_tasks(SpawnTasksParams {
 		config,
 		backend: backend.clone(),
