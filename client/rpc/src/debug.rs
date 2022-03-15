@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
-pub use darwinia_rpc_core::{DebugApi as DebugT, DebugApiServer, TraceParams};
+pub use darwinia_client_rpc_core::{DebugApi as DebugT, DebugApiServer, TraceParams};
 
 // --- crates.io ---
 use ethereum_types::H256;

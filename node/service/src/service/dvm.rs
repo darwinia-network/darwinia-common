@@ -65,7 +65,7 @@ where
 		use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 		use fc_rpc::EthTask;
 		// --- darwinia-network ---
-		use darwinia_rpc::{CacheTask, DebugTask};
+		use darwinia_client_rpc::{CacheTask, DebugTask};
 		use drml_rpc::{EthRpcConfig, EthRpcRequesters};
 
 		let DvmTaskParams {

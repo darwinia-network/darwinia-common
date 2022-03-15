@@ -128,8 +128,8 @@ pub struct EthRpcConfig {
 
 #[derive(Clone)]
 pub struct EthRpcRequesters {
-	pub debug: Option<darwinia_rpc::DebugRequester>,
-	pub trace: Option<darwinia_rpc::CacheRequester>,
+	pub debug: Option<darwinia_client_rpc::DebugRequester>,
+	pub trace: Option<darwinia_client_rpc::CacheRequester>,
 }
 
 /// Instantiate all RPC extensions.
@@ -176,9 +176,9 @@ where
 	use substrate_frame_rpc_system::*;
 	// --- darwinia-network ---
 	use darwinia_balances_rpc::*;
+	use darwinia_client_rpc::*;
 	use darwinia_fee_market_rpc::*;
 	use darwinia_staking_rpc::*;
-	use darwinia_rpc::*;
 
 	let FullDeps {
 		client,

@@ -26,7 +26,7 @@ darwinia-claims                     = { path = "../../frame/claims" }
 darwinia-ethereum                   = { path = "../../frame/dvm/ethereum" }
 darwinia-evm                        = { path = "../../frame/dvm/evm" }
 darwinia-fee-market-rpc-runtime-api = { path = "../../frame/fee-market/rpc/runtime-api" }
-darwinia-rpc                        = { path = "../../client/rpc" }
+darwinia-client-rpc                        = { path = "../../client/rpc" }
 darwinia-staking                    = { path = "../../frame/staking" }
 darwinia-staking-rpc-runtime-api    = { path = "../../frame/staking/rpc/runtime-api" }
 dp-evm-trace-apis                   = { path = "../../primitives/evm-trace/apis" }
