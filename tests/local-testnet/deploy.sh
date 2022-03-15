@@ -14,7 +14,7 @@ if [[ "$CHAIN" != "pangolin" ]] && [[ "$CHAIN" != "pangoro" ]] ; then
 fi
 
 if [ -z $EXECUTION ]; then
-  EXECUTION=native
+  EXECUTION=wasm
 fi
 
 LOG_DIR=$DIR/log
