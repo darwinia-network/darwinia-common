@@ -1585,11 +1585,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-client-evm-tracer"
+version = "2.8.6"
+dependencies = [
+ "dp-evm-trace-apis",
+ "dp-evm-trace-events",
+ "ethereum-types",
+ "hex",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-std",
+]
+
+[[package]]
 name = "darwinia-client-rpc"
 version = "2.8.6"
 dependencies = [
+ "darwinia-client-evm-tracer",
  "darwinia-client-rpc-core",
- "darwinia-evm-tracer",
  "dp-evm-trace-apis",
  "dp-evm-trace-rpc",
  "ethereum",
@@ -1621,8 +1636,8 @@ dependencies = [
 name = "darwinia-client-rpc-core"
 version = "2.8.6"
 dependencies = [
+ "darwinia-client-evm-tracer",
  "darwinia-evm",
- "darwinia-evm-tracer",
  "dp-evm-trace-rpc",
  "ethereum",
  "ethereum-types",
@@ -1847,21 +1862,6 @@ dependencies = [
  "sha3 0.9.1",
  "sp-std",
  "syn",
-]
-
-[[package]]
-name = "darwinia-evm-tracer"
-version = "2.8.6"
-dependencies = [
- "dp-evm-trace-apis",
- "dp-evm-trace-events",
- "ethereum-types",
- "hex",
- "log",
- "parity-scale-codec",
- "serde",
- "serde_json",
- "sp-std",
 ]
 
 [[package]]
