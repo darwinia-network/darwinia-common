@@ -19,7 +19,6 @@ smallvec          = { version = "1.7" }
 static_assertions = { version = "1.1" }
 # darwinia-network
 bsc-primitives                          = { default-features = false, path = "../../../primitives/bsc" }
-common-runtime                          = { default-features = false, path = "../common" }
 darwinia-balances                       = { default-features = false, path = "../../../frame/balances" }
 darwinia-balances-rpc-runtime-api       = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
 darwinia-beefy-gadget                   = { default-features = false, path = "../../../frame/beefy-gadget" }
@@ -49,6 +48,7 @@ dp-fee                                  = { default-features = false, path = "..
 dp-s2s                                  = { default-features = false, path = "../../../primitives/s2s" }
 drml-bridge-primitives                  = { default-features = false, path = "../../primitives/bridge" }
 drml-common-primitives                  = { default-features = false, path = "../../primitives/common" }
+drml-common-runtime                     = { default-features = false, path = "../common" }
 dvm-ethereum                            = { default-features = false, path = "../../../frame/dvm" }
 ethereum-primitives                     = { default-features = false, path = "../../../primitives/ethereum" }
 from-ethereum-issuing                   = { default-features = false, path = "../../../frame/wormhole/issuing/ethereum" }
@@ -144,7 +144,6 @@ std = [
 	"scale-info/std",
 	# darwinia-network
 	"bsc-primitives/std",
-	"common-runtime/std",
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
 	"darwinia-beefy-gadget/std",
@@ -173,6 +172,7 @@ std = [
 	"dp-s2s/std",
 	"drml-bridge-primitives/std",
 	"drml-common-primitives/std",
+	"drml-common-runtime/std",
 	"dvm-ethereum/std",
 	"ethereum-primitives/std",
 	"from-ethereum-issuing/std",

@@ -31,8 +31,8 @@ use pangolin_messages::{ToPangolinMessagePayload, WithPangolinMessageBridge};
 pub use drml_common_primitives as pangoro_primitives;
 pub use drml_common_primitives as pangolin_primitives;
 
-pub use common_runtime as pangoro_runtime_system_params;
-pub use common_runtime as pangolin_runtime_system_params;
+pub use drml_common_runtime as pangoro_runtime_system_params;
+pub use drml_common_runtime as pangolin_runtime_system_params;
 
 pub use darwinia_balances::Call as BalancesCall;
 pub use darwinia_fee_market::Call as FeeMarketCall;
@@ -76,9 +76,9 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
-use common_runtime::*;
 use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use drml_common_primitives::*;
+use drml_common_runtime::*;
 
 pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;

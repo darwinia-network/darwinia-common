@@ -48,9 +48,9 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
-use common_runtime::*;
 use darwinia_evm::Runner;
 use drml_common_primitives::*;
+use drml_common_runtime::*;
 
 pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
