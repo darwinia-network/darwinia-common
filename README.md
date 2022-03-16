@@ -16,9 +16,9 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 	- Pallet for airdrop.
 - [darwinia-democracy](./frame/democracy)
 	- Pallet for democracy.
-- [darwinia-dvm](./frame/dvm)
+- [darwinia-ethereum](./frame/dvm/ethereum/)
 	- Ethereum block handling pallet of the EVM-compatible DVM system.
-- [darwinia-evm](./frame/evm)
+- [darwinia-evm](./frame/dvm/evm)
 	- EVM execution handling pallet of the EVM-compatible DVM system.
 - [darwinia-elections-phragmen](./frame/elections-phragmen)
 	- An election module based on sequential phragmen.

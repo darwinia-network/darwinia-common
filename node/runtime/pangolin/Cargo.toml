@@ -27,11 +27,12 @@ darwinia-bridge-ethereum                = { default-features = false, path = "..
 darwinia-claims                         = { default-features = false, path = "../../../frame/claims" }
 darwinia-democracy                      = { default-features = false, path = "../../../frame/democracy" }
 darwinia-elections-phragmen             = { default-features = false, path = "../../../frame/elections-phragmen" }
-darwinia-evm                            = { default-features = false, path = "../../../frame/evm" }
-darwinia-evm-precompile-bridge-ethereum = { default-features = false, path = "../../../frame/evm/precompile/contracts/bridge/ethereum" }
-darwinia-evm-precompile-bridge-s2s      = { default-features = false, path = "../../../frame/evm/precompile/contracts/bridge/s2s" }
-darwinia-evm-precompile-dispatch        = { default-features = false, path = "../../../frame/evm/precompile/contracts/dispatch" }
-darwinia-evm-precompile-transfer        = { default-features = false, path = "../../../frame/evm/precompile/contracts/transfer" }
+darwinia-ethereum                       = { default-features = false, path = "../../../frame/dvm/ethereum" }
+darwinia-evm                            = { default-features = false, path = "../../../frame/dvm/evm" }
+darwinia-evm-precompile-bridge-ethereum = { default-features = false, path = "../../../frame/dvm/evm/precompiles/bridge/ethereum" }
+darwinia-evm-precompile-bridge-s2s      = { default-features = false, path = "../../../frame/dvm/evm/precompiles/bridge/s2s" }
+darwinia-evm-precompile-dispatch        = { default-features = false, path = "../../../frame/dvm/evm/precompiles/dispatch" }
+darwinia-evm-precompile-transfer        = { default-features = false, path = "../../../frame/dvm/evm/precompiles/transfer" }
 darwinia-fee-market                     = { default-features = false, path = "../../../frame/fee-market" }
 darwinia-fee-market-rpc-runtime-api     = { default-features = false, path = "../../../frame/fee-market/rpc/runtime-api" }
 darwinia-header-mmr                     = { default-features = false, path = "../../../frame/header-mmr" }
@@ -49,7 +50,6 @@ dp-s2s                                  = { default-features = false, path = "..
 drml-bridge-primitives                  = { default-features = false, path = "../../primitives/bridge" }
 drml-common-primitives                  = { default-features = false, path = "../../primitives/common" }
 drml-common-runtime                     = { default-features = false, path = "../common" }
-dvm-ethereum                            = { default-features = false, path = "../../../frame/dvm" }
 ethereum-primitives                     = { default-features = false, path = "../../../primitives/ethereum" }
 from-ethereum-issuing                   = { default-features = false, path = "../../../frame/wormhole/issuing/ethereum" }
 from-substrate-issuing                  = { default-features = false, path = "../../../frame/wormhole/issuing/s2s" }
@@ -147,10 +147,11 @@ std = [
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
 	"darwinia-beefy-gadget/std",
+	"darwinia-bridge-ethereum/std",
 	"darwinia-claims/std",
 	"darwinia-democracy/std",
 	"darwinia-elections-phragmen/std",
-	"darwinia-bridge-ethereum/std",
+	"darwinia-ethereum/std",
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-bridge-ethereum/std",
 	"darwinia-evm-precompile-bridge-s2s/std",
@@ -173,7 +174,6 @@ std = [
 	"drml-bridge-primitives/std",
 	"drml-common-primitives/std",
 	"drml-common-runtime/std",
-	"dvm-ethereum/std",
 	"ethereum-primitives/std",
 	"from-ethereum-issuing/std",
 	"from-substrate-issuing/std",
@@ -266,9 +266,9 @@ runtime-benchmarks = [
 	"pallet-collective/runtime-benchmarks",
 	"pallet-society/runtime-benchmarks",
 	# darwinia-network
+	"darwinia-ethereum/runtime-benchmarks",
 	"darwinia-evm/runtime-benchmarks",
 	"darwinia-fee-market/runtime-benchmarks",
-	"dvm-ethereum/runtime-benchmarks",
 	"from-ethereum-issuing/runtime-benchmarks",
 	"from-substrate-issuing/runtime-benchmarks",
 ]
@@ -280,9 +280,9 @@ try-runtime = [
 	# darwinia-network
 	"darwinia-balances/try-runtime",
 	"darwinia-elections-phragmen/try-runtime",
+	"darwinia-ethereum/try-runtime",
 	"darwinia-header-mmr/try-runtime",
 	"darwinia-staking/try-runtime",
-	"dvm-ethereum/try-runtime",
 	"to-ethereum-backing/try-runtime",
 ]
 

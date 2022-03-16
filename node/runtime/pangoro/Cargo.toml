@@ -23,9 +23,10 @@ darwinia-balances-rpc-runtime-api   = { default-features = false, path = "../../
 darwinia-beefy-gadget               = { default-features = false, path = "../../../frame/beefy-gadget" }
 darwinia-beefy-primitives           = { path = "../../../primitives/beefy" }
 darwinia-bridge-bsc                 = { default-features = false, path = "../../../frame/bridge/bsc" }
-darwinia-evm                        = { default-features = false, path = "../../../frame/evm" }
-darwinia-evm-precompile-bridge-bsc  = { default-features = false, path = "../../../frame/evm/precompile/contracts/bridge/bsc" }
-darwinia-evm-precompile-transfer    = { default-features = false, path = "../../../frame/evm/precompile/contracts/transfer" }
+darwinia-ethereum                   = { default-features = false, path = "../../../frame/dvm/ethereum" }
+darwinia-evm                        = { default-features = false, path = "../../../frame/dvm/evm" }
+darwinia-evm-precompile-bridge-bsc  = { default-features = false, path = "../../../frame/dvm/evm/precompiles/bridge/bsc" }
+darwinia-evm-precompile-transfer    = { default-features = false, path = "../../../frame/dvm/evm/precompiles/transfer" }
 darwinia-fee-market                 = { default-features = false, path = "../../../frame/fee-market" }
 darwinia-fee-market-rpc-runtime-api = { default-features = false, path = "../../../frame/fee-market/rpc/runtime-api" }
 darwinia-staking                    = { default-features = false, path = "../../../frame/staking" }
@@ -37,7 +38,6 @@ dp-s2s                              = { default-features = false, path = "../../
 drml-bridge-primitives              = { default-features = false, path = "../../primitives/bridge" }
 drml-common-primitives              = { default-features = false, path = "../../primitives/common" }
 drml-common-runtime                 = { default-features = false, path = "../common" }
-dvm-ethereum                        = { default-features = false, path = "../../../frame/dvm" }
 module-transaction-pause            = { default-features = false, path = "../../../frame/transaction-pause" }
 to-substrate-backing                = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 # dvm trace
@@ -125,6 +125,7 @@ std = [
 	"darwinia-balances-rpc-runtime-api/std",
 	"darwinia-beefy-gadget/std",
 	"darwinia-bridge-bsc/std",
+	"darwinia-ethereum/std",
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-bridge-bsc/std",
 	"darwinia-evm-precompile-transfer/std",
@@ -139,7 +140,6 @@ std = [
 	"drml-bridge-primitives/std",
 	"drml-common-primitives/std",
 	"drml-common-runtime/std",
-	"dvm-ethereum/std",
 	"module-transaction-pause/std",
 	"to-substrate-backing/std",
 	# paritytech
@@ -219,8 +219,8 @@ runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 	# darwinia-network
 	"darwinia-bridge-bsc/runtime-benchmarks",
+	"darwinia-ethereum/runtime-benchmarks",
 	"darwinia-evm/runtime-benchmarks",
-	"dvm-ethereum/runtime-benchmarks",
 	"to-substrate-backing/runtime-benchmarks",
 ]
 

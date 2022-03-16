@@ -1472,8 +1472,8 @@ dependencies = [
  "array-bytes",
  "beefy-primitives",
  "darwinia-beefy-primitives",
+ "darwinia-ethereum",
  "dp-contract",
- "dvm-ethereum",
  "frame-support",
  "frame-system",
  "pallet-beefy",
@@ -1563,6 +1563,78 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-client-evm-tracer"
+version = "2.8.6"
+dependencies = [
+ "dp-evm-trace-apis",
+ "dp-evm-trace-events",
+ "ethereum-types",
+ "hex",
+ "log",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-std",
+]
+
+[[package]]
+name = "darwinia-client-rpc"
+version = "2.8.6"
+dependencies = [
+ "darwinia-client-evm-tracer",
+ "darwinia-client-rpc-core",
+ "dp-evm-trace-apis",
+ "dp-evm-trace-rpc",
+ "ethereum",
+ "ethereum-types",
+ "fc-db",
+ "fc-rpc",
+ "fc-rpc-core",
+ "fp-rpc",
+ "fp-storage",
+ "futures 0.3.21",
+ "hex-literal",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "jsonrpc-pubsub",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-utils",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-io",
+ "sp-runtime",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "darwinia-client-rpc-core"
+version = "2.8.6"
+dependencies = [
+ "darwinia-client-evm-tracer",
+ "darwinia-evm",
+ "dp-evm-trace-rpc",
+ "ethereum",
+ "ethereum-types",
+ "fc-rpc-core",
+ "fp-evm",
+ "futures 0.3.21",
+ "jsonrpc-core",
+ "jsonrpc-derive",
+ "jsonrpc-pubsub",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "darwinia-democracy"
 version = "2.8.6"
 dependencies = [
@@ -1601,6 +1673,42 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "substrate-test-utils",
+]
+
+[[package]]
+name = "darwinia-ethereum"
+version = "2.8.6"
+dependencies = [
+ "array-bytes",
+ "darwinia-balances",
+ "darwinia-evm",
+ "darwinia-evm-precompile-transfer",
+ "darwinia-support",
+ "ethabi",
+ "ethereum",
+ "ethereum-types",
+ "evm",
+ "fp-consensus",
+ "fp-evm",
+ "fp-rpc",
+ "fp-self-contained",
+ "fp-storage",
+ "frame-support",
+ "frame-system",
+ "libsecp256k1 0.5.0",
+ "log",
+ "pallet-evm",
+ "pallet-evm-precompile-simple",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "rlp",
+ "scale-info",
+ "serde",
+ "sha3 0.9.1",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -2004,54 +2112,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dc-rpc"
-version = "2.8.6"
-dependencies = [
- "dc-tracer",
- "dp-evm-trace-apis",
- "dp-evm-trace-rpc",
- "dvm-rpc-core",
- "ethereum",
- "ethereum-types",
- "fc-db",
- "fc-rpc",
- "fc-rpc-core",
- "fp-rpc",
- "fp-storage",
- "futures 0.3.21",
- "hex-literal",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "jsonrpc-pubsub",
- "parity-scale-codec",
- "sc-client-api",
- "sc-utils",
- "sp-api",
- "sp-block-builder",
- "sp-blockchain",
- "sp-io",
- "sp-runtime",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "dc-tracer"
-version = "2.8.6"
-dependencies = [
- "dp-evm-trace-apis",
- "dp-evm-trace-events",
- "ethereum-types",
- "hex",
- "log",
- "parity-scale-codec",
- "serde",
- "serde_json",
- "sp-std",
-]
-
-[[package]]
 name = "derive_more"
 version = "0.99.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2332,12 +2392,12 @@ dependencies = [
  "beefy-gadget",
  "beefy-gadget-rpc",
  "darwinia-balances-rpc",
+ "darwinia-client-rpc",
+ "darwinia-ethereum",
  "darwinia-fee-market-rpc",
  "darwinia-staking-rpc",
- "dc-rpc",
  "dp-evm-trace-apis",
  "drml-common-primitives",
- "dvm-ethereum",
  "fc-db",
  "fc-rpc",
  "fc-rpc-core",
@@ -2381,16 +2441,16 @@ dependencies = [
  "darwinia-balances-rpc-runtime-api",
  "darwinia-bridge-ethereum",
  "darwinia-claims",
+ "darwinia-client-rpc",
+ "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-fee-market-rpc-runtime-api",
  "darwinia-staking",
  "darwinia-staking-rpc-runtime-api",
- "dc-rpc",
  "dp-evm-trace-apis",
  "dp-evm-trace-ext",
  "drml-common-primitives",
  "drml-rpc",
- "dvm-ethereum",
  "fc-db",
  "fc-mapping-sync",
  "fc-rpc",
@@ -2445,66 +2505,6 @@ dependencies = [
  "substrate-prometheus-endpoint",
  "template-runtime",
  "tokio",
-]
-
-[[package]]
-name = "dvm-ethereum"
-version = "2.8.6"
-dependencies = [
- "array-bytes",
- "darwinia-balances",
- "darwinia-evm",
- "darwinia-evm-precompile-transfer",
- "darwinia-support",
- "ethabi",
- "ethereum",
- "ethereum-types",
- "evm",
- "fp-consensus",
- "fp-evm",
- "fp-rpc",
- "fp-self-contained",
- "fp-storage",
- "frame-support",
- "frame-system",
- "libsecp256k1 0.5.0",
- "log",
- "pallet-evm",
- "pallet-evm-precompile-simple",
- "pallet-timestamp",
- "parity-scale-codec",
- "rlp",
- "scale-info",
- "serde",
- "sha3 0.9.1",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "dvm-rpc-core"
-version = "2.8.6"
-dependencies = [
- "darwinia-evm",
- "dc-tracer",
- "dp-evm-trace-rpc",
- "ethereum",
- "ethereum-types",
- "fc-rpc-core",
- "fp-evm",
- "futures 0.3.21",
- "jsonrpc-core",
- "jsonrpc-derive",
- "jsonrpc-pubsub",
- "parity-scale-codec",
- "serde",
- "serde_json",
- "sp-api",
- "sp-core",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -3324,11 +3324,11 @@ version = "2.8.6"
 dependencies = [
  "array-bytes",
  "darwinia-bridge-ethereum",
+ "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-relay-primitives",
  "darwinia-support",
  "dp-contract",
- "dvm-ethereum",
  "ethereum-primitives",
  "fp-evm",
  "frame-benchmarking",
@@ -3350,12 +3350,12 @@ dependencies = [
  "bp-messages",
  "bp-runtime",
  "darwinia-balances",
+ "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-support",
  "dp-asset",
  "dp-contract",
  "dp-s2s",
- "dvm-ethereum",
  "ethereum",
  "ethereum-primitives",
  "ethereum-types",
@@ -6354,6 +6354,7 @@ dependencies = [
  "darwinia-claims",
  "darwinia-democracy",
  "darwinia-elections-phragmen",
+ "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-evm-precompile-bridge-ethereum",
  "darwinia-evm-precompile-bridge-s2s",
@@ -6378,7 +6379,6 @@ dependencies = [
  "drml-bridge-primitives",
  "drml-common-primitives",
  "drml-common-runtime",
- "dvm-ethereum",
  "ethereum-primitives",
  "fp-evm",
  "fp-rpc",
@@ -6473,6 +6473,7 @@ dependencies = [
  "darwinia-beefy-gadget",
  "darwinia-beefy-primitives",
  "darwinia-bridge-bsc",
+ "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-evm-precompile-bridge-bsc",
  "darwinia-evm-precompile-transfer",
@@ -6489,7 +6490,6 @@ dependencies = [
  "drml-bridge-primitives",
  "drml-common-primitives",
  "drml-common-runtime",
- "dvm-ethereum",
  "fp-evm",
  "fp-rpc",
  "fp-self-contained",
@@ -9955,6 +9955,7 @@ name = "template-runtime"
 version = "2.8.6"
 dependencies = [
  "darwinia-balances",
+ "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-support",
  "dp-evm-trace-apis",
@@ -9963,7 +9964,6 @@ dependencies = [
  "dp-evm-tracer",
  "drml-common-primitives",
  "drml-common-runtime",
- "dvm-ethereum",
  "fp-evm",
  "fp-rpc",
  "fp-self-contained",

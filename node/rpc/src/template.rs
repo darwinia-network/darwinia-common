@@ -80,7 +80,7 @@ where
 	use substrate_frame_rpc_system::*;
 	// --- darwinia-network ---
 	use crate::EthRpcConfig;
-	use dc_rpc::*;
+	use darwinia_client_rpc::*;
 
 	let FullDeps {
 		client,

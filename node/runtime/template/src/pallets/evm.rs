@@ -9,12 +9,12 @@ use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripe
 use sp_core::crypto::Public;
 // --- darwinia-network ---
 use crate::*;
+use darwinia_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
 use darwinia_evm::{
 	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, Precompile,
 	PrecompileSet,
 };
 use darwinia_support::evm::ConcatConverter;
-use dvm_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
 
 pub struct FrontierPrecompiles<R>(PhantomData<R>);
 
@@ -92,7 +92,7 @@ impl Config for Runtime {
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type IntoAccountId = ConcatConverter<Self::AccountId>;
 	type FindAuthor = FindAuthorTruncated<Aura>;
-	type BlockHashMapping = dvm_ethereum::EthereumBlockHashMapping<Self>;
+	type BlockHashMapping = darwinia_ethereum::EthereumBlockHashMapping<Self>;
 	type Event = Event;
 	type PrecompilesType = FrontierPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;

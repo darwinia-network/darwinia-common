@@ -77,8 +77,8 @@ use sp_runtime::{generic::DigestItem, RuntimeDebug};
 use sp_std::borrow::ToOwned;
 // --- darwinia-network ---
 use darwinia_beefy_primitives::network_ids::AsciiId;
+use darwinia_ethereum::InternalTransactHandler;
 use dp_contract::beefy;
-use dvm_ethereum::InternalTransactHandler;
 
 pub const LOG_TARGET: &str = "runtime::beefy-gadget";
 
@@ -100,7 +100,7 @@ where
 		+ pallet_mmr::Config<Hash = H256>
 		+ pallet_beefy::Config
 		+ pallet_beefy_mmr::Config
-		+ dvm_ethereum::Config,
+		+ darwinia_ethereum::Config,
 	A: AsciiId,
 {
 	fn on_new_root(root: &<T as pallet_mmr::Config>::Hash) {
@@ -117,7 +117,7 @@ where
 		}
 
 		let raw_message_root = unwrap_or_exit!(
-			<dvm_ethereum::Pallet<T>>::read_only_call(
+			<darwinia_ethereum::Pallet<T>>::read_only_call(
 				<CommitmentContract<T>>::get(),
 				unwrap_or_exit!(
 					beefy::commitment(),
