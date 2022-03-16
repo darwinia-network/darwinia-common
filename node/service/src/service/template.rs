@@ -205,7 +205,7 @@ pub fn new_full(
 		dvm_backend: frontier_backend.clone(),
 		filter_pool: filter_pool.clone(),
 		is_archive,
-		eth_rpc_config: eth_rpc_config.clone(),
+		rpc_config: eth_rpc_config.clone(),
 		fee_history_cache: fee_history_cache.clone(),
 		overrides: overrides.clone(),
 	}
