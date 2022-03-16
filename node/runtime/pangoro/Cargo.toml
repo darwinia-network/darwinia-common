@@ -121,7 +121,6 @@ std = [
 	"serde",
 	# darwinia-network
 	"bsc-primitives/std",
-	"drml-common-runtime/std",
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
 	"darwinia-beefy-gadget/std",
@@ -139,6 +138,7 @@ std = [
 	"dp-s2s/std",
 	"drml-bridge-primitives/std",
 	"drml-common-primitives/std",
+	"drml-common-runtime/std",
 	"dvm-ethereum/std",
 	"module-transaction-pause/std",
 	"to-substrate-backing/std",

@@ -73,11 +73,11 @@ std = [
 	"scale-info/std",
 	"serde/std",
 	# darwinia-network
-	"drml-common-runtime/std",
 	"darwinia-balances/std",
 	"darwinia-evm/std",
 	"darwinia-support/std",
 	"drml-common-primitives/std",
+	"drml-common-runtime/std",
 	"dvm-ethereum/std",
 	# trace
 	"dp-evm-trace-apis/std",
