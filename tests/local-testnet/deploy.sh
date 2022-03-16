@@ -6,10 +6,15 @@ DIR="$( cd "$( dirname "$0" )" && pwd )"
 REPO_PATH="$( cd "$( dirname "$0" )" && cd ../../ && pwd )"
 
 CHAIN=$1
+EXECUTION=$2
 
 if [[ "$CHAIN" != "pangolin" ]] && [[ "$CHAIN" != "pangoro" ]] ; then
   echo "Missing chain name or not support chain, only supports [pangolin] or [pangoro]"
   exit 1
+fi
+
+if [ -z $EXECUTION ]; then
+  EXECUTION=wasm
 fi
 
 LOG_DIR=$DIR/log
@@ -49,6 +54,7 @@ do
     --unsafe-ws-external \
     --rpc-methods unsafe \
     --rpc-cors all \
+    --execution $EXECUTION \
     --chain $CHAIN-local \
     -d $DATA_DIR/$validator \
     --$validator \

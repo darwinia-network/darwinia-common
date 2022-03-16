@@ -31,7 +31,7 @@ where
 	pub dvm_backend: Arc<fc_db::Backend<B>>,
 	pub filter_pool: Option<fc_rpc_core::types::FilterPool>,
 	pub is_archive: bool,
-	pub eth_rpc_config: drml_rpc::EthRpcConfig,
+	pub rpc_config: drml_rpc::EthRpcConfig,
 	pub fee_history_cache: fc_rpc_core::types::FeeHistoryCache,
 	pub overrides: Arc<fc_rpc::OverrideHandle<B>>,
 }
@@ -42,12 +42,12 @@ where
 	pub fn spawn_task(self) -> drml_rpc::EthRpcRequesters
 	where
 		C: 'static
-			+ sc_client_api::BlockOf
-			+ sc_client_api::BlockchainEvents<B>
-			+ sc_client_api::backend::StorageProvider<B, BE>
 			+ sp_api::ProvideRuntimeApi<B>
 			+ sp_blockchain::HeaderBackend<B>
-			+ sp_blockchain::HeaderMetadata<B, Error = sp_blockchain::Error>,
+			+ sp_blockchain::HeaderMetadata<B, Error = sp_blockchain::Error>
+			+ sc_client_api::BlockOf
+			+ sc_client_api::BlockchainEvents<B>
+			+ sc_client_api::backend::StorageProvider<B, BE>,
 		C::Api: sp_block_builder::BlockBuilder<B>
 			+ fp_rpc::EthereumRuntimeRPCApi<B>
 			+ dp_evm_trace_apis::DebugRuntimeApi<B>,
@@ -75,7 +75,7 @@ where
 			dvm_backend,
 			filter_pool,
 			is_archive,
-			eth_rpc_config:
+			rpc_config:
 				EthRpcConfig {
 					ethapi_debug_targets,
 					ethapi_max_permits,
@@ -196,11 +196,10 @@ where
 }
 
 pub fn db_path(config: &sc_service::Configuration) -> PathBuf {
-	let chain_id = config.chain_spec.id();
 	let config_dir = config
 		.base_path
 		.as_ref()
-		.map(|base_path| base_path.config_dir(chain_id))
+		.map(|base_path| base_path.config_dir(config.chain_spec.id()))
 		.expect("Config dir must be set.");
 
 	config_dir.join("dvm").join("db")

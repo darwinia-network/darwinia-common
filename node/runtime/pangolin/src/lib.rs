@@ -49,8 +49,8 @@ pub use wasm::*;
 pub use drml_common_primitives as pangoro_primitives;
 pub use drml_common_primitives as pangolin_primitives;
 
-pub use common_runtime as pangolin_runtime_system_params;
-pub use common_runtime as pangoro_runtime_system_params;
+pub use drml_common_runtime as pangolin_runtime_system_params;
+pub use drml_common_runtime as pangoro_runtime_system_params;
 
 pub use darwinia_staking::StakerStatus;
 
@@ -97,10 +97,10 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use bridges::substrate::pangoro_messages::{ToPangoroMessagePayload, WithPangoroMessageBridge};
-use common_runtime::*;
 use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
 use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use drml_common_primitives::*;
+use drml_common_runtime::*;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;

@@ -198,14 +198,14 @@ pub fn new_full(
 		50,
 	));
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
-	let rpc_requesters = DvmTaskParams {
+	let eth_rpc_requesters = DvmTaskParams {
 		task_manager: &task_manager,
 		client: client.clone(),
 		substrate_backend: backend.clone(),
 		dvm_backend: frontier_backend.clone(),
 		filter_pool: filter_pool.clone(),
 		is_archive,
-		eth_rpc_config: eth_rpc_config.clone(),
+		rpc_config: eth_rpc_config.clone(),
 		fee_history_cache: fee_history_cache.clone(),
 		overrides: overrides.clone(),
 	}
@@ -236,7 +236,7 @@ pub fn new_full(
 					fee_history_cache: fee_history_cache.clone(),
 					overrides: overrides.clone(),
 					block_data_cache: block_data_cache.clone(),
-					rpc_requesters: rpc_requesters.clone(),
+					rpc_requesters: eth_rpc_requesters.clone(),
 				},
 				enable_dev_signer,
 				command_sink: Some(command_sink.clone()),

@@ -4,7 +4,7 @@ description = "DRML node common runtime"
 edition     = "2021"
 homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
-name        = "common-runtime"
+name        = "drml-common-runtime"
 repository  = "https://github.com/darwinia-network/darwinia-common"
 version     = "2.8.6"
 

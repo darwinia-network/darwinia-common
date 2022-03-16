@@ -20,6 +20,14 @@
 #[cfg(feature = "template")]
 use structopt::clap::arg_enum;
 use structopt::StructOpt;
+// --- paritytech ---
+#[cfg(feature = "runtime-benchmarks")]
+use frame_benchmarking_cli::BenchmarkCmd;
+use sc_cli::*;
+#[cfg(feature = "try-runtime")]
+use try_runtime_cli::TryRuntimeCmd;
+// --- darwinia-network ---
+use drml_rpc::EthRpcConfig;
 
 /// An overarching CLI command definition.
 #[derive(Debug, StructOpt)]
@@ -30,19 +38,15 @@ pub struct Cli {
 
 	#[allow(missing_docs)]
 	#[structopt(flatten)]
-	pub run: RunCmd,
-
-	/// Load the boot configuration json file from <PATH>. Command line input will be overwritten by this.
-	#[structopt(long = "conf", value_name = "PATH")]
-	pub conf: Option<std::path::PathBuf>,
+	pub run: Run,
 }
 
 #[allow(missing_docs)]
 #[derive(Debug, StructOpt)]
-pub struct RunCmd {
+pub struct Run {
 	#[allow(missing_docs)]
 	#[structopt(flatten)]
-	pub base: sc_cli::RunCmd,
+	pub base: RunCmd,
 
 	/// Force using Pangolin native runtime.
 	#[structopt(long = "force-pangolin")]
@@ -74,47 +78,47 @@ pub struct RunCmd {
 #[derive(Debug, StructOpt)]
 pub enum Subcommand {
 	/// Build a chain specification.
-	BuildSpec(sc_cli::BuildSpecCmd),
+	BuildSpec(BuildSpecCmd),
 
 	/// Validate blocks.
-	CheckBlock(sc_cli::CheckBlockCmd),
+	CheckBlock(CheckBlockCmd),
 
 	/// Export blocks.
-	ExportBlocks(sc_cli::ExportBlocksCmd),
+	ExportBlocks(ExportBlocksCmd),
 
 	/// Export the state of a given block into a chain spec.
-	ExportState(sc_cli::ExportStateCmd),
+	ExportState(ExportStateCmd),
 
 	/// Import blocks.
-	ImportBlocks(sc_cli::ImportBlocksCmd),
+	ImportBlocks(ImportBlocksCmd),
 
 	/// Remove the whole chain.
-	PurgeChain(sc_cli::PurgeChainCmd),
+	PurgeChain(PurgeChainCmd),
 
 	/// Revert the chain to a previous state.
-	Revert(sc_cli::RevertCmd),
+	Revert(RevertCmd),
 
 	/// Key management cli utilities
-	Key(sc_cli::KeySubcommand),
+	Key(KeySubcommand),
 
 	/// Verify a signature for a message, provided on STDIN, with a given (public or secret) key.
-	Verify(sc_cli::VerifyCmd),
+	Verify(VerifyCmd),
 
 	/// Generate a seed that provides a vanity address.
-	Vanity(sc_cli::VanityCmd),
+	Vanity(VanityCmd),
 
 	/// Sign a message, with a given (secret) key.
-	Sign(sc_cli::SignCmd),
+	Sign(SignCmd),
 
 	/// The custom benchmark subcommand benchmarking runtime pallets.
 	#[cfg(feature = "runtime-benchmarks")]
 	#[structopt(name = "benchmark", about = "Benchmark runtime pallets.")]
-	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
+	Benchmark(BenchmarkCmd),
 
 	/// Try some experimental command on the runtime. This includes migration and runtime-upgrade
 	/// testing.
 	#[cfg(feature = "try-runtime")]
-	TryRuntime(try_runtime_cli::TryRuntimeCmd),
+	TryRuntime(TryRuntimeCmd),
 }
 
 #[derive(Debug, StructOpt)]
@@ -160,10 +164,7 @@ pub struct DvmArgs {
 	pub enable_dev_signer: bool,
 }
 impl DvmArgs {
-	pub fn build_eth_rpc_config(&self) -> drml_rpc::EthRpcConfig {
-		// --- darwinia-network ---
-		use drml_rpc::EthRpcConfig;
-
+	pub fn build_eth_rpc_config(&self) -> EthRpcConfig {
 		EthRpcConfig {
 			ethapi_debug_targets: self.ethapi_debug_targets.clone(),
 			ethapi_max_permits: self.ethapi_max_permits,

@@ -18,7 +18,7 @@
 
 //! A collection of node-specific RPC methods.
 
-// -- -std ---
+// --- std ---
 use std::sync::Arc;
 // --- darwinia-network ---
 use crate::EthDeps;
