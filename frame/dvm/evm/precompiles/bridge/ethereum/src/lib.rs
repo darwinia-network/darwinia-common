@@ -74,7 +74,7 @@ where
 		};
 
 		Ok(PrecompileOutput {
-			exit_status: ExitSucceed::Stopped,
+			exit_status: ExitSucceed::Returned,
 			cost: 20000,
 			output,
 			logs: Default::default(),
