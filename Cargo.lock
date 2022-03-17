@@ -1834,7 +1834,7 @@ dependencies = [
 name = "darwinia-evm-precompile-utils-macro"
 version = "2.8.6"
 dependencies = [
- "evm",
+ "fp-evm",
  "proc-macro2",
  "quote",
  "sha3 0.9.1",

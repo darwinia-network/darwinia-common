@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-use evm::{executor::stack::PrecompileFailure, ExitError};
+use fp_evm::{ExitError, PrecompileFailure};
 use sha3::{Digest, Keccak256};
 
 // Expanded to:
