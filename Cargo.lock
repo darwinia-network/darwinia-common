@@ -1838,7 +1838,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "sha3 0.9.1",
- "sp-std",
  "syn",
 ]
 
