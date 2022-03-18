@@ -30,20 +30,20 @@ use sp_core::{H160, U256};
 use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 // --- darwinia-network ---
 use crate::{util, AccountId};
-use darwinia_evm::{runner::Runner, AccountBasic, Config, Pallet};
+use darwinia_evm::{runner::Runner, AccountBasic, Pallet};
 use darwinia_support::evm::{SELECTOR, TRANSFER_ADDR};
 
 const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,uint256)";
 const WITHDRAW_ACTION: &[u8] = b"withdraw(bytes32,uint256)";
 
-pub enum Kton<T: frame_system::Config> {
+pub enum Kton<T: darwinia_ethereum::Config> {
 	/// Transfer from substrate account to wkton contract
 	TransferAndCall(CallData),
 	/// Withdraw from wkton contract to substrate account
 	Withdraw(WithdrawData<T>),
 }
 
-impl<T: Config + darwinia_ethereum::Config> Kton<T> {
+impl<T: darwinia_ethereum::Config> Kton<T> {
 	pub fn transfer(input: &[u8], target_gas: Option<u64>, context: &Context) -> PrecompileResult {
 		let action = which_action::<T>(&input)?;
 
@@ -166,7 +166,9 @@ impl<T: Config + darwinia_ethereum::Config> Kton<T> {
 }
 
 /// which action depends on the function selector
-pub fn which_action<T: Config>(input_data: &[u8]) -> Result<Kton<T>, PrecompileFailure> {
+pub fn which_action<T: darwinia_ethereum::Config>(
+	input_data: &[u8],
+) -> Result<Kton<T>, PrecompileFailure> {
 	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..SELECTOR];
 	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..SELECTOR];
 	if &input_data[0..SELECTOR] == transfer_and_call_action {

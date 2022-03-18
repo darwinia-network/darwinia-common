@@ -24,7 +24,7 @@ use frame_support::ensure;
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use crate::AccountId;
-use darwinia_evm::{AccountBasic, Config};
+use darwinia_evm::AccountBasic;
 use darwinia_support::evm::TRANSFER_ADDR;
 // --- crates.io ---
 use codec::Decode;
@@ -33,7 +33,7 @@ pub struct RingBack<T> {
 	_maker: PhantomData<T>,
 }
 
-impl<T: Config + darwinia_ethereum::Config> RingBack<T> {
+impl<T: darwinia_ethereum::Config> RingBack<T> {
 	/// The Withdraw process is divided into two part:
 	/// 1. parse the withdrawal address from the input parameter and get the contract address and value from the context
 	/// 2. transfer from the contract address to withdrawal address
