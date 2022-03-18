@@ -129,12 +129,6 @@ pub mod pallet {
 		BalanceDeposit(T::AccountId, H160, U256),
 		/// A withdrawal has been made from a given address. \[sender, address, value\]
 		BalanceWithdraw(T::AccountId, H160, U256),
-		/// Withdraw RING from DVM to darwinia account. \[sender, destination, value\]
-		RingBack(H160, T::AccountId, U256),
-		/// Transfer substrate account KTON to WKTON contract.
-		TransferToWKton(H160, U256),
-		/// Withdraw from WKON contract to substrate account.
-		WithdrawFromWKton(T::AccountId, U256),
 	}
 
 	#[pallet::error]

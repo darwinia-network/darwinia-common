@@ -177,6 +177,7 @@ where
 
 impl<R> PrecompileSet for MockPrecompiles<R>
 where
+	Transfer<R>: Precompile,
 	R: darwinia_evm::Config,
 {
 	fn execute(
@@ -256,7 +257,7 @@ frame_support::construct_runtime! {
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>},
-		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event, Origin},
+		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event<T>, Origin},
 	}
 }
 

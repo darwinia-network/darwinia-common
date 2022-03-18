@@ -33,7 +33,7 @@ pub struct RingBack<T> {
 	_maker: PhantomData<T>,
 }
 
-impl<T: Config> RingBack<T> {
+impl<T: Config + darwinia_ethereum::Config> RingBack<T> {
 	/// The Withdraw process is divided into two part:
 	/// 1. parse the withdrawal address from the input parameter and get the contract address and value from the context
 	/// 2. transfer from the contract address to withdrawal address
@@ -77,7 +77,9 @@ impl<T: Config> RingBack<T> {
 		let new_target_balance = target_balance.saturating_add(value);
 		T::RingAccountBasic::mutate_account_balance(&to, new_target_balance);
 
-		<darwinia_evm::Pallet<T>>::deposit_event(darwinia_evm::Event::RingBack(caller, to, value));
+		<darwinia_ethereum::Pallet<T>>::deposit_event(darwinia_ethereum::Event::RingBack(
+			caller, to, value,
+		));
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
 			cost: 20000,

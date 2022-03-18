@@ -191,7 +191,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 		/// The overarching event type.
-		type Event: From<Event> + IsType<<Self as frame_system::Config>::Event>;
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// How Ethereum state root is calculated.
 		type StateRoot: Get<H256>;
 		/// *RING* balances module.
@@ -302,13 +302,19 @@ pub mod pallet {
 	}
 
 	#[pallet::event]
-	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	#[pallet::generate_deposit(pub fn deposit_event)]
 	/// Ethereum pallet events.
-	pub enum Event {
+	pub enum Event<T: Config> {
 		/// An ethereum transaction was successfully executed. \[from, to/contract_address, transaction_hash, exit_reason\]
 		Executed(H160, H160, H256, ExitReason),
 		/// DVM Transfer succeeded. \[from, to, value\]
 		DVMTransfer(H160, H160, U256),
+		/// Withdraw RING from DVM to darwinia account. \[sender, destination, value\]
+		RingBack(H160, T::AccountId, U256),
+		/// Transfer substrate account KTON to WKTON contract. \[sender, value\]
+		TransferToWKton(H160, U256),
+		/// Withdraw from WKON contract to substrate account. \[withdraw, value\]
+		WithdrawFromWKton(T::AccountId, U256),
 	}
 
 	#[pallet::error]

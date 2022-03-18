@@ -1806,6 +1806,7 @@ name = "darwinia-evm-precompile-transfer"
 version = "2.8.6"
 dependencies = [
  "array-bytes",
+ "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-support",
  "ethabi",

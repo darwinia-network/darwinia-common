@@ -57,7 +57,7 @@ pub enum Transfer<T> {
 	KtonTransfer,
 	_Impossible(PhantomData<T>),
 }
-impl<T: Config> Precompile for Transfer<T> {
+impl<T: Config + darwinia_ethereum::Config> Precompile for Transfer<T> {
 	fn execute(
 		input: &[u8],
 		target_gas: Option<u64>,

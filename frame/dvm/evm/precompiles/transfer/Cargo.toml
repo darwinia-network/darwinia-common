@@ -18,8 +18,9 @@ ethereum-types = { version = "0.12", default-features = false }
 log            = { version = "0.4" }
 sha3           = { version = "0.9", default-features = false }
 # darwinia-network
-darwinia-evm     = { default-features = false, path = "../.." }
-darwinia-support = { default-features = false, path = "../../../../support" }
+darwinia-ethereum = { default-features = false, path = "../../../ethereum" }
+darwinia-evm      = { default-features = false, path = "../.." }
+darwinia-support  = { default-features = false, path = "../../../../support" }
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -38,6 +39,7 @@ std = [
 	"ethereum-types/std",
 	"sha3/std",
 	# darwinia-network
+	"darwinia-ethereum/std",
 	"darwinia-evm/std",
 	"darwinia-support/std",
 	# paritytech

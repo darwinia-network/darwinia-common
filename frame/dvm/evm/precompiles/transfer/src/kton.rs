@@ -43,7 +43,7 @@ pub enum Kton<T: frame_system::Config> {
 	Withdraw(WithdrawData<T>),
 }
 
-impl<T: Config> Kton<T> {
+impl<T: Config + darwinia_ethereum::Config> Kton<T> {
 	pub fn transfer(input: &[u8], target_gas: Option<u64>, context: &Context) -> PrecompileResult {
 		let action = which_action::<T>(&input)?;
 
@@ -108,9 +108,9 @@ impl<T: Config> Kton<T> {
 					}
 				}
 
-				<darwinia_evm::Pallet<T>>::deposit_event(darwinia_evm::Event::TransferToWKton(
-					caller, value,
-				));
+				<darwinia_ethereum::Pallet<T>>::deposit_event(
+					darwinia_ethereum::Event::TransferToWKton(caller, value),
+				);
 				Ok(PrecompileOutput {
 					exit_status: ExitSucceed::Returned,
 					cost: 20000,
@@ -151,9 +151,9 @@ impl<T: Config> Kton<T> {
 				let new_target_kton_balance = target_kton.saturating_add(value);
 				T::KtonAccountBasic::mutate_account_balance(&to, new_target_kton_balance);
 
-				<darwinia_evm::Pallet<T>>::deposit_event(darwinia_evm::Event::WithdrawFromWKton(
-					to, value,
-				));
+				<darwinia_ethereum::Pallet<T>>::deposit_event(
+					darwinia_ethereum::Event::WithdrawFromWKton(to, value),
+				);
 				Ok(PrecompileOutput {
 					exit_status: ExitSucceed::Returned,
 					cost: 20000,
