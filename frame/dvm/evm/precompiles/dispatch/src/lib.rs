@@ -78,7 +78,7 @@ where
 					post_info.actual_weight.unwrap_or(info.weight),
 				);
 				Ok(PrecompileOutput {
-					exit_status: ExitSucceed::Stopped,
+					exit_status: ExitSucceed::Returned,
 					cost,
 					output: Default::default(),
 					logs: Default::default(),
