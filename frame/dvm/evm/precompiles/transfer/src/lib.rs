@@ -41,10 +41,11 @@ pub mod ring;
 pub mod util;
 
 // --- paritytech ---
-use fp_evm::{Context, ExitError, Precompile, PrecompileFailure, PrecompileResult};
+use fp_evm::{Context, ExitError, Precompile, PrecompileResult};
 use sp_std::marker::PhantomData;
 // --- darwinia-network ---
 use darwinia_evm::Config;
+use darwinia_evm_precompile_utils::ret_err;
 use darwinia_support::{evm::SELECTOR, AccountId};
 use kton::Kton;
 use ring::RingBack;
@@ -67,9 +68,7 @@ impl<T: Config> Precompile for Transfer<T> {
 		match which_transfer::<T>(&input) {
 			Ok(Transfer::RingTransfer) => <RingBack<T>>::transfer(&input, target_gas, context),
 			Ok(Transfer::KtonTransfer) => <Kton<T>>::transfer(&input, target_gas, context),
-			_ => Err(PrecompileFailure::Error {
-				exit_status: ExitError::Other("Invalid action".into()),
-			}),
+			_ => Err(ret_err("Invalid action")),
 		}
 	}
 }
