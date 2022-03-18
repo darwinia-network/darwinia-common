@@ -25,8 +25,10 @@ use rlp::RlpStream;
 use scale_info::TypeInfo;
 use sha3::{Digest, Keccak256};
 // --- paritytech ---
+use darwinia_ethereum::{EthereumBlockHashMapping, RawOrigin};
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
+	pallet_prelude::Weight,
 	traits::{Everything, FindAuthor, GenesisBuild},
 	ConsensusEngineId, PalletId,
 };
@@ -37,14 +39,22 @@ use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
+	transaction_validity::{TransactionValidity, TransactionValidityError},
 	AccountId32, Perbill, RuntimeDebug,
 };
 use sp_std::prelude::*;
 // --- darwinia-network ---
-use crate::{self as darwinia_ethereum, account_basic::*, *};
+// use crate::{self as daraccount_basic::*, *};
+use darwinia_ethereum::Transaction;
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
-use darwinia_evm_precompile_transfer::Transfer;
+// use darwinia_evm_precompile_transfer::Transfer;
+use crate::Transfer;
+use darwinia_ethereum::{
+	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
+	IntermediateStateRoot,
+};
 use darwinia_support::evm::IntoAccountId;
+use sp_std::marker::PhantomData;
 
 type Block = MockBlock<Test>;
 pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
@@ -177,7 +187,7 @@ where
 
 impl<R> PrecompileSet for MockPrecompiles<R>
 where
-	// Transfer<R>: Precompile,
+	Transfer<R>: Precompile,
 	R: darwinia_ethereum::Config,
 {
 	fn execute(
@@ -205,9 +215,9 @@ where
 				Some(Identity::execute(input, target_gas, context, is_static))
 			}
 			// Darwinia precompiles
-			// _ if address == to_address(21) => Some(<Transfer<R>>::execute(
-			// 	input, target_gas, context, is_static,
-			// )),
+			_ if address == to_address(21) => Some(<Transfer<R>>::execute(
+				input, target_gas, context, is_static,
+			)),
 			_ => None,
 		}
 	}
@@ -301,8 +311,8 @@ impl fp_self_contained::SelfContainedCall for Call {
 	) -> Option<sp_runtime::DispatchResultWithInfo<sp_runtime::traits::PostDispatchInfoOf<Self>>> {
 		use sp_runtime::traits::Dispatchable as _;
 		match self {
-			call @ Call::Ethereum(crate::Call::transact { .. }) => {
-				Some(call.dispatch(Origin::from(crate::RawOrigin::EthereumTransaction(info))))
+			call @ Call::Ethereum(darwinia_ethereum::Call::transact { .. }) => {
+				Some(call.dispatch(Origin::from(RawOrigin::EthereumTransaction(info))))
 			}
 			_ => None,
 		}
@@ -523,16 +533,5 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 	(pairs, ext.into())
 }
 
-pub fn contract_address(sender: H160, nonce: u64) -> H160 {
-	let mut rlp = RlpStream::new_list(2);
-	rlp.append(&sender);
-	rlp.append(&nonce);
-
-	H160::from_slice(&Keccak256::digest(&rlp.out())[12..])
-}
-
-pub fn storage_address(sender: H160, slot: H256) -> H256 {
-	H256::from_slice(&Keccak256::digest(
-		[&H256::from(sender)[..], &slot[..]].concat().as_slice(),
-	))
-}
+pub type RingAccount = <Test as darwinia_evm::Config>::RingAccountBasic;
+pub type KtonAccount = <Test as darwinia_evm::Config>::KtonAccountBasic;

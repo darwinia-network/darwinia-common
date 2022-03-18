@@ -20,7 +20,7 @@ pub struct FrontierPrecompiles<R>(PhantomData<R>);
 
 impl<R> FrontierPrecompiles<R>
 where
-	R: darwinia_evm::Config,
+	R: darwinia_ethereum::Config,
 {
 	pub fn new() -> Self {
 		Self(Default::default())
@@ -34,7 +34,7 @@ where
 }
 impl<R> PrecompileSet for FrontierPrecompiles<R>
 where
-	R: darwinia_evm::Config,
+	R: darwinia_ethereum::Config,
 {
 	fn execute(
 		&self,

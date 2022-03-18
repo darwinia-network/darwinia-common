@@ -36,6 +36,11 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(all(feature = "std", test))]
+mod mock;
+#[cfg(all(feature = "std", test))]
+mod test;
+
 pub mod kton;
 pub mod ring;
 pub mod util;

@@ -34,7 +34,7 @@ mod eip1559;
 mod eip2930;
 mod internal;
 mod legacy;
-mod transfer;
+// mod transfer;
 
 // This ERC-20 contract mints the maximum amount of tokens to the contract creator.
 // pragma solidity ^0.5.0;
