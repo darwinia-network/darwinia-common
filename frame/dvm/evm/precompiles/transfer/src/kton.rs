@@ -108,7 +108,7 @@ impl<T: Config> Kton<T> {
 					}
 				}
 
-				<darwinia_evm::Pallet<T>>::deposit_event(darwinia_evm::Event::TransferToWKTON(
+				<darwinia_evm::Pallet<T>>::deposit_event(darwinia_evm::Event::TransferToWKton(
 					caller, value,
 				));
 				Ok(PrecompileOutput {
@@ -151,7 +151,7 @@ impl<T: Config> Kton<T> {
 				let new_target_kton_balance = target_kton.saturating_add(value);
 				T::KtonAccountBasic::mutate_account_balance(&to, new_target_kton_balance);
 
-				<darwinia_evm::Pallet<T>>::deposit_event(darwinia_evm::Event::WithdrawFromWKTON(
+				<darwinia_evm::Pallet<T>>::deposit_event(darwinia_evm::Event::WithdrawFromWKton(
 					to, value,
 				));
 				Ok(PrecompileOutput {

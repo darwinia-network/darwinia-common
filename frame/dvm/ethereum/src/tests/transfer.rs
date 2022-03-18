@@ -225,7 +225,7 @@ fn kton_currency_transfer_and_call_works() {
 			origin - transfer_1
 		);
 		assert_eq!(query_contract_balance(alice, 2), transfer_1);
-		System::assert_has_event(Event::EVM(darwinia_evm::Event::TransferToWKTON(
+		System::assert_has_event(Event::EVM(darwinia_evm::Event::TransferToWKton(
 			alice.address,
 			transfer_1,
 		)));
@@ -241,7 +241,7 @@ fn kton_currency_transfer_and_call_works() {
 			origin - transfer_1 - transfer_2
 		);
 		assert_eq!(query_contract_balance(alice, 4), transfer_1 + transfer_2);
-		System::assert_has_event(Event::EVM(darwinia_evm::Event::TransferToWKTON(
+		System::assert_has_event(Event::EVM(darwinia_evm::Event::TransferToWKton(
 			alice.address,
 			transfer_2,
 		)));
@@ -345,7 +345,7 @@ fn kton_currency_withdraw() {
 		assert_eq!(KtonAccount::account_balance(&to), withdraw);
 		assert_eq!(query_contract_balance(alice, 3), transfer - withdraw);
 
-		System::assert_has_event(Event::EVM(darwinia_evm::Event::WithdrawFromWKTON(
+		System::assert_has_event(Event::EVM(darwinia_evm::Event::WithdrawFromWKton(
 			to, withdraw,
 		)));
 	});

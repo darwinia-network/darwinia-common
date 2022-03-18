@@ -132,9 +132,9 @@ pub mod pallet {
 		/// Withdraw RING from DVM to darwinia account. \[sender, destination, value\]
 		RingBack(H160, T::AccountId, U256),
 		/// Transfer substrate account KTON to WKTON contract.
-		TransferToWKTON(H160, U256),
+		TransferToWKton(H160, U256),
 		/// Withdraw from WKON contract to substrate account.
-		WithdrawFromWKTON(T::AccountId, U256),
+		WithdrawFromWKton(T::AccountId, U256),
 	}
 
 	#[pallet::error]
