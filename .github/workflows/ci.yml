@@ -33,7 +33,7 @@ env:
   SCCACHE_LINK: https://github.com/mozilla/sccache/releases/download
   SCCACHE_VERSION: v0.2.15
   SCCACHE_DIR: /home/runner/.cache/sccache
-  NODE_VERSION: 10
+  NODE_VERSION: 12
   GITHUB_CACHE_VERSION: 1
 
 jobs:
