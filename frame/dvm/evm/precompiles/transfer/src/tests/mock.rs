@@ -42,7 +42,7 @@ use sp_runtime::{
 	transaction_validity::{TransactionValidity, TransactionValidityError},
 	AccountId32, Perbill, RuntimeDebug,
 };
-use sp_std::prelude::*;
+use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use crate::Transfer;
 use darwinia_ethereum::{
@@ -51,7 +51,6 @@ use darwinia_ethereum::{
 };
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
 use darwinia_support::evm::IntoAccountId;
-use sp_std::marker::PhantomData;
 
 type Block = MockBlock<Test>;
 pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);

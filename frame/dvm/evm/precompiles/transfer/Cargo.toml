@@ -32,8 +32,8 @@ fp-evm = { default-features = false, git = "https://github.com/darwinia-network/
 [dev-dependencies]
 # crates.io
 ethereum     = { version = "0.11.1", default-features = false, features = ["with-codec"] }
-rlp          = { version = "0.5", default-features = false }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
+rlp          = { version = "0.5", default-features = false }
 # darwinia-network
 darwinia-balances = { path = "../../../../balances" }
 # paritytech
