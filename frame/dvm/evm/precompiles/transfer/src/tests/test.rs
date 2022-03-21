@@ -23,7 +23,7 @@ use ethabi::{Function, Param, ParamType, StateMutability, Token};
 // --- paritytech ---
 use sp_runtime::DispatchError;
 // --- darwinia-network ---
-use crate::mock::*;
+use crate::tests::mock::*;
 use darwinia_evm::AccountBasic;
 use darwinia_support::evm::{decimal_convert, TRANSFER_ADDR};
 use sp_core::{H160, U256};

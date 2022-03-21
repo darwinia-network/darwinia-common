@@ -43,7 +43,6 @@ use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::{self as darwinia_ethereum, account_basic::*, *};
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
-use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::IntoAccountId;
 
 type Block = MockBlock<Test>;
@@ -168,7 +167,7 @@ where
 		Self(Default::default())
 	}
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 21]
+		sp_std::vec![1, 2, 3, 4]
 			.into_iter()
 			.map(|x| H160::from_low_u64_be(x))
 			.collect()
@@ -177,7 +176,6 @@ where
 
 impl<R> PrecompileSet for MockPrecompiles<R>
 where
-	// Transfer<R>: Precompile,
 	R: darwinia_ethereum::Config,
 {
 	fn execute(
@@ -204,10 +202,6 @@ where
 			_ if address == to_address(4) => {
 				Some(Identity::execute(input, target_gas, context, is_static))
 			}
-			// Darwinia precompiles
-			// _ if address == to_address(21) => Some(<Transfer<R>>::execute(
-			// 	input, target_gas, context, is_static,
-			// )),
 			_ => None,
 		}
 	}

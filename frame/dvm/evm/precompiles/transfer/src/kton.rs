@@ -166,9 +166,10 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 }
 
 /// which action depends on the function selector
-pub fn which_action<T: darwinia_ethereum::Config>(
-	input_data: &[u8],
-) -> Result<Kton<T>, PrecompileFailure> {
+pub fn which_action<T>(input_data: &[u8]) -> Result<Kton<T>, PrecompileFailure>
+where
+	T: darwinia_ethereum::Config,
+{
 	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..SELECTOR];
 	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..SELECTOR];
 	if &input_data[0..SELECTOR] == transfer_and_call_action {
