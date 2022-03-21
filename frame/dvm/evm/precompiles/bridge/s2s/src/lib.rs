@@ -23,7 +23,7 @@ use core::marker::PhantomData;
 // --- crates.io ---
 use codec::Encode;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{ret_err, DvmInputParser};
+use darwinia_evm_precompile_utils::{custom_precompile_err, DvmInputParser};
 use darwinia_support::{
 	evm::IntoAccountId,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
@@ -103,7 +103,7 @@ where
 	fn outbound_latest_generated_nonce(
 		dvm_parser: &DvmInputParser,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		let lane_id = abi_decode_bytes4(dvm_parser.input).map_err(|_| ret_err("decode failed"))?;
+		let lane_id = abi_decode_bytes4(dvm_parser.input).map_err(|_| custom_precompile_err("decode failed"))?;
 		let nonce = <S as LatestMessageNoncer>::outbound_latest_generated_nonce(lane_id);
 		Ok(abi_encode_u64(nonce))
 	}
@@ -111,7 +111,7 @@ where
 	fn inbound_latest_received_nonce(
 		dvm_parser: &DvmInputParser,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		let lane_id = abi_decode_bytes4(dvm_parser.input).map_err(|_| ret_err("decode failed"))?;
+		let lane_id = abi_decode_bytes4(dvm_parser.input).map_err(|_| custom_precompile_err("decode failed"))?;
 		let nonce = <S as LatestMessageNoncer>::inbound_latest_received_nonce(lane_id);
 		Ok(abi_encode_u64(nonce))
 	}
@@ -121,7 +121,7 @@ where
 		caller: H160,
 	) -> Result<Vec<u8>, PrecompileFailure> {
 		let unlock_info = S2sRemoteUnlockInfo::abi_decode(dvm_parser.input)
-			.map_err(|_| ret_err("decode unlock failed"))?;
+			.map_err(|_| custom_precompile_err("decode unlock failed"))?;
 		let payload = <T as from_substrate_issuing::Config>::OutboundPayloadCreator::create(
 			CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(caller)),
 			unlock_info.spec_version,
@@ -133,7 +133,7 @@ where
 			),
 			DispatchFeePayment::AtSourceChain,
 		)
-		.map_err(|_| ret_err("decode remote unlock failed"))?;
+		.map_err(|_| custom_precompile_err("decode remote unlock failed"))?;
 		Ok(abi_encode_bytes(payload.encode().as_slice()))
 	}
 
@@ -141,14 +141,14 @@ where
 		dvm_parser: &DvmInputParser,
 	) -> Result<Vec<u8>, PrecompileFailure> {
 		let params = S2sSendMessageParams::decode(dvm_parser.input)
-			.map_err(|_| ret_err("decode send message info failed"))?;
+			.map_err(|_| custom_precompile_err("decode send message info failed"))?;
 		let encoded = <S as RelayMessageSender>::encode_send_message(
 			params.pallet_index,
 			params.lane_id,
 			params.payload,
 			params.fee.low_u128().saturated_into(),
 		)
-		.map_err(|_| ret_err("encode send message call failed"))?;
+		.map_err(|_| custom_precompile_err("encode send message call failed"))?;
 		Ok(abi_encode_bytes(encoded.as_slice()))
 	}
 }

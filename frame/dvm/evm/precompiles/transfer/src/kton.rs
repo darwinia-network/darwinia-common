@@ -31,7 +31,7 @@ use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 // --- darwinia-network ---
 use crate::{util, AccountId};
 use darwinia_evm::{runner::Runner, AccountBasic, Config, Pallet};
-use darwinia_evm_precompile_utils::ret_err;
+use darwinia_evm_precompile_utils::custom_precompile_err;
 use darwinia_support::evm::{SELECTOR, TRANSFER_ADDR};
 
 const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,uint256)";
@@ -55,12 +55,12 @@ impl<T: Config> Kton<T> {
 				// Ensure wkton is a contract
 				ensure!(
 					!<Pallet<T>>::is_contract_code_empty(&wkton),
-					ret_err("Wkton must be a contract!")
+					custom_precompile_err("Wkton must be a contract!")
 				);
 				// Ensure context's apparent_value is zero, since the transfer value is encoded in input field
 				ensure!(
 					context.apparent_value == U256::zero(),
-					ret_err("The value should be zero!")
+					custom_precompile_err("The value should be zero!")
 				);
 				// Ensure caller's balance is enough
 				ensure!(
@@ -77,7 +77,7 @@ impl<T: Config> Kton<T> {
 				let raw_input = make_call_data(caller, value)?;
 				if let Ok(call_res) = T::Runner::call(
 					array_bytes::hex_try_into(TRANSFER_ADDR)
-						.map_err(|_| ret_err("Invalid transfer address"))?,
+						.map_err(|_| custom_precompile_err("Invalid transfer address"))?,
 					wkton,
 					raw_input.to_vec(),
 					U256::zero(),
@@ -92,7 +92,7 @@ impl<T: Config> Kton<T> {
 						ExitReason::Succeed(_) => {
 							log::debug!("Transfer and call execute success.");
 						}
-						_ => return Err(ret_err("Call in Kton precompile failed")),
+						_ => return Err(custom_precompile_err("Call in Kton precompile failed")),
 					}
 				}
 
@@ -108,12 +108,12 @@ impl<T: Config> Kton<T> {
 				// Ensure wkton is a contract
 				ensure!(
 					!<Pallet<T>>::is_contract_code_empty(&source),
-					ret_err("The caller must be wkton contract")
+					custom_precompile_err("The caller must be wkton contract")
 				);
 				// Ensure context's apparent_value is zero
 				ensure!(
 					context.apparent_value == U256::zero(),
-					ret_err("The value in tx must be zero!")
+					custom_precompile_err("The value in tx must be zero!")
 				);
 				// Ensure source's balance is enough
 				let source_kton = T::KtonAccountBasic::account_basic(&source);
@@ -153,7 +153,7 @@ pub fn which_action<T: Config>(input_data: &[u8]) -> Result<Kton<T>, PrecompileF
 		let decoded_data = WithdrawData::decode(&input_data[SELECTOR..])?;
 		return Ok(Kton::Withdraw(decoded_data));
 	}
-	Err(ret_err("Invalid Action"))
+	Err(custom_precompile_err("Invalid Action"))
 }
 pub fn is_kton_transfer(data: &[u8]) -> bool {
 	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..SELECTOR];
@@ -187,7 +187,7 @@ fn make_call_data(
 		state_mutability: StateMutability::NonPayable,
 	};
 	func.encode_input(&[Token::Address(eth_address), Token::Uint(eth_value)])
-		.map_err(|_| ret_err("Make call data error happened"))
+		.map_err(|_| custom_precompile_err("Make call data error happened"))
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -199,13 +199,13 @@ pub struct CallData {
 impl CallData {
 	pub fn decode(data: &[u8]) -> Result<Self, PrecompileFailure> {
 		let tokens = ethabi::decode(&[ParamType::Address, ParamType::Uint(256)], &data)
-			.map_err(|_| ret_err("ethabi decoded error"))?;
+			.map_err(|_| custom_precompile_err("ethabi decoded error"))?;
 		match (tokens[0].clone(), tokens[1].clone()) {
 			(Token::Address(eth_wkton_address), Token::Uint(eth_value)) => Ok(CallData {
 				wkton_address: util::e2s_address(eth_wkton_address),
 				value: util::e2s_u256(eth_value),
 			}),
-			_ => Err(ret_err("Invlid call data")),
+			_ => Err(custom_precompile_err("Invlid call data")),
 		}
 	}
 }
@@ -219,16 +219,16 @@ pub struct WithdrawData<T: frame_system::Config> {
 impl<T: frame_system::Config> WithdrawData<T> {
 	pub fn decode(data: &[u8]) -> Result<Self, PrecompileFailure> {
 		let tokens = ethabi::decode(&[ParamType::FixedBytes(32), ParamType::Uint(256)], &data)
-			.map_err(|_| ret_err("ethabi decoded error"))?;
+			.map_err(|_| custom_precompile_err("ethabi decoded error"))?;
 		match (tokens[0].clone(), tokens[1].clone()) {
 			(Token::FixedBytes(address), Token::Uint(eth_value)) => Ok(WithdrawData {
 				to_account_id: <T as frame_system::Config>::AccountId::decode(
 					&mut address.as_ref(),
 				)
-				.map_err(|_| ret_err("Invalid destination address"))?,
+				.map_err(|_| custom_precompile_err("Invalid destination address"))?,
 				kton_value: util::e2s_u256(eth_value),
 			}),
-			_ => Err(ret_err("Invalid withdraw input data")),
+			_ => Err(custom_precompile_err("Invalid withdraw input data")),
 		}
 	}
 }

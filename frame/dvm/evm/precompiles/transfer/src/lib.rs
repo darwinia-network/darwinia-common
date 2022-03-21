@@ -45,7 +45,7 @@ use fp_evm::{Context, ExitError, Precompile, PrecompileResult};
 use sp_std::marker::PhantomData;
 // --- darwinia-network ---
 use darwinia_evm::Config;
-use darwinia_evm_precompile_utils::ret_err;
+use darwinia_evm_precompile_utils::custom_precompile_err;
 use darwinia_support::{evm::SELECTOR, AccountId};
 use kton::Kton;
 use ring::RingBack;
@@ -68,7 +68,7 @@ impl<T: Config> Precompile for Transfer<T> {
 		match which_transfer::<T>(&input) {
 			Ok(Transfer::RingTransfer) => <RingBack<T>>::transfer(&input, target_gas, context),
 			Ok(Transfer::KtonTransfer) => <Kton<T>>::transfer(&input, target_gas, context),
-			_ => Err(ret_err("Invalid action")),
+			_ => Err(custom_precompile_err("Invalid action")),
 		}
 	}
 }

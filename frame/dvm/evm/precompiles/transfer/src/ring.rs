@@ -25,7 +25,7 @@ use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use crate::AccountId;
 use darwinia_evm::{AccountBasic, Config};
-use darwinia_evm_precompile_utils::ret_err;
+use darwinia_evm_precompile_utils::custom_precompile_err;
 use darwinia_support::evm::TRANSFER_ADDR;
 // --- crates.io ---
 use codec::Decode;
@@ -48,8 +48,8 @@ impl<T: Config> RingBack<T> {
 
 		// Ensure the context address should be precompile address
 		let transfer_addr =
-			array_bytes::hex_try_into(TRANSFER_ADDR).map_err(|_| ret_err("invalid address"))?;
-		ensure!(source == transfer_addr, ret_err("Invalid context address"));
+			array_bytes::hex_try_into(TRANSFER_ADDR).map_err(|_| custom_precompile_err("invalid address"))?;
+		ensure!(source == transfer_addr, custom_precompile_err("Invalid context address"));
 		// Ensure the context address balance is enough
 		ensure!(
 			source_account.balance >= value,
@@ -88,9 +88,9 @@ impl<T: frame_system::Config> InputData<T> {
 
 			return Ok(InputData {
 				dest: <T as frame_system::Config>::AccountId::decode(&mut dest_bytes.as_ref())
-					.map_err(|_| ret_err("Invalid destination address"))?,
+					.map_err(|_| custom_precompile_err("Invalid destination address"))?,
 			});
 		}
-		Err(ret_err("Invalid input data length"))
+		Err(custom_precompile_err("Invalid input data length"))
 	}
 }

@@ -23,7 +23,7 @@ pub use darwinia_evm_precompile_utils_macro::selector;
 // --- darwinia-network ---
 use darwinia_support::evm::SELECTOR;
 // --- paritytech ---
-use fp_evm::{ ExitError, PrecompileFailure};
+use fp_evm::{ExitError, PrecompileFailure};
 
 #[derive(Clone, Copy, Debug)]
 pub struct DvmInputParser<'a> {
@@ -34,7 +34,7 @@ pub struct DvmInputParser<'a> {
 impl<'a> DvmInputParser<'a> {
 	pub fn new(input: &'a [u8]) -> Result<Self, PrecompileFailure> {
 		if input.len() < SELECTOR {
-			return Err(ret_err("input length less than 4 bytes".into()));
+			return Err(custom_precompile_err("input length less than 4 bytes".into()));
 		}
 
 		let mut buffer = [0u8; SELECTOR];
@@ -47,7 +47,7 @@ impl<'a> DvmInputParser<'a> {
 	}
 }
 
-pub fn ret_err(err_msg: &'static str) -> PrecompileFailure {
+pub fn custom_precompile_err(err_msg: &'static str) -> PrecompileFailure {
 	PrecompileFailure::Error {
 		exit_status: ExitError::Other(err_msg.into()),
 	}
