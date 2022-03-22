@@ -48,8 +48,8 @@ dp-contract                             = { default-features = false, path = "..
 dp-fee                                  = { default-features = false, path = "../../../primitives/fee-market" }
 dp-s2s                                  = { default-features = false, path = "../../../primitives/s2s" }
 drml-bridge-primitives                  = { default-features = false, path = "../../primitives/bridge" }
-drml-common-primitives                  = { default-features = false, path = "../../primitives/common" }
 drml-common-runtime                     = { default-features = false, path = "../common" }
+drml-primitives                         = { default-features = false, path = "../../primitives" }
 ethereum-primitives                     = { default-features = false, path = "../../../primitives/ethereum" }
 from-ethereum-issuing                   = { default-features = false, path = "../../../frame/wormhole/issuing/ethereum" }
 from-substrate-issuing                  = { default-features = false, path = "../../../frame/wormhole/issuing/s2s" }
@@ -172,7 +172,7 @@ std = [
 	"dp-fee/std",
 	"dp-s2s/std",
 	"drml-bridge-primitives/std",
-	"drml-common-primitives/std",
+	"drml-primitives/std",
 	"drml-common-runtime/std",
 	"ethereum-primitives/std",
 	"from-ethereum-issuing/std",
@@ -255,7 +255,7 @@ std = [
 	"pallet-evm-precompile-simple/std",
 ]
 
-fast-runtime = ["drml-common-primitives/fast-runtime"]
+fast-runtime = ["drml-primitives/fast-runtime"]
 
 runtime-benchmarks = [
 	# paritytech

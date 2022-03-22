@@ -36,8 +36,8 @@ dp-asset                            = { default-features = false, path = "../../
 dp-fee                              = { default-features = false, path = "../../../primitives/fee-market" }
 dp-s2s                              = { default-features = false, path = "../../../primitives/s2s" }
 drml-bridge-primitives              = { default-features = false, path = "../../primitives/bridge" }
-drml-common-primitives              = { default-features = false, path = "../../primitives/common" }
 drml-common-runtime                 = { default-features = false, path = "../common" }
+drml-primitives                     = { default-features = false, path = "../../primitives" }
 module-transaction-pause            = { default-features = false, path = "../../../frame/transaction-pause" }
 to-substrate-backing                = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 # dvm trace
@@ -138,7 +138,7 @@ std = [
 	"dp-fee/std",
 	"dp-s2s/std",
 	"drml-bridge-primitives/std",
-	"drml-common-primitives/std",
+	"drml-primitives/std",
 	"drml-common-runtime/std",
 	"module-transaction-pause/std",
 	"to-substrate-backing/std",
@@ -209,7 +209,7 @@ std = [
 	"pallet-evm/std",
 ]
 
-fast-runtime = ["drml-common-primitives/fast-runtime"]
+fast-runtime = ["drml-primitives/fast-runtime"]
 
 runtime-benchmarks = [
 	# paritytech

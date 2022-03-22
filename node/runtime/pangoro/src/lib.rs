@@ -28,8 +28,8 @@ pub use wasm::*;
 pub mod pangolin_messages;
 use pangolin_messages::{ToPangolinMessagePayload, WithPangolinMessageBridge};
 
-pub use drml_common_primitives as pangoro_primitives;
-pub use drml_common_primitives as pangolin_primitives;
+pub use drml_primitives as pangoro_primitives;
+pub use drml_primitives as pangolin_primitives;
 
 pub use drml_common_runtime as pangoro_runtime_system_params;
 pub use drml_common_runtime as pangolin_runtime_system_params;
@@ -77,8 +77,8 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
-use drml_common_primitives::*;
 use drml_common_runtime::*;
+use drml_primitives::*;
 
 pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;

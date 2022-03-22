@@ -14,9 +14,9 @@ codec             = { package = "parity-scale-codec", version = "2.3", default-f
 scale-info        = { version = "1.0", default-features = false, features = ["derive"] }
 static_assertions = { version = "1.1" }
 # darwinia-network
-darwinia-balances      = { default-features = false, path = "../../../frame/balances" }
-darwinia-support       = { default-features = false, path = "../../../frame/support" }
-drml-common-primitives = { default-features = false, path = "../../primitives/common" }
+darwinia-balances = { default-features = false, path = "../../../frame/balances" }
+darwinia-support  = { default-features = false, path = "../../../frame/support" }
+drml-primitives   = { default-features = false, path = "../../primitives" }
 # paritytech
 frame-election-provider-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 frame-support                   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -40,7 +40,7 @@ std = [
 	# darwinia-network
 	"darwinia-balances/std",
 	"darwinia-support/std",
-	"drml-common-primitives/std",
+	"drml-primitives/std",
 	# paritytech
 	"frame-election-provider-support/std",
 	"frame-support/std",

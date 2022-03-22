@@ -46,8 +46,8 @@ pub mod wasm {
 #[cfg(not(feature = "no-wasm"))]
 pub use wasm::*;
 
-pub use drml_common_primitives as pangoro_primitives;
-pub use drml_common_primitives as pangolin_primitives;
+pub use drml_primitives as pangoro_primitives;
+pub use drml_primitives as pangolin_primitives;
 
 pub use drml_common_runtime as pangolin_runtime_system_params;
 pub use drml_common_runtime as pangoro_runtime_system_params;
@@ -99,8 +99,8 @@ use sp_version::RuntimeVersion;
 use bridges::substrate::pangoro_messages::{ToPangoroMessagePayload, WithPangoroMessageBridge};
 use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
 use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
-use drml_common_primitives::*;
 use drml_common_runtime::*;
+use drml_primitives::*;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
