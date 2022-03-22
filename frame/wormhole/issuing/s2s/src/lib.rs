@@ -172,7 +172,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			token_address: H160,
 			amount: U256,
-			recipient: H160,
+			recipient: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 			// the s2s message relay has been verified that the message comes from the backing chain with the
@@ -183,6 +183,9 @@ pub mod pallet {
 				<RemoteBackingAccount<T>>::get(),
 				&user,
 			)?;
+
+			ensure!(recipient.len() == 20, Error::<T>::InvalidRecipient);
+			let recipient = H160::from_slice(&recipient.as_slice()[..]);
 
 			let backing_address = T::ToEthAddressT::into_ethereum_id(&user);
 			let mapping_token = Self::mapped_token_address(backing_address, token_address)?;
@@ -259,6 +262,8 @@ pub mod pallet {
 		InvalidIssueEncoding,
 		/// invalid ethereum address length
 		InvalidAddressLen,
+		/// Invalid recipient
+		InvalidRecipient,
 	}
 
 	#[pallet::storage]

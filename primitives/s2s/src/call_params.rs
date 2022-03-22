@@ -64,7 +64,7 @@ pub enum CallParams {
 	#[codec(index = 0)]
 	S2sIssuingPalletRegisterFromRemote(TokenMetadata),
 	#[codec(index = 1)]
-	S2sIssuingPalletIssueFromRemote(H160, U256, H160),
+	S2sIssuingPalletIssueFromRemote(H160, U256, Vec<u8>),
 	#[codec(index = 2)]
 	S2sBackingPalletUnlockFromRemote(H160, U256, Vec<u8>),
 }
@@ -175,7 +175,7 @@ mod test {
 			CallOrigin::SourceRoot,
 			0,
 			0,
-			CallParams::S2sIssuingPalletIssueFromRemote(H160::zero(), U256::zero(), H160::zero()),
+			CallParams::S2sIssuingPalletIssueFromRemote(H160::zero(), U256::zero(), vec![1; 32]),
 			DispatchFeePayment::AtSourceChain,
 		)
 		.unwrap();

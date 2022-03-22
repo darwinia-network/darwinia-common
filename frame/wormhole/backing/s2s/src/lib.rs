@@ -133,7 +133,7 @@ pub mod pallet {
 			MessageNonce,
 			H160,
 			AccountId<T>,
-			H160,
+			Vec<u8>,
 			RingBalance<T>,
 		),
 		/// Token unlocked \[lane_id, message_nonce, token_address, recipient, amount\]
@@ -280,7 +280,7 @@ pub mod pallet {
 			weight: u64,
 			#[pallet::compact] value: RingBalance<T>,
 			#[pallet::compact] fee: RingBalance<T>,
-			recipient: H160,
+			recipient: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
 
@@ -305,7 +305,11 @@ pub mod pallet {
 				CallOrigin::SourceAccount(Self::pallet_account_id()),
 				spec_version,
 				weight,
-				CallParams::S2sIssuingPalletIssueFromRemote(token_address, amount, recipient),
+				CallParams::S2sIssuingPalletIssueFromRemote(
+					token_address,
+					amount,
+					recipient.clone(),
+				),
 				DispatchFeePayment::AtSourceChain,
 			)?;
 			// this pallet account as the submitter of the remote message
