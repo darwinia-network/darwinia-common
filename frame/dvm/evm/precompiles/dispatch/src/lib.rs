@@ -21,6 +21,7 @@
 use core::marker::PhantomData;
 // --- darwinia-network ---
 use darwinia_evm::GasWeightMapping;
+use darwinia_evm_precompile_utils::custom_precompile_err;
 use darwinia_support::evm::IntoAccountId;
 // --- paritytech ---
 use codec::Decode;
@@ -56,9 +57,7 @@ where
 
 		let valid_call = info.pays_fee == Pays::Yes && info.class == DispatchClass::Normal;
 		if !valid_call {
-			return Err(PrecompileFailure::Error {
-				exit_status: ExitError::Other("invalid call".into()),
-			});
+			return Err(custom_precompile_err("invalid call"));
 		}
 
 		if let Some(gas) = target_gas {
@@ -84,9 +83,7 @@ where
 					logs: Default::default(),
 				})
 			}
-			Err(_) => Err(PrecompileFailure::Error {
-				exit_status: ExitError::Other("dispatch execution failed".into()),
-			}),
+			Err(_) => Err(custom_precompile_err("dispatch execution failed")),
 		}
 	}
 }
