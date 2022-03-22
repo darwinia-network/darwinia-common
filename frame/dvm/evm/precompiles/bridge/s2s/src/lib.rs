@@ -23,7 +23,9 @@ use core::marker::PhantomData;
 // --- crates.io ---
 use codec::Encode;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{custom_precompile_err, DvmInputParser};
+use darwinia_evm_precompile_utils::{
+	check_function_modifier, custom_precompile_err, DvmInputParser, FunctionModifier,
+};
 use darwinia_support::{
 	evm::IntoAccountId,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
@@ -68,11 +70,15 @@ where
 		input: &[u8],
 		_target_gas: Option<u64>,
 		context: &Context,
-		_is_static: bool,
+		is_static: bool,
 	) -> PrecompileResult {
 		let dvm_parser = DvmInputParser::new(&input)?;
+		let action = Action::from_u32(dvm_parser.selector)?;
 
-		let output = match Action::from_u32(dvm_parser.selector)? {
+		// Check function modifiers
+		check_function_modifier(context, is_static, FunctionModifier::View)?;
+
+		let output = match action {
 			Action::OutboundLatestGeneratedNonce => {
 				Self::outbound_latest_generated_nonce(&dvm_parser)?
 			}
@@ -103,7 +109,8 @@ where
 	fn outbound_latest_generated_nonce(
 		dvm_parser: &DvmInputParser,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		let lane_id = abi_decode_bytes4(dvm_parser.input).map_err(|_| custom_precompile_err("decode failed"))?;
+		let lane_id = abi_decode_bytes4(dvm_parser.input)
+			.map_err(|_| custom_precompile_err("decode failed"))?;
 		let nonce = <S as LatestMessageNoncer>::outbound_latest_generated_nonce(lane_id);
 		Ok(abi_encode_u64(nonce))
 	}
@@ -111,7 +118,8 @@ where
 	fn inbound_latest_received_nonce(
 		dvm_parser: &DvmInputParser,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		let lane_id = abi_decode_bytes4(dvm_parser.input).map_err(|_| custom_precompile_err("decode failed"))?;
+		let lane_id = abi_decode_bytes4(dvm_parser.input)
+			.map_err(|_| custom_precompile_err("decode failed"))?;
 		let nonce = <S as LatestMessageNoncer>::inbound_latest_received_nonce(lane_id);
 		Ok(abi_encode_u64(nonce))
 	}
