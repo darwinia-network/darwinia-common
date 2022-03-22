@@ -136,6 +136,9 @@ where
 
 	/// Transfer value.
 	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError> {
+		if value == U256::zero() || source == target {
+			return Ok(());
+		}
 		let source_account = Self::account_basic(source);
 		ensure!(source_account.balance >= value, ExitError::OutOfGas);
 		let new_source_balance = source_account.balance.saturating_sub(value);
