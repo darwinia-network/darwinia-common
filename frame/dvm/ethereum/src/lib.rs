@@ -32,9 +32,9 @@ pub use ethereum::{
 	TransactionAction, TransactionSignature, TransactionV2 as Transaction,
 };
 
-#[cfg(all(feature = "std", test))]
+#[cfg(test)]
 mod mock;
-#[cfg(all(feature = "std", test))]
+#[cfg(test)]
 mod tests;
 
 // --- crates.io ---

@@ -36,7 +36,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(all(feature = "std", test))]
+#[cfg(test)]
 mod tests;
 
 pub mod kton;
