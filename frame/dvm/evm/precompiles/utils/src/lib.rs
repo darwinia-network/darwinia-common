@@ -23,7 +23,8 @@ pub use darwinia_evm_precompile_utils_macro::selector;
 // --- darwinia-network ---
 use darwinia_support::evm::SELECTOR;
 // --- paritytech ---
-use fp_evm::{ExitError, PrecompileFailure};
+use fp_evm::{Context, ExitError, PrecompileFailure};
+use sp_core::U256;
 
 #[derive(Clone, Copy, Debug)]
 pub struct DvmInputParser<'a> {
@@ -34,7 +35,9 @@ pub struct DvmInputParser<'a> {
 impl<'a> DvmInputParser<'a> {
 	pub fn new(input: &'a [u8]) -> Result<Self, PrecompileFailure> {
 		if input.len() < SELECTOR {
-			return Err(custom_precompile_err("input length less than 4 bytes".into()));
+			return Err(custom_precompile_err(
+				"input length less than 4 bytes".into(),
+			));
 		}
 
 		let mut buffer = [0u8; SELECTOR];
@@ -51,4 +54,36 @@ pub fn custom_precompile_err(err_msg: &'static str) -> PrecompileFailure {
 	PrecompileFailure::Error {
 		exit_status: ExitError::Other(err_msg.into()),
 	}
+}
+
+/// Represents modifiers a Solidity function can be annotated with.
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub enum FunctionModifier {
+	/// Function that doesn't modify the state.
+	View,
+	/// Function that modifies the state but refuse receiving funds.
+	/// Correspond to a Solidity function with no modifiers.
+	NonPayable,
+	/// Function that modifies the state and accept funds.
+	Payable,
+}
+
+/// Check that a function call is compatible with the context it is
+/// called into.
+pub fn check_function_modifier(
+	context: &Context,
+	is_static: bool,
+	modifier: FunctionModifier,
+) -> Result<(), PrecompileFailure> {
+	if is_static && modifier != FunctionModifier::View {
+		return Err(custom_precompile_err(
+			"can't call non-static function in static context",
+		));
+	}
+
+	if modifier != FunctionModifier::Payable && context.apparent_value > U256::zero() {
+		return Err(custom_precompile_err("function is not payable"));
+	}
+
+	Ok(())
 }
