@@ -63,11 +63,15 @@ impl<T: Config> Precompile for Transfer<T> {
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
-		_is_static: bool,
+		is_static: bool,
 	) -> PrecompileResult {
 		match which_transfer::<T>(&input) {
-			Ok(Transfer::RingTransfer) => <RingBack<T>>::transfer(&input, target_gas, context),
-			Ok(Transfer::KtonTransfer) => <Kton<T>>::transfer(&input, target_gas, context),
+			Ok(Transfer::RingTransfer) => {
+				<RingBack<T>>::transfer(&input, target_gas, context, is_static)
+			}
+			Ok(Transfer::KtonTransfer) => {
+				<Kton<T>>::transfer(&input, target_gas, context, is_static)
+			}
 			_ => Err(custom_precompile_err("Invalid action")),
 		}
 	}

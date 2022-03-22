@@ -21,7 +21,9 @@
 // --- core ---
 use core::marker::PhantomData;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{custom_precompile_err, selector, DvmInputParser, check_state_modifier, StateMutability};
+use darwinia_evm_precompile_utils::{
+	check_state_modifier, custom_precompile_err, selector, DvmInputParser, StateMutability,
+};
 use dp_contract::{
 	abi_util::{abi_encode_array_bytes, abi_encode_bytes},
 	bsc_light_client::{BscMultiStorageVerifyParams, BscSingleStorageVerifyParams},
@@ -70,8 +72,10 @@ where
 
 		let (output, cost) = match action {
 			Action::VerfiySingleStorageProof => {
-				let params = BscSingleStorageVerifyParams::decode(dvm_parser.input)
-					.map_err(|_| custom_precompile_err("decode single storage verify info failed"))?;
+				let params =
+					BscSingleStorageVerifyParams::decode(dvm_parser.input).map_err(|_| {
+						custom_precompile_err("decode single storage verify info failed")
+					})?;
 				let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
 				let proof = EthereumStorageProof::new(
 					params.lane_address,
@@ -87,12 +91,16 @@ where
 				(abi_encode_bytes(storage_value.0.as_slice()), 10000u64)
 			}
 			Action::VerifyMultiStorageProof => {
-				let params = BscMultiStorageVerifyParams::decode(dvm_parser.input)
-					.map_err(|_| custom_precompile_err("decode multi storage verify info failed"))?;
+				let params =
+					BscMultiStorageVerifyParams::decode(dvm_parser.input).map_err(|_| {
+						custom_precompile_err("decode multi storage verify info failed")
+					})?;
 				let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
 				let key_size = params.storage_keys.len();
 				if key_size != params.storage_proofs.len() {
-					return Err(custom_precompile_err("storage keys not match storage proofs"));
+					return Err(custom_precompile_err(
+						"storage keys not match storage proofs",
+					));
 				}
 				if key_size > MAX_MULTI_STORAGEKEY_SIZE {
 					return Err(custom_precompile_err("storage keys size too large"));

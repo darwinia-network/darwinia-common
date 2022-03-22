@@ -40,16 +40,24 @@ impl<T: Config> RingBack<T> {
 	/// 2. transfer from the contract address to withdrawal address
 	///
 	/// Input data: 32-bit substrate withdrawal public key
-	pub fn transfer(input: &[u8], _: Option<u64>, context: &Context) -> PrecompileResult {
+	pub fn transfer(
+		input: &[u8],
+		_: Option<u64>,
+		context: &Context,
+		_is_static: bool,
+	) -> PrecompileResult {
 		// Decode input data
 		let input = InputData::<T>::decode(&input)?;
 		let (source, to, value) = (context.address, input.dest, context.apparent_value);
 		let source_account = T::RingAccountBasic::account_basic(&source);
 
 		// Ensure the context address should be precompile address
-		let transfer_addr =
-			array_bytes::hex_try_into(TRANSFER_ADDR).map_err(|_| custom_precompile_err("invalid address"))?;
-		ensure!(source == transfer_addr, custom_precompile_err("Invalid context address"));
+		let transfer_addr = array_bytes::hex_try_into(TRANSFER_ADDR)
+			.map_err(|_| custom_precompile_err("invalid address"))?;
+		ensure!(
+			source == transfer_addr,
+			custom_precompile_err("Invalid context address")
+		);
 		// Ensure the context address balance is enough
 		ensure!(
 			source_account.balance >= value,
