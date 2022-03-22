@@ -24,7 +24,7 @@ use core::marker::PhantomData;
 use codec::Encode;
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{
-	check_function_modifier, custom_precompile_err, DvmInputParser, FunctionModifier,
+	check_state_modifier, custom_precompile_err, DvmInputParser, StateMutability,
 };
 use darwinia_support::{
 	evm::IntoAccountId,
@@ -76,7 +76,7 @@ where
 		let action = Action::from_u32(dvm_parser.selector)?;
 
 		// Check function modifiers
-		check_function_modifier(context, is_static, FunctionModifier::View)?;
+		check_state_modifier(context, is_static, StateMutability::View)?;
 
 		let output = match action {
 			Action::OutboundLatestGeneratedNonce => {

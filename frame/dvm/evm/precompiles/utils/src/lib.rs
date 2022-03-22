@@ -19,6 +19,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use darwinia_evm_precompile_utils_macro::selector;
+pub use ethabi::StateMutability;
 
 // --- darwinia-network ---
 use darwinia_support::evm::SELECTOR;
@@ -56,32 +57,20 @@ pub fn custom_precompile_err(err_msg: &'static str) -> PrecompileFailure {
 	}
 }
 
-/// Represents modifiers a Solidity function can be annotated with.
-#[derive(Copy, Clone, PartialEq, Eq)]
-pub enum FunctionModifier {
-	/// Function that doesn't modify the state.
-	View,
-	/// Function that modifies the state but refuse receiving funds.
-	/// Correspond to a Solidity function with no modifiers.
-	NonPayable,
-	/// Function that modifies the state and accept funds.
-	Payable,
-}
-
 /// Check that a function call is compatible with the context it is
 /// called into.
-pub fn check_function_modifier(
+pub fn check_state_modifier(
 	context: &Context,
 	is_static: bool,
-	modifier: FunctionModifier,
+	modifier: StateMutability,
 ) -> Result<(), PrecompileFailure> {
-	if is_static && modifier != FunctionModifier::View {
+	if is_static && modifier != StateMutability::View {
 		return Err(custom_precompile_err(
 			"can't call non-static function in static context",
 		));
 	}
 
-	if modifier != FunctionModifier::Payable && context.apparent_value > U256::zero() {
+	if modifier != StateMutability::Payable && context.apparent_value > U256::zero() {
 		return Err(custom_precompile_err("function is not payable"));
 	}
 

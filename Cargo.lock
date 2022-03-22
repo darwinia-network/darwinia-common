@@ -1828,6 +1828,7 @@ version = "2.8.6"
 dependencies = [
  "darwinia-evm-precompile-utils-macro",
  "darwinia-support",
+ "ethabi",
  "evm",
  "fp-evm",
  "sp-core",
