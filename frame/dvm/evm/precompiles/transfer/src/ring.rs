@@ -23,10 +23,9 @@ use fp_evm::{
 use frame_support::ensure;
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
-use crate::AccountId;
 use darwinia_evm::{AccountBasic, Config};
 use darwinia_evm_precompile_utils::{check_state_modifier, custom_precompile_err, StateMutability};
-use darwinia_support::evm::TRANSFER_ADDR;
+use darwinia_support::{evm::TRANSFER_ADDR, AccountId};
 // --- crates.io ---
 use codec::Decode;
 

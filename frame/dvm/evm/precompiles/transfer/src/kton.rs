@@ -28,15 +28,16 @@ use frame_support::ensure;
 use sp_core::{H160, U256};
 use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 // --- darwinia-network ---
-use crate::{util, AccountId};
+use crate::util;
 use darwinia_evm::{runner::Runner, AccountBasic, Config, Pallet};
 use darwinia_evm_precompile_utils::{
 	check_state_modifier, custom_precompile_err, selector, DvmInputParser,
 };
-use darwinia_support::evm::{SELECTOR, TRANSFER_ADDR};
+use darwinia_support::{evm::TRANSFER_ADDR, AccountId};
 
 #[selector]
-enum Action {
+#[derive(Eq, PartialEq)]
+pub enum Action {
 	TransferAndCall = "transfer_and_call(address,uint256)",
 	Withdraw = "withdraw(bytes32,uint256)",
 }
@@ -145,11 +146,6 @@ impl<T: Config> Kton<T> {
 			}
 		}
 	}
-}
-
-pub fn is_kton_transfer(data: &[u8]) -> bool {
-	data[0..SELECTOR] == (Action::TransferAndCall as u32).to_be_bytes()[..]
-		|| data[0..SELECTOR] == (Action::Withdraw as u32).to_be_bytes()[..]
 }
 
 fn make_call_data(
