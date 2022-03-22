@@ -30,7 +30,9 @@ use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 // --- darwinia-network ---
 use crate::{util, AccountId};
 use darwinia_evm::{runner::Runner, AccountBasic, Config, Pallet};
-use darwinia_evm_precompile_utils::{custom_precompile_err, selector, DvmInputParser};
+use darwinia_evm_precompile_utils::{
+	check_state_modifier, custom_precompile_err, selector, DvmInputParser,
+};
 use darwinia_support::evm::{SELECTOR, TRANSFER_ADDR};
 
 #[selector]
@@ -51,10 +53,13 @@ impl<T: Config> Kton<T> {
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
-		_is_static: bool,
+		is_static: bool,
 	) -> PrecompileResult {
 		let dvm_parser = DvmInputParser::new(input)?;
 		let action = Action::from_u32(dvm_parser.selector)?;
+
+		// Check state modifiers
+		check_state_modifier(context, is_static, StateMutability::NonPayable)?;
 
 		match action {
 			Action::TransferAndCall => {
@@ -65,11 +70,6 @@ impl<T: Config> Kton<T> {
 				ensure!(
 					!<Pallet<T>>::is_contract_code_empty(&wkton),
 					custom_precompile_err("Wkton must be a contract!")
-				);
-				// Ensure context's apparent_value is zero, since the transfer value is encoded in input field
-				ensure!(
-					context.apparent_value == U256::zero(),
-					custom_precompile_err("The value should be zero!")
 				);
 				// Ensure caller's balance is enough
 				ensure!(
@@ -119,11 +119,6 @@ impl<T: Config> Kton<T> {
 				ensure!(
 					!<Pallet<T>>::is_contract_code_empty(&source),
 					custom_precompile_err("The caller must be wkton contract")
-				);
-				// Ensure context's apparent_value is zero
-				ensure!(
-					context.apparent_value == U256::zero(),
-					custom_precompile_err("The value in tx must be zero!")
 				);
 				// Ensure source's balance is enough
 				let source_kton = T::KtonAccountBasic::account_basic(&source);

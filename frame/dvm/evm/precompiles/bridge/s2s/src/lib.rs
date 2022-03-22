@@ -75,7 +75,7 @@ where
 		let dvm_parser = DvmInputParser::new(&input)?;
 		let action = Action::from_u32(dvm_parser.selector)?;
 
-		// Check function modifiers
+		// Check state modifiers
 		check_state_modifier(context, is_static, StateMutability::View)?;
 
 		let output = match action {
