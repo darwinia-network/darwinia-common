@@ -21,7 +21,7 @@
 // --- core ---
 use core::marker::PhantomData;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{custom_precompile_err, selector, DvmInputParser};
+use darwinia_evm_precompile_utils::{custom_precompile_err, selector, DvmInputParser, check_state_modifier, StateMutability};
 use dp_contract::{
 	abi_util::{abi_encode_array_bytes, abi_encode_bytes},
 	bsc_light_client::{BscMultiStorageVerifyParams, BscSingleStorageVerifyParams},
@@ -59,11 +59,16 @@ where
 	fn execute(
 		input: &[u8],
 		_target_gas: Option<u64>,
-		_context: &Context,
-		_is_static: bool,
+		context: &Context,
+		is_static: bool,
 	) -> PrecompileResult {
 		let dvm_parser = DvmInputParser::new(input)?;
-		let (output, cost) = match Action::from_u32(dvm_parser.selector)? {
+		let action = Action::from_u32(dvm_parser.selector)?;
+
+		// Check function modifiers
+		check_state_modifier(context, is_static, StateMutability::View)?;
+
+		let (output, cost) = match action {
 			Action::VerfiySingleStorageProof => {
 				let params = BscSingleStorageVerifyParams::decode(dvm_parser.input)
 					.map_err(|_| custom_precompile_err("decode single storage verify info failed"))?;

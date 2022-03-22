@@ -23,7 +23,9 @@ use core::marker::PhantomData;
 // --- crates.io ---
 use codec::Encode;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{selector, DvmInputParser};
+use darwinia_evm_precompile_utils::{
+	check_state_modifier, selector, DvmInputParser, StateMutability,
+};
 // --- paritytech ---
 use fp_evm::{
 	Context, ExitError, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
@@ -50,11 +52,16 @@ where
 	fn execute(
 		input: &[u8],
 		_target_gas: Option<u64>,
-		_context: &Context,
-		_is_static: bool,
+		context: &Context,
+		is_static: bool,
 	) -> PrecompileResult {
 		let dvm_parser = DvmInputParser::new(&input)?;
-		let output = match Action::from_u32(dvm_parser.selector)? {
+		let action = Action::from_u32(dvm_parser.selector)?;
+
+		// Check function modifiers
+		check_state_modifier(context, is_static, StateMutability::View)?;
+
+		let output = match action {
 			Action::BurnAndRemoteUnlock => {
 				let call: T::Call =
 					from_ethereum_issuing::Call::<T>::deposit_burn_token_event_from_precompile {
