@@ -35,7 +35,6 @@ darwinia-support                    = { default-features = false, path = "../../
 dp-asset                            = { default-features = false, path = "../../../primitives/asset" }
 dp-fee                              = { default-features = false, path = "../../../primitives/fee-market" }
 dp-s2s                              = { default-features = false, path = "../../../primitives/s2s" }
-drml-bridge-primitives              = { default-features = false, path = "../../primitives/bridge" }
 drml-common-runtime                 = { default-features = false, path = "../common" }
 drml-primitives                     = { default-features = false, path = "../../primitives" }
 module-transaction-pause            = { default-features = false, path = "../../../frame/transaction-pause" }
@@ -50,6 +49,8 @@ beefy-primitives                           = { default-features = false, git = "
 bp-header-chain                            = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
+bp-pangolin                                = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
+bp-pangoro                                 = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 bridge-runtime-common                      = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 frame-benchmarking                         = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -137,7 +138,6 @@ std = [
 	"dp-asset/std",
 	"dp-fee/std",
 	"dp-s2s/std",
-	"drml-bridge-primitives/std",
 	"drml-primitives/std",
 	"drml-common-runtime/std",
 	"module-transaction-pause/std",
@@ -147,6 +147,8 @@ std = [
 	"bp-header-chain/std",
 	"bp-message-dispatch/std",
 	"bp-messages/std",
+	"bp-pangolin/std",
+	"bp-pangoro/std",
 	"bp-runtime/std",
 	"bridge-runtime-common/std",
 	"frame-benchmarking/std",

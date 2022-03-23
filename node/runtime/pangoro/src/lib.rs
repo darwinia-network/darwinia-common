@@ -44,6 +44,7 @@ pub use pallet_sudo::Call as SudoCall;
 // --- crates.io ---
 use codec::Encode;
 // --- paritytech ---
+use bp_runtime::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use fp_storage::{EthereumStorageSchema, PALLET_ETHEREUM_SCHEMA};
 #[allow(unused)]
 use frame_support::{log, migration};
@@ -76,7 +77,6 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
-use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use drml_common_runtime::*;
 use drml_primitives::*;
 
@@ -738,28 +738,14 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl drml_bridge_primitives::PangolinFinalityApi<Block> for Runtime {
+	impl bp_pangolin::PangolinFinalityApi<Block> for Runtime {
 		fn best_finalized() -> (pangolin_primitives::BlockNumber, pangolin_primitives::Hash) {
 			let header = BridgePangolinGrandpa::best_finalized();
 			(header.number, header.hash())
 		}
-
-		fn is_known_header(hash: pangolin_primitives::Hash) -> bool {
-			BridgePangolinGrandpa::is_known_header(hash)
-		}
 	}
 
-	impl drml_bridge_primitives::ToPangolinOutboundLaneApi<Block, Balance, ToPangolinMessagePayload> for Runtime {
-		// fn estimate_message_delivery_and_dispatch_fee(
-		// 	_lane_id: bp_messages::LaneId,
-		// 	payload: ToPangolinMessagePayload,
-		// ) -> Option<Balance> {
-		// 	bridge_runtime_common::messages::source::estimate_message_dispatch_and_delivery_fee::<WithPangolinMessageBridge>(
-		// 		&payload,
-		// 		WithPangolinMessageBridge::RELAYER_FEE_PERCENT,
-		// 	).ok()
-		// }
-
+	impl bp_pangolin::ToPangolinOutboundLaneApi<Block, Balance, ToPangolinMessagePayload> for Runtime {
 		fn message_details(
 			lane: bp_messages::LaneId,
 			begin: bp_messages::MessageNonce,
@@ -781,7 +767,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl drml_bridge_primitives::FromPangolinInboundLaneApi<Block> for Runtime {
+	impl bp_pangolin::FromPangolinInboundLaneApi<Block> for Runtime {
 		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
 			BridgePangolinMessages::inbound_latest_received_nonce(lane)
 		}

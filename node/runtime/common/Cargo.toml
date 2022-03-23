@@ -14,14 +14,18 @@ codec             = { package = "parity-scale-codec", version = "2.3", default-f
 scale-info        = { version = "1.0", default-features = false, features = ["derive"] }
 static_assertions = { version = "1.1" }
 # darwinia-network
-darwinia-balances = { default-features = false, path = "../../../frame/balances" }
-darwinia-support  = { default-features = false, path = "../../../frame/support" }
-drml-primitives   = { default-features = false, path = "../../primitives" }
+darwinia-balances   = { default-features = false, path = "../../../frame/balances" }
+darwinia-fee-market = { default-features = false, path = "../../../frame/fee-market" }
+darwinia-support    = { default-features = false, path = "../../../frame/support" }
+drml-primitives     = { default-features = false, path = "../../primitives" }
 # paritytech
+bp-messages                     = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
+bridge-runtime-common           = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 frame-election-provider-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 frame-support                   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 frame-system                    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 pallet-authorship               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+pallet-bridge-dispatch          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 pallet-transaction-payment      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 pallet-treasury                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-io                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -42,10 +46,13 @@ std = [
 	"darwinia-support/std",
 	"drml-primitives/std",
 	# paritytech
+	"bp-messages/std",
+	"bridge-runtime-common/std",
 	"frame-election-provider-support/std",
 	"frame-support/std",
 	"frame-system/std",
 	"pallet-authorship/std",
+	"pallet-bridge-dispatch/std",
 	"pallet-transaction-payment/std",
 	"pallet-treasury/std",
 	"sp-io/std",
