@@ -43,6 +43,7 @@ std = [
 	"scale-info/std",
 	# darwinia-network
 	"darwinia-balances/std",
+	"darwinia-fee-market/std",
 	"darwinia-support/std",
 	"drml-primitives/std",
 	# paritytech
