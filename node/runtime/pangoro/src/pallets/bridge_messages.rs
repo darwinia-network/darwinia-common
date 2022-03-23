@@ -2,7 +2,11 @@ pub use pallet_bridge_messages::Instance1 as WithPangolinMessages;
 
 // --- paritytech ---
 use bp_messages::MessageNonce;
-use bp_runtime::ChainId;
+use bp_pangolin::{
+	AccountIdConverter, MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
+	MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX, MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX,
+};
+use bp_runtime::{ChainId, PANGOLIN_CHAIN_ID};
 use pallet_bridge_messages::Config;
 // --- darwinia-network ---
 use crate::*;
@@ -10,11 +14,6 @@ use darwinia_fee_market::s2s::{
 	FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler, FeeMarketPayment,
 };
 use darwinia_support::evm::{ConcatConverter, IntoAccountId, IntoH160};
-use drml_bridge_primitives::{
-	AccountIdConverter, MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
-	MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE, MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE,
-	PANGOLIN_CHAIN_ID,
-};
 use pangolin_messages::{
 	FromPangolinMessageDispatch, FromPangolinMessagePayload, Pangolin,
 	PangoroToPangolinMessagesParameter, ToPangolinMessagePayload, ToPangolinMessageVerifier,
@@ -23,9 +22,9 @@ use pangolin_messages::{
 frame_support::parameter_types! {
 	pub const MaxMessagesToPruneAtOnce: MessageNonce = 8;
 	pub const MaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =
-		MAX_UNREWARDED_RELAYER_ENTRIES_AT_INBOUND_LANE;
+		MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
 	pub const MaxUnconfirmedMessagesAtInboundLane: MessageNonce =
-		MAX_UNCONFIRMED_MESSAGES_AT_INBOUND_LANE;
+		MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
 	// `IdentityFee` is used by Pangoro => we may use weight directly
 	pub const GetDeliveryConfirmationTransactionFee: Balance =
 		MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT as _;

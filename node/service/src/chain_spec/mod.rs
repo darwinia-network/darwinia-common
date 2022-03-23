@@ -94,7 +94,7 @@ use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::IdentifyAccount;
 // --- darwinia-network ---
-use drml_common_primitives::{AccountId, AccountPublic, OpaqueBlock};
+use drml_primitives::{AccountId, AccountPublic, OpaqueBlock};
 
 const DEFAULT_PROTOCOL_ID: &str = "drml";
 

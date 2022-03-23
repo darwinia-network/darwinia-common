@@ -49,8 +49,8 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use darwinia_evm::Runner;
-use drml_common_primitives::*;
 use drml_common_runtime::*;
+use drml_primitives::*;
 
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 pub type SignedBlock = generic::SignedBlock<Block>;

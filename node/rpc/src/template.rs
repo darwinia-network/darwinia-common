@@ -22,7 +22,7 @@
 use std::sync::Arc;
 // --- darwinia-network ---
 use crate::EthDeps;
-use drml_common_primitives::{OpaqueBlock as Block, *};
+use drml_primitives::{OpaqueBlock as Block, *};
 use template_runtime::TransactionConverter;
 
 /// Full client dependencies.

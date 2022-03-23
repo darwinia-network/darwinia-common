@@ -27,7 +27,7 @@ use sp_core::crypto::{self, Ss58AddressFormat};
 // --- darwinia-network ---
 use crate::cli::*;
 #[cfg(any(feature = "try-runtime", feature = "runtime-benchmarks"))]
-use drml_common_primitives::OpaqueBlock as Block;
+use drml_primitives::OpaqueBlock as Block;
 use drml_service::*;
 
 impl SubstrateCli for Cli {

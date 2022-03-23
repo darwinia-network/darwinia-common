@@ -17,7 +17,7 @@ pub use template::Executor as TemplateExecutor;
 // --- std ---
 use std::sync::Arc;
 // --- darwinia-network ---
-use drml_common_primitives::{OpaqueBlock as Block, *};
+use drml_primitives::{OpaqueBlock as Block, *};
 
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;

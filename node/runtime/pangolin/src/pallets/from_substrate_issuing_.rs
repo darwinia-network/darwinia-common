@@ -1,12 +1,12 @@
 // --- paritytech ---
 use bp_messages::LaneId;
-use bp_runtime::ChainId;
+use bp_pangolin::AccountIdConverter;
+use bp_runtime::{ChainId, PANGORO_CHAIN_ID};
 use frame_support::PalletId;
 use sp_runtime::AccountId32;
 // --- darwinia-network ---
 use crate::{pangoro_messages::ToPangoroOutboundPayLoad, *};
 use darwinia_support::{s2s::ToEthAddress, ChainName};
-use drml_bridge_primitives::{AccountIdConverter, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE};
 use from_substrate_issuing::Config;
 
 // Convert from AccountId32 to H160

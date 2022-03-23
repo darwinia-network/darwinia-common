@@ -30,7 +30,7 @@ use super::*;
 use darwinia_bridge_ethereum::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
 use darwinia_claims::ClaimsList;
 use darwinia_evm::GenesisAccount;
-use drml_common_primitives::*;
+use drml_primitives::*;
 use pangolin_runtime::*;
 
 pub type ChainSpec = GenericChainSpec<GenesisConfig, Extensions>;

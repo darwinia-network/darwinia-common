@@ -103,7 +103,8 @@ where
 	fn outbound_latest_generated_nonce(
 		dvm_parser: &DvmInputParser,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		let lane_id = abi_decode_bytes4(dvm_parser.input).map_err(|_| custom_precompile_err("decode failed"))?;
+		let lane_id = abi_decode_bytes4(dvm_parser.input)
+			.map_err(|_| custom_precompile_err("decode failed"))?;
 		let nonce = <S as LatestMessageNoncer>::outbound_latest_generated_nonce(lane_id);
 		Ok(abi_encode_u64(nonce))
 	}
@@ -111,7 +112,8 @@ where
 	fn inbound_latest_received_nonce(
 		dvm_parser: &DvmInputParser,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		let lane_id = abi_decode_bytes4(dvm_parser.input).map_err(|_| custom_precompile_err("decode failed"))?;
+		let lane_id = abi_decode_bytes4(dvm_parser.input)
+			.map_err(|_| custom_precompile_err("decode failed"))?;
 		let nonce = <S as LatestMessageNoncer>::inbound_latest_received_nonce(lane_id);
 		Ok(abi_encode_u64(nonce))
 	}
