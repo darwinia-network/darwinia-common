@@ -49,7 +49,7 @@ pub type BlockNumber = u32;
 /// Hashing algorithm used by the chain.
 pub type Hashing = BlakeTwo256;
 
-/// A hash of some data used by the relay chain.
+/// A hash of some data used by the chain.
 pub type Hash = H256;
 
 /// An instant or duration in time.
@@ -59,7 +59,7 @@ pub type Moment = u64;
 #[cfg(feature = "std")]
 pub type SigningParams = Pair;
 
-/// Alias to type for a signature for a transaction on the relay chain. This allows one of several
+/// Alias to type for a signature for a transaction on the chain. This allows one of several
 /// kinds of underlying crypto to be used, so isn't a fixed size when encoded.
 pub type Signature = MultiSignature;
 
@@ -74,7 +74,7 @@ pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
 
-/// The index of a transaction in the relay chain. 32-bit should be plenty.
+/// The index of a transaction in the chain. 32-bit should be plenty.
 pub type Nonce = u32;
 
 /// The balance of an account.
