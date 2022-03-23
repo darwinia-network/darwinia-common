@@ -34,7 +34,9 @@ pub struct DvmInputParser<'a> {
 impl<'a> DvmInputParser<'a> {
 	pub fn new(input: &'a [u8]) -> Result<Self, PrecompileFailure> {
 		if input.len() < SELECTOR {
-			return Err(custom_precompile_err("input length less than 4 bytes".into()));
+			return Err(custom_precompile_err(
+				"input length less than 4 bytes".into(),
+			));
 		}
 
 		let mut buffer = [0u8; SELECTOR];

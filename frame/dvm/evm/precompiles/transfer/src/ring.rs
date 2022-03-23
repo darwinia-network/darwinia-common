@@ -47,9 +47,12 @@ impl<T: Config> RingBack<T> {
 		let source_account = T::RingAccountBasic::account_basic(&source);
 
 		// Ensure the context address should be precompile address
-		let transfer_addr =
-			array_bytes::hex_try_into(TRANSFER_ADDR).map_err(|_| custom_precompile_err("invalid address"))?;
-		ensure!(source == transfer_addr, custom_precompile_err("Invalid context address"));
+		let transfer_addr = array_bytes::hex_try_into(TRANSFER_ADDR)
+			.map_err(|_| custom_precompile_err("invalid address"))?;
+		ensure!(
+			source == transfer_addr,
+			custom_precompile_err("Invalid context address")
+		);
 		// Ensure the context address balance is enough
 		ensure!(
 			source_account.balance >= value,
