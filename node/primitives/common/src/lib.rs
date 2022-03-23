@@ -28,7 +28,7 @@ use sp_core::H256;
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentifyAccount, Verify},
-	MultiSignature, OpaqueExtrinsic,
+	MultiAddress, MultiSignature, OpaqueExtrinsic,
 };
 
 macro_rules! development_or_production {
@@ -45,6 +45,12 @@ macro_rules! development_or_production {
 /// An index to a block.
 /// 32-bits will allow for 136 years of blocks assuming 1 block per second.
 pub type BlockNumber = u32;
+
+/// Hashing algorithm used by the chain.
+pub type Hashing = BlakeTwo256;
+
+/// A hash of some data used by the relay chain.
+pub type Hash = H256;
 
 /// An instant or duration in time.
 pub type Moment = u64;
@@ -65,16 +71,10 @@ pub type AccountPublic = <Signature as Verify>::Signer;
 /// 32 bytes.
 pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
 
-/// The type for looking up accounts. We don't expect more than 4 billion of them.
-pub type AccountIndex = u32;
+/// The address format for describing accounts.
+pub type Address = MultiAddress<AccountId, ()>;
 
-/// A hash of some data used by the relay chain.
-pub type Hash = H256;
-
-/// Hashing algorithm used by the chain.
-pub type Hashing = BlakeTwo256;
-
-/// Index of a transaction in the relay chain. 32-bit should be plenty.
+/// The index of a transaction in the relay chain. 32-bit should be plenty.
 pub type Nonce = u32;
 
 /// The balance of an account.
