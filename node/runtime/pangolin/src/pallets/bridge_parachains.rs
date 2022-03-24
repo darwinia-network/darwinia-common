@@ -1,8 +1,8 @@
 pub use pallet_bridge_parachains::Instance1 as WithRococoParachainsInstance;
 
 // --- paritytech ---
-use pallet_bridge_parachains::Config;
 use bp_pangolin::BRIDGE_PARAS_PALLET_NAME;
+use pallet_bridge_parachains::Config;
 // --- darwinia-network ---
 use crate::*;
 

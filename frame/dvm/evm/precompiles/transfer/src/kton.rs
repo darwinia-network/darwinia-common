@@ -21,18 +21,22 @@ use codec::Decode;
 use ethabi::{Function, Param, ParamType, StateMutability, Token};
 // --- paritytech ---
 use fp_evm::{
-	Context, ExitReason, ExitSucceed, PrecompileFailure, PrecompileOutput, PrecompileResult,
+	Context, ExitError, ExitReason, ExitSucceed, PrecompileFailure, PrecompileOutput,
+	PrecompileResult,
 };
 use frame_support::ensure;
 use sp_core::{H160, U256};
 use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 // --- darwinia-network ---
 use crate::util;
-use darwinia_evm::{runner::Runner, AccountBasic, Config, Pallet};
+use darwinia_evm::{runner::Runner, AccountBasic, Pallet};
 use darwinia_evm_precompile_utils::{
 	check_state_modifier, custom_precompile_err, selector, DvmInputParser,
 };
-use darwinia_support::{evm::TRANSFER_ADDR, AccountId};
+use darwinia_support::{
+	evm::{IntoAccountId, TRANSFER_ADDR},
+	AccountId,
+};
 
 #[selector]
 #[derive(Eq, PartialEq)]
@@ -48,7 +52,7 @@ pub enum Kton<T: darwinia_ethereum::Config> {
 	Withdraw(WithdrawData<T>),
 }
 
-impl<T: Config> Kton<T> {
+impl<T: darwinia_ethereum::Config> Kton<T> {
 	pub fn transfer(
 		input: &[u8],
 		target_gas: Option<u64>,
