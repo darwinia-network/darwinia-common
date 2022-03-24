@@ -75,11 +75,6 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 					!<Pallet<T>>::is_contract_code_empty(&wkton),
 					custom_precompile_err("Wkton must be a contract!")
 				);
-				// Ensure context's apparent_value is zero, since the transfer value is encoded in input field
-				ensure!(
-					context.apparent_value == U256::zero(),
-					custom_precompile_err("The value should be zero!")
-				);
 
 				let caller_account_id =
 					<T as darwinia_evm::Config>::IntoAccountId::into_account_id(caller);
@@ -125,11 +120,6 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				ensure!(
 					!<Pallet<T>>::is_contract_code_empty(&source),
 					custom_precompile_err("The caller must be wkton contract")
-				);
-				// Ensure context's apparent_value is zero
-				ensure!(
-					context.apparent_value == U256::zero(),
-					custom_precompile_err("The value in tx must be zero!")
 				);
 
 				let source = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(source);
