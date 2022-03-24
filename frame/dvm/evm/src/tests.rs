@@ -164,7 +164,6 @@ impl<T: Config> AccountBasic<T> for MockAccountBasic<T> {
 		source: &T::AccountId,
 		target: &T::AccountId,
 		value: U256,
-		_has_event: bool,
 	) -> Result<(), ExitError> {
 		if value == U256::zero() || source == target {
 			return Ok(());

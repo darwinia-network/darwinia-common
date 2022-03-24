@@ -240,7 +240,7 @@ fn kton_currency_transfer_and_call_works() {
 		let wkton_account_id = <Test as darwinia_evm::Config>::IntoAccountId::into_account_id(
 			H160::from_str(WKTON_ADDRESS).unwrap(),
 		);
-		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::KtonTransfer(
+		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::KtonDVMTransfer(
 			alice_account_id.clone(),
 			wkton_account_id.clone(),
 			transfer_1,
@@ -257,7 +257,7 @@ fn kton_currency_transfer_and_call_works() {
 			origin - transfer_1 - transfer_2
 		);
 		assert_eq!(query_contract_balance(alice, 4), transfer_1 + transfer_2);
-		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::KtonTransfer(
+		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::KtonDVMTransfer(
 			alice_account_id,
 			wkton_account_id,
 			transfer_2,
@@ -365,7 +365,7 @@ fn kton_currency_withdraw() {
 		let wkton_account_id = <Test as darwinia_evm::Config>::IntoAccountId::into_account_id(
 			H160::from_str(WKTON_ADDRESS).unwrap(),
 		);
-		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::KtonTransfer(
+		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::KtonDVMTransfer(
 			wkton_account_id,
 			to,
 			withdraw,
