@@ -31,7 +31,7 @@ darwinia-staking                    = { path = "../../frame/staking" }
 darwinia-staking-rpc-runtime-api    = { path = "../../frame/staking/rpc/runtime-api" }
 dp-evm-trace-apis                   = { path = "../../primitives/evm-trace/apis" }
 dp-evm-trace-ext                    = { path = "../../primitives/evm-trace/ext" }
-drml-common-primitives              = { path = "../primitives/common" }
+drml-primitives                     = { path = "../primitives" }
 drml-rpc                            = { path = "../rpc" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
 pangoro-runtime                     = { path = "../runtime/pangoro" }

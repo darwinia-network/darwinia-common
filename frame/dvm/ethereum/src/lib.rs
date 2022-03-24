@@ -307,12 +307,9 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// An ethereum transaction was successfully executed. \[from, to/contract_address, transaction_hash, exit_reason\]
 		Executed(H160, H160, H256, ExitReason),
-		/// DVM Transfer succeeded. \[from, to, value\]
+		/// DVM transfer. \[from, to, value\]
 		DVMTransfer(T::AccountId, T::AccountId, U256),
-		/// Withdraw RING from DVM to darwinia account. \[sender, destination, value\]
-		// RingBack(H160, T::AccountId, U256),
-		// TransferToWKton(H160, U256),
-		// WithdrawFromWKton(T::AccountId, U256),
+		/// Kton transfer \[from, to, value\]
 		KtonTransfer(T::AccountId, T::AccountId, U256),
 	}
 

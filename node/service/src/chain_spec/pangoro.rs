@@ -29,7 +29,7 @@ use sp_runtime::Perbill;
 use super::*;
 use darwinia_evm::GenesisAccount;
 use darwinia_staking::StakerStatus;
-use drml_common_primitives::*;
+use drml_primitives::*;
 use pangoro_runtime::*;
 
 pub type ChainSpec = GenericChainSpec<GenesisConfig, Extensions>;

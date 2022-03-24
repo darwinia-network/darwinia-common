@@ -41,7 +41,7 @@ use sp_runtime::{
 	generic,
 	traits::{Block as BlockT, Dispatchable, NumberFor, PostDispatchInfoOf},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
-	ApplyExtrinsicResult, MultiAddress, OpaqueExtrinsic,
+	ApplyExtrinsicResult, OpaqueExtrinsic,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -49,10 +49,9 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use darwinia_evm::Runner;
-use drml_common_primitives::*;
 use drml_common_runtime::*;
+use drml_primitives::*;
 
-pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 pub type SignedBlock = generic::SignedBlock<Block>;
 pub type SignedExtra = (

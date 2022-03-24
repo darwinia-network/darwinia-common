@@ -47,9 +47,8 @@ dp-asset                                = { default-features = false, path = "..
 dp-contract                             = { default-features = false, path = "../../../primitives/contract" }
 dp-fee                                  = { default-features = false, path = "../../../primitives/fee-market" }
 dp-s2s                                  = { default-features = false, path = "../../../primitives/s2s" }
-drml-bridge-primitives                  = { default-features = false, path = "../../primitives/bridge" }
-drml-common-primitives                  = { default-features = false, path = "../../primitives/common" }
 drml-common-runtime                     = { default-features = false, path = "../common" }
+drml-primitives                         = { default-features = false, path = "../../primitives" }
 ethereum-primitives                     = { default-features = false, path = "../../../primitives/ethereum" }
 from-ethereum-issuing                   = { default-features = false, path = "../../../frame/wormhole/issuing/ethereum" }
 from-substrate-issuing                  = { default-features = false, path = "../../../frame/wormhole/issuing/s2s" }
@@ -65,6 +64,8 @@ sha3              = { version = "0.8", optional = true, default-features = false
 beefy-primitives                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
+bp-pangolin                                = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
+bp-pangoro                                 = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 bridge-runtime-common                      = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 frame-benchmarking                         = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -171,8 +172,7 @@ std = [
 	"dp-contract/std",
 	"dp-fee/std",
 	"dp-s2s/std",
-	"drml-bridge-primitives/std",
-	"drml-common-primitives/std",
+	"drml-primitives/std",
 	"drml-common-runtime/std",
 	"ethereum-primitives/std",
 	"from-ethereum-issuing/std",
@@ -184,6 +184,8 @@ std = [
 	"beefy-primitives/std",
 	"bp-message-dispatch/std",
 	"bp-messages/std",
+	"bp-pangolin/std",
+	"bp-pangoro/std",
 	"bp-runtime/std",
 	"bridge-runtime-common/std",
 	"frame-benchmarking/std",
@@ -255,7 +257,7 @@ std = [
 	"pallet-evm-precompile-simple/std",
 ]
 
-fast-runtime = ["drml-common-primitives/fast-runtime"]
+fast-runtime = ["drml-primitives/fast-runtime"]
 
 runtime-benchmarks = [
 	# paritytech

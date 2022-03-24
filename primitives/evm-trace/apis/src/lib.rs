@@ -18,7 +18,9 @@
 
 // --- crates.io ---
 use codec::{Decode, Encode};
-use ethereum::{TransactionV0 as LegacyTransaction, TransactionV2 as Transaction};
+#[cfg(feature = "std")]
+use ethereum::TransactionV0 as LegacyTransaction;
+use ethereum::TransactionV2 as Transaction;
 use ethereum_types::H256;
 // --- paritytech ---
 use sp_std::vec::Vec;

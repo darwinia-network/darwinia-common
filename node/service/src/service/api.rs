@@ -16,7 +16,7 @@ macro_rules! impl_runtime_apis {
 }
 
 // --- darwinia-network ---
-use drml_common_primitives::{OpaqueBlock as Block, *};
+use drml_primitives::{OpaqueBlock as Block, *};
 
 impl_runtime_apis![
 	sp_api::ApiExt<Block>,

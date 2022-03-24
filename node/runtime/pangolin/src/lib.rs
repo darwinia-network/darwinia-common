@@ -46,8 +46,8 @@ pub mod wasm {
 #[cfg(not(feature = "no-wasm"))]
 pub use wasm::*;
 
-pub use drml_common_primitives as pangoro_primitives;
-pub use drml_common_primitives as pangolin_primitives;
+pub use drml_primitives as pangoro_primitives;
+pub use drml_primitives as pangolin_primitives;
 
 pub use drml_common_runtime as pangolin_runtime_system_params;
 pub use drml_common_runtime as pangoro_runtime_system_params;
@@ -64,6 +64,7 @@ pub use pallet_sudo::Call as SudoCall;
 // --- crates.io ---
 use codec::Encode;
 // --- paritytech ---
+use bp_runtime::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use fp_storage::{EthereumStorageSchema, PALLET_ETHEREUM_SCHEMA};
 #[allow(unused)]
 use frame_support::{log, migration};
@@ -89,7 +90,7 @@ use sp_runtime::{
 		SaturatedConversion, StaticLookup, Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
-	ApplyExtrinsicResult, MultiAddress,
+	ApplyExtrinsicResult,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -98,12 +99,9 @@ use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use bridges::substrate::pangoro_messages::{ToPangoroMessagePayload, WithPangoroMessageBridge};
 use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
-use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
-use drml_common_primitives::*;
 use drml_common_runtime::*;
+use drml_primitives::*;
 
-/// The address format for describing accounts.
-pub type Address = MultiAddress<AccountId, ()>;
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// A Block signed with a Justification
@@ -822,28 +820,14 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl drml_bridge_primitives::PangoroFinalityApi<Block> for Runtime {
+	impl bp_pangoro::PangoroFinalityApi<Block> for Runtime {
 		fn best_finalized() -> (pangoro_primitives::BlockNumber, pangoro_primitives::Hash) {
 			let header = BridgePangoroGrandpa::best_finalized();
 			(header.number, header.hash())
 		}
-
-		fn is_known_header(hash: pangoro_primitives::Hash) -> bool {
-			BridgePangoroGrandpa::is_known_header(hash)
-		}
 	}
 
-	impl drml_bridge_primitives::ToPangoroOutboundLaneApi<Block, Balance, ToPangoroMessagePayload> for Runtime {
-		// fn estimate_message_delivery_and_dispatch_fee(
-		// 	_lane_id: bp_messages::LaneId,
-		// 	payload: ToPangoroMessagePayload,
-		// ) -> Option<Balance> {
-		// 	bridge_runtime_common::messages::source::estimate_message_dispatch_and_delivery_fee::<WithPangoroMessageBridge>(
-		// 		&payload,
-		// 		WithPangoroMessageBridge::RELAYER_FEE_PERCENT,
-		// 	).ok()
-		// }
-
+	impl bp_pangoro::ToPangoroOutboundLaneApi<Block, Balance, ToPangoroMessagePayload> for Runtime {
 		fn message_details(
 			lane: bp_messages::LaneId,
 			begin: bp_messages::MessageNonce,
@@ -865,7 +849,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl drml_bridge_primitives::FromPangoroInboundLaneApi<Block> for Runtime {
+	impl bp_pangoro::FromPangoroInboundLaneApi<Block> for Runtime {
 		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
 			BridgePangoroMessages::inbound_latest_received_nonce(lane)
 		}

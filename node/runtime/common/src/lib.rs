@@ -43,9 +43,9 @@ use frame_system::limits::{BlockLength, BlockWeights};
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
 // --- darwinia-network ---
-use drml_common_primitives::BlockNumber;
+use drml_primitives::BlockNumber;
 
-pub type NegativeImbalance<T> = <darwinia_balances::Pallet<T, RingInstance> as Currency<
+pub type RingNegativeImbalance<T> = <darwinia_balances::Pallet<T, RingInstance> as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::NegativeImbalance;
 
@@ -73,6 +73,9 @@ const_assert!(NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO
 /// Maximum number of iterations for balancing that will be executed in the embedded miner of
 /// pallet-election-provider-multi-phase.
 pub const MINER_MAX_ITERATIONS: u32 = 10;
+
+// 726f6c69
+pub const PANGORO_PANGOLIN_LANE: [u8; 4] = *b"roli";
 
 frame_support::parameter_types! {
 	pub const BlockHashCountForPangolin: BlockNumber = 256;
