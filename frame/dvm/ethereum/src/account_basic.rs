@@ -46,6 +46,8 @@ pub trait RemainBalanceOp<T: Config, B> {
 	fn inc_remaining_balance(account_id: &T::AccountId, value: B);
 	/// Dec remaining balance
 	fn dec_remaining_balance(account_id: &T::AccountId, value: B);
+	/// Deposit dvm related transfer events
+	fn deposit_dvm_transfer_event(source: &T::AccountId, target: &T::AccountId, value: U256);
 }
 
 /// The Remaining *RING* balance.
@@ -76,6 +78,10 @@ impl<T: Config> RemainBalanceOp<T, RingBalance<T>> for RingRemainBalance {
 			<Self as RemainBalanceOp<T, RingBalance<T>>>::remaining_balance(account_id);
 		let updated_balance = remain_balance.saturating_sub(value);
 		<RemainingRingBalance<T>>::insert(account_id, updated_balance);
+	}
+	/// Deposit dvm transfer event
+	fn deposit_dvm_transfer_event(source: &T::AccountId, target: &T::AccountId, value: U256) {
+		Pallet::<T>::deposit_event(Event::DVMTransfer(source.clone(), target.clone(), value));
 	}
 }
 
@@ -108,6 +114,10 @@ impl<T: Config> RemainBalanceOp<T, KtonBalance<T>> for KtonRemainBalance {
 		let updated_balance = remain_balance.saturating_sub(value);
 		<RemainingKtonBalance<T>>::insert(account_id, updated_balance);
 	}
+	/// Deposit dvm transfer event
+	fn deposit_dvm_transfer_event(source: &T::AccountId, target: &T::AccountId, value: U256) {
+		Pallet::<T>::deposit_event(Event::KtonDVMTransfer(source.clone(), target.clone(), value));
+	}
 }
 
 /// The basic management of RING and KTON balance for dvm account.
@@ -139,7 +149,6 @@ where
 		source: &T::AccountId,
 		target: &T::AccountId,
 		value: U256,
-		has_event: bool,
 	) -> Result<(), ExitError> {
 		if value == U256::zero() || source == target {
 			return Ok(());
@@ -153,9 +162,7 @@ where
 		let new_target_balance = target_balance.saturating_add(value);
 		Self::mutate_account_balance(target, new_target_balance);
 
-		if has_event {
-			Pallet::<T>::deposit_event(Event::DVMTransfer(source.clone(), target.clone(), value));
-		}
+		RB::deposit_dvm_transfer_event(source, target, value);
 		Ok(())
 	}
 

@@ -487,7 +487,6 @@ pub trait AccountBasic<T: frame_system::Config> {
 		source: &T::AccountId,
 		target: &T::AccountId,
 		value: U256,
-		has_event: bool,
 	) -> Result<(), ExitError>;
 	/// Get account balance.
 	fn account_balance(account_id: &T::AccountId) -> U256;

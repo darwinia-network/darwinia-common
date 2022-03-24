@@ -67,7 +67,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				let wkton_account_id =
 					<T as darwinia_evm::Config>::IntoAccountId::into_account_id(wkton);
 				// Transfer kton from sender to KTON wrapped contract
-				T::KtonAccountBasic::transfer(&caller_account_id, &wkton_account_id, value, false)
+				T::KtonAccountBasic::transfer(&caller_account_id, &wkton_account_id, value)
 					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 				// Call WKTON wrapped contract deposit
 				let raw_input = make_call_data(caller, value)?;
@@ -92,13 +92,6 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 					}
 				}
 
-				<darwinia_ethereum::Pallet<T>>::deposit_event(
-					darwinia_ethereum::Event::KtonTransfer(
-						caller_account_id,
-						wkton_account_id,
-						value,
-					),
-				);
 				Ok(PrecompileOutput {
 					exit_status: ExitSucceed::Returned,
 					cost: 20000,
@@ -120,12 +113,8 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				);
 
 				let source = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(source);
-				T::KtonAccountBasic::transfer(&source, &to, value, false)
+				T::KtonAccountBasic::transfer(&source, &to, value)
 					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
-
-				<darwinia_ethereum::Pallet<T>>::deposit_event(
-					darwinia_ethereum::Event::KtonTransfer(source, to, value),
-				);
 
 				Ok(PrecompileOutput {
 					exit_status: ExitSucceed::Returned,
