@@ -250,7 +250,7 @@ frame_support::construct_runtime! {
 		TronBacking: to_tron_backing::{Pallet, Config<T>} = 39,
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
-		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event, Origin} = 41,
+		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event<T>, Origin} = 41,
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 59,
 		// DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Inherent} = 47,
 

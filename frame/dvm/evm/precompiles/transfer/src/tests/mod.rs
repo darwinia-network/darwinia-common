@@ -34,45 +34,5 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-
-#[cfg(test)]
-mod tests;
-
-pub mod kton;
-pub mod ring;
-pub mod util;
-
-// --- paritytech ---
-use fp_evm::{Context, Precompile, PrecompileResult};
-use sp_std::marker::PhantomData;
-// --- darwinia-network ---
-use darwinia_evm_precompile_utils::DvmInputParser;
-use kton::{Action, Kton};
-use ring::RingBack;
-
-/// Transfer Precompile Contract, used to support the exchange of KTON and RING transfer.
-pub enum Transfer<T> {
-	/// Transfer RING back from DVM to Darwinia
-	RingTransfer,
-	/// Transfer KTON between Darwinia and DVM contract
-	KtonTransfer,
-	_Impossible(PhantomData<T>),
-}
-impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
-	fn execute(
-		input: &[u8],
-		target_gas: Option<u64>,
-		context: &Context,
-		is_static: bool,
-	) -> PrecompileResult {
-		let dvm_parser = DvmInputParser::new(input)?;
-
-		match Action::from_u32(dvm_parser.selector) {
-			Ok(Action::TransferAndCall) | Ok(Action::Withdraw) => {
-				<Kton<T>>::transfer(&input, target_gas, context, is_static)
-			}
-			_ => <RingBack<T>>::transfer(&input, target_gas, context, is_static),
-		}
-	}
-}
+mod mock;
+mod test;

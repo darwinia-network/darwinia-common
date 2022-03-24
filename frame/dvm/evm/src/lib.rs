@@ -483,7 +483,8 @@ pub trait AccountBasic<T: frame_system::Config> {
 	/// Mutate the basic account.
 	fn mutate_account_basic_balance(address: &H160, new_balance: U256);
 	/// Transfer value.
-	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError>;
+	fn transfer(source: &T::AccountId, target: &T::AccountId, value: U256)
+		-> Result<(), ExitError>;
 	/// Get account balance.
 	fn account_balance(account_id: &T::AccountId) -> U256;
 	/// Mutate account balance.

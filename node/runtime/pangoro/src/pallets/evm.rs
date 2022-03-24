@@ -33,7 +33,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 pub struct PangoroPrecompiles<R>(PhantomData<R>);
 impl<R> PangoroPrecompiles<R>
 where
-	R: darwinia_evm::Config,
+	R: darwinia_ethereum::Config,
 {
 	pub fn new() -> Self {
 		Self(Default::default())
@@ -50,7 +50,7 @@ impl<R> PrecompileSet for PangoroPrecompiles<R>
 where
 	Transfer<R>: Precompile,
 	BscBridge<R>: Precompile,
-	R: darwinia_evm::Config,
+	R: darwinia_ethereum::Config,
 {
 	fn execute(
 		&self,

@@ -25,8 +25,10 @@ use rlp::RlpStream;
 use scale_info::TypeInfo;
 use sha3::{Digest, Keccak256};
 // --- paritytech ---
+use darwinia_ethereum::{EthereumBlockHashMapping, RawOrigin};
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
+	pallet_prelude::Weight,
 	traits::{Everything, FindAuthor, GenesisBuild},
 	ConsensusEngineId, PalletId,
 };
@@ -37,11 +39,16 @@ use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
+	transaction_validity::{TransactionValidity, TransactionValidityError},
 	AccountId32, Perbill, RuntimeDebug,
 };
-use sp_std::prelude::*;
+use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
-use crate::{self as darwinia_ethereum, account_basic::*, *};
+use crate::Transfer;
+use darwinia_ethereum::{
+	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
+	IntermediateStateRoot, Transaction,
+};
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
 use darwinia_support::evm::IntoAccountId;
 
@@ -167,7 +174,7 @@ where
 		Self(Default::default())
 	}
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4]
+		sp_std::vec![1, 2, 3, 4, 21]
 			.into_iter()
 			.map(|x| H160::from_low_u64_be(x))
 			.collect()
@@ -176,6 +183,7 @@ where
 
 impl<R> PrecompileSet for MockPrecompiles<R>
 where
+	Transfer<R>: Precompile,
 	R: darwinia_ethereum::Config,
 {
 	fn execute(
@@ -202,6 +210,10 @@ where
 			_ if address == to_address(4) => {
 				Some(Identity::execute(input, target_gas, context, is_static))
 			}
+			// Darwinia precompiles
+			_ if address == to_address(21) => Some(<Transfer<R>>::execute(
+				input, target_gas, context, is_static,
+			)),
 			_ => None,
 		}
 	}
@@ -295,8 +307,8 @@ impl fp_self_contained::SelfContainedCall for Call {
 	) -> Option<sp_runtime::DispatchResultWithInfo<sp_runtime::traits::PostDispatchInfoOf<Self>>> {
 		use sp_runtime::traits::Dispatchable as _;
 		match self {
-			call @ Call::Ethereum(crate::Call::transact { .. }) => {
-				Some(call.dispatch(Origin::from(crate::RawOrigin::EthereumTransaction(info))))
+			call @ Call::Ethereum(darwinia_ethereum::Call::transact { .. }) => {
+				Some(call.dispatch(Origin::from(RawOrigin::EthereumTransaction(info))))
 			}
 			_ => None,
 		}
@@ -369,107 +381,6 @@ impl LegacyUnsignedTransaction {
 	}
 }
 
-pub struct EIP2930UnsignedTransaction {
-	pub nonce: U256,
-	pub gas_price: U256,
-	pub gas_limit: U256,
-	pub action: TransactionAction,
-	pub value: U256,
-	pub input: Vec<u8>,
-}
-
-impl EIP2930UnsignedTransaction {
-	pub fn sign(&self, secret: &H256, chain_id: Option<u64>) -> Transaction {
-		let secret = {
-			let mut sk: [u8; 32] = [0u8; 32];
-			sk.copy_from_slice(&secret[0..]);
-			libsecp256k1::SecretKey::parse(&sk).unwrap()
-		};
-		let chain_id = chain_id.unwrap_or(ChainId::get());
-		let msg = ethereum::EIP2930TransactionMessage {
-			chain_id,
-			nonce: self.nonce,
-			gas_price: self.gas_price,
-			gas_limit: self.gas_limit,
-			action: self.action,
-			value: self.value,
-			input: self.input.clone(),
-			access_list: vec![],
-		};
-		let signing_message = libsecp256k1::Message::parse_slice(&msg.hash()[..]).unwrap();
-
-		let (signature, recid) = libsecp256k1::sign(&signing_message, &secret);
-		let rs = signature.serialize();
-		let r = H256::from_slice(&rs[0..32]);
-		let s = H256::from_slice(&rs[32..64]);
-		Transaction::EIP2930(ethereum::EIP2930Transaction {
-			chain_id: msg.chain_id,
-			nonce: msg.nonce,
-			gas_price: msg.gas_price,
-			gas_limit: msg.gas_limit,
-			action: msg.action,
-			value: msg.value,
-			input: msg.input.clone(),
-			access_list: msg.access_list,
-			odd_y_parity: recid.serialize() != 0,
-			r,
-			s,
-		})
-	}
-}
-
-pub struct EIP1559UnsignedTransaction {
-	pub nonce: U256,
-	pub max_priority_fee_per_gas: U256,
-	pub max_fee_per_gas: U256,
-	pub gas_limit: U256,
-	pub action: TransactionAction,
-	pub value: U256,
-	pub input: Vec<u8>,
-}
-
-impl EIP1559UnsignedTransaction {
-	pub fn sign(&self, secret: &H256, chain_id: Option<u64>) -> Transaction {
-		let secret = {
-			let mut sk: [u8; 32] = [0u8; 32];
-			sk.copy_from_slice(&secret[0..]);
-			libsecp256k1::SecretKey::parse(&sk).unwrap()
-		};
-		let chain_id = chain_id.unwrap_or(ChainId::get());
-		let msg = ethereum::EIP1559TransactionMessage {
-			chain_id,
-			nonce: self.nonce,
-			max_priority_fee_per_gas: self.max_priority_fee_per_gas,
-			max_fee_per_gas: self.max_fee_per_gas,
-			gas_limit: self.gas_limit,
-			action: self.action,
-			value: self.value,
-			input: self.input.clone(),
-			access_list: vec![],
-		};
-		let signing_message = libsecp256k1::Message::parse_slice(&msg.hash()[..]).unwrap();
-
-		let (signature, recid) = libsecp256k1::sign(&signing_message, &secret);
-		let rs = signature.serialize();
-		let r = H256::from_slice(&rs[0..32]);
-		let s = H256::from_slice(&rs[32..64]);
-		Transaction::EIP1559(ethereum::EIP1559Transaction {
-			chain_id: msg.chain_id,
-			nonce: msg.nonce,
-			max_priority_fee_per_gas: msg.max_priority_fee_per_gas,
-			max_fee_per_gas: msg.max_fee_per_gas,
-			gas_limit: msg.gas_limit,
-			action: msg.action,
-			value: msg.value,
-			input: msg.input.clone(),
-			access_list: msg.access_list,
-			odd_y_parity: recid.serialize() != 0,
-			r,
-			s,
-		})
-	}
-}
-
 fn address_build(seed: u8) -> AccountInfo {
 	let raw_private_key = [seed + 1; 32];
 	let secret_key = libsecp256k1::SecretKey::parse_slice(&raw_private_key).unwrap();
@@ -517,16 +428,5 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 	(pairs, ext.into())
 }
 
-pub fn contract_address(sender: H160, nonce: u64) -> H160 {
-	let mut rlp = RlpStream::new_list(2);
-	rlp.append(&sender);
-	rlp.append(&nonce);
-
-	H160::from_slice(&Keccak256::digest(&rlp.out())[12..])
-}
-
-pub fn storage_address(sender: H160, slot: H256) -> H256 {
-	H256::from_slice(&Keccak256::digest(
-		[&H256::from(sender)[..], &slot[..]].concat().as_slice(),
-	))
-}
+pub type RingAccount = <Test as darwinia_evm::Config>::RingAccountBasic;
+pub type KtonAccount = <Test as darwinia_evm::Config>::KtonAccountBasic;

@@ -176,7 +176,7 @@ frame_support::construct_runtime!(
 		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 25,
-		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event, Origin} = 26,
+		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event<T>, Origin} = 26,
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 31,
 
 		Bsc: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,

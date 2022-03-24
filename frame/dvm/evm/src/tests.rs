@@ -160,14 +160,22 @@ impl<T: Config> AccountBasic<T> for MockAccountBasic<T> {
 		let account_id = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(*address);
 		Self::mutate_account_balance(&account_id, new_balance)
 	}
-	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError> {
-		let source_account = Self::account_basic(source);
-		let new_source_balance = source_account.balance.saturating_sub(value);
-		Self::mutate_account_basic_balance(source, new_source_balance);
+	fn transfer(
+		source: &T::AccountId,
+		target: &T::AccountId,
+		value: U256,
+	) -> Result<(), ExitError> {
+		if value == U256::zero() || source == target {
+			return Ok(());
+		}
+		let source_balance = Self::account_balance(source);
+		let new_source_balance = source_balance.saturating_sub(value);
+		Self::mutate_account_balance(source, new_source_balance);
 
-		let target_account = Self::account_basic(target);
-		let new_target_balance = target_account.balance.saturating_add(value);
-		Self::mutate_account_basic_balance(target, new_target_balance);
+		let target_balance = Self::account_balance(target);
+		let new_target_balance = target_balance.saturating_add(value);
+		Self::mutate_account_balance(target, new_target_balance);
+
 		Ok(())
 	}
 	fn account_balance(account_id: &T::AccountId) -> U256 {

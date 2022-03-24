@@ -46,6 +46,8 @@ pub trait RemainBalanceOp<T: Config, B> {
 	fn inc_remaining_balance(account_id: &T::AccountId, value: B);
 	/// Dec remaining balance
 	fn dec_remaining_balance(account_id: &T::AccountId, value: B);
+	/// Deposit dvm related transfer events
+	fn deposit_dvm_transfer_event(source: &T::AccountId, target: &T::AccountId, value: U256);
 }
 
 /// The Remaining *RING* balance.
@@ -76,6 +78,10 @@ impl<T: Config> RemainBalanceOp<T, RingBalance<T>> for RingRemainBalance {
 			<Self as RemainBalanceOp<T, RingBalance<T>>>::remaining_balance(account_id);
 		let updated_balance = remain_balance.saturating_sub(value);
 		<RemainingRingBalance<T>>::insert(account_id, updated_balance);
+	}
+	/// Deposit dvm transfer event
+	fn deposit_dvm_transfer_event(source: &T::AccountId, target: &T::AccountId, value: U256) {
+		Pallet::<T>::deposit_event(Event::DVMTransfer(source.clone(), target.clone(), value));
 	}
 }
 
@@ -108,6 +114,14 @@ impl<T: Config> RemainBalanceOp<T, KtonBalance<T>> for KtonRemainBalance {
 		let updated_balance = remain_balance.saturating_sub(value);
 		<RemainingKtonBalance<T>>::insert(account_id, updated_balance);
 	}
+	/// Deposit dvm transfer event
+	fn deposit_dvm_transfer_event(source: &T::AccountId, target: &T::AccountId, value: U256) {
+		Pallet::<T>::deposit_event(Event::KtonDVMTransfer(
+			source.clone(),
+			target.clone(),
+			value,
+		));
+	}
 }
 
 /// The basic management of RING and KTON balance for dvm account.
@@ -135,16 +149,24 @@ where
 	}
 
 	/// Transfer value.
-	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError> {
-		let source_account = Self::account_basic(source);
-		ensure!(source_account.balance >= value, ExitError::OutOfGas);
-		let new_source_balance = source_account.balance.saturating_sub(value);
-		Self::mutate_account_basic_balance(source, new_source_balance);
+	fn transfer(
+		source: &T::AccountId,
+		target: &T::AccountId,
+		value: U256,
+	) -> Result<(), ExitError> {
+		if value == U256::zero() || source == target {
+			return Ok(());
+		}
+		let source_balance = Self::account_balance(source);
+		ensure!(source_balance >= value, ExitError::OutOfFund);
+		let new_source_balance = source_balance.saturating_sub(value);
+		Self::mutate_account_balance(source, new_source_balance);
 
-		let target_account = Self::account_basic(target);
-		let new_target_balance = target_account.balance.saturating_add(value);
-		Self::mutate_account_basic_balance(target, new_target_balance);
-		Pallet::<T>::deposit_event(Event::DVMTransfer(*source, *target, value));
+		let target_balance = Self::account_balance(target);
+		let new_target_balance = target_balance.saturating_add(value);
+		Self::mutate_account_balance(target, new_target_balance);
+
+		RB::deposit_dvm_transfer_event(source, target, value);
 		Ok(())
 	}
 
