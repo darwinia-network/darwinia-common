@@ -41,13 +41,13 @@ pub mod ring;
 pub mod util;
 
 // --- paritytech ---
-use fp_evm::{Context, ExitError, Precompile, PrecompileResult};
+use fp_evm::{Context, Precompile, PrecompileResult};
 use sp_std::marker::PhantomData;
 // --- darwinia-network ---
 use darwinia_evm::Config;
-use darwinia_evm_precompile_utils::custom_precompile_err;
-use darwinia_support::{evm::SELECTOR, AccountId};
-use kton::Kton;
+use darwinia_evm_precompile_utils::DvmInputParser;
+// use darwinia_support::AccountId;
+use kton::{Action, Kton};
 use ring::RingBack;
 
 /// Transfer Precompile Contract, used to support the exchange of KTON and RING transfer.
@@ -63,25 +63,15 @@ impl<T: Config> Precompile for Transfer<T> {
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
-		_is_static: bool,
+		is_static: bool,
 	) -> PrecompileResult {
-		match which_transfer::<T>(&input) {
-			Ok(Transfer::RingTransfer) => <RingBack<T>>::transfer(&input, target_gas, context),
-			Ok(Transfer::KtonTransfer) => <Kton<T>>::transfer(&input, target_gas, context),
-			_ => Err(custom_precompile_err("Invalid action")),
+		let dvm_parser = DvmInputParser::new(input)?;
+
+		match Action::from_u32(dvm_parser.selector) {
+			Ok(Action::TransferAndCall) | Ok(Action::Withdraw) => {
+				<Kton<T>>::transfer(&input, target_gas, context, is_static)
+			}
+			_ => <RingBack<T>>::transfer(&input, target_gas, context, is_static),
 		}
 	}
-}
-
-/// There are two types of transfers: RING transfer and KTON transfer
-///
-/// The RingBack has only one action, while KtonTransfer has two: `transfer and call`, `withdraw`.
-fn which_transfer<T: Config>(data: &[u8]) -> Result<Transfer<T>, ExitError> {
-	if data.len() < SELECTOR {
-		return Err(ExitError::Other("Invalid input data！".into()));
-	}
-	if kton::is_kton_transfer(data) {
-		return Ok(Transfer::KtonTransfer);
-	}
-	Ok(Transfer::RingTransfer)
 }

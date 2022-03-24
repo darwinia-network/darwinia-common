@@ -19,11 +19,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use darwinia_evm_precompile_utils_macro::selector;
+pub use ethabi::StateMutability;
 
 // --- darwinia-network ---
 use darwinia_support::evm::SELECTOR;
 // --- paritytech ---
-use fp_evm::{ExitError, PrecompileFailure};
+use fp_evm::{Context, ExitError, PrecompileFailure};
+use sp_core::U256;
 
 #[derive(Clone, Copy, Debug)]
 pub struct DvmInputParser<'a> {
@@ -53,4 +55,24 @@ pub fn custom_precompile_err(err_msg: &'static str) -> PrecompileFailure {
 	PrecompileFailure::Error {
 		exit_status: ExitError::Other(err_msg.into()),
 	}
+}
+
+/// Check that a function call is compatible with the context it is
+/// called into.
+pub fn check_state_modifier(
+	context: &Context,
+	is_static: bool,
+	modifier: StateMutability,
+) -> Result<(), PrecompileFailure> {
+	if is_static && modifier != StateMutability::View {
+		return Err(custom_precompile_err(
+			"can't call non-static function in static context",
+		));
+	}
+
+	if modifier != StateMutability::Payable && context.apparent_value > U256::zero() {
+		return Err(custom_precompile_err("function is not payable"));
+	}
+
+	Ok(())
 }
