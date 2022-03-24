@@ -142,6 +142,9 @@ pub use bridge_dispatch::*;
 pub mod bridge_grandpa;
 pub use bridge_grandpa::*;
 
+pub mod bridge_parachains;
+pub use bridge_parachains::*;
+
 pub mod fee_market;
 pub use fee_market::*;
 
@@ -149,11 +152,4 @@ pub mod transaction_pause;
 pub use transaction_pause::*;
 
 pub mod from_substrate_issuing_;
-
-pub mod bridge_rococo_grandpa;
-pub use bridge_rococo_grandpa::*;
-
 pub use from_substrate_issuing_::*;
-
-pub mod bridge_pangolin_parachain;
-pub use bridge_pangolin_parachain::*;

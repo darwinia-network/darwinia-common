@@ -66,6 +66,7 @@ bp-message-dispatch                        = { default-features = false, git = "
 bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 bp-pangolin                                = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 bp-pangoro                                 = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
+bp-rococo                                  = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 bridge-runtime-common                      = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 frame-benchmarking                         = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -187,6 +188,7 @@ std = [
 	"bp-messages/std",
 	"bp-pangolin/std",
 	"bp-pangoro/std",
+	"bp-rococo/std",
 	"bp-runtime/std",
 	"bridge-runtime-common/std",
 	"frame-benchmarking/std",
