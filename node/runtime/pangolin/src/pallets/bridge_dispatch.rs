@@ -2,12 +2,12 @@ pub use pallet_bridge_dispatch::Instance1 as WithPangoroDispatch;
 
 // --- paritytech ---
 use bp_messages::{LaneId, MessageNonce};
+use bp_pangolin::AccountIdConverter;
 use frame_support::traits::Contains;
 use pallet_bridge_dispatch::Config;
-use pangoro_primitives::AccountId;
 // --- darwinia-network ---
 use crate::{pangoro_messages::FromPangoroEncodedCall, *};
-use drml_bridge_primitives::AccountIdConverter;
+use pangoro_primitives::AccountId;
 
 pub struct S2sCallFilter;
 impl Contains<Call> for S2sCallFilter {

@@ -28,11 +28,11 @@ pub use wasm::*;
 pub mod pangolin_messages;
 use pangolin_messages::{ToPangolinMessagePayload, WithPangolinMessageBridge};
 
-pub use drml_common_primitives as pangoro_primitives;
-pub use drml_common_primitives as pangolin_primitives;
+pub use drml_primitives as pangoro_primitives;
+pub use drml_primitives as pangolin_primitives;
 
-pub use common_runtime as pangoro_runtime_system_params;
-pub use common_runtime as pangolin_runtime_system_params;
+pub use drml_common_runtime as pangoro_runtime_system_params;
+pub use drml_common_runtime as pangolin_runtime_system_params;
 
 pub use darwinia_balances::Call as BalancesCall;
 pub use darwinia_fee_market::Call as FeeMarketCall;
@@ -44,6 +44,7 @@ pub use pallet_sudo::Call as SudoCall;
 // --- crates.io ---
 use codec::Encode;
 // --- paritytech ---
+use bp_runtime::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use fp_storage::{EthereumStorageSchema, PALLET_ETHEREUM_SCHEMA};
 #[allow(unused)]
 use frame_support::{log, migration};
@@ -69,18 +70,16 @@ use sp_runtime::{
 		Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
-	ApplyExtrinsicResult, MultiAddress, SaturatedConversion,
+	ApplyExtrinsicResult, SaturatedConversion,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
-use common_runtime::*;
-use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
-use drml_common_primitives::*;
+use drml_common_runtime::*;
+use drml_primitives::*;
 
-pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 pub type SignedBlock = generic::SignedBlock<Block>;
 pub type SignedExtra = (
@@ -112,7 +111,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangoro"),
 	impl_name: sp_runtime::create_runtime_str!("Pangoro"),
 	authoring_version: 0,
-	spec_version: 2_8_05_0,
+	spec_version: 2_8_06_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -177,7 +176,7 @@ frame_support::construct_runtime!(
 		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 25,
-		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, Origin} = 26,
+		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event, Origin} = 26,
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 31,
 
 		Bsc: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
@@ -276,8 +275,8 @@ impl fp_self_contained::SelfContainedCall for Call {
 		info: Self::SignedInfo,
 	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 		match self {
-			call @ Call::Ethereum(dvm_ethereum::Call::transact { .. }) => Some(call.dispatch(
-				Origin::from(dvm_ethereum::RawOrigin::EthereumTransaction(info)),
+			call @ Call::Ethereum(darwinia_ethereum::Call::transact { .. }) => Some(call.dispatch(
+				Origin::from(darwinia_ethereum::RawOrigin::EthereumTransaction(info)),
 			)),
 			_ => None,
 		}
@@ -617,17 +616,17 @@ sp_api::impl_runtime_apis! {
 			Ethereum::current_transaction_statuses()
 		}
 
-		fn current_block() -> Option<dvm_ethereum::Block> {
+		fn current_block() -> Option<darwinia_ethereum::Block> {
 			Ethereum::current_block()
 		}
 
-		fn current_receipts() -> Option<Vec<dvm_ethereum::Receipt>> {
+		fn current_receipts() -> Option<Vec<darwinia_ethereum::Receipt>> {
 			Ethereum::current_receipts()
 		}
 
 		fn current_all() -> (
-			Option<dvm_ethereum::Block>,
-			Option<Vec<dvm_ethereum::Receipt>>,
+			Option<darwinia_ethereum::Block>,
+			Option<Vec<darwinia_ethereum::Receipt>>,
 			Option<Vec<fp_rpc::TransactionStatus>>
 		) {
 			(
@@ -639,9 +638,9 @@ sp_api::impl_runtime_apis! {
 
 		fn extrinsic_filter(
 			xts: Vec<<Block as BlockT>::Extrinsic>,
-		) -> Vec<dvm_ethereum::Transaction> {
+		) -> Vec<darwinia_ethereum::Transaction> {
 			xts.into_iter().filter_map(|xt| match xt.0.function {
-				Call::Ethereum(dvm_ethereum::Call::transact { transaction }) => Some(transaction),
+				Call::Ethereum(darwinia_ethereum::Call::transact { transaction }) => Some(transaction),
 				_ => None
 			}).collect()
 		}
@@ -652,9 +651,9 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
-		fn convert_transaction(transaction: dvm_ethereum::Transaction) -> <Block as BlockT>::Extrinsic {
+		fn convert_transaction(transaction: darwinia_ethereum::Transaction) -> <Block as BlockT>::Extrinsic {
 			UncheckedExtrinsic::new_unsigned(
-				dvm_ethereum::Call::<Runtime>::transact { transaction }.into(),
+				darwinia_ethereum::Call::<Runtime>::transact { transaction }.into(),
 			)
 		}
 	}
@@ -662,7 +661,7 @@ sp_api::impl_runtime_apis! {
 	impl dp_evm_trace_apis::DebugRuntimeApi<Block> for Runtime {
 		fn trace_transaction(
 			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
-			_traced_transaction: &dvm_ethereum::Transaction,
+			_traced_transaction: &darwinia_ethereum::Transaction,
 		) -> Result<
 			(),
 			sp_runtime::DispatchError,
@@ -670,7 +669,7 @@ sp_api::impl_runtime_apis! {
 			#[cfg(feature = "evm-tracing")]
 			{
 				use dp_evm_tracer::tracer::EvmTracer;
-				use dvm_ethereum::Call::transact;
+				use darwinia_ethereum::Call::transact;
 				// Apply the a subset of extrinsics: all the substrate-specific or ethereum
 				// transactions that preceded the requested transaction.
 				for ext in _extrinsics.into_iter() {
@@ -706,8 +705,7 @@ sp_api::impl_runtime_apis! {
 			#[cfg(feature = "evm-tracing")]
 			{
 				use dp_evm_tracer::tracer::EvmTracer;
-				use sha3::{Digest, Keccak256};
-				use dvm_ethereum::Call::transact;
+				use darwinia_ethereum::Call::transact;
 
 				let mut config = <Runtime as darwinia_evm::Config>::config().clone();
 				config.estimate = true;
@@ -716,9 +714,7 @@ sp_api::impl_runtime_apis! {
 				for ext in _extrinsics.into_iter() {
 					match &ext.0.function {
 						Call::Ethereum(transact { transaction }) => {
-							let eth_extrinsic_hash =
-								H256::from_slice(Keccak256::digest(&rlp::encode(transaction)).as_slice());
-							if _known_transactions.contains(&eth_extrinsic_hash) {
+							if _known_transactions.contains(&transaction.hash()) {
 								// Each known extrinsic is a new call stack.
 								EvmTracer::emit_new();
 								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
@@ -741,28 +737,14 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl drml_bridge_primitives::PangolinFinalityApi<Block> for Runtime {
+	impl bp_pangolin::PangolinFinalityApi<Block> for Runtime {
 		fn best_finalized() -> (pangolin_primitives::BlockNumber, pangolin_primitives::Hash) {
 			let header = BridgePangolinGrandpa::best_finalized();
 			(header.number, header.hash())
 		}
-
-		fn is_known_header(hash: pangolin_primitives::Hash) -> bool {
-			BridgePangolinGrandpa::is_known_header(hash)
-		}
 	}
 
-	impl drml_bridge_primitives::ToPangolinOutboundLaneApi<Block, Balance, ToPangolinMessagePayload> for Runtime {
-		// fn estimate_message_delivery_and_dispatch_fee(
-		// 	_lane_id: bp_messages::LaneId,
-		// 	payload: ToPangolinMessagePayload,
-		// ) -> Option<Balance> {
-		// 	bridge_runtime_common::messages::source::estimate_message_dispatch_and_delivery_fee::<WithPangolinMessageBridge>(
-		// 		&payload,
-		// 		WithPangolinMessageBridge::RELAYER_FEE_PERCENT,
-		// 	).ok()
-		// }
-
+	impl bp_pangolin::ToPangolinOutboundLaneApi<Block, Balance, ToPangolinMessagePayload> for Runtime {
 		fn message_details(
 			lane: bp_messages::LaneId,
 			begin: bp_messages::MessageNonce,
@@ -784,7 +766,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl drml_bridge_primitives::FromPangolinInboundLaneApi<Block> for Runtime {
+	impl bp_pangolin::FromPangolinInboundLaneApi<Block> for Runtime {
 		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
 			BridgePangolinMessages::inbound_latest_received_nonce(lane)
 		}

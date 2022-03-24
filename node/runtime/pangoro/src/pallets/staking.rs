@@ -4,7 +4,7 @@ use sp_npos_elections::NposSolution;
 use sp_staking::SessionIndex;
 // --- darwinia-network ---
 use crate::*;
-use darwinia_staking::{Config, EraIndex};
+use darwinia_staking::{Config, EraIndex, UseNominatorsMap};
 
 pub const MAX_NOMINATIONS: u32 = <NposCompactSolution16 as NposSolution>::LIMIT as u32;
 
@@ -38,7 +38,7 @@ impl Config for Runtime {
 	type GenesisElectionProvider = GenesisElectionOf<Self>;
 	// Use the nominator map to iter voter AND no-ops for all SortedListProvider hooks. The migration
 	// to bags-list is a no-op, but the storage version will be updated.
-	type SortedListProvider = darwinia_staking::UseNominatorsMap<Self>;
+	type SortedListProvider = UseNominatorsMap<Self>;
 	type RingCurrency = Ring;
 	type RingRewardRemainder = ();
 	// send the slashed funds to the treasury.

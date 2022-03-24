@@ -20,20 +20,16 @@
 
 // --- std ---
 use std::sync::Arc;
-// --- paritytech ---
-use sc_executor::NativeExecutionDispatch;
-use sc_service::{Configuration, Error as ServiceError, RpcHandlers, TaskManager};
 // --- darwinia-network ---
 use crate::{
 	client::DrmlClient,
-	service::{self, FullBackend},
+	service::{self, *},
 };
-use drml_common_primitives::OpaqueBlock as Block;
-use drml_rpc::RpcConfig;
+use drml_primitives::OpaqueBlock as Block;
 use pangoro_runtime::RuntimeApi;
 
 pub struct Executor;
-impl NativeExecutionDispatch for Executor {
+impl sc_executor::NativeExecutionDispatch for Executor {
 	type ExtendHostFunctions = (
 		frame_benchmarking::benchmarking::HostFunctions,
 		dp_evm_trace_ext::dvm_ext::HostFunctions,
@@ -51,27 +47,19 @@ impl NativeExecutionDispatch for Executor {
 /// Create a new Pangoro service for a full node.
 #[cfg(feature = "full-node")]
 pub fn new_full(
-	config: Configuration,
+	config: sc_service::Configuration,
 	authority_discovery_disabled: bool,
-	rpc_config: RpcConfig,
-) -> Result<
-	(
-		TaskManager,
-		Arc<impl DrmlClient<Block, FullBackend, RuntimeApi>>,
-		RpcHandlers,
-	),
-	ServiceError,
-> {
+	eth_rpc_config: drml_rpc::EthRpcConfig,
+) -> ServiceResult<(
+	sc_service::TaskManager,
+	Arc<impl DrmlClient<Block, FullBackend, RuntimeApi>>,
+	sc_service::RpcHandlers,
+)> {
 	let (components, client, rpc_handlers) = service::new_full::<RuntimeApi, Executor>(
 		config,
 		authority_discovery_disabled,
-		rpc_config,
+		eth_rpc_config,
 	)?;
 
 	Ok((components, client, rpc_handlers))
-}
-
-/// Create a new Pangoro service for a light client.
-pub fn new_light(config: Configuration) -> Result<(TaskManager, RpcHandlers), ServiceError> {
-	service::new_light::<RuntimeApi, Executor>(config)
 }

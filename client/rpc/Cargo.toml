@@ -1,0 +1,46 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Ethereum RPC (web3) compatibility layer for Darwinia."
+edition     = "2021"
+homepage    = "https://darwinia.network"
+license     = "GPL-3.0"
+name        = "darwinia-client-rpc"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common"
+version     = "2.8.6"
+
+[dependencies]
+# crates.io
+codec               = { package = "parity-scale-codec", version = "2.3" }
+ethereum            = { version = "0.11.1", features = ["with-codec"] }
+ethereum-types      = { version = "0.12" }
+futures             = { version = "0.3" }
+hex-literal         = { version = "0.3.4" }
+jsonrpc-core        = { version = "18.0" }
+jsonrpc-core-client = { version = "18.0" }
+jsonrpc-derive      = { version = "18.0" }
+jsonrpc-pubsub      = { version = "18.0" }
+tokio               = { version = "1.15" }
+tracing             = { version = "0.1" }
+# darwinia-network
+darwinia-client-evm-tracer = { path = "../evm-tracer" }
+darwinia-client-rpc-core   = { path = "../rpc-core" }
+dp-evm-trace-apis          = { path = "../../primitives/evm-trace/apis" }
+dp-evm-trace-rpc           = { path = "../../primitives/evm-trace/rpc" }
+# paritytech
+sc-client-api    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sc-utils         = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-api           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-block-builder = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-blockchain    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-io            = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-runtime       = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+# frontier
+fc-db       = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fc-rpc      = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev", features = ["rpc_binary_search_estimate"] }
+fc-rpc-core = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fp-rpc      = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fp-storage  = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+
+[features]
+rpc_binary_search_estimate = []

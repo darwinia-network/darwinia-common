@@ -1205,12 +1205,12 @@ pub mod pallet {
 			let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
 			let mut ledger = Self::clear_mature_deposits(ledger).0;
 			let StakingLedger {
-				active_ring,
+				active,
 				active_deposit_ring,
 				deposit_items,
 				..
 			} = &mut ledger;
-			let value = value.min(active_ring.saturating_sub(*active_deposit_ring));
+			let value = value.min(active.saturating_sub(*active_deposit_ring));
 
 			if value.is_zero() {
 				return Ok(());
@@ -1261,7 +1261,7 @@ pub mod pallet {
 			.0;
 			let StakingLedger {
 				stash,
-				active_ring,
+				active,
 				active_deposit_ring,
 				active_kton,
 				ring_staking_lock,
@@ -1291,21 +1291,21 @@ pub mod pallet {
 			match value {
 				StakingBalance::RingBalance(r) => {
 					// Only active normal ring can be unbond:
-					// `active_ring = active_normal_ring + active_deposit_ring`
-					let active_normal_ring = *active_ring - *active_deposit_ring;
+					// `active = active_normal_ring + active_deposit_ring`
+					let active_normal_ring = *active - *active_deposit_ring;
 					unbond_ring = r.min(active_normal_ring);
 
 					if !unbond_ring.is_zero() {
-						*active_ring -= unbond_ring;
+						*active -= unbond_ring;
 
 						// Avoid there being a dust balance left in the staking system.
-						if (*active_ring < T::RingCurrency::minimum_balance())
+						if (*active < T::RingCurrency::minimum_balance())
 							&& (*active_kton < T::KtonCurrency::minimum_balance())
 						{
-							unbond_ring += *active_ring;
+							unbond_ring += *active;
 							unbond_kton += *active_kton;
 
-							*active_ring = Zero::zero();
+							*active = Zero::zero();
 							*active_kton = Zero::zero();
 						}
 
@@ -1319,10 +1319,7 @@ pub mod pallet {
 
 						// Make sure that the user maintains enough active bond for their role.
 						// If a user runs into this error, they should chill first.
-						ensure!(
-							*active_ring >= min_active_bond,
-							<Error<T>>::InsufficientBond
-						);
+						ensure!(*active >= min_active_bond, <Error<T>>::InsufficientBond);
 
 						ring_staking_lock
 							.unbondings
@@ -1355,13 +1352,13 @@ pub mod pallet {
 
 						// Avoid there being a dust balance left in the staking system.
 						if (*active_kton < T::KtonCurrency::minimum_balance())
-							&& (*active_ring < T::RingCurrency::minimum_balance())
+							&& (*active < T::RingCurrency::minimum_balance())
 						{
 							unbond_kton += *active_kton;
-							unbond_ring += *active_ring;
+							unbond_ring += *active;
 
 							*active_kton = Zero::zero();
-							*active_ring = Zero::zero();
+							*active = Zero::zero();
 						}
 
 						kton_staking_lock
@@ -1399,13 +1396,13 @@ pub mod pallet {
 			// TODO: https://github.com/darwinia-network/darwinia-common/issues/96
 			// FIXME: https://github.com/darwinia-network/darwinia-common/issues/121
 			// let StakingLedger {
-			// 	active_ring,
+			// 	active,
 			// 	active_kton,
 			// 	..
 			// } = ledger;
 
 			// // All bonded *RING* and *KTON* is withdrawing, then remove Ledger to save storage
-			// if active_ring.is_zero() && active_kton.is_zero() {
+			// if active.is_zero() && active_kton.is_zero() {
 			// 	//
 			// 	// `OnKilledAccount` would be a method to collect the locks.
 			// 	//
@@ -1563,7 +1560,7 @@ pub mod pallet {
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
 
 			ensure!(
-				ledger.active_ring >= <MinValidatorBond<T>>::get(),
+				ledger.active >= <MinValidatorBond<T>>::get(),
 				<Error<T>>::InsufficientBond
 			);
 
@@ -1606,7 +1603,7 @@ pub mod pallet {
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
 
 			ensure!(
-				ledger.active_ring >= <MinNominatorBond<T>>::get(),
+				ledger.active >= <MinNominatorBond<T>>::get(),
 				<Error<T>>::InsufficientBond
 			);
 
@@ -2038,7 +2035,7 @@ pub mod pallet {
 
 			// Last check: the new active amount of ledger must be more than ED.
 			ensure!(
-				ledger.active_ring >= T::RingCurrency::minimum_balance()
+				ledger.active >= T::RingCurrency::minimum_balance()
 					|| ledger.active_kton >= T::KtonCurrency::minimum_balance(),
 				<Error<T>>::InsufficientBond
 			);
@@ -2292,7 +2289,7 @@ pub mod pallet {
 				};
 
 				ensure!(
-					ledger.active_ring < min_active_bond,
+					ledger.active < min_active_bond,
 					<Error<T>>::CannotChillOther
 				);
 			}

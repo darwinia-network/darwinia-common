@@ -38,7 +38,7 @@ impl<T: Config> Pallet<T> {
 		mut ledger: StakingLedgerT<T>,
 	) -> Result<(TsInMs, TsInMs), DispatchError> {
 		let StakingLedger {
-			active_ring,
+			active,
 			active_deposit_ring,
 			deposit_items,
 			active_kton,
@@ -48,11 +48,11 @@ impl<T: Config> Pallet<T> {
 		let start_time = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 		let mut expire_time = start_time;
 
-		*active_ring = active_ring.saturating_add(value);
+		*active = active.saturating_add(value);
 
 		// Last check: the new active amount of ledger must be more than ED.
 		ensure!(
-			*active_ring >= T::RingCurrency::minimum_balance()
+			*active >= T::RingCurrency::minimum_balance()
 				|| *active_kton >= T::KtonCurrency::minimum_balance(),
 			<Error<T>>::InsufficientBond
 		);
@@ -89,7 +89,7 @@ impl<T: Config> Pallet<T> {
 
 		// Last check: the new active amount of ledger must be more than ED.
 		ensure!(
-			ledger.active_ring >= T::RingCurrency::minimum_balance()
+			ledger.active >= T::RingCurrency::minimum_balance()
 				|| ledger.active_kton >= T::KtonCurrency::minimum_balance(),
 			<Error<T>>::InsufficientBond
 		);
@@ -145,11 +145,11 @@ impl<T: Config> Pallet<T> {
 			.and_then(Self::ledger)
 			.map(|l| {
 				// dbg!(Self::currency_to_power::<_>(
-				// 	l.active_ring,
+				// 	l.active,
 				// 	Self::ring_pool()
 				// ));
 
-				Self::currency_to_power::<_>(l.active_ring, Self::ring_pool())
+				Self::currency_to_power::<_>(l.active, Self::ring_pool())
 					+ Self::currency_to_power::<_>(l.active_kton, Self::kton_pool())
 			})
 			.unwrap_or_default()
@@ -167,7 +167,7 @@ impl<T: Config> Pallet<T> {
 		// Weight note: consider making the stake accessible through stash.
 		Self::bonded(who)
 			.and_then(Self::ledger)
-			.map(|l| (l.active_ring, l.active_kton))
+			.map(|l| (l.active, l.active_kton))
 			.unwrap_or_default()
 	}
 
@@ -335,23 +335,23 @@ impl<T: Config> Pallet<T> {
 	/// 	DO NOT modify the locks' staking amount outside this function.
 	pub fn update_ledger(controller: &AccountId<T>, ledger: &mut StakingLedgerT<T>) {
 		let StakingLedger {
-			active_ring,
+			active,
 			active_kton,
 			ring_staking_lock,
 			kton_staking_lock,
 			..
 		} = ledger;
 
-		if *active_ring != ring_staking_lock.staking_amount {
+		if *active != ring_staking_lock.staking_amount {
 			let origin_active_ring = ring_staking_lock.staking_amount;
 
-			ring_staking_lock.staking_amount = *active_ring;
+			ring_staking_lock.staking_amount = *active;
 
 			<RingPool<T>>::mutate(|pool| {
-				if origin_active_ring > *active_ring {
-					*pool = pool.saturating_sub(origin_active_ring - *active_ring);
+				if origin_active_ring > *active {
+					*pool = pool.saturating_sub(origin_active_ring - *active);
 				} else {
-					*pool = pool.saturating_add(*active_ring - origin_active_ring);
+					*pool = pool.saturating_add(*active - origin_active_ring);
 				}
 			});
 
@@ -415,7 +415,7 @@ impl<T: Config> Pallet<T> {
 					let r = T::RingCurrency::deposit_into_existing(stash, amount).ok();
 
 					if r.is_some() {
-						l.active_ring += amount;
+						l.active += amount;
 
 						Self::update_ledger(&c, &mut l);
 					}
@@ -1199,7 +1199,7 @@ impl<T: Config> ElectionDataProvider<AccountId<T>, BlockNumberFor<T>> for Pallet
 			voter.clone(),
 			StakingLedger {
 				stash: voter.clone(),
-				active_ring: stake,
+				active: stake,
 				ring_staking_lock: StakingLock {
 					staking_amount: stake,
 					..Default::default()
@@ -1225,7 +1225,7 @@ impl<T: Config> ElectionDataProvider<AccountId<T>, BlockNumberFor<T>> for Pallet
 			target.clone(),
 			StakingLedger {
 				stash: target.clone(),
-				active_ring: stake,
+				active: stake,
 				ring_staking_lock: StakingLock {
 					staking_amount: stake,
 					..Default::default()
@@ -1537,13 +1537,13 @@ impl<T: Config> OnDepositRedeem<AccountId<T>, RingBalance<T>> for Pallet<T> {
 			T::RingCurrency::transfer(&backing, &stash, amount, ExistenceRequirement::KeepAlive)?;
 
 			let StakingLedger {
-				active_ring,
+				active,
 				active_deposit_ring,
 				deposit_items,
 				..
 			} = &mut ledger;
 
-			*active_ring = active_ring.saturating_add(amount);
+			*active = active.saturating_add(amount);
 			*active_deposit_ring = active_deposit_ring.saturating_add(amount);
 			deposit_items.push(TimeDepositItem {
 				value: amount,
@@ -1574,7 +1574,7 @@ impl<T: Config> OnDepositRedeem<AccountId<T>, RingBalance<T>> for Pallet<T> {
 
 			let mut ledger = StakingLedger {
 				stash: stash.clone(),
-				active_ring: amount,
+				active: amount,
 				active_deposit_ring: amount,
 				deposit_items: vec![TimeDepositItem {
 					value: amount,

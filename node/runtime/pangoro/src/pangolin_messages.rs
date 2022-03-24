@@ -10,7 +10,10 @@ use bp_messages::{
 	target_chain::{ProvedMessages, SourceHeaderChain},
 	InboundLaneData, LaneId, Message, MessageNonce, Parameter as MessagesParameter,
 };
-use bp_runtime::{messages::DispatchFeePayment, Chain, ChainId};
+use bp_pangoro::WITH_PANGORO_MESSAGES_PALLET_NAME;
+use bp_runtime::{
+	messages::DispatchFeePayment, Chain, ChainId, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID,
+};
 use bridge_runtime_common::messages::{
 	self,
 	source::{self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload},
@@ -31,10 +34,6 @@ use sp_std::{convert::TryFrom, ops::RangeInclusive};
 use crate::*;
 pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
 use dp_s2s::{CallParams, CreatePayload};
-use drml_bridge_primitives::{
-	FromThisChainMessageVerifier, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID, PANGORO_PANGOLIN_LANE,
-	WITH_PANGORO_MESSAGES_PALLET_NAME,
-};
 
 /// Message payload for Pangoro -> Pangolin messages.
 pub type ToPangolinMessagePayload = FromThisChainMessagePayload<WithPangolinMessageBridge>;
@@ -153,18 +152,17 @@ impl messages::ThisChainWithMessages for Pangoro {
 	fn estimate_delivery_confirmation_transaction() -> MessageTransaction<Weight> {
 		let inbound_data_size =
 			InboundLaneData::<pangoro_primitives::AccountId>::encoded_size_hint(
-				drml_bridge_primitives::MAXIMAL_ENCODED_ACCOUNT_ID_SIZE,
+				bp_pangolin::MAXIMAL_ENCODED_ACCOUNT_ID_SIZE,
 				1,
 				1,
 			)
 			.unwrap_or(u32::MAX);
 
 		MessageTransaction {
-			dispatch_weight:
-				drml_bridge_primitives::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
+			dispatch_weight: bp_pangolin::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
 			size: inbound_data_size
-				.saturating_add(drml_bridge_primitives::EXTRA_STORAGE_PROOF_SIZE)
-				.saturating_add(drml_bridge_primitives::TX_EXTRA_BYTES),
+				.saturating_add(bp_pangolin::EXTRA_STORAGE_PROOF_SIZE)
+				.saturating_add(bp_pangolin::TX_EXTRA_BYTES),
 		}
 	}
 
@@ -195,13 +193,13 @@ impl messages::ChainWithMessages for Pangolin {
 }
 impl messages::BridgedChainWithMessages for Pangolin {
 	fn maximal_extrinsic_size() -> u32 {
-		drml_bridge_primitives::Pangolin::max_extrinsic_size()
+		bp_pangolin::Pangolin::max_extrinsic_size()
 	}
 
 	fn message_weight_limits(_message_payload: &[u8]) -> RangeInclusive<Weight> {
 		// we don't want to relay too large messages + keep reserve for future upgrades
 		let upper_limit = messages::target::maximal_incoming_message_dispatch_weight(
-			drml_bridge_primitives::Pangolin::max_extrinsic_weight(),
+			bp_pangolin::Pangolin::max_extrinsic_weight(),
 		);
 
 		// we're charging for payload bytes in `WithPangolinMessageBridge::transaction_payment` function
@@ -223,17 +221,17 @@ impl messages::BridgedChainWithMessages for Pangolin {
 
 		MessageTransaction {
 			dispatch_weight: extra_bytes_in_payload
-				.saturating_mul(drml_bridge_primitives::ADDITIONAL_MESSAGE_BYTE_DELIVERY_WEIGHT)
-				.saturating_add(drml_bridge_primitives::DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT)
+				.saturating_mul(bp_pangolin::ADDITIONAL_MESSAGE_BYTE_DELIVERY_WEIGHT)
+				.saturating_add(bp_pangolin::DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT)
 				.saturating_add(message_dispatch_weight)
 				.saturating_sub(if include_pay_dispatch_fee_cost {
 					0
 				} else {
-					drml_bridge_primitives::PAY_INBOUND_DISPATCH_FEE_WEIGHT
+					bp_pangolin::PAY_INBOUND_DISPATCH_FEE_WEIGHT
 				}),
 			size: message_payload_len
-				.saturating_add(drml_bridge_primitives::EXTRA_STORAGE_PROOF_SIZE)
-				.saturating_add(drml_bridge_primitives::TX_EXTRA_BYTES),
+				.saturating_add(bp_pangolin::EXTRA_STORAGE_PROOF_SIZE)
+				.saturating_add(bp_pangolin::TX_EXTRA_BYTES),
 		}
 	}
 

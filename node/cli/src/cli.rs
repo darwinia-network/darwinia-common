@@ -21,9 +21,13 @@
 use structopt::clap::arg_enum;
 use structopt::StructOpt;
 // --- paritytech ---
-use sc_cli::{KeySubcommand, SignCmd, VanityCmd, VerifyCmd};
+#[cfg(feature = "runtime-benchmarks")]
+use frame_benchmarking_cli::BenchmarkCmd;
+use sc_cli::*;
+#[cfg(feature = "try-runtime")]
+use try_runtime_cli::TryRuntimeCmd;
 // --- darwinia-network ---
-use drml_rpc::EthApiCmd;
+use drml_rpc::EthRpcConfig;
 
 /// An overarching CLI command definition.
 #[derive(Debug, StructOpt)]
@@ -34,19 +38,15 @@ pub struct Cli {
 
 	#[allow(missing_docs)]
 	#[structopt(flatten)]
-	pub run: RunCmd,
-
-	/// Load the boot configuration json file from <PATH>. Command line input will be overwritten by this.
-	#[structopt(long = "conf", value_name = "PATH")]
-	pub conf: Option<std::path::PathBuf>,
+	pub run: Run,
 }
 
 #[allow(missing_docs)]
 #[derive(Debug, StructOpt)]
-pub struct RunCmd {
+pub struct Run {
 	#[allow(missing_docs)]
 	#[structopt(flatten)]
-	pub base: sc_cli::RunCmd,
+	pub base: RunCmd,
 
 	/// Force using Pangolin native runtime.
 	#[structopt(long = "force-pangolin")]
@@ -78,25 +78,25 @@ pub struct RunCmd {
 #[derive(Debug, StructOpt)]
 pub enum Subcommand {
 	/// Build a chain specification.
-	BuildSpec(sc_cli::BuildSpecCmd),
+	BuildSpec(BuildSpecCmd),
 
 	/// Validate blocks.
-	CheckBlock(sc_cli::CheckBlockCmd),
+	CheckBlock(CheckBlockCmd),
 
 	/// Export blocks.
-	ExportBlocks(sc_cli::ExportBlocksCmd),
+	ExportBlocks(ExportBlocksCmd),
 
 	/// Export the state of a given block into a chain spec.
-	ExportState(sc_cli::ExportStateCmd),
+	ExportState(ExportStateCmd),
 
 	/// Import blocks.
-	ImportBlocks(sc_cli::ImportBlocksCmd),
+	ImportBlocks(ImportBlocksCmd),
 
 	/// Remove the whole chain.
-	PurgeChain(sc_cli::PurgeChainCmd),
+	PurgeChain(PurgeChainCmd),
 
 	/// Revert the chain to a previous state.
-	Revert(sc_cli::RevertCmd),
+	Revert(RevertCmd),
 
 	/// Key management cli utilities
 	Key(KeySubcommand),
@@ -113,19 +113,19 @@ pub enum Subcommand {
 	/// The custom benchmark subcommand benchmarking runtime pallets.
 	#[cfg(feature = "runtime-benchmarks")]
 	#[structopt(name = "benchmark", about = "Benchmark runtime pallets.")]
-	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
+	Benchmark(BenchmarkCmd),
 
 	/// Try some experimental command on the runtime. This includes migration and runtime-upgrade
 	/// testing.
 	#[cfg(feature = "try-runtime")]
-	TryRuntime(try_runtime_cli::TryRuntimeCmd),
+	TryRuntime(TryRuntimeCmd),
 }
 
 #[derive(Debug, StructOpt)]
 pub struct DvmArgs {
 	/// Enable EVM tracing module on a non-authority node.
 	#[structopt(long, conflicts_with = "validator", require_delimiter = true)]
-	pub ethapi: Vec<EthApiCmd>,
+	pub ethapi_debug_targets: Vec<String>,
 
 	/// Number of concurrent tracing tasks. Meant to be shared by both "debug" and "trace" modules.
 	#[structopt(long, default_value = "10")]
@@ -162,6 +162,19 @@ pub struct DvmArgs {
 	#[cfg(feature = "template")]
 	#[structopt(long = "enable-dev-signer")]
 	pub enable_dev_signer: bool,
+}
+impl DvmArgs {
+	pub fn build_eth_rpc_config(&self) -> EthRpcConfig {
+		EthRpcConfig {
+			ethapi_debug_targets: self.ethapi_debug_targets.clone(),
+			ethapi_max_permits: self.ethapi_max_permits,
+			ethapi_trace_max_count: self.ethapi_trace_max_count,
+			ethapi_trace_cache_duration: self.ethapi_trace_cache_duration,
+			eth_log_block_cache: self.eth_log_block_cache,
+			max_past_logs: self.max_past_logs,
+			fee_history_limit: self.fee_history_limit,
+		}
+	}
 }
 
 #[cfg(feature = "template")]

@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "dp-s2s"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.8.5"
+version     = "2.8.6"
 
 [dependencies]
 # crates.io
@@ -17,8 +17,8 @@ codec       = { package = "parity-scale-codec", version = "2.3", default-feature
 dp-asset    = { default-features = false, path = "../asset" }
 dp-contract = { default-features = false, path = "../contract" }
 # paritytech
-bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "nada-parachain-pallet" }
-bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/parity-bridges-common", branch = "nada-parachain-pallet" }
+bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
+bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 sp-core             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

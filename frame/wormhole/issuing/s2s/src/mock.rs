@@ -40,14 +40,14 @@ use sp_runtime::{
 use crate::{
 	*, {self as s2s_issuing},
 };
+use darwinia_ethereum::{
+	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
+	IntermediateStateRoot, RawOrigin, Transaction,
+};
 use darwinia_evm::{EVMCurrencyAdapter, EnsureAddressTruncated, SubstrateBlockHashMapping};
 use darwinia_support::{
 	evm::IntoAccountId,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
-};
-use dvm_ethereum::{
-	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
-	IntermediateStateRoot, RawOrigin, Transaction,
 };
 
 type Block = MockBlock<Test>;
@@ -179,7 +179,7 @@ frame_support::parameter_types! {
 	pub const DvmPalletId: PalletId = PalletId(*b"dar/dvmp");
 }
 
-impl dvm_ethereum::Config for Test {
+impl darwinia_ethereum::Config for Test {
 	type Event = ();
 	type PalletId = DvmPalletId;
 	type StateRoot = IntermediateStateRoot;
@@ -295,7 +295,7 @@ frame_support::construct_runtime! {
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		S2sIssuing: s2s_issuing::{Pallet, Call, Storage, Config, Event<T>},
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>},
-		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Origin},
+		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Origin},
 	}
 }
 
@@ -339,7 +339,7 @@ impl fp_self_contained::SelfContainedCall for Call {
 	) -> Option<sp_runtime::DispatchResultWithInfo<sp_runtime::traits::PostDispatchInfoOf<Self>>> {
 		use sp_runtime::traits::Dispatchable as _;
 		match self {
-			call @ Call::Ethereum(dvm_ethereum::Call::transact { .. }) => {
+			call @ Call::Ethereum(darwinia_ethereum::Call::transact { .. }) => {
 				Some(call.dispatch(Origin::from(RawOrigin::EthereumTransaction(info))))
 			}
 			_ => None,

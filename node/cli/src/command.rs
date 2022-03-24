@@ -19,14 +19,15 @@
 // --- std ---
 use std::{env, path::PathBuf};
 // --- paritytech ---
-use sc_cli::{Role, RuntimeVersion, SubstrateCli};
-#[cfg(feature = "try-runtime")]
-use sc_service::TaskManager;
+use sc_cli::{Error as CliError, Result as CliResult, Role, RuntimeVersion, SubstrateCli};
 use sc_service::{ChainSpec, DatabaseSource};
-use sp_core::crypto::Ss58AddressFormat;
+#[cfg(feature = "try-runtime")]
+use sc_service::{Error as ServiceError, TaskManager};
+use sp_core::crypto::{self, Ss58AddressFormat};
 // --- darwinia-network ---
 use crate::cli::*;
-use drml_rpc::{EthApiCmd, RpcConfig};
+#[cfg(any(feature = "try-runtime", feature = "runtime-benchmarks"))]
+use drml_primitives::OpaqueBlock as Block;
 use drml_service::*;
 
 impl SubstrateCli for Cli {
@@ -109,7 +110,7 @@ impl SubstrateCli for Cli {
 }
 
 /// Parse command line arguments into service configuration.
-pub fn run() -> sc_cli::Result<()> {
+pub fn run() -> CliResult<()> {
 	macro_rules! async_run {
 		(|$cmd:ident, $cli:ident, $config:ident, $client:ident, $backend:ident, $import_queue:ident| $($code:tt)*) => {{
 			let runner = $cli.create_runner($cmd)?;
@@ -120,7 +121,7 @@ pub fn run() -> sc_cli::Result<()> {
 			if chain_spec.is_pangolin() {
 				runner.async_run(|mut $config| {
 					let ($client, $backend, $import_queue, task_manager) = drml_service::new_chain_ops::<
-						pangolin_runtime::RuntimeApi,
+						PangoroRuntimeApi,
 						PangolinExecutor,
 					>(&mut $config)?;
 
@@ -129,7 +130,7 @@ pub fn run() -> sc_cli::Result<()> {
 			} else {
 				runner.async_run(|mut $config| {
 					let ($client, $backend, $import_queue, task_manager) = drml_service::new_chain_ops::<
-						pangoro_runtime::RuntimeApi,
+						PangolinRuntimeApi,
 						PangoroExecutor,
 					>(&mut $config)?;
 
@@ -140,24 +141,17 @@ pub fn run() -> sc_cli::Result<()> {
 	}
 
 	let cli = Cli::from_args();
-	let _ = validate_trace_environment(&cli)?;
-	let rpc_config = RpcConfig {
-		ethapi: cli.run.dvm_args.ethapi.clone(),
-		ethapi_max_permits: cli.run.dvm_args.ethapi_max_permits,
-		ethapi_trace_max_count: cli.run.dvm_args.ethapi_trace_max_count,
-		ethapi_trace_cache_duration: cli.run.dvm_args.ethapi_trace_cache_duration,
-		eth_log_block_cache: cli.run.dvm_args.eth_log_block_cache,
-		max_past_logs: cli.run.dvm_args.max_past_logs,
-		fee_history_limit: cli.run.dvm_args.fee_history_limit,
-	};
 
 	match &cli.subcommand {
 		None => {
-			let authority_discovery_disabled = cli.run.authority_discovery_disabled;
+			validate_trace_environment(&cli)?;
+
 			let runner = cli.create_runner(&cli.run.base)?;
 			let chain_spec = &runner.config().chain_spec;
 
 			set_default_ss58_version(chain_spec);
+
+			let eth_rpc_config = cli.run.dvm_args.build_eth_rpc_config();
 
 			#[cfg(feature = "template")]
 			if chain_spec.is_template() {
@@ -170,40 +164,39 @@ pub fn run() -> sc_cli::Result<()> {
 							config,
 							is_manual_sealing,
 							enable_dev_signer,
-							rpc_config,
+							eth_rpc_config,
 						)
 					})
-					.map_err(sc_cli::Error::Service);
+					.map_err(CliError::from);
 			}
+
+			let authority_discovery_disabled = cli.run.authority_discovery_disabled;
 
 			if chain_spec.is_pangolin() {
 				runner.run_node_until_exit(|config| async move {
 					match config.role {
-						Role::Light => pangolin_service::new_light(config)
-							.map(|(task_manager, _)| task_manager),
+						Role::Light => panic!("Not support light client"),
 						_ => pangolin_service::new_full(
 							config,
 							authority_discovery_disabled,
-							rpc_config,
+							eth_rpc_config,
 						)
 						.map(|(task_manager, _, _)| task_manager),
 					}
-					.map_err(sc_cli::Error::Service)
+					.map_err(CliError::from)
 				})
 			} else {
 				runner.run_node_until_exit(|config| async move {
 					match config.role {
-						Role::Light => {
-							pangoro_service::new_light(config).map(|(task_manager, _)| task_manager)
-						}
+						Role::Light => panic!("Not support light client"),
 						_ => pangoro_service::new_full(
 							config,
 							authority_discovery_disabled,
-							rpc_config,
+							eth_rpc_config,
 						)
 						.map(|(task_manager, _, _)| task_manager),
 					}
-					.map_err(sc_cli::Error::Service)
+					.map_err(CliError::from)
 				})
 			}
 		}
@@ -241,7 +234,7 @@ pub fn run() -> sc_cli::Result<()> {
 			runner.sync_run(|config| {
 				// Remove dvm offchain db
 				let dvm_database_config = DatabaseSource::RocksDb {
-					path: drml_service::dvm_database_dir(&config),
+					path: drml_service::dvm::db_path(&config),
 					cache_size: 0,
 				};
 
@@ -271,12 +264,9 @@ pub fn run() -> sc_cli::Result<()> {
 					// manager to do `async_run`.
 					let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
 					let task_manager = TaskManager::new(config.tokio_handle.clone(), registry)
-						.map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
+						.map_err(|e| CliError::from(ServiceError::Prometheus(e)))?;
 
-					Ok((
-						cmd.run::<pangolin_runtime::Block, PangolinExecutor>(config),
-						task_manager,
-					))
+					Ok((cmd.run::<Block, PangolinExecutor>(config), task_manager))
 				})
 			} else {
 				runner.async_run(|config| {
@@ -284,12 +274,9 @@ pub fn run() -> sc_cli::Result<()> {
 					// manager to do `async_run`.
 					let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
 					let task_manager = TaskManager::new(config.tokio_handle.clone(), registry)
-						.map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
+						.map_err(|e| CliError::from(ServiceError::Prometheus(e)))?;
 
-					Ok((
-						cmd.run::<pangoro_runtime::Block, PangoroExecutor>(config),
-						task_manager,
-					))
+					Ok((cmd.run::<Block, PangoroExecutor>(config), task_manager))
 				})
 			}
 		}
@@ -301,10 +288,9 @@ pub fn run() -> sc_cli::Result<()> {
 			set_default_ss58_version(chain_spec);
 
 			if chain_spec.is_pangolin() {
-				runner
-					.sync_run(|config| cmd.run::<pangolin_runtime::Block, PangolinExecutor>(config))
+				runner.sync_run(|config| cmd.run::<Block, PangolinExecutor>(config))
 			} else {
-				runner.sync_run(|config| cmd.run::<pangoro_runtime::Block, PangoroExecutor>(config))
+				runner.sync_run(|config| cmd.run::<Block, PangoroExecutor>(config))
 			}
 		}
 	}
@@ -312,9 +298,9 @@ pub fn run() -> sc_cli::Result<()> {
 
 fn get_exec_name() -> Option<String> {
 	env::current_exe()
-		.ok()
-		.and_then(|pb| pb.file_name().map(|s| s.to_os_string()))
-		.and_then(|s| s.into_string().ok())
+		.ok()?
+		.file_name()
+		.map(|name| name.to_string_lossy().into_owned())
 }
 
 fn set_default_ss58_version(spec: &Box<dyn ChainSpec>) {
@@ -324,18 +310,23 @@ fn set_default_ss58_version(spec: &Box<dyn ChainSpec>) {
 		Ss58AddressFormat::SubstrateAccount
 	};
 
-	sp_core::crypto::set_default_ss58_version(ss58_version);
+	crypto::set_default_ss58_version(ss58_version);
 }
 
-fn validate_trace_environment(cli: &Cli) -> sc_cli::Result<()> {
-	if (cli.run.dvm_args.ethapi.contains(&EthApiCmd::Debug)
-		|| cli.run.dvm_args.ethapi.contains(&EthApiCmd::Trace))
+fn validate_trace_environment(cli: &Cli) -> CliResult<()> {
+	if cli
+		.run
+		.dvm_args
+		.ethapi_debug_targets
+		.iter()
+		.any(|target| matches!(target.as_str(), "debug" | "trace"))
 		&& cli.run.base.import_params.wasm_runtime_overrides.is_none()
 	{
-		return Err(
+		Err(
 			"`debug` or `trace` namespaces requires `--wasm-runtime-overrides /path/to/overrides`."
 				.into(),
-		);
+		)
+	} else {
+		Ok(())
 	}
-	Ok(())
 }

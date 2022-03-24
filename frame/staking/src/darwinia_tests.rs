@@ -156,7 +156,7 @@ fn slash_ledger_should_work() {
 					Staking::ledger(&account_id).unwrap(),
 					StakingLedger {
 						stash: account_id,
-						active_ring: total - total_slashed,
+						active: total - total_slashed,
 						active_deposit_ring: deposit - deposit_slashed,
 						deposit_items: vec![TimeDepositItem {
 							value: deposit - deposit_slashed,
@@ -344,7 +344,7 @@ fn time_deposit_ring_unbond_and_withdraw_automatically_should_work() {
 			Staking::ledger(controller).unwrap(),
 			StakingLedger {
 				stash,
-				active_ring: 1000 - unbond_value,
+				active: 1000 - unbond_value,
 				active_deposit_ring: 0,
 				active_kton: 0,
 				deposit_items: vec![],
@@ -482,7 +482,7 @@ fn normal_unbond_should_work() {
 				StakingBalance::RingBalance(value),
 				promise_month as u8,
 			));
-			ledger.active_ring += value;
+			ledger.active += value;
 			ledger.active_deposit_ring += value;
 			ledger.deposit_items.push(TimeDepositItem {
 				value,
@@ -535,7 +535,7 @@ fn punished_claim_should_work() {
 		let _ = Ring::deposit_creating(&stash, 1000);
 		let mut ledger = StakingLedger {
 			stash,
-			active_ring: bond_value,
+			active: bond_value,
 			active_deposit_ring: bond_value,
 			deposit_items: vec![TimeDepositItem {
 				value: bond_value,
@@ -585,7 +585,7 @@ fn punished_claim_should_work() {
 
 		let mut ledger = StakingLedger {
 			stash,
-			active_ring: bond_value,
+			active: bond_value,
 			active_deposit_ring: bond_value,
 			deposit_items: vec![TimeDepositItem {
 				value: bond_value,
@@ -1124,7 +1124,7 @@ fn on_deposit_redeem_should_work() {
 				Staking::ledger(unbonded_account).unwrap(),
 				StakingLedger {
 					stash: unbonded_account,
-					active_ring: deposit_amount,
+					active: deposit_amount,
 					active_deposit_ring: deposit_amount,
 					deposit_items: vec![deposit_item.clone()],
 					ring_staking_lock: StakingLock {
@@ -1157,7 +1157,7 @@ fn on_deposit_redeem_should_work() {
 				deposit_months
 			));
 
-			ledger.active_ring += deposit_amount;
+			ledger.active += deposit_amount;
 			ledger.active_deposit_ring += deposit_amount;
 			ledger.deposit_items.push(deposit_item);
 			ledger.ring_staking_lock.staking_amount += deposit_amount;
@@ -1517,7 +1517,7 @@ fn staking_with_kton_with_unbondings() {
 			Staking::ledger(controller).unwrap(),
 			StakingLedger {
 				stash: 123,
-				active_ring: 20,
+				active: 20,
 				ring_staking_lock: StakingLock {
 					staking_amount: 20,
 					unbondings: WeakBoundedVec::force_from(
@@ -2071,7 +2071,7 @@ fn bond_values_when_some_value_unbonding() {
 			Staking::ledger(controller).unwrap(),
 			StakingLedger {
 				stash: 123,
-				active_ring: 5,
+				active: 5,
 				ring_staking_lock: StakingLock {
 					staking_amount: 5,
 					..Default::default()
@@ -2127,7 +2127,7 @@ fn bond_values_when_some_value_unbonding() {
 			Staking::ledger(controller).unwrap(),
 			StakingLedger {
 				stash: 123,
-				active_ring: 1,
+				active: 1,
 				ring_staking_lock: StakingLock {
 					staking_amount: 1,
 					..Default::default()
@@ -2157,7 +2157,7 @@ fn rebond_event_should_work() {
 				Staking::ledger(&10),
 				Some(StakingLedger {
 					stash: 11,
-					active_ring: 1000,
+					active: 1000,
 					ring_staking_lock: StakingLock {
 						staking_amount: 1000,
 						unbondings: WeakBoundedVec::force_from(vec![], None)
@@ -2173,7 +2173,7 @@ fn rebond_event_should_work() {
 				Staking::ledger(&10),
 				Some(StakingLedger {
 					stash: 11,
-					active_ring: 600,
+					active: 600,
 					ring_staking_lock: StakingLock {
 						staking_amount: 600,
 						unbondings: WeakBoundedVec::force_from(
@@ -2196,7 +2196,7 @@ fn rebond_event_should_work() {
 				Staking::ledger(&10),
 				Some(StakingLedger {
 					stash: 11,
-					active_ring: 800,
+					active: 800,
 					ring_staking_lock: StakingLock {
 						staking_amount: 800,
 						unbondings: WeakBoundedVec::force_from(

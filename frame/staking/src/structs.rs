@@ -91,7 +91,7 @@ where
 	/// The total amount of the stash's *RING* that will be at stake in any forthcoming
 	/// rounds.
 	#[codec(compact)]
-	pub active_ring: RingBalance,
+	pub active: RingBalance,
 	/// active time-deposit ring
 	#[codec(compact)]
 	pub active_deposit_ring: RingBalance,
@@ -174,7 +174,7 @@ where
 
 		(
 			update(
-				&mut self.active_ring,
+				&mut self.active,
 				&mut self.ring_staking_lock,
 				plan_to_rebond_ring,
 			),
@@ -199,17 +199,17 @@ where
 		bn: BlockNumber,
 		ts: TsInMs,
 	) -> (RingBalance, KtonBalance) {
-		let slash_out_of = |active_ring: &mut RingBalance,
+		let slash_out_of = |active: &mut RingBalance,
 		                    active_deposit_ring: &mut RingBalance,
 		                    deposit_item: &mut Vec<TimeDepositItem<RingBalance>>,
 		                    active_kton: &mut KtonBalance,
 		                    slash_ring: &mut RingBalance,
 		                    slash_kton: &mut KtonBalance| {
-			let slashable_active_ring = (*slash_ring).min(*active_ring);
+			let slashable_active_ring = (*slash_ring).min(*active);
 			let slashable_active_kton = (*slash_kton).min(*active_kton);
 
 			if !slashable_active_ring.is_zero() {
-				let slashable_normal_ring = *active_ring - *active_deposit_ring;
+				let slashable_normal_ring = *active - *active_deposit_ring;
 				if let Some(mut slashable_deposit_ring) =
 					slashable_active_ring.checked_sub(&slashable_normal_ring)
 				{
@@ -237,7 +237,7 @@ where
 					});
 				}
 
-				*active_ring -= slashable_active_ring;
+				*active -= slashable_active_ring;
 				*slash_ring -= slashable_active_ring;
 			}
 
@@ -249,7 +249,7 @@ where
 
 		let (mut apply_slash_ring, mut apply_slash_kton) = (slash_ring, slash_kton);
 		let StakingLedger {
-			active_ring,
+			active,
 			active_deposit_ring,
 			deposit_items,
 			active_kton,
@@ -259,7 +259,7 @@ where
 		} = self;
 
 		slash_out_of(
-			active_ring,
+			active,
 			active_deposit_ring,
 			deposit_items,
 			active_kton,

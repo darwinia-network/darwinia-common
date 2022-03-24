@@ -1,0 +1,31 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "utils precompiles for EVM pallet."
+edition     = "2021"
+homepage    = "https://darwinia.network"
+license     = "GPL-3.0"
+name        = "darwinia-evm-precompile-utils"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common"
+version     = "2.8.6"
+
+[dependencies]
+# crates.io
+evm = { version = "0.33.1", default-features = false, features = ["with-codec"] }
+# darwinia-network
+darwinia-evm-precompile-utils-macro = { path = "macro" }
+darwinia-support                    = { default-features = false, path = "../../../../support" }
+# frontier
+fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+
+[features]
+default = ["std"]
+
+std = [
+	# crates.io
+	"evm/std",
+	# darwinia-network
+	"darwinia-support/std",
+	# frontier
+	"fp-evm/std",
+]
