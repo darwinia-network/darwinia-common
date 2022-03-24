@@ -135,19 +135,27 @@ where
 	}
 
 	/// Transfer value.
-	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError> {
+	fn transfer(
+		source: &T::AccountId,
+		target: &T::AccountId,
+		value: U256,
+		has_event: bool,
+	) -> Result<(), ExitError> {
 		if value == U256::zero() || source == target {
 			return Ok(());
 		}
-		let source_account = Self::account_basic(source);
-		ensure!(source_account.balance >= value, ExitError::OutOfGas);
-		let new_source_balance = source_account.balance.saturating_sub(value);
-		Self::mutate_account_basic_balance(source, new_source_balance);
+		let source_balance = Self::account_balance(source);
+		ensure!(source_balance >= value, ExitError::OutOfFund);
+		let new_source_balance = source_balance.saturating_sub(value);
+		Self::mutate_account_balance(source, new_source_balance);
 
-		let target_account = Self::account_basic(target);
-		let new_target_balance = target_account.balance.saturating_add(value);
-		Self::mutate_account_basic_balance(target, new_target_balance);
-		Pallet::<T>::deposit_event(Event::DVMTransfer(*source, *target, value));
+		let target_balance = Self::account_balance(target);
+		let new_target_balance = target_balance.saturating_add(value);
+		Self::mutate_account_balance(target, new_target_balance);
+
+		if has_event {
+			Pallet::<T>::deposit_event(Event::DVMTransfer(source.clone(), target.clone(), value));
+		}
 		Ok(())
 	}
 

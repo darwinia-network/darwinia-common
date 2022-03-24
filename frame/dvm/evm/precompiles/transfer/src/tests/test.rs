@@ -24,13 +24,12 @@ use ethabi::{Function, Param, ParamType, StateMutability, Token};
 use sp_runtime::DispatchError;
 // --- darwinia-network ---
 use crate::tests::mock::*;
-use darwinia_evm::AccountBasic;
-use darwinia_support::evm::{decimal_convert, TRANSFER_ADDR};
-use sp_core::{H160, U256};
-// use sp_std::str::FromStr;
 use darwinia_ethereum::Transaction;
+use darwinia_evm::AccountBasic;
+use darwinia_support::evm::{decimal_convert, IntoAccountId, TRANSFER_ADDR};
 use fp_evm::CallOrCreateInfo;
 use frame_support::{assert_err, assert_ok};
+use sp_core::{H160, U256};
 use std::str::FromStr;
 
 const WITH_DRAW_INPUT: &str = "723908ee9dc8e509d4b93251bd57f68c09bd9d04471c193fabd8f26c54284a4b";
@@ -73,8 +72,11 @@ fn ring_currency_withdraw_with_enough_balance() {
 			30_000_000_000
 		);
 
-		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::RingBack(
-			alice.address,
+		let transfer_account_id = <Test as darwinia_evm::Config>::IntoAccountId::into_account_id(
+			H160::from_str(TRANSFER_ADDR).unwrap(),
+		);
+		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::DVMTransfer(
+			transfer_account_id,
 			dest,
 			decimal_convert(30_000_000_000, None),
 		)));
@@ -233,8 +235,14 @@ fn kton_currency_transfer_and_call_works() {
 			origin - transfer_1
 		);
 		assert_eq!(query_contract_balance(alice, 2), transfer_1);
-		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::TransferToWKton(
-			alice.address,
+		let alice_account_id =
+			<Test as darwinia_evm::Config>::IntoAccountId::into_account_id(alice.address);
+		let wkton_account_id = <Test as darwinia_evm::Config>::IntoAccountId::into_account_id(
+			H160::from_str(WKTON_ADDRESS).unwrap(),
+		);
+		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::KtonTransfer(
+			alice_account_id.clone(),
+			wkton_account_id.clone(),
 			transfer_1,
 		)));
 
@@ -249,8 +257,9 @@ fn kton_currency_transfer_and_call_works() {
 			origin - transfer_1 - transfer_2
 		);
 		assert_eq!(query_contract_balance(alice, 4), transfer_1 + transfer_2);
-		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::TransferToWKton(
-			alice.address,
+		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::KtonTransfer(
+			alice_account_id,
+			wkton_account_id,
 			transfer_2,
 		)));
 	});
@@ -353,9 +362,14 @@ fn kton_currency_withdraw() {
 		assert_eq!(KtonAccount::account_balance(&to), withdraw);
 		assert_eq!(query_contract_balance(alice, 3), transfer - withdraw);
 
-		System::assert_has_event(Event::Ethereum(
-			darwinia_ethereum::Event::WithdrawFromWKton(to, withdraw),
-		));
+		let wkton_account_id = <Test as darwinia_evm::Config>::IntoAccountId::into_account_id(
+			H160::from_str(WKTON_ADDRESS).unwrap(),
+		);
+		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::KtonTransfer(
+			wkton_account_id,
+			to,
+			withdraw,
+		)));
 	});
 }
 

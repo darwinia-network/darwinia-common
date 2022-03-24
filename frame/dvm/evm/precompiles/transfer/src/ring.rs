@@ -17,16 +17,14 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- paritytech ---
-use fp_evm::{
-	Context, ExitError, ExitSucceed, PrecompileFailure, PrecompileOutput, PrecompileResult,
-};
+use fp_evm::{Context, ExitSucceed, PrecompileFailure, PrecompileOutput, PrecompileResult};
 use frame_support::ensure;
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use crate::AccountId;
 use darwinia_evm::AccountBasic;
 use darwinia_evm_precompile_utils::custom_precompile_err;
-use darwinia_support::evm::TRANSFER_ADDR;
+use darwinia_support::evm::{IntoAccountId, TRANSFER_ADDR};
 // --- crates.io ---
 use codec::Decode;
 
@@ -43,13 +41,7 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 	pub fn transfer(input: &[u8], _: Option<u64>, context: &Context) -> PrecompileResult {
 		// Decode input data
 		let input = InputData::<T>::decode(&input)?;
-		let (caller, address, to, value) = (
-			context.caller,
-			context.address,
-			input.dest,
-			context.apparent_value,
-		);
-		let source_account = T::RingAccountBasic::account_basic(&address);
+		let (address, to, value) = (context.address, input.dest, context.apparent_value);
 
 		// Ensure the context address should be precompile address
 		let transfer_addr = array_bytes::hex_try_into(TRANSFER_ADDR)
@@ -58,25 +50,11 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 			address == transfer_addr,
 			custom_precompile_err("Invalid context address")
 		);
-		// Ensure the context address balance is enough
-		ensure!(
-			source_account.balance >= value,
-			PrecompileFailure::Error {
-				exit_status: ExitError::OutOfFund,
-			}
-		);
 
-		// Transfer
-		let new_source_balance = source_account.balance.saturating_sub(value);
-		T::RingAccountBasic::mutate_account_basic_balance(&address, new_source_balance);
+		let source = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(address);
+		T::RingAccountBasic::transfer(&source, &to, value, true)
+			.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 
-		let target_balance = T::RingAccountBasic::account_balance(&to);
-		let new_target_balance = target_balance.saturating_add(value);
-		T::RingAccountBasic::mutate_account_balance(&to, new_target_balance);
-
-		<darwinia_ethereum::Pallet<T>>::deposit_event(darwinia_ethereum::Event::RingBack(
-			caller, to, value,
-		));
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
 			cost: 20000,

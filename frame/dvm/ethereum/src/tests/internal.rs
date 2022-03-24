@@ -236,12 +236,7 @@ fn internal_transaction_should_works() {
 
 		// Call foo use internal transaction
 		assert_ok!(Ethereum::internal_transact(contract_address, foo.clone()));
-		assert_eq!(System::event_count(), 4);
-		System::assert_has_event(Event::Ethereum(crate::Event::DVMTransfer(
-			alice.address,
-			contract_address,
-			U256::zero(),
-		)));
+		assert_eq!(System::event_count(), 2);
 		System::assert_last_event(Event::Ethereum(crate::Event::Executed(
 			<Test as self::Config>::PalletId::get().into_h160(),
 			contract_address,
@@ -251,7 +246,7 @@ fn internal_transaction_should_works() {
 		)));
 
 		assert_ok!(Ethereum::internal_transact(contract_address, foo));
-		assert_eq!(System::event_count(), 6);
+		assert_eq!(System::event_count(), 3);
 		System::assert_last_event(Event::Ethereum(crate::Event::Executed(
 			<Test as self::Config>::PalletId::get().into_h160(),
 			contract_address,

@@ -22,8 +22,7 @@ use ethabi::{Function, Param, ParamType, StateMutability, Token};
 use sha3::Digest;
 // --- paritytech ---
 use fp_evm::{
-	Context, ExitError, ExitReason, ExitSucceed, PrecompileFailure, PrecompileOutput,
-	PrecompileResult,
+	Context, ExitReason, ExitSucceed, PrecompileFailure, PrecompileOutput, PrecompileResult,
 };
 use frame_support::ensure;
 use sp_core::{H160, U256};
@@ -32,7 +31,7 @@ use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 use crate::{util, AccountId};
 use darwinia_evm::{runner::Runner, AccountBasic, Pallet};
 use darwinia_evm_precompile_utils::custom_precompile_err;
-use darwinia_support::evm::{SELECTOR, TRANSFER_ADDR};
+use darwinia_support::evm::{IntoAccountId, SELECTOR, TRANSFER_ADDR};
 
 const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,uint256)";
 const WITHDRAW_ACTION: &[u8] = b"withdraw(bytes32,uint256)";
@@ -62,16 +61,13 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 					context.apparent_value == U256::zero(),
 					custom_precompile_err("The value should be zero!")
 				);
-				// Ensure caller's balance is enough
-				ensure!(
-					T::KtonAccountBasic::account_basic(&caller).balance >= value,
-					PrecompileFailure::Error {
-						exit_status: ExitError::OutOfFund,
-					}
-				);
 
+				let caller_account_id =
+					<T as darwinia_evm::Config>::IntoAccountId::into_account_id(caller);
+				let wkton_account_id =
+					<T as darwinia_evm::Config>::IntoAccountId::into_account_id(wkton);
 				// Transfer kton from sender to KTON wrapped contract
-				T::KtonAccountBasic::transfer(&caller, &wkton, value)
+				T::KtonAccountBasic::transfer(&caller_account_id, &wkton_account_id, value, false)
 					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 				// Call WKTON wrapped contract deposit
 				let raw_input = make_call_data(caller, value)?;
@@ -97,7 +93,11 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				}
 
 				<darwinia_ethereum::Pallet<T>>::deposit_event(
-					darwinia_ethereum::Event::TransferToWKton(caller, value),
+					darwinia_ethereum::Event::KtonTransfer(
+						caller_account_id,
+						wkton_account_id,
+						value,
+					),
 				);
 				Ok(PrecompileOutput {
 					exit_status: ExitSucceed::Returned,
@@ -118,26 +118,15 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 					context.apparent_value == U256::zero(),
 					custom_precompile_err("The value in tx must be zero!")
 				);
-				// Ensure source's balance is enough
-				let source_kton = T::KtonAccountBasic::account_basic(&source);
-				ensure!(
-					source_kton.balance >= value,
-					PrecompileFailure::Error {
-						exit_status: ExitError::OutOfFund,
-					}
-				);
 
-				// Transfer
-				let new_source_kton_balance = source_kton.balance.saturating_sub(value);
-				T::KtonAccountBasic::mutate_account_basic_balance(&source, new_source_kton_balance);
-
-				let target_kton = T::KtonAccountBasic::account_balance(&to);
-				let new_target_kton_balance = target_kton.saturating_add(value);
-				T::KtonAccountBasic::mutate_account_balance(&to, new_target_kton_balance);
+				let source = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(source);
+				T::KtonAccountBasic::transfer(&source, &to, value, false)
+					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 
 				<darwinia_ethereum::Pallet<T>>::deposit_event(
-					darwinia_ethereum::Event::WithdrawFromWKton(to, value),
+					darwinia_ethereum::Event::KtonTransfer(source, to, value),
 				);
+
 				Ok(PrecompileOutput {
 					exit_status: ExitSucceed::Returned,
 					cost: 20000,

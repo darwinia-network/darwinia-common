@@ -308,13 +308,12 @@ pub mod pallet {
 		/// An ethereum transaction was successfully executed. \[from, to/contract_address, transaction_hash, exit_reason\]
 		Executed(H160, H160, H256, ExitReason),
 		/// DVM Transfer succeeded. \[from, to, value\]
-		DVMTransfer(H160, H160, U256),
+		DVMTransfer(T::AccountId, T::AccountId, U256),
 		/// Withdraw RING from DVM to darwinia account. \[sender, destination, value\]
-		RingBack(H160, T::AccountId, U256),
-		/// Transfer substrate account KTON to WKTON contract. \[sender, value\]
-		TransferToWKton(H160, U256),
-		/// Withdraw from WKON contract to substrate account. \[withdraw, value\]
-		WithdrawFromWKton(T::AccountId, U256),
+		// RingBack(H160, T::AccountId, U256),
+		// TransferToWKton(H160, U256),
+		// WithdrawFromWKton(T::AccountId, U256),
+		KtonTransfer(T::AccountId, T::AccountId, U256),
 	}
 
 	#[pallet::error]
