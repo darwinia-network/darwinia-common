@@ -142,6 +142,9 @@ pub use bridge_dispatch::*;
 pub mod bridge_grandpa;
 pub use bridge_grandpa::*;
 
+pub mod bridge_parachains;
+pub use bridge_parachains::*;
+
 pub mod fee_market;
 pub use fee_market::*;
 
