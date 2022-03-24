@@ -23,7 +23,9 @@ use core::marker::PhantomData;
 // --- crates.io ---
 use codec::Encode;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{custom_precompile_err, DvmInputParser};
+use darwinia_evm_precompile_utils::{
+	check_state_modifier, custom_precompile_err, DvmInputParser, StateMutability,
+};
 use darwinia_support::{
 	evm::IntoAccountId,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
@@ -68,11 +70,15 @@ where
 		input: &[u8],
 		_target_gas: Option<u64>,
 		context: &Context,
-		_is_static: bool,
+		is_static: bool,
 	) -> PrecompileResult {
 		let dvm_parser = DvmInputParser::new(&input)?;
+		let action = Action::from_u32(dvm_parser.selector)?;
 
-		let output = match Action::from_u32(dvm_parser.selector)? {
+		// Check state modifiers
+		check_state_modifier(context, is_static, StateMutability::View)?;
+
+		let output = match action {
 			Action::OutboundLatestGeneratedNonce => {
 				Self::outbound_latest_generated_nonce(&dvm_parser)?
 			}

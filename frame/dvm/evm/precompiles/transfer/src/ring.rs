@@ -21,10 +21,9 @@ use fp_evm::{Context, ExitSucceed, PrecompileFailure, PrecompileOutput, Precompi
 use frame_support::ensure;
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
-use crate::AccountId;
-use darwinia_evm::AccountBasic;
-use darwinia_evm_precompile_utils::custom_precompile_err;
-use darwinia_support::evm::{IntoAccountId, TRANSFER_ADDR};
+use darwinia_evm::{AccountBasic, Config};
+use darwinia_evm_precompile_utils::{check_state_modifier, custom_precompile_err, StateMutability};
+use darwinia_support::{evm::TRANSFER_ADDR, AccountId, IntoAccountId};
 // --- crates.io ---
 use codec::Decode;
 
@@ -38,7 +37,15 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 	/// 2. transfer from the contract address to withdrawal address
 	///
 	/// Input data: 32-bit substrate withdrawal public key
-	pub fn transfer(input: &[u8], _: Option<u64>, context: &Context) -> PrecompileResult {
+	pub fn transfer(
+		input: &[u8],
+		_target_gas: Option<u64>,
+		context: &Context,
+		is_static: bool,
+	) -> PrecompileResult {
+		// Check state modifiers
+		check_state_modifier(context, is_static, StateMutability::Payable)?;
+
 		// Decode input data
 		let input = InputData::<T>::decode(&input)?;
 		let (address, to, value) = (context.address, input.dest, context.apparent_value);
