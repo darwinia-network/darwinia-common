@@ -52,7 +52,7 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 		);
 
 		let source = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(address);
-		T::RingAccountBasic::transfer(&source, &to, value, true)
+		T::RingAccountBasic::transfer(&source, &to, value)
 			.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 
 		Ok(PrecompileOutput {

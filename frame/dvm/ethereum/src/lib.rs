@@ -310,7 +310,7 @@ pub mod pallet {
 		/// DVM transfer. \[from, to, value\]
 		DVMTransfer(T::AccountId, T::AccountId, U256),
 		/// Kton transfer \[from, to, value\]
-		KtonTransfer(T::AccountId, T::AccountId, U256),
+		KtonDVMTransfer(T::AccountId, T::AccountId, U256),
 	}
 
 	#[pallet::error]

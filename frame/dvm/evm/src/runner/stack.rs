@@ -580,7 +580,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	fn transfer(&mut self, transfer: Transfer) -> Result<(), ExitError> {
 		let source = <T as Config>::IntoAccountId::into_account_id(transfer.source);
 		let target = <T as Config>::IntoAccountId::into_account_id(transfer.target);
-		T::RingAccountBasic::transfer(&source, &target, transfer.value, true)?;
+		T::RingAccountBasic::transfer(&source, &target, transfer.value)?;
 
 		Ok(())
 	}
