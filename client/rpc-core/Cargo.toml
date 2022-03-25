@@ -23,7 +23,7 @@ serde_json     = { version = "1.0" }
 # darwinia-network
 darwinia-client-evm-tracer = { path = "../evm-tracer" }
 darwinia-evm               = { path = "../../frame/dvm/evm" }
-dp-evm-trace-rpc           = { path = "../../primitives/evm-trace/rpc" }
+moonbeam-rpc-core-types = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
 # paritytech
 sp-api     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

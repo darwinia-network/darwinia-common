@@ -53,7 +53,7 @@ use darwinia_client_evm_tracer::{
 	formatters::ResponseFormatter,
 	types::block::{self, TransactionTrace},
 };
-use dp_evm_trace_rpc::{RequestBlockId, RequestBlockTag};
+use moonbeam_rpc_core_types::{RequestBlockId, RequestBlockTag};
 use moonbeam_rpc_primitives_debug::DebugRuntimeApi;
 
 /// RPC handler. Will communicate with a `CacheTask` through a `CacheRequester`.

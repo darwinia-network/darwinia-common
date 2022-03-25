@@ -27,7 +27,7 @@ use tokio::{
 };
 // --- darwinia-network ---
 use darwinia_client_evm_tracer::{formatters::ResponseFormatter, types::single};
-use dp_evm_trace_rpc::{RequestBlockId, RequestBlockTag};
+use moonbeam_rpc_core_types::{RequestBlockId, RequestBlockTag};
 use moonbeam_rpc_primitives_debug::{DebugRuntimeApi, TracerInput};
 // --- paritytech --
 use fc_rpc::{frontier_backend_client, internal_err, OverrideHandle};

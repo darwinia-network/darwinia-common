@@ -26,7 +26,7 @@ tracing             = { version = "0.1" }
 darwinia-client-evm-tracer = { path = "../evm-tracer" }
 darwinia-client-rpc-core   = { path = "../rpc-core" }
 moonbeam-rpc-primitives-debug = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
-dp-evm-trace-rpc           = { path = "../../primitives/evm-trace/rpc" }
+moonbeam-rpc-core-types = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
 # paritytech
 sc-client-api    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sc-utils         = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
