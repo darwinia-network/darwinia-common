@@ -52,7 +52,6 @@ members = [
 	"primitives/bsc",
 	"primitives/contract",
 	"primitives/ethereum",
-	"primitives/evm-trace/apis",
 	"primitives/evm-trace/ext",
 	"primitives/evm-trace/rpc",
 	"primitives/evm-trace/tracer",

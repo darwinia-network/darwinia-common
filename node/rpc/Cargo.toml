@@ -19,7 +19,7 @@ darwinia-client-rpc     = { path = "../../client/rpc" }
 darwinia-ethereum       = { path = "../../frame/dvm/ethereum" }
 darwinia-fee-market-rpc = { path = "../../frame/fee-market/rpc" }
 darwinia-staking-rpc    = { path = "../../frame/staking/rpc" }
-dp-evm-trace-apis       = { path = "../../primitives/evm-trace/apis" }
+moonbeam-rpc-primitives-debug = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
 drml-primitives         = { path = "../primitives" }
 # paritytech
 beefy-gadget                   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

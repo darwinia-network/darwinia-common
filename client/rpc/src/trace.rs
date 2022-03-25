@@ -53,8 +53,8 @@ use darwinia_client_evm_tracer::{
 	formatters::ResponseFormatter,
 	types::block::{self, TransactionTrace},
 };
-use dp_evm_trace_apis::DebugRuntimeApi;
 use dp_evm_trace_rpc::{RequestBlockId, RequestBlockTag};
+use moonbeam_rpc_primitives_debug::DebugRuntimeApi;
 
 /// RPC handler. Will communicate with a `CacheTask` through a `CacheRequester`.
 pub struct Trace<B, C> {
@@ -877,7 +877,7 @@ where
 						height, e
 					))
 				})?;
-			Ok(dp_evm_trace_apis::Response::Block)
+			Ok(moonbeam_rpc_primitives_debug::Response::Block)
 		};
 
 		let mut proxy = darwinia_client_evm_tracer::listeners::CallList::default();

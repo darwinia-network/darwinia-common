@@ -40,7 +40,7 @@ drml-primitives                     = { default-features = false, path = "../../
 module-transaction-pause            = { default-features = false, path = "../../../frame/transaction-pause" }
 to-substrate-backing                = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 # dvm trace
-dp-evm-trace-apis = { default-features = false, path = "../../../primitives/evm-trace/apis" }
+moonbeam-rpc-primitives-debug = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev", default-features = false }
 dp-evm-tracer     = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
 rlp               = { version = "0.5", optional = true, default-features = false }
 sha3              = { version = "0.8", optional = true, default-features = false }
@@ -197,7 +197,7 @@ std = [
 	"sp-trie/std",
 	"sp-version/std",
 	# trace
-	"dp-evm-trace-apis/std",
+	"moonbeam-rpc-primitives-debug/std",
 	"dp-evm-tracer/std",
 	"rlp/std",
 	"sha3/std",

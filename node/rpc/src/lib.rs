@@ -156,7 +156,7 @@ where
 		+ darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>
 		+ darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>
 		+ darwinia_fee_market_rpc::FeeMarketRuntimeApi<Block, Balance>
-		+ dp_evm_trace_apis::DebugRuntimeApi<Block>,
+		+ moonbeam_rpc_primitives_debug::DebugRuntimeApi<Block>,
 	P: 'static + Sync + Send + sc_transaction_pool_api::TransactionPool<Block = Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,

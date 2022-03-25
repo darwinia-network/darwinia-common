@@ -27,8 +27,8 @@ use tokio::{
 };
 // --- darwinia-network ---
 use darwinia_client_evm_tracer::{formatters::ResponseFormatter, types::single};
-use dp_evm_trace_apis::{DebugRuntimeApi, TracerInput};
 use dp_evm_trace_rpc::{RequestBlockId, RequestBlockTag};
+use moonbeam_rpc_primitives_debug::{DebugRuntimeApi, TracerInput};
 // --- paritytech --
 use fc_rpc::{frontier_backend_client, internal_err, OverrideHandle};
 use fp_rpc::EthereumRuntimeRPCApi;
@@ -384,7 +384,7 @@ where
 						reference_id, e
 					))
 				})?;
-			Ok(dp_evm_trace_apis::Response::Block)
+			Ok(moonbeam_rpc_primitives_debug::Response::Block)
 		};
 
 		return match trace_type {
@@ -534,7 +534,7 @@ where
 						};
 					}
 
-					Ok(dp_evm_trace_apis::Response::Single)
+					Ok(moonbeam_rpc_primitives_debug::Response::Single)
 				};
 
 				return match trace_type {

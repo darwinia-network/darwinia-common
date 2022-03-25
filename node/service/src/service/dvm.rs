@@ -50,7 +50,7 @@ where
 			+ sc_client_api::backend::StorageProvider<B, BE>,
 		C::Api: sp_block_builder::BlockBuilder<B>
 			+ fp_rpc::EthereumRuntimeRPCApi<B>
-			+ dp_evm_trace_apis::DebugRuntimeApi<B>,
+			+ moonbeam_rpc_primitives_debug::DebugRuntimeApi<B>,
 		B: 'static + Send + Sync + sp_runtime::traits::Block<Hash = Hash>,
 		B::Header: sp_api::HeaderT<Number = BlockNumber>,
 		BE: 'static + sc_client_api::backend::Backend<B>,
