@@ -424,9 +424,12 @@ pub trait OnChargeEVMTransaction<T: Config> {
 	fn pay_priority_fee(tip: U256);
 }
 
-pub struct EVMCurrencyAdapter;
-
-impl<T: Config> OnChargeEVMTransaction<T> for EVMCurrencyAdapter {
+pub struct EVMCurrencyAdapter<F>(PhantomData<F>);
+impl<T, F> OnChargeEVMTransaction<T> for EVMCurrencyAdapter<F>
+where
+	T: Config,
+	F: FindAuthor<T::AccountId>,
+{
 	type LiquidityInfo = U256;
 
 	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, Error<T>> {
@@ -447,12 +450,14 @@ impl<T: Config> OnChargeEVMTransaction<T> for EVMCurrencyAdapter {
 		T::RingAccountBasic::mutate_account_basic_balance(&who, new_account_balance);
 	}
 
-	fn pay_priority_fee(_tip: U256) {
-		// TODO: FIX ME. See https://github.com/darwinia-network/darwinia-common/issues/1074
-		// let account_id = T::IntoAccountId::into_account_id(<Pallet<T>>::find_author());
-		// let account_balance = T::RingAccountBasic::account_balance(&account_id);
-		// let new_account_balance = account_balance.saturating_add(tip);
-		// T::RingAccountBasic::mutate_account_balance(&account_id, new_account_balance);
+	fn pay_priority_fee(tip: U256) {
+		let digest = <frame_system::Pallet<T>>::digest();
+		let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
+		if let Some(author) = F::find_author(pre_runtime_digests) {
+			let account_balance = T::RingAccountBasic::account_balance(&author);
+			let new_account_balance = account_balance.saturating_add(tip);
+			T::RingAccountBasic::mutate_account_balance(&author, new_account_balance);
+		}
 	}
 }
 

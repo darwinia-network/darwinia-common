@@ -225,7 +225,7 @@ impl darwinia_evm::Config for Test {
 	type Runner = Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
-	type OnChargeTransaction = EVMCurrencyAdapter;
+	type OnChargeTransaction = EVMCurrencyAdapter<()>;
 }
 
 frame_support::parameter_types! {

@@ -4,6 +4,7 @@ use core::marker::PhantomData;
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{traits::FindAuthor, ConsensusEngineId};
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
+use pallet_session::FindAccountFromAuthorIndex;
 use sp_core::{crypto::Public, H160, U256};
 // --- darwinia-network ---
 use crate::*;
@@ -110,7 +111,7 @@ impl Config for Runtime {
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type Runner = Runner<Self>;
-	type OnChargeTransaction = EVMCurrencyAdapter;
+	type OnChargeTransaction = EVMCurrencyAdapter<FindAccountFromAuthorIndex<Self, Babe>>;
 }
 
 fn addr(a: u64) -> H160 {
