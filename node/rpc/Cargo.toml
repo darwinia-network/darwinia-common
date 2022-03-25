@@ -15,11 +15,12 @@ jsonrpc-core   = { version = "18.0" }
 jsonrpc-pubsub = { version = "18.0" }
 # darwinia-network
 darwinia-balances-rpc   = { path = "../../frame/balances/rpc" }
-darwinia-client-rpc     = { path = "../../client/rpc" }
 darwinia-ethereum       = { path = "../../frame/dvm/ethereum" }
 darwinia-fee-market-rpc = { path = "../../frame/fee-market/rpc" }
 darwinia-staking-rpc    = { path = "../../frame/staking/rpc" }
 moonbeam-rpc-primitives-debug = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
+moonbeam-rpc-debug = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
+moonbeam-rpc-trace = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
 drml-primitives         = { path = "../primitives" }
 # paritytech
 beefy-gadget                   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

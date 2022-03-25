@@ -80,7 +80,8 @@ where
 	use substrate_frame_rpc_system::*;
 	// --- darwinia-network ---
 	use crate::EthRpcConfig;
-	use darwinia_client_rpc::*;
+	use moonbeam_rpc_debug::*;
+	use moonbeam_rpc_trace::*;
 
 	let FullDeps {
 		client,

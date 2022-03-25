@@ -1673,63 +1673,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-client-rpc"
-version = "2.8.6"
-dependencies = [
- "darwinia-client-rpc-core",
- "ethereum",
- "ethereum-types",
- "fc-db",
- "fc-rpc",
- "fc-rpc-core",
- "fp-rpc",
- "fp-storage",
- "futures 0.3.21",
- "hex-literal",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "jsonrpc-pubsub",
- "moonbeam-client-evm-tracing",
- "moonbeam-rpc-core-types",
- "moonbeam-rpc-primitives-debug",
- "parity-scale-codec 2.3.1",
- "sc-client-api",
- "sc-utils",
- "sp-api",
- "sp-block-builder",
- "sp-blockchain",
- "sp-io",
- "sp-runtime",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "darwinia-client-rpc-core"
-version = "2.8.6"
-dependencies = [
- "darwinia-evm",
- "ethereum",
- "ethereum-types",
- "fc-rpc-core",
- "fp-evm",
- "futures 0.3.21",
- "jsonrpc-core",
- "jsonrpc-derive",
- "jsonrpc-pubsub",
- "moonbeam-client-evm-tracing",
- "moonbeam-rpc-core-types",
- "parity-scale-codec 2.3.1",
- "serde",
- "serde_json",
- "sp-api",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-democracy"
 version = "2.8.6"
 dependencies = [
@@ -2416,7 +2359,6 @@ dependencies = [
  "beefy-gadget",
  "beefy-gadget-rpc",
  "darwinia-balances-rpc",
- "darwinia-client-rpc",
  "darwinia-ethereum",
  "darwinia-fee-market-rpc",
  "darwinia-staking-rpc",
@@ -2429,7 +2371,9 @@ dependencies = [
  "futures 0.3.21",
  "jsonrpc-core",
  "jsonrpc-pubsub",
+ "moonbeam-rpc-debug",
  "moonbeam-rpc-primitives-debug",
+ "moonbeam-rpc-trace",
  "pallet-transaction-payment-rpc",
  "sc-chain-spec",
  "sc-client-api",
@@ -2465,7 +2409,6 @@ dependencies = [
  "darwinia-balances-rpc-runtime-api",
  "darwinia-bridge-ethereum",
  "darwinia-claims",
- "darwinia-client-rpc",
  "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-fee-market-rpc-runtime-api",
@@ -2483,7 +2426,9 @@ dependencies = [
  "futures 0.3.21",
  "log",
  "moonbeam-primitives-ext",
+ "moonbeam-rpc-debug",
  "moonbeam-rpc-primitives-debug",
+ "moonbeam-rpc-trace",
  "pallet-im-online",
  "pallet-transaction-payment-rpc-runtime-api",
  "pangolin-runtime",
@@ -5417,6 +5362,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "moonbeam-rpc-core-debug"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#2ea8e629cfd4c80a1395fbb7396fd84e59d89728"
+dependencies = [
+ "ethereum-types",
+ "futures 0.3.21",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "moonbeam-client-evm-tracing",
+ "moonbeam-rpc-core-types",
+ "serde",
+ "serde_json",
+ "sp-core",
+]
+
+[[package]]
+name = "moonbeam-rpc-core-trace"
+version = "0.6.0"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#2ea8e629cfd4c80a1395fbb7396fd84e59d89728"
+dependencies = [
+ "ethereum-types",
+ "futures 0.3.21",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "moonbeam-client-evm-tracing",
+ "moonbeam-rpc-core-types",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "moonbeam-rpc-core-types"
 version = "0.1.0"
 source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#2ea8e629cfd4c80a1395fbb7396fd84e59d89728"
@@ -5424,6 +5402,35 @@ dependencies = [
  "ethereum-types",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "moonbeam-rpc-debug"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#2ea8e629cfd4c80a1395fbb7396fd84e59d89728"
+dependencies = [
+ "ethereum",
+ "ethereum-types",
+ "fc-consensus",
+ "fc-db",
+ "fc-rpc",
+ "fp-rpc",
+ "futures 0.3.21",
+ "hex-literal",
+ "jsonrpc-core",
+ "moonbeam-client-evm-tracing",
+ "moonbeam-rpc-core-debug",
+ "moonbeam-rpc-core-types",
+ "moonbeam-rpc-primitives-debug",
+ "sc-client-api",
+ "sc-utils",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "tokio",
 ]
 
 [[package]]
@@ -5443,6 +5450,39 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "moonbeam-rpc-trace"
+version = "0.6.0"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#2ea8e629cfd4c80a1395fbb7396fd84e59d89728"
+dependencies = [
+ "ethereum",
+ "ethereum-types",
+ "fc-consensus",
+ "fc-rpc",
+ "fc-rpc-core",
+ "fp-rpc",
+ "futures 0.3.21",
+ "jsonrpc-core",
+ "moonbeam-client-evm-tracing",
+ "moonbeam-rpc-core-trace",
+ "moonbeam-rpc-core-types",
+ "moonbeam-rpc-primitives-debug",
+ "sc-client-api",
+ "sc-network",
+ "sc-utils",
+ "serde",
+ "sha3 0.9.1",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-transaction-pool",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
