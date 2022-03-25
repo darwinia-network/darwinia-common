@@ -59,7 +59,7 @@ pub mod tracer {
 	impl EvmTracer {
 		pub fn new() -> Self {
 			Self {
-				step_event_filter: dp_evm_trace_ext::dvm_ext::step_event_filter(),
+				step_event_filter: moonbeam_primitives_ext::moonbeam_ext::step_event_filter(),
 			}
 		}
 		/// Setup event listeners and execute provided closure.
@@ -83,7 +83,7 @@ pub mod tracer {
 		}
 
 		pub fn emit_new() {
-			dp_evm_trace_ext::dvm_ext::call_list_new();
+			moonbeam_primitives_ext::moonbeam_ext::call_list_new();
 		}
 	}
 
@@ -92,7 +92,7 @@ pub mod tracer {
 		fn event(&mut self, event: evm::tracing::Event) {
 			let event: EvmEvent = event.into();
 			let message = event.encode();
-			dp_evm_trace_ext::dvm_ext::evm_event(message);
+			moonbeam_primitives_ext::moonbeam_ext::evm_event(message);
 		}
 	}
 
@@ -101,7 +101,7 @@ pub mod tracer {
 		fn event(&mut self, event: evm_gasometer::tracing::Event) {
 			let event: GasometerEvent = event.into();
 			let message = event.encode();
-			dp_evm_trace_ext::dvm_ext::gasometer_event(message);
+			moonbeam_primitives_ext::moonbeam_ext::gasometer_event(message);
 		}
 	}
 
@@ -110,7 +110,7 @@ pub mod tracer {
 		fn event(&mut self, event: evm_runtime::tracing::Event) {
 			let event = RuntimeEvent::from_evm_event(event, self.step_event_filter);
 			let message = event.encode();
-			dp_evm_trace_ext::dvm_ext::runtime_event(message);
+			moonbeam_primitives_ext::moonbeam_ext::runtime_event(message);
 		}
 	}
 }

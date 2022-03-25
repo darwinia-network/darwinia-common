@@ -24,7 +24,7 @@ drml-primitives     = { default-features = false, path = "../../primitives" }
 # trace
 moonbeam-rpc-primitives-debug = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev", default-features = false }
 evm-tracing-events = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev", default-features = false }
-dp-evm-trace-ext    = { default-features = false, path = "../../../primitives/evm-trace/ext" }
+moonbeam-primitives-ext = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev", default-features = false }
 dp-evm-tracer       = { default-features = false, path = "../../../primitives/evm-trace/tracer" }
 rlp                 = { version = "0.5", default-features = false }
 sha3                = { version = "0.8", default-features = false }
@@ -82,7 +82,7 @@ std = [
 	# trace
 	"moonbeam-rpc-primitives-debug/std",
 	"evm-tracing-events/std",
-	"dp-evm-trace-ext/std",
+	"moonbeam-primitives-ext/std",
 	"dp-evm-tracer/std",
 	"rlp/std",
 	"sha3/std",
