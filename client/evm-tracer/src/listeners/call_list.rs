@@ -22,7 +22,7 @@ use crate::{
 	formatters::blockscout::{BlockscoutCall as Call, BlockscoutCallInner as CallInner},
 	types::{CallResult, CallType, ContextType, CreateResult},
 };
-use dp_evm_trace_events::{
+use evm_tracing_events::{
 	runtime::{Capture, ExitError, ExitReason, ExitSucceed},
 	Event, EvmEvent, GasometerEvent, Listener as ListenerT, RuntimeEvent, StepEventFilter,
 };
@@ -125,7 +125,7 @@ impl Default for Listener {
 
 impl Listener {
 	pub fn using<R, F: FnOnce() -> R>(&mut self, f: F) -> R {
-		dp_evm_trace_events::using(self, f)
+		evm_tracing_events::using(self, f)
 	}
 
 	/// Called at the end of each transaction when tracing.
@@ -661,13 +661,13 @@ impl ListenerT for Listener {
 #[allow(unused)]
 mod tests {
 	use super::*;
-	use dp_evm_trace_events::{
+	use ethereum_types::H256;
+	use evm_tracing_events::{
 		evm::CreateScheme,
 		gasometer::Snapshot,
 		runtime::{Memory, Stack},
 		Context as EvmContext,
 	};
-	use ethereum_types::H256;
 
 	enum TestEvmEvent {
 		Call,

@@ -16,7 +16,7 @@ evm            = { version = "0.33.1", default-features = false, features = ["wi
 evm-gasometer  = { version = "0.33", default-features = false }
 evm-runtime    = { version = "0.33", default-features = false }
 # darwinia-network
-dp-evm-trace-events = { path = "../events", default-features = false, features = ["evm-tracing"] }
+evm-tracing-events = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev", default-features = false, features = [ "evm-tracing" ]}
 dp-evm-trace-ext    = { path = "../ext", default-features = false }
 # paritytech
 sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -33,7 +33,7 @@ std = [
 	"evm-gasometer/std",
 	"evm-runtime/std",
 	# darwinia-network
-	"dp-evm-trace-events/std",
+	"evm-tracing-events/std",
 	"dp-evm-trace-ext/std",
 	# paritytech
 	"codec/std",

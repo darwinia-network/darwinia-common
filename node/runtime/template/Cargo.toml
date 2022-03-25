@@ -23,7 +23,7 @@ drml-common-runtime = { default-features = false, path = "../common" }
 drml-primitives     = { default-features = false, path = "../../primitives" }
 # trace
 dp-evm-trace-apis   = { default-features = false, path = "../../../primitives/evm-trace/apis" }
-dp-evm-trace-events = { default-features = false, path = "../../../primitives/evm-trace/events" }
+evm-tracing-events = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev", default-features = false }
 dp-evm-trace-ext    = { default-features = false, path = "../../../primitives/evm-trace/ext" }
 dp-evm-tracer       = { default-features = false, path = "../../../primitives/evm-trace/tracer" }
 rlp                 = { version = "0.5", default-features = false }
@@ -81,7 +81,7 @@ std = [
 	"drml-common-runtime/std",
 	# trace
 	"dp-evm-trace-apis/std",
-	"dp-evm-trace-events/std",
+	"evm-tracing-events/std",
 	"dp-evm-trace-ext/std",
 	"dp-evm-tracer/std",
 	"rlp/std",

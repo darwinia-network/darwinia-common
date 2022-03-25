@@ -1677,8 +1677,8 @@ name = "darwinia-client-evm-tracer"
 version = "2.8.6"
 dependencies = [
  "dp-evm-trace-apis",
- "dp-evm-trace-events",
  "ethereum-types",
+ "evm-tracing-events",
  "hex",
  "log",
  "parity-scale-codec 2.3.1",
@@ -2364,25 +2364,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "dp-evm-trace-events"
-version = "2.8.6"
-dependencies = [
- "environmental",
- "ethereum",
- "ethereum-types",
- "evm",
- "evm-gasometer",
- "evm-runtime",
- "parity-scale-codec 2.3.1",
- "sp-runtime-interface",
-]
-
-[[package]]
 name = "dp-evm-trace-ext"
 version = "2.8.6"
 dependencies = [
- "dp-evm-trace-events",
  "ethereum-types",
+ "evm-tracing-events",
  "parity-scale-codec 2.3.1",
  "sp-externalities",
  "sp-runtime-interface",
@@ -2401,12 +2387,12 @@ dependencies = [
 name = "dp-evm-tracer"
 version = "2.8.6"
 dependencies = [
- "dp-evm-trace-events",
  "dp-evm-trace-ext",
  "ethereum-types",
  "evm",
  "evm-gasometer",
  "evm-runtime",
+ "evm-tracing-events",
  "parity-scale-codec 2.3.1",
  "sp-core",
  "sp-io",
@@ -2911,6 +2897,21 @@ dependencies = [
  "evm-core",
  "primitive-types",
  "sha3 0.8.2",
+]
+
+[[package]]
+name = "evm-tracing-events"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#1cde9b4ee53f1b76cfa2cef504541fd15d95ec88"
+dependencies = [
+ "environmental",
+ "ethereum",
+ "ethereum-types",
+ "evm",
+ "evm-gasometer",
+ "evm-runtime",
+ "parity-scale-codec 2.3.1",
+ "sp-runtime-interface",
 ]
 
 [[package]]
@@ -10154,11 +10155,11 @@ dependencies = [
  "darwinia-evm",
  "darwinia-support",
  "dp-evm-trace-apis",
- "dp-evm-trace-events",
  "dp-evm-trace-ext",
  "dp-evm-tracer",
  "drml-common-runtime",
  "drml-primitives",
+ "evm-tracing-events",
  "fp-evm",
  "fp-rpc",
  "fp-self-contained",

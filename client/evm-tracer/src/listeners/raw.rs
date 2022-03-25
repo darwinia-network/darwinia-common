@@ -19,7 +19,7 @@ use ethereum_types::{H160, H256};
 use std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 // darwinia-network
 use crate::types::{convert_memory, single::RawStepLog, ContextType};
-use dp_evm_trace_events::{
+use evm_tracing_events::{
 	runtime::{Capture, ExitReason},
 	Event, GasometerEvent, Listener as ListenerT, RuntimeEvent, StepEventFilter,
 };
@@ -81,7 +81,7 @@ impl Listener {
 	}
 
 	pub fn using<R, F: FnOnce() -> R>(&mut self, f: F) -> R {
-		dp_evm_trace_events::using(self, f)
+		evm_tracing_events::using(self, f)
 	}
 
 	pub fn gasometer_event(&mut self, event: GasometerEvent) {
