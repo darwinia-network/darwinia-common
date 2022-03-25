@@ -8,7 +8,6 @@ members = [
 	"node/runtime/pangoro",
 	"node/runtime/template",
 	"node/service",
-	"client/evm-tracer",
 	"client/rpc",
 	"client/rpc-core",
 	"frame/balances",

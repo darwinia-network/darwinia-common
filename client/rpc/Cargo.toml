@@ -23,8 +23,8 @@ jsonrpc-pubsub      = { version = "18.0" }
 tokio               = { version = "1.15" }
 tracing             = { version = "0.1" }
 # darwinia-network
-darwinia-client-evm-tracer = { path = "../evm-tracer" }
 darwinia-client-rpc-core   = { path = "../rpc-core" }
+moonbeam-client-evm-tracing = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
 moonbeam-rpc-primitives-debug = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
 moonbeam-rpc-core-types = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
 # paritytech

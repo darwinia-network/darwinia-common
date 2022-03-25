@@ -49,7 +49,7 @@ use sp_blockchain::{
 };
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 // --- darwinia-network ---
-use darwinia_client_evm_tracer::{
+use moonbeam_client_evm_tracing::{
 	formatters::ResponseFormatter,
 	types::block::{self, TransactionTrace},
 };
@@ -880,10 +880,11 @@ where
 			Ok(moonbeam_rpc_primitives_debug::Response::Block)
 		};
 
-		let mut proxy = darwinia_client_evm_tracer::listeners::CallList::default();
+		let mut proxy = moonbeam_client_evm_tracing::listeners::CallList::default();
 		proxy.using(f)?;
-		let mut traces: Vec<_> = darwinia_client_evm_tracer::formatters::TraceFilter::format(proxy)
-			.ok_or(internal_err("Fail to format proxy"))?;
+		let mut traces: Vec<_> =
+			moonbeam_client_evm_tracing::formatters::TraceFilter::format(proxy)
+				.ok_or(internal_err("Fail to format proxy"))?;
 		// Fill missing data.
 		for trace in traces.iter_mut() {
 			trace.block_hash = eth_block_hash;

@@ -1673,25 +1673,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-client-evm-tracer"
-version = "2.8.6"
-dependencies = [
- "ethereum-types",
- "evm-tracing-events",
- "hex",
- "log",
- "moonbeam-rpc-primitives-debug",
- "parity-scale-codec 2.3.1",
- "serde",
- "serde_json",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-client-rpc"
 version = "2.8.6"
 dependencies = [
- "darwinia-client-evm-tracer",
  "darwinia-client-rpc-core",
  "ethereum",
  "ethereum-types",
@@ -1706,6 +1690,7 @@ dependencies = [
  "jsonrpc-core-client",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
+ "moonbeam-client-evm-tracing",
  "moonbeam-rpc-core-types",
  "moonbeam-rpc-primitives-debug",
  "parity-scale-codec 2.3.1",
@@ -1724,7 +1709,6 @@ dependencies = [
 name = "darwinia-client-rpc-core"
 version = "2.8.6"
 dependencies = [
- "darwinia-client-evm-tracer",
  "darwinia-evm",
  "ethereum",
  "ethereum-types",
@@ -1734,6 +1718,7 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpc-derive",
  "jsonrpc-pubsub",
+ "moonbeam-client-evm-tracing",
  "moonbeam-rpc-core-types",
  "parity-scale-codec 2.3.1",
  "serde",
@@ -5380,6 +5365,21 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "moonbeam-client-evm-tracing"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#2ea8e629cfd4c80a1395fbb7396fd84e59d89728"
+dependencies = [
+ "ethereum-types",
+ "evm-tracing-events",
+ "hex",
+ "moonbeam-rpc-primitives-debug",
+ "parity-scale-codec 2.3.1",
+ "serde",
+ "serde_json",
  "sp-std",
 ]
 

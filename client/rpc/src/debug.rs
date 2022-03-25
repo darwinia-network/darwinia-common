@@ -26,7 +26,7 @@ use tokio::{
 	sync::{oneshot, Semaphore},
 };
 // --- darwinia-network ---
-use darwinia_client_evm_tracer::{formatters::ResponseFormatter, types::single};
+use moonbeam_client_evm_tracing::{formatters::ResponseFormatter, types::single};
 use moonbeam_rpc_core_types::{RequestBlockId, RequestBlockTag};
 use moonbeam_rpc_primitives_debug::{DebugRuntimeApi, TracerInput};
 // --- paritytech --
@@ -389,12 +389,12 @@ where
 
 		return match trace_type {
 			single::TraceType::CallList => {
-				let mut proxy = darwinia_client_evm_tracer::listeners::CallList::default();
+				let mut proxy = moonbeam_client_evm_tracing::listeners::CallList::default();
 				proxy.using(f)?;
 				proxy.finish_transaction();
 				let response = match tracer_input {
 					TracerInput::CallTracer => {
-						darwinia_client_evm_tracer::formatters::CallTracer::format(proxy)
+						moonbeam_client_evm_tracing::formatters::CallTracer::format(proxy)
 							.ok_or("Trace result is empty.")
 							.map_err(|e| internal_err(format!("{:?}", e)))
 					}
@@ -543,30 +543,30 @@ where
 						disable_memory,
 						disable_stack,
 					} => {
-						let mut proxy = darwinia_client_evm_tracer::listeners::Raw::new(
+						let mut proxy = moonbeam_client_evm_tracing::listeners::Raw::new(
 							disable_storage,
 							disable_memory,
 							disable_stack,
 						);
 						proxy.using(f)?;
 						Ok(Response::Single(
-							darwinia_client_evm_tracer::formatters::Raw::format(proxy)
+							moonbeam_client_evm_tracing::formatters::Raw::format(proxy)
 								.ok_or(internal_err("Fail to format proxy"))?,
 						))
 					}
 					single::TraceType::CallList => {
-						let mut proxy = darwinia_client_evm_tracer::listeners::CallList::default();
+						let mut proxy = moonbeam_client_evm_tracing::listeners::CallList::default();
 						proxy.using(f)?;
 						proxy.finish_transaction();
 						let response = match tracer_input {
 							TracerInput::Blockscout => {
-								darwinia_client_evm_tracer::formatters::Blockscout::format(proxy)
+								moonbeam_client_evm_tracing::formatters::Blockscout::format(proxy)
 									.ok_or("Trace result is empty.")
 									.map_err(|e| internal_err(format!("{:?}", e)))
 							}
 							TracerInput::CallTracer => {
 								let mut res =
-									darwinia_client_evm_tracer::formatters::CallTracer::format(
+									moonbeam_client_evm_tracing::formatters::CallTracer::format(
 										proxy,
 									)
 									.ok_or("Trace result is empty.")
