@@ -755,7 +755,7 @@ sp_api::impl_runtime_apis! {
 		> {
 			#[cfg(feature = "evm-tracing")]
 			{
-				use dp_evm_tracer::tracer::EvmTracer;
+				use moonbeam_evm_tracer::tracer::EvmTracer;
 				use darwinia_ethereum::Call::transact;
 				// Apply the a subset of extrinsics: all the substrate-specific or ethereum
 				// transactions that preceded the requested transaction.
@@ -791,7 +791,7 @@ sp_api::impl_runtime_apis! {
 		> {
 			#[cfg(feature = "evm-tracing")]
 			{
-				use dp_evm_tracer::tracer::EvmTracer;
+				use moonbeam_evm_tracer::tracer::EvmTracer;
 				use darwinia_ethereum::Call::transact;
 
 				let mut config = <Runtime as darwinia_evm::Config>::config().clone();

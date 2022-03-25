@@ -52,7 +52,6 @@ members = [
 	"primitives/bsc",
 	"primitives/contract",
 	"primitives/ethereum",
-	"primitives/evm-trace/tracer",
 	"primitives/fee-market",
 	"primitives/merkle-patricia-trie",
 	"primitives/relay",
