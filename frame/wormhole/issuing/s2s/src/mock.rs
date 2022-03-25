@@ -19,6 +19,7 @@
 // --- std ---
 use std::str::FromStr;
 // --- crates.io ---
+use array_bytes::hex2bytes_unchecked;
 use codec::{Decode, Encode, MaxEncodedLen};
 use ethereum::{TransactionAction, TransactionSignature};
 use rlp::RlpStream;
@@ -266,7 +267,8 @@ impl RelayMessageSender for MockS2sMessageSender {
 		_payload: Vec<u8>,
 		_fee: u128,
 	) -> Result<Vec<u8>, &'static str> {
-		Ok(Vec::new())
+		// don't send message instead system remark
+		Ok(hex2bytes_unchecked("0x0001081234"))
 	}
 }
 impl LatestMessageNoncer for MockS2sMessageSender {
