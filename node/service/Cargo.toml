@@ -23,15 +23,11 @@ tokio       = { version = "1.15" }
 darwinia-balances-rpc-runtime-api   = { path = "../../frame/balances/rpc/runtime-api" }
 darwinia-bridge-ethereum            = { path = "../../frame/bridge/ethereum" }
 darwinia-claims                     = { path = "../../frame/claims" }
-moonbeam-rpc-debug = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
-moonbeam-rpc-trace = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
 darwinia-ethereum                   = { path = "../../frame/dvm/ethereum" }
 darwinia-evm                        = { path = "../../frame/dvm/evm" }
 darwinia-fee-market-rpc-runtime-api = { path = "../../frame/fee-market/rpc/runtime-api" }
 darwinia-staking                    = { path = "../../frame/staking" }
 darwinia-staking-rpc-runtime-api    = { path = "../../frame/staking/rpc/runtime-api" }
-moonbeam-rpc-primitives-debug = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
-moonbeam-primitives-ext = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
 drml-primitives                     = { path = "../primitives" }
 drml-rpc                            = { path = "../rpc" }
 pangolin-runtime                    = { path = "../runtime/pangolin" }
@@ -74,12 +70,16 @@ sp-timestamp                               = { git = "https://github.com/darwini
 sp-transaction-pool                        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-trie                                    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
-# frontier
-fc-db           = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
-fc-mapping-sync = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
-fc-rpc          = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev", features = ["rpc_binary_search_estimate"] }
-fc-rpc-core     = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
-fp-rpc          = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+# frontier or moonbeam
+fc-db                         = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fc-mapping-sync               = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fc-rpc                        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev", features = ["rpc_binary_search_estimate"] }
+fc-rpc-core                   = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fp-rpc                        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+moonbeam-primitives-ext       = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
+moonbeam-rpc-debug            = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
+moonbeam-rpc-primitives-debug = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
+moonbeam-rpc-trace            = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
 # template
 async-trait              = { version = "0.1", optional = true }
 sc-consensus-aura        = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
