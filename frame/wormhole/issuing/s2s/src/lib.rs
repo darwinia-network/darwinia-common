@@ -41,7 +41,7 @@ use frame_support::{
 	transactional, PalletId,
 };
 use frame_system::ensure_signed;
-use sp_runtime::{traits::Convert, DispatchError, MultiSignature, MultiSigner};
+use sp_runtime::{traits::Convert, DispatchError};
 use sp_std::{str, vec::Vec};
 // --- darwinia-network ---
 use bp_runtime::ChainId;
@@ -55,7 +55,6 @@ use dp_asset::TokenMetadata;
 use dp_contract::mapping_token_factory::{
 	basic::BasicMappingTokenFactory as bmtf, s2s::Sub2SubMappingTokenFactory as smtf,
 };
-use dp_s2s::CreatePayload;
 
 pub use pallet::*;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
@@ -90,10 +89,6 @@ pub mod pallet {
 
 		/// Convert the substrate account to ethereum account
 		type ToEthAddressT: ToEthAddress<Self::AccountId>;
-
-		/// Outbound payload creator used for s2s message
-		type OutboundPayloadCreator: Parameter
-			+ CreatePayload<Self::AccountId, MultiSigner, MultiSignature>;
 
 		/// The handler for internal transaction.
 		type InternalTransactHandler: InternalTransactHandler;

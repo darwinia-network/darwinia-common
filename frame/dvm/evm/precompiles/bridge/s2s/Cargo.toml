@@ -19,13 +19,13 @@ darwinia-evm-precompile-utils = { default-features = false, path = "../../utils"
 darwinia-support              = { default-features = false, path = "../../../../../support" }
 dp-contract                   = { default-features = false, path = "../../../../../../primitives/contract" }
 dp-s2s                        = { default-features = false, path = "../../../../../../primitives/s2s" }
-from-substrate-issuing        = { default-features = false, path = "../../../../../wormhole/issuing/s2s" }
 # paritytech
 bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 frame-support       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-core             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-io               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
@@ -42,13 +42,13 @@ std = [
 	"darwinia-support/std",
 	"dp-contract/std",
 	"dp-s2s/std",
-	"from-substrate-issuing/std",
 	# paritytech
 	"bp-message-dispatch/std",
 	"bp-runtime/std",
 	"frame-support/std",
 	"sp-core/std",
 	"sp-io/std",
+	"sp-runtime/std",
 	"sp-std/std",
 	# frontier
 	"fp-evm/std",

@@ -23,53 +23,13 @@ use std::str::FromStr;
 use crate::{
 	*, {self as s2s_issuing},
 };
-use darwinia_support::evm::IntoAccountId;
 use dp_asset::{TokenMetadata, NATIVE_TOKEN_TYPE};
-use dp_contract::mapping_token_factory::s2s::S2sRemoteUnlockInfo;
-use dp_s2s::CallParams;
 use mock::*;
 
 // --- paritytech ---
-use bp_message_dispatch::CallOrigin;
-use bp_runtime::messages::DispatchFeePayment;
 use frame_support::assert_ok;
 use frame_system::RawOrigin;
 use sp_runtime::AccountId32;
-
-#[test]
-fn burn_and_remote_unlock_success() {
-	let (_, mut ext) = new_test_ext(1);
-	ext.execute_with(|| {
-		let original_token = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let burn_info = S2sRemoteUnlockInfo {
-			spec_version: 0,
-			weight: 100,
-			token_type: 0,
-			original_token,
-			amount: U256::from(1),
-			recipient: [1; 32].to_vec(),
-		};
-		let submitter = HashedConverter::into_account_id(
-			H160::from_str("1000000000000000000000000000000000000002").unwrap(),
-		);
-		<<Test as s2s_issuing::Config>::OutboundPayloadCreator as CreatePayload<
-			_,
-			MultiSigner,
-			MultiSignature,
-		>>::create(
-			CallOrigin::SourceAccount(submitter),
-			burn_info.spec_version,
-			burn_info.weight,
-			CallParams::S2sBackingPalletUnlockFromRemote(
-				original_token,
-				U256::from(1),
-				[1; 32].to_vec(),
-			),
-			DispatchFeePayment::AtSourceChain,
-		)
-		.unwrap();
-	});
-}
 
 fn alice_create(alice: &AccountInfo, input: Vec<u8>, nonce: u32) {
 	let gas_limit_create: u64 = 1_250_000 * 1_000_000_000;

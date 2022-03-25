@@ -1839,11 +1839,11 @@ dependencies = [
  "dp-s2s",
  "fp-evm",
  "frame-support",
- "from-substrate-issuing",
  "log",
  "parity-scale-codec 2.3.1",
  "sp-core",
  "sp-io",
+ "sp-runtime",
  "sp-std",
 ]
 
@@ -2383,7 +2383,6 @@ name = "drml"
 version = "2.8.6"
 dependencies = [
  "bsc-primitives",
- "drml-primitives",
  "drml-rpc",
  "drml-service",
  "fp-consensus",
