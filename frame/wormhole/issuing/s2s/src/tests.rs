@@ -71,21 +71,63 @@ fn burn_and_remote_unlock_success() {
 	});
 }
 
+fn alice_create(alice: &AccountInfo, input: Vec<u8>, nonce: u32) {
+	let gas_limit_create: u64 = 1_250_000 * 1_000_000_000;
+	let t = LegacyUnsignedTransaction {
+		nonce: U256::from(nonce),
+		gas_price: U256::from(1),
+		gas_limit: U256::from(gas_limit_create),
+		action: ethereum::TransactionAction::Create,
+		value: U256::zero(),
+		input,
+	}
+	.sign(&alice.private_key);
+	assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
+}
+
+fn alice_call(alice: &AccountInfo, input: Vec<u8>, nonce: u32, contract: H160) {
+	let t = LegacyUnsignedTransaction {
+		nonce: U256::from(nonce),
+		gas_price: U256::from(1),
+		gas_limit: U256::from(0x100000),
+		action: ethereum::TransactionAction::Call(contract),
+		value: U256::zero(),
+		input,
+	}
+	.sign(&alice.private_key);
+	assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
+}
+
+fn configure_mapping_token_factory(alice: &AccountInfo) {
+	let mapping_token_factory_address: H160 =
+		array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
+	// initialize, then the owner is system account
+	let initialize: Vec<u8> = hex2bytes_unchecked("0x8129fc1c").to_vec();
+	alice_call(&alice, initialize, 2, mapping_token_factory_address);
+	// setTokenContractLogic
+	let set_token_contract_logic0 = hex2bytes_unchecked("0x3c547e160000000000000000000000000000000000000000000000000000000000000000000000000000000000000000248e85939e48ca12a20cdf80e60d9e3d380ca7f9");
+	let set_token_contract_logic1 = hex2bytes_unchecked("0x3c547e160000000000000000000000000000000000000000000000000000000000000001000000000000000000000000248e85939e48ca12a20cdf80e60d9e3d380ca7f9");
+	alice_call(
+		&alice,
+		set_token_contract_logic0,
+		3,
+		mapping_token_factory_address,
+	);
+	alice_call(
+		&alice,
+		set_token_contract_logic1,
+		4,
+		mapping_token_factory_address,
+	);
+}
+
 #[test]
 fn register_and_issue_from_remote_success() {
 	let (pairs, mut ext) = new_test_ext(1);
 	let alice = &pairs[0];
 	ext.execute_with(|| {
-		let t = LegacyUnsignedTransaction {
-			nonce: U256::zero(),
-			gas_price: U256::from(1),
-			gas_limit: U256::from(0x100000),
-			action: ethereum::TransactionAction::Create,
-			value: U256::zero(),
-			input: hex2bytes_unchecked(TEST_CONTRACT_BYTECODE),
-		}
-		.sign(&alice.private_key);
-		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
+        alice_create(&alice, hex2bytes_unchecked(TEST_CONTRACT_BYTECODE), 0);
+        alice_create(&alice, hex2bytes_unchecked(MAPPING_TOKEN_LOGIC_CONTRACT_BYTECODE), 1);
 		let mapping_token_factory_address: H160 =
 			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
 		assert_ok!(S2sIssuing::set_mapping_factory_address(
@@ -121,6 +163,7 @@ fn register_and_issue_from_remote_success() {
 			S2sIssuing::mapped_token_address(backing_address, original_token_address).unwrap(),
 			H160::from_str("0000000000000000000000000000000000000000").unwrap()
 		);
+        configure_mapping_token_factory(&alice);
 		assert_ok!(S2sIssuing::register_from_remote(
 			Origin::signed(drived_remote_backing_account.clone()),
 			token
@@ -130,8 +173,13 @@ fn register_and_issue_from_remote_success() {
 		// after register, the mapping token address is 0x0000000000000000000000000000000000000001
 		assert_eq!(
 			mapping_token,
-			H160::from_str("0000000000000000000000000000000000000001").unwrap()
+			H160::from_str("deb21a862ebe470d8982423a03d525b50ea66c8c").unwrap()
 		);
+
+
+		//setDailyLimit
+		let set_dailylimit = hex2bytes_unchecked("0x2803212f000000000000000000000000deb21a862ebe470d8982423a03d525b50ea66c8c000000000000000000000000000000000000000000000000002386f26fc10000");
+        alice_call(&alice, set_dailylimit, 5, mapping_token_factory_address);
 		let recipient = H160::from_str("1000000000000000000000000000000000000000").unwrap();
 		assert_ok!(S2sIssuing::issue_from_remote(
 			Origin::signed(drived_remote_backing_account.clone()),

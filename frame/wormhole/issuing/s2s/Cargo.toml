@@ -51,6 +51,9 @@ pallet-timestamp  = { git = "https://github.com/darwinia-network/substrate", bra
 # frontier
 fp-self-contained = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 pallet-evm        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+pallet-evm-precompile-simple = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+darwinia-evm-precompile-bridge-s2s = { path = "../../../dvm/evm/precompiles/bridge/s2s" }
+darwinia-evm-precompile-dispatch = { path = "../../../dvm/evm/precompiles/dispatch" }
 
 [features]
 default = ["std"]
