@@ -1,6 +1,6 @@
-const expect = require("chai").expect;
-const Web3 = require("web3");
-const conf = require("./config.js");
+import { expect } from "chai";
+import Web3 from "web3";
+import { config } from "./config";
 const web3 = new Web3("http://127.0.0.1:9933");
 
 const addressFrom = "0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b";
@@ -17,7 +17,7 @@ describe("Test RPC Bloom", function () {
 				from: addressFrom,
 				data: TEST_CONTRACT_BYTECODE,
 				value: "0x00",
-				gas: conf.gas,
+				gas: config.gas,
 			},
 			privKey
 		);

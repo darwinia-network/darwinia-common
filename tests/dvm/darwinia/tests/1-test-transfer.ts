@@ -1,6 +1,7 @@
-const expect = require("chai").expect;
-const Web3 = require("web3");
-const conf = require("./config.ts");
+import { expect } from "chai";
+import Web3 from "web3";
+import { config } from "./config";
+
 const web3 = new Web3("http://127.0.0.1:9933");
 
 const addressWithdrawPrecompile = "0x0000000000000000000000000000000000000015";
@@ -29,7 +30,7 @@ describe("Test Transfer Balance", function () {
 				from: addressFrom,
 				to: addressTo,
 				value: web3.utils.toWei("10", "ether"),
-				gas: conf.gas,
+				gas: config.gas,
 			},
 			privKey
 		);
@@ -54,7 +55,7 @@ describe("Test Transfer Balance", function () {
 				from: addressFrom,
 				to: addressTo2,
 				value: web3.utils.toWei("100", "wei"),
-				gas: conf.gas,
+				gas: config.gas,
 			},
 			privKey
 		);
@@ -78,7 +79,7 @@ describe("Test Transfer Balance", function () {
 				from: addressFrom,
 				to: addressTo,
 				value: web3.utils.toWei("50", "ether"),
-				gas: conf.gas,
+				gas: config.gas,
 			},
 			privKey
 		);
@@ -104,8 +105,7 @@ describe("Test Transfer Balance", function () {
 				from: addressFrom,
 				to: addressFrom,
 				value: web3.utils.toWei("30", "ether"),
-				gas: conf.gas,
-				gas_price: 1,
+				gas: config.gas,
 			},
 			privKey
 		);
@@ -128,7 +128,7 @@ describe("Test Transfer Balance", function () {
 			{
 				from: addressFrom,
 				to: addressWithdrawPrecompile,
-				gas: conf.gas,
+				gas: config.gas,
 				data: input,
 				value: web3.utils.toWei("30", "ether"),
 			},

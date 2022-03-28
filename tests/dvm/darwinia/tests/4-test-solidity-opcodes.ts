@@ -1,24 +1,29 @@
-const expect = require("chai").expect;
-const assert = require("chai").assert;
-const Web3 = require("web3");
-const conf = require("./config.ts");
-const opcode = require("./bytecode.ts");
-const web3 = new Web3(conf.host);
-const account = web3.eth.accounts.wallet.add(conf.privKey);
-const opcodes = new web3.eth.Contract(opcode.abi);
-opcodes.options.from = conf.address;
-opcodes.options.gas = conf.gas;
-opcodes.options.gasPrice = 1000000000;
+import Web3 from "web3";
+import { expect, assert } from "chai";
+import { config } from "./config";
+import { AbiItem } from "web3-utils";
+import { bytecode } from "./bytecode";
+
+const web3 = new Web3(config.host);
+
+const account = web3.eth.accounts.wallet.add(config.privKey);
+const opcodes = new web3.eth.Contract(bytecode.abi as AbiItem[]);
+opcodes.options.from = config.address;
+opcodes.options.gas = config.gas;
+opcodes.options.gasPrice = "1000000000";
 
 describe("Test Solidity OpCodes", function () {
 
 	it("Should run without errors the majorit of opcodes", async () => {
 		const instance = await opcodes
 			.deploy({
-				data: opcode.bytecode,
+				// TODO: udpate this data
+				data: bytecode.bytecode,
 				arguments: [],
 			})
-			.send();
+			.send({
+				from: config.address,
+			});
 		opcodes.options.address = instance.options.address;
 		await opcodes.methods.test().send();
 		await opcodes.methods.test_stop().send();

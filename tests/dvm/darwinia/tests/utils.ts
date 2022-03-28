@@ -1,17 +1,18 @@
-const assert = require("chai").assert;
-const Web3 = require("web3");
-const BigNumber = require("bignumber.js");
-const conf = require("./config.js");
-var web3 = new Web3(conf.host);
+import { assert } from "chai";
+import Web3 from "web3";
+import { config } from "./config";
+import { BigNumber } from "bignumber.js";
 
-function customRequest(method, params) {
+var web3 = new Web3(config.host);
+
+export function customRequest(method, params) {
 	return new Promise((resolve, reject) => {
-		web3.currentProvider.send(
+		(web3.currentProvider as any).send(
 			{
 				method: method,
 				params: params,
 				jsonrpc: "2.0",
-				id: conf.rpcMessageId++,
+				id: config.rpcMessageId++,
 			},
 			function (error, result) {
 				if (error) {
@@ -25,5 +26,3 @@ function customRequest(method, params) {
 		);
 	});
 }
-
-module.exports = { customRequest };

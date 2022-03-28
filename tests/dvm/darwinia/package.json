@@ -22,7 +22,7 @@
   },
   "scripts": {
     "test": "mocha -r ts-node/register 'tests/**/*.ts'",
-    "test-single": "mocha -r ts-node/register 'tests/**/0-test-rpc-block.ts'"
+    "test-single": "mocha -r ts-node/register 'tests/**/1-test-transfer.ts'"
   },
   "keywords": [],
   "author": "",

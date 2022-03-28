@@ -1,10 +1,10 @@
 // Run the transfer balance firstly.
 // require("../test-transfer.js");
 
-const expect = require("chai").expect;
-const Web3 = require("web3");
-const contractFile = require("./compile");
-const conf = require("../config.ts");
+import { expect } from "chai";
+import Web3 from "web3";
+import { contractFile } from "./compile";
+import { config } from "../config";
 
 const web3 = new Web3("http://127.0.0.1:9933");
 const address = "0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b";
@@ -27,7 +27,7 @@ describe("Test Contract", function () {
 			{
 				from: address,
 				data: incrementerTx.encodeABI(),
-				gas: conf.gas,
+				gas: config.gas,
 			},
 			privKey
 		);
@@ -62,7 +62,7 @@ describe("Test Contract", function () {
 				from: address,
 				to: create_contract,
 				data: encoded,
-				gas: conf.gas,
+				gas: config.gas,
 			},
 			privKey
 		);
@@ -85,7 +85,7 @@ describe("Test Contract", function () {
 				from: address,
 				to: create_contract,
 				data: encoded,
-				gas: conf.gas,
+				gas: config.gas,
 			},
 			privKey
 		);
