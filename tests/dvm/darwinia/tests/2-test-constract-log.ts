@@ -1,12 +1,12 @@
 import { expect, assert } from "chai";
 import Web3 from "web3";
 import { config } from "./config";
+import { log_test } from "./contract/contract_info";
 import { AbiItem } from "web3-utils";
 
 const web3 = new Web3("ws://127.0.0.1:9944");
 const account = web3.eth.accounts.wallet.add(config.privKey);
-const jsontest = new web3.eth.Contract(config.abi as AbiItem[]);
-
+const jsontest = new web3.eth.Contract(log_test.abi as AbiItem[]);
 jsontest.options.from = config.address;
 jsontest.options.gas = config.gas;
 jsontest.options.gasPrice = "1000000000";
@@ -15,7 +15,7 @@ describe("Test Contract Log", function () {
 	it("Deploy json test contract", async function () {
 		const instance = await jsontest
 			.deploy({
-				data: config.bytecode,
+				data: log_test.bytecode,
 				arguments: [],
 			})
 			.send({

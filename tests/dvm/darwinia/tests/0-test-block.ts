@@ -1,8 +1,8 @@
 import { expect } from "chai";
 import Web3 from "web3";
-// import { Web3 } from "web3";
+import { config } from "./config";
 
-const web3 = new Web3("http://127.0.0.1:9933");
+const web3 = new Web3(config.host);
 
 describe("Test Block RPC", function () {
 	it("The block number should not be zero", async function () {

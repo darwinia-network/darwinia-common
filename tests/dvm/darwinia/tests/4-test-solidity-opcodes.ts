@@ -1,23 +1,22 @@
 import Web3 from "web3";
 import { expect, assert } from "chai";
 import { config } from "./config";
+import { opcodes_test } from "./contract/contract_info";
 import { AbiItem } from "web3-utils";
-import { bytecode } from "./bytecode";
 
 const web3 = new Web3(config.host);
 
 const account = web3.eth.accounts.wallet.add(config.privKey);
-const opcodes = new web3.eth.Contract(bytecode.abi as AbiItem[]);
+const opcodes = new web3.eth.Contract(opcodes_test.abi as AbiItem[]);
 opcodes.options.from = config.address;
 opcodes.options.gas = config.gas;
 opcodes.options.gasPrice = "1000000000";
 
 describe("Test Solidity OpCodes", function () {
-	it("Should run without errors the majorit of opcodes", async () => {
+	it("Should run without errors the majort of opcodes", async () => {
 		const instance = await opcodes
 			.deploy({
-				// TODO: udpate this data
-				data: bytecode.bytecode,
+				data: opcodes_test.bytecode,
 				arguments: [],
 			})
 			.send({

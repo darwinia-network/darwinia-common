@@ -1,7 +1,6 @@
 import { assert } from "chai";
 import Web3 from "web3";
 import { config } from "./config";
-import { BigNumber } from "bignumber.js";
 
 var web3 = new Web3(config.host);
 
