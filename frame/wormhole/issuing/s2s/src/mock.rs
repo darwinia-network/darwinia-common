@@ -199,7 +199,7 @@ where
 		Self(Default::default())
 	}
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 24]
+		sp_std::vec![1, 2, 3, 4, 24, 25]
 			.into_iter()
 			.map(|x| H160::from_low_u64_be(x))
 			.collect()

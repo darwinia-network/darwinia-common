@@ -49,11 +49,11 @@ rlp          = { version = "0.5" }
 darwinia-balances = { path = "../../../balances" }
 pallet-timestamp  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
-fp-self-contained = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
-pallet-evm        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
-pallet-evm-precompile-simple = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fp-self-contained                  = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+pallet-evm                         = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+pallet-evm-precompile-simple       = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 darwinia-evm-precompile-bridge-s2s = { path = "../../../dvm/evm/precompiles/bridge/s2s" }
-darwinia-evm-precompile-dispatch = { path = "../../../dvm/evm/precompiles/dispatch" }
+darwinia-evm-precompile-dispatch   = { path = "../../../dvm/evm/precompiles/dispatch" }
 
 [features]
 default = ["std"]
