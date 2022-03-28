@@ -2,7 +2,7 @@ const Web3 = require("web3");
 const expect = require("chai").expect;
 const assert = require("chai").assert;
 const utils = require("./utils");
-const conf = require("./config.js");
+const conf = require("./config.ts");
 
 let currentFilterId = null;
 

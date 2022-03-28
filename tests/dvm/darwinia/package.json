@@ -11,6 +11,7 @@
     "browserify": "^17.0.0",
     "chai": "^4.2.0",
     "macha": "^0.0.0",
+    "@types/mocha": "^9.0.0",
     "solc": "=0.6.10",
     "ts-node": "^8.10.2",
     "underscore": "^1.12.1",
@@ -20,7 +21,8 @@
     "mocha": "^8.2.0"
   },
   "scripts": {
-    "test": "mocha --recursive tests --reporter spec --timeout 10000 --exit"
+    "test": "mocha -r ts-node/register 'tests/**/*.ts'",
+    "test-single": "mocha -r ts-node/register 'tests/**/0-test-rpc-block.ts'"
   },
   "keywords": [],
   "author": "",

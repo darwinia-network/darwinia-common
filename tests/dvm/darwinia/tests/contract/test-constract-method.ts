@@ -4,7 +4,7 @@
 const expect = require("chai").expect;
 const Web3 = require("web3");
 const contractFile = require("./compile");
-const conf = require("../config.js");
+const conf = require("../config.ts");
 
 const web3 = new Web3("http://127.0.0.1:9933");
 const address = "0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b";
