@@ -21,5 +21,8 @@ const input = {
 	},
 };
 
+console.log("input: " + JSON.stringify(input, null, 4));
 const tempFile = JSON.parse(solc.compile(JSON.stringify(input)));
+console.log("tempFile: " + tempFile);
 export const contractFile = tempFile.contracts["Incrementer.sol"]["Incrementer"];
+console.log("contractFile: " + contractFile);
