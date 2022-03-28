@@ -87,7 +87,6 @@ describe("Test Transfer Balance", function () {
 		const createReceipt = await web3.eth.sendSignedTransaction(
 			createTransaction.rawTransaction
 		);
-
 	}).timeout(80000);
 
 	it("Check balance after transfer 50 ether", async function () {

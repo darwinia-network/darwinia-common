@@ -12,7 +12,6 @@ jsontest.options.gas = config.gas;
 jsontest.options.gasPrice = "1000000000";
 
 describe("Test Contract Log", function () {
-
 	it("Deploy json test contract", async function () {
 		const instance = await jsontest
 			.deploy({

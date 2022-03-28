@@ -17,7 +17,8 @@ export function customRequest(method, params) {
 			function (error, result) {
 				if (error) {
 					reject(
-						`Failed to send custom request (${method} (${params.join(",")})): ${error.message || error.toString()
+						`Failed to send custom request (${method} (${params.join(",")})): ${
+							error.message || error.toString()
 						}`
 					);
 				}

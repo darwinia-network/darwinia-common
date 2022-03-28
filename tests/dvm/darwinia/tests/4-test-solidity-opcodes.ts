@@ -13,7 +13,6 @@ opcodes.options.gas = config.gas;
 opcodes.options.gasPrice = "1000000000";
 
 describe("Test Solidity OpCodes", function () {
-
 	it("Should run without errors the majorit of opcodes", async () => {
 		const instance = await opcodes
 			.deploy({
