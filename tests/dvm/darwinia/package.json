@@ -23,7 +23,7 @@
 		"prettier": "2.6.1"
 	},
 	"scripts": {
-		"test": "mocha -r ts-node/register 'tests/**/*.ts'",
+		"test": "mocha -r ts-node/register 'tests/**/*.ts' --exit",
 		"test-single": "mocha -r ts-node/register 'tests/**/1-test-transfer.ts'"
 	},
 	"keywords": [],
