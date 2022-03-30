@@ -35,6 +35,7 @@ darwinia-staking                    = { default-features = false, path = "../../
 darwinia-staking-rpc-runtime-api    = { default-features = false, path = "../../../frame/staking/rpc/runtime-api" }
 darwinia-support                    = { default-features = false, path = "../../../frame/support" }
 dp-asset                            = { default-features = false, path = "../../../primitives/asset" }
+dp-evm-tracer                       = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
 dp-fee                              = { default-features = false, path = "../../../primitives/fee-market" }
 dp-s2s                              = { default-features = false, path = "../../../primitives/s2s" }
 drml-common-runtime                 = { default-features = false, path = "../common" }
@@ -104,7 +105,6 @@ pallet-base-fee               = { default-features = false, git = "https://githu
 pallet-evm                    = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 pallet-evm-precompile-simple  = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 moonbeam-rpc-primitives-debug = { default-features = false,  git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
-dp-evm-tracer = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
 
 [build-dependencies]
 # paritytech
@@ -136,6 +136,7 @@ std = [
 	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",
 	"dp-asset/std",
+	"dp-evm-tracer/std",
 	"dp-fee/std",
 	"dp-s2s/std",
 	"drml-primitives/std",
@@ -205,7 +206,6 @@ std = [
 	"pallet-base-fee/std",
 	"pallet-evm/std",
 	"moonbeam-rpc-primitives-debug/std",
-	"dp-evm-tracer/std",
 ]
 
 fast-runtime = ["drml-primitives/fast-runtime"]

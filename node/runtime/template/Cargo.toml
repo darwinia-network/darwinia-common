@@ -21,6 +21,8 @@ darwinia-balances   = { default-features = false, path = "../../../frame/balance
 darwinia-ethereum   = { default-features = false, path = "../../../frame/dvm/ethereum" }
 darwinia-evm        = { default-features = false, path = "../../../frame/dvm/evm" }
 darwinia-support    = { default-features = false, path = "../../../frame/support" }
+dp-evm-trace-ext    = { default-features = false, path = "../../../primitives/evm-trace/ext" }
+dp-evm-tracer       = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
 drml-common-runtime = { default-features = false, path = "../common" }
 drml-primitives     = { default-features = false, path = "../../primitives" }
 # paritytech
@@ -56,8 +58,6 @@ pallet-evm                     = { default-features = false, git = "https://gith
 pallet-evm-precompile-modexp   = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 pallet-evm-precompile-sha3fips = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 pallet-evm-precompile-simple   = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
-dp-evm-trace-ext = { default-features = false, path = "../../../primitives/evm-trace/ext" }
-dp-evm-tracer = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
 moonbeam-rpc-primitives-debug  = { default-features = false, git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
 
 [build-dependencies]
@@ -78,6 +78,8 @@ std = [
 	"darwinia-ethereum/std",
 	"darwinia-evm/std",
 	"darwinia-support/std",
+	"dp-evm-tracer/std",
+	"dp-evm-trace-ext/std",
 	"drml-primitives/std",
 	"drml-common-runtime/std",
 	# paritytech
@@ -113,7 +115,5 @@ std = [
 	"pallet-evm-precompile-modexp/std",
 	"pallet-evm-precompile-sha3fips/std",
 	"pallet-evm-precompile-simple/std",
-	"dp-evm-tracer/std",
-	"dp-evm-trace-ext/std",
 	"moonbeam-rpc-primitives-debug/std",
 ]

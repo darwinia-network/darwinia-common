@@ -1,26 +1,20 @@
-// Copyright 2019-2022 PureStake Inc.
-// This file is part of Moonbeam.
-
-// Moonbeam is free software: you can redistribute it and/or modify
+// This file is part of Darwinia.
+//
+// Copyright (C) 2018-2022 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-
-// Moonbeam is distributed in the hope that it will be useful,
+//
+// Darwinia is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-
+//
 // You should have received a copy of the GNU General Public License
-// along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
-
-//! Substrate EVM tracing.
-//!
-//! The purpose of this crate is enable tracing the EVM opcode execution and will be used by
-//! both Dapp developers - to get a granular view on their transactions - and indexers to access
-//! the EVM callstack (internal transactions).
-//!
-//! Proxies EVM messages to the host functions.
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 pub mod tracer {
@@ -29,9 +23,8 @@ pub mod tracer {
 	use evm::tracing::{using as evm_using, EventListener as EvmListener};
 	use evm_gasometer::tracing::{using as gasometer_using, EventListener as GasometerListener};
 	use evm_runtime::tracing::{using as runtime_using, EventListener as RuntimeListener};
-	// --- darwinia-network ---
-	use evm_tracing_events::{EvmEvent, GasometerEvent, RuntimeEvent, StepEventFilter};
 	// --- paritytech ---
+	use evm_tracing_events::{EvmEvent, GasometerEvent, RuntimeEvent, StepEventFilter};
 	use sp_std::{cell::RefCell, rc::Rc};
 
 	struct ListenerProxy<T>(pub Rc<RefCell<T>>);
