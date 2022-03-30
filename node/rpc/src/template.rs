@@ -185,7 +185,7 @@ where
 		.any(|cmd| matches!(cmd.as_str(), "debug" | "trace"))
 	{
 		if let Some(trace_filter_requester) = rpc_requesters.trace {
-			io.extend_with(TraceApiServer::to_delegate(Trace::new(
+			io.extend_with(TraceServer::to_delegate(Trace::new(
 				client,
 				trace_filter_requester,
 				ethapi_trace_max_count,
@@ -193,7 +193,7 @@ where
 		}
 
 		if let Some(debug_requester) = rpc_requesters.debug {
-			io.extend_with(DebugApiServer::to_delegate(Debug::new(debug_requester)));
+			io.extend_with(DebugServer::to_delegate(Debug::new(debug_requester)));
 		}
 	}
 
