@@ -2806,7 +2806,7 @@ dependencies = [
 [[package]]
 name = "evm-tracing-events"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#2ea8e629cfd4c80a1395fbb7396fd84e59d89728"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#838eda5ac66678b62f57edf88316b592319ea807"
 dependencies = [
  "environmental",
  "ethereum",
@@ -5345,7 +5345,7 @@ dependencies = [
 [[package]]
 name = "moonbeam-client-evm-tracing"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#2ea8e629cfd4c80a1395fbb7396fd84e59d89728"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#838eda5ac66678b62f57edf88316b592319ea807"
 dependencies = [
  "ethereum-types",
  "evm-tracing-events",
@@ -5360,7 +5360,7 @@ dependencies = [
 [[package]]
 name = "moonbeam-rpc-core-debug"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#2ea8e629cfd4c80a1395fbb7396fd84e59d89728"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#838eda5ac66678b62f57edf88316b592319ea807"
 dependencies = [
  "ethereum-types",
  "futures 0.3.21",
@@ -5377,7 +5377,7 @@ dependencies = [
 [[package]]
 name = "moonbeam-rpc-core-trace"
 version = "0.6.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#2ea8e629cfd4c80a1395fbb7396fd84e59d89728"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#838eda5ac66678b62f57edf88316b592319ea807"
 dependencies = [
  "ethereum-types",
  "futures 0.3.21",
@@ -5393,7 +5393,7 @@ dependencies = [
 [[package]]
 name = "moonbeam-rpc-core-types"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#2ea8e629cfd4c80a1395fbb7396fd84e59d89728"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#838eda5ac66678b62f57edf88316b592319ea807"
 dependencies = [
  "ethereum-types",
  "serde",
@@ -5403,7 +5403,7 @@ dependencies = [
 [[package]]
 name = "moonbeam-rpc-debug"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#2ea8e629cfd4c80a1395fbb7396fd84e59d89728"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#838eda5ac66678b62f57edf88316b592319ea807"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -5432,7 +5432,7 @@ dependencies = [
 [[package]]
 name = "moonbeam-rpc-primitives-debug"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#2ea8e629cfd4c80a1395fbb7396fd84e59d89728"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#838eda5ac66678b62f57edf88316b592319ea807"
 dependencies = [
  "environmental",
  "ethereum",
@@ -5451,7 +5451,7 @@ dependencies = [
 [[package]]
 name = "moonbeam-rpc-trace"
 version = "0.6.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#2ea8e629cfd4c80a1395fbb7396fd84e59d89728"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#838eda5ac66678b62f57edf88316b592319ea807"
 dependencies = [
  "ethereum",
  "ethereum-types",
