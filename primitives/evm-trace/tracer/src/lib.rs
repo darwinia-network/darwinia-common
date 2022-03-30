@@ -83,7 +83,8 @@ pub mod tracer {
 		}
 
 		pub fn emit_new() {
-			dp_evm_trace_ext::dvm_ext::call_list_new();
+			// dp_evm_trace_ext::dvm_ext::call_list_new();
+			evm_tracing_events::Event::CallListNew().emit();
 		}
 	}
 
@@ -91,8 +92,9 @@ pub mod tracer {
 		/// Proxies `evm::tracing::Event` to the host.
 		fn event(&mut self, event: evm::tracing::Event) {
 			let event: EvmEvent = event.into();
-			let message = event.encode();
-			dp_evm_trace_ext::dvm_ext::evm_event(message);
+			// let message = event.encode();
+			// dp_evm_trace_ext::dvm_ext::evm_event(message);
+			evm_tracing_events::Event::Evm(event).emit();
 		}
 	}
 
@@ -100,8 +102,9 @@ pub mod tracer {
 		/// Proxies `evm_gasometer::tracing::Event` to the host.
 		fn event(&mut self, event: evm_gasometer::tracing::Event) {
 			let event: GasometerEvent = event.into();
-			let message = event.encode();
-			dp_evm_trace_ext::dvm_ext::gasometer_event(message);
+			// let message = event.encode();
+			// dp_evm_trace_ext::dvm_ext::gasometer_event(message);
+			evm_tracing_events::Event::Gasometer(event).emit();
 		}
 	}
 
@@ -109,8 +112,9 @@ pub mod tracer {
 		/// Proxies `evm_runtime::tracing::Event` to the host.
 		fn event(&mut self, event: evm_runtime::tracing::Event) {
 			let event = RuntimeEvent::from_evm_event(event, self.step_event_filter);
-			let message = event.encode();
-			dp_evm_trace_ext::dvm_ext::runtime_event(message);
+			// let message = event.encode();
+			// dp_evm_trace_ext::dvm_ext::runtime_event(message);
+			evm_tracing_events::Event::Runtime(event).emit();
 		}
 	}
 }
