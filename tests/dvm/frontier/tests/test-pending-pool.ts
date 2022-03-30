@@ -4,7 +4,8 @@ import { createAndFinalizeBlock, customRequest, describeWithFrontier } from "./u
 
 describeWithFrontier("Frontier RPC (Pending Pool)", (context) => {
 	const GENESIS_ACCOUNT = "0x6be02d1d3665660d22ff9624b7be0551ee1ac91b";
-	const GENESIS_ACCOUNT_PRIVATE_KEY = "0x99B3C12287537E38C90A9219D4CB074A89A16E9CDB20BF85728EBD97C343E342";
+	const GENESIS_ACCOUNT_PRIVATE_KEY =
+		"0x99B3C12287537E38C90A9219D4CB074A89A16E9CDB20BF85728EBD97C343E342";
 
 	// Solidity: contract test { function multiply(uint a) public pure returns(uint d) {return a * 7;}}
 	const TEST_CONTRACT_BYTECODE =
@@ -24,14 +25,19 @@ describeWithFrontier("Frontier RPC (Pending Pool)", (context) => {
 			GENESIS_ACCOUNT_PRIVATE_KEY
 		);
 
-		const tx_hash = (await customRequest(context.web3, "eth_sendRawTransaction", [tx.rawTransaction])).result;
+		const tx_hash = (
+			await customRequest(context.web3, "eth_sendRawTransaction", [tx.rawTransaction])
+		).result;
 
-		const pending_transaction = (await customRequest(context.web3, "eth_getTransactionByHash", [tx_hash])).result;
+		const pending_transaction = (
+			await customRequest(context.web3, "eth_getTransactionByHash", [tx_hash])
+		).result;
 		// pending transactions do not know yet to which block they belong to
 		expect(pending_transaction).to.include({
 			blockNumber: null,
 			hash: tx_hash,
-			publicKey: "0x624f720eae676a04111631c9ca338c11d0f5a80ee42210c6be72983ceb620fbf645a96f951529fa2d70750432d11b7caba5270c4d677255be90b3871c8c58069",
+			publicKey:
+				"0x624f720eae676a04111631c9ca338c11d0f5a80ee42210c6be72983ceb620fbf645a96f951529fa2d70750432d11b7caba5270c4d677255be90b3871c8c58069",
 			r: "0x8e3759de96b00f8a05a95c24fa905963f86a82a0038cca0fde035762fb2d24f7",
 			s: "0x7131a2c265463f4bb063504f924df4d3d14bdad9cdfff8391041ea78295d186b",
 			v: "0x77",
@@ -39,10 +45,13 @@ describeWithFrontier("Frontier RPC (Pending Pool)", (context) => {
 
 		await createAndFinalizeBlock(context.web3);
 
-		const processed_transaction = (await customRequest(context.web3, "eth_getTransactionByHash", [tx_hash])).result;
+		const processed_transaction = (
+			await customRequest(context.web3, "eth_getTransactionByHash", [tx_hash])
+		).result;
 		expect(processed_transaction).to.include({
 			hash: tx_hash,
-			publicKey: "0x624f720eae676a04111631c9ca338c11d0f5a80ee42210c6be72983ceb620fbf645a96f951529fa2d70750432d11b7caba5270c4d677255be90b3871c8c58069",
+			publicKey:
+				"0x624f720eae676a04111631c9ca338c11d0f5a80ee42210c6be72983ceb620fbf645a96f951529fa2d70750432d11b7caba5270c4d677255be90b3871c8c58069",
 			r: "0x8e3759de96b00f8a05a95c24fa905963f86a82a0038cca0fde035762fb2d24f7",
 			s: "0x7131a2c265463f4bb063504f924df4d3d14bdad9cdfff8391041ea78295d186b",
 			v: "0x77",

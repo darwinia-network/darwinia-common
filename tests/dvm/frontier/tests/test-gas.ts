@@ -1,9 +1,8 @@
 import { expect } from "chai";
 
-import Test from "../build/contracts/Test.json"
-import { describeWithFrontier, createAndFinalizeBlock,customRequest } from "./util";
+import Test from "../build/contracts/Test.json";
+import { describeWithFrontier, createAndFinalizeBlock, customRequest } from "./util";
 import { AbiItem } from "web3-utils";
-
 
 // (!) The implementation must match the one in the rpc handler.
 // If the variation in the estimate is less than 10%,
@@ -14,10 +13,10 @@ function binary_search(one_off_estimation) {
 	let lowest = 21000;
 	let mid = Math.min(one_off_estimation * 3, (highest + lowest) / 2);
 	let previous_highest = highest;
-	while(true) {
-		if(mid >= one_off_estimation) {
+	while (true) {
+		if (mid >= one_off_estimation) {
 			highest = mid;
-			if((previous_highest - highest) * ESTIMATION_VARIANCE / previous_highest < 1){
+			if (((previous_highest - highest) * ESTIMATION_VARIANCE) / previous_highest < 1) {
 				break;
 			}
 			previous_highest = highest;
@@ -30,7 +29,10 @@ function binary_search(one_off_estimation) {
 }
 
 function estimation_variance(binary_search_estimation, one_off_estimation) {
-	return (binary_search_estimation - one_off_estimation) * ESTIMATION_VARIANCE / binary_search_estimation;
+	return (
+		((binary_search_estimation - one_off_estimation) * ESTIMATION_VARIANCE) /
+		binary_search_estimation
+	);
 }
 
 describeWithFrontier("Frontier RPC (Gas)", (context) => {
@@ -45,9 +47,7 @@ describeWithFrontier("Frontier RPC (Gas)", (context) => {
 		let one_off_estimation = 196657;
 		let binary_search_estimation = binary_search(one_off_estimation);
 		// Sanity check expect a variance of 10%.
-		expect(
-			estimation_variance(binary_search_estimation, one_off_estimation)
-		).to.be.lessThan(1);
+		expect(estimation_variance(binary_search_estimation, one_off_estimation)).to.be.lessThan(1);
 		expect(
 			await context.web3.eth.estimateGas({
 				from: GENESIS_ACCOUNT,
@@ -82,9 +82,7 @@ describeWithFrontier("Frontier RPC (Gas)", (context) => {
 		let one_off_estimation = 21204;
 		let binary_search_estimation = binary_search(one_off_estimation);
 		// Sanity check expect a variance of 10%.
-		expect(
-			estimation_variance(binary_search_estimation, one_off_estimation)
-		).to.be.lessThan(1);
+		expect(estimation_variance(binary_search_estimation, one_off_estimation)).to.be.lessThan(1);
 		const contract = new context.web3.eth.Contract(TEST_CONTRACT_ABI, FIRST_CONTRACT_ADDRESS, {
 			from: GENESIS_ACCOUNT,
 			gasPrice: "0x3B9ACA00",
@@ -98,11 +96,9 @@ describeWithFrontier("Frontier RPC (Gas)", (context) => {
 		let one_off_estimation = 21204;
 		let binary_search_estimation = binary_search(one_off_estimation);
 		// Sanity check expect a variance of 10%.
-		expect(
-			estimation_variance(binary_search_estimation, one_off_estimation)
-		).to.be.lessThan(1);
+		expect(estimation_variance(binary_search_estimation, one_off_estimation)).to.be.lessThan(1);
 		const contract = new context.web3.eth.Contract(TEST_CONTRACT_ABI, FIRST_CONTRACT_ADDRESS, {
-			from: GENESIS_ACCOUNT
+			from: GENESIS_ACCOUNT,
 		});
 
 		expect(await contract.methods.multiply(3).estimateGas()).to.equal(binary_search_estimation);
@@ -114,18 +110,23 @@ describeWithFrontier("Frontier RPC (Gas)", (context) => {
 		let one_off_estimation = 196657 + 4300;
 		let binary_search_estimation = binary_search(one_off_estimation);
 		// Sanity check expect a variance of 10%.
-		expect(
-			estimation_variance(binary_search_estimation, one_off_estimation)
-		).to.be.lessThan(1);
-		let result = (await customRequest(context.web3, "eth_estimateGas", [{
-			from: GENESIS_ACCOUNT,
-			data: Test.bytecode,
-			accessList: [{
-				address: "0x0000000000000000000000000000000000000000",
-				storageKeys: ["0x0000000000000000000000000000000000000000000000000000000000000000"]
-			}]
-		}])).result;
+		expect(estimation_variance(binary_search_estimation, one_off_estimation)).to.be.lessThan(1);
+		let result = (
+			await customRequest(context.web3, "eth_estimateGas", [
+				{
+					from: GENESIS_ACCOUNT,
+					data: Test.bytecode,
+					accessList: [
+						{
+							address: "0x0000000000000000000000000000000000000000",
+							storageKeys: [
+								"0x0000000000000000000000000000000000000000000000000000000000000000",
+							],
+						},
+					],
+				},
+			])
+		).result;
 		expect(result).to.equal(context.web3.utils.numberToHex(binary_search_estimation));
 	});
-
 });

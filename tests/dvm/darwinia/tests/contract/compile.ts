@@ -1,6 +1,6 @@
-const path = require("path");
-const fs = require("fs");
-const solc = require("solc");
+import path from "path";
+import fs from "fs";
+import solc from "solc";
 
 // Compile contract
 const contractPath = path.resolve(__dirname, "Incrementer.sol");
@@ -22,5 +22,4 @@ const input = {
 };
 
 const tempFile = JSON.parse(solc.compile(JSON.stringify(input)));
-const contractFile = tempFile.contracts["Incrementer.sol"]["Incrementer"];
-module.exports = contractFile;
+export const contractFile = tempFile.contracts["Incrementer.sol"]["Incrementer"];

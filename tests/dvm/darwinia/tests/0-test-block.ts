@@ -1,7 +1,8 @@
-const expect = require("chai").expect;
-const Web3 = require("web3");
+import { expect } from "chai";
+import Web3 from "web3";
+import { config } from "./config";
 
-const web3 = new Web3("http://127.0.0.1:9933");
+const web3 = new Web3(config.host);
 
 describe("Test Block RPC", function () {
 	it("The block number should not be zero", async function () {
@@ -29,7 +30,7 @@ describe("Test Block RPC", function () {
 
 		expect(block.transactions).to.be.a("array").empty;
 		expect(block.uncles).to.be.a("array").empty;
-		expect(block.sealFields).to.eql([
+		expect((block as any).sealFields).to.eql([
 			"0x0000000000000000000000000000000000000000000000000000000000000000",
 			"0x0000000000000000",
 		]);
@@ -78,12 +79,10 @@ describe("Test Block RPC", function () {
 
 	it("should have valid timestamp after block production", async function () {
 		const block = await web3.eth.getBlock("latest");
-
 		// previous block
 		const previous_block_number = block.number - 1;
 		const previous_block = await web3.eth.getBlock(previous_block_number);
-
-		expect(block.timestamp - previous_block.timestamp).to.be.eq(6);
+		expect(Number(block.timestamp) - Number(previous_block.timestamp)).to.be.eq(6);
 	});
 
 	it("should get transactions count by block number ", async function () {

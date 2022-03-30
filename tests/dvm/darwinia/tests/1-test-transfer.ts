@@ -1,16 +1,13 @@
-const expect = require("chai").expect;
-const Web3 = require("web3");
-const conf = require("./config.js");
-const web3 = new Web3("http://127.0.0.1:9933");
+import { expect } from "chai";
+import Web3 from "web3";
+import { config } from "./config";
+
+const web3 = new Web3(config.host);
 
 const addressWithdrawPrecompile = "0x0000000000000000000000000000000000000015";
-const addressFrom = "0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b";
-// substrate: '5ELRpquT7C3mWtjeqFMYqgNbcNgWKSr3mYtVi1Uvtc2R7YEx';
-const addressTo = "0xAa01a1bEF0557fa9625581a293F3AA7770192632";
-// substrate: '2qSbd2umtD4KmV2X7kfttbP8HH4tzL5iMKETbjY2vYXMHHQs';
-const addressTo2 = "0x44b21a4e1c4a510237c577c936fba2d6153d2fe2";
-// substrate: '5ELRpquT7C3mWtjepSRH3V2At1xp7MA7mb4uuVNsLDiAWZju';
-const privKey = "99B3C12287537E38C90A9219D4CB074A89A16E9CDB20BF85728EBD97C343E342";
+const addressFrom = config.address;
+const addressTo = "0xAa01a1bEF0557fa9625581a293F3AA7770192632"; // 2qSbd2umtD4KmV2X7kfttbP8HH4tzL5iMKETbjY2vYXMHHQs
+const addressTo2 = "0x44b21a4e1c4a510237c577c936fba2d6153d2fe2"; // 5ELRpquT7C3mWtjepSRH3V2At1xp7MA7mb4uuVNsLDiAWZju
 
 describe("Test Transfer Balance", function () {
 	it("Check balance before transfer", async function () {
@@ -29,15 +26,15 @@ describe("Test Transfer Balance", function () {
 				from: addressFrom,
 				to: addressTo,
 				value: web3.utils.toWei("10", "ether"),
-				gas: conf.gas,
+				gas: config.gas,
 			},
-			privKey
+			config.privKey
 		);
 
 		const createReceipt = await web3.eth.sendSignedTransaction(
 			createTransaction.rawTransaction
 		);
-	}).timeout(80000);
+	}).timeout(40000);
 
 	it("Check balance after transfer 10 ether", async function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
@@ -54,14 +51,14 @@ describe("Test Transfer Balance", function () {
 				from: addressFrom,
 				to: addressTo2,
 				value: web3.utils.toWei("100", "wei"),
-				gas: conf.gas,
+				gas: config.gas,
 			},
-			privKey
+			config.privKey
 		);
 		const createReceipt = await web3.eth.sendSignedTransaction(
 			createTransaction.rawTransaction
 		);
-	}).timeout(80000);
+	}).timeout(40000);
 
 	it("Check balance after transfer 100 wei", async function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
@@ -78,16 +75,15 @@ describe("Test Transfer Balance", function () {
 				from: addressFrom,
 				to: addressTo,
 				value: web3.utils.toWei("50", "ether"),
-				gas: conf.gas,
+				gas: config.gas,
 			},
-			privKey
+			config.privKey
 		);
 
 		const createReceipt = await web3.eth.sendSignedTransaction(
 			createTransaction.rawTransaction
 		);
-
-	}).timeout(80000);
+	}).timeout(40000);
 
 	it("Check balance after transfer 50 ether", async function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
@@ -104,16 +100,15 @@ describe("Test Transfer Balance", function () {
 				from: addressFrom,
 				to: addressFrom,
 				value: web3.utils.toWei("30", "ether"),
-				gas: conf.gas,
-				gas_price: 1,
+				gas: config.gas,
 			},
-			privKey
+			config.privKey
 		);
 
 		const createReceipt = await web3.eth.sendSignedTransaction(
 			createTransaction.rawTransaction
 		);
-	}).timeout(80000);
+	}).timeout(40000);
 
 	it("Check balance after transfer self", async function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
@@ -128,16 +123,16 @@ describe("Test Transfer Balance", function () {
 			{
 				from: addressFrom,
 				to: addressWithdrawPrecompile,
-				gas: conf.gas,
+				gas: config.gas,
 				data: input,
 				value: web3.utils.toWei("30", "ether"),
 			},
-			privKey
+			config.privKey
 		);
 		const createReceipt = await web3.eth.sendSignedTransaction(
 			createTransaction.rawTransaction
 		);
-	}).timeout(80000);
+	}).timeout(40000);
 
 	it("Get sender balance after withdraw", async function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");

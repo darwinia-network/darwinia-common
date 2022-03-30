@@ -1,14 +1,9 @@
-// Run the transfer balance firstly.
-// require("../test-transfer.js");
+import { expect } from "chai";
+import Web3 from "web3";
+import { contractFile } from "./contract/compile";
+import { config } from "./config";
 
-const expect = require("chai").expect;
-const Web3 = require("web3");
-const contractFile = require("./compile");
-const conf = require("../config.js");
-
-const web3 = new Web3("http://127.0.0.1:9933");
-const address = "0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b";
-const privKey = "99B3C12287537E38C90A9219D4CB074A89A16E9CDB20BF85728EBD97C343E342"; // Genesis private key
+const web3 = new Web3(config.host);
 const bytecode = contractFile.evm.bytecode.object;
 const abi = contractFile.abi;
 const incrementer = new web3.eth.Contract(abi);
@@ -25,11 +20,11 @@ describe("Test Contract", function () {
 
 		const createTransaction = await web3.eth.accounts.signTransaction(
 			{
-				from: address,
+				from: config.address,
 				data: incrementerTx.encodeABI(),
-				gas: conf.gas,
+				gas: config.gas,
 			},
-			privKey
+			config.privKey
 		);
 
 		const createReceipt = await web3.eth.sendSignedTransaction(
@@ -41,7 +36,6 @@ describe("Test Contract", function () {
 	it("Get Default Number", function () {
 		const get = async () => {
 			const data = await incrementer.methods.number().call();
-
 			expect(data).to.be.equal(0);
 		};
 	});
@@ -56,15 +50,14 @@ describe("Test Contract", function () {
 	it("Increase Number", async function () {
 		const value = 3;
 		const encoded = incrementer.methods.increment(value).encodeABI();
-
 		const createTransaction = await web3.eth.accounts.signTransaction(
 			{
-				from: address,
+				from: config.address,
 				to: create_contract,
 				data: encoded,
-				gas: conf.gas,
+				gas: config.gas,
 			},
-			privKey
+			config.privKey
 		);
 
 		const createReceipt = await web3.eth.sendSignedTransaction(
@@ -72,22 +65,20 @@ describe("Test Contract", function () {
 		);
 		const get = async () => {
 			const data = await incrementer.methods.number().call();
-
 			expect(data).to.be.equal(value);
 		};
 	}).timeout(80000);
 
 	it("Reset Number", async function () {
 		const encoded = incrementer.methods.reset().encodeABI();
-
 		const createTransaction = await web3.eth.accounts.signTransaction(
 			{
-				from: address,
+				from: config.address,
 				to: create_contract,
 				data: encoded,
-				gas: conf.gas,
+				gas: config.gas,
 			},
-			privKey
+			config.privKey
 		);
 
 		const createReceipt = await web3.eth.sendSignedTransaction(
@@ -99,7 +90,6 @@ describe("Test Contract", function () {
 
 		const get = async () => {
 			const data = await incrementer.methods.number().call();
-
 			expect(data).to.be.equal(0);
 		};
 	}).timeout(80000);
