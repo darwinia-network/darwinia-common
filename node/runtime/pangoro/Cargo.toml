@@ -104,7 +104,7 @@ pallet-base-fee               = { default-features = false, git = "https://githu
 pallet-evm                    = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 pallet-evm-precompile-simple  = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 moonbeam-rpc-primitives-debug = { default-features = false,  git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
-moonbeam-evm-tracer           = { default-features = false, optional = true, git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
+dp-evm-tracer = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
 
 [build-dependencies]
 # paritytech
@@ -205,7 +205,7 @@ std = [
 	"pallet-base-fee/std",
 	"pallet-evm/std",
 	"moonbeam-rpc-primitives-debug/std",
-	"moonbeam-evm-tracer/std",
+	"dp-evm-tracer/std",
 ]
 
 fast-runtime = ["drml-primitives/fast-runtime"]
@@ -233,7 +233,7 @@ try-runtime = [
 no-wasm = []
 
 evm-tracing = [
-	"moonbeam-evm-tracer",
+	"dp-evm-tracer",
 	"rlp",
 	"sha3",
 ]

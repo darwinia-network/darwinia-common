@@ -1,0 +1,35 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Runtime interface for evm trace"
+edition     = "2021"
+homepage    = "https://darwinia.network/"
+license     = "GPL-3.0"
+name        = "dp-evm-trace-ext"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common/"
+version     = "2.8.6"
+
+[dependencies]
+# crates.io
+codec          = { package = "parity-scale-codec", version = "2.3", default-features = false }
+ethereum-types = { version = "0.12.0", default-features = false }
+# darwinia-network
+evm-tracing-events = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev", default-features = false }
+# paritytech
+sp-externalities     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-runtime-interface = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-std               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+
+[features]
+default = ["std"]
+std = [
+	# crates.io
+	"codec/std",
+	"ethereum-types/std",
+	# darwinia-network
+	"evm-tracing-events/std",
+	# paritytech
+	"sp-externalities/std",
+	"sp-runtime-interface/std",
+	"sp-std/std",
+]

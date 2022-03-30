@@ -2274,6 +2274,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "dp-evm-trace-ext"
+version = "2.8.6"
+dependencies = [
+ "ethereum-types",
+ "evm-tracing-events",
+ "parity-scale-codec 2.3.1",
+ "sp-externalities",
+ "sp-runtime-interface",
+ "sp-std",
+]
+
+[[package]]
+name = "dp-evm-tracer"
+version = "2.8.6"
+dependencies = [
+ "dp-evm-trace-ext",
+ "ethereum-types",
+ "evm",
+ "evm-gasometer",
+ "evm-runtime",
+ "evm-tracing-events",
+ "parity-scale-codec 2.3.1",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "dp-fee"
 version = "2.8.6"
 dependencies = [
@@ -2414,6 +2443,7 @@ dependencies = [
  "darwinia-fee-market-rpc-runtime-api",
  "darwinia-staking",
  "darwinia-staking-rpc-runtime-api",
+ "dp-evm-trace-ext",
  "drml-primitives",
  "drml-rpc",
  "fc-db",
@@ -2425,7 +2455,6 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "futures 0.3.21",
  "log",
- "moonbeam-primitives-ext",
  "moonbeam-rpc-debug",
  "moonbeam-rpc-primitives-debug",
  "moonbeam-rpc-trace",
@@ -5329,39 +5358,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "moonbeam-evm-tracer"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#2ea8e629cfd4c80a1395fbb7396fd84e59d89728"
-dependencies = [
- "ethereum-types",
- "evm",
- "evm-gasometer",
- "evm-runtime",
- "evm-tracing-events",
- "fp-evm",
- "moonbeam-primitives-ext",
- "pallet-evm",
- "parity-scale-codec 2.3.1",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "moonbeam-primitives-ext"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#2ea8e629cfd4c80a1395fbb7396fd84e59d89728"
-dependencies = [
- "ethereum-types",
- "evm-tracing-events",
- "parity-scale-codec 2.3.1",
- "sp-externalities",
- "sp-runtime-interface",
- "sp-std",
-]
-
-[[package]]
 name = "moonbeam-rpc-core-debug"
 version = "0.1.0"
 source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#2ea8e629cfd4c80a1395fbb7396fd84e59d89728"
@@ -6556,6 +6552,7 @@ dependencies = [
  "darwinia-vesting",
  "dp-asset",
  "dp-contract",
+ "dp-evm-tracer",
  "dp-fee",
  "dp-s2s",
  "drml-common-runtime",
@@ -6576,7 +6573,6 @@ dependencies = [
  "from-ethereum-issuing",
  "from-substrate-issuing",
  "module-transaction-pause",
- "moonbeam-evm-tracer",
  "moonbeam-rpc-primitives-debug",
  "pallet-authority-discovery",
  "pallet-authorship",
@@ -6669,6 +6665,7 @@ dependencies = [
  "darwinia-staking-rpc-runtime-api",
  "darwinia-support",
  "dp-asset",
+ "dp-evm-tracer",
  "dp-fee",
  "dp-s2s",
  "drml-common-runtime",
@@ -6686,7 +6683,6 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "module-transaction-pause",
- "moonbeam-evm-tracer",
  "moonbeam-rpc-primitives-debug",
  "pallet-authority-discovery",
  "pallet-authorship",
@@ -10201,6 +10197,8 @@ dependencies = [
  "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-support",
+ "dp-evm-trace-ext",
+ "dp-evm-tracer",
  "drml-common-runtime",
  "drml-primitives",
  "evm-tracing-events",
@@ -10211,8 +10209,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "frame-system-rpc-runtime-api",
- "moonbeam-evm-tracer",
- "moonbeam-primitives-ext",
  "moonbeam-rpc-primitives-debug",
  "pallet-aura",
  "pallet-base-fee",

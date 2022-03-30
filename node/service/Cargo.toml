@@ -76,7 +76,8 @@ fc-mapping-sync               = { git = "https://github.com/darwinia-network/fro
 fc-rpc                        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev", features = ["rpc_binary_search_estimate"] }
 fc-rpc-core                   = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 fp-rpc                        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
-moonbeam-primitives-ext       = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
+# moonbeam-primitives-ext       = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
+dp-evm-trace-ext = { default-features = false, path = "../../primitives/evm-trace/ext" }
 moonbeam-rpc-debug            = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
 moonbeam-rpc-primitives-debug = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
 moonbeam-rpc-trace            = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
