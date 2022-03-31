@@ -147,7 +147,7 @@ jobs:
       - name: Launch drml
         if: matrix.task.target == 'darwinia'
         run: |
-          drml --unsafe-ws-external --unsafe-rpc-external --rpc-cors all --rpc-methods unsafe --chain pangolin-dev --alice &
+          drml --ethapi-debug-targets=debug,trace --wasm-runtime-overrides . --unsafe-ws-external --unsafe-rpc-external --rpc-cors all --rpc-methods unsafe --chain pangolin-dev --alice &
           # Need some time to start the non-optimized node
           sleep 60
 

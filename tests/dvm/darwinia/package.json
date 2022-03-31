@@ -24,7 +24,7 @@
 	},
 	"scripts": {
 		"test": "mocha -r ts-node/register 'tests/**/*.ts' --exit",
-		"test-single": "mocha -r ts-node/register 'tests/**/test-tracing.ts'"
+		"test-single": "mocha -r ts-node/register 'tests/**/1-test-transfer.ts'"
 	},
 	"keywords": [],
 	"author": "",

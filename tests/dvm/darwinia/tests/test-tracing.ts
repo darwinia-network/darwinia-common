@@ -34,7 +34,6 @@ describe("Test Evm Tracing", function () {
 
 		transaction_hash = createReceipt.transactionHash;
 		trace_result = await customRequest("debug_traceTransaction", [transaction_hash]);
-		console.log("trace result: ", trace_result);
 		expect(trace_result.result.gas).to.be.eq("0x5208"); // 21_000 gas for a transfer.
 	}).timeout(20000);
 
