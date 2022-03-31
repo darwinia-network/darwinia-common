@@ -10,14 +10,16 @@ use bp_messages::{
 use bp_runtime::{Chain, PANGOLIN_CHAIN_ID, PANGOLIN_PARACHAIN_CHAIN_ID};
 use bridge_runtime_common::messages::{
 	self,
-	source::{self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload},
+	source::{
+		self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload,
+		FromThisChainMessageVerifier,
+	},
 	target::{
 		self, FromBridgedChainEncodedMessageCall, FromBridgedChainMessageDispatch,
 		FromBridgedChainMessagePayload, FromBridgedChainMessagesProof,
 	},
 	MessageBridge,
 };
-use drml_common_runtime::FromThisChainMessageVerifier;
 use frame_support::{
 	weights::{DispatchClass, Weight},
 	RuntimeDebug,
@@ -32,8 +34,8 @@ use crate::{bridges::pangoro_messages::Pangolin, *};
 pub const PANGOLIN_PARACHAIN_ID: u32 = 2071;
 
 /// Message verifier for Pangolin -> PangolinParachain messages.
-pub type ToPangolinParachainMessageVerifier<R> =
-	FromThisChainMessageVerifier<WithPangolinParachainMessageBridge, R>;
+pub type ToPangolinParachainMessageVerifier =
+	FromThisChainMessageVerifier<WithPangolinParachainMessageBridge>;
 /// Message payload for Pangolin -> PangolinParachain messages.
 pub type ToPangolinParachainMessagePayload =
 	FromThisChainMessagePayload<WithPangolinParachainMessageBridge>;

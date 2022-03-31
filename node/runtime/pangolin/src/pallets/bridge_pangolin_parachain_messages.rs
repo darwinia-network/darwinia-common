@@ -40,7 +40,7 @@ impl Config<WithPangolinParachainMessages> for Runtime {
 	type InboundRelayer = bp_pangolin_parachain::AccountId;
 	type AccountIdConverter = AccountIdConverter;
 	type TargetHeaderChain = PangolinParachain;
-	type LaneMessageVerifier = ToPangolinParachainMessageVerifier<Self>;
+	type LaneMessageVerifier = ToPangolinParachainMessageVerifier;
 	type MessageDeliveryAndDispatchPayment =
 		pallet_bridge_messages::instant_payments::InstantCurrencyPayments<
 			Runtime,
