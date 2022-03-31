@@ -115,7 +115,6 @@ pub mod pallet {
 		/// Before the token transfer, token should be created first
 		#[pallet::weight(
 			<T as Config>::WeightInfo::register_from_remote()
-			.saturating_add(2_000_000 * 3)
 		)]
 		#[transactional]
 		pub fn register_from_remote(
@@ -160,7 +159,6 @@ pub mod pallet {
 		/// Handle relay message sent from the source backing pallet with relay message
 		#[pallet::weight(
 			<T as Config>::WeightInfo::issue_from_remote()
-			.saturating_add(2_000_000 * 2)
 		)]
 		#[transactional]
 		pub fn issue_from_remote(

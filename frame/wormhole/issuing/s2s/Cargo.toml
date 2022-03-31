@@ -46,14 +46,14 @@ evm          = { version = "0.33.1", features = ["with-codec"] }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 rlp          = { version = "0.5" }
 # darwinia-network
-darwinia-balances = { path = "../../../balances" }
-pallet-timestamp  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
-# frontier
-fp-self-contained                  = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
-pallet-evm                         = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
-pallet-evm-precompile-simple       = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+darwinia-balances                  = { path = "../../../balances" }
 darwinia-evm-precompile-bridge-s2s = { path = "../../../dvm/evm/precompiles/bridge/s2s" }
 darwinia-evm-precompile-dispatch   = { path = "../../../dvm/evm/precompiles/dispatch" }
+pallet-timestamp                   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+# frontier
+fp-self-contained            = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+pallet-evm                   = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+pallet-evm-precompile-simple = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
 
 [features]
 default = ["std"]
