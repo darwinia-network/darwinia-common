@@ -128,8 +128,8 @@ pub struct EthRpcConfig {
 
 #[derive(Clone)]
 pub struct EthRpcRequesters {
-	pub debug: Option<darwinia_client_rpc::DebugRequester>,
-	pub trace: Option<darwinia_client_rpc::CacheRequester>,
+	pub debug: Option<moonbeam_rpc_debug::DebugRequester>,
+	pub trace: Option<moonbeam_rpc_trace::CacheRequester>,
 }
 
 /// Instantiate all RPC extensions.
@@ -156,7 +156,7 @@ where
 		+ darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>
 		+ darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>
 		+ darwinia_fee_market_rpc::FeeMarketRuntimeApi<Block, Balance>
-		+ dp_evm_trace_apis::DebugRuntimeApi<Block>,
+		+ moonbeam_rpc_primitives_debug::DebugRuntimeApi<Block>,
 	P: 'static + Sync + Send + sc_transaction_pool_api::TransactionPool<Block = Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,
@@ -177,9 +177,10 @@ where
 	use substrate_frame_rpc_system::*;
 	// --- darwinia-network ---
 	use darwinia_balances_rpc::*;
-	use darwinia_client_rpc::*;
 	use darwinia_fee_market_rpc::*;
 	use darwinia_staking_rpc::*;
+	use moonbeam_rpc_debug::*;
+	use moonbeam_rpc_trace::*;
 
 	let FullDeps {
 		client,
@@ -313,7 +314,7 @@ where
 		.any(|cmd| matches!(cmd.as_str(), "debug" | "trace"))
 	{
 		if let Some(trace_requester) = rpc_requesters.trace {
-			io.extend_with(TraceApiServer::to_delegate(Trace::new(
+			io.extend_with(TraceServer::to_delegate(Trace::new(
 				client,
 				trace_requester,
 				ethapi_trace_max_count,
@@ -321,7 +322,7 @@ where
 		}
 
 		if let Some(debug_requester) = rpc_requesters.debug {
-			io.extend_with(DebugApiServer::to_delegate(Debug::new(debug_requester)));
+			io.extend_with(DebugServer::to_delegate(Debug::new(debug_requester)));
 		}
 	}
 
