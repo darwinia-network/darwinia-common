@@ -14,7 +14,7 @@ describe("Test Evm Tracing", function () {
 	let transaction_hash;
 	let trace_result = null;
 
-	it("Test debug_traceTransaction(Deploy Contract)", async function () {
+	it.skip("Test debug_traceTransaction(Deploy Contract)", async function () {
 		const incrementerTx = incrementer.deploy({
 			data: bytecode,
 			arguments: [5],
@@ -50,7 +50,7 @@ describe("Test Evm Tracing", function () {
 		expect(trace_result.result[0].type).to.be.equal("CREATE");
 	}).timeout(80000);
 
-	it("Test debug_traceBlock(Call Contract)", async function () {
+	it.skip("Test debug_traceBlock(Call Contract)", async function () {
 		const value = 3;
 		const encoded = incrementer.methods.increment(value).encodeABI();
 		const createTransaction = await web3.eth.accounts.signTransaction(
@@ -112,6 +112,7 @@ describe("Test Evm Tracing", function () {
 
 		transaction_hash = createReceipt.transactionHash;
 		trace_result = await customRequest("debug_traceTransaction", [transaction_hash]);
+		console.log("trace result: ", trace_result);
 		expect(trace_result.result.gas).to.be.eq("0x5208"); // 21_000 gas for a transfer.
 	}).timeout(80000);
 
