@@ -95,7 +95,7 @@ impl BitOr for LockReasons {
 /// A single lock on a balance. There can be many of these on an account and they "overlap", so the
 /// same balance is frozen by multiple locks.
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct BalanceLock<Balance, Moment> {
+pub struct OldBalanceLock<Balance, Moment> {
 	/// An identifier for this lock. Only one lock may be in existence for each identifier.
 	pub id: LockIdentifier,
 	pub lock_for: LockFor<Balance, Moment>,
@@ -103,7 +103,7 @@ pub struct BalanceLock<Balance, Moment> {
 	pub lock_reasons: LockReasons,
 }
 #[cfg(feature = "easy-testing")]
-impl<Balance, Moment> BalanceLock<Balance, Moment>
+impl<Balance, Moment> OldBalanceLock<Balance, Moment>
 where
 	Balance: Copy + PartialOrd + AtLeast32BitUnsigned,
 	Moment: Copy + PartialOrd,

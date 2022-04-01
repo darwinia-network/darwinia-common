@@ -40,8 +40,8 @@ fn nay(x: u8, balance: u64) -> AccountVote<u64> {
 	}
 }
 
-fn the_lock(amount: u64) -> BalanceLock<Balance, u64> {
-	BalanceLock {
+fn the_lock(amount: u64) -> OldBalanceLock<Balance, u64> {
+	OldBalanceLock {
 		id: DEMOCRACY_ID,
 		lock_for: LockFor::Common { amount },
 		lock_reasons: darwinia_support::balance::LockReasons::Misc,

@@ -26,7 +26,7 @@ pub mod traits;
 
 pub mod balance {
 	pub use crate::{
-		structs::{BalanceLock, FrozenBalance, LockFor, LockReasons, StakingLock, Unbonding},
+		structs::{FrozenBalance, LockFor, LockReasons, OldBalanceLock, StakingLock, Unbonding},
 		traits::{BalanceInfo, DustCollector, LockableCurrency},
 	};
 }

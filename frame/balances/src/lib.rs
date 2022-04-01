@@ -158,6 +158,8 @@ mod tests_local;
 #[cfg(test)]
 mod tests_reentrancy;
 
+pub mod migration;
+
 pub mod weights;
 pub use weights::WeightInfo;
 
@@ -677,7 +679,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::AccountId,
-		WeakBoundedVec<BalanceLock<T::Balance, T::BlockNumber>, T::MaxLocks>,
+		WeakBoundedVec<OldBalanceLock<T::Balance, T::BlockNumber>, T::MaxLocks>,
 		ValueQuery,
 		GetDefault,
 		ConstU32<300_000>,
@@ -1189,7 +1191,7 @@ pub mod pallet {
 		}
 
 		/// Update the account entry for `who`, given the locks.
-		fn update_locks(who: &T::AccountId, locks: &[BalanceLock<T::Balance, T::BlockNumber>]) {
+		fn update_locks(who: &T::AccountId, locks: &[OldBalanceLock<T::Balance, T::BlockNumber>]) {
 			let bounded_locks = WeakBoundedVec::<_, T::MaxLocks>::force_from(
 				locks.to_vec(),
 				Some("Balances Update Locks"),
@@ -1856,7 +1858,7 @@ pub mod pallet {
 			{
 				return;
 			}
-			let mut new_lock = Some(BalanceLock {
+			let mut new_lock = Some(OldBalanceLock {
 				id,
 				lock_for,
 				lock_reasons: reasons.into(),
@@ -1883,7 +1885,7 @@ pub mod pallet {
 				return Ok(());
 			}
 
-			let mut new_lock = Some(BalanceLock {
+			let mut new_lock = Some(OldBalanceLock {
 				id,
 				lock_for: LockFor::Common { amount },
 				lock_reasons: reasons.into(),
@@ -1894,7 +1896,7 @@ pub mod pallet {
 				.filter_map(|l| {
 					if l.id == id {
 						if let LockFor::Common { amount: a } = l.lock_for {
-							new_lock.take().map(|nl| BalanceLock {
+							new_lock.take().map(|nl| OldBalanceLock {
 								id: l.id,
 								lock_for: {
 									match nl.lock_for {
@@ -2254,14 +2256,3 @@ pub mod pallet {
 	}
 }
 pub use pallet::{imbalances::*, *};
-
-pub mod migration {
-	#[cfg(feature = "try-runtime")]
-	pub mod try_runtime {
-		pub fn pre_migrate() -> Result<(), &'static str> {
-			Ok(())
-		}
-	}
-
-	pub fn migrate() {}
-}

@@ -264,7 +264,7 @@ fn normal_kton_should_work() {
 			);
 			assert_eq!(
 				Kton::locks(&stash),
-				vec![BalanceLock {
+				vec![OldBalanceLock {
 					id: STAKING_ID,
 					lock_for: LockFor::Staking(StakingLock {
 						staking_amount: 10 * COIN,
@@ -321,7 +321,7 @@ fn time_deposit_ring_unbond_and_withdraw_automatically_should_work() {
 		assert_eq!(
 			Ring::locks(stash),
 			WeakBoundedVec::force_from(
-				vec![BalanceLock {
+				vec![OldBalanceLock {
 					id: STAKING_ID,
 					lock_for: LockFor::Staking(StakingLock {
 						staking_amount: 1000 - unbond_value,
@@ -375,7 +375,7 @@ fn time_deposit_ring_unbond_and_withdraw_automatically_should_work() {
 		// check the locks
 		assert_eq!(
 			Ring::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 900,
@@ -411,7 +411,7 @@ fn time_deposit_ring_unbond_and_withdraw_automatically_should_work() {
 
 		assert_eq!(
 			Ring::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 900,
@@ -1109,7 +1109,7 @@ fn on_deposit_redeem_should_work() {
 			assert_eq!(Ring::free_balance(unbonded_account), deposit_amount);
 			assert_eq!(
 				Ring::locks(unbonded_account),
-				vec![BalanceLock {
+				vec![OldBalanceLock {
 					id: STAKING_ID,
 					lock_for: LockFor::Staking(StakingLock {
 						staking_amount: deposit_amount,
@@ -1168,7 +1168,7 @@ fn on_deposit_redeem_should_work() {
 			);
 			assert_eq!(
 				Ring::locks(bonded_account),
-				vec![BalanceLock {
+				vec![OldBalanceLock {
 					id: STAKING_ID,
 					lock_for: LockFor::Staking(StakingLock {
 						staking_amount: 50 * COIN + deposit_amount,
@@ -1266,7 +1266,7 @@ fn staking_with_kton_with_unbondings() {
 		assert_eq!(Kton::free_balance(stash), 10);
 		assert_eq!(
 			Kton::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 5,
@@ -1284,7 +1284,7 @@ fn staking_with_kton_with_unbondings() {
 		assert_eq!(Kton::free_balance(stash), 10);
 		assert_eq!(
 			Kton::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 10,
@@ -1302,7 +1302,7 @@ fn staking_with_kton_with_unbondings() {
 		assert_eq!(Kton::free_balance(stash), 10);
 		assert_eq!(
 			Kton::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
@@ -1332,7 +1332,7 @@ fn staking_with_kton_with_unbondings() {
 		assert_eq!(Kton::free_balance(stash), 9);
 		assert_eq!(
 			Kton::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
@@ -1357,7 +1357,7 @@ fn staking_with_kton_with_unbondings() {
 		assert_eq!(Kton::free_balance(stash), 29);
 		assert_eq!(
 			Kton::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 20,
@@ -1407,7 +1407,7 @@ fn staking_with_kton_with_unbondings() {
 		assert_eq!(Ring::free_balance(stash), 10);
 		assert_eq!(
 			Ring::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 5,
@@ -1425,7 +1425,7 @@ fn staking_with_kton_with_unbondings() {
 		assert_eq!(Ring::free_balance(stash), 10);
 		assert_eq!(
 			Ring::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 10,
@@ -1443,7 +1443,7 @@ fn staking_with_kton_with_unbondings() {
 		assert_eq!(Ring::free_balance(stash), 10);
 		assert_eq!(
 			Ring::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
@@ -1473,7 +1473,7 @@ fn staking_with_kton_with_unbondings() {
 		assert_eq!(Ring::free_balance(stash), 9);
 		assert_eq!(
 			Ring::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
@@ -1498,7 +1498,7 @@ fn staking_with_kton_with_unbondings() {
 		assert_eq!(Ring::free_balance(stash), 29);
 		assert_eq!(
 			Ring::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 20,
@@ -1551,7 +1551,7 @@ fn unbound_values_in_twice() {
 		assert_eq!(Kton::free_balance(stash), 10);
 		assert_eq!(
 			Kton::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 5,
@@ -1569,7 +1569,7 @@ fn unbound_values_in_twice() {
 		assert_eq!(Kton::free_balance(stash), 10);
 		assert_eq!(
 			Kton::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 9,
@@ -1587,7 +1587,7 @@ fn unbound_values_in_twice() {
 		assert_eq!(Kton::free_balance(stash), 10);
 		assert_eq!(
 			Kton::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 7,
@@ -1611,7 +1611,7 @@ fn unbound_values_in_twice() {
 		assert_eq!(Kton::free_balance(stash), 10);
 		assert_eq!(
 			Kton::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
@@ -1661,7 +1661,7 @@ fn unbound_values_in_twice() {
 		assert_eq!(Kton::free_balance(stash), 7);
 		assert_eq!(
 			Kton::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
@@ -1691,7 +1691,7 @@ fn unbound_values_in_twice() {
 		assert_eq!(Kton::free_balance(stash), 1);
 		assert_eq!(
 			Kton::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
@@ -1722,7 +1722,7 @@ fn unbound_values_in_twice() {
 		));
 		assert_eq!(
 			Kton::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 2,
@@ -1761,7 +1761,7 @@ fn unbound_values_in_twice() {
 		assert_eq!(Ring::free_balance(stash), 10);
 		assert_eq!(
 			Ring::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 5,
@@ -1779,7 +1779,7 @@ fn unbound_values_in_twice() {
 		assert_eq!(Ring::free_balance(stash), 10);
 		assert_eq!(
 			Ring::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 9,
@@ -1798,7 +1798,7 @@ fn unbound_values_in_twice() {
 		assert_eq!(Ring::free_balance(stash), 10);
 		assert_eq!(
 			Ring::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 7,
@@ -1823,7 +1823,7 @@ fn unbound_values_in_twice() {
 		assert_eq!(Ring::free_balance(stash), 10);
 		assert_eq!(
 			Ring::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
@@ -1873,7 +1873,7 @@ fn unbound_values_in_twice() {
 		assert_eq!(Ring::free_balance(stash), 7);
 		assert_eq!(
 			Ring::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
@@ -1906,7 +1906,7 @@ fn unbound_values_in_twice() {
 		assert_eq!(Ring::free_balance(stash), 1);
 		assert_eq!(
 			Ring::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 1,
@@ -1938,7 +1938,7 @@ fn unbound_values_in_twice() {
 		));
 		assert_eq!(
 			Ring::locks(stash),
-			vec![BalanceLock {
+			vec![OldBalanceLock {
 				id: STAKING_ID,
 				lock_for: LockFor::Staking(StakingLock {
 					staking_amount: 2,
