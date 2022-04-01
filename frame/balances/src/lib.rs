@@ -130,9 +130,7 @@
 //! 	T::Currency::set_lock(
 //! 		STAKING_ID,
 //! 		&ledger.stash,
-//! 		LockFor::Common {
-//! 			amount: ledger.total
-//!			},
+//! 		ledger.total,
 //! 		WithdrawReasons::all()
 //! 	);
 //! 	// <Ledger<T>>::insert(controller, ledger); // Commented out as we don't have access to Staking's storage here.
