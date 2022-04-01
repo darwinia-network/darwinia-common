@@ -190,7 +190,7 @@ pub mod pallet {
 				// Liquid balance is what is neither reserved nor locked/frozen.
 				let liquid = a
 					.free()
-					.saturating_sub(Self::frozen_balance(who).frozen_for(LockReasons::All));
+					.saturating_sub(Self::frozen_balance(who).frozen_for(Reasons::All));
 				if <frame_system::Pallet<T>>::can_dec_provider(who) && !keep_alive {
 					liquid
 				} else {
@@ -219,7 +219,7 @@ pub mod pallet {
 			fn can_hold(who: &T::AccountId, amount: T::Balance) -> bool {
 				let a = Self::account(who);
 				let min_balance = T::ExistentialDeposit::get()
-					.max(Self::frozen_balance(who).frozen_for(LockReasons::All));
+					.max(Self::frozen_balance(who).frozen_for(Reasons::All));
 				if a.reserved().checked_add(&amount).is_none() {
 					return false;
 				}
@@ -988,10 +988,10 @@ pub mod pallet {
 					LockFor::Common { amount } => *amount,
 					LockFor::Staking(staking_lock) => staking_lock.locked_amount(now),
 				};
-				if lock.lock_reasons == LockReasons::All || lock.lock_reasons == LockReasons::Misc {
+				if lock.lock_reasons == Reasons::All || lock.lock_reasons == Reasons::Misc {
 					frozen_balance.misc = frozen_balance.misc.max(locked_amount);
 				}
-				if lock.lock_reasons == LockReasons::All || lock.lock_reasons == LockReasons::Fee {
+				if lock.lock_reasons == Reasons::All || lock.lock_reasons == Reasons::Fee {
 					frozen_balance.fee = frozen_balance.fee.max(locked_amount);
 				}
 			}
@@ -1112,7 +1112,7 @@ pub mod pallet {
 			};
 
 			// Eventual free funds must be no less than the frozen balance.
-			let min_balance = Self::frozen_balance(who).frozen_for(LockReasons::All);
+			let min_balance = Self::frozen_balance(who).frozen_for(Reasons::All);
 			if new_free_balance < min_balance {
 				return WithdrawConsequence::Frozen;
 			}
@@ -1953,7 +1953,7 @@ pub mod pallet {
 		fn usable_balance(who: &T::AccountId) -> Self::Balance {
 			let account = Self::account(who);
 
-			account.usable(LockReasons::Misc, Self::frozen_balance(who))
+			account.usable(Reasons::Misc, Self::frozen_balance(who))
 		}
 
 		/// Get the balance of an account that can be used for paying transaction fees (not tipping,
@@ -1961,7 +1961,7 @@ pub mod pallet {
 		fn usable_balance_for_fees(who: &T::AccountId) -> Self::Balance {
 			let account = Self::account(who);
 
-			account.usable(LockReasons::Fee, Self::frozen_balance(who))
+			account.usable(Reasons::Fee, Self::frozen_balance(who))
 		}
 	}
 

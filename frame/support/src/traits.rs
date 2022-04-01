@@ -24,10 +24,11 @@ use impl_trait_for_tuples::impl_for_tuples;
 use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::traits::{Currency, Get, LockIdentifier, WithdrawReasons};
+use pallet_balances::Reasons;
 use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia-network ---
-use crate::structs::{FrozenBalance, LockFor, LockReasons};
+use crate::structs::{FrozenBalance, LockFor};
 use ethereum_primitives::receipt::EthereumTransactionIndex;
 
 pub trait BalanceInfo<Balance, Module>: MaxEncodedLen {
@@ -41,7 +42,7 @@ pub trait BalanceInfo<Balance, Module>: MaxEncodedLen {
 	fn total(&self) -> Balance;
 
 	/// How much this account's balance can be reduced for the given `reasons`.
-	fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<Balance>) -> Balance;
+	fn usable(&self, reasons: Reasons, frozen_balance: FrozenBalance<Balance>) -> Balance;
 }
 
 /// A currency whose accounts can have liquidity restrictions.

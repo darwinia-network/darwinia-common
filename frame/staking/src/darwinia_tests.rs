@@ -270,7 +270,7 @@ fn normal_kton_should_work() {
 						staking_amount: 10 * COIN,
 						..Default::default()
 					}),
-					lock_reasons: LockReasons::All
+					lock_reasons: Reasons::All
 				}]
 			);
 		}
@@ -333,7 +333,7 @@ fn time_deposit_ring_unbond_and_withdraw_automatically_should_work() {
 							None,
 						),
 					}),
-					lock_reasons: LockReasons::All,
+					lock_reasons: Reasons::All,
 				}],
 				None
 			),
@@ -393,7 +393,7 @@ fn time_deposit_ring_unbond_and_withdraw_automatically_should_work() {
 						None
 					),
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}],
 		);
 
@@ -429,7 +429,7 @@ fn time_deposit_ring_unbond_and_withdraw_automatically_should_work() {
 						None
 					),
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}],
 		);
 
@@ -1115,7 +1115,7 @@ fn on_deposit_redeem_should_work() {
 						staking_amount: deposit_amount,
 						..Default::default()
 					}),
-					lock_reasons: LockReasons::All,
+					lock_reasons: Reasons::All,
 				}]
 			);
 			assert_eq!(Staking::bonded(unbonded_account).unwrap(), unbonded_account);
@@ -1174,7 +1174,7 @@ fn on_deposit_redeem_should_work() {
 						staking_amount: 50 * COIN + deposit_amount,
 						..Default::default()
 					}),
-					lock_reasons: LockReasons::All,
+					lock_reasons: Reasons::All,
 				}]
 			);
 			assert_eq!(Staking::ledger(bonded_account).unwrap(), ledger);
@@ -1272,7 +1272,7 @@ fn staking_with_kton_with_unbondings() {
 					staking_amount: 5,
 					..Default::default()
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}],
 		);
 
@@ -1290,7 +1290,7 @@ fn staking_with_kton_with_unbondings() {
 					staking_amount: 10,
 					..Default::default()
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1314,7 +1314,7 @@ fn staking_with_kton_with_unbondings() {
 						None
 					),
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1344,7 +1344,7 @@ fn staking_with_kton_with_unbondings() {
 						None
 					),
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1369,7 +1369,7 @@ fn staking_with_kton_with_unbondings() {
 						None
 					),
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 		assert_eq!(
@@ -1413,7 +1413,7 @@ fn staking_with_kton_with_unbondings() {
 					staking_amount: 5,
 					..Default::default()
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1431,7 +1431,7 @@ fn staking_with_kton_with_unbondings() {
 					staking_amount: 10,
 					..Default::default()
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1455,7 +1455,7 @@ fn staking_with_kton_with_unbondings() {
 						None
 					)
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1485,7 +1485,7 @@ fn staking_with_kton_with_unbondings() {
 						None
 					)
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1510,7 +1510,7 @@ fn staking_with_kton_with_unbondings() {
 						None
 					)
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 		assert_eq!(
@@ -1557,7 +1557,7 @@ fn unbound_values_in_twice() {
 					staking_amount: 5,
 					..Default::default()
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1575,7 +1575,7 @@ fn unbound_values_in_twice() {
 					staking_amount: 9,
 					..Default::default()
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1599,7 +1599,7 @@ fn unbound_values_in_twice() {
 						None
 					),
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1629,7 +1629,7 @@ fn unbound_values_in_twice() {
 						None
 					)
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1679,7 +1679,7 @@ fn unbound_values_in_twice() {
 						None
 					)
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1709,7 +1709,7 @@ fn unbound_values_in_twice() {
 						None
 					)
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1740,7 +1740,7 @@ fn unbound_values_in_twice() {
 						None
 					)
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 	});
@@ -1767,7 +1767,7 @@ fn unbound_values_in_twice() {
 					staking_amount: 5,
 					..Default::default()
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1785,7 +1785,7 @@ fn unbound_values_in_twice() {
 					staking_amount: 9,
 					..Default::default()
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1810,7 +1810,7 @@ fn unbound_values_in_twice() {
 						None
 					)
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1841,7 +1841,7 @@ fn unbound_values_in_twice() {
 						None
 					)
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1891,7 +1891,7 @@ fn unbound_values_in_twice() {
 						None
 					)
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 		assert_ok!(Ring::transfer(
@@ -1924,7 +1924,7 @@ fn unbound_values_in_twice() {
 						None
 					)
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 
@@ -1956,7 +1956,7 @@ fn unbound_values_in_twice() {
 						None
 					)
 				}),
-				lock_reasons: LockReasons::All,
+				lock_reasons: Reasons::All,
 			}]
 		);
 	});

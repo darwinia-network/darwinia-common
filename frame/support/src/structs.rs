@@ -21,14 +21,15 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{
-	traits::{ConstU32, LockIdentifier, WithdrawReasons},
+	traits::{ConstU32, LockIdentifier},
 	WeakBoundedVec,
 };
+use pallet_balances::Reasons;
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, Zero},
 	RuntimeDebug,
 };
-use sp_std::{ops::BitOr, prelude::*};
+use sp_std::prelude::*;
 
 /// Frozen balance information for an account.
 pub struct FrozenBalance<Balance> {
@@ -52,43 +53,12 @@ where
 
 	/// The amount that this account's free balance may not be reduced beyond for the given
 	/// `reasons`.
-	pub fn frozen_for(self, reasons: LockReasons) -> Balance {
+	pub fn frozen_for(self, reasons: Reasons) -> Balance {
 		match reasons {
-			LockReasons::All => self.misc.max(self.fee),
-			LockReasons::Misc => self.misc,
-			LockReasons::Fee => self.fee,
+			Reasons::All => self.misc.max(self.fee),
+			Reasons::Misc => self.misc,
+			Reasons::Fee => self.fee,
 		}
-	}
-}
-
-/// Simplified reasons for withdrawing balance.
-#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub enum LockReasons {
-	/// Paying system transaction fees.
-	Fee = 0,
-	/// Any reason other than paying system transaction fees.
-	Misc = 1,
-	/// Any reason at all.
-	All = 2,
-}
-impl From<WithdrawReasons> for LockReasons {
-	fn from(r: WithdrawReasons) -> LockReasons {
-		if r == WithdrawReasons::TRANSACTION_PAYMENT {
-			LockReasons::Fee
-		} else if r.contains(WithdrawReasons::TRANSACTION_PAYMENT) {
-			LockReasons::All
-		} else {
-			LockReasons::Misc
-		}
-	}
-}
-impl BitOr for LockReasons {
-	type Output = LockReasons;
-	fn bitor(self, other: LockReasons) -> LockReasons {
-		if self == other {
-			return self;
-		}
-		LockReasons::All
 	}
 }
 
@@ -100,7 +70,7 @@ pub struct OldBalanceLock<Balance, Moment> {
 	pub id: LockIdentifier,
 	pub lock_for: LockFor<Balance, Moment>,
 	/// If true, then the lock remains in effect even for payment of transaction fees.
-	pub lock_reasons: LockReasons,
+	pub lock_reasons: Reasons,
 }
 #[cfg(feature = "easy-testing")]
 impl<Balance, Moment> OldBalanceLock<Balance, Moment>

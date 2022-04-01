@@ -380,7 +380,7 @@ fn lock_should_work() {
 						vec![OldBalanceLock {
 							id: <Test as Config>::LockId::get(),
 							lock_for: LockFor::Common { amount: stakes },
-							lock_reasons: LockReasons::All
+							lock_reasons: Reasons::All
 						}]
 					);
 				};
