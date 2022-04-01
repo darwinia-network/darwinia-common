@@ -28,7 +28,7 @@ use pallet_balances::Reasons;
 use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia-network ---
-use crate::structs::{FrozenBalance, LockFor};
+use crate::structs::FrozenBalance;
 use ethereum_primitives::receipt::EthereumTransactionIndex;
 
 pub trait BalanceInfo<Balance, Module>: MaxEncodedLen {
@@ -62,7 +62,7 @@ pub trait LockableCurrency<AccountId>: Currency<AccountId> {
 	fn set_lock(
 		id: LockIdentifier,
 		who: &AccountId,
-		lock_for: LockFor<Self::Balance, Self::Moment>,
+		amount: Self::Balance,
 		reasons: WithdrawReasons,
 	);
 
@@ -79,7 +79,7 @@ pub trait LockableCurrency<AccountId>: Currency<AccountId> {
 		who: &AccountId,
 		amount: Self::Balance,
 		reasons: WithdrawReasons,
-	) -> DispatchResult;
+	);
 
 	/// Remove an existing lock.
 	fn remove_lock(id: LockIdentifier, who: &AccountId);

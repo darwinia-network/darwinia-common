@@ -44,7 +44,7 @@ fn the_lock(amount: u64) -> OldBalanceLock<Balance, u64> {
 	OldBalanceLock {
 		id: DEMOCRACY_ID,
 		lock_for: LockFor::Common { amount },
-		lock_reasons: darwinia_support::balance::Reasons::Misc,
+		reasons: darwinia_support::balance::Reasons::Misc,
 	}
 }
 

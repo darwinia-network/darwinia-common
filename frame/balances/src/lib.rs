@@ -988,10 +988,10 @@ pub mod pallet {
 					LockFor::Common { amount } => *amount,
 					LockFor::Staking(staking_lock) => staking_lock.locked_amount(now),
 				};
-				if lock.lock_reasons == Reasons::All || lock.lock_reasons == Reasons::Misc {
+				if lock.reasons == Reasons::All || lock.reasons == Reasons::Misc {
 					frozen_balance.misc = frozen_balance.misc.max(locked_amount);
 				}
-				if lock.lock_reasons == Reasons::All || lock.lock_reasons == Reasons::Fee {
+				if lock.reasons == Reasons::All || lock.reasons == Reasons::Fee {
 					frozen_balance.fee = frozen_balance.fee.max(locked_amount);
 				}
 			}
@@ -1845,31 +1845,27 @@ pub mod pallet {
 		fn set_lock(
 			id: LockIdentifier,
 			who: &T::AccountId,
-			lock_for: LockFor<Self::Balance, Self::Moment>,
+			amount: T::Balance,
 			reasons: WithdrawReasons,
 		) {
-			if match &lock_for {
-				LockFor::Common { amount } => *amount,
-				LockFor::Staking(staking_lock) => {
-					staking_lock.locked_amount(<frame_system::Pallet<T>>::block_number())
-				}
-			}
-			.is_zero() || reasons.is_empty()
-			{
+			if amount.is_zero() || reasons.is_empty() {
 				return;
 			}
+
 			let mut new_lock = Some(OldBalanceLock {
 				id,
-				lock_for,
-				lock_reasons: reasons.into(),
+				lock_for: LockFor::Common { amount },
+				reasons: reasons.into(),
 			});
 			let mut locks = Self::locks(who)
 				.into_iter()
 				.filter_map(|l| if l.id == id { new_lock.take() } else { Some(l) })
 				.collect::<Vec<_>>();
+
 			if let Some(lock) = new_lock {
 				locks.push(lock)
 			}
+
 			Self::update_locks(who, &locks);
 		}
 
@@ -1880,17 +1876,16 @@ pub mod pallet {
 			who: &T::AccountId,
 			amount: T::Balance,
 			reasons: WithdrawReasons,
-		) -> DispatchResult {
+		) {
 			if amount.is_zero() || reasons.is_empty() {
-				return Ok(());
+				return;
 			}
 
 			let mut new_lock = Some(OldBalanceLock {
 				id,
 				lock_for: LockFor::Common { amount },
-				lock_reasons: reasons.into(),
+				reasons: reasons.into(),
 			});
-			let mut poisoned = false;
 			let mut locks = Self::locks(who)
 				.into_iter()
 				.filter_map(|l| {
@@ -1904,21 +1899,23 @@ pub mod pallet {
 										LockFor::Common { amount: na } => LockFor::Common {
 											amount: (a).max(na),
 										},
-										// Not allow to extend other combination/type lock
-										//
-										// And the lock is always with lock id
-										// it's impossible to match a (other lock, common lock)
-										// under this if condition
+										// `StakingLock` was removed.
 										_ => {
-											poisoned = true;
+											frame_support::log::error!(
+												"Unreachable code balances/src/lib.rs:1908"
+											);
 
 											nl.lock_for
 										}
 									}
 								},
-								lock_reasons: l.lock_reasons | nl.lock_reasons,
+								reasons: l.reasons | nl.reasons,
 							})
-						} else {
+						}
+						// `StakingLock` was removed.
+						else {
+							frame_support::log::error!("Unreachable code balances/src/lib.rs:1917");
+
 							Some(l)
 						}
 					} else {
@@ -1927,17 +1924,11 @@ pub mod pallet {
 				})
 				.collect::<Vec<_>>();
 
-			if poisoned {
-				Err(<Error<T, I>>::LockP)?;
-			}
-
 			if let Some(lock) = new_lock {
 				locks.push(lock)
 			}
 
 			Self::update_locks(who, &locks);
-
-			Ok(())
 		}
 
 		fn remove_lock(id: LockIdentifier, who: &T::AccountId) {

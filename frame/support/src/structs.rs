@@ -70,7 +70,7 @@ pub struct OldBalanceLock<Balance, Moment> {
 	pub id: LockIdentifier,
 	pub lock_for: LockFor<Balance, Moment>,
 	/// If true, then the lock remains in effect even for payment of transaction fees.
-	pub lock_reasons: Reasons,
+	pub reasons: Reasons,
 }
 #[cfg(feature = "easy-testing")]
 impl<Balance, Moment> OldBalanceLock<Balance, Moment>
