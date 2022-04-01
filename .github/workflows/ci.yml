@@ -55,7 +55,7 @@ jobs:
               target: subalfred
         include:
           - action: build
-            flags: --features template
+            flags: --features template,evm-tracing
             task:
               target: drml
           - action: build
