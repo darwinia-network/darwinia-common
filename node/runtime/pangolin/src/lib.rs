@@ -932,13 +932,8 @@ sp_api::impl_runtime_apis! {
 }
 
 fn migrate() -> Weight {
-	frame_support::storage::unhashed::put::<EthereumStorageSchema>(
-		&PALLET_ETHEREUM_SCHEMA,
-		&EthereumStorageSchema::V3,
-	);
-
-	// 0
-	RuntimeBlockWeights::get().max_block
+	0
+	// RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
