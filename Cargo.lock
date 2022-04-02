@@ -2806,7 +2806,7 @@ dependencies = [
 [[package]]
 name = "evm-tracing-events"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#838eda5ac66678b62f57edf88316b592319ea807"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1#7bf5bd3447c0e2d057a1f31c8d7fe9f13ba73952"
 dependencies = [
  "environmental",
  "ethereum",
@@ -2851,7 +2851,7 @@ dependencies = [
 [[package]]
 name = "fc-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#1315cde4389d2805427b1d160a2c6cf84d8136ee"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#1315cde4389d2805427b1d160a2c6cf84d8136ee"
 dependencies = [
  "async-trait",
  "fc-db",
@@ -2877,7 +2877,7 @@ dependencies = [
 [[package]]
 name = "fc-db"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#1315cde4389d2805427b1d160a2c6cf84d8136ee"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#1315cde4389d2805427b1d160a2c6cf84d8136ee"
 dependencies = [
  "fp-storage",
  "kvdb",
@@ -2892,7 +2892,7 @@ dependencies = [
 [[package]]
 name = "fc-mapping-sync"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#1315cde4389d2805427b1d160a2c6cf84d8136ee"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#1315cde4389d2805427b1d160a2c6cf84d8136ee"
 dependencies = [
  "fc-consensus",
  "fc-db",
@@ -2910,7 +2910,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#1315cde4389d2805427b1d160a2c6cf84d8136ee"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#1315cde4389d2805427b1d160a2c6cf84d8136ee"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2955,7 +2955,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#1315cde4389d2805427b1d160a2c6cf84d8136ee"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#1315cde4389d2805427b1d160a2c6cf84d8136ee"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3063,7 +3063,7 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#1315cde4389d2805427b1d160a2c6cf84d8136ee"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#1315cde4389d2805427b1d160a2c6cf84d8136ee"
 dependencies = [
  "ethereum",
  "parity-scale-codec 2.3.1",
@@ -3077,7 +3077,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#1315cde4389d2805427b1d160a2c6cf84d8136ee"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#1315cde4389d2805427b1d160a2c6cf84d8136ee"
 dependencies = [
  "evm",
  "parity-scale-codec 2.3.1",
@@ -3089,7 +3089,7 @@ dependencies = [
 [[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#1315cde4389d2805427b1d160a2c6cf84d8136ee"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#1315cde4389d2805427b1d160a2c6cf84d8136ee"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3106,7 +3106,7 @@ dependencies = [
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#1315cde4389d2805427b1d160a2c6cf84d8136ee"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#1315cde4389d2805427b1d160a2c6cf84d8136ee"
 dependencies = [
  "ethereum",
  "frame-support",
@@ -3123,7 +3123,7 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#1315cde4389d2805427b1d160a2c6cf84d8136ee"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#1315cde4389d2805427b1d160a2c6cf84d8136ee"
 dependencies = [
  "parity-scale-codec 2.3.1",
 ]
@@ -5345,7 +5345,7 @@ dependencies = [
 [[package]]
 name = "moonbeam-client-evm-tracing"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#838eda5ac66678b62f57edf88316b592319ea807"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1#7bf5bd3447c0e2d057a1f31c8d7fe9f13ba73952"
 dependencies = [
  "ethereum-types",
  "evm-tracing-events",
@@ -5360,7 +5360,7 @@ dependencies = [
 [[package]]
 name = "moonbeam-rpc-core-debug"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#838eda5ac66678b62f57edf88316b592319ea807"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1#7bf5bd3447c0e2d057a1f31c8d7fe9f13ba73952"
 dependencies = [
  "ethereum-types",
  "futures 0.3.21",
@@ -5377,7 +5377,7 @@ dependencies = [
 [[package]]
 name = "moonbeam-rpc-core-trace"
 version = "0.6.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#838eda5ac66678b62f57edf88316b592319ea807"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1#7bf5bd3447c0e2d057a1f31c8d7fe9f13ba73952"
 dependencies = [
  "ethereum-types",
  "futures 0.3.21",
@@ -5393,7 +5393,7 @@ dependencies = [
 [[package]]
 name = "moonbeam-rpc-core-types"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#838eda5ac66678b62f57edf88316b592319ea807"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1#7bf5bd3447c0e2d057a1f31c8d7fe9f13ba73952"
 dependencies = [
  "ethereum-types",
  "serde",
@@ -5403,7 +5403,7 @@ dependencies = [
 [[package]]
 name = "moonbeam-rpc-debug"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#838eda5ac66678b62f57edf88316b592319ea807"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1#7bf5bd3447c0e2d057a1f31c8d7fe9f13ba73952"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -5432,7 +5432,7 @@ dependencies = [
 [[package]]
 name = "moonbeam-rpc-primitives-debug"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#838eda5ac66678b62f57edf88316b592319ea807"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1#7bf5bd3447c0e2d057a1f31c8d7fe9f13ba73952"
 dependencies = [
  "environmental",
  "ethereum",
@@ -5451,7 +5451,7 @@ dependencies = [
 [[package]]
 name = "moonbeam-rpc-trace"
 version = "0.6.0"
-source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1-dev#838eda5ac66678b62f57edf88316b592319ea807"
+source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.12.1#7bf5bd3447c0e2d057a1f31c8d7fe9f13ba73952"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -5918,7 +5918,7 @@ dependencies = [
 [[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#1315cde4389d2805427b1d160a2c6cf84d8136ee"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#1315cde4389d2805427b1d160a2c6cf84d8136ee"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6110,7 +6110,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#1315cde4389d2805427b1d160a2c6cf84d8136ee"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#1315cde4389d2805427b1d160a2c6cf84d8136ee"
 dependencies = [
  "evm",
  "evm-gasometer",
@@ -6138,7 +6138,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-modexp"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#1315cde4389d2805427b1d160a2c6cf84d8136ee"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#1315cde4389d2805427b1d160a2c6cf84d8136ee"
 dependencies = [
  "fp-evm",
  "num",
@@ -6149,7 +6149,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-sha3fips"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#1315cde4389d2805427b1d160a2c6cf84d8136ee"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#1315cde4389d2805427b1d160a2c6cf84d8136ee"
 dependencies = [
  "fp-evm",
  "sp-core",
@@ -6160,7 +6160,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-simple"
 version = "2.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1-dev#1315cde4389d2805427b1d160a2c6cf84d8136ee"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.1#1315cde4389d2805427b1d160a2c6cf84d8136ee"
 dependencies = [
  "fp-evm",
  "ripemd160",
