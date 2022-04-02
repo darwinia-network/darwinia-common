@@ -16,12 +16,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-use crate::*;
+// --- darwinia-network ---
+use crate::{types::Order, *};
+// --- paritytech ---
 use bp_messages::{
 	source_chain::{OnDeliveryConfirmed, OnMessageAccepted},
 	DeliveredMessages, LaneId, MessageNonce,
 };
-use dp_fee::Order;
 
 pub struct FeeMarketMessageAcceptedHandler<T>(PhantomData<T>);
 impl<T: Config> OnMessageAccepted for FeeMarketMessageAcceptedHandler<T> {

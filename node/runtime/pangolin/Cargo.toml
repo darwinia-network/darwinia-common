@@ -48,7 +48,6 @@ darwinia-vesting                        = { default-features = false, path = "..
 dp-asset                                = { default-features = false, path = "../../../primitives/asset" }
 dp-contract                             = { default-features = false, path = "../../../primitives/contract" }
 dp-evm-tracer                           = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
-dp-fee                                  = { default-features = false, path = "../../../primitives/fee-market" }
 dp-s2s                                  = { default-features = false, path = "../../../primitives/s2s" }
 drml-common-runtime                     = { default-features = false, path = "../common" }
 drml-primitives                         = { default-features = false, path = "../../primitives" }
@@ -174,7 +173,6 @@ std = [
 	"dp-asset/std",
 	"dp-contract/std",
 	"dp-evm-tracer/std",
-	"dp-fee/std",
 	"dp-s2s/std",
 	"drml-primitives/std",
 	"drml-common-runtime/std",
