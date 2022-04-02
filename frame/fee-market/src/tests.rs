@@ -35,7 +35,7 @@ use bp_messages::{
 use bp_runtime::{messages::MessageDispatchResult, Size};
 use frame_support::{
 	assert_err, assert_ok,
-	traits::{Everything, GenesisBuild, LockIdentifier},
+	traits::{Everything, LockIdentifier},
 	weights::{RuntimeDbWeight, Weight},
 	PalletId,
 };
@@ -44,7 +44,7 @@ use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup, UniqueSaturatedInto},
-	FixedU128, Permill, RuntimeDebug,
+	FixedU128, Permill,
 };
 // --- darwinia-network ---
 use crate::{
@@ -60,8 +60,6 @@ pub type Block = MockBlock<Test>;
 pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 pub type Balance = u64;
 pub type AccountId = u64;
-
-darwinia_support::impl_test_account_data! {}
 
 frame_support::parameter_types! {
 	pub const DbWeight: RuntimeDbWeight = RuntimeDbWeight { read: 1, write: 2 };
@@ -84,7 +82,7 @@ impl frame_system::Config for Test {
 	type BlockHashCount = ();
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = AccountData<Balance>;
+	type AccountData = pallet_balances::AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
@@ -95,7 +93,7 @@ impl frame_system::Config for Test {
 frame_support::parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
-impl darwinia_balances::Config<RingInstance> for Test {
+impl pallet_balances::Config for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = Event;
@@ -104,8 +102,6 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type MaxLocks = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
-	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
 
@@ -475,7 +471,7 @@ frame_support::construct_runtime! {
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
-		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Ring: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>},
 		Messages: pallet_bridge_messages::{Pallet, Call, Event<T>},
 	}
@@ -484,7 +480,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap();
-	darwinia_balances::GenesisConfig::<Test, RingInstance> {
+	pallet_balances::GenesisConfig::<Test> {
 		balances: vec![
 			(1, 150),
 			(2, 200),

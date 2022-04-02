@@ -37,7 +37,7 @@ use bp_messages::{LaneId, MessageNonce};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
-	traits::{Currency, Get, LockIdentifier, WithdrawReasons},
+	traits::{Currency, Get, LockIdentifier, LockableCurrency, WithdrawReasons},
 	transactional, PalletId,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
@@ -47,9 +47,6 @@ use sp_runtime::{
 };
 use sp_std::vec::Vec;
 // --- darwinia-network ---
-use darwinia_support::{
-	balance::{LockFor, LockableCurrency},
-};
 use types::{Order, Relayer, SlashReport};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -89,8 +86,7 @@ pub mod pallet {
 
 		/// The slash rule
 		type Slasher: Slasher<Self>;
-		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
-			+ Currency<Self::AccountId>;
+		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
 	}
@@ -138,7 +134,7 @@ pub mod pallet {
 		Blake2_128Concat,
 		T::AccountId,
 		Relayer<T::AccountId, RingBalance<T>>,
-		ValueQuery,
+		OptionQuery,
 	>;
 	#[pallet::storage]
 	#[pallet::getter(fn relayers)]
@@ -175,6 +171,7 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
+	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -215,9 +212,7 @@ pub mod pallet {
 			T::RingCurrency::set_lock(
 				T::LockId::get(),
 				&who,
-				LockFor::Common {
-					amount: lock_collateral,
-				},
+				lock_collateral,
 				WithdrawReasons::all(),
 			);
 			// Store enrollment detail information.
@@ -248,9 +243,7 @@ pub mod pallet {
 				T::RingCurrency::set_lock(
 					T::LockId::get(),
 					&who,
-					LockFor::Common {
-						amount: new_collateral,
-					},
+					new_collateral,
 					WithdrawReasons::all(),
 				);
 			} else {
@@ -265,9 +258,7 @@ pub mod pallet {
 					T::RingCurrency::set_lock(
 						T::LockId::get(),
 						&who,
-						LockFor::Common {
-							amount: new_collateral,
-						},
+						new_collateral,
 						WithdrawReasons::all(),
 					);
 				}
@@ -384,9 +375,7 @@ impl<T: Config> Pallet<T> {
 		T::RingCurrency::set_lock(
 			T::LockId::get(),
 			&who,
-			LockFor::Common {
-				amount: new_collateral,
-			},
+			new_collateral,
 			WithdrawReasons::all(),
 		);
 		<RelayersMap<T>>::mutate(who.clone(), |relayer| {
