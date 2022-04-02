@@ -49,7 +49,7 @@ use darwinia_ethereum::InternalTransactHandler;
 use darwinia_support::{
 	mapping_token::*,
 	s2s::{ensure_source_account, ToEthAddress},
-	AccountId, ChainName,
+	ChainName,
 };
 use dp_asset::TokenMetadata;
 use dp_contract::mapping_token_factory::{
@@ -57,7 +57,7 @@ use dp_contract::mapping_token_factory::{
 };
 use dp_s2s::CreatePayload;
 
-pub use pallet::*;
+pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 
 #[frame_support::pallet]
@@ -305,6 +305,7 @@ pub mod pallet {
 		}
 	}
 }
+pub use pallet::*;
 
 impl<T: Config> Pallet<T> {
 	/// Get mapping token address from contract

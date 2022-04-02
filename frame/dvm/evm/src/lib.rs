@@ -57,6 +57,8 @@ use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use darwinia_support::evm::IntoAccountId;
 
+pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+
 static LONDON_CONFIG: EvmConfig = EvmConfig::london();
 
 #[frame_support::pallet]
