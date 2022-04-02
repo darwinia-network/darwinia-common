@@ -20,9 +20,9 @@ log       = { version = "0.4" }
 structopt = { version = "0.3", optional = true }
 # darwinia-network
 bsc-primitives  = { path = "../../primitives/bsc" }
+drml-primitives = { optional = true, path = "../primitives" }
 drml-rpc        = { path = "../rpc" }
 drml-service    = { path = "../service" }
-drml-primitives = { optional = true, path = "../primitives" }
 # paritytech
 frame-benchmarking-cli = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sc-cli                 = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

@@ -49,7 +49,8 @@ rustc-hex    = { version = "2.1.0", default-features = false }
 darwinia-balances                  = { path = "../../../balances" }
 darwinia-evm-precompile-bridge-s2s = { path = "../../../dvm/evm/precompiles/bridge/s2s" }
 darwinia-evm-precompile-dispatch   = { path = "../../../dvm/evm/precompiles/dispatch" }
-pallet-timestamp                   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+# paritytech
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
 fp-self-contained            = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 pallet-evm                   = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }

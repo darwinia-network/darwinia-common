@@ -18,8 +18,8 @@
 
 // --- crates.io ---
 use array_bytes::{hex2bytes_unchecked, hex_into_unchecked};
-use std::str::FromStr;
 use rustc_hex::FromHex;
+use std::str::FromStr;
 // --- darwinia-network ---
 use crate::{
 	*, {self as s2s_issuing},

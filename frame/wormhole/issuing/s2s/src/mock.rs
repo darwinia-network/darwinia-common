@@ -60,8 +60,10 @@ type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
 type Balance = u64;
 
-pub const MAPPING_TOKEN_FACTORY_CONTRACT_BYTECODE: &str = include_str!("./res/mapping_token_factory_bytecode.txt");
-pub const MAPPING_TOKEN_LOGIC_CONTRACT_BYTECODE: &str = include_str!("./res/mapping_erc20_bytecode.txt");
+pub const MAPPING_TOKEN_FACTORY_CONTRACT_BYTECODE: &str =
+	include_str!("./res/mapping_token_factory_bytecode.txt");
+pub const MAPPING_TOKEN_LOGIC_CONTRACT_BYTECODE: &str =
+	include_str!("./res/mapping_erc20_bytecode.txt");
 
 darwinia_support::impl_test_account_data! {}
 

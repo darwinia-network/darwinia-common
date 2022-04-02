@@ -18,22 +18,26 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use super::*;
-use rustc_hex::FromHex;
-use crate::Pallet as S2sIssuing;
-
+// --- crates.io ---
 use array_bytes::{hex2bytes_unchecked, hex_into_unchecked};
+use rustc_hex::FromHex;
+// darwinia-network
+use super::*;
+use crate::Pallet as S2sIssuing;
 use darwinia_evm::Runner;
 use dp_asset::{TokenMetadata, NATIVE_TOKEN_TYPE};
+// --- paritytech ---
 use frame_benchmarking::benchmarks;
 use frame_support::assert_ok;
 use frame_system::RawOrigin;
 
-// This is the bytecode of s2s mapping token factory contract
+// S2S mapping token factory contract
 // https://github.com/darwinia-network/darwinia-bridges-sol/blob/master/contracts/wormhole/contracts/mapping-token/darwinia/Sub2SubMappingTokenFactory.sol
-pub const MAPPING_TOKEN_FACTORY_CONTRACT_BYTECODE: &str = include_str!("./res/mapping_token_factory_bytecode.txt");
+pub const MAPPING_TOKEN_FACTORY_CONTRACT_BYTECODE: &str =
+	include_str!("./res/mapping_token_factory_bytecode.txt");
 // https://github.com/darwinia-network/darwinia-bridges-sol/blob/master/contracts/wormhole/contracts/mapping-token/darwinia/MappingERC20.sol
-pub const MAPPING_TOKEN_LOGIC_CONTRACT_BYTECODE: &str = include_str!("./res/mapping_erc20_bytecode.txt");
+pub const MAPPING_TOKEN_LOGIC_CONTRACT_BYTECODE: &str =
+	include_str!("./res/mapping_erc20_bytecode.txt");
 
 fn deploy_mapping_token_factory<T: Config>() -> H160 {
 	let contract_bytecode = FromHex::from_hex(MAPPING_TOKEN_FACTORY_CONTRACT_BYTECODE).unwrap();
