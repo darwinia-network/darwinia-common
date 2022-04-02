@@ -26,9 +26,11 @@ mod benchmarking;
 #[cfg(test)]
 mod tests;
 
-pub mod s2s;
 pub mod weight;
 pub use weight::WeightInfo;
+
+pub mod s2s;
+pub mod types;
 
 // --- paritytech ---
 use bp_messages::{LaneId, MessageNonce};
@@ -47,12 +49,11 @@ use sp_std::vec::Vec;
 // --- darwinia-network ---
 use darwinia_support::{
 	balance::{LockFor, LockableCurrency},
-	AccountId,
 };
-use dp_fee::{Order, Relayer, SlashReport};
+use types::{Order, Relayer, SlashReport};
 
+pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
-pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -127,8 +128,6 @@ pub mod pallet {
 		RelayFeeTooLow,
 		/// The relayer is occupied, and can't cancel enrollment now.
 		OccupiedRelayer,
-		/// Extend lock failed.
-		ExtendLockFailed,
 	}
 
 	// Enrolled relayers storage
@@ -246,13 +245,14 @@ pub mod pallet {
 
 			// Increase the locked collateral
 			if new_collateral >= Self::relayer(&who).collateral {
-				let _ = T::RingCurrency::extend_lock(
+				T::RingCurrency::set_lock(
 					T::LockId::get(),
 					&who,
-					new_collateral,
+					LockFor::Common {
+						amount: new_collateral,
+					},
 					WithdrawReasons::all(),
-				)
-				.map_err(|_| <Error<T>>::ExtendLockFailed);
+				);
 			} else {
 				// Decrease the locked collateral
 				if let Some((_, orders_locked_collateral)) = Self::occupied(&who) {
@@ -344,6 +344,7 @@ pub mod pallet {
 		}
 	}
 }
+pub use pallet::*;
 
 impl<T: Config> Pallet<T> {
 	/// An important update in this pallet, need to update market information in the following cases:

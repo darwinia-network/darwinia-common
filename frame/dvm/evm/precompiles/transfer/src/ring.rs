@@ -21,12 +21,9 @@ use fp_evm::{Context, ExitSucceed, PrecompileFailure, PrecompileOutput, Precompi
 use frame_support::ensure;
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
-use darwinia_evm::AccountBasic;
+use darwinia_evm::{AccountBasic, AccountId};
 use darwinia_evm_precompile_utils::{check_state_modifier, custom_precompile_err, StateMutability};
-use darwinia_support::{
-	evm::{IntoAccountId, TRANSFER_ADDR},
-	AccountId,
-};
+use darwinia_support::evm::{IntoAccountId, TRANSFER_ADDR};
 // --- crates.io ---
 use codec::Decode;
 

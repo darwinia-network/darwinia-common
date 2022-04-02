@@ -41,6 +41,7 @@ pub mod pallet {
 		pub type EcdsaSignature = [u8; 65];
 		pub type EcdsaMessage = [u8; 32];
 		// Generic type
+		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 		pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 		pub type KtonBalance<T> = <<T as Config>::KtonCurrency as Currency<AccountId<T>>>::Balance;
 		pub type EthereumReceiptProofThing<T> = <<T as Config>::EthereumRelay as EthereumReceipt<
@@ -72,7 +73,6 @@ pub mod pallet {
 	use darwinia_support::{
 		balance::*,
 		traits::{EthereumReceipt, OnDepositRedeem},
-		AccountId,
 	};
 	use ethereum_primitives::{
 		log_entry::LogEntry, receipt::EthereumTransactionIndex, EthereumAddress, U256,
