@@ -45,10 +45,7 @@ use sp_runtime::{
 };
 use sp_std::vec::Vec;
 // --- darwinia-network ---
-use darwinia_support::{
-	balance::{LockFor, LockableCurrency},
-	AccountId,
-};
+use darwinia_support::{balance::LockableCurrency, AccountId};
 use dp_fee::{Order, Relayer, SlashReport};
 
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
@@ -127,8 +124,6 @@ pub mod pallet {
 		RelayFeeTooLow,
 		/// The relayer is occupied, and can't cancel enrollment now.
 		OccupiedRelayer,
-		/// Extend lock failed.
-		ExtendLockFailed,
 	}
 
 	// Enrolled relayers storage
@@ -216,9 +211,7 @@ pub mod pallet {
 			T::RingCurrency::set_lock(
 				T::LockId::get(),
 				&who,
-				LockFor::Common {
-					amount: lock_collateral,
-				},
+				lock_collateral,
 				WithdrawReasons::all(),
 			);
 			// Store enrollment detail information.
@@ -246,13 +239,12 @@ pub mod pallet {
 
 			// Increase the locked collateral
 			if new_collateral >= Self::relayer(&who).collateral {
-				let _ = T::RingCurrency::extend_lock(
+				T::RingCurrency::set_lock(
 					T::LockId::get(),
 					&who,
 					new_collateral,
 					WithdrawReasons::all(),
-				)
-				.map_err(|_| <Error<T>>::ExtendLockFailed);
+				);
 			} else {
 				// Decrease the locked collateral
 				if let Some((_, orders_locked_collateral)) = Self::occupied(&who) {
@@ -265,9 +257,7 @@ pub mod pallet {
 					T::RingCurrency::set_lock(
 						T::LockId::get(),
 						&who,
-						LockFor::Common {
-							amount: new_collateral,
-						},
+						new_collateral,
 						WithdrawReasons::all(),
 					);
 				}
@@ -383,9 +373,7 @@ impl<T: Config> Pallet<T> {
 		T::RingCurrency::set_lock(
 			T::LockId::get(),
 			&who,
-			LockFor::Common {
-				amount: new_collateral,
-			},
+			new_collateral,
 			WithdrawReasons::all(),
 		);
 		<RelayersMap<T>>::mutate(who.clone(), |relayer| {
