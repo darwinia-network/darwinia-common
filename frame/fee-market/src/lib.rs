@@ -47,9 +47,7 @@ use sp_runtime::{
 };
 use sp_std::vec::Vec;
 // --- darwinia-network ---
-use darwinia_support::{
-	balance::{LockFor, LockableCurrency},
-};
+use darwinia_support::balance::{LockFor, LockableCurrency};
 use types::{Order, Relayer, SlashReport};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -89,8 +87,8 @@ pub mod pallet {
 
 		/// The slash rule
 		type Slasher: Slasher<Self>;
-		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>
-			+ Currency<Self::AccountId>;
+		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
 	}
