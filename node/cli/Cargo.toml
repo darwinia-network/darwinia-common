@@ -29,7 +29,7 @@ sc-service             = { optional = true, git = "https://github.com/darwinia-n
 sp-core                = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 try-runtime-cli        = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
-fp-consensus = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fp-consensus = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 
 [build-dependencies]
 # paritytech

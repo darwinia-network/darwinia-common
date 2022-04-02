@@ -43,14 +43,14 @@ sp-keystore                    = { git = "https://github.com/darwinia-network/su
 sp-runtime                     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 substrate-frame-rpc-system     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier or moonbeam
-fc-db                         = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
-fc-rpc                        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev", features = ["rpc_binary_search_estimate"] }
-fc-rpc-core                   = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
-fp-rpc                        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
-fp-storage                    = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
-moonbeam-rpc-debug            = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
-moonbeam-rpc-primitives-debug = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
-moonbeam-rpc-trace            = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1-dev" }
+fc-db                         = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fc-rpc                        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1", features = ["rpc_binary_search_estimate"] }
+fc-rpc-core                   = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-rpc                        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-storage                    = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+moonbeam-rpc-debug            = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1" }
+moonbeam-rpc-primitives-debug = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1" }
+moonbeam-rpc-trace            = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1" }
 # template
 futures                  = { version = "0.3", optional = true }
 sc-consensus-manual-seal = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
