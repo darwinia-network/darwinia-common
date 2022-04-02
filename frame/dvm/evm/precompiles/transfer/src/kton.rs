@@ -19,7 +19,6 @@
 // --- crates.io ---
 use codec::Decode;
 use ethabi::{Function, Param, ParamType, StateMutability, Token};
-use sha3::Digest;
 // --- paritytech ---
 use fp_evm::{
 	Context, ExitError, ExitReason, ExitSucceed, PrecompileFailure, PrecompileOutput,
@@ -29,27 +28,46 @@ use frame_support::ensure;
 use sp_core::{H160, U256};
 use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 // --- darwinia-network ---
-use crate::{util, AccountId};
-use darwinia_evm::{runner::Runner, AccountBasic, Config, Pallet};
-use darwinia_evm_precompile_utils::custom_precompile_err;
-use darwinia_support::evm::{SELECTOR, TRANSFER_ADDR};
+use crate::util;
+use darwinia_evm::{runner::Runner, AccountBasic, Pallet};
+use darwinia_evm_precompile_utils::{
+	check_state_modifier, custom_precompile_err, selector, DvmInputParser,
+};
+use darwinia_support::{
+	evm::{IntoAccountId, TRANSFER_ADDR},
+	AccountId,
+};
 
-const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,uint256)";
-const WITHDRAW_ACTION: &[u8] = b"withdraw(bytes32,uint256)";
+#[selector]
+#[derive(Eq, PartialEq)]
+pub enum Action {
+	TransferAndCall = "transfer_and_call(address,uint256)",
+	Withdraw = "withdraw(bytes32,uint256)",
+}
 
-pub enum Kton<T: frame_system::Config> {
+pub enum Kton<T: darwinia_ethereum::Config> {
 	/// Transfer from substrate account to wkton contract
 	TransferAndCall(CallData),
 	/// Withdraw from wkton contract to substrate account
 	Withdraw(WithdrawData<T>),
 }
 
-impl<T: Config> Kton<T> {
-	pub fn transfer(input: &[u8], target_gas: Option<u64>, context: &Context) -> PrecompileResult {
-		let action = which_action::<T>(&input)?;
+impl<T: darwinia_ethereum::Config> Kton<T> {
+	pub fn transfer(
+		input: &[u8],
+		target_gas: Option<u64>,
+		context: &Context,
+		is_static: bool,
+	) -> PrecompileResult {
+		let dvm_parser = DvmInputParser::new(input)?;
+		let action = Action::from_u32(dvm_parser.selector)?;
+
+		// Check state modifiers
+		check_state_modifier(context, is_static, StateMutability::NonPayable)?;
 
 		match action {
-			Kton::TransferAndCall(call_data) => {
+			Action::TransferAndCall => {
+				let call_data = CallData::decode(&dvm_parser.input)?;
 				let (caller, wkton, value) =
 					(context.caller, call_data.wkton_address, call_data.value);
 				// Ensure wkton is a contract
@@ -57,21 +75,13 @@ impl<T: Config> Kton<T> {
 					!<Pallet<T>>::is_contract_code_empty(&wkton),
 					custom_precompile_err("Wkton must be a contract!")
 				);
-				// Ensure context's apparent_value is zero, since the transfer value is encoded in input field
-				ensure!(
-					context.apparent_value == U256::zero(),
-					custom_precompile_err("The value should be zero!")
-				);
-				// Ensure caller's balance is enough
-				ensure!(
-					T::KtonAccountBasic::account_basic(&caller).balance >= value,
-					PrecompileFailure::Error {
-						exit_status: ExitError::OutOfFund,
-					}
-				);
 
+				let caller_account_id =
+					<T as darwinia_evm::Config>::IntoAccountId::into_account_id(caller);
+				let wkton_account_id =
+					<T as darwinia_evm::Config>::IntoAccountId::into_account_id(wkton);
 				// Transfer kton from sender to KTON wrapped contract
-				T::KtonAccountBasic::transfer(&caller, &wkton, value)
+				T::KtonAccountBasic::transfer(&caller_account_id, &wkton_account_id, value)
 					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 				// Call WKTON wrapped contract deposit
 				let raw_input = make_call_data(caller, value)?;
@@ -103,34 +113,19 @@ impl<T: Config> Kton<T> {
 					logs: Default::default(),
 				})
 			}
-			Kton::Withdraw(wd) => {
+			Action::Withdraw => {
+				let wd = WithdrawData::<T>::decode(&dvm_parser.input)?;
 				let (source, to, value) = (context.caller, wd.to_account_id, wd.kton_value);
 				// Ensure wkton is a contract
 				ensure!(
 					!<Pallet<T>>::is_contract_code_empty(&source),
 					custom_precompile_err("The caller must be wkton contract")
 				);
-				// Ensure context's apparent_value is zero
-				ensure!(
-					context.apparent_value == U256::zero(),
-					custom_precompile_err("The value in tx must be zero!")
-				);
-				// Ensure source's balance is enough
-				let source_kton = T::KtonAccountBasic::account_basic(&source);
-				ensure!(
-					source_kton.balance >= value,
-					PrecompileFailure::Error {
-						exit_status: ExitError::OutOfFund,
-					}
-				);
 
-				// Transfer
-				let new_source_kton_balance = source_kton.balance.saturating_sub(value);
-				T::KtonAccountBasic::mutate_account_basic_balance(&source, new_source_kton_balance);
+				let source = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(source);
+				T::KtonAccountBasic::transfer(&source, &to, value)
+					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 
-				let target_kton = T::KtonAccountBasic::account_balance(&to);
-				let new_target_kton_balance = target_kton.saturating_add(value);
-				T::KtonAccountBasic::mutate_account_balance(&to, new_target_kton_balance);
 				Ok(PrecompileOutput {
 					exit_status: ExitSucceed::Returned,
 					cost: 20000,
@@ -140,25 +135,6 @@ impl<T: Config> Kton<T> {
 			}
 		}
 	}
-}
-
-/// which action depends on the function selector
-pub fn which_action<T: Config>(input_data: &[u8]) -> Result<Kton<T>, PrecompileFailure> {
-	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..SELECTOR];
-	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..SELECTOR];
-	if &input_data[0..SELECTOR] == transfer_and_call_action {
-		let decoded_data = CallData::decode(&input_data[SELECTOR..])?;
-		return Ok(Kton::TransferAndCall(decoded_data));
-	} else if &input_data[0..SELECTOR] == withdraw_action {
-		let decoded_data = WithdrawData::decode(&input_data[SELECTOR..])?;
-		return Ok(Kton::Withdraw(decoded_data));
-	}
-	Err(custom_precompile_err("Invalid Action"))
-}
-pub fn is_kton_transfer(data: &[u8]) -> bool {
-	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..SELECTOR];
-	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..SELECTOR];
-	&data[0..SELECTOR] == transfer_and_call_action || &data[0..SELECTOR] == withdraw_action
 }
 
 fn make_call_data(
@@ -253,19 +229,5 @@ mod tests {
 		let encoded_str =
 			array_bytes::bytes2hex("0x", make_call_data(mock_address, mock_value_2).unwrap());
 		assert_ne!(encoded_str, expected_str);
-	}
-
-	#[test]
-	fn test_is_kton_transfer() {
-		let transfer_and_call_action =
-			&sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..SELECTOR];
-		let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..SELECTOR];
-
-		let data = vec![0; 32];
-		assert!(!is_kton_transfer(&data));
-		let data1 = transfer_and_call_action;
-		assert!(is_kton_transfer(&data1));
-		let data2 = withdraw_action;
-		assert!(is_kton_transfer(&data2));
 	}
 }

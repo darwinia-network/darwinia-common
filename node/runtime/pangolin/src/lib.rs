@@ -59,6 +59,7 @@ pub use darwinia_fee_market::Call as FeeMarketCall;
 pub use frame_system::Call as SystemCall;
 pub use pallet_bridge_grandpa::Call as BridgeGrandpaCall;
 pub use pallet_bridge_messages::Call as BridgeMessagesCall;
+pub use pallet_bridge_parachains::Call as BridgeParachainsCall;
 pub use pallet_sudo::Call as SudoCall;
 
 // --- crates.io ---
@@ -249,13 +250,16 @@ frame_support::construct_runtime! {
 		TronBacking: to_tron_backing::{Pallet, Config<T>} = 39,
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
-		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event, Origin} = 41,
+		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event<T>, Origin} = 41,
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 59,
 		// DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Inherent} = 47,
 
 		BridgePangoroDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
 		BridgePangoroGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
 		BridgePangoroMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
+
+		BridgeRococoGrandpa: pallet_bridge_grandpa::<Instance2>::{Pallet, Call, Storage} = 60,
+		BridgeRococoParachains: pallet_bridge_parachains::<Instance1>::{Pallet, Call, Storage} = 61,
 
 		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 53,
 		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 54,
@@ -741,7 +745,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl dp_evm_trace_apis::DebugRuntimeApi<Block> for Runtime {
+	impl moonbeam_rpc_primitives_debug::DebugRuntimeApi<Block> for Runtime {
 		fn trace_transaction(
 			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
 			_traced_transaction: &darwinia_ethereum::Transaction,

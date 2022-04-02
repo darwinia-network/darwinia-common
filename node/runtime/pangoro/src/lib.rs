@@ -176,7 +176,7 @@ frame_support::construct_runtime!(
 		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 25,
-		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event, Origin} = 26,
+		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event<T>, Origin} = 26,
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 31,
 
 		Bsc: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
@@ -658,7 +658,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl dp_evm_trace_apis::DebugRuntimeApi<Block> for Runtime {
+	impl moonbeam_rpc_primitives_debug::DebugRuntimeApi<Block> for Runtime {
 		fn trace_transaction(
 			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
 			_traced_transaction: &darwinia_ethereum::Transaction,

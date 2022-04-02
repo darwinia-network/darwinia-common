@@ -4,6 +4,7 @@ use core::marker::PhantomData;
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{traits::FindAuthor, ConsensusEngineId};
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
+use pallet_session::FindAccountFromAuthorIndex;
 use sp_core::{crypto::Public, H160, U256};
 // --- darwinia-network ---
 use crate::*;
@@ -33,7 +34,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 pub struct PangoroPrecompiles<R>(PhantomData<R>);
 impl<R> PangoroPrecompiles<R>
 where
-	R: darwinia_evm::Config,
+	R: darwinia_ethereum::Config,
 {
 	pub fn new() -> Self {
 		Self(Default::default())
@@ -50,7 +51,7 @@ impl<R> PrecompileSet for PangoroPrecompiles<R>
 where
 	Transfer<R>: Precompile,
 	BscBridge<R>: Precompile,
-	R: darwinia_evm::Config,
+	R: darwinia_ethereum::Config,
 {
 	fn execute(
 		&self,
@@ -110,7 +111,7 @@ impl Config for Runtime {
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type Runner = Runner<Self>;
-	type OnChargeTransaction = EVMCurrencyAdapter;
+	type OnChargeTransaction = EVMCurrencyAdapter<FindAccountFromAuthorIndex<Self, Babe>>;
 }
 
 fn addr(a: u64) -> H160 {

@@ -17,16 +17,16 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- paritytech ---
-use fp_evm::{
-	Context, ExitError, ExitSucceed, PrecompileFailure, PrecompileOutput, PrecompileResult,
-};
+use fp_evm::{Context, ExitSucceed, PrecompileFailure, PrecompileOutput, PrecompileResult};
 use frame_support::ensure;
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
-use crate::AccountId;
-use darwinia_evm::{AccountBasic, Config};
-use darwinia_evm_precompile_utils::custom_precompile_err;
-use darwinia_support::evm::TRANSFER_ADDR;
+use darwinia_evm::AccountBasic;
+use darwinia_evm_precompile_utils::{check_state_modifier, custom_precompile_err, StateMutability};
+use darwinia_support::{
+	evm::{IntoAccountId, TRANSFER_ADDR},
+	AccountId,
+};
 // --- crates.io ---
 use codec::Decode;
 
@@ -34,40 +34,36 @@ pub struct RingBack<T> {
 	_maker: PhantomData<T>,
 }
 
-impl<T: Config> RingBack<T> {
+impl<T: darwinia_ethereum::Config> RingBack<T> {
 	/// The Withdraw process is divided into two part:
 	/// 1. parse the withdrawal address from the input parameter and get the contract address and value from the context
 	/// 2. transfer from the contract address to withdrawal address
 	///
 	/// Input data: 32-bit substrate withdrawal public key
-	pub fn transfer(input: &[u8], _: Option<u64>, context: &Context) -> PrecompileResult {
+	pub fn transfer(
+		input: &[u8],
+		_target_gas: Option<u64>,
+		context: &Context,
+		is_static: bool,
+	) -> PrecompileResult {
+		// Check state modifiers
+		check_state_modifier(context, is_static, StateMutability::Payable)?;
+
 		// Decode input data
 		let input = InputData::<T>::decode(&input)?;
-		let (source, to, value) = (context.address, input.dest, context.apparent_value);
-		let source_account = T::RingAccountBasic::account_basic(&source);
+		let (address, to, value) = (context.address, input.dest, context.apparent_value);
 
 		// Ensure the context address should be precompile address
 		let transfer_addr = array_bytes::hex_try_into(TRANSFER_ADDR)
 			.map_err(|_| custom_precompile_err("invalid address"))?;
 		ensure!(
-			source == transfer_addr,
+			address == transfer_addr,
 			custom_precompile_err("Invalid context address")
 		);
-		// Ensure the context address balance is enough
-		ensure!(
-			source_account.balance >= value,
-			PrecompileFailure::Error {
-				exit_status: ExitError::OutOfFund,
-			}
-		);
 
-		// Transfer
-		let new_source_balance = source_account.balance.saturating_sub(value);
-		T::RingAccountBasic::mutate_account_basic_balance(&source, new_source_balance);
-
-		let target_balance = T::RingAccountBasic::account_balance(&to);
-		let new_target_balance = target_balance.saturating_add(value);
-		T::RingAccountBasic::mutate_account_balance(&to, new_target_balance);
+		let source = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(address);
+		T::RingAccountBasic::transfer(&source, &to, value)
+			.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,

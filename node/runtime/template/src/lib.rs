@@ -110,7 +110,7 @@ frame_support::construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 
 		EVM: darwinia_evm::{Pallet, Config, Call, Storage, Event<T>},
-		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
+		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Event<T>, Config, Origin},
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event},
 	}
 );
@@ -430,7 +430,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl dp_evm_trace_apis::DebugRuntimeApi<Block> for Runtime {
+	impl moonbeam_rpc_primitives_debug::DebugRuntimeApi<Block> for Runtime {
 		fn trace_transaction(
 			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
 			_traced_transaction: &darwinia_ethereum::Transaction,

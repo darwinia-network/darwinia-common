@@ -9,6 +9,7 @@ use frame_support::{
 	ConsensusEngineId,
 };
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
+use pallet_session::FindAccountFromAuthorIndex;
 use sp_core::{crypto::Public, H160, U256};
 // --- darwinia-network ---
 use crate::*;
@@ -83,7 +84,7 @@ impl LatestMessageNoncer for ToPangoroMessageSender {
 pub struct PangolinPrecompiles<R>(PhantomData<R>);
 impl<R> PangolinPrecompiles<R>
 where
-	R: darwinia_evm::Config,
+	R: darwinia_ethereum::Config,
 {
 	pub fn new() -> Self {
 		Self(Default::default())
@@ -102,7 +103,7 @@ where
 	EthereumBridge<R>: Precompile,
 	Sub2SubBridge<R, ToPangoroMessageSender, ToPangoroOutboundPayLoad>: Precompile,
 	Dispatch<R>: Precompile,
-	R: darwinia_evm::Config,
+	R: darwinia_ethereum::Config,
 {
 	fn execute(
 		&self,
@@ -170,7 +171,7 @@ impl Config for Runtime {
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type Runner = Runner<Self>;
-	type OnChargeTransaction = EVMCurrencyAdapter;
+	type OnChargeTransaction = EVMCurrencyAdapter<FindAccountFromAuthorIndex<Self, Babe>>;
 }
 
 fn addr(a: u64) -> H160 {
