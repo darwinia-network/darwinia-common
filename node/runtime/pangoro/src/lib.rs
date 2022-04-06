@@ -45,7 +45,6 @@ pub use pallet_sudo::Call as SudoCall;
 use codec::Encode;
 // --- paritytech ---
 use bp_runtime::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
-use fp_storage::{EthereumStorageSchema, PALLET_ETHEREUM_SCHEMA};
 #[allow(unused)]
 use frame_support::{log, migration};
 use frame_support::{

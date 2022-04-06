@@ -117,8 +117,6 @@ impl MessageBridge for WithPangolinMessageBridge {
 
 	fn bridged_balance_to_this_balance(
 		bridged_balance: pangolin_primitives::Balance,
-		// TODO: S2S
-		_bridged_to_this_conversion_rate_override: Option<FixedU128>,
 	) -> pangoro_primitives::Balance {
 		pangoro_primitives::Balance::try_from(
 			PangolinToPangoroConversionRate::get().saturating_mul_int(bridged_balance),
