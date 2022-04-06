@@ -138,7 +138,7 @@ pub mod pallet {
 	>;
 	#[pallet::storage]
 	#[pallet::getter(fn relayers)]
-	pub type Relayers<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
+	pub type Relayers<T: Config> = StorageValue<_, Vec<T::AccountId>, OptionQuery>;
 
 	// Priority relayers storage
 	#[pallet::storage]
@@ -172,6 +172,7 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -239,7 +240,7 @@ pub mod pallet {
 			);
 
 			// Increase the locked collateral
-			if new_collateral >= Self::relayer(&who).collateral {
+			if new_collateral >= Self::relayer_locked_collateral(&who) {
 				T::RingCurrency::set_lock(
 					T::LockId::get(),
 					&who,
@@ -265,7 +266,9 @@ pub mod pallet {
 			}
 
 			<RelayersMap<T>>::mutate(who.clone(), |relayer| {
-				relayer.collateral = new_collateral;
+				if let Some(ref mut r) = relayer {
+					r.collateral = new_collateral;
+				}
 			});
 			Self::update_market();
 			Self::deposit_event(Event::<T>::UpdateLockedCollateral(who, new_collateral));
@@ -287,7 +290,9 @@ pub mod pallet {
 			);
 
 			<RelayersMap<T>>::mutate(who.clone(), |relayer| {
-				relayer.fee = new_fee;
+				if let Some(ref mut r) = relayer {
+					r.fee = new_fee;
+				}
 			});
 
 			Self::update_market();
@@ -346,11 +351,16 @@ impl<T: Config> Pallet<T> {
 	/// - The order didn't confirm in-time, slash occurred.
 	pub(crate) fn update_market() {
 		// Sort all enrolled relayers who are able to accept orders.
-		let mut relayers: Vec<Relayer<T::AccountId, RingBalance<T>>> = <Relayers<T>>::get()
-			.iter()
-			.map(RelayersMap::<T>::get)
-			.filter(|r| Self::usable_order_capacity(&r.id) >= 1)
-			.collect();
+		let mut relayers: Vec<Relayer<T::AccountId, RingBalance<T>>> = Vec::new();
+		if let Some(ids) = <Relayers<T>>::get() {
+			for id in ids.iter() {
+				if let Some(r) = RelayersMap::<T>::get(id) {
+					if Self::usable_order_capacity(&r.id) >= 1 {
+						relayers.push(r)
+					}
+				}
+			}
+		}
 
 		// Select the first `AssignedRelayersNumber` relayers as AssignedRelayer.
 		let assigned_relayers_len = <AssignedRelayersNumber<T>>::get() as usize;
@@ -379,7 +389,9 @@ impl<T: Config> Pallet<T> {
 			WithdrawReasons::all(),
 		);
 		<RelayersMap<T>>::mutate(who.clone(), |relayer| {
-			relayer.collateral = new_collateral;
+			if let Some(ref mut r) = relayer {
+				r.collateral = new_collateral;
+			}
 		});
 
 		Self::update_market();
@@ -391,7 +403,11 @@ impl<T: Config> Pallet<T> {
 		T::RingCurrency::remove_lock(T::LockId::get(), who);
 
 		<RelayersMap<T>>::remove(who.clone());
-		<Relayers<T>>::mutate(|relayers| relayers.retain(|x| x != who));
+		<Relayers<T>>::mutate(|relayers| {
+			if let Some(ref mut r) = relayers {
+				r.retain(|x| x != who)
+			}
+		});
 		<AssignedRelayers<T>>::mutate(|assigned_relayers| {
 			if let Some(relayers) = assigned_relayers {
 				relayers.retain(|x| x.id != *who);
@@ -402,7 +418,10 @@ impl<T: Config> Pallet<T> {
 
 	/// Whether the relayer has enrolled
 	pub(crate) fn is_enrolled(who: &T::AccountId) -> bool {
-		<Relayers<T>>::get().iter().any(|r| *r == *who)
+		if let Some(rs) = <Relayers<T>>::get() {
+			return rs.iter().any(|r| *r == *who);
+		}
+		false
 	}
 
 	/// Get market fee, If there is not enough relayers have order capacity to accept new order, return None.
@@ -413,6 +432,14 @@ impl<T: Config> Pallet<T> {
 	/// Get order indexes in the storage
 	pub fn in_process_orders() -> Vec<(LaneId, MessageNonce)> {
 		Orders::<T>::iter().map(|(k, _v)| k).collect()
+	}
+
+	/// Get the relayer locked collateral value
+	pub fn relayer_locked_collateral(who: &T::AccountId) -> RingBalance<T> {
+		if let Some(r) = RelayersMap::<T>::get(who) {
+			return r.collateral;
+		}
+		RingBalance::<T>::zero()
 	}
 
 	/// Whether the enrolled relayer is occupied(Responsible for order relaying)
@@ -437,13 +464,13 @@ impl<T: Config> Pallet<T> {
 	/// The relayer collateral is composed of two part: fee_collateral and orders_locked_collateral.
 	/// Calculate the order capacity with fee_collateral
 	pub(crate) fn usable_order_capacity(who: &T::AccountId) -> u32 {
+		let relayer_locked_collateral = Self::relayer_locked_collateral(&who);
 		if let Some((_, orders_locked_collateral)) = Self::occupied(&who) {
-			let free_collateral = Self::relayer(who)
-				.collateral
-				.saturating_sub(orders_locked_collateral);
+			let free_collateral =
+				relayer_locked_collateral.saturating_sub(orders_locked_collateral);
 			return Self::collateral_to_order_capacity(free_collateral);
 		}
-		Self::collateral_to_order_capacity(Self::relayer(who).collateral)
+		Self::collateral_to_order_capacity(relayer_locked_collateral)
 	}
 
 	fn collateral_to_order_capacity(collateral: RingBalance<T>) -> u32 {

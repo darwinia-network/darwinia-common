@@ -744,7 +744,7 @@ dependencies = [
 [[package]]
 name = "bp-message-dispatch"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=polkadot-v0.9.16#7feb7e1e5c1415cd17079fd1f590896d80dd91cc"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=polkadot-v0.9.16#07bbb7427ffcf12ef9c7ce66bc2f64fb08525b08"
 dependencies = [
  "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=polkadot-v0.9.16)",
  "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.16)",
@@ -773,7 +773,7 @@ dependencies = [
 [[package]]
 name = "bp-messages"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=polkadot-v0.9.16#7feb7e1e5c1415cd17079fd1f590896d80dd91cc"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=polkadot-v0.9.16#07bbb7427ffcf12ef9c7ce66bc2f64fb08525b08"
 dependencies = [
  "bitvec 0.20.4",
  "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=polkadot-v0.9.16)",
@@ -889,7 +889,7 @@ dependencies = [
 [[package]]
 name = "bp-runtime"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=polkadot-v0.9.16#7feb7e1e5c1415cd17079fd1f590896d80dd91cc"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=polkadot-v0.9.16#07bbb7427ffcf12ef9c7ce66bc2f64fb08525b08"
 dependencies = [
  "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.16)",
  "hash-db",
@@ -6267,7 +6267,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-messages"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=polkadot-v0.9.16#7feb7e1e5c1415cd17079fd1f590896d80dd91cc"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=polkadot-v0.9.16#07bbb7427ffcf12ef9c7ce66bc2f64fb08525b08"
 dependencies = [
  "bitvec 0.20.4",
  "bp-message-dispatch 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=polkadot-v0.9.16)",

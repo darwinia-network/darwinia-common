@@ -227,7 +227,7 @@ pub(crate) fn do_slash<T: Config>(
 	amount: RingBalance<T>,
 	report: SlashReport<T::AccountId, T::BlockNumber, RingBalance<T>>,
 ) -> RingBalance<T> {
-	let locked_collateral = Pallet::<T>::relayer(&who).collateral;
+	let locked_collateral = Pallet::<T>::relayer_locked_collateral(&who);
 	T::RingCurrency::remove_lock(T::LockId::get(), &who);
 	debug_assert!(
 		locked_collateral >= amount,
