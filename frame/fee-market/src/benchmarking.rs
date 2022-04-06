@@ -62,7 +62,7 @@ fn fee_market_ready<T: Config>() {
 		None
 	));
 	assert!(<FeeMarket<T>>::market_fee().is_some());
-	assert_eq!(<FeeMarket<T>>::relayers().len(), 4);
+	assert_eq!(<FeeMarket<T>>::relayers().unwrap().len(), 4);
 }
 
 benchmarks! {
@@ -74,7 +74,7 @@ benchmarks! {
 	}: enroll_and_lock_collateral(RawOrigin::Signed(relayer.clone()), lock_collateral, None)
 	verify {
 		assert!(<FeeMarket<T>>::is_enrolled(&relayer));
-		assert_eq!(<FeeMarket<T>>::relayers().len(), 5);
+		assert_eq!(<FeeMarket<T>>::relayers().unwrap().len(), 5);
 	}
 
 	update_locked_collateral {
@@ -83,7 +83,7 @@ benchmarks! {
 		let new_collateral = T::CollateralPerOrder::get().saturating_mul(5u32.into());
 	}: update_locked_collateral(RawOrigin::Signed(caller3.clone()), new_collateral)
 	verify {
-		let relayer = <FeeMarket<T>>::relayer(&caller3);
+		let relayer = <FeeMarket<T>>::relayer(&caller3).unwrap();
 		assert_eq!(relayer.collateral,  T::CollateralPerOrder::get().saturating_mul(5u32.into()));
 	}
 
@@ -93,7 +93,7 @@ benchmarks! {
 		let new_fee = T::CollateralPerOrder::get().saturating_mul(10u32.into());
 	}: update_relay_fee(RawOrigin::Signed(caller3.clone()), new_fee)
 	verify {
-		let relayer = <FeeMarket<T>>::relayer(&caller3);
+		let relayer = <FeeMarket<T>>::relayer(&caller3).unwrap();
 		assert_eq!(relayer.fee,  T::CollateralPerOrder::get().saturating_mul(10u32.into()));
 	}
 
@@ -103,7 +103,7 @@ benchmarks! {
 	}: cancel_enrollment(RawOrigin::Signed(caller1.clone()))
 	verify {
 		assert!(!<FeeMarket<T>>::is_enrolled(&caller1));
-		assert_eq!(<FeeMarket<T>>::relayers().len(), 3);
+		assert_eq!(<FeeMarket<T>>::relayers().unwrap().len(), 3);
 	}
 
 	set_slash_protect {
