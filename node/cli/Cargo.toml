@@ -19,9 +19,10 @@ name = "drml"
 log       = { version = "0.4" }
 structopt = { version = "0.3", optional = true }
 # darwinia-network
-bsc-primitives = { path = "../../primitives/bsc" }
-drml-rpc       = { path = "../rpc" }
-drml-service   = { path = "../service" }
+bsc-primitives  = { path = "../../primitives/bsc" }
+drml-primitives = { path = "../primitives", optional = true }
+drml-rpc        = { path = "../rpc" }
+drml-service    = { path = "../service" }
 # paritytech
 frame-benchmarking-cli = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sc-cli                 = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -66,6 +67,7 @@ template = ["drml-service/template"]
 
 runtime-benchmarks = [
 	# darwinia-network
+	"drml-primitives",
 	"drml-service/runtime-benchmarks",
 	# paritytech
 	"frame-benchmarking-cli",
@@ -73,6 +75,7 @@ runtime-benchmarks = [
 
 try-runtime = [
 	# darwinia-network
+	"drml-primitives",
 	"drml-service/try-runtime",
 	# paritytech
 	"try-runtime-cli",
