@@ -418,10 +418,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Whether the relayer has enrolled
 	pub(crate) fn is_enrolled(who: &T::AccountId) -> bool {
-		if let Some(rs) = <Relayers<T>>::get() {
-			return rs.iter().any(|r| *r == *who);
-		}
-		false
+		<Relayers<T>>::get().map_or(false, |rs| rs.iter().any(|r| *r == *who))
 	}
 
 	/// Get market fee, If there is not enough relayers have order capacity to accept new order, return None.
@@ -436,10 +433,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Get the relayer locked collateral value
 	pub fn relayer_locked_collateral(who: &T::AccountId) -> RingBalance<T> {
-		if let Some(r) = RelayersMap::<T>::get(who) {
-			return r.collateral;
-		}
-		RingBalance::<T>::zero()
+		RelayersMap::<T>::get(who).map_or(RingBalance::<T>::zero(), |r| r.collateral)
 	}
 
 	/// Whether the enrolled relayer is occupied(Responsible for order relaying)
