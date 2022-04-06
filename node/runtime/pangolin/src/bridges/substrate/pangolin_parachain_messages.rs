@@ -28,10 +28,13 @@ use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
 use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::ops::RangeInclusive;
 // --- darwinia-network ---
-use crate::{bridges::pangoro_messages::Pangolin, *};
+use crate::*;
 
-/// Identifier of PangolinParachain in the relay chain.
-pub const PANGOLIN_PARACHAIN_ID: u32 = 2071;
+/// Identifier of PangolinParachain registered in the rococo relay chain.
+pub const PANGOLIN_PARACHAIN_ID: u32 = 2105;
+
+/// Identifier of bridge between pangolin and pangolin parachain.
+pub const PANGOLIN_PANGOLIN_PARACHAIN_LANE: [u8; 4] = *b"pali";
 
 /// Message verifier for Pangolin -> PangolinParachain messages.
 pub type ToPangolinParachainMessageVerifier =
@@ -107,6 +110,58 @@ impl MessageBridge for WithPangolinParachainMessageBridge {
 			PangolinParachainToPangolinConversionRate::get().saturating_mul_int(bridged_balance),
 		)
 		.unwrap_or(Balance::MAX)
+	}
+}
+
+/// Pangolin chain from message lane point of view.
+#[derive(Clone, Copy, RuntimeDebug)]
+pub struct Pangolin;
+impl messages::ChainWithMessages for Pangolin {
+	type Hash = Hash;
+	type AccountId = AccountId;
+	type Signer = AccountPublic;
+	type Signature = Signature;
+	type Weight = Weight;
+	type Balance = Balance;
+}
+impl messages::ThisChainWithMessages for Pangolin {
+	type Call = Call;
+
+	fn is_outbound_lane_enabled(lane: &bp_messages::LaneId) -> bool {
+		*lane == [0, 0, 0, 0] || *lane == [0, 0, 0, 1] || *lane == PANGOLIN_PANGOLIN_PARACHAIN_LANE
+	}
+
+	fn maximal_pending_messages_at_outbound_lane() -> bp_messages::MessageNonce {
+		bp_messages::MessageNonce::MAX
+	}
+
+	fn estimate_delivery_confirmation_transaction() -> messages::MessageTransaction<Weight> {
+		let inbound_data_size = bp_messages::InboundLaneData::<AccountId>::encoded_size_hint(
+			bp_pangolin::MAXIMAL_ENCODED_ACCOUNT_ID_SIZE,
+			1,
+			1,
+		)
+		.unwrap_or(u32::MAX);
+
+		messages::MessageTransaction {
+			dispatch_weight: bp_pangolin::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
+			size: inbound_data_size
+				.saturating_add(bp_pangolin::EXTRA_STORAGE_PROOF_SIZE)
+				.saturating_add(bp_pangolin::TX_EXTRA_BYTES),
+		}
+	}
+
+	fn transaction_payment(transaction: messages::MessageTransaction<Weight>) -> Balance {
+		// in our testnets, both per-byte fee and weight-to-fee are 1:1
+		messages::transaction_payment(
+			RuntimeBlockWeights::get()
+				.get(DispatchClass::Normal)
+				.base_extrinsic,
+			1,
+			FixedU128::zero(),
+			|weight| weight as _,
+			transaction,
+		)
 	}
 }
 
