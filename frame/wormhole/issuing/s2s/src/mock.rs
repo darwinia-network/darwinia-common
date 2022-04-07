@@ -19,18 +19,21 @@
 // --- std ---
 use std::str::FromStr;
 // --- crates.io ---
+use array_bytes::hex2bytes_unchecked;
 use codec::{Decode, Encode, MaxEncodedLen};
 use ethereum::{TransactionAction, TransactionSignature};
 use rlp::RlpStream;
 use scale_info::TypeInfo;
 use sha3::{Digest, Keccak256};
 // --- paritytech ---
+use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
 	traits::{Everything, GenesisBuild},
 	PalletId,
 };
 use frame_system::mocking::*;
 use pallet_evm::FeeCalculator;
+use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -45,6 +48,8 @@ use darwinia_ethereum::{
 	IntermediateStateRoot, RawOrigin, Transaction,
 };
 use darwinia_evm::{EVMCurrencyAdapter, EnsureAddressTruncated, SubstrateBlockHashMapping};
+use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
+use darwinia_evm_precompile_dispatch::Dispatch;
 use darwinia_support::{
 	evm::IntoAccountId,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
@@ -55,57 +60,10 @@ type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
 type Balance = u64;
 
-/*
-* Test Contract
-pragma solidity ^0.6.0;
-
-contract MockS2SMappingTokenFactory {
-
-	address public constant SYSTEM_ACCOUNT = 0x6D6F646C6461722f64766D700000000000000000;
-	address public constant MOCKED_ADDRESS = 0x0000000000000000000000000000000000000001;
-
-	mapping(bytes32 => address) public salt2MappingToken;
-
-	event IssuingERC20Created(address backing_address, address original_token, address mapping_token);
-	event MappingTokenIssued(address mapping_token, address recipient, uint256 amount);
-
-	receive() external payable {
-	}
-
-	/**
-	 * @dev Throws if called by any account other than the system account defined by SYSTEM_ACCOUNT address.
-	 */
-	modifier onlySystem() {
-		require(SYSTEM_ACCOUNT == msg.sender, "System: caller is not the system account");
-		_;
-	}
-
-	function mappingToken(address backing_address, address original_token) public view returns (address) {
-		bytes32 salt = keccak256(abi.encodePacked(backing_address, original_token));
-		return salt2MappingToken[salt];
-	}
-
-	function newErc20Contract(
-		uint32,
-		string memory,
-		string memory,
-		uint8,
-		address backing_address,
-		address original_token
-	) public virtual onlySystem returns (address mapping_token) {
-		bytes32 salt = keccak256(abi.encodePacked(backing_address, original_token));
-		salt2MappingToken[salt] = MOCKED_ADDRESS;
-		emit IssuingERC20Created(backing_address, original_token, MOCKED_ADDRESS);
-		return MOCKED_ADDRESS;
-	}
-
-	function issueMappingToken(address mapping_token, address recipient, uint256 amount) public virtual onlySystem {
-		require(mapping_token == MOCKED_ADDRESS, "invalid mapping token address");
-		emit MappingTokenIssued(mapping_token, recipient, amount);
-	}
-}
-*/
-pub const TEST_CONTRACT_BYTECODE: &str = "608060405234801561001057600080fd5b506105ad806100206000396000f3fe6080604052600436106100595760003560e01c8063148a79fd14610065578063739d40d9146100ab578063b28bf620146100c0578063c8ff0854146100d5578063ecd22a191461011a578063ef13ef4d1461015557610060565b3661006057005b600080fd5b34801561007157600080fd5b5061008f6004803603602081101561008857600080fd5b50356102b6565b604080516001600160a01b039092168252519081900360200190f35b3480156100b757600080fd5b5061008f6102d1565b3480156100cc57600080fd5b5061008f6102e4565b3480156100e157600080fd5b50610118600480360360608110156100f857600080fd5b506001600160a01b038135811691602081013590911690604001356102e9565b005b34801561012657600080fd5b5061008f6004803603604081101561013d57600080fd5b506001600160a01b03813581169160200135166103e3565b34801561016157600080fd5b5061008f600480360360c081101561017857600080fd5b63ffffffff82351691908101906040810160208201356401000000008111156101a057600080fd5b8201836020820111156101b257600080fd5b803590602001918460018302840111640100000000831117156101d457600080fd5b91908080601f016020809104026020016040519081016040528093929190818152602001838380828437600092019190915250929594936020810193503591505064010000000081111561022757600080fd5b82018360208201111561023957600080fd5b8035906020019184600183028401116401000000008311171561025b57600080fd5b91908080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152509295505060ff8335169350506001600160a01b03602083013581169260400135169050610442565b6000602081905290815260409020546001600160a01b031681565b6b06d6f646c6461722f64766d760441b81565b600181565b6b06d6f646c6461722f64766d760441b33146103365760405162461bcd60e51b81526004018080602001828103825260288152602001806105506028913960400191505060405180910390fd5b6001600160a01b038316600114610394576040805162461bcd60e51b815260206004820152601d60248201527f696e76616c6964206d617070696e6720746f6b656e2061646472657373000000604482015290519081900360640190fd5b604080516001600160a01b0380861682528416602082015280820183905290517f4c965b0027d1a0b20e874218493f3717f065d312001e29e75c42d135c7ab96259181900360600190a1505050565b604080516bffffffffffffffffffffffff19606094851b81166020808401919091529390941b9093166034840152805160288185030181526048909301815282519282019290922060009081529081905220546001600160a01b031690565b60006b06d6f646c6461722f64766d760441b33146104915760405162461bcd60e51b81526004018080602001828103825260288152602001806105506028913960400191505060405180910390fd5b604080516bffffffffffffffffffffffff19606086811b82166020808501919091529086901b909116603483015282516028818403018152604883018085528151918301919091206000818152928390529184902080546001600160a01b03191660019081179091556001600160a01b038089169092529086166068840152608883015291517fc9c337e478378d4317643765b21b7d2da0d66f86675b2e3b6e1aff67ce572daf9181900360a80190a150600197965050505050505056fe53797374656d3a2063616c6c6572206973206e6f74207468652073797374656d206163636f756e74a26469706673582212202576f15b3a6363c8f6949d2605f736ff2b3b65e179f1788b5db7d244efebbc0d64736f6c63430006090033";
+pub const MAPPING_TOKEN_FACTORY_CONTRACT_BYTECODE: &str =
+	include_str!("./res/mapping_token_factory_bytecode.txt");
+pub const MAPPING_TOKEN_LOGIC_CONTRACT_BYTECODE: &str =
+	include_str!("./res/mapping_erc20_bytecode.txt");
 
 darwinia_support::impl_test_account_data! {}
 
@@ -206,6 +164,7 @@ impl IntoAccountId<AccountId32> for HashedConverter {
 frame_support::parameter_types! {
 	pub const ChainId: u64 = 42;
 	pub const BlockGasLimit: U256 = U256::MAX;
+	pub PrecompilesValue: MockPrecompiles<Test> = MockPrecompiles::<_>::new();
 }
 impl darwinia_evm::Config for Test {
 	type FeeCalculator = FixedGasPrice;
@@ -213,8 +172,8 @@ impl darwinia_evm::Config for Test {
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type IntoAccountId = HashedConverter;
 	type Event = ();
-	type PrecompilesType = ();
-	type PrecompilesValue = ();
+	type PrecompilesType = MockPrecompiles<Self>;
+	type PrecompilesValue = PrecompilesValue;
 	type FindAuthor = ();
 	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
 	type ChainId = ChainId;
@@ -233,25 +192,88 @@ frame_support::parameter_types! {
 	pub MessageLaneId: [u8; 4] = *b"ltor";
 }
 
+pub struct MockPrecompiles<R>(PhantomData<R>);
+impl<R> MockPrecompiles<R>
+where
+	R: darwinia_evm::Config,
+{
+	pub fn new() -> Self {
+		Self(Default::default())
+	}
+	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
+		sp_std::vec![1, 2, 3, 4, 24, 25]
+			.into_iter()
+			.map(|x| H160::from_low_u64_be(x))
+			.collect()
+	}
+}
+
+impl<R> PrecompileSet for MockPrecompiles<R>
+where
+	Sub2SubBridge<R, MockS2sMessageSender, ()>: Precompile,
+	Dispatch<R>: Precompile,
+	R: darwinia_evm::Config,
+{
+	fn execute(
+		&self,
+		address: H160,
+		input: &[u8],
+		target_gas: Option<u64>,
+		context: &Context,
+		is_static: bool,
+	) -> Option<PrecompileResult> {
+		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
+
+		match address {
+			// Ethereum precompiles
+			_ if address == to_address(1) => {
+				Some(ECRecover::execute(input, target_gas, context, is_static))
+			}
+			_ if address == to_address(2) => {
+				Some(Sha256::execute(input, target_gas, context, is_static))
+			}
+			_ if address == to_address(3) => {
+				Some(Ripemd160::execute(input, target_gas, context, is_static))
+			}
+			_ if address == to_address(4) => {
+				Some(Identity::execute(input, target_gas, context, is_static))
+			}
+			// Darwinia precompiles
+			_ if address == to_address(24) => {
+				Some(<Sub2SubBridge<R, MockS2sMessageSender, ()>>::execute(
+					input, target_gas, context, is_static,
+				))
+			}
+			_ if address == to_address(25) => Some(<Dispatch<R>>::execute(
+				input, target_gas, context, is_static,
+			)),
+			_ => None,
+		}
+	}
+	fn is_precompile(&self, address: H160) -> bool {
+		Self::used_addresses().contains(&address)
+	}
+}
+
 pub struct AccountIdConverter;
 impl Convert<H256, AccountId32> for AccountIdConverter {
 	fn convert(hash: H256) -> AccountId32 {
 		hash.to_fixed_bytes().into()
 	}
 }
-pub struct ToPangoroMessageRelayCaller;
-impl RelayMessageSender for ToPangoroMessageRelayCaller {
+pub struct MockS2sMessageSender;
+impl RelayMessageSender for MockS2sMessageSender {
 	fn encode_send_message(
 		_message_pallet_index: u32,
 		_lane_id: [u8; 4],
 		_payload: Vec<u8>,
 		_fee: u128,
 	) -> Result<Vec<u8>, &'static str> {
-		Ok(Vec::new())
+		// don't send message instead system remark
+		Ok(hex2bytes_unchecked("0x0001081234"))
 	}
 }
-pub struct MockLatestMessageNoncer;
-impl LatestMessageNoncer for MockLatestMessageNoncer {
+impl LatestMessageNoncer for MockS2sMessageSender {
 	fn outbound_latest_generated_nonce(_lane_id: [u8; 4]) -> u64 {
 		0
 	}
@@ -277,7 +299,6 @@ impl Config for Test {
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangoroChainId;
 	type ToEthAddressT = TruncateToEthAddress;
-	type OutboundPayloadCreator = ();
 	type InternalTransactHandler = Ethereum;
 	type BackingChainName = PangoroName;
 	type MessageLaneId = MessageLaneId;

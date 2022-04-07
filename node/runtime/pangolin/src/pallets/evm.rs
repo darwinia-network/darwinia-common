@@ -26,6 +26,7 @@ use darwinia_support::{
 	evm::ConcatConverter,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
 };
+use pangoro_messages::ToPangoroOutboundPayLoad;
 
 pub struct EthereumFindAuthor<F>(PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
@@ -100,7 +101,7 @@ impl<R> PrecompileSet for PangolinPrecompiles<R>
 where
 	Transfer<R>: Precompile,
 	EthereumBridge<R>: Precompile,
-	Sub2SubBridge<R, ToPangoroMessageSender>: Precompile,
+	Sub2SubBridge<R, ToPangoroMessageSender, ToPangoroOutboundPayLoad>: Precompile,
 	Dispatch<R>: Precompile,
 	R: darwinia_ethereum::Config,
 {
@@ -125,9 +126,11 @@ where
 			a if a == addr(23) => Some(<EthereumBridge<R>>::execute(
 				input, target_gas, context, is_static,
 			)),
-			a if a == addr(24) => Some(<Sub2SubBridge<R, ToPangoroMessageSender>>::execute(
-				input, target_gas, context, is_static,
-			)),
+			a if a == addr(24) => Some(<Sub2SubBridge<
+				R,
+				ToPangoroMessageSender,
+				ToPangoroOutboundPayLoad,
+			>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(25) => Some(<Dispatch<R>>::execute(
 				input, target_gas, context, is_static,
 			)),

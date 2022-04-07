@@ -14,9 +14,8 @@ version     = "2.8.7"
 array-bytes    = { version = "1.4" }
 codec          = { package = "parity-scale-codec", version = "2.3", default-features = false, features = ["derive"] }
 ethereum-types = { version = "0.12", default-features = false }
+rustc-hex      = { version = "2.1.0", optional = true, default-features = false }
 scale-info     = { version = "1.0", default-features = false, features = ["derive"] }
-serde          = { version = "1.0", optional = true }
-serde_json     = { version = "1.0", optional = true }
 sha3           = { version = "0.9", default-features = false }
 # darwinia-network
 darwinia-ethereum   = { default-features = false, path = "../../../dvm/ethereum" }
@@ -45,12 +44,17 @@ ethereum     = { version = "0.11.1", features = ["with-codec"] }
 evm          = { version = "0.33.1", features = ["with-codec"] }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 rlp          = { version = "0.5" }
+rustc-hex    = { version = "2.1.0", default-features = false }
 # darwinia-network
-darwinia-balances = { path = "../../../balances" }
-pallet-timestamp  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+darwinia-balances                  = { path = "../../../balances" }
+darwinia-evm-precompile-bridge-s2s = { path = "../../../dvm/evm/precompiles/bridge/s2s" }
+darwinia-evm-precompile-dispatch   = { path = "../../../dvm/evm/precompiles/dispatch" }
+# paritytech
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
-fp-self-contained = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
-pallet-evm        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-self-contained            = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+pallet-evm                   = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+pallet-evm-precompile-simple = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 
 [features]
 default = ["std"]
@@ -60,8 +64,6 @@ std = [
 	"codec/std",
 	"ethereum-types/std",
 	"scale-info/std",
-	"serde",
-	"serde_json",
 	"sha3/std",
 	# darwinia-network
 	"dp-asset/std",
@@ -85,4 +87,4 @@ std = [
 	"fp-evm/std",
 ]
 
-runtime-benchmarks = ["frame-benchmarking"]
+runtime-benchmarks = ["frame-benchmarking", "rustc-hex"]
