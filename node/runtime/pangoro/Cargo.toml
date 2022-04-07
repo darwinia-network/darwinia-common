@@ -7,7 +7,7 @@ license    = "GPL-3.0"
 name       = "pangoro-runtime"
 readme     = "README.md"
 repository = "https://github.com/darwinia-network/darwinia-common"
-version    = "2.8.6"
+version    = "2.8.7"
 
 [dependencies]
 # crates.io
@@ -36,7 +36,6 @@ darwinia-staking-rpc-runtime-api    = { default-features = false, path = "../../
 darwinia-support                    = { default-features = false, path = "../../../frame/support" }
 dp-asset                            = { default-features = false, path = "../../../primitives/asset" }
 dp-evm-tracer                       = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
-dp-fee                              = { default-features = false, path = "../../../primitives/fee-market" }
 dp-s2s                              = { default-features = false, path = "../../../primitives/s2s" }
 drml-common-runtime                 = { default-features = false, path = "../common" }
 drml-primitives                     = { default-features = false, path = "../../primitives" }
@@ -100,11 +99,10 @@ sp-version                                 = { default-features = false, git = "
 fp-evm                        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 fp-rpc                        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 fp-self-contained             = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
-fp-storage                    = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+moonbeam-rpc-primitives-debug = { default-features = false, git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1" }
 pallet-base-fee               = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 pallet-evm                    = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 pallet-evm-precompile-simple  = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
-moonbeam-rpc-primitives-debug = { default-features = false,  git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.1" }
 
 [build-dependencies]
 # paritytech
@@ -137,7 +135,6 @@ std = [
 	"darwinia-support/std",
 	"dp-asset/std",
 	"dp-evm-tracer/std",
-	"dp-fee/std",
 	"dp-s2s/std",
 	"drml-primitives/std",
 	"drml-common-runtime/std",
@@ -201,7 +198,6 @@ std = [
 	"fp-evm/std",
 	"fp-rpc/std",
 	"fp-self-contained/std",
-	"fp-storage/std",
 	"pallet-evm-precompile-simple/std",
 	"pallet-base-fee/std",
 	"pallet-evm/std",
@@ -230,7 +226,13 @@ try-runtime = [
 	"darwinia-staking/try-runtime",
 ]
 
-no-wasm = []
+# A feature that should be enabled when the runtime should be build for on-chain
+# deployment. This will disable stuff that shouldn't be part of the on-chain wasm
+# to make it smaller like logging for example.
+on-chain-release-build = [
+	"sp-api/disable-logging",
+]
+
 
 evm-tracing = [
 	"dp-evm-tracer",

@@ -8,7 +8,7 @@ license     = "GPL-3.0"
 name        = "drml"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.8.6"
+version     = "2.8.7"
 
 # TODO: Consider rename this repo to darwinia-runtime-module-library
 [[bin]]
@@ -20,7 +20,7 @@ log       = { version = "0.4" }
 structopt = { version = "0.3", optional = true }
 # darwinia-network
 bsc-primitives  = { path = "../../primitives/bsc" }
-drml-primitives = { optional = true, path = "../primitives" }
+drml-primitives = { path = "../primitives", optional = true }
 drml-rpc        = { path = "../rpc" }
 drml-service    = { path = "../service" }
 # paritytech
@@ -75,6 +75,7 @@ runtime-benchmarks = [
 
 try-runtime = [
 	# darwinia-network
+	"drml-primitives",
 	"drml-service/try-runtime",
 	# paritytech
 	"try-runtime-cli",

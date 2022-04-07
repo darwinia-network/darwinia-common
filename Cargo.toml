@@ -51,7 +51,6 @@ members = [
 	"primitives/ethereum",
 	"primitives/evm-trace/ext",
 	"primitives/evm-trace/tracer",
-	"primitives/fee-market",
 	"primitives/merkle-patricia-trie",
 	"primitives/relay",
 	"primitives/s2s",

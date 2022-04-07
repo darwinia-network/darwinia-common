@@ -66,7 +66,6 @@ pub use pallet_sudo::Call as SudoCall;
 use codec::Encode;
 // --- paritytech ---
 use bp_runtime::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
-use fp_storage::{EthereumStorageSchema, PALLET_ETHEREUM_SCHEMA};
 #[allow(unused)]
 use frame_support::{log, migration};
 use frame_support::{
@@ -143,7 +142,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 0,
-	spec_version: 2_8_06_0,
+	spec_version: 2_8_07_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -932,13 +931,8 @@ sp_api::impl_runtime_apis! {
 }
 
 fn migrate() -> Weight {
-	frame_support::storage::unhashed::put::<EthereumStorageSchema>(
-		&PALLET_ETHEREUM_SCHEMA,
-		&EthereumStorageSchema::V3,
-	);
-
-	// 0
-	RuntimeBlockWeights::get().max_block
+	0
+	// RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
