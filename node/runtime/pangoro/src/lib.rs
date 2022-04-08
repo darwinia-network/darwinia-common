@@ -6,6 +6,8 @@
 pub mod pallets;
 pub use pallets::*;
 
+pub mod bridges_message;
+
 pub mod wasm {
 	//! Make the WASM binary available.
 
@@ -22,15 +24,6 @@ pub mod wasm {
 	}
 }
 pub use wasm::*;
-
-pub mod pangolin_messages;
-use pangolin_messages::{ToPangolinMessagePayload, WithPangolinMessageBridge};
-
-pub use drml_primitives as pangoro_primitives;
-pub use drml_primitives as pangolin_primitives;
-
-pub use drml_common_runtime as pangoro_runtime_system_params;
-pub use drml_common_runtime as pangolin_runtime_system_params;
 
 // --- crates.io ---
 use codec::Encode;
@@ -728,13 +721,13 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl bp_pangolin::PangolinFinalityApi<Block> for Runtime {
-		fn best_finalized() -> (pangolin_primitives::BlockNumber, pangolin_primitives::Hash) {
+		fn best_finalized() -> (bp_pangolin::BlockNumber, bp_pangolin::Hash) {
 			let header = BridgePangolinGrandpa::best_finalized();
 			(header.number, header.hash())
 		}
 	}
 
-	impl bp_pangolin::ToPangolinOutboundLaneApi<Block, Balance, ToPangolinMessagePayload> for Runtime {
+	impl bp_pangolin::ToPangolinOutboundLaneApi<Block, Balance, crate::bridges_message::pangolin::ToPangolinMessagePayload> for Runtime {
 		fn message_details(
 			lane: bp_messages::LaneId,
 			begin: bp_messages::MessageNonce,
@@ -743,7 +736,7 @@ sp_api::impl_runtime_apis! {
 			bridge_runtime_common::messages_api::outbound_message_details::<
 				Runtime,
 				WithPangolinMessages,
-				WithPangolinMessageBridge,
+				crate::bridges_message::pangolin::WithPangolinMessageBridge,
 			>(lane, begin, end)
 		}
 
