@@ -1,34 +1,43 @@
-use bp_rococo::parachains::ParaId;
+// This file is part of Darwinia.
+//
+// Copyright (C) 2018-2022 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
 // --- crates.io ---
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 // --- paritytech ---
-use bp_messages::{
-	source_chain::TargetHeaderChain, target_chain::SourceHeaderChain,
-	Parameter as MessagesParameter,
-};
-use bp_runtime::{Chain, PANGOLIN_CHAIN_ID, PANGOLIN_PARACHAIN_CHAIN_ID};
-use bridge_runtime_common::messages::{
-	self,
-	source::{
-		self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload,
-		FromThisChainMessageVerifier,
-	},
-	target::{
-		self, FromBridgedChainEncodedMessageCall, FromBridgedChainMessageDispatch,
-		FromBridgedChainMessagePayload, FromBridgedChainMessagesProof,
-	},
-	MessageBridge,
-};
 use frame_support::{
 	weights::{DispatchClass, Weight},
 	RuntimeDebug,
 };
-use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
 use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::ops::RangeInclusive;
 // --- darwinia-network ---
 use crate::*;
+use bp_messages::{source_chain::*, target_chain::*, *};
+use bp_rococo::parachains::ParaId;
+use bp_runtime::*;
+use bridge_runtime_common::messages::{
+	self,
+	source::{self, *},
+	target::{self, *},
+	*,
+};
+use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
 
 /// Identifier of PangolinParachain registered in the rococo relay chain.
 pub const PANGOLIN_PARACHAIN_ID: u32 = 2105;
@@ -93,9 +102,9 @@ impl MessagesParameter for PangolinToPangolinParachainParameter {
 pub struct WithPangolinParachainMessageBridge;
 impl MessageBridge for WithPangolinParachainMessageBridge {
 	const RELAYER_FEE_PERCENT: u32 = 10;
-	const THIS_CHAIN_ID: bp_runtime::ChainId = PANGOLIN_CHAIN_ID;
+	const THIS_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
 	// todo change to pangolin parachain id
-	const BRIDGED_CHAIN_ID: bp_runtime::ChainId = PANGOLIN_PARACHAIN_CHAIN_ID;
+	const BRIDGED_CHAIN_ID: ChainId = PANGOLIN_PARACHAIN_CHAIN_ID;
 	const BRIDGED_MESSAGES_PALLET_NAME: &'static str =
 		bp_pangolin::WITH_PANGOLIN_MESSAGES_PALLET_NAME;
 
