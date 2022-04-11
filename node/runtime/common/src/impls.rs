@@ -28,20 +28,14 @@ use bp_messages::{
 	source_chain::{LaneMessageVerifier, Sender},
 	LaneId, OutboundLaneData,
 };
-use bridge_runtime_common::messages::{
-	source::{
-		FromThisChainMessagePayload, BAD_ORIGIN, OUTBOUND_LANE_DISABLED, TOO_LOW_FEE,
-		TOO_MANY_PENDING_MESSAGES,
-	},
-	AccountIdOf, BalanceOf, MessageBridge, ThisChain, ThisChainWithMessages,
-};
+use bridge_runtime_common::messages::{source::*, *};
 use frame_support::traits::{Currency, Get, Imbalance, OnUnbalanced};
 use sp_io::offchain;
 use sp_npos_elections::ExtendedBalance;
 use sp_runtime::{traits::TrailingZeroInput, RuntimeDebug};
 // --- darwinia-network ---
 use crate::*;
-use drml_primitives::AccountId;
+use drml_primitives::*;
 
 darwinia_support::impl_account_data! {
 	struct AccountData<Balance>
@@ -56,7 +50,7 @@ darwinia_support::impl_account_data! {
 }
 
 /// Logic for the author to get a portion of fees.
-pub struct ToAuthor<R>(sp_std::marker::PhantomData<R>);
+pub struct ToAuthor<R>(PhantomData<R>);
 impl<R> OnUnbalanced<RingNegativeImbalance<R>> for ToAuthor<R>
 where
 	R: darwinia_balances::Config<RingInstance> + pallet_authorship::Config,
@@ -78,7 +72,7 @@ where
 	}
 }
 
-pub struct DealWithFees<R>(sp_std::marker::PhantomData<R>);
+pub struct DealWithFees<R>(PhantomData<R>);
 impl<R> OnUnbalanced<RingNegativeImbalance<R>> for DealWithFees<R>
 where
 	R: darwinia_balances::Config<RingInstance>
@@ -151,7 +145,7 @@ impl<B, R>
 where
 	B: MessageBridge,
 	R: darwinia_fee_market::Config,
-	AccountIdOf<ThisChain<B>>: PartialEq + Clone,
+	AccountIdOf<ThisChain<B>>: Clone + PartialEq,
 	darwinia_fee_market::RingBalance<R>: From<BalanceOf<ThisChain<B>>>,
 {
 	type Error = &'static str;
