@@ -19,8 +19,8 @@ frame_support::parameter_types! {
 	// `IdentityFee` is used by Pangoro => we may use weight directly
 	pub const GetDeliveryConfirmationTransactionFee: Balance =
 		bp_pangolin::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT as _;
-	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::into_account_id((&b"root"[..]).into_h160()));
 	pub const BridgedChainId: ChainId = PANGORO_CHAIN_ID;
+	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::into_account_id((&b"root"[..]).into_h160()));
 }
 
 impl Config<WithPangoroMessages> for Runtime {

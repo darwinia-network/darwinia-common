@@ -3,9 +3,12 @@ pub use pallet_bridge_dispatch::{
 };
 
 // --- paritytech ---
-use frame_support::traits::Contains;
+use frame_support::traits::{Contains, Everything};
 // --- darwinia-network ---
-use crate::{bridges_message::bm_pangoro, *};
+use crate::{
+	bridges_message::{bm_pangolin_parachain, bm_pangoro},
+	*,
+};
 use bp_messages::{LaneId, MessageNonce};
 use pallet_bridge_dispatch::Config;
 
@@ -34,17 +37,14 @@ impl Config<WithPangoroDispatch> for Runtime {
 	type TargetChainSignature = Signature;
 	type AccountIdConverter = bp_pangolin::AccountIdConverter;
 }
-
 impl Config<WithPangolinParachainDispatch> for Runtime {
 	type Event = Event;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
-
-	/// todo
-	type CallFilter = frame_support::traits::Everything;
-	type EncodedCall = FromPangolinParachainEncodedCall;
+	type CallFilter = Everything;
+	type EncodedCall = bm_pangolin_parachain::FromPangolinParachainEncodedCall;
 	type SourceChainAccountId = bp_pangolin_parachain::AccountId;
 	type TargetChainAccountPublic = AccountPublic;
 	type TargetChainSignature = Signature;
-	type AccountIdConverter = AccountIdConverter;
+	type AccountIdConverter = bp_pangolin::AccountIdConverter;
 }
