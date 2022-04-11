@@ -24,8 +24,7 @@
 pub mod pallets;
 pub use pallets::*;
 
-pub mod bridges;
-pub use bridges::*;
+pub mod bridges_message;
 
 pub mod wasm {
 	//! Make the WASM binary available.
@@ -43,12 +42,6 @@ pub mod wasm {
 	}
 }
 pub use wasm::*;
-
-pub use drml_primitives as pangoro_primitives;
-pub use drml_primitives as pangolin_primitives;
-
-pub use drml_common_runtime as pangolin_runtime_system_params;
-pub use drml_common_runtime as pangoro_runtime_system_params;
 
 pub use darwinia_staking::StakerStatus;
 
@@ -87,7 +80,6 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
-use bridges::substrate::pangoro_messages::{ToPangoroMessagePayload, WithPangoroMessageBridge};
 use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
 use drml_common_runtime::*;
 use drml_primitives::*;
@@ -814,13 +806,13 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl bp_pangoro::PangoroFinalityApi<Block> for Runtime {
-		fn best_finalized() -> (pangoro_primitives::BlockNumber, pangoro_primitives::Hash) {
+		fn best_finalized() -> (bp_pangoro::BlockNumber, bp_pangoro::Hash) {
 			let header = BridgePangoroGrandpa::best_finalized();
 			(header.number, header.hash())
 		}
 	}
 
-	impl bp_pangoro::ToPangoroOutboundLaneApi<Block, Balance, ToPangoroMessagePayload> for Runtime {
+	impl bp_pangoro::ToPangoroOutboundLaneApi<Block, Balance, bridges_message::bm_pangoro::ToPangoroMessagePayload> for Runtime {
 		fn message_details(
 			lane: bp_messages::LaneId,
 			begin: bp_messages::MessageNonce,
@@ -829,7 +821,7 @@ sp_api::impl_runtime_apis! {
 			bridge_runtime_common::messages_api::outbound_message_details::<
 				Runtime,
 				WithPangoroMessages,
-				WithPangoroMessageBridge,
+				bridges_message::bm_pangoro::WithPangoroMessageBridge,
 			>(lane, begin, end)
 		}
 

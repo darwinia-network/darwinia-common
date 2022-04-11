@@ -1,14 +1,14 @@
 pub use pallet_bridge_messages::Instance1 as WithPangolinMessages;
 
 // --- darwinia-network ---
+use crate::{bridges_message::bm_pangolin, *};
 use bp_messages::MessageNonce;
 use bp_runtime::{ChainId, PANGOLIN_CHAIN_ID};
-use pallet_bridge_messages::Config;
-use crate::{bridges_message::pangolin::*, *};
 use darwinia_fee_market::s2s::{
 	FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler, FeeMarketPayment,
 };
 use darwinia_support::evm::{ConcatConverter, IntoAccountId, IntoH160};
+use pallet_bridge_messages::Config;
 
 frame_support::parameter_types! {
 	pub const MaxMessagesToPruneAtOnce: MessageNonce = 8;
@@ -18,7 +18,7 @@ frame_support::parameter_types! {
 		bp_pangolin::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
 	// `IdentityFee` is used by Pangoro => we may use weight directly
 	pub const GetDeliveryConfirmationTransactionFee: Balance =
-	bp_pangolin::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT as _;
+		bp_pangoro::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT as _;
 	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::into_account_id((&b"root"[..]).into_h160()));
 	pub const BridgedChainId: ChainId = PANGOLIN_CHAIN_ID;
 }
@@ -26,22 +26,22 @@ frame_support::parameter_types! {
 impl Config<WithPangolinMessages> for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
-	type Parameter = PangoroToPangolinMessagesParameter;
+	type Parameter = bm_pangolin::PangoroToPangolinMessagesParameter;
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
 	type MaxUnrewardedRelayerEntriesAtInboundLane = MaxUnrewardedRelayerEntriesAtInboundLane;
 	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
 
-	type OutboundPayload = ToPangolinMessagePayload;
+	type OutboundPayload = bm_pangolin::ToPangolinMessagePayload;
 	type OutboundMessageFee = Balance;
 
-	type InboundPayload = FromPangolinMessagePayload;
+	type InboundPayload = bm_pangolin::FromPangolinMessagePayload;
 	type InboundMessageFee = bp_pangolin::Balance;
 	type InboundRelayer = bp_pangolin::AccountId;
 
-	type AccountIdConverter = bp_pangolin::AccountIdConverter;
+	type AccountIdConverter = bp_pangoro::AccountIdConverter;
 
-	type TargetHeaderChain = Pangolin;
-	type LaneMessageVerifier = ToPangolinMessageVerifier<Self>;
+	type TargetHeaderChain = bm_pangolin::Pangolin;
+	type LaneMessageVerifier = bm_pangolin::ToPangolinMessageVerifier<Self>;
 	type MessageDeliveryAndDispatchPayment = FeeMarketPayment<
 		Runtime,
 		WithPangolinMessages,
@@ -56,7 +56,7 @@ impl Config<WithPangolinMessages> for Runtime {
 		FeeMarketMessageConfirmedHandler<Self>,
 	);
 
-	type SourceHeaderChain = Pangolin;
-	type MessageDispatch = FromPangolinMessageDispatch;
+	type SourceHeaderChain = bm_pangolin::Pangolin;
+	type MessageDispatch = bm_pangolin::FromPangolinMessageDispatch;
 	type BridgedChainId = BridgedChainId;
 }

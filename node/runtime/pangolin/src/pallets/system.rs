@@ -1,5 +1,3 @@
-pub use pangolin_runtime_system_params::*;
-
 // --- paritytech ---
 use frame_support::{traits::Contains, weights::constants::RocksDbWeight};
 use frame_system::Config;

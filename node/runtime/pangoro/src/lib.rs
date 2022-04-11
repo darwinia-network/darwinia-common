@@ -727,7 +727,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl bp_pangolin::ToPangolinOutboundLaneApi<Block, Balance, crate::bridges_message::pangolin::ToPangolinMessagePayload> for Runtime {
+	impl bp_pangolin::ToPangolinOutboundLaneApi<Block, Balance, bridges_message::bm_pangolin::ToPangolinMessagePayload> for Runtime {
 		fn message_details(
 			lane: bp_messages::LaneId,
 			begin: bp_messages::MessageNonce,
@@ -736,7 +736,7 @@ sp_api::impl_runtime_apis! {
 			bridge_runtime_common::messages_api::outbound_message_details::<
 				Runtime,
 				WithPangolinMessages,
-				crate::bridges_message::pangolin::WithPangolinMessageBridge,
+				bridges_message::bm_pangolin::WithPangolinMessageBridge,
 			>(lane, begin, end)
 		}
 

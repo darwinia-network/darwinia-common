@@ -15,7 +15,7 @@ frame_support::parameter_types! {
 	//
 	// Assuming the worst case of every header being finalized, we will keep headers for at least a
 	// week.
-	pub const HeadersToKeep: u32 = 7 * DAYS as u32;
+	pub const HeadersToKeep: u32 = 7 * bp_pangolin::DAYS as u32;
 }
 
 impl Config<WithPangolinGrandpa> for Runtime {
