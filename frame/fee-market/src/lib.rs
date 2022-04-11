@@ -29,7 +29,7 @@ mod tests;
 pub mod weight;
 pub use weight::WeightInfo;
 
-// pub mod s2s;
+pub mod s2s;
 pub mod types;
 
 // --- paritytech ---
