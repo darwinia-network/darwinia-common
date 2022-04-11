@@ -51,8 +51,7 @@ use darwinia_support::balance::{LockFor, LockableCurrency};
 use types::{Order, Relayer, SlashReport};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-pub type RingBalance<T, I = ()> =
-	<<T as Config<I>>::RingCurrency as Currency<AccountId<T>>>::Balance;
+pub type RingBalance<T, I> = <<T as Config<I>>::RingCurrency as Currency<AccountId<T>>>::Balance;
 
 #[frame_support::pallet]
 pub mod pallet {
