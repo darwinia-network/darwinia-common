@@ -9,6 +9,7 @@ use sp_runtime::{traits::UniqueSaturatedInto, Permill};
 use crate::*;
 use darwinia_fee_market::{Config, RingBalance, Slasher};
 
+// TODO: move this into pallet
 pub struct FeeMarketSlasher;
 impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
 	fn slash(locked_collateral: RingBalance<T, I>, timeout: T::BlockNumber) -> RingBalance<T, I> {
@@ -24,9 +25,13 @@ impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
 }
 
 frame_support::parameter_types! {
-	pub const FeeMarketPalletId: PalletId = PalletId(*b"da/feemk");
 	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
-	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
+
+	pub const FeeMarketPangoroPalletId: PalletId = PalletId(*b"da/feemk");
+	pub const FeeMarketParachainPalletId: PalletId = PalletId(*b"da/parai");
+
+	pub const FeeMarketPangoroLockId: LockIdentifier = *b"da/feelf";
+	pub const FeeMarketParachainLockId: LockIdentifier = *b"da/feepa";
 
 	pub const MinimumRelayFee: Balance = 15 * COIN;
 	pub const CollateralPerOrder: Balance = 50 * COIN;
@@ -38,9 +43,9 @@ frame_support::parameter_types! {
 }
 
 impl Config<FeeMarketPangro> for Runtime {
-	type PalletId = FeeMarketPalletId;
+	type PalletId = FeeMarketPangoroPalletId;
 	type TreasuryPalletId = TreasuryPalletId;
-	type LockId = FeeMarketLockId;
+	type LockId = FeeMarketPangoroLockId;
 
 	type MinimumRelayFee = MinimumRelayFee;
 	type CollateralPerOrder = CollateralPerOrder;
@@ -57,9 +62,9 @@ impl Config<FeeMarketPangro> for Runtime {
 }
 
 impl Config<FeeMarketParachain> for Runtime {
-	type PalletId = FeeMarketPalletId;
+	type PalletId = FeeMarketParachainPalletId;
 	type TreasuryPalletId = TreasuryPalletId;
-	type LockId = FeeMarketLockId;
+	type LockId = FeeMarketParachainLockId;
 
 	type MinimumRelayFee = MinimumRelayFee;
 	type CollateralPerOrder = CollateralPerOrder;

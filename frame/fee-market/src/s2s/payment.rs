@@ -33,6 +33,8 @@ use sp_std::{
 // --- darwinia-network ---
 use crate::{Config, Orders, Pallet, *};
 
+// TODO: Do we need to add another generic param, I2?
+// It's because the current I refers to pallet_bridge_message's instance
 pub struct FeeMarketPayment<T, I, Currency, GetConfirmationFee, RootAccount> {
 	_phantom: sp_std::marker::PhantomData<(T, I, Currency, GetConfirmationFee, RootAccount)>,
 }

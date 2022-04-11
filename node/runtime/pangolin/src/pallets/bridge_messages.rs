@@ -44,6 +44,7 @@ impl Config<WithPangoroMessages> for Runtime {
 	type LaneMessageVerifier = bm_pangoro::ToPangoroMessageVerifier<Self, FeeMarketPangro>;
 	type MessageDeliveryAndDispatchPayment = FeeMarketPayment<
 		Runtime,
+		// TODO: check this instance
 		WithPangoroMessages,
 		Ring,
 		GetDeliveryConfirmationTransactionFee,
