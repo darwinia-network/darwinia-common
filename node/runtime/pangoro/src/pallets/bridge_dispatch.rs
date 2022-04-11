@@ -1,13 +1,11 @@
 pub use pallet_bridge_dispatch::Instance1 as WithPangolinDispatch;
 
 // --- paritytech ---
-use bp_messages::{LaneId, MessageNonce};
-use bp_pangolin::AccountIdConverter;
 use frame_support::traits::Contains;
-use pallet_bridge_dispatch::Config;
 // --- darwinia-network ---
-use crate::*;
-use pangolin_messages::FromPangolinEncodedCall;
+use crate::{bridges_message::bm_pangolin, *};
+use bp_messages::{LaneId, MessageNonce};
+use pallet_bridge_dispatch::Config;
 
 pub struct S2sCallFilter;
 impl Contains<Call> for S2sCallFilter {
@@ -24,9 +22,9 @@ impl Config<WithPangolinDispatch> for Runtime {
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
 	type CallFilter = S2sCallFilter;
-	type EncodedCall = FromPangolinEncodedCall;
-	type SourceChainAccountId = pangolin_primitives::AccountId;
+	type EncodedCall = bm_pangolin::FromPangolinEncodedCall;
+	type SourceChainAccountId = bp_pangolin::AccountId;
 	type TargetChainAccountPublic = AccountPublic;
 	type TargetChainSignature = Signature;
-	type AccountIdConverter = AccountIdConverter;
+	type AccountIdConverter = bp_pangoro::AccountIdConverter;
 }

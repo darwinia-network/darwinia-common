@@ -6,7 +6,8 @@
 pub mod pallets;
 pub use pallets::*;
 
-#[cfg(not(feature = "no-wasm"))]
+pub mod bridges_message;
+
 pub mod wasm {
 	//! Make the WASM binary available.
 
@@ -22,30 +23,12 @@ pub mod wasm {
 		);
 	}
 }
-#[cfg(not(feature = "no-wasm"))]
 pub use wasm::*;
-
-pub mod pangolin_messages;
-use pangolin_messages::{ToPangolinMessagePayload, WithPangolinMessageBridge};
-
-pub use drml_primitives as pangoro_primitives;
-pub use drml_primitives as pangolin_primitives;
-
-pub use drml_common_runtime as pangoro_runtime_system_params;
-pub use drml_common_runtime as pangolin_runtime_system_params;
-
-pub use darwinia_balances::Call as BalancesCall;
-pub use darwinia_fee_market::Call as FeeMarketCall;
-pub use frame_system::Call as SystemCall;
-pub use pallet_bridge_grandpa::Call as BridgeGrandpaCall;
-pub use pallet_bridge_messages::Call as BridgeMessagesCall;
-pub use pallet_sudo::Call as SudoCall;
 
 // --- crates.io ---
 use codec::Encode;
 // --- paritytech ---
 use bp_runtime::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
-use fp_storage::{EthereumStorageSchema, PALLET_ETHEREUM_SCHEMA};
 #[allow(unused)]
 use frame_support::{log, migration};
 use frame_support::{
@@ -111,7 +94,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangoro"),
 	impl_name: sp_runtime::create_runtime_str!("Pangoro"),
 	authoring_version: 0,
-	spec_version: 2_8_06_0,
+	spec_version: 2_8_07_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -658,7 +641,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl dp_evm_trace_apis::DebugRuntimeApi<Block> for Runtime {
+	impl moonbeam_rpc_primitives_debug::DebugRuntimeApi<Block> for Runtime {
 		fn trace_transaction(
 			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
 			_traced_transaction: &darwinia_ethereum::Transaction,
@@ -738,13 +721,13 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl bp_pangolin::PangolinFinalityApi<Block> for Runtime {
-		fn best_finalized() -> (pangolin_primitives::BlockNumber, pangolin_primitives::Hash) {
+		fn best_finalized() -> (bp_pangolin::BlockNumber, bp_pangolin::Hash) {
 			let header = BridgePangolinGrandpa::best_finalized();
 			(header.number, header.hash())
 		}
 	}
 
-	impl bp_pangolin::ToPangolinOutboundLaneApi<Block, Balance, ToPangolinMessagePayload> for Runtime {
+	impl bp_pangolin::ToPangolinOutboundLaneApi<Block, Balance, bridges_message::bm_pangolin::ToPangolinMessagePayload> for Runtime {
 		fn message_details(
 			lane: bp_messages::LaneId,
 			begin: bp_messages::MessageNonce,
@@ -753,7 +736,7 @@ sp_api::impl_runtime_apis! {
 			bridge_runtime_common::messages_api::outbound_message_details::<
 				Runtime,
 				WithPangolinMessages,
-				WithPangolinMessageBridge,
+				bridges_message::bm_pangolin::WithPangolinMessageBridge,
 			>(lane, begin, end)
 		}
 
@@ -842,13 +825,8 @@ sp_api::impl_runtime_apis! {
 }
 
 fn migrate() -> Weight {
-	frame_support::storage::unhashed::put::<EthereumStorageSchema>(
-		&PALLET_ETHEREUM_SCHEMA,
-		&EthereumStorageSchema::V3,
-	);
-
-	// 0
-	RuntimeBlockWeights::get().max_block
+	0
+	// RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;

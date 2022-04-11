@@ -5,7 +5,7 @@ use bp_runtime::{ChainId, PANGORO_CHAIN_ID};
 use frame_support::PalletId;
 use sp_runtime::AccountId32;
 // --- darwinia-network ---
-use crate::{pangoro_messages::ToPangoroOutboundPayLoad, *};
+use crate::*;
 use darwinia_support::{s2s::ToEthAddress, ChainName};
 use from_substrate_issuing::Config;
 
@@ -34,7 +34,6 @@ impl Config for Runtime {
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangoroChainId;
 	type ToEthAddressT = TruncateToEthAddress;
-	type OutboundPayloadCreator = ToPangoroOutboundPayLoad;
 	type InternalTransactHandler = Ethereum;
 	type BackingChainName = BackingChainName;
 	type MessageLaneId = BridgePangoroLaneId;

@@ -3,16 +3,11 @@ pub use pallet_bridge_dispatch::{
 };
 
 // --- paritytech ---
-use bp_messages::{LaneId, MessageNonce};
-use bp_pangolin::AccountIdConverter;
 use frame_support::traits::Contains;
-use pallet_bridge_dispatch::Config;
 // --- darwinia-network ---
-use crate::{
-	pangolin_parachain_messages::FromPangolinParachainEncodedCall,
-	pangoro_messages::FromPangoroEncodedCall, *,
-};
-use pangoro_primitives::AccountId;
+use crate::{bridges_message::bm_pangoro, *};
+use bp_messages::{LaneId, MessageNonce};
+use pallet_bridge_dispatch::Config;
 
 pub struct S2sCallFilter;
 impl Contains<Call> for S2sCallFilter {
@@ -33,11 +28,11 @@ impl Config<WithPangoroDispatch> for Runtime {
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
 	type CallFilter = S2sCallFilter;
-	type EncodedCall = FromPangoroEncodedCall;
-	type SourceChainAccountId = AccountId;
+	type EncodedCall = bm_pangoro::FromPangoroEncodedCall;
+	type SourceChainAccountId = bp_pangoro::AccountId;
 	type TargetChainAccountPublic = AccountPublic;
 	type TargetChainSignature = Signature;
-	type AccountIdConverter = AccountIdConverter;
+	type AccountIdConverter = bp_pangolin::AccountIdConverter;
 }
 
 impl Config<WithPangolinParachainDispatch> for Runtime {
