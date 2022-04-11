@@ -234,4 +234,8 @@ on-chain-release-build = [
 ]
 
 
-evm-tracing = ["dp-evm-tracer", "rlp", "sha3"]
+evm-tracing = [
+	"dp-evm-tracer",
+	"rlp",
+	"sha3",
+]
