@@ -4,41 +4,58 @@
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 // --- paritytech ---
-use bp_message_dispatch::CallOrigin;
-use bp_messages::{
-	source_chain::TargetHeaderChain,
-	target_chain::{ProvedMessages, SourceHeaderChain},
-	InboundLaneData, LaneId, Message, MessageNonce, Parameter as MessagesParameter,
-};
-use bp_pangoro::WITH_PANGORO_MESSAGES_PALLET_NAME;
-use bp_runtime::{
-	messages::DispatchFeePayment, Chain, ChainId, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID,
-};
-use bridge_runtime_common::messages::{
-	self,
-	source::{self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload},
-	target::{
-		self, FromBridgedChainEncodedMessageCall, FromBridgedChainMessageDispatch,
-		FromBridgedChainMessagePayload, FromBridgedChainMessagesProof,
-	},
-	MessageBridge, MessageTransaction,
-};
 use frame_support::{
 	weights::{DispatchClass, Weight},
 	RuntimeDebug,
 };
-use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
 use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
-pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
+use bp_message_dispatch::CallOrigin;
+use bp_messages::{source_chain::*, target_chain::*, *};
+use bp_runtime::{messages::DispatchFeePayment, ChainId, *};
+use bridge_runtime_common::messages::{
+	self,
+	source::{self, *},
+	target::{self, *},
+	*,
+};
 use dp_s2s::{CallParams, CreatePayload};
+use drml_common_runtime::impls::FromThisChainMessageVerifier;
+use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
+
+/// Messages delivery proof for Pangoro -> Pangolin messages.
+type ToPangolinMessagesDeliveryProof = FromBridgedChainMessagesDeliveryProof<bp_pangolin::Hash>;
+/// Messages proof for Pangolin -> Pangoro messages.
+type FromPangolinMessagesProof = FromBridgedChainMessagesProof<bp_pangolin::Hash>;
 
 /// Message payload for Pangoro -> Pangolin messages.
 pub type ToPangolinMessagePayload = FromThisChainMessagePayload<WithPangolinMessageBridge>;
+/// Message payload for Pangolin -> Pangoro messages.
+pub type FromPangolinMessagePayload = FromBridgedChainMessagePayload<WithPangolinMessageBridge>;
+
+/// Message verifier for Pangoro -> Pangolin messages.
+pub type ToPangolinMessageVerifier<R> = FromThisChainMessageVerifier<WithPangolinMessageBridge, R>;
+
+/// Encoded Pangoro Call as it comes from Pangolin.
+pub type FromPangolinEncodedCall = FromBridgedChainEncodedMessageCall<Call>;
+
+/// Call-dispatch based message dispatch for Pangolin -> Pangoro messages.
+pub type FromPangolinMessageDispatch =
+	FromBridgedChainMessageDispatch<WithPangolinMessageBridge, Runtime, Ring, WithPangolinDispatch>;
+
 /// The s2s issuing pallet index in the pangolin chain runtime
 pub const PANGOLIN_S2S_ISSUING_PALLET_INDEX: u8 = 49;
+
+/// Initial value of `PangolinToPangoroConversionRate` parameter.
+pub const INITIAL_PANGOLIN_TO_PANGORO_CONVERSION_RATE: FixedU128 =
+	FixedU128::from_inner(FixedU128::DIV);
+
+frame_support::parameter_types! {
+	/// Pangolin to Pangoro conversion rate. Initially we treat both tokens as equal.
+	pub storage PangolinToPangoroConversionRate: FixedU128 = INITIAL_PANGOLIN_TO_PANGORO_CONVERSION_RATE;
+}
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ToPangolinOutboundPayload;
@@ -63,37 +80,13 @@ impl CreatePayload<AccountId, AccountPublic, Signature> for ToPangolinOutboundPa
 	}
 }
 
-/// Message verifier for Pangoro -> Pangolin messages.
-pub type ToPangolinMessageVerifier<R> = FromThisChainMessageVerifier<WithPangolinMessageBridge, R>;
-/// Message payload for Pangolin -> Pangoro messages.
-pub type FromPangolinMessagePayload = FromBridgedChainMessagePayload<WithPangolinMessageBridge>;
-/// Encoded Pangoro Call as it comes from Pangolin.
-pub type FromPangolinEncodedCall = FromBridgedChainEncodedMessageCall<Call>;
-/// Messages proof for Pangolin -> Pangoro messages.
-type FromPangolinMessagesProof = FromBridgedChainMessagesProof<pangolin_primitives::Hash>;
-/// Messages delivery proof for Pangoro -> Pangolin messages.
-type ToPangolinMessagesDeliveryProof =
-	FromBridgedChainMessagesDeliveryProof<pangolin_primitives::Hash>;
-/// Call-dispatch based message dispatch for Pangolin -> Pangoro messages.
-pub type FromPangolinMessageDispatch =
-	FromBridgedChainMessageDispatch<WithPangolinMessageBridge, Runtime, Ring, WithPangolinDispatch>;
-
-/// Initial value of `PangolinToPangoroConversionRate` parameter.
-pub const INITIAL_PANGOLIN_TO_PANGORO_CONVERSION_RATE: FixedU128 =
-	FixedU128::from_inner(FixedU128::DIV);
-
-frame_support::parameter_types! {
-	/// Pangolin to Pangoro conversion rate. Initially we treat both tokens as equal.
-	pub storage PangolinToPangoroConversionRate: FixedU128 = INITIAL_PANGOLIN_TO_PANGORO_CONVERSION_RATE;
-}
-
 /// Pangoro -> Pangolin message lane pallet parameters.
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum PangoroToPangolinMessagesParameter {
 	/// The conversion formula we use is: `PangoroTokens = PangolinTokens * conversion_rate`.
 	PangolinToPangoroConversionRate(FixedU128),
 }
-impl MessagesParameter for PangoroToPangolinMessagesParameter {
+impl Parameter for PangoroToPangolinMessagesParameter {
 	fn save(&self) {
 		match *self {
 			PangoroToPangolinMessagesParameter::PangolinToPangoroConversionRate(
@@ -110,18 +103,19 @@ impl MessageBridge for WithPangolinMessageBridge {
 	const RELAYER_FEE_PERCENT: u32 = 10;
 	const THIS_CHAIN_ID: ChainId = PANGORO_CHAIN_ID;
 	const BRIDGED_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
-	const BRIDGED_MESSAGES_PALLET_NAME: &'static str = WITH_PANGORO_MESSAGES_PALLET_NAME;
+	const BRIDGED_MESSAGES_PALLET_NAME: &'static str =
+		bp_pangoro::WITH_PANGORO_MESSAGES_PALLET_NAME;
 
 	type ThisChain = Pangoro;
 	type BridgedChain = Pangolin;
 
 	fn bridged_balance_to_this_balance(
-		bridged_balance: pangolin_primitives::Balance,
-	) -> pangoro_primitives::Balance {
-		pangoro_primitives::Balance::try_from(
+		bridged_balance: bp_pangolin::Balance,
+	) -> bp_pangoro::Balance {
+		bp_pangoro::Balance::try_from(
 			PangolinToPangoroConversionRate::get().saturating_mul_int(bridged_balance),
 		)
-		.unwrap_or(pangoro_primitives::Balance::MAX)
+		.unwrap_or(bp_pangoro::Balance::MAX)
 	}
 }
 
@@ -129,12 +123,12 @@ impl MessageBridge for WithPangolinMessageBridge {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct Pangoro;
 impl messages::ChainWithMessages for Pangoro {
-	type Hash = pangoro_primitives::Hash;
-	type AccountId = pangoro_primitives::AccountId;
-	type Signer = pangoro_primitives::AccountPublic;
-	type Signature = pangoro_primitives::Signature;
+	type Hash = bp_pangoro::Hash;
+	type AccountId = bp_pangoro::AccountId;
+	type Signer = bp_pangoro::AccountPublic;
+	type Signature = bp_pangoro::Signature;
 	type Weight = Weight;
-	type Balance = pangoro_primitives::Balance;
+	type Balance = bp_pangoro::Balance;
 }
 impl messages::ThisChainWithMessages for Pangoro {
 	type Call = Call;
@@ -148,13 +142,12 @@ impl messages::ThisChainWithMessages for Pangoro {
 	}
 
 	fn estimate_delivery_confirmation_transaction() -> MessageTransaction<Weight> {
-		let inbound_data_size =
-			InboundLaneData::<pangoro_primitives::AccountId>::encoded_size_hint(
-				bp_pangolin::MAXIMAL_ENCODED_ACCOUNT_ID_SIZE,
-				1,
-				1,
-			)
-			.unwrap_or(u32::MAX);
+		let inbound_data_size = InboundLaneData::<bp_pangoro::AccountId>::encoded_size_hint(
+			bp_pangolin::MAXIMAL_ENCODED_ACCOUNT_ID_SIZE,
+			1,
+			1,
+		)
+		.unwrap_or(u32::MAX);
 
 		MessageTransaction {
 			dispatch_weight: bp_pangolin::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
@@ -164,10 +157,10 @@ impl messages::ThisChainWithMessages for Pangoro {
 		}
 	}
 
-	fn transaction_payment(transaction: MessageTransaction<Weight>) -> pangoro_primitives::Balance {
+	fn transaction_payment(transaction: MessageTransaction<Weight>) -> bp_pangoro::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			pangoro_runtime_system_params::RuntimeBlockWeights::get()
+			bp_pangoro::RuntimeBlockWeights::get()
 				.get(DispatchClass::Normal)
 				.base_extrinsic,
 			1,
@@ -182,12 +175,12 @@ impl messages::ThisChainWithMessages for Pangoro {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct Pangolin;
 impl messages::ChainWithMessages for Pangolin {
-	type Hash = pangolin_primitives::Hash;
-	type AccountId = pangolin_primitives::AccountId;
-	type Signer = pangolin_primitives::AccountPublic;
-	type Signature = pangolin_primitives::Signature;
+	type Hash = bp_pangolin::Hash;
+	type AccountId = bp_pangolin::AccountId;
+	type Signer = bp_pangolin::AccountPublic;
+	type Signature = bp_pangolin::Signature;
 	type Weight = Weight;
-	type Balance = pangolin_primitives::Balance;
+	type Balance = bp_pangolin::Balance;
 }
 impl messages::BridgedChainWithMessages for Pangolin {
 	fn maximal_extrinsic_size() -> u32 {
@@ -233,12 +226,10 @@ impl messages::BridgedChainWithMessages for Pangolin {
 		}
 	}
 
-	fn transaction_payment(
-		transaction: MessageTransaction<Weight>,
-	) -> pangolin_primitives::Balance {
+	fn transaction_payment(transaction: MessageTransaction<Weight>) -> bp_pangolin::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			pangolin_runtime_system_params::RuntimeBlockWeights::get()
+			bp_pangolin::RuntimeBlockWeights::get()
 				.get(DispatchClass::Normal)
 				.base_extrinsic,
 			1,
@@ -248,7 +239,7 @@ impl messages::BridgedChainWithMessages for Pangolin {
 		)
 	}
 }
-impl TargetHeaderChain<ToPangolinMessagePayload, pangolin_primitives::AccountId> for Pangolin {
+impl TargetHeaderChain<ToPangolinMessagePayload, bp_pangolin::AccountId> for Pangolin {
 	type Error = &'static str;
 	// The proof is:
 	// - hash of the header this proof has been created with;
@@ -262,7 +253,7 @@ impl TargetHeaderChain<ToPangolinMessagePayload, pangolin_primitives::AccountId>
 
 	fn verify_messages_delivery_proof(
 		proof: Self::MessagesDeliveryProof,
-	) -> Result<(LaneId, InboundLaneData<pangoro_primitives::AccountId>), Self::Error> {
+	) -> Result<(LaneId, InboundLaneData<bp_pangoro::AccountId>), Self::Error> {
 		source::verify_messages_delivery_proof::<
 			WithPangolinMessageBridge,
 			Runtime,
@@ -270,7 +261,7 @@ impl TargetHeaderChain<ToPangolinMessagePayload, pangolin_primitives::AccountId>
 		>(proof)
 	}
 }
-impl SourceHeaderChain<pangolin_primitives::Balance> for Pangolin {
+impl SourceHeaderChain<bp_pangolin::Balance> for Pangolin {
 	type Error = &'static str;
 	// The proof is:
 	// - hash of the header this proof has been created with;
@@ -282,7 +273,7 @@ impl SourceHeaderChain<pangolin_primitives::Balance> for Pangolin {
 	fn verify_messages_proof(
 		proof: Self::MessagesProof,
 		messages_count: u32,
-	) -> Result<ProvedMessages<Message<pangolin_primitives::Balance>>, Self::Error> {
+	) -> Result<ProvedMessages<Message<bp_pangolin::Balance>>, Self::Error> {
 		target::verify_messages_proof::<WithPangolinMessageBridge, Runtime, WithPangolinGrandpa>(
 			proof,
 			messages_count,
