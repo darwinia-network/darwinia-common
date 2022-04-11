@@ -35,7 +35,7 @@ use bridge_runtime_common::messages::{
 	self,
 	source::{self, *},
 	target::{self, *},
-	*,
+	BalanceOf, *,
 };
 use drml_common_runtime::impls::FromThisChainMessageVerifier;
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
