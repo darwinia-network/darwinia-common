@@ -19,13 +19,13 @@ darwinia-fee-market = { default-features = false, path = "../../../frame/fee-mar
 darwinia-support    = { default-features = false, path = "../../../frame/support" }
 drml-primitives     = { default-features = false, path = "../../primitives" }
 # paritytech
-bp-messages                     = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "nada-darwinia-v0.12.1" }
-bridge-runtime-common           = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "nada-darwinia-v0.12.1" }
+bp-messages                     = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
+bridge-runtime-common           = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 frame-election-provider-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 frame-support                   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 frame-system                    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 pallet-authorship               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
-pallet-bridge-dispatch          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "nada-darwinia-v0.12.1" }
+pallet-bridge-dispatch          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 pallet-transaction-payment      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 pallet-treasury                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-io                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
