@@ -414,8 +414,8 @@ impl pallet_bridge_messages::Config for Test {
 	type TargetHeaderChain = TestTargetHeaderChain;
 	type LaneMessageVerifier = TestLaneMessageVerifier;
 	type MessageDeliveryAndDispatchPayment = TestMessageDeliveryAndDispatchPayment;
-	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self>;
-	type OnDeliveryConfirmed = FeeMarketMessageConfirmedHandler<Self>;
+	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, ()>;
+	type OnDeliveryConfirmed = FeeMarketMessageConfirmedHandler<Self, ()>;
 
 	type SourceHeaderChain = TestSourceHeaderChain;
 	type MessageDispatch = TestMessageDispatch;
