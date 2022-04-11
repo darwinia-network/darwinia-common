@@ -1,7 +1,6 @@
 // --- core ---
 use core::marker::PhantomData;
 // --- paritytech ---
-use bp_messages::LaneId;
 use codec::{Decode, Encode};
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
@@ -12,7 +11,8 @@ use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use pallet_session::FindAccountFromAuthorIndex;
 use sp_core::{crypto::Public, H160, U256};
 // --- darwinia-network ---
-use crate::*;
+use crate::{bridges_message::bm_pangoro, *};
+use bp_messages::LaneId;
 use darwinia_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping,
@@ -26,7 +26,6 @@ use darwinia_support::{
 	evm::ConcatConverter,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
 };
-use pangoro_messages::ToPangoroOutboundPayLoad;
 
 pub struct EthereumFindAuthor<F>(PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
@@ -50,14 +49,14 @@ impl RelayMessageSender for ToPangoroMessageSender {
 		payload: Vec<u8>,
 		fee: u128,
 	) -> Result<Vec<u8>, &'static str> {
-		let payload = ToPangoroMessagePayload::decode(&mut payload.as_slice())
+		let payload = bm_pangoro::ToPangoroMessagePayload::decode(&mut payload.as_slice())
 			.map_err(|_| "decode pangoro payload failed")?;
 
 		let call: Call = match message_pallet_index {
 			_ if message_pallet_index as usize
 				== <BridgePangoroMessages as PalletInfoAccess>::index() =>
 			{
-				BridgeMessagesCall::<Runtime, WithPangoroMessages>::send_message {
+				pallet_bridge_messages::Call::<Runtime, WithPangoroMessages>::send_message {
 					lane_id,
 					payload,
 					delivery_and_dispatch_fee: fee.saturated_into(),
@@ -101,7 +100,7 @@ impl<R> PrecompileSet for PangolinPrecompiles<R>
 where
 	Transfer<R>: Precompile,
 	EthereumBridge<R>: Precompile,
-	Sub2SubBridge<R, ToPangoroMessageSender, ToPangoroOutboundPayLoad>: Precompile,
+	Sub2SubBridge<R, ToPangoroMessageSender, bm_pangoro::ToPangoroOutboundPayLoad>: Precompile,
 	Dispatch<R>: Precompile,
 	R: darwinia_ethereum::Config,
 {
@@ -129,7 +128,7 @@ where
 			a if a == addr(24) => Some(<Sub2SubBridge<
 				R,
 				ToPangoroMessageSender,
-				ToPangoroOutboundPayLoad,
+				bm_pangoro::ToPangoroOutboundPayLoad,
 			>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(25) => Some(<Dispatch<R>>::execute(
 				input, target_gas, context, is_static,
