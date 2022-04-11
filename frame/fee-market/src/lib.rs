@@ -29,7 +29,7 @@ mod tests;
 pub mod weight;
 pub use weight::WeightInfo;
 
-pub mod s2s;
+// pub mod s2s;
 pub mod types;
 
 // --- paritytech ---
@@ -58,7 +58,7 @@ pub mod pallet {
 	use super::*;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config<I: 'static = ()>: frame_system::Config {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 		/// Some reward goes to Treasury.
@@ -89,13 +89,13 @@ pub mod pallet {
 		type Slasher: Slasher<Self>;
 		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type Event: From<Event<Self, I>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {
+	pub enum Event<T: Config<I>, I: 'static = ()> {
 		/// Relayer enrollment. \[account_id, locked_collateral, relay_fee\]
 		Enroll(T::AccountId, RingBalance<T>, RingBalance<T>),
 		/// Update relayer locked collateral. \[account_id, new_collateral\]
@@ -113,7 +113,7 @@ pub mod pallet {
 	}
 
 	#[pallet::error]
-	pub enum Error<T> {
+	pub enum Error<T, I = ()> {
 		/// Insufficient balance.
 		InsufficientBalance,
 		/// The relayer has been enrolled.
@@ -131,7 +131,7 @@ pub mod pallet {
 	// Enrolled relayers storage
 	#[pallet::storage]
 	#[pallet::getter(fn relayer)]
-	pub type RelayersMap<T: Config> = StorageMap<
+	pub type RelayersMap<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
 		Blake2_128Concat,
 		T::AccountId,
@@ -140,18 +140,19 @@ pub mod pallet {
 	>;
 	#[pallet::storage]
 	#[pallet::getter(fn relayers)]
-	pub type Relayers<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
+	pub type Relayers<T: Config<I>, I: 'static = ()> =
+		StorageValue<_, Vec<T::AccountId>, ValueQuery>;
 
 	// Priority relayers storage
 	#[pallet::storage]
 	#[pallet::getter(fn assigned_relayers)]
-	pub type AssignedRelayers<T: Config> =
+	pub type AssignedRelayers<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, Vec<Relayer<T::AccountId, RingBalance<T>>>, OptionQuery>;
 
 	// Order storage
 	#[pallet::storage]
 	#[pallet::getter(fn order)]
-	pub type Orders<T: Config> = StorageMap<
+	pub type Orders<T: Config<I>, I: 'static = ()> = StorageMap<
 		_,
 		Blake2_128Concat,
 		(LaneId, MessageNonce),
@@ -161,11 +162,12 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn collateral_slash_protect)]
-	pub type CollateralSlashProtect<T: Config> = StorageValue<_, RingBalance<T>, OptionQuery>;
+	pub type CollateralSlashProtect<T: Config<I>, I: 'static = ()> =
+		StorageValue<_, RingBalance<T>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn assigned_relayers_number)]
-	pub type AssignedRelayersNumber<T: Config> =
+	pub type AssignedRelayersNumber<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, u32, ValueQuery, DefaultAssignedRelayersNumber>;
 	#[pallet::type_value]
 	pub fn DefaultAssignedRelayersNumber() -> u32 {
@@ -173,9 +175,10 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	pub struct Pallet<T>(_);
+	pub struct Pallet<T, I = ()>(_);
+
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+	impl<T: Config<I>, I: 'static> Hooks<BlockNumberFor<T>> for Pallet<T, I> {
 		fn on_finalize(_: BlockNumberFor<T>) {
 			for ((lane_id, message_nonce), order) in <Orders<T>>::iter() {
 				// Once the order's confirm_time is not None, we consider this order has been rewarded. Hence, clean the storage.
@@ -187,7 +190,7 @@ pub mod pallet {
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
+	impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		/// Any accounts can enroll to be a relayer by lock collateral. The relay fee is optional,
 		/// the default value is MinimumRelayFee in runtime. (Update market needed)
 		/// Note: One account can enroll only once.
@@ -344,7 +347,7 @@ pub mod pallet {
 }
 pub use pallet::*;
 
-impl<T: Config> Pallet<T> {
+impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// An important update in this pallet, need to update market information in the following cases:
 	///
 	/// - New relayer enroll.
