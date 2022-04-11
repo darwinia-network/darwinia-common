@@ -437,8 +437,8 @@ frame_support::parameter_types! {
 }
 
 pub struct TestSlasher;
-impl<T: Config> Slasher<T> for TestSlasher {
-	fn slash(locked_collateral: RingBalance<T>, timeout: T::BlockNumber) -> RingBalance<T> {
+impl<T: Config<I>, I: 'static> Slasher<T, I> for TestSlasher {
+	fn slash(locked_collateral: RingBalance<T, I>, timeout: T::BlockNumber) -> RingBalance<T, I> {
 		let slash_each_block = 2;
 		let slash_value = UniqueSaturatedInto::<u128>::unique_saturated_into(timeout)
 			.saturating_mul(UniqueSaturatedInto::<u128>::unique_saturated_into(

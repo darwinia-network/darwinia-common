@@ -242,7 +242,8 @@ frame_support::construct_runtime! {
 		BridgeRococoGrandpa: pallet_bridge_grandpa::<Instance2>::{Pallet, Call, Storage} = 60,
 		BridgeRococoParachains: pallet_bridge_parachains::<Instance1>::{Pallet, Call, Storage} = 61,
 
-		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 53,
+		FeeMarket: darwinia_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 53,
+		FeeMarketParachain: darwinia_fee_market::<Instance2>::{Pallet, Call, Storage, Event<T>} = 62,
 		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 54,
 
 		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
@@ -562,7 +563,7 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
-		fn market_fee() -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
+		fn market_fee(instance: u8) -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
 			if let Some(fee) = FeeMarket::market_fee() {
 				return Some(darwinia_fee_market_rpc_runtime_api::Fee {
 					amount: fee,
@@ -570,7 +571,7 @@ sp_api::impl_runtime_apis! {
 			}
 			None
 		}
-		fn in_process_orders() -> darwinia_fee_market_rpc_runtime_api::InProcessOrders {
+		fn in_process_orders(instance: u8) -> darwinia_fee_market_rpc_runtime_api::InProcessOrders {
 			return darwinia_fee_market_rpc_runtime_api::InProcessOrders {
 				orders: FeeMarket::in_process_orders(),
 			}
