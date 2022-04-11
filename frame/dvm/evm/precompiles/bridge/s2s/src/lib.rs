@@ -24,7 +24,7 @@ use core::marker::PhantomData;
 use codec::Encode;
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{
-	check_state_modifier, custom_precompile_err, DvmInputParser, StateMutability,
+	check_state_modifier, custom_precompile_err, DvmInputParser, StateMutability, PrecompileGasMeter
 };
 use darwinia_support::{
 	evm::IntoAccountId,
@@ -70,7 +70,7 @@ where
 {
 	fn execute(
 		input: &[u8],
-		_target_gas: Option<u64>,
+		target_gas: Option<u64>,
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
@@ -80,16 +80,18 @@ where
 		// Check state modifiers
 		check_state_modifier(context, is_static, StateMutability::View)?;
 
+		let mut gas_meter = PrecompileGasMeter::new(target_gas);
+
 		let output = match action {
 			Action::OutboundLatestGeneratedNonce => {
-				Self::outbound_latest_generated_nonce(&dvm_parser)?
+				Self::outbound_latest_generated_nonce(&dvm_parser, &mut gas_meter)?
 			}
-			Action::InboundLatestReceivedNonce => Self::inbound_latest_received_nonce(&dvm_parser)?,
+			Action::InboundLatestReceivedNonce => Self::inbound_latest_received_nonce(&dvm_parser, &mut gas_meter)?,
 			Action::EncodeUnlockFromRemoteDispatchCall => {
-				Self::encode_unlock_from_remote_dispatch_call(&dvm_parser, context.caller)?
+				Self::encode_unlock_from_remote_dispatch_call(&dvm_parser, context.caller, &mut gas_meter)?
 			}
 			Action::EncodeSendMessageDispatchCall => {
-				Self::encode_send_message_dispatch_call(&dvm_parser)?
+				Self::encode_send_message_dispatch_call(&dvm_parser, &mut gas_meter)?
 			}
 		};
 
@@ -111,6 +113,7 @@ where
 {
 	fn outbound_latest_generated_nonce(
 		dvm_parser: &DvmInputParser,
+		gas_meter: &mut PrecompileGasMeter,
 	) -> Result<Vec<u8>, PrecompileFailure> {
 		let lane_id = abi_decode_bytes4(dvm_parser.input)
 			.map_err(|_| custom_precompile_err("decode failed"))?;
@@ -120,6 +123,7 @@ where
 
 	fn inbound_latest_received_nonce(
 		dvm_parser: &DvmInputParser,
+		gas_meter: &mut PrecompileGasMeter,
 	) -> Result<Vec<u8>, PrecompileFailure> {
 		let lane_id = abi_decode_bytes4(dvm_parser.input)
 			.map_err(|_| custom_precompile_err("decode failed"))?;
@@ -130,6 +134,7 @@ where
 	fn encode_unlock_from_remote_dispatch_call(
 		dvm_parser: &DvmInputParser,
 		caller: H160,
+		gas_meter: &mut PrecompileGasMeter,
 	) -> Result<Vec<u8>, PrecompileFailure> {
 		let unlock_info = S2sRemoteUnlockInfo::abi_decode(dvm_parser.input)
 			.map_err(|_| custom_precompile_err("decode unlock failed"))?;
@@ -150,6 +155,7 @@ where
 
 	fn encode_send_message_dispatch_call(
 		dvm_parser: &DvmInputParser,
+		gas_meter: &mut PrecompileGasMeter,
 	) -> Result<Vec<u8>, PrecompileFailure> {
 		let params = S2sSendMessageParams::decode(dvm_parser.input)
 			.map_err(|_| custom_precompile_err("decode send message info failed"))?;

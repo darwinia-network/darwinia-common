@@ -76,3 +76,45 @@ pub fn check_state_modifier(
 
 	Ok(())
 }
+
+#[derive(Clone, Copy, Debug)]
+pub struct PrecompileGasMeter {
+	target_gas: Option<u64>,
+	used_gas: u64,
+}
+
+impl PrecompileGasMeter {
+	pub fn new(target_gas: Option<u64>) -> Self {
+		Self {
+			target_gas,
+			used_gas: 0,
+		}
+	}
+
+	pub fn record_gas(&mut self, cost: u64) -> Result<(), PrecompileFailure> {
+		self.used_gas = self
+			.used_gas
+			.checked_add(cost)
+			.ok_or(PrecompileFailure::Error {
+				exit_status: ExitError::OutOfGas,
+			})?;
+
+		match self.target_gas {
+			Some(gas_limit) if self.used_gas > gas_limit => Err(PrecompileFailure::Error {
+				exit_status: ExitError::OutOfGas,
+			}),
+			_ => Ok(()),
+		}
+	}
+
+	pub fn return_gas(&self) -> Result<Option<u64>, PrecompileFailure> {
+		Ok(match self.target_gas {
+			None => None,
+			Some(gas_limit) => Some(gas_limit.checked_sub(self.used_gas).ok_or(
+				PrecompileFailure::Error {
+					exit_status: ExitError::OutOfGas,
+				},
+			)?),
+		})
+	}
+}
