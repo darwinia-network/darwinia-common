@@ -11,7 +11,6 @@ use sp_runtime::{traits::UniqueSaturatedInto, Permill};
 use crate::*;
 use darwinia_fee_market::{Config, RingBalance, Slasher};
 
-// TODO: move this into pallet
 pub struct FeeMarketSlasher;
 impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
 	fn slash(locked_collateral: RingBalance<T, I>, timeout: T::BlockNumber) -> RingBalance<T, I> {
@@ -29,11 +28,11 @@ impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
 frame_support::parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
 
-	pub const FeeMarketPangoroPalletId: PalletId = PalletId(*b"da/feemk");
-	pub const FeeMarketParachainPalletId: PalletId = PalletId(*b"da/parai");
+	pub const WithPangoroFeeMarketId: PalletId = PalletId(*b"da/feemk");
+	pub const WithParachainFeeMarketId: PalletId = PalletId(*b"da/feepa");
 
-	pub const FeeMarketPangoroLockId: LockIdentifier = *b"da/feelf";
-	pub const FeeMarketParachainLockId: LockIdentifier = *b"da/feepa";
+	pub const WithPangoroFeeMarketLockId: LockIdentifier = *b"da/feelf";
+	pub const WithParachainFeeMarketLockId: LockIdentifier = *b"da/feepa";
 
 	pub const MinimumRelayFee: Balance = 15 * COIN;
 	pub const CollateralPerOrder: Balance = 50 * COIN;
@@ -45,9 +44,10 @@ frame_support::parameter_types! {
 }
 
 impl Config<WithPangoroFeeMarket> for Runtime {
-	type PalletId = FeeMarketPangoroPalletId;
 	type TreasuryPalletId = TreasuryPalletId;
-	type LockId = FeeMarketPangoroLockId;
+
+	type PalletId = WithPangoroFeeMarketId;
+	type LockId = WithPangoroFeeMarketLockId;
 
 	type MinimumRelayFee = MinimumRelayFee;
 	type CollateralPerOrder = CollateralPerOrder;
@@ -64,9 +64,10 @@ impl Config<WithPangoroFeeMarket> for Runtime {
 }
 
 impl Config<WithParachainFeeMarket> for Runtime {
-	type PalletId = FeeMarketParachainPalletId;
 	type TreasuryPalletId = TreasuryPalletId;
-	type LockId = FeeMarketParachainLockId;
+
+	type PalletId = WithParachainFeeMarketId;
+	type LockId = WithParachainFeeMarketLockId;
 
 	type MinimumRelayFee = MinimumRelayFee;
 	type CollateralPerOrder = CollateralPerOrder;

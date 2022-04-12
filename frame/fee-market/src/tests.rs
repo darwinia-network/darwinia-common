@@ -300,7 +300,7 @@ impl MessageDeliveryAndDispatchPayment<AccountId, TestMessageFee>
 			confirmation_relayer_rewards,
 			assigned_relayers_rewards,
 			treasury_total_rewards,
-		} = slash_and_calculate_rewards::<Test, (), ()>(
+		} = slash_and_calculate_rewards::<Test, ()>(
 			lane_id,
 			message_relayers,
 			received_range,
