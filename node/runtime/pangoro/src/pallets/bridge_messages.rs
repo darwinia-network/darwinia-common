@@ -41,20 +41,14 @@ impl Config<WithPangolinMessages> for Runtime {
 	type AccountIdConverter = bp_pangoro::AccountIdConverter;
 
 	type TargetHeaderChain = bm_pangolin::Pangolin;
-	type LaneMessageVerifier =
-		bm_pangolin::ToPangolinMessageVerifier<Self, FeeMarketWorkForPangolin>;
-	type MessageDeliveryAndDispatchPayment = FeeMarketPayment<
-		Runtime,
-		WithPangolinMessages,
-		FeeMarketWorkForPangolin,
-		Ring,
-		RootAccountForPayments,
-	>;
+	type LaneMessageVerifier = bm_pangolin::ToPangolinMessageVerifier<Self, WithPangolinFeeMarket>;
+	type MessageDeliveryAndDispatchPayment =
+		FeeMarketPayment<Runtime, WithPangolinFeeMarket, Ring, RootAccountForPayments>;
 
-	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, FeeMarketWorkForPangolin>;
+	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangolinFeeMarket>;
 	type OnDeliveryConfirmed = (
 		Substrate2SubstrateBacking,
-		FeeMarketMessageConfirmedHandler<Self, FeeMarketWorkForPangolin>,
+		FeeMarketMessageConfirmedHandler<Self, WithPangolinFeeMarket>,
 	);
 
 	type SourceHeaderChain = bm_pangolin::Pangolin;

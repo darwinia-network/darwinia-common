@@ -1,4 +1,4 @@
-pub use darwinia_fee_market::Instance1 as FeeMarketWorkForPangolin;
+pub use darwinia_fee_market::Instance1 as WithPangolinFeeMarket;
 // --- core ---
 use core::cmp;
 // --- substrate ---
@@ -36,7 +36,7 @@ frame_support::parameter_types! {
 	pub const ConfirmRelayersRewardRatio: Permill = Permill::from_percent(20);
 }
 
-impl Config<FeeMarketWorkForPangolin> for Runtime {
+impl Config<WithPangolinFeeMarket> for Runtime {
 	type PalletId = FeeMarketPalletId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type LockId = FeeMarketLockId;

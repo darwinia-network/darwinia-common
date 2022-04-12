@@ -1,5 +1,5 @@
 pub use darwinia_fee_market::{
-	Instance1 as FeeMarketForPangoro, Instance2 as FeeMarketForParachain,
+	Instance1 as WithPangoroFeeMarket, Instance2 as WithParachainFeeMarket,
 };
 
 // --- core ---
@@ -44,7 +44,7 @@ frame_support::parameter_types! {
 	pub const ConfirmRelayersRewardRatio: Permill = Permill::from_percent(20);
 }
 
-impl Config<FeeMarketForPangoro> for Runtime {
+impl Config<WithPangoroFeeMarket> for Runtime {
 	type PalletId = FeeMarketPangoroPalletId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type LockId = FeeMarketPangoroLockId;
@@ -63,7 +63,7 @@ impl Config<FeeMarketForPangoro> for Runtime {
 	type WeightInfo = ();
 }
 
-impl Config<FeeMarketForParachain> for Runtime {
+impl Config<WithParachainFeeMarket> for Runtime {
 	type PalletId = FeeMarketParachainPalletId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type LockId = FeeMarketParachainLockId;
