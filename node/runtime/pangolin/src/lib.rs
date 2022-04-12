@@ -565,22 +565,8 @@ sp_api::impl_runtime_apis! {
 	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
 		fn market_fee(instance: u8) -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
 			match instance {
-				0 => {
-					if let Some(fee) = FeeMarket::market_fee() {
-						return Some(darwinia_fee_market_rpc_runtime_api::Fee {
-							amount: fee,
-						});
-					}
-					None
-				},
-				1 => {
-					if let Some(fee) = FeeMarketParachain::market_fee() {
-						return Some(darwinia_fee_market_rpc_runtime_api::Fee {
-							amount: fee,
-						});
-					}
-					None
-				},
+				0 => FeeMarket::market_fee().and_then(|fee| Some(darwinia_fee_market_rpc_runtime_api::Fee { amount: fee })),
+				1 => FeeMarketParachain::market_fee().and_then(|fee| Some(darwinia_fee_market_rpc_runtime_api::Fee { amount: fee })),
 				_ => None,
 			}
 		}
