@@ -35,20 +35,19 @@ use crate::{Config, Orders, Pallet, *};
 
 // TODO: Do we need to add another generic param, I2?
 // It's because the current I refers to pallet_bridge_message's instance
-pub struct FeeMarketPayment<T, BMI, FI, Currency, GetConfirmationFee, RootAccount> {
-	_phantom: sp_std::marker::PhantomData<(T, BMI, FI, Currency, GetConfirmationFee, RootAccount)>,
+pub struct FeeMarketPayment<T, BMI, FI, Currency, RootAccount> {
+	_phantom: sp_std::marker::PhantomData<(T, BMI, FI, Currency, RootAccount)>,
 }
 
-impl<T, BMI, FI, Currency, GetConfirmationFee, RootAccount>
+impl<T, BMI, FI, Currency, RootAccount>
 	MessageDeliveryAndDispatchPayment<T::AccountId, RingBalance<T, FI>>
-	for FeeMarketPayment<T, BMI, FI, Currency, GetConfirmationFee, RootAccount>
+	for FeeMarketPayment<T, BMI, FI, Currency, RootAccount>
 where
 	T: frame_system::Config + pallet_bridge_messages::Config<BMI> + Config<FI>,
 	BMI: 'static,
 	FI: 'static,
 	Currency: CurrencyT<T::AccountId, Balance = T::OutboundMessageFee>,
 	Currency::Balance: From<MessageNonce>,
-	GetConfirmationFee: Get<RingBalance<T, FI>>,
 	RootAccount: Get<Option<T::AccountId>>,
 {
 	type Error = &'static str;

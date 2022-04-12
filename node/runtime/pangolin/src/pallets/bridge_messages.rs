@@ -47,7 +47,6 @@ impl Config<WithPangoroMessages> for Runtime {
 		WithPangoroMessages,
 		FeeMarketForPangoro,
 		Ring,
-		GetDeliveryConfirmationTransactionFee,
 		RootAccountForPayments,
 	>;
 

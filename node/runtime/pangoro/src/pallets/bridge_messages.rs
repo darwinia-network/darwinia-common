@@ -48,7 +48,6 @@ impl Config<WithPangolinMessages> for Runtime {
 		WithPangolinMessages,
 		FeeMarketWorkForPangolin,
 		Ring,
-		GetDeliveryConfirmationTransactionFee,
 		RootAccountForPayments,
 	>;
 
