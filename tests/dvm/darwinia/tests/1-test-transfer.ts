@@ -40,7 +40,7 @@ describe("Test Transfer Balance", function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
 		const balanceTo = await web3.utils.fromWei(await web3.eth.getBalance(addressTo), "ether");
 
-		expect(balanceFrom).to.be.equal("123446.78897900000000009");
+		expect(balanceFrom).to.be.equal("123446.78879000000000009");
 		expect(balanceTo).to.be.equal("10");
 		expect(await web3.eth.getTransactionCount(addressFrom, "latest")).to.eq(1);
 	});
@@ -64,7 +64,7 @@ describe("Test Transfer Balance", function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
 		const balanceTo = await web3.utils.fromWei(await web3.eth.getBalance(addressTo2), "ether");
 
-		expect(balanceFrom).to.be.equal("123446.78895799999999999");
+		expect(balanceFrom).to.be.equal("123446.78857999999999999");
 		expect(balanceTo).to.be.equal("0.0000000000000001");
 		expect(await web3.eth.getTransactionCount(addressFrom, "latest")).to.eq(2);
 	});
@@ -89,7 +89,7 @@ describe("Test Transfer Balance", function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
 		const balanceTo = await web3.utils.fromWei(await web3.eth.getBalance(addressTo), "ether");
 
-		expect(balanceFrom).to.be.equal("123396.78893699999999999");
+		expect(balanceFrom).to.be.equal("123396.78836999999999999");
 		expect(balanceTo).to.be.equal("60");
 		expect(await web3.eth.getTransactionCount(addressFrom, "latest")).to.eq(3);
 	});
@@ -112,31 +112,7 @@ describe("Test Transfer Balance", function () {
 
 	it("Check balance after transfer self", async function () {
 		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
-		expect(balanceFrom).to.be.equal("123396.78891599999999999");
+		expect(balanceFrom).to.be.equal("123396.78815999999999999");
 		expect(await web3.eth.getTransactionCount(addressFrom, "latest")).to.eq(4);
-	});
-
-	it("Withdraw value from sender", async function () {
-		// target address = "723908ee9dc8e509d4b93251bd57f68c09bd9d04471c193fabd8f26c54284a4b(5EeUFyFjHsCJB8TaGXi1PkMgqkxMctcxw8hvfmNdCYGC76xj)";
-		const input = "723908ee9dc8e509d4b93251bd57f68c09bd9d04471c193fabd8f26c54284a4b";
-		const createTransaction = await web3.eth.accounts.signTransaction(
-			{
-				from: addressFrom,
-				to: addressWithdrawPrecompile,
-				gas: config.gas,
-				data: input,
-				value: web3.utils.toWei("30", "ether"),
-			},
-			config.privKey
-		);
-		const createReceipt = await web3.eth.sendSignedTransaction(
-			createTransaction.rawTransaction
-		);
-	}).timeout(40000);
-
-	it("Get sender balance after withdraw", async function () {
-		const balanceFrom = web3.utils.fromWei(await web3.eth.getBalance(addressFrom), "ether");
-		expect(balanceFrom).to.be.equal("123366.78887448799999999");
-		expect(await web3.eth.getTransactionCount(addressFrom, "latest")).to.eq(5);
 	});
 });

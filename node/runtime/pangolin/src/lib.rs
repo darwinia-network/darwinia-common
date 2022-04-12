@@ -245,7 +245,9 @@ frame_support::construct_runtime! {
 		BridgePangolinParachainDispatch: pallet_bridge_dispatch::<Instance2>::{Pallet, Event<T>} = 62,
 		BridgePangolinParachainMessages: pallet_bridge_messages::<Instance2>::{Pallet, Call, Storage, Event<T>} = 63,
 
-		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 53,
+		// The fee market instance1 used for the pangoro network
+		FeeMarket: darwinia_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 53,
+		WithParachainFeeMarket: darwinia_fee_market::<Instance2>::{Pallet, Call, Storage, Event<T>} = 64,
 		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 54,
 
 		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
@@ -565,17 +567,22 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
-		fn market_fee() -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
-			if let Some(fee) = FeeMarket::market_fee() {
-				return Some(darwinia_fee_market_rpc_runtime_api::Fee {
-					amount: fee,
-				});
+		fn market_fee(instance: u8) -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
+			match instance {
+				0 => FeeMarket::market_fee().and_then(|fee| Some(darwinia_fee_market_rpc_runtime_api::Fee { amount: fee })),
+				1 => WithParachainFeeMarket::market_fee().and_then(|fee| Some(darwinia_fee_market_rpc_runtime_api::Fee { amount: fee })),
+				_ => None,
 			}
-			None
 		}
-		fn in_process_orders() -> darwinia_fee_market_rpc_runtime_api::InProcessOrders {
-			return darwinia_fee_market_rpc_runtime_api::InProcessOrders {
-				orders: FeeMarket::in_process_orders(),
+		fn in_process_orders(instance: u8) -> darwinia_fee_market_rpc_runtime_api::InProcessOrders {
+			match instance {
+				0 => darwinia_fee_market_rpc_runtime_api::InProcessOrders {
+					orders: FeeMarket::in_process_orders(),
+				},
+				1 => darwinia_fee_market_rpc_runtime_api::InProcessOrders {
+					orders: WithParachainFeeMarket::in_process_orders(),
+				},
+				_ => Default::default()
 			}
 		}
 	}
