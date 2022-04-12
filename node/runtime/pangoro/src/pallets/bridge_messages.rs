@@ -16,9 +16,6 @@ frame_support::parameter_types! {
 		bp_pangolin::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
 	pub const MaxUnconfirmedMessagesAtInboundLane: MessageNonce =
 		bp_pangolin::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
-	// `IdentityFee` is used by Pangoro => we may use weight directly
-	pub const GetDeliveryConfirmationTransactionFee: Balance =
-		bp_pangoro::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT as _;
 	pub const BridgedChainId: ChainId = PANGOLIN_CHAIN_ID;
 	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::into_account_id((&b"root"[..]).into_h160()));
 }
@@ -41,14 +38,14 @@ impl Config<WithPangolinMessages> for Runtime {
 	type AccountIdConverter = bp_pangoro::AccountIdConverter;
 
 	type TargetHeaderChain = bm_pangolin::Pangolin;
-	type LaneMessageVerifier = bm_pangolin::ToPangolinMessageVerifier<Self, WithPangolinFeeMarket>;
+	type LaneMessageVerifier = bm_pangolin::ToPangolinMessageVerifier;
 	type MessageDeliveryAndDispatchPayment =
-		FeeMarketPayment<Runtime, WithPangolinFeeMarket, Ring, RootAccountForPayments>;
+		FeeMarketPayment<Runtime, PangolinFeeMarket, Ring, RootAccountForPayments>;
 
-	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangolinFeeMarket>;
+	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, PangolinFeeMarket>;
 	type OnDeliveryConfirmed = (
 		Substrate2SubstrateBacking,
-		FeeMarketMessageConfirmedHandler<Self, WithPangolinFeeMarket>,
+		FeeMarketMessageConfirmedHandler<Self, PangolinFeeMarket>,
 	);
 
 	type SourceHeaderChain = bm_pangolin::Pangolin;
