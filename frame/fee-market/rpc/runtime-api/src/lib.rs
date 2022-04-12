@@ -80,9 +80,8 @@ decl_runtime_apis! {
 	where
 		Balance: Codec + MaybeDisplay + MaybeFromStr,
 	 {
-		fn market_fee(
-		) -> Option<Fee<Balance>>;
+		fn market_fee(instance: u8) -> Option<Fee<Balance>>;
 
-		fn in_process_orders() -> InProcessOrders;
+		fn in_process_orders(instance: u8) -> InProcessOrders;
 	}
 }

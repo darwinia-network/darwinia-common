@@ -42,9 +42,9 @@ const RUNTIME_ERROR: i64 = -1;
 #[rpc]
 pub trait FeeMarketApi<Fee> {
 	#[rpc(name = "fee_marketFee")]
-	fn market_fee(&self) -> Result<Option<Fee>>;
+	fn market_fee(&self, instance: u8) -> Result<Option<Fee>>;
 	#[rpc(name = "fee_inProcessOrders")]
-	fn in_process_orders(&self) -> Result<InProcessOrders>;
+	fn in_process_orders(&self, instance: u8) -> Result<InProcessOrders>;
 }
 
 pub struct FeeMarket<Client, Block, Balance> {
@@ -68,24 +68,24 @@ where
 	Block: BlockT,
 	Balance: 'static + Sync + Send + Codec + MaybeDisplay + MaybeFromStr,
 {
-	fn market_fee(&self) -> Result<Option<Fee<Balance>>> {
+	fn market_fee(&self, instance: u8) -> Result<Option<Fee<Balance>>> {
 		let api = self.client.runtime_api();
 		let best = self.client.info().best_hash;
 		let at = BlockId::hash(best);
 
-		api.market_fee(&at).map_err(|e| Error {
+		api.market_fee(&at, instance).map_err(|e| Error {
 			code: ErrorCode::ServerError(RUNTIME_ERROR),
 			message: "Unable to query market fee.".into(),
 			data: Some(format!("{:?}", e).into()),
 		})
 	}
 
-	fn in_process_orders(&self) -> Result<InProcessOrders> {
+	fn in_process_orders(&self, instance: u8) -> Result<InProcessOrders> {
 		let api = self.client.runtime_api();
 		let best = self.client.info().best_hash;
 		let at = BlockId::hash(best);
 
-		api.in_process_orders(&at).map_err(|e| Error {
+		api.in_process_orders(&at, instance).map_err(|e| Error {
 			code: ErrorCode::ServerError(RUNTIME_ERROR),
 			message: "Unable to query in process orders.".into(),
 			data: Some(format!("{:?}", e).into()),

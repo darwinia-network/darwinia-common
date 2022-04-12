@@ -153,7 +153,7 @@ frame_support::construct_runtime!(
 		BridgePangolinGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 19,
 		BridgePangolinMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 17,
 
-		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 22,
+		FeeMarket: darwinia_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 22,
 		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 23,
 
 		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
@@ -475,18 +475,14 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	// The pangoro network has only one FeeMarket pallet instance right now.
 	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
-		fn market_fee() -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
-			if let Some(fee) = FeeMarket::market_fee() {
-				return Some(darwinia_fee_market_rpc_runtime_api::Fee {
-					amount: fee,
-				});
-			}
-			None
+		fn market_fee(_instance: u8) -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
+			FeeMarket::market_fee().and_then(|fee| Some(darwinia_fee_market_rpc_runtime_api::Fee { amount: fee }))
 		}
 
-		fn in_process_orders() -> darwinia_fee_market_rpc_runtime_api::InProcessOrders {
-			return darwinia_fee_market_rpc_runtime_api::InProcessOrders {
+		fn in_process_orders(_instance: u8) -> darwinia_fee_market_rpc_runtime_api::InProcessOrders {
+			darwinia_fee_market_rpc_runtime_api::InProcessOrders {
 				orders: FeeMarket::in_process_orders(),
 			}
 		}
