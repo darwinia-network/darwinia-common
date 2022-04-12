@@ -38,7 +38,7 @@ impl Config<WithPangoroMessages> for Runtime {
 	type AccountIdConverter = bp_pangolin::AccountIdConverter;
 
 	type TargetHeaderChain = bm_pangoro::Pangoro;
-	type LaneMessageVerifier = bm_pangoro::ToPangoroMessageVerifier<Self, PangoroFeeMarket>;
+	type LaneMessageVerifier = bm_pangoro::ToPangoroMessageVerifier;
 	type MessageDeliveryAndDispatchPayment =
 		FeeMarketPayment<Runtime, PangoroFeeMarket, Ring, RootAccountForPayments>;
 
