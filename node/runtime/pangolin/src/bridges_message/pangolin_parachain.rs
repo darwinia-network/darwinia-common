@@ -58,7 +58,7 @@ pub type FromPangolinParachainMessagePayload =
 pub type ToPangolinParachainMessageVerifier = FromThisChainMessageVerifier<
 	WithPangolinParachainMessageBridge,
 	Runtime,
-	PangolinParachainFeeMarket,
+	WithPangolinParachainFeeMarket,
 >;
 
 /// Encoded Pangolin Call as it comes from PangolinParachain

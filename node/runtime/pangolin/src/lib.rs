@@ -245,8 +245,7 @@ frame_support::construct_runtime! {
 		BridgePangolinParachainDispatch: pallet_bridge_dispatch::<Instance2>::{Pallet, Event<T>} = 62,
 		BridgePangolinParachainMessages: pallet_bridge_messages::<Instance2>::{Pallet, Call, Storage, Event<T>} = 63,
 
-		// The fee market instance1 used for the pangoro network
-		FeeMarket: darwinia_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 53,
+		PangoroFeeMarket: darwinia_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 53,
 		PangolinParachainFeeMarket: darwinia_fee_market::<Instance2>::{Pallet, Call, Storage, Event<T>} = 64,
 		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 54,
 
@@ -570,7 +569,7 @@ sp_api::impl_runtime_apis! {
 		fn market_fee(instance: u8) -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
 			match instance {
 				0 => FeeMarket::market_fee().and_then(|fee| Some(darwinia_fee_market_rpc_runtime_api::Fee { amount: fee })),
-				1 => PangolinParachainFeeMarket::market_fee().and_then(|fee| Some(darwinia_fee_market_rpc_runtime_api::Fee { amount: fee })),
+				1 => WithPangolinParachainFeeMarket::market_fee().and_then(|fee| Some(darwinia_fee_market_rpc_runtime_api::Fee { amount: fee })),
 				_ => None,
 			}
 		}
@@ -580,7 +579,7 @@ sp_api::impl_runtime_apis! {
 					orders: FeeMarket::in_process_orders(),
 				},
 				1 => darwinia_fee_market_rpc_runtime_api::InProcessOrders {
-					orders: PangolinParachainFeeMarket::in_process_orders(),
+					orders: WithPangolinParachainFeeMarket::in_process_orders(),
 				},
 				_ => Default::default()
 			}

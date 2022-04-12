@@ -41,12 +41,12 @@ impl Config<WithPangolinParachainMessages> for Runtime {
 	type TargetHeaderChain = bm_pangolin_parachain::PangolinParachain;
 	type LaneMessageVerifier = bm_pangolin_parachain::ToPangolinParachainMessageVerifier;
 	type MessageDeliveryAndDispatchPayment =
-		FeeMarketPayment<Runtime, PangolinParachainFeeMarket, Ring, RootAccountForPayments>;
+		FeeMarketPayment<Runtime, WithPangolinParachainFeeMarket, Ring, RootAccountForPayments>;
 
-	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, PangolinParachainFeeMarket>;
+	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangolinParachainFeeMarket>;
 	type OnDeliveryConfirmed = (
 		Substrate2SubstrateIssuing,
-		FeeMarketMessageConfirmedHandler<Self, PangolinParachainFeeMarket>,
+		FeeMarketMessageConfirmedHandler<Self, WithPangolinParachainFeeMarket>,
 	);
 
 	type SourceHeaderChain = bm_pangolin_parachain::PangolinParachain;
