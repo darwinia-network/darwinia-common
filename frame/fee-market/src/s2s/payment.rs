@@ -35,26 +35,27 @@ use crate::{Config, Orders, Pallet, *};
 
 // TODO: Do we need to add another generic param, I2?
 // It's because the current I refers to pallet_bridge_message's instance
-pub struct FeeMarketPayment<T, I, Currency, GetConfirmationFee, RootAccount> {
-	_phantom: sp_std::marker::PhantomData<(T, I, Currency, GetConfirmationFee, RootAccount)>,
+pub struct FeeMarketPayment<T, BMI, FI, Currency, GetConfirmationFee, RootAccount> {
+	_phantom: sp_std::marker::PhantomData<(T, BMI, FI, Currency, GetConfirmationFee, RootAccount)>,
 }
 
-impl<T, I, Currency, GetConfirmationFee, RootAccount>
-	MessageDeliveryAndDispatchPayment<T::AccountId, RingBalance<T, I>>
-	for FeeMarketPayment<T, I, Currency, GetConfirmationFee, RootAccount>
+impl<T, BMI, FI, Currency, GetConfirmationFee, RootAccount>
+	MessageDeliveryAndDispatchPayment<T::AccountId, RingBalance<T, FI>>
+	for FeeMarketPayment<T, BMI, FI, Currency, GetConfirmationFee, RootAccount>
 where
-	T: frame_system::Config + pallet_bridge_messages::Config<I> + Config<I>,
-	I: 'static,
+	T: frame_system::Config + pallet_bridge_messages::Config<BMI> + Config<FI>,
+	BMI: 'static,
+	FI: 'static,
 	Currency: CurrencyT<T::AccountId, Balance = T::OutboundMessageFee>,
 	Currency::Balance: From<MessageNonce>,
-	GetConfirmationFee: Get<RingBalance<T, I>>,
+	GetConfirmationFee: Get<RingBalance<T, FI>>,
 	RootAccount: Get<Option<T::AccountId>>,
 {
 	type Error = &'static str;
 
 	fn pay_delivery_and_dispatch_fee(
 		submitter: &Sender<T::AccountId>,
-		fee: &RingBalance<T, I>,
+		fee: &RingBalance<T, FI>,
 		relayer_fund_account: &T::AccountId,
 	) -> Result<(), Self::Error> {
 		let root_account = RootAccount::get();
@@ -65,7 +66,7 @@ where
 				.ok_or("Sending messages using Root or None origin is disallowed.")?,
 		};
 
-		<T as Config<I>>::RingCurrency::transfer(
+		<T as Config<FI>>::RingCurrency::transfer(
 			account,
 			relayer_fund_account,
 			*fee,
@@ -87,7 +88,7 @@ where
 			confirmation_relayer_rewards,
 			assigned_relayers_rewards,
 			treasury_total_rewards,
-		} = slash_and_calculate_rewards::<T, I>(
+		} = slash_and_calculate_rewards::<T, BMI, FI>(
 			lane_id,
 			messages_relayers,
 			received_range,
@@ -95,21 +96,21 @@ where
 		);
 
 		// Pay confirmation relayer rewards
-		do_reward::<T, I>(
+		do_reward::<T, FI>(
 			relayer_fund_account,
 			confirmation_relayer,
 			confirmation_relayer_rewards,
 		);
 		// Pay messages relayers rewards
 		for (relayer, reward) in messages_relayers_rewards {
-			do_reward::<T, I>(relayer_fund_account, &relayer, reward);
+			do_reward::<T, FI>(relayer_fund_account, &relayer, reward);
 		}
 		// Pay assign relayer reward
 		for (relayer, reward) in assigned_relayers_rewards {
-			do_reward::<T, I>(relayer_fund_account, &relayer, reward);
+			do_reward::<T, FI>(relayer_fund_account, &relayer, reward);
 		}
 		// Pay treasury reward
-		do_reward::<T, I>(
+		do_reward::<T, FI>(
 			relayer_fund_account,
 			&T::TreasuryPalletId::get().into_account(),
 			treasury_total_rewards,
@@ -118,20 +119,21 @@ where
 }
 
 /// Slash and calculate rewards for messages_relayers, confirmation relayers, treasury, assigned_relayers
-pub fn slash_and_calculate_rewards<T, I>(
+pub fn slash_and_calculate_rewards<T, BMI, FI>(
 	lane_id: LaneId,
 	messages_relayers: VecDeque<UnrewardedRelayer<T::AccountId>>,
 	received_range: &RangeInclusive<MessageNonce>,
 	relayer_fund_account: &T::AccountId,
-) -> RewardsBook<T::AccountId, RingBalance<T, I>>
+) -> RewardsBook<T::AccountId, RingBalance<T, FI>>
 where
-	T: frame_system::Config + pallet_bridge_messages::Config<I> + Config<I>,
-	I: 'static,
+	T: frame_system::Config + pallet_bridge_messages::Config<BMI> + Config<FI>,
+	BMI: 'static,
+	FI: 'static,
 {
-	let mut confirmation_rewards = RingBalance::<T, I>::zero();
-	let mut messages_rewards = BTreeMap::<T::AccountId, RingBalance<T, I>>::new();
-	let mut assigned_relayers_rewards = BTreeMap::<T::AccountId, RingBalance<T, I>>::new();
-	let mut treasury_total_rewards = RingBalance::<T, I>::zero();
+	let mut confirmation_rewards = RingBalance::<T, FI>::zero();
+	let mut messages_rewards = BTreeMap::<T::AccountId, RingBalance<T, FI>>::new();
+	let mut assigned_relayers_rewards = BTreeMap::<T::AccountId, RingBalance<T, FI>>::new();
+	let mut treasury_total_rewards = RingBalance::<T, FI>::zero();
 
 	for entry in messages_relayers {
 		let nonce_begin = sp_std::cmp::max(entry.messages.begin, *received_range.start());
@@ -139,7 +141,7 @@ where
 
 		for message_nonce in nonce_begin..nonce_end + 1 {
 			// The order created when message was accepted, so we can always get the order info below.
-			if let Some(order) = <Orders<T, I>>::get(&(lane_id, message_nonce)) {
+			if let Some(order) = <Orders<T, FI>>::get(&(lane_id, message_nonce)) {
 				// The confirm_time of the order is set in the `OnDeliveryConfirmed` callback. And the callback function
 				// was called as source chain received message delivery proof, before the reward payment.
 				let order_confirm_time = order
@@ -175,19 +177,19 @@ where
 					let mut total_slash = message_fee;
 
 					// calculate slash amount
-					let mut amount: RingBalance<T, I> = T::Slasher::slash(
+					let mut amount: RingBalance<T, FI> = T::Slasher::slash(
 						order.locked_collateral,
 						order.delivery_delay().unwrap_or_default(),
 					);
-					if let Some(slash_protect) = Pallet::<T, I>::collateral_slash_protect() {
+					if let Some(slash_protect) = Pallet::<T, FI>::collateral_slash_protect() {
 						amount = sp_std::cmp::min(amount, slash_protect);
 					}
 
 					// Slash order's assigned relayers
-					let mut assigned_relayers_slash = RingBalance::<T, I>::zero();
+					let mut assigned_relayers_slash = RingBalance::<T, FI>::zero();
 					for assigned_relayer in order.relayers_slice() {
 						let report = SlashReport::new(&order, assigned_relayer.id.clone(), amount);
-						let slashed = do_slash::<T, I>(
+						let slashed = do_slash::<T, FI>(
 							&assigned_relayer.id,
 							relayer_fund_account,
 							amount,

@@ -46,6 +46,7 @@ impl Config<WithPangolinMessages> for Runtime {
 	type MessageDeliveryAndDispatchPayment = FeeMarketPayment<
 		Runtime,
 		WithPangolinMessages,
+		FeeMarketWorkForPangolin,
 		Ring,
 		GetDeliveryConfirmationTransactionFee,
 		RootAccountForPayments,
