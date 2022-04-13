@@ -163,7 +163,7 @@ impl GasWeightMapping for FixedGasWeightMapping {
 
 frame_support::parameter_types! {
 	pub const ChainId: u64 = 43;
-	pub BlockGasLimit: U256 = u32::MAX.into();
+	pub BlockGasLimit: U256 = U256::from(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WEIGHT_PER_GAS);
 	pub PrecompilesValue: PangolinPrecompiles<Runtime> = PangolinPrecompiles::<_>::new();
 }
 
