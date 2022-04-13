@@ -26,28 +26,27 @@ impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
 }
 
 frame_support::parameter_types! {
+	// Shared configurations.
 	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
-
-	pub const WithPangoroFeeMarketId: PalletId = PalletId(*b"da/feemk");
-	pub const WithParachainFeeMarketId: PalletId = PalletId(*b"da/feepa");
-
-	pub const WithPangoroFeeMarketLockId: LockIdentifier = *b"da/feelf";
-	pub const WithParachainFeeMarketLockId: LockIdentifier = *b"da/feepa";
-
 	pub const MinimumRelayFee: Balance = 15 * COIN;
 	pub const CollateralPerOrder: Balance = 50 * COIN;
 	pub const Slot: BlockNumber = 600;
-
 	pub const AssignedRelayersRewardRatio: Permill = Permill::from_percent(60);
 	pub const MessageRelayersRewardRatio: Permill = Permill::from_percent(80);
 	pub const ConfirmRelayersRewardRatio: Permill = Permill::from_percent(20);
+	// Pangoro configurations.
+	pub const PangoroFeeMarketId: PalletId = PalletId(*b"da/feemk");
+	pub const PangoroFeeMarketLockId: LockIdentifier = *b"da/feelf";
+	// Pangolin Parachain configurations.
+	pub const PangolinParachainFeeMarketId: PalletId = PalletId(*b"da/feepa");
+	pub const PangolinParachainFeeMarketLockId: LockIdentifier = *b"da/feepa";
 }
 
 impl Config<WithPangoroFeeMarket> for Runtime {
 	type TreasuryPalletId = TreasuryPalletId;
 
-	type PalletId = WithPangoroFeeMarketId;
-	type LockId = WithPangoroFeeMarketLockId;
+	type PalletId = PangoroFeeMarketId;
+	type LockId = PangoroFeeMarketLockId;
 
 	type MinimumRelayFee = MinimumRelayFee;
 	type CollateralPerOrder = CollateralPerOrder;
@@ -62,12 +61,11 @@ impl Config<WithPangoroFeeMarket> for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
 }
-
 impl Config<WithPangolinParachainFeeMarket> for Runtime {
 	type TreasuryPalletId = TreasuryPalletId;
 
-	type PalletId = WithParachainFeeMarketId;
-	type LockId = WithParachainFeeMarketLockId;
+	type PalletId = PangolinParachainFeeMarketId;
+	type LockId = PangolinParachainFeeMarketLockId;
 
 	type MinimumRelayFee = MinimumRelayFee;
 	type CollateralPerOrder = CollateralPerOrder;

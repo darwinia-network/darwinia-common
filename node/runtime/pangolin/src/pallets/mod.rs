@@ -153,6 +153,3 @@ pub use transaction_pause::*;
 
 pub mod from_substrate_issuing_;
 pub use from_substrate_issuing_::*;
-
-pub mod bridge_pangolin_parachain_messages;
-pub use bridge_pangolin_parachain_messages::*;
