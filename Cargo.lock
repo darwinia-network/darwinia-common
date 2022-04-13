@@ -1876,12 +1876,16 @@ dependencies = [
 name = "darwinia-evm-precompile-utils"
 version = "2.8.7"
 dependencies = [
+ "darwinia-evm",
  "darwinia-evm-precompile-utils-macro",
  "darwinia-support",
  "ethabi",
  "evm",
  "fp-evm",
+ "frame-support",
+ "frame-system",
  "sp-core",
+ "sp-std",
 ]
 
 [[package]]

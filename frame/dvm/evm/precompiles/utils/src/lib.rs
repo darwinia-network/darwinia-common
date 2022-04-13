@@ -22,10 +22,13 @@ pub use darwinia_evm_precompile_utils_macro::selector;
 pub use ethabi::StateMutability;
 
 // --- darwinia-network ---
+use darwinia_evm::GasWeightMapping;
 use darwinia_support::evm::SELECTOR;
 // --- paritytech ---
 use fp_evm::{Context, ExitError, PrecompileFailure};
+use frame_support::traits::Get;
 use sp_core::U256;
+use sp_std::marker::PhantomData;
 
 #[derive(Clone, Copy, Debug)]
 pub struct DvmInputParser<'a> {
@@ -78,20 +81,36 @@ pub fn check_state_modifier(
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct PrecompileGasMeter {
+pub struct PrecompileGasMeter<T> {
 	target_gas: Option<u64>,
 	used_gas: u64,
+	_marker: PhantomData<T>,
 }
 
-impl PrecompileGasMeter {
+impl<T: darwinia_evm::Config> PrecompileGasMeter<T> {
 	pub fn new(target_gas: Option<u64>) -> Self {
 		Self {
 			target_gas,
 			used_gas: 0,
+			_marker: PhantomData,
 		}
 	}
 
-	pub fn record_gas(&mut self, cost: u64) -> Result<(), PrecompileFailure> {
+	pub fn record_gas(&mut self, reads: u64, writes: u64) -> Result<(), PrecompileFailure> {
+		let reads_cost = <T as darwinia_evm::Config>::GasWeightMapping::weight_to_gas(
+			<T as frame_system::Config>::DbWeight::get().read,
+		)
+		.checked_mul(reads)
+		.ok_or(custom_precompile_err("Cost Overflow"))?;
+		let writes_cost = <T as darwinia_evm::Config>::GasWeightMapping::weight_to_gas(
+			<T as frame_system::Config>::DbWeight::get().write,
+		)
+		.checked_mul(writes)
+		.ok_or(custom_precompile_err("Cost Overflow"))?;
+		let cost = reads_cost
+			.checked_add(writes_cost)
+			.ok_or(custom_precompile_err("Cost Overflow"))?;
+
 		self.used_gas = self
 			.used_gas
 			.checked_add(cost)
@@ -107,14 +126,7 @@ impl PrecompileGasMeter {
 		}
 	}
 
-	pub fn return_gas(&self) -> Result<Option<u64>, PrecompileFailure> {
-		Ok(match self.target_gas {
-			None => None,
-			Some(gas_limit) => Some(gas_limit.checked_sub(self.used_gas).ok_or(
-				PrecompileFailure::Error {
-					exit_status: ExitError::OutOfGas,
-				},
-			)?),
-		})
+	pub fn used_gas(&self) -> u64 {
+		self.used_gas
 	}
 }
