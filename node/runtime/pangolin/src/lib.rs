@@ -25,6 +25,7 @@ pub mod pallets;
 pub use pallets::*;
 
 pub mod bridges_message;
+pub use bridges_message::*;
 
 pub mod migrations;
 pub use migrations::*;
@@ -819,7 +820,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl bp_pangoro::ToPangoroOutboundLaneApi<Block, Balance, bridges_message::bm_pangoro::ToPangoroMessagePayload> for Runtime {
+	impl bp_pangoro::ToPangoroOutboundLaneApi<Block, Balance, bm_pangoro::ToPangoroMessagePayload> for Runtime {
 		fn message_details(
 			lane: bp_messages::LaneId,
 			begin: bp_messages::MessageNonce,
@@ -828,7 +829,7 @@ sp_api::impl_runtime_apis! {
 			bridge_runtime_common::messages_api::outbound_message_details::<
 				Runtime,
 				WithPangoroMessages,
-				bridges_message::bm_pangoro::WithPangoroMessageBridge,
+				bm_pangoro::WithPangoroMessageBridge,
 			>(lane, begin, end)
 		}
 

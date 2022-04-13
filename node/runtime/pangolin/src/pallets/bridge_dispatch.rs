@@ -5,10 +5,7 @@ pub use pallet_bridge_dispatch::{
 // --- paritytech ---
 use frame_support::traits::Everything;
 // --- darwinia-network ---
-use crate::{
-	bridges_message::{bm_pangolin_parachain, bm_pangoro},
-	*,
-};
+use crate::*;
 use bp_messages::{LaneId, MessageNonce};
 use pallet_bridge_dispatch::Config;
 

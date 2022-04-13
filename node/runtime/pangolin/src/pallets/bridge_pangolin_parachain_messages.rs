@@ -4,7 +4,7 @@ pub use pallet_bridge_messages::Instance2 as WithPangolinParachainMessages;
 use bp_messages::MessageNonce;
 use pallet_bridge_messages::Config;
 // --- darwinia-network ---
-use crate::{bridges_message::bm_pangolin_parachain, *};
+use crate::*;
 use bp_runtime::{ChainId, PANGOLIN_PARACHAIN_CHAIN_ID};
 use darwinia_fee_market::s2s::{
 	FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler, FeeMarketPayment,

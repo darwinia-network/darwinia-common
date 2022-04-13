@@ -1,7 +1,7 @@
 pub use pallet_bridge_messages::Instance1 as WithPangoroMessages;
 
 // --- darwinia-network ---
-use crate::{bridges_message::bm_pangoro, *};
+use crate::*;
 use bp_messages::MessageNonce;
 use bp_runtime::{ChainId, PANGORO_CHAIN_ID};
 use darwinia_fee_market::s2s::{
