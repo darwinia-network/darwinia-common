@@ -8,6 +8,9 @@ pub use pallets::*;
 
 pub mod bridges_message;
 
+pub mod migrations;
+pub use migrations::*;
+
 pub mod wasm {
 	//! Make the WASM binary available.
 
@@ -29,12 +32,7 @@ pub use wasm::*;
 use codec::Encode;
 // --- paritytech ---
 use bp_runtime::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
-#[allow(unused)]
-use frame_support::{log, migration};
-use frame_support::{
-	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade},
-	weights::Weight,
-};
+use frame_support::{log, traits::KeyOwnerProofSystem};
 use frame_system::{
 	offchain::{AppCrypto, CreateSignedTransaction, SendTransactionTypes, SigningTypes},
 	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
@@ -475,15 +473,14 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	// The pangoro network has only one FeeMarket pallet instance right now.
 	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
 		fn market_fee(_instance: u8) -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
-			FeeMarket::market_fee().and_then(|fee| Some(darwinia_fee_market_rpc_runtime_api::Fee { amount: fee }))
+			PangolinFeeMarket::market_fee().and_then(|fee| Some(darwinia_fee_market_rpc_runtime_api::Fee { amount: fee }))
 		}
 
 		fn in_process_orders(_instance: u8) -> darwinia_fee_market_rpc_runtime_api::InProcessOrders {
 			darwinia_fee_market_rpc_runtime_api::InProcessOrders {
-				orders: FeeMarket::in_process_orders(),
+				orders: PangolinFeeMarket::in_process_orders(),
 			}
 		}
 	}
@@ -817,28 +814,6 @@ sp_api::impl_runtime_apis! {
 
 			Ok(batches)
 		}
-	}
-}
-
-fn migrate() -> Weight {
-	0
-	// RuntimeBlockWeights::get().max_block
-}
-
-pub struct CustomOnRuntimeUpgrade;
-impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
-	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<(), &'static str> {
-		Ok(())
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn post_upgrade() -> Result<(), &'static str> {
-		Ok(())
-	}
-
-	fn on_runtime_upgrade() -> Weight {
-		migrate()
 	}
 }
 
