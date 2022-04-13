@@ -31,7 +31,7 @@ use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 use crate::util;
 use darwinia_evm::{runner::Runner, AccountBasic, AccountId, Pallet};
 use darwinia_evm_precompile_utils::{
-	check_state_modifier, custom_precompile_err, selector, DvmInputParser,
+	check_state_modifier, custom_precompile_err, selector, DvmInputParser, PrecompileGasMeter,
 };
 use darwinia_support::evm::{IntoAccountId, TRANSFER_ADDR};
 
@@ -62,8 +62,18 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 		// Check state modifiers
 		check_state_modifier(context, is_static, StateMutability::NonPayable)?;
 
+		let mut gas_meter = PrecompileGasMeter::<T>::new(target_gas);
+
 		match action {
 			Action::TransferAndCall => {
+				// 1 storage read: for check contract code empty
+				// 2 storage read: for source account balance and nonce
+				// 2 storage read: for target account balance and nonce
+				// 2 storage write: for source account main, remaining balance
+				// 2 storage write: for target account main, remaining balance
+				// 2 storage write: for call WKTON contract.
+				gas_meter.record_gas(5, 6)?;
+
 				let call_data = CallData::decode(&dvm_parser.input)?;
 				let (caller, wkton, value) =
 					(context.caller, call_data.wkton_address, call_data.value);
@@ -111,6 +121,13 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				})
 			}
 			Action::Withdraw => {
+				// 1 storage read: for check contract code empty
+				// 2 storage read: for source account balance and nonce
+				// 2 storage read: for target account balance and nonce
+				// 2 storage write: for source account main, remaining balance
+				// 2 storage write: for target account main, remaining balance
+				gas_meter.record_gas(5, 4)?;
+
 				let wd = WithdrawData::<T>::decode(&dvm_parser.input)?;
 				let (source, to, value) = (context.caller, wd.to_account_id, wd.kton_value);
 				// Ensure wkton is a contract
@@ -125,7 +142,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 
 				Ok(PrecompileOutput {
 					exit_status: ExitSucceed::Returned,
-					cost: 20000,
+					cost: gas_meter.used_gas(),
 					output: Default::default(),
 					logs: Default::default(),
 				})
