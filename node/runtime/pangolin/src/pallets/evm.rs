@@ -11,7 +11,7 @@ use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use pallet_session::FindAccountFromAuthorIndex;
 use sp_core::{crypto::Public, H160, U256};
 // --- darwinia-network ---
-use crate::{bridges_message::bm_pangoro, *};
+use crate::*;
 use bp_messages::LaneId;
 use darwinia_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},

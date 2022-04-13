@@ -60,6 +60,7 @@ beefy-primitives                           = { default-features = false, git = "
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 bp-messages                                = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 bp-pangolin                                = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
+bp-pangolin-parachain                      = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 bp-pangoro                                 = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 bp-rococo                                  = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
 bp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.1" }
@@ -182,6 +183,7 @@ std = [
 	"bp-message-dispatch/std",
 	"bp-messages/std",
 	"bp-pangolin/std",
+	"bp-pangolin-parachain/std",
 	"bp-pangoro/std",
 	"bp-rococo/std",
 	"bp-runtime/std",

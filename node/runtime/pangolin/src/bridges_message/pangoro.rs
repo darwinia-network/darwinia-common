@@ -1,3 +1,23 @@
+// This file is part of Darwinia.
+//
+// Copyright (C) 2018-2022 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
+//! Everything required to serve Pangolin <-> Pangoro messages.
+
 // --- crates.io ---
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
@@ -17,7 +37,7 @@ use bridge_runtime_common::messages::{
 	self,
 	source::{self, *},
 	target::{self, *},
-	*,
+	BalanceOf, *,
 };
 use dp_s2s::{CallParams, CreatePayload};
 use drml_common_runtime::impls::FromThisChainMessageVerifier;
@@ -34,11 +54,11 @@ pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessag
 pub type FromPangoroMessagePayload = FromBridgedChainMessagePayload<WithPangoroMessageBridge>;
 
 /// Message verifier for Pangolin -> Pangoro messages.
-pub type ToPangoroMessageVerifier<R, I> =
-	FromThisChainMessageVerifier<WithPangoroMessageBridge, R, I>;
+pub type ToPangoroMessageVerifier =
+	FromThisChainMessageVerifier<WithPangoroMessageBridge, Runtime, WithPangoroFeeMarket>;
 
 /// Encoded Pangolin Call as it comes from Pangoro.
-pub type FromPangoroEncodedCall = FromBridgedChainEncodedMessageCall<crate::Call>;
+pub type FromPangoroEncodedCall = FromBridgedChainEncodedMessageCall<Call>;
 
 /// Call-dispatch based message dispatch for Pangoro -> Pangolin messages.
 pub type FromPangoroMessageDispatch =
@@ -58,11 +78,17 @@ frame_support::parameter_types! {
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ToPangoroOutboundPayLoad;
-impl CreatePayload<AccountId, AccountPublic, Signature> for ToPangoroOutboundPayLoad {
+impl CreatePayload<bp_pangolin::AccountId, bp_pangolin::AccountPublic, bp_pangolin::Signature>
+	for ToPangoroOutboundPayLoad
+{
 	type Payload = ToPangoroMessagePayload;
 
 	fn create(
-		origin: CallOrigin<AccountId, AccountPublic, Signature>,
+		origin: CallOrigin<
+			bp_pangolin::AccountId,
+			bp_pangolin::AccountPublic,
+			bp_pangolin::Signature,
+		>,
 		spec_version: u32,
 		weight: u64,
 		call_params: CallParams,
@@ -99,35 +125,37 @@ impl Parameter for PangolinToPangoroMessagesParameter {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct WithPangoroMessageBridge;
 impl MessageBridge for WithPangoroMessageBridge {
+	type ThisChain = Pangolin;
+	type BridgedChain = Pangoro;
+
 	const RELAYER_FEE_PERCENT: u32 = 10;
 	const THIS_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
 	const BRIDGED_CHAIN_ID: ChainId = PANGORO_CHAIN_ID;
 	const BRIDGED_MESSAGES_PALLET_NAME: &'static str =
 		bp_pangolin::WITH_PANGOLIN_MESSAGES_PALLET_NAME;
 
-	type ThisChain = Pangolin;
-	type BridgedChain = Pangoro;
-
-	fn bridged_balance_to_this_balance(bridged_balance: bp_pangoro::Balance) -> Balance {
-		Balance::try_from(
+	fn bridged_balance_to_this_balance(
+		bridged_balance: BalanceOf<Self::BridgedChain>,
+	) -> BalanceOf<Self::ThisChain> {
+		<BalanceOf<Self::ThisChain>>::try_from(
 			PangoroToPangolinConversionRate::get().saturating_mul_int(bridged_balance),
 		)
-		.unwrap_or(Balance::MAX)
+		.unwrap_or(<BalanceOf<Self::ThisChain>>::MAX)
 	}
 }
 
 /// Pangolin chain from message lane point of view.
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct Pangolin;
-impl messages::ChainWithMessages for Pangolin {
-	type Hash = Hash;
-	type AccountId = AccountId;
-	type Signer = AccountPublic;
-	type Signature = Signature;
+impl ChainWithMessages for Pangolin {
+	type Hash = bp_pangolin::Hash;
+	type AccountId = bp_pangolin::AccountId;
+	type Signer = bp_pangolin::AccountPublic;
+	type Signature = bp_pangolin::Signature;
 	type Weight = Weight;
-	type Balance = Balance;
+	type Balance = bp_pangolin::Balance;
 }
-impl messages::ThisChainWithMessages for Pangolin {
+impl ThisChainWithMessages for Pangolin {
 	type Call = Call;
 
 	fn is_outbound_lane_enabled(lane: &LaneId) -> bool {
@@ -139,7 +167,7 @@ impl messages::ThisChainWithMessages for Pangolin {
 	}
 
 	fn estimate_delivery_confirmation_transaction() -> MessageTransaction<Weight> {
-		let inbound_data_size = InboundLaneData::<AccountId>::encoded_size_hint(
+		let inbound_data_size = InboundLaneData::<Self::AccountId>::encoded_size_hint(
 			bp_pangolin::MAXIMAL_ENCODED_ACCOUNT_ID_SIZE,
 			1,
 			1,
@@ -154,7 +182,7 @@ impl messages::ThisChainWithMessages for Pangolin {
 		}
 	}
 
-	fn transaction_payment(transaction: MessageTransaction<Weight>) -> Balance {
+	fn transaction_payment(transaction: MessageTransaction<Weight>) -> Self::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
 			RuntimeBlockWeights::get()
@@ -171,7 +199,7 @@ impl messages::ThisChainWithMessages for Pangolin {
 /// Pangoro chain from message lane point of view.
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct Pangoro;
-impl messages::ChainWithMessages for Pangoro {
+impl ChainWithMessages for Pangoro {
 	type Hash = bp_pangoro::Hash;
 	type AccountId = bp_pangoro::AccountId;
 	type Signer = bp_pangoro::AccountPublic;
@@ -179,14 +207,14 @@ impl messages::ChainWithMessages for Pangoro {
 	type Weight = Weight;
 	type Balance = bp_pangoro::Balance;
 }
-impl messages::BridgedChainWithMessages for Pangoro {
+impl BridgedChainWithMessages for Pangoro {
 	fn maximal_extrinsic_size() -> u32 {
 		bp_pangoro::Pangoro::max_extrinsic_size()
 	}
 
 	fn message_weight_limits(_message_payload: &[u8]) -> RangeInclusive<Weight> {
 		// we don't want to relay too large messages + keep reserve for future upgrades
-		let upper_limit = messages::target::maximal_incoming_message_dispatch_weight(
+		let upper_limit = target::maximal_incoming_message_dispatch_weight(
 			bp_pangoro::Pangoro::max_extrinsic_weight(),
 		);
 
@@ -223,7 +251,7 @@ impl messages::BridgedChainWithMessages for Pangoro {
 		}
 	}
 
-	fn transaction_payment(transaction: MessageTransaction<Weight>) -> bp_pangoro::Balance {
+	fn transaction_payment(transaction: MessageTransaction<Weight>) -> Self::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
 			bp_pangoro::RuntimeBlockWeights::get()
@@ -236,7 +264,9 @@ impl messages::BridgedChainWithMessages for Pangoro {
 		)
 	}
 }
-impl TargetHeaderChain<ToPangoroMessagePayload, bp_pangoro::AccountId> for Pangoro {
+impl TargetHeaderChain<ToPangoroMessagePayload, <Self as ChainWithMessages>::AccountId>
+	for Pangoro
+{
 	type Error = &'static str;
 	// The proof is:
 	// - hash of the header this proof has been created with;
@@ -250,7 +280,7 @@ impl TargetHeaderChain<ToPangoroMessagePayload, bp_pangoro::AccountId> for Pango
 
 	fn verify_messages_delivery_proof(
 		proof: Self::MessagesDeliveryProof,
-	) -> Result<(LaneId, InboundLaneData<AccountId>), Self::Error> {
+	) -> Result<(LaneId, InboundLaneData<bp_pangolin::AccountId>), Self::Error> {
 		source::verify_messages_delivery_proof::<
 			WithPangoroMessageBridge,
 			Runtime,
@@ -258,7 +288,7 @@ impl TargetHeaderChain<ToPangoroMessagePayload, bp_pangoro::AccountId> for Pango
 		>(proof)
 	}
 }
-impl SourceHeaderChain<bp_pangoro::Balance> for Pangoro {
+impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for Pangoro {
 	type Error = &'static str;
 	// The proof is:
 	// - hash of the header this proof has been created with;
@@ -270,7 +300,7 @@ impl SourceHeaderChain<bp_pangoro::Balance> for Pangoro {
 	fn verify_messages_proof(
 		proof: Self::MessagesProof,
 		messages_count: u32,
-	) -> Result<ProvedMessages<Message<bp_pangoro::Balance>>, Self::Error> {
+	) -> Result<ProvedMessages<Message<<Self as ChainWithMessages>::Balance>>, Self::Error> {
 		target::verify_messages_proof::<WithPangoroMessageBridge, Runtime, WithPangoroGrandpa>(
 			proof,
 			messages_count,
