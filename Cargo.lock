@@ -1783,6 +1783,7 @@ name = "darwinia-evm-precompile-bridge-bsc"
 version = "2.7.2"
 dependencies = [
  "darwinia-bridge-bsc",
+ "darwinia-evm",
  "darwinia-evm-precompile-utils",
  "dp-contract",
  "ethereum-primitives",

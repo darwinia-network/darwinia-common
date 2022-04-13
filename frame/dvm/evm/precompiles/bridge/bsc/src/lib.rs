@@ -22,7 +22,8 @@
 use core::marker::PhantomData;
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{
-	check_state_modifier, custom_precompile_err, selector, DvmInputParser, StateMutability,
+	check_state_modifier, custom_precompile_err, selector, DvmInputParser, PrecompileGasMeter,
+	StateMutability,
 };
 use dp_contract::{
 	abi_util::{abi_encode_array_bytes, abi_encode_bytes},
@@ -56,11 +57,11 @@ pub struct BscBridge<T> {
 
 impl<T> Precompile for BscBridge<T>
 where
-	T: darwinia_bridge_bsc::Config,
+	T: darwinia_bridge_bsc::Config + darwinia_evm::Config,
 {
 	fn execute(
 		input: &[u8],
-		_target_gas: Option<u64>,
+		target_gas: Option<u64>,
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
@@ -70,8 +71,13 @@ where
 		// Check state modifiers
 		check_state_modifier(context, is_static, StateMutability::View)?;
 
-		let (output, cost) = match action {
+		let mut gas_meter = PrecompileGasMeter::<T>::new(target_gas);
+
+		let output = match action {
 			Action::VerfiySingleStorageProof => {
+				// 1 storage read: finalized checkpoint
+				gas_meter.record_gas(1, 0)?;
+
 				let params =
 					BscSingleStorageVerifyParams::decode(dvm_parser.input).map_err(|_| {
 						custom_precompile_err("decode single storage verify info failed")
@@ -88,9 +94,12 @@ where
 					&proof,
 				)
 				.map_err(|_| custom_precompile_err("verify single storage proof failed"))?;
-				(abi_encode_bytes(storage_value.0.as_slice()), 10000u64)
+				abi_encode_bytes(storage_value.0.as_slice())
 			}
 			Action::VerifyMultiStorageProof => {
+				// 1 storage read: finalized checkpoint
+				gas_meter.record_gas(1, 0)?;
+
 				let params =
 					BscMultiStorageVerifyParams::decode(dvm_parser.input).map_err(|_| {
 						custom_precompile_err("decode multi storage verify info failed")
@@ -135,16 +144,13 @@ where
 						}
 					})
 					.collect();
-				(
-					abi_encode_array_bytes(storage_values?),
-					10000 * key_size as u64,
-				)
+				abi_encode_array_bytes(storage_values?)
 			}
 		};
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			cost,
+			cost: gas_meter.used_gas(),
 			output,
 			logs: Default::default(),
 		})
