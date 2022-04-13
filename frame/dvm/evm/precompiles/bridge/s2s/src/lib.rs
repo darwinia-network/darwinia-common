@@ -102,10 +102,9 @@ where
 			}
 		};
 
-		// estimate a cost for this encoder process
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			cost: 20000,
+			cost: gas_meter.used_gas(),
 			output,
 			logs: Default::default(),
 		})
