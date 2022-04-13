@@ -133,3 +133,8 @@ frame_support::parameter_types! {
 		.max
 		.get(DispatchClass::Normal);
 }
+
+
+// The maxinum block weight for normal transaction is MAXIMUM_BLOCK_WEIGHT(2s) * NORMAL_DISPATCH_RATIO = 1_000_000_000_000 * 75% = 750_000_000_000
+// Accounding to the evm gas benchmark, 1 gas ~= 40_000 weight.
+pub const WEIGHT_PER_GAS: u64 = 40_000;
