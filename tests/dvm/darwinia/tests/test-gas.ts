@@ -15,7 +15,7 @@ describe("Test Gas", function () {
 		arguments: [5],
 	});
 
-    it("Test tx gas limit below EXTRINSIC_GAS_LIMIT", async function () {
+	it("Test tx gas limit below EXTRINSIC_GAS_LIMIT", async function () {
 		const createTransaction = await web3.eth.accounts.signTransaction(
 			{
 				from: config.address,
@@ -32,7 +32,7 @@ describe("Test Gas", function () {
 		expect(createReceipt.blockHash).to.be.not.null;
 	}).timeout(20000);
 
-    it("Test tx gas limit equal EXTRINSIC_GAS_LIMIT", async function () {
+	it("Test tx gas limit equal EXTRINSIC_GAS_LIMIT", async function () {
 		const createTransaction = await web3.eth.accounts.signTransaction(
 			{
 				from: config.address,
@@ -49,7 +49,7 @@ describe("Test Gas", function () {
 		expect(createReceipt.blockHash).to.be.not.null;
 	}).timeout(20000);
 
-    it("Test tx gas limit larger EXTRINSIC_GAS_LIMIT", async function () {
+	it("Test tx gas limit larger EXTRINSIC_GAS_LIMIT", async function () {
 		const createTransaction = await web3.eth.accounts.signTransaction(
 			{
 				from: config.address,
@@ -59,13 +59,12 @@ describe("Test Gas", function () {
 			config.privKey
 		);
 
-        let result = await customRequest("eth_sendRawTransaction", [createTransaction.rawTransaction]);
-        console.log(result);
-        expect((result as any).error.message).to.equal("submit transaction to pool failed: Pool(InvalidTransaction(InvalidTransaction::ExhaustsResources))");
-		
+		let result = await customRequest("eth_sendRawTransaction", [
+			createTransaction.rawTransaction,
+		]);
+		console.log(result);
+		expect((result as any).error.message).to.equal(
+			"submit transaction to pool failed: Pool(InvalidTransaction(InvalidTransaction::ExhaustsResources))"
+		);
 	}).timeout(20000);
-
-	
-
-	
 });
