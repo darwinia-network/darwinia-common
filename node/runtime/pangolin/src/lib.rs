@@ -25,6 +25,10 @@ pub mod pallets;
 pub use pallets::*;
 
 pub mod bridges_message;
+pub use bridges_message::*;
+
+pub mod migrations;
+pub use migrations::*;
 
 pub mod wasm {
 	//! Make the WASM binary available.
@@ -49,12 +53,7 @@ pub use darwinia_staking::StakerStatus;
 use codec::Encode;
 // --- paritytech ---
 use bp_runtime::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
-#[allow(unused)]
-use frame_support::{log, migration};
-use frame_support::{
-	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade},
-	weights::Weight,
-};
+use frame_support::{log, traits::KeyOwnerProofSystem};
 use frame_system::{
 	offchain::{AppCrypto, CreateSignedTransaction, SendTransactionTypes, SigningTypes},
 	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
@@ -242,7 +241,11 @@ frame_support::construct_runtime! {
 		BridgeRococoGrandpa: pallet_bridge_grandpa::<Instance2>::{Pallet, Call, Storage} = 60,
 		BridgeRococoParachains: pallet_bridge_parachains::<Instance1>::{Pallet, Call, Storage} = 61,
 
-		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 53,
+		BridgePangolinParachainDispatch: pallet_bridge_dispatch::<Instance2>::{Pallet, Event<T>} = 62,
+		BridgePangolinParachainMessages: pallet_bridge_messages::<Instance2>::{Pallet, Call, Storage, Event<T>} = 63,
+
+		PangoroFeeMarket: darwinia_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 53,
+		PangolinParachainFeeMarket: darwinia_fee_market::<Instance2>::{Pallet, Call, Storage, Event<T>} = 64,
 		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 54,
 
 		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
@@ -562,17 +565,22 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
-		fn market_fee() -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
-			if let Some(fee) = FeeMarket::market_fee() {
-				return Some(darwinia_fee_market_rpc_runtime_api::Fee {
-					amount: fee,
-				});
+		fn market_fee(instance: u8) -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
+			match instance {
+				0 => PangoroFeeMarket::market_fee().and_then(|fee| Some(darwinia_fee_market_rpc_runtime_api::Fee { amount: fee })),
+				1 => PangolinParachainFeeMarket::market_fee().and_then(|fee| Some(darwinia_fee_market_rpc_runtime_api::Fee { amount: fee })),
+				_ => None,
 			}
-			None
 		}
-		fn in_process_orders() -> darwinia_fee_market_rpc_runtime_api::InProcessOrders {
-			return darwinia_fee_market_rpc_runtime_api::InProcessOrders {
-				orders: FeeMarket::in_process_orders(),
+		fn in_process_orders(instance: u8) -> darwinia_fee_market_rpc_runtime_api::InProcessOrders {
+			match instance {
+				0 => darwinia_fee_market_rpc_runtime_api::InProcessOrders {
+					orders: PangoroFeeMarket::in_process_orders(),
+				},
+				1 => darwinia_fee_market_rpc_runtime_api::InProcessOrders {
+					orders: PangolinParachainFeeMarket::in_process_orders(),
+				},
+				_ => Default::default()
 			}
 		}
 	}
@@ -812,7 +820,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl bp_pangoro::ToPangoroOutboundLaneApi<Block, Balance, bridges_message::bm_pangoro::ToPangoroMessagePayload> for Runtime {
+	impl bp_pangoro::ToPangoroOutboundLaneApi<Block, Balance, bm_pangoro::ToPangoroMessagePayload> for Runtime {
 		fn message_details(
 			lane: bp_messages::LaneId,
 			begin: bp_messages::MessageNonce,
@@ -821,7 +829,7 @@ sp_api::impl_runtime_apis! {
 			bridge_runtime_common::messages_api::outbound_message_details::<
 				Runtime,
 				WithPangoroMessages,
-				bridges_message::bm_pangoro::WithPangoroMessageBridge,
+				bm_pangoro::WithPangoroMessageBridge,
 			>(lane, begin, end)
 		}
 
@@ -880,7 +888,7 @@ sp_api::impl_runtime_apis! {
 			list_benchmark!(list, extra, darwinia_evm, EVM);
 			list_benchmark!(list, extra, from_substrate_issuing, Substrate2SubstrateIssuing);
 			list_benchmark!(list, extra, from_ethereum_issuing, EthereumIssuing);
-			list_benchmark!(list, extra, darwinia_fee_market, FeeMarket);
+			list_benchmark!(list, extra, darwinia_fee_market, PangoroFeeMarket);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -903,34 +911,12 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, darwinia_evm, EVM);
 			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
 			add_benchmark!(params, batches, from_ethereum_issuing, EthereumIssuing);
-			add_benchmark!(params, batches, darwinia_fee_market, FeeMarket);
+			add_benchmark!(params, batches, darwinia_fee_market, PangoroFeeMarket);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 
 			Ok(batches)
 		}
-	}
-}
-
-fn migrate() -> Weight {
-	0
-	// RuntimeBlockWeights::get().max_block
-}
-
-pub struct CustomOnRuntimeUpgrade;
-impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
-	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<(), &'static str> {
-		Ok(())
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn post_upgrade() -> Result<(), &'static str> {
-		Ok(())
-	}
-
-	fn on_runtime_upgrade() -> Weight {
-		migrate()
 	}
 }
 

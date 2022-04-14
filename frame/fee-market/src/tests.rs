@@ -414,8 +414,8 @@ impl pallet_bridge_messages::Config for Test {
 	type TargetHeaderChain = TestTargetHeaderChain;
 	type LaneMessageVerifier = TestLaneMessageVerifier;
 	type MessageDeliveryAndDispatchPayment = TestMessageDeliveryAndDispatchPayment;
-	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self>;
-	type OnDeliveryConfirmed = FeeMarketMessageConfirmedHandler<Self>;
+	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, ()>;
+	type OnDeliveryConfirmed = FeeMarketMessageConfirmedHandler<Self, ()>;
 
 	type SourceHeaderChain = TestSourceHeaderChain;
 	type MessageDispatch = TestMessageDispatch;
@@ -437,8 +437,8 @@ frame_support::parameter_types! {
 }
 
 pub struct TestSlasher;
-impl<T: Config> Slasher<T> for TestSlasher {
-	fn slash(locked_collateral: RingBalance<T>, timeout: T::BlockNumber) -> RingBalance<T> {
+impl<T: Config<I>, I: 'static> Slasher<T, I> for TestSlasher {
+	fn slash(locked_collateral: RingBalance<T, I>, timeout: T::BlockNumber) -> RingBalance<T, I> {
 		let slash_each_block = 2;
 		let slash_value = UniqueSaturatedInto::<u128>::unique_saturated_into(timeout)
 			.saturating_mul(UniqueSaturatedInto::<u128>::unique_saturated_into(
