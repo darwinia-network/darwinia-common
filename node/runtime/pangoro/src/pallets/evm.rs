@@ -12,7 +12,9 @@ use darwinia_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping,
 };
-use darwinia_evm::{runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, GasWeightMapping};
+use darwinia_evm::{
+	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, GasWeightMapping,
+};
 use darwinia_evm_precompile_bridge_bsc::BscBridge;
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::ConcatConverter;
@@ -99,7 +101,6 @@ impl GasWeightMapping for FixedGasWeightMapping {
 		u64::try_from(weight.wrapping_div(WEIGHT_PER_GAS)).unwrap_or(u32::MAX as u64)
 	}
 }
-
 
 frame_support::parameter_types! {
 	pub const ChainId: u64 = 45;

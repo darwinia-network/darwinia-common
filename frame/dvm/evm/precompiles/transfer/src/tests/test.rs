@@ -60,8 +60,8 @@ fn ring_currency_withdraw_with_enough_balance() {
 		// Check caller balance
 		assert_eq!(
 			RingAccount::account_basic(&alice.address).balance,
-			// gas fee: 41512
-			decimal_convert(70_000_000_000, None).saturating_sub(U256::from(41512))
+			// gas fee: 21512
+			decimal_convert(70_000_000_000, None).saturating_sub(U256::from(21512))
 		);
 		// Check the dest balance
 		let input_bytes: Vec<u8> = hex2bytes_unchecked(WITH_DRAW_INPUT);
