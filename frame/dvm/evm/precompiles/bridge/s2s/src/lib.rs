@@ -121,7 +121,7 @@ where
 		dvm_parser: &DvmInputParser,
 		gas_meter: &mut PrecompileGasMeter<T>,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		// 1 storage read: read outbound latest generated nonce
+		// Storage: ParityBridgeMessages OutboundLanes (r:1 w:0)
 		gas_meter.record_gas(1, 0)?;
 
 		let lane_id = abi_decode_bytes4(dvm_parser.input)
@@ -134,7 +134,7 @@ where
 		dvm_parser: &DvmInputParser,
 		gas_meter: &mut PrecompileGasMeter<T>,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		// 1 storage read: read intbound latest generated nonce
+		// Storage: ParityBridgeMessages INboundLanes (r:1 w:0)
 		gas_meter.record_gas(1, 0)?;
 
 		let lane_id = abi_decode_bytes4(dvm_parser.input)

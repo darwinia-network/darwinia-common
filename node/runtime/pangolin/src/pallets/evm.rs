@@ -4,6 +4,7 @@ use core::marker::PhantomData;
 use codec::{Decode, Encode};
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
+	pallet_prelude::Weight,
 	traits::{FindAuthor, PalletInfoAccess},
 	ConsensusEngineId,
 };

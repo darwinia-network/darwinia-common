@@ -66,13 +66,11 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 
 		match action {
 			Action::TransferAndCall => {
-				// 1 storage read: for check contract code empty
-				// 2 storage read: for source account balance and nonce
-				// 2 storage read: for target account balance and nonce
-				// 2 storage write: for source account main, remaining balance
-				// 2 storage write: for target account main, remaining balance
-				// 2 storage write: for call WKTON contract.
-				gas_meter.record_gas(5, 6)?;
+				// Storage: System Account (r:2 w:2)
+				// Storage: Ethereum RemainingRingBalance (r:2 w:2)
+				// Storage: EVM AccountCodes (r:1 w:0)
+				// Storage: EVM AccountStorages (r:2 w:2)
+				gas_meter.record_gas(7, 6)?;
 
 				let call_data = CallData::decode(&dvm_parser.input)?;
 				let (caller, wkton, value) =
@@ -121,11 +119,9 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				})
 			}
 			Action::Withdraw => {
-				// 1 storage read: for check contract code empty
-				// 2 storage read: for source account balance and nonce
-				// 2 storage read: for target account balance and nonce
-				// 2 storage write: for source account main, remaining balance
-				// 2 storage write: for target account main, remaining balance
+				// Storage: System Account (r:2 w:2)
+				// Storage: Ethereum RemainingRingBalance (r:2 w:2)
+				// Storage: EVM AccountCodes (r:1 w:0)
 				gas_meter.record_gas(5, 4)?;
 
 				let wd = WithdrawData::<T>::decode(&dvm_parser.input)?;

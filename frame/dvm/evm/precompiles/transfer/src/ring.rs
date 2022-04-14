@@ -49,10 +49,8 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 		check_state_modifier(context, is_static, StateMutability::Payable)?;
 
 		let mut gas_meter = PrecompileGasMeter::<T>::new(target_gas);
-		// 2 storage read: for source account balance and nonce
-		// 2 storage read: for target account balance and nonce
-		// 2 storage write: for source account main, remaining balance
-		// 2 storage write: for target account main, remaining balance
+		// Storage: System Account (r:2 w:2)
+		// Storage: Ethereum RemainingRingBalance (r:2 w:2)
 		gas_meter.record_gas(4, 4)?;
 
 		// Decode input data

@@ -2,7 +2,7 @@
 use core::marker::PhantomData;
 // --- paritytech ---
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
-use frame_support::{traits::FindAuthor, ConsensusEngineId};
+use frame_support::{pallet_prelude::Weight, traits::FindAuthor, ConsensusEngineId};
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use pallet_session::FindAccountFromAuthorIndex;
 use sp_core::{crypto::Public, H160, U256};

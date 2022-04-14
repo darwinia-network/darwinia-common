@@ -75,7 +75,7 @@ where
 
 		let output = match action {
 			Action::VerfiySingleStorageProof => {
-				// 1 storage read: finalized checkpoint
+				// Storage: BSC FinalizedCheckpoint (r:1 w:0)
 				gas_meter.record_gas(1, 0)?;
 
 				let params =
@@ -97,7 +97,7 @@ where
 				abi_encode_bytes(storage_value.0.as_slice())
 			}
 			Action::VerifyMultiStorageProof => {
-				// 1 storage read: finalized checkpoint
+				// Storage: BSC FinalizedCheckpoint (r:1 w:0)
 				gas_meter.record_gas(1, 0)?;
 
 				let params =
