@@ -15,7 +15,7 @@ describe("Test Gas", function () {
 		arguments: [5],
 	});
 
-    it("Test block gas limit 1", async function () {
+    it("Test tx gas limit below EXTRINSIC_GAS_LIMIT", async function () {
 		const createTransaction = await web3.eth.accounts.signTransaction(
 			{
 				from: config.address,
@@ -32,7 +32,7 @@ describe("Test Gas", function () {
 		expect(createReceipt.blockHash).to.be.not.null;
 	}).timeout(20000);
 
-    it.skip("Test block gas limit 2", async function () {
+    it("Test tx gas limit equal EXTRINSIC_GAS_LIMIT", async function () {
 		const createTransaction = await web3.eth.accounts.signTransaction(
 			{
 				from: config.address,
@@ -42,9 +42,26 @@ describe("Test Gas", function () {
 			config.privKey
 		);
 
+		const createReceipt = await web3.eth.sendSignedTransaction(
+			createTransaction.rawTransaction
+		);
+		expect(createReceipt.transactionHash).to.be.not.null;
+		expect(createReceipt.blockHash).to.be.not.null;
+	}).timeout(20000);
+
+    it("Test tx gas limit larger EXTRINSIC_GAS_LIMIT", async function () {
+		const createTransaction = await web3.eth.accounts.signTransaction(
+			{
+				from: config.address,
+				data: incrementerTx.encodeABI(),
+				gas: EXTRINSIC_GAS_LIMIT + 1,
+			},
+			config.privKey
+		);
+
         let result = await customRequest("eth_sendRawTransaction", [createTransaction.rawTransaction]);
         console.log(result);
-        expect((result as any).error.message).to.equal("submit transaction to pool failed: Pool(TemporarilyBanned)");
+        expect((result as any).error.message).to.equal("submit transaction to pool failed: Pool(InvalidTransaction(InvalidTransaction::ExhaustsResources))");
 		
 	}).timeout(20000);
 
@@ -52,5 +69,3 @@ describe("Test Gas", function () {
 
 	
 });
-
-// 0.025 * 1000
