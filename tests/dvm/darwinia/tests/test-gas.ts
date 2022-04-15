@@ -62,7 +62,6 @@ describe("Test Gas", function () {
 		let result = await customRequest("eth_sendRawTransaction", [
 			createTransaction.rawTransaction,
 		]);
-		console.log(result);
 		expect((result as any).error.message).to.equal(
 			"submit transaction to pool failed: Pool(InvalidTransaction(InvalidTransaction::ExhaustsResources))"
 		);

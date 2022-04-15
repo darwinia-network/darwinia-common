@@ -224,7 +224,9 @@ macro_rules! impl_self_contained_call {
 				info: &Self::SignedInfo,
 			) -> Option<TransactionValidity> {
 				match self {
-					Call::Ethereum(call) => call.validate_self_contained(info),
+					Call::Ethereum(ref call) => {
+						Some(validate_self_contained_inner(&self, &call, info))
+					}
 					_ => None,
 				}
 			}
