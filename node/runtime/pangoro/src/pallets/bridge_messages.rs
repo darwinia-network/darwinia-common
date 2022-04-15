@@ -29,7 +29,7 @@ impl Config<WithPangolinMessages> for Runtime {
 	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
 
 	type OutboundPayload = bm_pangolin::ToPangolinMessagePayload;
-	type OutboundMessageFee = Balance;
+	type OutboundMessageFee = bp_pangoro::Balance;
 
 	type InboundPayload = bm_pangolin::FromPangolinMessagePayload;
 	type InboundMessageFee = bp_pangolin::Balance;

@@ -31,11 +31,14 @@ use crate::*;
 use bp_messages::{source_chain::*, target_chain::*, *};
 use bp_rococo::parachains::ParaId;
 use bp_runtime::{ChainId, *};
-use bridge_runtime_common::messages::{
-	self,
-	source::{self, *},
-	target::{self, *},
-	BalanceOf, *,
+use bridge_runtime_common::{
+	lanes::*,
+	messages::{
+		self,
+		source::{self, *},
+		target::{self, *},
+		BalanceOf, *,
+	},
 };
 use drml_common_runtime::impls::FromThisChainMessageVerifier;
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
@@ -74,9 +77,6 @@ pub type FromPangolinParachainMessageDispatch = FromBridgedChainMessageDispatch<
 
 /// Identifier of PangolinParachain registered in the rococo relay chain.
 pub const PANGOLIN_PARACHAIN_ID: u32 = 2105;
-
-/// Identifier of bridge between pangolin and pangolin parachain.
-pub const PANGOLIN_PANGOLIN_PARACHAIN_LANE: [u8; 4] = *b"pali";
 
 pub const INITIAL_PANGOLIN_PARACHAIN_TO_PANGOLIN_CONVERSION_RATE: FixedU128 =
 	FixedU128::from_inner(FixedU128::DIV);
@@ -248,7 +248,7 @@ impl TargetHeaderChain<ToPangolinParachainMessagePayload, <Self as ChainWithMess
 
 	fn verify_messages_delivery_proof(
 		proof: Self::MessagesDeliveryProof,
-	) -> Result<(LaneId, InboundLaneData<bp_pangolin_parachain::AccountId>), Self::Error> {
+	) -> Result<(LaneId, InboundLaneData<bp_pangolin::AccountId>), Self::Error> {
 		source::verify_messages_delivery_proof_from_parachain::<
 			WithPangolinParachainMessageBridge,
 			bp_pangolin_parachain::Header,
