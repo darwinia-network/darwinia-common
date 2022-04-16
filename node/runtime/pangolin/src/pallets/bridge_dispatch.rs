@@ -16,8 +16,8 @@ impl Config<WithPangoroDispatch> for Runtime {
 	type CallFilter = Everything;
 	type EncodedCall = bm_pangoro::FromPangoroEncodedCall;
 	type SourceChainAccountId = bp_pangoro::AccountId;
-	type TargetChainAccountPublic = AccountPublic;
-	type TargetChainSignature = Signature;
+	type TargetChainAccountPublic = bp_pangolin::AccountPublic;
+	type TargetChainSignature = bp_pangolin::Signature;
 	type AccountIdConverter = bp_pangolin::AccountIdConverter;
 }
 impl Config<WithPangolinParachainDispatch> for Runtime {
@@ -27,7 +27,7 @@ impl Config<WithPangolinParachainDispatch> for Runtime {
 	type CallFilter = Everything;
 	type EncodedCall = bm_pangolin_parachain::FromPangolinParachainEncodedCall;
 	type SourceChainAccountId = bp_pangolin_parachain::AccountId;
-	type TargetChainAccountPublic = AccountPublic;
-	type TargetChainSignature = Signature;
+	type TargetChainAccountPublic = bp_pangolin::AccountPublic;
+	type TargetChainSignature = bp_pangolin::Signature;
 	type AccountIdConverter = bp_pangolin::AccountIdConverter;
 }

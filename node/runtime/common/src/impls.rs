@@ -24,17 +24,14 @@ use core::marker::PhantomData;
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 // --- paritytech ---
-use bp_messages::{
-	source_chain::{LaneMessageVerifier, Sender},
-	LaneId, OutboundLaneData,
-};
-use bridge_runtime_common::messages::{source::*, *};
 use frame_support::traits::{Currency, Get, Imbalance, OnUnbalanced};
 use sp_io::offchain;
 use sp_npos_elections::ExtendedBalance;
 use sp_runtime::{traits::TrailingZeroInput, RuntimeDebug};
 // --- darwinia-network ---
 use crate::*;
+use bp_messages::{source_chain::*, *};
+use bridge_runtime_common::messages::{source::*, *};
 use drml_primitives::*;
 
 darwinia_support::impl_account_data! {

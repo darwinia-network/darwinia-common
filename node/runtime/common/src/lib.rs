@@ -74,9 +74,6 @@ const_assert!(NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO
 /// pallet-election-provider-multi-phase.
 pub const MINER_MAX_ITERATIONS: u32 = 10;
 
-// 726f6c69
-pub const PANGORO_PANGOLIN_LANE: [u8; 4] = *b"roli";
-
 frame_support::parameter_types! {
 	pub const BlockHashCountForPangolin: BlockNumber = 256;
 	pub const BlockHashCountForPangoro: BlockNumber = 2400;
