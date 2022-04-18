@@ -393,7 +393,7 @@ pub fn development_config() -> ChainSpec {
 					.map(|x| (x.0, x.1, A_FEW_COINS, StakerStatus::Validator))
 					.collect(),
 				invulnerables: initial_authorities.iter().cloned().map(|x| x.0).collect(),
-				force_era: darwinia_staking::Forcing::ForceAlways,
+				force_era: Forcing::ForceNew,
 				slash_reward_fraction: Perbill::from_percent(10),
 				payout_fraction: Perbill::from_percent(50),
 				..Default::default()
@@ -590,7 +590,7 @@ pub fn local_testnet_config() -> ChainSpec {
 					.map(|x| (x.0, x.1, A_FEW_COINS, StakerStatus::Validator))
 					.collect(),
 				invulnerables: initial_authorities.iter().cloned().map(|x| x.0).collect(),
-				force_era: darwinia_staking::Forcing::ForceAlways,
+				force_era: Forcing::ForceNew,
 				slash_reward_fraction: Perbill::from_percent(10),
 				payout_fraction: Perbill::from_percent(50),
 				..Default::default()
