@@ -47,7 +47,7 @@ pub mod wasm {
 }
 pub use wasm::*;
 
-pub use darwinia_staking::StakerStatus;
+pub use darwinia_staking::{Forcing, StakerStatus};
 
 // --- crates.io ---
 use codec::Encode;
