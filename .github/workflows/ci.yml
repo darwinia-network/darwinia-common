@@ -58,9 +58,6 @@ jobs:
             flags: --features template,evm-tracing
             task:
               target: drml
-          - action: build
-            task:
-              target: subalfred
 
     steps:
       - name: Install Rust ${{ env.RUST_TOOLCHAIN }} toolchain
