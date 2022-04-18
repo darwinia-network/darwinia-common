@@ -10,7 +10,7 @@ const account = web3.eth.accounts.wallet.add(config.privKey);
 const opcodes = new web3.eth.Contract(opcodes_test.abi as AbiItem[]);
 opcodes.options.from = config.address;
 opcodes.options.gas = config.gas;
-opcodes.options.gasPrice = "10000000000";
+opcodes.options.gasPrice = "1000000000";
 
 describe("Test Solidity OpCodes", function () {
 	it("Should run without errors the majort of opcodes", async () => {

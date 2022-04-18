@@ -9,7 +9,7 @@ const account = web3.eth.accounts.wallet.add(config.privKey);
 const jsontest = new web3.eth.Contract(log_test.abi as AbiItem[]);
 jsontest.options.from = config.address;
 jsontest.options.gas = config.gas;
-jsontest.options.gasPrice = "10000000000";
+jsontest.options.gasPrice = "1000000000";
 
 describe("Test Contract Log", function () {
 	it("Deploy json test contract", async function () {
