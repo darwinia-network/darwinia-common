@@ -22,7 +22,7 @@ use codec::{Decode, Encode};
 use bp_message_dispatch::CallOrigin;
 use bp_runtime::messages::DispatchFeePayment;
 use sp_core::{H160, U256};
-use sp_std::{vec, vec::Vec};
+use sp_std::{vec::Vec};
 // --- darwinia-network ---
 use dp_asset::TokenMetadata;
 
@@ -30,9 +30,17 @@ use dp_asset::TokenMetadata;
 pub trait CreatePayload<SourceChainAccountId, TargetChainAccountPublic, TargetChainSignature> {
 	type Payload: Encode;
 
-	fn encode_call(pallet_index: u8, call_params: CallParams) -> Result<Vec<u8>, &'static str> {
-		let mut encoded = vec![pallet_index];
-		encoded.append(&mut call_params.encode());
+	fn encode_call(pallet_index: u8, mut call_params: CallParams) -> Result<Vec<u8>, &'static str> {
+		let mut encoded = Vec::new();
+		match call_params {
+			CallParams::OpaqueCall(ref mut call) => {
+				encoded.append(call)
+			},
+			_ => {
+				encoded.push(pallet_index);
+				encoded.append(&mut call_params.encode());
+			}
+		}
 		Ok(encoded)
 	}
 
@@ -67,7 +75,7 @@ pub enum CallParams {
 	S2sIssuingPalletIssueFromRemote(H160, U256, H160),
 	#[codec(index = 2)]
 	S2sBackingPalletUnlockFromRemote(H160, U256, Vec<u8>),
-	RawCall(Vec<u8>),
+	OpaqueCall(Vec<u8>),
 }
 
 #[cfg(test)]

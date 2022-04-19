@@ -32,7 +32,7 @@ use darwinia_support::{
 };
 use dp_contract::{
 	abi_util::{abi_decode_bytes4, abi_encode_bytes, abi_encode_u64},
-	mapping_token_factory::s2s::{Helper, S2sRemoteUnlockInfo, S2sSendMessageParams},
+	mapping_token_factory::s2s::{S2sCallWrapper, S2sRemoteUnlockInfo, S2sSendMessageParams},
 };
 use dp_s2s::{CallParams, CreatePayload};
 // --- paritytech ---
@@ -55,6 +55,7 @@ enum Action {
 		"encode_unlock_from_remote_dispatch_call(uint32,uint64,uint32,address,bytes,uint256)",
 	EncodeSendMessageDispatchCall =
 		"encode_send_message_dispatch_call(uint32,bytes4,bytes,uint256)",
+	CreateOpaqueCallPayload = "create_opaque_call_payload(uint32,uint64,bytes)",
 }
 
 /// The contract address: 0000000000000000000000000000000000000018
@@ -88,7 +89,14 @@ where
 			Action::EncodeUnlockFromRemoteDispatchCall => {
 				Self::encode_unlock_from_remote_dispatch_call(&dvm_parser, context.caller)?
 			}
+			Action::CreateOpaqueCallPayload => {
+				// This action creates a rich payload for the target chain. Additionally,
+				// the payload contains more nessary information, such as spec_version, weight, dipatch_fee_payment, etc.
+				Self::create_opaque_call_payload(&dvm_parser, context.caller)?
+			}
 			Action::EncodeSendMessageDispatchCall => {
+				// The main task of this action is creating a pallet_bridge_messsage send_message call(including payload),
+				// which can be dispatched using dispatch precompile; the message is then stored in the outbound storage, waiting for the bridger to deliver it.
 				Self::encode_send_message_dispatch_call(&dvm_parser)?
 			}
 		};
@@ -148,17 +156,17 @@ where
 		Ok(abi_encode_bytes(payload.encode().as_slice()))
 	}
 
-	fn get_diapatch_call_payload(
+	fn create_opaque_call_payload(
 		dvm_parser: &DvmInputParser,
 		caller: H160,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		let helper = Helper::abi_decode(dvm_parser.input)
+		let wapper = S2sCallWrapper::abi_decode(dvm_parser.input)
 			.map_err(|_| custom_precompile_err("decode unlock failed"))?;
 		let payload = P::create(
 			CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(caller)),
-			helper.spec_version,
-			helper.weight,
-			CallParams::RawCall(helper.call),
+			wapper.spec_version,
+			wapper.weight,
+			CallParams::OpaqueCall(wapper.opaque_call),
 			DispatchFeePayment::AtSourceChain,
 		)
 		.map_err(|_| custom_precompile_err("decode remote unlock failed"))?;
