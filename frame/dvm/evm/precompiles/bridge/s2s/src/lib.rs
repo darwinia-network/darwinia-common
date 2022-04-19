@@ -32,7 +32,7 @@ use darwinia_support::{
 };
 use dp_contract::{
 	abi_util::{abi_decode_bytes4, abi_encode_bytes, abi_encode_u64},
-	mapping_token_factory::s2s::{S2sCallWrapper, S2sRemoteUnlockInfo, S2sSendMessageParams},
+	mapping_token_factory::s2s::{S2sOpaqueCallWrapper, S2sRemoteUnlockInfo, S2sSendMessageParams},
 };
 use dp_s2s::{CallParams, CreatePayload};
 // --- paritytech ---
@@ -160,7 +160,7 @@ where
 		dvm_parser: &DvmInputParser,
 		caller: H160,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		let wapper = S2sCallWrapper::abi_decode(dvm_parser.input)
+		let wapper = S2sOpaqueCallWrapper::abi_decode(dvm_parser.input)
 			.map_err(|_| custom_precompile_err("decode unlock failed"))?;
 		let payload = P::create(
 			CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(caller)),

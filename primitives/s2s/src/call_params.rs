@@ -22,7 +22,7 @@ use codec::{Decode, Encode};
 use bp_message_dispatch::CallOrigin;
 use bp_runtime::messages::DispatchFeePayment;
 use sp_core::{H160, U256};
-use sp_std::{vec::Vec};
+use sp_std::vec::Vec;
 // --- darwinia-network ---
 use dp_asset::TokenMetadata;
 
@@ -33,9 +33,7 @@ pub trait CreatePayload<SourceChainAccountId, TargetChainAccountPublic, TargetCh
 	fn encode_call(pallet_index: u8, mut call_params: CallParams) -> Result<Vec<u8>, &'static str> {
 		let mut encoded = Vec::new();
 		match call_params {
-			CallParams::OpaqueCall(ref mut call) => {
-				encoded.append(call)
-			},
+			CallParams::OpaqueCall(ref mut call) => encoded.append(call),
 			_ => {
 				encoded.push(pallet_index);
 				encoded.append(&mut call_params.encode());

@@ -156,24 +156,26 @@ impl S2sRemoteUnlockInfo {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct S2sCallWrapper {
+pub struct S2sOpaqueCallWrapper {
 	pub spec_version: u32,
 	pub weight: u64,
 	pub opaque_call: Vec<u8>,
 }
 
-impl S2sCallWrapper {
+impl S2sOpaqueCallWrapper {
 	pub fn abi_decode(data: &[u8]) -> AbiResult<Self> {
 		let tokens = ethabi::decode(
 			&[ParamType::Uint(32), ParamType::Uint(64), ParamType::Bytes],
 			&data,
 		)?;
 		match (tokens[0].clone(), tokens[1].clone(), tokens[2].clone()) {
-			(Token::Uint(spec_version), Token::Uint(weight), Token::Bytes(opaque_call)) => Ok(Self {
-				spec_version: spec_version.as_u32(),
-				weight: weight.as_u64(),
-				opaque_call,
-			}),
+			(Token::Uint(spec_version), Token::Uint(weight), Token::Bytes(opaque_call)) => {
+				Ok(Self {
+					spec_version: spec_version.as_u32(),
+					weight: weight.as_u64(),
+					opaque_call,
+				})
+			}
 			_ => Err(Error::InvalidData),
 		}
 	}
