@@ -156,13 +156,13 @@ impl S2sRemoteUnlockInfo {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct S2sOpaqueCallWrapper {
+pub struct S2sOpaqueCallParams {
 	pub spec_version: u32,
 	pub weight: u64,
 	pub opaque_call: Vec<u8>,
 }
 
-impl S2sOpaqueCallWrapper {
+impl S2sOpaqueCallParams {
 	pub fn abi_decode(data: &[u8]) -> AbiResult<Self> {
 		let tokens = ethabi::decode(
 			&[ParamType::Uint(32), ParamType::Uint(64), ParamType::Bytes],
