@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "darwinia-staking-rpc"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.8.7"
+version     = "2.8.8"
 
 [dependencies]
 # crates.io
