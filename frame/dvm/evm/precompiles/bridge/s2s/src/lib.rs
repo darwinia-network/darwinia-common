@@ -54,6 +54,8 @@ enum Action {
 		"encode_unlock_from_remote_dispatch_call(uint32,uint64,uint32,address,bytes,uint256)",
 	EncodeSendMessageDispatchCall =
 		"encode_send_message_dispatch_call(uint32,bytes4,bytes,uint256)",
+	BuildMessagePayload =
+		"build_message_payload(uint32,uint64,bytes)",
 }
 
 /// The contract address: 0000000000000000000000000000000000000018
@@ -88,6 +90,9 @@ where
 			}
 			Action::EncodeSendMessageDispatchCall => {
 				Self::encode_send_message_dispatch_call(&dvm_parser)?
+			}
+			Action::BuildMessagePayload => {
+				Self::build_message_payload(&dvm_parser, context.caller)?
 			}
 		};
 
