@@ -161,7 +161,7 @@ where
 		caller: H160,
 	) -> Result<Vec<u8>, PrecompileFailure> {
 		let wapper = S2sOpaqueCallWrapper::abi_decode(dvm_parser.input)
-			.map_err(|_| custom_precompile_err("decode unlock failed"))?;
+			.map_err(|_| custom_precompile_err("decode failed"))?;
 		let payload = P::create(
 			CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(caller)),
 			wapper.spec_version,
@@ -169,7 +169,7 @@ where
 			CallParams::OpaqueCall(wapper.opaque_call),
 			DispatchFeePayment::AtSourceChain,
 		)
-		.map_err(|_| custom_precompile_err("decode remote unlock failed"))?;
+		.map_err(|_| custom_precompile_err("decode failed"))?;
 		Ok(abi_encode_bytes(payload.encode().as_slice()))
 	}
 
