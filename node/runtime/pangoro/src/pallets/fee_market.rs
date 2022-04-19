@@ -1,3 +1,5 @@
+pub use darwinia_fee_market::Instance1 as WithPangolinFeeMarket;
+
 // --- core ---
 use core::cmp;
 // --- substrate ---
@@ -6,6 +8,20 @@ use sp_runtime::{traits::UniqueSaturatedInto, Permill};
 // --- darwinia ---
 use crate::*;
 use darwinia_fee_market::{Config, RingBalance, Slasher};
+
+pub struct FeeMarketSlasher;
+impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
+	fn slash(locked_collateral: RingBalance<T, I>, timeout: T::BlockNumber) -> RingBalance<T, I> {
+		let slash_each_block = 2 * COIN;
+		let slash_value = UniqueSaturatedInto::<Balance>::unique_saturated_into(timeout)
+			.saturating_mul(UniqueSaturatedInto::<Balance>::unique_saturated_into(
+				slash_each_block,
+			))
+			.unique_saturated_into();
+
+		cmp::min(locked_collateral, slash_value)
+	}
+}
 
 frame_support::parameter_types! {
 	pub const FeeMarketPalletId: PalletId = PalletId(*b"da/feemk");
@@ -21,7 +37,7 @@ frame_support::parameter_types! {
 	pub const ConfirmRelayersRewardRatio: Permill = Permill::from_percent(20);
 }
 
-impl Config for Runtime {
+impl Config<WithPangolinFeeMarket> for Runtime {
 	type PalletId = FeeMarketPalletId;
 	type TreasuryPalletId = TreasuryPalletId;
 	type LockId = FeeMarketLockId;
@@ -38,18 +54,4 @@ impl Config for Runtime {
 	type RingCurrency = Ring;
 	type Event = Event;
 	type WeightInfo = ();
-}
-
-pub struct FeeMarketSlasher;
-impl<T: Config> Slasher<T> for FeeMarketSlasher {
-	fn slash(locked_collateral: RingBalance<T>, timeout: T::BlockNumber) -> RingBalance<T> {
-		let slash_each_block = 2 * COIN;
-		let slash_value = UniqueSaturatedInto::<Balance>::unique_saturated_into(timeout)
-			.saturating_mul(UniqueSaturatedInto::<Balance>::unique_saturated_into(
-				slash_each_block,
-			))
-			.unique_saturated_into();
-
-		cmp::min(locked_collateral, slash_value)
-	}
 }

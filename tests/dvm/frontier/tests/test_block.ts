@@ -46,7 +46,9 @@ describeWithFrontier("Frontier RPC (Block)", (context) => {
 	step("should have empty uncles and correct sha3Uncles", async function () {
 		const block = await context.web3.eth.getBlock(0);
 		expect(block.uncles).to.be.a("array").empty;
-		expect(block.sha3Uncles).to.equal("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347");
+		expect(block.sha3Uncles).to.equal(
+			"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+		);
 	});
 
 	step("should have empty transactions and correct transactionRoot", async function () {
@@ -134,13 +136,13 @@ describeWithFrontier("Frontier RPC (Block)", (context) => {
 		expect(block.timestamp).to.be.a("number");
 	});
 
-	step("get block by hash", async function() {
+	step("get block by hash", async function () {
 		const latest_block = await context.web3.eth.getBlock("latest");
 		const block = await context.web3.eth.getBlock(latest_block.hash);
 		expect(block.hash).to.be.eq(latest_block.hash);
 	});
 
-	step("get block by number", async function() {
+	step("get block by number", async function () {
 		const block = await context.web3.eth.getBlock(1);
 		expect(block).not.null;
 	});

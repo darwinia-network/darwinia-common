@@ -1,71 +1,54 @@
 pub use pallet_bridge_messages::Instance1 as WithPangolinMessages;
 
-// --- paritytech ---
-use bp_messages::MessageNonce;
-use bp_pangolin::{
-	AccountIdConverter, MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
-	MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX, MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX,
-};
-use bp_runtime::{ChainId, PANGOLIN_CHAIN_ID};
-use pallet_bridge_messages::Config;
 // --- darwinia-network ---
 use crate::*;
+use bp_messages::MessageNonce;
+use bp_runtime::{ChainId, PANGOLIN_CHAIN_ID};
 use darwinia_fee_market::s2s::{
 	FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler, FeeMarketPayment,
 };
 use darwinia_support::evm::{ConcatConverter, IntoAccountId, IntoH160};
-use pangolin_messages::{
-	FromPangolinMessageDispatch, FromPangolinMessagePayload, Pangolin,
-	PangoroToPangolinMessagesParameter, ToPangolinMessagePayload, ToPangolinMessageVerifier,
-};
+use pallet_bridge_messages::Config;
 
 frame_support::parameter_types! {
 	pub const MaxMessagesToPruneAtOnce: MessageNonce = 8;
 	pub const MaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =
-		MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
+		bp_pangolin::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
 	pub const MaxUnconfirmedMessagesAtInboundLane: MessageNonce =
-		MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
-	// `IdentityFee` is used by Pangoro => we may use weight directly
-	pub const GetDeliveryConfirmationTransactionFee: Balance =
-		MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT as _;
-	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::into_account_id((&b"root"[..]).into_h160()));
+		bp_pangolin::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
 	pub const BridgedChainId: ChainId = PANGOLIN_CHAIN_ID;
+	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::into_account_id((&b"root"[..]).into_h160()));
 }
 
 impl Config<WithPangolinMessages> for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
-	type Parameter = PangoroToPangolinMessagesParameter;
+	type Parameter = bm_pangolin::PangoroToPangolinMessagesParameter;
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
 	type MaxUnrewardedRelayerEntriesAtInboundLane = MaxUnrewardedRelayerEntriesAtInboundLane;
 	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
 
-	type OutboundPayload = ToPangolinMessagePayload;
-	type OutboundMessageFee = Balance;
+	type OutboundPayload = bm_pangolin::ToPangolinMessagePayload;
+	type OutboundMessageFee = bp_pangoro::Balance;
 
-	type InboundPayload = FromPangolinMessagePayload;
-	type InboundMessageFee = pangolin_primitives::Balance;
-	type InboundRelayer = pangolin_primitives::AccountId;
+	type InboundPayload = bm_pangolin::FromPangolinMessagePayload;
+	type InboundMessageFee = bp_pangolin::Balance;
+	type InboundRelayer = bp_pangolin::AccountId;
 
-	type AccountIdConverter = AccountIdConverter;
+	type AccountIdConverter = bp_pangoro::AccountIdConverter;
 
-	type TargetHeaderChain = Pangolin;
-	type LaneMessageVerifier = ToPangolinMessageVerifier<Self>;
-	type MessageDeliveryAndDispatchPayment = FeeMarketPayment<
-		Runtime,
-		WithPangolinMessages,
-		Ring,
-		GetDeliveryConfirmationTransactionFee,
-		RootAccountForPayments,
-	>;
+	type TargetHeaderChain = bm_pangolin::Pangolin;
+	type LaneMessageVerifier = bm_pangolin::ToPangolinMessageVerifier;
+	type MessageDeliveryAndDispatchPayment =
+		FeeMarketPayment<Runtime, WithPangolinFeeMarket, Ring, RootAccountForPayments>;
 
-	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self>;
+	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangolinFeeMarket>;
 	type OnDeliveryConfirmed = (
 		Substrate2SubstrateBacking,
-		FeeMarketMessageConfirmedHandler<Self>,
+		FeeMarketMessageConfirmedHandler<Self, WithPangolinFeeMarket>,
 	);
 
-	type SourceHeaderChain = Pangolin;
-	type MessageDispatch = FromPangolinMessageDispatch;
+	type SourceHeaderChain = bm_pangolin::Pangolin;
+	type MessageDispatch = bm_pangolin::FromPangolinMessageDispatch;
 	type BridgedChainId = BridgedChainId;
 }

@@ -24,24 +24,15 @@ use core::marker::PhantomData;
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 // --- paritytech ---
-use bp_messages::{
-	source_chain::{LaneMessageVerifier, Sender},
-	LaneId, OutboundLaneData,
-};
-use bridge_runtime_common::messages::{
-	source::{
-		FromThisChainMessagePayload, BAD_ORIGIN, OUTBOUND_LANE_DISABLED, TOO_LOW_FEE,
-		TOO_MANY_PENDING_MESSAGES,
-	},
-	AccountIdOf, BalanceOf, MessageBridge, ThisChain, ThisChainWithMessages,
-};
 use frame_support::traits::{Currency, Get, Imbalance, OnUnbalanced};
 use sp_io::offchain;
 use sp_npos_elections::ExtendedBalance;
 use sp_runtime::{traits::TrailingZeroInput, RuntimeDebug};
 // --- darwinia-network ---
 use crate::*;
-use drml_primitives::AccountId;
+use bp_messages::{source_chain::*, *};
+use bridge_runtime_common::messages::{source::*, *};
+use drml_primitives::*;
 
 darwinia_support::impl_account_data! {
 	struct AccountData<Balance>
@@ -56,7 +47,7 @@ darwinia_support::impl_account_data! {
 }
 
 /// Logic for the author to get a portion of fees.
-pub struct ToAuthor<R>(sp_std::marker::PhantomData<R>);
+pub struct ToAuthor<R>(PhantomData<R>);
 impl<R> OnUnbalanced<RingNegativeImbalance<R>> for ToAuthor<R>
 where
 	R: darwinia_balances::Config<RingInstance> + pallet_authorship::Config,
@@ -78,7 +69,7 @@ where
 	}
 }
 
-pub struct DealWithFees<R>(sp_std::marker::PhantomData<R>);
+pub struct DealWithFees<R>(PhantomData<R>);
 impl<R> OnUnbalanced<RingNegativeImbalance<R>> for DealWithFees<R>
 where
 	R: darwinia_balances::Config<RingInstance>
@@ -141,18 +132,19 @@ impl Get<Option<(usize, ExtendedBalance)>> for OffchainRandomBalancing {
 ///   dispatch origin;
 /// - check that the sender has paid enough funds for both message delivery and dispatch.
 #[derive(RuntimeDebug)]
-pub struct FromThisChainMessageVerifier<B, R>(PhantomData<(B, R)>);
-impl<B, R>
+pub struct FromThisChainMessageVerifier<B, R, I>(PhantomData<(B, R, I)>);
+impl<B, R, I>
 	LaneMessageVerifier<
 		AccountIdOf<ThisChain<B>>,
 		FromThisChainMessagePayload<B>,
 		BalanceOf<ThisChain<B>>,
-	> for FromThisChainMessageVerifier<B, R>
+	> for FromThisChainMessageVerifier<B, R, I>
 where
 	B: MessageBridge,
-	R: darwinia_fee_market::Config,
-	AccountIdOf<ThisChain<B>>: PartialEq + Clone,
-	darwinia_fee_market::RingBalance<R>: From<BalanceOf<ThisChain<B>>>,
+	R: darwinia_fee_market::Config<I>,
+	I: 'static,
+	AccountIdOf<ThisChain<B>>: Clone + PartialEq,
+	darwinia_fee_market::RingBalance<R, I>: From<BalanceOf<ThisChain<B>>>,
 {
 	type Error = &'static str;
 
@@ -184,8 +176,8 @@ where
 
 		// Do the delivery_and_dispatch_fee. We assume that the delivery and dispatch fee always
 		// greater than the fee market provided fee.
-		if let Some(market_fee) = darwinia_fee_market::Pallet::<R>::market_fee() {
-			let message_fee: darwinia_fee_market::RingBalance<R> =
+		if let Some(market_fee) = darwinia_fee_market::Pallet::<R, I>::market_fee() {
+			let message_fee: darwinia_fee_market::RingBalance<R, I> =
 				(*delivery_and_dispatch_fee).into();
 
 			// compare with actual fee paid

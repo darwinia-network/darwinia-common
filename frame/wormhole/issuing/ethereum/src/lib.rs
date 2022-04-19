@@ -49,7 +49,7 @@ use darwinia_ethereum::InternalTransactHandler;
 use darwinia_evm::GasWeightMapping;
 use darwinia_relay_primitives::relay_authorities::*;
 use darwinia_support::{
-	balance::*, evm::IntoAccountId, mapping_token::*, traits::EthereumReceipt, AccountId, ChainName,
+	balance::*, evm::IntoAccountId, mapping_token::*, traits::EthereumReceipt, ChainName,
 };
 use dp_contract::{
 	ethereum_backing::{EthereumBacking, EthereumLockEvent, EthereumRegisterEvent},
@@ -61,11 +61,11 @@ use dp_contract::{
 use ethereum_primitives::{
 	log_entry::LogEntry, receipt::EthereumTransactionIndex, EthereumAddress, U256,
 };
-pub use pallet::*;
 
 const REGISTER_TYPE: u8 = 0;
 const BURN_TYPE: u8 = 1;
 
+pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 pub type EthereumReceiptProofThing<T> = <<T as Config>::EthereumRelay as EthereumReceipt<
 	AccountId<T>,
@@ -350,6 +350,7 @@ pub mod pallet {
 		}
 	}
 }
+pub use pallet::*;
 
 impl<T: Config> Pallet<T> {
 	pub fn mapped_token_address(

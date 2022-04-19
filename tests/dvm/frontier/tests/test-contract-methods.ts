@@ -1,12 +1,18 @@
 import { expect } from "chai";
 
-import Test from "../build/contracts/Test.json"
-import { createAndFinalizeBlock, createAndFinalizeBlockNowait, customRequest, describeWithFrontier } from "./util";
+import Test from "../build/contracts/Test.json";
+import {
+	createAndFinalizeBlock,
+	createAndFinalizeBlockNowait,
+	customRequest,
+	describeWithFrontier,
+} from "./util";
 import { AbiItem } from "web3-utils";
 
 describeWithFrontier("Frontier RPC (Contract Methods)", (context) => {
 	const GENESIS_ACCOUNT = "0x6be02d1d3665660d22ff9624b7be0551ee1ac91b";
-	const GENESIS_ACCOUNT_PRIVATE_KEY = "0x99B3C12287537E38C90A9219D4CB074A89A16E9CDB20BF85728EBD97C343E342";
+	const GENESIS_ACCOUNT_PRIVATE_KEY =
+		"0x99B3C12287537E38C90A9219D4CB074A89A16E9CDB20BF85728EBD97C343E342";
 
 	const TEST_CONTRACT_BYTECODE = Test.bytecode;
 	const TEST_CONTRACT_ABI = Test.abi as AbiItem[];
@@ -67,7 +73,7 @@ describeWithFrontier("Frontier RPC (Contract Methods)", (context) => {
 		});
 		let number = (await context.web3.eth.getBlock("latest")).number;
 		let last = number + 256;
-		for(let i = number; i <= last; i++) {
+		for (let i = number; i <= last; i++) {
 			let hash = (await context.web3.eth.getBlock("latest")).hash;
 			expect(await contract.methods.blockHash(i).call()).to.eq(hash);
 			await createAndFinalizeBlockNowait(context.web3);
@@ -84,20 +90,26 @@ describeWithFrontier("Frontier RPC (Contract Methods)", (context) => {
 			gasPrice: "0x3B9ACA00",
 		});
 		// Max u32
-		expect(await contract.methods.gasLimit().call()).to.eq('4294967295');
+		expect(await contract.methods.gasLimit().call()).to.eq("4294967295");
 	});
 
 	// Requires error handling
 	it.skip("should fail for missing parameters", async function () {
-		const contract = new context.web3.eth.Contract([{ ...TEST_CONTRACT_ABI[0], inputs: [] }], FIRST_CONTRACT_ADDRESS, {
-			from: GENESIS_ACCOUNT,
-			gasPrice: "0x3B9ACA00",
-		});
+		const contract = new context.web3.eth.Contract(
+			[{ ...TEST_CONTRACT_ABI[0], inputs: [] }],
+			FIRST_CONTRACT_ADDRESS,
+			{
+				from: GENESIS_ACCOUNT,
+				gasPrice: "0x3B9ACA00",
+			}
+		);
 		await contract.methods
 			.multiply()
 			.call()
 			.catch((err) =>
-				expect(err.message).to.equal(`Returned error: VM Exception while processing transaction: revert.`)
+				expect(err.message).to.equal(
+					`Returned error: VM Exception while processing transaction: revert.`
+				)
 			);
 	});
 
@@ -123,14 +135,21 @@ describeWithFrontier("Frontier RPC (Contract Methods)", (context) => {
 			.multiply(3, 4)
 			.call()
 			.catch((err) =>
-				expect(err.message).to.equal(`Returned error: VM Exception while processing transaction: revert.`)
+				expect(err.message).to.equal(
+					`Returned error: VM Exception while processing transaction: revert.`
+				)
 			);
 	});
 
 	// Requires error handling
 	it.skip("should fail for invalid parameters", async function () {
 		const contract = new context.web3.eth.Contract(
-			[{ ...TEST_CONTRACT_ABI[0], inputs: [{ internalType: "address", name: "a", type: "address" }] }],
+			[
+				{
+					...TEST_CONTRACT_ABI[0],
+					inputs: [{ internalType: "address", name: "a", type: "address" }],
+				},
+			],
 			FIRST_CONTRACT_ADDRESS,
 			{ from: GENESIS_ACCOUNT, gasPrice: "0x3B9ACA00" }
 		);
@@ -138,7 +157,9 @@ describeWithFrontier("Frontier RPC (Contract Methods)", (context) => {
 			.multiply("0x0123456789012345678901234567890123456789")
 			.call()
 			.catch((err) =>
-				expect(err.message).to.equal(`Returned error: VM Exception while processing transaction: revert.`)
+				expect(err.message).to.equal(
+					`Returned error: VM Exception while processing transaction: revert.`
+				)
 			);
 	});
 });

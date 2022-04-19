@@ -50,7 +50,7 @@ where
 			+ sc_client_api::backend::StorageProvider<B, BE>,
 		C::Api: sp_block_builder::BlockBuilder<B>
 			+ fp_rpc::EthereumRuntimeRPCApi<B>
-			+ dp_evm_trace_apis::DebugRuntimeApi<B>,
+			+ moonbeam_rpc_primitives_debug::DebugRuntimeApi<B>,
 		B: 'static + Send + Sync + sp_runtime::traits::Block<Hash = Hash>,
 		B::Header: sp_api::HeaderT<Number = BlockNumber>,
 		BE: 'static + sc_client_api::backend::Backend<B>,
@@ -65,8 +65,9 @@ where
 		use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 		use fc_rpc::EthTask;
 		// --- darwinia-network ---
-		use darwinia_client_rpc::{CacheTask, DebugTask};
 		use drml_rpc::{EthRpcConfig, EthRpcRequesters};
+		use moonbeam_rpc_debug::DebugHandler;
+		use moonbeam_rpc_trace::CacheTask;
 
 		let DvmTaskParams {
 			task_manager,
@@ -153,7 +154,7 @@ where
 				.iter()
 				.any(|target| target.as_str() == "debug")
 			{
-				let (debug_task, debug_requester) = DebugTask::task(
+				let (debug_task, debug_requester) = DebugHandler::task(
 					client.clone(),
 					substrate_backend.clone(),
 					dvm_backend.clone(),

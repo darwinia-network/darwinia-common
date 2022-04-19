@@ -44,6 +44,7 @@ use fp_evm::{
 };
 use frame_support::sp_runtime::SaturatedConversion;
 use sp_core::H160;
+use sp_runtime::{MultiSignature, MultiSigner};
 use sp_std::vec::Vec;
 
 #[darwinia_evm_precompile_utils::selector]
@@ -57,14 +58,15 @@ enum Action {
 }
 
 /// The contract address: 0000000000000000000000000000000000000018
-pub struct Sub2SubBridge<T, S> {
-	_marker: PhantomData<(T, S)>,
+pub struct Sub2SubBridge<T, S, P> {
+	_marker: PhantomData<(T, S, P)>,
 }
 
-impl<T, S> Precompile for Sub2SubBridge<T, S>
+impl<T, S, P> Precompile for Sub2SubBridge<T, S, P>
 where
-	T: from_substrate_issuing::Config,
+	T: darwinia_evm::Config,
 	S: RelayMessageSender + LatestMessageNoncer,
+	P: CreatePayload<T::AccountId, MultiSigner, MultiSignature>,
 {
 	fn execute(
 		input: &[u8],
@@ -101,10 +103,11 @@ where
 	}
 }
 
-impl<T, S> Sub2SubBridge<T, S>
+impl<T, S, P> Sub2SubBridge<T, S, P>
 where
-	T: from_substrate_issuing::Config,
+	T: darwinia_evm::Config,
 	S: RelayMessageSender + LatestMessageNoncer,
+	P: CreatePayload<T::AccountId, MultiSigner, MultiSignature>,
 {
 	fn outbound_latest_generated_nonce(
 		dvm_parser: &DvmInputParser,
@@ -130,7 +133,7 @@ where
 	) -> Result<Vec<u8>, PrecompileFailure> {
 		let unlock_info = S2sRemoteUnlockInfo::abi_decode(dvm_parser.input)
 			.map_err(|_| custom_precompile_err("decode unlock failed"))?;
-		let payload = <T as from_substrate_issuing::Config>::OutboundPayloadCreator::create(
+		let payload = P::create(
 			CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(caller)),
 			unlock_info.spec_version,
 			unlock_info.weight,

@@ -29,14 +29,11 @@ use sp_core::{H160, U256};
 use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 // --- darwinia-network ---
 use crate::util;
-use darwinia_evm::{runner::Runner, AccountBasic, Pallet};
+use darwinia_evm::{runner::Runner, AccountBasic, AccountId, Pallet};
 use darwinia_evm_precompile_utils::{
 	check_state_modifier, custom_precompile_err, selector, DvmInputParser,
 };
-use darwinia_support::{
-	evm::{IntoAccountId, TRANSFER_ADDR},
-	AccountId,
-};
+use darwinia_support::evm::{IntoAccountId, TRANSFER_ADDR};
 
 #[selector]
 #[derive(Eq, PartialEq)]

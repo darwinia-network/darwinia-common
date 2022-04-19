@@ -37,6 +37,7 @@ mod types {
 	// --- darwinia-network ---
 	use crate::*;
 
+	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 	pub type RingBalance<T, I> = <RingCurrency<T, I> as Currency<AccountId<T>>>::Balance;
 	pub type RingNegativeImbalance<T, I> =
 		<RingCurrency<T, I> as Currency<AccountId<T>>>::NegativeImbalance;
@@ -72,7 +73,7 @@ use sp_std::borrow::ToOwned;
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 // --- darwinia-network ---
 use darwinia_relay_primitives::relayer_game::*;
-use darwinia_support::{balance::*, AccountId};
+use darwinia_support::balance::*;
 use types::*;
 
 pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {
