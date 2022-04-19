@@ -32,7 +32,7 @@ use darwinia_support::{
 };
 use dp_contract::{
 	abi_util::{abi_decode_bytes4, abi_encode_bytes, abi_encode_u64},
-	mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams},
+	mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams, S2sMessagePayloadInfo},
 };
 use dp_s2s::{CallParams, CreatePayload};
 // --- paritytech ---
@@ -158,5 +158,23 @@ where
 		)
 		.map_err(|_| custom_precompile_err("encode send message call failed"))?;
 		Ok(abi_encode_bytes(encoded.as_slice()))
+	}
+
+	fn build_message_payload(
+		dvm_parser: &DvmInputParser,
+		caller: H160,
+	) -> Result<Vec<u8>, PrecompileFailure> {
+		let info = S2sMessagePayloadInfo::abi_decode(dvm_parser.input)
+			.map_err(|_| custom_precompile_err("abi_decode message payload info failed"))?;
+
+		let payload = <T as from_substrate_issuing::Config>::ToPangoroMessagePayload {
+			info.spec_version,
+			info.weight,
+			CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(caller)),
+			info.call,
+			DispatchFeePayment::AtSourceChain,
+		};
+
+		Ok(abi_encode_bytes(payload.encode().as_slice()))
 	}
 }

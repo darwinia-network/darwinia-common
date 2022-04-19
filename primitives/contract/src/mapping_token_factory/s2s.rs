@@ -198,3 +198,54 @@ impl S2sSendMessageParams {
 		}
 	}
 }
+
+/// S2sMessagePayloadInfo
+/// @spec_version: the remote chain's spec_version
+/// @weight: the remote dispatch call's weight
+#[derive(Debug, PartialEq, Eq)]
+pub struct S2sMessagePayloadInfo {
+	pub spec_version: u32,
+	pub weight: u64,
+	pub call: Vec<u8>,
+}
+
+impl S2sMessagePayloadInfo {
+	pub fn abi_encode(
+		spec_version: u32,
+		weight: u64,
+		call: Vec<u8>,
+	) -> Vec<u8> {
+		ethabi::encode(&[
+			Token::Uint(spec_version.into()),
+			Token::Uint(weight.into()),
+			Token::Bytes(call),
+		])
+	}
+
+	pub fn abi_decode(data: &[u8]) -> AbiResult<Self> {
+		let tokens = ethabi::decode(
+			&[
+				ParamType::Uint(32),
+				ParamType::Uint(64),
+				ParamType::Bytes,
+			],
+			&data,
+		)?;
+		match (
+			tokens[0].clone(),
+			tokens[1].clone(),
+			tokens[2].clone()
+		) {
+			(
+				Token::Uint(spec_version),
+				Token::Uint(weight),
+				Token::Bytes(call),
+			) => Ok(Self {
+				spec_version: spec_version.low_u32(),
+				weight: weight.low_u64(),
+				call,
+			}),
+			_ => Err(Error::InvalidData),
+		}
+	}
+}
