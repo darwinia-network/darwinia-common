@@ -67,6 +67,7 @@ pub enum CallParams {
 	S2sIssuingPalletIssueFromRemote(H160, U256, H160),
 	#[codec(index = 2)]
 	S2sBackingPalletUnlockFromRemote(H160, U256, Vec<u8>),
+	RawCall(Vec<u8>),
 }
 
 #[cfg(test)]
