@@ -25,7 +25,7 @@ use crate::service::{
 	dvm::{self, DvmTaskParams},
 	*,
 };
-use drml_common_primitives::{OpaqueBlock as Block, *};
+use drml_primitives::{OpaqueBlock as Block, *};
 use template_runtime::RuntimeApi;
 
 thread_local!(static TIMESTAMP: RefCell<u64> = RefCell::new(0));

@@ -53,14 +53,12 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia-network ---
-use darwinia_support::{
-	s2s::{ensure_source_account, LatestMessageNoncer},
-	AccountId,
-};
+use darwinia_support::s2s::{ensure_source_account, LatestMessageNoncer};
 use dp_asset::TokenMetadata;
 use dp_s2s::{CallParams, CreatePayload};
 
 pub type Balance = u128;
+pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 
 pub use pallet::*;

@@ -1,12 +1,12 @@
 // --- paritytech ---
-use bp_messages::LaneId;
-use bp_runtime::ChainId;
 use frame_support::PalletId;
 // --- darwinia-network ---
-use crate::{pangolin_messages::ToPangolinOutboundPayload, *};
+use crate::*;
+use bp_messages::LaneId;
+use bp_runtime::{ChainId, PANGOLIN_CHAIN_ID};
+use bridge_runtime_common::lanes::PANGORO_PANGOLIN_LANE;
 use darwinia_support::{evm::IntoH160, s2s::LatestMessageNoncer};
 use dp_asset::{TokenMetadata, NATIVE_TOKEN_TYPE};
-use drml_bridge_primitives::{AccountIdConverter, PANGORO_PANGOLIN_LANE};
 use to_substrate_backing::Config;
 
 pub struct PangolinMessageNoncer;
@@ -40,9 +40,9 @@ impl Config for Runtime {
 	type RingMetadata = RingMetadata;
 	type MaxLockRingAmountPerTx = MaxLockRingAmountPerTx;
 	type RingCurrency = Ring;
-	type BridgedAccountIdConverter = AccountIdConverter;
+	type BridgedAccountIdConverter = bp_pangolin::AccountIdConverter;
 	type BridgedChainId = PangolinChainId;
-	type OutboundPayloadCreator = ToPangolinOutboundPayload;
+	type OutboundPayloadCreator = bm_pangolin::ToPangolinOutboundPayload;
 	type MessageNoncer = PangolinMessageNoncer;
 	type MessageLaneId = BridgePangolinLaneId;
 	type MessagesBridge = BridgePangolinMessages;

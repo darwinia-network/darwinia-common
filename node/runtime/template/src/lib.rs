@@ -41,7 +41,7 @@ use sp_runtime::{
 	generic,
 	traits::{Block as BlockT, Dispatchable, NumberFor, PostDispatchInfoOf},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
-	ApplyExtrinsicResult, MultiAddress, OpaqueExtrinsic,
+	ApplyExtrinsicResult, OpaqueExtrinsic,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -49,10 +49,9 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use darwinia_evm::Runner;
-use drml_common_primitives::*;
 use drml_common_runtime::*;
+use drml_primitives::*;
 
-pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 pub type SignedBlock = generic::SignedBlock<Block>;
 pub type SignedExtra = (
@@ -111,7 +110,7 @@ frame_support::construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 
 		EVM: darwinia_evm::{Pallet, Config, Call, Storage, Event<T>},
-		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
+		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Event<T>, Config, Origin},
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event},
 	}
 );
@@ -431,7 +430,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl dp_evm_trace_apis::DebugRuntimeApi<Block> for Runtime {
+	impl moonbeam_rpc_primitives_debug::DebugRuntimeApi<Block> for Runtime {
 		fn trace_transaction(
 			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
 			_traced_transaction: &darwinia_ethereum::Transaction,

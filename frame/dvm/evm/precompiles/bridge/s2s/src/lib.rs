@@ -23,7 +23,9 @@ use core::marker::PhantomData;
 // --- crates.io ---
 use codec::Encode;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::DvmInputParser;
+use darwinia_evm_precompile_utils::{
+	check_state_modifier, custom_precompile_err, DvmInputParser, StateMutability,
+};
 use darwinia_support::{
 	evm::IntoAccountId,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
@@ -42,6 +44,7 @@ use fp_evm::{
 };
 use frame_support::sp_runtime::SaturatedConversion;
 use sp_core::H160;
+use sp_runtime::{MultiSignature, MultiSigner};
 use sp_std::vec::Vec;
 
 #[darwinia_evm_precompile_utils::selector]
@@ -55,24 +58,29 @@ enum Action {
 }
 
 /// The contract address: 0000000000000000000000000000000000000018
-pub struct Sub2SubBridge<T, S> {
-	_marker: PhantomData<(T, S)>,
+pub struct Sub2SubBridge<T, S, P> {
+	_marker: PhantomData<(T, S, P)>,
 }
 
-impl<T, S> Precompile for Sub2SubBridge<T, S>
+impl<T, S, P> Precompile for Sub2SubBridge<T, S, P>
 where
-	T: from_substrate_issuing::Config,
+	T: darwinia_evm::Config,
 	S: RelayMessageSender + LatestMessageNoncer,
+	P: CreatePayload<T::AccountId, MultiSigner, MultiSignature>,
 {
 	fn execute(
 		input: &[u8],
 		_target_gas: Option<u64>,
 		context: &Context,
-		_is_static: bool,
+		is_static: bool,
 	) -> PrecompileResult {
 		let dvm_parser = DvmInputParser::new(&input)?;
+		let action = Action::from_u32(dvm_parser.selector)?;
 
-		let output = match Action::from_u32(dvm_parser.selector)? {
+		// Check state modifiers
+		check_state_modifier(context, is_static, StateMutability::View)?;
+
+		let output = match action {
 			Action::OutboundLatestGeneratedNonce => {
 				Self::outbound_latest_generated_nonce(&dvm_parser)?
 			}
@@ -95,18 +103,17 @@ where
 	}
 }
 
-impl<T, S> Sub2SubBridge<T, S>
+impl<T, S, P> Sub2SubBridge<T, S, P>
 where
-	T: from_substrate_issuing::Config,
+	T: darwinia_evm::Config,
 	S: RelayMessageSender + LatestMessageNoncer,
+	P: CreatePayload<T::AccountId, MultiSigner, MultiSignature>,
 {
 	fn outbound_latest_generated_nonce(
 		dvm_parser: &DvmInputParser,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		let lane_id =
-			abi_decode_bytes4(dvm_parser.input).map_err(|_| PrecompileFailure::Error {
-				exit_status: ExitError::Other("decode lane id failed".into()),
-			})?;
+		let lane_id = abi_decode_bytes4(dvm_parser.input)
+			.map_err(|_| custom_precompile_err("decode failed"))?;
 		let nonce = <S as LatestMessageNoncer>::outbound_latest_generated_nonce(lane_id);
 		Ok(abi_encode_u64(nonce))
 	}
@@ -114,10 +121,8 @@ where
 	fn inbound_latest_received_nonce(
 		dvm_parser: &DvmInputParser,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		let lane_id =
-			abi_decode_bytes4(dvm_parser.input).map_err(|_| PrecompileFailure::Error {
-				exit_status: ExitError::Other("decode lane id failed".into()),
-			})?;
+		let lane_id = abi_decode_bytes4(dvm_parser.input)
+			.map_err(|_| custom_precompile_err("decode failed"))?;
 		let nonce = <S as LatestMessageNoncer>::inbound_latest_received_nonce(lane_id);
 		Ok(abi_encode_u64(nonce))
 	}
@@ -126,12 +131,9 @@ where
 		dvm_parser: &DvmInputParser,
 		caller: H160,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		let unlock_info = S2sRemoteUnlockInfo::abi_decode(dvm_parser.input).map_err(|_| {
-			PrecompileFailure::Error {
-				exit_status: ExitError::Other("decode unlock info failed".into()),
-			}
-		})?;
-		let payload = <T as from_substrate_issuing::Config>::OutboundPayloadCreator::create(
+		let unlock_info = S2sRemoteUnlockInfo::abi_decode(dvm_parser.input)
+			.map_err(|_| custom_precompile_err("decode unlock failed"))?;
+		let payload = P::create(
 			CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(caller)),
 			unlock_info.spec_version,
 			unlock_info.weight,
@@ -142,29 +144,22 @@ where
 			),
 			DispatchFeePayment::AtSourceChain,
 		)
-		.map_err(|_| PrecompileFailure::Error {
-			exit_status: ExitError::Other("decode remote unlock failed".into()),
-		})?;
+		.map_err(|_| custom_precompile_err("decode remote unlock failed"))?;
 		Ok(abi_encode_bytes(payload.encode().as_slice()))
 	}
 
 	fn encode_send_message_dispatch_call(
 		dvm_parser: &DvmInputParser,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		let params = S2sSendMessageParams::decode(dvm_parser.input).map_err(|_| {
-			PrecompileFailure::Error {
-				exit_status: ExitError::Other("decode send message info failed".into()),
-			}
-		})?;
+		let params = S2sSendMessageParams::decode(dvm_parser.input)
+			.map_err(|_| custom_precompile_err("decode send message info failed"))?;
 		let encoded = <S as RelayMessageSender>::encode_send_message(
 			params.pallet_index,
 			params.lane_id,
 			params.payload,
 			params.fee.low_u128().saturated_into(),
 		)
-		.map_err(|_| PrecompileFailure::Error {
-			exit_status: ExitError::Other("encode send message call failed".into()),
-		})?;
+		.map_err(|_| custom_precompile_err("encode send message call failed"))?;
 		Ok(abi_encode_bytes(encoded.as_slice()))
 	}
 }

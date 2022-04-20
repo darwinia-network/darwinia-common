@@ -1,7 +1,6 @@
 // --- core ---
 use core::marker::PhantomData;
 // --- paritytech ---
-use bp_messages::LaneId;
 use codec::{Decode, Encode};
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
@@ -9,9 +8,11 @@ use frame_support::{
 	ConsensusEngineId,
 };
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
+use pallet_session::FindAccountFromAuthorIndex;
 use sp_core::{crypto::Public, H160, U256};
 // --- darwinia-network ---
 use crate::*;
+use bp_messages::LaneId;
 use darwinia_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping,
@@ -48,14 +49,14 @@ impl RelayMessageSender for ToPangoroMessageSender {
 		payload: Vec<u8>,
 		fee: u128,
 	) -> Result<Vec<u8>, &'static str> {
-		let payload = ToPangoroMessagePayload::decode(&mut payload.as_slice())
+		let payload = bm_pangoro::ToPangoroMessagePayload::decode(&mut payload.as_slice())
 			.map_err(|_| "decode pangoro payload failed")?;
 
 		let call: Call = match message_pallet_index {
 			_ if message_pallet_index as usize
 				== <BridgePangoroMessages as PalletInfoAccess>::index() =>
 			{
-				BridgeMessagesCall::<Runtime, WithPangoroMessages>::send_message {
+				pallet_bridge_messages::Call::<Runtime, WithPangoroMessages>::send_message {
 					lane_id,
 					payload,
 					delivery_and_dispatch_fee: fee.saturated_into(),
@@ -82,7 +83,7 @@ impl LatestMessageNoncer for ToPangoroMessageSender {
 pub struct PangolinPrecompiles<R>(PhantomData<R>);
 impl<R> PangolinPrecompiles<R>
 where
-	R: darwinia_evm::Config,
+	R: darwinia_ethereum::Config,
 {
 	pub fn new() -> Self {
 		Self(Default::default())
@@ -99,9 +100,9 @@ impl<R> PrecompileSet for PangolinPrecompiles<R>
 where
 	Transfer<R>: Precompile,
 	EthereumBridge<R>: Precompile,
-	Sub2SubBridge<R, ToPangoroMessageSender>: Precompile,
+	Sub2SubBridge<R, ToPangoroMessageSender, bm_pangoro::ToPangoroOutboundPayLoad>: Precompile,
 	Dispatch<R>: Precompile,
-	R: darwinia_evm::Config,
+	R: darwinia_ethereum::Config,
 {
 	fn execute(
 		&self,
@@ -124,9 +125,11 @@ where
 			a if a == addr(23) => Some(<EthereumBridge<R>>::execute(
 				input, target_gas, context, is_static,
 			)),
-			a if a == addr(24) => Some(<Sub2SubBridge<R, ToPangoroMessageSender>>::execute(
-				input, target_gas, context, is_static,
-			)),
+			a if a == addr(24) => Some(<Sub2SubBridge<
+				R,
+				ToPangoroMessageSender,
+				bm_pangoro::ToPangoroOutboundPayLoad,
+			>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(25) => Some(<Dispatch<R>>::execute(
 				input, target_gas, context, is_static,
 			)),
@@ -142,7 +145,7 @@ where
 pub struct FixedGasPrice;
 impl FeeCalculator for FixedGasPrice {
 	fn min_gas_price() -> U256 {
-		U256::from(1 * COIN)
+		U256::from(1 * GWEI)
 	}
 }
 
@@ -167,7 +170,7 @@ impl Config for Runtime {
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type Runner = Runner<Self>;
-	type OnChargeTransaction = EVMCurrencyAdapter;
+	type OnChargeTransaction = EVMCurrencyAdapter<FindAccountFromAuthorIndex<Self, Babe>>;
 }
 
 fn addr(a: u64) -> H160 {

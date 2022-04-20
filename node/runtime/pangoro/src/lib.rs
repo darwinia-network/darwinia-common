@@ -6,7 +6,12 @@
 pub mod pallets;
 pub use pallets::*;
 
-#[cfg(not(feature = "no-wasm"))]
+pub mod bridges_message;
+pub use bridges_message::*;
+
+pub mod migrations;
+pub use migrations::*;
+
 pub mod wasm {
 	//! Make the WASM binary available.
 
@@ -22,35 +27,15 @@ pub mod wasm {
 		);
 	}
 }
-#[cfg(not(feature = "no-wasm"))]
 pub use wasm::*;
 
-pub mod pangolin_messages;
-use pangolin_messages::{ToPangolinMessagePayload, WithPangolinMessageBridge};
-
-pub use drml_common_primitives as pangoro_primitives;
-pub use drml_common_primitives as pangolin_primitives;
-
-pub use drml_common_runtime as pangoro_runtime_system_params;
-pub use drml_common_runtime as pangolin_runtime_system_params;
-
-pub use darwinia_balances::Call as BalancesCall;
-pub use darwinia_fee_market::Call as FeeMarketCall;
-pub use frame_system::Call as SystemCall;
-pub use pallet_bridge_grandpa::Call as BridgeGrandpaCall;
-pub use pallet_bridge_messages::Call as BridgeMessagesCall;
-pub use pallet_sudo::Call as SudoCall;
+pub use darwinia_staking::{Forcing, StakerStatus};
 
 // --- crates.io ---
 use codec::Encode;
 // --- paritytech ---
-use fp_storage::{EthereumStorageSchema, PALLET_ETHEREUM_SCHEMA};
-#[allow(unused)]
-use frame_support::{log, migration};
-use frame_support::{
-	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade},
-	weights::Weight,
-};
+use bp_runtime::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
+use frame_support::{log, traits::KeyOwnerProofSystem};
 use frame_system::{
 	offchain::{AppCrypto, CreateSignedTransaction, SendTransactionTypes, SigningTypes},
 	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
@@ -69,18 +54,16 @@ use sp_runtime::{
 		Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
-	ApplyExtrinsicResult, MultiAddress, SaturatedConversion,
+	ApplyExtrinsicResult, SaturatedConversion,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
-use drml_bridge_primitives::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
-use drml_common_primitives::*;
 use drml_common_runtime::*;
+use drml_primitives::*;
 
-pub type Address = MultiAddress<AccountId, ()>;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 pub type SignedBlock = generic::SignedBlock<Block>;
 pub type SignedExtra = (
@@ -112,7 +95,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangoro"),
 	impl_name: sp_runtime::create_runtime_str!("Pangoro"),
 	authoring_version: 0,
-	spec_version: 2_8_06_0,
+	spec_version: 2_8_08_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -171,13 +154,13 @@ frame_support::construct_runtime!(
 		BridgePangolinGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 19,
 		BridgePangolinMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 17,
 
-		FeeMarket: darwinia_fee_market::{Pallet, Call, Storage, Event<T>} = 22,
+		PangolinFeeMarket: darwinia_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 22,
 		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 23,
 
 		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 25,
-		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event, Origin} = 26,
+		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event<T>, Origin} = 26,
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 31,
 
 		Bsc: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
@@ -494,18 +477,13 @@ sp_api::impl_runtime_apis! {
 	}
 
 	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
-		fn market_fee() -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
-			if let Some(fee) = FeeMarket::market_fee() {
-				return Some(darwinia_fee_market_rpc_runtime_api::Fee {
-					amount: fee,
-				});
-			}
-			None
+		fn market_fee(_instance: u8) -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
+			PangolinFeeMarket::market_fee().and_then(|fee| Some(darwinia_fee_market_rpc_runtime_api::Fee { amount: fee }))
 		}
 
-		fn in_process_orders() -> darwinia_fee_market_rpc_runtime_api::InProcessOrders {
-			return darwinia_fee_market_rpc_runtime_api::InProcessOrders {
-				orders: FeeMarket::in_process_orders(),
+		fn in_process_orders(_instance: u8) -> darwinia_fee_market_rpc_runtime_api::InProcessOrders {
+			darwinia_fee_market_rpc_runtime_api::InProcessOrders {
+				orders: PangolinFeeMarket::in_process_orders(),
 			}
 		}
 	}
@@ -659,7 +637,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl dp_evm_trace_apis::DebugRuntimeApi<Block> for Runtime {
+	impl moonbeam_rpc_primitives_debug::DebugRuntimeApi<Block> for Runtime {
 		fn trace_transaction(
 			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
 			_traced_transaction: &darwinia_ethereum::Transaction,
@@ -738,28 +716,14 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl drml_bridge_primitives::PangolinFinalityApi<Block> for Runtime {
-		fn best_finalized() -> (pangolin_primitives::BlockNumber, pangolin_primitives::Hash) {
+	impl bp_pangolin::PangolinFinalityApi<Block> for Runtime {
+		fn best_finalized() -> (bp_pangolin::BlockNumber, bp_pangolin::Hash) {
 			let header = BridgePangolinGrandpa::best_finalized();
 			(header.number, header.hash())
 		}
-
-		fn is_known_header(hash: pangolin_primitives::Hash) -> bool {
-			BridgePangolinGrandpa::is_known_header(hash)
-		}
 	}
 
-	impl drml_bridge_primitives::ToPangolinOutboundLaneApi<Block, Balance, ToPangolinMessagePayload> for Runtime {
-		// fn estimate_message_delivery_and_dispatch_fee(
-		// 	_lane_id: bp_messages::LaneId,
-		// 	payload: ToPangolinMessagePayload,
-		// ) -> Option<Balance> {
-		// 	bridge_runtime_common::messages::source::estimate_message_dispatch_and_delivery_fee::<WithPangolinMessageBridge>(
-		// 		&payload,
-		// 		WithPangolinMessageBridge::RELAYER_FEE_PERCENT,
-		// 	).ok()
-		// }
-
+	impl bp_pangolin::ToPangolinOutboundLaneApi<Block, Balance, bm_pangolin::ToPangolinMessagePayload> for Runtime {
 		fn message_details(
 			lane: bp_messages::LaneId,
 			begin: bp_messages::MessageNonce,
@@ -768,7 +732,7 @@ sp_api::impl_runtime_apis! {
 			bridge_runtime_common::messages_api::outbound_message_details::<
 				Runtime,
 				WithPangolinMessages,
-				WithPangolinMessageBridge,
+				bm_pangolin::WithPangolinMessageBridge,
 			>(lane, begin, end)
 		}
 
@@ -781,7 +745,7 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl drml_bridge_primitives::FromPangolinInboundLaneApi<Block> for Runtime {
+	impl bp_pangolin::FromPangolinInboundLaneApi<Block> for Runtime {
 		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
 			BridgePangolinMessages::inbound_latest_received_nonce(lane)
 		}
@@ -797,7 +761,7 @@ sp_api::impl_runtime_apis! {
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
-		fn on_runtime_upgrade() -> (Weight, Weight) {
+		fn on_runtime_upgrade() -> (frame_support::weights::Weight, frame_support::weights::Weight) {
 			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
 			// have a backtrace here. If any of the pre/post migration checks fail, we shall stop
 			// right here and right now.
@@ -806,7 +770,7 @@ sp_api::impl_runtime_apis! {
 			(weight, RuntimeBlockWeights::get().max_block)
 		}
 
-		fn execute_block_no_check(block: Block) -> Weight {
+		fn execute_block_no_check(block: Block) -> frame_support::weights::Weight {
 			Executive::execute_block_no_check(block)
 		}
 	}
@@ -853,33 +817,6 @@ sp_api::impl_runtime_apis! {
 
 			Ok(batches)
 		}
-	}
-}
-
-fn migrate() -> Weight {
-	frame_support::storage::unhashed::put::<EthereumStorageSchema>(
-		&PALLET_ETHEREUM_SCHEMA,
-		&EthereumStorageSchema::V3,
-	);
-
-	// 0
-	RuntimeBlockWeights::get().max_block
-}
-
-pub struct CustomOnRuntimeUpgrade;
-impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
-	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<(), &'static str> {
-		Ok(())
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn post_upgrade() -> Result<(), &'static str> {
-		Ok(())
-	}
-
-	fn on_runtime_upgrade() -> Weight {
-		migrate()
 	}
 }
 

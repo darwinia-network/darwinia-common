@@ -41,7 +41,9 @@ mod types {
 	// --- darwinia-network ---
 	use crate::*;
 
+	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 	pub type RingBalance<T> = <CurrencyT<T> as Currency<AccountId<T>>>::Balance;
+
 	type CurrencyT<T> = <T as Config>::Currency;
 }
 
@@ -75,7 +77,7 @@ use sp_std::{convert::From, marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRMerge, MerkleProof};
 use darwinia_relay_primitives::relayer_game::*;
-use darwinia_support::{balance::*, traits::EthereumReceipt as EthereumReceiptT, AccountId};
+use darwinia_support::{balance::*, traits::EthereumReceipt as EthereumReceiptT};
 use ethereum_primitives::{
 	ethashproof::EthashProof,
 	header::EthereumHeader,

@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "darwinia-evm-precompile-transfer"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.8.6"
+version     = "2.8.8"
 
 [dependencies]
 # crates.io
@@ -18,15 +18,36 @@ ethereum-types = { version = "0.12", default-features = false }
 log            = { version = "0.4" }
 sha3           = { version = "0.9", default-features = false }
 # darwinia-network
-darwinia-evm     = { default-features = false, path = "../.." }
-darwinia-support = { default-features = false, path = "../../../../support" }
+darwinia-ethereum             = { default-features = false, path = "../../../ethereum" }
+darwinia-evm                  = { default-features = false, path = "../.." }
+darwinia-evm-precompile-utils = { default-features = false, path = "../utils" }
+darwinia-support              = { default-features = false, path = "../../../../support" }
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
-fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1-dev" }
+fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+
+[dev-dependencies]
+# crates.io
+ethereum     = { version = "0.11.1", default-features = false, features = ["with-codec"] }
+libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
+rlp          = { version = "0.5", default-features = false }
+scale-info   = { version = "1.0", features = ["derive"] }
+# darwinia-network
+darwinia-balances = { path = "../../../../balances" }
+# paritytech
+frame-system     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-io            = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-runtime       = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-std           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+# frontier
+fp-self-contained            = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+pallet-evm                   = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+pallet-evm-precompile-simple = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 
 [features]
 default = ["std"]
@@ -38,7 +59,9 @@ std = [
 	"ethereum-types/std",
 	"sha3/std",
 	# darwinia-network
+	"darwinia-ethereum/std",
 	"darwinia-evm/std",
+	"darwinia-evm-precompile-utils/std",
 	"darwinia-support/std",
 	# paritytech
 	"frame-support/std",

@@ -16,7 +16,7 @@ macro_rules! impl_runtime_apis {
 }
 
 // --- darwinia-network ---
-use drml_common_primitives::{OpaqueBlock as Block, *};
+use drml_primitives::{OpaqueBlock as Block, *};
 
 impl_runtime_apis![
 	sp_api::ApiExt<Block>,
@@ -36,5 +36,5 @@ impl_runtime_apis![
 	darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance>,
 	fp_rpc::EthereumRuntimeRPCApi<Block>,
 	fp_rpc::ConvertTransactionRuntimeApi<Block>,
-	dp_evm_trace_apis::DebugRuntimeApi<Block>,
+	moonbeam_rpc_primitives_debug::DebugRuntimeApi<Block>,
 ];

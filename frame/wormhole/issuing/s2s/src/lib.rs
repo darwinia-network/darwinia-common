@@ -41,7 +41,7 @@ use frame_support::{
 	transactional, PalletId,
 };
 use frame_system::ensure_signed;
-use sp_runtime::{traits::Convert, DispatchError, MultiSignature, MultiSigner};
+use sp_runtime::{traits::Convert, DispatchError};
 use sp_std::{str, vec::Vec};
 // --- darwinia-network ---
 use bp_runtime::ChainId;
@@ -49,15 +49,14 @@ use darwinia_ethereum::InternalTransactHandler;
 use darwinia_support::{
 	mapping_token::*,
 	s2s::{ensure_source_account, ToEthAddress},
-	AccountId, ChainName,
+	ChainName,
 };
 use dp_asset::TokenMetadata;
 use dp_contract::mapping_token_factory::{
 	basic::BasicMappingTokenFactory as bmtf, s2s::Sub2SubMappingTokenFactory as smtf,
 };
-use dp_s2s::CreatePayload;
 
-pub use pallet::*;
+pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
 
 #[frame_support::pallet]
@@ -91,10 +90,6 @@ pub mod pallet {
 		/// Convert the substrate account to ethereum account
 		type ToEthAddressT: ToEthAddress<Self::AccountId>;
 
-		/// Outbound payload creator used for s2s message
-		type OutboundPayloadCreator: Parameter
-			+ CreatePayload<Self::AccountId, MultiSigner, MultiSignature>;
-
 		/// The handler for internal transaction.
 		type InternalTransactHandler: InternalTransactHandler;
 
@@ -120,7 +115,6 @@ pub mod pallet {
 		/// Before the token transfer, token should be created first
 		#[pallet::weight(
 			<T as Config>::WeightInfo::register_from_remote()
-			.saturating_add(2_000_000 * 3)
 		)]
 		#[transactional]
 		pub fn register_from_remote(
@@ -165,7 +159,6 @@ pub mod pallet {
 		/// Handle relay message sent from the source backing pallet with relay message
 		#[pallet::weight(
 			<T as Config>::WeightInfo::issue_from_remote()
-			.saturating_add(2_000_000 * 2)
 		)]
 		#[transactional]
 		pub fn issue_from_remote(
@@ -310,6 +303,7 @@ pub mod pallet {
 		}
 	}
 }
+pub use pallet::*;
 
 impl<T: Config> Pallet<T> {
 	/// Get mapping token address from contract

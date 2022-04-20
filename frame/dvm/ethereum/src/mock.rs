@@ -43,7 +43,6 @@ use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::{self as darwinia_ethereum, account_basic::*, *};
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
-use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::IntoAccountId;
 
 type Block = MockBlock<Test>;
@@ -162,13 +161,13 @@ frame_support::parameter_types! {
 pub struct MockPrecompiles<R>(PhantomData<R>);
 impl<R> MockPrecompiles<R>
 where
-	R: darwinia_evm::Config,
+	R: darwinia_ethereum::Config,
 {
 	pub fn new() -> Self {
 		Self(Default::default())
 	}
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 21]
+		sp_std::vec![1, 2, 3, 4]
 			.into_iter()
 			.map(|x| H160::from_low_u64_be(x))
 			.collect()
@@ -177,7 +176,7 @@ where
 
 impl<R> PrecompileSet for MockPrecompiles<R>
 where
-	R: darwinia_evm::Config,
+	R: darwinia_ethereum::Config,
 {
 	fn execute(
 		&self,
@@ -203,10 +202,6 @@ where
 			_ if address == to_address(4) => {
 				Some(Identity::execute(input, target_gas, context, is_static))
 			}
-			// Darwinia precompiles
-			_ if address == to_address(21) => Some(<Transfer<R>>::execute(
-				input, target_gas, context, is_static,
-			)),
 			_ => None,
 		}
 	}
@@ -230,7 +225,7 @@ impl darwinia_evm::Config for Test {
 	type Runner = Runner<Self>;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
-	type OnChargeTransaction = EVMCurrencyAdapter;
+	type OnChargeTransaction = EVMCurrencyAdapter<()>;
 }
 
 frame_support::parameter_types! {
@@ -256,7 +251,7 @@ frame_support::construct_runtime! {
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>},
-		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event, Origin},
+		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event<T>, Origin},
 	}
 }
 

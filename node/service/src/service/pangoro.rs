@@ -25,7 +25,7 @@ use crate::{
 	client::DrmlClient,
 	service::{self, *},
 };
-use drml_common_primitives::OpaqueBlock as Block;
+use drml_primitives::OpaqueBlock as Block;
 use pangoro_runtime::RuntimeApi;
 
 pub struct Executor;

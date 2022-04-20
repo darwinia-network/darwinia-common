@@ -22,7 +22,7 @@
 use std::sync::Arc;
 // --- darwinia-network ---
 use crate::EthDeps;
-use drml_common_primitives::{OpaqueBlock as Block, *};
+use drml_primitives::{OpaqueBlock as Block, *};
 use template_runtime::TransactionConverter;
 
 /// Full client dependencies.
@@ -65,7 +65,7 @@ where
 		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
 		+ fp_rpc::EthereumRuntimeRPCApi<Block>
 		+ fp_rpc::ConvertTransactionRuntimeApi<Block>
-		+ dp_evm_trace_apis::DebugRuntimeApi<Block>,
+		+ moonbeam_rpc_primitives_debug::DebugRuntimeApi<Block>,
 	P: 'static + sc_transaction_pool_api::TransactionPool<Block = Block>,
 	B: 'static + sc_client_api::Backend<Block>,
 	B::State: sc_client_api::StateBackend<Hashing>,
@@ -80,7 +80,8 @@ where
 	use substrate_frame_rpc_system::*;
 	// --- darwinia-network ---
 	use crate::EthRpcConfig;
-	use darwinia_client_rpc::*;
+	use moonbeam_rpc_debug::*;
+	use moonbeam_rpc_trace::*;
 
 	let FullDeps {
 		client,
@@ -184,7 +185,7 @@ where
 		.any(|cmd| matches!(cmd.as_str(), "debug" | "trace"))
 	{
 		if let Some(trace_filter_requester) = rpc_requesters.trace {
-			io.extend_with(TraceApiServer::to_delegate(Trace::new(
+			io.extend_with(TraceServer::to_delegate(Trace::new(
 				client,
 				trace_filter_requester,
 				ethapi_trace_max_count,
@@ -192,7 +193,7 @@ where
 		}
 
 		if let Some(debug_requester) = rpc_requesters.debug {
-			io.extend_with(DebugApiServer::to_delegate(Debug::new(debug_requester)));
+			io.extend_with(DebugServer::to_delegate(Debug::new(debug_requester)));
 		}
 	}
 
