@@ -6645,6 +6645,7 @@ dependencies = [
  "static_assertions",
  "substrate-wasm-builder",
  "to-ethereum-backing",
+ "to-substrate-backing",
  "to-tron-backing",
 ]
 

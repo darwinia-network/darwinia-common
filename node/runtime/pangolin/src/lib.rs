@@ -249,6 +249,7 @@ frame_support::construct_runtime! {
 		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 54,
 
 		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
+		ToPangolinParachainBacking: to_substrate_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 65,
 
 		// BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
 	}

@@ -28,9 +28,10 @@ use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::ops::RangeInclusive;
 // --- darwinia-network ---
 use crate::*;
+use bp_message_dispatch::CallOrigin;
 use bp_messages::{source_chain::*, target_chain::*, *};
 use bp_rococo::parachains::ParaId;
-use bp_runtime::{ChainId, *};
+use bp_runtime::{messages::*, ChainId, *};
 use bridge_runtime_common::{
 	lanes::*,
 	messages::{
@@ -40,6 +41,8 @@ use bridge_runtime_common::{
 		BalanceOf, *,
 	},
 };
+use dp_asset::TokenMetadata;
+use dp_s2s::{CreatePayload, IssuingParamsEncoder};
 use drml_common_runtime::impls::FromThisChainMessageVerifier;
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
 
@@ -75,6 +78,8 @@ pub type FromPangolinParachainMessageDispatch = FromBridgedChainMessageDispatch<
 	WithPangolinParachainDispatch,
 >;
 
+pub const PANGOLIN_PARACHAIN_S2S_ISSUING_PALLET_INDEX: u8 = 24;
+
 /// Identifier of PangolinParachain registered in the rococo relay chain.
 pub const PANGOLIN_PARACHAIN_ID: u32 = 2105;
 
@@ -84,6 +89,51 @@ pub const INITIAL_PANGOLIN_PARACHAIN_TO_PANGOLIN_CONVERSION_RATE: FixedU128 =
 frame_support::parameter_types! {
 	/// PangolinParachain to Pangolin conversion rate. Initially we trate both tokens as equal.
 	pub storage PangolinParachainToPangolinConversionRate: FixedU128 = INITIAL_PANGOLIN_PARACHAIN_TO_PANGOLIN_CONVERSION_RATE;
+}
+
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+pub enum PangolinParachainIssuingParamsEncoder {
+	#[codec(index = 0)]
+	S2sIssuingPalletIssueFromRemote(H160, U256, Vec<u8>),
+}
+
+impl IssuingParamsEncoder for PangolinParachainIssuingParamsEncoder {
+	fn encode_register_from_remote(meta: TokenMetadata) -> Vec<u8> {
+		Vec::new()
+	}
+
+	fn encode_issue_from_remote(
+		token: H160,
+		amount: U256,
+		recipient: Vec<u8>,
+	) -> Result<Vec<u8>, &'static str> {
+		Ok(Self::S2sIssuingPalletIssueFromRemote(token, amount, recipient).encode())
+	}
+}
+
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
+pub struct ToPangolinParachainOutboundPayload;
+impl CreatePayload<bp_pangoro::AccountId, bp_pangoro::AccountPublic, bp_pangoro::Signature>
+	for ToPangolinParachainOutboundPayload
+{
+	type Payload = ToPangolinParachainMessagePayload;
+
+	fn create(
+		origin: CallOrigin<bp_pangoro::AccountId, bp_pangoro::AccountPublic, bp_pangoro::Signature>,
+		spec_version: u32,
+		weight: u64,
+		call_params: Vec<u8>,
+		dispatch_fee_payment: DispatchFeePayment,
+	) -> Result<Self::Payload, &'static str> {
+		let call = Self::encode_call(PANGOLIN_PARACHAIN_S2S_ISSUING_PALLET_INDEX, call_params)?;
+		return Ok(ToPangolinParachainMessagePayload {
+			spec_version,
+			weight,
+			origin,
+			call,
+			dispatch_fee_payment,
+		});
+	}
 }
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]

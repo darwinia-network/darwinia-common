@@ -54,6 +54,7 @@ from-ethereum-issuing                   = { default-features = false, path = "..
 from-substrate-issuing                  = { default-features = false, path = "../../../frame/wormhole/issuing/s2s" }
 module-transaction-pause                = { default-features = false, path = "../../../frame/transaction-pause" }
 to-ethereum-backing                     = { default-features = false, path = "../../../frame/wormhole/backing/ethereum" }
+to-substrate-backing                    = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 to-tron-backing                         = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
 # paritytech
 beefy-primitives                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -177,6 +178,7 @@ std = [
 	"from-substrate-issuing/std",
 	"module-transaction-pause/std",
 	"to-ethereum-backing/std",
+	"to-substrate-backing/std",
 	"to-tron-backing/std",
 	# paritytech
 	"beefy-primitives/std",
@@ -269,6 +271,7 @@ runtime-benchmarks = [
 	"darwinia-fee-market/runtime-benchmarks",
 	"from-ethereum-issuing/runtime-benchmarks",
 	"from-substrate-issuing/runtime-benchmarks",
+	"to-substrate-backing/runtime-benchmarks",
 ]
 
 try-runtime = [
