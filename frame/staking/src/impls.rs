@@ -6,8 +6,8 @@ use frame_support::{
 	dispatch::{DispatchError, DispatchResult, DispatchResultWithPostInfo, WithPostDispatchInfo},
 	ensure,
 	traits::{
-		Currency, EstimateNextNewSession, ExistenceRequirement, Get, Imbalance, OnUnbalanced,
-		UnixTime, WithdrawReasons,
+		Currency, EstimateNextNewSession, ExistenceRequirement, Get, Imbalance, LockableCurrency,
+		OnUnbalanced, UnixTime, WithdrawReasons,
 	},
 	weights::{DispatchClass, Weight},
 };
@@ -22,7 +22,7 @@ use sp_std::{borrow::ToOwned, collections::btree_map::BTreeMap, prelude::*};
 // --- darwinia-network ---
 use crate::*;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo;
-use darwinia_support::{balance::*, traits::OnDepositRedeem};
+use darwinia_support::traits::OnDepositRedeem;
 
 impl<T: Config> Pallet<T> {
 	pub fn account_id() -> AccountId<T> {
@@ -268,10 +268,11 @@ impl<T: Config> Pallet<T> {
 
 		let module_account = Self::account_id();
 
-		ensure!(
-			T::RingCurrency::usable_balance(&module_account) >= validator_total_payout,
-			<Error<T>>::PayoutIns
-		);
+		// TODO: balances
+		// ensure!(
+		// 	T::RingCurrency::usable_balance(&module_account) >= validator_total_payout,
+		// 	<Error<T>>::PayoutIns
+		// );
 
 		let validator_prefs = Self::eras_validator_prefs(&era, &validator_stash);
 		// Validator first gets a cut off the top.

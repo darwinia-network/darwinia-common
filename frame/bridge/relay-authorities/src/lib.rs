@@ -73,7 +73,7 @@ use codec::Encode;
 // --- paritytech ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure, log,
-	traits::{Currency, EnsureOrigin, Get, LockIdentifier, WithdrawReasons},
+	traits::{Currency, EnsureOrigin, Get, LockIdentifier, LockableCurrency, WithdrawReasons},
 	weights::Weight,
 	StorageValue,
 };
@@ -87,14 +87,13 @@ use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use darwinia_relay_primitives::relay_authorities::*;
-use darwinia_support::balance::*;
 use types::*;
 
 pub const MAX_SCHEDULED_NUM: usize = 10;
 
 pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Config>::Event>;
-	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+	type RingCurrency: LockableCurrency<Self::AccountId>;
 	type LockId: Get<LockIdentifier>;
 	type TermDuration: Get<Self::BlockNumber>;
 	type MaxCandidates: Get<usize>;
@@ -231,7 +230,7 @@ decl_storage! {
 				T::RingCurrency::set_lock(
 					T::LockId::get(),
 					account_id,
-					LockFor::Common { amount: *stake },
+					*stake,
 					WithdrawReasons::all(),
 				);
 
@@ -304,10 +303,11 @@ decl_module! {
 				find_authority_position::<T, I>(&<Authorities<T, I>>::get(), &account_id).is_none(),
 				<Error<T, I>>::AuthorityAE
 			);
-			ensure!(
-				<RingCurrency<T, I>>::usable_balance(&account_id) > stake,
-				<Error<T, I>>::StakeIns
-			);
+			// TODO: balances
+			// ensure!(
+			// 	<RingCurrency<T, I>>::usable_balance(&account_id) > stake,
+			// 	<Error<T, I>>::StakeIns
+			// );
 
 			<Candidates<T, I>>::try_mutate(|candidates| {
 				ensure!(
@@ -340,7 +340,7 @@ decl_module! {
 				<RingCurrency<T, I>>::set_lock(
 					T::LockId::get(),
 					&account_id,
-					LockFor::Common { amount: stake },
+					stake,
 					WithdrawReasons::all()
 				);
 

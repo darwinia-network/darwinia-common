@@ -35,7 +35,7 @@ use frame_support::{
 	ensure, log,
 	pallet_prelude::*,
 	parameter_types,
-	traits::{Currency, ExistenceRequirement::*, Get},
+	traits::{Currency, ExistenceRequirement::*, Get, LockableCurrency},
 	transactional, PalletId,
 };
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::*};
@@ -83,7 +83,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+		type RingCurrency: LockableCurrency<Self::AccountId>;
 		type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
 		type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
 		type WeightInfo: WeightInfo;

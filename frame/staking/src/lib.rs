@@ -311,7 +311,7 @@ pub mod pallet {
 	use frame_election_provider_support::{ElectionProvider, *};
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{Currency, EstimateNextNewSession, OnUnbalanced, UnixTime},
+		traits::{Currency, EstimateNextNewSession, LockableCurrency, OnUnbalanced, UnixTime},
 		PalletId,
 	};
 	use frame_system::{offchain::SendTransactionTypes, pallet_prelude::*};
@@ -320,7 +320,7 @@ pub mod pallet {
 		Perbill, Percent, SaturatedConversion,
 	};
 	use sp_staking::SessionIndex;
-	use sp_std::{borrow::ToOwned, prelude::*};
+	use sp_std::prelude::*;
 	// --- darwinia-network ---
 	use crate::*;
 	use darwinia_support::balance::*;
@@ -397,7 +397,7 @@ pub mod pallet {
 		type BondingDurationInBlockNumber: Get<Self::BlockNumber>;
 
 		/// The *RING* currency.
-		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+		type RingCurrency: LockableCurrency<Self::AccountId>;
 		/// Tokens have been minted and are unused for validator-reward.
 		/// See [Era payout](./index.html#era-payout).
 		type RingRewardRemainder: OnUnbalanced<RingNegativeImbalance<Self>>;
@@ -407,7 +407,7 @@ pub mod pallet {
 		type RingReward: OnUnbalanced<RingPositiveImbalance<Self>>;
 
 		/// The *KTON* currency.
-		type KtonCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+		type KtonCurrency: LockableCurrency<Self::AccountId>;
 		/// Handler for the unbalanced *KTON* reduction when slashing a staker.
 		type KtonSlash: OnUnbalanced<KtonNegativeImbalance<Self>>;
 		/// Handler for the unbalanced *KTON* increment when rewarding a staker.
@@ -1574,7 +1574,9 @@ pub mod pallet {
 
 					// check total free balance and locked one
 					// strict on punishing in kton
-					if T::KtonCurrency::usable_balance(stash) >= kton_slash {
+					// TODO: balances
+					if true {
+					// if T::KtonCurrency::usable_balance(stash) >= kton_slash {
 						*active_deposit_ring = active_deposit_ring.saturating_sub(item.value);
 
 						let imbalance = T::KtonCurrency::slash(stash, kton_slash).0;

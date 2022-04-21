@@ -16,7 +16,6 @@ log        = { version = "0.4" }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 # darwinia-network
 darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
-darwinia-support          = { default-features = false, path = "../../support" }
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
@@ -43,7 +42,6 @@ std = [
 	"scale-info/std",
 	# darwinia-network
 	"darwinia-relay-primitives/std",
-	"darwinia-support/std",
 	# paritytech
 	"frame-support/std",
 	"frame-system/std",

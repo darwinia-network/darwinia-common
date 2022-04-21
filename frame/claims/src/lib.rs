@@ -45,7 +45,7 @@ use scale_info::TypeInfo;
 use frame_support::traits::WithdrawReasons;
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
-	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get},
+	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get, LockableCurrency},
 	weights::{DispatchClass, Pays},
 	PalletId,
 };
@@ -63,7 +63,6 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia-network ---
-use darwinia_support::balance::*;
 use types::*;
 
 pub trait Config: frame_system::Config {
@@ -157,7 +156,7 @@ decl_storage! {
 			T::RingCurrency::set_lock(
 				T::PalletId::get().0,
 				&<Module<T>>::account_id(),
-				LockFor::Common { amount: minimum_balance },
+				minimum_balance ,
 				WithdrawReasons::all(),
 			);
 		});
@@ -351,8 +350,10 @@ impl<T: Config> Module<T> {
 	}
 
 	fn pot<C: LockableCurrency<T::AccountId>>() -> C::Balance {
+		// TODO: balances
+		sp_runtime::traits::Zero::zero()
 		// Already lock minimal balance in the account, no need to worry about to be 0.
-		C::usable_balance(&Self::account_id())
+		// C::usable_balance(&Self::account_id())
 	}
 
 	// Constructs the message that RPC's `personal_sign` and `sign` would sign.

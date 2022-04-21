@@ -60,8 +60,8 @@ impl InstanceFilter<Call> for ProxyType {
 							Call::Bounties(..) |
 							Call::Sudo(..) |
 							// Specifically omitting Vesting `vested_transfer`, and `force_vested_transfer`
-							Call::Vesting(darwinia_vesting::Call::vest{ .. }) |
-							Call::Vesting(darwinia_vesting::Call::vest_other{ .. }) |
+							Call::Vesting(pallet_vesting::Call::vest{ .. }) |
+							Call::Vesting(pallet_vesting::Call::vest_other{ .. }) |
 							Call::Utility(..)|
 							Call::Identity(..)|
 							Call::Society(..)|

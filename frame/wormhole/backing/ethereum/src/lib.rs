@@ -58,7 +58,7 @@ pub mod pallet {
 	use frame_support::{
 		log,
 		pallet_prelude::*,
-		traits::{Currency, ExistenceRequirement},
+		traits::{Currency, ExistenceRequirement, LockableCurrency},
 		PalletId,
 	};
 	use frame_system::pallet_prelude::*;
@@ -70,10 +70,7 @@ pub mod pallet {
 	// --- darwinia-network ---
 	use crate::weights::WeightInfo;
 	use darwinia_relay_primitives::relay_authorities::*;
-	use darwinia_support::{
-		balance::*,
-		traits::{EthereumReceipt, OnDepositRedeem},
-	};
+	use darwinia_support::traits::{EthereumReceipt, OnDepositRedeem};
 	use ethereum_primitives::{
 		log_entry::LogEntry, receipt::EthereumTransactionIndex, EthereumAddress, U256,
 	};
@@ -105,8 +102,8 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 		#[pallet::constant]
 		type FeePalletId: Get<PalletId>;
-		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
-		type KtonCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+		type RingCurrency: LockableCurrency<Self::AccountId>;
+		type KtonCurrency: LockableCurrency<Self::AccountId>;
 		type RedeemAccountId: From<[u8; 32]> + Into<Self::AccountId>;
 		type EthereumRelay: EthereumReceipt<Self::AccountId, RingBalance<Self>>;
 		type OnDepositRedeem: OnDepositRedeem<Self::AccountId, RingBalance<Self>>;
@@ -433,8 +430,10 @@ pub mod pallet {
 
 			let fee_account = Self::fee_account_id();
 			let sync_reward = T::SyncReward::get().min(
-				T::RingCurrency::usable_balance(&fee_account)
-					.saturating_sub(T::RingCurrency::minimum_balance()),
+				// TODO: balances
+				Zero::zero()
+				// T::RingCurrency::usable_balance(&fee_account)
+					// .saturating_sub(T::RingCurrency::minimum_balance()),
 			);
 
 			if !sync_reward.is_zero() {
@@ -555,9 +554,11 @@ pub mod pallet {
 		/// Return the amount of money in the pot.
 		// The existential deposit is not part of the pot so backing account never gets deleted.
 		pub fn pot<C: LockableCurrency<T::AccountId>>() -> C::Balance {
-			C::usable_balance(&Self::account_id())
-				// Must never be less than 0 but better be safe.
-				.saturating_sub(C::minimum_balance())
+			// TODO: balances
+			Zero::zero()
+			// C::usable_balance(&Self::account_id())
+			// 	// Must never be less than 0 but better be safe.
+			// 	.saturating_sub(C::minimum_balance())
 		}
 
 		fn redeem_token(

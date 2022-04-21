@@ -1,5 +1,5 @@
 // --- paritytech ---
-use frame_support::{WeakBoundedVec, assert_ok, traits::Currency};
+use frame_support::{assert_ok, traits::Currency, WeakBoundedVec};
 use sp_runtime::Perbill;
 use sp_staking::offence::OffenceDetails;
 use substrate_test_utils::assert_eq_uvec;

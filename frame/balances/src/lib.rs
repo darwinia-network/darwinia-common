@@ -527,8 +527,8 @@ pub mod pallet {
 			fungible::Inspect,
 			tokens::{DepositConsequence, WithdrawConsequence},
 			BalanceStatus, Currency, ExistenceRequirement, Imbalance, LockIdentifier,
-			NamedReservableCurrency, OnUnbalanced, ReservableCurrency, SignedImbalance, StoredMap,
-			TryDrop, WithdrawReasons,
+			LockableCurrency, NamedReservableCurrency, OnUnbalanced, ReservableCurrency,
+			SignedImbalance, StoredMap, TryDrop, WithdrawReasons,
 		},
 		WeakBoundedVec,
 	};
@@ -999,7 +999,9 @@ pub mod pallet {
 		impl_rpc! {
 			fn usable_balance_rpc(who: impl Borrow<T::AccountId>) -> RuntimeDispatchInfo<T::Balance> {
 				RuntimeDispatchInfo {
-					usable_balance: Self::usable_balance(who.borrow()),
+					// TODO: balances
+					usable_balance: Zero::zero(),
+					// usable_balance: Self::usable_balance(who.borrow()),
 				}
 			}
 		}
@@ -1936,21 +1938,21 @@ pub mod pallet {
 			Self::update_locks(who, &locks);
 		}
 
-		/// Get the balance of an account that can be used for transfers, reservations, or any other
-		/// non-locking, non-transaction-fee activity. Will be at most `free_balance`.
-		fn usable_balance(who: &T::AccountId) -> Self::Balance {
-			let account = Self::account(who);
+		// /// Get the balance of an account that can be used for transfers, reservations, or any other
+		// /// non-locking, non-transaction-fee activity. Will be at most `free_balance`.
+		// fn usable_balance(who: &T::AccountId) -> Self::Balance {
+		// 	let account = Self::account(who);
 
-			account.usable(Reasons::Misc, Self::frozen_balance(who))
-		}
+		// 	account.usable(Reasons::Misc, Self::frozen_balance(who))
+		// }
 
-		/// Get the balance of an account that can be used for paying transaction fees (not tipping,
-		/// or any other kind of fees, though). Will be at most `free_balance`.
-		fn usable_balance_for_fees(who: &T::AccountId) -> Self::Balance {
-			let account = Self::account(who);
+		// /// Get the balance of an account that can be used for paying transaction fees (not tipping,
+		// /// or any other kind of fees, though). Will be at most `free_balance`.
+		// fn usable_balance_for_fees(who: &T::AccountId) -> Self::Balance {
+		// 	let account = Self::account(who);
 
-			account.usable(Reasons::Fee, Self::frozen_balance(who))
-		}
+		// 	account.usable(Reasons::Fee, Self::frozen_balance(who))
+		// }
 	}
 
 	impl<T: Config<I>, I: 'static> NamedReservableCurrency<T::AccountId> for Pallet<T, I>

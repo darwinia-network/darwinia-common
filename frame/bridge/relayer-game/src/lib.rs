@@ -61,7 +61,7 @@ mod types {
 // --- paritytech ---
 use frame_support::{
 	decl_error, decl_module, decl_storage, ensure,
-	traits::{Currency, Get, LockIdentifier, OnUnbalanced, WithdrawReasons},
+	traits::{Currency, Get, LockIdentifier, LockableCurrency, OnUnbalanced, WithdrawReasons},
 };
 use frame_system::pallet_prelude::*;
 use sp_runtime::{
@@ -73,12 +73,11 @@ use sp_std::borrow::ToOwned;
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 // --- darwinia-network ---
 use darwinia_relay_primitives::relayer_game::*;
-use darwinia_support::balance::*;
 use types::*;
 
 pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {
 	/// The currency use for stake
-	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+	type RingCurrency: LockableCurrency<Self::AccountId>;
 
 	type LockId: Get<LockIdentifier>;
 
@@ -250,10 +249,11 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 	) -> Result<RingBalance<T, I>, DispatchError> {
 		let stake = T::RelayerGameAdjustor::estimate_stake(round, affirmations_count);
 
-		ensure!(
-			T::RingCurrency::usable_balance(relayer) >= stake,
-			<Error<T, I>>::StakeIns
-		);
+		// TODO: balances
+		// ensure!(
+		// 	T::RingCurrency::usable_balance(relayer) >= stake,
+		// 	<Error<T, I>>::StakeIns
+		// );
 
 		Ok(stake)
 	}
@@ -300,12 +300,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 			<Stakes<T, I>>::take(relayer);
 		} else {
-			T::RingCurrency::set_lock(
-				T::LockId::get(),
-				relayer,
-				LockFor::Common { amount: stakes },
-				WithdrawReasons::all(),
-			);
+			T::RingCurrency::set_lock(T::LockId::get(), relayer, stakes, WithdrawReasons::all());
 
 			<Stakes<T, I>>::insert(relayer, stakes);
 		}

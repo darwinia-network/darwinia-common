@@ -27,7 +27,7 @@ pub mod traits;
 pub mod balance {
 	pub use crate::{
 		structs::{FrozenBalance, LockFor, OldBalanceLock, StakingLock, Unbonding},
-		traits::{BalanceInfo, DustCollector, LockableCurrency},
+		traits::{BalanceInfo, DustCollector},
 	};
 	pub use pallet_balances::Reasons;
 }

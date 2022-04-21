@@ -1690,47 +1690,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-democracy"
-version = "2.8.8"
-dependencies = [
- "darwinia-balances",
- "darwinia-support",
- "frame-support",
- "frame-system",
- "hex-literal",
- "pallet-scheduler",
- "parity-scale-codec 2.3.1",
- "scale-info 1.0.0",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "sp-storage",
- "substrate-test-utils",
-]
-
-[[package]]
-name = "darwinia-elections-phragmen"
-version = "2.8.8"
-dependencies = [
- "darwinia-balances",
- "darwinia-support",
- "frame-support",
- "frame-system",
- "hex-literal",
- "log",
- "parity-scale-codec 2.3.1",
- "scale-info 1.0.0",
- "sp-core",
- "sp-io",
- "sp-npos-elections",
- "sp-runtime",
- "sp-std",
- "substrate-test-utils",
-]
-
-[[package]]
 name = "darwinia-ethereum"
 version = "2.8.8"
 dependencies = [
@@ -2043,7 +2002,6 @@ version = "2.8.8"
 dependencies = [
  "darwinia-balances",
  "darwinia-relay-primitives",
- "darwinia-support",
  "env_logger",
  "frame-support",
  "frame-system",
@@ -2133,24 +2091,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "darwinia-vesting"
-version = "2.8.8"
-dependencies = [
- "darwinia-balances",
- "darwinia-support",
- "frame-support",
- "frame-system",
- "hex-literal",
- "parity-scale-codec 2.3.1",
- "scale-info 1.0.0",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "sp-storage",
 ]
 
 [[package]]
@@ -6105,6 +6045,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-democracy"
+version = "4.0.0-dev"
+source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#5cb17b488d600befa4918915e18d40c28a25353d"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec 2.3.1",
+ "scale-info 1.0.0",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-election-provider-multi-phase"
 version = "4.0.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#5cb17b488d600befa4918915e18d40c28a25353d"
@@ -6122,6 +6078,23 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "static_assertions",
+]
+
+[[package]]
+name = "pallet-elections-phragmen"
+version = "5.0.0-dev"
+source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#5cb17b488d600befa4918915e18d40c28a25353d"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec 2.3.1",
+ "scale-info 1.0.0",
+ "sp-core",
+ "sp-io",
+ "sp-npos-elections",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -6530,6 +6503,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-vesting"
+version = "4.0.0-dev"
+source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.1#5cb17b488d600befa4918915e18d40c28a25353d"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec 2.3.1",
+ "scale-info 1.0.0",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pangolin-runtime"
 version = "2.8.8"
 dependencies = [
@@ -6550,8 +6537,6 @@ dependencies = [
  "darwinia-beefy-primitives",
  "darwinia-bridge-ethereum",
  "darwinia-claims",
- "darwinia-democracy",
- "darwinia-elections-phragmen",
  "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-evm-precompile-bridge-ethereum",
@@ -6567,7 +6552,6 @@ dependencies = [
  "darwinia-staking",
  "darwinia-staking-rpc-runtime-api",
  "darwinia-support",
- "darwinia-vesting",
  "dp-asset",
  "dp-contract",
  "dp-evm-tracer",
@@ -6602,7 +6586,9 @@ dependencies = [
  "pallet-bridge-messages",
  "pallet-bridge-parachains",
  "pallet-collective",
+ "pallet-democracy",
  "pallet-election-provider-multi-phase",
+ "pallet-elections-phragmen",
  "pallet-evm",
  "pallet-evm-precompile-simple",
  "pallet-grandpa",
@@ -6625,6 +6611,7 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-utility",
+ "pallet-vesting",
  "parity-scale-codec 2.3.1",
  "scale-info 1.0.0",
  "serde",
