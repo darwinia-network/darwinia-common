@@ -43,6 +43,7 @@ impl Config for Runtime {
 	type BridgedAccountIdConverter = bp_pangolin::AccountIdConverter;
 	type BridgedChainId = PangolinChainId;
 	type OutboundPayloadCreator = bm_pangolin::ToPangolinOutboundPayload;
+	type S2sIssuingParamsEncoder = bm_pangolin::PangolinIssuingParamsEncoder;
 	type MessageNoncer = PangolinMessageNoncer;
 	type MessageLaneId = BridgePangolinLaneId;
 	type MessagesBridge = BridgePangolinMessages;

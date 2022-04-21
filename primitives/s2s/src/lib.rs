@@ -19,4 +19,4 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod call_params;
-pub use call_params::{CallParams, CreatePayload};
+pub use call_params::{BackingParamsEncoder, CreatePayload, IssuingParamsEncoder};

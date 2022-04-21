@@ -212,16 +212,16 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(<T as Config>::WeightInfo::set_remote_backing_account())]
-		pub fn set_remote_backing_account(
-			origin: OriginFor<T>,
-			account: AccountId<T>,
-		) -> DispatchResultWithPostInfo {
-			ensure_root(origin)?;
-			<RemoteBackingAccount<T>>::put(account.clone());
-			Self::deposit_event(Event::RemoteBackingAccountUpdated(account));
-			Ok(().into())
-		}
+        #[pallet::weight(<T as Config>::WeightInfo::set_remote_backing_account())]
+        pub fn set_remote_backing_account(
+            origin: OriginFor<T>,
+            account: AccountId<T>,
+        ) -> DispatchResultWithPostInfo {
+            ensure_root(origin)?;
+            <RemoteBackingAccount<T>>::put(account.clone());
+            Self::deposit_event(Event::RemoteBackingAccountUpdated(account));
+            Ok(().into())
+        }
 	}
 
 	#[pallet::event]

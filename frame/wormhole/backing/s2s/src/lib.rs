@@ -55,7 +55,7 @@ use sp_std::prelude::*;
 // --- darwinia-network ---
 use darwinia_support::s2s::{ensure_source_account, LatestMessageNoncer};
 use dp_asset::TokenMetadata;
-use dp_s2s::{CallParams, CreatePayload};
+use dp_s2s::{CreatePayload, IssuingParamsEncoder};
 
 pub type Balance = u128;
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -118,6 +118,8 @@ pub mod pallet {
 			>>::Payload,
 			Error = DispatchErrorWithPostInfo<PostDispatchInfo>,
 		>;
+
+		type S2sIssuingParamsEncoder: IssuingParamsEncoder;
 	}
 
 	#[pallet::event]
@@ -250,7 +252,7 @@ pub mod pallet {
 				CallOrigin::SourceAccount(Self::pallet_account_id()),
 				spec_version,
 				weight,
-				CallParams::S2sIssuingPalletRegisterFromRemote(T::RingMetadata::get()),
+				T::S2sIssuingParamsEncoder::encode_register_from_remote(T::RingMetadata::get()),
 				DispatchFeePayment::AtSourceChain,
 			)?;
 			// this pallet account as the submitter of the remote message
@@ -303,11 +305,11 @@ pub mod pallet {
 				CallOrigin::SourceAccount(Self::pallet_account_id()),
 				spec_version,
 				weight,
-				CallParams::S2sIssuingPalletIssueFromRemote(
+				T::S2sIssuingParamsEncoder::encode_issue_from_remote(
 					token_address,
 					amount,
 					recipient.clone(),
-				),
+				)?,
 				DispatchFeePayment::AtSourceChain,
 			)?;
 			// this pallet account as the submitter of the remote message

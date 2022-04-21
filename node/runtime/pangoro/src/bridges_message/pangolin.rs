@@ -42,7 +42,8 @@ use bridge_runtime_common::{
 		BalanceOf, *,
 	},
 };
-use dp_s2s::{CallParams, CreatePayload};
+use dp_asset::TokenMetadata;
+use dp_s2s::{CreatePayload, IssuingParamsEncoder};
 use drml_common_runtime::impls::FromThisChainMessageVerifier;
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
 
@@ -79,6 +80,32 @@ frame_support::parameter_types! {
 	pub storage PangolinToPangoroConversionRate: FixedU128 = INITIAL_PANGOLIN_TO_PANGORO_CONVERSION_RATE;
 }
 
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+pub enum PangolinIssuingParamsEncoder {
+	#[codec(index = 0)]
+	S2sIssuingPalletRegisterFromRemote(TokenMetadata),
+	#[codec(index = 1)]
+	S2sIssuingPalletIssueFromRemote(H160, U256, H160),
+}
+
+impl IssuingParamsEncoder for PangolinIssuingParamsEncoder {
+	fn encode_register_from_remote(meta: TokenMetadata) -> Vec<u8> {
+		Self::S2sIssuingPalletRegisterFromRemote(meta).encode()
+	}
+
+	fn encode_issue_from_remote(
+		token: H160,
+		amount: U256,
+		recipient: Vec<u8>,
+	) -> Result<Vec<u8>, &'static str> {
+		if recipient.len() != 20 {
+			return Err("Invalid Address Len".into());
+		}
+		let recipient = H160::from_slice(recipient.as_slice());
+		Ok(Self::S2sIssuingPalletIssueFromRemote(token, amount, recipient).encode())
+	}
+}
+
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ToPangolinOutboundPayload;
 impl CreatePayload<bp_pangoro::AccountId, bp_pangoro::AccountPublic, bp_pangoro::Signature>
@@ -90,7 +117,7 @@ impl CreatePayload<bp_pangoro::AccountId, bp_pangoro::AccountPublic, bp_pangoro:
 		origin: CallOrigin<bp_pangoro::AccountId, bp_pangoro::AccountPublic, bp_pangoro::Signature>,
 		spec_version: u32,
 		weight: u64,
-		call_params: CallParams,
+		call_params: Vec<u8>,
 		dispatch_fee_payment: DispatchFeePayment,
 	) -> Result<Self::Payload, &'static str> {
 		let call = Self::encode_call(PANGOLIN_S2S_ISSUING_PALLET_INDEX, call_params)?;

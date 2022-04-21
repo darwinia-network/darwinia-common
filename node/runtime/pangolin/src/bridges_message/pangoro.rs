@@ -42,7 +42,7 @@ use bridge_runtime_common::{
 		BalanceOf, *,
 	},
 };
-use dp_s2s::{CallParams, CreatePayload};
+use dp_s2s::CreatePayload;
 use drml_common_runtime::impls::FromThisChainMessageVerifier;
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
 
@@ -94,7 +94,7 @@ impl CreatePayload<bp_pangolin::AccountId, bp_pangolin::AccountPublic, bp_pangol
 		>,
 		spec_version: u32,
 		weight: u64,
-		call_params: CallParams,
+		call_params: Vec<u8>,
 		dispatch_fee_payment: DispatchFeePayment,
 	) -> Result<Self::Payload, &'static str> {
 		let call = Self::encode_call(PANGORO_S2S_BACKING_PALLET_INDEX, call_params)?;

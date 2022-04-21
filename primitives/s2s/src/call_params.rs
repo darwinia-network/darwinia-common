@@ -17,7 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- crates.io ---
-use codec::{Decode, Encode};
+use codec::Encode;
 // --- paritytech ---
 use bp_message_dispatch::CallOrigin;
 use bp_runtime::messages::DispatchFeePayment;
@@ -30,9 +30,9 @@ use dp_asset::TokenMetadata;
 pub trait CreatePayload<SourceChainAccountId, TargetChainAccountPublic, TargetChainSignature> {
 	type Payload: Encode;
 
-	fn encode_call(pallet_index: u8, call_params: CallParams) -> Result<Vec<u8>, &'static str> {
+	fn encode_call(pallet_index: u8, call_params: Vec<u8>) -> Result<Vec<u8>, &'static str> {
 		let mut encoded = vec![pallet_index];
-		encoded.append(&mut call_params.encode());
+		encoded.append(&mut call_params.clone());
 		Ok(encoded)
 	}
 
@@ -40,7 +40,7 @@ pub trait CreatePayload<SourceChainAccountId, TargetChainAccountPublic, TargetCh
 		origin: CallOrigin<SourceChainAccountId, TargetChainAccountPublic, TargetChainSignature>,
 		spec_version: u32,
 		weight: u64,
-		call_params: CallParams,
+		call_params: Vec<u8>,
 		dispatch_fee_payment: DispatchFeePayment,
 	) -> Result<Self::Payload, &'static str>;
 }
@@ -51,22 +51,20 @@ impl<AccountId, Signer, Signature> CreatePayload<AccountId, Signer, Signature> f
 		_: CallOrigin<AccountId, Signer, Signature>,
 		_: u32,
 		_: u64,
-		_: CallParams,
+		_: Vec<u8>,
 		_: DispatchFeePayment,
 	) -> Result<Self::Payload, &'static str> {
 		Ok(())
 	}
 }
 
-/// The parameters box for the pallet runtime call.
-#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
-pub enum CallParams {
-	#[codec(index = 0)]
-	S2sIssuingPalletRegisterFromRemote(TokenMetadata),
-	#[codec(index = 1)]
-	S2sIssuingPalletIssueFromRemote(H160, U256, Vec<u8>),
-	#[codec(index = 2)]
-	S2sBackingPalletUnlockFromRemote(H160, U256, Vec<u8>),
+pub trait IssuingParamsEncoder {
+	fn encode_register_from_remote(_: TokenMetadata) -> Vec<u8>;
+	fn encode_issue_from_remote(_: H160, _: U256, _: Vec<u8>) -> Result<Vec<u8>, &'static str>;
+}
+
+pub trait BackingParamsEncoder {
+	fn encode_unlock_from_remote(_: H160, _: U256, _: Vec<u8>) -> Vec<u8>;
 }
 
 #[cfg(test)]
@@ -110,7 +108,7 @@ mod test {
 			_origin: CallOrigin<u64, (), ()>,
 			_spec_version: u32,
 			_weight: u64,
-			call_params: CallParams,
+			call_params: Vec<u8>,
 			_dispatch_fee_payment: DispatchFeePayment,
 		) -> Result<Vec<u8>, &'static str> {
 			Self::encode_call(20, call_params)
@@ -124,7 +122,7 @@ mod test {
 			_origin: CallOrigin<u64, (), ()>,
 			_spec_version: u32,
 			_weight: u64,
-			call_params: CallParams,
+			call_params: Vec<u8>,
 			_dispatch_fee_payment: DispatchFeePayment,
 		) -> Result<Vec<u8>, &'static str> {
 			Self::encode_call(49, call_params)

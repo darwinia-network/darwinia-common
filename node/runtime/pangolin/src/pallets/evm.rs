@@ -26,6 +26,7 @@ use darwinia_support::{
 	evm::ConcatConverter,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
 };
+use dp_s2s::BackingParamsEncoder;
 
 pub struct EthereumFindAuthor<F>(PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
@@ -41,7 +42,18 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 	}
 }
 
-pub struct ToPangoroMessageSender;
+#[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+pub enum ToPangoroMessageSender {
+	#[codec(index = 2)]
+	S2sBackingPalletUnlockFromRemote(H160, U256, Vec<u8>),
+}
+
+impl BackingParamsEncoder for ToPangoroMessageSender {
+	fn encode_unlock_from_remote(token: H160, amount: U256, recipient: Vec<u8>) -> Vec<u8> {
+		Self::S2sBackingPalletUnlockFromRemote(token, amount, recipient).encode()
+	}
+}
+
 impl RelayMessageSender for ToPangoroMessageSender {
 	fn encode_send_message(
 		message_pallet_index: u32,

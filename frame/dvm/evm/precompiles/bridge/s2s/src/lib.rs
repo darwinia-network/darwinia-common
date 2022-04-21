@@ -34,7 +34,7 @@ use dp_contract::{
 	abi_util::{abi_decode_bytes4, abi_encode_bytes, abi_encode_u64},
 	mapping_token_factory::s2s::{S2sRemoteUnlockInfo, S2sSendMessageParams},
 };
-use dp_s2s::{CallParams, CreatePayload};
+use dp_s2s::{BackingParamsEncoder, CreatePayload};
 // --- paritytech ---
 use bp_message_dispatch::CallOrigin;
 use bp_runtime::messages::DispatchFeePayment;
@@ -65,7 +65,7 @@ pub struct Sub2SubBridge<T, S, P> {
 impl<T, S, P> Precompile for Sub2SubBridge<T, S, P>
 where
 	T: darwinia_evm::Config,
-	S: RelayMessageSender + LatestMessageNoncer,
+	S: RelayMessageSender + LatestMessageNoncer + BackingParamsEncoder,
 	P: CreatePayload<T::AccountId, MultiSigner, MultiSignature>,
 {
 	fn execute(
@@ -106,7 +106,7 @@ where
 impl<T, S, P> Sub2SubBridge<T, S, P>
 where
 	T: darwinia_evm::Config,
-	S: RelayMessageSender + LatestMessageNoncer,
+	S: RelayMessageSender + LatestMessageNoncer + BackingParamsEncoder,
 	P: CreatePayload<T::AccountId, MultiSigner, MultiSignature>,
 {
 	fn outbound_latest_generated_nonce(
@@ -137,7 +137,7 @@ where
 			CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(caller)),
 			unlock_info.spec_version,
 			unlock_info.weight,
-			CallParams::S2sBackingPalletUnlockFromRemote(
+			<S as BackingParamsEncoder>::encode_unlock_from_remote(
 				unlock_info.original_token,
 				unlock_info.amount,
 				unlock_info.recipient,
