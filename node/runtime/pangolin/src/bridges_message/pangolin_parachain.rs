@@ -98,7 +98,7 @@ pub enum PangolinParachainIssuingParamsEncoder {
 }
 
 impl IssuingParamsEncoder for PangolinParachainIssuingParamsEncoder {
-	fn encode_register_from_remote(meta: TokenMetadata) -> Vec<u8> {
+	fn encode_register_from_remote(_meta: TokenMetadata) -> Vec<u8> {
 		Vec::new()
 	}
 
