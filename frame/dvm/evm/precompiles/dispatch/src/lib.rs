@@ -52,9 +52,7 @@ where
 	) -> PrecompileResult {
 		let helper = PrecompileHelper::<T>::new(input, target_gas);
 
-		let call = T::Call::decode(&mut &input[..]).map_err(|_| PrecompileFailure::Error {
-			exit_status: ExitError::Other("decode failed".into()),
-		})?;
+		let call = T::Call::decode(&mut &input[..]).map_err(|_| helper.revert("decode failed"))?;
 		let info = call.get_dispatch_info();
 
 		let valid_call = info.pays_fee == Pays::Yes && info.class == DispatchClass::Normal;

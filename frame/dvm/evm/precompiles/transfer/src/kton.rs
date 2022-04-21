@@ -19,10 +19,10 @@
 // --- crates.io ---
 use codec::Decode;
 use ethabi::{Function, Param, ParamType, StateMutability, Token};
+use evm::ExitRevert;
 // --- paritytech ---
 use fp_evm::{
-	Context, ExitError, ExitReason, ExitSucceed, PrecompileFailure, PrecompileOutput,
-	PrecompileResult,
+	Context, ExitReason, ExitSucceed, PrecompileFailure, PrecompileOutput, PrecompileResult,
 };
 use frame_support::ensure;
 use sp_core::{H160, U256};
