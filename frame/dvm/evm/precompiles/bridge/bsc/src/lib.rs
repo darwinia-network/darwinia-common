@@ -22,7 +22,7 @@
 use core::marker::PhantomData;
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{
-	check_state_modifier, custom_precompile_err, selector, DvmInputParser, PrecompileGasMeter,
+	check_state_modifier, custom_precompile_err, selector, DvmInputParser, PrecompileHelper,
 	StateMutability,
 };
 use dp_contract::{
@@ -71,12 +71,12 @@ where
 		// Check state modifiers
 		check_state_modifier(context, is_static, StateMutability::View)?;
 
-		let mut gas_meter = PrecompileGasMeter::<T>::new(target_gas);
+		let mut precompile_helper = PrecompileHelper::<T>::new(target_gas);
 
 		let output = match action {
 			Action::VerfiySingleStorageProof => {
 				// Storage: BSC FinalizedCheckpoint (r:1 w:0)
-				gas_meter.record_gas(1, 0)?;
+				precompile_helper.record_gas(1, 0)?;
 
 				let params =
 					BscSingleStorageVerifyParams::decode(dvm_parser.input).map_err(|_| {
@@ -98,7 +98,7 @@ where
 			}
 			Action::VerifyMultiStorageProof => {
 				// Storage: BSC FinalizedCheckpoint (r:1 w:0)
-				gas_meter.record_gas(1, 0)?;
+				precompile_helper.record_gas(1, 0)?;
 
 				let params =
 					BscMultiStorageVerifyParams::decode(dvm_parser.input).map_err(|_| {
@@ -150,7 +150,7 @@ where
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			cost: gas_meter.used_gas(),
+			cost: precompile_helper.used_gas(),
 			output,
 			logs: Default::default(),
 		})

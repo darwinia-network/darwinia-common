@@ -81,13 +81,13 @@ pub fn check_state_modifier(
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct PrecompileGasMeter<T> {
+pub struct PrecompileHelper<T> {
 	target_gas: Option<u64>,
 	used_gas: u64,
 	_marker: PhantomData<T>,
 }
 
-impl<T: darwinia_evm::Config> PrecompileGasMeter<T> {
+impl<T: darwinia_evm::Config> PrecompileHelper<T> {
 	pub fn new(target_gas: Option<u64>) -> Self {
 		Self {
 			target_gas,

@@ -24,7 +24,7 @@ use core::marker::PhantomData;
 use codec::Encode;
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{
-	check_state_modifier, selector, DvmInputParser, PrecompileGasMeter, StateMutability,
+	check_state_modifier, selector, DvmInputParser, PrecompileHelper, StateMutability,
 };
 // --- paritytech ---
 use fp_evm::{
@@ -61,11 +61,11 @@ where
 		// Check state modifiers
 		check_state_modifier(context, is_static, StateMutability::View)?;
 
-		let mut gas_meter = PrecompileGasMeter::<T>::new(target_gas);
+		let mut precompile_helper = PrecompileHelper::<T>::new(target_gas);
 
 		let output = match action {
 			Action::BurnAndRemoteUnlock => {
-				gas_meter.record_gas(0, 0)?;
+				precompile_helper.record_gas(0, 0)?;
 
 				let call: T::Call =
 					from_ethereum_issuing::Call::<T>::deposit_burn_token_event_from_precompile {
@@ -75,7 +75,7 @@ where
 				call.encode()
 			}
 			Action::TokenRegisterResponse => {
-				gas_meter.record_gas(0, 0)?;
+				precompile_helper.record_gas(0, 0)?;
 
 				let call: T::Call =
 					from_ethereum_issuing::Call::<T>::register_response_from_contract {
@@ -88,7 +88,7 @@ where
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			cost: gas_meter.used_gas(),
+			cost: precompile_helper.used_gas(),
 			output,
 			logs: Default::default(),
 		})

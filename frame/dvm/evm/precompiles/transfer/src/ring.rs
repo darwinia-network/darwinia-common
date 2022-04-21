@@ -23,7 +23,7 @@ use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use darwinia_evm::{AccountBasic, AccountId};
 use darwinia_evm_precompile_utils::{
-	check_state_modifier, custom_precompile_err, PrecompileGasMeter, StateMutability,
+	check_state_modifier, custom_precompile_err, PrecompileHelper, StateMutability,
 };
 use darwinia_support::evm::{IntoAccountId, TRANSFER_ADDR};
 // --- crates.io ---
@@ -48,10 +48,10 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 		// Check state modifiers
 		check_state_modifier(context, is_static, StateMutability::Payable)?;
 
-		let mut gas_meter = PrecompileGasMeter::<T>::new(target_gas);
+		let mut precompile_helper = PrecompileHelper::<T>::new(target_gas);
 		// Storage: System Account (r:2 w:2)
 		// Storage: Ethereum RemainingRingBalance (r:2 w:2)
-		gas_meter.record_gas(4, 4)?;
+		precompile_helper.record_gas(4, 4)?;
 
 		// Decode input data
 		let input = InputData::<T>::decode(&input)?;
@@ -71,7 +71,7 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			cost: gas_meter.used_gas(),
+			cost: precompile_helper.used_gas(),
 			output: Default::default(),
 			logs: Default::default(),
 		})

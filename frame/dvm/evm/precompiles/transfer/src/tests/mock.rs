@@ -30,8 +30,8 @@ use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
 	pallet_prelude::Weight,
 	traits::{Everything, FindAuthor, GenesisBuild},
-	ConsensusEngineId, PalletId,
 	weights::GetDispatchInfo,
+	ConsensusEngineId, PalletId,
 };
 use frame_system::mocking::*;
 use pallet_evm::FeeCalculator;
@@ -40,7 +40,7 @@ use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	transaction_validity::{TransactionValidity, TransactionValidityError, InvalidTransaction},
+	transaction_validity::{InvalidTransaction, TransactionValidity, TransactionValidityError},
 	AccountId32, Perbill, RuntimeDebug,
 };
 use sp_std::{marker::PhantomData, prelude::*};

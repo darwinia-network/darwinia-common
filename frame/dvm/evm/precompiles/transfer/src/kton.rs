@@ -31,7 +31,7 @@ use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 use crate::util;
 use darwinia_evm::{runner::Runner, AccountBasic, AccountId, Pallet};
 use darwinia_evm_precompile_utils::{
-	check_state_modifier, custom_precompile_err, selector, DvmInputParser, PrecompileGasMeter,
+	check_state_modifier, custom_precompile_err, selector, DvmInputParser, PrecompileHelper,
 };
 use darwinia_support::evm::{IntoAccountId, TRANSFER_ADDR};
 
@@ -62,7 +62,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 		// Check state modifiers
 		check_state_modifier(context, is_static, StateMutability::NonPayable)?;
 
-		let mut gas_meter = PrecompileGasMeter::<T>::new(target_gas);
+		let mut precompile_helper = PrecompileHelper::<T>::new(target_gas);
 
 		match action {
 			Action::TransferAndCall => {
@@ -70,7 +70,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				// Storage: Ethereum RemainingRingBalance (r:2 w:2)
 				// Storage: EVM AccountCodes (r:1 w:0)
 				// Storage: EVM AccountStorages (r:2 w:2)
-				gas_meter.record_gas(7, 6)?;
+				precompile_helper.record_gas(7, 6)?;
 
 				let call_data = CallData::decode(&dvm_parser.input)?;
 				let (caller, wkton, value) =
@@ -122,7 +122,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				// Storage: System Account (r:2 w:2)
 				// Storage: Ethereum RemainingRingBalance (r:2 w:2)
 				// Storage: EVM AccountCodes (r:1 w:0)
-				gas_meter.record_gas(5, 4)?;
+				precompile_helper.record_gas(5, 4)?;
 
 				let wd = WithdrawData::<T>::decode(&dvm_parser.input)?;
 				let (source, to, value) = (context.caller, wd.to_account_id, wd.kton_value);
@@ -138,7 +138,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 
 				Ok(PrecompileOutput {
 					exit_status: ExitSucceed::Returned,
-					cost: gas_meter.used_gas(),
+					cost: precompile_helper.used_gas(),
 					output: Default::default(),
 					logs: Default::default(),
 				})
