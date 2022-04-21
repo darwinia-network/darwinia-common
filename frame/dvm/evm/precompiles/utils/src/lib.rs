@@ -31,6 +31,7 @@ use fp_evm::{Context, ExitError, PrecompileFailure};
 use frame_support::traits::Get;
 use sp_core::U256;
 use sp_std::{borrow::ToOwned, marker::PhantomData};
+
 #[derive(Clone, Copy, Debug)]
 pub struct PrecompileHelper<'a, T> {
 	input: &'a [u8],
@@ -113,6 +114,10 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 		self.used_gas
 	}
 
+	/// Revert the execution, making the user pay for the the currently
+	/// recorded cost. It is better to **revert** instead of **error** as
+	/// erroring consumes the entire gas limit, and **revert** returns an error
+	/// message to the calling contract.
 	pub fn revert(&self, err_message: impl AsRef<[u8]>) -> PrecompileFailure {
 		PrecompileFailure::Revert {
 			exit_status: ExitRevert::Reverted,

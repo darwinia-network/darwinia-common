@@ -52,7 +52,7 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 		helper.record_gas(4, 4)?;
 
 		// Decode input data
-		let input = InputData::<T>::decode(&input, helper.clone())?;
+		let input = InputData::<T>::decode(&input, &helper)?;
 		let (address, to, value) = (context.address, input.dest, context.apparent_value);
 
 		// Ensure the context address should be precompile address
@@ -82,7 +82,7 @@ pub struct InputData<T: darwinia_evm::Config> {
 }
 
 impl<T: darwinia_evm::Config> InputData<T> {
-	pub fn decode(data: &[u8], helper: PrecompileHelper<T>) -> Result<Self, PrecompileFailure> {
+	pub fn decode(data: &[u8], helper: &PrecompileHelper<T>) -> Result<Self, PrecompileFailure> {
 		if data.len() == 32 {
 			let mut dest_bytes = [0u8; 32];
 			dest_bytes.copy_from_slice(&data[0..32]);

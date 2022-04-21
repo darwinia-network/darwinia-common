@@ -69,7 +69,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				// Storage: EVM AccountStorages (r:2 w:2)
 				helper.record_gas(7, 6)?;
 
-				let call_data = CallData::decode(data, helper.clone())?;
+				let call_data = CallData::decode(data, &helper)?;
 				let (caller, wkton, value) =
 					(context.caller, call_data.wkton_address, call_data.value);
 				// Ensure wkton is a contract
@@ -86,7 +86,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				T::KtonAccountBasic::transfer(&caller_account_id, &wkton_account_id, value)
 					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 				// Call WKTON wrapped contract deposit
-				let raw_input = Self::make_call_data(caller, value, helper.clone())?;
+				let raw_input = Self::make_call_data(caller, value, &helper)?;
 				if let Ok(call_res) = T::Runner::call(
 					array_bytes::hex_try_into(TRANSFER_ADDR)
 						.map_err(|_| helper.revert("Invalid transfer address"))?,
@@ -121,7 +121,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				// Storage: EVM AccountCodes (r:1 w:0)
 				helper.record_gas(5, 4)?;
 
-				let wd = WithdrawData::<T>::decode(data, helper.clone())?;
+				let wd = WithdrawData::<T>::decode(data, &helper)?;
 				let (source, to, value) = (context.caller, wd.to_account_id, wd.kton_value);
 				// Ensure wkton is a contract
 				ensure!(
@@ -143,10 +143,10 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 		}
 	}
 
-	fn make_call_data(
+	pub(crate) fn make_call_data(
 		sp_address: sp_core::H160,
 		sp_value: sp_core::U256,
-		helper: PrecompileHelper<T>,
+		helper: &PrecompileHelper<T>,
 	) -> Result<Vec<u8>, PrecompileFailure> {
 		let eth_address = util::s2e_address(sp_address);
 		let eth_value = util::s2e_u256(sp_value);
@@ -183,7 +183,7 @@ pub struct CallData {
 impl CallData {
 	pub fn decode<T: darwinia_evm::Config>(
 		data: &[u8],
-		helper: PrecompileHelper<T>,
+		helper: &PrecompileHelper<T>,
 	) -> Result<Self, PrecompileFailure> {
 		let tokens = ethabi::decode(&[ParamType::Address, ParamType::Uint(256)], &data)
 			.map_err(|_| helper.revert("ethabi decoded error"))?;
@@ -204,7 +204,7 @@ pub struct WithdrawData<T: darwinia_evm::Config> {
 }
 
 impl<T: darwinia_evm::Config> WithdrawData<T> {
-	pub fn decode(data: &[u8], helper: PrecompileHelper<T>) -> Result<Self, PrecompileFailure> {
+	pub fn decode(data: &[u8], helper: &PrecompileHelper<T>) -> Result<Self, PrecompileFailure> {
 		let tokens = ethabi::decode(&[ParamType::FixedBytes(32), ParamType::Uint(256)], &data)
 			.map_err(|_| helper.revert("ethabi decoded error"))?;
 		match (tokens[0].clone(), tokens[1].clone()) {
@@ -217,28 +217,5 @@ impl<T: darwinia_evm::Config> WithdrawData<T> {
 			}),
 			_ => Err(helper.revert("Invalid withdraw input data")),
 		}
-	}
-}
-
-#[cfg(test)]
-mod tests {
-	use super::*;
-	use std::str::FromStr;
-
-	#[test]
-	fn test_make_input() {
-		let mock_address =
-			sp_core::H160::from_str("Aa01a1bEF0557fa9625581a293F3AA7770192632").unwrap();
-		let mock_value_1 = sp_core::U256::from(30);
-		let expected_str = "0x47e7ef24000000000000000000000000aa01a1bef0557fa9625581a293f3aa7770192632000000000000000000000000000000000000000000000000000000000000001e";
-
-		let encoded_str =
-			array_bytes::bytes2hex("0x", make_call_data(mock_address, mock_value_1).unwrap());
-		assert_eq!(encoded_str, expected_str);
-
-		let mock_value_2 = sp_core::U256::from(25);
-		let encoded_str =
-			array_bytes::bytes2hex("0x", make_call_data(mock_address, mock_value_2).unwrap());
-		assert_ne!(encoded_str, expected_str);
 	}
 }
