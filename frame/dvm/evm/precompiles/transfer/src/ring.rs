@@ -22,7 +22,7 @@ use frame_support::ensure;
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use darwinia_evm::{AccountBasic, AccountId};
-use darwinia_evm_precompile_utils::{custom_precompile_err, PrecompileHelper, StateMutability};
+use darwinia_evm_precompile_utils::{PrecompileHelper, StateMutability};
 use darwinia_support::evm::{IntoAccountId, TRANSFER_ADDR};
 // --- crates.io ---
 use codec::Decode;
@@ -52,15 +52,15 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 		precompile_helper.record_gas(4, 4)?;
 
 		// Decode input data
-		let input = InputData::<T>::decode(&input)?;
+		let input = InputData::<T>::decode(&input, precompile_helper.clone())?;
 		let (address, to, value) = (context.address, input.dest, context.apparent_value);
 
 		// Ensure the context address should be precompile address
 		let transfer_addr = array_bytes::hex_try_into(TRANSFER_ADDR)
-			.map_err(|_| custom_precompile_err("invalid address"))?;
+			.map_err(|_| precompile_helper.revert("invalid address"))?;
 		ensure!(
 			address == transfer_addr,
-			custom_precompile_err("Invalid context address")
+			precompile_helper.revert("Invalid context address")
 		);
 
 		let source = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(address);
@@ -77,21 +77,24 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct InputData<T: frame_system::Config> {
+pub struct InputData<T: darwinia_evm::Config> {
 	pub dest: AccountId<T>,
 }
 
-impl<T: frame_system::Config> InputData<T> {
-	pub fn decode(data: &[u8]) -> Result<Self, PrecompileFailure> {
+impl<T: darwinia_evm::Config> InputData<T> {
+	pub fn decode(
+		data: &[u8],
+		precompile_helper: PrecompileHelper<T>,
+	) -> Result<Self, PrecompileFailure> {
 		if data.len() == 32 {
 			let mut dest_bytes = [0u8; 32];
 			dest_bytes.copy_from_slice(&data[0..32]);
 
 			return Ok(InputData {
 				dest: <T as frame_system::Config>::AccountId::decode(&mut dest_bytes.as_ref())
-					.map_err(|_| custom_precompile_err("Invalid destination address"))?,
+					.map_err(|_| precompile_helper.revert("Invalid destination address"))?,
 			});
 		}
-		Err(custom_precompile_err("Invalid input data length"))
+		Err(precompile_helper.revert("Invalid input data length"))
 	}
 }

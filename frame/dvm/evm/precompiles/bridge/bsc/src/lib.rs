@@ -21,9 +21,7 @@
 // --- core ---
 use core::marker::PhantomData;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{
-	custom_precompile_err, selector, DvmInputParser, PrecompileHelper, StateMutability,
-};
+use darwinia_evm_precompile_utils::{selector, DvmInputParser, PrecompileHelper, StateMutability};
 use dp_contract::{
 	abi_util::{abi_encode_array_bytes, abi_encode_bytes},
 	bsc_light_client::{BscMultiStorageVerifyParams, BscSingleStorageVerifyParams},
@@ -78,7 +76,7 @@ where
 
 				let params =
 					BscSingleStorageVerifyParams::decode(dvm_parser.input).map_err(|_| {
-						custom_precompile_err("decode single storage verify info failed")
+						precompile_helper.revert("decode single storage verify info failed")
 					})?;
 				let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
 				let proof = EthereumStorageProof::new(
@@ -91,7 +89,7 @@ where
 					finalized_header.state_root,
 					&proof,
 				)
-				.map_err(|_| custom_precompile_err("verify single storage proof failed"))?;
+				.map_err(|_| precompile_helper.revert("verify single storage proof failed"))?;
 				abi_encode_bytes(storage_value.0.as_slice())
 			}
 			Action::VerifyMultiStorageProof => {
@@ -100,17 +98,15 @@ where
 
 				let params =
 					BscMultiStorageVerifyParams::decode(dvm_parser.input).map_err(|_| {
-						custom_precompile_err("decode multi storage verify info failed")
+						precompile_helper.revert("decode multi storage verify info failed")
 					})?;
 				let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
 				let key_size = params.storage_keys.len();
 				if key_size != params.storage_proofs.len() {
-					return Err(custom_precompile_err(
-						"storage keys not match storage proofs",
-					));
+					return Err(precompile_helper.revert("storage keys not match storage proofs"));
 				}
 				if key_size > MAX_MULTI_STORAGEKEY_SIZE {
-					return Err(custom_precompile_err("storage keys size too large"));
+					return Err(precompile_helper.revert("storage keys size too large"));
 				}
 				let storage_values: Result<Vec<Vec<u8>>, _> = (0..key_size)
 					.map(|idx| {
@@ -136,7 +132,7 @@ where
 								if err == StorageProofError(ProofError::TrieKeyNotExist) {
 									return Ok(vec![]);
 								} else {
-									return Err(custom_precompile_err("verfiy storage failed"));
+									return Err(precompile_helper.revert("verfiy storage failed"));
 								}
 							}
 						}

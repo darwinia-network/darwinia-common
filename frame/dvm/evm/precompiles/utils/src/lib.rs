@@ -21,6 +21,8 @@
 pub use darwinia_evm_precompile_utils_macro::selector;
 pub use ethabi::StateMutability;
 
+// --- crates.io ---
+use evm::ExitRevert;
 // --- darwinia-network ---
 use darwinia_evm::GasWeightMapping;
 use darwinia_support::evm::SELECTOR;
@@ -29,6 +31,7 @@ use fp_evm::{Context, ExitError, PrecompileFailure};
 use frame_support::traits::Get;
 use sp_core::U256;
 use sp_std::marker::PhantomData;
+use sp_std::borrow::ToOwned;
 
 #[derive(Clone, Copy, Debug)]
 pub struct DvmInputParser<'a> {
@@ -85,13 +88,11 @@ impl<T: darwinia_evm::Config> PrecompileHelper<T> {
 		modifier: StateMutability,
 	) -> Result<(), PrecompileFailure> {
 		if is_static && modifier != StateMutability::View {
-			return Err(custom_precompile_err(
-				"can't call non-static function in static context",
-			));
+			return Err(self.revert("can't call non-static function in static context"));
 		}
 
 		if modifier != StateMutability::Payable && context.apparent_value > U256::zero() {
-			return Err(custom_precompile_err("function is not payable"));
+			return Err(self.revert("function is not payable"));
 		}
 
 		Ok(())
@@ -102,15 +103,15 @@ impl<T: darwinia_evm::Config> PrecompileHelper<T> {
 			<T as frame_system::Config>::DbWeight::get().read,
 		)
 		.checked_mul(reads)
-		.ok_or(custom_precompile_err("Cost Overflow"))?;
+		.ok_or(self.revert("Cost Overflow"))?;
 		let writes_cost = <T as darwinia_evm::Config>::GasWeightMapping::weight_to_gas(
 			<T as frame_system::Config>::DbWeight::get().write,
 		)
 		.checked_mul(writes)
-		.ok_or(custom_precompile_err("Cost Overflow"))?;
+		.ok_or(self.revert("Cost Overflow"))?;
 		let cost = reads_cost
 			.checked_add(writes_cost)
-			.ok_or(custom_precompile_err("Cost Overflow"))?;
+			.ok_or(self.revert("Cost Overflow"))?;
 
 		self.used_gas = self
 			.used_gas
@@ -129,5 +130,13 @@ impl<T: darwinia_evm::Config> PrecompileHelper<T> {
 
 	pub fn used_gas(&self) -> u64 {
 		self.used_gas
+	}
+
+	pub fn revert(&self, err_message: impl AsRef<[u8]>) -> PrecompileFailure {
+		PrecompileFailure::Revert {
+			exit_status: ExitRevert::Reverted,
+			output: err_message.as_ref().to_owned(),
+			cost: self.used_gas,
+		}
 	}
 }

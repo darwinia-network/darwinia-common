@@ -30,9 +30,7 @@ use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 // --- darwinia-network ---
 use crate::util;
 use darwinia_evm::{runner::Runner, AccountBasic, AccountId, Pallet};
-use darwinia_evm_precompile_utils::{
-	custom_precompile_err, selector, DvmInputParser, PrecompileHelper,
-};
+use darwinia_evm_precompile_utils::{selector, DvmInputParser, PrecompileHelper};
 use darwinia_support::evm::{IntoAccountId, TRANSFER_ADDR};
 
 #[selector]
@@ -71,13 +69,13 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				// Storage: EVM AccountStorages (r:2 w:2)
 				precompile_helper.record_gas(7, 6)?;
 
-				let call_data = CallData::decode(&dvm_parser.input)?;
+				let call_data = CallData::decode(&dvm_parser.input, precompile_helper.clone())?;
 				let (caller, wkton, value) =
 					(context.caller, call_data.wkton_address, call_data.value);
 				// Ensure wkton is a contract
 				ensure!(
 					!<Pallet<T>>::is_contract_code_empty(&wkton),
-					custom_precompile_err("Wkton must be a contract!")
+					precompile_helper.revert("Wkton must be a contract!")
 				);
 
 				let caller_account_id =
@@ -88,10 +86,10 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				T::KtonAccountBasic::transfer(&caller_account_id, &wkton_account_id, value)
 					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 				// Call WKTON wrapped contract deposit
-				let raw_input = make_call_data(caller, value)?;
+				let raw_input = Self::make_call_data(caller, value, precompile_helper.clone())?;
 				if let Ok(call_res) = T::Runner::call(
 					array_bytes::hex_try_into(TRANSFER_ADDR)
-						.map_err(|_| custom_precompile_err("Invalid transfer address"))?,
+						.map_err(|_| precompile_helper.revert("Invalid transfer address"))?,
 					wkton,
 					raw_input.to_vec(),
 					U256::zero(),
@@ -106,7 +104,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 						ExitReason::Succeed(_) => {
 							log::debug!("Transfer and call execute success.");
 						}
-						_ => return Err(custom_precompile_err("Call in Kton precompile failed")),
+						_ => return Err(precompile_helper.revert("Call in Kton precompile failed")),
 					}
 				}
 
@@ -123,12 +121,12 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				// Storage: EVM AccountCodes (r:1 w:0)
 				precompile_helper.record_gas(5, 4)?;
 
-				let wd = WithdrawData::<T>::decode(&dvm_parser.input)?;
+				let wd = WithdrawData::<T>::decode(&dvm_parser.input, precompile_helper.clone())?;
 				let (source, to, value) = (context.caller, wd.to_account_id, wd.kton_value);
 				// Ensure wkton is a contract
 				ensure!(
 					!<Pallet<T>>::is_contract_code_empty(&source),
-					custom_precompile_err("The caller must be wkton contract")
+					precompile_helper.revert("The caller must be wkton contract")
 				);
 
 				let source = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(source);
@@ -144,35 +142,36 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 			}
 		}
 	}
-}
 
-fn make_call_data(
-	sp_address: sp_core::H160,
-	sp_value: sp_core::U256,
-) -> Result<Vec<u8>, PrecompileFailure> {
-	let eth_address = util::s2e_address(sp_address);
-	let eth_value = util::s2e_u256(sp_value);
-	#[allow(deprecated)]
-	let func = Function {
-		name: "deposit".to_owned(),
-		inputs: vec![
-			Param {
-				name: "address".to_owned(),
-				kind: ParamType::Address,
-				internal_type: Some("address".into()),
-			},
-			Param {
-				name: "value".to_owned(),
-				kind: ParamType::Uint(256),
-				internal_type: Some("uint256".into()),
-			},
-		],
-		outputs: vec![],
-		constant: false,
-		state_mutability: StateMutability::NonPayable,
-	};
-	func.encode_input(&[Token::Address(eth_address), Token::Uint(eth_value)])
-		.map_err(|_| custom_precompile_err("Make call data error happened"))
+	fn make_call_data(
+		sp_address: sp_core::H160,
+		sp_value: sp_core::U256,
+		precompile_helper: PrecompileHelper<T>,
+	) -> Result<Vec<u8>, PrecompileFailure> {
+		let eth_address = util::s2e_address(sp_address);
+		let eth_value = util::s2e_u256(sp_value);
+		#[allow(deprecated)]
+		let func = Function {
+			name: "deposit".to_owned(),
+			inputs: vec![
+				Param {
+					name: "address".to_owned(),
+					kind: ParamType::Address,
+					internal_type: Some("address".into()),
+				},
+				Param {
+					name: "value".to_owned(),
+					kind: ParamType::Uint(256),
+					internal_type: Some("uint256".into()),
+				},
+			],
+			outputs: vec![],
+			constant: false,
+			state_mutability: StateMutability::NonPayable,
+		};
+		func.encode_input(&[Token::Address(eth_address), Token::Uint(eth_value)])
+			.map_err(|_| precompile_helper.revert("Make call data error happened"))
+	}
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -182,38 +181,44 @@ pub struct CallData {
 }
 
 impl CallData {
-	pub fn decode(data: &[u8]) -> Result<Self, PrecompileFailure> {
+	pub fn decode<T: darwinia_evm::Config>(
+		data: &[u8],
+		precompile_helper: PrecompileHelper<T>,
+	) -> Result<Self, PrecompileFailure> {
 		let tokens = ethabi::decode(&[ParamType::Address, ParamType::Uint(256)], &data)
-			.map_err(|_| custom_precompile_err("ethabi decoded error"))?;
+			.map_err(|_| precompile_helper.revert("ethabi decoded error"))?;
 		match (tokens[0].clone(), tokens[1].clone()) {
 			(Token::Address(eth_wkton_address), Token::Uint(eth_value)) => Ok(CallData {
 				wkton_address: util::e2s_address(eth_wkton_address),
 				value: util::e2s_u256(eth_value),
 			}),
-			_ => Err(custom_precompile_err("Invlid call data")),
+			_ => Err(precompile_helper.revert("Invlid call data")),
 		}
 	}
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct WithdrawData<T: frame_system::Config> {
+pub struct WithdrawData<T: darwinia_evm::Config> {
 	pub to_account_id: AccountId<T>,
 	pub kton_value: U256,
 }
 
-impl<T: frame_system::Config> WithdrawData<T> {
-	pub fn decode(data: &[u8]) -> Result<Self, PrecompileFailure> {
+impl<T: darwinia_evm::Config> WithdrawData<T> {
+	pub fn decode(
+		data: &[u8],
+		precompile_helper: PrecompileHelper<T>,
+	) -> Result<Self, PrecompileFailure> {
 		let tokens = ethabi::decode(&[ParamType::FixedBytes(32), ParamType::Uint(256)], &data)
-			.map_err(|_| custom_precompile_err("ethabi decoded error"))?;
+			.map_err(|_| precompile_helper.revert("ethabi decoded error"))?;
 		match (tokens[0].clone(), tokens[1].clone()) {
 			(Token::FixedBytes(address), Token::Uint(eth_value)) => Ok(WithdrawData {
 				to_account_id: <T as frame_system::Config>::AccountId::decode(
 					&mut address.as_ref(),
 				)
-				.map_err(|_| custom_precompile_err("Invalid destination address"))?,
+				.map_err(|_| precompile_helper.revert("Invalid destination address"))?,
 				kton_value: util::e2s_u256(eth_value),
 			}),
-			_ => Err(custom_precompile_err("Invalid withdraw input data")),
+			_ => Err(precompile_helper.revert("Invalid withdraw input data")),
 		}
 	}
 }
