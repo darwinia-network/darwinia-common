@@ -22,8 +22,7 @@
 use core::marker::PhantomData;
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{
-	check_state_modifier, custom_precompile_err, selector, DvmInputParser, PrecompileHelper,
-	StateMutability,
+	custom_precompile_err, selector, DvmInputParser, PrecompileHelper, StateMutability,
 };
 use dp_contract::{
 	abi_util::{abi_encode_array_bytes, abi_encode_bytes},
@@ -68,10 +67,9 @@ where
 		let dvm_parser = DvmInputParser::new(input)?;
 		let action = Action::from_u32(dvm_parser.selector)?;
 
-		// Check state modifiers
-		check_state_modifier(context, is_static, StateMutability::View)?;
-
 		let mut precompile_helper = PrecompileHelper::<T>::new(target_gas);
+		// Check state modifiers
+		precompile_helper.check_state_modifier(context, is_static, StateMutability::View)?;
 
 		let output = match action {
 			Action::VerfiySingleStorageProof => {

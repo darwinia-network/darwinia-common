@@ -31,7 +31,7 @@ use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 use crate::util;
 use darwinia_evm::{runner::Runner, AccountBasic, AccountId, Pallet};
 use darwinia_evm_precompile_utils::{
-	check_state_modifier, custom_precompile_err, selector, DvmInputParser, PrecompileHelper,
+	custom_precompile_err, selector, DvmInputParser, PrecompileHelper,
 };
 use darwinia_support::evm::{IntoAccountId, TRANSFER_ADDR};
 
@@ -59,10 +59,9 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 		let dvm_parser = DvmInputParser::new(input)?;
 		let action = Action::from_u32(dvm_parser.selector)?;
 
-		// Check state modifiers
-		check_state_modifier(context, is_static, StateMutability::NonPayable)?;
-
 		let mut precompile_helper = PrecompileHelper::<T>::new(target_gas);
+		// Check state modifiers
+		precompile_helper.check_state_modifier(context, is_static, StateMutability::NonPayable)?;
 
 		match action {
 			Action::TransferAndCall => {

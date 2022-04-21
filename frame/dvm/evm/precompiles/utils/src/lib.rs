@@ -60,26 +60,6 @@ pub fn custom_precompile_err(err_msg: &'static str) -> PrecompileFailure {
 	}
 }
 
-/// Check that a function call is compatible with the context it is
-/// called into.
-pub fn check_state_modifier(
-	context: &Context,
-	is_static: bool,
-	modifier: StateMutability,
-) -> Result<(), PrecompileFailure> {
-	if is_static && modifier != StateMutability::View {
-		return Err(custom_precompile_err(
-			"can't call non-static function in static context",
-		));
-	}
-
-	if modifier != StateMutability::Payable && context.apparent_value > U256::zero() {
-		return Err(custom_precompile_err("function is not payable"));
-	}
-
-	Ok(())
-}
-
 #[derive(Clone, Copy, Debug)]
 pub struct PrecompileHelper<T> {
 	target_gas: Option<u64>,
@@ -94,6 +74,27 @@ impl<T: darwinia_evm::Config> PrecompileHelper<T> {
 			used_gas: 0,
 			_marker: PhantomData,
 		}
+	}
+
+	/// Check that a function call is compatible with the context it is
+	/// called into.
+	pub fn check_state_modifier(
+		&self,
+		context: &Context,
+		is_static: bool,
+		modifier: StateMutability,
+	) -> Result<(), PrecompileFailure> {
+		if is_static && modifier != StateMutability::View {
+			return Err(custom_precompile_err(
+				"can't call non-static function in static context",
+			));
+		}
+
+		if modifier != StateMutability::Payable && context.apparent_value > U256::zero() {
+			return Err(custom_precompile_err("function is not payable"));
+		}
+
+		Ok(())
 	}
 
 	pub fn record_gas(&mut self, reads: u64, writes: u64) -> Result<(), PrecompileFailure> {
