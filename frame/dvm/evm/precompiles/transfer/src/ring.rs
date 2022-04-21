@@ -22,7 +22,9 @@ use frame_support::ensure;
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use darwinia_evm::{AccountBasic, AccountId};
-use darwinia_evm_precompile_utils::{check_state_modifier, custom_precompile_err, StateMutability};
+use darwinia_evm_precompile_utils::{
+	check_state_modifier, custom_precompile_err, PrecompileGasMeter, StateMutability,
+};
 use darwinia_support::evm::{IntoAccountId, TRANSFER_ADDR};
 // --- crates.io ---
 use codec::Decode;
@@ -39,12 +41,17 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 	/// Input data: 32-bit substrate withdrawal public key
 	pub fn transfer(
 		input: &[u8],
-		_target_gas: Option<u64>,
+		target_gas: Option<u64>,
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
 		// Check state modifiers
 		check_state_modifier(context, is_static, StateMutability::Payable)?;
+
+		let mut gas_meter = PrecompileGasMeter::<T>::new(target_gas);
+		// Storage: System Account (r:2 w:2)
+		// Storage: Ethereum RemainingRingBalance (r:2 w:2)
+		gas_meter.record_gas(4, 4)?;
 
 		// Decode input data
 		let input = InputData::<T>::decode(&input)?;
@@ -64,7 +71,7 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			cost: 20000,
+			cost: gas_meter.used_gas(),
 			output: Default::default(),
 			logs: Default::default(),
 		})

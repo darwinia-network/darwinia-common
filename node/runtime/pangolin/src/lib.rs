@@ -53,7 +53,7 @@ pub use darwinia_staking::{Forcing, StakerStatus};
 use codec::Encode;
 // --- paritytech ---
 use bp_runtime::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
-use frame_support::{log, traits::KeyOwnerProofSystem};
+use frame_support::{log, traits::KeyOwnerProofSystem, weights::GetDispatchInfo};
 use frame_system::{
 	offchain::{AppCrypto, CreateSignedTransaction, SendTransactionTypes, SigningTypes},
 	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
@@ -71,7 +71,9 @@ use sp_runtime::{
 		Block as BlockT, Dispatchable, Extrinsic, NumberFor, PostDispatchInfoOf,
 		SaturatedConversion, StaticLookup, Verify,
 	},
-	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
+	transaction_validity::{
+		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
+	},
 	ApplyExtrinsicResult,
 };
 use sp_std::prelude::*;
@@ -308,52 +310,7 @@ where
 	type OverarchingCall = Call;
 }
 
-impl fp_self_contained::SelfContainedCall for Call {
-	type SignedInfo = H160;
-
-	fn is_self_contained(&self) -> bool {
-		match self {
-			Call::Ethereum(call) => call.is_self_contained(),
-			_ => false,
-		}
-	}
-
-	fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
-		match self {
-			Call::Ethereum(call) => call.check_self_contained(),
-			_ => None,
-		}
-	}
-
-	fn validate_self_contained(&self, info: &Self::SignedInfo) -> Option<TransactionValidity> {
-		match self {
-			Call::Ethereum(call) => call.validate_self_contained(info),
-			_ => None,
-		}
-	}
-
-	fn pre_dispatch_self_contained(
-		&self,
-		info: &Self::SignedInfo,
-	) -> Option<Result<(), TransactionValidityError>> {
-		match self {
-			Call::Ethereum(call) => call.pre_dispatch_self_contained(info),
-			_ => None,
-		}
-	}
-
-	fn apply_self_contained(
-		self,
-		info: Self::SignedInfo,
-	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
-		match self {
-			call @ Call::Ethereum(darwinia_ethereum::Call::transact { .. }) => Some(call.dispatch(
-				Origin::from(darwinia_ethereum::RawOrigin::EthereumTransaction(info)),
-			)),
-			_ => None,
-		}
-	}
-}
+drml_common_runtime::impl_self_contained_call!();
 
 sp_api::impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {

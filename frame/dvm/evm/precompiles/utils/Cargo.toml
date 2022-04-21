@@ -14,10 +14,14 @@ version     = "2.8.8"
 ethabi = { version = "15.0", default-features = false }
 evm    = { version = "0.33.1", default-features = false, features = ["with-codec"] }
 # darwinia-network
+darwinia-evm                        = { default-features = false, path = "../../../evm" }
 darwinia-evm-precompile-utils-macro = { path = "macro" }
 darwinia-support                    = { default-features = false, path = "../../../../support" }
 # paritytech
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 # frontier
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
 
@@ -29,9 +33,13 @@ std = [
 	"ethabi/std",
 	"evm/std",
 	# darwinia-network
+	"darwinia-evm/std",
 	"darwinia-support/std",
 	# paritytech
+	"frame-system/std",
+	"frame-support/std",
 	"sp-core/std",
+	"sp-std/std",
 	# frontier
 	"fp-evm/std",
 ]
