@@ -979,12 +979,11 @@ pub mod pallet {
 
 		/// Get the frozen balance of an account.
 		fn frozen_balance(who: impl Borrow<T::AccountId>) -> FrozenBalance<T::Balance> {
-			let now = <frame_system::Pallet<T>>::block_number();
 			let mut frozen_balance = <FrozenBalance<T::Balance>>::zero();
 			for lock in Self::locks(who.borrow()).iter() {
 				let locked_amount = match &lock.lock_for {
 					LockFor::Common { amount } => *amount,
-					LockFor::Staking(staking_lock) => staking_lock.locked_amount(now),
+					LockFor::Staking(staking_lock) => staking_lock.locked_amount(),
 				};
 				if lock.reasons == Reasons::All || lock.reasons == Reasons::Misc {
 					frozen_balance.misc = frozen_balance.misc.max(locked_amount);

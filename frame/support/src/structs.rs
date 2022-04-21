@@ -80,11 +80,10 @@ where
 {
 	// For performance, we don't need the `at` in some cases
 	// Only use for tests to avoid write a lot of matches in tests
-	pub fn locked_amount(&self, at: Option<Moment>) -> Balance {
+	pub fn locked_amount(&self) -> Balance {
 		match &self.lock_for {
 			LockFor::Common { amount } => *amount,
-			LockFor::Staking(staking_lock) => staking_lock
-				.locked_amount(at.expect("This's a `StakingLock`, please specify the `Moment`.")),
+			LockFor::Staking(staking_lock) => staking_lock.locked_amount(),
 		}
 	}
 }
@@ -103,24 +102,18 @@ pub struct StakingLock<Balance, Moment> {
 }
 impl<Balance, Moment> StakingLock<Balance, Moment>
 where
-	Balance: Copy + PartialOrd + AtLeast32BitUnsigned,
+	Balance: Copy + PartialOrd + AtLeast32BitUnsigned + Zero,
 	Moment: Copy + PartialOrd,
 {
 	#[inline]
-	pub fn locked_amount(&self, at: Moment) -> Balance {
-		self.unbondings
-			.iter()
-			.fold(self.staking_amount, |acc, unbonding| {
-				if unbonding.valid_at(at) {
-					acc.saturating_add(unbonding.amount)
-				} else {
-					acc
-				}
-			})
+	pub fn locked_amount(&self) -> Balance {
+		self.unbondings.iter().fold(Zero::zero(), |acc, unbonding| {
+			acc.saturating_add(unbonding.amount)
+		})
 	}
 
 	#[inline]
-	pub fn update(&mut self, at: Moment) {
+	pub fn refresh(&mut self, at: Moment) {
 		self.unbondings.retain(|unbonding| unbonding.valid_at(at));
 	}
 }

@@ -723,6 +723,8 @@ pub fn do_slash<T: Config>(
 		Some(ledger) => ledger,
 		None => return, // nothing to do.
 	};
+	let origin_active = ledger.active.clone();
+	let origin_active_kton = ledger.active_kton.clone();
 	let (slash_ring, slash_kton) = ledger.slash(
 		value.r,
 		value.k,
@@ -757,7 +759,13 @@ pub fn do_slash<T: Config>(
 	}
 
 	if slashed {
-		<Pallet<T>>::update_ledger(&controller, &mut ledger);
+		<Pallet<T>>::update_ledger(&controller, &ledger);
+		<Pallet<T>>::update_staking_pool(
+			ledger.active,
+			origin_active,
+			ledger.active_kton,
+			origin_active_kton,
+		);
 		<Pallet<T>>::deposit_event(Event::Slashed(stash.clone(), value.r, value.k));
 	}
 }

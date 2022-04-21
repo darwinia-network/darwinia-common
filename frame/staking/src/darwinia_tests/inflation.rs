@@ -17,6 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- paritytech ---
+use frame_support::traits::Currency;
 use sp_runtime::{assert_eq_error_rate, Perbill};
 // --- darwinia-network ---
 use crate::{
@@ -374,4 +375,48 @@ fn kton_slash_should_work() {
 			);
 		}
 	}
+}
+
+#[test]
+fn inflation_should_be_correct() {
+	ExtBuilder::default().build().execute_with(|| {
+		let initial_issuance = 1_200_000_000 * COIN;
+		let surplus_needed = initial_issuance - Ring::total_issuance();
+		let _ = Ring::deposit_into_existing(&11, surplus_needed);
+
+		assert_eq!(Ring::total_issuance(), initial_issuance);
+	});
+
+	// breakpoint test
+	// ExtBuilder::default().build().execute_with(|| {
+	// 	gen_paired_account!(validator_1_stash(123), validator_1_controller(456), 0);
+	// 	gen_paired_account!(validator_2_stash(234), validator_2_controller(567), 0);
+	// 	gen_paired_account!(nominator_stash(345), nominator_controller(678), 0);
+	//
+	// 	assert_ok!(Staking::validate(
+	// 		Origin::signed(validator_1_controller),
+	// 		ValidatorPrefs::default(),
+	// 	));
+	// 	assert_ok!(Staking::validate(
+	// 		Origin::signed(validator_2_controller),
+	// 		ValidatorPrefs::default(),
+	// 	));
+	// 	assert_ok!(Staking::nominate(
+	// 		Origin::signed(nominator_controller),
+	// 		vec![validator_1_stash, validator_2_stash],
+	// 	));
+	//
+	// 	Timestamp::set_timestamp(1_575_448_345_000 - 12_000);
+	// 	// breakpoint here
+	// 	Staking::new_era(1);
+	//
+	// 	Timestamp::set_timestamp(1_575_448_345_000);
+	// 	// breakpoint here
+	// 	Staking::new_era(2);
+	//
+	// 	// breakpoint here
+	//     inflation::compute_total_payout::<Test>(11_999, 1_295_225_000, 9_987_999_900_000_000_000);
+	//
+	// 	loop {}
+	// });
 }

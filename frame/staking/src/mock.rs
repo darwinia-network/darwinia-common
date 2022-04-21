@@ -712,10 +712,6 @@ fn assert_is_stash(acc: AccountId) {
 
 pub fn assert_ledger_consistent(controller: AccountId) {
 	let ledger = Staking::ledger(controller).unwrap();
-
-	assert_eq!(ledger.active, ledger.ring_staking_lock.staking_amount);
-	assert_eq!(ledger.active_kton, ledger.kton_staking_lock.staking_amount);
-
 	let real_total_ring: Balance = ledger
 		.ring_staking_lock
 		.unbondings

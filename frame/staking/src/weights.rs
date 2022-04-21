@@ -33,6 +33,9 @@ pub trait WeightInfo {
 	fn bond_extra() -> Weight;
 	fn deposit_extra() -> Weight;
 	fn unbond() -> Weight;
+	fn withdraw_unbonded_update(s: u32) -> Weight;
+	fn withdraw_unbonded_kill(s: u32) -> Weight;
+
 	fn claim_mature_deposits() -> Weight;
 	fn try_claim_deposits_with_punish() -> Weight;
 	fn validate() -> Weight;
@@ -92,6 +95,18 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		(75_020_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+	}
+	fn withdraw_unbonded_update(s: u32) -> Weight {
+		(51_631_000 as Weight)
+			// Standard Error: 0
+			.saturating_add((55_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+	}
+	fn withdraw_unbonded_kill(_s: u32) -> Weight {
+		(101_870_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(13 as Weight))
+			.saturating_add(T::DbWeight::get().writes(11 as Weight))
 	}
 	fn validate() -> Weight {
 		(40_702_000 as Weight)
@@ -274,6 +289,18 @@ impl WeightInfo for () {
 		(75_020_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+	}
+	fn withdraw_unbonded_update(s: u32) -> Weight {
+		(51_631_000 as Weight)
+			// Standard Error: 0
+			.saturating_add((55_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+	}
+	fn withdraw_unbonded_kill(_s: u32) -> Weight {
+		(101_870_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(13 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(11 as Weight))
 	}
 	fn validate() -> Weight {
 		(40_702_000 as Weight)

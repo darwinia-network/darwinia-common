@@ -287,8 +287,6 @@ macro_rules! log {
 #[cfg(test)]
 mod darwinia_tests;
 #[cfg(test)]
-mod inflation_tests;
-#[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod substrate_tests;
@@ -1133,9 +1131,9 @@ pub mod pallet {
 				StakingBalance::RingBalance(max_additional) => {
 					let stash_balance = T::RingCurrency::free_balance(&stash);
 
-					if let Some(extra) = stash_balance.checked_sub(
-						&ledger.ring_locked_amount_at(<frame_system::Pallet<T>>::block_number()),
-					) {
+					if let Some(extra) = stash_balance
+						.checked_sub(&(ledger.active + ledger.ring_staking_lock.locked_amount()))
+					{
 						let extra = extra.min(max_additional);
 						let (start_time, expire_time) =
 							Self::bond_ring(&stash, &controller, extra, promise_month, ledger)?;
@@ -1152,7 +1150,7 @@ pub mod pallet {
 					let stash_balance = T::KtonCurrency::free_balance(&stash);
 
 					if let Some(extra) = stash_balance.checked_sub(
-						&ledger.kton_locked_amount_at(<frame_system::Pallet<T>>::block_number()),
+						&(ledger.active_kton + ledger.kton_staking_lock.locked_amount()),
 					) {
 						let extra = extra.min(max_additional);
 
@@ -1194,7 +1192,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let stash = ensure_signed(origin)?;
 			let controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
-			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
+			let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
 
 			if value.is_zero() {
 				return Ok(());
@@ -1203,7 +1201,6 @@ pub mod pallet {
 			let start_time = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 			let promise_month = promise_month.max(1).min(36);
 			let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
-			let mut ledger = Self::clear_mature_deposits(ledger).0;
 			let StakingLedger {
 				active,
 				active_deposit_ring,
@@ -1220,6 +1217,7 @@ pub mod pallet {
 			let kton_positive_imbalance = T::KtonCurrency::deposit_creating(&stash, kton_return);
 
 			T::KtonReward::on_unbalanced(kton_positive_imbalance);
+
 			*active_deposit_ring = active_deposit_ring.saturating_add(value);
 			deposit_items.push(TimeDepositItem {
 				value,
@@ -1228,6 +1226,7 @@ pub mod pallet {
 			});
 
 			<Ledger<T>>::insert(&controller, ledger);
+
 			Self::deposit_event(Event::RingBonded(stash, value, start_time, expire_time));
 
 			Ok(())
@@ -1270,9 +1269,6 @@ pub mod pallet {
 			} = &mut ledger;
 			let now = <frame_system::Pallet<T>>::block_number();
 
-			ring_staking_lock.update(now);
-			kton_staking_lock.update(now);
-
 			// Due to the macro parser, we've to add a bracket.
 			// Actually, this's totally wrong:
 			//	 `a as u32 + b as u32 < c`
@@ -1285,6 +1281,8 @@ pub mod pallet {
 				<Error<T>>::NoMoreChunks,
 			);
 
+			let origin_active = active.clone();
+			let origin_active_kton = active_kton.clone();
 			let mut unbond_ring: RingBalance<T> = Zero::zero();
 			let mut unbond_kton: KtonBalance<T> = Zero::zero();
 
@@ -1293,6 +1291,7 @@ pub mod pallet {
 					// Only active normal ring can be unbond:
 					// `active = active_normal_ring + active_deposit_ring`
 					let active_normal_ring = *active - *active_deposit_ring;
+
 					unbond_ring = r.min(active_normal_ring);
 
 					if !unbond_ring.is_zero() {
@@ -1329,7 +1328,7 @@ pub mod pallet {
 							})
 							.expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
-						Self::deposit_event(Event::RingUnbonded(stash.to_owned(), unbond_ring));
+						Self::deposit_event(Event::RingUnbonded(stash.clone(), unbond_ring));
 
 						if !unbond_kton.is_zero() {
 							kton_staking_lock
@@ -1340,7 +1339,10 @@ pub mod pallet {
 								})
 								.expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
-							Self::deposit_event(Event::KtonUnbonded(stash.to_owned(), unbond_kton));
+							Self::deposit_event(Event::KtonUnbonded(
+								ledger.stash.clone(),
+								unbond_kton,
+							));
 						}
 					}
 				}
@@ -1369,7 +1371,7 @@ pub mod pallet {
 							})
 							.expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
-						Self::deposit_event(Event::KtonUnbonded(stash.to_owned(), unbond_kton));
+						Self::deposit_event(Event::KtonUnbonded(stash.clone(), unbond_kton));
 
 						if !unbond_ring.is_zero() {
 							ring_staking_lock
@@ -1380,48 +1382,98 @@ pub mod pallet {
 								})
 								.expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
-							Self::deposit_event(Event::RingUnbonded(stash.to_owned(), unbond_ring));
+							Self::deposit_event(Event::RingUnbonded(
+								ledger.stash.clone(),
+								unbond_ring,
+							));
 						}
 					}
 				}
 			}
 
-			Self::update_ledger(&controller, &mut ledger);
+			Self::update_ledger(&controller, &ledger);
+			Self::update_staking_pool(
+				ledger.active,
+				origin_active,
+				ledger.active_kton,
+				origin_active_kton,
+			);
 
 			// update this staker in the sorted list, if they exist in it.
 			if T::SortedListProvider::contains(&ledger.stash) {
 				T::SortedListProvider::on_update(&ledger.stash, Self::weight_of(&ledger.stash));
 			}
 
-			// TODO: https://github.com/darwinia-network/darwinia-common/issues/96
-			// FIXME: https://github.com/darwinia-network/darwinia-common/issues/121
-			// let StakingLedger {
-			// 	active,
-			// 	active_kton,
-			// 	..
-			// } = ledger;
+			Ok(())
+		}
 
-			// // All bonded *RING* and *KTON* is withdrawing, then remove Ledger to save storage
-			// if active.is_zero() && active_kton.is_zero() {
-			// 	//
-			// 	// `OnKilledAccount` would be a method to collect the locks.
-			// 	//
-			// 	// These locks are still in the system, and should be removed after 14 days
-			// 	//
-			// 	// There two situations should be considered after the 14 days
-			// 	// - the user never bond again, so the locks should be released.
-			// 	// - the user is bonded again in the 14 days, so the after 14 days
-			// 	//   the lock should not be removed
-			// 	//
-			// 	// If the locks are not deleted, this lock will waste the storage in the future
-			// 	// blocks.
-			// 	//
-			// 	// T::Ring::remove_lock(STAKING_ID, &stash);
-			// 	// T::Kton::remove_lock(STAKING_ID, &stash);
-			// 	// Self::kill_stash(&stash)?;
+		/// Remove any unlocked chunks from the `unlocking` queue from our management.
+		///
+		/// This essentially frees up that balance to be used by the stash account to do
+		/// whatever it wants.
+		///
+		/// The dispatch origin for this call must be _Signed_ by the controller.
+		///
+		/// Emits `Withdrawn`.
+		///
+		/// See also [`Call::unbond`].
+		///
+		/// # <weight>
+		/// Complexity O(S) where S is the number of slashing spans to remove
+		/// NOTE: Weight annotation is the kill scenario, we refund otherwise.
+		/// # </weight>
+		#[pallet::weight(T::WeightInfo::withdraw_unbonded_kill(*num_slashing_spans))]
+		pub fn withdraw_unbonded(
+			origin: OriginFor<T>,
+			num_slashing_spans: u32,
+		) -> DispatchResultWithPostInfo {
+			let controller = ensure_signed(origin)?;
+			let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
+
+			ledger.consolidate_unbondings(<frame_system::Pallet<T>>::block_number());
+
+			let StakingLedger {
+				stash,
+				active,
+				active_kton,
+				ring_staking_lock,
+				kton_staking_lock,
+				..
+			} = &ledger;
+
+			let post_info_weight = if ring_staking_lock.unbondings.is_empty()
+				&& active < &T::RingCurrency::minimum_balance()
+				&& kton_staking_lock.unbondings.is_empty()
+				&& active_kton < &T::KtonCurrency::minimum_balance()
+			{
+				// This account must have called `unbond()` with some value that caused the active
+				// portion to fall below existential deposit + will have no more unlocking chunks
+				// left. We can now safely remove all staking-related information.
+				Self::kill_stash(stash, num_slashing_spans)?;
+
+				// Remove the lock.
+				T::RingCurrency::remove_lock(STAKING_ID, stash);
+				T::KtonCurrency::remove_lock(STAKING_ID, stash);
+
+				// This is worst case scenario, so we use the full weight and return None
+				None
+			} else {
+				// This was the consequence of a partial unbond. just update the ledger and move on.
+				Self::update_ledger(&controller, &ledger);
+
+				// This is only an update, so we use less overall weight.
+				Some(T::WeightInfo::withdraw_unbonded_update(num_slashing_spans))
+			};
+
+			// `old_total` should never be less than the new total because
+			// `consolidate_unlocked` strictly subtracts balance.
+			// if ledger.total < old_total {
+			// 	// Already checked that this won't overflow by entry condition.
+			// 	let value = old_total - ledger.total;
+			// 	Self::deposit_event(<Event<T>>::Withdrawn(stash.clone(), value));
 			// }
 
-			Ok(())
+			Ok(post_info_weight.into())
 		}
 
 		/// Stash accounts can get their ring back after the depositing time exceeded,
@@ -2017,30 +2069,49 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let controller = ensure_signed(origin)?;
 			let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
-			let now = <frame_system::Pallet<T>>::block_number();
-
-			ledger.ring_staking_lock.update(now);
-			ledger.kton_staking_lock.update(now);
+			let StakingLedger {
+				active,
+				active_kton,
+				ring_staking_lock,
+				kton_staking_lock,
+				..
+			} = &mut ledger;
+			let origin_active = active.clone();
+			let origin_active_kton = active_kton.clone();
 
 			ensure!(
-				!ledger.ring_staking_lock.unbondings.is_empty()
-					|| !ledger.kton_staking_lock.unbondings.is_empty(),
+				!ring_staking_lock.unbondings.is_empty()
+					|| !kton_staking_lock.unbondings.is_empty(),
 				<Error<T>>::NoUnlockChunk
 			);
 
-			let initial_unbondings = ledger.ring_staking_lock.unbondings.len() as u32
-				+ ledger.kton_staking_lock.unbondings.len() as u32;
+			let initial_unbondings = ring_staking_lock.unbondings.len() as u32
+				+ kton_staking_lock.unbondings.len() as u32;
 			let (rebonded_ring, rebonded_kton) =
 				ledger.rebond(plan_to_rebond_ring, plan_to_rebond_kton);
+			let StakingLedger {
+				stash,
+				active,
+				active_kton,
+				ring_staking_lock,
+				kton_staking_lock,
+				..
+			} = &ledger;
 
 			// Last check: the new active amount of ledger must be more than ED.
 			ensure!(
-				ledger.active >= T::RingCurrency::minimum_balance()
-					|| ledger.active_kton >= T::KtonCurrency::minimum_balance(),
+				*active >= T::RingCurrency::minimum_balance()
+					|| *active_kton >= T::KtonCurrency::minimum_balance(),
 				<Error<T>>::InsufficientBond
 			);
 
-			Self::update_ledger(&controller, &mut ledger);
+			Self::update_ledger(&controller, &ledger);
+			Self::update_staking_pool(
+				ledger.active,
+				origin_active,
+				ledger.active_kton,
+				origin_active_kton,
+			);
 
 			let ring_rebonded = !rebonded_ring.is_zero();
 			let kton_rebonded = !rebonded_kton.is_zero();
@@ -2048,25 +2119,20 @@ pub mod pallet {
 			if ring_rebonded {
 				let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 
-				Self::deposit_event(Event::RingBonded(
-					ledger.stash.clone(),
-					rebonded_ring,
-					now,
-					now,
-				));
+				Self::deposit_event(Event::RingBonded(stash.clone(), rebonded_ring, now, now));
 			}
 			if kton_rebonded {
-				Self::deposit_event(Event::KtonBonded(ledger.stash.clone(), rebonded_kton));
+				Self::deposit_event(Event::KtonBonded(stash.clone(), rebonded_kton));
 			}
 			if ring_rebonded && kton_rebonded {
-				if T::SortedListProvider::contains(&ledger.stash) {
-					T::SortedListProvider::on_update(&ledger.stash, Self::weight_of(&ledger.stash));
+				if T::SortedListProvider::contains(stash) {
+					T::SortedListProvider::on_update(stash, Self::weight_of(stash));
 				}
 			}
 
 			let removed_unbondings = 1.saturating_add(initial_unbondings).saturating_sub(
-				ledger.ring_staking_lock.unbondings.len() as u32
-					+ ledger.kton_staking_lock.unbondings.len() as u32,
+				ring_staking_lock.unbondings.len() as u32
+					+ kton_staking_lock.unbondings.len() as u32,
 			);
 
 			Ok(Some(T::WeightInfo::rebond(removed_unbondings)).into())

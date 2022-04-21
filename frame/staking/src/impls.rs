@@ -45,6 +45,7 @@ impl<T: Config> Pallet<T> {
 			..
 		} = &mut ledger;
 
+		let origin_active = active.clone();
 		let start_time = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 		let mut expire_time = start_time;
 
@@ -74,7 +75,8 @@ impl<T: Config> Pallet<T> {
 			});
 		}
 
-		Self::update_ledger(&controller, &mut ledger);
+		Self::update_ledger(&controller, &ledger);
+		Self::update_staking_pool(ledger.active, origin_active, Zero::zero(), Zero::zero());
 
 		Ok((start_time, expire_time))
 	}
@@ -85,16 +87,29 @@ impl<T: Config> Pallet<T> {
 		value: KtonBalance<T>,
 		mut ledger: StakingLedgerT<T>,
 	) -> DispatchResult {
-		ledger.active_kton = ledger.active_kton.saturating_add(value);
+		let StakingLedger {
+			active,
+			active_kton,
+			..
+		} = &mut ledger;
+		let origin_active_kton = active_kton.clone();
+
+		*active_kton = origin_active_kton.saturating_add(value);
 
 		// Last check: the new active amount of ledger must be more than ED.
 		ensure!(
-			ledger.active >= T::RingCurrency::minimum_balance()
-				|| ledger.active_kton >= T::KtonCurrency::minimum_balance(),
+			*active >= T::RingCurrency::minimum_balance()
+				|| *active_kton >= T::KtonCurrency::minimum_balance(),
 			<Error<T>>::InsufficientBond
 		);
 
-		Self::update_ledger(&controller, &mut ledger);
+		Self::update_ledger(&controller, &ledger);
+		Self::update_staking_pool(
+			Zero::zero(),
+			Zero::zero(),
+			ledger.active_kton,
+			origin_active_kton,
+		);
 
 		Ok(())
 	}
@@ -333,7 +348,7 @@ impl<T: Config> Pallet<T> {
 	/// BE CAREFUL:
 	/// 	This will also update the stash lock.
 	/// 	DO NOT modify the locks' staking amount outside this function.
-	pub fn update_ledger(controller: &AccountId<T>, ledger: &mut StakingLedgerT<T>) {
+	pub fn update_ledger(controller: &AccountId<T>, ledger: &StakingLedgerT<T>) {
 		let StakingLedger {
 			active,
 			active_kton,
@@ -342,49 +357,47 @@ impl<T: Config> Pallet<T> {
 			..
 		} = ledger;
 
-		if *active != ring_staking_lock.staking_amount {
-			let origin_active_ring = ring_staking_lock.staking_amount;
-
-			ring_staking_lock.staking_amount = *active;
-
-			<RingPool<T>>::mutate(|pool| {
-				if origin_active_ring > *active {
-					*pool = pool.saturating_sub(origin_active_ring - *active);
-				} else {
-					*pool = pool.saturating_add(*active - origin_active_ring);
-				}
-			});
-
-			T::RingCurrency::set_lock(
-				STAKING_ID,
-				&ledger.stash,
-				LockFor::Staking(ledger.ring_staking_lock.clone()),
-				WithdrawReasons::all(),
-			);
-		}
-
-		if *active_kton != kton_staking_lock.staking_amount {
-			let origin_active_kton = kton_staking_lock.staking_amount;
-
-			kton_staking_lock.staking_amount = *active_kton;
-
-			<KtonPool<T>>::mutate(|pool| {
-				if origin_active_kton > *active_kton {
-					*pool = pool.saturating_sub(origin_active_kton - *active_kton);
-				} else {
-					*pool = pool.saturating_add(*active_kton - origin_active_kton);
-				}
-			});
-
-			T::KtonCurrency::set_lock(
-				STAKING_ID,
-				&ledger.stash,
-				LockFor::Staking(ledger.kton_staking_lock.clone()),
-				WithdrawReasons::all(),
-			);
-		}
+		T::RingCurrency::set_lock(
+			STAKING_ID,
+			&ledger.stash,
+			active.saturating_add(ring_staking_lock.locked_amount()),
+			WithdrawReasons::all(),
+		);
+		T::KtonCurrency::set_lock(
+			STAKING_ID,
+			&ledger.stash,
+			active_kton.saturating_add(kton_staking_lock.locked_amount()),
+			WithdrawReasons::all(),
+		);
 
 		<Ledger<T>>::insert(controller, ledger);
+	}
+
+	/// Update the staking pool, once any account change its bond.
+	pub fn update_staking_pool(
+		active: RingBalance<T>,
+		origin_active: RingBalance<T>,
+		active_kton: KtonBalance<T>,
+		origin_active_kton: KtonBalance<T>,
+	) {
+		if active != origin_active {
+			<RingPool<T>>::mutate(|pool| {
+				if origin_active > active {
+					*pool = pool.saturating_sub(origin_active - active);
+				} else {
+					*pool = pool.saturating_add(active - origin_active);
+				}
+			});
+		}
+		if active_kton != origin_active_kton {
+			<KtonPool<T>>::mutate(|pool| {
+				if origin_active_kton > active_kton {
+					*pool = pool.saturating_sub(origin_active_kton - active_kton);
+				} else {
+					*pool = pool.saturating_add(active_kton - origin_active_kton);
+				}
+			});
+		}
 	}
 
 	/// Chill a stash account.
@@ -415,9 +428,16 @@ impl<T: Config> Pallet<T> {
 					let r = T::RingCurrency::deposit_into_existing(stash, amount).ok();
 
 					if r.is_some() {
+						let origin_active = l.active.clone();
 						l.active += amount;
 
-						Self::update_ledger(&c, &mut l);
+						Self::update_ledger(&c, &l);
+						Self::update_staking_pool(
+							l.active,
+							origin_active,
+							Zero::zero(),
+							Zero::zero(),
+						);
 					}
 
 					r
@@ -1533,6 +1553,7 @@ impl<T: Config> OnDepositRedeem<AccountId<T>, RingBalance<T>> for Pallet<T> {
 
 		if let Some(controller) = Self::bonded(&stash) {
 			let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
+			let origin_active = ledger.active.clone();
 
 			T::RingCurrency::transfer(&backing, &stash, amount, ExistenceRequirement::KeepAlive)?;
 
@@ -1551,7 +1572,8 @@ impl<T: Config> OnDepositRedeem<AccountId<T>, RingBalance<T>> for Pallet<T> {
 				expire_time,
 			});
 
-			Self::update_ledger(&controller, &mut ledger);
+			Self::update_ledger(&controller, &ledger);
+			Self::update_staking_pool(ledger.active, origin_active, Zero::zero(), Zero::zero());
 		} else {
 			ensure!(
 				!<Bonded<T>>::contains_key(&stash),
@@ -1572,7 +1594,7 @@ impl<T: Config> OnDepositRedeem<AccountId<T>, RingBalance<T>> for Pallet<T> {
 
 			<frame_system::Pallet<T>>::inc_consumers(&stash).map_err(|_| <Error<T>>::BadState)?;
 
-			let mut ledger = StakingLedger {
+			let ledger = StakingLedger {
 				stash: stash.clone(),
 				active: amount,
 				active_deposit_ring: amount,
@@ -1589,7 +1611,8 @@ impl<T: Config> OnDepositRedeem<AccountId<T>, RingBalance<T>> for Pallet<T> {
 				..Default::default()
 			};
 
-			Self::update_ledger(controller, &mut ledger);
+			Self::update_ledger(controller, &ledger);
+			Self::update_staking_pool(ledger.active, Zero::zero(), Zero::zero(), Zero::zero());
 		};
 
 		Self::deposit_event(Event::RingBonded(
