@@ -66,8 +66,8 @@ impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let precompile_helper = PrecompileHelper::<T>::new(input, target_gas);
-		let (selector, _data) = precompile_helper.split_input()?;
+		let helper = PrecompileHelper::<T>::new(input, target_gas);
+		let (selector, _data) = helper.split_input()?;
 
 		match Action::from_u32(selector) {
 			Ok(Action::TransferAndCall) | Ok(Action::Withdraw) => {

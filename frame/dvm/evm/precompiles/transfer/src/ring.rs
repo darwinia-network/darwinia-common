@@ -43,24 +43,24 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let mut precompile_helper = PrecompileHelper::<T>::new(input, target_gas);
+		let mut helper = PrecompileHelper::<T>::new(input, target_gas);
 		// Check state modifiers
-		precompile_helper.check_state_modifier(context, is_static, StateMutability::Payable)?;
+		helper.check_state_modifier(context, is_static, StateMutability::Payable)?;
 
 		// Storage: System Account (r:2 w:2)
 		// Storage: Ethereum RemainingRingBalance (r:2 w:2)
-		precompile_helper.record_gas(4, 4)?;
+		helper.record_gas(4, 4)?;
 
 		// Decode input data
-		let input = InputData::<T>::decode(&input, precompile_helper.clone())?;
+		let input = InputData::<T>::decode(&input, helper.clone())?;
 		let (address, to, value) = (context.address, input.dest, context.apparent_value);
 
 		// Ensure the context address should be precompile address
 		let transfer_addr = array_bytes::hex_try_into(TRANSFER_ADDR)
-			.map_err(|_| precompile_helper.revert("invalid address"))?;
+			.map_err(|_| helper.revert("invalid address"))?;
 		ensure!(
 			address == transfer_addr,
-			precompile_helper.revert("Invalid context address")
+			helper.revert("Invalid context address")
 		);
 
 		let source = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(address);
@@ -69,7 +69,7 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			cost: precompile_helper.used_gas(),
+			cost: helper.used_gas(),
 			output: Default::default(),
 			logs: Default::default(),
 		})
@@ -82,19 +82,16 @@ pub struct InputData<T: darwinia_evm::Config> {
 }
 
 impl<T: darwinia_evm::Config> InputData<T> {
-	pub fn decode(
-		data: &[u8],
-		precompile_helper: PrecompileHelper<T>,
-	) -> Result<Self, PrecompileFailure> {
+	pub fn decode(data: &[u8], helper: PrecompileHelper<T>) -> Result<Self, PrecompileFailure> {
 		if data.len() == 32 {
 			let mut dest_bytes = [0u8; 32];
 			dest_bytes.copy_from_slice(&data[0..32]);
 
 			return Ok(InputData {
 				dest: <T as frame_system::Config>::AccountId::decode(&mut dest_bytes.as_ref())
-					.map_err(|_| precompile_helper.revert("Invalid destination address"))?,
+					.map_err(|_| helper.revert("Invalid destination address"))?,
 			});
 		}
-		Err(precompile_helper.revert("Invalid input data length"))
+		Err(helper.revert("Invalid input data length"))
 	}
 }

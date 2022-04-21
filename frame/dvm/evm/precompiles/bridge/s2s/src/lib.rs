@@ -72,35 +72,31 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let mut precompile_helper = PrecompileHelper::new(input, target_gas);
-		let (selector, data) = precompile_helper.split_input()?;
+		let mut helper = PrecompileHelper::new(input, target_gas);
+		let (selector, data) = helper.split_input()?;
 		let action = Action::from_u32(selector)?;
 
 		// Check state modifiers
-		precompile_helper.check_state_modifier(context, is_static, StateMutability::View)?;
+		helper.check_state_modifier(context, is_static, StateMutability::View)?;
 
 		let output = match action {
 			Action::OutboundLatestGeneratedNonce => {
-				Self::outbound_latest_generated_nonce(data, &mut precompile_helper)?
+				Self::outbound_latest_generated_nonce(data, &mut helper)?
 			}
 			Action::InboundLatestReceivedNonce => {
-				Self::inbound_latest_received_nonce(data, &mut precompile_helper)?
+				Self::inbound_latest_received_nonce(data, &mut helper)?
 			}
 			Action::EncodeUnlockFromRemoteDispatchCall => {
-				Self::encode_unlock_from_remote_dispatch_call(
-					data,
-					context.caller,
-					&mut precompile_helper,
-				)?
+				Self::encode_unlock_from_remote_dispatch_call(data, context.caller, &mut helper)?
 			}
 			Action::EncodeSendMessageDispatchCall => {
-				Self::encode_send_message_dispatch_call(data, &mut precompile_helper)?
+				Self::encode_send_message_dispatch_call(data, &mut helper)?
 			}
 		};
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			cost: precompile_helper.used_gas(),
+			cost: helper.used_gas(),
 			output,
 			logs: Default::default(),
 		})
@@ -115,26 +111,24 @@ where
 {
 	fn outbound_latest_generated_nonce(
 		data: &[u8],
-		precompile_helper: &mut PrecompileHelper<T>,
+		helper: &mut PrecompileHelper<T>,
 	) -> Result<Vec<u8>, PrecompileFailure> {
 		// Storage: ParityBridgeMessages OutboundLanes (r:1 w:0)
-		precompile_helper.record_gas(1, 0)?;
+		helper.record_gas(1, 0)?;
 
-		let lane_id =
-			abi_decode_bytes4(data).map_err(|_| precompile_helper.revert("decode failed"))?;
+		let lane_id = abi_decode_bytes4(data).map_err(|_| helper.revert("decode failed"))?;
 		let nonce = <S as LatestMessageNoncer>::outbound_latest_generated_nonce(lane_id);
 		Ok(abi_encode_u64(nonce))
 	}
 
 	fn inbound_latest_received_nonce(
 		data: &[u8],
-		precompile_helper: &mut PrecompileHelper<T>,
+		helper: &mut PrecompileHelper<T>,
 	) -> Result<Vec<u8>, PrecompileFailure> {
 		// Storage: ParityBridgeMessages INboundLanes (r:1 w:0)
-		precompile_helper.record_gas(1, 0)?;
+		helper.record_gas(1, 0)?;
 
-		let lane_id =
-			abi_decode_bytes4(data).map_err(|_| precompile_helper.revert("decode failed"))?;
+		let lane_id = abi_decode_bytes4(data).map_err(|_| helper.revert("decode failed"))?;
 		let nonce = <S as LatestMessageNoncer>::inbound_latest_received_nonce(lane_id);
 		Ok(abi_encode_u64(nonce))
 	}
@@ -142,12 +136,12 @@ where
 	fn encode_unlock_from_remote_dispatch_call(
 		data: &[u8],
 		caller: H160,
-		precompile_helper: &mut PrecompileHelper<T>,
+		helper: &mut PrecompileHelper<T>,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		precompile_helper.record_gas(0, 0)?;
+		helper.record_gas(0, 0)?;
 
 		let unlock_info = S2sRemoteUnlockInfo::abi_decode(data)
-			.map_err(|_| precompile_helper.revert("decode unlock failed"))?;
+			.map_err(|_| helper.revert("decode unlock failed"))?;
 		let payload = P::create(
 			CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(caller)),
 			unlock_info.spec_version,
@@ -159,25 +153,25 @@ where
 			),
 			DispatchFeePayment::AtSourceChain,
 		)
-		.map_err(|_| precompile_helper.revert("decode remote unlock failed"))?;
+		.map_err(|_| helper.revert("decode remote unlock failed"))?;
 		Ok(abi_encode_bytes(payload.encode().as_slice()))
 	}
 
 	fn encode_send_message_dispatch_call(
 		data: &[u8],
-		precompile_helper: &mut PrecompileHelper<T>,
+		helper: &mut PrecompileHelper<T>,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		precompile_helper.record_gas(0, 0)?;
+		helper.record_gas(0, 0)?;
 
 		let params = S2sSendMessageParams::decode(data)
-			.map_err(|_| precompile_helper.revert("decode send message info failed"))?;
+			.map_err(|_| helper.revert("decode send message info failed"))?;
 		let encoded = <S as RelayMessageSender>::encode_send_message(
 			params.pallet_index,
 			params.lane_id,
 			params.payload,
 			params.fee.low_u128().saturated_into(),
 		)
-		.map_err(|_| precompile_helper.revert("encode send message call failed"))?;
+		.map_err(|_| helper.revert("encode send message call failed"))?;
 		Ok(abi_encode_bytes(encoded.as_slice()))
 	}
 }

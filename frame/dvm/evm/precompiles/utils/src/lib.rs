@@ -31,13 +31,6 @@ use fp_evm::{Context, ExitError, PrecompileFailure};
 use frame_support::traits::Get;
 use sp_core::U256;
 use sp_std::{borrow::ToOwned, marker::PhantomData};
-
-pub fn custom_precompile_err(err_msg: &'static str) -> PrecompileFailure {
-	PrecompileFailure::Error {
-		exit_status: ExitError::Other(err_msg.into()),
-	}
-}
-
 #[derive(Clone, Copy, Debug)]
 pub struct PrecompileHelper<'a, T> {
 	input: &'a [u8],
@@ -58,9 +51,7 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 
 	pub fn split_input(&self) -> Result<(u32, &'a [u8]), PrecompileFailure> {
 		if self.input.len() < SELECTOR {
-			return Err(custom_precompile_err(
-				"input length less than 4 bytes".into(),
-			));
+			return Err(self.revert("input length less than 4 bytes"));
 		}
 
 		let mut buffer = [0u8; SELECTOR];

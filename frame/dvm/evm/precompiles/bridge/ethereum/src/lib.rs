@@ -23,14 +23,14 @@ use core::marker::PhantomData;
 // --- crates.io ---
 use codec::Encode;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{selector, PrecompileHelper, StateMutability};
+use darwinia_evm_precompile_utils::{PrecompileHelper, StateMutability};
 // --- paritytech ---
 use fp_evm::{
 	Context, ExitError, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
 	PrecompileResult,
 };
 
-#[selector]
+#[darwinia_evm_precompile_utils::selector]
 enum Action {
 	BurnAndRemoteUnlock = "burn_and_remote_unlock(uint32,address,address,address,bytes,uint256)",
 	TokenRegisterResponse = "token_register_response(address,address,address)",
@@ -53,16 +53,16 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let mut precompile_helper = PrecompileHelper::<T>::new(input, target_gas);
-		let (selector, data) = precompile_helper.split_input()?;
+		let mut helper = PrecompileHelper::<T>::new(input, target_gas);
+		let (selector, data) = helper.split_input()?;
 		let action = Action::from_u32(selector)?;
 
 		// Check state modifiers
-		precompile_helper.check_state_modifier(context, is_static, StateMutability::View)?;
+		helper.check_state_modifier(context, is_static, StateMutability::View)?;
 
 		let output = match action {
 			Action::BurnAndRemoteUnlock => {
-				precompile_helper.record_gas(0, 0)?;
+				helper.record_gas(0, 0)?;
 
 				let call: T::Call =
 					from_ethereum_issuing::Call::<T>::deposit_burn_token_event_from_precompile {
@@ -72,7 +72,7 @@ where
 				call.encode()
 			}
 			Action::TokenRegisterResponse => {
-				precompile_helper.record_gas(0, 0)?;
+				helper.record_gas(0, 0)?;
 
 				let call: T::Call =
 					from_ethereum_issuing::Call::<T>::register_response_from_contract {
@@ -85,7 +85,7 @@ where
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			cost: precompile_helper.used_gas(),
+			cost: helper.used_gas(),
 			output,
 			logs: Default::default(),
 		})
