@@ -21,7 +21,7 @@
 // --- core ---
 use core::marker::PhantomData;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{selector, DvmInputParser, PrecompileHelper, StateMutability};
+use darwinia_evm_precompile_utils::{selector, PrecompileHelper, StateMutability};
 use dp_contract::{
 	abi_util::{abi_encode_array_bytes, abi_encode_bytes},
 	bsc_light_client::{BscMultiStorageVerifyParams, BscSingleStorageVerifyParams},
@@ -62,10 +62,10 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let dvm_parser = DvmInputParser::new(input)?;
-		let action = Action::from_u32(dvm_parser.selector)?;
+		let mut precompile_helper = PrecompileHelper::<T>::new(input, target_gas);
+		let (selector, data) = precompile_helper.split_input()?;
+		let action = Action::from_u32(selector)?;
 
-		let mut precompile_helper = PrecompileHelper::<T>::new(target_gas);
 		// Check state modifiers
 		precompile_helper.check_state_modifier(context, is_static, StateMutability::View)?;
 
@@ -74,10 +74,9 @@ where
 				// Storage: BSC FinalizedCheckpoint (r:1 w:0)
 				precompile_helper.record_gas(1, 0)?;
 
-				let params =
-					BscSingleStorageVerifyParams::decode(dvm_parser.input).map_err(|_| {
-						precompile_helper.revert("decode single storage verify info failed")
-					})?;
+				let params = BscSingleStorageVerifyParams::decode(data).map_err(|_| {
+					precompile_helper.revert("decode single storage verify info failed")
+				})?;
 				let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
 				let proof = EthereumStorageProof::new(
 					params.lane_address,
@@ -96,10 +95,9 @@ where
 				// Storage: BSC FinalizedCheckpoint (r:1 w:0)
 				precompile_helper.record_gas(1, 0)?;
 
-				let params =
-					BscMultiStorageVerifyParams::decode(dvm_parser.input).map_err(|_| {
-						precompile_helper.revert("decode multi storage verify info failed")
-					})?;
+				let params = BscMultiStorageVerifyParams::decode(data).map_err(|_| {
+					precompile_helper.revert("decode multi storage verify info failed")
+				})?;
 				let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
 				let key_size = params.storage_keys.len();
 				if key_size != params.storage_proofs.len() {

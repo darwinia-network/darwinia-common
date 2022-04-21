@@ -43,7 +43,7 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let mut precompile_helper = PrecompileHelper::<T>::new(target_gas);
+		let mut precompile_helper = PrecompileHelper::<T>::new(input, target_gas);
 		// Check state modifiers
 		precompile_helper.check_state_modifier(context, is_static, StateMutability::Payable)?;
 

@@ -30,7 +30,7 @@ use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 // --- darwinia-network ---
 use crate::util;
 use darwinia_evm::{runner::Runner, AccountBasic, AccountId, Pallet};
-use darwinia_evm_precompile_utils::{selector, DvmInputParser, PrecompileHelper};
+use darwinia_evm_precompile_utils::{selector, PrecompileHelper};
 use darwinia_support::evm::{IntoAccountId, TRANSFER_ADDR};
 
 #[selector]
@@ -54,10 +54,10 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let dvm_parser = DvmInputParser::new(input)?;
-		let action = Action::from_u32(dvm_parser.selector)?;
+		let mut precompile_helper = PrecompileHelper::<T>::new(input, target_gas);
+		let (selector, data) = precompile_helper.split_input()?;
+		let action = Action::from_u32(selector)?;
 
-		let mut precompile_helper = PrecompileHelper::<T>::new(target_gas);
 		// Check state modifiers
 		precompile_helper.check_state_modifier(context, is_static, StateMutability::NonPayable)?;
 
@@ -69,7 +69,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				// Storage: EVM AccountStorages (r:2 w:2)
 				precompile_helper.record_gas(7, 6)?;
 
-				let call_data = CallData::decode(&dvm_parser.input, precompile_helper.clone())?;
+				let call_data = CallData::decode(data, precompile_helper.clone())?;
 				let (caller, wkton, value) =
 					(context.caller, call_data.wkton_address, call_data.value);
 				// Ensure wkton is a contract
@@ -121,7 +121,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				// Storage: EVM AccountCodes (r:1 w:0)
 				precompile_helper.record_gas(5, 4)?;
 
-				let wd = WithdrawData::<T>::decode(&dvm_parser.input, precompile_helper.clone())?;
+				let wd = WithdrawData::<T>::decode(data, precompile_helper.clone())?;
 				let (source, to, value) = (context.caller, wd.to_account_id, wd.kton_value);
 				// Ensure wkton is a contract
 				ensure!(

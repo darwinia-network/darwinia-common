@@ -30,32 +30,7 @@ use darwinia_support::evm::SELECTOR;
 use fp_evm::{Context, ExitError, PrecompileFailure};
 use frame_support::traits::Get;
 use sp_core::U256;
-use sp_std::marker::PhantomData;
-use sp_std::borrow::ToOwned;
-
-#[derive(Clone, Copy, Debug)]
-pub struct DvmInputParser<'a> {
-	pub input: &'a [u8],
-	pub selector: u32,
-}
-
-impl<'a> DvmInputParser<'a> {
-	pub fn new(input: &'a [u8]) -> Result<Self, PrecompileFailure> {
-		if input.len() < SELECTOR {
-			return Err(custom_precompile_err(
-				"input length less than 4 bytes".into(),
-			));
-		}
-
-		let mut buffer = [0u8; SELECTOR];
-		buffer.copy_from_slice(&input[0..SELECTOR]);
-		let selector = u32::from_be_bytes(buffer);
-		Ok(Self {
-			input: &input[SELECTOR..],
-			selector,
-		})
-	}
-}
+use sp_std::{borrow::ToOwned, marker::PhantomData};
 
 pub fn custom_precompile_err(err_msg: &'static str) -> PrecompileFailure {
 	PrecompileFailure::Error {
@@ -64,19 +39,34 @@ pub fn custom_precompile_err(err_msg: &'static str) -> PrecompileFailure {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct PrecompileHelper<T> {
+pub struct PrecompileHelper<'a, T> {
+	input: &'a [u8],
 	target_gas: Option<u64>,
 	used_gas: u64,
 	_marker: PhantomData<T>,
 }
 
-impl<T: darwinia_evm::Config> PrecompileHelper<T> {
-	pub fn new(target_gas: Option<u64>) -> Self {
+impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
+	pub fn new(input: &'a [u8], target_gas: Option<u64>) -> Self {
 		Self {
+			input,
 			target_gas,
 			used_gas: 0,
 			_marker: PhantomData,
 		}
+	}
+
+	pub fn split_input(&self) -> Result<(u32, &'a [u8]), PrecompileFailure> {
+		if self.input.len() < SELECTOR {
+			return Err(custom_precompile_err(
+				"input length less than 4 bytes".into(),
+			));
+		}
+
+		let mut buffer = [0u8; SELECTOR];
+		buffer.copy_from_slice(&self.input[0..SELECTOR]);
+		let selector = u32::from_be_bytes(buffer);
+		Ok((selector, &self.input[SELECTOR..]))
 	}
 
 	/// Check that a function call is compatible with the context it is

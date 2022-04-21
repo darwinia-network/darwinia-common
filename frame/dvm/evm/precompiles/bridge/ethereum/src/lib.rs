@@ -23,7 +23,7 @@ use core::marker::PhantomData;
 // --- crates.io ---
 use codec::Encode;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{selector, DvmInputParser, PrecompileHelper, StateMutability};
+use darwinia_evm_precompile_utils::{selector, PrecompileHelper, StateMutability};
 // --- paritytech ---
 use fp_evm::{
 	Context, ExitError, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
@@ -53,10 +53,10 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let dvm_parser = DvmInputParser::new(&input)?;
-		let action = Action::from_u32(dvm_parser.selector)?;
+		let mut precompile_helper = PrecompileHelper::<T>::new(input, target_gas);
+		let (selector, data) = precompile_helper.split_input()?;
+		let action = Action::from_u32(selector)?;
 
-		let mut precompile_helper = PrecompileHelper::<T>::new(target_gas);
 		// Check state modifiers
 		precompile_helper.check_state_modifier(context, is_static, StateMutability::View)?;
 
@@ -66,7 +66,7 @@ where
 
 				let call: T::Call =
 					from_ethereum_issuing::Call::<T>::deposit_burn_token_event_from_precompile {
-						input: dvm_parser.input.to_vec(),
+						input: data.to_vec(),
 					}
 					.into();
 				call.encode()
@@ -76,7 +76,7 @@ where
 
 				let call: T::Call =
 					from_ethereum_issuing::Call::<T>::register_response_from_contract {
-						input: dvm_parser.input.to_vec(),
+						input: data.to_vec(),
 					}
 					.into();
 				call.encode()

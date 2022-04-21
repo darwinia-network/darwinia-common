@@ -50,7 +50,7 @@ where
 		context: &Context,
 		_is_static: bool,
 	) -> PrecompileResult {
-		let precompile_helper = PrecompileHelper::<T>::new(target_gas);
+		let precompile_helper = PrecompileHelper::<T>::new(input, target_gas);
 
 		let call = T::Call::decode(&mut &input[..]).map_err(|_| PrecompileFailure::Error {
 			exit_status: ExitError::Other("decode failed".into()),

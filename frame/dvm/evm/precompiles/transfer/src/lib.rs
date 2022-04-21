@@ -47,7 +47,7 @@ pub mod util;
 use fp_evm::{Context, Precompile, PrecompileResult};
 use sp_std::marker::PhantomData;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::DvmInputParser;
+use darwinia_evm_precompile_utils::PrecompileHelper;
 use kton::{Action, Kton};
 use ring::RingBack;
 
@@ -66,9 +66,10 @@ impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let dvm_parser = DvmInputParser::new(input)?;
+		let precompile_helper = PrecompileHelper::<T>::new(input, target_gas);
+		let (selector, _data) = precompile_helper.split_input()?;
 
-		match Action::from_u32(dvm_parser.selector) {
+		match Action::from_u32(selector) {
 			Ok(Action::TransferAndCall) | Ok(Action::Withdraw) => {
 				<Kton<T>>::transfer(&input, target_gas, context, is_static)
 			}
