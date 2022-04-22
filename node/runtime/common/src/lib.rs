@@ -130,3 +130,6 @@ frame_support::parameter_types! {
 		.max
 		.get(DispatchClass::Normal);
 }
+
+// Accounding to the evm gas benchmark, 1 gas ~= 40_000 weight.
+pub const WEIGHT_PER_GAS: u64 = 40_000;
