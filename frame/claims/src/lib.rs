@@ -350,10 +350,9 @@ impl<T: Config> Module<T> {
 	}
 
 	fn pot<C: LockableCurrency<T::AccountId>>() -> C::Balance {
-		// TODO: balances
-		sp_runtime::traits::Zero::zero()
 		// Already lock minimal balance in the account, no need to worry about to be 0.
-		// C::usable_balance(&Self::account_id())
+		// And no other locks on this account.
+		C::free_balance(&Self::account_id())
 	}
 
 	// Constructs the message that RPC's `personal_sign` and `sign` would sign.
