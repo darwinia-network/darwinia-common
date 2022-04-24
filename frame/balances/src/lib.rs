@@ -977,6 +977,14 @@ pub mod pallet {
 			Self::account(who.borrow()).free()
 		}
 
+		/// Get the balance of an account that can be used for transfers, reservations, or any other
+		/// non-locking, non-transaction-fee activity. Will be at most `free_balance`.
+		pub fn usable_balance(who: &T::AccountId) -> T::Balance {
+			let account = Self::account(who);
+
+			account.usable(Reasons::Misc, Self::frozen_balance(who))
+		}
+
 		/// Get the frozen balance of an account.
 		fn frozen_balance(who: impl Borrow<T::AccountId>) -> FrozenBalance<T::Balance> {
 			let mut frozen_balance = <FrozenBalance<T::Balance>>::zero();
@@ -999,9 +1007,7 @@ pub mod pallet {
 		impl_rpc! {
 			fn usable_balance_rpc(who: impl Borrow<T::AccountId>) -> RuntimeDispatchInfo<T::Balance> {
 				RuntimeDispatchInfo {
-					// TODO: balances
-					usable_balance: Zero::zero(),
-					// usable_balance: Self::usable_balance(who.borrow()),
+					usable_balance: Self::usable_balance(who.borrow()),
 				}
 			}
 		}
