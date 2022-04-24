@@ -262,17 +262,8 @@ impl<T: Config> Pallet<T> {
 		// nominators will get.
 		let validator_total_reward_part =
 			Perbill::from_rational(validator_reward_points, total_reward_points);
-
 		// This is how much validator + nominators are entitled to.
 		let validator_total_payout = validator_total_reward_part * era_payout;
-
-		let module_account = Self::account_id();
-
-		// TODO: balances
-		// ensure!(
-		// 	T::RingCurrency::usable_balance(&module_account) >= validator_total_payout,
-		// 	<Error<T>>::PayoutIns
-		// );
 
 		let validator_prefs = Self::eras_validator_prefs(&era, &validator_stash);
 		// Validator first gets a cut off the top.
@@ -330,7 +321,7 @@ impl<T: Config> Pallet<T> {
 		}
 
 		T::RingCurrency::settle(
-			&module_account,
+			&Self::account_id(),
 			actual_payout,
 			WithdrawReasons::all(),
 			ExistenceRequirement::KeepAlive,
