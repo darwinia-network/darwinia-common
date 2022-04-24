@@ -311,7 +311,10 @@ pub mod pallet {
 	use frame_election_provider_support::{ElectionProvider, *};
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{Currency, EstimateNextNewSession, LockableCurrency, OnUnbalanced, UnixTime},
+		traits::{
+			Currency, EstimateNextNewSession, LockableCurrency, OnUnbalanced, UnixTime,
+			WithdrawReasons,
+		},
 		PalletId,
 	};
 	use frame_system::{offchain::SendTransactionTypes, pallet_prelude::*};
@@ -1533,70 +1536,45 @@ pub mod pallet {
 				return Ok(());
 			}
 
-			let mut claim_deposits_with_punish = (false, Zero::zero());
+			let StakingLedger {
+				stash,
+				active_deposit_ring,
+				deposit_items,
+				..
+			} = &mut ledger;
 
+			if let Some(i) = deposit_items
+				.iter()
+				.position(|item| item.expire_time == expire_time)
 			{
-				let StakingLedger {
-					stash,
-					active_deposit_ring,
-					deposit_items,
-					..
-				} = &mut ledger;
-
-				deposit_items.retain(|item| {
-					if item.expire_time != expire_time {
-						return true;
-					}
-
-					let kton_slash = {
-						let plan_duration_in_months = {
-							let plan_duration_in_milliseconds =
-								item.expire_time.saturating_sub(item.start_time);
-
-							plan_duration_in_milliseconds / MONTH_IN_MILLISECONDS
-						};
-						let passed_duration_in_months = {
-							let passed_duration_in_milliseconds =
-								now.saturating_sub(item.start_time);
-
-							passed_duration_in_milliseconds / MONTH_IN_MILLISECONDS
-						};
-
-						(inflation::compute_kton_reward::<T>(
-							item.value,
-							plan_duration_in_months as _,
-						) - inflation::compute_kton_reward::<T>(
+				let item = &deposit_items[i];
+				let plan_duration_in_months =
+					item.expire_time.saturating_sub(item.start_time) / MONTH_IN_MILLISECONDS;
+				let passed_duration_in_months =
+					now.saturating_sub(item.start_time) / MONTH_IN_MILLISECONDS;
+				let kton_penalty =
+					(inflation::compute_kton_reward::<T>(item.value, plan_duration_in_months as _)
+						- inflation::compute_kton_reward::<T>(
 							item.value,
 							passed_duration_in_months as _,
 						))
-						.max(1u32.into()) * 3u32.into()
-					};
+					.max(1u32.into()) * 3u32.into();
 
-					// check total free balance and locked one
-					// strict on punishing in kton
-					// TODO: balances
-					if true {
-					// if T::KtonCurrency::usable_balance(stash) >= kton_slash {
-						*active_deposit_ring = active_deposit_ring.saturating_sub(item.value);
+				T::KtonCurrency::ensure_can_withdraw(
+					stash,
+					kton_penalty,
+					WithdrawReasons::TRANSFER,
+					T::KtonCurrency::free_balance(stash),
+				)?;
 
-						let imbalance = T::KtonCurrency::slash(stash, kton_slash).0;
-						T::KtonSlash::on_unbalanced(imbalance);
+				T::KtonSlash::on_unbalanced(T::KtonCurrency::slash(stash, kton_penalty).0);
+				*active_deposit_ring = active_deposit_ring.saturating_sub(item.value);
+				deposit_items.remove(i);
 
-						claim_deposits_with_punish = (true, kton_slash);
-
-						false
-					} else {
-						true
-					}
-				});
-			}
-
-			<Ledger<T>>::insert(&controller, &ledger);
-
-			if claim_deposits_with_punish.0 {
+				<Ledger<T>>::insert(&controller, &ledger);
 				Self::deposit_event(Event::DepositsClaimedWithPunish(
 					ledger.stash.clone(),
-					claim_deposits_with_punish.1,
+					kton_penalty,
 				));
 			}
 
