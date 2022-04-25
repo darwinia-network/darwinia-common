@@ -428,22 +428,12 @@ pub mod pallet {
 
 			<VerifiedProof<T>>::insert(tx_index, true);
 
-			let fee_account = Self::fee_account_id();
-			let sync_reward = T::SyncReward::get().min(
-				// TODO: balances
-				Zero::zero()
-				// T::RingCurrency::usable_balance(&fee_account)
-					// .saturating_sub(T::RingCurrency::minimum_balance()),
-			);
-
-			if !sync_reward.is_zero() {
-				T::RingCurrency::transfer(
-					&fee_account,
-					&beneficiary,
-					sync_reward,
-					ExistenceRequirement::KeepAlive,
-				)?;
-			}
+			T::RingCurrency::transfer(
+				&Self::fee_account_id(),
+				&beneficiary,
+				T::SyncReward::get(),
+				ExistenceRequirement::KeepAlive,
+			)?;
 
 			Ok(().into())
 		}
