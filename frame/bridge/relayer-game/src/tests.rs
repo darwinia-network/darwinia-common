@@ -363,7 +363,7 @@ fn lock_should_work() {
 					MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], false);
 				let game_id = relay_header_parcels_a.len() as _;
 				let round_index = relay_header_parcels_a.len() as _;
-				let submit_then_assert = |relayer, relay_parcel, round, index, stakes| {
+				let submit_then_assert = |relayer, relay_parcel, round, index, stake| {
 					assert_ok!(RelayerGame::extend_affirmation(
 						relayer,
 						RelayAffirmationId {
@@ -374,12 +374,12 @@ fn lock_should_work() {
 						vec![relay_parcel],
 						Some(vec![()])
 					));
-					assert_eq!(RelayerGame::stake_of(relayer), stakes);
+					assert_eq!(RelayerGame::stake_of(relayer), stake);
 					assert_eq!(
 						Ring::locks(relayer),
 						vec![OldBalanceLock {
 							id: <Test as Config>::LockId::get(),
-							lock_for: LockFor::Common { amount: stakes },
+							lock_for: LockFor::Common { amount: stake },
 							reasons: Reasons::All
 						}]
 					);
@@ -398,24 +398,24 @@ fn lock_should_work() {
 
 				run_to_block(challenge_time() * 1 + 1);
 
-				let mut stakes = estimate_stake;
+				let mut stake = estimate_stake;
 
 				for i in 1..round_index {
-					stakes += estimate_stake;
+					stake += estimate_stake;
 
 					submit_then_assert(
 						&relayer_a,
 						relay_header_parcels_a[i as usize].clone(),
 						i - 1,
 						0,
-						stakes,
+						stake,
 					);
 					submit_then_assert(
 						&relayer_b,
 						relay_header_parcels_b[i as usize].clone(),
 						i - 1,
 						1,
-						stakes,
+						stake,
 					);
 
 					run_to_block(challenge_time() * (i as BlockNumber + 1) + 1);
@@ -445,7 +445,7 @@ fn slash_and_reward_should_work() {
 					MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], false);
 				let game_id = relay_header_parcels_a.len() as _;
 				let round_index = relay_header_parcels_a.len() as _;
-				let mut stakes = estimate_stake;
+				let mut stake = estimate_stake;
 
 				assert_eq!(Ring::usable_balance(&relayer_a), 1000);
 				assert_eq!(Ring::usable_balance(&relayer_b), 2000);
@@ -487,13 +487,13 @@ fn slash_and_reward_should_work() {
 
 					run_to_block(challenge_time() * (i as BlockNumber + 1) + 1);
 
-					stakes += estimate_stake;
+					stake += estimate_stake;
 				}
 
-				assert_eq!(Ring::usable_balance(&relayer_a), 1000 + stakes);
+				assert_eq!(Ring::usable_balance(&relayer_a), 1000 + stake);
 				assert!(Ring::locks(relayer_a).is_empty());
 
-				assert_eq!(Ring::usable_balance(&relayer_b), 2000 - stakes);
+				assert_eq!(Ring::usable_balance(&relayer_b), 2000 - stake);
 				assert!(Ring::locks(relayer_b).is_empty());
 			});
 	}

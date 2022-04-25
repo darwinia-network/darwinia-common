@@ -2011,6 +2011,7 @@ version = "2.8.9"
 dependencies = [
  "darwinia-balances",
  "darwinia-relay-primitives",
+ "darwinia-support",
  "env_logger",
  "frame-support",
  "frame-system",

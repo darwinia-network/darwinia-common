@@ -29,6 +29,7 @@ rand       = { version = "0.8" }
 serde      = { version = "1.0" }
 # darwinia-network
 darwinia-balances = { path = "../../balances" }
+darwinia-support  = { path = "../../support" }
 # paritytech
 sp-core = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
 sp-io   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }

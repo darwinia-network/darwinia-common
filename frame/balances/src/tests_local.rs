@@ -40,7 +40,6 @@ use sp_runtime::{
 };
 // --- darwinia-network ---
 use crate::{self as darwinia_balances, pallet::*};
-use darwinia_support::balance::*;
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
