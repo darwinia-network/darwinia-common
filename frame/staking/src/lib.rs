@@ -1562,12 +1562,20 @@ pub mod pallet {
 
 				// Can only pay the penalty from usable balance.
 				// Not allow to use bonded kton to pay the penalty.
-				T::KtonCurrency::ensure_can_withdraw(
-					stash,
-					kton_penalty,
-					WithdrawReasons::TRANSFER,
-					T::KtonCurrency::free_balance(stash),
-				)?;
+				let new_kton_balance =
+					T::KtonCurrency::free_balance(stash).saturating_sub(kton_penalty);
+
+				if new_kton_balance.is_zero()
+					|| T::KtonCurrency::ensure_can_withdraw(
+						stash,
+						kton_penalty,
+						WithdrawReasons::TRANSFER,
+						new_kton_balance,
+					)
+					.is_err()
+				{
+					return Ok(());
+				}
 
 				T::KtonSlash::on_unbalanced(T::KtonCurrency::slash(stash, kton_penalty).0);
 				*active_deposit_ring = active_deposit_ring.saturating_sub(item.value);
