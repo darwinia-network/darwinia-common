@@ -1560,6 +1560,8 @@ pub mod pallet {
 						))
 					.max(1u32.into()) * 3u32.into();
 
+				// Can only pay the penalty from usable balance.
+				// Not allow to use bonded kton to pay the penalty.
 				T::KtonCurrency::ensure_can_withdraw(
 					stash,
 					kton_penalty,
