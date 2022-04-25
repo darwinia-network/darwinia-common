@@ -112,6 +112,8 @@ decl_error! {
 		GameAtThisRoundC,
 		/// Relay Affirmation - DUPLICATED
 		RelayAffirmationDup,
+		/// Usable *RING* for Stake - INSUFFICIENT
+		StakeIns,
 		/// Relay Proofs Quantity - INVALID
 		RelayProofsQuantityInv,
 		/// Relay Affirmation - NOT EXISTED
@@ -247,12 +249,10 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 	) -> Result<RingBalance<T, I>, DispatchError> {
 		let stake = T::RelayerGameAdjustor::estimate_stake(round, affirmations_count);
 
-		T::RingCurrency::ensure_can_withdraw(
-			relayer,
-			stake,
-			WithdrawReasons::TRANSFER,
-			T::RingCurrency::free_balance(relayer),
-		)?;
+		ensure!(
+			T::RingCurrency::free_balance(relayer) >= stake,
+			<Error<T, I>>::StakeIns
+		);
 
 		Ok(stake)
 	}

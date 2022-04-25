@@ -303,11 +303,10 @@ decl_module! {
 				find_authority_position::<T, I>(&<Authorities<T, I>>::get(), &account_id).is_none(),
 				<Error<T, I>>::AuthorityAE
 			);
-			// TODO: balances
-			// ensure!(
-			// 	<RingCurrency<T, I>>::usable_balance(&account_id) > stake,
-			// 	<Error<T, I>>::StakeIns
-			// );
+			ensure!(
+				<RingCurrency<T, I>>::free_balance(&account_id) > stake,
+				<Error<T, I>>::StakeIns
+			);
 
 			<Candidates<T, I>>::try_mutate(|candidates| {
 				ensure!(

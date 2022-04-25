@@ -544,11 +544,10 @@ pub mod pallet {
 		/// Return the amount of money in the pot.
 		// The existential deposit is not part of the pot so backing account never gets deleted.
 		pub fn pot<C: LockableCurrency<T::AccountId>>() -> C::Balance {
-			// TODO: balances
-			Zero::zero()
-			// C::usable_balance(&Self::account_id())
-			// 	// Must never be less than 0 but better be safe.
-			// 	.saturating_sub(C::minimum_balance())
+			// No other locks on this account.
+			C::free_balance(&Self::account_id())
+				// Must never be less than 0 but better be safe.
+				.saturating_sub(C::minimum_balance())
 		}
 
 		fn redeem_token(
