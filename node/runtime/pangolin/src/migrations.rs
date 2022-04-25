@@ -1,6 +1,8 @@
 // --- paritytech ---
+#[allow(unused)]
 use frame_support::{traits::OnRuntimeUpgrade, weights::Weight};
 // --- darwinia-network ---
+#[allow(unused)]
 use crate::*;
 
 fn migrate() -> Weight {
