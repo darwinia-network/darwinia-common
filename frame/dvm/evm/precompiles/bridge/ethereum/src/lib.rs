@@ -22,17 +22,15 @@
 use core::marker::PhantomData;
 // --- crates.io ---
 use codec::Encode;
+use evm::ExitRevert;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{
-	check_state_modifier, selector, DvmInputParser, StateMutability,
-};
+use darwinia_evm_precompile_utils::{PrecompileHelper, StateMutability};
 // --- paritytech ---
 use fp_evm::{
-	Context, ExitError, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
-	PrecompileResult,
+	Context, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput, PrecompileResult,
 };
 
-#[selector]
+#[darwinia_evm_precompile_utils::selector]
 enum Action {
 	BurnAndRemoteUnlock = "burn_and_remote_unlock(uint32,address,address,address,bytes,uint256)",
 	TokenRegisterResponse = "token_register_response(address,address,address)",
@@ -51,29 +49,34 @@ where
 {
 	fn execute(
 		input: &[u8],
-		_target_gas: Option<u64>,
+		target_gas: Option<u64>,
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let dvm_parser = DvmInputParser::new(&input)?;
-		let action = Action::from_u32(dvm_parser.selector)?;
+		let mut helper = PrecompileHelper::<T>::new(input, target_gas);
+		let (selector, data) = helper.split_input()?;
+		let action = Action::from_u32(selector)?;
 
 		// Check state modifiers
-		check_state_modifier(context, is_static, StateMutability::View)?;
+		helper.check_state_modifier(context, is_static, StateMutability::View)?;
 
 		let output = match action {
 			Action::BurnAndRemoteUnlock => {
+				helper.record_gas(0, 0)?;
+
 				let call: T::Call =
 					from_ethereum_issuing::Call::<T>::deposit_burn_token_event_from_precompile {
-						input: dvm_parser.input.to_vec(),
+						input: data.to_vec(),
 					}
 					.into();
 				call.encode()
 			}
 			Action::TokenRegisterResponse => {
+				helper.record_gas(0, 0)?;
+
 				let call: T::Call =
 					from_ethereum_issuing::Call::<T>::register_response_from_contract {
-						input: dvm_parser.input.to_vec(),
+						input: data.to_vec(),
 					}
 					.into();
 				call.encode()
@@ -82,7 +85,7 @@ where
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			cost: 20000,
+			cost: helper.used_gas(),
 			output,
 			logs: Default::default(),
 		})

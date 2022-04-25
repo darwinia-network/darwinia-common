@@ -29,6 +29,7 @@ use sha3::{Digest, Keccak256};
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
 	traits::{Everything, GenesisBuild},
+	weights::GetDispatchInfo,
 	PalletId,
 };
 use frame_system::mocking::*;
@@ -339,7 +340,7 @@ impl fp_self_contained::SelfContainedCall for Call {
 
 	fn validate_self_contained(&self, info: &Self::SignedInfo) -> Option<TransactionValidity> {
 		match self {
-			Call::Ethereum(call) => call.validate_self_contained(info),
+			Call::Ethereum(ref call) => Some(validate_self_contained_inner(&self, &call, info)),
 			_ => None,
 		}
 	}
@@ -365,6 +366,37 @@ impl fp_self_contained::SelfContainedCall for Call {
 			}
 			_ => None,
 		}
+	}
+}
+
+fn validate_self_contained_inner(
+	call: &Call,
+	eth_call: &darwinia_ethereum::Call<Test>,
+	signed_info: &<Call as fp_self_contained::SelfContainedCall>::SignedInfo,
+) -> TransactionValidity {
+	if let darwinia_ethereum::Call::transact { ref transaction } = eth_call {
+		// Previously, ethereum transactions were contained in an unsigned
+		// extrinsic, we now use a new form of dedicated extrinsic defined by
+		// frontier, but to keep the same behavior as before, we must perform
+		// the controls that were performed on the unsigned extrinsic.
+		use sp_runtime::traits::SignedExtension as _;
+		let input_len = match transaction {
+			darwinia_ethereum::Transaction::Legacy(t) => t.input.len(),
+			darwinia_ethereum::Transaction::EIP2930(t) => t.input.len(),
+			darwinia_ethereum::Transaction::EIP1559(t) => t.input.len(),
+		};
+		let extra_validation =
+			SignedExtra::validate_unsigned(call, &call.get_dispatch_info(), input_len)?;
+		// Then, do the controls defined by the ethereum pallet.
+		let self_contained_validation = eth_call.validate_self_contained(signed_info).ok_or(
+			TransactionValidityError::Invalid(InvalidTransaction::BadProof),
+		)??;
+
+		Ok(extra_validation.combine_with(self_contained_validation))
+	} else {
+		Err(TransactionValidityError::Unknown(
+			sp_runtime::transaction_validity::UnknownTransaction::CannotLookup,
+		))
 	}
 }
 

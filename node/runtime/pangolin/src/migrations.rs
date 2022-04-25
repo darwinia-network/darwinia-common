@@ -7,10 +7,8 @@ fn migrate() -> Weight {
 	// --- paritytech ---
 	use frame_support::migration;
 
-	migration::move_pallet(b"FeeMarket", b"PangoroFeeMarket");
-
-	// 0
-	RuntimeBlockWeights::get().max_block
+	0
+	// RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;

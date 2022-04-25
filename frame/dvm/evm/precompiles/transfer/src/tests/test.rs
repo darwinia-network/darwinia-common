@@ -20,17 +20,18 @@
 use array_bytes::{bytes2hex, hex2bytes_unchecked};
 use codec::Decode;
 use ethabi::{Function, Param, ParamType, StateMutability, Token};
+use std::str::FromStr;
 // --- paritytech ---
+use fp_evm::CallOrCreateInfo;
+use frame_support::{assert_err, assert_ok};
+use sp_core::{H160, U256};
 use sp_runtime::DispatchError;
 // --- darwinia-network ---
 use crate::tests::mock::*;
 use darwinia_ethereum::Transaction;
 use darwinia_evm::AccountBasic;
+use darwinia_evm_precompile_utils::PrecompileHelper;
 use darwinia_support::evm::{decimal_convert, IntoAccountId, TRANSFER_ADDR};
-use fp_evm::CallOrCreateInfo;
-use frame_support::{assert_err, assert_ok};
-use sp_core::{H160, U256};
-use std::str::FromStr;
 
 const WITH_DRAW_INPUT: &str = "723908ee9dc8e509d4b93251bd57f68c09bd9d04471c193fabd8f26c54284a4b";
 fn ring_withdraw_unsigned_transaction() -> LegacyUnsignedTransaction {
@@ -60,8 +61,8 @@ fn ring_currency_withdraw_with_enough_balance() {
 		// Check caller balance
 		assert_eq!(
 			RingAccount::account_basic(&alice.address).balance,
-			// gas fee: 41512
-			decimal_convert(70_000_000_000, None).saturating_sub(U256::from(41512))
+			// gas fee: 21512
+			decimal_convert(70_000_000_000, None).saturating_sub(U256::from(21512))
 		);
 		// Check the dest balance
 		let input_bytes: Vec<u8> = hex2bytes_unchecked(WITH_DRAW_INPUT);
@@ -208,6 +209,27 @@ fn transfer_and_call_transaction(
 		value: U256::from(0),
 		input: transfer_and_call(address, value),
 	}
+}
+
+#[test]
+fn kton_make_call_works() {
+	let (_, mut ext) = new_test_ext(1);
+
+	ext.execute_with(|| {
+		let helper = PrecompileHelper::<Test>::new(&[], Some(100));
+		let mock_address =
+			H160::from_str("Aa01a1bEF0557fa9625581a293F3AA7770192632").unwrap();
+		let mock_value = U256::from(30);
+		let expected_str = "0x47e7ef24000000000000000000000000aa01a1bef0557fa9625581a293f3aa7770192632000000000000000000000000000000000000000000000000000000000000001e";
+		let encoded_str =
+			bytes2hex("0x", crate::kton::Kton::<Test>::make_call_data(mock_address, mock_value, &helper).unwrap());
+		assert_eq!(encoded_str, expected_str);
+
+		let mock_value = sp_core::U256::from(25);
+		let encoded_str =
+			bytes2hex("0x", crate::kton::Kton::<Test>::make_call_data(mock_address, mock_value, &helper).unwrap());
+			assert_ne!(encoded_str, expected_str);
+	});
 }
 
 #[test]

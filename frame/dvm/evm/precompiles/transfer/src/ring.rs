@@ -22,7 +22,7 @@ use frame_support::ensure;
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use darwinia_evm::{AccountBasic, AccountId};
-use darwinia_evm_precompile_utils::{check_state_modifier, custom_precompile_err, StateMutability};
+use darwinia_evm_precompile_utils::{PrecompileHelper, StateMutability};
 use darwinia_support::evm::{IntoAccountId, TRANSFER_ADDR};
 // --- crates.io ---
 use codec::Decode;
@@ -39,23 +39,28 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 	/// Input data: 32-bit substrate withdrawal public key
 	pub fn transfer(
 		input: &[u8],
-		_target_gas: Option<u64>,
+		target_gas: Option<u64>,
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
+		let mut helper = PrecompileHelper::<T>::new(input, target_gas);
 		// Check state modifiers
-		check_state_modifier(context, is_static, StateMutability::Payable)?;
+		helper.check_state_modifier(context, is_static, StateMutability::Payable)?;
+
+		// Storage: System Account (r:2 w:2)
+		// Storage: Ethereum RemainingRingBalance (r:2 w:2)
+		helper.record_gas(4, 4)?;
 
 		// Decode input data
-		let input = InputData::<T>::decode(&input)?;
+		let input = InputData::<T>::decode(&input, &helper)?;
 		let (address, to, value) = (context.address, input.dest, context.apparent_value);
 
 		// Ensure the context address should be precompile address
 		let transfer_addr = array_bytes::hex_try_into(TRANSFER_ADDR)
-			.map_err(|_| custom_precompile_err("invalid address"))?;
+			.map_err(|_| helper.revert("invalid address"))?;
 		ensure!(
 			address == transfer_addr,
-			custom_precompile_err("Invalid context address")
+			helper.revert("Invalid context address")
 		);
 
 		let source = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(address);
@@ -64,7 +69,7 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			cost: 20000,
+			cost: helper.used_gas(),
 			output: Default::default(),
 			logs: Default::default(),
 		})
@@ -72,21 +77,21 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct InputData<T: frame_system::Config> {
+pub struct InputData<T: darwinia_evm::Config> {
 	pub dest: AccountId<T>,
 }
 
-impl<T: frame_system::Config> InputData<T> {
-	pub fn decode(data: &[u8]) -> Result<Self, PrecompileFailure> {
+impl<T: darwinia_evm::Config> InputData<T> {
+	pub fn decode(data: &[u8], helper: &PrecompileHelper<T>) -> Result<Self, PrecompileFailure> {
 		if data.len() == 32 {
 			let mut dest_bytes = [0u8; 32];
 			dest_bytes.copy_from_slice(&data[0..32]);
 
 			return Ok(InputData {
 				dest: <T as frame_system::Config>::AccountId::decode(&mut dest_bytes.as_ref())
-					.map_err(|_| custom_precompile_err("Invalid destination address"))?,
+					.map_err(|_| helper.revert("Invalid destination address"))?,
 			});
 		}
-		Err(custom_precompile_err("Invalid input data length"))
+		Err(helper.revert("Invalid input data length"))
 	}
 }

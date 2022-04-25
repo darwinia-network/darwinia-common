@@ -20,10 +20,10 @@
 
 // --- core ---
 use core::marker::PhantomData;
+// --- crates.io ---
+use evm::ExitRevert;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{
-	check_state_modifier, custom_precompile_err, selector, DvmInputParser, StateMutability,
-};
+use darwinia_evm_precompile_utils::{PrecompileHelper, StateMutability};
 use dp_contract::{
 	abi_util::{abi_encode_array_bytes, abi_encode_bytes},
 	bsc_light_client::{BscMultiStorageVerifyParams, BscSingleStorageVerifyParams},
@@ -34,12 +34,11 @@ use ethereum_primitives::{
 };
 // --- paritytech ---
 use fp_evm::{
-	Context, ExitError, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
-	PrecompileResult,
+	Context, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput, PrecompileResult,
 };
 use sp_std::{vec, vec::Vec};
 
-#[selector]
+#[darwinia_evm_precompile_utils::selector]
 enum Action {
 	// account, account_proof, storage_key, storage_proof
 	VerfiySingleStorageProof = "verify_single_storage_proof(address,bytes[],bytes32,bytes[])",
@@ -56,26 +55,28 @@ pub struct BscBridge<T> {
 
 impl<T> Precompile for BscBridge<T>
 where
-	T: darwinia_bridge_bsc::Config,
+	T: darwinia_bridge_bsc::Config + darwinia_evm::Config,
 {
 	fn execute(
 		input: &[u8],
-		_target_gas: Option<u64>,
+		target_gas: Option<u64>,
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let dvm_parser = DvmInputParser::new(input)?;
-		let action = Action::from_u32(dvm_parser.selector)?;
+		let mut helper = PrecompileHelper::<T>::new(input, target_gas);
+		let (selector, data) = helper.split_input()?;
+		let action = Action::from_u32(selector)?;
 
 		// Check state modifiers
-		check_state_modifier(context, is_static, StateMutability::View)?;
+		helper.check_state_modifier(context, is_static, StateMutability::View)?;
 
-		let (output, cost) = match action {
+		let output = match action {
 			Action::VerfiySingleStorageProof => {
-				let params =
-					BscSingleStorageVerifyParams::decode(dvm_parser.input).map_err(|_| {
-						custom_precompile_err("decode single storage verify info failed")
-					})?;
+				// Storage: BSC FinalizedCheckpoint (r:1 w:0)
+				helper.record_gas(1, 0)?;
+
+				let params = BscSingleStorageVerifyParams::decode(data)
+					.map_err(|_| helper.revert("decode single storage verify info failed"))?;
 				let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
 				let proof = EthereumStorageProof::new(
 					params.lane_address,
@@ -87,23 +88,22 @@ where
 					finalized_header.state_root,
 					&proof,
 				)
-				.map_err(|_| custom_precompile_err("verify single storage proof failed"))?;
-				(abi_encode_bytes(storage_value.0.as_slice()), 10000u64)
+				.map_err(|_| helper.revert("verify single storage proof failed"))?;
+				abi_encode_bytes(storage_value.0.as_slice())
 			}
 			Action::VerifyMultiStorageProof => {
-				let params =
-					BscMultiStorageVerifyParams::decode(dvm_parser.input).map_err(|_| {
-						custom_precompile_err("decode multi storage verify info failed")
-					})?;
+				// Storage: BSC FinalizedCheckpoint (r:1 w:0)
+				helper.record_gas(1, 0)?;
+
+				let params = BscMultiStorageVerifyParams::decode(data)
+					.map_err(|_| helper.revert("decode multi storage verify info failed"))?;
 				let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
 				let key_size = params.storage_keys.len();
 				if key_size != params.storage_proofs.len() {
-					return Err(custom_precompile_err(
-						"storage keys not match storage proofs",
-					));
+					return Err(helper.revert("storage keys not match storage proofs"));
 				}
 				if key_size > MAX_MULTI_STORAGEKEY_SIZE {
-					return Err(custom_precompile_err("storage keys size too large"));
+					return Err(helper.revert("storage keys size too large"));
 				}
 				let storage_values: Result<Vec<Vec<u8>>, _> = (0..key_size)
 					.map(|idx| {
@@ -129,22 +129,19 @@ where
 								if err == StorageProofError(ProofError::TrieKeyNotExist) {
 									return Ok(vec![]);
 								} else {
-									return Err(custom_precompile_err("verfiy storage failed"));
+									return Err(helper.revert("verfiy storage failed"));
 								}
 							}
 						}
 					})
 					.collect();
-				(
-					abi_encode_array_bytes(storage_values?),
-					10000 * key_size as u64,
-				)
+				abi_encode_array_bytes(storage_values?)
 			}
 		};
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			cost,
+			cost: helper.used_gas(),
 			output,
 			logs: Default::default(),
 		})
