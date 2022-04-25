@@ -354,8 +354,6 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 	pub fn settle_abandon(game_id: &RelayHeaderId<T, I>) {
 		for relay_affirmations in <Affirmations<T, I>>::iter_prefix_values(&game_id) {
 			for RelayAffirmation { relayer, stake, .. } in relay_affirmations {
-				dbg!(&relayer);
-				dbg!(&stake);
 				Self::slash_on(&relayer, stake);
 			}
 		}
