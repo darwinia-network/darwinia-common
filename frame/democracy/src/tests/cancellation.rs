@@ -36,10 +36,7 @@ fn cancel_queued_should_work() {
 
 		assert!(pallet_scheduler::Agenda::<Test>::get(6)[0].is_some());
 
-		assert_noop!(
-			Democracy::cancel_queued(Origin::root(), 1),
-			Error::<Test>::ProposalMissing
-		);
+		assert_noop!(Democracy::cancel_queued(Origin::root(), 1), Error::<Test>::ProposalMissing);
 		assert_ok!(Democracy::cancel_queued(Origin::root(), 0));
 		assert!(pallet_scheduler::Agenda::<Test>::get(6)[0].is_none());
 	});

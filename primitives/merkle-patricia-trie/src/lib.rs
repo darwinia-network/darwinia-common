@@ -89,9 +89,5 @@ where
 	I: IntoIterator,
 	I::Item: AsRef<[u8]>,
 {
-	build_trie(
-		data.into_iter()
-			.enumerate()
-			.map(|(i, v)| (rlp::encode(&i), v)),
-	)
+	build_trie(data.into_iter().enumerate().map(|(i, v)| (rlp::encode(&i), v)))
 }

@@ -191,9 +191,8 @@ pub mod pallet {
 			fn reducible_balance(who: &T::AccountId, keep_alive: bool) -> Self::Balance {
 				let a = Self::account(who);
 				// Liquid balance is what is neither reserved nor locked/frozen.
-				let liquid = a
-					.free()
-					.saturating_sub(Self::frozen_balance(who).frozen_for(LockReasons::All));
+				let liquid =
+					a.free().saturating_sub(Self::frozen_balance(who).frozen_for(LockReasons::All));
 				if <frame_system::Pallet<T>>::can_dec_provider(who) && !keep_alive {
 					liquid
 				} else {
@@ -277,10 +276,7 @@ pub mod pallet {
 				if amount.is_zero() {
 					return Ok(());
 				}
-				ensure!(
-					Self::can_reserve(who, amount),
-					<Error<T, I>>::InsufficientBalance
-				);
+				ensure!(Self::can_reserve(who, amount), <Error<T, I>>::InsufficientBalance);
 				Self::mutate_account(who, |a| {
 					a.set_free(a.free() - amount);
 					a.set_reserved(a.reserved() + amount);
@@ -299,10 +295,7 @@ pub mod pallet {
 				Self::try_mutate_account(who, |a, _| {
 					let new_free = a.free().saturating_add(amount.min(a.reserved()));
 					let actual = new_free - a.free();
-					ensure!(
-						best_effort || actual == amount,
-						<Error<T, I>>::InsufficientBalance
-					);
+					ensure!(best_effort || actual == amount, <Error<T, I>>::InsufficientBalance);
 					// ^^^ Guaranteed to be <= amount and <= a.reserved
 					a.set_free(new_free);
 					a.set_reserved(a.reserved().saturating_sub(actual.clone()));
@@ -316,11 +309,7 @@ pub mod pallet {
 				best_effort: bool,
 				on_hold: bool,
 			) -> Result<Self::Balance, DispatchError> {
-				let status = if on_hold {
-					BalanceStatus::Reserved
-				} else {
-					BalanceStatus::Free
-				};
+				let status = if on_hold { BalanceStatus::Reserved } else { BalanceStatus::Free };
 				Self::do_transfer_reserved(source, dest, amount, best_effort, status)
 			}
 		}
@@ -715,18 +704,13 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl<T: Config<I>, I: 'static> Default for GenesisConfig<T, I> {
 		fn default() -> Self {
-			Self {
-				balances: Default::default(),
-			}
+			Self { balances: Default::default() }
 		}
 	}
 	#[pallet::genesis_build]
 	impl<T: Config<I>, I: 'static> GenesisBuild<T, I> for GenesisConfig<T, I> {
 		fn build(&self) {
-			let total = self
-				.balances
-				.iter()
-				.fold(Zero::zero(), |acc: T::Balance, &(_, n)| acc + n);
+			let total = self.balances.iter().fold(Zero::zero(), |acc: T::Balance, &(_, n)| acc + n);
 			<TotalIssuance<T, I>>::put(total);
 
 			<StorageVersion<T, I>>::put(Releases::V2_0_0);
@@ -851,13 +835,9 @@ pub mod pallet {
 				}
 
 				if new_reserved > account.reserved() {
-					mem::drop(<PositiveImbalance<T, I>>::new(
-						new_reserved - account.reserved(),
-					));
+					mem::drop(<PositiveImbalance<T, I>>::new(new_reserved - account.reserved()));
 				} else if new_reserved < account.reserved() {
-					mem::drop(<NegativeImbalance<T, I>>::new(
-						account.reserved() - new_reserved,
-					));
+					mem::drop(<NegativeImbalance<T, I>>::new(account.reserved() - new_reserved));
 				}
 
 				account.set_free(new_free);
@@ -1388,10 +1368,7 @@ pub mod pallet {
 				return Ok(());
 			}
 			let min_balance = Self::frozen_balance(who.borrow()).frozen_for(reasons.into());
-			ensure!(
-				new_balance >= min_balance,
-				<Error<T, I>>::LiquidityRestrictions
-			);
+			ensure!(new_balance >= min_balance, <Error<T, I>>::LiquidityRestrictions);
 			Ok(())
 		}
 
@@ -1561,10 +1538,7 @@ pub mod pallet {
 						<Error<T, I>>::DeadAccount
 					);
 					account.set_free(
-						account
-							.free()
-							.checked_add(&value)
-							.ok_or(ArithmeticError::Overflow)?,
+						account.free().checked_add(&value).ok_or(ArithmeticError::Overflow)?,
 					);
 					Ok(PositiveImbalance::new(value))
 				},
@@ -1704,13 +1678,9 @@ pub mod pallet {
 			if value.is_zero() {
 				return true;
 			}
-			Self::account(who)
-				.free()
-				.checked_sub(&value)
-				.map_or(false, |new_balance| {
-					Self::ensure_can_withdraw(who, value, WithdrawReasons::RESERVE, new_balance)
-						.is_ok()
-				})
+			Self::account(who).free().checked_sub(&value).map_or(false, |new_balance| {
+				Self::ensure_can_withdraw(who, value, WithdrawReasons::RESERVE, new_balance).is_ok()
+			})
 		}
 
 		/// Slash from reserved balance, returning the negative imbalance created,
@@ -1773,16 +1743,12 @@ pub mod pallet {
 			}
 
 			Self::try_mutate_account(who, |account, _| -> DispatchResult {
-				let new_free = account
-					.free()
-					.checked_sub(&value)
-					.ok_or(<Error<T, I>>::InsufficientBalance)?;
+				let new_free =
+					account.free().checked_sub(&value).ok_or(<Error<T, I>>::InsufficientBalance)?;
 				account.set_free(new_free);
 
-				let new_reserved = account
-					.reserved()
-					.checked_add(&value)
-					.ok_or(ArithmeticError::Overflow)?;
+				let new_reserved =
+					account.reserved().checked_add(&value).ok_or(ArithmeticError::Overflow)?;
 				account.set_reserved(new_reserved);
 				Self::ensure_can_withdraw(
 					&who,
@@ -1871,11 +1837,7 @@ pub mod pallet {
 			{
 				return;
 			}
-			let mut new_lock = Some(BalanceLock {
-				id,
-				lock_for,
-				lock_reasons: reasons.into(),
-			});
+			let mut new_lock = Some(BalanceLock { id, lock_for, lock_reasons: reasons.into() });
 			let mut locks = Self::locks(who)
 				.into_iter()
 				.filter_map(|l| if l.id == id { new_lock.take() } else { Some(l) })
@@ -1914,9 +1876,9 @@ pub mod pallet {
 								lock_for: {
 									match nl.lock_for {
 										// Only extend common lock type
-										LockFor::Common { amount: na } => LockFor::Common {
-											amount: (a).max(na),
-										},
+										LockFor::Common { amount: na } => {
+											LockFor::Common { amount: (a).max(na) }
+										}
 										// Not allow to extend other combination/type lock
 										//
 										// And the lock is always with lock id
@@ -2015,13 +1977,7 @@ pub mod pallet {
 					}
 					Err(index) => {
 						reserves
-							.try_insert(
-								index,
-								ReserveData {
-									id: id.clone(),
-									amount: value,
-								},
-							)
+							.try_insert(index, ReserveData { id: id.clone(), amount: value })
 							.map_err(|_| Error::<T, I>::TooManyReserves)?;
 					}
 				};
@@ -2089,28 +2045,25 @@ pub mod pallet {
 				return (NegativeImbalance::zero(), Zero::zero());
 			}
 
-			Reserves::<T, I>::mutate(
-				who,
-				|reserves| -> (Self::NegativeImbalance, Self::Balance) {
-					match reserves.binary_search_by_key(id, |data| data.id) {
-						Ok(index) => {
-							let to_change = cmp::min(reserves[index].amount, value);
+			Reserves::<T, I>::mutate(who, |reserves| -> (Self::NegativeImbalance, Self::Balance) {
+				match reserves.binary_search_by_key(id, |data| data.id) {
+					Ok(index) => {
+						let to_change = cmp::min(reserves[index].amount, value);
 
-							let (imb, remain) =
-								<Self as ReservableCurrency<_>>::slash_reserved(who, to_change);
+						let (imb, remain) =
+							<Self as ReservableCurrency<_>>::slash_reserved(who, to_change);
 
-							// remain should always be zero but just to be defensive here
-							let actual = to_change.saturating_sub(remain);
+						// remain should always be zero but just to be defensive here
+						let actual = to_change.saturating_sub(remain);
 
-							// `actual <= to_change` and `to_change <= amount`; qed;
-							reserves[index].amount -= actual;
+						// `actual <= to_change` and `to_change <= amount`; qed;
+						reserves[index].amount -= actual;
 
-							(imb, value - actual)
-						}
-						Err(_) => (NegativeImbalance::zero(), value),
+						(imb, value - actual)
 					}
-				},
-			)
+					Err(_) => (NegativeImbalance::zero(), value),
+				}
+			})
 		}
 
 		/// Move the reserved balance of one account into the balance of another, according to

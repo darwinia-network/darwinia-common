@@ -91,10 +91,7 @@ where
 	K: Zero,
 {
 	fn zero() -> Self {
-		Self {
-			r: Zero::zero(),
-			k: Zero::zero(),
-		}
+		Self { r: Zero::zero(), k: Zero::zero() }
 	}
 
 	fn set_zero(&mut self) {
@@ -114,10 +111,7 @@ where
 	type Output = Self;
 
 	fn add(self, rhs: Self) -> Self::Output {
-		Self {
-			r: self.r + rhs.r,
-			k: self.k + rhs.k,
-		}
+		Self { r: self.r + rhs.r, k: self.k + rhs.k }
 	}
 }
 impl<R, K> AddAssign for RK<R, K>
@@ -138,10 +132,7 @@ where
 	type Output = Self;
 
 	fn sub(self, rhs: Self) -> Self::Output {
-		Self {
-			r: self.r - rhs.r,
-			k: self.k - rhs.k,
-		}
+		Self { r: self.r - rhs.r, k: self.k - rhs.k }
 	}
 }
 impl<R, K> Saturating for RK<R, K>
@@ -150,31 +141,19 @@ where
 	K: Copy + Saturating,
 {
 	fn saturating_add(self, o: Self) -> Self {
-		Self {
-			r: self.r.saturating_add(o.r),
-			k: self.k.saturating_add(o.k),
-		}
+		Self { r: self.r.saturating_add(o.r), k: self.k.saturating_add(o.k) }
 	}
 
 	fn saturating_sub(self, o: Self) -> Self {
-		Self {
-			r: self.r.saturating_sub(o.r),
-			k: self.k.saturating_sub(o.k),
-		}
+		Self { r: self.r.saturating_sub(o.r), k: self.k.saturating_sub(o.k) }
 	}
 
 	fn saturating_mul(self, o: Self) -> Self {
-		Self {
-			r: self.r.saturating_mul(o.r),
-			k: self.k.saturating_mul(o.k),
-		}
+		Self { r: self.r.saturating_mul(o.r), k: self.k.saturating_mul(o.k) }
 	}
 
 	fn saturating_pow(self, exp: usize) -> Self {
-		Self {
-			r: self.r.saturating_pow(exp),
-			k: self.k.saturating_pow(exp),
-		}
+		Self { r: self.r.saturating_pow(exp), k: self.k.saturating_pow(exp) }
 	}
 }
 
@@ -243,21 +222,13 @@ impl SlashingSpans {
 	pub fn iter(&'_ self) -> impl Iterator<Item = SlashingSpan> + '_ {
 		let mut last_start = self.last_start;
 		let mut index = self.span_index;
-		let last = SlashingSpan {
-			index,
-			start: last_start,
-			length: None,
-		};
+		let last = SlashingSpan { index, start: last_start, length: None };
 		let prior = self.prior.iter().cloned().map(move |length| {
 			let start = last_start - length;
 			last_start = start;
 			index -= 1;
 
-			SlashingSpan {
-				index,
-				start,
-				length: Some(length),
-			}
+			SlashingSpan { index, start, length: Some(length) }
 		});
 
 		sp_std::iter::once(last).chain(prior)
@@ -276,10 +247,7 @@ impl SlashingSpans {
 		let old_idx = self
 			.iter()
 			.skip(1) // skip ongoing span.
-			.position(|span| {
-				span.length
-					.map_or(false, |len| span.start + len <= window_start)
-			});
+			.position(|span| span.length.map_or(false, |len| span.start + len <= window_start));
 
 		let earliest_span_index = self.span_index - self.prior.len() as SpanIndex;
 		let pruned = match old_idx {
@@ -341,24 +309,15 @@ pub struct SlashParams<'a, T: 'a + Config> {
 pub fn compute_slash<T: Config>(
 	params: SlashParams<T>,
 ) -> Option<UnappliedSlash<T::AccountId, RingBalance<T>, KtonBalance<T>>> {
-	let SlashParams {
-		stash,
-		slash,
-		exposure,
-		slash_era,
-		window_start,
-		now,
-		reward_proportion,
-	} = params.clone();
+	let SlashParams { stash, slash, exposure, slash_era, window_start, now, reward_proportion } =
+		params.clone();
 
 	let mut reward_payout = Zero::zero();
 	let mut val_slashed = Zero::zero();
 
 	// is the slash amount here a maximum for the era?
-	let own_slash = RK {
-		r: slash * exposure.own_ring_balance,
-		k: slash * exposure.own_kton_balance,
-	};
+	let own_slash =
+		RK { r: slash * exposure.own_ring_balance, k: slash * exposure.own_kton_balance };
 	if (slash * exposure.total_power).is_zero() {
 		// kick out the validator even if they won't be slashed,
 		// as long as the misbehavior is from their most recent slashing span.
@@ -460,15 +419,8 @@ fn slash_nominators<T: Config>(
 	prior_slash_p: Perbill,
 	nominators_slashed: &mut Vec<(T::AccountId, RKT<T>)>,
 ) -> RKT<T> {
-	let SlashParams {
-		stash: _,
-		slash,
-		exposure,
-		slash_era,
-		window_start,
-		now,
-		reward_proportion,
-	} = params;
+	let SlashParams { stash: _, slash, exposure, slash_era, window_start, now, reward_proportion } =
+		params;
 
 	let mut reward_payout = Zero::zero();
 
@@ -484,10 +436,8 @@ fn slash_nominators<T: Config>(
 				r: prior_slash_p * nominator.ring_balance,
 				k: prior_slash_p * nominator.kton_balance,
 			};
-			let own_slash_by_validator = RK {
-				r: slash * nominator.ring_balance,
-				k: slash * nominator.kton_balance,
-			};
+			let own_slash_by_validator =
+				RK { r: slash * nominator.ring_balance, k: slash * nominator.kton_balance };
 			let own_slash_difference = own_slash_by_validator.saturating_sub(own_slash_prior);
 
 			let mut era_slash = <Pallet<T> as Store>::NominatorSlashInEra::get(&slash_era, stash)
@@ -609,15 +559,10 @@ impl<'a, T: 'a + Config> InspectingSpans<'a, T> {
 			span_record.slashed = slash;
 
 			// compute reward.
-			let slash = RK {
-				r: self.reward_proportion * slash.r,
-				k: self.reward_proportion * slash.k,
-			};
+			let slash =
+				RK { r: self.reward_proportion * slash.r, k: self.reward_proportion * slash.k };
 			let slash = slash.saturating_sub(span_record.paid_out);
-			let reward = RK {
-				r: REWARD_F1 * slash.r,
-				k: REWARD_F1 * slash.k,
-			};
+			let reward = RK { r: REWARD_F1 * slash.r, k: REWARD_F1 * slash.k };
 
 			self.add_slash(difference, slash_era);
 			changed = true;
@@ -625,15 +570,10 @@ impl<'a, T: 'a + Config> InspectingSpans<'a, T> {
 			reward
 		} else if span_record.slashed == slash {
 			// compute reward. no slash difference to apply.
-			let slash = RK {
-				r: self.reward_proportion * slash.r,
-				k: self.reward_proportion * slash.k,
-			};
+			let slash =
+				RK { r: self.reward_proportion * slash.r, k: self.reward_proportion * slash.k };
 			let slash = slash.saturating_sub(span_record.paid_out);
-			RK {
-				r: REWARD_F1 * slash.r,
-				k: REWARD_F1 * slash.k,
-			}
+			RK { r: REWARD_F1 * slash.r, k: REWARD_F1 * slash.k }
 		} else {
 			Zero::zero()
 		};
@@ -788,12 +728,7 @@ pub fn apply_slash<T: Config>(
 		);
 	}
 
-	pay_reporters::<T>(
-		reward_payout,
-		slashed_ring,
-		slashed_kton,
-		&unapplied_slash.reporters,
-	);
+	pay_reporters::<T>(reward_payout, slashed_ring, slashed_kton, &unapplied_slash.reporters);
 }
 
 /// Apply a reward payout to some reporters, paying the rewards out of the slashed imbalance.

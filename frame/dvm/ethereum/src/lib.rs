@@ -157,10 +157,7 @@ where
 		origin: &H160,
 	) -> Option<Result<(), TransactionValidityError>> {
 		if let Call::transact { transaction } = self {
-			Some(Pallet::<T>::validate_transaction_in_block(
-				*origin,
-				&transaction,
-			))
+			Some(Pallet::<T>::validate_transaction_in_block(*origin, &transaction))
 		} else {
 			None
 		}
@@ -168,10 +165,7 @@ where
 
 	pub fn validate_self_contained(&self, origin: &H160) -> Option<TransactionValidity> {
 		if let Call::transact { transaction } = self {
-			Some(Pallet::<T>::validate_transaction_in_pool(
-				*origin,
-				transaction,
-			))
+			Some(Pallet::<T>::validate_transaction_in_pool(*origin, transaction))
 		} else {
 			None
 		}
@@ -218,9 +212,7 @@ pub mod pallet {
 			);
 			// move block hash pruning window by one block
 			let block_hash_count = T::BlockHashCount::get();
-			let to_remove = n
-				.saturating_sub(block_hash_count)
-				.saturating_sub(One::one());
+			let to_remove = n.saturating_sub(block_hash_count).saturating_sub(One::one());
 			// keep genesis hash
 			if !to_remove.is_zero() {
 				<BlockHash<T>>::remove(U256::from(
@@ -413,11 +405,7 @@ impl<T: Config> Pallet<T> {
 				max_priority_fee_per_gas: None,
 				value: t.value,
 				chain_id: Some(t.chain_id),
-				access_list: t
-					.access_list
-					.iter()
-					.map(|d| (d.address, d.slots.clone()))
-					.collect(),
+				access_list: t.access_list.iter().map(|d| (d.address, d.slots.clone())).collect(),
 			},
 			Transaction::EIP1559(t) => TransactionData {
 				action: t.action,
@@ -429,11 +417,7 @@ impl<T: Config> Pallet<T> {
 				max_priority_fee_per_gas: Some(t.max_priority_fee_per_gas),
 				value: t.value,
 				chain_id: Some(t.chain_id),
-				access_list: t
-					.access_list
-					.iter()
-					.map(|d| (d.address, d.slots.clone()))
-					.collect(),
+				access_list: t.access_list.iter().map(|d| (d.address, d.slots.clone())).collect(),
 			},
 		}
 	}
@@ -570,9 +554,7 @@ impl<T: Config> Pallet<T> {
 		// In the context of the block, a transaction with a nonce that is
 		// too high should be considered invalid and make the whole block invalid.
 		if transaction_nonce > account_nonce {
-			Err(TransactionValidityError::Invalid(
-				InvalidTransaction::Future,
-			))
+			Err(TransactionValidityError::Invalid(InvalidTransaction::Future))
 		} else if transaction_nonce < account_nonce {
 			Err(TransactionValidityError::Invalid(InvalidTransaction::Stale))
 		} else {

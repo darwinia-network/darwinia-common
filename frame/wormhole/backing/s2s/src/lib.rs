@@ -126,14 +126,7 @@ pub mod pallet {
 		/// Token registered \[token metadata, sender\]
 		TokenRegistered(TokenMetadata, AccountId<T>),
 		/// Token locked \[lane_id, message_nonce, token address, sender, recipient, amount\]
-		TokenLocked(
-			LaneId,
-			MessageNonce,
-			H160,
-			AccountId<T>,
-			H160,
-			RingBalance<T>,
-		),
+		TokenLocked(LaneId, MessageNonce, H160, AccountId<T>, H160, RingBalance<T>),
 		/// Token unlocked \[lane_id, message_nonce, token_address, recipient, amount\]
 		TokenUnlocked(LaneId, MessageNonce, H160, AccountId<T>, RingBalance<T>),
 		/// Token locked confirmed from remote \[lane_id, message_nonce, user, amount, result\]
@@ -319,10 +312,7 @@ pub mod pallet {
 			let message_nonce =
 				T::MessageNoncer::outbound_latest_generated_nonce(T::MessageLaneId::get());
 			let message_id: BridgeMessageId = (T::MessageLaneId::get(), message_nonce);
-			ensure!(
-				!<TransactionInfos<T>>::contains_key(message_id),
-				Error::<T>::NonceDuplicated
-			);
+			ensure!(!<TransactionInfos<T>>::contains_key(message_id), Error::<T>::NonceDuplicated);
 			<TransactionInfos<T>>::insert(message_id, (user.clone(), value));
 			Self::deposit_event(Event::TokenLocked(
 				T::MessageLaneId::get(),
@@ -351,10 +341,7 @@ pub mod pallet {
 				&user,
 			)?;
 			// Check call params
-			ensure!(
-				token_address == T::RingMetadata::get().address,
-				<Error<T>>::UnsupportedToken
-			);
+			ensure!(token_address == T::RingMetadata::get().address, <Error<T>>::UnsupportedToken);
 
 			let amount = amount.low_u128().saturated_into();
 			// Make sure the total transfer is less than the security limitation

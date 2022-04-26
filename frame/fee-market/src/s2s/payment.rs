@@ -90,11 +90,7 @@ where
 		);
 
 		// Pay confirmation relayer rewards
-		do_reward::<T, I>(
-			relayer_fund_account,
-			confirmation_relayer,
-			confirmation_relayer_rewards,
-		);
+		do_reward::<T, I>(relayer_fund_account, confirmation_relayer, confirmation_relayer_rewards);
 		// Pay messages relayers rewards
 		for (relayer, reward) in messages_relayers_rewards {
 			do_reward::<T, I>(relayer_fund_account, &relayer, reward);
@@ -140,9 +136,8 @@ where
 				// The confirm_time of the order is set in the `OnDeliveryConfirmed` callback. And
 				// the callback function was called as source chain received message delivery proof,
 				// before the reward payment.
-				let order_confirm_time = order
-					.confirm_time
-					.unwrap_or_else(|| frame_system::Pallet::<T>::block_number());
+				let order_confirm_time =
+					order.confirm_time.unwrap_or_else(|| frame_system::Pallet::<T>::block_number());
 				let message_fee = order.fee();
 
 				let message_reward;
@@ -279,13 +274,7 @@ pub(crate) fn do_reward<T: Config<I>, I: 'static>(
 
 	match pay_result {
 		Ok(_) => log::trace!("Reward, from {:?} to {:?} reward: {:?}", from, to, reward),
-		Err(e) => log::error!(
-			"Reward, from {:?} to {:?} reward {:?}: {:?}",
-			from,
-			to,
-			reward,
-			e,
-		),
+		Err(e) => log::error!("Reward, from {:?} to {:?} reward {:?}: {:?}", from, to, reward, e,),
 	}
 }
 

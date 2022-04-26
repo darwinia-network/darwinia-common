@@ -274,16 +274,10 @@ pub mod pallet {
 					&& header.gas_limit <= config.max_gas_limit,
 				<Error<T>>::InvalidGasLimit
 			);
-			ensure!(
-				header.gas_used <= header.gas_limit,
-				<Error<T>>::TooMuchGasUsed
-			);
+			ensure!(header.gas_used <= header.gas_limit, <Error<T>>::TooMuchGasUsed);
 
 			// Ensure that the block doesn't contain any uncles which are meaningless in PoA
-			ensure!(
-				header.uncle_hash == KECCAK_EMPTY_LIST_RLP,
-				<Error<T>>::InvalidUncleHash
-			);
+			ensure!(header.uncle_hash == KECCAK_EMPTY_LIST_RLP, <Error<T>>::InvalidUncleHash);
 
 			// Ensure difficulty is valid
 			ensure!(
@@ -297,10 +291,7 @@ pub mod pallet {
 			ensure!(header.mix_digest.is_zero(), <Error<T>>::InvalidMixDigest);
 
 			// Check that the extra-data contains the vanity, validators and signature.
-			ensure!(
-				header.extra_data.len() > VANITY_LENGTH,
-				<Error<T>>::MissingVanity
-			);
+			ensure!(header.extra_data.len() > VANITY_LENGTH, <Error<T>>::MissingVanity);
 
 			let validator_bytes_len = header
 				.extra_data
@@ -313,10 +304,7 @@ pub mod pallet {
 
 			if is_checkpoint {
 				// Checkpoint blocks must at least contain one validator
-				ensure!(
-					validator_bytes_len != 0,
-					<Error<T>>::InvalidCheckpointValidators
-				);
+				ensure!(validator_bytes_len != 0, <Error<T>>::InvalidCheckpointValidators);
 				// Ensure that the validator bytes length is valid
 				ensure!(
 					validator_bytes_len % ADDRESS_LENGTH == 0,
@@ -357,10 +345,7 @@ pub mod pallet {
 			let data = &header.extra_data;
 
 			ensure!(data.len() > VANITY_LENGTH, <Error<T>>::MissingVanity);
-			ensure!(
-				data.len() >= VANITY_LENGTH + SIGNATURE_LENGTH,
-				<Error<T>>::MissingSignature
-			);
+			ensure!(data.len() >= VANITY_LENGTH + SIGNATURE_LENGTH, <Error<T>>::MissingSignature);
 
 			// Split `signed_extra data` and `signature`
 			let (signed_data_slice, signature_slice) = data.split_at(data.len() - SIGNATURE_LENGTH);
@@ -395,18 +380,12 @@ pub mod pallet {
 		pub fn extract_authorities(header: &BscHeader) -> Result<Vec<Address>, DispatchError> {
 			let data = &header.extra_data;
 
-			ensure!(
-				data.len() > VANITY_LENGTH + SIGNATURE_LENGTH,
-				<Error<T>>::CheckpointNoSigner
-			);
+			ensure!(data.len() > VANITY_LENGTH + SIGNATURE_LENGTH, <Error<T>>::CheckpointNoSigner);
 
 			// extract only the portion of extra_data which includes the signer list
 			let signers_raw = &data[VANITY_LENGTH..data.len() - SIGNATURE_LENGTH];
 
-			ensure!(
-				signers_raw.len() % ADDRESS_LENGTH == 0,
-				<Error<T>>::CheckpointInvalidSigners
-			);
+			ensure!(signers_raw.len() % ADDRESS_LENGTH == 0, <Error<T>>::CheckpointInvalidSigners);
 
 			let num_signers = signers_raw.len() / ADDRESS_LENGTH;
 			let signers: Vec<Address> = (0..num_signers)
@@ -430,10 +409,7 @@ pub mod pallet {
 
 			// ensure valid length
 			// we should submit at least `N / 2 + 1` headers
-			ensure!(
-				last_authority_set.len() / 2 < headers.len(),
-				<Error::<T>>::InvalidHeadersSize
-			);
+			ensure!(last_authority_set.len() / 2 < headers.len(), <Error::<T>>::InvalidHeadersSize);
 
 			let last_checkpoint = <FinalizedCheckpoint<T>>::get();
 			let checkpoint = &headers[0];
@@ -448,10 +424,7 @@ pub mod pallet {
 				<Error::<T>>::RidiculousNumber
 			);
 			// ensure first element is checkpoint block header
-			ensure!(
-				checkpoint.number % cfg.epoch_length == 0,
-				<Error::<T>>::NotCheckpoint
-			);
+			ensure!(checkpoint.number % cfg.epoch_length == 0, <Error::<T>>::NotCheckpoint);
 
 			// verify checkpoint
 			// basic checks
@@ -460,10 +433,7 @@ pub mod pallet {
 			// check signer
 			let signer = Self::recover_creator(cfg.chain_id, checkpoint)?;
 
-			ensure!(
-				contains(&last_authority_set, signer),
-				<Error::<T>>::InvalidSigner
-			);
+			ensure!(contains(&last_authority_set, signer), <Error::<T>>::InvalidSigner);
 
 			// extract new authority set from submitted checkpoint header
 			let new_authority_set = Self::extract_authorities(checkpoint)?;
@@ -479,10 +449,7 @@ pub mod pallet {
 				let signer = Self::recover_creator(cfg.chain_id, &headers[i])?;
 
 				// signed must in last authority set
-				ensure!(
-					contains(&last_authority_set, signer),
-					<Error::<T>>::InvalidSigner
-				);
+				ensure!(contains(&last_authority_set, signer), <Error::<T>>::InvalidSigner);
 				// headers submitted must signed by different authority
 				ensure!(!recently.contains(&signer), <Error::<T>>::SignedRecently);
 
@@ -502,9 +469,8 @@ pub mod pallet {
 						if !contains(&authorities, *authority) {
 							authorities.push(*authority);
 						}
-						if let Some(i) = authorities
-							.iter()
-							.position(|authority_| authority_ == authority)
+						if let Some(i) =
+							authorities.iter().position(|authority_| authority_ == authority)
 						{
 							indexes.push(i as u32);
 						}

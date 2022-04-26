@@ -42,10 +42,7 @@ where
 		Self(Default::default())
 	}
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 21, 26]
-			.into_iter()
-			.map(|x| addr(x))
-			.collect()
+		sp_std::vec![1, 2, 3, 4, 21, 26].into_iter().map(|x| addr(x)).collect()
 	}
 }
 
@@ -70,12 +67,12 @@ where
 			a if a == addr(3) => Some(Ripemd160::execute(input, target_gas, context, is_static)),
 			a if a == addr(4) => Some(Identity::execute(input, target_gas, context, is_static)),
 			// Darwinia precompiles
-			a if a == addr(21) => Some(<Transfer<R>>::execute(
-				input, target_gas, context, is_static,
-			)),
-			a if a == addr(26) => Some(<BscBridge<R>>::execute(
-				input, target_gas, context, is_static,
-			)),
+			a if a == addr(21) => {
+				Some(<Transfer<R>>::execute(input, target_gas, context, is_static))
+			}
+			a if a == addr(26) => {
+				Some(<BscBridge<R>>::execute(input, target_gas, context, is_static))
+			}
 			_ => None,
 		}
 	}

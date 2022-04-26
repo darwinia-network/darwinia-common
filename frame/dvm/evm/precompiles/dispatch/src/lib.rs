@@ -63,9 +63,7 @@ where
 		if let Some(gas) = target_gas {
 			let valid_weight = info.weight <= T::GasWeightMapping::gas_to_weight(gas);
 			if !valid_weight {
-				return Err(PrecompileFailure::Error {
-					exit_status: ExitError::OutOfGas,
-				});
+				return Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas });
 			}
 		}
 

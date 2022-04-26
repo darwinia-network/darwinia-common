@@ -25,10 +25,7 @@ pub(crate) mod v1 {
 
 	#[cfg(feature = "try-runtime")]
 	pub(crate) fn pre_migrate<T: Config>() -> Result<(), &'static str> {
-		assert!(
-			StorageVersion::<T>::get() == Releases::V0,
-			"Storage version too high."
-		);
+		assert!(StorageVersion::<T>::get() == Releases::V0, "Storage version too high.");
 
 		log::debug!(
 			target: "runtime::vesting",

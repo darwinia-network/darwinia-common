@@ -272,10 +272,9 @@ macro_rules! impl_self_contained_call {
 					SignedExtra::validate_unsigned(call, &call.get_dispatch_info(), input_len)?;
 				// Then, do the controls defined by the ethereum pallet.
 				use fp_self_contained::SelfContainedCall as _;
-				let self_contained_validation =
-					eth_call.validate_self_contained(signed_info).ok_or(
-						TransactionValidityError::Invalid(InvalidTransaction::BadProof),
-					)??;
+				let self_contained_validation = eth_call
+					.validate_self_contained(signed_info)
+					.ok_or(TransactionValidityError::Invalid(InvalidTransaction::BadProof))??;
 
 				Ok(extra_validation.combine_with(self_contained_validation))
 			} else {

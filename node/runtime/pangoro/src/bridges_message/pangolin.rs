@@ -184,9 +184,7 @@ impl ThisChainWithMessages for Pangoro {
 	fn transaction_payment(transaction: MessageTransaction<Weight>) -> Self::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			bp_pangoro::RuntimeBlockWeights::get()
-				.get(DispatchClass::Normal)
-				.base_extrinsic,
+			bp_pangoro::RuntimeBlockWeights::get().get(DispatchClass::Normal).base_extrinsic,
 			1,
 			FixedU128::zero(),
 			|weight| weight as _,
@@ -254,9 +252,7 @@ impl BridgedChainWithMessages for Pangolin {
 	fn transaction_payment(transaction: MessageTransaction<Weight>) -> Self::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			bp_pangolin::RuntimeBlockWeights::get()
-				.get(DispatchClass::Normal)
-				.base_extrinsic,
+			bp_pangolin::RuntimeBlockWeights::get().get(DispatchClass::Normal).base_extrinsic,
 			1,
 			FixedU128::zero(),
 			|weight| weight as _,

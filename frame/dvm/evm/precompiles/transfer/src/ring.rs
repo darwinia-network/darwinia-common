@@ -58,10 +58,7 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 		// Ensure the context address should be precompile address
 		let transfer_addr = array_bytes::hex_try_into(TRANSFER_ADDR)
 			.map_err(|_| helper.revert("invalid address"))?;
-		ensure!(
-			address == transfer_addr,
-			helper.revert("Invalid context address")
-		);
+		ensure!(address == transfer_addr, helper.revert("Invalid context address"));
 
 		let source = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(address);
 		T::RingAccountBasic::transfer(&source, &to, value)

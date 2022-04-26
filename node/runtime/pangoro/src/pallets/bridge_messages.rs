@@ -43,10 +43,8 @@ impl Config<WithPangolinMessages> for Runtime {
 		FeeMarketPayment<Runtime, WithPangolinFeeMarket, Ring, RootAccountForPayments>;
 
 	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangolinFeeMarket>;
-	type OnDeliveryConfirmed = (
-		Substrate2SubstrateBacking,
-		FeeMarketMessageConfirmedHandler<Self, WithPangolinFeeMarket>,
-	);
+	type OnDeliveryConfirmed =
+		(Substrate2SubstrateBacking, FeeMarketMessageConfirmedHandler<Self, WithPangolinFeeMarket>);
 
 	type SourceHeaderChain = bm_pangolin::Pangolin;
 	type MessageDispatch = bm_pangolin::FromPangolinMessageDispatch;

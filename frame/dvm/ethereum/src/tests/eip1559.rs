@@ -46,10 +46,7 @@ fn transaction_should_increment_nonce() {
 	ext.execute_with(|| {
 		let t = eip1559_erc20_creation_transaction(alice);
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
-		assert_eq!(
-			RingAccount::account_basic(&alice.address).nonce,
-			U256::from(1)
-		);
+		assert_eq!(RingAccount::account_basic(&alice.address).nonce, U256::from(1));
 	});
 }
 
@@ -70,10 +67,7 @@ fn transaction_without_enough_gas_should_not_work() {
 		// upstream repo
 		let source = call.check_self_contained().unwrap().unwrap();
 
-		assert_err!(
-			call.validate_self_contained(&source).unwrap(),
-			InvalidTransaction::Payment
-		);
+		assert_err!(call.validate_self_contained(&source).unwrap(), InvalidTransaction::Payment);
 	});
 }
 
@@ -87,9 +81,7 @@ fn transaction_with_to_low_nonce_should_not_work() {
 		let mut transaction = eip1559_erc20_creation_unsigned_transaction();
 		transaction.nonce = U256::from(1);
 		let signed = transaction.sign(&alice.private_key, None);
-		let call = crate::Call::<Test>::transact {
-			transaction: signed,
-		};
+		let call = crate::Call::<Test>::transact { transaction: signed };
 		let source = call.check_self_contained().unwrap().unwrap();
 
 		assert_eq!(
@@ -109,15 +101,10 @@ fn transaction_with_to_low_nonce_should_not_work() {
 		transaction.nonce = U256::from(0);
 
 		let signed2 = transaction.sign(&alice.private_key, None);
-		let call2 = crate::Call::<Test>::transact {
-			transaction: signed2,
-		};
+		let call2 = crate::Call::<Test>::transact { transaction: signed2 };
 		let source2 = call2.check_self_contained().unwrap().unwrap();
 
-		assert_err!(
-			call2.validate_self_contained(&source2).unwrap(),
-			InvalidTransaction::Stale
-		);
+		assert_err!(call2.validate_self_contained(&source2).unwrap(), InvalidTransaction::Stale);
 	});
 }
 
@@ -131,9 +118,7 @@ fn transaction_with_to_hight_nonce_should_fail_in_block() {
 		transaction.nonce = U256::one();
 
 		let signed = transaction.sign(&alice.private_key, None);
-		let call = crate::Call::<Test>::transact {
-			transaction: signed,
-		};
+		let call = crate::Call::<Test>::transact { transaction: signed };
 
 		let source = call.check_self_contained().unwrap().unwrap();
 		let extrinsic = fp_self_contained::CheckedExtrinsic::<_, _, SignedExtra, _> {
@@ -322,8 +307,6 @@ fn call_should_handle_errors() {
 		.sign(&alice.private_key, None);
 
 		// calling should always succeed even if the inner EVM execution fails.
-		Ethereum::execute(alice.address, &t3.into(), None)
-			.ok()
-			.unwrap();
+		Ethereum::execute(alice.address, &t3.into(), None).ok().unwrap();
 	});
 }

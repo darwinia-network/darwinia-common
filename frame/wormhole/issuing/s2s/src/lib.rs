@@ -266,9 +266,7 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self {
-				mapping_factory_address: Default::default(),
-			}
+			Self { mapping_factory_address: Default::default() }
 		}
 	}
 

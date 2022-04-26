@@ -90,10 +90,7 @@ fn configure_mapping_token_factory<T: Config>() {
 		hex_into_unchecked("bd770416a3345f91e4b34576cb804a576fa48eb1");
 	// initialize, then the owner is system account
 	let initialize: Vec<u8> = hex2bytes_unchecked("0x8129fc1c").to_vec();
-	assert_ok!(T::InternalTransactHandler::internal_transact(
-		mapping_token_factory,
-		initialize
-	));
+	assert_ok!(T::InternalTransactHandler::internal_transact(mapping_token_factory, initialize));
 	// setTokenContractLogic
 	let set_token_contract_logic0 = hex2bytes_unchecked("0x3c547e1600000000000000000000000000000000000000000000000000000000000000000000000000000000000000005a443704dd4b594b382c22a083e2bd3090a6fef3");
 	let set_token_contract_logic1 = hex2bytes_unchecked("0x3c547e1600000000000000000000000000000000000000000000000000000000000000010000000000000000000000005a443704dd4b594b382c22a083e2bd3090a6fef3");

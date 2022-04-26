@@ -166,9 +166,7 @@ impl ThisChainWithMessages for Pangolin {
 	fn transaction_payment(transaction: MessageTransaction<Weight>) -> Self::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			RuntimeBlockWeights::get()
-				.get(DispatchClass::Normal)
-				.base_extrinsic,
+			RuntimeBlockWeights::get().get(DispatchClass::Normal).base_extrinsic,
 			1,
 			FixedU128::zero(),
 			|weight| weight as _,

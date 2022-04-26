@@ -146,9 +146,7 @@ impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
 		self.set_associated_constants();
 
-		let mut storage = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.unwrap();
+		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 		darwinia_bridge_ethereum::GenesisConfig::<Test> {
 			genesis_header_parcel: r#"{

@@ -1,4 +1,10 @@
 
+# Basic
+edition    = "2021"
+hard_tabs  = true
+max_width  = 100
+tab_spaces = 4
+
 # Imports
 imports_granularity = "Crate"
 reorder_imports     = true
@@ -8,10 +14,7 @@ comment_width = 100
 wrap_comments = true
 
 # Misc
-edition                  = "2021"
-hard_tabs                = true
-max_width                = 100
 newline_style            = "Unix"
-tab_spaces               = 4
 use_field_init_shorthand = true
+use_small_heuristics     = "Max"
 reorder_modules          = true

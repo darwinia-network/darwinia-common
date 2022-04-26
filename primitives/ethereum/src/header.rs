@@ -501,8 +501,7 @@ impl Header {
 	/// Get the hash of this header (keccak of the RLP with seal).
 	#[cfg(any(feature = "full-rlp", test))]
 	pub fn hash(&self) -> H256 {
-		self.hash
-			.unwrap_or_else(|| keccak_hash::keccak(self.rlp(Seal::With)))
+		self.hash.unwrap_or_else(|| keccak_hash::keccak(self.rlp(Seal::With)))
 	}
 
 	/// Get the hash of the header excluding the seal
@@ -522,11 +521,7 @@ impl Header {
 	/// Place this header into an RLP stream `s`, optionally `with_seal`.
 	#[cfg(any(feature = "full-rlp", test))]
 	fn stream_rlp(&self, s: &mut RlpStream, with_seal: Seal) {
-		let stream_length_without_seal = if self.base_fee_per_gas.is_some() {
-			14
-		} else {
-			13
-		};
+		let stream_length_without_seal = if self.base_fee_per_gas.is_some() { 14 } else { 13 };
 
 		if let Seal::With = with_seal {
 			s.begin_list(stream_length_without_seal + self.seal.len());
@@ -858,10 +853,7 @@ mod tests {
 
 		//		ethash_params.set_difficulty_bomb_delays(0xc3500, 5000000);
 
-		assert_eq!(
-			ethash_params.calculate_difficulty(&header2, &header1),
-			expected
-		);
+		assert_eq!(ethash_params.calculate_difficulty(&header2, &header1), expected);
 	}
 
 	#[test]
@@ -870,10 +862,7 @@ mod tests {
 		let expected = U256::from_str("92c07e50de0b9").unwrap();
 		let ethash_params = EthashPartial::production();
 
-		assert_eq!(
-			ethash_params.calculate_difficulty(&header2, &header1),
-			expected
-		);
+		assert_eq!(ethash_params.calculate_difficulty(&header2, &header1), expected);
 	}
 
 	#[test]

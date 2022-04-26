@@ -472,9 +472,7 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			GenesisConfig {
-				_phantom: Default::default(),
-			}
+			GenesisConfig { _phantom: Default::default() }
 		}
 	}
 
@@ -629,10 +627,7 @@ pub mod pallet {
 			let index = Self::public_prop_count();
 			let real_prop_count = PublicProps::<T>::decode_len().unwrap_or(0) as u32;
 			let max_proposals = T::MaxProposals::get();
-			ensure!(
-				real_prop_count < max_proposals,
-				Error::<T>::TooManyProposals
-			);
+			ensure!(real_prop_count < max_proposals, Error::<T>::TooManyProposals);
 
 			if let Some((until, _)) = <Blacklist<T>>::get(proposal_hash) {
 				ensure!(
@@ -718,10 +713,7 @@ pub mod pallet {
 
 			let status = Self::referendum_status(ref_index)?;
 			let h = status.proposal_hash;
-			ensure!(
-				!<Cancellations<T>>::contains_key(h),
-				Error::<T>::AlreadyCanceled
-			);
+			ensure!(!<Cancellations<T>>::contains_key(h), Error::<T>::AlreadyCanceled);
 
 			<Cancellations<T>>::insert(h, true);
 			Self::internal_cancel_referendum(ref_index);
@@ -861,21 +853,15 @@ pub mod pallet {
 			let who = T::VetoOrigin::ensure_origin(origin)?;
 
 			if let Some((e_proposal_hash, _)) = <NextExternal<T>>::get() {
-				ensure!(
-					proposal_hash == e_proposal_hash,
-					Error::<T>::ProposalMissing
-				);
+				ensure!(proposal_hash == e_proposal_hash, Error::<T>::ProposalMissing);
 			} else {
 				Err(Error::<T>::NoProposal)?;
 			}
 
-			let mut existing_vetoers = <Blacklist<T>>::get(&proposal_hash)
-				.map(|pair| pair.1)
-				.unwrap_or_else(Vec::new);
-			let insert_position = existing_vetoers
-				.binary_search(&who)
-				.err()
-				.ok_or(Error::<T>::AlreadyVetoed)?;
+			let mut existing_vetoers =
+				<Blacklist<T>>::get(&proposal_hash).map(|pair| pair.1).unwrap_or_else(Vec::new);
+			let insert_position =
+				existing_vetoers.binary_search(&who).err().ok_or(Error::<T>::AlreadyVetoed)?;
 
 			existing_vetoers.insert(insert_position, who.clone());
 			let until = <frame_system::Pallet<T>>::block_number() + T::CooloffPeriod::get();
@@ -1087,24 +1073,16 @@ pub mod pallet {
 
 			let (provider, deposit, since, expiry) = <Preimages<T>>::get(&proposal_hash)
 				.and_then(|m| match m {
-					PreimageStatus::Available {
-						provider,
-						deposit,
-						since,
-						expiry,
-						..
-					} => Some((provider, deposit, since, expiry)),
+					PreimageStatus::Available { provider, deposit, since, expiry, .. } => {
+						Some((provider, deposit, since, expiry))
+					}
 					_ => None,
 				})
 				.ok_or(Error::<T>::PreimageMissing)?;
 
 			let now = <frame_system::Pallet<T>>::block_number();
 			let (voting, enactment) = (T::VotingPeriod::get(), T::EnactmentPeriod::get());
-			let additional = if who == provider {
-				Zero::zero()
-			} else {
-				enactment
-			};
+			let additional = if who == provider { Zero::zero() } else { enactment };
 			ensure!(now >= since + voting + additional, Error::<T>::TooEarly);
 			ensure!(expiry.map_or(true, |e| now > e), Error::<T>::Imminent);
 
@@ -1112,12 +1090,7 @@ pub mod pallet {
 				T::Currency::repatriate_reserved(&provider, &who, deposit, BalanceStatus::Free);
 			debug_assert!(res.is_ok());
 			<Preimages<T>>::remove(&proposal_hash);
-			Self::deposit_event(Event::<T>::PreimageReaped(
-				proposal_hash,
-				provider,
-				deposit,
-				who,
-			));
+			Self::deposit_event(Event::<T>::PreimageReaped(proposal_hash, provider, deposit, who));
 			Ok(())
 		}
 
@@ -1193,11 +1166,7 @@ pub mod pallet {
 			index: ReferendumIndex,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let scope = if target == who {
-				UnvoteScope::Any
-			} else {
-				UnvoteScope::OnlyExpired
-			};
+			let scope = if target == who { UnvoteScope::Any } else { UnvoteScope::OnlyExpired };
 			Self::try_remove_vote(&target, index, scope)?;
 			Ok(())
 		}
@@ -1308,10 +1277,7 @@ impl<T: Config> Pallet<T> {
 	/// Get all referenda ready for tally at block `n`.
 	pub fn maturing_referenda_at(
 		n: T::BlockNumber,
-	) -> Vec<(
-		ReferendumIndex,
-		ReferendumStatus<T::BlockNumber, T::Hash, BalanceOf<T>>,
-	)> {
+	) -> Vec<(ReferendumIndex, ReferendumStatus<T::BlockNumber, T::Hash, BalanceOf<T>>)> {
 		let next = Self::lowest_unbaked();
 		let last = Self::referendum_count();
 		Self::maturing_referenda_at_inner(n, next..last)
@@ -1320,10 +1286,7 @@ impl<T: Config> Pallet<T> {
 	fn maturing_referenda_at_inner(
 		n: T::BlockNumber,
 		range: core::ops::Range<PropIndex>,
-	) -> Vec<(
-		ReferendumIndex,
-		ReferendumStatus<T::BlockNumber, T::Hash, BalanceOf<T>>,
-	)> {
+	) -> Vec<(ReferendumIndex, ReferendumStatus<T::BlockNumber, T::Hash, BalanceOf<T>>)> {
 		range
 			.into_iter()
 			.map(|i| (i, Self::referendum_info(i)))
@@ -1383,24 +1346,13 @@ impl<T: Config> Pallet<T> {
 		vote: AccountVote<BalanceOf<T>>,
 	) -> DispatchResult {
 		let mut status = Self::referendum_status(ref_index)?;
-		ensure!(
-			vote.balance() <= T::Currency::free_balance(who),
-			Error::<T>::InsufficientFunds
-		);
+		ensure!(vote.balance() <= T::Currency::free_balance(who), Error::<T>::InsufficientFunds);
 		VotingOf::<T>::try_mutate(who, |voting| -> DispatchResult {
-			if let Voting::Direct {
-				ref mut votes,
-				delegations,
-				..
-			} = voting
-			{
+			if let Voting::Direct { ref mut votes, delegations, .. } = voting {
 				match votes.binary_search_by_key(&ref_index, |i| i.0) {
 					Ok(i) => {
 						// Shouldn't be possible to fail, but we handle it gracefully.
-						status
-							.tally
-							.remove(votes[i].1)
-							.ok_or(ArithmeticError::Underflow)?;
+						status.tally.remove(votes[i].1).ok_or(ArithmeticError::Underflow)?;
 						if let Some(approve) = votes[i].1.as_standard() {
 							status.tally.reduce(approve, *delegations);
 						}
@@ -1444,12 +1396,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let info = ReferendumInfoOf::<T>::get(ref_index);
 		VotingOf::<T>::try_mutate(who, |voting| -> DispatchResult {
-			if let Voting::Direct {
-				ref mut votes,
-				delegations,
-				ref mut prior,
-			} = voting
-			{
+			if let Voting::Direct { ref mut votes, delegations, ref mut prior } = voting {
 				let i = votes
 					.binary_search_by_key(&ref_index, |i| i.0)
 					.map_err(|_| Error::<T>::NotVoter)?;
@@ -1457,10 +1404,7 @@ impl<T: Config> Pallet<T> {
 					Some(ReferendumInfo::Ongoing(mut status)) => {
 						ensure!(matches!(scope, UnvoteScope::Any), Error::<T>::NoPermission);
 						// Shouldn't be possible to fail, but we handle it gracefully.
-						status
-							.tally
-							.remove(votes[i].1)
-							.ok_or(ArithmeticError::Underflow)?;
+						status.tally.remove(votes[i].1).ok_or(ArithmeticError::Underflow)?;
 						if let Some(approve) = votes[i].1.as_standard() {
 							status.tally.reduce(approve, *delegations);
 						}
@@ -1496,9 +1440,7 @@ impl<T: Config> Pallet<T> {
 				*delegations = delegations.saturating_add(amount);
 				1
 			}
-			Voting::Direct {
-				votes, delegations, ..
-			} => {
+			Voting::Direct { votes, delegations, .. } => {
 				*delegations = delegations.saturating_add(amount);
 				for &(ref_index, account_vote) in votes.iter() {
 					if let AccountVote::Standard { vote, .. } = account_vote {
@@ -1522,9 +1464,7 @@ impl<T: Config> Pallet<T> {
 				*delegations = delegations.saturating_sub(amount);
 				1
 			}
-			Voting::Direct {
-				votes, delegations, ..
-			} => {
+			Voting::Direct { votes, delegations, .. } => {
 				*delegations = delegations.saturating_sub(amount);
 				for &(ref_index, account_vote) in votes.iter() {
 					if let AccountVote::Standard { vote, .. } = account_vote {
@@ -1550,10 +1490,7 @@ impl<T: Config> Pallet<T> {
 		balance: BalanceOf<T>,
 	) -> Result<u32, DispatchError> {
 		ensure!(who != target, Error::<T>::Nonsense);
-		ensure!(
-			balance <= T::Currency::free_balance(&who),
-			Error::<T>::InsufficientFunds
-		);
+		ensure!(balance <= T::Currency::free_balance(&who), Error::<T>::InsufficientFunds);
 		let votes = VotingOf::<T>::try_mutate(&who, |voting| -> Result<u32, DispatchError> {
 			let mut old = Voting::Delegating {
 				balance,
@@ -1564,23 +1501,12 @@ impl<T: Config> Pallet<T> {
 			};
 			sp_std::mem::swap(&mut old, voting);
 			match old {
-				Voting::Delegating {
-					balance,
-					target,
-					conviction,
-					delegations,
-					prior,
-					..
-				} => {
+				Voting::Delegating { balance, target, conviction, delegations, prior, .. } => {
 					// remove any delegation votes to our current target.
 					Self::reduce_upstream_delegation(&target, conviction.votes(balance));
 					voting.set_common(delegations, prior);
 				}
-				Voting::Direct {
-					votes,
-					delegations,
-					prior,
-				} => {
+				Voting::Direct { votes, delegations, prior } => {
 					// here we just ensure that we're currently idling with no votes recorded.
 					ensure!(votes.is_empty(), Error::<T>::VotesExist);
 					voting.set_common(delegations, prior);
@@ -1604,13 +1530,7 @@ impl<T: Config> Pallet<T> {
 			let mut old = Voting::default();
 			sp_std::mem::swap(&mut old, voting);
 			match old {
-				Voting::Delegating {
-					balance,
-					target,
-					conviction,
-					delegations,
-					mut prior,
-				} => {
+				Voting::Delegating { balance, target, conviction, delegations, mut prior } => {
 					// remove any delegation votes to our current target.
 					let votes =
 						Self::reduce_upstream_delegation(&target, conviction.votes(balance));
@@ -1641,9 +1561,7 @@ impl<T: Config> Pallet<T> {
 			T::Currency::set_lock(
 				DEMOCRACY_ID,
 				who,
-				LockFor::Common {
-					amount: lock_needed,
-				},
+				LockFor::Common { amount: lock_needed },
 				WithdrawReasons::TRANSFER,
 			);
 		}
@@ -1658,13 +1576,8 @@ impl<T: Config> Pallet<T> {
 	) -> ReferendumIndex {
 		let ref_index = Self::referendum_count();
 		ReferendumCount::<T>::put(ref_index + 1);
-		let status = ReferendumStatus {
-			end,
-			proposal_hash,
-			threshold,
-			delay,
-			tally: Default::default(),
-		};
+		let status =
+			ReferendumStatus { end, proposal_hash, threshold, delay, tally: Default::default() };
 		let item = ReferendumInfo::Ongoing(status);
 		<ReferendumInfoOf<T>>::insert(ref_index, item);
 		Self::deposit_event(Event::<T>::Started(ref_index, threshold));
@@ -1731,13 +1644,7 @@ impl<T: Config> Pallet<T> {
 
 	fn do_enact_proposal(proposal_hash: T::Hash, index: ReferendumIndex) -> DispatchResult {
 		let preimage = <Preimages<T>>::take(&proposal_hash);
-		if let Some(PreimageStatus::Available {
-			data,
-			provider,
-			deposit,
-			..
-		}) = preimage
-		{
+		if let Some(PreimageStatus::Available { data, provider, deposit, .. }) = preimage {
 			if let Ok(proposal) = T::Proposal::decode(&mut &data[..]) {
 				let err_amount = T::Currency::unreserve(&provider, deposit);
 				debug_assert!(err_amount.is_zero());
@@ -1792,11 +1699,7 @@ impl<T: Config> Pallet<T> {
 					None,
 					63,
 					frame_system::RawOrigin::Root.into(),
-					Call::enact_proposal {
-						proposal_hash: status.proposal_hash,
-						index,
-					}
-					.into(),
+					Call::enact_proposal { proposal_hash: status.proposal_hash, index }.into(),
 				)
 				.is_err()
 				{
@@ -1927,10 +1830,7 @@ impl<T: Config> Pallet<T> {
 	// See `note_preimage`
 	fn note_preimage_inner(who: T::AccountId, encoded_proposal: Vec<u8>) -> DispatchResult {
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
-		ensure!(
-			!<Preimages<T>>::contains_key(&proposal_hash),
-			Error::<T>::DuplicatePreimage
-		);
+		ensure!(!<Preimages<T>>::contains_key(&proposal_hash), Error::<T>::DuplicatePreimage);
 
 		let deposit = <BalanceOf<T>>::from(encoded_proposal.len() as u32)
 			.saturating_mul(T::PreimageByteDeposit::get());
@@ -1959,9 +1859,7 @@ impl<T: Config> Pallet<T> {
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
 		Self::check_pre_image_is_missing(proposal_hash)?;
 		let status = Preimages::<T>::get(&proposal_hash).ok_or(Error::<T>::NotImminent)?;
-		let expiry = status
-			.to_missing_expiry()
-			.ok_or(Error::<T>::DuplicatePreimage)?;
+		let expiry = status.to_missing_expiry().ok_or(Error::<T>::DuplicatePreimage)?;
 
 		let now = <frame_system::Pallet<T>>::block_number();
 		let free = <BalanceOf<T>>::zero();

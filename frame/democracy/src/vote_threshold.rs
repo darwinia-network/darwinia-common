@@ -96,21 +96,9 @@ mod tests {
 
 	#[test]
 	fn should_work() {
-		assert!(!VoteThreshold::SuperMajorityApprove.approved(
-			Tally {
-				ayes: 60,
-				nays: 50,
-				turnout: 110
-			},
-			210
-		));
-		assert!(VoteThreshold::SuperMajorityApprove.approved(
-			Tally {
-				ayes: 100,
-				nays: 50,
-				turnout: 150
-			},
-			210
-		));
+		assert!(!VoteThreshold::SuperMajorityApprove
+			.approved(Tally { ayes: 60, nays: 50, turnout: 110 }, 210));
+		assert!(VoteThreshold::SuperMajorityApprove
+			.approved(Tally { ayes: 100, nays: 50, turnout: 150 }, 210));
 	}
 }

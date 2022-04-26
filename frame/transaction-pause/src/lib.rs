@@ -135,10 +135,7 @@ where
 	<T as frame_system::Config>::Call: GetCallMetadata,
 {
 	fn contains(call: &T::Call) -> bool {
-		let CallMetadata {
-			function_name,
-			pallet_name,
-		} = call.get_call_metadata();
+		let CallMetadata { function_name, pallet_name } = call.get_call_metadata();
 		PausedTransactions::<T>::contains_key((pallet_name.as_bytes(), function_name.as_bytes()))
 	}
 }

@@ -864,12 +864,7 @@ pub mod pallet {
 		pub force_era: Forcing,
 		pub slash_reward_fraction: Perbill,
 		pub canceled_payout: Power,
-		pub stakers: Vec<(
-			AccountId<T>,
-			AccountId<T>,
-			RingBalance<T>,
-			StakerStatus<AccountId<T>>,
-		)>,
+		pub stakers: Vec<(AccountId<T>, AccountId<T>, RingBalance<T>, StakerStatus<AccountId<T>>)>,
 		pub min_nominator_bond: RingBalance<T>,
 		pub min_validator_bond: RingBalance<T>,
 		pub payout_fraction: Perbill,
@@ -934,10 +929,7 @@ pub mod pallet {
 					),
 					StakerStatus::Nominator(votes) => <Pallet<T>>::nominate(
 						T::Origin::from(Some(controller.to_owned()).into()),
-						votes
-							.iter()
-							.map(|l| T::Lookup::unlookup(l.to_owned()))
-							.collect(),
+						votes.iter().map(|l| T::Lookup::unlookup(l.to_owned())).collect(),
 					),
 					_ => Ok(()),
 				});
@@ -1038,16 +1030,10 @@ pub mod pallet {
 			promise_month: u8,
 		) -> DispatchResult {
 			let stash = ensure_signed(origin)?;
-			ensure!(
-				!<Bonded<T>>::contains_key(&stash),
-				<Error<T>>::AlreadyBonded
-			);
+			ensure!(!<Bonded<T>>::contains_key(&stash), <Error<T>>::AlreadyBonded);
 
 			let controller = T::Lookup::lookup(controller)?;
-			ensure!(
-				!<Ledger<T>>::contains_key(&controller),
-				<Error<T>>::AlreadyPaired
-			);
+			ensure!(!<Ledger<T>>::contains_key(&controller), <Error<T>>::AlreadyPaired);
 
 			match value {
 				StakingBalance::RingBalance(value) => {
@@ -1206,12 +1192,7 @@ pub mod pallet {
 			let promise_month = promise_month.max(1).min(36);
 			let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
 			let mut ledger = Self::clear_mature_deposits(ledger).0;
-			let StakingLedger {
-				active,
-				active_deposit_ring,
-				deposit_items,
-				..
-			} = &mut ledger;
+			let StakingLedger { active, active_deposit_ring, deposit_items, .. } = &mut ledger;
 			let value = value.min(active.saturating_sub(*active_deposit_ring));
 
 			if value.is_zero() {
@@ -1223,11 +1204,7 @@ pub mod pallet {
 
 			T::KtonReward::on_unbalanced(kton_positive_imbalance);
 			*active_deposit_ring = active_deposit_ring.saturating_add(value);
-			deposit_items.push(TimeDepositItem {
-				value,
-				start_time,
-				expire_time,
-			});
+			deposit_items.push(TimeDepositItem { value, start_time, expire_time });
 
 			<Ledger<T>>::insert(&controller, ledger);
 			Self::deposit_event(Event::RingBonded(stash, value, start_time, expire_time));
@@ -1487,12 +1464,7 @@ pub mod pallet {
 			let mut claim_deposits_with_punish = (false, Zero::zero());
 
 			{
-				let StakingLedger {
-					stash,
-					active_deposit_ring,
-					deposit_items,
-					..
-				} = &mut ledger;
+				let StakingLedger { stash, active_deposit_ring, deposit_items, .. } = &mut ledger;
 
 				deposit_items.retain(|item| {
 					if item.expire_time != expire_time {
@@ -1562,10 +1534,7 @@ pub mod pallet {
 			let controller = ensure_signed(origin)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
 
-			ensure!(
-				ledger.active >= <MinValidatorBond<T>>::get(),
-				<Error<T>>::InsufficientBond
-			);
+			ensure!(ledger.active >= <MinValidatorBond<T>>::get(), <Error<T>>::InsufficientBond);
 
 			let stash = &ledger.stash;
 
@@ -1606,10 +1575,7 @@ pub mod pallet {
 			let controller = ensure_signed(origin)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
 
-			ensure!(
-				ledger.active >= <MinNominatorBond<T>>::get(),
-				<Error<T>>::InsufficientBond
-			);
+			ensure!(ledger.active >= <MinNominatorBond<T>>::get(), <Error<T>>::InsufficientBond);
 
 			let stash = &ledger.stash;
 
@@ -1627,10 +1593,7 @@ pub mod pallet {
 			}
 
 			ensure!(!targets.is_empty(), <Error<T>>::EmptyTargets);
-			ensure!(
-				targets.len() <= T::MAX_NOMINATIONS as usize,
-				<Error<T>>::TooManyTargets
-			);
+			ensure!(targets.len() <= T::MAX_NOMINATIONS as usize, <Error<T>>::TooManyTargets);
 
 			let old = <Nominators<T>>::get(stash).map_or_else(Vec::new, |x| x.targets);
 			let targets = targets
@@ -1735,10 +1698,7 @@ pub mod pallet {
 			let old_controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
 			let controller = T::Lookup::lookup(controller)?;
 
-			ensure!(
-				!<Ledger<T>>::contains_key(&controller),
-				<Error<T>>::AlreadyPaired
-			);
+			ensure!(!<Ledger<T>>::contains_key(&controller), <Error<T>>::AlreadyPaired);
 
 			if controller != old_controller {
 				<Bonded<T>>::insert(&stash, &controller);
@@ -1949,17 +1909,11 @@ pub mod pallet {
 			T::SlashCancelOrigin::ensure_origin(origin)?;
 
 			ensure!(!slash_indices.is_empty(), <Error<T>>::EmptyTargets);
-			ensure!(
-				is_sorted_and_unique(&slash_indices),
-				<Error<T>>::NotSortedAndUnique
-			);
+			ensure!(is_sorted_and_unique(&slash_indices), <Error<T>>::NotSortedAndUnique);
 
 			let mut unapplied = <Self as Store>::UnappliedSlashes::get(&era);
 			let last_item = slash_indices[slash_indices.len() - 1];
-			ensure!(
-				(last_item as usize) < unapplied.len(),
-				<Error<T>>::InvalidSlashIndex
-			);
+			ensure!((last_item as usize) < unapplied.len(), <Error<T>>::InvalidSlashIndex);
 
 			for (removed, index) in slash_indices.into_iter().enumerate() {
 				let index = (index as usize) - removed;
@@ -2295,10 +2249,7 @@ pub mod pallet {
 					Zero::zero()
 				};
 
-				ensure!(
-					ledger.active < min_active_bond,
-					<Error<T>>::CannotChillOther
-				);
+				ensure!(ledger.active < min_active_bond, <Error<T>>::CannotChillOther);
 			}
 
 			Self::chill_stash(&stash);

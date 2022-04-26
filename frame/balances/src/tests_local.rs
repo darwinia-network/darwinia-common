@@ -152,10 +152,7 @@ pub struct ExtBuilder {
 }
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		Self {
-			existential_deposit: 1,
-			monied: false,
-		}
+		Self { existential_deposit: 1, monied: false }
 	}
 }
 impl ExtBuilder {
@@ -175,9 +172,7 @@ impl ExtBuilder {
 	}
 	pub fn build(self) -> sp_io::TestExternalities {
 		self.set_associated_constants();
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.unwrap();
+		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 		darwinia_balances::GenesisConfig::<Test, RingInstance> {
 			balances: if self.monied {
 				vec![
@@ -204,96 +199,90 @@ decl_tests! { Test, ExtBuilder, EXISTENTIAL_DEPOSIT }
 
 #[test]
 fn emit_events_with_no_existential_deposit_suicide_with_dust() {
-	<ExtBuilder>::default()
-		.existential_deposit(2)
-		.build()
-		.execute_with(|| {
-			assert_ok!(Ring::set_balance(RawOrigin::Root.into(), 1, 100, 0));
+	<ExtBuilder>::default().existential_deposit(2).build().execute_with(|| {
+		assert_ok!(Ring::set_balance(RawOrigin::Root.into(), 1, 100, 0));
 
-			assert_eq!(
-				events(),
-				[
-					Event::System(frame_system::Event::NewAccount(1)),
-					Event::Ring(darwinia_balances::Event::Endowed(1, 100)),
-					Event::Ring(darwinia_balances::Event::BalanceSet(1, 100, 0)),
-				]
-			);
+		assert_eq!(
+			events(),
+			[
+				Event::System(frame_system::Event::NewAccount(1)),
+				Event::Ring(darwinia_balances::Event::Endowed(1, 100)),
+				Event::Ring(darwinia_balances::Event::BalanceSet(1, 100, 0)),
+			]
+		);
 
-			let res = Ring::slash(&1, 98);
-			assert_eq!(res, (NegativeImbalance::new(98), 0));
+		let res = Ring::slash(&1, 98);
+		assert_eq!(res, (NegativeImbalance::new(98), 0));
 
-			// no events
-			assert_eq!(events(), []);
+		// no events
+		assert_eq!(events(), []);
 
-			let res = Ring::slash(&1, 1);
-			assert_eq!(res, (NegativeImbalance::new(1), 0));
+		let res = Ring::slash(&1, 1);
+		assert_eq!(res, (NegativeImbalance::new(1), 0));
 
-			assert_eq!(
-				events(),
-				[
-					Event::System(frame_system::Event::KilledAccount(1)),
-					Event::Ring(darwinia_balances::Event::DustLost(1, 1))
-				]
-			);
-		});
+		assert_eq!(
+			events(),
+			[
+				Event::System(frame_system::Event::KilledAccount(1)),
+				Event::Ring(darwinia_balances::Event::DustLost(1, 1))
+			]
+		);
+	});
 }
 
 #[test]
 fn dust_collector_should_work() {
-	<ExtBuilder>::default()
-		.existential_deposit(100)
-		.build()
-		.execute_with(|| {
-			assert_ok!(Ring::set_balance(RawOrigin::Root.into(), 1, 100, 0));
+	<ExtBuilder>::default().existential_deposit(100).build().execute_with(|| {
+		assert_ok!(Ring::set_balance(RawOrigin::Root.into(), 1, 100, 0));
 
-			assert_eq!(
-				events(),
-				[
-					Event::System(frame_system::Event::NewAccount(1)),
-					Event::Ring(darwinia_balances::Event::Endowed(1, 100)),
-					Event::Ring(darwinia_balances::Event::BalanceSet(1, 100, 0)),
-				]
-			);
+		assert_eq!(
+			events(),
+			[
+				Event::System(frame_system::Event::NewAccount(1)),
+				Event::Ring(darwinia_balances::Event::Endowed(1, 100)),
+				Event::Ring(darwinia_balances::Event::BalanceSet(1, 100, 0)),
+			]
+		);
 
-			let _ = Ring::slash(&1, 1);
+		let _ = Ring::slash(&1, 1);
 
-			assert_eq!(
-				events(),
-				[
-					Event::System(frame_system::Event::KilledAccount(1)),
-					Event::Ring(darwinia_balances::Event::DustLost(1, 99))
-				]
-			);
+		assert_eq!(
+			events(),
+			[
+				Event::System(frame_system::Event::KilledAccount(1)),
+				Event::Ring(darwinia_balances::Event::DustLost(1, 99))
+			]
+		);
 
-			// ---
+		// ---
 
-			assert_ok!(Ring::set_balance(RawOrigin::Root.into(), 1, 100, 0));
-			assert_ok!(Kton::set_balance(RawOrigin::Root.into(), 1, 100, 0));
+		assert_ok!(Ring::set_balance(RawOrigin::Root.into(), 1, 100, 0));
+		assert_ok!(Kton::set_balance(RawOrigin::Root.into(), 1, 100, 0));
 
-			assert_eq!(
-				events(),
-				[
-					Event::System(frame_system::Event::NewAccount(1)),
-					Event::Ring(darwinia_balances::Event::Endowed(1, 100)),
-					Event::Ring(darwinia_balances::Event::BalanceSet(1, 100, 0)),
-					Event::Kton(darwinia_balances::Event::Endowed(1, 100)),
-					Event::Kton(darwinia_balances::Event::BalanceSet(1, 100, 0)),
-				]
-			);
+		assert_eq!(
+			events(),
+			[
+				Event::System(frame_system::Event::NewAccount(1)),
+				Event::Ring(darwinia_balances::Event::Endowed(1, 100)),
+				Event::Ring(darwinia_balances::Event::BalanceSet(1, 100, 0)),
+				Event::Kton(darwinia_balances::Event::Endowed(1, 100)),
+				Event::Kton(darwinia_balances::Event::BalanceSet(1, 100, 0)),
+			]
+		);
 
-			let _ = Ring::slash(&1, 1);
+		let _ = Ring::slash(&1, 1);
 
-			assert_eq!(events(), []);
+		assert_eq!(events(), []);
 
-			let _ = Kton::slash(&1, 1);
+		let _ = Kton::slash(&1, 1);
 
-			assert_eq!(
-				events(),
-				[
-					Event::System(frame_system::Event::KilledAccount(1)),
-					Event::Ring(darwinia_balances::Event::DustLost(1, 99)),
-					Event::Kton(darwinia_balances::Event::DustLost(1, 99)),
-				]
-			);
-		});
+		assert_eq!(
+			events(),
+			[
+				Event::System(frame_system::Event::KilledAccount(1)),
+				Event::Ring(darwinia_balances::Event::DustLost(1, 99)),
+				Event::Kton(darwinia_balances::Event::DustLost(1, 99)),
+			]
+		);
+	});
 }

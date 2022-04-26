@@ -58,31 +58,11 @@ impl EthereumBacking {
 		Event {
 			name: "NewTokenRegistered".into(),
 			inputs: vec![
-				EventParam {
-					name: "token".into(),
-					kind: ParamType::Address,
-					indexed: true,
-				},
-				EventParam {
-					name: "name".into(),
-					kind: ParamType::String,
-					indexed: false,
-				},
-				EventParam {
-					name: "symbol".into(),
-					kind: ParamType::String,
-					indexed: false,
-				},
-				EventParam {
-					name: "decimals".into(),
-					kind: ParamType::Uint(8),
-					indexed: false,
-				},
-				EventParam {
-					name: "fee".into(),
-					kind: ParamType::Uint(256),
-					indexed: false,
-				},
+				EventParam { name: "token".into(), kind: ParamType::Address, indexed: true },
+				EventParam { name: "name".into(), kind: ParamType::String, indexed: false },
+				EventParam { name: "symbol".into(), kind: ParamType::String, indexed: false },
+				EventParam { name: "decimals".into(), kind: ParamType::Uint(8), indexed: false },
+				EventParam { name: "fee".into(), kind: ParamType::Uint(256), indexed: false },
 			],
 			anonymous: false,
 		}
@@ -98,36 +78,12 @@ impl EthereumBacking {
 		Event {
 			name: "BackingLock".into(),
 			inputs: vec![
-				EventParam {
-					name: "sender".into(),
-					kind: ParamType::Address,
-					indexed: true,
-				},
-				EventParam {
-					name: "source".into(),
-					kind: ParamType::Address,
-					indexed: false,
-				},
-				EventParam {
-					name: "target".into(),
-					kind: ParamType::Address,
-					indexed: false,
-				},
-				EventParam {
-					name: "amount".into(),
-					kind: ParamType::Uint(256),
-					indexed: false,
-				},
-				EventParam {
-					name: "recipient".into(),
-					kind: ParamType::Address,
-					indexed: false,
-				},
-				EventParam {
-					name: "fee".into(),
-					kind: ParamType::Uint(256),
-					indexed: false,
-				},
+				EventParam { name: "sender".into(), kind: ParamType::Address, indexed: true },
+				EventParam { name: "source".into(), kind: ParamType::Address, indexed: false },
+				EventParam { name: "target".into(), kind: ParamType::Address, indexed: false },
+				EventParam { name: "amount".into(), kind: ParamType::Uint(256), indexed: false },
+				EventParam { name: "recipient".into(), kind: ParamType::Address, indexed: false },
+				EventParam { name: "fee".into(), kind: ParamType::Uint(256), indexed: false },
 			],
 			anonymous: false,
 		}
@@ -146,19 +102,12 @@ impl EthereumBacking {
 			.find(|x| &x.address == backing_address && x.topics[0] == log_event.signature())
 			.cloned()
 			.ok_or(Error::InvalidData)?;
-		let log = RawLog {
-			topics: log_entry.topics.into_iter().collect(),
-			data: log_entry.data,
-		};
+		let log = RawLog { topics: log_entry.topics.into_iter().collect(), data: log_entry.data };
 		log_event.parse_log(log)
 	}
 
 	fn log_params2address(log: &Log, idx: usize) -> AbiResult<EthereumAddress> {
-		log.params[idx]
-			.value
-			.clone()
-			.into_address()
-			.ok_or(Error::InvalidData)
+		log.params[idx].value.clone().into_address().ok_or(Error::InvalidData)
 	}
 
 	fn log_params2string(log: &Log, idx: usize) -> AbiResult<Vec<u8>> {
@@ -172,11 +121,7 @@ impl EthereumBacking {
 	}
 
 	fn log_params2uint(log: &Log, idx: usize) -> AbiResult<U256> {
-		log.params[idx]
-			.value
-			.clone()
-			.into_uint()
-			.ok_or(Error::InvalidData)
+		log.params[idx].value.clone().into_uint().ok_or(Error::InvalidData)
 	}
 
 	pub fn parse_register_event(

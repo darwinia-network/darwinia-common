@@ -169,9 +169,7 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self {
-				accounts: Default::default(),
-			}
+			Self { accounts: Default::default() }
 		}
 	}
 	#[pallet::genesis_build]
@@ -275,17 +273,11 @@ pub mod pallet {
 			)?;
 			match info {
 				CreateInfo {
-					exit_reason: ExitReason::Succeed(_),
-					value: create_address,
-					..
+					exit_reason: ExitReason::Succeed(_), value: create_address, ..
 				} => {
 					Pallet::<T>::deposit_event(Event::<T>::Created(create_address));
 				}
-				CreateInfo {
-					exit_reason: _,
-					value: create_address,
-					..
-				} => {
+				CreateInfo { exit_reason: _, value: create_address, .. } => {
 					Pallet::<T>::deposit_event(Event::<T>::CreatedFailed(create_address));
 				}
 			}
@@ -328,17 +320,11 @@ pub mod pallet {
 			)?;
 			match info {
 				CreateInfo {
-					exit_reason: ExitReason::Succeed(_),
-					value: create_address,
-					..
+					exit_reason: ExitReason::Succeed(_), value: create_address, ..
 				} => {
 					Pallet::<T>::deposit_event(Event::<T>::Created(create_address));
 				}
-				CreateInfo {
-					exit_reason: _,
-					value: create_address,
-					..
-				} => {
+				CreateInfo { exit_reason: _, value: create_address, .. } => {
 					Pallet::<T>::deposit_event(Event::<T>::CreatedFailed(create_address));
 				}
 			}

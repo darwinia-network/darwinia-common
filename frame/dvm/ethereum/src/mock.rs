@@ -168,10 +168,7 @@ where
 		Self(Default::default())
 	}
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4]
-			.into_iter()
-			.map(|x| H160::from_low_u64_be(x))
-			.collect()
+		sp_std::vec![1, 2, 3, 4].into_iter().map(|x| H160::from_low_u64_be(x)).collect()
 	}
 }
 
@@ -323,9 +320,9 @@ fn validate_self_contained_inner(
 		let extra_validation =
 			SignedExtra::validate_unsigned(call, &call.get_dispatch_info(), input_len)?;
 		// Then, do the controls defined by the ethereum pallet.
-		let self_contained_validation = eth_call.validate_self_contained(signed_info).ok_or(
-			TransactionValidityError::Invalid(InvalidTransaction::BadProof),
-		)??;
+		let self_contained_validation = eth_call
+			.validate_self_contained(signed_info)
+			.ok_or(TransactionValidityError::Invalid(InvalidTransaction::BadProof))??;
 
 		Ok(extra_validation.combine_with(self_contained_validation))
 	} else {
@@ -376,10 +373,7 @@ impl LegacyUnsignedTransaction {
 	pub fn sign_with_chain_id(&self, key: &H256, chain_id: u64) -> Transaction {
 		let hash = self.signing_hash();
 		let msg = libsecp256k1::Message::parse(hash.as_fixed_bytes());
-		let s = libsecp256k1::sign(
-			&msg,
-			&libsecp256k1::SecretKey::parse_slice(&key[..]).unwrap(),
-		);
+		let s = libsecp256k1::sign(&msg, &libsecp256k1::SecretKey::parse_slice(&key[..]).unwrap());
 		let sig = s.0.serialize();
 
 		let sig = TransactionSignature::new(
@@ -528,17 +522,12 @@ fn address_build(seed: u8) -> AccountInfo {
 // our desired mockup.
 pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExternalities) {
 	// sc_cli::init_logger("");
-	let mut t = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap();
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-	let pairs = (0..accounts_len)
-		.map(|i| address_build(i as u8))
-		.collect::<Vec<_>>();
+	let pairs = (0..accounts_len).map(|i| address_build(i as u8)).collect::<Vec<_>>();
 
-	let balances: Vec<_> = (0..accounts_len)
-		.map(|i| (pairs[i].account_id.clone(), 100_000_000_000))
-		.collect();
+	let balances: Vec<_> =
+		(0..accounts_len).map(|i| (pairs[i].account_id.clone(), 100_000_000_000)).collect();
 
 	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
 		.assimilate_storage(&mut t)
@@ -558,7 +547,5 @@ pub fn contract_address(sender: H160, nonce: u64) -> H160 {
 }
 
 pub fn storage_address(sender: H160, slot: H256) -> H256 {
-	H256::from_slice(&Keccak256::digest(
-		[&H256::from(sender)[..], &slot[..]].concat().as_slice(),
-	))
+	H256::from_slice(&Keccak256::digest([&H256::from(sender)[..], &slot[..]].concat().as_slice()))
 }

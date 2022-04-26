@@ -26,10 +26,7 @@ where
 		Self(Default::default())
 	}
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 5, 1024, 1025]
-			.into_iter()
-			.map(|x| addr(x))
-			.collect()
+		sp_std::vec![1, 2, 3, 4, 5, 1024, 1025].into_iter().map(|x| addr(x)).collect()
 	}
 }
 impl<R> PrecompileSet for FrontierPrecompiles<R>
@@ -55,9 +52,9 @@ where
 			a if a == addr(1024) => {
 				Some(Sha3FIPS256::execute(input, target_gas, context, is_static))
 			}
-			a if a == addr(1025) => Some(ECRecoverPublicKey::execute(
-				input, target_gas, context, is_static,
-			)),
+			a if a == addr(1025) => {
+				Some(ECRecoverPublicKey::execute(input, target_gas, context, is_static))
+			}
 			_ => None,
 		}
 	}

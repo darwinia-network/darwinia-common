@@ -661,23 +661,11 @@ fn lock_should_work() {
 			lock_balance,
 			e_account
 		));
-		assert_eq!(
-			Ring::free_balance(&account),
-			init_balance - lock_balance - advanced_fee
-		);
+		assert_eq!(Ring::free_balance(&account), init_balance - lock_balance - advanced_fee);
 		assert_eq!(Kton::free_balance(&account), init_balance - lock_balance);
-		assert_eq!(
-			Ring::free_balance(&fee_account_id),
-			fee_account_balance + advanced_fee
-		);
-		assert_eq!(
-			Ring::free_balance(&module_account_id),
-			module_account_ring + lock_balance
-		);
-		assert_eq!(
-			Kton::free_balance(&module_account_id),
-			module_account_kton + lock_balance
-		);
+		assert_eq!(Ring::free_balance(&fee_account_id), fee_account_balance + advanced_fee);
+		assert_eq!(Ring::free_balance(&module_account_id), module_account_ring + lock_balance);
+		assert_eq!(Kton::free_balance(&module_account_id), module_account_kton + lock_balance);
 	});
 }
 
@@ -699,12 +687,7 @@ fn lock_failed_rollback_transaction_should_work() {
 		let _advanced_fee = <Test as Config>::AdvancedFee::get();
 
 		assert_noop!(
-			EthereumBacking::lock(
-				Origin::signed(account.clone()),
-				lock_ring,
-				lock_kton,
-				e_account
-			),
+			EthereumBacking::lock(Origin::signed(account.clone()), lock_ring, lock_kton, e_account),
 			<Error<Test>>::KtonLockLim
 		);
 		assert_eq!(Ring::free_balance(&account), init_balance);

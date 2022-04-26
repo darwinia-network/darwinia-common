@@ -159,12 +159,7 @@ impl Size for TestPayload {
 }
 /// Constructs message payload using given arguments and zero unspent weight.
 pub const fn message_payload(id: u64, declared_weight: Weight) -> TestPayload {
-	TestPayload {
-		id,
-		declared_weight,
-		dispatch_result: dispatch_result(0),
-		extra: Vec::new(),
-	}
+	TestPayload { id, declared_weight, dispatch_result: dispatch_result(0), extra: Vec::new() }
 }
 
 /// Test messages proof.
@@ -306,12 +301,8 @@ impl MessageDeliveryAndDispatchPayment<AccountId, TestMessageFee>
 			received_range,
 			relayer_fund_account,
 		);
-		let confimation_key = (
-			b":relayer-reward:",
-			confirmation_relayer,
-			confirmation_relayer_rewards,
-		)
-			.encode();
+		let confimation_key =
+			(b":relayer-reward:", confirmation_relayer, confirmation_relayer_rewards).encode();
 		frame_support::storage::unhashed::put(&confimation_key, &true);
 
 		for (relayer, reward) in &messages_relayers_rewards {
@@ -325,12 +316,8 @@ impl MessageDeliveryAndDispatchPayment<AccountId, TestMessageFee>
 		}
 
 		let treasury_account: AccountId = <Test as Config>::TreasuryPalletId::get().into_account();
-		let treasury_key = (
-			b":relayer-reward:",
-			&treasury_account,
-			treasury_total_rewards,
-		)
-			.encode();
+		let treasury_key =
+			(b":relayer-reward:", &treasury_account, treasury_total_rewards).encode();
 		frame_support::storage::unhashed::put(&treasury_key, &true);
 	}
 }
@@ -346,10 +333,7 @@ impl SourceHeaderChain<TestMessageFee> for TestSourceHeaderChain {
 		proof: Self::MessagesProof,
 		_messages_count: u32,
 	) -> Result<ProvedMessages<Message<TestMessageFee>>, Self::Error> {
-		proof
-			.result
-			.map(|proof| proof.into_iter().collect())
-			.map_err(|_| TEST_ERROR)
+		proof.result.map(|proof| proof.into_iter().collect()).map_err(|_| TEST_ERROR)
 	}
 }
 
@@ -441,9 +425,7 @@ impl<T: Config<I>, I: 'static> Slasher<T, I> for TestSlasher {
 	fn slash(locked_collateral: RingBalance<T, I>, timeout: T::BlockNumber) -> RingBalance<T, I> {
 		let slash_each_block = 2;
 		let slash_value = UniqueSaturatedInto::<u128>::unique_saturated_into(timeout)
-			.saturating_mul(UniqueSaturatedInto::<u128>::unique_saturated_into(
-				slash_each_block,
-			))
+			.saturating_mul(UniqueSaturatedInto::<u128>::unique_saturated_into(slash_each_block))
 			.unique_saturated_into();
 		sp_std::cmp::min(locked_collateral, slash_value)
 	}
@@ -481,9 +463,7 @@ frame_support::construct_runtime! {
 	}
 }
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap();
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	darwinia_balances::GenesisConfig::<Test, RingInstance> {
 		balances: vec![
 			(1, 150),
@@ -545,11 +525,7 @@ fn test_call_relayer_enroll_works() {
 			<Error<Test>>::InsufficientBalance
 		);
 
-		assert_ok!(FeeMarket::enroll_and_lock_collateral(
-			Origin::signed(1),
-			100,
-			None
-		));
+		assert_ok!(FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, None));
 		assert!(FeeMarket::is_enrolled(&1));
 		assert_eq!(FeeMarket::relayers().len(), 1);
 		assert_eq!(Ring::free_balance(1), 150);
@@ -561,17 +537,9 @@ fn test_call_relayer_enroll_works() {
 			<Error<Test>>::AlreadyEnrolled
 		);
 
-		assert_ok!(FeeMarket::enroll_and_lock_collateral(
-			Origin::signed(3),
-			250,
-			None
-		));
+		assert_ok!(FeeMarket::enroll_and_lock_collateral(Origin::signed(3), 250, None));
 
-		assert_ok!(FeeMarket::enroll_and_lock_collateral(
-			Origin::signed(4),
-			0,
-			None
-		),);
+		assert_ok!(FeeMarket::enroll_and_lock_collateral(Origin::signed(4), 0, None),);
 	});
 }
 
@@ -635,16 +603,9 @@ fn test_call_relayer_decrease_lock_collateral_works() {
 #[test]
 fn test_call_relayer_cancel_registration_works() {
 	new_test_ext().execute_with(|| {
-		assert_err!(
-			FeeMarket::cancel_enrollment(Origin::signed(1)),
-			<Error<Test>>::NotEnrolled
-		);
+		assert_err!(FeeMarket::cancel_enrollment(Origin::signed(1)), <Error<Test>>::NotEnrolled);
 
-		assert_ok!(FeeMarket::enroll_and_lock_collateral(
-			Origin::signed(1),
-			100,
-			None
-		));
+		assert_ok!(FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, None));
 		assert!(FeeMarket::is_enrolled(&1));
 		assert_ok!(FeeMarket::cancel_enrollment(Origin::signed(1)));
 		assert!(!FeeMarket::is_enrolled(&1));
@@ -683,9 +644,7 @@ fn test_call_relayer_cancel_registration_works() {
 			TestMessagesDeliveryProof(Ok((
 				TEST_LANE_ID,
 				InboundLaneData {
-					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
-						.into_iter()
-						.collect(),
+					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)].into_iter().collect(),
 					..Default::default()
 				}
 			))),
@@ -705,10 +664,7 @@ fn test_call_relayer_cancel_registration_works() {
 #[test]
 fn test_call_relayer_update_fee_works() {
 	new_test_ext().execute_with(|| {
-		assert_err!(
-			FeeMarket::update_relay_fee(Origin::signed(1), 1),
-			<Error<Test>>::NotEnrolled
-		);
+		assert_err!(FeeMarket::update_relay_fee(Origin::signed(1), 1), <Error<Test>>::NotEnrolled);
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(1), 100, None);
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(2), 110, Some(50));
 		let _ = FeeMarket::enroll_and_lock_collateral(Origin::signed(3), 120, Some(100));
@@ -752,12 +708,7 @@ fn test_rpc_market_fee_works() {
 
 fn send_regular_message(fee: Balance) -> (LaneId, u64) {
 	let message_nonce = Messages::outbound_latest_generated_nonce(TEST_LANE_ID) + 1;
-	assert_ok!(Messages::send_message(
-		Origin::signed(1),
-		TEST_LANE_ID,
-		REGULAR_PAYLOAD,
-		fee
-	));
+	assert_ok!(Messages::send_message(Origin::signed(1), TEST_LANE_ID, REGULAR_PAYLOAD, fee));
 
 	(TEST_LANE_ID, message_nonce)
 }
@@ -866,9 +817,7 @@ fn test_payment_cal_reward_normally_single_message() {
 			TestMessagesDeliveryProof(Ok((
 				TEST_LANE_ID,
 				InboundLaneData {
-					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
-						.into_iter()
-						.collect(),
+					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)].into_iter().collect(),
 					..Default::default()
 				}
 			))),
@@ -888,10 +837,7 @@ fn test_payment_cal_reward_normally_single_message() {
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(t, 70));
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(1, 18));
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 2));
-		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
-			TEST_RELAYER_A,
-			10
-		));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(TEST_RELAYER_A, 10));
 	});
 }
 
@@ -933,19 +879,11 @@ fn test_payment_cal_reward_normally_multi_message() {
 		));
 
 		let t: AccountId = <Test as Config>::TreasuryPalletId::get().into_account();
-		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
-			t, 140
-		));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(t, 140));
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(1, 4));
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 36));
-		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
-			TEST_RELAYER_A,
-			10
-		));
-		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
-			TEST_RELAYER_B,
-			10
-		));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(TEST_RELAYER_A, 10));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(TEST_RELAYER_B, 10));
 	});
 }
 
@@ -968,9 +906,7 @@ fn test_payment_cal_reward_with_duplicated_delivery_proof() {
 			TestMessagesDeliveryProof(Ok((
 				TEST_LANE_ID,
 				InboundLaneData {
-					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
-						.into_iter()
-						.collect(),
+					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)].into_iter().collect(),
 					..Default::default()
 				}
 			))),
@@ -986,9 +922,7 @@ fn test_payment_cal_reward_with_duplicated_delivery_proof() {
 			TestMessagesDeliveryProof(Ok((
 				TEST_LANE_ID,
 				InboundLaneData {
-					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
-						.into_iter()
-						.collect(),
+					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)].into_iter().collect(),
 					..Default::default()
 				}
 			))),
@@ -1003,10 +937,7 @@ fn test_payment_cal_reward_with_duplicated_delivery_proof() {
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(t, 70));
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(1, 18));
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 2));
-		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
-			TEST_RELAYER_A,
-			10
-		));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(TEST_RELAYER_A, 10));
 	});
 }
 
@@ -1029,9 +960,7 @@ fn test_payment_with_slash_and_reduce_order_capacity() {
 			TestMessagesDeliveryProof(Ok((
 				TEST_LANE_ID,
 				InboundLaneData {
-					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
-						.into_iter()
-						.collect(),
+					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)].into_iter().collect(),
 					..Default::default()
 				}
 			))),
@@ -1048,10 +977,7 @@ fn test_payment_with_slash_and_reduce_order_capacity() {
 		assert_eq!(FeeMarket::relayer(&7).collateral, 300);
 		assert_eq!(FeeMarket::relayer(&8).collateral, 300);
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 80));
-		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
-			TEST_RELAYER_A,
-			320
-		));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(TEST_RELAYER_A, 320));
 	});
 }
 
@@ -1075,9 +1001,7 @@ fn test_payment_slash_with_protect() {
 			TestMessagesDeliveryProof(Ok((
 				TEST_LANE_ID,
 				InboundLaneData {
-					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
-						.into_iter()
-						.collect(),
+					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)].into_iter().collect(),
 					..Default::default()
 				}
 			))),
@@ -1094,10 +1018,7 @@ fn test_payment_slash_with_protect() {
 		assert_eq!(FeeMarket::relayer(&7).collateral, 350);
 		assert_eq!(FeeMarket::relayer(&8).collateral, 350);
 		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 50));
-		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
-			TEST_RELAYER_A,
-			200
-		));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(TEST_RELAYER_A, 200));
 	});
 }
 
@@ -1121,9 +1042,7 @@ fn test_payment_slash_event() {
 			TestMessagesDeliveryProof(Ok((
 				TEST_LANE_ID,
 				InboundLaneData {
-					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)]
-						.into_iter()
-						.collect(),
+					relayers: vec![unrewarded_relayer(1, 1, TEST_RELAYER_A)].into_iter().collect(),
 					..Default::default()
 				}
 			))),
@@ -1134,39 +1053,33 @@ fn test_payment_slash_event() {
 			},
 		));
 
-		System::assert_has_event(Event::FeeMarket(crate::Event::FeeMarketSlash(
-			SlashReport {
-				lane: TEST_LANE_ID,
-				message: 1,
-				sent_time: 2,
-				confirm_time: Some(2000),
-				delay_time: Some(1848),
-				account_id: 6,
-				amount: 50,
-			},
-		)));
-		System::assert_has_event(Event::FeeMarket(crate::Event::FeeMarketSlash(
-			SlashReport {
-				lane: TEST_LANE_ID,
-				message: 1,
-				sent_time: 2,
-				confirm_time: Some(2000),
-				delay_time: Some(1848),
-				account_id: 7,
-				amount: 50,
-			},
-		)));
-		System::assert_has_event(Event::FeeMarket(crate::Event::FeeMarketSlash(
-			SlashReport {
-				lane: TEST_LANE_ID,
-				message: 1,
-				sent_time: 2,
-				confirm_time: Some(2000),
-				delay_time: Some(1848),
-				account_id: 8,
-				amount: 50,
-			},
-		)));
+		System::assert_has_event(Event::FeeMarket(crate::Event::FeeMarketSlash(SlashReport {
+			lane: TEST_LANE_ID,
+			message: 1,
+			sent_time: 2,
+			confirm_time: Some(2000),
+			delay_time: Some(1848),
+			account_id: 6,
+			amount: 50,
+		})));
+		System::assert_has_event(Event::FeeMarket(crate::Event::FeeMarketSlash(SlashReport {
+			lane: TEST_LANE_ID,
+			message: 1,
+			sent_time: 2,
+			confirm_time: Some(2000),
+			delay_time: Some(1848),
+			account_id: 7,
+			amount: 50,
+		})));
+		System::assert_has_event(Event::FeeMarket(crate::Event::FeeMarketSlash(SlashReport {
+			lane: TEST_LANE_ID,
+			message: 1,
+			sent_time: 2,
+			confirm_time: Some(2000),
+			delay_time: Some(1848),
+			account_id: 8,
+			amount: 50,
+		})));
 	});
 }
 
@@ -1206,17 +1119,9 @@ fn test_payment_cal_slash_with_multiple_message() {
 				..Default::default()
 			},
 		));
-		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
-			5, 520
-		));
-		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
-			TEST_RELAYER_A,
-			1040
-		));
-		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(
-			TEST_RELAYER_B,
-			1040
-		));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(5, 520));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(TEST_RELAYER_A, 1040));
+		assert!(TestMessageDeliveryAndDispatchPayment::is_reward_paid(TEST_RELAYER_B, 1040));
 	});
 }
 
@@ -1299,12 +1204,7 @@ fn test_fee_verification_when_send_message() {
 		);
 
 		// Case 3: Normal workflow
-		assert_ok!(Messages::send_message(
-			Origin::signed(1),
-			TEST_LANE_ID,
-			REGULAR_PAYLOAD,
-			50
-		),);
+		assert_ok!(Messages::send_message(Origin::signed(1), TEST_LANE_ID, REGULAR_PAYLOAD, 50),);
 	});
 }
 

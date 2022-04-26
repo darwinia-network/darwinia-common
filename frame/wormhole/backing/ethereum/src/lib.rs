@@ -129,26 +129,11 @@ pub mod pallet {
 		/// Someone redeem some *KTON*. \[account, amount, transaction index\]
 		RedeemKton(AccountId<T>, Balance, EthereumTransactionIndex),
 		/// Someone redeem a deposit. \[account, deposit id, amount, transaction index\]
-		RedeemDeposit(
-			AccountId<T>,
-			DepositId,
-			RingBalance<T>,
-			EthereumTransactionIndex,
-		),
+		RedeemDeposit(AccountId<T>, DepositId, RingBalance<T>, EthereumTransactionIndex),
 		/// Someone lock some *RING*. \[account, ethereum account, asset address, amount\]
-		LockRing(
-			AccountId<T>,
-			EthereumAddress,
-			EthereumAddress,
-			RingBalance<T>,
-		),
+		LockRing(AccountId<T>, EthereumAddress, EthereumAddress, RingBalance<T>),
 		/// Someone lock some *KTON*. \[account, ethereum account, asset address, amount\]
-		LockKton(
-			AccountId<T>,
-			EthereumAddress,
-			EthereumAddress,
-			KtonBalance<T>,
-		),
+		LockKton(AccountId<T>, EthereumAddress, EthereumAddress, KtonBalance<T>),
 	}
 
 	#[pallet::error]
@@ -342,10 +327,7 @@ pub mod pallet {
 			let mut locked = false;
 
 			if !ring_to_lock.is_zero() {
-				ensure!(
-					ring_to_lock < T::RingLockLimit::get(),
-					<Error<T>>::RingLockLim
-				);
+				ensure!(ring_to_lock < T::RingLockLimit::get(), <Error<T>>::RingLockLim);
 
 				T::RingCurrency::transfer(
 					&user,
@@ -369,10 +351,7 @@ pub mod pallet {
 				Self::deposit_event(event);
 			}
 			if !kton_to_lock.is_zero() {
-				ensure!(
-					kton_to_lock < T::KtonLockLimit::get(),
-					<Error<T>>::KtonLockLim
-				);
+				ensure!(kton_to_lock < T::KtonLockLimit::get(), <Error<T>>::KtonLockLim);
 
 				T::KtonCurrency::transfer(
 					&user,
@@ -419,10 +398,7 @@ pub mod pallet {
 			let _bridger = ensure_signed(origin)?;
 			let tx_index = T::EthereumRelay::gen_receipt_index(&proof);
 
-			ensure!(
-				!<VerifiedProof<T>>::contains_key(tx_index),
-				<Error<T>>::AuthoritiesChangeAR
-			);
+			ensure!(!<VerifiedProof<T>>::contains_key(tx_index), <Error<T>>::AuthoritiesChangeAR);
 
 			let (term, authorities, beneficiary) = Self::parse_authorities_set_proof(&proof)?;
 
@@ -566,10 +542,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let tx_index = T::EthereumRelay::gen_receipt_index(proof);
 
-			ensure!(
-				!<VerifiedProof<T>>::contains_key(tx_index),
-				<Error<T>>::AssetAR
-			);
+			ensure!(!<VerifiedProof<T>>::contains_key(tx_index), <Error<T>>::AssetAR);
 
 			// TODO: remove fee?
 			let (darwinia_account, (is_ring, redeem_amount), fee) =
@@ -610,11 +583,7 @@ pub mod pallet {
 
 			ensure!(
 				Self::pot::<C>() >= redeem_amount,
-				if is_ring {
-					<Error<T>>::RingLockedNSBA
-				} else {
-					<Error<T>>::KtonLockedNSBA
-				}
+				if is_ring { <Error<T>>::RingLockedNSBA } else { <Error<T>>::KtonLockedNSBA }
 			);
 			// // Checking redeemer have enough of balance to pay fee, make sure follow up transfer
 			// will success. ensure!(
@@ -687,22 +656,15 @@ pub mod pallet {
 					})
 					.ok_or(<Error<T>>::LogEntryNE)?;
 				let log = RawLog {
-					topics: vec![
-						log_entry.topics[0],
-						log_entry.topics[1],
-						log_entry.topics[2],
-					],
+					topics: vec![log_entry.topics[0], log_entry.topics[1], log_entry.topics[2]],
 					data: log_entry.data.clone(),
 				};
 
 				eth_event.parse_log(log).map_err(|_| <Error<T>>::EthLogPF)?
 			};
 			let is_ring = {
-				let token_address = result.params[0]
-					.value
-					.clone()
-					.into_address()
-					.ok_or(<Error<T>>::AddressCF)?;
+				let token_address =
+					result.params[0].value.clone().into_address().ok_or(<Error<T>>::AddressCF)?;
 
 				ensure!(
 					token_address == <RingTokenAddress<T>>::get()
@@ -725,19 +687,13 @@ pub mod pallet {
 				Balance::try_from(amount)?
 			};
 			let darwinia_account = {
-				let raw_account_id = result.params[3]
-					.value
-					.clone()
-					.into_bytes()
-					.ok_or(<Error<T>>::BytesCF)?;
+				let raw_account_id =
+					result.params[3].value.clone().into_bytes().ok_or(<Error<T>>::BytesCF)?;
 				log::trace!("[ethereum-backing] Raw Account: {:?}", raw_account_id);
 
 				Self::account_id_try_from_bytes(&raw_account_id)?
 			};
-			log::trace!(
-				"[ethereum-backing] Darwinia Account: {:?}",
-				darwinia_account
-			);
+			log::trace!("[ethereum-backing] Darwinia Account: {:?}", darwinia_account);
 
 			Ok((darwinia_account, (is_ring, redeemed_amount), fee))
 		}
@@ -748,19 +704,13 @@ pub mod pallet {
 		) -> DispatchResult {
 			let tx_index = T::EthereumRelay::gen_receipt_index(proof);
 
-			ensure!(
-				!<VerifiedProof<T>>::contains_key(tx_index),
-				<Error<T>>::AssetAR
-			);
+			ensure!(!<VerifiedProof<T>>::contains_key(tx_index), <Error<T>>::AssetAR);
 
 			// TODO: remove fee?
 			let (deposit_id, darwinia_account, redeemed_ring, start_at, months, _fee) =
 				Self::parse_deposit_redeem_proof(&proof)?;
 
-			ensure!(
-				Self::pot::<T::RingCurrency>() >= redeemed_ring,
-				<Error<T>>::RingLockedNSBA
-			);
+			ensure!(Self::pot::<T::RingCurrency>() >= redeemed_ring, <Error<T>>::RingLockedNSBA);
 			// // Checking redeemer have enough of balance to pay fee, make sure follow up fee
 			// transfer will success. ensure!(
 			// 	T::RingCurrency::usable_balance(redeemer) >= fee,
@@ -795,17 +745,8 @@ pub mod pallet {
 		// uint48 _startAt, uint64 _unitInterest, uint128 _value, bytes _data); Redeem Deposit https://ropsten.etherscan.io/tx/0x5a7004126466ce763501c89bcbb98d14f3c328c4b310b1976a38be1183d91919
 		pub(super) fn parse_deposit_redeem_proof(
 			proof_record: &EthereumReceiptProofThing<T>,
-		) -> Result<
-			(
-				DepositId,
-				T::AccountId,
-				RingBalance<T>,
-				u64,
-				u8,
-				RingBalance<T>,
-			),
-			DispatchError,
-		> {
+		) -> Result<(DepositId, T::AccountId, RingBalance<T>, u64, u8, RingBalance<T>), DispatchError>
+		{
 			let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)?;
 			let fee = T::EthereumRelay::receipt_verify_fee();
 			let result = {
@@ -866,28 +807,17 @@ pub mod pallet {
 
 				eth_event.parse_log(log).map_err(|_| <Error<T>>::EthLogPF)?
 			};
-			let deposit_id = result.params[0]
-				.value
-				.clone()
-				.into_uint()
-				.ok_or(<Error<T>>::IntCF)?;
+			let deposit_id = result.params[0].value.clone().into_uint().ok_or(<Error<T>>::IntCF)?;
 			let months = {
-				let months = result.params[2]
-					.value
-					.clone()
-					.into_uint()
-					.ok_or(<Error<T>>::IntCF)?;
+				let months = result.params[2].value.clone().into_uint().ok_or(<Error<T>>::IntCF)?;
 
 				months.saturated_into()
 			};
 			// The start_at here is in seconds, will be converted to milliseconds later in
 			// on_deposit_redeem
 			let start_at = {
-				let start_at = result.params[3]
-					.value
-					.clone()
-					.into_uint()
-					.ok_or(<Error<T>>::IntCF)?;
+				let start_at =
+					result.params[3].value.clone().into_uint().ok_or(<Error<T>>::IntCF)?;
 
 				start_at.saturated_into()
 			};
@@ -904,28 +834,15 @@ pub mod pallet {
 				<RingBalance<T>>::saturated_from(redeemed_ring.saturated_into::<u128>())
 			};
 			let darwinia_account = {
-				let raw_account_id = result.params[6]
-					.value
-					.clone()
-					.into_bytes()
-					.ok_or(<Error<T>>::BytesCF)?;
+				let raw_account_id =
+					result.params[6].value.clone().into_bytes().ok_or(<Error<T>>::BytesCF)?;
 				log::trace!("[ethereum-backing] Raw Account: {:?}", raw_account_id);
 
 				Self::account_id_try_from_bytes(&raw_account_id)?
 			};
-			log::trace!(
-				"[ethereum-backing] Darwinia Account: {:?}",
-				darwinia_account
-			);
+			log::trace!("[ethereum-backing] Darwinia Account: {:?}", darwinia_account);
 
-			Ok((
-				deposit_id,
-				darwinia_account,
-				redeemed_ring,
-				start_at,
-				months,
-				fee,
-			))
+			Ok((deposit_id, darwinia_account, redeemed_ring, start_at, months, fee))
 		}
 
 		// event SetAuthoritiesEvent(uint32 nonce, address[] authorities, bytes32 benefit);
@@ -968,10 +885,7 @@ pub mod pallet {
 					.ok_or(<Error<T>>::LogEntryNE)?;
 
 				eth_event
-					.parse_log(RawLog {
-						topics: vec![topics[0]],
-						data,
-					})
+					.parse_log(RawLog { topics: vec![topics[0]], data })
 					.map_err(|_| <Error<T>>::EthLogPF)?
 			};
 			let term = log.params[0]
@@ -983,23 +897,15 @@ pub mod pallet {
 			let authorities = {
 				let mut authorities = vec![];
 
-				for token in log.params[1]
-					.value
-					.clone()
-					.into_array()
-					.ok_or(<Error<T>>::ArrayCF)?
-				{
+				for token in log.params[1].value.clone().into_array().ok_or(<Error<T>>::ArrayCF)? {
 					authorities.push(token.into_address().ok_or(<Error<T>>::AddressCF)?);
 				}
 
 				authorities
 			};
 			let beneficiary = {
-				let raw_account_id = log.params[2]
-					.value
-					.clone()
-					.into_fixed_bytes()
-					.ok_or(<Error<T>>::BytesCF)?;
+				let raw_account_id =
+					log.params[2].value.clone().into_fixed_bytes().ok_or(<Error<T>>::BytesCF)?;
 
 				log::trace!("[ethereum-backing] Raw Account: {:?}", raw_account_id);
 

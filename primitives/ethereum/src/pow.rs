@@ -295,11 +295,8 @@ impl EthashPartial {
 		};
 
 		let expip2_hardfork = header.number() >= self.expip2_transition;
-		let duration_limit = if expip2_hardfork {
-			self.expip2_duration_limit
-		} else {
-			self.duration_limit
-		};
+		let duration_limit =
+			if expip2_hardfork { self.expip2_duration_limit } else { self.duration_limit };
 
 		let frontier_limit = self.homestead_transition;
 
@@ -356,10 +353,7 @@ impl EthashPartial {
 				let period = ((parent.number() + 1) / EXP_DIFF_PERIOD) as usize;
 				let delay = ((self.ecip1010_continue_transition - self.ecip1010_pause_transition)
 					/ EXP_DIFF_PERIOD) as usize;
-				target = cmp::max(
-					min_difficulty,
-					target + (U256::from(1) << (period - delay - 2)),
-				);
+				target = cmp::max(min_difficulty, target + (U256::from(1) << (period - delay - 2)));
 			}
 		}
 		target
@@ -379,18 +373,11 @@ impl Seal {
 	#[cfg(any(feature = "full-rlp", test))]
 	pub fn parse_seal<T: AsRef<[u8]>>(seal: &[T]) -> Result<Self, Error> {
 		if seal.len() != 2 {
-			Err(BlockError::InvalidSealArity(Mismatch {
-				expected: 2,
-				found: seal.len(),
-			}))?;
+			Err(BlockError::InvalidSealArity(Mismatch { expected: 2, found: seal.len() }))?;
 		}
 
-		let mix_hash = Rlp::new(seal[0].as_ref())
-			.as_val::<H256>()
-			.map_err(RlpError::from)?;
-		let nonce = Rlp::new(seal[1].as_ref())
-			.as_val::<H64>()
-			.map_err(RlpError::from)?;
+		let mix_hash = Rlp::new(seal[0].as_ref()).as_val::<H256>().map_err(RlpError::from)?;
+		let nonce = Rlp::new(seal[1].as_ref()).as_val::<H64>().map_err(RlpError::from)?;
 		let seal = Seal { mix_hash, nonce };
 
 		Ok(seal)

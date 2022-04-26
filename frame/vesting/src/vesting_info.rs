@@ -41,11 +41,7 @@ where
 		per_block: Balance,
 		starting_block: BlockNumber,
 	) -> VestingInfo<Balance, BlockNumber> {
-		VestingInfo {
-			locked,
-			per_block,
-			starting_block,
-		}
+		VestingInfo { locked, per_block, starting_block }
 	}
 
 	/// Validate parameters for `VestingInfo`. Note that this does not check

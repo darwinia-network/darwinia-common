@@ -42,12 +42,7 @@ pub struct PrecompileHelper<'a, T> {
 
 impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 	pub fn new(input: &'a [u8], target_gas: Option<u64>) -> Self {
-		Self {
-			input,
-			target_gas,
-			used_gas: 0,
-			_marker: PhantomData,
-		}
+		Self { input, target_gas, used_gas: 0, _marker: PhantomData }
 	}
 
 	pub fn split_input(&self) -> Result<(u32, &'a [u8]), PrecompileFailure> {
@@ -91,21 +86,17 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 		)
 		.checked_mul(writes)
 		.ok_or(self.revert("Cost Overflow"))?;
-		let cost = reads_cost
-			.checked_add(writes_cost)
-			.ok_or(self.revert("Cost Overflow"))?;
+		let cost = reads_cost.checked_add(writes_cost).ok_or(self.revert("Cost Overflow"))?;
 
 		self.used_gas = self
 			.used_gas
 			.checked_add(cost)
-			.ok_or(PrecompileFailure::Error {
-				exit_status: ExitError::OutOfGas,
-			})?;
+			.ok_or(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })?;
 
 		match self.target_gas {
-			Some(gas_limit) if self.used_gas > gas_limit => Err(PrecompileFailure::Error {
-				exit_status: ExitError::OutOfGas,
-			}),
+			Some(gas_limit) if self.used_gas > gas_limit => {
+				Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
+			}
 			_ => Ok(()),
 		}
 	}

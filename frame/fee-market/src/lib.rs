@@ -210,19 +210,14 @@ pub mod pallet {
 				<Error<T, I>>::InsufficientBalance
 			);
 			if let Some(fee) = relay_fee {
-				ensure!(
-					fee >= T::MinimumRelayFee::get(),
-					<Error<T, I>>::RelayFeeTooLow
-				);
+				ensure!(fee >= T::MinimumRelayFee::get(), <Error<T, I>>::RelayFeeTooLow);
 			}
 			let fee = relay_fee.unwrap_or_else(T::MinimumRelayFee::get);
 
 			T::RingCurrency::set_lock(
 				T::LockId::get(),
 				&who,
-				LockFor::Common {
-					amount: lock_collateral,
-				},
+				LockFor::Common { amount: lock_collateral },
 				WithdrawReasons::all(),
 			);
 			// Store enrollment detail information.
@@ -254,9 +249,7 @@ pub mod pallet {
 				T::RingCurrency::set_lock(
 					T::LockId::get(),
 					&who,
-					LockFor::Common {
-						amount: new_collateral,
-					},
+					LockFor::Common { amount: new_collateral },
 					WithdrawReasons::all(),
 				);
 			} else {
@@ -271,9 +264,7 @@ pub mod pallet {
 					T::RingCurrency::set_lock(
 						T::LockId::get(),
 						&who,
-						LockFor::Common {
-							amount: new_collateral,
-						},
+						LockFor::Common { amount: new_collateral },
 						WithdrawReasons::all(),
 					);
 				}
@@ -296,10 +287,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_enrolled(&who), <Error<T, I>>::NotEnrolled);
-			ensure!(
-				new_fee >= T::MinimumRelayFee::get(),
-				<Error<T, I>>::RelayFeeTooLow
-			);
+			ensure!(new_fee >= T::MinimumRelayFee::get(), <Error<T, I>>::RelayFeeTooLow);
 
 			<RelayersMap<T, I>>::mutate(who.clone(), |relayer| {
 				relayer.fee = new_fee;
@@ -316,10 +304,7 @@ pub mod pallet {
 		pub fn cancel_enrollment(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_enrolled(&who), <Error<T, I>>::NotEnrolled);
-			ensure!(
-				Self::occupied(&who).is_none(),
-				<Error<T, I>>::OccupiedRelayer
-			);
+			ensure!(Self::occupied(&who).is_none(), <Error<T, I>>::OccupiedRelayer);
 
 			Self::remove_enrolled_relayer(&who);
 			Self::deposit_event(Event::<T, I>::CancelEnrollment(who));
@@ -395,9 +380,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		T::RingCurrency::set_lock(
 			T::LockId::get(),
 			&who,
-			LockFor::Common {
-				amount: new_collateral,
-			},
+			LockFor::Common { amount: new_collateral },
 			WithdrawReasons::all(),
 		);
 		<RelayersMap<T, I>>::mutate(who.clone(), |relayer| {
@@ -462,9 +445,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// Calculate the order capacity with fee_collateral
 	pub(crate) fn usable_order_capacity(who: &T::AccountId) -> u32 {
 		if let Some((_, orders_locked_collateral)) = Self::occupied(&who) {
-			let free_collateral = Self::relayer(who)
-				.collateral
-				.saturating_sub(orders_locked_collateral);
+			let free_collateral =
+				Self::relayer(who).collateral.saturating_sub(orders_locked_collateral);
 			return Self::collateral_to_order_capacity(free_collateral);
 		}
 		Self::collateral_to_order_capacity(Self::relayer(who).collateral)
