@@ -1559,7 +1559,6 @@ pub mod pallet {
 							passed_duration_in_months as _,
 						))
 					.max(1u32.into()) * 3u32.into();
-
 				// Can only pay the penalty from usable balance.
 				// Not allow to use bonded kton to pay the penalty.
 				let new_kton_balance =
