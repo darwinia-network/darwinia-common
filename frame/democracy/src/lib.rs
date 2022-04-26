@@ -1073,9 +1073,8 @@ pub mod pallet {
 
 			let (provider, deposit, since, expiry) = <Preimages<T>>::get(&proposal_hash)
 				.and_then(|m| match m {
-					PreimageStatus::Available { provider, deposit, since, expiry, .. } => {
-						Some((provider, deposit, since, expiry))
-					}
+					PreimageStatus::Available { provider, deposit, since, expiry, .. } =>
+						Some((provider, deposit, since, expiry)),
 					_ => None,
 				})
 				.ok_or(Error::<T>::PreimageMissing)?;
@@ -1686,9 +1685,8 @@ impl<T: Config> Pallet<T> {
 				Preimages::<T>::mutate_exists(
 					&status.proposal_hash,
 					|maybe_pre| match *maybe_pre {
-						Some(PreimageStatus::Available { ref mut expiry, .. }) => {
-							*expiry = Some(when)
-						}
+						Some(PreimageStatus::Available { ref mut expiry, .. }) =>
+							*expiry = Some(when),
 						ref mut a => *a = Some(PreimageStatus::Missing(when)),
 					},
 				);

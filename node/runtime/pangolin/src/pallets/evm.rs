@@ -58,14 +58,12 @@ impl RelayMessageSender for ToPangoroMessageSender {
 		let call: Call = match message_pallet_index {
 			_ if message_pallet_index as usize
 				== <BridgePangoroMessages as PalletInfoAccess>::index() =>
-			{
 				pallet_bridge_messages::Call::<Runtime, WithPangoroMessages>::send_message {
 					lane_id,
 					payload,
 					delivery_and_dispatch_fee: fee.saturated_into(),
 				}
-				.into()
-			}
+				.into(),
 			_ => {
 				return Err("invalid pallet index".into());
 			}
@@ -119,20 +117,17 @@ where
 			a if a == addr(3) => Some(Ripemd160::execute(input, target_gas, context, is_static)),
 			a if a == addr(4) => Some(Identity::execute(input, target_gas, context, is_static)),
 			// Darwinia precompiles
-			a if a == addr(21) => {
-				Some(<Transfer<R>>::execute(input, target_gas, context, is_static))
-			}
-			a if a == addr(23) => {
-				Some(<EthereumBridge<R>>::execute(input, target_gas, context, is_static))
-			}
+			a if a == addr(21) =>
+				Some(<Transfer<R>>::execute(input, target_gas, context, is_static)),
+			a if a == addr(23) =>
+				Some(<EthereumBridge<R>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(24) => Some(<Sub2SubBridge<
 				R,
 				ToPangoroMessageSender,
 				bm_pangoro::ToPangoroOutboundPayLoad,
 			>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(25) => {
-				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static))
-			}
+			a if a == addr(25) =>
+				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}

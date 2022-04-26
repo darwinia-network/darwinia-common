@@ -49,12 +49,10 @@ where
 			a if a == addr(4) => Some(Identity::execute(input, target_gas, context, is_static)),
 			a if a == addr(5) => Some(Modexp::execute(input, target_gas, context, is_static)),
 			// Non-Frontier specific nor Ethereum precompiles :
-			a if a == addr(1024) => {
-				Some(Sha3FIPS256::execute(input, target_gas, context, is_static))
-			}
-			a if a == addr(1025) => {
-				Some(ECRecoverPublicKey::execute(input, target_gas, context, is_static))
-			}
+			a if a == addr(1024) =>
+				Some(Sha3FIPS256::execute(input, target_gas, context, is_static)),
+			a if a == addr(1025) =>
+				Some(ECRecoverPublicKey::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}

@@ -94,9 +94,8 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 			.ok_or(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })?;
 
 		match self.target_gas {
-			Some(gas_limit) if self.used_gas > gas_limit => {
-				Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })
-			}
+			Some(gas_limit) if self.used_gas > gas_limit =>
+				Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas }),
 			_ => Ok(()),
 		}
 	}

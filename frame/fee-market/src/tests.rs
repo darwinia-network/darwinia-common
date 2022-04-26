@@ -189,9 +189,8 @@ pub enum TestMessagesParameter {
 impl MessagesParameter for TestMessagesParameter {
 	fn save(&self) {
 		match *self {
-			TestMessagesParameter::TokenConversionRate(conversion_rate) => {
-				TokenConversionRate::set(&conversion_rate)
-			}
+			TestMessagesParameter::TokenConversionRate(conversion_rate) =>
+				TokenConversionRate::set(&conversion_rate),
 		}
 	}
 }

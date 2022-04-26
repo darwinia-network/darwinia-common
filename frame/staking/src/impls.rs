@@ -398,9 +398,8 @@ impl<T: Config> Pallet<T> {
 
 					r
 				}),
-			RewardDestination::Account(dest_account) => {
-				Some(T::RingCurrency::deposit_creating(&dest_account, amount))
-			}
+			RewardDestination::Account(dest_account) =>
+				Some(T::RingCurrency::deposit_creating(&dest_account, amount)),
 			RewardDestination::None => None,
 		}
 	}

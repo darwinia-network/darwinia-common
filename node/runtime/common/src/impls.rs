@@ -220,9 +220,8 @@ macro_rules! impl_self_contained_call {
 				info: &Self::SignedInfo,
 			) -> Option<TransactionValidity> {
 				match self {
-					Call::Ethereum(ref call) => {
-						Some(validate_self_contained_inner(&self, &call, info))
-					}
+					Call::Ethereum(ref call) =>
+						Some(validate_self_contained_inner(&self, &call, info)),
 					_ => None,
 				}
 			}
@@ -242,11 +241,10 @@ macro_rules! impl_self_contained_call {
 				info: Self::SignedInfo,
 			) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 				match self {
-					call @ Call::Ethereum(darwinia_ethereum::Call::transact { .. }) => {
+					call @ Call::Ethereum(darwinia_ethereum::Call::transact { .. }) =>
 						Some(call.dispatch(Origin::from(
 							darwinia_ethereum::RawOrigin::EthereumTransaction(info),
-						)))
-					}
+						))),
 					_ => None,
 				}
 			}

@@ -1234,9 +1234,8 @@ pub mod pallet {
 			if slashed == beneficiary {
 				return match status {
 					BalanceStatus::Free => Ok(Self::unreserve(slashed, value)),
-					BalanceStatus::Reserved => {
-						Ok(value.saturating_sub(Self::reserved_balance(slashed)))
-					}
+					BalanceStatus::Reserved =>
+						Ok(value.saturating_sub(Self::reserved_balance(slashed))),
 				};
 			}
 
@@ -1829,9 +1828,8 @@ pub mod pallet {
 		) {
 			if match &lock_for {
 				LockFor::Common { amount } => *amount,
-				LockFor::Staking(staking_lock) => {
-					staking_lock.locked_amount(<frame_system::Pallet<T>>::block_number())
-				}
+				LockFor::Staking(staking_lock) =>
+					staking_lock.locked_amount(<frame_system::Pallet<T>>::block_number()),
 			}
 			.is_zero() || reasons.is_empty()
 			{
@@ -1876,9 +1874,8 @@ pub mod pallet {
 								lock_for: {
 									match nl.lock_for {
 										// Only extend common lock type
-										LockFor::Common { amount: na } => {
-											LockFor::Common { amount: (a).max(na) }
-										}
+										LockFor::Common { amount: na } =>
+											LockFor::Common { amount: (a).max(na) },
 										// Not allow to extend other combination/type lock
 										//
 										// And the lock is always with lock id
@@ -2086,9 +2083,8 @@ pub mod pallet {
 			if slashed == beneficiary {
 				return match status {
 					BalanceStatus::Free => Ok(Self::unreserve_named(id, slashed, value)),
-					BalanceStatus::Reserved => {
-						Ok(value.saturating_sub(Self::reserved_balance_named(id, slashed)))
-					}
+					BalanceStatus::Reserved =>
+						Ok(value.saturating_sub(Self::reserved_balance_named(id, slashed))),
 				};
 			}
 

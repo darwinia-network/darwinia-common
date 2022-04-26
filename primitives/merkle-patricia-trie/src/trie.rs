@@ -631,13 +631,12 @@ impl MerklePatriciaTrie {
 
 				Ok(Node::from_branch(nodes, value))
 			}
-			_ => {
+			_ =>
 				if r.is_data() && r.size() == LENGTH {
 					Ok(Node::from_hash(r.data()?.to_vec()))
 				} else {
 					Err(TrieError::InvalidData)
-				}
-			}
+				},
 		}
 	}
 

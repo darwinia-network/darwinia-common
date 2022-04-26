@@ -196,22 +196,17 @@ where
 
 		match address {
 			// Ethereum precompiles
-			_ if address == to_address(1) => {
-				Some(ECRecover::execute(input, target_gas, context, is_static))
-			}
-			_ if address == to_address(2) => {
-				Some(Sha256::execute(input, target_gas, context, is_static))
-			}
-			_ if address == to_address(3) => {
-				Some(Ripemd160::execute(input, target_gas, context, is_static))
-			}
-			_ if address == to_address(4) => {
-				Some(Identity::execute(input, target_gas, context, is_static))
-			}
+			_ if address == to_address(1) =>
+				Some(ECRecover::execute(input, target_gas, context, is_static)),
+			_ if address == to_address(2) =>
+				Some(Sha256::execute(input, target_gas, context, is_static)),
+			_ if address == to_address(3) =>
+				Some(Ripemd160::execute(input, target_gas, context, is_static)),
+			_ if address == to_address(4) =>
+				Some(Identity::execute(input, target_gas, context, is_static)),
 			// Darwinia precompiles
-			_ if address == to_address(21) => {
-				Some(<Transfer<R>>::execute(input, target_gas, context, is_static))
-			}
+			_ if address == to_address(21) =>
+				Some(<Transfer<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
@@ -305,9 +300,8 @@ impl fp_self_contained::SelfContainedCall for Call {
 	) -> Option<sp_runtime::DispatchResultWithInfo<sp_runtime::traits::PostDispatchInfoOf<Self>>> {
 		use sp_runtime::traits::Dispatchable as _;
 		match self {
-			call @ Call::Ethereum(darwinia_ethereum::Call::transact { .. }) => {
-				Some(call.dispatch(Origin::from(RawOrigin::EthereumTransaction(info))))
-			}
+			call @ Call::Ethereum(darwinia_ethereum::Call::transact { .. }) =>
+				Some(call.dispatch(Origin::from(RawOrigin::EthereumTransaction(info)))),
 			_ => None,
 		}
 	}

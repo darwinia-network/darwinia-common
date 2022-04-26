@@ -79,12 +79,10 @@ impl<
 			return false;
 		}
 		match *self {
-			VoteThreshold::SuperMajorityApprove => {
-				compare_rationals(tally.nays, sqrt_voters, tally.ayes, sqrt_electorate)
-			}
-			VoteThreshold::SuperMajorityAgainst => {
-				compare_rationals(tally.nays, sqrt_electorate, tally.ayes, sqrt_voters)
-			}
+			VoteThreshold::SuperMajorityApprove =>
+				compare_rationals(tally.nays, sqrt_voters, tally.ayes, sqrt_electorate),
+			VoteThreshold::SuperMajorityAgainst =>
+				compare_rationals(tally.nays, sqrt_electorate, tally.ayes, sqrt_voters),
 			VoteThreshold::SimpleMajority => tally.ayes > tally.nays,
 		}
 	}

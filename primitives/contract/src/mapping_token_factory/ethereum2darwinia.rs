@@ -38,9 +38,8 @@ impl TokenRegisterInfo {
 		let tokens =
 			ethabi::decode(&[ParamType::Address, ParamType::Address, ParamType::Address], &data)?;
 		match (tokens[0].clone(), tokens[1].clone(), tokens[2].clone()) {
-			(Token::Address(backing), Token::Address(source), Token::Address(target)) => {
-				Ok(TokenRegisterInfo(backing, source, target))
-			}
+			(Token::Address(backing), Token::Address(source), Token::Address(target)) =>
+				Ok(TokenRegisterInfo(backing, source, target)),
 			_ => Err(Error::InvalidData),
 		}
 	}
