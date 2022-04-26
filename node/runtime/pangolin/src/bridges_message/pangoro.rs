@@ -221,10 +221,11 @@ impl BridgedChainWithMessages for Pangoro {
 			bp_pangoro::Pangoro::max_extrinsic_weight(),
 		);
 
-		// we're charging for payload bytes in `WithPangoroMessageBridge::transaction_payment` function
+		// we're charging for payload bytes in `WithPangoroMessageBridge::transaction_payment`
+		// function
 		//
-		// this bridge may be used to deliver all kind of messages, so we're not making any assumptions about
-		// minimal dispatch weight here
+		// this bridge may be used to deliver all kind of messages, so we're not making any
+		// assumptions about minimal dispatch weight here
 
 		0..=upper_limit
 	}

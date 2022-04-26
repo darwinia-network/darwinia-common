@@ -253,10 +253,10 @@ pub mod pallet {
 				}
 			}
 			// Account for `on_finalize` weight:
-			//	- read: frame_system::Pallet::<T>::digest()
-			//	- read: frame_system::Pallet::<T>::block_number()
-			//	- write: <Pallet<T>>::store_block()
-			//	- write: <BlockHash<T>>::remove()
+			// 	- read: frame_system::Pallet::<T>::digest()
+			// 	- read: frame_system::Pallet::<T>::block_number()
+			// 	- write: <Pallet<T>>::store_block()
+			// 	- write: <BlockHash<T>>::remove()
 			weight.saturating_add(T::DbWeight::get().reads_writes(2, 2))
 		}
 	}
@@ -305,7 +305,8 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub fn deposit_event)]
 	/// Ethereum pallet events.
 	pub enum Event<T: Config> {
-		/// An ethereum transaction was successfully executed. \[from, to/contract_address, transaction_hash, exit_reason\]
+		/// An ethereum transaction was successfully executed. \[from, to/contract_address,
+		/// transaction_hash, exit_reason\]
 		Executed(H160, H160, H256, ExitReason),
 		/// DVM transfer. \[from, to, value\]
 		DVMTransfer(T::AccountId, T::AccountId, U256),
@@ -507,7 +508,8 @@ impl<T: Config> Pallet<T> {
 		let mut fee = gas_price.saturating_mul(gas_limit);
 		if let Some(max_priority_fee_per_gas) = transaction_data.max_priority_fee_per_gas {
 			// EIP-1559 transaction priority is determined by `max_priority_fee_per_gas`.
-			// If the transaction do not include this optional parameter, priority is now considered zero.
+			// If the transaction do not include this optional parameter, priority is now considered
+			// zero.
 			priority = max_priority_fee_per_gas.unique_saturated_into();
 			// Add the priority tip to the payable fee.
 			fee = fee.saturating_add(max_priority_fee_per_gas.saturating_mul(gas_limit));
@@ -738,8 +740,8 @@ impl<T: Config> Pallet<T> {
 		) = match advanced_transaction {
 			AdvancedTransaction::Ethereum(transaction) => {
 				match transaction {
-					// max_fee_per_gas and max_priority_fee_per_gas in legacy and 2930 transactions is
-					// the provided gas_price.
+					// max_fee_per_gas and max_priority_fee_per_gas in legacy and 2930 transactions
+					// is the provided gas_price.
 					Transaction::Legacy(t) => {
 						let base_fee = T::FeeCalculator::min_gas_price();
 						let priority_fee = t
@@ -871,8 +873,8 @@ impl<T: Config> Pallet<T> {
 		let receipts_root =
 			ethereum::util::ordered_trie_root(receipts.iter().map(|r| rlp::encode(r)));
 		let partial_header = ethereum::PartialHeader {
-			// Instead of using current_block(), obtain the parent block hash from BlockHash storage to avoid Block type upgrade failures
-			// See: https://github.com/paritytech/frontier/pull/570
+			// Instead of using current_block(), obtain the parent block hash from BlockHash storage
+			// to avoid Block type upgrade failures See: https://github.com/paritytech/frontier/pull/570
 			parent_hash: if block_number > U256::zero() {
 				BlockHash::<T>::get(block_number - 1)
 			} else {

@@ -264,8 +264,9 @@ mod tests {
 	/// block number: 13376543 (only a tx in this block, which is above)
 	/// from: 0x4aea6cfc5bd14f2308954d544e1dc905268357db
 	/// to: 0xa24df0420de1f3b8d740a52aaeb9d55d6d64478e (a contract)
-	/// receipts_root in block#13376543: 0xc789eb8b7f5876f4df4f8ae16f95c9881eabfb700ee7d8a00a51fb4a71afbac9
-	/// to check if receipts_root in block-header can be pre-computed.
+	/// receipts_root in block#13376543:
+	/// 0xc789eb8b7f5876f4df4f8ae16f95c9881eabfb700ee7d8a00a51fb4a71afbac9 to check if receipts_root
+	/// in block-header can be pre-computed.
 	#[test]
 	fn check_receipts() {
 		let expected_root = array_bytes::hex_into_unchecked(

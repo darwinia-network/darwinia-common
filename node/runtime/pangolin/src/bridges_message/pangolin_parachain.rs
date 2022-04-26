@@ -88,7 +88,8 @@ frame_support::parameter_types! {
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum PangolinToPangolinParachainParameter {
-	/// The conversion formula we use is: `PangolinTokens = PangolinParachainTokens * conversion_rate`.
+	/// The conversion formula we use is: `PangolinTokens = PangolinParachainTokens *
+	/// conversion_rate`.
 	PangolinParachainToPangolinConversionRate(FixedU128),
 }
 impl Parameter for PangolinToPangolinParachainParameter {

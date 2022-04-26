@@ -780,8 +780,8 @@ sp_api::impl_runtime_apis! {
 /// Pangolin account ownership digest from Pangoro.
 ///
 /// The byte vector returned by this function should be signed with a Pangolin account private key.
-/// This way, the owner of `pangoro_account_id` on Pangoro proves that the Pangolin account private key
-/// is also under his control.
+/// This way, the owner of `pangoro_account_id` on Pangoro proves that the Pangolin account private
+/// key is also under his control.
 pub fn pangoro_to_pangolin_account_ownership_digest<Call, AccountId, SpecVersion>(
 	pangolin_call: &Call,
 	pangoro_account_id: AccountId,

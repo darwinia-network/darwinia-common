@@ -880,8 +880,8 @@ fn test_payment_cal_reward_normally_single_message() {
 		));
 
 		// Analysis:
-		// 1. assigned_relayers [(1, 30, 2-52),(2, 50, 52-102),(3, 100, 102-152)] -> id: 1, reward = 60% * 30 = 18
-		// 2. message relayer -> id: 100, reward = 40% * 30 * 80% = 9.6 ~ 10
+		// 1. assigned_relayers [(1, 30, 2-52),(2, 50, 52-102),(3, 100, 102-152)] -> id: 1, reward =
+		// 60% * 30 = 18 2. message relayer -> id: 100, reward = 40% * 30 * 80% = 9.6 ~ 10
 		// 3. confirmation relayer -> id: 5, reward = 40% * 30 * 20% = 2.4 ~ 2
 		// 4. treasury reward -> reward: 100 - 30 = 70
 		let t: AccountId = <Test as Config>::TreasuryPalletId::get().into_account();

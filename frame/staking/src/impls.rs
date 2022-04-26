@@ -286,8 +286,9 @@ impl<T: Config> Pallet<T> {
 			Self::deposit_event(Event::Rewarded(ledger.stash, payout));
 		}
 
-		// Track the number of payout ops to nominators. Note: `WeightInfo::payout_stakers_alive_staked`
-		// always assumes at least a validator is paid out, so we do not need to count their payout op.
+		// Track the number of payout ops to nominators. Note:
+		// `WeightInfo::payout_stakers_alive_staked` always assumes at least a validator is paid
+		// out, so we do not need to count their payout op.
 		let mut nominator_payout_count: u32 = 0;
 
 		// Lets now calculate how this is split to the nominators.
@@ -510,6 +511,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	/// 
 	/// * Increment `active_era.index`,
 	/// * reset `active_era.start`,
 	/// * update `BondedEras` and apply slashes.
@@ -739,7 +741,8 @@ impl<T: Config> Pallet<T> {
 					.voters
 					.into_iter()
 					.for_each(|(nominator, power_u128)| {
-						// `T::TotalPower::get() == 1_000_000_000_u32`, will never overflow or get truncated; qed
+						// `T::TotalPower::get() == 1_000_000_000_u32`, will never overflow or get
+						// truncated; qed
 						let power = power_u128 as _;
 						let origin_power = Self::power_of(&nominator);
 						let origin_power_u128 = origin_power as _;

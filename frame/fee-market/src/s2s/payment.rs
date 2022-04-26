@@ -112,7 +112,8 @@ where
 	}
 }
 
-/// Slash and calculate rewards for messages_relayers, confirmation relayers, treasury, assigned_relayers
+/// Slash and calculate rewards for messages_relayers, confirmation relayers, treasury,
+/// assigned_relayers
 pub fn slash_and_calculate_rewards<T, I>(
 	lane_id: LaneId,
 	messages_relayers: VecDeque<UnrewardedRelayer<T::AccountId>>,
@@ -133,10 +134,12 @@ where
 		let nonce_end = sp_std::cmp::min(entry.messages.end, *received_range.end());
 
 		for message_nonce in nonce_begin..nonce_end + 1 {
-			// The order created when message was accepted, so we can always get the order info below.
+			// The order created when message was accepted, so we can always get the order info
+			// below.
 			if let Some(order) = <Orders<T, I>>::get(&(lane_id, message_nonce)) {
-				// The confirm_time of the order is set in the `OnDeliveryConfirmed` callback. And the callback function
-				// was called as source chain received message delivery proof, before the reward payment.
+				// The confirm_time of the order is set in the `OnDeliveryConfirmed` callback. And
+				// the callback function was called as source chain received message delivery proof,
+				// before the reward payment.
 				let order_confirm_time = order
 					.confirm_time
 					.unwrap_or_else(|| frame_system::Pallet::<T>::block_number());

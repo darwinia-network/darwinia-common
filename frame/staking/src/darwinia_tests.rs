@@ -777,7 +777,8 @@ fn inflation_should_be_correct() {
 	// 	Staking::new_era(2);
 	//
 	// 	// breakpoint here
-	//     inflation::compute_total_payout::<Test>(11_999, 1_295_225_000, 9_987_999_900_000_000_000);
+	//     inflation::compute_total_payout::<Test>(11_999, 1_295_225_000,
+	// 9_987_999_900_000_000_000);
 	//
 	// 	loop {}
 	// });

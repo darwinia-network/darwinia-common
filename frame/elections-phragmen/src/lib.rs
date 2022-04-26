@@ -429,9 +429,9 @@ pub mod pallet {
 		///   origin is removed as a runner-up.
 		/// - `origin` is a current member. In this case, the deposit is unreserved and origin is
 		///   removed as a member, consequently not being a candidate for the next round anymore.
-		///   Similar to [`remove_member`](Self::remove_member), if replacement runners exists,
-		///   they are immediately used. If the prime is renouncing, then no prime will exist until
-		///   the next round.
+		///   Similar to [`remove_member`](Self::remove_member), if replacement runners exists, they
+		///   are immediately used. If the prime is renouncing, then no prime will exist until the
+		///   next round.
 		///
 		/// The dispatch origin of this call must be signed, and have one of the above roles.
 		///
@@ -701,9 +701,10 @@ pub mod pallet {
 						"Genesis member does not have enough stake.",
 					);
 
-					// Note: all members will only vote for themselves, hence they must be given exactly
-					// their own stake as total backing. Any sane election should behave as such.
-					// Nonetheless, stakes will be updated for term 1 onwards according to the election.
+					// Note: all members will only vote for themselves, hence they must be given
+					// exactly their own stake as total backing. Any sane election should behave as
+					// such. Nonetheless, stakes will be updated for term 1 onwards according to the
+					// election.
 					Members::<T>::mutate(|members| {
 						match members.binary_search_by(|m| m.who.cmp(member)) {
 							Ok(_) => {
@@ -721,9 +722,9 @@ pub mod pallet {
 					});
 
 					// set self-votes to make persistent. Genesis voters don't have any bond, nor do
-					// they have any lock. NOTE: this means that we will still try to remove a lock once
-					// this genesis voter is removed, and for now it is okay because remove_lock is noop
-					// if lock is not there.
+					// they have any lock. NOTE: this means that we will still try to remove a lock
+					// once this genesis voter is removed, and for now it is okay because
+					// remove_lock is noop if lock is not there.
 					<Voting<T>>::insert(
 						&member,
 						Voter {
@@ -1038,9 +1039,9 @@ impl<T: Config> Pallet<T> {
 						}
 					}
 				}
-				// We then select the new member with the highest weighted stake. In the case of a tie,
-				// the last person in the list with the tied score is selected. This is the person with
-				// the "highest" account id based on the sort above.
+				// We then select the new member with the highest weighted stake. In the case of a
+				// tie, the last person in the list with the tied score is selected. This is the
+				// person with the "highest" account id based on the sort above.
 				let prime = prime_votes
 					.into_iter()
 					.max_by_key(|x| x.1)
@@ -1078,16 +1079,16 @@ impl<T: Config> Pallet<T> {
 
 				// write final values to storage.
 				let deposit_of_candidate = |x: &T::AccountId| -> BalanceOf<T> {
-					// defensive-only. This closure is used against the new members and new runners-up,
-					// both of which are phragmen winners and thus must have deposit.
+					// defensive-only. This closure is used against the new members and new
+					// runners-up, both of which are phragmen winners and thus must have deposit.
 					candidates_and_deposit
 						.iter()
 						.find_map(|(c, d)| if c == x { Some(*d) } else { None })
 						.unwrap_or_default()
 				};
-				// fetch deposits from the one recorded one. This will make sure that a candidate who
-				// submitted candidacy before a change to candidacy deposit will have the correct amount
-				// recorded.
+				// fetch deposits from the one recorded one. This will make sure that a candidate
+				// who submitted candidacy before a change to candidacy deposit will have the
+				// correct amount recorded.
 				<Members<T>>::put(
 					new_members_sorted_by_id
 						.iter()

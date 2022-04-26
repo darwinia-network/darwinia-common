@@ -351,8 +351,8 @@ impl Default for Header {
 impl PartialEq for Header {
 	fn eq(&self, c: &Header) -> bool {
 		if let (&Some(ref h1), &Some(ref h2)) = (&self.hash, &c.hash) {
-			// More strict check even if hashes equal since Header could be decoded from dispatch call by external
-			// Note that this is different implementation compared to Open Ethereum
+			// More strict check even if hashes equal since Header could be decoded from dispatch
+			// call by external Note that this is different implementation compared to Open Ethereum
 			// Refer: https://github.com/openethereum/openethereum/blob/v3.0.0-alpha.1/ethcore/types/src/header.rs#L93
 			if h1 != h2 {
 				return false;

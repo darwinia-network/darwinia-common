@@ -123,9 +123,10 @@ pub mod pallet {
 		TokenRegisterSubmitted(EthereumAddress, EthereumTransactionIndex),
 		/// redeem erc20 token
 		RedeemErc20(EthereumAddress, EthereumTransactionIndex),
-		//  These two events `BurnToken` and `TokenRegisterFinished` will be saved in a special storage, and
-		//  will be delivered to the remote chain. Remote ethereum chain will decode them using
-		//  scale encoding. And the first parameter `type` is used to distinguish the two events.
+		//  These two events `BurnToken` and `TokenRegisterFinished` will be saved in a special
+		// storage, and  will be delivered to the remote chain. Remote ethereum chain will decode
+		// them using  scale encoding. And the first parameter `type` is used to distinguish the
+		// two events.
 		/// burn event
 		/// type: 1, backing_address, sender, recipient, original_token, mapping_token, value
 		BurnToken(
@@ -138,7 +139,8 @@ pub mod pallet {
 			U256,
 		),
 		/// token registered event
-		/// type: u8 = 0, backing_address, original_token(origin erc20), mapping_token(mapped erc20)
+		/// type: u8 = 0, backing_address, original_token(origin erc20), mapping_token(mapped
+		/// erc20)
 		TokenRegisterFinished(u8, EthereumAddress, EthereumAddress, EthereumAddress),
 		/// set mapping token factory address
 		/// [old, new]

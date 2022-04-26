@@ -33,8 +33,8 @@ pub struct RingBack<T> {
 
 impl<T: darwinia_ethereum::Config> RingBack<T> {
 	/// The Withdraw process is divided into two part:
-	/// 1. parse the withdrawal address from the input parameter and get the contract address and value from the context
-	/// 2. transfer from the contract address to withdrawal address
+	/// 1. parse the withdrawal address from the input parameter and get the contract address and
+	/// value from the context 2. transfer from the contract address to withdrawal address
 	///
 	/// Input data: 32-bit substrate withdrawal public key
 	pub fn transfer(

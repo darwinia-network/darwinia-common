@@ -726,7 +726,8 @@ fn merge_ongoing_schedules() {
 			assert_ok!(Vesting::vested_transfer(Some(4).into(), 2, sched1));
 			assert_eq!(Vesting::vesting(&2).unwrap(), vec![sched0, sched1]);
 
-			// Got to half way through the second schedule where both schedules are actively vesting.
+			// Got to half way through the second schedule where both schedules are actively
+			// vesting.
 			let cur_block = 20;
 			System::set_block_number(cur_block);
 
@@ -761,7 +762,8 @@ fn merge_ongoing_schedules() {
 			let sched2 = VestingInfo::new(sched2_locked, sched2_per_block, cur_block);
 			assert_eq!(Vesting::vesting(&2).unwrap(), vec![sched2]);
 
-			// And just to double check, we assert the new merged schedule we be cleaned up as expected.
+			// And just to double check, we assert the new merged schedule we be cleaned up as
+			// expected.
 			System::set_block_number(30);
 			vest_and_assert_no_vesting::<Test>(2);
 		});
@@ -1063,8 +1065,8 @@ fn merge_finished_and_yet_to_be_started_schedules() {
 			// Merge schedule 0 and 1.
 			assert_ok!(Vesting::merge_schedules(Some(2).into(), 0, 1));
 
-			// sched0 is removed since it finished, and sched1 is removed and then pushed on the back
-			// because it is treated as the merged schedule
+			// sched0 is removed since it finished, and sched1 is removed and then pushed on the
+			// back because it is treated as the merged schedule
 			assert_eq!(Vesting::vesting(&2).unwrap(), vec![sched2, sched1]);
 
 			// The usable balance is updated because merging fully unlocked sched0.

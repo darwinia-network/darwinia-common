@@ -179,8 +179,9 @@ where
 	}
 }
 
-/// Relayers selected by the fee market. Each prior relayer has a valid slot, if the order can finished in time,
-/// will be rewarded with more percentage. PriorRelayer are responsible for the messages relay in most time.
+/// Relayers selected by the fee market. Each prior relayer has a valid slot, if the order can
+/// finished in time, will be rewarded with more percentage. PriorRelayer are responsible for the
+/// messages relay in most time.
 #[derive(Clone, Debug, Default, Encode, Decode, TypeInfo)]
 pub struct PriorRelayer<AccountId, BlockNumber, Balance> {
 	pub id: AccountId,

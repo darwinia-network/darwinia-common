@@ -755,7 +755,7 @@ impl<T: Config> Relayable for Module<T> {
 			// The mmr_root of first submit should includ the hash last confirm block
 			//      mmr_root of 1st
 			//     / \
-			//    -   -
+			//    - -
 			//   /     \
 			//  c  ...  1st
 			//  c: last comfirmed block 1st: 1st submit block
@@ -781,7 +781,7 @@ impl<T: Config> Relayable for Module<T> {
 			//     / \
 			//    - ..-
 			//   /   | \
-			//  -  ..c  1st
+			//  - ..c  1st
 			// c: current submit  1st: 1st submit block
 			ensure!(
 				Self::verify_mmr(

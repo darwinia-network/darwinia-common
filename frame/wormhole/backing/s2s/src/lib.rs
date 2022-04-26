@@ -449,9 +449,9 @@ pub mod pallet {
 				let result = messages.message_dispatch_result(nonce);
 				if let Some((user, amount)) = <TransactionInfos<T>>::take((*lane, nonce)) {
 					if !result {
-						// if remote issue mapped token failed, this fund need to transfer token back
-						// to the user. The balance always comes from the user's locked currency while
-						// calling the dispatch call `lock_and_remote_issue`.
+						// if remote issue mapped token failed, this fund need to transfer token
+						// back to the user. The balance always comes from the user's locked
+						// currency while calling the dispatch call `lock_and_remote_issue`.
 						// This transfer will always successful except some extreme scene, since the
 						// user must lock some currency first, then this transfer can be triggered.
 						let _ = T::RingCurrency::transfer(

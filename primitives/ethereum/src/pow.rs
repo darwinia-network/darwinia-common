@@ -310,8 +310,10 @@ impl EthashPartial {
 				*parent.difficulty() + (*parent.difficulty() / difficulty_bound_divisor)
 			}
 		} else {
-			//		trace!(target: "ethash", "Calculating difficulty parent.difficulty={}, header.timestamp={}, parent.timestamp={}", parent.difficulty(), header.timestamp(), parent.timestamp());
-			//block_diff = parent_diff + parent_diff // 2048 * max(1 - (block_timestamp - parent_timestamp) // 10, -99)
+			//		trace!(target: "ethash", "Calculating difficulty parent.difficulty={},
+			// header.timestamp={}, parent.timestamp={}", parent.difficulty(), header.timestamp(),
+			// parent.timestamp()); block_diff = parent_diff + parent_diff // 2048 * max(1 -
+			// (block_timestamp - parent_timestamp) // 10, -99)
 			let (increment_divisor, threshold) = if header.number() < self.eip100b_transition {
 				(self.difficulty_increment_divisor, 1)
 			} else if parent_has_uncles {

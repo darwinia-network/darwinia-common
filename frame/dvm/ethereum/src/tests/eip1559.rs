@@ -66,7 +66,8 @@ fn transaction_without_enough_gas_should_not_work() {
 		}
 
 		let call = crate::Call::<Test>::transact { transaction };
-		// TODO: the source is not alice's address, the signature is incorrect, fix it later in upstream repo
+		// TODO: the source is not alice's address, the signature is incorrect, fix it later in
+		// upstream repo
 		let source = call.check_self_contained().unwrap().unwrap();
 
 		assert_err!(

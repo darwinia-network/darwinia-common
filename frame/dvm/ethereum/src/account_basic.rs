@@ -195,8 +195,8 @@ where
 				let diff = cb.saturating_sub(nb);
 				let (diff_main, diff_remaining) = diff.div_mod(helper);
 
-				// If the dvm storage < diff remaining balance, we can not do sub operation directly.
-				// Otherwise, slash Currency, dec dvm storage balance directly.
+				// If the dvm storage < diff remaining balance, we can not do sub operation
+				// directly. Otherwise, slash Currency, dec dvm storage balance directly.
 				if dvm_balance < diff_remaining {
 					let remaining_balance = dvm_balance
 						.saturating_add(decimal_convert(1, None))
@@ -222,7 +222,8 @@ where
 				let diff = nb.saturating_sub(cb);
 				let (diff_main, diff_remaining) = diff.div_mod(helper);
 
-				// If dvm storage `balance + diff remaining balance > helper`, we must update Currency balance.
+				// If dvm storage `balance + diff remaining balance > helper`, we must update
+				// Currency balance.
 				if dvm_balance + diff_remaining >= helper {
 					let remaining_balance = dvm_balance
 						.saturating_add(diff_remaining)

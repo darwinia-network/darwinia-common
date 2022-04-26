@@ -616,8 +616,8 @@ pub mod pallet {
 					<Error<T>>::KtonLockedNSBA
 				}
 			);
-			// // Checking redeemer have enough of balance to pay fee, make sure follow up transfer will success.
-			// ensure!(
+			// // Checking redeemer have enough of balance to pay fee, make sure follow up transfer
+			// will success. ensure!(
 			// 	T::RingCurrency::usable_balance(redeemer) >= fee,
 			// 	<Error<T>>::FeeIns
 			// );
@@ -629,7 +629,8 @@ pub mod pallet {
 				ExistenceRequirement::KeepAlive,
 			)?;
 			// // Transfer the fee from redeemer.
-			// T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee, KeepAlive)?;
+			// T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee,
+			// KeepAlive)?;
 
 			<VerifiedProof<T>>::insert(tx_index, true);
 
@@ -641,8 +642,8 @@ pub mod pallet {
 
 			Ok(())
 		}
-		// event BurnAndRedeem(address indexed token, address indexed from, uint256 amount, bytes receiver);
-		// Redeem RING https://ropsten.etherscan.io/tx/0x1d3ef601b9fa4a7f1d6259c658d0a10c77940fa5db9e10ab55397eb0ce88807d
+		// event BurnAndRedeem(address indexed token, address indexed from, uint256 amount, bytes
+		// receiver); Redeem RING https://ropsten.etherscan.io/tx/0x1d3ef601b9fa4a7f1d6259c658d0a10c77940fa5db9e10ab55397eb0ce88807d
 		// Redeem KTON https://ropsten.etherscan.io/tx/0x2878ae39a9e0db95e61164528bb1ec8684be194bdcc236848ff14d3fe5ba335d
 		pub(super) fn parse_token_redeem_proof(
 			proof_record: &EthereumReceiptProofThing<T>,
@@ -760,8 +761,8 @@ pub mod pallet {
 				Self::pot::<T::RingCurrency>() >= redeemed_ring,
 				<Error<T>>::RingLockedNSBA
 			);
-			// // Checking redeemer have enough of balance to pay fee, make sure follow up fee transfer will success.
-			// ensure!(
+			// // Checking redeemer have enough of balance to pay fee, make sure follow up fee
+			// transfer will success. ensure!(
 			// 	T::RingCurrency::usable_balance(redeemer) >= fee,
 			// 	<Error<T>>::FeeIns
 			// );
@@ -774,7 +775,8 @@ pub mod pallet {
 				months,
 			)?;
 			// // Transfer the fee from redeemer.
-			// T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee, KeepAlive)?;
+			// T::RingCurrency::transfer(redeemer, &T::EthereumRelay::account_id(), fee,
+			// KeepAlive)?;
 
 			// TODO: check deposit_id duplication
 			// TODO: Ignore Unit Interest for now
@@ -789,8 +791,8 @@ pub mod pallet {
 
 			Ok(())
 		}
-		// event BurnAndRedeem(uint256 indexed _depositID,  address _depositor, uint48 _months, uint48 _startAt, uint64 _unitInterest, uint128 _value, bytes _data);
-		// Redeem Deposit https://ropsten.etherscan.io/tx/0x5a7004126466ce763501c89bcbb98d14f3c328c4b310b1976a38be1183d91919
+		// event BurnAndRedeem(uint256 indexed _depositID,  address _depositor, uint48 _months,
+		// uint48 _startAt, uint64 _unitInterest, uint128 _value, bytes _data); Redeem Deposit https://ropsten.etherscan.io/tx/0x5a7004126466ce763501c89bcbb98d14f3c328c4b310b1976a38be1183d91919
 		pub(super) fn parse_deposit_redeem_proof(
 			proof_record: &EthereumReceiptProofThing<T>,
 		) -> Result<
@@ -878,7 +880,8 @@ pub mod pallet {
 
 				months.saturated_into()
 			};
-			// The start_at here is in seconds, will be converted to milliseconds later in on_deposit_redeem
+			// The start_at here is in seconds, will be converted to milliseconds later in
+			// on_deposit_redeem
 			let start_at = {
 				let start_at = result.params[3]
 					.value

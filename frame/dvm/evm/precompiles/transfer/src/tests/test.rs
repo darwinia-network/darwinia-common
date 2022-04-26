@@ -302,7 +302,8 @@ fn kton_currency_transfer_and_call_out_of_fund() {
 
 		// Transfer and call
 		let transfer = decimal_convert(90_000_000_000, None);
-		// send_kton_transfer_and_call_tx(alice, H160::from_str(WKTON_ADDRESS).unwrap(), transfer, 1);
+		// send_kton_transfer_and_call_tx(alice, H160::from_str(WKTON_ADDRESS).unwrap(), transfer,
+		// 1);
 		let t = transfer_and_call_transaction(H160::from_str(WKTON_ADDRESS).unwrap(), transfer, 1)
 			.sign(&alice.private_key);
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
