@@ -45,10 +45,7 @@ where
 	Balance: Copy + Ord + Zero,
 {
 	pub fn zero() -> Self {
-		Self {
-			fee: Zero::zero(),
-			misc: Zero::zero(),
-		}
+		Self { fee: Zero::zero(), misc: Zero::zero() }
 	}
 
 	/// The amount that this account's free balance may not be reduced beyond for the given

@@ -50,12 +50,6 @@ impl TokenMetadata {
 		symbol: Vec<u8>,
 		decimal: u8,
 	) -> Self {
-		Self {
-			token_type,
-			address,
-			name,
-			symbol,
-			decimal,
-		}
+		Self { token_type, address, name, symbol, decimal }
 	}
 }

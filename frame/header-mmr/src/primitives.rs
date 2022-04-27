@@ -69,11 +69,7 @@ where
 		let diff = |a: &[NodeIndex], b: &[NodeIndex]| -> Vec<NodeIndex> {
 			b.iter().filter(|x| !a.contains(x)).cloned().collect()
 		};
-		let peaks_before = if mmr_size == 0 {
-			vec![]
-		} else {
-			mmr::helper::get_peaks(mmr_size)
-		};
+		let peaks_before = if mmr_size == 0 { vec![] } else { mmr::helper::get_peaks(mmr_size) };
 		let elems = elems
 			.into_iter()
 			.enumerate()
@@ -105,10 +101,7 @@ where
 			<Peaks<T>>::remove(position);
 		}
 		for position in peaks_to_store {
-			if let Some(i) = elems
-				.iter()
-				.position(|(position_, _)| *position_ == position)
-			{
+			if let Some(i) = elems.iter().position(|(position_, _)| *position_ == position) {
 				if let Some((_, elem)) = elems.get(i) {
 					<Peaks<T>>::insert(position, elem);
 
@@ -138,15 +131,11 @@ where
 	Storage<StorageType, T>: MMRStore<T::Hash>,
 {
 	pub fn new() -> Self {
-		Self {
-			mmr: MMR::new(<MmrSize<T>>::get(), Default::default()),
-		}
+		Self { mmr: MMR::new(<MmrSize<T>>::get(), Default::default()) }
 	}
 
 	pub fn with_size(size: NodeIndex) -> Self {
-		Self {
-			mmr: MMR::new(size, Default::default()),
-		}
+		Self { mmr: MMR::new(size, Default::default()) }
 	}
 
 	pub fn get_root(&self) -> MMRResult<T::Hash> {

@@ -54,10 +54,7 @@ pub struct FeeMarket<Client, Block, Balance> {
 
 impl<Client, Block, Balance> FeeMarket<Client, Block, Balance> {
 	pub fn new(client: Arc<Client>) -> Self {
-		Self {
-			client,
-			_marker: Default::default(),
-		}
+		Self { client, _marker: Default::default() }
 	}
 }
 

@@ -202,10 +202,7 @@ where
 		Self(Default::default())
 	}
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 24, 25]
-			.into_iter()
-			.map(|x| H160::from_low_u64_be(x))
-			.collect()
+		sp_std::vec![1, 2, 3, 4, 24, 25].into_iter().map(|x| H160::from_low_u64_be(x)).collect()
 	}
 }
 
@@ -227,27 +224,21 @@ where
 
 		match address {
 			// Ethereum precompiles
-			_ if address == to_address(1) => {
-				Some(ECRecover::execute(input, target_gas, context, is_static))
-			}
-			_ if address == to_address(2) => {
-				Some(Sha256::execute(input, target_gas, context, is_static))
-			}
-			_ if address == to_address(3) => {
-				Some(Ripemd160::execute(input, target_gas, context, is_static))
-			}
-			_ if address == to_address(4) => {
-				Some(Identity::execute(input, target_gas, context, is_static))
-			}
+			_ if address == to_address(1) =>
+				Some(ECRecover::execute(input, target_gas, context, is_static)),
+			_ if address == to_address(2) =>
+				Some(Sha256::execute(input, target_gas, context, is_static)),
+			_ if address == to_address(3) =>
+				Some(Ripemd160::execute(input, target_gas, context, is_static)),
+			_ if address == to_address(4) =>
+				Some(Identity::execute(input, target_gas, context, is_static)),
 			// Darwinia precompiles
-			_ if address == to_address(24) => {
+			_ if address == to_address(24) =>
 				Some(<Sub2SubBridge<R, MockS2sMessageSender, ()>>::execute(
 					input, target_gas, context, is_static,
-				))
-			}
-			_ if address == to_address(25) => Some(<Dispatch<R>>::execute(
-				input, target_gas, context, is_static,
-			)),
+				)),
+			_ if address == to_address(25) =>
+				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
@@ -361,9 +352,8 @@ impl fp_self_contained::SelfContainedCall for Call {
 	) -> Option<sp_runtime::DispatchResultWithInfo<sp_runtime::traits::PostDispatchInfoOf<Self>>> {
 		use sp_runtime::traits::Dispatchable as _;
 		match self {
-			call @ Call::Ethereum(darwinia_ethereum::Call::transact { .. }) => {
-				Some(call.dispatch(Origin::from(RawOrigin::EthereumTransaction(info))))
-			}
+			call @ Call::Ethereum(darwinia_ethereum::Call::transact { .. }) =>
+				Some(call.dispatch(Origin::from(RawOrigin::EthereumTransaction(info)))),
 			_ => None,
 		}
 	}
@@ -388,9 +378,9 @@ fn validate_self_contained_inner(
 		let extra_validation =
 			SignedExtra::validate_unsigned(call, &call.get_dispatch_info(), input_len)?;
 		// Then, do the controls defined by the ethereum pallet.
-		let self_contained_validation = eth_call.validate_self_contained(signed_info).ok_or(
-			TransactionValidityError::Invalid(InvalidTransaction::BadProof),
-		)??;
+		let self_contained_validation = eth_call
+			.validate_self_contained(signed_info)
+			.ok_or(TransactionValidityError::Invalid(InvalidTransaction::BadProof))??;
 
 		Ok(extra_validation.combine_with(self_contained_validation))
 	} else {
@@ -437,10 +427,7 @@ impl LegacyUnsignedTransaction {
 	pub fn sign(&self, key: &H256) -> Transaction {
 		let hash = self.signing_hash();
 		let msg = libsecp256k1::Message::parse(hash.as_fixed_bytes());
-		let s = libsecp256k1::sign(
-			&msg,
-			&libsecp256k1::SecretKey::parse_slice(&key[..]).unwrap(),
-		);
+		let s = libsecp256k1::sign(&msg, &libsecp256k1::SecretKey::parse_slice(&key[..]).unwrap());
 		let sig = s.0.serialize();
 
 		let sig = TransactionSignature::new(
@@ -485,27 +472,20 @@ fn address_build(seed: u8) -> AccountInfo {
 }
 
 pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExternalities) {
-	let mut t = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap();
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	let mapping_factory_address =
 		H160::from_str("0000000000000000000000000000000000000002").unwrap();
 
 	<s2s_issuing::GenesisConfig as GenesisBuild<Test>>::assimilate_storage(
-		&s2s_issuing::GenesisConfig {
-			mapping_factory_address,
-		},
+		&s2s_issuing::GenesisConfig { mapping_factory_address },
 		&mut t,
 	)
 	.unwrap();
 
-	let pairs = (0..accounts_len)
-		.map(|i| address_build(i as u8))
-		.collect::<Vec<_>>();
+	let pairs = (0..accounts_len).map(|i| address_build(i as u8)).collect::<Vec<_>>();
 
-	let balances: Vec<_> = (0..accounts_len)
-		.map(|i| (pairs[i].account_id.clone(), 100_000_000_000))
-		.collect();
+	let balances: Vec<_> =
+		(0..accounts_len).map(|i| (pairs[i].account_id.clone(), 100_000_000_000)).collect();
 
 	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
 		.assimilate_storage(&mut t)

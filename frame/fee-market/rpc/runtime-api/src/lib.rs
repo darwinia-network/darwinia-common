@@ -38,15 +38,9 @@ use sp_std::vec::Vec;
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub struct Fee<Balance> {
-	#[cfg_attr(
-		feature = "std",
-		serde(bound(serialize = "Balance: std::fmt::Display"))
-	)]
+	#[cfg_attr(feature = "std", serde(bound(serialize = "Balance: std::fmt::Display")))]
 	#[cfg_attr(feature = "std", serde(serialize_with = "serialize_as_string"))]
-	#[cfg_attr(
-		feature = "std",
-		serde(bound(deserialize = "Balance: std::str::FromStr"))
-	)]
+	#[cfg_attr(feature = "std", serde(bound(deserialize = "Balance: std::str::FromStr")))]
 	#[cfg_attr(feature = "std", serde(deserialize_with = "deserialize_from_string"))]
 	pub amount: Balance,
 }
@@ -64,8 +58,7 @@ fn deserialize_from_string<'de, D: Deserializer<'de>, T: std::str::FromStr>(
 	deserializer: D,
 ) -> Result<T, D::Error> {
 	let s = String::deserialize(deserializer)?;
-	s.parse::<T>()
-		.map_err(|_| serde::de::Error::custom("Parse from string failed"))
+	s.parse::<T>().map_err(|_| serde::de::Error::custom("Parse from string failed"))
 }
 
 #[derive(Eq, PartialEq, Encode, Decode, Default)]

@@ -151,10 +151,7 @@ impl<T: Config> AccountBasic<T> for MockAccountBasic<T> {
 		let account_id = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(*address);
 		let balance =
 			frame_support::storage::unhashed::get(&account_id.encode()).unwrap_or_default();
-		Account {
-			balance,
-			nonce: U256::zero(),
-		}
+		Account { balance, nonce: U256::zero() }
 	}
 	fn mutate_account_basic_balance(address: &H160, new_balance: U256) {
 		let account_id = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(*address);
@@ -219,9 +216,7 @@ frame_support::construct_runtime! {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap();
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 	let mut accounts = BTreeMap::new();
 	accounts.insert(
@@ -336,10 +331,7 @@ fn fee_deduction() {
 fn find_author() {
 	new_test_ext().execute_with(|| {
 		let author = EVM::find_author();
-		assert_eq!(
-			author,
-			H160::from_str("1234500000000000000000000000000000000000").unwrap()
-		);
+		assert_eq!(author, H160::from_str("1234500000000000000000000000000000000000").unwrap());
 	});
 }
 

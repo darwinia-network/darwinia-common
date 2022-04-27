@@ -54,10 +54,7 @@ pub struct Staking<Client, Block> {
 
 impl<Client, Block> Staking<Client, Block> {
 	pub fn new(client: Arc<Client>) -> Self {
-		Self {
-			client,
-			_marker: Default::default(),
-		}
+		Self { client, _marker: Default::default() }
 	}
 }
 

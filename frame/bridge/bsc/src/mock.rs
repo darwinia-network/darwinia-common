@@ -160,14 +160,10 @@ impl ExtBuilder {
 	pub fn build(self) -> TestExternalities {
 		self.set_associated_constants();
 
-		let mut storage = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.unwrap();
+		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 		<darwinia_bridge_bsc::GenesisConfig as GenesisBuild<Test>>::assimilate_storage(
-			&darwinia_bridge_bsc::GenesisConfig {
-				genesis_header: self.genesis_header,
-			},
+			&darwinia_bridge_bsc::GenesisConfig { genesis_header: self.genesis_header },
 			&mut storage,
 		)
 		.unwrap();
@@ -176,10 +172,7 @@ impl ExtBuilder {
 
 		ext.execute_with(|| {
 			Timestamp::set_timestamp(
-				SystemTime::now()
-					.duration_since(UNIX_EPOCH)
-					.unwrap()
-					.as_millis() as _,
+				SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as _,
 			);
 		});
 

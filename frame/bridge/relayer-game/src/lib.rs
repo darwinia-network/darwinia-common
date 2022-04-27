@@ -337,12 +337,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 		// TODO: reward on no challenge
 
 		if winning_relay_affirmation.relay_header_parcels.len() == 1 {
-			Some(
-				winning_relay_affirmation
-					.relay_header_parcels
-					.pop()
-					.unwrap(),
-			)
+			Some(winning_relay_affirmation.relay_header_parcels.pop().unwrap())
 		} else {
 			// Should never enter this condition
 			log::error!(target: "relayer-game", "   >  Relay Parcels Count - MISMATCHED");
@@ -363,12 +358,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 		game_id: &RelayHeaderId<T, I>,
 		relay_affirmation: RelayAffirmationT<T, I>,
 	) -> Option<RelayHeaderParcel<T, I>> {
-		let RelayAffirmation {
-			relayer,
-			stake,
-			mut maybe_extended_relay_affirmation_id,
-			..
-		} = relay_affirmation;
+		let RelayAffirmation { relayer, stake, mut maybe_extended_relay_affirmation_id, .. } =
+			relay_affirmation;
 		// BTreeMap<(relayer, unstake, reward)>
 		let mut honesties = <BTreeMap<AccountId<T>, (RingBalance<T, I>, RingBalance<T, I>)>>::new();
 		// BTreeMap<(relayer, slash)>
@@ -645,10 +636,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 			T::RelayerGameAdjustor::update_sample_points(game_sample_points);
 			T::RelayableChain::new_round(
 				game_id,
-				game_sample_points
-					.last()
-					.map(ToOwned::to_owned)
-					.unwrap_or_default(),
+				game_sample_points.last().map(ToOwned::to_owned).unwrap_or_default(),
 			);
 		});
 	}
@@ -656,9 +644,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 	pub fn game_over(game_id: RelayHeaderId<T, I>) {
 		// TODO: log::error log::trace
 		let _ = <RelayHeaderParcelToResolve<T, I>>::try_mutate(|relay_header_parcel_to_resolve| {
-			if let Some(i) = relay_header_parcel_to_resolve
-				.iter()
-				.position(|block_id| block_id == &game_id)
+			if let Some(i) =
+				relay_header_parcel_to_resolve.iter().position(|block_id| block_id == &game_id)
 			{
 				relay_header_parcel_to_resolve.remove(i);
 
@@ -777,11 +764,7 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	fn get_affirmed_relay_header_parcels(
 		relay_affirmation_id: &RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>> {
-		let RelayAffirmationId {
-			game_id,
-			round,
-			index,
-		} = relay_affirmation_id;
+		let RelayAffirmationId { game_id, round, index } = relay_affirmation_id;
 
 		Self::affirmations_of_game_at(&game_id, round)
 			.into_iter()
@@ -809,10 +792,7 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		let game_id = relay_header_parcel.header_id();
 
 		// Check if the proposed header has already been confirmed
-		ensure!(
-			game_id > best_confirmed_relay_header_id,
-			<Error<T, I>>::RelayParcelAR
-		);
+		ensure!(game_id > best_confirmed_relay_header_id, <Error<T, I>>::RelayParcelAR);
 		// Make sure the game is at first round
 		ensure!(
 			<Affirmations<T, I>>::decode_len(&game_id, 1).unwrap_or(0) == 0,
@@ -891,17 +871,11 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		let game_id = relay_header_parcel.header_id();
 
 		// Check if the proposed header has already been confirmed
-		ensure!(
-			game_id > best_confirmed_relay_header_id,
-			<Error<T, I>>::RelayParcelAR
-		);
+		ensure!(game_id > best_confirmed_relay_header_id, <Error<T, I>>::RelayParcelAR);
 
 		let now = <frame_system::Pallet<T>>::block_number();
 
-		ensure!(
-			Self::is_game_open_at(&game_id, now, 0),
-			<Error<T, I>>::GameAtThisRoundC
-		);
+		ensure!(Self::is_game_open_at(&game_id, now, 0), <Error<T, I>>::GameAtThisRoundC);
 
 		let proposed_relay_header_parcels = vec![relay_header_parcel];
 		let existed_affirmations = Self::affirmations_of_game_at(&game_id, 0);
@@ -957,18 +931,12 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		relay_affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
 		relay_proofs: Vec<Self::RelayProofs>,
 	) -> DispatchResult {
-		let RelayAffirmationId {
-			game_id,
-			round,
-			index,
-		} = relay_affirmation_id;
+		let RelayAffirmationId { game_id, round, index } = relay_affirmation_id;
 
 		<Affirmations<T, I>>::try_mutate(&game_id, round, |relay_affirmations| {
 			if let Some(relay_affirmation) = relay_affirmations.get_mut(index as usize) {
-				for (relay_header_parcel, relay_proofs) in relay_affirmation
-					.relay_header_parcels
-					.iter()
-					.zip(relay_proofs.into_iter())
+				for (relay_header_parcel, relay_proofs) in
+					relay_affirmation.relay_header_parcels.iter().zip(relay_proofs.into_iter())
 				{
 					if round == 0 {
 						T::RelayableChain::verify_relay_proofs(
@@ -1010,11 +978,8 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			game_sample_points,
 		);
 
-		let RelayAffirmationId {
-			game_id,
-			round: previous_round,
-			index: previous_index,
-		} = extended_relay_affirmation_id.clone();
+		let RelayAffirmationId { game_id, round: previous_round, index: previous_index } =
+			extended_relay_affirmation_id.clone();
 		let round = previous_round + 1;
 
 		ensure!(
@@ -1041,10 +1006,7 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			.ok_or(<Error<T, I>>::ExtendedRelayAffirmationNE)?;
 
 		// Currently only accept extending from a completed affirmation
-		ensure!(
-			extended_affirmation.verified_on_chain,
-			<Error<T, I>>::PreviousRelayProofsInc
-		);
+		ensure!(extended_affirmation.verified_on_chain, <Error<T, I>>::PreviousRelayProofsInc);
 
 		T::RelayableChain::pre_verify_game_sample_points(
 			&extended_relay_affirmation_id,
@@ -1071,10 +1033,8 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			// Allow affirm without relay proofs
 			// The relay proofs can be completed later through `complete_proofs`
 			if let Some(relay_proofs) = optional_relay_proofs {
-				for (relay_header_parcel, relay_proofs) in relay_affirmation
-					.relay_header_parcels
-					.iter()
-					.zip(relay_proofs.into_iter())
+				for (relay_header_parcel, relay_proofs) in
+					relay_affirmation.relay_header_parcels.iter().zip(relay_proofs.into_iter())
 				{
 					T::RelayableChain::verify_relay_proofs(
 						&game_id,

@@ -5,14 +5,8 @@ use sp_runtime::traits::Zero;
 use crate::*;
 
 pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
-	assert!(
-		<CounterForValidators<T>>::get().is_zero(),
-		"CounterForValidators already set."
-	);
-	assert!(
-		<CounterForNominators<T>>::get().is_zero(),
-		"CounterForNominators already set."
-	);
+	assert!(<CounterForValidators<T>>::get().is_zero(), "CounterForValidators already set.");
+	assert!(<CounterForNominators<T>>::get().is_zero(), "CounterForNominators already set.");
 	assert!(<StorageVersion<T>>::get() == Releases::V6_0_0);
 	Ok(())
 }

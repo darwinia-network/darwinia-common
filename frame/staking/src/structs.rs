@@ -170,16 +170,8 @@ where
 		}
 
 		(
-			update(
-				&mut self.active,
-				&mut self.ring_staking_lock,
-				plan_to_rebond_ring,
-			),
-			update(
-				&mut self.active_kton,
-				&mut self.kton_staking_lock,
-				plan_to_rebond_kton,
-			),
+			update(&mut self.active, &mut self.ring_staking_lock, plan_to_rebond_ring),
+			update(&mut self.active_kton, &mut self.kton_staking_lock, plan_to_rebond_kton),
 		)
 	}
 
@@ -364,10 +356,7 @@ pub struct ValidatorPrefs {
 }
 impl Default for ValidatorPrefs {
 	fn default() -> Self {
-		ValidatorPrefs {
-			commission: Perbill::zero(),
-			blocked: false,
-		}
+		ValidatorPrefs { commission: Perbill::zero(), blocked: false }
 	}
 }
 

@@ -97,7 +97,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangoro"),
 	impl_name: sp_runtime::create_runtime_str!("Pangoro"),
 	authoring_version: 0,
-	spec_version: 2_8_09_0,
+	spec_version: 2_8_10_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -111,10 +111,7 @@ pub const BABE_GENESIS_EPOCH_CONFIG: BabeEpochConfiguration = BabeEpochConfigura
 
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
-	NativeVersion {
-		runtime_version: VERSION,
-		can_author_with: Default::default(),
-	}
+	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
 frame_support::construct_runtime!(
@@ -180,10 +177,9 @@ where
 		nonce: Nonce,
 	) -> Option<(Call, <UncheckedExtrinsic as Extrinsic>::SignaturePayload)> {
 		// take the biggest period possible.
-		let period = BlockHashCountForPangoro::get()
-			.checked_next_power_of_two()
-			.map(|c| c / 2)
-			.unwrap_or(2) as u64;
+		let period =
+			BlockHashCountForPangoro::get().checked_next_power_of_two().map(|c| c / 2).unwrap_or(2)
+				as u64;
 		let current_block = System::block_number()
 			.saturated_into::<u64>()
 			// The `System::block_number` is initialized with `n+1`,
@@ -780,8 +776,8 @@ sp_api::impl_runtime_apis! {
 /// Pangolin account ownership digest from Pangoro.
 ///
 /// The byte vector returned by this function should be signed with a Pangolin account private key.
-/// This way, the owner of `pangoro_account_id` on Pangoro proves that the Pangolin account private key
-/// is also under his control.
+/// This way, the owner of `pangoro_account_id` on Pangoro proves that the Pangolin account private
+/// key is also under his control.
 pub fn pangoro_to_pangolin_account_ownership_digest<Call, AccountId, SpecVersion>(
 	pangolin_call: &Call,
 	pangoro_account_id: AccountId,

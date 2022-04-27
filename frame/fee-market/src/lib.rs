@@ -180,7 +180,8 @@ pub mod pallet {
 	impl<T: Config<I>, I: 'static> Hooks<BlockNumberFor<T>> for Pallet<T, I> {
 		fn on_finalize(_: BlockNumberFor<T>) {
 			for ((lane_id, message_nonce), order) in <Orders<T, I>>::iter() {
-				// Once the order's confirm_time is not None, we consider this order has been rewarded. Hence, clean the storage.
+				// Once the order's confirm_time is not None, we consider this order has been
+				// rewarded. Hence, clean the storage.
 				if order.confirm_time.is_some() {
 					<Orders<T, I>>::remove((lane_id, message_nonce));
 				}
@@ -208,10 +209,7 @@ pub mod pallet {
 				<Error<T, I>>::InsufficientBalance
 			);
 			if let Some(fee) = relay_fee {
-				ensure!(
-					fee >= T::MinimumRelayFee::get(),
-					<Error<T, I>>::RelayFeeTooLow
-				);
+				ensure!(fee >= T::MinimumRelayFee::get(), <Error<T, I>>::RelayFeeTooLow);
 			}
 			let fee = relay_fee.unwrap_or_else(T::MinimumRelayFee::get);
 
@@ -230,7 +228,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Update locked collateral for enrolled relayer, only supporting lock more. (Update market needed)
+		/// Update locked collateral for enrolled relayer, only supporting lock more. (Update market
+		/// needed)
 		#[pallet::weight(<T as Config<I>>::WeightInfo::update_locked_collateral())]
 		#[transactional]
 		pub fn update_locked_collateral(
@@ -287,10 +286,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_enrolled(&who), <Error<T, I>>::NotEnrolled);
-			ensure!(
-				new_fee >= T::MinimumRelayFee::get(),
-				<Error<T, I>>::RelayFeeTooLow
-			);
+			ensure!(new_fee >= T::MinimumRelayFee::get(), <Error<T, I>>::RelayFeeTooLow);
 
 			<RelayersMap<T, I>>::mutate(who.clone(), |relayer| {
 				relayer.fee = new_fee;
@@ -307,10 +303,7 @@ pub mod pallet {
 		pub fn cancel_enrollment(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(Self::is_enrolled(&who), <Error<T, I>>::NotEnrolled);
-			ensure!(
-				Self::occupied(&who).is_none(),
-				<Error<T, I>>::OccupiedRelayer
-			);
+			ensure!(Self::occupied(&who).is_none(), <Error<T, I>>::OccupiedRelayer);
 
 			Self::remove_enrolled_relayer(&who);
 			Self::deposit_event(Event::<T, I>::CancelEnrollment(who));
@@ -347,7 +340,8 @@ pub mod pallet {
 pub use pallet::*;
 
 impl<T: Config<I>, I: 'static> Pallet<T, I> {
-	/// An important update in this pallet, need to update market information in the following cases:
+	/// An important update in this pallet, need to update market information in the following
+	/// cases:
 	///
 	/// - New relayer enroll.
 	/// - The enrolled relayer wants to update fee or order capacity.
@@ -375,7 +369,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		}
 	}
 
-	/// Update relayer after slash occurred, this will changes RelayersMap storage. (Update market needed)
+	/// Update relayer after slash occurred, this will changes RelayersMap storage. (Update market
+	/// needed)
 	pub(crate) fn update_relayer_after_slash(
 		who: &T::AccountId,
 		new_collateral: RingBalance<T, I>,
@@ -414,7 +409,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		<Relayers<T, I>>::get().iter().any(|r| *r == *who)
 	}
 
-	/// Get market fee, If there is not enough relayers have order capacity to accept new order, return None.
+	/// Get market fee, If there is not enough relayers have order capacity to accept new order,
+	/// return None.
 	pub fn market_fee() -> Option<RingBalance<T, I>> {
 		Self::assigned_relayers().and_then(|relayers| relayers.last().map(|r| r.fee))
 	}
@@ -425,7 +421,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	}
 
 	/// Whether the enrolled relayer is occupied(Responsible for order relaying)
-	/// Whether the enrolled relayer is occupied, If occupied, return the number of orders and orders locked collateral, otherwise, return None.
+	/// Whether the enrolled relayer is occupied, If occupied, return the number of orders and
+	/// orders locked collateral, otherwise, return None.
 	pub(crate) fn occupied(who: &T::AccountId) -> Option<(u32, RingBalance<T, I>)> {
 		let mut count = 0u32;
 		let mut orders_locked_collateral = RingBalance::<T, I>::zero();
@@ -447,9 +444,8 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// Calculate the order capacity with fee_collateral
 	pub(crate) fn usable_order_capacity(who: &T::AccountId) -> u32 {
 		if let Some((_, orders_locked_collateral)) = Self::occupied(&who) {
-			let free_collateral = Self::relayer(who)
-				.collateral
-				.saturating_sub(orders_locked_collateral);
+			let free_collateral =
+				Self::relayer(who).collateral.saturating_sub(orders_locked_collateral);
 			return Self::collateral_to_order_capacity(free_collateral);
 		}
 		Self::collateral_to_order_capacity(Self::relayer(who).collateral)

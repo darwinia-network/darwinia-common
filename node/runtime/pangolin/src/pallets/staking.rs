@@ -36,8 +36,8 @@ impl Config for Runtime {
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type ElectionProvider = ElectionProviderMultiPhase;
 	type GenesisElectionProvider = GenesisElectionOf<Self>;
-	// Use the nominator map to iter voter AND no-ops for all SortedListProvider hooks. The migration
-	// to bags-list is a no-op, but the storage version will be updated.
+	// Use the nominator map to iter voter AND no-ops for all SortedListProvider hooks. The
+	// migration to bags-list is a no-op, but the storage version will be updated.
 	type SortedListProvider = UseNominatorsMap<Self>;
 	type RingCurrency = Ring;
 	type RingRewardRemainder = Treasury;

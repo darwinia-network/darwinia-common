@@ -154,9 +154,7 @@ frame_support::construct_runtime! {
 pub fn new_test_ext() -> TestExternalities {
 	sp_tracing::try_init_simple();
 
-	let mut storage = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap();
+	let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 	darwinia_balances::GenesisConfig::<Test, RingInstance> {
 		balances: (1..10)
@@ -204,10 +202,7 @@ pub fn run_to_block_from_genesis(n: BlockNumber) -> Vec<Header> {
 }
 
 pub fn events() -> Vec<Event> {
-	let events = System::events()
-		.into_iter()
-		.map(|evt| evt.event)
-		.collect::<Vec<_>>();
+	let events = System::events().into_iter().map(|evt| evt.event).collect::<Vec<_>>();
 
 	System::reset_events();
 
@@ -215,10 +210,7 @@ pub fn events() -> Vec<Event> {
 }
 
 pub fn relay_authorities_events() -> Vec<Event> {
-	events()
-		.into_iter()
-		.filter(|e| matches!(e, Event::RelayAuthorities(_)))
-		.collect()
+	events().into_iter().filter(|e| matches!(e, Event::RelayAuthorities(_))).collect()
 }
 
 pub fn request_authority(account_id: AccountId) -> DispatchResult {

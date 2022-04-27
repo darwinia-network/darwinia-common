@@ -91,10 +91,7 @@ frame_support::construct_runtime! {
 pub fn new_test_ext() -> TestExternalities {
 	sp_tracing::try_init_simple();
 
-	frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap()
-		.into()
+	frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }
 
 #[allow(unused)]
@@ -108,10 +105,8 @@ pub fn register_offchain_ext(ext: &mut TestExternalities) {
 }
 
 pub fn header_parent_mmr_log(hash: Hash) -> DigestItem<Hash> {
-	let mmr_root_log = MerkleMountainRangeRootLog::<Hash> {
-		prefix: LOG_PREFIX,
-		parent_mmr_root: hash,
-	};
+	let mmr_root_log =
+		MerkleMountainRangeRootLog::<Hash> { prefix: LOG_PREFIX, parent_mmr_root: hash };
 
 	DigestItem::Other(mmr_root_log.encode())
 }
@@ -156,9 +151,7 @@ pub fn run_to_block_from_genesis(n: BlockNumber) -> Vec<Header> {
 	let mut headers = vec![new_block()];
 
 	for _ in 2..=n {
-		headers.push(new_block_with_parent_hash(
-			headers[headers.len() - 1].hash(),
-		));
+		headers.push(new_block_with_parent_hash(headers[headers.len() - 1].hash()));
 	}
 
 	headers

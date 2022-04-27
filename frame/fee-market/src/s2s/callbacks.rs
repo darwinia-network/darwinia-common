@@ -28,7 +28,8 @@ pub struct FeeMarketMessageAcceptedHandler<T, I>(PhantomData<(T, I)>);
 impl<T: Config<I>, I: 'static> OnMessageAccepted for FeeMarketMessageAcceptedHandler<T, I> {
 	// Called when the message is accepted by message pallet
 	fn on_messages_accepted(lane: &LaneId, message: &MessageNonce) -> Weight {
-		// Create a new order based on the latest block, assign relayers which have priority to relaying
+		// Create a new order based on the latest block, assign relayers which have priority to
+		// relaying
 		let now = frame_system::Pallet::<T>::block_number();
 		if let Some(assigned_relayers) = <Pallet<T, I>>::assigned_relayers() {
 			let order = Order::new(

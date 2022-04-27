@@ -202,10 +202,7 @@ fn print_total_payout_error_rate() {
 		);
 		let inflation_rate = inflation * 10_000 / (hard_cap - total_left);
 
-		println!(
-			"year {:3}, inflation {:9}, rate {:3}",
-			year, inflation, inflation_rate
-		);
+		println!("year {:3}, inflation {:9}, rate {:3}", year, inflation, inflation_rate);
 
 		total_inflation += inflation;
 		total_left = total_left - inflation;
@@ -225,18 +222,10 @@ fn kton_slash_should_work() {
 		&[395939, 319797, 243655, 162437, 86295],
 		&[477157, 401015, 324873, 243655, 167513, 81218],
 		&[563451, 487309, 411167, 329949, 253807, 167512, 86294],
-		&[
-			644670, 568528, 492386, 411168, 335026, 248731, 167513, 81219,
-		],
-		&[
-			730964, 654822, 578680, 497462, 421320, 335025, 253807, 167513, 86294,
-		],
-		&[
-			822335, 746193, 670051, 588833, 512691, 426396, 345178, 258884, 177665, 91371,
-		],
-		&[
-			908629, 832487, 756345, 675127, 598985, 512690, 431472, 345178, 263959, 177665, 86294,
-		],
+		&[644670, 568528, 492386, 411168, 335026, 248731, 167513, 81219],
+		&[730964, 654822, 578680, 497462, 421320, 335025, 253807, 167513, 86294],
+		&[822335, 746193, 670051, 588833, 512691, 426396, 345178, 258884, 177665, 91371],
+		&[908629, 832487, 756345, 675127, 598985, 512690, 431472, 345178, 263959, 177665, 86294],
 		&[
 			1000000, 923858, 847716, 766498, 690356, 604061, 522843, 436549, 355330, 269036,
 			177665, 91371,
@@ -369,10 +358,7 @@ fn kton_slash_should_work() {
 			let kton_reward = compute_kton_reward::<Test>(10 * COIN, promise_month);
 			let slashes = kton_reward - compute_kton_reward::<Test>(10 * COIN, passed_month);
 
-			assert_eq!(
-				slashes,
-				exp_slashes[promise_month as usize - 1][passed_month as usize]
-			);
+			assert_eq!(slashes, exp_slashes[promise_month as usize - 1][passed_month as usize]);
 		}
 	}
 }

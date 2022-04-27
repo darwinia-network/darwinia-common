@@ -297,10 +297,7 @@ pub fn run() -> CliResult<()> {
 }
 
 fn get_exec_name() -> Option<String> {
-	env::current_exe()
-		.ok()?
-		.file_name()
-		.map(|name| name.to_string_lossy().into_owned())
+	env::current_exe().ok()?.file_name().map(|name| name.to_string_lossy().into_owned())
 }
 
 fn set_default_ss58_version(spec: &Box<dyn ChainSpec>) {
@@ -322,10 +319,8 @@ fn validate_trace_environment(cli: &Cli) -> CliResult<()> {
 		.any(|target| matches!(target.as_str(), "debug" | "trace"))
 		&& cli.run.base.import_params.wasm_runtime_overrides.is_none()
 	{
-		Err(
-			"`debug` or `trace` namespaces requires `--wasm-runtime-overrides /path/to/overrides`."
-				.into(),
-		)
+		Err("`debug` or `trace` namespaces requires `--wasm-runtime-overrides /path/to/overrides`."
+			.into())
 	} else {
 		Ok(())
 	}

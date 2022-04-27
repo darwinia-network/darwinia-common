@@ -53,10 +53,8 @@ impl Config<WithPangoroMessages> for Runtime {
 		FeeMarketPayment<Runtime, WithPangoroFeeMarket, Ring, RootAccountForPayments>;
 
 	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangoroFeeMarket>;
-	type OnDeliveryConfirmed = (
-		Substrate2SubstrateIssuing,
-		FeeMarketMessageConfirmedHandler<Self, WithPangoroFeeMarket>,
-	);
+	type OnDeliveryConfirmed =
+		(Substrate2SubstrateIssuing, FeeMarketMessageConfirmedHandler<Self, WithPangoroFeeMarket>);
 
 	type SourceHeaderChain = bm_pangoro::Pangoro;
 	type MessageDispatch = bm_pangoro::FromPangoroMessageDispatch;

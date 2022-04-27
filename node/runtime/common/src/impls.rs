@@ -126,10 +126,9 @@ impl Get<Option<(usize, ExtendedBalance)>> for OffchainRandomBalancing {
 /// Following checks are made:
 ///
 /// - message is rejected if its lane is currently blocked;
-/// - message is rejected if there are too many pending (undelivered) messages at the outbound
-///   lane;
-/// - check that the sender has rights to dispatch the call on target chain using provided
-///   dispatch origin;
+/// - message is rejected if there are too many pending (undelivered) messages at the outbound lane;
+/// - check that the sender has rights to dispatch the call on target chain using provided dispatch
+///   origin;
 /// - check that the sender has paid enough funds for both message delivery and dispatch.
 #[derive(RuntimeDebug)]
 pub struct FromThisChainMessageVerifier<B, R, I>(PhantomData<(B, R, I)>);
@@ -221,9 +220,8 @@ macro_rules! impl_self_contained_call {
 				info: &Self::SignedInfo,
 			) -> Option<TransactionValidity> {
 				match self {
-					Call::Ethereum(ref call) => {
-						Some(validate_self_contained_inner(&self, &call, info))
-					}
+					Call::Ethereum(ref call) =>
+						Some(validate_self_contained_inner(&self, &call, info)),
 					_ => None,
 				}
 			}
@@ -243,11 +241,10 @@ macro_rules! impl_self_contained_call {
 				info: Self::SignedInfo,
 			) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 				match self {
-					call @ Call::Ethereum(darwinia_ethereum::Call::transact { .. }) => {
+					call @ Call::Ethereum(darwinia_ethereum::Call::transact { .. }) =>
 						Some(call.dispatch(Origin::from(
 							darwinia_ethereum::RawOrigin::EthereumTransaction(info),
-						)))
-					}
+						))),
 					_ => None,
 				}
 			}
@@ -273,10 +270,9 @@ macro_rules! impl_self_contained_call {
 					SignedExtra::validate_unsigned(call, &call.get_dispatch_info(), input_len)?;
 				// Then, do the controls defined by the ethereum pallet.
 				use fp_self_contained::SelfContainedCall as _;
-				let self_contained_validation =
-					eth_call.validate_self_contained(signed_info).ok_or(
-						TransactionValidityError::Invalid(InvalidTransaction::BadProof),
-					)??;
+				let self_contained_validation = eth_call
+					.validate_self_contained(signed_info)
+					.ok_or(TransactionValidityError::Invalid(InvalidTransaction::BadProof))??;
 
 				Ok(extra_validation.combine_with(self_contained_validation))
 			} else {
