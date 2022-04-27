@@ -1281,7 +1281,7 @@ fn too_many_unbond_calls_should_not_work() {
 
 #[test]
 fn rebond_works() {
-	// 
+	//
 	// * Should test
 	// * Given an account being bonded [and chosen as a validator](not mandatory)
 	// * it can unbond a portion of its funds from the stash account.

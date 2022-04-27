@@ -102,9 +102,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.56"
+version = "1.0.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4361135be9122e0870de935d7c439aef945b9f9ddd4199a553b5270b49c82a27"
+checksum = "08f9b8508dccb7687a1d6c4ce66b2b0ecef467c94667de27d8d7fe1f8d2a9cdc"
 
 [[package]]
 name = "approx"
@@ -280,7 +280,7 @@ dependencies = [
  "memchr",
  "num_cpus",
  "once_cell",
- "pin-project-lite 0.2.8",
+ "pin-project-lite 0.2.9",
  "pin-utils",
  "slab",
  "wasm-bindgen-futures",
@@ -327,7 +327,7 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "memchr",
- "pin-project-lite 0.2.8",
+ "pin-project-lite 0.2.9",
 ]
 
 [[package]]
@@ -340,7 +340,7 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "memchr",
- "pin-project-lite 0.2.8",
+ "pin-project-lite 0.2.9",
 ]
 
 [[package]]
@@ -389,16 +389,16 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "backtrace"
-version = "0.3.64"
+version = "0.3.65"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e121dee8023ce33ab248d9ce1493df03c3b38a659b240096fcbd7048ff9c31f"
+checksum = "11a17d453482a265fd5f8479f2a3f405566e6ca627837aaddb85af8b1ab8ef61"
 dependencies = [
  "addr2line 0.17.0",
  "cc",
  "cfg-if 1.0.0",
  "libc",
- "miniz_oxide 0.4.4",
- "object 0.27.1",
+ "miniz_oxide",
+ "object 0.28.3",
  "rustc-demangle",
 ]
 
@@ -417,9 +417,9 @@ dependencies = [
 
 [[package]]
 name = "base-x"
-version = "0.2.8"
+version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4521f3e3d031370679b3b140beb36dfe4801b09ac77e30c61941f97df3ef28b"
+checksum = "dc19a4937b4fbd3fe3379793130e42060d10627a360f2127802b10b87e7baf74"
 
 [[package]]
 name = "base58"
@@ -905,7 +905,7 @@ checksum = "771fe0050b883fcc3ea2359b1a96bcfbc090b7116eae7c3c512c7a083fdf23d3"
 
 [[package]]
 name = "bsc-primitives"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "ethbloom",
@@ -1551,7 +1551,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "darwinia-balances-rpc-runtime-api",
  "darwinia-support",
@@ -1569,7 +1569,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances-rpc"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "darwinia-balances-rpc-runtime-api",
  "jsonrpc-core",
@@ -1583,7 +1583,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-balances-rpc-runtime-api"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "darwinia-support",
  "parity-scale-codec 2.3.1",
@@ -1594,7 +1594,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-beefy-gadget"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "beefy-primitives",
@@ -1616,14 +1616,14 @@ dependencies = [
 
 [[package]]
 name = "darwinia-beefy-primitives"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
 ]
 
 [[package]]
 name = "darwinia-bridge-bsc"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "bsc-primitives",
@@ -1644,7 +1644,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-bridge-ethereum"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "blake2-rfc",
@@ -1670,7 +1670,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-claims"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -1690,8 +1690,49 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-democracy"
+version = "2.8.10"
+dependencies = [
+ "darwinia-balances",
+ "darwinia-support",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "pallet-scheduler",
+ "parity-scale-codec 2.3.1",
+ "scale-info 1.0.0",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-storage",
+ "substrate-test-utils",
+]
+
+[[package]]
+name = "darwinia-elections-phragmen"
+version = "2.8.10"
+dependencies = [
+ "darwinia-balances",
+ "darwinia-support",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "log",
+ "parity-scale-codec 2.3.1",
+ "scale-info 1.0.0",
+ "sp-core",
+ "sp-io",
+ "sp-npos-elections",
+ "sp-runtime",
+ "sp-std",
+ "substrate-test-utils",
+]
+
+[[package]]
 name = "darwinia-ethereum"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -1725,7 +1766,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -1768,7 +1809,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-bridge-ethereum"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
@@ -1783,7 +1824,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-bridge-s2s"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "bp-message-dispatch",
  "bp-runtime",
@@ -1805,7 +1846,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-dispatch"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
@@ -1819,7 +1860,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-transfer"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -1852,7 +1893,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-utils"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "darwinia-evm",
  "darwinia-evm-precompile-utils-macro",
@@ -1868,7 +1909,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-utils-macro"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "evm",
  "fp-evm",
@@ -1880,7 +1921,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-fee-market"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "bitvec 0.20.4",
  "bp-messages",
@@ -1902,7 +1943,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-fee-market-rpc"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "darwinia-fee-market-rpc-runtime-api",
  "jsonrpc-core",
@@ -1916,7 +1957,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-fee-market-rpc-runtime-api"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "bp-messages",
  "parity-scale-codec 2.3.1",
@@ -1928,7 +1969,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-header-mmr"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "ckb-merkle-mountain-range 0.3.1",
@@ -1950,7 +1991,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-header-mmr-rpc"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "darwinia-header-mmr-rpc-runtime-api",
  "jsonrpc-core",
@@ -1964,7 +2005,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-header-mmr-rpc-runtime-api"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "darwinia-support",
  "parity-scale-codec 2.3.1",
@@ -1976,7 +2017,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-relay-authorities"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -1996,7 +2037,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-relay-primitives"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "frame-support",
  "parity-scale-codec 2.3.1",
@@ -2007,7 +2048,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-relayer-game"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "darwinia-balances",
  "darwinia-relay-primitives",
@@ -2028,7 +2069,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-staking"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "darwinia-balances",
  "darwinia-staking-rpc-runtime-api",
@@ -2059,7 +2100,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-staking-rpc"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "darwinia-staking-rpc-runtime-api",
  "jsonrpc-core",
@@ -2073,7 +2114,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-staking-rpc-runtime-api"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "darwinia-support",
  "parity-scale-codec 2.3.1",
@@ -2084,7 +2125,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-support"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "bp-messages",
  "bp-runtime",
@@ -2101,6 +2142,24 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "darwinia-vesting"
+version = "2.8.10"
+dependencies = [
+ "darwinia-balances",
+ "darwinia-support",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "parity-scale-codec 2.3.1",
+ "scale-info 1.0.0",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-storage",
 ]
 
 [[package]]
@@ -2219,7 +2278,7 @@ checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 
 [[package]]
 name = "dp-asset"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "ethereum-types",
  "parity-scale-codec 2.3.1",
@@ -2229,7 +2288,7 @@ dependencies = [
 
 [[package]]
 name = "dp-contract"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "bp-messages",
@@ -2242,7 +2301,7 @@ dependencies = [
 
 [[package]]
 name = "dp-evm-trace-ext"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "ethereum-types",
  "evm-tracing-events",
@@ -2254,7 +2313,7 @@ dependencies = [
 
 [[package]]
 name = "dp-evm-tracer"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "dp-evm-trace-ext",
  "ethereum-types",
@@ -2271,7 +2330,7 @@ dependencies = [
 
 [[package]]
 name = "dp-s2s"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "bp-message-dispatch",
@@ -2286,7 +2345,7 @@ dependencies = [
 
 [[package]]
 name = "drml"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "bsc-primitives",
  "drml-primitives",
@@ -2305,7 +2364,7 @@ dependencies = [
 
 [[package]]
 name = "drml-common-runtime"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "bp-messages",
  "bridge-runtime-common",
@@ -2331,7 +2390,7 @@ dependencies = [
 
 [[package]]
 name = "drml-primitives"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "sp-core",
  "sp-runtime",
@@ -2339,7 +2398,7 @@ dependencies = [
 
 [[package]]
 name = "drml-rpc"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "beefy-gadget",
  "beefy-gadget-rpc",
@@ -2385,7 +2444,7 @@ dependencies = [
 
 [[package]]
 name = "drml-service"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "async-trait",
@@ -2658,7 +2717,7 @@ dependencies = [
 
 [[package]]
 name = "ethereum-primitives"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "ethash",
@@ -2988,7 +3047,7 @@ dependencies = [
  "crc32fast",
  "libc",
  "libz-sys",
- "miniz_oxide 0.5.1",
+ "miniz_oxide",
 ]
 
 [[package]]
@@ -3286,7 +3345,7 @@ dependencies = [
 
 [[package]]
 name = "from-ethereum-issuing"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "darwinia-bridge-ethereum",
@@ -3309,7 +3368,7 @@ dependencies = [
 
 [[package]]
 name = "from-substrate-issuing"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "bp-message-dispatch",
@@ -3463,7 +3522,7 @@ dependencies = [
  "futures-io",
  "memchr",
  "parking",
- "pin-project-lite 0.2.8",
+ "pin-project-lite 0.2.9",
  "waker-fn",
 ]
 
@@ -3527,7 +3586,7 @@ dependencies = [
  "futures-sink",
  "futures-task",
  "memchr",
- "pin-project-lite 0.2.8",
+ "pin-project-lite 0.2.9",
  "pin-utils",
  "slab",
 ]
@@ -3804,14 +3863,14 @@ checksum = "1ff4f84919677303da5f147645dbea6b1881f368d03ac84e1dc09031ebd7b2c6"
 dependencies = [
  "bytes 1.1.0",
  "http",
- "pin-project-lite 0.2.8",
+ "pin-project-lite 0.2.9",
 ]
 
 [[package]]
 name = "httparse"
-version = "1.7.0"
+version = "1.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6330e8a36bd8c859f3fa6d9382911fbb7147ec39807f63b923933a247240b9ba"
+checksum = "496ce29bb5a52785b44e0f7ca2847ae0bb839c9bd28f69acac9b99d461c0c04c"
 
 [[package]]
 name = "httpdate"
@@ -3840,7 +3899,7 @@ dependencies = [
  "httparse",
  "httpdate",
  "itoa 1.0.1",
- "pin-project-lite 0.2.8",
+ "pin-project-lite 0.2.9",
  "socket2 0.4.4",
  "tokio",
  "tower-service",
@@ -4030,9 +4089,9 @@ dependencies = [
 
 [[package]]
 name = "ipnet"
-version = "2.4.0"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35e70ee094dc02fd9c13fdad4940090f22dbd6ac7c9e7094a46cf0232a50bc7c"
+checksum = "879d54834c8c76457ef4293a689b2a8c59b076067ad77b15efafbb05f92a592b"
 
 [[package]]
 name = "itertools"
@@ -4360,9 +4419,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.123"
+version = "0.2.124"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb691a747a7ab48abc15c5b42066eaafde10dc427e3b6ee2a1cf43db04c763bd"
+checksum = "21a41fed9d98f27ab1c6d161da622a4fa35e8a54a8adc24bbf3ddd0ef70b0e50"
 
 [[package]]
 name = "libloading"
@@ -5156,7 +5215,7 @@ checksum = "71d96e3f3c0b6325d8ccd83c33b28acb183edcb6c67938ba104ec546854b0882"
 
 [[package]]
 name = "merkle-patricia-trie"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "criterion",
@@ -5207,16 +5266,6 @@ name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
-
-[[package]]
-name = "miniz_oxide"
-version = "0.4.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a92518e98c078586bc6c934028adcca4c92a53d6a958196de835170a01d84e4b"
-dependencies = [
- "adler",
- "autocfg",
-]
 
 [[package]]
 name = "miniz_oxide"
@@ -5295,7 +5344,7 @@ dependencies = [
 
 [[package]]
 name = "module-transaction-pause"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "darwinia-balances",
  "darwinia-support",
@@ -5684,9 +5733,9 @@ dependencies = [
 
 [[package]]
 name = "num-iter"
-version = "0.1.42"
+version = "0.1.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2021c8337a54d21aca0d59a92577a029af9431cb59b909b03252b9c164fad59"
+checksum = "7d03e6c028c5dc5cac6e2dec0efda81fc887605bb3d884578bb6d6bf7514e252"
 dependencies = [
  "autocfg",
  "num-integer",
@@ -5750,9 +5799,9 @@ dependencies = [
 
 [[package]]
 name = "object"
-version = "0.27.1"
+version = "0.28.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67ac1d3f9a1d3616fd9a60c8d74296f22406a238b6a72f5cc1e6f314df4ffbf9"
+checksum = "40bec70ba014595f99f7aa110b84331ffe1ee9aece7fe6f387cc7e3ecda4d456"
 dependencies = [
  "memchr",
 ]
@@ -6528,7 +6577,7 @@ dependencies = [
 
 [[package]]
 name = "pangolin-runtime"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "beefy-primitives",
@@ -6649,7 +6698,7 @@ dependencies = [
 
 [[package]]
 name = "pangoro-runtime"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "beefy-primitives",
@@ -7092,9 +7141,9 @@ checksum = "257b64915a082f7811703966789728173279bdebb956b143dbcd23f6f970a777"
 
 [[package]]
 name = "pin-project-lite"
-version = "0.2.8"
+version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e280fbe77cc62c91527259e9442153f4688736748d24660126286329742b4c6c"
+checksum = "e0a7ae3ac2f1173085d398531c705756c94a4c56843785df85a60c1a0afac116"
 
 [[package]]
 name = "pin-utils"
@@ -7537,18 +7586,18 @@ dependencies = [
 
 [[package]]
 name = "ref-cast"
-version = "1.0.6"
+version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "300f2a835d808734ee295d45007adacb9ebb29dd3ae2424acfa17930cae541da"
+checksum = "685d58625b6c2b83e4cc88a27c4bf65adb7b6b16dbdc413e515c9405b47432ab"
 dependencies = [
  "ref-cast-impl",
 ]
 
 [[package]]
 name = "ref-cast-impl"
-version = "1.0.6"
+version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c38e3aecd2b21cb3959637b883bb3714bc7e43f0268b9a29d3743ee3e55cdd2"
+checksum = "a043824e29c94169374ac5183ac0ed43f5724dc4556b19568007486bd840fa1f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -10197,7 +10246,7 @@ dependencies = [
 
 [[package]]
 name = "template-runtime"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "darwinia-balances",
  "darwinia-ethereum",
@@ -10362,9 +10411,9 @@ dependencies = [
 
 [[package]]
 name = "tinyvec"
-version = "1.5.1"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c1c1d5a42b6245520c249549ec267180beaffcc0615401ac8e31853d4b6d8d2"
+checksum = "87cc5ceb3875bb20c2890005a4e226a4651264a5c75edb2421b52861a0a0cb50"
 dependencies = [
  "tinyvec_macros",
 ]
@@ -10377,7 +10426,7 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "to-ethereum-backing"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -10407,7 +10456,7 @@ dependencies = [
 
 [[package]]
 name = "to-substrate-backing"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "array-bytes",
  "bp-message-dispatch",
@@ -10435,7 +10484,7 @@ dependencies = [
 
 [[package]]
 name = "to-tron-backing"
-version = "2.8.9"
+version = "2.8.10"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -10456,7 +10505,7 @@ dependencies = [
  "mio 0.8.2",
  "num_cpus",
  "once_cell",
- "pin-project-lite 0.2.8",
+ "pin-project-lite 0.2.9",
  "signal-hook-registry",
  "socket2 0.4.4",
  "tokio-macros",
@@ -10492,7 +10541,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "50145484efff8818b5ccd256697f36863f587da82cf8b409c53adf1e840798e3"
 dependencies = [
  "futures-core",
- "pin-project-lite 0.2.8",
+ "pin-project-lite 0.2.9",
  "tokio",
 ]
 
@@ -10507,7 +10556,7 @@ dependencies = [
  "futures-io",
  "futures-sink",
  "log",
- "pin-project-lite 0.2.8",
+ "pin-project-lite 0.2.9",
  "tokio",
 ]
 
@@ -10533,16 +10582,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5d0ecdcb44a79f0fe9844f0c4f33a342cbcbb5117de8001e6ba0dc2351327d09"
 dependencies = [
  "cfg-if 1.0.0",
- "pin-project-lite 0.2.8",
+ "pin-project-lite 0.2.9",
  "tracing-attributes",
  "tracing-core",
 ]
 
 [[package]]
 name = "tracing-attributes"
-version = "0.1.20"
+version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e65ce065b4b5c53e73bb28912318cb8c9e9ad3921f1d669eb0e68b4c8143a2b"
+checksum = "cc6b8ad3567499f98a1db7a752b07a7c8c7c7c34c332ec00effb2b0027974b7c"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -10571,9 +10620,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-log"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6923477a48e41c1951f1999ef8bb5a3023eb723ceadafe78ffb65dc366761e3"
+checksum = "78ddad33d2d10b1ed7eb9d1f518a5674713876e97e5bb9b7345a7984fbb4f922"
 dependencies = [
  "lazy_static",
  "log",
@@ -10772,9 +10821,9 @@ dependencies = [
 
 [[package]]
 name = "unicode-bidi"
-version = "0.3.7"
+version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a01404663e3db436ed2746d9fefef640d868edae3cceb81c3b8d5732fda678f"
+checksum = "099b7128301d285f79ddd55b9a83d5e6b9e97c92e0ea0daebee7263e932de992"
 
 [[package]]
 name = "unicode-normalization"
