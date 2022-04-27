@@ -156,7 +156,7 @@ frame_support::construct_runtime!(
 		BridgePangolinGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 19,
 		BridgePangolinMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 17,
 
-		PangolinFeeMarket: darwinia_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 22,
+		PangolinFeeMarket: pallet_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 22,
 		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 23,
 
 		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
@@ -433,13 +433,13 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
-		fn market_fee(_instance: u8) -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
-			PangolinFeeMarket::market_fee().and_then(|fee| Some(darwinia_fee_market_rpc_runtime_api::Fee { amount: fee }))
+	impl pallet_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
+		fn market_fee(_instance: u8) -> Option<pallet_fee_market_rpc_runtime_api::Fee<Balance>> {
+			PangolinFeeMarket::market_fee().and_then(|fee| Some(pallet_fee_market_rpc_runtime_api::Fee { amount: fee }))
 		}
 
-		fn in_process_orders(_instance: u8) -> darwinia_fee_market_rpc_runtime_api::InProcessOrders {
-			darwinia_fee_market_rpc_runtime_api::InProcessOrders {
+		fn in_process_orders(_instance: u8) -> pallet_fee_market_rpc_runtime_api::InProcessOrders {
+			pallet_fee_market_rpc_runtime_api::InProcessOrders {
 				orders: PangolinFeeMarket::in_process_orders(),
 			}
 		}

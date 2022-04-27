@@ -27,8 +27,6 @@ darwinia-ethereum                   = { default-features = false, path = "../../
 darwinia-evm                        = { default-features = false, path = "../../../frame/dvm/evm" }
 darwinia-evm-precompile-bridge-bsc  = { default-features = false, path = "../../../frame/dvm/evm/precompiles/bridge/bsc" }
 darwinia-evm-precompile-transfer    = { default-features = false, path = "../../../frame/dvm/evm/precompiles/transfer" }
-darwinia-fee-market                 = { default-features = false, path = "../../../frame/fee-market" }
-darwinia-fee-market-rpc-runtime-api = { default-features = false, path = "../../../frame/fee-market/rpc/runtime-api" }
 darwinia-staking                    = { default-features = false, path = "../../../frame/staking" }
 darwinia-staking-rpc-runtime-api    = { default-features = false, path = "../../../frame/staking/rpc/runtime-api" }
 darwinia-support                    = { default-features = false, path = "../../../frame/support" }
@@ -65,6 +63,8 @@ pallet-bridge-dispatch                     = { default-features = false, git = "
 pallet-bridge-grandpa                      = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
 pallet-bridge-messages                     = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
 pallet-election-provider-multi-phase       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+pallet-fee-market                          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
+pallet-fee-market-rpc-runtime-api          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
 pallet-grandpa                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 pallet-im-online                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 pallet-mmr                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
@@ -124,8 +124,6 @@ std = [
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-bridge-bsc/std",
 	"darwinia-evm-precompile-transfer/std",
-	"darwinia-fee-market/std",
-	"darwinia-fee-market-rpc-runtime-api/std",
 	"darwinia-staking/std",
 	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",
@@ -162,6 +160,8 @@ std = [
 	"pallet-bridge-grandpa/std",
 	"pallet-bridge-messages/std",
 	"pallet-election-provider-multi-phase/std",
+	"pallet-fee-market/std",
+	"pallet-fee-market-rpc-runtime-api/std",
 	"pallet-grandpa/std",
 	"pallet-im-online/std",
 	"pallet-mmr/std",

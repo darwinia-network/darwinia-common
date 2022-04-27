@@ -25,7 +25,6 @@ darwinia-bridge-ethereum            = { path = "../../frame/bridge/ethereum" }
 darwinia-claims                     = { path = "../../frame/claims" }
 darwinia-ethereum                   = { path = "../../frame/dvm/ethereum" }
 darwinia-evm                        = { path = "../../frame/dvm/evm" }
-darwinia-fee-market-rpc-runtime-api = { path = "../../frame/fee-market/rpc/runtime-api" }
 darwinia-staking-rpc-runtime-api    = { path = "../../frame/staking/rpc/runtime-api" }
 dp-evm-trace-ext                    = { default-features = false, path = "../../primitives/evm-trace/ext" }
 drml-primitives                     = { path = "../primitives" }
@@ -40,6 +39,7 @@ frame-system-rpc-runtime-api               = { git = "https://github.com/darwini
 pallet-im-online                           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 sc-authority-discovery                     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+pallet-fee-market-rpc-runtime-api          = { git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
 sc-basic-authorship                        = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 sc-chain-spec                              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 sc-client-api                              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }

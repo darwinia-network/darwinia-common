@@ -1,4 +1,4 @@
-pub use darwinia_fee_market::Instance1 as WithPangolinFeeMarket;
+pub use pallet_fee_market::Instance1 as WithPangolinFeeMarket;
 
 // --- core ---
 use core::cmp;
@@ -7,7 +7,7 @@ use frame_support::{traits::LockIdentifier, PalletId};
 use sp_runtime::{traits::UniqueSaturatedInto, Permill};
 // --- darwinia ---
 use crate::*;
-use darwinia_fee_market::{Config, RingBalance, Slasher};
+use pallet_fee_market::{Config, RingBalance, Slasher};
 
 pub struct FeeMarketSlasher;
 impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
