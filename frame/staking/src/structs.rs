@@ -524,22 +524,28 @@ impl<T: Config> SortedListProvider<T::AccountId> for UseNominatorsMap<T> {
 	fn iter() -> Box<dyn Iterator<Item = T::AccountId>> {
 		Box::new(<Nominators<T>>::iter().map(|(n, _)| n))
 	}
+
 	fn count() -> u32 {
 		<CounterForNominators<T>>::get()
 	}
+
 	fn contains(id: &T::AccountId) -> bool {
 		<Nominators<T>>::contains_key(id)
 	}
+
 	fn on_insert(_: T::AccountId, _weight: VoteWeight) -> Result<(), Self::Error> {
 		// nothing to do on insert.
 		Ok(())
 	}
+
 	fn on_update(_: &T::AccountId, _weight: VoteWeight) {
 		// nothing to do on update.
 	}
+
 	fn on_remove(_: &T::AccountId) {
 		// nothing to do on remove.
 	}
+
 	fn regenerate(
 		_: impl IntoIterator<Item = T::AccountId>,
 		_: Box<dyn Fn(&T::AccountId) -> VoteWeight>,
@@ -547,9 +553,11 @@ impl<T: Config> SortedListProvider<T::AccountId> for UseNominatorsMap<T> {
 		// nothing to do upon regenerate.
 		0
 	}
+
 	fn sanity_check() -> Result<(), &'static str> {
 		Ok(())
 	}
+
 	fn clear(maybe_count: Option<u32>) -> u32 {
 		<Nominators<T>>::remove_all(maybe_count);
 		if let Some(count) = maybe_count {

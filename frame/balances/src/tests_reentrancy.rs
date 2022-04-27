@@ -50,29 +50,29 @@ frame_support::parameter_types! {
 	pub static ExistentialDeposit: Balance = 0;
 }
 impl frame_system::Config for Test {
+	type AccountData = AccountData<Balance>;
+	type AccountId = u64;
 	type BaseCallFilter = Everything;
-	type BlockWeights = BlockWeights;
+	type BlockHashCount = BlockHashCount;
 	type BlockLength = ();
-	type DbWeight = ();
-	type Origin = Origin;
-	type Index = u64;
 	type BlockNumber = u64;
+	type BlockWeights = BlockWeights;
 	type Call = Call;
+	type DbWeight = ();
+	type Event = Event;
 	type Hash = H256;
 	type Hashing = ::sp_runtime::traits::BlakeTwo256;
-	type AccountId = u64;
-	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
-	type BlockHashCount = BlockHashCount;
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
+	type Index = u64;
+	type Lookup = IdentityLookup<Self::AccountId>;
 	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type OnNewAccount = ();
 	type OnSetCode = ();
+	type Origin = Origin;
+	type PalletInfo = PalletInfo;
+	type SS58Prefix = ();
+	type SystemWeightInfo = ();
+	type Version = ();
 }
 
 frame_support::parameter_types! {
@@ -80,11 +80,11 @@ frame_support::parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 impl pallet_transaction_payment::Config for Test {
-	type OnChargeTransaction = CurrencyAdapter<Ring, ()>;
-	type TransactionByteFee = TransactionByteFee;
-	type OperationalFeeMultiplier = OperationalFeeMultiplier;
-	type WeightToFee = IdentityFee<Balance>;
 	type FeeMultiplierUpdate = ();
+	type OnChargeTransaction = CurrencyAdapter<Ring, ()>;
+	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+	type TransactionByteFee = TransactionByteFee;
+	type WeightToFee = IdentityFee<Balance>;
 }
 
 pub struct OnDustRemoval;
@@ -98,21 +98,21 @@ frame_support::parameter_types! {
 	pub const MaxReserves: u32 = 2;
 }
 impl Config<RingInstance> for Test {
-	type Balance = Balance;
-	type DustRemoval = OnDustRemoval;
-	type Event = Event;
-	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = StorageMapShim<
 		Account<Test, RingInstance>,
 		frame_system::Provider<Test>,
 		Balance,
 		AccountData<Balance>,
 	>;
+	type Balance = Balance;
+	type BalanceInfo = AccountData<Balance>;
+	type DustRemoval = OnDustRemoval;
+	type Event = Event;
+	type ExistentialDeposit = ExistentialDeposit;
 	type MaxLocks = MaxLocks;
 	type MaxReserves = MaxReserves;
-	type ReserveIdentifier = [u8; 8];
 	type OtherCurrencies = ();
+	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
 

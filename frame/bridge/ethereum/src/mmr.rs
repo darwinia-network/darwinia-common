@@ -41,6 +41,7 @@ pub fn hash(data: &[u8]) -> [u8; 32] {
 pub struct MMRMerge;
 impl Merge for MMRMerge {
 	type Item = [u8; 32];
+
 	fn merge(lhs: &Self::Item, rhs: &Self::Item) -> Self::Item {
 		let mut data = vec![];
 		data.append(&mut lhs.to_vec());

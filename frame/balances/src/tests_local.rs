@@ -54,29 +54,29 @@ parameter_types! {
 		frame_system::limits::BlockWeights::simple_max(1024);
 }
 impl frame_system::Config for Test {
+	type AccountData = AccountData<Balance>;
+	type AccountId = Balance;
 	type BaseCallFilter = Everything;
-	type BlockWeights = BlockWeights;
+	type BlockHashCount = ();
 	type BlockLength = ();
-	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
-	type Index = Balance;
 	type BlockNumber = Balance;
+	type BlockWeights = BlockWeights;
+	type Call = Call;
+	type DbWeight = ();
+	type Event = Event;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = Balance;
-	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
-	type BlockHashCount = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
+	type Index = Balance;
+	type Lookup = IdentityLookup<Self::AccountId>;
 	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type OnNewAccount = ();
 	type OnSetCode = ();
+	type Origin = Origin;
+	type PalletInfo = PalletInfo;
+	type SS58Prefix = ();
+	type SystemWeightInfo = ();
+	type Version = ();
 }
 
 parameter_types! {
@@ -84,11 +84,11 @@ parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 impl pallet_transaction_payment::Config for Test {
-	type OnChargeTransaction = CurrencyAdapter<Ring, ()>;
-	type TransactionByteFee = TransactionByteFee;
-	type OperationalFeeMultiplier = OperationalFeeMultiplier;
-	type WeightToFee = IdentityFee<u64>;
 	type FeeMultiplierUpdate = ();
+	type OnChargeTransaction = CurrencyAdapter<Ring, ()>;
+	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+	type TransactionByteFee = TransactionByteFee;
+	type WeightToFee = IdentityFee<u64>;
 }
 
 parameter_types! {
@@ -96,39 +96,39 @@ parameter_types! {
 	pub const MaxReserves: u32 = 2;
 }
 impl Config<RingInstance> for Test {
-	type Balance = Balance;
-	type DustRemoval = ();
-	type Event = Event;
-	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = StorageMapShim<
 		Account<Test, RingInstance>,
 		frame_system::Provider<Test>,
 		Balance,
 		AccountData<Balance>,
 	>;
-	type MaxLocks = ();
-	type MaxReserves = MaxReserves;
-	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
-	type OtherCurrencies = (Kton,);
-	type WeightInfo = ();
-}
-impl Config<KtonInstance> for Test {
 	type Balance = Balance;
+	type BalanceInfo = AccountData<Balance>;
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
+	type MaxLocks = ();
+	type MaxReserves = MaxReserves;
+	type OtherCurrencies = (Kton,);
+	type ReserveIdentifier = [u8; 8];
+	type WeightInfo = ();
+}
+impl Config<KtonInstance> for Test {
 	type AccountStore = StorageMapShim<
 		Account<Test, KtonInstance>,
 		frame_system::Provider<Test>,
 		Balance,
 		AccountData<Balance>,
 	>;
+	type Balance = Balance;
+	type BalanceInfo = AccountData<Balance>;
+	type DustRemoval = ();
+	type Event = Event;
+	type ExistentialDeposit = ExistentialDeposit;
 	type MaxLocks = ();
 	type MaxReserves = MaxReserves;
-	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = (Ring,);
+	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
 
@@ -160,6 +160,7 @@ impl ExtBuilder {
 		self.existential_deposit = existential_deposit;
 		self
 	}
+
 	pub fn monied(mut self, monied: bool) -> Self {
 		self.monied = monied;
 		if self.existential_deposit == 0 {
@@ -167,9 +168,11 @@ impl ExtBuilder {
 		}
 		self
 	}
+
 	pub fn set_associated_constants(&self) {
 		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow_mut() = self.existential_deposit);
 	}
+
 	pub fn build(self) -> sp_io::TestExternalities {
 		self.set_associated_constants();
 		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();

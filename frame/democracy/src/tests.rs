@@ -70,41 +70,41 @@ parameter_types! {
 		frame_system::limits::BlockWeights::simple_max(1_000_000);
 }
 impl frame_system::Config for Test {
+	type AccountData = AccountData<u64>;
+	type AccountId = u64;
 	type BaseCallFilter = BaseFilter;
-	type BlockWeights = ();
+	type BlockHashCount = BlockHashCount;
 	type BlockLength = ();
-	type DbWeight = ();
-	type Origin = Origin;
-	type Index = u64;
 	type BlockNumber = u64;
+	type BlockWeights = ();
 	type Call = Call;
+	type DbWeight = ();
+	type Event = Event;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = u64;
-	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
-	type BlockHashCount = BlockHashCount;
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = AccountData<u64>;
-	type OnNewAccount = ();
+	type Index = u64;
+	type Lookup = IdentityLookup<Self::AccountId>;
 	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type OnNewAccount = ();
 	type OnSetCode = ();
+	type Origin = Origin;
+	type PalletInfo = PalletInfo;
+	type SS58Prefix = ();
+	type SystemWeightInfo = ();
+	type Version = ();
 }
 parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * BlockWeights::get().max_block;
 }
 impl pallet_scheduler::Config for Test {
+	type Call = Call;
 	type Event = Event;
+	type MaxScheduledPerBlock = ();
+	type MaximumWeight = MaximumSchedulerWeight;
 	type Origin = Origin;
 	type PalletsOrigin = OriginCaller;
-	type Call = Call;
-	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureRoot<u64>;
-	type MaxScheduledPerBlock = ();
 	type WeightInfo = ();
 }
 parameter_types! {
@@ -112,16 +112,16 @@ parameter_types! {
 	pub const MaxLocks: u32 = 10;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
-	type Balance = u64;
-	type Event = Event;
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type MaxLocks = MaxLocks;
+	type Balance = u64;
 	type BalanceInfo = AccountData<Balance>;
+	type DustRemoval = ();
+	type Event = Event;
+	type ExistentialDeposit = ExistentialDeposit;
+	type MaxLocks = MaxLocks;
+	type MaxReserves = ();
 	type OtherCurrencies = ();
+	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
 parameter_types! {
@@ -150,39 +150,40 @@ impl SortedMembers<u64> for OneToFive {
 	fn sorted_members() -> Vec<u64> {
 		vec![1, 2, 3, 4, 5]
 	}
+
 	#[cfg(feature = "runtime-benchmarks")]
 	fn add(_m: &u64) {}
 }
 
 impl Config for Test {
-	type Proposal = Call;
-	type Event = Event;
-	type Currency = Balances;
-	type EnactmentPeriod = EnactmentPeriod;
-	type LaunchPeriod = LaunchPeriod;
-	type VotingPeriod = VotingPeriod;
-	type VoteLockingPeriod = VoteLockingPeriod;
-	type FastTrackVotingPeriod = FastTrackVotingPeriod;
-	type MinimumDeposit = MinimumDeposit;
-	type ExternalOrigin = EnsureSignedBy<Two, u64>;
-	type ExternalMajorityOrigin = EnsureSignedBy<Three, u64>;
-	type ExternalDefaultOrigin = EnsureSignedBy<One, u64>;
-	type FastTrackOrigin = EnsureSignedBy<Five, u64>;
-	type CancellationOrigin = EnsureSignedBy<Four, u64>;
 	type BlacklistOrigin = EnsureRoot<u64>;
 	type CancelProposalOrigin = EnsureRoot<u64>;
-	type VetoOrigin = EnsureSignedBy<OneToFive, u64>;
+	type CancellationOrigin = EnsureSignedBy<Four, u64>;
 	type CooloffPeriod = CooloffPeriod;
-	type PreimageByteDeposit = PreimageByteDeposit;
-	type Slash = ();
-	type InstantOrigin = EnsureSignedBy<Six, u64>;
+	type Currency = Balances;
+	type EnactmentPeriod = EnactmentPeriod;
+	type Event = Event;
+	type ExternalDefaultOrigin = EnsureSignedBy<One, u64>;
+	type ExternalMajorityOrigin = EnsureSignedBy<Three, u64>;
+	type ExternalOrigin = EnsureSignedBy<Two, u64>;
+	type FastTrackOrigin = EnsureSignedBy<Five, u64>;
+	type FastTrackVotingPeriod = FastTrackVotingPeriod;
 	type InstantAllowed = InstantAllowed;
-	type Scheduler = Scheduler;
+	type InstantOrigin = EnsureSignedBy<Six, u64>;
+	type LaunchPeriod = LaunchPeriod;
+	type MaxProposals = MaxProposals;
 	type MaxVotes = MaxVotes;
+	type MinimumDeposit = MinimumDeposit;
 	type OperationalPreimageOrigin = EnsureSignedBy<Six, u64>;
 	type PalletsOrigin = OriginCaller;
+	type PreimageByteDeposit = PreimageByteDeposit;
+	type Proposal = Call;
+	type Scheduler = Scheduler;
+	type Slash = ();
+	type VetoOrigin = EnsureSignedBy<OneToFive, u64>;
+	type VoteLockingPeriod = VoteLockingPeriod;
+	type VotingPeriod = VotingPeriod;
 	type WeightInfo = ();
-	type MaxProposals = MaxProposals;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

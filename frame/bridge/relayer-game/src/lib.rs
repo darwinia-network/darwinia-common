@@ -616,13 +616,13 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 					log::error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
 
 					None
-				}
+				},
 				_ => {
 					// Should never enter this condition
 					log::error!(target: "relayer-game", "   >  Honesty Relayer - MORE THAN ONE");
 
 					None
-				}
+				},
 			}
 		} else {
 			// Should never enter this condition
@@ -706,13 +706,13 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 					{
 						relay_header_parcels.push(relay_header_parcel);
 					}
-				}
+				},
 				// No relayer response for the latest round
 				(_, 0) => {
 					log::trace!(target: "relayer-game", "   >  All Relayers Abstain, Settle Abandon");
 
 					Self::settle_abandon(&game_id);
-				}
+				},
 				// No more challenge found at latest round, only one relayer win
 				(_, 1) => {
 					log::trace!(target: "relayer-game", "   >  No More Challenge, Settle With Challenge");
@@ -726,7 +726,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 						Self::settle_abandon(&game_id);
 					}
-				}
+				},
 				(last_round, _) => {
 					let distance = T::RelayableChain::distance_between(
 						&game_id,
@@ -750,7 +750,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 						continue;
 					}
-				}
+				},
 			}
 
 			Self::game_over(game_id);
@@ -766,10 +766,10 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 }
 
 impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
-	type Relayer = AccountId<T>;
 	type RelayHeaderId = RelayHeaderId<T, I>;
 	type RelayHeaderParcel = RelayHeaderParcel<T, I>;
 	type RelayProofs = RelayProofs<T, I>;
+	type Relayer = AccountId<T>;
 
 	fn get_affirmed_relay_header_parcels(
 		relay_affirmation_id: &RelayAffirmationId<Self::RelayHeaderId>,

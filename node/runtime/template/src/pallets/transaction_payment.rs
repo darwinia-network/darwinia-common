@@ -12,9 +12,9 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	type OnChargeTransaction = CurrencyAdapter<Ring, ()>;
-	type TransactionByteFee = TransactionByteFee;
-	type OperationalFeeMultiplier = OperationalFeeMultiplier;
-	type WeightToFee = IdentityFee<Balance>;
 	type FeeMultiplierUpdate = ();
+	type OnChargeTransaction = CurrencyAdapter<Ring, ()>;
+	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+	type TransactionByteFee = TransactionByteFee;
+	type WeightToFee = IdentityFee<Balance>;
 }

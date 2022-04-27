@@ -183,7 +183,7 @@ impl S2sSendMessageParams {
 			) => {
 				let lane_id: LaneId = lane_id.try_into().map_err(|_| Error::InvalidData)?;
 				Ok(Self { pallet_index: pallet_index.low_u32(), lane_id, payload, fee })
-			}
+			},
 			_ => Err(Error::InvalidData),
 		}
 	}

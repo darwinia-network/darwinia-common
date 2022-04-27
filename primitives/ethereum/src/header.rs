@@ -195,7 +195,7 @@ impl<'de> Deserialize<'de> for Header {
 							Field::difficulty => check_and_set_option!(difficulty),
 							Field::extraData => {
 								check_and_set_option!(extraData, array_bytes::hex2bytes)
-							}
+							},
 							Field::gasLimit => check_and_set_option!(gasLimit),
 							Field::gasUsed => check_and_set_option!(gasUsed),
 							Field::hash => check_and_set_option!(hash),
@@ -205,7 +205,7 @@ impl<'de> Deserialize<'de> for Header {
 							Field::nonce => check_and_set_option!(nonce),
 							Field::number => {
 								check_and_set_option!(number, TryFromHex::try_from_hex)
-							}
+							},
 							Field::parentHash => check_and_set_option!(parentHash),
 							Field::receiptsRoot => check_and_set_option!(receiptsRoot),
 							Field::sha3Uncles => check_and_set_option!(sha3Uncles),
@@ -213,14 +213,14 @@ impl<'de> Deserialize<'de> for Header {
 							Field::stateRoot => check_and_set_option!(stateRoot),
 							Field::timestamp => {
 								check_and_set_option!(timestamp, TryFromHex::try_from_hex)
-							}
+							},
 							// Field::totalDifficulty => {}
 							Field::transactionsRoot => check_and_set_option!(transactionsRoot),
 						},
 						Ok(None) => break,
 						Err(_) => {
 							map.next_value::<IgnoredAny>()?;
-						}
+						},
 					}
 				}
 
@@ -832,7 +832,7 @@ mod tests {
 		let verify_result = ethash_params.verify_block_basic(&header);
 
 		match verify_result {
-			Err(Error::Block(BlockError::InvalidProofOfWork(_))) => {}
+			Err(Error::Block(BlockError::InvalidProofOfWork(_))) => {},
 			_ => panic!("Expected `InvalidProofOfWork` but got {:?}", verify_result),
 		}
 	}

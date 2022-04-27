@@ -478,7 +478,7 @@ impl<T: Config> Pallet<T> {
 			(true, false) => return Some(schedule2),
 			(false, true) => return Some(schedule1),
 			// If neither schedule has ended don't exit early.
-			_ => {}
+			_ => {},
 		}
 
 		let locked = schedule1
@@ -662,7 +662,7 @@ impl<T: Config> Pallet<T> {
 				} // In the None case there was no new schedule to account for.
 
 				(schedules, locked_now)
-			}
+			},
 			_ => Self::report_schedule_updates(schedules.to_vec(), action),
 		};
 

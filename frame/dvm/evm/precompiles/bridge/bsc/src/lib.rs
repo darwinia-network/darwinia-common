@@ -90,7 +90,7 @@ where
 				)
 				.map_err(|_| helper.revert("verify single storage proof failed"))?;
 				abi_encode_bytes(storage_value.0.as_slice())
-			}
+			},
 			Action::VerifyMultiStorageProof => {
 				// Storage: BSC FinalizedCheckpoint (r:1 w:0)
 				helper.record_gas(1, 0)?;
@@ -122,7 +122,7 @@ where
 						match storage_value {
 							Ok(value) => {
 								return Ok(value.0.clone());
-							}
+							},
 							Err(err) => {
 								// if the key not exist, we should return Zero Value due to the
 								// Zero Value will not be stored.
@@ -131,12 +131,12 @@ where
 								} else {
 									return Err(helper.revert("verfiy storage failed"));
 								}
-							}
+							},
 						}
 					})
 					.collect();
 				abi_encode_array_bytes(storage_values?)
-			}
+			},
 		};
 
 		Ok(PrecompileOutput {

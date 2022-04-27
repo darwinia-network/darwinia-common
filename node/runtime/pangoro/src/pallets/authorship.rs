@@ -9,8 +9,8 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
+	type EventHandler = (Staking, ImOnline);
+	type FilterUncle = ();
 	type FindAuthor = FindAccountFromAuthorIndex<Self, Babe>;
 	type UncleGenerations = UncleGenerations;
-	type FilterUncle = ();
-	type EventHandler = (Staking, ImOnline);
 }

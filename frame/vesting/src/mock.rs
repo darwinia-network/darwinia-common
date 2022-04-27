@@ -81,12 +81,12 @@ parameter_types! {
 impl pallet_balances::Config<RingInstance> for Test {
 	type AccountStore = System;
 	type Balance = u64;
+	type BalanceInfo = AccountData<Balance>;
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
 	type MaxLocks = MaxLocks;
 	type MaxReserves = ();
-	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
@@ -99,9 +99,10 @@ impl Config for Test {
 	type BlockNumberToBalance = Identity;
 	type Currency = Balances;
 	type Event = Event;
-	const MAX_VESTING_SCHEDULES: u32 = 3;
 	type MinVestedTransfer = MinVestedTransfer;
 	type WeightInfo = ();
+
+	const MAX_VESTING_SCHEDULES: u32 = 3;
 }
 
 pub struct ExtBuilder {

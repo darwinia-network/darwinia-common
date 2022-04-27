@@ -20,13 +20,13 @@ frame_support::parameter_types! {
 
 impl Config<WithPangoroGrandpa> for Runtime {
 	type BridgedChain = bp_pangoro::Pangoro;
-	type MaxRequests = MaxRequests;
 	type HeadersToKeep = HeadersToKeep;
+	type MaxRequests = MaxRequests;
 	type WeightInfo = ();
 }
 impl Config<WithRococoGrandpa> for Runtime {
 	type BridgedChain = bp_rococo::Rococo;
-	type MaxRequests = MaxRequests;
 	type HeadersToKeep = HeadersToKeep;
+	type MaxRequests = MaxRequests;
 	type WeightInfo = ();
 }

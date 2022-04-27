@@ -81,6 +81,7 @@ impl From<WithdrawReasons> for LockReasons {
 }
 impl BitOr for LockReasons {
 	type Output = LockReasons;
+
 	fn bitor(self, other: LockReasons) -> LockReasons {
 		if self == other {
 			return self;

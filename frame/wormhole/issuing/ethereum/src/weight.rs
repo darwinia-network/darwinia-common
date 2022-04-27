@@ -69,22 +69,27 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(14 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
+
 	fn redeem_erc20() -> Weight {
 		(1_084_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(14 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
+
 	fn register_response_from_contract() -> Weight {
 		(30_000_000 as Weight).saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
+
 	fn deposit_burn_token_event_from_precompile() -> Weight {
 		(30_000_000 as Weight).saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
+
 	fn set_mapping_factory_address() -> Weight {
 		(92_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+
 	fn set_ethereum_backing_address() -> Weight {
 		(99_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
@@ -99,22 +104,27 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(14 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
 	}
+
 	fn redeem_erc20() -> Weight {
 		(1_084_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(14 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
 	}
+
 	fn register_response_from_contract() -> Weight {
 		(30_000_000 as Weight).saturating_add(RocksDbWeight::get().reads(1 as Weight))
 	}
+
 	fn deposit_burn_token_event_from_precompile() -> Weight {
 		(30_000_000 as Weight).saturating_add(RocksDbWeight::get().reads(1 as Weight))
 	}
+
 	fn set_mapping_factory_address() -> Weight {
 		(92_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
+
 	fn set_ethereum_backing_address() -> Weight {
 		(99_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))

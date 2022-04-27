@@ -52,16 +52,16 @@ frame_support::parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
-	type OtherCurrencies = ();
 	type Balance = Balance;
+	type BalanceInfo = AccountData<Balance>;
+	type DustRemoval = ();
 	type Event = ();
+	type ExistentialDeposit = ExistentialDeposit;
 	type MaxLocks = ();
 	type MaxReserves = ();
+	type OtherCurrencies = ();
 	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
 	type WeightInfo = ();
 }
 
@@ -69,36 +69,36 @@ frame_support::parameter_types! {
 	pub const MinimumPeriod: u64 = 6000 / 2;
 }
 impl pallet_timestamp::Config for Test {
+	type MinimumPeriod = MinimumPeriod;
 	type Moment = u64;
 	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = Everything;
-	type BlockWeights = ();
-	type BlockLength = ();
-	type DbWeight = ();
-	type Origin = Origin;
-	type Index = u64;
-	type BlockNumber = u64;
-	type Hash = H256;
-	type Call = Call;
-	type Hashing = BlakeTwo256;
-	type AccountId = AccountId32;
-	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
-	type Event = ();
-	type BlockHashCount = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
 	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
+	type AccountId = AccountId32;
+	type BaseCallFilter = Everything;
+	type BlockHashCount = ();
+	type BlockLength = ();
+	type BlockNumber = u64;
+	type BlockWeights = ();
+	type Call = Call;
+	type DbWeight = ();
+	type Event = ();
+	type Hash = H256;
+	type Hashing = BlakeTwo256;
+	type Header = Header;
+	type Index = u64;
+	type Lookup = IdentityLookup<Self::AccountId>;
 	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type OnNewAccount = ();
 	type OnSetCode = ();
+	type Origin = Origin;
+	type PalletInfo = PalletInfo;
+	type SS58Prefix = ();
+	type SystemWeightInfo = ();
+	type Version = ();
 }
 
 pub struct MockRelayCaller;
@@ -118,6 +118,7 @@ impl LatestMessageNoncer for MockLatestMessageNoncer {
 	fn outbound_latest_generated_nonce(_lane_id: [u8; 4]) -> u64 {
 		0
 	}
+
 	fn inbound_latest_received_nonce(_lane_id: [u8; 4]) -> u64 {
 		0
 	}
@@ -126,6 +127,7 @@ impl LatestMessageNoncer for MockLatestMessageNoncer {
 pub struct MockMessagesBridge;
 impl MessagesBridge<AccountId<Test>, Balance, ()> for MockMessagesBridge {
 	type Error = DispatchErrorWithPostInfo<PostDispatchInfo>;
+
 	fn send_message(
 		submitter: RawOrigin<AccountId<Test>>,
 		_laneid: [u8; 4],
@@ -158,23 +160,18 @@ frame_support::parameter_types! {
 	pub const BridgePangolinLaneId: [u8; 4] = [0; 4];
 }
 impl Config for Test {
-	type Event = ();
-	type WeightInfo = ();
-
-	type PalletId = MockId;
-
-	type RingMetadata = RingMetadata;
-	type MaxLockRingAmountPerTx = MaxLockRingAmountPerTx;
-	type RingCurrency = Ring;
-
 	type BridgedAccountIdConverter = MockAccountIdConverter;
 	type BridgedChainId = MockChainId;
-
-	type OutboundPayloadCreator = ();
-	type MessageNoncer = MockLatestMessageNoncer;
-
+	type Event = ();
+	type MaxLockRingAmountPerTx = MaxLockRingAmountPerTx;
 	type MessageLaneId = BridgePangolinLaneId;
+	type MessageNoncer = MockLatestMessageNoncer;
 	type MessagesBridge = MockMessagesBridge;
+	type OutboundPayloadCreator = ();
+	type PalletId = MockId;
+	type RingCurrency = Ring;
+	type RingMetadata = RingMetadata;
+	type WeightInfo = ();
 }
 
 frame_support::construct_runtime! {

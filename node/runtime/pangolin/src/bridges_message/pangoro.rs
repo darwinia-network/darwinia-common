@@ -122,14 +122,14 @@ impl Parameter for PangolinToPangoroMessagesParameter {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct WithPangoroMessageBridge;
 impl MessageBridge for WithPangoroMessageBridge {
-	type ThisChain = Pangolin;
 	type BridgedChain = Pangoro;
+	type ThisChain = Pangolin;
 
-	const RELAYER_FEE_PERCENT: u32 = 10;
-	const THIS_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
 	const BRIDGED_CHAIN_ID: ChainId = PANGORO_CHAIN_ID;
 	const BRIDGED_MESSAGES_PALLET_NAME: &'static str =
 		bp_pangolin::WITH_PANGOLIN_MESSAGES_PALLET_NAME;
+	const RELAYER_FEE_PERCENT: u32 = 10;
+	const THIS_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
 
 	fn bridged_balance_to_this_balance(
 		bridged_balance: BalanceOf<Self::BridgedChain>,
@@ -145,12 +145,12 @@ impl MessageBridge for WithPangoroMessageBridge {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct Pangolin;
 impl ChainWithMessages for Pangolin {
-	type Hash = bp_pangolin::Hash;
 	type AccountId = bp_pangolin::AccountId;
-	type Signer = bp_pangolin::AccountPublic;
-	type Signature = bp_pangolin::Signature;
-	type Weight = Weight;
 	type Balance = bp_pangolin::Balance;
+	type Hash = bp_pangolin::Hash;
+	type Signature = bp_pangolin::Signature;
+	type Signer = bp_pangolin::AccountPublic;
+	type Weight = Weight;
 }
 impl ThisChainWithMessages for Pangolin {
 	type Call = Call;
@@ -195,12 +195,12 @@ impl ThisChainWithMessages for Pangolin {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct Pangoro;
 impl ChainWithMessages for Pangoro {
-	type Hash = bp_pangoro::Hash;
 	type AccountId = bp_pangoro::AccountId;
-	type Signer = bp_pangoro::AccountPublic;
-	type Signature = bp_pangoro::Signature;
-	type Weight = Weight;
 	type Balance = bp_pangoro::Balance;
+	type Hash = bp_pangoro::Hash;
+	type Signature = bp_pangoro::Signature;
+	type Signer = bp_pangoro::AccountPublic;
+	type Weight = Weight;
 }
 impl BridgedChainWithMessages for Pangoro {
 	fn maximal_extrinsic_size() -> u32 {

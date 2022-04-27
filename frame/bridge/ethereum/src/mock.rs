@@ -38,42 +38,42 @@ pub type Balance = u128;
 darwinia_support::impl_test_account_data! {}
 
 impl frame_system::Config for Test {
+	type AccountData = AccountData<Balance>;
+	type AccountId = AccountId;
 	type BaseCallFilter = Everything;
-	type BlockWeights = ();
+	type BlockHashCount = ();
 	type BlockLength = ();
-	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
-	type Index = u64;
 	type BlockNumber = BlockNumber;
+	type BlockWeights = ();
+	type Call = Call;
+	type DbWeight = ();
+	type Event = ();
 	type Hash = H256;
 	type Hashing = sp_runtime::traits::BlakeTwo256;
-	type AccountId = AccountId;
-	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = ();
-	type BlockHashCount = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
+	type Index = u64;
+	type Lookup = IdentityLookup<Self::AccountId>;
 	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type OnNewAccount = ();
 	type OnSetCode = ();
+	type Origin = Origin;
+	type PalletInfo = PalletInfo;
+	type SS58Prefix = ();
+	type SystemWeightInfo = ();
+	type Version = ();
 }
 
 impl darwinia_balances::Config<RingInstance> for Test {
+	type AccountStore = System;
 	type Balance = Balance;
+	type BalanceInfo = AccountData<Balance>;
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ();
-	type AccountStore = System;
 	type MaxLocks = ();
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
+	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
 
@@ -90,18 +90,18 @@ frame_support::parameter_types! {
 	pub static ConfirmPeriod: BlockNumber = 0;
 }
 impl Config for Test {
-	type PalletId = EthereumRelayPalletId;
-	type Event = ();
+	type ApproveOrigin = EnsureRoot<AccountId>;
+	type ApproveThreshold = ();
 	type BridgedNetwork = EthereumRelayBridgeNetwork;
 	type Call = Call;
-	type Currency = Ring;
-	type RelayerGame = UnusedRelayerGame;
-	type ApproveOrigin = EnsureRoot<AccountId>;
-	type RejectOrigin = EnsureRoot<AccountId>;
 	type ConfirmPeriod = ConfirmPeriod;
-	type TechnicalMembership = UnusedTechnicalMembership;
-	type ApproveThreshold = ();
+	type Currency = Ring;
+	type Event = ();
+	type PalletId = EthereumRelayPalletId;
+	type RejectOrigin = EnsureRoot<AccountId>;
 	type RejectThreshold = ();
+	type RelayerGame = UnusedRelayerGame;
+	type TechnicalMembership = UnusedTechnicalMembership;
 	type WeightInfo = ();
 }
 
@@ -198,10 +198,10 @@ impl Default for ExtBuilder {
 // TODO https://github.com/darwinia-network/darwinia-common/issues/754
 pub struct UnusedRelayerGame;
 impl RelayerGameProtocol for UnusedRelayerGame {
-	type Relayer = AccountId;
 	type RelayHeaderId = EthereumBlockNumber;
 	type RelayHeaderParcel = EthereumRelayHeaderParcel;
 	type RelayProofs = EthereumRelayProofs;
+	type Relayer = AccountId;
 
 	fn get_affirmed_relay_header_parcels(
 		_: &RelayAffirmationId<Self::RelayHeaderId>,
@@ -209,9 +209,11 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 		// This is mocked for test `pre_verify_should_work`
 		Some(Default::default())
 	}
+
 	fn best_confirmed_header_id_of(_: &Self::RelayHeaderId) -> Self::RelayHeaderId {
 		BEST_CONFIRMED_BLOCK_NUMBER.with(|v| *v.borrow())
 	}
+
 	fn affirm(
 		_: &Self::Relayer,
 		_: Self::RelayHeaderParcel,
@@ -219,6 +221,7 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 	) -> Result<Self::RelayHeaderId, DispatchError> {
 		unimplemented!()
 	}
+
 	fn dispute_and_affirm(
 		_: &Self::Relayer,
 		_: Self::RelayHeaderParcel,
@@ -226,12 +229,14 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 	) -> Result<(Self::RelayHeaderId, u32), DispatchError> {
 		unimplemented!()
 	}
+
 	fn complete_relay_proofs(
 		_: RelayAffirmationId<Self::RelayHeaderId>,
 		_: Vec<Self::RelayProofs>,
 	) -> DispatchResult {
 		unimplemented!()
 	}
+
 	fn extend_affirmation(
 		_: &Self::Relayer,
 		_: RelayAffirmationId<Self::RelayHeaderId>,

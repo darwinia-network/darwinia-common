@@ -48,13 +48,13 @@ impl Nibbles {
 
 		let mut is_leaf = false;
 		match flag >> 4 {
-			0x0 => {}
+			0x0 => {},
 			0x1 => hex.push(flag % 16),
 			0x2 => is_leaf = true,
 			0x3 => {
 				is_leaf = true;
 				hex.push(flag % 16);
-			}
+			},
 			_ => panic!("invalid data"),
 		}
 

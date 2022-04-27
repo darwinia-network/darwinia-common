@@ -10,6 +10,6 @@ frame_support::parameter_types! {
 
 impl Config<WithRococoParachainsInstance> for Runtime {
 	type BridgesGrandpaPalletInstance = WithRococoGrandpa;
-	type ParasPalletName = PangolinParasPalletName;
 	type HeadsToKeep = HeadersToKeep;
+	type ParasPalletName = PangolinParasPalletName;
 }

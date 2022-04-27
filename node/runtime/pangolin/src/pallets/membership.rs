@@ -19,14 +19,14 @@ impl ChangeMembers<AccountId> for MembershipChangedGroup {
 }
 
 impl Config<TechnicalMembershipInstance> for Runtime {
-	type Event = Event;
 	type AddOrigin = EnsureRootOrMoreThanHalfCouncil;
-	type RemoveOrigin = EnsureRootOrMoreThanHalfCouncil;
-	type SwapOrigin = EnsureRootOrMoreThanHalfCouncil;
-	type ResetOrigin = EnsureRootOrMoreThanHalfCouncil;
-	type PrimeOrigin = EnsureRootOrMoreThanHalfCouncil;
-	type MembershipInitialized = TechnicalCommittee;
-	type MembershipChanged = MembershipChangedGroup;
+	type Event = Event;
 	type MaxMembers = TechnicalMaxMembers;
+	type MembershipChanged = MembershipChangedGroup;
+	type MembershipInitialized = TechnicalCommittee;
+	type PrimeOrigin = EnsureRootOrMoreThanHalfCouncil;
+	type RemoveOrigin = EnsureRootOrMoreThanHalfCouncil;
+	type ResetOrigin = EnsureRootOrMoreThanHalfCouncil;
+	type SwapOrigin = EnsureRootOrMoreThanHalfCouncil;
 	type WeightInfo = ();
 }

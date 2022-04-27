@@ -71,7 +71,7 @@ impl<T: Config> Runner<T> {
 			Some(max_fee_per_gas) => {
 				ensure!(max_fee_per_gas >= base_fee, <Error<T>>::GasPriceTooLow);
 				max_fee_per_gas
-			}
+			},
 			None => Default::default(),
 		};
 
@@ -399,6 +399,7 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 	fn gas_price(&self) -> U256 {
 		self.vicinity.gas_price
 	}
+
 	fn origin(&self) -> H160 {
 		self.vicinity.origin
 	}

@@ -53,6 +53,7 @@ pub mod tracer {
 		pub fn new() -> Self {
 			Self { step_event_filter: dp_evm_trace_ext::dvm_ext::step_event_filter() }
 		}
+
 		/// Setup event listeners and execute provided closure.
 		///
 		/// Consume the tracer and return it alongside the return value of

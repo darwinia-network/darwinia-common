@@ -1042,14 +1042,14 @@ pub mod pallet {
 						value >= T::RingCurrency::minimum_balance(),
 						<Error<T>>::InsufficientBond,
 					);
-				}
+				},
 				StakingBalance::KtonBalance(value) => {
 					// Reject a bond which is considered to be _dust_.
 					ensure!(
 						value >= T::KtonCurrency::minimum_balance(),
 						<Error<T>>::InsufficientBond,
 					);
-				}
+				},
 			}
 
 			<frame_system::Pallet<T>>::inc_consumers(&stash).map_err(|_| <Error<T>>::BadState)?;
@@ -1078,14 +1078,14 @@ pub mod pallet {
 						Self::bond_ring(&stash, &controller, value, promise_month, ledger)?;
 
 					Self::deposit_event(Event::RingBonded(stash, value, start_time, expire_time));
-				}
+				},
 				StakingBalance::KtonBalance(value) => {
 					let stash_balance = T::KtonCurrency::free_balance(&stash);
 					let value = value.min(stash_balance);
 
 					Self::bond_kton(&controller, value, ledger)?;
 					Self::deposit_event(Event::KtonBonded(stash, value));
-				}
+				},
 			}
 
 			Ok(())
@@ -1135,7 +1135,7 @@ pub mod pallet {
 							expire_time,
 						));
 					}
-				}
+				},
 				StakingBalance::KtonBalance(max_additional) => {
 					let stash_balance = T::KtonCurrency::free_balance(&stash);
 
@@ -1147,7 +1147,7 @@ pub mod pallet {
 						Self::bond_kton(&controller, extra, ledger)?;
 						Self::deposit_event(Event::KtonBonded(stash.clone(), extra));
 					}
-				}
+				},
 			}
 
 			// update this staker in the sorted list, if they exist in it.
@@ -1323,7 +1323,7 @@ pub mod pallet {
 							Self::deposit_event(Event::KtonUnbonded(stash.to_owned(), unbond_kton));
 						}
 					}
-				}
+				},
 				StakingBalance::KtonBalance(k) => {
 					unbond_kton = k.min(*active_kton);
 
@@ -1363,7 +1363,7 @@ pub mod pallet {
 							Self::deposit_event(Event::RingUnbonded(stash.to_owned(), unbond_ring));
 						}
 					}
-				}
+				},
 			}
 
 			Self::update_ledger(&controller, &mut ledger);

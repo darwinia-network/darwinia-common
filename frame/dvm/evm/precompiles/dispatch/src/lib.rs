@@ -80,7 +80,7 @@ where
 					output: Default::default(),
 					logs: Default::default(),
 				})
-			}
+			},
 			Err(_) => Err(helper.revert("dispatch execution failed")),
 		}
 	}

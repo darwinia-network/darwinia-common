@@ -22,7 +22,7 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	type LeafVersion = LeafVersion;
 	type BeefyAuthorityToMerkleLeaf = BeefyEcdsaToEthereum;
+	type LeafVersion = LeafVersion;
 	type ParachainHeads = ();
 }

@@ -104,7 +104,7 @@ impl SubstrateCli for Cli {
 				} else {
 					chain_spec
 				}
-			}
+			},
 		})
 	}
 }
@@ -199,32 +199,32 @@ pub fn run() -> CliResult<()> {
 					.map_err(CliError::from)
 				})
 			}
-		}
+		},
 		Some(Subcommand::BuildSpec(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
-		}
+		},
 		Some(Subcommand::CheckBlock(cmd)) => {
 			async_run!(|cmd, cli, config, client, _backend, import_queue| Ok(
 				cmd.run(client, import_queue)
 			))
-		}
+		},
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			async_run!(|cmd, cli, config, client, _backend, _import_queue| Ok(
 				cmd.run(client, config.database)
 			))
-		}
+		},
 		Some(Subcommand::ExportState(cmd)) => {
 			async_run!(|cmd, cli, config, client, _backend, _import_queue| Ok(
 				cmd.run(client, config.chain_spec)
 			))
-		}
+		},
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			async_run!(|cmd, cli, config, client, _backend, import_queue| Ok(
 				cmd.run(client, import_queue)
 			))
-		}
+		},
 		Some(Subcommand::PurgeChain(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			let chain_spec = &runner.config().chain_spec;
@@ -241,12 +241,12 @@ pub fn run() -> CliResult<()> {
 				cmd.run(dvm_database_config)?;
 				cmd.run(config.database)
 			})
-		}
+		},
 		Some(Subcommand::Revert(cmd)) => {
 			async_run!(|cmd, cli, config, client, backend, _import_queue| Ok(
 				cmd.run(client, backend)
 			))
-		}
+		},
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
 		Some(Subcommand::Sign(cmd)) => cmd.run(),
 		Some(Subcommand::Verify(cmd)) => cmd.run(),
@@ -279,7 +279,7 @@ pub fn run() -> CliResult<()> {
 					Ok((cmd.run::<Block, PangoroExecutor>(config), task_manager))
 				})
 			}
-		}
+		},
 		#[cfg(feature = "runtime-benchmarks")]
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
@@ -292,7 +292,7 @@ pub fn run() -> CliResult<()> {
 			} else {
 				runner.sync_run(|config| cmd.run::<Block, PangoroExecutor>(config))
 			}
-		}
+		},
 	}
 }
 
