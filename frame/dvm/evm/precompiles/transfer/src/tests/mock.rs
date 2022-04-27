@@ -67,29 +67,29 @@ frame_support::parameter_types! {
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 }
 impl frame_system::Config for Test {
+	type AccountData = AccountData<Balance>;
+	type AccountId = AccountId32;
 	type BaseCallFilter = Everything;
-	type BlockWeights = ();
+	type BlockHashCount = ();
 	type BlockLength = ();
-	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
-	type Index = u64;
 	type BlockNumber = u64;
+	type BlockWeights = ();
+	type Call = Call;
+	type DbWeight = ();
+	type Event = Event;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = AccountId32;
-	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
-	type BlockHashCount = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
+	type Index = u64;
+	type Lookup = IdentityLookup<Self::AccountId>;
 	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type OnNewAccount = ();
 	type OnSetCode = ();
+	type Origin = Origin;
+	type PalletInfo = PalletInfo;
+	type SS58Prefix = ();
+	type SystemWeightInfo = ();
+	type Version = ();
 }
 
 frame_support::parameter_types! {
@@ -99,29 +99,29 @@ frame_support::parameter_types! {
 	pub const ExistentialDeposit: u64 = 500;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type Balance = Balance;
-	type Event = Event;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type MaxLocks = MaxLocks;
 	type BalanceInfo = AccountData<Balance>;
+	type DustRemoval = ();
+	type Event = Event;
+	type ExistentialDeposit = ExistentialDeposit;
+	type MaxLocks = MaxLocks;
+	type MaxReserves = ();
 	type OtherCurrencies = ();
+	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
 impl darwinia_balances::Config<KtonInstance> for Test {
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type Balance = Balance;
-	type Event = Event;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type MaxLocks = MaxLocks;
 	type BalanceInfo = AccountData<Balance>;
+	type DustRemoval = ();
+	type Event = Event;
+	type ExistentialDeposit = ExistentialDeposit;
+	type MaxLocks = MaxLocks;
+	type MaxReserves = ();
 	type OtherCurrencies = ();
+	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
 
@@ -129,9 +129,9 @@ frame_support::parameter_types! {
 	pub const MinimumPeriod: u64 = 6000 / 2;
 }
 impl pallet_timestamp::Config for Test {
+	type MinimumPeriod = MinimumPeriod;
 	type Moment = u64;
 	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
 
@@ -174,6 +174,7 @@ where
 	pub fn new() -> Self {
 		Self(Default::default())
 	}
+
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
 		sp_std::vec![1, 2, 3, 4, 21].into_iter().map(|x| H160::from_low_u64_be(x)).collect()
 	}
@@ -210,27 +211,28 @@ where
 			_ => None,
 		}
 	}
+
 	fn is_precompile(&self, address: H160) -> bool {
 		Self::used_addresses().contains(&address)
 	}
 }
 
 impl darwinia_evm::Config for Test {
-	type FeeCalculator = FixedGasPrice;
-	type GasWeightMapping = ();
-	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
-	type IntoAccountId = HashedConverter;
-	type Event = Event;
-	type PrecompilesType = MockPrecompiles<Self>;
-	type PrecompilesValue = PrecompilesValue;
-	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type FindAuthor = FindAuthorTruncated;
 	type BlockHashMapping = EthereumBlockHashMapping<Self>;
-	type Runner = Runner<Self>;
-	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
+	type ChainId = ChainId;
+	type Event = Event;
+	type FeeCalculator = FixedGasPrice;
+	type FindAuthor = FindAuthorTruncated;
+	type GasWeightMapping = ();
+	type IntoAccountId = HashedConverter;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
+	type PrecompilesType = MockPrecompiles<Self>;
+	type PrecompilesValue = PrecompilesValue;
+	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type Runner = Runner<Self>;
 }
 
 frame_support::parameter_types! {
@@ -238,11 +240,11 @@ frame_support::parameter_types! {
 }
 
 impl darwinia_ethereum::Config for Test {
-	type PalletId = MockPalletId;
 	type Event = Event;
-	type StateRoot = IntermediateStateRoot;
-	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
+	type PalletId = MockPalletId;
+	type RingCurrency = Ring;
+	type StateRoot = IntermediateStateRoot;
 }
 
 frame_support::construct_runtime! {

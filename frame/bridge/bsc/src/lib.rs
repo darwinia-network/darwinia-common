@@ -246,12 +246,12 @@ pub mod pallet {
 						submitter,
 						&new_authority_set,
 					);
-				}
+				},
 				e => {
 					T::OnHeadersSubmitted::on_invalid_headers_submitted(submitter);
 
 					e?;
-				}
+				},
 			}
 
 			Ok(().into())
@@ -513,7 +513,9 @@ pub mod pallet {
 	}
 	impl<AccountId> OnHeadersSubmitted<AccountId> for () {
 		fn on_valid_headers_submitted(_: AccountId, _: &[BscHeader]) {}
+
 		fn on_invalid_headers_submitted(_: AccountId) {}
+
 		fn on_valid_authority_finalized(_: AccountId, _: &[Address]) {}
 	}
 

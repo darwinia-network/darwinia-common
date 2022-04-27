@@ -244,11 +244,11 @@ pub(crate) fn do_slash<T: Config<I>, I: 'static>(
 			);
 			log::trace!("Slash {:?} amount: {:?}", who, amount);
 			return amount;
-		}
+		},
 		Err(e) => {
 			crate::Pallet::<T, I>::update_relayer_after_slash(who, locked_collateral, report);
 			log::error!("Slash {:?} amount {:?}, err {:?}", who, amount, e)
-		}
+		},
 	}
 
 	RingBalance::<T, I>::zero()

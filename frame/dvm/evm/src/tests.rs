@@ -46,58 +46,58 @@ type Balance = u64;
 darwinia_support::impl_test_account_data! {}
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = Everything;
-	type BlockWeights = ();
-	type BlockLength = ();
-	type DbWeight = ();
-	type Origin = Origin;
-	type Index = u64;
-	type BlockNumber = u64;
-	type Hash = H256;
-	type Call = Call;
-	type Hashing = BlakeTwo256;
-	type AccountId = AccountId32;
-	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
-	type Event = Event;
-	type BlockHashCount = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
 	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
+	type AccountId = AccountId32;
+	type BaseCallFilter = Everything;
+	type BlockHashCount = ();
+	type BlockLength = ();
+	type BlockNumber = u64;
+	type BlockWeights = ();
+	type Call = Call;
+	type DbWeight = ();
+	type Event = Event;
+	type Hash = H256;
+	type Hashing = BlakeTwo256;
+	type Header = Header;
+	type Index = u64;
+	type Lookup = IdentityLookup<Self::AccountId>;
 	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type OnNewAccount = ();
 	type OnSetCode = ();
+	type Origin = Origin;
+	type PalletInfo = PalletInfo;
+	type SS58Prefix = ();
+	type SystemWeightInfo = ();
+	type Version = ();
 }
 
 frame_support::parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
+	type AccountStore = System;
 	type Balance = Balance;
+	type BalanceInfo = AccountData<Balance>;
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
 	type MaxLocks = ();
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
+	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
 impl darwinia_balances::Config<KtonInstance> for Test {
+	type AccountStore = System;
 	type Balance = Balance;
+	type BalanceInfo = AccountData<Balance>;
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
 	type MaxLocks = ();
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
+	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
 
@@ -105,9 +105,9 @@ frame_support::parameter_types! {
 	pub const MinimumPeriod: u64 = 1000;
 }
 impl pallet_timestamp::Config for Test {
+	type MinimumPeriod = MinimumPeriod;
 	type Moment = u64;
 	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
 
@@ -153,10 +153,12 @@ impl<T: Config> AccountBasic<T> for MockAccountBasic<T> {
 			frame_support::storage::unhashed::get(&account_id.encode()).unwrap_or_default();
 		Account { balance, nonce: U256::zero() }
 	}
+
 	fn mutate_account_basic_balance(address: &H160, new_balance: U256) {
 		let account_id = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(*address);
 		Self::mutate_account_balance(&account_id, new_balance)
 	}
+
 	fn transfer(
 		source: &T::AccountId,
 		target: &T::AccountId,
@@ -175,30 +177,32 @@ impl<T: Config> AccountBasic<T> for MockAccountBasic<T> {
 
 		Ok(())
 	}
+
 	fn account_balance(account_id: &T::AccountId) -> U256 {
 		frame_support::storage::unhashed::get(&account_id.encode()).unwrap_or_default()
 	}
+
 	fn mutate_account_balance(account_id: &T::AccountId, balance: U256) {
 		frame_support::storage::unhashed::put(&account_id.encode(), &balance);
 	}
 }
 
 impl Config for Test {
-	type FeeCalculator = FixedGasPrice;
-	type GasWeightMapping = ();
-	type CallOrigin = EnsureAddressRoot<Self::AccountId>;
-	type IntoAccountId = ConcatConverter<Self::AccountId>;
-	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
-	type FindAuthor = FindAuthorTruncated;
-	type Event = Event;
-	type PrecompilesType = ();
-	type PrecompilesValue = ();
-	type ChainId = ();
 	type BlockGasLimit = ();
-	type Runner = Runner<Self>;
-	type RingAccountBasic = MockAccountBasic<Self>;
+	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
+	type CallOrigin = EnsureAddressRoot<Self::AccountId>;
+	type ChainId = ();
+	type Event = Event;
+	type FeeCalculator = FixedGasPrice;
+	type FindAuthor = FindAuthorTruncated;
+	type GasWeightMapping = ();
+	type IntoAccountId = ConcatConverter<Self::AccountId>;
 	type KtonAccountBasic = MockAccountBasic<Self>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
+	type PrecompilesType = ();
+	type PrecompilesValue = ();
+	type RingAccountBasic = MockAccountBasic<Self>;
+	type Runner = Runner<Self>;
 }
 
 frame_support::construct_runtime! {

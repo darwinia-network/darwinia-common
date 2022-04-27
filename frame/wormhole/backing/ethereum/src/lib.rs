@@ -516,6 +516,7 @@ pub mod pallet {
 		pub fn account_id() -> T::AccountId {
 			T::PalletId::get().into_account()
 		}
+
 		pub fn fee_account_id() -> T::AccountId {
 			T::FeePalletId::get().into_account()
 		}
@@ -570,6 +571,7 @@ pub mod pallet {
 
 			Ok(())
 		}
+
 		fn redeem_token_cast<C: LockableCurrency<T::AccountId>>(
 			_redeemer: &T::AccountId,
 			darwinia_account: T::AccountId,
@@ -611,6 +613,7 @@ pub mod pallet {
 
 			Ok(())
 		}
+
 		// event BurnAndRedeem(address indexed token, address indexed from, uint256 amount, bytes
 		// receiver); Redeem RING https://ropsten.etherscan.io/tx/0x1d3ef601b9fa4a7f1d6259c658d0a10c77940fa5db9e10ab55397eb0ce88807d
 		// Redeem KTON https://ropsten.etherscan.io/tx/0x2878ae39a9e0db95e61164528bb1ec8684be194bdcc236848ff14d3fe5ba335d
@@ -741,6 +744,7 @@ pub mod pallet {
 
 			Ok(())
 		}
+
 		// event BurnAndRedeem(uint256 indexed _depositID,  address _depositor, uint48 _months,
 		// uint48 _startAt, uint64 _unitInterest, uint128 _value, bytes _data); Redeem Deposit https://ropsten.etherscan.io/tx/0x5a7004126466ce763501c89bcbb98d14f3c328c4b310b1976a38be1183d91919
 		pub(super) fn parse_deposit_redeem_proof(
@@ -916,8 +920,8 @@ pub mod pallet {
 		}
 	}
 	impl<T: Config> Sign<BlockNumberFor<T>> for Pallet<T> {
-		type Signature = EcdsaSignature;
 		type Message = EcdsaMessage;
+		type Signature = EcdsaSignature;
 		type Signer = EthereumAddress;
 
 		fn hash(raw_message: impl AsRef<[u8]>) -> Self::Message {

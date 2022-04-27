@@ -106,14 +106,14 @@ impl Parameter for PangolinToPangolinParachainParameter {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct WithPangolinParachainMessageBridge;
 impl MessageBridge for WithPangolinParachainMessageBridge {
-	type ThisChain = Pangolin;
 	type BridgedChain = PangolinParachain;
+	type ThisChain = Pangolin;
 
-	const RELAYER_FEE_PERCENT: u32 = 10;
-	const THIS_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
 	const BRIDGED_CHAIN_ID: ChainId = PANGOLIN_PARACHAIN_CHAIN_ID;
 	const BRIDGED_MESSAGES_PALLET_NAME: &'static str =
 		bp_pangolin::WITH_PANGOLIN_MESSAGES_PALLET_NAME;
+	const RELAYER_FEE_PERCENT: u32 = 10;
+	const THIS_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
 
 	fn bridged_balance_to_this_balance(
 		bridged_balance: BalanceOf<Self::BridgedChain>,
@@ -129,12 +129,12 @@ impl MessageBridge for WithPangolinParachainMessageBridge {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct Pangolin;
 impl ChainWithMessages for Pangolin {
-	type Hash = bp_pangolin::Hash;
 	type AccountId = bp_pangolin::AccountId;
-	type Signer = bp_pangolin::AccountPublic;
-	type Signature = bp_pangolin::Signature;
-	type Weight = Weight;
 	type Balance = bp_pangolin::Balance;
+	type Hash = bp_pangolin::Hash;
+	type Signature = bp_pangolin::Signature;
+	type Signer = bp_pangolin::AccountPublic;
+	type Weight = Weight;
 }
 impl ThisChainWithMessages for Pangolin {
 	type Call = Call;
@@ -178,12 +178,12 @@ impl ThisChainWithMessages for Pangolin {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct PangolinParachain;
 impl ChainWithMessages for PangolinParachain {
-	type Hash = bp_pangolin_parachain::Hash;
 	type AccountId = bp_pangolin_parachain::AccountId;
-	type Signer = bp_pangolin_parachain::AccountPublic;
-	type Signature = bp_pangolin_parachain::Signature;
-	type Weight = Weight;
 	type Balance = bp_pangolin_parachain::Balance;
+	type Hash = bp_pangolin_parachain::Hash;
+	type Signature = bp_pangolin_parachain::Signature;
+	type Signer = bp_pangolin_parachain::AccountPublic;
+	type Weight = Weight;
 }
 impl BridgedChainWithMessages for PangolinParachain {
 	fn maximal_extrinsic_size() -> u32 {

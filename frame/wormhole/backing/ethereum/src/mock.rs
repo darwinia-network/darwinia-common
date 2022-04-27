@@ -61,35 +61,35 @@ pub type EthereumRelayError = darwinia_bridge_ethereum::Error<Test>;
 darwinia_support::impl_test_account_data! {}
 
 impl frame_system::Config for Test {
+	type AccountData = AccountData<Balance>;
+	type AccountId = AccountId;
 	type BaseCallFilter = Everything;
-	type BlockWeights = ();
+	type BlockHashCount = ();
 	type BlockLength = ();
-	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
-	type Index = u64;
 	type BlockNumber = BlockNumber;
+	type BlockWeights = ();
+	type Call = Call;
+	type DbWeight = ();
+	type Event = ();
 	type Hash = sp_core::H256;
 	type Hashing = ::sp_runtime::traits::BlakeTwo256;
-	type AccountId = AccountId;
-	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = ();
-	type BlockHashCount = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
+	type Index = u64;
+	type Lookup = IdentityLookup<Self::AccountId>;
 	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type OnNewAccount = ();
 	type OnSetCode = ();
+	type Origin = Origin;
+	type PalletInfo = PalletInfo;
+	type SS58Prefix = ();
+	type SystemWeightInfo = ();
+	type Version = ();
 }
 
 impl pallet_timestamp::Config for Test {
+	type MinimumPeriod = ();
 	type Moment = u64;
 	type OnTimestampSet = ();
-	type MinimumPeriod = ();
 	type WeightInfo = ();
 }
 
@@ -113,15 +113,15 @@ frame_support::parameter_types! {
 	pub const Offset: BlockNumber = 0;
 }
 impl pallet_session::Config for Test {
+	type DisabledValidatorsThreshold = ();
 	type Event = ();
+	type Keys = UintAuthorityId;
+	type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
+	type SessionHandler = TestSessionHandler;
+	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Test, Staking>;
+	type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
 	type ValidatorId = AccountId;
 	type ValidatorIdOf = ();
-	type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
-	type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
-	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Test, Staking>;
-	type SessionHandler = TestSessionHandler;
-	type Keys = UintAuthorityId;
-	type DisabledValidatorsThreshold = ();
 	type WeightInfo = ();
 }
 
@@ -131,29 +131,29 @@ impl pallet_session::historical::Config for Test {
 }
 
 impl darwinia_balances::Config<KtonInstance> for Test {
+	type AccountStore = System;
 	type Balance = Balance;
+	type BalanceInfo = AccountData<Balance>;
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ();
-	type AccountStore = System;
 	type MaxLocks = ();
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
+	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
 impl darwinia_balances::Config<RingInstance> for Test {
+	type AccountStore = System;
 	type Balance = Balance;
+	type BalanceInfo = AccountData<Balance>;
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ();
-	type AccountStore = System;
 	type MaxLocks = ();
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
+	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
 
@@ -166,48 +166,51 @@ frame_support::parameter_types! {
 	pub const StakingPalletId: PalletId = PalletId(*b"da/staki");
 }
 impl darwinia_staking::Config for Test {
-	const MAX_NOMINATIONS: u32 = 0;
-	type Event = ();
-	type PalletId = StakingPalletId;
-	type UnixTime = Timestamp;
-	type SessionsPerEra = ();
-	type BondingDurationInEra = ();
 	type BondingDurationInBlockNumber = ();
-	type SlashDeferDuration = ();
-	type SlashCancelOrigin = frame_system::EnsureRoot<Self::AccountId>;
-	type SessionInterface = Self;
-	type NextNewSession = Session;
-	type MaxNominatorRewardedPerValidator = ();
+	type BondingDurationInEra = ();
+	type Cap = ();
 	type ElectionProvider = onchain::OnChainSequentialPhragmen<Self>;
+	type Event = ();
 	type GenesisElectionProvider = Self::ElectionProvider;
-	type SortedListProvider = darwinia_staking::UseNominatorsMap<Self>;
+	type KtonCurrency = Kton;
+	type KtonReward = ();
+	type KtonSlash = ();
+	type MaxNominatorRewardedPerValidator = ();
+	type NextNewSession = Session;
+	type PalletId = StakingPalletId;
 	type RingCurrency = Ring;
+	type RingReward = ();
 	type RingRewardRemainder = ();
 	type RingSlash = ();
-	type RingReward = ();
-	type KtonCurrency = Kton;
-	type KtonSlash = ();
-	type KtonReward = ();
-	type Cap = ();
+	type SessionInterface = Self;
+	type SessionsPerEra = ();
+	type SlashCancelOrigin = frame_system::EnsureRoot<Self::AccountId>;
+	type SlashDeferDuration = ();
+	type SortedListProvider = darwinia_staking::UseNominatorsMap<Self>;
 	type TotalPower = ();
+	type UnixTime = Timestamp;
 	type WeightInfo = ();
+
+	const MAX_NOMINATIONS: u32 = 0;
 }
 
 pub struct UnusedRelayerGame;
 impl RelayerGameProtocol for UnusedRelayerGame {
-	type Relayer = AccountId;
 	type RelayHeaderId = EthereumBlockNumber;
 	type RelayHeaderParcel = EthereumRelayHeaderParcel;
 	type RelayProofs = EthereumRelayProofs;
+	type Relayer = AccountId;
 
 	fn get_affirmed_relay_header_parcels(
 		_: &RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>> {
 		unimplemented!()
 	}
+
 	fn best_confirmed_header_id_of(_: &Self::RelayHeaderId) -> Self::RelayHeaderId {
 		unimplemented!()
 	}
+
 	fn affirm(
 		_: &Self::Relayer,
 		_: Self::RelayHeaderParcel,
@@ -215,6 +218,7 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 	) -> Result<Self::RelayHeaderId, DispatchError> {
 		unimplemented!()
 	}
+
 	fn dispute_and_affirm(
 		_: &Self::Relayer,
 		_: Self::RelayHeaderParcel,
@@ -222,12 +226,14 @@ impl RelayerGameProtocol for UnusedRelayerGame {
 	) -> Result<(Self::RelayHeaderId, u32), DispatchError> {
 		unimplemented!()
 	}
+
 	fn complete_relay_proofs(
 		_: RelayAffirmationId<Self::RelayHeaderId>,
 		_: Vec<Self::RelayProofs>,
 	) -> DispatchResult {
 		unimplemented!()
 	}
+
 	fn extend_affirmation(
 		_: &Self::Relayer,
 		_: RelayAffirmationId<Self::RelayHeaderId>,
@@ -249,18 +255,18 @@ frame_support::parameter_types! {
 	pub static EthereumRelayBridgeNetwork: EthereumNetwork = EthereumNetwork::Ropsten;
 }
 impl darwinia_bridge_ethereum::Config for Test {
-	type PalletId = EthereumRelayPalletId;
-	type Event = ();
-	type BridgedNetwork = EthereumRelayBridgeNetwork;
-	type RelayerGame = UnusedRelayerGame;
 	type ApproveOrigin = EnsureRoot<AccountId>;
-	type RejectOrigin = EnsureRoot<AccountId>;
-	type ConfirmPeriod = ();
-	type TechnicalMembership = UnusedTechnicalMembership;
 	type ApproveThreshold = ();
-	type RejectThreshold = ();
+	type BridgedNetwork = EthereumRelayBridgeNetwork;
 	type Call = Call;
+	type ConfirmPeriod = ();
 	type Currency = Ring;
+	type Event = ();
+	type PalletId = EthereumRelayPalletId;
+	type RejectOrigin = EnsureRoot<AccountId>;
+	type RejectThreshold = ();
+	type RelayerGame = UnusedRelayerGame;
+	type TechnicalMembership = UnusedTechnicalMembership;
 	type WeightInfo = ();
 }
 
@@ -288,19 +294,19 @@ frame_support::parameter_types! {
 	pub const AdvancedFee: Balance = 1;
 }
 impl Config for Test {
-	type PalletId = EthereumBackingPalletId;
-	type FeePalletId = EthereumBackingFeePalletId;
-	type Event = ();
-	type RedeemAccountId = AccountId;
-	type EthereumRelay = EthereumRelay;
-	type OnDepositRedeem = Staking;
-	type RingCurrency = Ring;
-	type KtonCurrency = Kton;
-	type RingLockLimit = RingLockLimit;
-	type KtonLockLimit = KtonLockLimit;
 	type AdvancedFee = AdvancedFee;
-	type SyncReward = ();
 	type EcdsaAuthorities = EcdsaAuthorities;
+	type EthereumRelay = EthereumRelay;
+	type Event = ();
+	type FeePalletId = EthereumBackingFeePalletId;
+	type KtonCurrency = Kton;
+	type KtonLockLimit = KtonLockLimit;
+	type OnDepositRedeem = Staking;
+	type PalletId = EthereumBackingPalletId;
+	type RedeemAccountId = AccountId;
+	type RingCurrency = Ring;
+	type RingLockLimit = RingLockLimit;
+	type SyncReward = ();
 	type WeightInfo = ();
 }
 

@@ -22,35 +22,36 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	const MAX_NOMINATIONS: u32 = MAX_NOMINATIONS;
-	type Event = Event;
-	type PalletId = StakingPalletId;
-	type UnixTime = Timestamp;
-	type SessionsPerEra = SessionsPerEra;
-	type BondingDurationInEra = BondingDurationInEra;
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
-	type SlashDeferDuration = SlashDeferDuration;
-	type SlashCancelOrigin = RootOrigin;
-	type SessionInterface = Self;
-	type NextNewSession = Session;
-	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
+	type BondingDurationInEra = BondingDurationInEra;
+	type Cap = Cap;
 	type ElectionProvider = ElectionProviderMultiPhase;
+	type Event = Event;
 	type GenesisElectionProvider = GenesisElectionOf<Self>;
-	// Use the nominator map to iter voter AND no-ops for all SortedListProvider hooks. The
-	// migration to bags-list is a no-op, but the storage version will be updated.
-	type SortedListProvider = UseNominatorsMap<Self>;
+	type KtonCurrency = Kton;
+	// rewards are minted from the void
+	type KtonReward = ();
+	// send the slashed funds to the treasury.
+	type KtonSlash = ();
+	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
+	type NextNewSession = Session;
+	type PalletId = StakingPalletId;
 	type RingCurrency = Ring;
+	// rewards are minted from the void
+	type RingReward = ();
 	type RingRewardRemainder = ();
 	// send the slashed funds to the treasury.
 	type RingSlash = ();
-	// rewards are minted from the void
-	type RingReward = ();
-	type KtonCurrency = Kton;
-	// send the slashed funds to the treasury.
-	type KtonSlash = ();
-	// rewards are minted from the void
-	type KtonReward = ();
-	type Cap = Cap;
+	type SessionInterface = Self;
+	type SessionsPerEra = SessionsPerEra;
+	type SlashCancelOrigin = RootOrigin;
+	type SlashDeferDuration = SlashDeferDuration;
+	// Use the nominator map to iter voter AND no-ops for all SortedListProvider hooks. The
+	// migration to bags-list is a no-op, but the storage version will be updated.
+	type SortedListProvider = UseNominatorsMap<Self>;
 	type TotalPower = TotalPower;
+	type UnixTime = Timestamp;
 	type WeightInfo = ();
+
+	const MAX_NOMINATIONS: u32 = MAX_NOMINATIONS;
 }

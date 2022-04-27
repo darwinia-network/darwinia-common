@@ -50,6 +50,7 @@ impl From<Conviction> for u8 {
 
 impl TryFrom<u8> for Conviction {
 	type Error = ();
+
 	fn try_from(i: u8) -> Result<Conviction, ()> {
 		Ok(match i {
 			0 => Conviction::None,
@@ -96,6 +97,7 @@ impl Bounded for Conviction {
 	fn min_value() -> Self {
 		Conviction::None
 	}
+
 	fn max_value() -> Self {
 		Conviction::Locked6x
 	}

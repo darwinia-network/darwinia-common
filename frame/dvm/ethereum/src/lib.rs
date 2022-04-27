@@ -113,6 +113,7 @@ impl<O: Into<Result<RawOrigin, O>> + From<RawOrigin>> EnsureOrigin<O>
 	for EnsureEthereumTransaction
 {
 	type Success = H160;
+
 	fn try_origin(o: O) -> Result<Self::Success, O> {
 		o.into().and_then(|o| match o {
 			RawOrigin::EthereumTransaction(id) => Ok(id),
@@ -688,6 +689,7 @@ impl<T: Config> Pallet<T> {
 	pub fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
 		CurrentTransactionStatuses::<T>::get()
 	}
+
 	/// Get current block.
 	pub fn current_block() -> Option<ethereum::BlockV2> {
 		CurrentBlock::<T>::get()
@@ -739,7 +741,7 @@ impl<T: Config> Pallet<T> {
 							t.action,
 							Vec::new(),
 						)
-					}
+					},
 					Transaction::EIP2930(t) => {
 						let base_fee = T::FeeCalculator::min_gas_price();
 						let priority_fee = t
@@ -761,7 +763,7 @@ impl<T: Config> Pallet<T> {
 							t.action,
 							access_list,
 						)
-					}
+					},
 					Transaction::EIP1559(t) => {
 						let access_list: Vec<(H160, Vec<H256>)> = t
 							.access_list
@@ -778,9 +780,9 @@ impl<T: Config> Pallet<T> {
 							t.action,
 							access_list,
 						)
-					}
+					},
 				}
-			}
+			},
 			AdvancedTransaction::Internal(t) => (
 				t.input.clone(),
 				t.value,
@@ -810,7 +812,7 @@ impl<T: Config> Pallet<T> {
 				.map_err(Into::into)?;
 
 				Ok((Some(target), None, CallOrCreateInfo::Call(res)))
-			}
+			},
 			ethereum::TransactionAction::Create => {
 				let res = T::Runner::create(
 					from,
@@ -826,7 +828,7 @@ impl<T: Config> Pallet<T> {
 				.map_err(Into::into)?;
 
 				Ok((None, Some(res.value), CallOrCreateInfo::Create(res)))
-			}
+			},
 		}
 	}
 

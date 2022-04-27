@@ -103,7 +103,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 					match call_res.exit_reason {
 						ExitReason::Succeed(_) => {
 							log::debug!("Transfer and call execute success.");
-						}
+						},
 						_ => return Err(helper.revert("Call in Kton precompile failed")),
 					}
 				}
@@ -114,7 +114,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 					output: Default::default(),
 					logs: Default::default(),
 				})
-			}
+			},
 			Action::Withdraw => {
 				// Storage: System Account (r:2 w:2)
 				// Storage: Ethereum RemainingRingBalance (r:2 w:2)
@@ -139,7 +139,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 					output: Default::default(),
 					logs: Default::default(),
 				})
-			}
+			},
 		}
 	}
 

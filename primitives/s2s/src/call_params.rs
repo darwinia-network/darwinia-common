@@ -106,6 +106,7 @@ mod test {
 	pub struct MockPangoroPayloadCreator;
 	impl CreatePayload<u64, (), ()> for MockPangoroPayloadCreator {
 		type Payload = Vec<u8>;
+
 		fn create(
 			_origin: CallOrigin<u64, (), ()>,
 			_spec_version: u32,
@@ -120,6 +121,7 @@ mod test {
 	pub struct MockPangolinPayloadCreator;
 	impl CreatePayload<u64, (), ()> for MockPangolinPayloadCreator {
 		type Payload = Vec<u8>;
+
 		fn create(
 			_origin: CallOrigin<u64, (), ()>,
 			_spec_version: u32,

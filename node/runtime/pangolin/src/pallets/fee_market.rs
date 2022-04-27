@@ -41,40 +41,32 @@ frame_support::parameter_types! {
 }
 
 impl Config<WithPangoroFeeMarket> for Runtime {
-	type TreasuryPalletId = TreasuryPalletId;
-
-	type PalletId = PangoroFeeMarketId;
-	type LockId = PangoroFeeMarketLockId;
-
-	type MinimumRelayFee = MinimumRelayFee;
-	type CollateralPerOrder = CollateralPerOrder;
-	type Slot = Slot;
-
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
-	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
+	type CollateralPerOrder = CollateralPerOrder;
 	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
-
-	type Slasher = FeeMarketSlasher;
-	type RingCurrency = Ring;
 	type Event = Event;
+	type LockId = PangoroFeeMarketLockId;
+	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
+	type MinimumRelayFee = MinimumRelayFee;
+	type PalletId = PangoroFeeMarketId;
+	type RingCurrency = Ring;
+	type Slasher = FeeMarketSlasher;
+	type Slot = Slot;
+	type TreasuryPalletId = TreasuryPalletId;
 	type WeightInfo = ();
 }
 impl Config<WithPangolinParachainFeeMarket> for Runtime {
-	type TreasuryPalletId = TreasuryPalletId;
-
-	type PalletId = PangolinParachainFeeMarketId;
-	type LockId = PangolinParachainFeeMarketLockId;
-
-	type MinimumRelayFee = MinimumRelayFee;
-	type CollateralPerOrder = CollateralPerOrder;
-	type Slot = Slot;
-
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
-	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
+	type CollateralPerOrder = CollateralPerOrder;
 	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
-
-	type Slasher = FeeMarketSlasher;
-	type RingCurrency = Ring;
 	type Event = Event;
+	type LockId = PangolinParachainFeeMarketLockId;
+	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
+	type MinimumRelayFee = MinimumRelayFee;
+	type PalletId = PangolinParachainFeeMarketId;
+	type RingCurrency = Ring;
+	type Slasher = FeeMarketSlasher;
+	type Slot = Slot;
+	type TreasuryPalletId = TreasuryPalletId;
 	type WeightInfo = ();
 }

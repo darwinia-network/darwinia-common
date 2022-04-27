@@ -323,14 +323,14 @@ pub mod pallet {
 					let to_reserve = new_deposit - old_deposit;
 					T::Currency::reserve(&who, to_reserve)
 						.map_err(|_| Error::<T>::UnableToPayBond)?;
-				}
-				Ordering::Equal => {}
+				},
+				Ordering::Equal => {},
 				Ordering::Less => {
 					// Must unreserve a bit.
 					let to_unreserve = old_deposit - new_deposit;
 					let _remainder = T::Currency::unreserve(&who, to_unreserve);
 					debug_assert!(_remainder.is_zero());
-				}
+				},
 			};
 
 			// Amount to be locked up.
@@ -429,7 +429,7 @@ pub mod pallet {
 					let _ = Self::remove_and_replace_member(&who, false)
 						.map_err(|_| Error::<T>::InvalidRenouncing)?;
 					Self::deposit_event(Event::Renounced(who));
-				}
+				},
 				Renouncing::RunnerUp => {
 					<RunnersUp<T>>::try_mutate::<_, Error<T>, _>(|runners_up| {
 						let index = runners_up
@@ -443,7 +443,7 @@ pub mod pallet {
 						Self::deposit_event(Event::Renounced(who));
 						Ok(())
 					})?;
-				}
+				},
 				Renouncing::Candidate(count) => {
 					<Candidates<T>>::try_mutate::<_, Error<T>, _>(|candidates| {
 						ensure!(count >= candidates.len() as u32, Error::<T>::InvalidWitnessData);
@@ -456,7 +456,7 @@ pub mod pallet {
 						Self::deposit_event(Event::Renounced(who));
 						Ok(())
 					})?;
-				}
+				},
 			};
 			Ok(None.into())
 		}
@@ -680,7 +680,7 @@ pub mod pallet {
 						match members.binary_search_by(|m| m.who.cmp(member)) {
 							Ok(_) => {
 								panic!("Duplicate member in elections-phragmen genesis: {}", member)
-							}
+							},
 							Err(pos) => members.insert(
 								pos,
 								SeatHolder {
@@ -786,7 +786,7 @@ impl<T: Config> Pallet<T> {
 					&remaining_member_ids_sorted[..],
 				);
 				true
-			}
+			},
 			None => {
 				T::ChangeMembers::change_members_sorted(
 					&[],
@@ -794,7 +794,7 @@ impl<T: Config> Pallet<T> {
 					&remaining_member_ids_sorted[..],
 				);
 				false
-			}
+			},
 		};
 
 		// if there was a prime before and they are not the one being removed, then set them
@@ -1124,16 +1124,16 @@ mod tests {
 		pub const MaxLocks: u32 = 1024;
 	}
 	impl darwinia_balances::Config<RingInstance> for Test {
+		type AccountStore = System;
 		type Balance = Balance;
+		type BalanceInfo = AccountData<Balance>;
 		type DustRemoval = ();
 		type Event = Event;
 		type ExistentialDeposit = ExistentialDeposit;
-		type AccountStore = System;
 		type MaxLocks = MaxLocks;
 		type MaxReserves = ();
-		type ReserveIdentifier = [u8; 8];
-		type BalanceInfo = AccountData<Balance>;
 		type OtherCurrencies = ();
+		type ReserveIdentifier = [u8; 8];
 		type WeightInfo = ();
 	}
 
@@ -1144,29 +1144,29 @@ mod tests {
 	}
 
 	impl frame_system::Config for Test {
+		type AccountData = AccountData<Balance>;
+		type AccountId = u64;
 		type BaseCallFilter = Everything;
-		type BlockWeights = BlockWeights;
+		type BlockHashCount = BlockHashCount;
 		type BlockLength = ();
-		type DbWeight = ();
-		type Origin = Origin;
-		type Index = u64;
 		type BlockNumber = u64;
+		type BlockWeights = BlockWeights;
 		type Call = Call;
+		type DbWeight = ();
+		type Event = Event;
 		type Hash = H256;
 		type Hashing = BlakeTwo256;
-		type AccountId = u64;
-		type Lookup = IdentityLookup<Self::AccountId>;
 		type Header = Header;
-		type Event = Event;
-		type BlockHashCount = BlockHashCount;
-		type Version = ();
-		type PalletInfo = PalletInfo;
-		type AccountData = AccountData<Balance>;
-		type OnNewAccount = ();
+		type Index = u64;
+		type Lookup = IdentityLookup<Self::AccountId>;
 		type OnKilledAccount = ();
-		type SystemWeightInfo = ();
-		type SS58Prefix = ();
+		type OnNewAccount = ();
 		type OnSetCode = ();
+		type Origin = Origin;
+		type PalletInfo = PalletInfo;
+		type SS58Prefix = ();
+		type SystemWeightInfo = ();
+		type Version = ();
 	}
 
 	frame_support::parameter_types! {
@@ -1229,20 +1229,20 @@ mod tests {
 	}
 
 	impl Config for Test {
-		type PalletId = PhragmenElectionPalletId;
-		type Event = Event;
+		type CandidacyBond = CandidacyBond;
+		type ChangeMembers = TestChangeMembers;
 		type Currency = Balances;
 		type CurrencyToVote = frame_support::traits::SaturatingCurrencyToVote;
-		type ChangeMembers = TestChangeMembers;
-		type InitializeMembers = ();
-		type CandidacyBond = CandidacyBond;
-		type VotingBondBase = VotingBondBase;
-		type VotingBondFactor = VotingBondFactor;
-		type TermDuration = TermDuration;
 		type DesiredMembers = DesiredMembers;
 		type DesiredRunnersUp = DesiredRunnersUp;
-		type LoserCandidate = ();
+		type Event = Event;
+		type InitializeMembers = ();
 		type KickedMember = ();
+		type LoserCandidate = ();
+		type PalletId = PhragmenElectionPalletId;
+		type TermDuration = TermDuration;
+		type VotingBondBase = VotingBondBase;
+		type VotingBondFactor = VotingBondFactor;
 		type WeightInfo = ();
 	}
 
@@ -1277,18 +1277,22 @@ mod tests {
 			VOTING_BOND_BASE.with(|v| *v.borrow_mut() = bond);
 			self
 		}
+
 		pub fn voter_bond_factor(self, bond: u64) -> Self {
 			VOTING_BOND_FACTOR.with(|v| *v.borrow_mut() = bond);
 			self
 		}
+
 		pub fn desired_runners_up(self, count: u32) -> Self {
 			DESIRED_RUNNERS_UP.with(|v| *v.borrow_mut() = count);
 			self
 		}
+
 		pub fn term_duration(self, duration: u64) -> Self {
 			TERM_DURATION.with(|v| *v.borrow_mut() = duration);
 			self
 		}
+
 		pub fn genesis_members(mut self, members: Vec<(u64, u64)>) -> Self {
 			MEMBERS.with(|m| {
 				*m.borrow_mut() = members.iter().map(|(m, _)| m.clone()).collect::<Vec<_>>()
@@ -1296,14 +1300,17 @@ mod tests {
 			self.genesis_members = members;
 			self
 		}
+
 		pub fn desired_members(self, count: u32) -> Self {
 			DESIRED_MEMBERS.with(|m| *m.borrow_mut() = count);
 			self
 		}
+
 		pub fn balance_factor(mut self, factor: u64) -> Self {
 			self.balance_factor = factor;
 			self
 		}
+
 		pub fn build_and_execute(self, test: impl FnOnce() -> ()) {
 			MEMBERS.with(|m| {
 				*m.borrow_mut() =

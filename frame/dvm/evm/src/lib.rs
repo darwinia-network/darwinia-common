@@ -230,10 +230,10 @@ pub mod pallet {
 			match info.exit_reason {
 				ExitReason::Succeed(_) => {
 					Pallet::<T>::deposit_event(Event::<T>::Executed(target));
-				}
+				},
 				_ => {
 					Pallet::<T>::deposit_event(Event::<T>::ExecutedFailed(target));
-				}
+				},
 			};
 
 			Ok(PostDispatchInfo {
@@ -276,10 +276,10 @@ pub mod pallet {
 					exit_reason: ExitReason::Succeed(_), value: create_address, ..
 				} => {
 					Pallet::<T>::deposit_event(Event::<T>::Created(create_address));
-				}
+				},
 				CreateInfo { exit_reason: _, value: create_address, .. } => {
 					Pallet::<T>::deposit_event(Event::<T>::CreatedFailed(create_address));
-				}
+				},
 			}
 
 			Ok(PostDispatchInfo {
@@ -323,10 +323,10 @@ pub mod pallet {
 					exit_reason: ExitReason::Succeed(_), value: create_address, ..
 				} => {
 					Pallet::<T>::deposit_event(Event::<T>::Created(create_address));
-				}
+				},
 				CreateInfo { exit_reason: _, value: create_address, .. } => {
 					Pallet::<T>::deposit_event(Event::<T>::CreatedFailed(create_address));
-				}
+				},
 			}
 
 			Ok(PostDispatchInfo {
@@ -497,6 +497,7 @@ impl GasWeightMapping for () {
 	fn gas_to_weight(gas: u64) -> Weight {
 		gas * 16_000 as Weight
 	}
+
 	fn weight_to_gas(weight: Weight) -> u64 {
 		weight / 16_000
 	}

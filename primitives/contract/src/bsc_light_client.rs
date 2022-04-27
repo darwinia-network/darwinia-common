@@ -77,7 +77,7 @@ impl BscSingleStorageVerifyParams {
 					storage_key: storage_key.into(),
 					storage_proof: storage_proof?,
 				})
-			}
+			},
 			_ => Err(Error::InvalidData),
 		}
 	}
@@ -123,7 +123,7 @@ impl BscMultiStorageVerifyParams {
 							let key: [u8; 32] =
 								storage_key.clone().try_into().map_err(|_| Error::InvalidData)?;
 							Ok(key.into())
-						}
+						},
 						_ => Err(Error::InvalidData),
 					})
 					.collect();
@@ -146,7 +146,7 @@ impl BscMultiStorageVerifyParams {
 					account_proof: account_proof?,
 					storage_proofs: storage_proofs?,
 				})
-			}
+			},
 			_ => Err(Error::InvalidData),
 		}
 	}

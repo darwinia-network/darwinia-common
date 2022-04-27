@@ -27,14 +27,14 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	type PalletId = S2sIssuingPalletId;
-	type Event = Event;
-	type WeightInfo = ();
-	type RingCurrency = Ring;
+	type BackingChainName = BackingChainName;
 	type BridgedAccountIdConverter = bp_pangolin::AccountIdConverter;
 	type BridgedChainId = PangoroChainId;
-	type ToEthAddressT = TruncateToEthAddress;
+	type Event = Event;
 	type InternalTransactHandler = Ethereum;
-	type BackingChainName = BackingChainName;
 	type MessageLaneId = BridgePangoroLaneId;
+	type PalletId = S2sIssuingPalletId;
+	type RingCurrency = Ring;
+	type ToEthAddressT = TruncateToEthAddress;
+	type WeightInfo = ();
 }
