@@ -115,11 +115,10 @@
 //! The Staking pallet uses the `LockableCurrency` trait to lock a stash account's funds:
 //!
 //! ```
-//! use frame_support::traits::WithdrawReasons;
+//! use frame_support::traits::{LockableCurrency, WithdrawReasons};
 //! use sp_runtime::traits::Bounded;
-//! use darwinia_support::balance::*;
 //! pub trait Config: frame_system::Config {
-//! 	type Currency: LockableCurrency<Self::AccountId, Moment=Self::BlockNumber>;
+//! 	type Currency: LockableCurrency<Self::AccountId>;
 //! }
 //! # struct StakingLedger<T: Config> {
 //! # 	stash: <T as frame_system::Config>::AccountId,
