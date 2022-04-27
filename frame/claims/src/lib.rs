@@ -443,7 +443,7 @@ impl<T: Config> sp_runtime::traits::ValidateUnsigned for Module<T> {
 							longevity: TransactionLongevity::max_value(),
 							propagate: true,
 						})
-					}
+					},
 					OtherSignature::Tron(signature) => {
 						let maybe_signer = Self::tron_recover(&signature, &data);
 						let signer = if let Some(s) = maybe_signer {
@@ -469,9 +469,9 @@ impl<T: Config> sp_runtime::traits::ValidateUnsigned for Module<T> {
 							longevity: TransactionLongevity::max_value(),
 							propagate: true,
 						})
-					}
+					},
 				}
-			}
+			},
 			_ => Err(InvalidTransaction::Call.into()),
 		}
 	}
@@ -602,45 +602,45 @@ mod tests {
 	darwinia_support::impl_test_account_data! {}
 
 	impl frame_system::Config for Test {
+		type AccountData = AccountData<Balance>;
+		type AccountId = u64;
 		type BaseCallFilter = Everything;
-		type BlockWeights = ();
+		type BlockHashCount = ();
 		type BlockLength = ();
-		type DbWeight = ();
-		type Origin = Origin;
-		type Call = Call;
-		type Index = u64;
 		type BlockNumber = u64;
+		type BlockWeights = ();
+		type Call = Call;
+		type DbWeight = ();
+		type Event = ();
 		type Hash = H256;
 		type Hashing = BlakeTwo256;
-		type AccountId = u64;
-		type Lookup = IdentityLookup<Self::AccountId>;
 		type Header = Header;
-		type Event = ();
-		type BlockHashCount = ();
-		type Version = ();
-		type PalletInfo = PalletInfo;
-		type AccountData = AccountData<Balance>;
-		type OnNewAccount = ();
+		type Index = u64;
+		type Lookup = IdentityLookup<Self::AccountId>;
 		type OnKilledAccount = ();
-		type SystemWeightInfo = ();
-		type SS58Prefix = ();
+		type OnNewAccount = ();
 		type OnSetCode = ();
+		type Origin = Origin;
+		type PalletInfo = PalletInfo;
+		type SS58Prefix = ();
+		type SystemWeightInfo = ();
+		type Version = ();
 	}
 
 	parameter_types! {
 		pub const ExistentialDeposit: Balance = 1;
 	}
 	impl darwinia_balances::Config<RingInstance> for Test {
+		type AccountStore = System;
 		type Balance = Balance;
+		type BalanceInfo = AccountData<Balance>;
 		type DustRemoval = ();
 		type Event = ();
 		type ExistentialDeposit = ExistentialDeposit;
-		type AccountStore = System;
 		type MaxLocks = ();
 		type MaxReserves = ();
-		type ReserveIdentifier = [u8; 8];
-		type BalanceInfo = AccountData<Balance>;
 		type OtherCurrencies = ();
+		type ReserveIdentifier = [u8; 8];
 		type WeightInfo = ();
 	}
 
@@ -653,10 +653,10 @@ mod tests {
 	}
 	impl Config for Test {
 		type Event = ();
+		type MoveClaimOrigin = frame_system::EnsureSignedBy<Six, u64>;
 		type PalletId = ClaimsPalletId;
 		type Prefix = Prefix;
 		type RingCurrency = Ring;
-		type MoveClaimOrigin = frame_system::EnsureSignedBy<Six, u64>;
 	}
 
 	frame_support::construct_runtime! {

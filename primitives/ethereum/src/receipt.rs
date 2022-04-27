@@ -80,11 +80,11 @@ impl TypedReceipt {
 			TypedTxId::EIP1559Transaction => {
 				let rlp = Rlp::new(&tx[1..]);
 				Ok(Self::EIP1559Transaction(LegacyReceipt::decode(&rlp)?))
-			}
+			},
 			TypedTxId::AccessList => {
 				let rlp = Rlp::new(&tx[1..]);
 				Ok(Self::AccessList(LegacyReceipt::decode(&rlp)?))
-			}
+			},
 			TypedTxId::Legacy => Ok(Self::Legacy(LegacyReceipt::decode(&Rlp::new(tx))?)),
 		}
 	}
@@ -162,15 +162,15 @@ impl Encodable for LegacyReceipt {
 		match self.outcome {
 			TransactionOutcome::Unknown => {
 				s.begin_list(3);
-			}
+			},
 			TransactionOutcome::StateRoot(ref root) => {
 				s.begin_list(4);
 				s.append(root);
-			}
+			},
 			TransactionOutcome::StatusCode(ref status_code) => {
 				s.begin_list(4);
 				s.append(status_code);
-			}
+			},
 		}
 		s.append(&self.gas_used);
 		s.append(&self.log_bloom);

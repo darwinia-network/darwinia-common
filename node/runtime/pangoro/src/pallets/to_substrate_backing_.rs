@@ -34,16 +34,16 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	type Event = Event;
-	type WeightInfo = ();
-	type PalletId = S2sBackingPalletId;
-	type RingMetadata = RingMetadata;
-	type MaxLockRingAmountPerTx = MaxLockRingAmountPerTx;
-	type RingCurrency = Ring;
 	type BridgedAccountIdConverter = bp_pangolin::AccountIdConverter;
 	type BridgedChainId = PangolinChainId;
-	type OutboundPayloadCreator = bm_pangolin::ToPangolinOutboundPayload;
-	type MessageNoncer = PangolinMessageNoncer;
+	type Event = Event;
+	type MaxLockRingAmountPerTx = MaxLockRingAmountPerTx;
 	type MessageLaneId = BridgePangolinLaneId;
+	type MessageNoncer = PangolinMessageNoncer;
 	type MessagesBridge = BridgePangolinMessages;
+	type OutboundPayloadCreator = bm_pangolin::ToPangolinOutboundPayload;
+	type PalletId = S2sBackingPalletId;
+	type RingCurrency = Ring;
+	type RingMetadata = RingMetadata;
+	type WeightInfo = ();
 }

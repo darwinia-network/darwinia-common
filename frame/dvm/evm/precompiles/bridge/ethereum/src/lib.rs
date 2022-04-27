@@ -70,7 +70,7 @@ where
 					}
 					.into();
 				call.encode()
-			}
+			},
 			Action::TokenRegisterResponse => {
 				helper.record_gas(0, 0)?;
 
@@ -80,7 +80,7 @@ where
 					}
 					.into();
 				call.encode()
-			}
+			},
 		};
 
 		Ok(PrecompileOutput {

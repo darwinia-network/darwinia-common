@@ -25,6 +25,7 @@ where
 	pub fn new() -> Self {
 		Self(Default::default())
 	}
+
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
 		sp_std::vec![1, 2, 3, 4, 5, 1024, 1025].into_iter().map(|x| addr(x)).collect()
 	}
@@ -82,21 +83,21 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	type FeeCalculator = BaseFee;
-	type GasWeightMapping = ();
-	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
-	type IntoAccountId = ConcatConverter<Self::AccountId>;
-	type FindAuthor = FindAuthorTruncated<Aura>;
-	type BlockHashMapping = darwinia_ethereum::EthereumBlockHashMapping<Self>;
-	type Event = Event;
-	type PrecompilesType = FrontierPrecompiles<Self>;
-	type PrecompilesValue = PrecompilesValue;
-	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type Runner = Runner<Self>;
-	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type BlockHashMapping = darwinia_ethereum::EthereumBlockHashMapping<Self>;
+	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
+	type ChainId = ChainId;
+	type Event = Event;
+	type FeeCalculator = BaseFee;
+	type FindAuthor = FindAuthorTruncated<Aura>;
+	type GasWeightMapping = ();
+	type IntoAccountId = ConcatConverter<Self::AccountId>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
+	type PrecompilesType = FrontierPrecompiles<Self>;
+	type PrecompilesValue = PrecompilesValue;
+	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type Runner = Runner<Self>;
 }
 
 fn addr(a: u64) -> H160 {

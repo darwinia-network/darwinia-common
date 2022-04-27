@@ -59,7 +59,7 @@ fn transaction_without_enough_gas_should_not_work() {
 		let mut transaction = eip1559_erc20_creation_transaction(alice);
 		match &mut transaction {
 			Transaction::EIP1559(t) => t.max_fee_per_gas = U256::from(11_000_000),
-			_ => {}
+			_ => {},
 		}
 
 		let call = crate::Call::<Test>::transact { transaction };
@@ -231,7 +231,7 @@ fn transaction_should_generate_correct_gas_used() {
 		match info {
 			CallOrCreateInfo::Create(info) => {
 				assert_eq!(info.used_gas, expected_gas);
-			}
+			},
 			CallOrCreateInfo::Call(_) => panic!("expected create info"),
 		}
 	});
@@ -291,7 +291,7 @@ fn call_should_handle_errors() {
 					bytes2hex("", info.value),
 					"0000000000000000000000000000000000000000000000000000000000000001".to_owned()
 				);
-			}
+			},
 			CallOrCreateInfo::Create(_) => panic!("expected call info"),
 		}
 

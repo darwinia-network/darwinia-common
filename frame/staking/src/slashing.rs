@@ -255,7 +255,7 @@ impl SlashingSpans {
 				self.prior.truncate(o);
 				let new_earliest = self.span_index - self.prior.len() as SpanIndex;
 				Some((earliest_span_index, new_earliest))
-			}
+			},
 			None => None,
 		};
 

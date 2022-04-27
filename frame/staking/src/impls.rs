@@ -25,6 +25,14 @@ use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo;
 use darwinia_support::traits::OnDepositRedeem;
 
 impl<T: Config> Pallet<T> {
+	darwinia_support::impl_rpc! {
+		pub fn power_of_rpc(
+			stash: impl sp_std::borrow::Borrow<AccountId<T>>,
+		) -> RuntimeDispatchInfo<Power> {
+			RuntimeDispatchInfo { power: Self::power_of(stash.borrow()) }
+		}
+	}
+
 	pub fn account_id() -> AccountId<T> {
 		T::PalletId::get().into_account()
 	}
@@ -150,14 +158,6 @@ impl<T: Config> Pallet<T> {
 					+ Self::currency_to_power::<_>(l.active_kton, Self::kton_pool())
 			})
 			.unwrap_or_default()
-	}
-
-	darwinia_support::impl_rpc! {
-		pub fn power_of_rpc(
-			stash: impl sp_std::borrow::Borrow<AccountId<T>>,
-		) -> RuntimeDispatchInfo<Power> {
-			RuntimeDispatchInfo { power: Self::power_of(stash.borrow()) }
-		}
 	}
 
 	pub fn stake_of(who: &AccountId<T>) -> (RingBalance<T>, KtonBalance<T>) {
@@ -436,7 +436,7 @@ impl<T: Config> Pallet<T> {
 					// Either `Forcing::ForceNone`,
 					// or `Forcing::NotForcing if era_length >= T::SessionsPerEra::get()`.
 					return None;
-				}
+				},
 			}
 
 			// New era.
@@ -632,7 +632,7 @@ impl<T: Config> Pallet<T> {
 					// TODO: this should be simplified #8911
 					<CurrentEra<T>>::put(0);
 					<ErasStartSessionIndex<T>>::insert(0, &start_session_index);
-				}
+				},
 				_ => (),
 			}
 
@@ -925,7 +925,7 @@ impl<T: Config> Pallet<T> {
 				Some(nominator) => {
 					nominators_seen.saturating_inc();
 					nominator
-				}
+				},
 				None => break,
 			};
 
@@ -1249,6 +1249,7 @@ impl<T: Config> pallet_session::SessionManager<AccountId<T>> for Pallet<T> {
 
 		Self::new_session(new_index, false)
 	}
+
 	fn new_session_genesis(new_index: SessionIndex) -> Option<Vec<AccountId<T>>> {
 		log!(trace, "planning new session {} at genesis", new_index);
 
@@ -1256,11 +1257,13 @@ impl<T: Config> pallet_session::SessionManager<AccountId<T>> for Pallet<T> {
 
 		Self::new_session(new_index, true)
 	}
+
 	fn start_session(start_index: SessionIndex) {
 		log!(trace, "starting session {}", start_index);
 
 		Self::start_session(start_index)
 	}
+
 	fn end_session(end_index: SessionIndex) {
 		log!(trace, "ending session {}", end_index);
 
@@ -1286,6 +1289,7 @@ impl<T: Config> pallet_session::historical::SessionManager<AccountId<T>, Exposur
 				.collect()
 		})
 	}
+
 	fn new_session_genesis(new_index: SessionIndex) -> Option<Vec<(AccountId<T>, ExposureT<T>)>> {
 		<Self as pallet_session::SessionManager<_>>::new_session_genesis(new_index).map(
 			|validators| {
@@ -1303,9 +1307,11 @@ impl<T: Config> pallet_session::historical::SessionManager<AccountId<T>, Exposur
 			},
 		)
 	}
+
 	fn start_session(start_index: SessionIndex) {
 		<Self as pallet_session::SessionManager<_>>::start_session(start_index)
 	}
+
 	fn end_session(end_index: SessionIndex) {
 		<Self as pallet_session::SessionManager<_>>::end_session(end_index)
 	}
@@ -1516,6 +1522,7 @@ where
 	fn note_author(author: AccountId<T>) {
 		Self::reward_by_ids(vec![(author, 20)]);
 	}
+
 	fn note_uncle(author: AccountId<T>, _age: BlockNumberFor<T>) {
 		Self::reward_by_ids(vec![(<pallet_authorship::Pallet<T>>::author(), 2), (author, 1)]);
 	}

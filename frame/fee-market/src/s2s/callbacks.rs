@@ -60,7 +60,7 @@ impl<T: Config<I>, I: 'static> OnDeliveryConfirmed for FeeMarketMessageConfirmed
 				if !order.is_confirmed() {
 					<Orders<T, I>>::mutate((lane, message_nonce), |order| match order {
 						Some(order) => order.set_confirm_time(Some(now)),
-						None => {}
+						None => {},
 					});
 				}
 			}

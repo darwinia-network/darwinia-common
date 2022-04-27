@@ -181,12 +181,15 @@ pub mod pallet {
 			fn total_issuance() -> Self::Balance {
 				<TotalIssuance<T, I>>::get()
 			}
+
 			fn minimum_balance() -> Self::Balance {
 				T::ExistentialDeposit::get()
 			}
+
 			fn balance(who: &T::AccountId) -> Self::Balance {
 				Self::account(who).total()
 			}
+
 			fn reducible_balance(who: &T::AccountId, keep_alive: bool) -> Self::Balance {
 				let a = Self::account(who);
 				// Liquid balance is what is neither reserved nor locked/frozen.
@@ -202,9 +205,11 @@ pub mod pallet {
 					liquid.saturating_sub(must_remain_to_exist)
 				}
 			}
+
 			fn can_deposit(who: &T::AccountId, amount: Self::Balance) -> DepositConsequence {
 				Self::deposit_consequence(who, amount, &Self::account(who))
 			}
+
 			fn can_withdraw(
 				who: &T::AccountId,
 				amount: Self::Balance,
@@ -217,6 +222,7 @@ pub mod pallet {
 			fn balance_on_hold(who: &T::AccountId) -> T::Balance {
 				Self::account(who).reserved()
 			}
+
 			fn can_hold(who: &T::AccountId, amount: T::Balance) -> bool {
 				let a = Self::account(who);
 				let min_balance = T::ExistentialDeposit::get()
@@ -282,6 +288,7 @@ pub mod pallet {
 				})?;
 				Ok(())
 			}
+
 			fn release(
 				who: &T::AccountId,
 				amount: Self::Balance,
@@ -301,6 +308,7 @@ pub mod pallet {
 					Ok(actual)
 				})
 			}
+
 			fn transfer_held(
 				source: &T::AccountId,
 				dest: &T::AccountId,
@@ -393,6 +401,7 @@ pub mod pallet {
 			fn zero() -> Self {
 				Self(Zero::zero())
 			}
+
 			fn drop_zero(self) -> Result<(), Self> {
 				if self.0.is_zero() {
 					Ok(())
@@ -400,6 +409,7 @@ pub mod pallet {
 					Err(self)
 				}
 			}
+
 			fn split(self, amount: T::Balance) -> (Self, Self) {
 				let first = self.0.min(amount);
 				let second = self.0 - first;
@@ -407,16 +417,19 @@ pub mod pallet {
 				mem::forget(self);
 				(Self(first), Self(second))
 			}
+
 			fn merge(mut self, other: Self) -> Self {
 				self.0 = self.0.saturating_add(other.0);
 				mem::forget(other);
 
 				self
 			}
+
 			fn subsume(&mut self, other: Self) {
 				self.0 = self.0.saturating_add(other.0);
 				mem::forget(other);
 			}
+
 			fn offset(self, other: Self::Opposite) -> SameOrOther<Self, Self::Opposite> {
 				let (a, b) = (self.0, other.0);
 				mem::forget((self, other));
@@ -429,6 +442,7 @@ pub mod pallet {
 					SameOrOther::None
 				}
 			}
+
 			fn peek(&self) -> T::Balance {
 				self.0.clone()
 			}
@@ -452,6 +466,7 @@ pub mod pallet {
 			fn zero() -> Self {
 				Self(Zero::zero())
 			}
+
 			fn drop_zero(self) -> Result<(), Self> {
 				if self.0.is_zero() {
 					Ok(())
@@ -459,6 +474,7 @@ pub mod pallet {
 					Err(self)
 				}
 			}
+
 			fn split(self, amount: T::Balance) -> (Self, Self) {
 				let first = self.0.min(amount);
 				let second = self.0 - first;
@@ -466,16 +482,19 @@ pub mod pallet {
 				mem::forget(self);
 				(Self(first), Self(second))
 			}
+
 			fn merge(mut self, other: Self) -> Self {
 				self.0 = self.0.saturating_add(other.0);
 				mem::forget(other);
 
 				self
 			}
+
 			fn subsume(&mut self, other: Self) {
 				self.0 = self.0.saturating_add(other.0);
 				mem::forget(other);
 			}
+
 			fn offset(self, other: Self::Opposite) -> SameOrOther<Self, Self::Opposite> {
 				let (a, b) = (self.0, other.0);
 				mem::forget((self, other));
@@ -488,6 +507,7 @@ pub mod pallet {
 					SameOrOther::None
 				}
 			}
+
 			fn peek(&self) -> T::Balance {
 				self.0.clone()
 			}
@@ -955,6 +975,14 @@ pub mod pallet {
 	}
 
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
+		impl_rpc! {
+			fn usable_balance_rpc(who: impl Borrow<T::AccountId>) -> RuntimeDispatchInfo<T::Balance> {
+				RuntimeDispatchInfo {
+					usable_balance: Self::usable_balance(who.borrow()),
+				}
+			}
+		}
+
 		// PRIVATE MUTABLES
 
 		/// Get the free balance of an account.
@@ -987,14 +1015,6 @@ pub mod pallet {
 			}
 
 			frozen_balance
-		}
-
-		impl_rpc! {
-			fn usable_balance_rpc(who: impl Borrow<T::AccountId>) -> RuntimeDispatchInfo<T::Balance> {
-				RuntimeDispatchInfo {
-					usable_balance: Self::usable_balance(who.borrow()),
-				}
-			}
 		}
 
 		/// Get the reserved balance of an account.
@@ -1296,8 +1316,8 @@ pub mod pallet {
 		T::Balance: MaybeSerializeDeserialize + Debug,
 	{
 		type Balance = T::Balance;
-		type PositiveImbalance = PositiveImbalance<T, I>;
 		type NegativeImbalance = NegativeImbalance<T, I>;
+		type PositiveImbalance = PositiveImbalance<T, I>;
 
 		fn total_balance(who: &T::AccountId) -> Self::Balance {
 			let account = Self::account(who);
@@ -1793,7 +1813,7 @@ pub mod pallet {
 					// account. If it ever does, then we should fail gracefully though, indicating
 					// that nothing could be done.
 					return value;
-				}
+				},
 			};
 
 			Self::deposit_event(Event::Unreserved(who.clone(), actual.clone()));
@@ -1821,8 +1841,8 @@ pub mod pallet {
 	where
 		T::Balance: MaybeSerializeDeserialize + Debug,
 	{
-		type Moment = T::BlockNumber;
 		type MaxLocks = T::MaxLocks;
+		type Moment = T::BlockNumber;
 
 		// Set a lock on the balance of `who`.
 		// Is a no-op if lock amount is zero or `reasons` `is_none()`.
@@ -1889,7 +1909,7 @@ pub mod pallet {
 											);
 
 											nl.lock_for
-										}
+										},
 									}
 								},
 								reasons: l.reasons | nl.reasons,
@@ -1957,12 +1977,12 @@ pub mod pallet {
 					Ok(index) => {
 						// this add can't overflow but just to be defensive.
 						reserves[index].amount = reserves[index].amount.saturating_add(value);
-					}
+					},
 					Err(index) => {
 						reserves
 							.try_insert(index, ReserveData { id: id.clone(), amount: value })
 							.map_err(|_| Error::<T, I>::TooManyReserves)?;
-					}
+					},
 				};
 				<Self as ReservableCurrency<_>>::reserve(who, value)?;
 				Ok(())
@@ -2006,7 +2026,7 @@ pub mod pallet {
 							}
 
 							value - actual
-						}
+						},
 						Err(_) => value,
 					}
 				} else {
@@ -2043,7 +2063,7 @@ pub mod pallet {
 						reserves[index].amount -= actual;
 
 						(imb, value - actual)
-					}
+					},
 					Err(_) => (NegativeImbalance::zero(), value),
 				}
 			})
@@ -2099,7 +2119,7 @@ pub mod pallet {
 													reserves[index].amount.saturating_add(actual);
 
 												Ok(actual)
-											}
+											},
 											Err(index) => {
 												let remain = <Self as ReservableCurrency<_>>::repatriate_reserved(slashed, beneficiary, to_change, status)?;
 
@@ -2118,7 +2138,7 @@ pub mod pallet {
 													.map_err(|_| Error::<T, I>::TooManyReserves)?;
 
 												Ok(actual)
-											}
+											},
 										}
 									},
 								)?
@@ -2138,7 +2158,7 @@ pub mod pallet {
 							reserves[index].amount -= actual;
 
 							Ok(value - actual)
-						}
+						},
 						Err(_) => Ok(value),
 					}
 				},

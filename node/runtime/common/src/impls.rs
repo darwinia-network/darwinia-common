@@ -109,7 +109,7 @@ impl Get<Option<(usize, ExtendedBalance)>> for OffchainRandomBalancing {
 					% max.saturating_add(1);
 
 				random as usize
-			}
+			},
 		};
 
 		Some((iters, 0))

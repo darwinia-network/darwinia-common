@@ -72,29 +72,29 @@ frame_support::parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
-	type OtherCurrencies = ();
 	type Balance = Balance;
+	type BalanceInfo = AccountData<Balance>;
+	type DustRemoval = ();
 	type Event = ();
+	type ExistentialDeposit = ExistentialDeposit;
 	type MaxLocks = ();
 	type MaxReserves = ();
+	type OtherCurrencies = ();
 	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
 	type WeightInfo = ();
 }
 impl darwinia_balances::Config<KtonInstance> for Test {
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
-	type OtherCurrencies = ();
 	type Balance = Balance;
+	type BalanceInfo = AccountData<Balance>;
+	type DustRemoval = ();
 	type Event = ();
+	type ExistentialDeposit = ExistentialDeposit;
 	type MaxLocks = ();
 	type MaxReserves = ();
+	type OtherCurrencies = ();
 	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
 	type WeightInfo = ();
 }
 
@@ -102,36 +102,36 @@ frame_support::parameter_types! {
 	pub const MinimumPeriod: u64 = 6000 / 2;
 }
 impl pallet_timestamp::Config for Test {
+	type MinimumPeriod = MinimumPeriod;
 	type Moment = u64;
 	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = Everything;
-	type BlockWeights = ();
-	type BlockLength = ();
-	type DbWeight = ();
-	type Origin = Origin;
-	type Index = u64;
-	type BlockNumber = u64;
-	type Hash = H256;
-	type Call = Call;
-	type Hashing = BlakeTwo256;
-	type AccountId = AccountId32;
-	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
-	type Event = ();
-	type BlockHashCount = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
 	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
+	type AccountId = AccountId32;
+	type BaseCallFilter = Everything;
+	type BlockHashCount = ();
+	type BlockLength = ();
+	type BlockNumber = u64;
+	type BlockWeights = ();
+	type Call = Call;
+	type DbWeight = ();
+	type Event = ();
+	type Hash = H256;
+	type Hashing = BlakeTwo256;
+	type Header = Header;
+	type Index = u64;
+	type Lookup = IdentityLookup<Self::AccountId>;
 	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type OnNewAccount = ();
 	type OnSetCode = ();
+	type Origin = Origin;
+	type PalletInfo = PalletInfo;
+	type SS58Prefix = ();
+	type SystemWeightInfo = ();
+	type Version = ();
 }
 
 frame_support::parameter_types! {
@@ -140,10 +140,10 @@ frame_support::parameter_types! {
 
 impl darwinia_ethereum::Config for Test {
 	type Event = ();
-	type PalletId = DvmPalletId;
-	type StateRoot = IntermediateStateRoot;
-	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
+	type PalletId = DvmPalletId;
+	type RingCurrency = Ring;
+	type StateRoot = IntermediateStateRoot;
 }
 
 pub struct FixedGasPrice;
@@ -168,21 +168,21 @@ frame_support::parameter_types! {
 	pub PrecompilesValue: MockPrecompiles<Test> = MockPrecompiles::<_>::new();
 }
 impl darwinia_evm::Config for Test {
-	type FeeCalculator = FixedGasPrice;
-	type GasWeightMapping = ();
-	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
-	type IntoAccountId = HashedConverter;
-	type Event = ();
-	type PrecompilesType = MockPrecompiles<Self>;
-	type PrecompilesValue = PrecompilesValue;
-	type FindAuthor = ();
-	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
-	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type Runner = darwinia_evm::runner::stack::Runner<Self>;
-	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
+	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
+	type ChainId = ChainId;
+	type Event = ();
+	type FeeCalculator = FixedGasPrice;
+	type FindAuthor = ();
+	type GasWeightMapping = ();
+	type IntoAccountId = HashedConverter;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
+	type PrecompilesType = MockPrecompiles<Self>;
+	type PrecompilesValue = PrecompilesValue;
+	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 }
 
 frame_support::parameter_types! {
@@ -201,6 +201,7 @@ where
 	pub fn new() -> Self {
 		Self(Default::default())
 	}
+
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
 		sp_std::vec![1, 2, 3, 4, 24, 25].into_iter().map(|x| H160::from_low_u64_be(x)).collect()
 	}
@@ -242,6 +243,7 @@ where
 			_ => None,
 		}
 	}
+
 	fn is_precompile(&self, address: H160) -> bool {
 		Self::used_addresses().contains(&address)
 	}
@@ -269,6 +271,7 @@ impl LatestMessageNoncer for MockS2sMessageSender {
 	fn outbound_latest_generated_nonce(_lane_id: [u8; 4]) -> u64 {
 		0
 	}
+
 	fn inbound_latest_received_nonce(_lane_id: [u8; 4]) -> u64 {
 		0
 	}
@@ -283,17 +286,16 @@ impl ToEthAddress<AccountId32> for TruncateToEthAddress {
 }
 
 impl Config for Test {
-	type Event = ();
-	type PalletId = S2sRelayPalletId;
-	type WeightInfo = ();
-
-	type RingCurrency = Ring;
+	type BackingChainName = PangoroName;
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangoroChainId;
-	type ToEthAddressT = TruncateToEthAddress;
+	type Event = ();
 	type InternalTransactHandler = Ethereum;
-	type BackingChainName = PangoroName;
 	type MessageLaneId = MessageLaneId;
+	type PalletId = S2sRelayPalletId;
+	type RingCurrency = Ring;
+	type ToEthAddressT = TruncateToEthAddress;
+	type WeightInfo = ();
 }
 
 frame_support::construct_runtime! {

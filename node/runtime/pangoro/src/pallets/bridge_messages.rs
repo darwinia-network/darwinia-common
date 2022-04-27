@@ -21,32 +21,26 @@ frame_support::parameter_types! {
 }
 
 impl Config<WithPangolinMessages> for Runtime {
-	type Event = Event;
-	type WeightInfo = ();
-	type Parameter = bm_pangolin::PangoroToPangolinMessagesParameter;
-	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
-	type MaxUnrewardedRelayerEntriesAtInboundLane = MaxUnrewardedRelayerEntriesAtInboundLane;
-	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
-
-	type OutboundPayload = bm_pangolin::ToPangolinMessagePayload;
-	type OutboundMessageFee = bp_pangoro::Balance;
-
-	type InboundPayload = bm_pangolin::FromPangolinMessagePayload;
-	type InboundMessageFee = bp_pangolin::Balance;
-	type InboundRelayer = bp_pangolin::AccountId;
-
 	type AccountIdConverter = bp_pangoro::AccountIdConverter;
-
-	type TargetHeaderChain = bm_pangolin::Pangolin;
+	type BridgedChainId = BridgedChainId;
+	type Event = Event;
+	type InboundMessageFee = bp_pangolin::Balance;
+	type InboundPayload = bm_pangolin::FromPangolinMessagePayload;
+	type InboundRelayer = bp_pangolin::AccountId;
 	type LaneMessageVerifier = bm_pangolin::ToPangolinMessageVerifier;
+	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
+	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
+	type MaxUnrewardedRelayerEntriesAtInboundLane = MaxUnrewardedRelayerEntriesAtInboundLane;
 	type MessageDeliveryAndDispatchPayment =
 		FeeMarketPayment<Runtime, WithPangolinFeeMarket, Ring, RootAccountForPayments>;
-
-	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangolinFeeMarket>;
+	type MessageDispatch = bm_pangolin::FromPangolinMessageDispatch;
 	type OnDeliveryConfirmed =
 		(Substrate2SubstrateBacking, FeeMarketMessageConfirmedHandler<Self, WithPangolinFeeMarket>);
-
+	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangolinFeeMarket>;
+	type OutboundMessageFee = bp_pangoro::Balance;
+	type OutboundPayload = bm_pangolin::ToPangolinMessagePayload;
+	type Parameter = bm_pangolin::PangoroToPangolinMessagesParameter;
 	type SourceHeaderChain = bm_pangolin::Pangolin;
-	type MessageDispatch = bm_pangolin::FromPangolinMessageDispatch;
-	type BridgedChainId = BridgedChainId;
+	type TargetHeaderChain = bm_pangolin::Pangolin;
+	type WeightInfo = ();
 }

@@ -124,29 +124,29 @@ parameter_types! {
 		);
 }
 impl frame_system::Config for Test {
+	type AccountData = AccountData<Balance>;
+	type AccountId = AccountId;
 	type BaseCallFilter = Everything;
-	type BlockWeights = BlockWeights;
+	type BlockHashCount = ();
 	type BlockLength = ();
-	type DbWeight = RocksDbWeight;
-	type Origin = Origin;
-	type Call = Call;
-	type Index = AccountIndex;
 	type BlockNumber = BlockNumber;
+	type BlockWeights = BlockWeights;
+	type Call = Call;
+	type DbWeight = RocksDbWeight;
+	type Event = Event;
 	type Hash = H256;
 	type Hashing = ::sp_runtime::traits::BlakeTwo256;
-	type AccountId = AccountId;
-	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
-	type BlockHashCount = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
+	type Index = AccountIndex;
+	type Lookup = IdentityLookup<Self::AccountId>;
 	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type OnNewAccount = ();
 	type OnSetCode = ();
+	type Origin = Origin;
+	type PalletInfo = PalletInfo;
+	type SS58Prefix = ();
+	type SystemWeightInfo = ();
+	type Version = ();
 }
 
 sp_runtime::impl_opaque_keys! {
@@ -160,15 +160,15 @@ parameter_types! {
 	pub static Offset: BlockNumber = 0;
 }
 impl pallet_session::Config for Test {
+	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
 	type Event = Event;
+	type Keys = SessionKeys;
+	type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
+	type SessionHandler = (OtherSessionHandler,);
+	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Test, Staking>;
+	type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
 	type ValidatorId = AccountId;
 	type ValidatorIdOf = StashOf<Test>;
-	type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
-	type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
-	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Test, Staking>;
-	type SessionHandler = (OtherSessionHandler,);
-	type Keys = SessionKeys;
-	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
 	type WeightInfo = ();
 }
 
@@ -181,19 +181,19 @@ parameter_types! {
 	pub const UncleGenerations: u64 = 0;
 }
 impl pallet_authorship::Config for Test {
+	type EventHandler = Pallet<Test>;
+	type FilterUncle = ();
 	type FindAuthor = Author11;
 	type UncleGenerations = UncleGenerations;
-	type FilterUncle = ();
-	type EventHandler = Pallet<Test>;
 }
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = 5;
 }
 impl pallet_timestamp::Config for Test {
+	type MinimumPeriod = MinimumPeriod;
 	type Moment = u64;
 	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
 
@@ -201,29 +201,29 @@ parameter_types! {
 	pub const MaxLocks: u32 = 1024;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
+	type AccountStore = System;
 	type Balance = Balance;
+	type BalanceInfo = AccountData<Balance>;
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
 	type MaxLocks = MaxLocks;
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
+	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
 impl darwinia_balances::Config<KtonInstance> for Test {
+	type AccountStore = System;
 	type Balance = Balance;
+	type BalanceInfo = AccountData<Balance>;
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
 	type MaxLocks = MaxLocks;
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
+	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
 
@@ -246,31 +246,32 @@ parameter_types! {
 	pub static RingRewardRemainderUnbalanced: Balance = 0;
 }
 impl Config for Test {
-	const MAX_NOMINATIONS: u32 = 16;
-	type Event = Event;
-	type PalletId = StakingPalletId;
-	type UnixTime = SuppressUnixTimeWarning;
-	type SessionsPerEra = SessionsPerEra;
-	type BondingDurationInEra = BondingDurationInEra;
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
-	type SlashDeferDuration = SlashDeferDuration;
-	type SlashCancelOrigin = frame_system::EnsureRoot<Self::AccountId>;
-	type SessionInterface = Self;
-	type NextNewSession = Session;
-	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
+	type BondingDurationInEra = BondingDurationInEra;
+	type Cap = Cap;
 	type ElectionProvider = onchain::OnChainSequentialPhragmen<Self>;
+	type Event = Event;
 	type GenesisElectionProvider = Self::ElectionProvider;
+	type KtonCurrency = Kton;
+	type KtonReward = ();
+	type KtonSlash = ();
+	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
+	type NextNewSession = Session;
+	type PalletId = StakingPalletId;
 	type RingCurrency = Ring;
+	type RingReward = ();
 	type RingRewardRemainder = RingRewardRemainderMock;
 	type RingSlash = ();
-	type RingReward = ();
-	type KtonCurrency = Kton;
-	type KtonSlash = ();
-	type KtonReward = ();
-	type Cap = Cap;
-	type TotalPower = TotalPower;
-	type WeightInfo = ();
+	type SessionInterface = Self;
+	type SessionsPerEra = SessionsPerEra;
+	type SlashCancelOrigin = frame_system::EnsureRoot<Self::AccountId>;
+	type SlashDeferDuration = SlashDeferDuration;
 	type SortedListProvider = UseNominatorsMap<Self>;
+	type TotalPower = TotalPower;
+	type UnixTime = SuppressUnixTimeWarning;
+	type WeightInfo = ();
+
+	const MAX_NOMINATIONS: u32 = 16;
 }
 
 impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
@@ -318,66 +319,82 @@ impl ExtBuilder {
 		SESSIONS_PER_ERA.with(|v| *v.borrow_mut() = length);
 		self
 	}
+
 	pub fn period(self, length: BlockNumber) -> Self {
 		PERIOD.with(|v| *v.borrow_mut() = length);
 		self
 	}
+
 	pub fn existential_deposit(self, existential_deposit: Balance) -> Self {
 		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow_mut() = existential_deposit);
 		self
 	}
+
 	pub fn nominate(mut self, nominate: bool) -> Self {
 		self.nominate = nominate;
 		self
 	}
+
 	pub fn validator_count(mut self, count: u32) -> Self {
 		self.validator_count = count;
 		self
 	}
+
 	pub fn minimum_validator_count(mut self, count: u32) -> Self {
 		self.minimum_validator_count = count;
 		self
 	}
+
 	pub fn slash_defer_duration(mut self, eras: EraIndex) -> Self {
 		SLASH_DEFER_DURATION.with(|v| *v.borrow_mut() = eras);
 		self
 	}
+
 	pub fn invulnerables(mut self, invulnerables: Vec<AccountId>) -> Self {
 		self.invulnerables = invulnerables;
 		self
 	}
+
 	pub fn has_stakers(mut self, has: bool) -> Self {
 		self.has_stakers = has;
 		self
 	}
+
 	pub fn initialize_first_session(mut self, init: bool) -> Self {
 		self.initialize_first_session = init;
 		self
 	}
+
 	pub fn offset(self, offset: BlockNumber) -> Self {
 		OFFSET.with(|v| *v.borrow_mut() = offset);
 		self
 	}
+
 	pub fn min_nominator_bond(mut self, amount: Balance) -> Self {
 		self.min_nominator_bond = amount;
 		self
 	}
+
 	pub fn min_validator_bond(mut self, amount: Balance) -> Self {
 		self.min_validator_bond = amount;
 		self
 	}
+
 	pub fn balance_factor(mut self, factor: Balance) -> Self {
 		self.balance_factor = factor;
 		self
 	}
+
 	pub fn set_status(mut self, who: AccountId, status: StakerStatus<AccountId>) -> Self {
 		self.status.insert(who, status);
 		self
 	}
+
 	pub fn set_stake(mut self, who: AccountId, stake: Balance) -> Self {
 		self.stakes.insert(who, stake);
 		self
 	}
+
 	pub fn add_staker(
 		mut self,
 		stash: AccountId,
@@ -388,10 +405,12 @@ impl ExtBuilder {
 		self.stakers.push((stash, ctrl, stake, status));
 		self
 	}
+
 	pub fn init_kton(mut self, init: bool) -> Self {
 		self.init_kton = init;
 		self
 	}
+
 	pub fn build(self) -> sp_io::TestExternalities {
 		sp_tracing::try_init_simple();
 
@@ -537,6 +556,7 @@ impl ExtBuilder {
 
 		ext
 	}
+
 	pub fn build_and_execute(self, test: impl FnOnce() -> ()) {
 		let mut ext = self.build();
 		ext.execute_with(test);
@@ -650,7 +670,7 @@ fn check_nominators() {
 				let individual = e.others.iter().filter(|e| e.who == nominator).collect::<Vec<_>>();
 				let len = individual.len();
 				match len {
-					0 => { /* not supporting this validator at all. */ }
+					0 => { /* not supporting this validator at all. */ },
 					1 => sum += individual[0].power,
 					_ => panic!("nominator cannot back a validator more than once."),
 				};
@@ -708,11 +728,11 @@ fn bond(stash: AccountId, controller: AccountId, val: StakingBalanceT<Test>) {
 		StakingBalance::RingBalance(r) => {
 			let _ = Ring::make_free_balance_be(&(stash), r);
 			let _ = Ring::make_free_balance_be(&(controller), r);
-		}
+		},
 		StakingBalance::KtonBalance(k) => {
 			let _ = Kton::make_free_balance_be(&(stash), k);
 			let _ = Kton::make_free_balance_be(&(controller), k);
-		}
+		},
 	}
 	assert_ok!(Staking::bond(
 		Origin::signed(stash),

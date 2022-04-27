@@ -51,45 +51,45 @@ pub const DEFAULT_SIGNATURE: [u8; 65] = [0; 65];
 darwinia_support::impl_test_account_data! {}
 
 impl frame_system::Config for Test {
+	type AccountData = AccountData<Balance>;
+	type AccountId = AccountId;
 	type BaseCallFilter = Everything;
-	type BlockWeights = ();
+	type BlockHashCount = ();
 	type BlockLength = ();
-	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
-	type Index = Index;
 	type BlockNumber = BlockNumber;
+	type BlockWeights = ();
+	type Call = Call;
+	type DbWeight = ();
+	type Event = Event;
 	type Hash = Hash;
 	type Hashing = BlakeTwo256;
-	type AccountId = AccountId;
-	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
-	type BlockHashCount = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
+	type Index = Index;
+	type Lookup = IdentityLookup<Self::AccountId>;
 	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type OnNewAccount = ();
 	type OnSetCode = ();
+	type Origin = Origin;
+	type PalletInfo = PalletInfo;
+	type SS58Prefix = ();
+	type SystemWeightInfo = ();
+	type Version = ();
 }
 
 frame_support::parameter_types! {
 	pub const MaxLocks: u32 = 1024;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
+	type AccountStore = System;
 	type Balance = Balance;
+	type BalanceInfo = AccountData<Balance>;
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ();
-	type AccountStore = System;
 	type MaxLocks = ();
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
+	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
 
@@ -101,8 +101,8 @@ impl darwinia_header_mmr::Config for Test {
 
 pub struct Sign;
 impl SignT<BlockNumber> for Sign {
-	type Signature = [u8; 65];
 	type Message = [u8; 32];
+	type Signature = [u8; 65];
 	type Signer = [u8; 20];
 
 	fn hash(raw_message: impl AsRef<[u8]>) -> Self::Message {
@@ -121,19 +121,19 @@ frame_support::parameter_types! {
 	pub const SubmitDuration: BlockNumber = 3;
 }
 impl Config for Test {
-	type Event = Event;
-	type RingCurrency = Ring;
-	type LockId = LockId;
-	type TermDuration = TermDuration;
-	type MaxCandidates = MaxCandidates;
 	type AddOrigin = EnsureRoot<Self::AccountId>;
+	type DarwiniaMMR = HeaderMmr;
+	type Event = Event;
+	type LockId = LockId;
+	type MaxCandidates = MaxCandidates;
+	type OpCodes = ();
 	type RemoveOrigin = EnsureRoot<Self::AccountId>;
 	type ResetOrigin = EnsureRoot<Self::AccountId>;
-	type DarwiniaMMR = HeaderMmr;
+	type RingCurrency = Ring;
 	type Sign = Sign;
-	type OpCodes = ();
 	type SignThreshold = SignThreshold;
 	type SubmitDuration = SubmitDuration;
+	type TermDuration = TermDuration;
 	type WeightInfo = ();
 }
 

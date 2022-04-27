@@ -17,18 +17,18 @@ frame_support::parameter_types! {
 // In order to use `Tips`, which bounded by `pallet_treasury::Config` rather
 // `pallet_treasury::Config<I>` Still use `DefaultInstance` here instead `Instance1`
 impl Config for Runtime {
-	type PalletId = TreasuryPalletId;
-	type Currency = Ring;
 	type ApproveOrigin = RootOrigin;
-	type RejectOrigin = RootOrigin;
-	type Event = Event;
-	type OnSlash = Treasury;
-	type ProposalBond = ProposalBond;
-	type ProposalBondMinimum = RingProposalBondMinimum;
-	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
-	type WeightInfo = ();
-	type SpendFunds = ();
+	type Currency = Ring;
+	type Event = Event;
 	type MaxApprovals = MaxApprovals;
+	type OnSlash = Treasury;
+	type PalletId = TreasuryPalletId;
+	type ProposalBond = ProposalBond;
+	type ProposalBondMinimum = RingProposalBondMinimum;
+	type RejectOrigin = RootOrigin;
+	type SpendFunds = ();
+	type SpendPeriod = SpendPeriod;
+	type WeightInfo = ();
 }

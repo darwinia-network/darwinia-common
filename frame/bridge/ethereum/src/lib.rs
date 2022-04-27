@@ -974,11 +974,12 @@ impl<T: Config> Debug for CheckEthereumRelayHeaderParcel<T> {
 	}
 }
 impl<T: Send + Sync + Config + TypeInfo> SignedExtension for CheckEthereumRelayHeaderParcel<T> {
-	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderParcel";
 	type AccountId = T::AccountId;
-	type Call = <T as Config>::Call;
 	type AdditionalSigned = ();
+	type Call = <T as Config>::Call;
 	type Pre = ();
+
+	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderParcel";
 
 	fn additional_signed(&self) -> Result<Self::AdditionalSigned, TransactionValidityError> {
 		Ok(())
@@ -1005,7 +1006,7 @@ impl<T: Send + Sync + Config + TypeInfo> SignedExtension for CheckEthereumRelayH
 				}
 
 				Ok(ValidTransaction::default())
-			}
+			},
 			// TODO
 			// Some(Call::dispute_and_affirm())
 			// Some(Call::extend_affirmation())

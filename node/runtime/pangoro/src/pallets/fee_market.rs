@@ -36,20 +36,17 @@ frame_support::parameter_types! {
 }
 
 impl Config<WithPangolinFeeMarket> for Runtime {
-	type PalletId = FeeMarketPalletId;
-	type TreasuryPalletId = TreasuryPalletId;
-	type LockId = FeeMarketLockId;
-
-	type MinimumRelayFee = MinimumRelayFee;
-	type CollateralPerOrder = CollateralPerOrder;
-	type Slot = Slot;
-
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
-	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
+	type CollateralPerOrder = CollateralPerOrder;
 	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
-
-	type Slasher = FeeMarketSlasher;
-	type RingCurrency = Ring;
 	type Event = Event;
+	type LockId = FeeMarketLockId;
+	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
+	type MinimumRelayFee = MinimumRelayFee;
+	type PalletId = FeeMarketPalletId;
+	type RingCurrency = Ring;
+	type Slasher = FeeMarketSlasher;
+	type Slot = Slot;
+	type TreasuryPalletId = TreasuryPalletId;
 	type WeightInfo = ();
 }

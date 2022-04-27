@@ -70,26 +70,31 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(13 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
+
 	fn update_locked_collateral() -> Weight {
 		(117_829_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(13 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
+
 	fn update_relay_fee() -> Weight {
 		(95_137_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(11 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+
 	fn cancel_enrollment() -> Weight {
 		(117_809_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(13 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
+
 	fn set_slash_protect() -> Weight {
 		(18_584_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+
 	fn set_assigned_relayers_number() -> Weight {
 		(86_661_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(10 as Weight))
@@ -104,26 +109,31 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(13 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
 	}
+
 	fn update_locked_collateral() -> Weight {
 		(117_829_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(13 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
 	}
+
 	fn update_relay_fee() -> Weight {
 		(95_137_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(11 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
+
 	fn cancel_enrollment() -> Weight {
 		(117_809_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(13 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
 	}
+
 	fn set_slash_protect() -> Weight {
 		(18_584_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
+
 	fn set_assigned_relayers_number() -> Weight {
 		(86_661_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(10 as Weight))
