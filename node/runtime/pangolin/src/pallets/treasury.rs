@@ -15,8 +15,8 @@ frame_support::parameter_types! {
 	pub const MaxApprovals: u32 = 100;
 }
 
-// In order to use `Tips`, which bounded by `pallet_treasury::Config` rather `pallet_treasury::Config<I>`
-// Still use `DefaultInstance` here instead `Instance1`
+// In order to use `Tips`, which bounded by `pallet_treasury::Config` rather
+// `pallet_treasury::Config<I>` Still use `DefaultInstance` here instead `Instance1`
 impl Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Ring;

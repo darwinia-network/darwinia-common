@@ -70,9 +70,8 @@ impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
 		let (selector, _data) = helper.split_input()?;
 
 		match Action::from_u32(selector) {
-			Ok(Action::TransferAndCall) | Ok(Action::Withdraw) => {
-				<Kton<T>>::transfer(&input, target_gas, context, is_static)
-			}
+			Ok(Action::TransferAndCall) | Ok(Action::Withdraw) =>
+				<Kton<T>>::transfer(&input, target_gas, context, is_static),
 			_ => <RingBack<T>>::transfer(&input, target_gas, context, is_static),
 		}
 	}

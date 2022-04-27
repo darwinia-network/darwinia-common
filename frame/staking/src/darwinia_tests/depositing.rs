@@ -23,10 +23,7 @@ fn deposit_zero_should_do_nothing() {
 			assert_ok!(Staking::deposit_extra(Origin::signed(stash), 0, m));
 		}
 
-		assert!(Staking::ledger(&controller)
-			.unwrap()
-			.deposit_items
-			.is_empty());
+		assert!(Staking::ledger(&controller).unwrap().deposit_items.is_empty());
 
 		// Deposit succeeded.
 		assert_ok!(Staking::deposit_extra(Origin::signed(stash), COIN, 1));
@@ -65,10 +62,7 @@ fn deposit_extra_should_work() {
 		});
 
 		assert_eq!(Staking::ledger(controller).unwrap(), ledger);
-		assert_eq!(
-			Kton::free_balance(&stash),
-			kton_free_balance + (COIN / 10000)
-		);
+		assert_eq!(Kton::free_balance(&stash), kton_free_balance + (COIN / 10000));
 	});
 }
 
@@ -88,24 +82,13 @@ fn deposit_extra_should_not_touch_existed_items() {
 		));
 
 		for _ in 0..expired_items_len {
-			assert_ok!(Staking::deposit_extra(
-				Origin::signed(stash),
-				COIN,
-				promise_month as u8
-			));
+			assert_ok!(Staking::deposit_extra(Origin::signed(stash), COIN, promise_month as u8));
 		}
 
 		Timestamp::set_timestamp(expiry_timestamp);
 
-		assert_ok!(Staking::deposit_extra(
-			Origin::signed(stash),
-			2 * COIN,
-			promise_month as u8,
-		));
-		assert_eq!(
-			Staking::ledger(controller).unwrap().deposit_items.len(),
-			expired_items_len + 1,
-		);
+		assert_ok!(Staking::deposit_extra(Origin::signed(stash), 2 * COIN, promise_month as u8,));
+		assert_eq!(Staking::ledger(controller).unwrap().deposit_items.len(), expired_items_len + 1,);
 	});
 }
 
@@ -125,10 +108,7 @@ fn claim_deposits_with_punish_should_work() {
 				start_time: INIT_TIMESTAMP,
 				expire_time: INIT_TIMESTAMP + promise_month * MONTH_IN_MILLISECONDS,
 			}],
-			ring_staking_lock: StakingLock {
-				staking_amount: 0,
-				..Default::default()
-			},
+			ring_staking_lock: StakingLock { staking_amount: 0, ..Default::default() },
 			..Default::default()
 		};
 
@@ -178,10 +158,7 @@ fn claim_deposits_with_punish_should_work() {
 				start_time: INIT_TIMESTAMP,
 				expire_time: deposit_item_expire_time,
 			}],
-			ring_staking_lock: StakingLock {
-				staking_amount: 0,
-				..Default::default()
-			},
+			ring_staking_lock: StakingLock { staking_amount: 0, ..Default::default() },
 			..Default::default()
 		};
 
@@ -246,10 +223,7 @@ fn on_deposit_redeem_should_work() {
 			assert_eq!(Ring::free_balance(unbonded_account), 0);
 			assert!(Ring::locks(unbonded_account).is_empty());
 			assert!(Staking::bonded(unbonded_account).is_none());
-			assert_eq!(
-				Staking::payee(unbonded_account),
-				RewardDestination::default(),
-			);
+			assert_eq!(Staking::payee(unbonded_account), RewardDestination::default(),);
 			assert!(Staking::ledger(unbonded_account).is_none());
 			assert!(System::account(unbonded_account).providers == 0);
 
@@ -266,9 +240,7 @@ fn on_deposit_redeem_should_work() {
 				Ring::locks(unbonded_account),
 				vec![OldBalanceLock {
 					id: STAKING_ID,
-					lock_for: LockFor::Common {
-						amount: deposit_amount
-					},
+					lock_for: LockFor::Common { amount: deposit_amount },
 					reasons: Reasons::All,
 				}]
 			);
@@ -315,17 +287,12 @@ fn on_deposit_redeem_should_work() {
 			ledger.active_deposit_ring += deposit_amount;
 			ledger.deposit_items.push(deposit_item);
 
-			assert_eq!(
-				Ring::free_balance(bonded_account),
-				101 * COIN + deposit_amount
-			);
+			assert_eq!(Ring::free_balance(bonded_account), 101 * COIN + deposit_amount);
 			assert_eq!(
 				Ring::locks(bonded_account),
 				vec![OldBalanceLock {
 					id: STAKING_ID,
-					lock_for: LockFor::Common {
-						amount: 50 * COIN + deposit_amount
-					},
+					lock_for: LockFor::Common { amount: 50 * COIN + deposit_amount },
 					reasons: Reasons::All,
 				}]
 			);

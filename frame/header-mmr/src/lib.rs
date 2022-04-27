@@ -170,16 +170,13 @@ pub mod pallet {
 			// find the first other digest with the right prefix which converts to
 			// the right kind of mmr root log.
 			header.digest().convert_first(|d| {
-				d.try_to(OpaqueDigestItemId::Other)
-					.and_then(find_parent_mmr_root)
+				d.try_to(OpaqueDigestItemId::Other).and_then(find_parent_mmr_root)
 			})
 		}
 	}
 	impl<T: Config> MMRT<BlockNumberFor<T>, T::Hash> for Pallet<T> {
 		fn get_root() -> Option<T::Hash> {
-			<Mmr<RuntimeStorage, T>>::with_size(<MmrSize<T>>::get())
-				.get_root()
-				.ok()
+			<Mmr<RuntimeStorage, T>>::with_size(<MmrSize<T>>::get()).get_root().ok()
 		}
 	}
 

@@ -83,14 +83,7 @@ where
 	use moonbeam_rpc_debug::*;
 	use moonbeam_rpc_trace::*;
 
-	let FullDeps {
-		client,
-		pool,
-		deny_unsafe,
-		eth,
-		enable_dev_signer,
-		command_sink,
-	} = deps;
+	let FullDeps { client, pool, deny_unsafe, eth, enable_dev_signer, command_sink } = deps;
 	let EthDeps {
 		config:
 			EthRpcConfig {
@@ -117,9 +110,7 @@ where
 		pool.clone(),
 		deny_unsafe,
 	)));
-	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
-		client.clone(),
-	)));
+	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(client.clone())));
 
 	let mut signers = Vec::new();
 	if enable_dev_signer {
@@ -180,10 +171,7 @@ where
 		);
 	}
 
-	if ethapi_debug_targets
-		.iter()
-		.any(|cmd| matches!(cmd.as_str(), "debug" | "trace"))
-	{
+	if ethapi_debug_targets.iter().any(|cmd| matches!(cmd.as_str(), "debug" | "trace")) {
 		if let Some(trace_filter_requester) = rpc_requesters.trace {
 			io.extend_with(TraceServer::to_delegate(Trace::new(
 				client,

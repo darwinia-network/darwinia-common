@@ -747,12 +747,9 @@ where
 		for RelayAuthority { account_id, .. } in authorities {
 			if next_authorities
 				.iter()
-				.position(
-					|RelayAuthority {
-					     account_id: account_id_,
-					     ..
-					 }| account_id_ == &account_id,
-				)
+				.position(|RelayAuthority { account_id: account_id_, .. }| {
+					account_id_ == &account_id
+				})
 				.is_none()
 			{
 				<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
@@ -804,9 +801,8 @@ where
 	pub fn mmr_root_signed(block_number: BlockNumberFor<T>) {
 		<MmrRootsToSign<T, I>>::remove(block_number);
 		<MmrRootsToSignKeys<T, I>>::mutate(|mmr_roots_to_sign_keys| {
-			if let Some(position) = mmr_roots_to_sign_keys
-				.iter()
-				.position(|key| key == &block_number)
+			if let Some(position) =
+				mmr_roots_to_sign_keys.iter().position(|key| key == &block_number)
 			{
 				mmr_roots_to_sign_keys.remove(position);
 			}
@@ -819,10 +815,7 @@ where
 				let _ = <Authorities<T, I>>::try_mutate(|authorities| {
 					let mut storage_changed = false;
 
-					for RelayAuthority {
-						account_id, stake, ..
-					} in authorities.iter_mut()
-					{
+					for RelayAuthority { account_id, stake, .. } in authorities.iter_mut() {
 						if signatures
 							.iter()
 							.position(|(authority, _)| authority == account_id)
@@ -971,9 +964,7 @@ where
 	T: Config<I>,
 	I: Instance,
 {
-	authorities
-		.iter()
-		.position(|relay_authority| relay_authority == account_id)
+	authorities.iter().position(|relay_authority| relay_authority == account_id)
 }
 
 pub fn find_signer<T, I>(
@@ -984,9 +975,8 @@ where
 	T: Config<I>,
 	I: Instance,
 {
-	if let Some(position) = authorities
-		.iter()
-		.position(|relay_authority| relay_authority == account_id)
+	if let Some(position) =
+		authorities.iter().position(|relay_authority| relay_authority == account_id)
 	{
 		Some(authorities[position].signer.to_owned())
 	} else {

@@ -391,10 +391,7 @@ impl<T: Config> Module<T> {
 	// Attempts to recover the Ethereum address from a message signature signed by using
 	// the Ethereum RPC's `personal_sign` and `eth_sign`.
 	fn eth_recover(s: &EcdsaSignature, what: &[u8]) -> Option<AddressT> {
-		let msg = keccak_256(&Self::eth_signable_message(
-			what,
-			b"\x19Ethereum Signed Message:\n",
-		));
+		let msg = keccak_256(&Self::eth_signable_message(what, b"\x19Ethereum Signed Message:\n"));
 		let mut res = AddressT::default();
 		res.copy_from_slice(&keccak_256(&secp256k1_ecdsa_recover(&s.0, &msg).ok()?[..])[12..]);
 		Some(res)
@@ -403,10 +400,7 @@ impl<T: Config> Module<T> {
 	// Attempts to recover the Tron address from a message signature signed by using
 	// the Tron RPC's `personal_sign` and `tron_sign`.
 	fn tron_recover(s: &EcdsaSignature, what: &[u8]) -> Option<AddressT> {
-		let msg = keccak_256(&Self::tron_signable_message(
-			what,
-			b"\x19TRON Signed Message:\n",
-		));
+		let msg = keccak_256(&Self::tron_signable_message(what, b"\x19TRON Signed Message:\n"));
 		let mut res = AddressT::default();
 		res.copy_from_slice(&keccak_256(&secp256k1_ecdsa_recover(&s.0, &msg).ok()?[..])[12..]);
 		Some(res)
@@ -420,10 +414,7 @@ impl<T: Config> sp_runtime::traits::ValidateUnsigned for Module<T> {
 		const PRIORITY: u64 = 100;
 
 		match call {
-			Call::claim {
-				dest: account,
-				signature,
-			} => {
+			Call::claim { dest: account, signature } => {
 				let data = account.using_encoded(to_ascii_hex);
 
 				match signature {
@@ -694,27 +685,16 @@ mod tests {
 	// This function basically just builds a genesis storage key/value store according to
 	// our desired mockup.
 	fn new_test_ext() -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.unwrap();
+		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 		// We use default for brevity, but you can configure as desired if needed.
 		<darwinia_balances::GenesisConfig<Test, RingInstance>>::default()
 			.assimilate_storage(&mut t)
 			.unwrap();
 		darwinia_claims::GenesisConfig {
 			claims_list: ClaimsList {
-				dot: vec![Account {
-					address: EthereumAddress(addr(&alice())),
-					backed_ring: 100,
-				}],
-				eth: vec![Account {
-					address: EthereumAddress(addr(&bob())),
-					backed_ring: 200,
-				}],
-				tron: vec![Account {
-					address: TronAddress(addr(&carol())),
-					backed_ring: 300,
-				}],
+				dot: vec![Account { address: EthereumAddress(addr(&alice())), backed_ring: 100 }],
+				eth: vec![Account { address: EthereumAddress(addr(&bob())), backed_ring: 200 }],
+				tron: vec![Account { address: TronAddress(addr(&carol())), backed_ring: 300 }],
 			},
 		}
 		.assimilate_storage::<Test>(&mut t)
@@ -860,10 +840,7 @@ mod tests {
 				))
 			));
 			assert_eq!(Ring::free_balance(&42), 100);
-			assert_eq!(
-				Ring::usable_balance(&Claims::account_id()),
-				total_claims() - 100
-			);
+			assert_eq!(Ring::usable_balance(&Claims::account_id()), total_claims() - 100);
 		});
 	}
 
@@ -887,11 +864,7 @@ mod tests {
 				),
 				<Error<Test>>::SignerHasNoClaim,
 			);
-			assert_ok!(Claims::mint_claim(
-				Origin::root(),
-				OtherAddress::Eth(addr(&carol())),
-				200
-			));
+			assert_ok!(Claims::mint_claim(Origin::root(), OtherAddress::Eth(addr(&carol())), 200));
 			assert_eq!(Ring::usable_balance(&Claims::account_id()), 800);
 			assert_ok!(Claims::claim(
 				Origin::none(),

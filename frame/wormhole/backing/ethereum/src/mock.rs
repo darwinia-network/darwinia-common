@@ -335,9 +335,7 @@ pub struct ExtBuilder {
 }
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		Self {
-			network: EthereumNetwork::Ropsten,
-		}
+		Self { network: EthereumNetwork::Ropsten }
 	}
 }
 impl ExtBuilder {
@@ -354,9 +352,7 @@ impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
 		self.set_associated_constants();
 
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.unwrap();
+		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 		if self.network == EthereumNetwork::Ropsten {
 			to_ethereum_backing::GenesisConfig::<Test> {

@@ -188,11 +188,7 @@ where
 		select_chain,
 		chain_spec,
 		deny_unsafe,
-		babe: BabeDeps {
-			keystore,
-			babe_config,
-			shared_epoch_changes,
-		},
+		babe: BabeDeps { keystore, babe_config, shared_epoch_changes },
 		grandpa:
 			GrandpaDeps {
 				shared_voter_state,
@@ -202,10 +198,7 @@ where
 				finality_proof_provider,
 			},
 		beefy:
-			BeefyDeps {
-				beefy_commitment_stream,
-				subscription_executor: beefy_subscription_executor,
-			},
+			BeefyDeps { beefy_commitment_stream, subscription_executor: beefy_subscription_executor },
 		eth:
 			EthDeps {
 				config:
@@ -234,9 +227,7 @@ where
 		pool.clone(),
 		deny_unsafe,
 	)));
-	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
-		client.clone(),
-	)));
+	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(client.clone())));
 	io.extend_with(BabeApi::to_delegate(BabeRpcHandler::new(
 		client.clone(),
 		shared_epoch_changes.clone(),
@@ -309,10 +300,7 @@ where
 	)));
 	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client.clone())));
 
-	if ethapi_debug_targets
-		.iter()
-		.any(|cmd| matches!(cmd.as_str(), "debug" | "trace"))
-	{
+	if ethapi_debug_targets.iter().any(|cmd| matches!(cmd.as_str(), "debug" | "trace")) {
 		if let Some(trace_requester) = rpc_requesters.trace {
 			io.extend_with(TraceServer::to_delegate(Trace::new(
 				client,

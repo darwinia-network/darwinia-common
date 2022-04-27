@@ -37,13 +37,8 @@ impl<T: Config> Pallet<T> {
 		promise_month: u8,
 		mut ledger: StakingLedgerT<T>,
 	) -> Result<(TsInMs, TsInMs), DispatchError> {
-		let StakingLedger {
-			active,
-			active_deposit_ring,
-			deposit_items,
-			active_kton,
-			..
-		} = &mut ledger;
+		let StakingLedger { active, active_deposit_ring, deposit_items, active_kton, .. } =
+			&mut ledger;
 
 		let origin_active = active.clone();
 		let start_time = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
@@ -68,11 +63,7 @@ impl<T: Config> Pallet<T> {
 			let kton_positive_imbalance = T::KtonCurrency::deposit_creating(&stash, kton_return);
 
 			T::KtonReward::on_unbalanced(kton_positive_imbalance);
-			deposit_items.push(TimeDepositItem {
-				value,
-				start_time,
-				expire_time,
-			});
+			deposit_items.push(TimeDepositItem { value, start_time, expire_time });
 		}
 
 		Self::update_ledger(&controller, &ledger);
@@ -87,11 +78,7 @@ impl<T: Config> Pallet<T> {
 		value: KtonBalance<T>,
 		mut ledger: StakingLedgerT<T>,
 	) -> DispatchResult {
-		let StakingLedger {
-			active,
-			active_kton,
-			..
-		} = &mut ledger;
+		let StakingLedger { active, active_kton, .. } = &mut ledger;
 		let origin_active_kton = active_kton.clone();
 
 		*active_kton = origin_active_kton.saturating_add(value);
@@ -117,12 +104,7 @@ impl<T: Config> Pallet<T> {
 	/// Turn the expired deposit items into normal bond
 	pub fn clear_mature_deposits(mut ledger: StakingLedgerT<T>) -> (StakingLedgerT<T>, bool) {
 		let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
-		let StakingLedger {
-			stash,
-			active_deposit_ring,
-			deposit_items,
-			..
-		} = &mut ledger;
+		let StakingLedger { stash, active_deposit_ring, deposit_items, .. } = &mut ledger;
 		let mut mutated = false;
 
 		deposit_items.retain(|item| {
@@ -223,9 +205,7 @@ impl<T: Config> Pallet<T> {
 		})?;
 		let mut ledger = <Ledger<T>>::get(&controller).ok_or_else(|| <Error<T>>::NotController)?;
 
-		ledger
-			.claimed_rewards
-			.retain(|&x| x >= current_era.saturating_sub(history_depth));
+		ledger.claimed_rewards.retain(|&x| x >= current_era.saturating_sub(history_depth));
 		match ledger.claimed_rewards.binary_search(&era) {
 			Ok(_) => Err(<Error<T>>::AlreadyClaimed
 				.with_weight(T::WeightInfo::payout_stakers_alive_staked(0)))?,
@@ -282,10 +262,9 @@ impl<T: Config> Pallet<T> {
 		let mut actual_payout = <RingPositiveImbalance<T>>::zero();
 
 		// We can now make total validator payout:
-		if let Some(imbalance) = Self::make_payout(
-			&ledger.stash,
-			validator_staking_payout + validator_commission_payout,
-		) {
+		if let Some(imbalance) =
+			Self::make_payout(&ledger.stash, validator_staking_payout + validator_commission_payout)
+		{
 			let payout = imbalance.peek();
 
 			actual_payout.subsume(imbalance);
@@ -293,8 +272,9 @@ impl<T: Config> Pallet<T> {
 			Self::deposit_event(Event::Rewarded(ledger.stash, payout));
 		}
 
-		// Track the number of payout ops to nominators. Note: `WeightInfo::payout_stakers_alive_staked`
-		// always assumes at least a validator is paid out, so we do not need to count their payout op.
+		// Track the number of payout ops to nominators. Note:
+		// `WeightInfo::payout_stakers_alive_staked` always assumes at least a validator is paid
+		// out, so we do not need to count their payout op.
 		let mut nominator_payout_count: u32 = 0;
 
 		// Lets now calculate how this is split to the nominators.
@@ -329,10 +309,7 @@ impl<T: Config> Pallet<T> {
 		.map_err(|_| <Error<T>>::PayoutIns)?;
 
 		debug_assert!(nominator_payout_count <= T::MaxNominatorRewardedPerValidator::get());
-		Ok(Some(T::WeightInfo::payout_stakers_alive_staked(
-			nominator_payout_count,
-		))
-		.into())
+		Ok(Some(T::WeightInfo::payout_stakers_alive_staked(nominator_payout_count)).into())
 	}
 
 	/// Update the ledger for a controller.
@@ -341,13 +318,8 @@ impl<T: Config> Pallet<T> {
 	/// 	This will also update the stash lock.
 	/// 	DO NOT modify the locks' staking amount outside this function.
 	pub fn update_ledger(controller: &AccountId<T>, ledger: &StakingLedgerT<T>) {
-		let StakingLedger {
-			active,
-			active_kton,
-			ring_staking_lock,
-			kton_staking_lock,
-			..
-		} = ledger;
+		let StakingLedger { active, active_kton, ring_staking_lock, kton_staking_lock, .. } =
+			ledger;
 
 		T::RingCurrency::set_lock(
 			STAKING_ID,
@@ -434,9 +406,8 @@ impl<T: Config> Pallet<T> {
 
 					r
 				}),
-			RewardDestination::Account(dest_account) => {
-				Some(T::RingCurrency::deposit_creating(&dest_account, amount))
-			}
+			RewardDestination::Account(dest_account) =>
+				Some(T::RingCurrency::deposit_creating(&dest_account, amount)),
 			RewardDestination::None => None,
 		}
 	}
@@ -451,9 +422,8 @@ impl<T: Config> Pallet<T> {
 					0
 				});
 
-			let era_length = session_index
-				.checked_sub(current_era_start_session_index)
-				.unwrap_or(0); // Must never happen.
+			let era_length =
+				session_index.checked_sub(current_era_start_session_index).unwrap_or(0); // Must never happen.
 
 			match <ForceEra<T>>::get() {
 				// Will be set to `NotForcing` again if a new era has been triggered.
@@ -522,6 +492,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	/// 
 	/// * Increment `active_era.index`,
 	/// * reset `active_era.start`,
 	/// * update `BondedEras` and apply slashes.
@@ -545,10 +516,8 @@ impl<T: Config> Pallet<T> {
 				let first_kept = active_era - bonding_duration;
 
 				// Prune out everything that's from before the first-kept index.
-				let n_to_prune = bonded
-					.iter()
-					.take_while(|&&(era_idx, _)| era_idx < first_kept)
-					.count();
+				let n_to_prune =
+					bonded.iter().take_while(|&&(era_idx, _)| era_idx < first_kept).count();
 
 				// Kill slashing metadata.
 				for (pruned_era, _) in bonded.drain(..n_to_prune) {
@@ -684,11 +653,7 @@ impl<T: Config> Pallet<T> {
 		exposures: Vec<(AccountId<T>, ExposureT<T>)>,
 		new_planned_era: EraIndex,
 	) -> Vec<AccountId<T>> {
-		let elected_stashes = exposures
-			.iter()
-			.cloned()
-			.map(|(x, _)| x)
-			.collect::<Vec<_>>();
+		let elected_stashes = exposures.iter().cloned().map(|(x, _)| x).collect::<Vec<_>>();
 		// Populate stakers, exposures, and the snapshot of validator prefs.
 		let mut total_stake = 0;
 
@@ -701,9 +666,7 @@ impl<T: Config> Pallet<T> {
 			let clipped_max_len = T::MaxNominatorRewardedPerValidator::get() as usize;
 
 			if exposure_clipped.others.len() > clipped_max_len {
-				exposure_clipped
-					.others
-					.sort_by(|a, b| a.power.cmp(&b.power).reverse());
+				exposure_clipped.others.sort_by(|a, b| a.power.cmp(&b.power).reverse());
 				exposure_clipped.others.truncate(clipped_max_len);
 			}
 
@@ -747,73 +710,66 @@ impl<T: Config> Pallet<T> {
 				let mut total_power = 0;
 				let mut others = Vec::with_capacity(support.voters.len());
 
-				support
-					.voters
-					.into_iter()
-					.for_each(|(nominator, power_u128)| {
-						// `T::TotalPower::get() == 1_000_000_000_u32`, will never overflow or get truncated; qed
-						let power = power_u128 as _;
-						let origin_power = Self::power_of(&nominator);
-						let origin_power_u128 = origin_power as _;
+				support.voters.into_iter().for_each(|(nominator, power_u128)| {
+					// `T::TotalPower::get() == 1_000_000_000_u32`, will never overflow or get
+					// truncated; qed
+					let power = power_u128 as _;
+					let origin_power = Self::power_of(&nominator);
+					let origin_power_u128 = origin_power as _;
 
-						let (origin_ring_balance, origin_kton_balance) = Self::stake_of(&nominator);
-						let ring_balance = if let Ok(ring_balance) =
-							helpers_128bit::multiply_by_rational(
-								origin_ring_balance.saturated_into(),
-								power_u128,
-								origin_power_u128,
-							) {
-							ring_balance.saturated_into()
-						} else {
-							log!(
-								error,
-								"[staking] Origin RING: {:?}, Weight: {:?}, Origin Weight: {:?}",
-								origin_ring_balance,
-								power_u128,
-								origin_power_u128
-							);
-							Zero::zero()
-						};
-						let kton_balance = if let Ok(kton_balance) =
-							helpers_128bit::multiply_by_rational(
-								origin_kton_balance.saturated_into(),
-								power_u128,
-								origin_power_u128,
-							) {
-							kton_balance.saturated_into()
-						} else {
-							log!(
-								error,
-								"[staking] Origin KTON: {:?}, Weight: {:?}, Origin Weight: {:?}",
-								origin_kton_balance,
-								power_u128,
-								origin_power_u128
-							);
-							Zero::zero()
-						};
+					let (origin_ring_balance, origin_kton_balance) = Self::stake_of(&nominator);
+					let ring_balance = if let Ok(ring_balance) =
+						helpers_128bit::multiply_by_rational(
+							origin_ring_balance.saturated_into(),
+							power_u128,
+							origin_power_u128,
+						) {
+						ring_balance.saturated_into()
+					} else {
+						log!(
+							error,
+							"[staking] Origin RING: {:?}, Weight: {:?}, Origin Weight: {:?}",
+							origin_ring_balance,
+							power_u128,
+							origin_power_u128
+						);
+						Zero::zero()
+					};
+					let kton_balance = if let Ok(kton_balance) =
+						helpers_128bit::multiply_by_rational(
+							origin_kton_balance.saturated_into(),
+							power_u128,
+							origin_power_u128,
+						) {
+						kton_balance.saturated_into()
+					} else {
+						log!(
+							error,
+							"[staking] Origin KTON: {:?}, Weight: {:?}, Origin Weight: {:?}",
+							origin_kton_balance,
+							power_u128,
+							origin_power_u128
+						);
+						Zero::zero()
+					};
 
-						if nominator == validator {
-							own_ring_balance = own_ring_balance.saturating_add(ring_balance);
-							own_kton_balance = own_kton_balance.saturating_add(kton_balance);
-							own_power = own_power.saturating_add(power);
-						} else {
-							others.push(IndividualExposure {
-								who: nominator,
-								ring_balance,
-								kton_balance,
-								power,
-							});
-						}
-						total_power = total_power.saturating_add(power);
-					});
+					if nominator == validator {
+						own_ring_balance = own_ring_balance.saturating_add(ring_balance);
+						own_kton_balance = own_kton_balance.saturating_add(kton_balance);
+						own_power = own_power.saturating_add(power);
+					} else {
+						others.push(IndividualExposure {
+							who: nominator,
+							ring_balance,
+							kton_balance,
+							power,
+						});
+					}
+					total_power = total_power.saturating_add(power);
+				});
 
-				let exposure = Exposure {
-					own_ring_balance,
-					own_kton_balance,
-					own_power,
-					total_power,
-					others,
-				};
+				let exposure =
+					Exposure { own_ring_balance, own_kton_balance, own_power, total_power, others };
 
 				(validator, exposure)
 			})
@@ -941,9 +897,7 @@ impl<T: Config> Pallet<T> {
 			let validator_count = <CounterForValidators<T>>::get() as usize;
 			let all_voter_count = validator_count.saturating_add(nominator_count);
 
-			maybe_max_len
-				.unwrap_or(all_voter_count)
-				.min(all_voter_count)
+			maybe_max_len.unwrap_or(all_voter_count).min(all_voter_count)
 		};
 		let mut all_voters = <Vec<_>>::with_capacity(max_allowed_len);
 		// first, grab all validators in no particular order, capped by the maximum allowed length.
@@ -951,11 +905,8 @@ impl<T: Config> Pallet<T> {
 
 		for (validator, _) in <Validators<T>>::iter().take(max_allowed_len) {
 			// Append self vote.
-			let self_vote = (
-				validator.clone(),
-				Self::weight_of(&validator),
-				vec![validator.clone()],
-			);
+			let self_vote =
+				(validator.clone(), Self::weight_of(&validator), vec![validator.clone()]);
 			all_voters.push(self_vote);
 			validators_taken.saturating_inc();
 		}
@@ -978,11 +929,8 @@ impl<T: Config> Pallet<T> {
 				None => break,
 			};
 
-			if let Some(Nominations {
-				submitted_in,
-				mut targets,
-				suppressed: _,
-			}) = <Nominators<T>>::get(&nominator)
+			if let Some(Nominations { submitted_in, mut targets, suppressed: _ }) =
+				<Nominators<T>>::get(&nominator)
 			{
 				targets.retain(|stash| {
 					slashing_spans
@@ -995,11 +943,7 @@ impl<T: Config> Pallet<T> {
 					nominators_taken.saturating_inc();
 				}
 			} else {
-				log!(
-					error,
-					"invalid item in `SortedListProvider`: {:?}",
-					nominator
-				)
+				log!(error, "invalid item in `SortedListProvider`: {:?}", nominator)
 			}
 		}
 
@@ -1080,10 +1024,7 @@ impl<T: Config> Pallet<T> {
 			<CounterForNominators<T>>::mutate(|x| x.saturating_dec());
 			T::SortedListProvider::on_remove(who);
 			debug_assert_eq!(T::SortedListProvider::sanity_check(), Ok(()));
-			debug_assert_eq!(
-				<CounterForNominators<T>>::get(),
-				T::SortedListProvider::count()
-			);
+			debug_assert_eq!(<CounterForNominators<T>>::get(), T::SortedListProvider::count());
 			true
 		} else {
 			false
@@ -1212,21 +1153,11 @@ impl<T: Config> ElectionDataProvider<AccountId<T>, BlockNumberFor<T>> for Pallet
 			StakingLedger {
 				stash: voter.clone(),
 				active: stake,
-				ring_staking_lock: StakingLock {
-					staking_amount: stake,
-					..Default::default()
-				},
+				ring_staking_lock: StakingLock { staking_amount: stake, ..Default::default() },
 				..Default::default()
 			},
 		);
-		Self::do_add_nominator(
-			&voter,
-			Nominations {
-				targets,
-				submitted_in: 0,
-				suppressed: false,
-			},
-		);
+		Self::do_add_nominator(&voter, Nominations { targets, submitted_in: 0, suppressed: false });
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
@@ -1238,19 +1169,13 @@ impl<T: Config> ElectionDataProvider<AccountId<T>, BlockNumberFor<T>> for Pallet
 			StakingLedger {
 				stash: target.clone(),
 				active: stake,
-				ring_staking_lock: StakingLock {
-					staking_amount: stake,
-					..Default::default()
-				},
+				ring_staking_lock: StakingLock { staking_amount: stake, ..Default::default() },
 				..Default::default()
 			},
 		);
 		Self::do_add_validator(
 			&target,
-			ValidatorPrefs {
-				commission: Perbill::zero(),
-				blocked: false,
-			},
+			ValidatorPrefs { commission: Perbill::zero(), blocked: false },
 		);
 	}
 
@@ -1289,10 +1214,7 @@ impl<T: Config> ElectionDataProvider<AccountId<T>, BlockNumberFor<T>> for Pallet
 			);
 			Self::do_add_validator(
 				&v,
-				ValidatorPrefs {
-					commission: Perbill::zero(),
-					blocked: false,
-				},
+				ValidatorPrefs { commission: Perbill::zero(), blocked: false },
 			);
 		});
 
@@ -1313,11 +1235,7 @@ impl<T: Config> ElectionDataProvider<AccountId<T>, BlockNumberFor<T>> for Pallet
 			);
 			Self::do_add_nominator(
 				&v,
-				Nominations {
-					targets: t,
-					submitted_in: 0,
-					suppressed: false,
-				},
+				Nominations { targets: t, submitted_in: 0, suppressed: false },
 			);
 		});
 	}
@@ -1428,9 +1346,7 @@ where
 				// This offence need not be re-submitted.
 				return consumed_weight;
 			}
-			active_era
-				.expect("value checked not to be `None`; qed")
-				.index
+			active_era.expect("value checked not to be `None`; qed").index
 		};
 		let active_era_start_session_index = Self::eras_start_session_index(active_era)
 			.unwrap_or_else(|| {
@@ -1450,12 +1366,7 @@ where
 			add_db_reads_writes(1, 0);
 
 			// Reverse because it's more likely to find reports from recent eras.
-			match eras
-				.iter()
-				.rev()
-				.filter(|&&(_, ref sesh)| sesh <= &slash_session)
-				.next()
-			{
+			match eras.iter().rev().filter(|&&(_, ref sesh)| sesh <= &slash_session).next() {
 				Some(&(ref slash_era, _)) => *slash_era,
 				// Before bonding period. defensive - should be filtered out.
 				None => return consumed_weight,
@@ -1549,35 +1460,20 @@ impl<T: Config> OnDepositRedeem<AccountId<T>, RingBalance<T>> for Pallet<T> {
 
 			T::RingCurrency::transfer(&backing, &stash, amount, ExistenceRequirement::KeepAlive)?;
 
-			let StakingLedger {
-				active,
-				active_deposit_ring,
-				deposit_items,
-				..
-			} = &mut ledger;
+			let StakingLedger { active, active_deposit_ring, deposit_items, .. } = &mut ledger;
 
 			*active = active.saturating_add(amount);
 			*active_deposit_ring = active_deposit_ring.saturating_add(amount);
-			deposit_items.push(TimeDepositItem {
-				value: amount,
-				start_time,
-				expire_time,
-			});
+			deposit_items.push(TimeDepositItem { value: amount, start_time, expire_time });
 
 			Self::update_ledger(&controller, &ledger);
 			Self::update_staking_pool(ledger.active, origin_active, Zero::zero(), Zero::zero());
 		} else {
-			ensure!(
-				!<Bonded<T>>::contains_key(&stash),
-				<Error<T>>::AlreadyBonded
-			);
+			ensure!(!<Bonded<T>>::contains_key(&stash), <Error<T>>::AlreadyBonded);
 
 			let controller = stash;
 
-			ensure!(
-				!<Ledger<T>>::contains_key(controller),
-				<Error<T>>::AlreadyPaired
-			);
+			ensure!(!<Ledger<T>>::contains_key(controller), <Error<T>>::AlreadyPaired);
 
 			T::RingCurrency::transfer(&backing, &stash, amount, ExistenceRequirement::KeepAlive)?;
 
@@ -1590,11 +1486,7 @@ impl<T: Config> OnDepositRedeem<AccountId<T>, RingBalance<T>> for Pallet<T> {
 				stash: stash.clone(),
 				active: amount,
 				active_deposit_ring: amount,
-				deposit_items: vec![TimeDepositItem {
-					value: amount,
-					start_time,
-					expire_time,
-				}],
+				deposit_items: vec![TimeDepositItem { value: amount, start_time, expire_time }],
 				claimed_rewards: {
 					let current_era = <CurrentEra<T>>::get().unwrap_or(0);
 					let last_reward_era = current_era.saturating_sub(Self::history_depth());
@@ -1607,12 +1499,7 @@ impl<T: Config> OnDepositRedeem<AccountId<T>, RingBalance<T>> for Pallet<T> {
 			Self::update_staking_pool(ledger.active, Zero::zero(), Zero::zero(), Zero::zero());
 		};
 
-		Self::deposit_event(Event::RingBonded(
-			stash.to_owned(),
-			amount,
-			start_time,
-			expire_time,
-		));
+		Self::deposit_event(Event::RingBonded(stash.to_owned(), amount, start_time, expire_time));
 
 		Ok(())
 	}
@@ -1630,10 +1517,7 @@ where
 		Self::reward_by_ids(vec![(author, 20)]);
 	}
 	fn note_uncle(author: AccountId<T>, _age: BlockNumberFor<T>) {
-		Self::reward_by_ids(vec![
-			(<pallet_authorship::Pallet<T>>::author(), 2),
-			(author, 1),
-		]);
+		Self::reward_by_ids(vec![(<pallet_authorship::Pallet<T>>::author(), 2), (author, 1)]);
 	}
 }
 
@@ -1692,11 +1576,7 @@ where
 		let offence_session = offence.session_index();
 		let bonded_eras = <BondedEras<T>>::get();
 
-		if bonded_eras
-			.first()
-			.filter(|(_, start)| offence_session >= *start)
-			.is_some()
-		{
+		if bonded_eras.first().filter(|(_, start)| offence_session >= *start).is_some() {
 			R::report_offence(reporters, offence)
 		} else {
 			<Pallet<T>>::deposit_event(Event::OldSlashingReportDiscarded(offence_session));

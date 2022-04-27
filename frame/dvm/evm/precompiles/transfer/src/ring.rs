@@ -33,8 +33,8 @@ pub struct RingBack<T> {
 
 impl<T: darwinia_ethereum::Config> RingBack<T> {
 	/// The Withdraw process is divided into two part:
-	/// 1. parse the withdrawal address from the input parameter and get the contract address and value from the context
-	/// 2. transfer from the contract address to withdrawal address
+	/// 1. parse the withdrawal address from the input parameter and get the contract address and
+	/// value from the context 2. transfer from the contract address to withdrawal address
 	///
 	/// Input data: 32-bit substrate withdrawal public key
 	pub fn transfer(
@@ -58,10 +58,7 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 		// Ensure the context address should be precompile address
 		let transfer_addr = array_bytes::hex_try_into(TRANSFER_ADDR)
 			.map_err(|_| helper.revert("invalid address"))?;
-		ensure!(
-			address == transfer_addr,
-			helper.revert("Invalid context address")
-		);
+		ensure!(address == transfer_addr, helper.revert("Invalid context address"));
 
 		let source = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(address);
 		T::RingAccountBasic::transfer(&source, &to, value)

@@ -35,14 +35,11 @@ pub struct TokenRegisterInfo(pub H160, pub H160, pub H160);
 
 impl TokenRegisterInfo {
 	pub fn decode(data: &[u8]) -> AbiResult<Self> {
-		let tokens = ethabi::decode(
-			&[ParamType::Address, ParamType::Address, ParamType::Address],
-			&data,
-		)?;
+		let tokens =
+			ethabi::decode(&[ParamType::Address, ParamType::Address, ParamType::Address], &data)?;
 		match (tokens[0].clone(), tokens[1].clone(), tokens[2].clone()) {
-			(Token::Address(backing), Token::Address(source), Token::Address(target)) => {
-				Ok(TokenRegisterInfo(backing, source, target))
-			}
+			(Token::Address(backing), Token::Address(source), Token::Address(target)) =>
+				Ok(TokenRegisterInfo(backing, source, target)),
 			_ => Err(Error::InvalidData),
 		}
 	}

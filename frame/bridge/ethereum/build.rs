@@ -23,9 +23,7 @@ fn main() {
 	let mut dags_merkle_roots_file =
 		fs::File::open("../../../node/service/res/ethereum/dags-merkle-roots.json").unwrap();
 	let mut dags_merkle_roots_str = String::new();
-	dags_merkle_roots_file
-		.read_to_string(&mut dags_merkle_roots_str)
-		.unwrap();
+	dags_merkle_roots_file.read_to_string(&mut dags_merkle_roots_str).unwrap();
 
 	fs::write(
 		&Path::new(&env::var_os("OUT_DIR").unwrap()).join("dags_merkle_roots.rs"),

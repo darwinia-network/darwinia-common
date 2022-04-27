@@ -141,10 +141,7 @@ fn bond_kton_should_work() {
 				StakingLedger {
 					stash,
 					active_kton: 10 * COIN,
-					kton_staking_lock: StakingLock {
-						staking_amount: 0,
-						..Default::default()
-					},
+					kton_staking_lock: StakingLock { staking_amount: 0, ..Default::default() },
 					..Default::default()
 				}
 			);
@@ -175,10 +172,7 @@ fn bond_kton_should_work() {
 				StakingLedger {
 					stash,
 					active_kton: 10 * COIN,
-					kton_staking_lock: StakingLock {
-						staking_amount: 0,
-						..Default::default()
-					},
+					kton_staking_lock: StakingLock { staking_amount: 0, ..Default::default() },
 					..Default::default()
 				}
 			);
@@ -201,10 +195,7 @@ fn unbond_over_max_unbondings_chunks_should_fail() {
 		for ts in 0..MAX_UNLOCKING_CHUNKS {
 			Timestamp::set_timestamp(ts as u64);
 
-			assert_ok!(Staking::unbond(
-				Origin::signed(controller),
-				StakingBalance::RingBalance(1)
-			));
+			assert_ok!(Staking::unbond(Origin::signed(controller), StakingBalance::RingBalance(1)));
 		}
 
 		assert_err!(
@@ -221,14 +212,8 @@ fn unbond_zero() {
 		let ledger = Staking::ledger(controller).unwrap();
 
 		Timestamp::set_timestamp(promise_month * MONTH_IN_MILLISECONDS);
-		assert_ok!(Staking::unbond(
-			Origin::signed(10),
-			StakingBalance::RingBalance(0)
-		));
-		assert_ok!(Staking::unbond(
-			Origin::signed(10),
-			StakingBalance::KtonBalance(0)
-		));
+		assert_ok!(Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(0)));
+		assert_ok!(Staking::unbond(Origin::signed(10), StakingBalance::KtonBalance(0)));
 		assert_eq!(Staking::ledger(controller).unwrap(), ledger);
 	});
 }
@@ -264,18 +249,11 @@ fn two_different_bond_then_unbond_specific_one() {
 		assert_eq!(Kton::free_balance(&stash), 4);
 
 		// Bond 1 Kton
-		assert_ok!(Staking::bond_extra(
-			Origin::signed(stash),
-			StakingBalance::KtonBalance(1),
-			36
-		));
+		assert_ok!(Staking::bond_extra(Origin::signed(stash), StakingBalance::KtonBalance(1), 36));
 		assert_eq!(Staking::ledger(controller).unwrap().active_kton, 1);
 
 		// Become a nominator
-		assert_ok!(Staking::nominate(
-			Origin::signed(controller),
-			vec![controller]
-		));
+		assert_ok!(Staking::nominate(Origin::signed(controller), vec![controller]));
 
 		// Then unbond the the first 12 months part,
 		// this behavior should be punished 3 times Kton according to the remaining times
@@ -300,76 +278,67 @@ fn two_different_bond_then_unbond_specific_one() {
 
 #[test]
 fn rebond_event_should_work() {
-	ExtBuilder::default()
-		.nominate(false)
-		.build()
-		.execute_with(|| {
-			assert_ok!(Staking::set_payee(
-				Origin::signed(10),
-				RewardDestination::Controller
-			));
+	ExtBuilder::default().nominate(false).build().execute_with(|| {
+		assert_ok!(Staking::set_payee(Origin::signed(10), RewardDestination::Controller));
 
-			let _ = Ring::make_free_balance_be(&11, 1000000);
+		let _ = Ring::make_free_balance_be(&11, 1000000);
 
-			run_to_block(5);
+		run_to_block(5);
 
-			assert_eq!(
-				Staking::ledger(&10),
-				Some(StakingLedger {
-					stash: 11,
-					active: 1000,
-					ring_staking_lock: StakingLock {
-						staking_amount: 0,
-						unbondings: WeakBoundedVec::force_from(vec![], None)
-					},
-					..Default::default()
-				})
-			);
+		assert_eq!(
+			Staking::ledger(&10),
+			Some(StakingLedger {
+				stash: 11,
+				active: 1000,
+				ring_staking_lock: StakingLock {
+					staking_amount: 0,
+					unbondings: WeakBoundedVec::force_from(vec![], None)
+				},
+				..Default::default()
+			})
+		);
 
-			run_to_block(6);
+		run_to_block(6);
 
-			Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(400)).unwrap();
-			assert_eq!(
-				Staking::ledger(&10),
-				Some(StakingLedger {
-					stash: 11,
-					active: 600,
-					ring_staking_lock: StakingLock {
-						staking_amount: 0,
-						unbondings: WeakBoundedVec::force_from(
-							vec![Unbonding {
-								amount: 400,
-								until: 6 + bonding_duration_in_blocks(),
-							}],
-							None
-						)
-					},
-					..Default::default()
-				})
-			);
+		Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(400)).unwrap();
+		assert_eq!(
+			Staking::ledger(&10),
+			Some(StakingLedger {
+				stash: 11,
+				active: 600,
+				ring_staking_lock: StakingLock {
+					staking_amount: 0,
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding { amount: 400, until: 6 + bonding_duration_in_blocks() }],
+						None
+					)
+				},
+				..Default::default()
+			})
+		);
 
-			System::reset_events();
+		System::reset_events();
 
-			// Re-bond half of the unbonding funds.
-			Staking::rebond(Origin::signed(10), 200, 0).unwrap();
-			assert_eq!(
-				Staking::ledger(&10),
-				Some(StakingLedger {
-					stash: 11,
-					active: 800,
-					ring_staking_lock: StakingLock {
-						staking_amount: 0,
-						unbondings: WeakBoundedVec::force_from(
-							vec![Unbonding {
-								amount: 200,
-								until: 6 + BondingDurationInBlockNumber::get(),
-							}],
-							None
-						)
-					},
-					..Default::default()
-				})
-			);
-			System::assert_has_event(Event::RingBonded(11, 200, 36000, 36000).into());
-		});
+		// Re-bond half of the unbonding funds.
+		Staking::rebond(Origin::signed(10), 200, 0).unwrap();
+		assert_eq!(
+			Staking::ledger(&10),
+			Some(StakingLedger {
+				stash: 11,
+				active: 800,
+				ring_staking_lock: StakingLock {
+					staking_amount: 0,
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding {
+							amount: 200,
+							until: 6 + BondingDurationInBlockNumber::get(),
+						}],
+						None
+					)
+				},
+				..Default::default()
+			})
+		);
+		System::assert_has_event(Event::RingBonded(11, 200, 36000, 36000).into());
+	});
 }

@@ -47,27 +47,16 @@ pub fn development_config() -> ChainSpec {
 				changes_trie_config: Default::default(),
 			},
 			balances: BalancesConfig {
-				balances: endowed_accounts
-					.iter()
-					.cloned()
-					.map(|k| (k, 1 << 60))
-					.collect(),
+				balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
 			},
 			kton: KtonConfig {
-				balances: endowed_accounts
-					.clone()
-					.into_iter()
-					.map(|a| (a, 1 << 60))
-					.collect(),
+				balances: endowed_accounts.clone().into_iter().map(|a| (a, 1 << 60)).collect(),
 			},
 			aura: AuraConfig {
 				authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
 			},
 			grandpa: GrandpaConfig {
-				authorities: initial_authorities
-					.iter()
-					.map(|x| (x.1.clone(), 1))
-					.collect(),
+				authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
 			},
 			sudo: SudoConfig { key: root_key },
 			evm: EVMConfig {

@@ -98,13 +98,7 @@ impl CreatePayload<bp_pangolin::AccountId, bp_pangolin::AccountPublic, bp_pangol
 		dispatch_fee_payment: DispatchFeePayment,
 	) -> Result<Self::Payload, &'static str> {
 		let call = Self::encode_call(PANGORO_S2S_BACKING_PALLET_INDEX, call_params)?;
-		Ok(ToPangoroMessagePayload {
-			spec_version,
-			weight,
-			origin,
-			call,
-			dispatch_fee_payment,
-		})
+		Ok(ToPangoroMessagePayload { spec_version, weight, origin, call, dispatch_fee_payment })
 	}
 }
 
@@ -188,9 +182,7 @@ impl ThisChainWithMessages for Pangolin {
 	fn transaction_payment(transaction: MessageTransaction<Weight>) -> Self::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			RuntimeBlockWeights::get()
-				.get(DispatchClass::Normal)
-				.base_extrinsic,
+			RuntimeBlockWeights::get().get(DispatchClass::Normal).base_extrinsic,
 			1,
 			FixedU128::zero(),
 			|weight| weight as _,
@@ -221,10 +213,11 @@ impl BridgedChainWithMessages for Pangoro {
 			bp_pangoro::Pangoro::max_extrinsic_weight(),
 		);
 
-		// we're charging for payload bytes in `WithPangoroMessageBridge::transaction_payment` function
+		// we're charging for payload bytes in `WithPangoroMessageBridge::transaction_payment`
+		// function
 		//
-		// this bridge may be used to deliver all kind of messages, so we're not making any assumptions about
-		// minimal dispatch weight here
+		// this bridge may be used to deliver all kind of messages, so we're not making any
+		// assumptions about minimal dispatch weight here
 
 		0..=upper_limit
 	}
@@ -257,9 +250,7 @@ impl BridgedChainWithMessages for Pangoro {
 	fn transaction_payment(transaction: MessageTransaction<Weight>) -> Self::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			bp_pangoro::RuntimeBlockWeights::get()
-				.get(DispatchClass::Normal)
-				.base_extrinsic,
+			bp_pangoro::RuntimeBlockWeights::get().get(DispatchClass::Normal).base_extrinsic,
 			1,
 			FixedU128::zero(),
 			|weight| weight as _,

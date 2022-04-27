@@ -75,9 +75,7 @@ where
 		raw_account[0..4].copy_from_slice(b"dvm:");
 		raw_account[11..31].copy_from_slice(&address[..]);
 
-		let checksum: u8 = raw_account[1..31]
-			.iter()
-			.fold(raw_account[0], |sum, &byte| sum ^ byte);
+		let checksum: u8 = raw_account[1..31].iter().fold(raw_account[0], |sum, &byte| sum ^ byte);
 
 		raw_account[31] = checksum;
 
@@ -110,9 +108,7 @@ pub fn recover_signer(transaction: &Transaction) -> Option<H160> {
 	}
 
 	let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg).ok()?;
-	Some(H160::from(H256::from_slice(
-		Keccak256::digest(&pubkey).as_slice(),
-	)))
+	Some(H160::from(H256::from_slice(Keccak256::digest(&pubkey).as_slice())))
 }
 
 /// Decimal conversion from RING/KTON to Ethereum decimal format.

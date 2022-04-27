@@ -24,13 +24,13 @@ darwinia-support          = { default-features = false, path = "../../../support
 dp-contract               = { default-features = false, path = "../../../../primitives/contract" }
 ethereum-primitives       = { default-features = false, features = ["full-codec"], path = "../../../../primitives/ethereum" }
 # paritytech
-frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
-frame-support      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
-frame-system       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
-sp-runtime         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
-sp-std             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.1" }
+frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+frame-support      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+frame-system       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+sp-runtime         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+sp-std             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 # frontier
-fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.1" }
+fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
 
 [features]
 default = ["std"]

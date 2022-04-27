@@ -122,47 +122,38 @@ fn verify_relay_proofs_should_work() {
 
 #[test]
 fn verify_relay_chain_should_work() {
-	ExtBuilder::default()
-		.best_confirmed_block_number(100)
-		.build()
-		.execute_with(|| {
-			EthereumRelay::confirm_relay_header_parcel_with_reason(
-				serde_json::from_str(LAST_CONFIRM).unwrap(),
-				vec![],
-			);
+	ExtBuilder::default().best_confirmed_block_number(100).build().execute_with(|| {
+		EthereumRelay::confirm_relay_header_parcel_with_reason(
+			serde_json::from_str(LAST_CONFIRM).unwrap(),
+			vec![],
+		);
 
-			// Should work for random sample points order
+		// Should work for random sample points order
 
-			let relay_chain = vec![
-				serde_json::from_str(HEADER_101).unwrap(),
-				serde_json::from_str(HEADER_102).unwrap(),
-				serde_json::from_str(HEADER_103).unwrap(),
-			];
+		let relay_chain = vec![
+			serde_json::from_str(HEADER_101).unwrap(),
+			serde_json::from_str(HEADER_102).unwrap(),
+			serde_json::from_str(HEADER_103).unwrap(),
+		];
 
-			assert_ok!(EthereumRelay::verify_relay_chain(
-				relay_chain.iter().collect()
-			));
+		assert_ok!(EthereumRelay::verify_relay_chain(relay_chain.iter().collect()));
 
-			let relay_chain = vec![
-				serde_json::from_str(HEADER_101).unwrap(),
-				serde_json::from_str(HEADER_103).unwrap(),
-				serde_json::from_str(HEADER_102).unwrap(),
-			];
+		let relay_chain = vec![
+			serde_json::from_str(HEADER_101).unwrap(),
+			serde_json::from_str(HEADER_103).unwrap(),
+			serde_json::from_str(HEADER_102).unwrap(),
+		];
 
-			assert_ok!(EthereumRelay::verify_relay_chain(
-				relay_chain.iter().collect()
-			));
+		assert_ok!(EthereumRelay::verify_relay_chain(relay_chain.iter().collect()));
 
-			let relay_chain = vec![
-				serde_json::from_str(HEADER_102).unwrap(),
-				serde_json::from_str(HEADER_103).unwrap(),
-				serde_json::from_str(HEADER_101).unwrap(),
-			];
+		let relay_chain = vec![
+			serde_json::from_str(HEADER_102).unwrap(),
+			serde_json::from_str(HEADER_103).unwrap(),
+			serde_json::from_str(HEADER_101).unwrap(),
+		];
 
-			assert_ok!(EthereumRelay::verify_relay_chain(
-				relay_chain.iter().collect()
-			));
-		});
+		assert_ok!(EthereumRelay::verify_relay_chain(relay_chain.iter().collect()));
+	});
 }
 
 #[test]
@@ -179,25 +170,22 @@ fn try_confirm_relay_header_parcel_should_work() {
 		assert_eq!(EthereumRelay::best_confirmed_block_number(), 100);
 	});
 
-	ExtBuilder::default()
-		.confirm_period(3)
-		.build()
-		.execute_with(|| {
-			assert!(EthereumRelay::pending_relay_header_parcels().is_empty());
-			assert_eq!(EthereumRelay::best_confirmed_block_number(), 0);
+	ExtBuilder::default().confirm_period(3).build().execute_with(|| {
+		assert!(EthereumRelay::pending_relay_header_parcels().is_empty());
+		assert_eq!(EthereumRelay::best_confirmed_block_number(), 0);
 
-			assert_ok!(EthereumRelay::try_confirm_relay_header_parcel(
-				serde_json::from_str(LAST_CONFIRM).unwrap()
-			));
+		assert_ok!(EthereumRelay::try_confirm_relay_header_parcel(
+			serde_json::from_str(LAST_CONFIRM).unwrap()
+		));
 
-			assert!(!EthereumRelay::pending_relay_header_parcels().is_empty());
-			assert_eq!(EthereumRelay::best_confirmed_block_number(), 0);
+		assert!(!EthereumRelay::pending_relay_header_parcels().is_empty());
+		assert_eq!(EthereumRelay::best_confirmed_block_number(), 0);
 
-			run_to_block(3);
+		run_to_block(3);
 
-			assert!(EthereumRelay::pending_relay_header_parcels().is_empty());
-			assert_eq!(EthereumRelay::best_confirmed_block_number(), 100);
-		});
+		assert!(EthereumRelay::pending_relay_header_parcels().is_empty());
+		assert_eq!(EthereumRelay::best_confirmed_block_number(), 100);
+	});
 }
 
 #[test]
@@ -221,12 +209,7 @@ fn mmr() {
 	)
 	.unwrap();
 
-	assert!(EthereumRelay::verify_mmr(
-		102,
-		mmr_root,
-		mmr_proof,
-		vec![(102, header_hash)]
-	));
+	assert!(EthereumRelay::verify_mmr(102, mmr_root, mmr_proof, vec![(102, header_hash)]));
 }
 
 #[test]

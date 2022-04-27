@@ -48,12 +48,7 @@ impl BscSingleStorageVerifyParams {
 			],
 			&data,
 		)?;
-		match (
-			tokens[0].clone(),
-			tokens[1].clone(),
-			tokens[2].clone(),
-			tokens[3].clone(),
-		) {
+		match (tokens[0].clone(), tokens[1].clone(), tokens[2].clone(), tokens[3].clone()) {
 			(
 				Token::Address(lane_address),
 				Token::Array(account_proof),
@@ -107,12 +102,7 @@ impl BscMultiStorageVerifyParams {
 			],
 			&data,
 		)?;
-		match (
-			tokens[0].clone(),
-			tokens[1].clone(),
-			tokens[2].clone(),
-			tokens[3].clone(),
-		) {
+		match (tokens[0].clone(), tokens[1].clone(), tokens[2].clone(), tokens[3].clone()) {
 			(
 				Token::Address(lane_address),
 				Token::Array(account_proof),
@@ -130,10 +120,8 @@ impl BscMultiStorageVerifyParams {
 					.iter()
 					.map(|storage_key| match storage_key {
 						Token::FixedBytes(storage_key) => {
-							let key: [u8; 32] = storage_key
-								.clone()
-								.try_into()
-								.map_err(|_| Error::InvalidData)?;
+							let key: [u8; 32] =
+								storage_key.clone().try_into().map_err(|_| Error::InvalidData)?;
 							Ok(key.into())
 						}
 						_ => Err(Error::InvalidData),
