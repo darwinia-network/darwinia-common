@@ -71,11 +71,7 @@ fn root_transact_should_works() {
 		let add: Vec<u8> = hex2bytes_unchecked(
 			"1003e2d20000000000000000000000000000000000000000000000000000000000000002",
 		);
-		assert_ok!(Ethereum::root_transact(
-			Origin::root(),
-			contract_address,
-			add.clone()
-		));
+		assert_ok!(Ethereum::root_transact(Origin::root(), contract_address, add.clone()));
 
 		let number: Vec<u8> = hex2bytes_unchecked("0x8381f58a");
 		let result = Ethereum::read_only_call(contract_address, number.clone()).unwrap();

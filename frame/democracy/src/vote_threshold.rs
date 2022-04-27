@@ -79,12 +79,10 @@ impl<
 			return false;
 		}
 		match *self {
-			VoteThreshold::SuperMajorityApprove => {
-				compare_rationals(tally.nays, sqrt_voters, tally.ayes, sqrt_electorate)
-			}
-			VoteThreshold::SuperMajorityAgainst => {
-				compare_rationals(tally.nays, sqrt_electorate, tally.ayes, sqrt_voters)
-			}
+			VoteThreshold::SuperMajorityApprove =>
+				compare_rationals(tally.nays, sqrt_voters, tally.ayes, sqrt_electorate),
+			VoteThreshold::SuperMajorityAgainst =>
+				compare_rationals(tally.nays, sqrt_electorate, tally.ayes, sqrt_voters),
 			VoteThreshold::SimpleMajority => tally.ayes > tally.nays,
 		}
 	}
@@ -96,21 +94,9 @@ mod tests {
 
 	#[test]
 	fn should_work() {
-		assert!(!VoteThreshold::SuperMajorityApprove.approved(
-			Tally {
-				ayes: 60,
-				nays: 50,
-				turnout: 110
-			},
-			210
-		));
-		assert!(VoteThreshold::SuperMajorityApprove.approved(
-			Tally {
-				ayes: 100,
-				nays: 50,
-				turnout: 150
-			},
-			210
-		));
+		assert!(!VoteThreshold::SuperMajorityApprove
+			.approved(Tally { ayes: 60, nays: 50, turnout: 110 }, 210));
+		assert!(VoteThreshold::SuperMajorityApprove
+			.approved(Tally { ayes: 100, nays: 50, turnout: 150 }, 210));
 	}
 }

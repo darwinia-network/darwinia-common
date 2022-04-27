@@ -43,10 +43,10 @@ use codec::{Decode, Encode};
 /*
  *
  * let mmr_root = if ethereum_header.number == 10254000 {
- *     H256::from_str("4daf1aacca87c0829a1e55f3ebcc44f49b158e92e9cbb474a60719070b225e6e").unwrap()
- * } else {
- *     H256::from_str("e860637b3d94a6606fd1d7cd7d86ca3bb37625c3b6a88de3afe118f936acbc35").unwrap()
- * };
+ *     H256::from_str("4daf1aacca87c0829a1e55f3ebcc44f49b158e92e9cbb474a60719070b225e6e").
+ * unwrap() } else {
+ *     H256::from_str("e860637b3d94a6606fd1d7cd7d86ca3bb37625c3b6a88de3afe118f936acbc35").
+ * unwrap() };
  *
  */
 benchmarks! {

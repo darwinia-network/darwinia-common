@@ -43,9 +43,7 @@ impl From<Vec<Vec<u8>>> for Proof {
 
 impl Decodable for Proof {
 	fn decode(r: &Rlp) -> Result<Self, DecoderError> {
-		Ok(Proof {
-			nodes: r.list_at(0)?,
-		})
+		Ok(Proof { nodes: r.list_at(0)? })
 	}
 }
 

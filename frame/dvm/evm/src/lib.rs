@@ -75,7 +75,8 @@ pub mod pallet {
 		type FeeCalculator: FeeCalculator;
 		/// Maps Ethereum gas to Substrate weight.
 		type GasWeightMapping: GasWeightMapping;
-		/// The block gas limit. Can be a simple constant, or an adjustment algorithm in another pallet.
+		/// The block gas limit. Can be a simple constant, or an adjustment algorithm in another
+		/// pallet.
 		type BlockGasLimit: Get<U256>;
 
 		/// Allow the origin to call on behalf of given address.
@@ -103,9 +104,10 @@ pub mod pallet {
 		/// EVM execution runner.
 		type Runner: Runner<Self>;
 
-		/// To handle fee deduction for EVM transactions. An example is this pallet being used by `pallet_ethereum`
-		/// where the chain implementing `pallet_ethereum` should be able to configure what happens to the fees
-		/// Similar to `OnChargeTransaction` of `pallet_transaction_payment`
+		/// To handle fee deduction for EVM transactions. An example is this pallet being used by
+		/// `pallet_ethereum` where the chain implementing `pallet_ethereum` should be able to
+		/// configure what happens to the fees Similar to `OnChargeTransaction` of
+		/// `pallet_transaction_payment`
 		type OnChargeTransaction: OnChargeEVMTransaction<Self>;
 
 		/// EVM config used in the Pallet.
@@ -125,7 +127,8 @@ pub mod pallet {
 		CreatedFailed(H160),
 		/// A \[contract\] has been executed successfully with states applied.
 		Executed(H160),
-		/// A \[contract\] has been executed with errors. States are reverted with only gas fees applied.
+		/// A \[contract\] has been executed with errors. States are reverted with only gas fees
+		/// applied.
 		ExecutedFailed(H160),
 		/// A deposit has been made at a given address. \[sender, address, value\]
 		BalanceDeposit(T::AccountId, H160, U256),
@@ -166,9 +169,7 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self {
-				accounts: Default::default(),
-			}
+			Self { accounts: Default::default() }
 		}
 	}
 	#[pallet::genesis_build]
@@ -272,17 +273,11 @@ pub mod pallet {
 			)?;
 			match info {
 				CreateInfo {
-					exit_reason: ExitReason::Succeed(_),
-					value: create_address,
-					..
+					exit_reason: ExitReason::Succeed(_), value: create_address, ..
 				} => {
 					Pallet::<T>::deposit_event(Event::<T>::Created(create_address));
 				}
-				CreateInfo {
-					exit_reason: _,
-					value: create_address,
-					..
-				} => {
+				CreateInfo { exit_reason: _, value: create_address, .. } => {
 					Pallet::<T>::deposit_event(Event::<T>::CreatedFailed(create_address));
 				}
 			}
@@ -325,17 +320,11 @@ pub mod pallet {
 			)?;
 			match info {
 				CreateInfo {
-					exit_reason: ExitReason::Succeed(_),
-					value: create_address,
-					..
+					exit_reason: ExitReason::Succeed(_), value: create_address, ..
 				} => {
 					Pallet::<T>::deposit_event(Event::<T>::Created(create_address));
 				}
-				CreateInfo {
-					exit_reason: _,
-					value: create_address,
-					..
-				} => {
+				CreateInfo { exit_reason: _, value: create_address, .. } => {
 					Pallet::<T>::deposit_event(Event::<T>::CreatedFailed(create_address));
 				}
 			}

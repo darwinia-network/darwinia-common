@@ -147,10 +147,7 @@ fn noting_imminent_preimage_for_free_should_work() {
 		next_block();
 
 		// Now we're in the dispatch queue it's all good.
-		assert_ok!(Democracy::note_imminent_preimage(
-			Origin::signed(6),
-			set_balance_proposal(2)
-		));
+		assert_ok!(Democracy::note_imminent_preimage(Origin::signed(6), set_balance_proposal(2)));
 
 		next_block();
 
@@ -188,10 +185,7 @@ fn note_imminent_preimage_can_only_be_successful_once() {
 		next_block();
 
 		// First time works
-		assert_ok!(Democracy::note_imminent_preimage(
-			Origin::signed(6),
-			set_balance_proposal(2)
-		));
+		assert_ok!(Democracy::note_imminent_preimage(Origin::signed(6), set_balance_proposal(2)));
 
 		// Second time fails
 		assert_noop!(

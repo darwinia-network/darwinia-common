@@ -185,12 +185,7 @@ pub mod mock_relay {
 				_ => true,
 			};
 
-			Self {
-				number,
-				hash: rand::random(),
-				parent_hash,
-				valid,
-			}
+			Self { number, hash: rand::random(), parent_hash, valid }
 		}
 
 		pub fn gen_continuous(
@@ -384,9 +379,7 @@ impl ExtBuilder {
 		self.set_associated_constants();
 
 		let _ = env_logger::try_init();
-		let mut storage = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.unwrap();
+		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 		RingConfig {
 			balances: (1..10)
@@ -396,11 +389,9 @@ impl ExtBuilder {
 		}
 		.assimilate_storage(&mut storage)
 		.unwrap();
-		mock_relay::GenesisConfig {
-			headers: self.headers.clone(),
-		}
-		.assimilate_storage(&mut storage)
-		.unwrap();
+		mock_relay::GenesisConfig { headers: self.headers.clone() }
+			.assimilate_storage(&mut storage)
+			.unwrap();
 
 		storage.into()
 	}

@@ -48,14 +48,8 @@ pub enum Action {
 
 #[test]
 fn test_selector_macro() {
-	assert_eq!(
-		&(Action::A as u32).to_be_bytes()[..],
-		&Keccak256::digest(b"a()")[0..4],
-	);
-	assert_eq!(
-		&(Action::B as u32).to_be_bytes()[..],
-		&Keccak256::digest(b"b()")[0..4],
-	);
+	assert_eq!(&(Action::A as u32).to_be_bytes()[..], &Keccak256::digest(b"a()")[0..4],);
+	assert_eq!(&(Action::B as u32).to_be_bytes()[..], &Keccak256::digest(b"b()")[0..4],);
 	assert_ne!(Action::A as u32, Action::B as u32);
 }
 

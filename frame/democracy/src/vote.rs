@@ -39,12 +39,10 @@ impl TypeInfo for Vote {
 	type Identity = Self;
 
 	fn type_info() -> scale_info::Type {
-		scale_info::Type::builder()
-			.path(scale_info::Path::new("Vote", module_path!()))
-			.composite(scale_info::build::Fields::unnamed().field(|f| {
-				f.ty::<u8>()
-					.docs(&["Raw vote byte, encodes aye + conviction"])
-			}))
+		scale_info::Type::builder().path(scale_info::Path::new("Vote", module_path!())).composite(
+			scale_info::build::Fields::unnamed()
+				.field(|f| f.ty::<u8>().docs(&["Raw vote byte, encodes aye + conviction"])),
+		)
 	}
 }
 
@@ -64,9 +62,8 @@ impl<Balance: Saturating> AccountVote<Balance> {
 	pub fn locked_if(self, approved: bool) -> Option<(u32, Balance)> {
 		// winning side: can only be removed after the lock period ends.
 		match self {
-			AccountVote::Standard { vote, balance } if vote.aye == approved => {
-				Some((vote.conviction.lock_periods(), balance))
-			}
+			AccountVote::Standard { vote, balance } if vote.aye == approved =>
+				Some((vote.conviction.lock_periods(), balance)),
 			_ => None,
 		}
 	}
@@ -165,10 +162,8 @@ impl<Balance: Saturating + Ord + Zero + Copy, BlockNumber: Ord + Copy + Zero, Ac
 	/// The amount of this account's balance that much currently be locked due to voting.
 	pub fn locked_balance(&self) -> Balance {
 		match self {
-			Voting::Direct { votes, prior, .. } => votes
-				.iter()
-				.map(|i| i.1.balance())
-				.fold(prior.locked(), |a, i| a.max(i)),
+			Voting::Direct { votes, prior, .. } =>
+				votes.iter().map(|i| i.1.balance()).fold(prior.locked(), |a, i| a.max(i)),
 			Voting::Delegating { balance, .. } => *balance,
 		}
 	}
@@ -179,16 +174,8 @@ impl<Balance: Saturating + Ord + Zero + Copy, BlockNumber: Ord + Copy + Zero, Ac
 		prior: PriorLock<BlockNumber, Balance>,
 	) {
 		let (d, p) = match self {
-			Voting::Direct {
-				ref mut delegations,
-				ref mut prior,
-				..
-			} => (delegations, prior),
-			Voting::Delegating {
-				ref mut delegations,
-				ref mut prior,
-				..
-			} => (delegations, prior),
+			Voting::Direct { ref mut delegations, ref mut prior, .. } => (delegations, prior),
+			Voting::Delegating { ref mut delegations, ref mut prior, .. } => (delegations, prior),
 		};
 		*d = delegations;
 		*p = prior;

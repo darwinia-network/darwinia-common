@@ -134,10 +134,7 @@ impl MessagesBridge<AccountId<Test>, Balance, ()> for MockMessagesBridge {
 	) -> Result<SendMessageArtifacts, Self::Error> {
 		// send fee to fund account [2;32]
 		Ring::transfer(submitter.into(), build_account(2), fee)?;
-		Ok(SendMessageArtifacts {
-			nonce: 0,
-			weight: 0,
-		})
+		Ok(SendMessageArtifacts { nonce: 0, weight: 0 })
 	}
 }
 
@@ -197,9 +194,7 @@ pub fn build_account(x: u8) -> AccountId32 {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut storage = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap();
+	let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 	s2s_backing::GenesisConfig::<Test> {
 		secure_limited_period: 10,
@@ -210,10 +205,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	.unwrap();
 
 	// add some balance to backing account 10 ring
-	let balances = vec![
-		(Backing::pallet_account_id(), 10_000_000_000),
-		(build_account(1), 100),
-	];
+	let balances = vec![(Backing::pallet_account_id(), 10_000_000_000), (build_account(1), 100)];
 	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
 		.assimilate_storage(&mut storage)
 		.unwrap();
@@ -317,10 +309,7 @@ fn test_lock_and_remote_issue() {
 		));
 		assert_eq!(Ring::free_balance(build_account(1)), 30);
 		assert_eq!(Ring::free_balance(build_account(2)), 10);
-		assert_eq!(
-			Ring::free_balance(Backing::pallet_account_id()),
-			10_000_000_060
-		);
+		assert_eq!(Ring::free_balance(Backing::pallet_account_id()), 10_000_000_060);
 
 		assert_err!(
 			Backing::lock_and_remote_issue(
@@ -359,9 +348,6 @@ fn test_register_and_remote_create() {
 		));
 		assert_eq!(Ring::free_balance(build_account(1)), 90);
 		assert_eq!(Ring::free_balance(build_account(2)), 10);
-		assert_eq!(
-			Ring::free_balance(Backing::pallet_account_id()),
-			10_000_000_000
-		);
+		assert_eq!(Ring::free_balance(Backing::pallet_account_id()), 10_000_000_000);
 	});
 }

@@ -71,13 +71,7 @@ pub fn session_keys(
 	im_online: ImOnlineId,
 	authority_discovery: AuthorityDiscoveryId,
 ) -> SessionKeys {
-	SessionKeys {
-		babe,
-		grandpa,
-		beefy,
-		im_online,
-		authority_discovery,
-	}
+	SessionKeys { babe, grandpa, beefy, im_online, authority_discovery }
 }
 
 pub fn properties() -> Properties {
@@ -337,11 +331,7 @@ pub fn development_config() -> ChainSpec {
 			s2s_relayer,
 		]
 		.into_iter()
-		.chain(
-			TEAM_MEMBERS
-				.iter()
-				.map(|m| array_bytes::hex_into_unchecked(m)),
-		)
+		.chain(TEAM_MEMBERS.iter().map(|m| array_bytes::hex_into_unchecked(m)))
 		.collect::<Vec<_>>();
 		let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
 		let evm_accounts = {
@@ -534,11 +524,7 @@ pub fn local_testnet_config() -> ChainSpec {
 			s2s_relayer,
 		]
 		.into_iter()
-		.chain(
-			TEAM_MEMBERS
-				.iter()
-				.map(|m| array_bytes::hex_into_unchecked(m)),
-		)
+		.chain(TEAM_MEMBERS.iter().map(|m| array_bytes::hex_into_unchecked(m)))
 		.collect::<Vec<_>>();
 		let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
 		let evm_accounts = {

@@ -343,8 +343,8 @@ pub mod pallet {
 
 		/// Time used for computing era duration.
 		///
-		/// It is guaranteed to start being called from the first `on_finalize`. Thus value at genesis
-		/// is not used.
+		/// It is guaranteed to start being called from the first `on_finalize`. Thus value at
+		/// genesis is not used.
 		type UnixTime: UnixTime;
 
 		/// Something that provides the election functionality.
@@ -367,7 +367,8 @@ pub mod pallet {
 		type SessionsPerEra: Get<SessionIndex>;
 		/// Interface for interacting with a session pallet.
 		type SessionInterface: self::SessionInterface<Self::AccountId>;
-		/// Something that can estimate the next session change, accurately or as a best effort guess.
+		/// Something that can estimate the next session change, accurately or as a best effort
+		/// guess.
 		type NextNewSession: EstimateNextNewSession<Self::BlockNumber>;
 
 		/// Number of eras that slashes are deferred by, after computation.
@@ -381,8 +382,8 @@ pub mod pallet {
 
 		/// The maximum number of nominators rewarded for each validator.
 		///
-		/// For each validator only the `$MaxNominatorRewardedPerValidator` biggest stakers can claim
-		/// their reward. This used to limit the i/o cost for the nominator payout.
+		/// For each validator only the `$MaxNominatorRewardedPerValidator` biggest stakers can
+		/// claim their reward. This used to limit the i/o cost for the nominator payout.
 		#[pallet::constant]
 		type MaxNominatorRewardedPerValidator: Get<u32>;
 
@@ -526,11 +527,11 @@ pub mod pallet {
 		BadTarget,
 		/// The user has enough bond and thus cannot be chilled forcefully by an external person.
 		CannotChillOther,
-		/// There are too many nominators in the system. Governance needs to adjust the staking settings
-		/// to keep things safe for the runtime.
+		/// There are too many nominators in the system. Governance needs to adjust the staking
+		/// settings to keep things safe for the runtime.
 		TooManyNominators,
-		/// There are too many validators in the system. Governance needs to adjust the staking settings
-		/// to keep things safe for the runtime.
+		/// There are too many validators in the system. Governance needs to adjust the staking
+		/// settings to keep things safe for the runtime.
 		TooManyValidators,
 		/// Payout - INSUFFICIENT
 		PayoutIns,
@@ -826,9 +827,9 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type StorageVersion<T: Config> = StorageValue<_, Releases, ValueQuery>;
 
-	/// The threshold for when users can start calling `chill_other` for other validators / nominators.
-	/// The threshold is compared to the actual number of validators / nominators (`CountFor*`) in
-	/// the system compared to the configured max (`Max*Count`).
+	/// The threshold for when users can start calling `chill_other` for other validators /
+	/// nominators. The threshold is compared to the actual number of validators / nominators
+	/// (`CountFor*`) in the system compared to the configured max (`Max*Count`).
 	#[pallet::storage]
 	pub type ChillThreshold<T: Config> = StorageValue<_, Percent, OptionQuery>;
 
@@ -863,12 +864,7 @@ pub mod pallet {
 		pub force_era: Forcing,
 		pub slash_reward_fraction: Perbill,
 		pub canceled_payout: Power,
-		pub stakers: Vec<(
-			AccountId<T>,
-			AccountId<T>,
-			RingBalance<T>,
-			StakerStatus<AccountId<T>>,
-		)>,
+		pub stakers: Vec<(AccountId<T>, AccountId<T>, RingBalance<T>, StakerStatus<AccountId<T>>)>,
 		pub min_nominator_bond: RingBalance<T>,
 		pub min_validator_bond: RingBalance<T>,
 		pub payout_fraction: Perbill,
@@ -933,10 +929,7 @@ pub mod pallet {
 					),
 					StakerStatus::Nominator(votes) => <Pallet<T>>::nominate(
 						T::Origin::from(Some(controller.to_owned()).into()),
-						votes
-							.iter()
-							.map(|l| T::Lookup::unlookup(l.to_owned()))
-							.collect(),
+						votes.iter().map(|l| T::Lookup::unlookup(l.to_owned())).collect(),
 					),
 					_ => Ok(()),
 				});
@@ -985,7 +978,8 @@ pub mod pallet {
 				if active_era.start.is_none() {
 					let now_as_millis_u64 = T::UnixTime::now().as_millis() as _;
 					active_era.start = Some(now_as_millis_u64);
-					// This write only ever happens once, we don't include it in the weight in general
+					// This write only ever happens once, we don't include it in the weight in
+					// general
 					<ActiveEra<T>>::put(active_era);
 				}
 			}
@@ -1036,16 +1030,10 @@ pub mod pallet {
 			promise_month: u8,
 		) -> DispatchResult {
 			let stash = ensure_signed(origin)?;
-			ensure!(
-				!<Bonded<T>>::contains_key(&stash),
-				<Error<T>>::AlreadyBonded
-			);
+			ensure!(!<Bonded<T>>::contains_key(&stash), <Error<T>>::AlreadyBonded);
 
 			let controller = T::Lookup::lookup(controller)?;
-			ensure!(
-				!<Ledger<T>>::contains_key(&controller),
-				<Error<T>>::AlreadyPaired
-			);
+			ensure!(!<Ledger<T>>::contains_key(&controller), <Error<T>>::AlreadyPaired);
 
 			match value {
 				StakingBalance::RingBalance(value) => {
@@ -1109,8 +1097,8 @@ pub mod pallet {
 		/// The dispatch origin for this call must be _Signed_ by the stash, not the controller.
 		///
 		/// Use this if there are additional funds in your stash account that you wish to bond.
-		/// Unlike [`bond`](Self::bond) or [`unbond`](Self::unbond) this function does not impose any limitation
-		/// on the amount that can be added.
+		/// Unlike [`bond`](Self::bond) or [`unbond`](Self::unbond) this function does not impose
+		/// any limitation on the amount that can be added.
 		///
 		/// Emits `Bonded`.
 		///
@@ -1204,12 +1192,7 @@ pub mod pallet {
 			let promise_month = promise_month.max(1).min(36);
 			let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
 			let mut ledger = Self::clear_mature_deposits(ledger).0;
-			let StakingLedger {
-				active,
-				active_deposit_ring,
-				deposit_items,
-				..
-			} = &mut ledger;
+			let StakingLedger { active, active_deposit_ring, deposit_items, .. } = &mut ledger;
 			let value = value.min(active.saturating_sub(*active_deposit_ring));
 
 			if value.is_zero() {
@@ -1221,11 +1204,7 @@ pub mod pallet {
 
 			T::KtonReward::on_unbalanced(kton_positive_imbalance);
 			*active_deposit_ring = active_deposit_ring.saturating_add(value);
-			deposit_items.push(TimeDepositItem {
-				value,
-				start_time,
-				expire_time,
-			});
+			deposit_items.push(TimeDepositItem { value, start_time, expire_time });
 
 			<Ledger<T>>::insert(&controller, ledger);
 			Self::deposit_event(Event::RingBonded(stash, value, start_time, expire_time));
@@ -1239,7 +1218,8 @@ pub mod pallet {
 		///
 		/// The dispatch origin for this call must be _Signed_ by the controller, not the stash.
 		///
-		/// Once the unlock period is done, the funds will be withdrew automatically and ready for transfer.
+		/// Once the unlock period is done, the funds will be withdrew automatically and ready for
+		/// transfer.
 		///
 		/// No more than a limited number of unlocking chunks (see `MAX_UNLOCKING_CHUNKS`)
 		/// can co-exists at the same time. In that case,  [`StakingLock::shrink`] need
@@ -1484,12 +1464,7 @@ pub mod pallet {
 			let mut claim_deposits_with_punish = (false, Zero::zero());
 
 			{
-				let StakingLedger {
-					stash,
-					active_deposit_ring,
-					deposit_items,
-					..
-				} = &mut ledger;
+				let StakingLedger { stash, active_deposit_ring, deposit_items, .. } = &mut ledger;
 
 				deposit_items.retain(|item| {
 					if item.expire_time != expire_time {
@@ -1559,17 +1534,15 @@ pub mod pallet {
 			let controller = ensure_signed(origin)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
 
-			ensure!(
-				ledger.active >= <MinValidatorBond<T>>::get(),
-				<Error<T>>::InsufficientBond
-			);
+			ensure!(ledger.active >= <MinValidatorBond<T>>::get(), <Error<T>>::InsufficientBond);
 
 			let stash = &ledger.stash;
 
 			// Only check limits if they are not already a validator.
 			if !<Validators<T>>::contains_key(stash) {
-				// If this error is reached, we need to adjust the `MinValidatorBond` and start calling `chill_other`.
-				// Until then, we explicitly block new validators to protect the runtime.
+				// If this error is reached, we need to adjust the `MinValidatorBond` and start
+				// calling `chill_other`. Until then, we explicitly block new validators to protect
+				// the runtime.
 				if let Some(max_validators) = <MaxValidatorsCount<T>>::get() {
 					ensure!(
 						<CounterForValidators<T>>::get() < max_validators,
@@ -1602,17 +1575,15 @@ pub mod pallet {
 			let controller = ensure_signed(origin)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
 
-			ensure!(
-				ledger.active >= <MinNominatorBond<T>>::get(),
-				<Error<T>>::InsufficientBond
-			);
+			ensure!(ledger.active >= <MinNominatorBond<T>>::get(), <Error<T>>::InsufficientBond);
 
 			let stash = &ledger.stash;
 
 			// Only check limits if they are not already a nominator.
 			if !<Nominators<T>>::contains_key(stash) {
-				// If this error is reached, we need to adjust the `MinNominatorBond` and start calling `chill_other`.
-				// Until then, we explicitly block new nominators to protect the runtime.
+				// If this error is reached, we need to adjust the `MinNominatorBond` and start
+				// calling `chill_other`. Until then, we explicitly block new nominators to protect
+				// the runtime.
 				if let Some(max_nominators) = <MaxNominatorsCount<T>>::get() {
 					ensure!(
 						<CounterForNominators<T>>::get() < max_nominators,
@@ -1622,10 +1593,7 @@ pub mod pallet {
 			}
 
 			ensure!(!targets.is_empty(), <Error<T>>::EmptyTargets);
-			ensure!(
-				targets.len() <= T::MAX_NOMINATIONS as usize,
-				<Error<T>>::TooManyTargets
-			);
+			ensure!(targets.len() <= T::MAX_NOMINATIONS as usize, <Error<T>>::TooManyTargets);
 
 			let old = <Nominators<T>>::get(stash).map_or_else(Vec::new, |x| x.targets);
 			let targets = targets
@@ -1730,10 +1698,7 @@ pub mod pallet {
 			let old_controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
 			let controller = T::Lookup::lookup(controller)?;
 
-			ensure!(
-				!<Ledger<T>>::contains_key(&controller),
-				<Error<T>>::AlreadyPaired
-			);
+			ensure!(!<Ledger<T>>::contains_key(&controller), <Error<T>>::AlreadyPaired);
 
 			if controller != old_controller {
 				<Bonded<T>>::insert(&stash, &controller);
@@ -1878,8 +1843,8 @@ pub mod pallet {
 		/// # <weight>
 		/// O(S) where S is the number of slashing spans to be removed
 		/// Reads: Bonded, Slashing Spans, Account, Locks
-		/// Writes: Bonded, Slashing Spans (if S > 0), Ledger, Payee, Validators, Nominators, Account, Locks
-		/// Writes Each: SpanSlash * S
+		/// Writes: Bonded, Slashing Spans (if S > 0), Ledger, Payee, Validators, Nominators,
+		/// Account, Locks Writes Each: SpanSlash * S
 		/// # </weight>
 		#[pallet::weight(T::WeightInfo::force_unstake(*num_slashing_spans))]
 		pub fn force_unstake(
@@ -1944,17 +1909,11 @@ pub mod pallet {
 			T::SlashCancelOrigin::ensure_origin(origin)?;
 
 			ensure!(!slash_indices.is_empty(), <Error<T>>::EmptyTargets);
-			ensure!(
-				is_sorted_and_unique(&slash_indices),
-				<Error<T>>::NotSortedAndUnique
-			);
+			ensure!(is_sorted_and_unique(&slash_indices), <Error<T>>::NotSortedAndUnique);
 
 			let mut unapplied = <Self as Store>::UnappliedSlashes::get(&era);
 			let last_item = slash_indices[slash_indices.len() - 1];
-			ensure!(
-				(last_item as usize) < unapplied.len(),
-				<Error<T>>::InvalidSlashIndex
-			);
+			ensure!((last_item as usize) < unapplied.len(), <Error<T>>::InvalidSlashIndex);
 
 			for (removed, index) in slash_indices.into_iter().enumerate() {
 				let index = (index as usize) - removed;
@@ -2077,10 +2036,10 @@ pub mod pallet {
 		///
 		/// Parameters:
 		/// - `new_history_depth`: The new history depth you would like to set.
-		/// - `era_items_deleted`: The number of items that will be deleted by this dispatch.
-		///    This should report all the storage items that will be deleted by clearing old
-		///    era history. Needed to report an accurate weight for the dispatch. Trusted by
-		///    `Root` to report an accurate number.
+		/// - `era_items_deleted`: The number of items that will be deleted by this dispatch. This
+		///   should report all the storage items that will be deleted by clearing old era history.
+		///   Needed to report an accurate weight for the dispatch. Trusted by `Root` to report an
+		///   accurate number.
 		///
 		/// Origin must be root.
 		///
@@ -2091,7 +2050,8 @@ pub mod pallet {
 		///     - Reads: Current Era, History Depth
 		///     - Writes: History Depth
 		///     - Clear Prefix Each: Era Stakers, EraStakersClipped, ErasValidatorPrefs
-		///     - Writes Each: ErasValidatorReward, ErasRewardPoints, ErasTotalStake, ErasStartSessionIndex
+		///     - Writes Each: ErasValidatorReward, ErasRewardPoints, ErasTotalStake,
+		///       ErasStartSessionIndex
 		/// # </weight>
 		#[pallet::weight(T::WeightInfo::set_history_depth(*_era_items_deleted))]
 		pub fn set_history_depth(
@@ -2127,7 +2087,8 @@ pub mod pallet {
 		/// Complexity: O(S) where S is the number of slashing spans on the account.
 		/// DB Weight:
 		/// - Reads: Stash Account, Bonded, Slashing Spans, Locks
-		/// - Writes: Bonded, Slashing Spans (if S > 0), Ledger, Payee, Validators, Nominators, Stash Account, Locks
+		/// - Writes: Bonded, Slashing Spans (if S > 0), Ledger, Payee, Validators, Nominators,
+		///   Stash Account, Locks
 		/// - Writes Each: SpanSlash * S
 		/// # </weight>
 		#[pallet::weight(T::WeightInfo::reap_stash(*num_slashing_spans))]
@@ -2195,10 +2156,10 @@ pub mod pallet {
 		///
 		/// * `min_nominator_bond`: The minimum active bond needed to be a nominator.
 		/// * `min_validator_bond`: The minimum active bond needed to be a validator.
-		/// * `max_nominator_count`: The max number of users who can be a nominator at once.
-		///   When set to `None`, no limit is enforced.
-		/// * `max_validator_count`: The max number of users who can be a validator at once.
-		///   When set to `None`, no limit is enforced.
+		/// * `max_nominator_count`: The max number of users who can be a nominator at once. When
+		///   set to `None`, no limit is enforced.
+		/// * `max_validator_count`: The max number of users who can be a validator at once. When
+		///   set to `None`, no limit is enforced.
 		///
 		/// Origin must be Root to call this function.
 		///
@@ -2288,10 +2249,7 @@ pub mod pallet {
 					Zero::zero()
 				};
 
-				ensure!(
-					ledger.active < min_active_bond,
-					<Error<T>>::CannotChillOther
-				);
+				ensure!(ledger.active < min_active_bond, <Error<T>>::CannotChillOther);
 			}
 
 			Self::chill_stash(&stash);

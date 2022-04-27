@@ -73,10 +73,7 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			GenesisConfig {
-				backed_ring: Default::default(),
-				backed_kton: Default::default(),
-			}
+			GenesisConfig { backed_ring: Default::default(), backed_kton: Default::default() }
 		}
 	}
 	#[pallet::genesis_build]

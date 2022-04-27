@@ -24,11 +24,7 @@ fn fast_track_referendum_works() {
 				proposal_hash: set_balance_proposal_hash_and_note(2),
 				threshold: VoteThreshold::SimpleMajority,
 				delay: 0,
-				tally: Tally {
-					ayes: 0,
-					nays: 0,
-					turnout: 0
-				},
+				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
 			})
 		);
 	});
@@ -62,11 +58,7 @@ fn instant_referendum_works() {
 				proposal_hash: set_balance_proposal_hash_and_note(2),
 				threshold: VoteThreshold::SimpleMajority,
 				delay: 0,
-				tally: Tally {
-					ayes: 0,
-					nays: 0,
-					turnout: 0
-				},
+				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
 			})
 		);
 	});

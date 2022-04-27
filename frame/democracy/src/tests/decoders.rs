@@ -41,21 +41,12 @@ fn pre_image() {
 		let key = Default::default();
 		let missing = PreimageStatus::Missing(0);
 		Preimages::<Test>::insert(key, missing);
-		assert_noop!(
-			Democracy::pre_image_data_len(key),
-			Error::<Test>::PreimageMissing
-		);
+		assert_noop!(Democracy::pre_image_data_len(key), Error::<Test>::PreimageMissing);
 		assert_eq!(Democracy::check_pre_image_is_missing(key), Ok(()));
 
 		Preimages::<Test>::remove(key);
-		assert_noop!(
-			Democracy::pre_image_data_len(key),
-			Error::<Test>::PreimageMissing
-		);
-		assert_noop!(
-			Democracy::check_pre_image_is_missing(key),
-			Error::<Test>::NotImminent
-		);
+		assert_noop!(Democracy::pre_image_data_len(key), Error::<Test>::PreimageMissing);
+		assert_noop!(Democracy::check_pre_image_is_missing(key), Error::<Test>::NotImminent);
 
 		for l in vec![0, 10, 100, 1000u32] {
 			let available = PreimageStatus::Available {

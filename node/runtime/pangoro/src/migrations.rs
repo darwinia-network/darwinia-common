@@ -6,8 +6,6 @@ use frame_support::{migration, traits::OnRuntimeUpgrade, weights::Weight};
 use crate::*;
 
 fn migrate() -> Weight {
-	// --- paritytech ---
-
 	0
 	// RuntimeBlockWeights::get().max_block
 }

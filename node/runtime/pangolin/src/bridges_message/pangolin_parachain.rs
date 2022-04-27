@@ -88,7 +88,8 @@ frame_support::parameter_types! {
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum PangolinToPangolinParachainParameter {
-	/// The conversion formula we use is: `PangolinTokens = PangolinParachainTokens * conversion_rate`.
+	/// The conversion formula we use is: `PangolinTokens = PangolinParachainTokens *
+	/// conversion_rate`.
 	PangolinParachainToPangolinConversionRate(FixedU128),
 }
 impl Parameter for PangolinToPangolinParachainParameter {
@@ -165,9 +166,7 @@ impl ThisChainWithMessages for Pangolin {
 	fn transaction_payment(transaction: MessageTransaction<Weight>) -> Self::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			RuntimeBlockWeights::get()
-				.get(DispatchClass::Normal)
-				.base_extrinsic,
+			RuntimeBlockWeights::get().get(DispatchClass::Normal).base_extrinsic,
 			1,
 			FixedU128::zero(),
 			|weight| weight as _,
