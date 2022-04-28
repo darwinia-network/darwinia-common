@@ -6683,6 +6683,7 @@ dependencies = [
  "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-evm-precompile-bridge-bsc",
+ "darwinia-evm-precompile-fee-market",
  "darwinia-evm-precompile-transfer",
  "darwinia-fee-market",
  "darwinia-fee-market-rpc-runtime-api",

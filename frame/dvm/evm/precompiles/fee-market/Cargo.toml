@@ -12,19 +12,13 @@ version     = "2.8.10"
 
 [dependencies]
 # # crates.io
-# codec = { package = "parity-scale-codec", version = "2.3", default-features = false }
-evm   = { version = "0.33.1", default-features = false, features = ["with-codec"] }
+evm = { version = "0.33.1", default-features = false, features = ["with-codec"] }
 # darwinia-network
 darwinia-evm                  = { default-features = false, path = "../.." }
 darwinia-evm-precompile-utils = { default-features = false, path = "../utils" }
 darwinia-fee-market           = { default-features = false, path = "../../../../fee-market" }
 dp-contract                   = { default-features = false, path = "../../../../../primitives/contract" }
-# darwinia-support              = { default-features = false, path = "../../../../support" }
-# paritytech
-# frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-# sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-# sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-sp-runtime         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 # frontier
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
 
@@ -34,17 +28,12 @@ default = ["std"]
 std = [
 	# crates.io
 	"evm/std",
-	# "codec/std",
 	# darwinia-network
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-utils/std",
 	"darwinia-fee-market/std",
 	"dp-contract/std",
-	# "darwinia-support/std",
-	# # paritytech
-	# "frame-support/std",
-	# "sp-core/std",
-	# "sp-io/std",
+	# paritytech
 	"sp-runtime/std",
 	# frontier
 	"fp-evm/std",

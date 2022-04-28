@@ -25,7 +25,6 @@ use evm::ExitRevert;
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{PrecompileHelper, StateMutability};
 use dp_contract::abi_util::abi_encode_u64;
-
 // --- paritytech ---
 use fp_evm::{
 	Context, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput, PrecompileResult,
