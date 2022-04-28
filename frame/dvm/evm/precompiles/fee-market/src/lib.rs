@@ -37,13 +37,14 @@ enum Action {
 	MarketFee = "market_fee()",
 }
 
-pub struct FeeMarket<T> {
-	_marker: PhantomData<T>,
+pub struct FeeMarket<T, I> {
+	_marker: PhantomData<(T, I)>,
 }
 
-impl<T> Precompile for FeeMarket<T>
+impl<T, I> Precompile for FeeMarket<T, I>
 where
-	T: darwinia_evm::Config + darwinia_fee_market::Config,
+	I: 'static,
+	T: darwinia_evm::Config + darwinia_fee_market::Config<I>,
 {
 	fn execute(
 		input: &[u8],
@@ -63,7 +64,7 @@ where
 				// Storage: FeeMarket AssignedRelayers (r:1 w:0)
 				helper.record_gas(1, 0)?;
 
-				darwinia_fee_market::Pallet::<T>::market_fee()
+				darwinia_fee_market::Pallet::<T, I>::market_fee()
 					.map_or(0, |f| f.saturated_into::<u64>())
 			},
 		};
