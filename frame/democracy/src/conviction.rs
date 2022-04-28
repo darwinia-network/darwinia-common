@@ -50,6 +50,7 @@ impl From<Conviction> for u8 {
 
 impl TryFrom<u8> for Conviction {
 	type Error = ();
+
 	fn try_from(i: u8) -> Result<Conviction, ()> {
 		Ok(match i {
 			0 => Conviction::None,
@@ -86,9 +87,7 @@ impl Conviction {
 	) -> Delegations<B> {
 		let votes = match self {
 			Conviction::None => capital.checked_div(&10u8.into()).unwrap_or_else(Zero::zero),
-			x => capital
-				.checked_mul(&u8::from(x).into())
-				.unwrap_or_else(B::max_value),
+			x => capital.checked_mul(&u8::from(x).into()).unwrap_or_else(B::max_value),
 		};
 		Delegations { votes, capital }
 	}
@@ -98,6 +97,7 @@ impl Bounded for Conviction {
 	fn min_value() -> Self {
 		Conviction::None
 	}
+
 	fn max_value() -> Self {
 		Conviction::Locked6x
 	}

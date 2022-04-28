@@ -81,12 +81,12 @@ parameter_types! {
 impl pallet_balances::Config<RingInstance> for Test {
 	type AccountStore = System;
 	type Balance = u64;
+	type BalanceInfo = AccountData<Balance>;
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
 	type MaxLocks = MaxLocks;
 	type MaxReserves = ();
-	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
@@ -99,9 +99,10 @@ impl Config for Test {
 	type BlockNumberToBalance = Identity;
 	type Currency = Balances;
 	type Event = Event;
-	const MAX_VESTING_SCHEDULES: u32 = 3;
 	type MinVestedTransfer = MinVestedTransfer;
 	type WeightInfo = ();
+
+	const MAX_VESTING_SCHEDULES: u32 = 3;
 }
 
 pub struct ExtBuilder {
@@ -111,10 +112,7 @@ pub struct ExtBuilder {
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
-		Self {
-			existential_deposit: 1,
-			vesting_genesis_config: None,
-		}
+		Self { existential_deposit: 1, vesting_genesis_config: None }
 	}
 }
 
@@ -131,9 +129,7 @@ impl ExtBuilder {
 
 	pub fn build(self) -> sp_io::TestExternalities {
 		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow_mut() = self.existential_deposit);
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.unwrap();
+		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 		pallet_balances::GenesisConfig::<Test, RingInstance> {
 			balances: vec![
 				(1, 10 * self.existential_deposit),
@@ -157,9 +153,7 @@ impl ExtBuilder {
 			]
 		};
 
-		pallet_vesting::GenesisConfig::<Test> { vesting }
-			.assimilate_storage(&mut t)
-			.unwrap();
+		pallet_vesting::GenesisConfig::<Test> { vesting }.assimilate_storage(&mut t).unwrap();
 		let mut ext = sp_io::TestExternalities::new(t);
 		ext.execute_with(|| System::set_block_number(1));
 		ext

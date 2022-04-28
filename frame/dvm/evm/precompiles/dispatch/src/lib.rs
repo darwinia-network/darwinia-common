@@ -21,7 +21,7 @@
 use core::marker::PhantomData;
 // --- darwinia-network ---
 use darwinia_evm::GasWeightMapping;
-use darwinia_evm_precompile_utils::custom_precompile_err;
+use darwinia_evm_precompile_utils::PrecompileHelper;
 use darwinia_support::evm::IntoAccountId;
 // --- paritytech ---
 use codec::Decode;
@@ -50,22 +50,20 @@ where
 		context: &Context,
 		_is_static: bool,
 	) -> PrecompileResult {
-		let call = T::Call::decode(&mut &input[..]).map_err(|_| PrecompileFailure::Error {
-			exit_status: ExitError::Other("decode failed".into()),
-		})?;
+		let helper = PrecompileHelper::<T>::new(input, target_gas);
+
+		let call = T::Call::decode(&mut &input[..]).map_err(|_| helper.revert("decode failed"))?;
 		let info = call.get_dispatch_info();
 
 		let valid_call = info.pays_fee == Pays::Yes && info.class == DispatchClass::Normal;
 		if !valid_call {
-			return Err(custom_precompile_err("invalid call"));
+			return Err(helper.revert("invalid call"));
 		}
 
 		if let Some(gas) = target_gas {
 			let valid_weight = info.weight <= T::GasWeightMapping::gas_to_weight(gas);
 			if !valid_weight {
-				return Err(PrecompileFailure::Error {
-					exit_status: ExitError::OutOfGas,
-				});
+				return Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas });
 			}
 		}
 
@@ -82,8 +80,8 @@ where
 					output: Default::default(),
 					logs: Default::default(),
 				})
-			}
-			Err(_) => Err(custom_precompile_err("dispatch execution failed")),
+			},
+			Err(_) => Err(helper.revert("dispatch execution failed")),
 		}
 	}
 }

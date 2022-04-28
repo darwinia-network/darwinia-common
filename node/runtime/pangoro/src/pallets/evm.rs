@@ -2,7 +2,7 @@
 use core::marker::PhantomData;
 // --- paritytech ---
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
-use frame_support::{traits::FindAuthor, ConsensusEngineId};
+use frame_support::{pallet_prelude::Weight, traits::FindAuthor, ConsensusEngineId};
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use pallet_session::FindAccountFromAuthorIndex;
 use sp_core::{crypto::Public, H160, U256};
@@ -12,7 +12,9 @@ use darwinia_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping,
 };
-use darwinia_evm::{runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated};
+use darwinia_evm::{
+	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, GasWeightMapping,
+};
 use darwinia_evm_precompile_bridge_bsc::BscBridge;
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::ConcatConverter;
@@ -39,11 +41,9 @@ where
 	pub fn new() -> Self {
 		Self(Default::default())
 	}
+
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 21, 26]
-			.into_iter()
-			.map(|x| addr(x))
-			.collect()
+		sp_std::vec![1, 2, 3, 4, 21, 26].into_iter().map(|x| addr(x)).collect()
 	}
 }
 
@@ -68,12 +68,10 @@ where
 			a if a == addr(3) => Some(Ripemd160::execute(input, target_gas, context, is_static)),
 			a if a == addr(4) => Some(Identity::execute(input, target_gas, context, is_static)),
 			// Darwinia precompiles
-			a if a == addr(21) => Some(<Transfer<R>>::execute(
-				input, target_gas, context, is_static,
-			)),
-			a if a == addr(26) => Some(<BscBridge<R>>::execute(
-				input, target_gas, context, is_static,
-			)),
+			a if a == addr(21) =>
+				Some(<Transfer<R>>::execute(input, target_gas, context, is_static)),
+			a if a == addr(26) =>
+				Some(<BscBridge<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
@@ -90,28 +88,39 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
+pub struct FixedGasWeightMapping;
+impl GasWeightMapping for FixedGasWeightMapping {
+	fn gas_to_weight(gas: u64) -> Weight {
+		gas.saturating_mul(WEIGHT_PER_GAS)
+	}
+
+	fn weight_to_gas(weight: Weight) -> u64 {
+		u64::try_from(weight.wrapping_div(WEIGHT_PER_GAS)).unwrap_or(u32::MAX as u64)
+	}
+}
+
 frame_support::parameter_types! {
 	pub const ChainId: u64 = 45;
-	pub BlockGasLimit: U256 = u32::MAX.into();
+	pub BlockGasLimit: U256 = U256::from(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WEIGHT_PER_GAS);
 	pub PrecompilesValue: PangoroPrecompiles<Runtime> = PangoroPrecompiles::<_>::new();
 }
 
 impl Config for Runtime {
-	type FeeCalculator = FixedGasPrice;
-	type GasWeightMapping = ();
-	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
-	type IntoAccountId = ConcatConverter<Self::AccountId>;
-	type FindAuthor = EthereumFindAuthor<Babe>;
+	type BlockGasLimit = BlockGasLimit;
 	type BlockHashMapping = EthereumBlockHashMapping<Self>;
+	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
+	type ChainId = ChainId;
 	type Event = Event;
+	type FeeCalculator = FixedGasPrice;
+	type FindAuthor = EthereumFindAuthor<Babe>;
+	type GasWeightMapping = FixedGasWeightMapping;
+	type IntoAccountId = ConcatConverter<Self::AccountId>;
+	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
+	type OnChargeTransaction = EVMCurrencyAdapter<FindAccountFromAuthorIndex<Self, Babe>>;
 	type PrecompilesType = PangoroPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type ChainId = ChainId;
-	type BlockGasLimit = BlockGasLimit;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
-	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type Runner = Runner<Self>;
-	type OnChargeTransaction = EVMCurrencyAdapter<FindAccountFromAuthorIndex<Self, Babe>>;
 }
 
 fn addr(a: u64) -> H160 {

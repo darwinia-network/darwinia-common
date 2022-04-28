@@ -45,22 +45,22 @@ frame_support::parameter_types! {
 static_assertions::const_assert!(DesiredMembers::get() <= CouncilMaxMembers::get());
 
 impl Config<CouncilCollective> for Runtime {
+	type DefaultVote = PrimeDefaultVote;
+	type Event = Event;
+	type MaxMembers = CouncilMaxMembers;
+	type MaxProposals = CouncilMaxProposals;
+	type MotionDuration = CouncilMotionDuration;
 	type Origin = Origin;
 	type Proposal = Call;
-	type Event = Event;
-	type MotionDuration = CouncilMotionDuration;
-	type MaxProposals = CouncilMaxProposals;
-	type MaxMembers = CouncilMaxMembers;
-	type DefaultVote = PrimeDefaultVote;
 	type WeightInfo = ();
 }
 impl Config<TechnicalCollective> for Runtime {
+	type DefaultVote = PrimeDefaultVote;
+	type Event = Event;
+	type MaxMembers = TechnicalMaxMembers;
+	type MaxProposals = TechnicalMaxProposals;
+	type MotionDuration = TechnicalMotionDuration;
 	type Origin = Origin;
 	type Proposal = Call;
-	type Event = Event;
-	type MotionDuration = TechnicalMotionDuration;
-	type MaxProposals = TechnicalMaxProposals;
-	type MaxMembers = TechnicalMaxMembers;
-	type DefaultVote = PrimeDefaultVote;
 	type WeightInfo = ();
 }

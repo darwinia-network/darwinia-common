@@ -68,36 +68,43 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+
 	fn bond_extra() -> Weight {
 		(69_833_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+
 	fn deposit_extra() -> Weight {
 		(69_833_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+
 	fn claim_mature_deposits() -> Weight {
 		(69_833_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+
 	fn try_claim_deposits_with_punish() -> Weight {
 		(69_833_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+
 	fn unbond() -> Weight {
 		(75_020_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+
 	fn validate() -> Weight {
 		(40_702_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+
 	fn kick(k: u32) -> Weight {
 		(33_572_000 as Weight)
 			// Standard Error: 18_000
@@ -106,6 +113,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(k as Weight)))
 			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(k as Weight)))
 	}
+
 	fn nominate(n: u32) -> Weight {
 		(53_561_000 as Weight)
 			// Standard Error: 34_000
@@ -114,37 +122,46 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+
 	fn chill() -> Weight {
 		(21_489_000 as Weight).saturating_add(T::DbWeight::get().reads(3 as Weight))
 	}
+
 	fn set_payee() -> Weight {
 		(14_514_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+
 	fn set_controller() -> Weight {
 		(32_598_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+
 	fn set_validator_count() -> Weight {
 		(2_477_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+
 	fn force_no_eras() -> Weight {
 		(2_743_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+
 	fn force_new_era() -> Weight {
 		(2_784_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+
 	fn force_new_era_always() -> Weight {
 		(2_749_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+
 	fn set_invulnerables(v: u32) -> Weight {
 		(2_798_000 as Weight)
 			// Standard Error: 0
 			.saturating_add((5_000 as Weight).saturating_mul(v as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+
 	fn force_unstake(s: u32) -> Weight {
 		(70_372_000 as Weight)
 			// Standard Error: 13_000
@@ -153,6 +170,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(s as Weight)))
 	}
+
 	fn cancel_deferred_slash(s: u32) -> Weight {
 		(3_436_822_000 as Weight)
 			// Standard Error: 221_000
@@ -160,6 +178,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+
 	fn payout_stakers_dead_controller(n: u32) -> Weight {
 		(132_018_000 as Weight)
 			// Standard Error: 27_000
@@ -169,6 +188,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(n as Weight)))
 	}
+
 	fn payout_stakers_alive_staked(n: u32) -> Weight {
 		(158_346_000 as Weight)
 			// Standard Error: 61_000
@@ -178,6 +198,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes((3 as Weight).saturating_mul(n as Weight)))
 	}
+
 	fn rebond(l: u32) -> Weight {
 		(57_756_000 as Weight)
 			// Standard Error: 2_000
@@ -185,6 +206,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+
 	fn set_history_depth(e: u32) -> Weight {
 		(0 as Weight)
 			// Standard Error: 100_000
@@ -193,6 +215,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes((7 as Weight).saturating_mul(e as Weight)))
 	}
+
 	fn reap_stash(s: u32) -> Weight {
 		(75_073_000 as Weight)
 			// Standard Error: 4_000
@@ -201,6 +224,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(s as Weight)))
 	}
+
 	fn new_era(v: u32, n: u32) -> Weight {
 		(0 as Weight)
 			// Standard Error: 1_146_000
@@ -213,6 +237,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes((3 as Weight).saturating_mul(v as Weight)))
 	}
+
 	fn get_npos_voters(v: u32, n: u32, s: u32) -> Weight {
 		(0 as Weight)
 			// Standard Error: 230_000
@@ -226,6 +251,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads((3 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(s as Weight)))
 	}
+
 	fn get_npos_targets(v: u32) -> Weight {
 		(0 as Weight)
 			// Standard Error: 74_000
@@ -233,9 +259,11 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(v as Weight)))
 	}
+
 	fn set_staking_limits() -> Weight {
 		(6_398_000 as Weight).saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+
 	fn chill_other() -> Weight {
 		(44_694_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
@@ -250,36 +278,43 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
+
 	fn bond_extra() -> Weight {
 		(69_833_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
+
 	fn deposit_extra() -> Weight {
 		(69_833_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
+
 	fn claim_mature_deposits() -> Weight {
 		(69_833_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
+
 	fn try_claim_deposits_with_punish() -> Weight {
 		(69_833_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
+
 	fn unbond() -> Weight {
 		(75_020_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
+
 	fn validate() -> Weight {
 		(40_702_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
+
 	fn kick(k: u32) -> Weight {
 		(33_572_000 as Weight)
 			// Standard Error: 18_000
@@ -288,6 +323,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads((1 as Weight).saturating_mul(k as Weight)))
 			.saturating_add(RocksDbWeight::get().writes((1 as Weight).saturating_mul(k as Weight)))
 	}
+
 	fn nominate(n: u32) -> Weight {
 		(53_561_000 as Weight)
 			// Standard Error: 34_000
@@ -296,37 +332,46 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads((1 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
+
 	fn chill() -> Weight {
 		(21_489_000 as Weight).saturating_add(RocksDbWeight::get().reads(3 as Weight))
 	}
+
 	fn set_payee() -> Weight {
 		(14_514_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
+
 	fn set_controller() -> Weight {
 		(32_598_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
+
 	fn set_validator_count() -> Weight {
 		(2_477_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
+
 	fn force_no_eras() -> Weight {
 		(2_743_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
+
 	fn force_new_era() -> Weight {
 		(2_784_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
+
 	fn force_new_era_always() -> Weight {
 		(2_749_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
+
 	fn set_invulnerables(v: u32) -> Weight {
 		(2_798_000 as Weight)
 			// Standard Error: 0
 			.saturating_add((5_000 as Weight).saturating_mul(v as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
+
 	fn force_unstake(s: u32) -> Weight {
 		(70_372_000 as Weight)
 			// Standard Error: 13_000
@@ -335,6 +380,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 			.saturating_add(RocksDbWeight::get().writes((1 as Weight).saturating_mul(s as Weight)))
 	}
+
 	fn cancel_deferred_slash(s: u32) -> Weight {
 		(3_436_822_000 as Weight)
 			// Standard Error: 221_000
@@ -342,6 +388,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
+
 	fn payout_stakers_dead_controller(n: u32) -> Weight {
 		(132_018_000 as Weight)
 			// Standard Error: 27_000
@@ -351,6 +398,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes((1 as Weight).saturating_mul(n as Weight)))
 	}
+
 	fn payout_stakers_alive_staked(n: u32) -> Weight {
 		(158_346_000 as Weight)
 			// Standard Error: 61_000
@@ -360,6 +408,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes((3 as Weight).saturating_mul(n as Weight)))
 	}
+
 	fn rebond(l: u32) -> Weight {
 		(57_756_000 as Weight)
 			// Standard Error: 2_000
@@ -367,6 +416,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
+
 	fn set_history_depth(e: u32) -> Weight {
 		(0 as Weight)
 			// Standard Error: 100_000
@@ -375,6 +425,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes((7 as Weight).saturating_mul(e as Weight)))
 	}
+
 	fn reap_stash(s: u32) -> Weight {
 		(75_073_000 as Weight)
 			// Standard Error: 4_000
@@ -383,6 +434,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 			.saturating_add(RocksDbWeight::get().writes((1 as Weight).saturating_mul(s as Weight)))
 	}
+
 	fn new_era(v: u32, n: u32) -> Weight {
 		(0 as Weight)
 			// Standard Error: 1_146_000
@@ -395,6 +447,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes((3 as Weight).saturating_mul(v as Weight)))
 	}
+
 	fn get_npos_voters(v: u32, n: u32, s: u32) -> Weight {
 		(0 as Weight)
 			// Standard Error: 230_000
@@ -408,6 +461,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads((3 as Weight).saturating_mul(n as Weight)))
 			.saturating_add(RocksDbWeight::get().reads((1 as Weight).saturating_mul(s as Weight)))
 	}
+
 	fn get_npos_targets(v: u32) -> Weight {
 		(0 as Weight)
 			// Standard Error: 74_000
@@ -415,9 +469,11 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().reads((1 as Weight).saturating_mul(v as Weight)))
 	}
+
 	fn set_staking_limits() -> Weight {
 		(6_398_000 as Weight).saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
+
 	fn chill_other() -> Weight {
 		(44_694_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))

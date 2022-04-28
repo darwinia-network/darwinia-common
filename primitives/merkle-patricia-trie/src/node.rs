@@ -69,7 +69,7 @@ impl BranchNode {
 			match n {
 				Node::Leaf(leaf) => {
 					self.value = Some(leaf.borrow().value.clone());
-				}
+				},
 				_ => panic!("The n must be leaf node"),
 			}
 		} else {

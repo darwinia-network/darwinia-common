@@ -76,10 +76,7 @@ fn external_blacklisting_should_work() {
 		assert_ok!(Democracy::blacklist(Origin::root(), hash, None));
 
 		fast_forward_to(2);
-		assert_noop!(
-			Democracy::referendum_status(0),
-			Error::<Test>::ReferendumInvalid
-		);
+		assert_noop!(Democracy::referendum_status(0), Error::<Test>::ReferendumInvalid);
 
 		assert_noop!(
 			Democracy::external_propose(Origin::signed(2), set_balance_proposal_hash_and_note(2),),
@@ -112,11 +109,7 @@ fn external_referendum_works() {
 				proposal_hash: set_balance_proposal_hash(2),
 				threshold: VoteThreshold::SuperMajorityApprove,
 				delay: 2,
-				tally: Tally {
-					ayes: 0,
-					nays: 0,
-					turnout: 0
-				},
+				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
 			})
 		);
 	});
@@ -142,11 +135,7 @@ fn external_majority_referendum_works() {
 				proposal_hash: set_balance_proposal_hash(2),
 				threshold: VoteThreshold::SimpleMajority,
 				delay: 2,
-				tally: Tally {
-					ayes: 0,
-					nays: 0,
-					turnout: 0
-				},
+				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
 			})
 		);
 	});
@@ -172,11 +161,7 @@ fn external_default_referendum_works() {
 				proposal_hash: set_balance_proposal_hash(2),
 				threshold: VoteThreshold::SuperMajorityAgainst,
 				delay: 2,
-				tally: Tally {
-					ayes: 0,
-					nays: 0,
-					turnout: 0
-				},
+				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
 			})
 		);
 	});
@@ -202,11 +187,7 @@ fn external_and_public_interleaving_works() {
 				proposal_hash: set_balance_proposal_hash_and_note(1),
 				threshold: VoteThreshold::SuperMajorityApprove,
 				delay: 2,
-				tally: Tally {
-					ayes: 0,
-					nays: 0,
-					turnout: 0
-				},
+				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
 			})
 		);
 		// replenish external
@@ -225,11 +206,7 @@ fn external_and_public_interleaving_works() {
 				proposal_hash: set_balance_proposal_hash_and_note(2),
 				threshold: VoteThreshold::SuperMajorityApprove,
 				delay: 2,
-				tally: Tally {
-					ayes: 0,
-					nays: 0,
-					turnout: 0
-				},
+				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
 			})
 		);
 		// don't replenish public
@@ -244,11 +221,7 @@ fn external_and_public_interleaving_works() {
 				proposal_hash: set_balance_proposal_hash_and_note(3),
 				threshold: VoteThreshold::SuperMajorityApprove,
 				delay: 2,
-				tally: Tally {
-					ayes: 0,
-					nays: 0,
-					turnout: 0
-				},
+				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
 			})
 		);
 		// replenish external
@@ -267,11 +240,7 @@ fn external_and_public_interleaving_works() {
 				proposal_hash: set_balance_proposal_hash_and_note(5),
 				threshold: VoteThreshold::SuperMajorityApprove,
 				delay: 2,
-				tally: Tally {
-					ayes: 0,
-					nays: 0,
-					turnout: 0
-				},
+				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
 			})
 		);
 		// replenish both
@@ -291,11 +260,7 @@ fn external_and_public_interleaving_works() {
 				proposal_hash: set_balance_proposal_hash_and_note(4),
 				threshold: VoteThreshold::SuperMajorityApprove,
 				delay: 2,
-				tally: Tally {
-					ayes: 0,
-					nays: 0,
-					turnout: 0
-				},
+				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
 			})
 		);
 		// replenish public again
@@ -314,11 +279,7 @@ fn external_and_public_interleaving_works() {
 				proposal_hash: set_balance_proposal_hash_and_note(6),
 				threshold: VoteThreshold::SuperMajorityApprove,
 				delay: 2,
-				tally: Tally {
-					ayes: 0,
-					nays: 0,
-					turnout: 0
-				},
+				tally: Tally { ayes: 0, nays: 0, turnout: 0 },
 			})
 		);
 	});

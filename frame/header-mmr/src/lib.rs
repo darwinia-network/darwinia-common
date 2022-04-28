@@ -123,18 +123,14 @@ pub mod pallet {
 					let mmr_item = DigestItem::Other(mmr_root_log.encode());
 
 					<frame_system::Pallet<T>>::deposit_log(mmr_item.into());
-				}
+				},
 				Err(e) => {
 					log::error!("Failed to finalize MMR due to {}", e);
-				}
+				},
 			}
 		}
 	}
 	impl<T: Config> Pallet<T> {
-		pub fn offchain_key(position: NodeIndex) -> Vec<u8> {
-			(T::INDEXING_PREFIX, position).encode()
-		}
-
 		darwinia_support::impl_rpc! {
 			pub fn gen_proof_rpc(
 				block_number_of_member_leaf: NodeIndex,
@@ -159,6 +155,10 @@ pub mod pallet {
 			}
 		}
 
+		pub fn offchain_key(position: NodeIndex) -> Vec<u8> {
+			(T::INDEXING_PREFIX, position).encode()
+		}
+
 		// Remove the cfg, once there's a requirement from runtime usage
 		#[cfg(any(test, feature = "easy-testing"))]
 		pub fn find_parent_mmr_root(header: &T::Header) -> Option<T::Hash> {
@@ -170,16 +170,13 @@ pub mod pallet {
 			// find the first other digest with the right prefix which converts to
 			// the right kind of mmr root log.
 			header.digest().convert_first(|d| {
-				d.try_to(OpaqueDigestItemId::Other)
-					.and_then(find_parent_mmr_root)
+				d.try_to(OpaqueDigestItemId::Other).and_then(find_parent_mmr_root)
 			})
 		}
 	}
 	impl<T: Config> MMRT<BlockNumberFor<T>, T::Hash> for Pallet<T> {
 		fn get_root() -> Option<T::Hash> {
-			<Mmr<RuntimeStorage, T>>::with_size(<MmrSize<T>>::get())
-				.get_root()
-				.ok()
+			<Mmr<RuntimeStorage, T>>::with_size(<MmrSize<T>>::get()).get_root().ok()
 		}
 	}
 

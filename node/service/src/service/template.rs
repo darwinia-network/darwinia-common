@@ -82,11 +82,7 @@ pub fn new_partial(
 		FullSelectChain,
 		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
 		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
-		(
-			ConsensusResult,
-			Option<fc_rpc_core::types::FilterPool>,
-			Arc<fc_db::Backend<Block>>,
-		),
+		(ConsensusResult, Option<fc_rpc_core::types::FilterPool>, Arc<fc_db::Backend<Block>>),
 	>,
 > {
 	// --- std ---
@@ -97,9 +93,7 @@ pub fn new_partial(
 	use sc_service::error::Error as ServiceError;
 
 	if config.keystore_remote.is_some() {
-		return Err(ServiceError::Other(format!(
-			"Remote Keystores are not supported."
-		)));
+		return Err(ServiceError::Other(format!("Remote Keystores are not supported.")));
 	}
 
 	let executor = <NativeElseWasmExecutor<Executor>>::new(
@@ -191,12 +185,8 @@ pub fn new_full(
 
 	let is_archive = config.state_pruning.is_archive();
 	let overrides = drml_rpc::overrides_handle(client.clone());
-	let block_data_cache = Arc::new(EthBlockDataCache::new(
-		task_manager.spawn_handle(),
-		overrides.clone(),
-		50,
-		50,
-	));
+	let block_data_cache =
+		Arc::new(EthBlockDataCache::new(task_manager.spawn_handle(), overrides.clone(), 50, 50));
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
 	let eth_rpc_requesters = DvmTaskParams {
 		task_manager: &task_manager,
@@ -242,10 +232,7 @@ pub fn new_full(
 				command_sink: Some(command_sink.clone()),
 			};
 
-			Ok(drml_rpc::template::create_full(
-				deps,
-				subscription_task_executor.clone(),
-			))
+			Ok(drml_rpc::template::create_full(deps, subscription_task_executor.clone()))
 		})
 	};
 	let _ = sc_service::spawn_tasks(SpawnTasksParams {
@@ -290,9 +277,7 @@ pub fn new_full(
 				},
 			});
 			// we spawn the future on a background thread managed by service.
-			task_manager
-				.spawn_essential_handle()
-				.spawn_blocking("manual-seal", authorship_future);
+			task_manager.spawn_essential_handle().spawn_blocking("manual-seal", authorship_future);
 		} else {
 			let authorship_future = manual_seal::run_instant_seal(InstantSealParams {
 				block_import,
@@ -308,9 +293,7 @@ pub fn new_full(
 				},
 			});
 			// we spawn the future on a background thread managed by service.
-			task_manager
-				.spawn_essential_handle()
-				.spawn_blocking("instant-seal", authorship_future);
+			task_manager.spawn_essential_handle().spawn_blocking("instant-seal", authorship_future);
 		}
 
 		log::info!("Manual Seal Ready");

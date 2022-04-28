@@ -51,10 +51,7 @@ impl<Balance: Saturating> Saturating for Delegations<Balance> {
 	}
 
 	fn saturating_pow(self, exp: usize) -> Self {
-		Self {
-			votes: self.votes.saturating_pow(exp),
-			capital: self.capital.saturating_pow(exp),
-		}
+		Self { votes: self.votes.saturating_pow(exp), capital: self.capital.saturating_pow(exp) }
 	}
 }
 
@@ -90,17 +87,14 @@ impl<
 					true => self.ayes = self.ayes.checked_add(&votes)?,
 					false => self.nays = self.nays.checked_add(&votes)?,
 				}
-			}
+			},
 			AccountVote::Split { aye, nay } => {
 				let aye = Conviction::None.votes(aye);
 				let nay = Conviction::None.votes(nay);
-				self.turnout = self
-					.turnout
-					.checked_add(&aye.capital)?
-					.checked_add(&nay.capital)?;
+				self.turnout = self.turnout.checked_add(&aye.capital)?.checked_add(&nay.capital)?;
 				self.ayes = self.ayes.checked_add(&aye.votes)?;
 				self.nays = self.nays.checked_add(&nay.votes)?;
-			}
+			},
 		}
 		Some(())
 	}
@@ -115,17 +109,14 @@ impl<
 					true => self.ayes = self.ayes.checked_sub(&votes)?,
 					false => self.nays = self.nays.checked_sub(&votes)?,
 				}
-			}
+			},
 			AccountVote::Split { aye, nay } => {
 				let aye = Conviction::None.votes(aye);
 				let nay = Conviction::None.votes(nay);
-				self.turnout = self
-					.turnout
-					.checked_sub(&aye.capital)?
-					.checked_sub(&nay.capital)?;
+				self.turnout = self.turnout.checked_sub(&aye.capital)?.checked_sub(&nay.capital)?;
 				self.ayes = self.ayes.checked_sub(&aye.votes)?;
 				self.nays = self.nays.checked_sub(&nay.votes)?;
-			}
+			},
 		}
 		Some(())
 	}
@@ -183,13 +174,7 @@ impl<BlockNumber, Hash, Balance: Default> ReferendumInfo<BlockNumber, Hash, Bala
 		threshold: VoteThreshold,
 		delay: BlockNumber,
 	) -> Self {
-		let s = ReferendumStatus {
-			end,
-			proposal_hash,
-			threshold,
-			delay,
-			tally: Tally::default(),
-		};
+		let s = ReferendumStatus { end, proposal_hash, threshold, delay, tally: Tally::default() };
 		ReferendumInfo::Ongoing(s)
 	}
 }

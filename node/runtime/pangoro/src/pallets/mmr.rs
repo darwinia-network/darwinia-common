@@ -9,8 +9,8 @@ use darwinia_beefy_primitives::network_ids;
 pub type MmrHash = <Keccak256 as Hash>::Output;
 
 impl Config for Runtime {
-	type Hashing = Keccak256;
 	type Hash = MmrHash;
+	type Hashing = Keccak256;
 	type LeafData = MmrLeaf;
 	type OnNewRoot = DepositBeefyDigest<Runtime, network_ids::Pangolin>;
 	type WeightInfo = ();

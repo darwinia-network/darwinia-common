@@ -123,16 +123,13 @@ impl VestingAction {
 		&'a self,
 		schedules: Vec<VestingInfo<BalanceOf<T>, T::BlockNumber>>,
 	) -> impl Iterator<Item = VestingInfo<BalanceOf<T>, T::BlockNumber>> + 'a {
-		schedules
-			.into_iter()
-			.enumerate()
-			.filter_map(move |(index, schedule)| {
-				if self.should_remove(index) {
-					None
-				} else {
-					Some(schedule)
-				}
-			})
+		schedules.into_iter().enumerate().filter_map(move |(index, schedule)| {
+			if self.should_remove(index) {
+				None
+			} else {
+				Some(schedule)
+			}
+		})
 	}
 }
 
@@ -201,10 +198,7 @@ pub mod pallet {
 		}
 
 		fn integrity_test() {
-			assert!(
-				T::MAX_VESTING_SCHEDULES > 0,
-				"`MaxVestingSchedules` must ge greater than 0"
-			);
+			assert!(T::MAX_VESTING_SCHEDULES > 0, "`MaxVestingSchedules` must ge greater than 0");
 		}
 	}
 
@@ -237,9 +231,7 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			GenesisConfig {
-				vesting: Default::default(),
-			}
+			GenesisConfig { vesting: Default::default() }
 		}
 	}
 
@@ -258,10 +250,7 @@ pub mod pallet {
 			// * liquid - Number of units which can be spent before vesting begins
 			for &(ref who, begin, length, liquid) in self.vesting.iter() {
 				let balance = T::Currency::free_balance(who);
-				assert!(
-					!balance.is_zero(),
-					"Currencies must be init'd before vesting"
-				);
+				assert!(!balance.is_zero(), "Currencies must be init'd before vesting");
 				// Total genesis `balance` minus `liquid` equals funds locked for vesting
 				let locked = balance.saturating_sub(liquid);
 				let length_as_balance = T::BlockNumberToBalance::convert(length);
@@ -481,10 +470,7 @@ impl<T: Config> Pallet<T> {
 		let now_as_balance = T::BlockNumberToBalance::convert(now);
 
 		// Check if one or both schedules have ended.
-		match (
-			schedule1_ending_block <= now_as_balance,
-			schedule2_ending_block <= now_as_balance,
-		) {
+		match (schedule1_ending_block <= now_as_balance, schedule2_ending_block <= now_as_balance) {
 			// If both schedules have ended, we don't merge and exit early.
 			(true, true) => return None,
 			// If one schedule has ended, we treat the one that has not ended as the new
@@ -492,7 +478,7 @@ impl<T: Config> Pallet<T> {
 			(true, false) => return Some(schedule2),
 			(false, true) => return Some(schedule1),
 			// If neither schedule has ended don't exit early.
-			_ => {}
+			_ => {},
 		}
 
 		let locked = schedule1
@@ -506,9 +492,7 @@ impl<T: Config> Pallet<T> {
 		);
 
 		let ending_block = schedule1_ending_block.max(schedule2_ending_block);
-		let starting_block = now
-			.max(schedule1.starting_block())
-			.max(schedule2.starting_block());
+		let starting_block = now.max(schedule1.starting_block()).max(schedule2.starting_block());
 
 		let per_block = {
 			let duration = ending_block
@@ -518,10 +502,7 @@ impl<T: Config> Pallet<T> {
 		};
 
 		let schedule = VestingInfo::new(locked, per_block, starting_block);
-		debug_assert!(
-			schedule.is_valid(),
-			"merge_vesting_info schedule validation check failed"
-		);
+		debug_assert!(schedule.is_valid(), "merge_vesting_info schedule validation check failed");
 
 		Some(schedule)
 	}
@@ -533,10 +514,7 @@ impl<T: Config> Pallet<T> {
 		schedule: VestingInfo<BalanceOf<T>, T::BlockNumber>,
 	) -> DispatchResult {
 		// Validate user inputs.
-		ensure!(
-			schedule.locked() >= T::MinVestedTransfer::get(),
-			Error::<T>::AmountLow
-		);
+		ensure!(schedule.locked() >= T::MinVestedTransfer::get(), Error::<T>::AmountLow);
 		if !schedule.is_valid() {
 			return Err(Error::<T>::InvalidScheduleParams.into());
 		};
@@ -565,10 +543,7 @@ impl<T: Config> Pallet<T> {
 			schedule.per_block(),
 			schedule.starting_block(),
 		);
-		debug_assert!(
-			res.is_ok(),
-			"Failed to add a schedule when we had to succeed."
-		);
+		debug_assert!(res.is_ok(), "Failed to add a schedule when we had to succeed.");
 
 		Ok(())
 	}
@@ -616,9 +591,7 @@ impl<T: Config> Pallet<T> {
 			T::Currency::set_lock(
 				VESTING_ID,
 				who,
-				LockFor::Common {
-					amount: total_locked_now,
-				},
+				LockFor::Common { amount: total_locked_now },
 				reasons,
 			);
 			Self::deposit_event(Event::<T>::VestingUpdated(who.clone(), total_locked_now));
@@ -633,9 +606,7 @@ impl<T: Config> Pallet<T> {
 		let schedules: BoundedVec<
 			VestingInfo<BalanceOf<T>, T::BlockNumber>,
 			MaxVestingSchedulesGet<T>,
-		> = schedules
-			.try_into()
-			.map_err(|_| Error::<T>::AtMaxVestingSchedules)?;
+		> = schedules.try_into().map_err(|_| Error::<T>::AtMaxVestingSchedules)?;
 
 		if schedules.len() == 0 {
 			Vesting::<T>::remove(&who);
@@ -669,12 +640,8 @@ impl<T: Config> Pallet<T> {
 			VestingAction::Merge(idx1, idx2) => {
 				// The schedule index is based off of the schedule ordering prior to filtering out
 				// any schedules that may be ending at this block.
-				let schedule1 = *schedules
-					.get(idx1)
-					.ok_or(Error::<T>::ScheduleIndexOutOfBounds)?;
-				let schedule2 = *schedules
-					.get(idx2)
-					.ok_or(Error::<T>::ScheduleIndexOutOfBounds)?;
+				let schedule1 = *schedules.get(idx1).ok_or(Error::<T>::ScheduleIndexOutOfBounds)?;
+				let schedule2 = *schedules.get(idx2).ok_or(Error::<T>::ScheduleIndexOutOfBounds)?;
 
 				// The length of `schedules` decreases by 2 here since we filter out 2 schedules.
 				// Thus we know below that we can push the new merged schedule without error
@@ -695,7 +662,7 @@ impl<T: Config> Pallet<T> {
 				} // In the None case there was no new schedule to account for.
 
 				(schedules, locked_now)
-			}
+			},
 			_ => Self::report_schedule_updates(schedules.to_vec(), action),
 		};
 
@@ -720,9 +687,7 @@ where
 		if let Some(v) = Self::vesting(who) {
 			let now = <frame_system::Pallet<T>>::block_number();
 			let total_locked_now = v.iter().fold(Zero::zero(), |total, schedule| {
-				schedule
-					.locked_at::<T::BlockNumberToBalance>(now)
-					.saturating_add(total)
+				schedule.locked_at::<T::BlockNumberToBalance>(now).saturating_add(total)
 			});
 			Some(T::Currency::free_balance(who).min(total_locked_now))
 		} else {
@@ -762,10 +727,7 @@ where
 
 		// NOTE: we must push the new schedule so that `exec_action`
 		// will give the correct new locked amount.
-		ensure!(
-			schedules.try_push(vesting_schedule).is_ok(),
-			Error::<T>::AtMaxVestingSchedules
-		);
+		ensure!(schedules.try_push(vesting_schedule).is_ok(), Error::<T>::AtMaxVestingSchedules);
 
 		let (schedules, locked_now) =
 			Self::exec_action(schedules.to_vec(), VestingAction::Passive)?;

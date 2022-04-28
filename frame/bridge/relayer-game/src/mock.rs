@@ -185,12 +185,7 @@ pub mod mock_relay {
 				_ => true,
 			};
 
-			Self {
-				number,
-				hash: rand::random(),
-				parent_hash,
-				valid,
-			}
+			Self { number, hash: rand::random(), parent_hash, valid }
 		}
 
 		pub fn gen_continuous(
@@ -257,52 +252,52 @@ pub type RelayerGameError = Error<Test, DefaultInstance>;
 darwinia_support::impl_test_account_data! {}
 
 impl frame_system::Config for Test {
+	type AccountData = AccountData<Balance>;
+	type AccountId = AccountId;
 	type BaseCallFilter = Everything;
-	type BlockWeights = ();
+	type BlockHashCount = ();
 	type BlockLength = ();
-	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
-	type Index = u64;
 	type BlockNumber = BlockNumber;
+	type BlockWeights = ();
+	type Call = Call;
+	type DbWeight = ();
+	type Event = ();
 	type Hash = sp_core::H256;
 	type Hashing = sp_runtime::traits::BlakeTwo256;
-	type AccountId = AccountId;
-	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
 	type Header = sp_runtime::testing::Header;
-	type Event = ();
-	type BlockHashCount = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
+	type Index = u64;
+	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
 	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type OnNewAccount = ();
 	type OnSetCode = ();
+	type Origin = Origin;
+	type PalletInfo = PalletInfo;
+	type SS58Prefix = ();
+	type SystemWeightInfo = ();
+	type Version = ();
 }
 
 frame_support::parameter_types! {
 	pub const ExistentialDeposit: Balance = 1;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
+	type AccountStore = System;
 	type Balance = Balance;
+	type BalanceInfo = AccountData<Balance>;
 	type DustRemoval = ();
 	type Event = ();
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
 	type MaxLocks = ();
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
+	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
 
 pub struct RelayerGameAdjustor;
 impl AdjustableRelayerGame for RelayerGameAdjustor {
-	type Moment = BlockNumber;
 	type Balance = Balance;
+	type Moment = BlockNumber;
 	type RelayHeaderId = MockRelayBlockNumber;
 
 	fn max_active_games() -> u8 {
@@ -331,11 +326,11 @@ frame_support::parameter_types! {
 	pub static EstimateBond: Balance = 1;
 }
 impl Config for Test {
-	type RingCurrency = Ring;
 	type LockId = RelayerGameLockId;
-	type RingSlash = ();
-	type RelayerGameAdjustor = RelayerGameAdjustor;
 	type RelayableChain = Relay;
+	type RelayerGameAdjustor = RelayerGameAdjustor;
+	type RingCurrency = Ring;
+	type RingSlash = ();
 	type WeightInfo = ();
 }
 
@@ -364,11 +359,13 @@ impl ExtBuilder {
 
 		self
 	}
+
 	pub fn challenge_time(mut self, challenge_time: BlockNumber) -> Self {
 		self.challenge_time = challenge_time;
 
 		self
 	}
+
 	pub fn estimate_stake(mut self, estimate_stake: Balance) -> Self {
 		self.estimate_stake = estimate_stake;
 
@@ -384,9 +381,7 @@ impl ExtBuilder {
 		self.set_associated_constants();
 
 		let _ = env_logger::try_init();
-		let mut storage = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.unwrap();
+		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 		RingConfig {
 			balances: (1..10)
@@ -396,11 +391,9 @@ impl ExtBuilder {
 		}
 		.assimilate_storage(&mut storage)
 		.unwrap();
-		mock_relay::GenesisConfig {
-			headers: self.headers.clone(),
-		}
-		.assimilate_storage(&mut storage)
-		.unwrap();
+		mock_relay::GenesisConfig { headers: self.headers.clone() }
+			.assimilate_storage(&mut storage)
+			.unwrap();
 
 		storage.into()
 	}

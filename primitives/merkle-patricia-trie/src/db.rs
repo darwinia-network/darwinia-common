@@ -26,9 +26,7 @@ pub struct MemoryDB {
 
 impl MemoryDB {
 	pub fn new() -> Self {
-		MemoryDB {
-			data: RefCell::new(HashMap::new()),
-		}
+		MemoryDB { data: RefCell::new(HashMap::new()) }
 	}
 
 	pub fn get(&self, key: &[u8]) -> Option<Vec<u8>> {

@@ -195,7 +195,7 @@ impl<'de> Deserialize<'de> for Header {
 							Field::difficulty => check_and_set_option!(difficulty),
 							Field::extraData => {
 								check_and_set_option!(extraData, array_bytes::hex2bytes)
-							}
+							},
 							Field::gasLimit => check_and_set_option!(gasLimit),
 							Field::gasUsed => check_and_set_option!(gasUsed),
 							Field::hash => check_and_set_option!(hash),
@@ -205,7 +205,7 @@ impl<'de> Deserialize<'de> for Header {
 							Field::nonce => check_and_set_option!(nonce),
 							Field::number => {
 								check_and_set_option!(number, TryFromHex::try_from_hex)
-							}
+							},
 							Field::parentHash => check_and_set_option!(parentHash),
 							Field::receiptsRoot => check_and_set_option!(receiptsRoot),
 							Field::sha3Uncles => check_and_set_option!(sha3Uncles),
@@ -213,14 +213,14 @@ impl<'de> Deserialize<'de> for Header {
 							Field::stateRoot => check_and_set_option!(stateRoot),
 							Field::timestamp => {
 								check_and_set_option!(timestamp, TryFromHex::try_from_hex)
-							}
+							},
 							// Field::totalDifficulty => {}
 							Field::transactionsRoot => check_and_set_option!(transactionsRoot),
 						},
 						Ok(None) => break,
 						Err(_) => {
 							map.next_value::<IgnoredAny>()?;
-						}
+						},
 					}
 				}
 
@@ -351,8 +351,8 @@ impl Default for Header {
 impl PartialEq for Header {
 	fn eq(&self, c: &Header) -> bool {
 		if let (&Some(ref h1), &Some(ref h2)) = (&self.hash, &c.hash) {
-			// More strict check even if hashes equal since Header could be decoded from dispatch call by external
-			// Note that this is different implementation compared to Open Ethereum
+			// More strict check even if hashes equal since Header could be decoded from dispatch
+			// call by external Note that this is different implementation compared to Open Ethereum
 			// Refer: https://github.com/openethereum/openethereum/blob/v3.0.0-alpha.1/ethcore/types/src/header.rs#L93
 			if h1 != h2 {
 				return false;
@@ -501,8 +501,7 @@ impl Header {
 	/// Get the hash of this header (keccak of the RLP with seal).
 	#[cfg(any(feature = "full-rlp", test))]
 	pub fn hash(&self) -> H256 {
-		self.hash
-			.unwrap_or_else(|| keccak_hash::keccak(self.rlp(Seal::With)))
+		self.hash.unwrap_or_else(|| keccak_hash::keccak(self.rlp(Seal::With)))
 	}
 
 	/// Get the hash of the header excluding the seal
@@ -522,11 +521,7 @@ impl Header {
 	/// Place this header into an RLP stream `s`, optionally `with_seal`.
 	#[cfg(any(feature = "full-rlp", test))]
 	fn stream_rlp(&self, s: &mut RlpStream, with_seal: Seal) {
-		let stream_length_without_seal = if self.base_fee_per_gas.is_some() {
-			14
-		} else {
-			13
-		};
+		let stream_length_without_seal = if self.base_fee_per_gas.is_some() { 14 } else { 13 };
 
 		if let Seal::With = with_seal {
 			s.begin_list(stream_length_without_seal + self.seal.len());
@@ -837,7 +832,7 @@ mod tests {
 		let verify_result = ethash_params.verify_block_basic(&header);
 
 		match verify_result {
-			Err(Error::Block(BlockError::InvalidProofOfWork(_))) => {}
+			Err(Error::Block(BlockError::InvalidProofOfWork(_))) => {},
 			_ => panic!("Expected `InvalidProofOfWork` but got {:?}", verify_result),
 		}
 	}
@@ -858,10 +853,7 @@ mod tests {
 
 		//		ethash_params.set_difficulty_bomb_delays(0xc3500, 5000000);
 
-		assert_eq!(
-			ethash_params.calculate_difficulty(&header2, &header1),
-			expected
-		);
+		assert_eq!(ethash_params.calculate_difficulty(&header2, &header1), expected);
 	}
 
 	#[test]
@@ -870,10 +862,7 @@ mod tests {
 		let expected = U256::from_str("92c07e50de0b9").unwrap();
 		let ethash_params = EthashPartial::production();
 
-		assert_eq!(
-			ethash_params.calculate_difficulty(&header2, &header1),
-			expected
-		);
+		assert_eq!(ethash_params.calculate_difficulty(&header2, &header1), expected);
 	}
 
 	#[test]

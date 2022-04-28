@@ -52,16 +52,16 @@ frame_support::parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
-	type OtherCurrencies = ();
 	type Balance = Balance;
+	type BalanceInfo = AccountData<Balance>;
+	type DustRemoval = ();
 	type Event = ();
+	type ExistentialDeposit = ExistentialDeposit;
 	type MaxLocks = ();
 	type MaxReserves = ();
+	type OtherCurrencies = ();
 	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
 	type WeightInfo = ();
 }
 
@@ -69,36 +69,36 @@ frame_support::parameter_types! {
 	pub const MinimumPeriod: u64 = 6000 / 2;
 }
 impl pallet_timestamp::Config for Test {
+	type MinimumPeriod = MinimumPeriod;
 	type Moment = u64;
 	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
 
 impl frame_system::Config for Test {
-	type BaseCallFilter = Everything;
-	type BlockWeights = ();
-	type BlockLength = ();
-	type DbWeight = ();
-	type Origin = Origin;
-	type Index = u64;
-	type BlockNumber = u64;
-	type Hash = H256;
-	type Call = Call;
-	type Hashing = BlakeTwo256;
-	type AccountId = AccountId32;
-	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
-	type Event = ();
-	type BlockHashCount = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
 	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
+	type AccountId = AccountId32;
+	type BaseCallFilter = Everything;
+	type BlockHashCount = ();
+	type BlockLength = ();
+	type BlockNumber = u64;
+	type BlockWeights = ();
+	type Call = Call;
+	type DbWeight = ();
+	type Event = ();
+	type Hash = H256;
+	type Hashing = BlakeTwo256;
+	type Header = Header;
+	type Index = u64;
+	type Lookup = IdentityLookup<Self::AccountId>;
 	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type OnNewAccount = ();
 	type OnSetCode = ();
+	type Origin = Origin;
+	type PalletInfo = PalletInfo;
+	type SS58Prefix = ();
+	type SystemWeightInfo = ();
+	type Version = ();
 }
 
 pub struct MockRelayCaller;
@@ -118,6 +118,7 @@ impl LatestMessageNoncer for MockLatestMessageNoncer {
 	fn outbound_latest_generated_nonce(_lane_id: [u8; 4]) -> u64 {
 		0
 	}
+
 	fn inbound_latest_received_nonce(_lane_id: [u8; 4]) -> u64 {
 		0
 	}
@@ -126,6 +127,7 @@ impl LatestMessageNoncer for MockLatestMessageNoncer {
 pub struct MockMessagesBridge;
 impl MessagesBridge<AccountId<Test>, Balance, ()> for MockMessagesBridge {
 	type Error = DispatchErrorWithPostInfo<PostDispatchInfo>;
+
 	fn send_message(
 		submitter: RawOrigin<AccountId<Test>>,
 		_laneid: [u8; 4],
@@ -134,10 +136,7 @@ impl MessagesBridge<AccountId<Test>, Balance, ()> for MockMessagesBridge {
 	) -> Result<SendMessageArtifacts, Self::Error> {
 		// send fee to fund account [2;32]
 		Ring::transfer(submitter.into(), build_account(2), fee)?;
-		Ok(SendMessageArtifacts {
-			nonce: 0,
-			weight: 0,
-		})
+		Ok(SendMessageArtifacts { nonce: 0, weight: 0 })
 	}
 }
 
@@ -161,23 +160,18 @@ frame_support::parameter_types! {
 	pub const BridgePangolinLaneId: [u8; 4] = [0; 4];
 }
 impl Config for Test {
-	type Event = ();
-	type WeightInfo = ();
-
-	type PalletId = MockId;
-
-	type RingMetadata = RingMetadata;
-	type MaxLockRingAmountPerTx = MaxLockRingAmountPerTx;
-	type RingCurrency = Ring;
-
 	type BridgedAccountIdConverter = MockAccountIdConverter;
 	type BridgedChainId = MockChainId;
-
-	type OutboundPayloadCreator = ();
-	type MessageNoncer = MockLatestMessageNoncer;
-
+	type Event = ();
+	type MaxLockRingAmountPerTx = MaxLockRingAmountPerTx;
 	type MessageLaneId = BridgePangolinLaneId;
+	type MessageNoncer = MockLatestMessageNoncer;
 	type MessagesBridge = MockMessagesBridge;
+	type OutboundPayloadCreator = ();
+	type PalletId = MockId;
+	type RingCurrency = Ring;
+	type RingMetadata = RingMetadata;
+	type WeightInfo = ();
 }
 
 frame_support::construct_runtime! {
@@ -197,9 +191,7 @@ pub fn build_account(x: u8) -> AccountId32 {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut storage = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap();
+	let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 	s2s_backing::GenesisConfig::<Test> {
 		secure_limited_period: 10,
@@ -210,10 +202,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	.unwrap();
 
 	// add some balance to backing account 10 ring
-	let balances = vec![
-		(Backing::pallet_account_id(), 10_000_000_000),
-		(build_account(1), 100),
-	];
+	let balances = vec![(Backing::pallet_account_id(), 10_000_000_000), (build_account(1), 100)];
 	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
 		.assimilate_storage(&mut storage)
 		.unwrap();
@@ -317,10 +306,7 @@ fn test_lock_and_remote_issue() {
 		));
 		assert_eq!(Ring::free_balance(build_account(1)), 30);
 		assert_eq!(Ring::free_balance(build_account(2)), 10);
-		assert_eq!(
-			Ring::free_balance(Backing::pallet_account_id()),
-			10_000_000_060
-		);
+		assert_eq!(Ring::free_balance(Backing::pallet_account_id()), 10_000_000_060);
 
 		assert_err!(
 			Backing::lock_and_remote_issue(
@@ -359,9 +345,6 @@ fn test_register_and_remote_create() {
 		));
 		assert_eq!(Ring::free_balance(build_account(1)), 90);
 		assert_eq!(Ring::free_balance(build_account(2)), 10);
-		assert_eq!(
-			Ring::free_balance(Backing::pallet_account_id()),
-			10_000_000_000
-		);
+		assert_eq!(Ring::free_balance(Backing::pallet_account_id()), 10_000_000_000);
 	});
 }

@@ -54,10 +54,7 @@ pub struct Balances<Client, Block> {
 
 impl<Client, Block> Balances<Client, Block> {
 	pub fn new(client: Arc<Client>) -> Self {
-		Self {
-			client,
-			_marker: Default::default(),
-		}
+		Self { client, _marker: Default::default() }
 	}
 }
 

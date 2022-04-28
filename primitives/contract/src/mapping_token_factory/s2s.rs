@@ -174,12 +174,7 @@ impl S2sSendMessageParams {
 			],
 			&data,
 		)?;
-		match (
-			tokens[0].clone(),
-			tokens[1].clone(),
-			tokens[2].clone(),
-			tokens[3].clone(),
-		) {
+		match (tokens[0].clone(), tokens[1].clone(), tokens[2].clone(), tokens[3].clone()) {
 			(
 				Token::Uint(pallet_index),
 				Token::FixedBytes(lane_id),
@@ -187,13 +182,8 @@ impl S2sSendMessageParams {
 				Token::Uint(fee),
 			) => {
 				let lane_id: LaneId = lane_id.try_into().map_err(|_| Error::InvalidData)?;
-				Ok(Self {
-					pallet_index: pallet_index.low_u32(),
-					lane_id,
-					payload,
-					fee,
-				})
-			}
+				Ok(Self { pallet_index: pallet_index.low_u32(), lane_id, payload, fee })
+			},
 			_ => Err(Error::InvalidData),
 		}
 	}

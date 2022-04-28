@@ -49,20 +49,11 @@ mod trie_tests {
 			"0xd23786fb4a010da3ce639d66d5e904a11dbc02746d1ce25029e53290cabf28ab",
 		);
 		assert_root(
-			vec![
-				(b"doe", b"reindeer"),
-				(b"dog", b"puppy"),
-				(b"dogglesworth", b"cat"),
-			],
+			vec![(b"doe", b"reindeer"), (b"dog", b"puppy"), (b"dogglesworth", b"cat")],
 			"0x8aad789dff2f538bca5d8ea56e8abe10f4c7ba3a5dea95fea4cd6e7c3a1168d3",
 		);
 		assert_root(
-			vec![
-				(b"do", b"verb"),
-				(b"horse", b"stallion"),
-				(b"doge", b"coin"),
-				(b"dog", b"puppy"),
-			],
+			vec![(b"do", b"verb"), (b"horse", b"stallion"), (b"doge", b"coin"), (b"dog", b"puppy")],
 			"0x5991bb8c6514148a29db676a14ac506cd2cd5775ace63c30a4fe457715e9ac84",
 		);
 		assert_root(
@@ -544,10 +535,7 @@ mod trie_tests {
 		assert_root(
 			vec![
 				(b"key1aa", b"0123456789012345678901234567890123456789xxx"),
-				(
-					b"key1",
-					b"0123456789012345678901234567890123456789Very_Long",
-				),
+				(b"key1", b"0123456789012345678901234567890123456789Very_Long"),
 				(b"key2bb", b"aval3"),
 				(b"key2", b"short"),
 				(b"key3cc", b"aval3"),
@@ -570,8 +558,7 @@ mod trie_tests {
 		let mut trie = MerklePatriciaTrie::new(Rc::clone(&memdb));
 		trie.insert(b"doe".to_vec(), b"reindeer".to_vec()).unwrap();
 		trie.insert(b"dog".to_vec(), b"puppy".to_vec()).unwrap();
-		trie.insert(b"dogglesworth".to_vec(), b"cat".to_vec())
-			.unwrap();
+		trie.insert(b"dogglesworth".to_vec(), b"cat".to_vec()).unwrap();
 		let root = trie.root().unwrap();
 		let r = format!("0x{}", hex::encode(trie.root().unwrap()));
 		assert_eq!(
@@ -585,15 +572,7 @@ mod trie_tests {
 			"e5831646f6a0db6ae1fda66890f6693f36560d36b4dca68b4d838f17016b151efe1d4c95c453",
 			"f83b8080808080ca20887265696e6465657280a037efd11993cb04a54048c25320e9f29c50a432d28afdf01598b2978ce1ca3068808080808080808080",
 		];
-		assert_eq!(
-			proof
-				.clone()
-				.nodes
-				.into_iter()
-				.map(hex::encode)
-				.collect::<Vec<_>>(),
-			expected
-		);
+		assert_eq!(proof.clone().nodes.into_iter().map(hex::encode).collect::<Vec<_>>(), expected);
 		let value = MerklePatriciaTrie::verify_proof(root.clone(), b"doe", proof).unwrap();
 		assert_eq!(value, Some(b"reindeer".to_vec()));
 
@@ -604,15 +583,7 @@ mod trie_tests {
 			"f83b8080808080ca20887265696e6465657280a037efd11993cb04a54048c25320e9f29c50a432d28afdf01598b2978ce1ca3068808080808080808080",
 			"e4808080808080ce89376c6573776f72746883636174808080808080808080857075707079",
 		];
-		assert_eq!(
-			proof
-				.clone()
-				.nodes
-				.into_iter()
-				.map(hex::encode)
-				.collect::<Vec<_>>(),
-			expected
-		);
+		assert_eq!(proof.clone().nodes.into_iter().map(hex::encode).collect::<Vec<_>>(), expected);
 		let value = MerklePatriciaTrie::verify_proof(root.clone(), b"dogg", proof).unwrap();
 		assert_eq!(value, None);
 
@@ -634,11 +605,9 @@ mod trie_tests {
 		let mut rng = rand::thread_rng();
 		let mut keys = vec![];
 		for _ in 0..100 {
-			let random_bytes: Vec<u8> = (0..rng.gen_range(2..30))
-				.map(|_| rand::random::<u8>())
-				.collect();
-			trie.insert(random_bytes.to_vec(), random_bytes.clone())
-				.unwrap();
+			let random_bytes: Vec<u8> =
+				(0..rng.gen_range(2..30)).map(|_| rand::random::<u8>()).collect();
+			trie.insert(random_bytes.to_vec(), random_bytes.clone()).unwrap();
 			keys.push(random_bytes.clone());
 		}
 		for k in keys.clone().into_iter() {
@@ -647,9 +616,7 @@ mod trie_tests {
 		let root = trie.root().unwrap();
 		for k in keys.into_iter() {
 			let proof = trie.get_proof(&k).unwrap();
-			let value = MerklePatriciaTrie::verify_proof(root.clone(), &k, proof)
-				.unwrap()
-				.unwrap();
+			let value = MerklePatriciaTrie::verify_proof(root.clone(), &k, proof).unwrap().unwrap();
 			assert_eq!(value, k);
 		}
 	}
@@ -699,8 +666,8 @@ mod trie_tests {
 
 	#[test]
 	fn test_ethereum_receipts_build_proof() {
-		// transaction hash 0xb04fcb9822eb21b5ffdbf89df076de58469af66d23c86abe30266e5d3c5e0db2   in ropsten
-		// build trie
+		// transaction hash 0xb04fcb9822eb21b5ffdbf89df076de58469af66d23c86abe30266e5d3c5e0db2   in
+		// ropsten build trie
 		let data = vec![
 			array_bytes::hex2bytes("f90184018261beb9010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000040000000000000000000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000020000000000000000000000000000000000f87bf87994095c5cbf4937d0a21f6f395194e95b6ebe8616b9e1a06ef95f06320e7a25a04a175ca677b7052bdd97131872c2192525a629f51be770b8400000000000000000000000002e0a521fe69c14d99c8d236d8c3cd5353cc44e720000000000000000000000000000000000000000000000000000000000000000").unwrap(),
 			array_bytes::hex2bytes("f9010901835cdb6eb9010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0").unwrap(),
@@ -709,12 +676,7 @@ mod trie_tests {
 
 		let memdb = Rc::new(MemoryDB::new());
 		let mut trie = MerklePatriciaTrie::new(Rc::clone(&memdb));
-		for (k, v) in data
-			.clone()
-			.into_iter()
-			.enumerate()
-			.map(|(i, v)| (rlp::encode(&i), v))
-		{
+		for (k, v) in data.clone().into_iter().enumerate().map(|(i, v)| (rlp::encode(&i), v)) {
 			trie.insert(k.to_vec(), v.to_vec()).unwrap();
 		}
 		let r = trie.root().unwrap();

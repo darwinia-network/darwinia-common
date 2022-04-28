@@ -57,14 +57,17 @@ impl<T: Config> RemainBalanceOp<T, RingBalance<T>> for RingRemainBalance {
 	fn remaining_balance(account_id: &T::AccountId) -> RingBalance<T> {
 		<RemainingRingBalance<T>>::get(account_id)
 	}
+
 	/// Set the remaining balance.
 	fn set_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
 		<RemainingRingBalance<T>>::insert(account_id, value)
 	}
+
 	/// Remove the remaining balance.
 	fn remove_remaining_balance(account_id: &T::AccountId) {
 		<RemainingRingBalance<T>>::remove(account_id)
 	}
+
 	/// Inc remaining balance.
 	fn inc_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
 		let remain_balance =
@@ -72,6 +75,7 @@ impl<T: Config> RemainBalanceOp<T, RingBalance<T>> for RingRemainBalance {
 		let updated_balance = remain_balance.saturating_add(value);
 		<RemainingRingBalance<T>>::insert(account_id, updated_balance);
 	}
+
 	/// Dec remaining balance.
 	fn dec_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
 		let remain_balance =
@@ -79,6 +83,7 @@ impl<T: Config> RemainBalanceOp<T, RingBalance<T>> for RingRemainBalance {
 		let updated_balance = remain_balance.saturating_sub(value);
 		<RemainingRingBalance<T>>::insert(account_id, updated_balance);
 	}
+
 	/// Deposit dvm transfer event
 	fn deposit_dvm_transfer_event(source: &T::AccountId, target: &T::AccountId, value: U256) {
 		Pallet::<T>::deposit_event(Event::DVMTransfer(source.clone(), target.clone(), value));
@@ -92,14 +97,17 @@ impl<T: Config> RemainBalanceOp<T, KtonBalance<T>> for KtonRemainBalance {
 	fn remaining_balance(account_id: &T::AccountId) -> KtonBalance<T> {
 		<RemainingKtonBalance<T>>::get(account_id)
 	}
+
 	/// Set the remaining balance.
 	fn set_remaining_balance(account_id: &T::AccountId, value: KtonBalance<T>) {
 		<RemainingKtonBalance<T>>::insert(account_id, value)
 	}
+
 	/// Remove the remaining balance.
 	fn remove_remaining_balance(account_id: &T::AccountId) {
 		<RemainingKtonBalance<T>>::remove(account_id)
 	}
+
 	/// Inc remaining balance.
 	fn inc_remaining_balance(account_id: &T::AccountId, value: KtonBalance<T>) {
 		let remain_balance =
@@ -107,6 +115,7 @@ impl<T: Config> RemainBalanceOp<T, KtonBalance<T>> for KtonRemainBalance {
 		let updated_balance = remain_balance.saturating_add(value);
 		<RemainingKtonBalance<T>>::insert(account_id, updated_balance);
 	}
+
 	/// Dec remaining balance.
 	fn dec_remaining_balance(account_id: &T::AccountId, value: KtonBalance<T>) {
 		let remain_balance =
@@ -114,13 +123,10 @@ impl<T: Config> RemainBalanceOp<T, KtonBalance<T>> for KtonRemainBalance {
 		let updated_balance = remain_balance.saturating_sub(value);
 		<RemainingKtonBalance<T>>::insert(account_id, updated_balance);
 	}
+
 	/// Deposit dvm transfer event
 	fn deposit_dvm_transfer_event(source: &T::AccountId, target: &T::AccountId, value: U256) {
-		Pallet::<T>::deposit_event(Event::KtonDVMTransfer(
-			source.clone(),
-			target.clone(),
-			value,
-		));
+		Pallet::<T>::deposit_event(Event::KtonDVMTransfer(source.clone(), target.clone(), value));
 	}
 }
 
@@ -185,9 +191,7 @@ where
 		let helper = U256::from(POW_9);
 
 		let current = Self::account_balance(account_id);
-		let dvm_balance: U256 = RB::remaining_balance(&account_id)
-			.saturated_into::<u128>()
-			.into();
+		let dvm_balance: U256 = RB::remaining_balance(&account_id).saturated_into::<u128>().into();
 
 		let nb = new_balance;
 		match current {
@@ -195,17 +199,14 @@ where
 				let diff = cb.saturating_sub(nb);
 				let (diff_main, diff_remaining) = diff.div_mod(helper);
 
-				// If the dvm storage < diff remaining balance, we can not do sub operation directly.
-				// Otherwise, slash Currency, dec dvm storage balance directly.
+				// If the dvm storage < diff remaining balance, we can not do sub operation
+				// directly. Otherwise, slash Currency, dec dvm storage balance directly.
 				if dvm_balance < diff_remaining {
 					let remaining_balance = dvm_balance
 						.saturating_add(decimal_convert(1, None))
 						.saturating_sub(diff_remaining);
 
-					C::slash(
-						&account_id,
-						(diff_main + 1).low_u128().unique_saturated_into(),
-					);
+					C::slash(&account_id, (diff_main + 1).low_u128().unique_saturated_into());
 					RB::set_remaining_balance(
 						&account_id,
 						remaining_balance.low_u128().saturated_into(),
@@ -217,16 +218,16 @@ where
 						diff_remaining.low_u128().saturated_into(),
 					);
 				}
-			}
+			},
 			cb if cb < nb => {
 				let diff = nb.saturating_sub(cb);
 				let (diff_main, diff_remaining) = diff.div_mod(helper);
 
-				// If dvm storage `balance + diff remaining balance > helper`, we must update Currency balance.
+				// If dvm storage `balance + diff remaining balance > helper`, we must update
+				// Currency balance.
 				if dvm_balance + diff_remaining >= helper {
-					let remaining_balance = dvm_balance
-						.saturating_add(diff_remaining)
-						.saturating_sub(helper);
+					let remaining_balance =
+						dvm_balance.saturating_add(diff_remaining).saturating_sub(helper);
 
 					C::deposit_creating(
 						&account_id,
@@ -243,7 +244,7 @@ where
 						diff_remaining.low_u128().saturated_into(),
 					);
 				}
-			}
+			},
 			_ => return,
 		}
 

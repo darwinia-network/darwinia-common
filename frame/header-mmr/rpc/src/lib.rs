@@ -57,10 +57,7 @@ pub struct HeaderMMR<Client, Block> {
 }
 impl<Client, Block> HeaderMMR<Client, Block> {
 	pub fn new(client: Arc<Client>) -> Self {
-		Self {
-			client,
-			_marker: Default::default(),
-		}
+		Self { client, _marker: Default::default() }
 	}
 }
 impl<Client, Block, Hash> HeaderMMRApi<Hash, RuntimeDispatchInfo<Hash>> for HeaderMMR<Client, Block>
@@ -79,11 +76,12 @@ where
 		let best = self.client.info().best_hash;
 		let at = BlockId::hash(best);
 
-		api.gen_proof(&at, block_number_of_member_leaf, block_number_of_last_leaf)
-			.map_err(|e| Error {
+		api.gen_proof(&at, block_number_of_member_leaf, block_number_of_last_leaf).map_err(|e| {
+			Error {
 				code: ErrorCode::ServerError(RUNTIME_ERROR),
 				message: "Unable to generate mmr proof.".into(),
 				data: Some(format!("{:?}", e).into()),
-			})
+			}
+		})
 	}
 }

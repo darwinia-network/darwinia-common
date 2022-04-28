@@ -146,43 +146,18 @@ fn add_authorities_should_work() {
 		assert_ok!(request_authority(2));
 		assert_ok!(request_authority(3));
 
-		assert_ok!(RelayAuthorities::add_authorities(
-			Origin::root(),
-			vec![1, 2, 3]
-		));
+		assert_ok!(RelayAuthorities::add_authorities(Origin::root(), vec![1, 2, 3]));
 
 		assert!(!Ring::locks(1).is_empty());
 		assert!(!Ring::locks(2).is_empty());
 		assert!(!Ring::locks(3).is_empty());
 		assert_eq!(
-			RelayAuthorities::next_authorities()
-				.unwrap()
-				.next_authorities,
+			RelayAuthorities::next_authorities().unwrap().next_authorities,
 			vec![
-				RelayAuthority {
-					account_id: 9,
-					signer: [0; 20],
-					stake: 1,
-					term: 10
-				},
-				RelayAuthority {
-					account_id: 1,
-					signer: [0; 20],
-					stake: 1,
-					term: 10
-				},
-				RelayAuthority {
-					account_id: 2,
-					signer: [0; 20],
-					stake: 1,
-					term: 10
-				},
-				RelayAuthority {
-					account_id: 3,
-					signer: [0; 20],
-					stake: 1,
-					term: 10
-				}
+				RelayAuthority { account_id: 9, signer: [0; 20], stake: 1, term: 10 },
+				RelayAuthority { account_id: 1, signer: [0; 20], stake: 1, term: 10 },
+				RelayAuthority { account_id: 2, signer: [0; 20], stake: 1, term: 10 },
+				RelayAuthority { account_id: 3, signer: [0; 20], stake: 1, term: 10 }
 			]
 		);
 	});
@@ -206,10 +181,7 @@ fn remove_authorities_should_work() {
 			RelayAuthorities::remove_authorities(Origin::root(), vec![10]),
 			RelayAuthoritiesError::AuthorityNE
 		);
-		assert_ok!(RelayAuthorities::remove_authorities(
-			Origin::root(),
-			vec![1]
-		));
+		assert_ok!(RelayAuthorities::remove_authorities(Origin::root(), vec![1]));
 
 		RelayAuthorities::apply_authorities_change().unwrap();
 		assert!(Ring::locks(1).is_empty());
@@ -223,10 +195,7 @@ fn remove_authorities_should_work() {
 		assert_ok!(request_authority(3));
 		assert_ok!(request_authority(4));
 		assert_ok!(request_authority(5));
-		assert_ok!(RelayAuthorities::add_authorities(
-			Origin::root(),
-			vec![3, 4, 5]
-		));
+		assert_ok!(RelayAuthorities::add_authorities(Origin::root(), vec![3, 4, 5]));
 
 		RelayAuthorities::apply_authorities_change().unwrap();
 		RelayAuthorities::sync_authorities_change().unwrap();
@@ -234,49 +203,21 @@ fn remove_authorities_should_work() {
 		assert_eq!(
 			RelayAuthorities::authorities(),
 			vec![
-				RelayAuthority {
-					account_id: 9,
-					signer: [0; 20],
-					stake: 1,
-					term: 10
-				},
-				RelayAuthority {
-					account_id: 3,
-					signer: [0; 20],
-					stake: 1,
-					term: 10
-				},
-				RelayAuthority {
-					account_id: 4,
-					signer: [0; 20],
-					stake: 1,
-					term: 10
-				},
-				RelayAuthority {
-					account_id: 5,
-					signer: [0; 20],
-					stake: 1,
-					term: 10
-				}
+				RelayAuthority { account_id: 9, signer: [0; 20], stake: 1, term: 10 },
+				RelayAuthority { account_id: 3, signer: [0; 20], stake: 1, term: 10 },
+				RelayAuthority { account_id: 4, signer: [0; 20], stake: 1, term: 10 },
+				RelayAuthority { account_id: 5, signer: [0; 20], stake: 1, term: 10 }
 			]
 		);
 
-		assert_ok!(RelayAuthorities::remove_authorities(
-			Origin::root(),
-			vec![9, 4, 5]
-		));
+		assert_ok!(RelayAuthorities::remove_authorities(Origin::root(), vec![9, 4, 5]));
 
 		RelayAuthorities::apply_authorities_change().unwrap();
 		RelayAuthorities::sync_authorities_change().unwrap();
 
 		assert_eq!(
 			RelayAuthorities::authorities(),
-			vec![RelayAuthority {
-				account_id: 3,
-				signer: [0; 20],
-				stake: 1,
-				term: 10
-			}]
+			vec![RelayAuthority { account_id: 3, signer: [0; 20], stake: 1, term: 10 }]
 		);
 	});
 }
@@ -309,10 +250,7 @@ fn authority_term_should_work() {
 		for i in 1..=max_candidates {
 			assert_eq!(RelayAuthorities::next_term(), i as Term - 1);
 			assert_ok!(request_authority(i as _));
-			assert_ok!(RelayAuthorities::add_authorities(
-				Origin::root(),
-				vec![i as _]
-			));
+			assert_ok!(RelayAuthorities::add_authorities(Origin::root(), vec![i as _]));
 
 			RelayAuthorities::apply_authorities_change().unwrap();
 			RelayAuthorities::sync_authorities_change().unwrap();
@@ -494,51 +432,28 @@ fn schedule_authorities_change_should_work() {
 		assert_ok!(request_authority(1));
 		assert_ok!(RelayAuthorities::add_authorities(Origin::root(), vec![1]));
 
-		let authorities = vec![RelayAuthority {
-			account_id: 9,
-			signer: [0; 20],
-			stake: 1,
-			term: 10,
-		}];
+		let authorities =
+			vec![RelayAuthority { account_id: 9, signer: [0; 20], stake: 1, term: 10 }];
 		let schedule_authorities_change = ScheduledAuthoritiesChange {
 			next_authorities: vec![
-				RelayAuthority {
-					account_id: 9,
-					signer: [0; 20],
-					stake: 1,
-					term: 10,
-				},
-				RelayAuthority {
-					account_id: 1,
-					signer: [0; 20],
-					stake: 1,
-					term: 10,
-				},
+				RelayAuthority { account_id: 9, signer: [0; 20], stake: 1, term: 10 },
+				RelayAuthority { account_id: 1, signer: [0; 20], stake: 1, term: 10 },
 			],
 			deadline: 3,
 		};
 
 		assert_eq!(RelayAuthorities::authorities(), authorities);
-		assert_eq!(
-			RelayAuthorities::next_authorities(),
-			Some(schedule_authorities_change.clone())
-		);
+		assert_eq!(RelayAuthorities::next_authorities(), Some(schedule_authorities_change.clone()));
 
 		RelayAuthorities::apply_authorities_change().unwrap();
 
 		assert_eq!(RelayAuthorities::authorities(), authorities);
-		assert_eq!(
-			RelayAuthorities::next_authorities(),
-			Some(schedule_authorities_change.clone())
-		);
+		assert_eq!(RelayAuthorities::next_authorities(), Some(schedule_authorities_change.clone()));
 
 		RelayAuthorities::apply_authorities_change().unwrap();
 		RelayAuthorities::sync_authorities_change().unwrap();
 
-		assert_eq!(
-			RelayAuthorities::authorities(),
-			schedule_authorities_change.next_authorities
-		);
+		assert_eq!(RelayAuthorities::authorities(), schedule_authorities_change.next_authorities);
 		assert!(RelayAuthorities::next_authorities().is_none());
 	});
 }
@@ -555,18 +470,8 @@ fn kill_authorities_and_force_new_term_should_work() {
 		assert_eq!(
 			RelayAuthorities::authorities(),
 			vec![
-				RelayAuthority {
-					account_id: 9,
-					signer: [0; 20],
-					stake: 1,
-					term: 10
-				},
-				RelayAuthority {
-					account_id: 1,
-					signer: [0; 20],
-					stake: 1,
-					term: 10
-				}
+				RelayAuthority { account_id: 9, signer: [0; 20], stake: 1, term: 10 },
+				RelayAuthority { account_id: 1, signer: [0; 20], stake: 1, term: 10 }
 			]
 		);
 		assert!(RelayAuthorities::next_authorities().is_none());
@@ -585,24 +490,9 @@ fn kill_authorities_and_force_new_term_should_work() {
 		assert_eq!(
 			RelayAuthorities::authorities(),
 			vec![
-				RelayAuthority {
-					account_id: 9,
-					signer: [0; 20],
-					stake: 1,
-					term: 10
-				},
-				RelayAuthority {
-					account_id: 1,
-					signer: [0; 20],
-					stake: 1,
-					term: 10
-				},
-				RelayAuthority {
-					account_id: 2,
-					signer: [0; 20],
-					stake: 1,
-					term: 10
-				}
+				RelayAuthority { account_id: 9, signer: [0; 20], stake: 1, term: 10 },
+				RelayAuthority { account_id: 1, signer: [0; 20], stake: 1, term: 10 },
+				RelayAuthority { account_id: 2, signer: [0; 20], stake: 1, term: 10 }
 			]
 		);
 		assert!(RelayAuthorities::next_authorities().is_none());
@@ -615,12 +505,7 @@ fn kill_authorities_and_force_new_term_should_work() {
 
 		assert_eq!(
 			RelayAuthorities::authorities(),
-			vec![RelayAuthority {
-				account_id: 3,
-				signer: [0; 20],
-				stake: 1,
-				term: 10
-			},]
+			vec![RelayAuthority { account_id: 3, signer: [0; 20], stake: 1, term: 10 },]
 		);
 		assert!(RelayAuthorities::next_authorities().is_none());
 		assert_eq!(RelayAuthorities::submit_duration(), SubmitDuration::get());
@@ -636,10 +521,7 @@ fn lock_after_authorities_change_should_work() {
 
 		assert_ok!(request_authority(1));
 		assert_ok!(request_authority(2));
-		assert_ok!(RelayAuthorities::add_authorities(
-			Origin::root(),
-			vec![1, 2]
-		));
+		assert_ok!(RelayAuthorities::add_authorities(Origin::root(), vec![1, 2]));
 
 		assert!(!Ring::locks(9).is_empty());
 		assert!(!Ring::locks(1).is_empty());
@@ -652,10 +534,7 @@ fn lock_after_authorities_change_should_work() {
 		assert!(!Ring::locks(1).is_empty());
 		assert!(!Ring::locks(2).is_empty());
 
-		assert_ok!(RelayAuthorities::remove_authorities(
-			Origin::root(),
-			vec![9, 2]
-		));
+		assert_ok!(RelayAuthorities::remove_authorities(Origin::root(), vec![9, 2]));
 
 		RelayAuthorities::apply_authorities_change().unwrap();
 		RelayAuthorities::sync_authorities_change().unwrap();
@@ -672,10 +551,7 @@ fn check_authorities_change_to_sync_should_work() {
 		assert_ok!(request_authority(1));
 		assert_ok!(request_authority(2));
 		assert_ok!(request_authority(3));
-		assert_ok!(RelayAuthorities::add_authorities(
-			Origin::root(),
-			vec![1, 2, 3]
-		));
+		assert_ok!(RelayAuthorities::add_authorities(Origin::root(), vec![1, 2, 3]));
 		RelayAuthorities::apply_authorities_change().unwrap();
 
 		assert_err!(
@@ -725,18 +601,12 @@ fn slash_should_work() {
 
 		assert_ok!(request_authority_with_stake(1, 50));
 		assert_ok!(request_authority_with_stake(2, 60));
-		assert_ok!(RelayAuthorities::add_authorities(
-			Origin::root(),
-			vec![1, 2]
-		));
+		assert_ok!(RelayAuthorities::add_authorities(Origin::root(), vec![1, 2]));
 
 		RelayAuthorities::apply_authorities_change().unwrap();
 		RelayAuthorities::sync_authorities_change().unwrap();
 
-		assert_ok!(RelayAuthorities::remove_authorities(
-			Origin::root(),
-			vec![9]
-		));
+		assert_ok!(RelayAuthorities::remove_authorities(Origin::root(), vec![9]));
 
 		assert!(!Ring::locks(9).is_empty());
 		assert!(!Ring::locks(1).is_empty());

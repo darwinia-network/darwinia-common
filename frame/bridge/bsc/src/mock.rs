@@ -36,38 +36,38 @@ pub type BlockNumber = u64;
 pub type BscError = Error<Test>;
 
 impl frame_system::Config for Test {
+	type AccountData = ();
+	type AccountId = AccountId;
 	type BaseCallFilter = Everything;
-	type BlockWeights = ();
+	type BlockHashCount = ();
 	type BlockLength = ();
-	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
-	type Index = u64;
 	type BlockNumber = BlockNumber;
+	type BlockWeights = ();
+	type Call = Call;
+	type DbWeight = ();
+	type Event = ();
 	type Hash = sp_core::H256;
 	type Hashing = sp_runtime::traits::BlakeTwo256;
-	type AccountId = AccountId;
-	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
 	type Header = sp_runtime::testing::Header;
-	type Event = ();
-	type BlockHashCount = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = ();
-	type OnNewAccount = ();
+	type Index = u64;
+	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
 	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type OnNewAccount = ();
 	type OnSetCode = ();
+	type Origin = Origin;
+	type PalletInfo = PalletInfo;
+	type SS58Prefix = ();
+	type SystemWeightInfo = ();
+	type Version = ();
 }
 
 frame_support::parameter_types! {
 	pub const MinimumPeriod: u64 = 5;
 }
 impl pallet_timestamp::Config for Test {
+	type MinimumPeriod = MinimumPeriod;
 	type Moment = u64;
 	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
 
@@ -83,10 +83,10 @@ frame_support::parameter_types! {
 	pub const EpochInStorage: u64 = 128;
 }
 impl Config for Test {
-	type WeightInfo = ();
 	type BscConfiguration = Configuration;
-	type OnHeadersSubmitted = ();
 	type EpochInStorage = EpochInStorage;
+	type OnHeadersSubmitted = ();
+	type WeightInfo = ();
 }
 
 frame_support::construct_runtime! {
@@ -160,14 +160,10 @@ impl ExtBuilder {
 	pub fn build(self) -> TestExternalities {
 		self.set_associated_constants();
 
-		let mut storage = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.unwrap();
+		let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 		<darwinia_bridge_bsc::GenesisConfig as GenesisBuild<Test>>::assimilate_storage(
-			&darwinia_bridge_bsc::GenesisConfig {
-				genesis_header: self.genesis_header,
-			},
+			&darwinia_bridge_bsc::GenesisConfig { genesis_header: self.genesis_header },
 			&mut storage,
 		)
 		.unwrap();
@@ -176,10 +172,7 @@ impl ExtBuilder {
 
 		ext.execute_with(|| {
 			Timestamp::set_timestamp(
-				SystemTime::now()
-					.duration_since(UNIX_EPOCH)
-					.unwrap()
-					.as_millis() as _,
+				SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as _,
 			);
 		});
 

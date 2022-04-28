@@ -12,12 +12,12 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
+	type Call = Call;
 	type Event = Event;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type MaximumWeight = MaximumSchedulerWeight;
 	type Origin = Origin;
 	type PalletsOrigin = OriginCaller;
-	type Call = Call;
-	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = RootOrigin;
-	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type WeightInfo = ();
 }

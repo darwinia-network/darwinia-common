@@ -1,16 +1,13 @@
 // --- paritytech ---
-use frame_support::{traits::OnRuntimeUpgrade, weights::Weight};
+#[allow(unused)]
+use frame_support::{migration, traits::OnRuntimeUpgrade, weights::Weight};
 // --- darwinia-network ---
+#[allow(unused)]
 use crate::*;
 
 fn migrate() -> Weight {
-	// --- paritytech ---
-	use frame_support::migration;
-
-	migration::move_pallet(b"FeeMarket", b"PangoroFeeMarket");
-
-	// 0
-	RuntimeBlockWeights::get().max_block
+	0
+	// RuntimeBlockWeights::get().max_block
 }
 
 pub struct CustomOnRuntimeUpgrade;
