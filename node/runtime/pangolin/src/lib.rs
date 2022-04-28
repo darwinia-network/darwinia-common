@@ -810,6 +810,56 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl bp_pangolin_parachain::PangolinParachainFinalityApi<Block> for Runtime{
+		fn best_finalized() -> (bp_pangolin_parachain::BlockNumber, bp_pangolin_parachain::Hash) {
+			use codec::Decode;
+			use sp_runtime::traits::Header;
+
+			let best_pangolin_parachain_head =
+				pallet_bridge_parachains::Pallet::<Runtime, WithRococoParachainsInstance>::best_parachain_head(
+					bm_pangolin_parachain::PANGOLIN_PARACHAIN_ID.into()
+				)
+				.and_then(|encoded_header| bp_pangolin_parachain::Header::decode(&mut &encoded_header.0[..]).ok());
+			match best_pangolin_parachain_head {
+				Some(head) => (*head.number(), head.hash()),
+				None => (Default::default(), Default::default()),
+			}
+		}
+	}
+
+	impl bp_pangolin_parachain::ToPangolinParachainOutboundLaneApi<Block, Balance, bm_pangolin_parachain::ToPangolinParachainMessagePayload> for Runtime {
+		fn message_details(
+			lane: bp_messages::LaneId,
+			begin: bp_messages::MessageNonce,
+			end: bp_messages::MessageNonce,
+		) -> Vec<bp_messages::MessageDetails<Balance>> {
+			bridge_runtime_common::messages_api::outbound_message_details::<
+				Runtime,
+				WithPangolinParachainMessages,
+				bm_pangolin_parachain::WithPangolinParachainMessageBridge,
+			>(lane, begin, end)
+		}
+
+		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgePangolinParachainMessages::outbound_latest_received_nonce(lane)
+		}
+		fn latest_generated_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgePangolinParachainMessages::outbound_latest_generated_nonce(lane)
+		}
+	}
+
+	impl bp_pangolin_parachain::FromPangolinParachainInboundLaneApi<Block> for Runtime {
+		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgePangolinParachainMessages::inbound_latest_received_nonce(lane)
+		}
+		fn latest_confirmed_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgePangolinParachainMessages::inbound_latest_confirmed_nonce(lane)
+		}
+		fn unrewarded_relayers_state(lane: bp_messages::LaneId) -> bp_messages::UnrewardedRelayersState {
+			BridgePangolinParachainMessages::inbound_unrewarded_relayers_state(lane)
+		}
+	}
+
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade() -> (frame_support::weights::Weight, frame_support::weights::Weight) {
