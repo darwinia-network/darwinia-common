@@ -36,7 +36,6 @@ enum Action {
 	TokenRegisterResponse = "token_register_response(address,address,address)",
 }
 
-/// The contract address: 0000000000000000000000000000000000000017
 pub struct EthereumBridge<T> {
 	_marker: PhantomData<T>,
 }

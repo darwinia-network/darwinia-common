@@ -48,7 +48,6 @@ enum Action {
 
 const MAX_MULTI_STORAGEKEY_SIZE: usize = 32;
 
-/// The contract address: 0000000000000000000000000000000000000026
 pub struct BscBridge<T> {
 	_marker: PhantomData<T>,
 }
