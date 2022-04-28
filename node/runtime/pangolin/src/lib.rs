@@ -860,9 +860,11 @@ sp_api::impl_runtime_apis! {
 		fn best_finalized() -> (bp_pangolin_parachain::BlockNumber, bp_pangolin_parachain::Hash) {
 			use codec::Decode;
 			use sp_runtime::traits::Header;
-			use bm_pangolin_parachain::PANGOLIN_PARACHAIN_ID;
 
-			let best_pangolin_parachain_head = pallet_bridge_parachains::Pallet::<Runtime, WithRococoParachainsInstance>::best_parachain_head(PANGOLIN_PARACHAIN_ID.into())
+			let best_pangolin_parachain_head =
+				pallet_bridge_parachains::Pallet::<Runtime, WithRococoParachainsInstance>::best_parachain_head(
+					bm_pangolin_parachain::PANGOLIN_PARACHAIN_ID.into()
+				)
 				.and_then(|encoded_header| bp_pangolin_parachain::Header::decode(&mut &encoded_header.0[..]).ok());
 			match best_pangolin_parachain_head {
 				Some(head) => (*head.number(), head.hash()),
