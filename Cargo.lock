@@ -1859,6 +1859,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-evm-precompile-fee-market"
+version = "2.8.10"
+dependencies = [
+ "darwinia-evm-precompile-utils",
+ "fp-evm",
+]
+
+[[package]]
 name = "darwinia-evm-precompile-transfer"
 version = "2.8.10"
 dependencies = [

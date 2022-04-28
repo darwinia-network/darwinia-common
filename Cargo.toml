@@ -21,6 +21,7 @@ members = [
 	"frame/elections-phragmen",
 	"frame/dvm/ethereum",
 	"frame/dvm/evm",
+	"frame/dvm/evm/precompiles/fee-market",
 	"frame/dvm/evm/precompiles/dispatch",
 	"frame/dvm/evm/precompiles/transfer",
 	"frame/dvm/evm/precompiles/utils",
