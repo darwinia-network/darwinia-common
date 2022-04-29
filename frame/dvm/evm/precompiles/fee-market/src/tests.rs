@@ -20,8 +20,8 @@
 
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
+use ethereum::TransactionAction;
 use scale_info::TypeInfo;
-use sha3::{Digest, Keccak256};
 // --- paritytech ---
 use darwinia_ethereum::{EthereumBlockHashMapping, RawOrigin};
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
@@ -48,6 +48,9 @@ use darwinia_ethereum::{
 	IntermediateStateRoot, Transaction,
 };
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
+use darwinia_evm_precompile_utils::test_helper::{
+	address_build, create_function_encode_bytes, AccountInfo, LegacyUnsignedTransaction,
+};
 use darwinia_fee_market::{Config, RingBalance, Slasher};
 use darwinia_support::evm::IntoAccountId;
 
@@ -94,7 +97,7 @@ frame_support::parameter_types! {
 	// For weight estimation, we assume that the most locks on an individual account will be 50.
 	// This number may need to be adjusted in the future if this assumption no longer holds true.
 	pub const MaxLocks: u32 = 10;
-	pub const ExistentialDeposit: u64 = 500;
+	pub const ExistentialDeposit: u64 = 0;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
 	type AccountStore = System;
@@ -194,9 +197,9 @@ where
 		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
 
 		match address {
-			a if a == to_address(26) =>
+			a if a == to_address(1) =>
 				Some(<FeeMarket<R, F1>>::execute(input, target_gas, context, is_static)),
-			a if a == to_address(27) =>
+			a if a == to_address(2) =>
 				Some(<FeeMarket<R, F2>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
@@ -390,30 +393,169 @@ fn validate_self_contained_inner(
 	}
 }
 
-pub struct AccountInfo {
-	pub address: H160,
-	pub account_id: AccountId32,
-	pub private_key: H256,
+pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExternalities) {
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let pairs = (0..accounts_len).map(|i| address_build(i as u8)).collect::<Vec<_>>();
+	let balances: Vec<_> = (0..accounts_len).map(|i| (pairs[i].account_id.clone(), 500)).collect();
+
+	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
+		.assimilate_storage(&mut t)
+		.unwrap();
+	let mut ext = sp_io::TestExternalities::new(t);
+	ext.execute_with(|| System::set_block_number(1));
+
+	(pairs, ext.into())
 }
 
-fn address_build(seed: u8) -> AccountInfo {
-	let raw_private_key = [seed + 1; 32];
-	let secret_key = libsecp256k1::SecretKey::parse_slice(&raw_private_key).unwrap();
-	let raw_public_key = &libsecp256k1::PublicKey::from_secret_key(&secret_key).serialize()[1..65];
-	let raw_address = {
-		let mut s = [0; 20];
-		s.copy_from_slice(&Keccak256::digest(raw_public_key)[12..]);
-		s
-	};
-	let raw_account = {
-		let mut s = [0; 32];
-		s[..20].copy_from_slice(&raw_address);
-		s
-	};
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use darwinia_ethereum::Transaction;
+	// --- paritytech ---
+	use array_bytes::{bytes2hex, hex2bytes_unchecked};
+	use ethabi::StateMutability;
+	use fp_evm::CallOrCreateInfo;
+	use frame_support::assert_ok;
+	use sp_core::{H160, U256};
+	use sp_std::str::FromStr;
 
-	AccountInfo {
-		private_key: raw_private_key.into(),
-		account_id: raw_account.into(),
-		address: raw_address.into(),
+	// SPDX-License-Identifier: MIT
+	// pragma solidity >=0.8.10;
+
+	// interface IMarketFee {
+	//     function market_fee() external view returns (uint64);
+	// }
+
+	// contract TestMarketFee {
+	//     function market_fee_1() public view returns (uint64) {
+	//         address addr = 0x0000000000000000000000000000000000000001;
+	//         return IMarketFee(addr).market_fee();
+	//     }
+	//     function market_fee_2() public view returns (uint64) {
+	//         address addr = 0x0000000000000000000000000000000000000002;
+	//         return IMarketFee(addr).market_fee();
+	//     }
+	// }
+
+	const BYTECODE: &'static str = "0x608060405234801561001057600080fd5b50610183806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c80635d2b05d61461003b57806387ff12b914610060575b600080fd5b610043610068565b60405167ffffffffffffffff909116815260200160405180910390f35b6100436100d7565b60008060019050806001600160a01b0316636673cb7a6040518163ffffffff1660e01b8152600401602060405180830381865afa1580156100ad573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906100d1919061011c565b91505090565b60008060029050806001600160a01b0316636673cb7a6040518163ffffffff1660e01b8152600401602060405180830381865afa1580156100ad573d6000803e3d6000fd5b60006020828403121561012e57600080fd5b815167ffffffffffffffff8116811461014657600080fd5b939250505056fea26469706673582212206b2f0c27a267a7c87c2deaa1c5086ca879a604b687b102788ddd800727ffdcb264736f6c634300080d0033";
+
+	fn deploy_contract(account: &AccountInfo) -> Transaction {
+		let unsigned_tx = LegacyUnsignedTransaction {
+			nonce: U256::zero(),
+			gas_price: U256::from(1),
+			gas_limit: U256::from(0x100000),
+			action: ethereum::TransactionAction::Create,
+			value: U256::zero(),
+			input: hex2bytes_unchecked(BYTECODE),
+		};
+		// TODO: update the chainId
+		unsigned_tx.sign_with_chain_id(&account.private_key, 42)
+	}
+
+	#[test]
+	fn test_precompile_fetch_market_fee() {
+		let (pairs, mut ext) = new_test_ext(7);
+		let (a1, b1, c1, d1, e1, f1, g1) =
+			(&pairs[0], &pairs[1], &pairs[2], &pairs[3], &pairs[4], &pairs[5], &pairs[6]);
+		ext.execute_with(|| {
+			FeeMarketInstance1::enroll_and_lock_collateral(
+				Origin::signed(a1.clone().account_id),
+				100,
+				None,
+			);
+			FeeMarketInstance1::enroll_and_lock_collateral(
+				Origin::signed(b1.clone().account_id),
+				100,
+				Some(20),
+			);
+			FeeMarketInstance1::enroll_and_lock_collateral(
+				Origin::signed(c1.clone().account_id),
+				100,
+				Some(30),
+			);
+			assert_eq!(FeeMarketInstance1::market_fee(), Some(30));
+
+			FeeMarketInstance2::enroll_and_lock_collateral(
+				Origin::signed(d1.clone().account_id),
+				100,
+				None,
+			);
+			FeeMarketInstance2::enroll_and_lock_collateral(
+				Origin::signed(e1.clone().account_id),
+				100,
+				Some(40),
+			);
+			FeeMarketInstance2::enroll_and_lock_collateral(
+				Origin::signed(f1.clone().account_id),
+				100,
+				Some(50),
+			);
+			assert_eq!(FeeMarketInstance2::market_fee(), Some(50));
+
+			// Deploy test contract
+			let unsign_tx = LegacyUnsignedTransaction::new(
+				0,
+				1,
+				300000,
+				TransactionAction::Create,
+				0,
+				hex2bytes_unchecked(BYTECODE),
+			);
+			let tx = unsign_tx.sign_with_chain_id(&g1.private_key, 42);
+			assert_ok!(Ethereum::execute(g1.address, &tx.into(), None));
+			let created_addr = H160::from_str("ec3273d4fdc320f2286b14380cc835e7a5f1d845").unwrap();
+
+			// Call market_fee_1
+			let call_function = create_function_encode_bytes(
+				"market_fee_1".to_owned(),
+				vec![],
+				vec![],
+				true,
+				StateMutability::NonPayable,
+				&[],
+			)
+			.unwrap();
+			let unsign_tx = LegacyUnsignedTransaction::new(
+				1,
+				1,
+				300000,
+				TransactionAction::Call(created_addr),
+				0,
+				hex2bytes_unchecked(bytes2hex("0x", call_function)),
+			);
+			let tx = unsign_tx.sign_with_chain_id(&g1.private_key, 42);
+			let result =
+				Ethereum::execute(g1.address, &tx.into(), None).map(|(_, _, res)| match res {
+					CallOrCreateInfo::Call(info) => U256::from_big_endian(&info.value),
+					CallOrCreateInfo::Create(_) => U256::default(),
+				});
+			assert_eq!(FeeMarketInstance1::market_fee().unwrap(), result.unwrap().as_u64());
+
+			// Call market_fee_2
+			let call_function = create_function_encode_bytes(
+				"market_fee_2".to_owned(),
+				vec![],
+				vec![],
+				true,
+				StateMutability::NonPayable,
+				&[],
+			)
+			.unwrap();
+			let unsign_tx = LegacyUnsignedTransaction::new(
+				2,
+				1,
+				300000,
+				TransactionAction::Call(created_addr),
+				0,
+				hex2bytes_unchecked(bytes2hex("0x", call_function)),
+			);
+			let tx = unsign_tx.sign_with_chain_id(&g1.private_key, 42);
+			let result =
+				Ethereum::execute(g1.address, &tx.into(), None).map(|(_, _, res)| match res {
+					CallOrCreateInfo::Call(info) => U256::from_big_endian(&info.value),
+					CallOrCreateInfo::Create(_) => U256::default(),
+				});
+			assert_eq!(FeeMarketInstance2::market_fee().unwrap(), result.unwrap().as_u64());
+		});
 	}
 }

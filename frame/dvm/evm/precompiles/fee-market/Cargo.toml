@@ -26,8 +26,10 @@ fp-evm = { default-features = false, git = "https://github.com/darwinia-network/
 codec          = { package = "parity-scale-codec", version = "2.3" }
 darwinia-ethereum = { path = "../../../ethereum" }
 scale-info   = { version = "1.0", features = ["derive"] }
+ethabi         = { version = "15.0" }
+array-bytes    = { version = "1.4" }
+ethereum     = { version = "0.11.1", features = ["with-codec"] }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
-sha3           = { version = "0.9", default-features = false }
 # darwinia-network
 darwinia-balances = { path = "../../../../balances" }
 darwinia-support  = { path = "../../../../support" }
@@ -42,6 +44,8 @@ sp-std           = { git = "https://github.com/darwinia-network/substrate", bran
 # frontier
 fp-self-contained            = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
 pallet-evm                   = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
+
+darwinia-evm-precompile-utils = { default-features = false, path = "../utils", features = ["testing"] }
 
 [features]
 default = ["std"]
