@@ -1862,13 +1862,28 @@ dependencies = [
 name = "darwinia-evm-precompile-fee-market"
 version = "2.8.10"
 dependencies = [
+ "darwinia-balances",
+ "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
  "darwinia-fee-market",
+ "darwinia-support",
  "dp-contract",
  "evm",
  "fp-evm",
+ "fp-self-contained",
+ "frame-support",
+ "frame-system",
+ "libsecp256k1 0.5.0",
+ "pallet-evm",
+ "pallet-timestamp",
+ "parity-scale-codec 2.3.1",
+ "scale-info 1.0.0",
+ "sha3 0.9.1",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

@@ -11,7 +11,7 @@ version     = "2.8.10"
 
 
 [dependencies]
-# # crates.io
+# crates.io
 evm = { version = "0.33.1", default-features = false, features = ["with-codec"] }
 # darwinia-network
 darwinia-evm                  = { default-features = false, path = "../.." }
@@ -21,6 +21,27 @@ dp-contract                   = { default-features = false, path = "../../../../
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 # frontier
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
+
+[dev-dependencies]
+codec          = { package = "parity-scale-codec", version = "2.3" }
+darwinia-ethereum = { path = "../../../ethereum" }
+scale-info   = { version = "1.0", features = ["derive"] }
+libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
+sha3           = { version = "0.9", default-features = false }
+# darwinia-network
+darwinia-balances = { path = "../../../../balances" }
+darwinia-support  = { path = "../../../../support" }
+# paritytech
+frame-support    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+frame-system     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+sp-core          = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+sp-io            = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+sp-runtime       = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+sp-std           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+# frontier
+fp-self-contained            = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
+pallet-evm                   = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
 
 [features]
 default = ["std"]

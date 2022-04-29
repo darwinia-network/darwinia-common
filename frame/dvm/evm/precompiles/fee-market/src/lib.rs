@@ -18,6 +18,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(test)]
+mod tests;
+
 // --- core ---
 use core::marker::PhantomData;
 // --- crates.io ---
