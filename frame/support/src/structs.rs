@@ -69,21 +69,6 @@ pub struct OldBalanceLock<Balance, Moment> {
 	/// If true, then the lock remains in effect even for payment of transaction fees.
 	pub reasons: Reasons,
 }
-#[cfg(feature = "easy-testing")]
-impl<Balance, Moment> OldBalanceLock<Balance, Moment>
-where
-	Balance: Copy + PartialOrd + AtLeast32BitUnsigned,
-	Moment: Copy + PartialOrd,
-{
-	// For performance, we don't need the `at` in some cases
-	// Only use for tests to avoid write a lot of matches in tests
-	pub fn locked_amount(&self) -> Balance {
-		match &self.lock_for {
-			LockFor::Common { amount } => *amount,
-			LockFor::Staking(staking_lock) => staking_lock.locked_amount(),
-		}
-	}
-}
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub enum LockFor<Balance, Moment> {
@@ -103,7 +88,7 @@ where
 	Moment: Copy + PartialOrd,
 {
 	#[inline]
-	pub fn locked_amount(&self) -> Balance {
+	pub fn total_unbond(&self) -> Balance {
 		self.unbondings
 			.iter()
 			.fold(Zero::zero(), |acc, unbonding| acc.saturating_add(unbonding.amount))

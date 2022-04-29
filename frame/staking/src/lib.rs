@@ -1123,7 +1123,7 @@ pub mod pallet {
 					let stash_balance = T::RingCurrency::free_balance(&stash);
 
 					if let Some(extra) = stash_balance
-						.checked_sub(&(ledger.active + ledger.ring_staking_lock.locked_amount()))
+						.checked_sub(&(ledger.active + ledger.ring_staking_lock.total_unbond()))
 					{
 						let extra = extra.min(max_additional);
 						let (start_time, expire_time) =
@@ -1141,7 +1141,7 @@ pub mod pallet {
 					let stash_balance = T::KtonCurrency::free_balance(&stash);
 
 					if let Some(extra) = stash_balance.checked_sub(
-						&(ledger.active_kton + ledger.kton_staking_lock.locked_amount()),
+						&(ledger.active_kton + ledger.kton_staking_lock.total_unbond()),
 					) {
 						let extra = extra.min(max_additional);
 

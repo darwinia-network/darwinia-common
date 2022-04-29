@@ -324,13 +324,13 @@ impl<T: Config> Pallet<T> {
 		T::RingCurrency::set_lock(
 			STAKING_ID,
 			&ledger.stash,
-			active.saturating_add(ring_staking_lock.locked_amount()),
+			active.saturating_add(ring_staking_lock.total_unbond()),
 			WithdrawReasons::all(),
 		);
 		T::KtonCurrency::set_lock(
 			STAKING_ID,
 			&ledger.stash,
-			active_kton.saturating_add(kton_staking_lock.locked_amount()),
+			active_kton.saturating_add(kton_staking_lock.total_unbond()),
 			WithdrawReasons::all(),
 		);
 
