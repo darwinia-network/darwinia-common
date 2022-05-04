@@ -29,7 +29,7 @@ pub mod balance {
 		structs::{FrozenBalance, LockFor, OldBalanceLock, StakingLock, Unbonding},
 		traits::{BalanceInfo, DustCollector},
 	};
-	pub use pallet_balances::Reasons;
+	pub use pallet_balances::{BalanceLock, Reasons};
 }
 use sp_std::{vec, vec::Vec};
 

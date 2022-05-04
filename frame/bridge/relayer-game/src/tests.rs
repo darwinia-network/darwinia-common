@@ -335,9 +335,9 @@ fn lock_should_work() {
 				assert_eq!(RelayerGame::stake_of(relayer), stake);
 				assert_eq!(
 					Ring::locks(relayer),
-					vec![OldBalanceLock {
+					vec![BalanceLock {
 						id: <Test as Config>::LockId::get(),
-						lock_for: LockFor::Common { amount: stake },
+						amount: stake,
 						reasons: Reasons::All
 					}]
 				);

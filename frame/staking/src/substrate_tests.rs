@@ -2010,14 +2010,7 @@ fn bond_with_no_staked_value() {
 				RewardDestination::Controller,
 				0,
 			));
-			assert_eq!(
-				if let LockFor::Common { amount } = &Ring::locks(&1)[0].lock_for {
-					*amount
-				} else {
-					unreachable!();
-				},
-				5
-			);
+			assert_eq!(Ring::locks(&1)[0].amount, 5);
 
 			// unbonding even 1 will cause all to be unbonded.
 			assert_ok!(Staking::unbond(Origin::signed(2), StakingBalance::RingBalance(1)));
