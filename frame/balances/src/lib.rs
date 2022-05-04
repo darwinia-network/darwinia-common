@@ -1004,7 +1004,7 @@ pub mod pallet {
 			for lock in Self::locks(who.borrow()).iter() {
 				let locked_amount = match &lock.lock_for {
 					LockFor::Common { amount } => *amount,
-					LockFor::Staking(staking_lock) => staking_lock.locked_amount(),
+					LockFor::Staking(staking_lock) => staking_lock.staking_amount + staking_lock.total_unbond(),
 				};
 				if lock.reasons == Reasons::All || lock.reasons == Reasons::Misc {
 					frozen_balance.misc = frozen_balance.misc.max(locked_amount);
