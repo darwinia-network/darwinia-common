@@ -18,13 +18,17 @@ where
 	// --- darwinia-network ---
 	use darwinia_support::balance::*;
 	// --- paritytech ---
-	use frame_support::WeakBoundedVec;
+	use frame_support::{log, WeakBoundedVec};
 	use sp_std::prelude::*;
+
+	let mut count = 0;
 
 	<Locks<T, I>>::translate::<
 		WeakBoundedVec<OldBalanceLock<T::Balance, T::BlockNumber>, T::MaxLocks>,
 		_,
 	>(|_, locks| {
+		count += 1;
+
 		Some(WeakBoundedVec::force_from(
 			locks
 				.into_inner()
@@ -41,5 +45,11 @@ where
 				.collect::<Vec<_>>(),
 			None,
 		))
+
+		if count % 100 == 0 {
+			log::info!("{} locks were migrated.", count);
+		}
 	});
+
+	log::info!("{} locks were migrated.", count);
 }
