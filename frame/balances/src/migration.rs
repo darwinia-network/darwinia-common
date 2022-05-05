@@ -29,6 +29,10 @@ where
 	>(|_, locks| {
 		count += 1;
 
+		if count % 100 == 0 {
+			log::info!("{} locks were migrated.", count);
+		}
+
 		Some(WeakBoundedVec::force_from(
 			locks
 				.into_inner()
@@ -45,10 +49,6 @@ where
 				.collect::<Vec<_>>(),
 			None,
 		))
-
-		if count % 100 == 0 {
-			log::info!("{} locks were migrated.", count);
-		}
 	});
 
 	log::info!("{} locks were migrated.", count);
