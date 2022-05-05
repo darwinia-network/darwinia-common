@@ -238,11 +238,7 @@ fn on_deposit_redeem_should_work() {
 			assert_eq!(Ring::free_balance(unbonded_account), deposit_amount);
 			assert_eq!(
 				Ring::locks(unbonded_account),
-				vec![OldBalanceLock {
-					id: STAKING_ID,
-					lock_for: LockFor::Common { amount: deposit_amount },
-					reasons: Reasons::All,
-				}]
+				vec![BalanceLock { id: STAKING_ID, amount: deposit_amount, reasons: Reasons::All }]
 			);
 			assert_eq!(Staking::bonded(unbonded_account).unwrap(), unbonded_account);
 			assert_eq!(Staking::payee(unbonded_account), RewardDestination::Stash);
@@ -290,9 +286,9 @@ fn on_deposit_redeem_should_work() {
 			assert_eq!(Ring::free_balance(bonded_account), 101 * COIN + deposit_amount);
 			assert_eq!(
 				Ring::locks(bonded_account),
-				vec![OldBalanceLock {
+				vec![BalanceLock {
 					id: STAKING_ID,
-					lock_for: LockFor::Common { amount: 50 * COIN + deposit_amount },
+					amount: 50 * COIN + deposit_amount,
 					reasons: Reasons::All,
 				}]
 			);

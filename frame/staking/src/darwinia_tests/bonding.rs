@@ -147,11 +147,7 @@ fn bond_kton_should_work() {
 			);
 			assert_eq!(
 				Kton::locks(&stash),
-				vec![OldBalanceLock {
-					id: STAKING_ID,
-					lock_for: LockFor::Common { amount: 10 * COIN },
-					reasons: Reasons::All
-				}]
+				vec![BalanceLock { id: STAKING_ID, amount: 10 * COIN, reasons: Reasons::All }]
 			);
 		}
 

@@ -546,7 +546,6 @@ pub mod pallet {
 		WeakBoundedVec,
 	};
 	use frame_system::pallet_prelude::*;
-	// --- paritytech ---
 	use sp_runtime::{
 		traits::{
 			AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedSub, MaybeSerializeDeserialize,
@@ -558,7 +557,7 @@ pub mod pallet {
 	// --- darwinia-network ---
 	use crate::weights::WeightInfo;
 	use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo;
-	use darwinia_support::{balance::*, impl_rpc, traits::BalanceInfo};
+	use darwinia_support::balance::*;
 
 	#[pallet::config]
 	pub trait Config<I: 'static = ()>: frame_system::Config {
@@ -691,7 +690,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::AccountId,
-		WeakBoundedVec<OldBalanceLock<T::Balance, T::BlockNumber>, T::MaxLocks>,
+		WeakBoundedVec<BalanceLock<T::Balance>, T::MaxLocks>,
 		ValueQuery,
 		GetDefault,
 		ConstU32<300_000>,
@@ -975,7 +974,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
-		impl_rpc! {
+		darwinia_support::impl_rpc! {
 			fn usable_balance_rpc(who: impl Borrow<T::AccountId>) -> RuntimeDispatchInfo<T::Balance> {
 				RuntimeDispatchInfo {
 					usable_balance: Self::usable_balance(who.borrow()),
@@ -1002,10 +1001,8 @@ pub mod pallet {
 		fn frozen_balance(who: impl Borrow<T::AccountId>) -> FrozenBalance<T::Balance> {
 			let mut frozen_balance = <FrozenBalance<T::Balance>>::zero();
 			for lock in Self::locks(who.borrow()).iter() {
-				let locked_amount = match &lock.lock_for {
-					LockFor::Common { amount } => *amount,
-					LockFor::Staking(staking_lock) => staking_lock.staking_amount + staking_lock.total_unbond(),
-				};
+				let locked_amount = lock.amount;
+
 				if lock.reasons == Reasons::All || lock.reasons == Reasons::Misc {
 					frozen_balance.misc = frozen_balance.misc.max(locked_amount);
 				}
@@ -1201,7 +1198,7 @@ pub mod pallet {
 		}
 
 		/// Update the account entry for `who`, given the locks.
-		fn update_locks(who: &T::AccountId, locks: &[OldBalanceLock<T::Balance, T::BlockNumber>]) {
+		fn update_locks(who: &T::AccountId, locks: &[BalanceLock<T::Balance>]) {
 			let bounded_locks = WeakBoundedVec::<_, T::MaxLocks>::force_from(
 				locks.to_vec(),
 				Some("Balances Update Locks"),
@@ -1856,11 +1853,7 @@ pub mod pallet {
 				return;
 			}
 
-			let mut new_lock = Some(OldBalanceLock {
-				id,
-				lock_for: LockFor::Common { amount },
-				reasons: reasons.into(),
-			});
+			let mut new_lock = Some(BalanceLock { id, amount, reasons: reasons.into() });
 			let mut locks = Self::locks(who)
 				.into_iter()
 				.filter_map(|l| if l.id == id { new_lock.take() } else { Some(l) })
@@ -1885,42 +1878,16 @@ pub mod pallet {
 				return;
 			}
 
-			let mut new_lock = Some(OldBalanceLock {
-				id,
-				lock_for: LockFor::Common { amount },
-				reasons: reasons.into(),
-			});
+			let mut new_lock = Some(BalanceLock { id, amount, reasons: reasons.into() });
 			let mut locks = Self::locks(who)
 				.into_iter()
 				.filter_map(|l| {
 					if l.id == id {
-						if let LockFor::Common { amount: a } = l.lock_for {
-							new_lock.take().map(|nl| OldBalanceLock {
-								id: l.id,
-								lock_for: {
-									match nl.lock_for {
-										// Only extend common lock type
-										LockFor::Common { amount: na } =>
-											LockFor::Common { amount: (a).max(na) },
-										// `StakingLock` was removed.
-										_ => {
-											frame_support::log::error!(
-												"Unreachable code balances/src/lib.rs:1908"
-											);
-
-											nl.lock_for
-										},
-									}
-								},
-								reasons: l.reasons | nl.reasons,
-							})
-						}
-						// `StakingLock` was removed.
-						else {
-							frame_support::log::error!("Unreachable code balances/src/lib.rs:1917");
-
-							Some(l)
-						}
+						new_lock.take().map(|nl| BalanceLock {
+							id: l.id,
+							amount: l.amount.max(nl.amount),
+							reasons: l.reasons | nl.reasons,
+						})
 					} else {
 						Some(l)
 					}
