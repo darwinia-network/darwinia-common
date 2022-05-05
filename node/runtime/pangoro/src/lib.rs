@@ -9,9 +9,6 @@ pub use pallets::*;
 pub mod bridges_message;
 pub use bridges_message::*;
 
-pub mod migrations;
-pub use migrations::*;
-
 pub mod wasm {
 	//! Make the WASM binary available.
 
@@ -28,6 +25,9 @@ pub mod wasm {
 	}
 }
 pub use wasm::*;
+
+mod migrations;
+use migrations::*;
 
 pub use darwinia_staking::{Forcing, StakerStatus};
 

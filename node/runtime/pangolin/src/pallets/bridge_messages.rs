@@ -42,7 +42,7 @@ impl Config<WithPangoroMessages> for Runtime {
 	type MaxUnconfirmedMessagesAtInboundLane = PangoroMaxUnconfirmedMessagesAtInboundLane;
 	type MaxUnrewardedRelayerEntriesAtInboundLane = PangoroMaxUnrewardedRelayerEntriesAtInboundLane;
 	type MessageDeliveryAndDispatchPayment =
-		FeeMarketPayment<Runtime, WithPangoroFeeMarket, Ring, RootAccountForPayments>;
+		FeeMarketPayment<Self, WithPangoroFeeMarket, Ring, RootAccountForPayments>;
 	type MessageDispatch = bm_pangoro::FromPangoroMessageDispatch;
 	type OnDeliveryConfirmed =
 		(Substrate2SubstrateIssuing, FeeMarketMessageConfirmedHandler<Self, WithPangoroFeeMarket>);
@@ -67,7 +67,7 @@ impl Config<WithPangolinParachainMessages> for Runtime {
 	type MaxUnrewardedRelayerEntriesAtInboundLane =
 		PangolinParachainMaxUnrewardedRelayerEntriesAtInboundLane;
 	type MessageDeliveryAndDispatchPayment =
-		FeeMarketPayment<Runtime, WithPangolinParachainFeeMarket, Ring, RootAccountForPayments>;
+		FeeMarketPayment<Self, WithPangolinParachainFeeMarket, Ring, RootAccountForPayments>;
 	type MessageDispatch = bm_pangolin_parachain::FromPangolinParachainMessageDispatch;
 	type OnDeliveryConfirmed = (
 		Substrate2SubstrateIssuing,
