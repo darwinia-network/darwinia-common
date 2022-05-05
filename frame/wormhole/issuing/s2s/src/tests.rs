@@ -24,9 +24,9 @@ use std::str::FromStr;
 use crate::{
 	*, {self as s2s_issuing},
 };
+use darwinia_evm_precompile_utils::test_helper::{AccountInfo, LegacyUnsignedTransaction};
 use dp_asset::{TokenMetadata, NATIVE_TOKEN_TYPE};
 use mock::*;
-
 // --- paritytech ---
 use frame_support::assert_ok;
 use frame_system::RawOrigin;

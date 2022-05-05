@@ -37,7 +37,7 @@ ethereum     = { version = "0.11.1", default-features = false, features = ["with
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 scale-info   = { version = "1.0", features = ["derive"] }
 # darwinia-network
-darwinia-balances = { path = "../../../../balances" }
+darwinia-balances             = { path = "../../../../balances" }
 darwinia-evm-precompile-utils = { path = "../utils", features = ["testing"] }
 # paritytech
 frame-system     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }

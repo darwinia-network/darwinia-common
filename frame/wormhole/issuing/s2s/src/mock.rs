@@ -48,9 +48,7 @@ use darwinia_ethereum::{
 use darwinia_evm::{EVMCurrencyAdapter, EnsureAddressTruncated, SubstrateBlockHashMapping};
 use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 use darwinia_evm_precompile_dispatch::Dispatch;
-pub use darwinia_evm_precompile_utils::test_helper::{
-	address_build, AccountInfo, LegacyUnsignedTransaction,
-};
+use darwinia_evm_precompile_utils::test_helper::{address_build, AccountInfo};
 use darwinia_support::{
 	evm::IntoAccountId,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
