@@ -115,11 +115,10 @@
 //! The Staking pallet uses the `LockableCurrency` trait to lock a stash account's funds:
 //!
 //! ```
-//! use frame_support::traits::WithdrawReasons;
+//! use frame_support::traits::{LockableCurrency, WithdrawReasons};
 //! use sp_runtime::traits::Bounded;
-//! use darwinia_support::balance::*;
 //! pub trait Config: frame_system::Config {
-//! 	type Currency: LockableCurrency<Self::AccountId, Moment=Self::BlockNumber>;
+//! 	type Currency: LockableCurrency<Self::AccountId>;
 //! }
 //! # struct StakingLedger<T: Config> {
 //! # 	stash: <T as frame_system::Config>::AccountId,
@@ -135,9 +134,7 @@
 //! 	T::Currency::set_lock(
 //! 		STAKING_ID,
 //! 		&ledger.stash,
-//! 		LockFor::Common {
-//! 			amount: ledger.total
-//! 			},
+//! 		ledger.total,
 //! 		WithdrawReasons::all()
 //! 	);
 //! 	// <Ledger<T>>::insert(controller, ledger); // Commented out as we don't have access to Staking's storage here.
@@ -162,6 +159,8 @@ mod tests;
 mod tests_local;
 #[cfg(test)]
 mod tests_reentrancy;
+
+pub mod migration;
 
 pub mod weights;
 pub use weights::WeightInfo;
@@ -195,7 +194,7 @@ pub mod pallet {
 				let a = Self::account(who);
 				// Liquid balance is what is neither reserved nor locked/frozen.
 				let liquid =
-					a.free().saturating_sub(Self::frozen_balance(who).frozen_for(LockReasons::All));
+					a.free().saturating_sub(Self::frozen_balance(who).frozen_for(Reasons::All));
 				if <frame_system::Pallet<T>>::can_dec_provider(who) && !keep_alive {
 					liquid
 				} else {
@@ -227,7 +226,7 @@ pub mod pallet {
 			fn can_hold(who: &T::AccountId, amount: T::Balance) -> bool {
 				let a = Self::account(who);
 				let min_balance = T::ExistentialDeposit::get()
-					.max(Self::frozen_balance(who).frozen_for(LockReasons::All));
+					.max(Self::frozen_balance(who).frozen_for(Reasons::All));
 				if a.reserved().checked_add(&amount).is_none() {
 					return false;
 				}
@@ -541,13 +540,12 @@ pub mod pallet {
 			fungible::Inspect,
 			tokens::{DepositConsequence, WithdrawConsequence},
 			BalanceStatus, Currency, ExistenceRequirement, Imbalance, LockIdentifier,
-			NamedReservableCurrency, OnUnbalanced, ReservableCurrency, SignedImbalance, StoredMap,
-			TryDrop, WithdrawReasons,
+			LockableCurrency, NamedReservableCurrency, OnUnbalanced, ReservableCurrency,
+			SignedImbalance, StoredMap, TryDrop, WithdrawReasons,
 		},
 		WeakBoundedVec,
 	};
 	use frame_system::pallet_prelude::*;
-	// --- paritytech ---
 	use sp_runtime::{
 		traits::{
 			AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedSub, MaybeSerializeDeserialize,
@@ -559,7 +557,7 @@ pub mod pallet {
 	// --- darwinia-network ---
 	use crate::weights::WeightInfo;
 	use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo;
-	use darwinia_support::{balance::*, impl_rpc, traits::BalanceInfo};
+	use darwinia_support::balance::*;
 
 	#[pallet::config]
 	pub trait Config<I: 'static = ()>: frame_system::Config {
@@ -692,7 +690,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::AccountId,
-		WeakBoundedVec<BalanceLock<T::Balance, T::BlockNumber>, T::MaxLocks>,
+		WeakBoundedVec<BalanceLock<T::Balance>, T::MaxLocks>,
 		ValueQuery,
 		GetDefault,
 		ConstU32<300_000>,
@@ -976,7 +974,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
-		impl_rpc! {
+		darwinia_support::impl_rpc! {
 			fn usable_balance_rpc(who: impl Borrow<T::AccountId>) -> RuntimeDispatchInfo<T::Balance> {
 				RuntimeDispatchInfo {
 					usable_balance: Self::usable_balance(who.borrow()),
@@ -991,19 +989,24 @@ pub mod pallet {
 			Self::account(who.borrow()).free()
 		}
 
+		/// Get the balance of an account that can be used for transfers, reservations, or any other
+		/// non-locking, non-transaction-fee activity. Will be at most `free_balance`.
+		pub fn usable_balance(who: &T::AccountId) -> T::Balance {
+			let account = Self::account(who);
+
+			account.usable(Reasons::Misc, Self::frozen_balance(who))
+		}
+
 		/// Get the frozen balance of an account.
 		fn frozen_balance(who: impl Borrow<T::AccountId>) -> FrozenBalance<T::Balance> {
-			let now = <frame_system::Pallet<T>>::block_number();
 			let mut frozen_balance = <FrozenBalance<T::Balance>>::zero();
 			for lock in Self::locks(who.borrow()).iter() {
-				let locked_amount = match &lock.lock_for {
-					LockFor::Common { amount } => *amount,
-					LockFor::Staking(staking_lock) => staking_lock.locked_amount(now),
-				};
-				if lock.lock_reasons == LockReasons::All || lock.lock_reasons == LockReasons::Misc {
+				let locked_amount = lock.amount;
+
+				if lock.reasons == Reasons::All || lock.reasons == Reasons::Misc {
 					frozen_balance.misc = frozen_balance.misc.max(locked_amount);
 				}
-				if lock.lock_reasons == LockReasons::All || lock.lock_reasons == LockReasons::Fee {
+				if lock.reasons == Reasons::All || lock.reasons == Reasons::Fee {
 					frozen_balance.fee = frozen_balance.fee.max(locked_amount);
 				}
 			}
@@ -1116,7 +1119,7 @@ pub mod pallet {
 			};
 
 			// Eventual free funds must be no less than the frozen balance.
-			let min_balance = Self::frozen_balance(who).frozen_for(LockReasons::All);
+			let min_balance = Self::frozen_balance(who).frozen_for(Reasons::All);
 			if new_free_balance < min_balance {
 				return WithdrawConsequence::Frozen;
 			}
@@ -1195,7 +1198,7 @@ pub mod pallet {
 		}
 
 		/// Update the account entry for `who`, given the locks.
-		fn update_locks(who: &T::AccountId, locks: &[BalanceLock<T::Balance, T::BlockNumber>]) {
+		fn update_locks(who: &T::AccountId, locks: &[BalanceLock<T::Balance>]) {
 			let bounded_locks = WeakBoundedVec::<_, T::MaxLocks>::force_from(
 				locks.to_vec(),
 				Some("Balances Update Locks"),
@@ -1843,26 +1846,23 @@ pub mod pallet {
 		fn set_lock(
 			id: LockIdentifier,
 			who: &T::AccountId,
-			lock_for: LockFor<Self::Balance, Self::Moment>,
+			amount: T::Balance,
 			reasons: WithdrawReasons,
 		) {
-			if match &lock_for {
-				LockFor::Common { amount } => *amount,
-				LockFor::Staking(staking_lock) =>
-					staking_lock.locked_amount(<frame_system::Pallet<T>>::block_number()),
-			}
-			.is_zero() || reasons.is_empty()
-			{
+			if amount.is_zero() || reasons.is_empty() {
 				return;
 			}
-			let mut new_lock = Some(BalanceLock { id, lock_for, lock_reasons: reasons.into() });
+
+			let mut new_lock = Some(BalanceLock { id, amount, reasons: reasons.into() });
 			let mut locks = Self::locks(who)
 				.into_iter()
 				.filter_map(|l| if l.id == id { new_lock.take() } else { Some(l) })
 				.collect::<Vec<_>>();
+
 			if let Some(lock) = new_lock {
 				locks.push(lock)
 			}
+
 			Self::update_locks(who, &locks);
 		}
 
@@ -1873,63 +1873,32 @@ pub mod pallet {
 			who: &T::AccountId,
 			amount: T::Balance,
 			reasons: WithdrawReasons,
-		) -> DispatchResult {
+		) {
 			if amount.is_zero() || reasons.is_empty() {
-				return Ok(());
+				return;
 			}
 
-			let mut new_lock = Some(BalanceLock {
-				id,
-				lock_for: LockFor::Common { amount },
-				lock_reasons: reasons.into(),
-			});
-			let mut poisoned = false;
+			let mut new_lock = Some(BalanceLock { id, amount, reasons: reasons.into() });
 			let mut locks = Self::locks(who)
 				.into_iter()
 				.filter_map(|l| {
 					if l.id == id {
-						if let LockFor::Common { amount: a } = l.lock_for {
-							new_lock.take().map(|nl| BalanceLock {
-								id: l.id,
-								lock_for: {
-									match nl.lock_for {
-										// Only extend common lock type
-										LockFor::Common { amount: na } =>
-											LockFor::Common { amount: (a).max(na) },
-										// Not allow to extend other combination/type lock
-										//
-										// And the lock is always with lock id
-										// it's impossible to match a (other lock, common lock)
-										// under this if condition
-										_ => {
-											poisoned = true;
-
-											nl.lock_for
-										},
-									}
-								},
-								lock_reasons: l.lock_reasons | nl.lock_reasons,
-							})
-						} else {
-							Some(l)
-						}
+						new_lock.take().map(|nl| BalanceLock {
+							id: l.id,
+							amount: l.amount.max(nl.amount),
+							reasons: l.reasons | nl.reasons,
+						})
 					} else {
 						Some(l)
 					}
 				})
 				.collect::<Vec<_>>();
 
-			if poisoned {
-				Err(<Error<T, I>>::LockP)?;
-			}
-
 			if let Some(lock) = new_lock {
 				locks.push(lock)
 			}
 
 			Self::update_locks(who, &locks);
-
-			Ok(())
 		}
 
 		fn remove_lock(id: LockIdentifier, who: &T::AccountId) {
@@ -1938,22 +1907,6 @@ pub mod pallet {
 			locks.retain(|l| l.id != id);
 
 			Self::update_locks(who, &locks);
-		}
-
-		/// Get the balance of an account that can be used for transfers, reservations, or any other
-		/// non-locking, non-transaction-fee activity. Will be at most `free_balance`.
-		fn usable_balance(who: &T::AccountId) -> Self::Balance {
-			let account = Self::account(who);
-
-			account.usable(LockReasons::Misc, Self::frozen_balance(who))
-		}
-
-		/// Get the balance of an account that can be used for paying transaction fees (not tipping,
-		/// or any other kind of fees, though). Will be at most `free_balance`.
-		fn usable_balance_for_fees(who: &T::AccountId) -> Self::Balance {
-			let account = Self::account(who);
-
-			account.usable(LockReasons::Fee, Self::frozen_balance(who))
 		}
 	}
 
@@ -2241,14 +2194,3 @@ pub mod pallet {
 	}
 }
 pub use pallet::{imbalances::*, *};
-
-pub mod migration {
-	#[cfg(feature = "try-runtime")]
-	pub mod try_runtime {
-		pub fn pre_migrate() -> Result<(), &'static str> {
-			Ok(())
-		}
-	}
-
-	pub fn migrate() {}
-}

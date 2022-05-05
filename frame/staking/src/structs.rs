@@ -122,12 +122,9 @@ where
 	BlockNumber: Copy + PartialOrd,
 	TsInMs: PartialOrd,
 {
-	pub fn ring_locked_amount_at(&self, at: BlockNumber) -> RingBalance {
-		self.ring_staking_lock.locked_amount(at)
-	}
-
-	pub fn kton_locked_amount_at(&self, at: BlockNumber) -> KtonBalance {
-		self.kton_staking_lock.locked_amount(at)
+	pub fn consolidate_unbondings(&mut self, now: BlockNumber) {
+		self.ring_staking_lock.refresh(now);
+		self.kton_staking_lock.refresh(now);
 	}
 
 	/// Re-bond funds that were scheduled for unlocking.

@@ -37,7 +37,7 @@ use bp_messages::{LaneId, MessageNonce};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
-	traits::{Currency, Get, LockIdentifier, WithdrawReasons},
+	traits::{Currency, Get, LockIdentifier, LockableCurrency, WithdrawReasons},
 	transactional, PalletId,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
@@ -47,7 +47,6 @@ use sp_runtime::{
 };
 use sp_std::vec::Vec;
 // --- darwinia-network ---
-use darwinia_support::balance::{LockFor, LockableCurrency};
 use types::{Order, Relayer, SlashReport};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -217,7 +216,7 @@ pub mod pallet {
 			T::RingCurrency::set_lock(
 				T::LockId::get(),
 				&who,
-				LockFor::Common { amount: lock_collateral },
+				lock_collateral,
 				WithdrawReasons::all(),
 			);
 			// Store enrollment detail information.
@@ -249,7 +248,7 @@ pub mod pallet {
 				T::RingCurrency::set_lock(
 					T::LockId::get(),
 					&who,
-					LockFor::Common { amount: new_collateral },
+					new_collateral,
 					WithdrawReasons::all(),
 				);
 			} else {
@@ -264,7 +263,7 @@ pub mod pallet {
 					T::RingCurrency::set_lock(
 						T::LockId::get(),
 						&who,
-						LockFor::Common { amount: new_collateral },
+						new_collateral,
 						WithdrawReasons::all(),
 					);
 				}
@@ -377,12 +376,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		new_collateral: RingBalance<T, I>,
 		report: SlashReport<T::AccountId, T::BlockNumber, RingBalance<T, I>>,
 	) {
-		T::RingCurrency::set_lock(
-			T::LockId::get(),
-			&who,
-			LockFor::Common { amount: new_collateral },
-			WithdrawReasons::all(),
-		);
+		T::RingCurrency::set_lock(T::LockId::get(), &who, new_collateral, WithdrawReasons::all());
 		<RelayersMap<T, I>>::mutate(who.clone(), |relayer| {
 			relayer.collateral = new_collateral;
 		});

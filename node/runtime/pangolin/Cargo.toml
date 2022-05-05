@@ -25,8 +25,6 @@ darwinia-beefy-gadget                   = { default-features = false, path = "..
 darwinia-beefy-primitives               = { path = "../../../primitives/beefy" }
 darwinia-bridge-ethereum                = { default-features = false, path = "../../../frame/bridge/ethereum" }
 darwinia-claims                         = { default-features = false, path = "../../../frame/claims" }
-darwinia-democracy                      = { default-features = false, path = "../../../frame/democracy" }
-darwinia-elections-phragmen             = { default-features = false, path = "../../../frame/elections-phragmen" }
 darwinia-ethereum                       = { default-features = false, path = "../../../frame/dvm/ethereum" }
 darwinia-evm                            = { default-features = false, path = "../../../frame/dvm/evm" }
 darwinia-evm-precompile-bridge-ethereum = { default-features = false, path = "../../../frame/dvm/evm/precompiles/bridge/ethereum" }
@@ -42,7 +40,6 @@ darwinia-relayer-game                   = { default-features = false, path = "..
 darwinia-staking                        = { default-features = false, path = "../../../frame/staking" }
 darwinia-staking-rpc-runtime-api        = { default-features = false, path = "../../../frame/staking/rpc/runtime-api" }
 darwinia-support                        = { default-features = false, path = "../../../frame/support" }
-darwinia-vesting                        = { default-features = false, path = "../../../frame/vesting" }
 dp-asset                                = { default-features = false, path = "../../../primitives/asset" }
 dp-contract                             = { default-features = false, path = "../../../primitives/contract" }
 dp-evm-tracer                           = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
@@ -84,7 +81,9 @@ pallet-bridge-grandpa                      = { default-features = false, git = "
 pallet-bridge-messages                     = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
 pallet-bridge-parachains                   = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
 pallet-collective                          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+pallet-democracy                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 pallet-election-provider-multi-phase       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+pallet-elections-phragmen                  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 pallet-grandpa                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 pallet-identity                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 pallet-im-online                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
@@ -105,6 +104,7 @@ pallet-transaction-payment                 = { default-features = false, git = "
 pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 pallet-treasury                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 pallet-utility                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+pallet-vesting                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 sp-api                                     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 sp-authority-discovery                     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 sp-block-builder                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
@@ -148,8 +148,6 @@ std = [
 	"darwinia-beefy-gadget/std",
 	"darwinia-bridge-ethereum/std",
 	"darwinia-claims/std",
-	"darwinia-democracy/std",
-	"darwinia-elections-phragmen/std",
 	"darwinia-ethereum/std",
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-bridge-ethereum/std",
@@ -165,7 +163,6 @@ std = [
 	"darwinia-staking/std",
 	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",
-	"darwinia-vesting/std",
 	"dp-asset/std",
 	"dp-contract/std",
 	"dp-evm-tracer/std",
@@ -207,6 +204,8 @@ std = [
 	"pallet-bridge-messages/std",
 	"pallet-bridge-parachains/std",
 	"pallet-collective/std",
+	"pallet-democracy/std",
+	"pallet-elections-phragmen/std",
 	"pallet-election-provider-multi-phase/std",
 	"pallet-grandpa/std",
 	"pallet-identity/std",
@@ -228,6 +227,7 @@ std = [
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-treasury/std",
 	"pallet-utility/std",
+	"pallet-vesting/std",
 	"sp-api/std",
 	"sp-authority-discovery/std",
 	"sp-block-builder/std",
@@ -277,7 +277,6 @@ try-runtime = [
 	"frame-try-runtime",
 	# darwinia-network
 	"darwinia-balances/try-runtime",
-	"darwinia-elections-phragmen/try-runtime",
 	"darwinia-ethereum/try-runtime",
 	"darwinia-header-mmr/try-runtime",
 	"darwinia-staking/try-runtime",

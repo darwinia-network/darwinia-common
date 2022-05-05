@@ -38,7 +38,6 @@ sp-std                          = { default-features = false, git = "https://git
 rand_chacha = { version = "0.3" }
 # darwinia-network
 darwinia-balances = { path = "../../frame/balances" }
-darwinia-support  = { features = ["easy-testing"], path = "../support" }
 # paritytech
 frame-benchmarking              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 frame-election-provider-support = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }

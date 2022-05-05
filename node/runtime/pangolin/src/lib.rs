@@ -178,10 +178,10 @@ frame_support::construct_runtime! {
 		HeaderMMR: darwinia_header_mmr::{Pallet, Storage} = 16,
 
 		// Governance stuff; uncallable initially.
-		Democracy: darwinia_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 17,
+		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 17,
 		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 18,
 		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 19,
-		PhragmenElection: darwinia_elections_phragmen::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
+		PhragmenElection: pallet_elections_phragmen::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
 		TechnicalMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 21,
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 22,
 		KtonTreasury: pallet_treasury::<Instance2>::{Pallet, Call, Storage, Config, Event<T>} = 50,
@@ -194,7 +194,7 @@ frame_support::construct_runtime! {
 		Claims: darwinia_claims::{Pallet, Call, Storage, Config, Event<T>, ValidateUnsigned} = 24,
 
 		// Vesting. Usable initially, but removed once all vesting is finished.
-		Vesting: darwinia_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 25,
+		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 25,
 
 		// Utility module.
 		Utility: pallet_utility::{Pallet, Call, Event} = 26,
