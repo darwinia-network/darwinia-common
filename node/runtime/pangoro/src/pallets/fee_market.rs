@@ -10,7 +10,11 @@ use crate::*;
 use darwinia_fee_market::{Config, RingBalance, Slasher};
 
 pub struct FeeMarketSlasher;
-impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
+impl<T, I> Slasher<T, I> for FeeMarketSlasher
+where
+	T: Config<I>,
+	I: 'static,
+{
 	fn slash(locked_collateral: RingBalance<T, I>, timeout: T::BlockNumber) -> RingBalance<T, I> {
 		let slash_each_block = 2 * COIN;
 		let slash_value = UniqueSaturatedInto::<Balance>::unique_saturated_into(timeout)
