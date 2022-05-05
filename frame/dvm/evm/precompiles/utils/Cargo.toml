@@ -57,7 +57,7 @@ testing = [
 	"rlp",
 	"sha3/std",
 	# darwinia-network
-	# "darwinia-ethereum",
+	"darwinia-ethereum",
 	# paritytech
 	"sp-runtime/std",
 ]
