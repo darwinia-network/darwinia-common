@@ -42,7 +42,7 @@ fn alice_create(alice: &AccountInfo, input: Vec<u8>, nonce: u32) {
 		value: U256::zero(),
 		input,
 	}
-	.sign(&alice.private_key);
+	.sign_with_chain_id(&alice.private_key, 42);
 	assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 }
 
@@ -56,7 +56,7 @@ fn alice_call(alice: &AccountInfo, input: Vec<u8>, nonce: u32, contract: H160, v
 		value: U256::from(value),
 		input,
 	}
-	.sign(&alice.private_key);
+	.sign_with_chain_id(&alice.private_key, 42);
 	assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 }
 
