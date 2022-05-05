@@ -23,16 +23,18 @@ sp-runtime = { default-features = false, git = "https://github.com/darwinia-netw
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
 
 [dev-dependencies]
-codec          = { package = "parity-scale-codec", version = "2.3" }
-darwinia-ethereum = { path = "../../../ethereum" }
-scale-info   = { version = "1.0", features = ["derive"] }
-ethabi         = { version = "15.0" }
-array-bytes    = { version = "1.4" }
+# crates.io
+array-bytes  = { version = "1.4" }
+codec        = { package = "parity-scale-codec", version = "2.3" }
+ethabi       = { version = "15.0" }
 ethereum     = { version = "0.11.1", features = ["with-codec"] }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
+scale-info   = { version = "1.0", features = ["derive"] }
 # darwinia-network
-darwinia-balances = { path = "../../../../balances" }
-darwinia-support  = { path = "../../../../support" }
+darwinia-balances             = { path = "../../../../balances" }
+darwinia-ethereum             = { path = "../../../ethereum" }
+darwinia-evm-precompile-utils = { path = "../utils", features = ["testing"] }
+darwinia-support              = { path = "../../../../support" }
 # paritytech
 frame-support    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 frame-system     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
@@ -42,10 +44,9 @@ sp-io            = { git = "https://github.com/darwinia-network/substrate", bran
 sp-runtime       = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 sp-std           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 # frontier
-fp-self-contained            = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
-pallet-evm                   = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
+fp-self-contained = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
+pallet-evm        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
 
-darwinia-evm-precompile-utils = { default-features = false, path = "../utils", features = ["testing"] }
 
 [features]
 default = ["std"]

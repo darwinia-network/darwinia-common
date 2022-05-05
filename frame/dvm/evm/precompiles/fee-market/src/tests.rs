@@ -45,7 +45,7 @@ use sp_std::{marker::PhantomData, prelude::*};
 use crate::FeeMarket;
 use darwinia_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
-	IntermediateStateRoot, Transaction,
+	IntermediateStateRoot,
 };
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
 use darwinia_evm_precompile_utils::test_helper::{
@@ -410,10 +410,10 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use darwinia_ethereum::Transaction;
-	// --- paritytech ---
+	// --- crates.io ---
 	use array_bytes::{bytes2hex, hex2bytes_unchecked};
 	use ethabi::StateMutability;
+	// --- paritytech ---
 	use fp_evm::CallOrCreateInfo;
 	use frame_support::assert_ok;
 	use sp_core::{H160, U256};
@@ -439,57 +439,44 @@ mod tests {
 
 	const BYTECODE: &'static str = "0x608060405234801561001057600080fd5b50610183806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c80635d2b05d61461003b57806387ff12b914610060575b600080fd5b610043610068565b60405167ffffffffffffffff909116815260200160405180910390f35b6100436100d7565b60008060019050806001600160a01b0316636673cb7a6040518163ffffffff1660e01b8152600401602060405180830381865afa1580156100ad573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906100d1919061011c565b91505090565b60008060029050806001600160a01b0316636673cb7a6040518163ffffffff1660e01b8152600401602060405180830381865afa1580156100ad573d6000803e3d6000fd5b60006020828403121561012e57600080fd5b815167ffffffffffffffff8116811461014657600080fd5b939250505056fea26469706673582212206b2f0c27a267a7c87c2deaa1c5086ca879a604b687b102788ddd800727ffdcb264736f6c634300080d0033";
 
-	fn deploy_contract(account: &AccountInfo) -> Transaction {
-		let unsigned_tx = LegacyUnsignedTransaction {
-			nonce: U256::zero(),
-			gas_price: U256::from(1),
-			gas_limit: U256::from(0x100000),
-			action: ethereum::TransactionAction::Create,
-			value: U256::zero(),
-			input: hex2bytes_unchecked(BYTECODE),
-		};
-		// TODO: update the chainId
-		unsigned_tx.sign_with_chain_id(&account.private_key, 42)
-	}
-
 	#[test]
-	fn test_precompile_fetch_market_fee() {
+	fn fetch_market_fee_in_multi_instance() {
 		let (pairs, mut ext) = new_test_ext(7);
 		let (a1, b1, c1, d1, e1, f1, g1) =
 			(&pairs[0], &pairs[1], &pairs[2], &pairs[3], &pairs[4], &pairs[5], &pairs[6]);
 		ext.execute_with(|| {
-			FeeMarketInstance1::enroll_and_lock_collateral(
+			assert_ok!(FeeMarketInstance1::enroll_and_lock_collateral(
 				Origin::signed(a1.clone().account_id),
 				100,
 				None,
-			);
-			FeeMarketInstance1::enroll_and_lock_collateral(
+			));
+			assert_ok!(FeeMarketInstance1::enroll_and_lock_collateral(
 				Origin::signed(b1.clone().account_id),
 				100,
 				Some(20),
-			);
-			FeeMarketInstance1::enroll_and_lock_collateral(
+			));
+			assert_ok!(FeeMarketInstance1::enroll_and_lock_collateral(
 				Origin::signed(c1.clone().account_id),
 				100,
 				Some(30),
-			);
+			));
 			assert_eq!(FeeMarketInstance1::market_fee(), Some(30));
 
-			FeeMarketInstance2::enroll_and_lock_collateral(
+			assert_ok!(FeeMarketInstance2::enroll_and_lock_collateral(
 				Origin::signed(d1.clone().account_id),
 				100,
 				None,
-			);
-			FeeMarketInstance2::enroll_and_lock_collateral(
+			));
+			assert_ok!(FeeMarketInstance2::enroll_and_lock_collateral(
 				Origin::signed(e1.clone().account_id),
 				100,
 				Some(40),
-			);
-			FeeMarketInstance2::enroll_and_lock_collateral(
+			));
+			assert_ok!(FeeMarketInstance2::enroll_and_lock_collateral(
 				Origin::signed(f1.clone().account_id),
 				100,
 				Some(50),
-			);
+			));
 			assert_eq!(FeeMarketInstance2::market_fee(), Some(50));
 
 			// Deploy test contract

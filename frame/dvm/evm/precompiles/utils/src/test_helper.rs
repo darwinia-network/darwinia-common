@@ -18,11 +18,14 @@
 
 //! Test utilities
 
-use darwinia_ethereum::Transaction;
+// --- crates.io ---
 use ethabi::{Bytes, Function, Param, Result, StateMutability, Token};
 use ethereum::{TransactionAction, TransactionSignature};
 use rlp::RlpStream;
 use sha3::{Digest, Keccak256};
+// --- darwinia-network ---
+use darwinia_ethereum::Transaction;
+// --- paritytech ---
 use sp_core::{H160, H256, U256};
 use sp_runtime::AccountId32;
 
@@ -135,6 +138,7 @@ pub fn create_function_encode_bytes(
 	state_mutability: StateMutability,
 	tokens: &[Token],
 ) -> Result<Bytes> {
+	#[allow(deprecated)]
 	let function = Function { name, inputs, outputs, constant, state_mutability };
 	function.encode_input(tokens)
 }
