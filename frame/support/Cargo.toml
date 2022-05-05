@@ -42,6 +42,7 @@ std = [
 	"ethereum-primitives/std",
 	# paritytech
 	"frame-support/std",
+	"frame-system/std",
 	"pallet-balances/std",
 	"bp-messages/std",
 	"bp-runtime/std",
