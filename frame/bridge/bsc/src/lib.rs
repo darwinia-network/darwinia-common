@@ -18,8 +18,8 @@
 
 //! # Ethereum BSC(Binance Smart Chain) Pallet
 //!
-//! The darwinia-bridge-bsc pallet provides functionality for verifying headers which submitted by relayer and finalized
-//! authority set
+//! The darwinia-bridge-bsc pallet provides functionality for verifying headers which submitted by
+//! relayer and finalized authority set
 //!
 //! - [`Config`]
 //! - [`Call`]
@@ -36,24 +36,26 @@
 //!
 //! - [`BscHeader`]: The header structure of Binance Smart Chain.
 //!
-//! - `genesis_header` The initial header which set to this pallet before it accepts the headers submitted by relayers.
-//!   We extract the initial authority set from this header and verify the headers submitted later with the extracted initial
-//!   authority set. So the genesis_header must be verified manually.
+//! - `genesis_header` The initial header which set to this pallet before it accepts the headers
+//!   submitted by relayers. We extract the initial authority set from this header and verify the
+//!   headers submitted later with the extracted initial authority set. So the genesis_header must
+//!   be verified manually.
 //!
 //!
-//! - `checkpoint` checkpoint is the block that fulfill block number % epoch_length == 0. This concept comes from the implementation of
-//!   Proof of Authority consensus algorithm
+//! - `checkpoint` checkpoint is the block that fulfill block number % epoch_length == 0. This
+//!   concept comes from the implementation of Proof of Authority consensus algorithm
 //!
 //! ### Implementations
-//! If you want to review the code, you may need to read about Authority Round and Proof of Authority consensus algorithms first. Then you may
-//! look into the go implementation of bsc source code and probably focus on the consensus algorithm that bsc is using. Read the bsc official docs if you need them.
-//! For this pallet:
-//! The first thing you should care about is the configuration parameters of this pallet. Check the bsc official docs even the go source code to make sure you set them
-//! correctly
-//! In bsc explorer, choose a checkpoint block's header to set as the genesis header of this pallet. It's not important which block you take, but it's important
-//! that the relayers should submit headers from `genesis_header.number + epoch_length`
-//! Probably you need a tool to finish this, like POSTMAN
-//! For bsc testnet, you can access API https://data-seed-prebsc-1-s1.binance.org:8545 with
+//! If you want to review the code, you may need to read about Authority Round and Proof of
+//! Authority consensus algorithms first. Then you may look into the go implementation of bsc source
+//! code and probably focus on the consensus algorithm that bsc is using. Read the bsc official docs
+//! if you need them. For this pallet:
+//! The first thing you should care about is the configuration parameters of this pallet. Check the
+//! bsc official docs even the go source code to make sure you set them correctly
+//! In bsc explorer, choose a checkpoint block's header to set as the genesis header of this pallet.
+//! It's not important which block you take, but it's important that the relayers should submit
+//! headers from `genesis_header.number + epoch_length` Probably you need a tool to finish this,
+//! like POSTMAN For bsc testnet, you can access API https://data-seed-prebsc-1-s1.binance.org:8545 with
 //! following body input to get the header content.
 //! ```json
 //! {
@@ -65,9 +67,11 @@
 //!    ],
 //!    "id": 83
 //! }
-//!```
-//! According to the official doc of Binance Smart Chain, when the authority set changed at checkpoint header, the new authority set is not taken as finalized immediately.
-//! We will wait(accept and verify) N / 2 blocks(only headers) to make sure it's safe to finalize the new authority set. N is the authority set size.
+//! ```
+//! According to the official doc of Binance Smart Chain, when the authority set changed at
+//! checkpoint header, the new authority set is not taken as finalized immediately.
+//! We will wait(accept and verify) N / 2 blocks(only headers) to make sure it's safe to finalize
+//! the new authority set. N is the authority set size.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -160,7 +164,8 @@ pub mod pallet {
 		/// their extra-data fields
 		ExtraValidators,
 
-		/// UnknownAncestor is returned when validating a block requires an ancestor that is unknown.
+		/// UnknownAncestor is returned when validating a block requires an ancestor that is
+		/// unknown.
 		UnknownAncestor,
 		/// Header timestamp too close while header timestamp is too close with parent's
 		HeaderTimestampTooClose,
@@ -187,14 +192,15 @@ pub mod pallet {
 	#[pallet::getter(fn finalized_checkpoint)]
 	pub type FinalizedCheckpoint<T> = StorageValue<_, BscHeader, ValueQuery>;
 
-	/// [`Authorities`] is the set of qualified authorities that currently active or activated in previous rounds
-	/// this was added to track the older qualified authorities, to make sure we can verify a older header
+	/// [`Authorities`] is the set of qualified authorities that currently active or activated in
+	/// previous rounds this was added to track the older qualified authorities, to make sure we can
+	/// verify a older header
 	#[pallet::storage]
 	#[pallet::getter(fn authorities)]
 	pub type Authorities<T> = StorageValue<_, Vec<Address>, ValueQuery>;
 
-	/// [`AuthoritiesOfRound`] use a `Map<u64, Vec<u32>>` structure to track the active authorities in every epoch
-	/// the key is `checkpoint.number / epoch_length`
+	/// [`AuthoritiesOfRound`] use a `Map<u64, Vec<u32>>` structure to track the active authorities
+	/// in every epoch the key is `checkpoint.number / epoch_length`
 	/// the value is the index of authorities which extracted from checkpoint block header
 	/// So the the order of authorities vector **MUST** be stable.
 	#[pallet::storage]
@@ -240,12 +246,12 @@ pub mod pallet {
 						submitter,
 						&new_authority_set,
 					);
-				}
+				},
 				e => {
 					T::OnHeadersSubmitted::on_invalid_headers_submitted(submitter);
 
 					e?;
-				}
+				},
 			}
 
 			Ok(().into())
@@ -268,16 +274,10 @@ pub mod pallet {
 					&& header.gas_limit <= config.max_gas_limit,
 				<Error<T>>::InvalidGasLimit
 			);
-			ensure!(
-				header.gas_used <= header.gas_limit,
-				<Error<T>>::TooMuchGasUsed
-			);
+			ensure!(header.gas_used <= header.gas_limit, <Error<T>>::TooMuchGasUsed);
 
 			// Ensure that the block doesn't contain any uncles which are meaningless in PoA
-			ensure!(
-				header.uncle_hash == KECCAK_EMPTY_LIST_RLP,
-				<Error<T>>::InvalidUncleHash
-			);
+			ensure!(header.uncle_hash == KECCAK_EMPTY_LIST_RLP, <Error<T>>::InvalidUncleHash);
 
 			// Ensure difficulty is valid
 			ensure!(
@@ -291,25 +291,20 @@ pub mod pallet {
 			ensure!(header.mix_digest.is_zero(), <Error<T>>::InvalidMixDigest);
 
 			// Check that the extra-data contains the vanity, validators and signature.
-			ensure!(
-				header.extra_data.len() > VANITY_LENGTH,
-				<Error<T>>::MissingVanity
-			);
+			ensure!(header.extra_data.len() > VANITY_LENGTH, <Error<T>>::MissingVanity);
 
 			let validator_bytes_len = header
 				.extra_data
 				.len()
 				.checked_sub(VANITY_LENGTH + SIGNATURE_LENGTH)
 				.ok_or(<Error<T>>::MissingSignature)?;
-			// Ensure that the extra-data contains a validator list on checkpoint, but none otherwise
+			// Ensure that the extra-data contains a validator list on checkpoint, but none
+			// otherwise
 			let is_checkpoint = header.number % config.epoch_length == 0;
 
 			if is_checkpoint {
 				// Checkpoint blocks must at least contain one validator
-				ensure!(
-					validator_bytes_len != 0,
-					<Error<T>>::InvalidCheckpointValidators
-				);
+				ensure!(validator_bytes_len != 0, <Error<T>>::InvalidCheckpointValidators);
 				// Ensure that the validator bytes length is valid
 				ensure!(
 					validator_bytes_len % ADDRESS_LENGTH == 0,
@@ -350,10 +345,7 @@ pub mod pallet {
 			let data = &header.extra_data;
 
 			ensure!(data.len() > VANITY_LENGTH, <Error<T>>::MissingVanity);
-			ensure!(
-				data.len() >= VANITY_LENGTH + SIGNATURE_LENGTH,
-				<Error<T>>::MissingSignature
-			);
+			ensure!(data.len() >= VANITY_LENGTH + SIGNATURE_LENGTH, <Error<T>>::MissingSignature);
 
 			// Split `signed_extra data` and `signature`
 			let (signed_data_slice, signature_slice) = data.split_at(data.len() - SIGNATURE_LENGTH);
@@ -388,18 +380,12 @@ pub mod pallet {
 		pub fn extract_authorities(header: &BscHeader) -> Result<Vec<Address>, DispatchError> {
 			let data = &header.extra_data;
 
-			ensure!(
-				data.len() > VANITY_LENGTH + SIGNATURE_LENGTH,
-				<Error<T>>::CheckpointNoSigner
-			);
+			ensure!(data.len() > VANITY_LENGTH + SIGNATURE_LENGTH, <Error<T>>::CheckpointNoSigner);
 
 			// extract only the portion of extra_data which includes the signer list
 			let signers_raw = &data[VANITY_LENGTH..data.len() - SIGNATURE_LENGTH];
 
-			ensure!(
-				signers_raw.len() % ADDRESS_LENGTH == 0,
-				<Error<T>>::CheckpointInvalidSigners
-			);
+			ensure!(signers_raw.len() % ADDRESS_LENGTH == 0, <Error<T>>::CheckpointInvalidSigners);
 
 			let num_signers = signers_raw.len() / ADDRESS_LENGTH;
 			let signers: Vec<Address> = (0..num_signers)
@@ -423,28 +409,22 @@ pub mod pallet {
 
 			// ensure valid length
 			// we should submit at least `N / 2 + 1` headers
-			ensure!(
-				last_authority_set.len() / 2 < headers.len(),
-				<Error::<T>>::InvalidHeadersSize
-			);
+			ensure!(last_authority_set.len() / 2 < headers.len(), <Error::<T>>::InvalidHeadersSize);
 
 			let last_checkpoint = <FinalizedCheckpoint<T>>::get();
 			let checkpoint = &headers[0];
 			let cfg = T::BscConfiguration::get();
 
 			// ensure valid header number
-			// the first group headers that relayer submitted should exactly follow the initial checkpoint
-			// eg. the initial header number is x, the first call of this extrinsic should submit
-			// headers with numbers [x + epoch_length, x + epoch_length + 1, ...]
+			// the first group headers that relayer submitted should exactly follow the initial
+			// checkpoint eg. the initial header number is x, the first call of this extrinsic
+			// should submit headers with numbers [x + epoch_length, x + epoch_length + 1, ...]
 			ensure!(
 				last_checkpoint.number + cfg.epoch_length == checkpoint.number,
 				<Error::<T>>::RidiculousNumber
 			);
 			// ensure first element is checkpoint block header
-			ensure!(
-				checkpoint.number % cfg.epoch_length == 0,
-				<Error::<T>>::NotCheckpoint
-			);
+			ensure!(checkpoint.number % cfg.epoch_length == 0, <Error::<T>>::NotCheckpoint);
 
 			// verify checkpoint
 			// basic checks
@@ -453,10 +433,7 @@ pub mod pallet {
 			// check signer
 			let signer = Self::recover_creator(cfg.chain_id, checkpoint)?;
 
-			ensure!(
-				contains(&last_authority_set, signer),
-				<Error::<T>>::InvalidSigner
-			);
+			ensure!(contains(&last_authority_set, signer), <Error::<T>>::InvalidSigner);
 
 			// extract new authority set from submitted checkpoint header
 			let new_authority_set = Self::extract_authorities(checkpoint)?;
@@ -472,10 +449,7 @@ pub mod pallet {
 				let signer = Self::recover_creator(cfg.chain_id, &headers[i])?;
 
 				// signed must in last authority set
-				ensure!(
-					contains(&last_authority_set, signer),
-					<Error::<T>>::InvalidSigner
-				);
+				ensure!(contains(&last_authority_set, signer), <Error::<T>>::InvalidSigner);
 				// headers submitted must signed by different authority
 				ensure!(!recently.contains(&signer), <Error::<T>>::SignedRecently);
 
@@ -495,9 +469,8 @@ pub mod pallet {
 						if !contains(&authorities, *authority) {
 							authorities.push(*authority);
 						}
-						if let Some(i) = authorities
-							.iter()
-							.position(|authority_| authority_ == authority)
+						if let Some(i) =
+							authorities.iter().position(|authority_| authority_ == authority)
 						{
 							indexes.push(i as u32);
 						}
@@ -526,10 +499,10 @@ pub mod pallet {
 	pub trait OnHeadersSubmitted<AccountId> {
 		/// Called when valid headers have been submitted.
 		///
-		/// The submitter **must not** be rewarded for submitting valid headers, because greedy authority
-		/// could produce and submit multiple valid headers (without relaying them to other peers) and
-		/// get rewarded. Instead, the provider could track submitters and stop rewarding if too many
-		/// headers have been submitted without finalization.
+		/// The submitter **must not** be rewarded for submitting valid headers, because greedy
+		/// authority could produce and submit multiple valid headers (without relaying them to
+		/// other peers) and get rewarded. Instead, the provider could track submitters and stop
+		/// rewarding if too many headers have been submitted without finalization.
 		fn on_valid_headers_submitted(submitter: AccountId, headers: &[BscHeader]);
 		/// Called when invalid headers have been submitted.
 		fn on_invalid_headers_submitted(submitter: AccountId);
@@ -540,7 +513,9 @@ pub mod pallet {
 	}
 	impl<AccountId> OnHeadersSubmitted<AccountId> for () {
 		fn on_valid_headers_submitted(_: AccountId, _: &[BscHeader]) {}
+
 		fn on_invalid_headers_submitted(_: AccountId) {}
+
 		fn on_valid_authority_finalized(_: AccountId, _: &[Address]) {}
 	}
 

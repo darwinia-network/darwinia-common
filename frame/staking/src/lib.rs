@@ -287,8 +287,6 @@ macro_rules! log {
 #[cfg(test)]
 mod darwinia_tests;
 #[cfg(test)]
-mod inflation_tests;
-#[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod substrate_tests;
@@ -313,7 +311,10 @@ pub mod pallet {
 	use frame_election_provider_support::{ElectionProvider, *};
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{Currency, EstimateNextNewSession, OnUnbalanced, UnixTime},
+		traits::{
+			Currency, EstimateNextNewSession, LockableCurrency, OnUnbalanced, UnixTime,
+			WithdrawReasons,
+		},
 		PalletId,
 	};
 	use frame_system::{offchain::SendTransactionTypes, pallet_prelude::*};
@@ -322,7 +323,7 @@ pub mod pallet {
 		Perbill, Percent, SaturatedConversion,
 	};
 	use sp_staking::SessionIndex;
-	use sp_std::{borrow::ToOwned, prelude::*};
+	use sp_std::prelude::*;
 	// --- darwinia-network ---
 	use crate::*;
 	use darwinia_support::balance::*;
@@ -343,8 +344,8 @@ pub mod pallet {
 
 		/// Time used for computing era duration.
 		///
-		/// It is guaranteed to start being called from the first `on_finalize`. Thus value at genesis
-		/// is not used.
+		/// It is guaranteed to start being called from the first `on_finalize`. Thus value at
+		/// genesis is not used.
 		type UnixTime: UnixTime;
 
 		/// Something that provides the election functionality.
@@ -367,7 +368,8 @@ pub mod pallet {
 		type SessionsPerEra: Get<SessionIndex>;
 		/// Interface for interacting with a session pallet.
 		type SessionInterface: self::SessionInterface<Self::AccountId>;
-		/// Something that can estimate the next session change, accurately or as a best effort guess.
+		/// Something that can estimate the next session change, accurately or as a best effort
+		/// guess.
 		type NextNewSession: EstimateNextNewSession<Self::BlockNumber>;
 
 		/// Number of eras that slashes are deferred by, after computation.
@@ -381,8 +383,8 @@ pub mod pallet {
 
 		/// The maximum number of nominators rewarded for each validator.
 		///
-		/// For each validator only the `$MaxNominatorRewardedPerValidator` biggest stakers can claim
-		/// their reward. This used to limit the i/o cost for the nominator payout.
+		/// For each validator only the `$MaxNominatorRewardedPerValidator` biggest stakers can
+		/// claim their reward. This used to limit the i/o cost for the nominator payout.
 		#[pallet::constant]
 		type MaxNominatorRewardedPerValidator: Get<u32>;
 
@@ -399,7 +401,7 @@ pub mod pallet {
 		type BondingDurationInBlockNumber: Get<Self::BlockNumber>;
 
 		/// The *RING* currency.
-		type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+		type RingCurrency: LockableCurrency<Self::AccountId>;
 		/// Tokens have been minted and are unused for validator-reward.
 		/// See [Era payout](./index.html#era-payout).
 		type RingRewardRemainder: OnUnbalanced<RingNegativeImbalance<Self>>;
@@ -409,7 +411,7 @@ pub mod pallet {
 		type RingReward: OnUnbalanced<RingPositiveImbalance<Self>>;
 
 		/// The *KTON* currency.
-		type KtonCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+		type KtonCurrency: LockableCurrency<Self::AccountId>;
 		/// Handler for the unbalanced *KTON* reduction when slashing a staker.
 		type KtonSlash: OnUnbalanced<KtonNegativeImbalance<Self>>;
 		/// Handler for the unbalanced *KTON* increment when rewarding a staker.
@@ -526,11 +528,11 @@ pub mod pallet {
 		BadTarget,
 		/// The user has enough bond and thus cannot be chilled forcefully by an external person.
 		CannotChillOther,
-		/// There are too many nominators in the system. Governance needs to adjust the staking settings
-		/// to keep things safe for the runtime.
+		/// There are too many nominators in the system. Governance needs to adjust the staking
+		/// settings to keep things safe for the runtime.
 		TooManyNominators,
-		/// There are too many validators in the system. Governance needs to adjust the staking settings
-		/// to keep things safe for the runtime.
+		/// There are too many validators in the system. Governance needs to adjust the staking
+		/// settings to keep things safe for the runtime.
 		TooManyValidators,
 		/// Payout - INSUFFICIENT
 		PayoutIns,
@@ -826,9 +828,9 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type StorageVersion<T: Config> = StorageValue<_, Releases, ValueQuery>;
 
-	/// The threshold for when users can start calling `chill_other` for other validators / nominators.
-	/// The threshold is compared to the actual number of validators / nominators (`CountFor*`) in
-	/// the system compared to the configured max (`Max*Count`).
+	/// The threshold for when users can start calling `chill_other` for other validators /
+	/// nominators. The threshold is compared to the actual number of validators / nominators
+	/// (`CountFor*`) in the system compared to the configured max (`Max*Count`).
 	#[pallet::storage]
 	pub type ChillThreshold<T: Config> = StorageValue<_, Percent, OptionQuery>;
 
@@ -863,12 +865,7 @@ pub mod pallet {
 		pub force_era: Forcing,
 		pub slash_reward_fraction: Perbill,
 		pub canceled_payout: Power,
-		pub stakers: Vec<(
-			AccountId<T>,
-			AccountId<T>,
-			RingBalance<T>,
-			StakerStatus<AccountId<T>>,
-		)>,
+		pub stakers: Vec<(AccountId<T>, AccountId<T>, RingBalance<T>, StakerStatus<AccountId<T>>)>,
 		pub min_nominator_bond: RingBalance<T>,
 		pub min_validator_bond: RingBalance<T>,
 		pub payout_fraction: Perbill,
@@ -933,10 +930,7 @@ pub mod pallet {
 					),
 					StakerStatus::Nominator(votes) => <Pallet<T>>::nominate(
 						T::Origin::from(Some(controller.to_owned()).into()),
-						votes
-							.iter()
-							.map(|l| T::Lookup::unlookup(l.to_owned()))
-							.collect(),
+						votes.iter().map(|l| T::Lookup::unlookup(l.to_owned())).collect(),
 					),
 					_ => Ok(()),
 				});
@@ -985,7 +979,8 @@ pub mod pallet {
 				if active_era.start.is_none() {
 					let now_as_millis_u64 = T::UnixTime::now().as_millis() as _;
 					active_era.start = Some(now_as_millis_u64);
-					// This write only ever happens once, we don't include it in the weight in general
+					// This write only ever happens once, we don't include it in the weight in
+					// general
 					<ActiveEra<T>>::put(active_era);
 				}
 			}
@@ -1036,16 +1031,10 @@ pub mod pallet {
 			promise_month: u8,
 		) -> DispatchResult {
 			let stash = ensure_signed(origin)?;
-			ensure!(
-				!<Bonded<T>>::contains_key(&stash),
-				<Error<T>>::AlreadyBonded
-			);
+			ensure!(!<Bonded<T>>::contains_key(&stash), <Error<T>>::AlreadyBonded);
 
 			let controller = T::Lookup::lookup(controller)?;
-			ensure!(
-				!<Ledger<T>>::contains_key(&controller),
-				<Error<T>>::AlreadyPaired
-			);
+			ensure!(!<Ledger<T>>::contains_key(&controller), <Error<T>>::AlreadyPaired);
 
 			match value {
 				StakingBalance::RingBalance(value) => {
@@ -1054,14 +1043,14 @@ pub mod pallet {
 						value >= T::RingCurrency::minimum_balance(),
 						<Error<T>>::InsufficientBond,
 					);
-				}
+				},
 				StakingBalance::KtonBalance(value) => {
 					// Reject a bond which is considered to be _dust_.
 					ensure!(
 						value >= T::KtonCurrency::minimum_balance(),
 						<Error<T>>::InsufficientBond,
 					);
-				}
+				},
 			}
 
 			<frame_system::Pallet<T>>::inc_consumers(&stash).map_err(|_| <Error<T>>::BadState)?;
@@ -1090,14 +1079,14 @@ pub mod pallet {
 						Self::bond_ring(&stash, &controller, value, promise_month, ledger)?;
 
 					Self::deposit_event(Event::RingBonded(stash, value, start_time, expire_time));
-				}
+				},
 				StakingBalance::KtonBalance(value) => {
 					let stash_balance = T::KtonCurrency::free_balance(&stash);
 					let value = value.min(stash_balance);
 
 					Self::bond_kton(&controller, value, ledger)?;
 					Self::deposit_event(Event::KtonBonded(stash, value));
-				}
+				},
 			}
 
 			Ok(())
@@ -1109,8 +1098,8 @@ pub mod pallet {
 		/// The dispatch origin for this call must be _Signed_ by the stash, not the controller.
 		///
 		/// Use this if there are additional funds in your stash account that you wish to bond.
-		/// Unlike [`bond`](Self::bond) or [`unbond`](Self::unbond) this function does not impose any limitation
-		/// on the amount that can be added.
+		/// Unlike [`bond`](Self::bond) or [`unbond`](Self::unbond) this function does not impose
+		/// any limitation on the amount that can be added.
 		///
 		/// Emits `Bonded`.
 		///
@@ -1133,9 +1122,9 @@ pub mod pallet {
 				StakingBalance::RingBalance(max_additional) => {
 					let stash_balance = T::RingCurrency::free_balance(&stash);
 
-					if let Some(extra) = stash_balance.checked_sub(
-						&ledger.ring_locked_amount_at(<frame_system::Pallet<T>>::block_number()),
-					) {
+					if let Some(extra) = stash_balance
+						.checked_sub(&(ledger.active + ledger.ring_staking_lock.total_unbond()))
+					{
 						let extra = extra.min(max_additional);
 						let (start_time, expire_time) =
 							Self::bond_ring(&stash, &controller, extra, promise_month, ledger)?;
@@ -1147,19 +1136,19 @@ pub mod pallet {
 							expire_time,
 						));
 					}
-				}
+				},
 				StakingBalance::KtonBalance(max_additional) => {
 					let stash_balance = T::KtonCurrency::free_balance(&stash);
 
 					if let Some(extra) = stash_balance.checked_sub(
-						&ledger.kton_locked_amount_at(<frame_system::Pallet<T>>::block_number()),
+						&(ledger.active_kton + ledger.kton_staking_lock.total_unbond()),
 					) {
 						let extra = extra.min(max_additional);
 
 						Self::bond_kton(&controller, extra, ledger)?;
 						Self::deposit_event(Event::KtonBonded(stash.clone(), extra));
 					}
-				}
+				},
 			}
 
 			// update this staker in the sorted list, if they exist in it.
@@ -1194,7 +1183,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let stash = ensure_signed(origin)?;
 			let controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
-			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
+			let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
 
 			if value.is_zero() {
 				return Ok(());
@@ -1203,13 +1192,7 @@ pub mod pallet {
 			let start_time = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 			let promise_month = promise_month.max(1).min(36);
 			let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
-			let mut ledger = Self::clear_mature_deposits(ledger).0;
-			let StakingLedger {
-				active,
-				active_deposit_ring,
-				deposit_items,
-				..
-			} = &mut ledger;
+			let StakingLedger { active, active_deposit_ring, deposit_items, .. } = &mut ledger;
 			let value = value.min(active.saturating_sub(*active_deposit_ring));
 
 			if value.is_zero() {
@@ -1220,14 +1203,12 @@ pub mod pallet {
 			let kton_positive_imbalance = T::KtonCurrency::deposit_creating(&stash, kton_return);
 
 			T::KtonReward::on_unbalanced(kton_positive_imbalance);
+
 			*active_deposit_ring = active_deposit_ring.saturating_add(value);
-			deposit_items.push(TimeDepositItem {
-				value,
-				start_time,
-				expire_time,
-			});
+			deposit_items.push(TimeDepositItem { value, start_time, expire_time });
 
 			<Ledger<T>>::insert(&controller, ledger);
+
 			Self::deposit_event(Event::RingBonded(stash, value, start_time, expire_time));
 
 			Ok(())
@@ -1239,7 +1220,8 @@ pub mod pallet {
 		///
 		/// The dispatch origin for this call must be _Signed_ by the controller, not the stash.
 		///
-		/// Once the unlock period is done, the funds will be withdrew automatically and ready for transfer.
+		/// Once the unlock period is done, the funds will be withdrew automatically and ready for
+		/// transfer.
 		///
 		/// No more than a limited number of unlocking chunks (see `MAX_UNLOCKING_CHUNKS`)
 		/// can co-exists at the same time. In that case,  [`StakingLock::shrink`] need
@@ -1270,9 +1252,6 @@ pub mod pallet {
 			} = &mut ledger;
 			let now = <frame_system::Pallet<T>>::block_number();
 
-			ring_staking_lock.update(now);
-			kton_staking_lock.update(now);
-
 			// Due to the macro parser, we've to add a bracket.
 			// Actually, this's totally wrong:
 			//	 `a as u32 + b as u32 < c`
@@ -1285,6 +1264,8 @@ pub mod pallet {
 				<Error<T>>::NoMoreChunks,
 			);
 
+			let origin_active = active.clone();
+			let origin_active_kton = active_kton.clone();
 			let mut unbond_ring: RingBalance<T> = Zero::zero();
 			let mut unbond_kton: KtonBalance<T> = Zero::zero();
 
@@ -1293,6 +1274,7 @@ pub mod pallet {
 					// Only active normal ring can be unbond:
 					// `active = active_normal_ring + active_deposit_ring`
 					let active_normal_ring = *active - *active_deposit_ring;
+
 					unbond_ring = r.min(active_normal_ring);
 
 					if !unbond_ring.is_zero() {
@@ -1329,7 +1311,7 @@ pub mod pallet {
 							})
 							.expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
-						Self::deposit_event(Event::RingUnbonded(stash.to_owned(), unbond_ring));
+						Self::deposit_event(Event::RingUnbonded(stash.clone(), unbond_ring));
 
 						if !unbond_kton.is_zero() {
 							kton_staking_lock
@@ -1340,10 +1322,13 @@ pub mod pallet {
 								})
 								.expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
-							Self::deposit_event(Event::KtonUnbonded(stash.to_owned(), unbond_kton));
+							Self::deposit_event(Event::KtonUnbonded(
+								ledger.stash.clone(),
+								unbond_kton,
+							));
 						}
 					}
-				}
+				},
 				StakingBalance::KtonBalance(k) => {
 					unbond_kton = k.min(*active_kton);
 
@@ -1369,7 +1354,7 @@ pub mod pallet {
 							})
 							.expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
-						Self::deposit_event(Event::KtonUnbonded(stash.to_owned(), unbond_kton));
+						Self::deposit_event(Event::KtonUnbonded(stash.clone(), unbond_kton));
 
 						if !unbond_ring.is_zero() {
 							ring_staking_lock
@@ -1380,48 +1365,98 @@ pub mod pallet {
 								})
 								.expect("ALREADY CHECKED THE BOUNDARY MUST NOT FAIL!");
 
-							Self::deposit_event(Event::RingUnbonded(stash.to_owned(), unbond_ring));
+							Self::deposit_event(Event::RingUnbonded(
+								ledger.stash.clone(),
+								unbond_ring,
+							));
 						}
 					}
-				}
+				},
 			}
 
-			Self::update_ledger(&controller, &mut ledger);
+			Self::update_ledger(&controller, &ledger);
+			Self::update_staking_pool(
+				ledger.active,
+				origin_active,
+				ledger.active_kton,
+				origin_active_kton,
+			);
 
 			// update this staker in the sorted list, if they exist in it.
 			if T::SortedListProvider::contains(&ledger.stash) {
 				T::SortedListProvider::on_update(&ledger.stash, Self::weight_of(&ledger.stash));
 			}
 
-			// TODO: https://github.com/darwinia-network/darwinia-common/issues/96
-			// FIXME: https://github.com/darwinia-network/darwinia-common/issues/121
-			// let StakingLedger {
-			// 	active,
-			// 	active_kton,
-			// 	..
-			// } = ledger;
+			Ok(())
+		}
 
-			// // All bonded *RING* and *KTON* is withdrawing, then remove Ledger to save storage
-			// if active.is_zero() && active_kton.is_zero() {
-			// 	//
-			// 	// `OnKilledAccount` would be a method to collect the locks.
-			// 	//
-			// 	// These locks are still in the system, and should be removed after 14 days
-			// 	//
-			// 	// There two situations should be considered after the 14 days
-			// 	// - the user never bond again, so the locks should be released.
-			// 	// - the user is bonded again in the 14 days, so the after 14 days
-			// 	//   the lock should not be removed
-			// 	//
-			// 	// If the locks are not deleted, this lock will waste the storage in the future
-			// 	// blocks.
-			// 	//
-			// 	// T::Ring::remove_lock(STAKING_ID, &stash);
-			// 	// T::Kton::remove_lock(STAKING_ID, &stash);
-			// 	// Self::kill_stash(&stash)?;
+		/// Remove any unlocked chunks from the `unlocking` queue from our management.
+		///
+		/// This essentially frees up that balance to be used by the stash account to do
+		/// whatever it wants.
+		///
+		/// The dispatch origin for this call must be _Signed_ by the controller.
+		///
+		/// Emits `Withdrawn`.
+		///
+		/// See also [`Call::unbond`].
+		///
+		/// # <weight>
+		/// Complexity O(S) where S is the number of slashing spans to remove
+		/// NOTE: Weight annotation is the kill scenario, we refund otherwise.
+		/// # </weight>
+		#[pallet::weight(T::WeightInfo::withdraw_unbonded_kill(*num_slashing_spans))]
+		pub fn withdraw_unbonded(
+			origin: OriginFor<T>,
+			num_slashing_spans: u32,
+		) -> DispatchResultWithPostInfo {
+			let controller = ensure_signed(origin)?;
+			let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
+
+			ledger.consolidate_unbondings(<frame_system::Pallet<T>>::block_number());
+
+			let StakingLedger {
+				stash,
+				active,
+				active_kton,
+				ring_staking_lock,
+				kton_staking_lock,
+				..
+			} = &ledger;
+
+			let post_info_weight = if ring_staking_lock.unbondings.is_empty()
+				&& active < &T::RingCurrency::minimum_balance()
+				&& kton_staking_lock.unbondings.is_empty()
+				&& active_kton < &T::KtonCurrency::minimum_balance()
+			{
+				// This account must have called `unbond()` with some value that caused the active
+				// portion to fall below existential deposit + will have no more unlocking chunks
+				// left. We can now safely remove all staking-related information.
+				Self::kill_stash(stash, num_slashing_spans)?;
+
+				// Remove the lock.
+				T::RingCurrency::remove_lock(STAKING_ID, stash);
+				T::KtonCurrency::remove_lock(STAKING_ID, stash);
+
+				// This is worst case scenario, so we use the full weight and return None
+				None
+			} else {
+				// This was the consequence of a partial unbond. just update the ledger and move on.
+				Self::update_ledger(&controller, &ledger);
+
+				// This is only an update, so we use less overall weight.
+				Some(T::WeightInfo::withdraw_unbonded_update(num_slashing_spans))
+			};
+
+			// `old_total` should never be less than the new total because
+			// `consolidate_unlocked` strictly subtracts balance.
+			// if ledger.total < old_total {
+			// 	// Already checked that this won't overflow by entry condition.
+			// 	let value = old_total - ledger.total;
+			// 	Self::deposit_event(<Event<T>>::Withdrawn(stash.clone(), value));
 			// }
 
-			Ok(())
+			Ok(post_info_weight.into())
 		}
 
 		/// Stash accounts can get their ring back after the depositing time exceeded,
@@ -1481,68 +1516,46 @@ pub mod pallet {
 				return Ok(());
 			}
 
-			let mut claim_deposits_with_punish = (false, Zero::zero());
+			let StakingLedger { stash, active_deposit_ring, deposit_items, .. } = &mut ledger;
 
-			{
-				let StakingLedger {
-					stash,
-					active_deposit_ring,
-					deposit_items,
-					..
-				} = &mut ledger;
-
-				deposit_items.retain(|item| {
-					if item.expire_time != expire_time {
-						return true;
-					}
-
-					let kton_slash = {
-						let plan_duration_in_months = {
-							let plan_duration_in_milliseconds =
-								item.expire_time.saturating_sub(item.start_time);
-
-							plan_duration_in_milliseconds / MONTH_IN_MILLISECONDS
-						};
-						let passed_duration_in_months = {
-							let passed_duration_in_milliseconds =
-								now.saturating_sub(item.start_time);
-
-							passed_duration_in_milliseconds / MONTH_IN_MILLISECONDS
-						};
-
-						(inflation::compute_kton_reward::<T>(
-							item.value,
-							plan_duration_in_months as _,
-						) - inflation::compute_kton_reward::<T>(
+			if let Some(i) = deposit_items.iter().position(|item| item.expire_time == expire_time) {
+				let item = &deposit_items[i];
+				let plan_duration_in_months =
+					item.expire_time.saturating_sub(item.start_time) / MONTH_IN_MILLISECONDS;
+				let passed_duration_in_months =
+					now.saturating_sub(item.start_time) / MONTH_IN_MILLISECONDS;
+				let kton_penalty =
+					(inflation::compute_kton_reward::<T>(item.value, plan_duration_in_months as _)
+						- inflation::compute_kton_reward::<T>(
 							item.value,
 							passed_duration_in_months as _,
 						))
-						.max(1u32.into()) * 3u32.into()
-					};
+					.max(1u32.into()) * 3u32.into();
+				// Can only pay the penalty from usable balance.
+				// Not allow to use bonded kton to pay the penalty.
+				let new_kton_balance =
+					T::KtonCurrency::free_balance(stash).saturating_sub(kton_penalty);
 
-					// check total free balance and locked one
-					// strict on punishing in kton
-					if T::KtonCurrency::usable_balance(stash) >= kton_slash {
-						*active_deposit_ring = active_deposit_ring.saturating_sub(item.value);
+				if new_kton_balance.is_zero()
+					|| T::KtonCurrency::ensure_can_withdraw(
+						stash,
+						kton_penalty,
+						WithdrawReasons::TRANSFER,
+						new_kton_balance,
+					)
+					.is_err()
+				{
+					return Ok(());
+				}
 
-						let imbalance = T::KtonCurrency::slash(stash, kton_slash).0;
-						T::KtonSlash::on_unbalanced(imbalance);
+				T::KtonSlash::on_unbalanced(T::KtonCurrency::slash(stash, kton_penalty).0);
+				*active_deposit_ring = active_deposit_ring.saturating_sub(item.value);
+				deposit_items.remove(i);
 
-						claim_deposits_with_punish = (true, kton_slash);
-
-						false
-					} else {
-						true
-					}
-				});
-			}
-
-			<Ledger<T>>::insert(&controller, &ledger);
-
-			if claim_deposits_with_punish.0 {
+				<Ledger<T>>::insert(&controller, &ledger);
 				Self::deposit_event(Event::DepositsClaimedWithPunish(
 					ledger.stash.clone(),
-					claim_deposits_with_punish.1,
+					kton_penalty,
 				));
 			}
 
@@ -1559,17 +1572,15 @@ pub mod pallet {
 			let controller = ensure_signed(origin)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
 
-			ensure!(
-				ledger.active >= <MinValidatorBond<T>>::get(),
-				<Error<T>>::InsufficientBond
-			);
+			ensure!(ledger.active >= <MinValidatorBond<T>>::get(), <Error<T>>::InsufficientBond);
 
 			let stash = &ledger.stash;
 
 			// Only check limits if they are not already a validator.
 			if !<Validators<T>>::contains_key(stash) {
-				// If this error is reached, we need to adjust the `MinValidatorBond` and start calling `chill_other`.
-				// Until then, we explicitly block new validators to protect the runtime.
+				// If this error is reached, we need to adjust the `MinValidatorBond` and start
+				// calling `chill_other`. Until then, we explicitly block new validators to protect
+				// the runtime.
 				if let Some(max_validators) = <MaxValidatorsCount<T>>::get() {
 					ensure!(
 						<CounterForValidators<T>>::get() < max_validators,
@@ -1602,17 +1613,15 @@ pub mod pallet {
 			let controller = ensure_signed(origin)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
 
-			ensure!(
-				ledger.active >= <MinNominatorBond<T>>::get(),
-				<Error<T>>::InsufficientBond
-			);
+			ensure!(ledger.active >= <MinNominatorBond<T>>::get(), <Error<T>>::InsufficientBond);
 
 			let stash = &ledger.stash;
 
 			// Only check limits if they are not already a nominator.
 			if !<Nominators<T>>::contains_key(stash) {
-				// If this error is reached, we need to adjust the `MinNominatorBond` and start calling `chill_other`.
-				// Until then, we explicitly block new nominators to protect the runtime.
+				// If this error is reached, we need to adjust the `MinNominatorBond` and start
+				// calling `chill_other`. Until then, we explicitly block new nominators to protect
+				// the runtime.
 				if let Some(max_nominators) = <MaxNominatorsCount<T>>::get() {
 					ensure!(
 						<CounterForNominators<T>>::get() < max_nominators,
@@ -1622,10 +1631,7 @@ pub mod pallet {
 			}
 
 			ensure!(!targets.is_empty(), <Error<T>>::EmptyTargets);
-			ensure!(
-				targets.len() <= T::MAX_NOMINATIONS as usize,
-				<Error<T>>::TooManyTargets
-			);
+			ensure!(targets.len() <= T::MAX_NOMINATIONS as usize, <Error<T>>::TooManyTargets);
 
 			let old = <Nominators<T>>::get(stash).map_or_else(Vec::new, |x| x.targets);
 			let targets = targets
@@ -1730,10 +1736,7 @@ pub mod pallet {
 			let old_controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
 			let controller = T::Lookup::lookup(controller)?;
 
-			ensure!(
-				!<Ledger<T>>::contains_key(&controller),
-				<Error<T>>::AlreadyPaired
-			);
+			ensure!(!<Ledger<T>>::contains_key(&controller), <Error<T>>::AlreadyPaired);
 
 			if controller != old_controller {
 				<Bonded<T>>::insert(&stash, &controller);
@@ -1878,8 +1881,8 @@ pub mod pallet {
 		/// # <weight>
 		/// O(S) where S is the number of slashing spans to be removed
 		/// Reads: Bonded, Slashing Spans, Account, Locks
-		/// Writes: Bonded, Slashing Spans (if S > 0), Ledger, Payee, Validators, Nominators, Account, Locks
-		/// Writes Each: SpanSlash * S
+		/// Writes: Bonded, Slashing Spans (if S > 0), Ledger, Payee, Validators, Nominators,
+		/// Account, Locks Writes Each: SpanSlash * S
 		/// # </weight>
 		#[pallet::weight(T::WeightInfo::force_unstake(*num_slashing_spans))]
 		pub fn force_unstake(
@@ -1944,17 +1947,11 @@ pub mod pallet {
 			T::SlashCancelOrigin::ensure_origin(origin)?;
 
 			ensure!(!slash_indices.is_empty(), <Error<T>>::EmptyTargets);
-			ensure!(
-				is_sorted_and_unique(&slash_indices),
-				<Error<T>>::NotSortedAndUnique
-			);
+			ensure!(is_sorted_and_unique(&slash_indices), <Error<T>>::NotSortedAndUnique);
 
 			let mut unapplied = <Self as Store>::UnappliedSlashes::get(&era);
 			let last_item = slash_indices[slash_indices.len() - 1];
-			ensure!(
-				(last_item as usize) < unapplied.len(),
-				<Error<T>>::InvalidSlashIndex
-			);
+			ensure!((last_item as usize) < unapplied.len(), <Error<T>>::InvalidSlashIndex);
 
 			for (removed, index) in slash_indices.into_iter().enumerate() {
 				let index = (index as usize) - removed;
@@ -2017,30 +2014,44 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let controller = ensure_signed(origin)?;
 			let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
-			let now = <frame_system::Pallet<T>>::block_number();
-
-			ledger.ring_staking_lock.update(now);
-			ledger.kton_staking_lock.update(now);
+			let StakingLedger { active, active_kton, ring_staking_lock, kton_staking_lock, .. } =
+				&mut ledger;
+			let origin_active = active.clone();
+			let origin_active_kton = active_kton.clone();
 
 			ensure!(
-				!ledger.ring_staking_lock.unbondings.is_empty()
-					|| !ledger.kton_staking_lock.unbondings.is_empty(),
+				!ring_staking_lock.unbondings.is_empty()
+					|| !kton_staking_lock.unbondings.is_empty(),
 				<Error<T>>::NoUnlockChunk
 			);
 
-			let initial_unbondings = ledger.ring_staking_lock.unbondings.len() as u32
-				+ ledger.kton_staking_lock.unbondings.len() as u32;
+			let initial_unbondings = ring_staking_lock.unbondings.len() as u32
+				+ kton_staking_lock.unbondings.len() as u32;
 			let (rebonded_ring, rebonded_kton) =
 				ledger.rebond(plan_to_rebond_ring, plan_to_rebond_kton);
+			let StakingLedger {
+				stash,
+				active,
+				active_kton,
+				ring_staking_lock,
+				kton_staking_lock,
+				..
+			} = &ledger;
 
 			// Last check: the new active amount of ledger must be more than ED.
 			ensure!(
-				ledger.active >= T::RingCurrency::minimum_balance()
-					|| ledger.active_kton >= T::KtonCurrency::minimum_balance(),
+				*active >= T::RingCurrency::minimum_balance()
+					|| *active_kton >= T::KtonCurrency::minimum_balance(),
 				<Error<T>>::InsufficientBond
 			);
 
-			Self::update_ledger(&controller, &mut ledger);
+			Self::update_ledger(&controller, &ledger);
+			Self::update_staking_pool(
+				ledger.active,
+				origin_active,
+				ledger.active_kton,
+				origin_active_kton,
+			);
 
 			let ring_rebonded = !rebonded_ring.is_zero();
 			let kton_rebonded = !rebonded_kton.is_zero();
@@ -2048,25 +2059,20 @@ pub mod pallet {
 			if ring_rebonded {
 				let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
 
-				Self::deposit_event(Event::RingBonded(
-					ledger.stash.clone(),
-					rebonded_ring,
-					now,
-					now,
-				));
+				Self::deposit_event(Event::RingBonded(stash.clone(), rebonded_ring, now, now));
 			}
 			if kton_rebonded {
-				Self::deposit_event(Event::KtonBonded(ledger.stash.clone(), rebonded_kton));
+				Self::deposit_event(Event::KtonBonded(stash.clone(), rebonded_kton));
 			}
 			if ring_rebonded && kton_rebonded {
-				if T::SortedListProvider::contains(&ledger.stash) {
-					T::SortedListProvider::on_update(&ledger.stash, Self::weight_of(&ledger.stash));
+				if T::SortedListProvider::contains(stash) {
+					T::SortedListProvider::on_update(stash, Self::weight_of(stash));
 				}
 			}
 
 			let removed_unbondings = 1.saturating_add(initial_unbondings).saturating_sub(
-				ledger.ring_staking_lock.unbondings.len() as u32
-					+ ledger.kton_staking_lock.unbondings.len() as u32,
+				ring_staking_lock.unbondings.len() as u32
+					+ kton_staking_lock.unbondings.len() as u32,
 			);
 
 			Ok(Some(T::WeightInfo::rebond(removed_unbondings)).into())
@@ -2077,10 +2083,10 @@ pub mod pallet {
 		///
 		/// Parameters:
 		/// - `new_history_depth`: The new history depth you would like to set.
-		/// - `era_items_deleted`: The number of items that will be deleted by this dispatch.
-		///    This should report all the storage items that will be deleted by clearing old
-		///    era history. Needed to report an accurate weight for the dispatch. Trusted by
-		///    `Root` to report an accurate number.
+		/// - `era_items_deleted`: The number of items that will be deleted by this dispatch. This
+		///   should report all the storage items that will be deleted by clearing old era history.
+		///   Needed to report an accurate weight for the dispatch. Trusted by `Root` to report an
+		///   accurate number.
 		///
 		/// Origin must be root.
 		///
@@ -2091,7 +2097,8 @@ pub mod pallet {
 		///     - Reads: Current Era, History Depth
 		///     - Writes: History Depth
 		///     - Clear Prefix Each: Era Stakers, EraStakersClipped, ErasValidatorPrefs
-		///     - Writes Each: ErasValidatorReward, ErasRewardPoints, ErasTotalStake, ErasStartSessionIndex
+		///     - Writes Each: ErasValidatorReward, ErasRewardPoints, ErasTotalStake,
+		///       ErasStartSessionIndex
 		/// # </weight>
 		#[pallet::weight(T::WeightInfo::set_history_depth(*_era_items_deleted))]
 		pub fn set_history_depth(
@@ -2127,7 +2134,8 @@ pub mod pallet {
 		/// Complexity: O(S) where S is the number of slashing spans on the account.
 		/// DB Weight:
 		/// - Reads: Stash Account, Bonded, Slashing Spans, Locks
-		/// - Writes: Bonded, Slashing Spans (if S > 0), Ledger, Payee, Validators, Nominators, Stash Account, Locks
+		/// - Writes: Bonded, Slashing Spans (if S > 0), Ledger, Payee, Validators, Nominators,
+		///   Stash Account, Locks
 		/// - Writes Each: SpanSlash * S
 		/// # </weight>
 		#[pallet::weight(T::WeightInfo::reap_stash(*num_slashing_spans))]
@@ -2195,10 +2203,10 @@ pub mod pallet {
 		///
 		/// * `min_nominator_bond`: The minimum active bond needed to be a nominator.
 		/// * `min_validator_bond`: The minimum active bond needed to be a validator.
-		/// * `max_nominator_count`: The max number of users who can be a nominator at once.
-		///   When set to `None`, no limit is enforced.
-		/// * `max_validator_count`: The max number of users who can be a validator at once.
-		///   When set to `None`, no limit is enforced.
+		/// * `max_nominator_count`: The max number of users who can be a nominator at once. When
+		///   set to `None`, no limit is enforced.
+		/// * `max_validator_count`: The max number of users who can be a validator at once. When
+		///   set to `None`, no limit is enforced.
 		///
 		/// Origin must be Root to call this function.
 		///
@@ -2288,10 +2296,7 @@ pub mod pallet {
 					Zero::zero()
 				};
 
-				ensure!(
-					ledger.active < min_active_bond,
-					<Error<T>>::CannotChillOther
-				);
+				ensure!(ledger.active < min_active_bond, <Error<T>>::CannotChillOther);
 			}
 
 			Self::chill_stash(&stash);

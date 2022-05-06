@@ -58,17 +58,15 @@ impl RelayMessageSender for ToPangoroMessageSender {
 		let call: Call = match message_pallet_index {
 			_ if message_pallet_index as usize
 				== <BridgePangoroMessages as PalletInfoAccess>::index() =>
-			{
 				pallet_bridge_messages::Call::<Runtime, WithPangoroMessages>::send_message {
 					lane_id,
 					payload,
 					delivery_and_dispatch_fee: fee.saturated_into(),
 				}
-				.into()
-			}
+				.into(),
 			_ => {
 				return Err("invalid pallet index".into());
-			}
+			},
 		};
 		Ok(call.encode())
 	}
@@ -91,11 +89,9 @@ where
 	pub fn new() -> Self {
 		Self(Default::default())
 	}
+
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 21, 23, 24, 25]
-			.into_iter()
-			.map(|x| addr(x))
-			.collect()
+		sp_std::vec![1, 2, 3, 4, 21, 23, 24, 25].into_iter().map(|x| addr(x)).collect()
 	}
 }
 
@@ -122,20 +118,17 @@ where
 			a if a == addr(3) => Some(Ripemd160::execute(input, target_gas, context, is_static)),
 			a if a == addr(4) => Some(Identity::execute(input, target_gas, context, is_static)),
 			// Darwinia precompiles
-			a if a == addr(21) => Some(<Transfer<R>>::execute(
-				input, target_gas, context, is_static,
-			)),
-			a if a == addr(23) => Some(<EthereumBridge<R>>::execute(
-				input, target_gas, context, is_static,
-			)),
+			a if a == addr(21) =>
+				Some(<Transfer<R>>::execute(input, target_gas, context, is_static)),
+			a if a == addr(23) =>
+				Some(<EthereumBridge<R>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(24) => Some(<Sub2SubBridge<
 				R,
 				ToPangoroMessageSender,
 				bm_pangoro::ToPangoroOutboundPayLoad,
 			>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(25) => Some(<Dispatch<R>>::execute(
-				input, target_gas, context, is_static,
-			)),
+			a if a == addr(25) =>
+				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
@@ -157,6 +150,7 @@ impl GasWeightMapping for FixedGasWeightMapping {
 	fn gas_to_weight(gas: u64) -> Weight {
 		gas.saturating_mul(WEIGHT_PER_GAS)
 	}
+
 	fn weight_to_gas(weight: Weight) -> u64 {
 		u64::try_from(weight.wrapping_div(WEIGHT_PER_GAS)).unwrap_or(u32::MAX as u64)
 	}
@@ -169,21 +163,21 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	type FeeCalculator = FixedGasPrice;
-	type GasWeightMapping = FixedGasWeightMapping;
-	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
-	type IntoAccountId = ConcatConverter<Self::AccountId>;
-	type FindAuthor = EthereumFindAuthor<Babe>;
+	type BlockGasLimit = BlockGasLimit;
 	type BlockHashMapping = EthereumBlockHashMapping<Self>;
+	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
+	type ChainId = ChainId;
 	type Event = Event;
+	type FeeCalculator = FixedGasPrice;
+	type FindAuthor = EthereumFindAuthor<Babe>;
+	type GasWeightMapping = FixedGasWeightMapping;
+	type IntoAccountId = ConcatConverter<Self::AccountId>;
+	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
+	type OnChargeTransaction = EVMCurrencyAdapter<FindAccountFromAuthorIndex<Self, Babe>>;
 	type PrecompilesType = PangolinPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type ChainId = ChainId;
-	type BlockGasLimit = BlockGasLimit;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
-	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type Runner = Runner<Self>;
-	type OnChargeTransaction = EVMCurrencyAdapter<FindAccountFromAuthorIndex<Self, Babe>>;
 }
 
 fn addr(a: u64) -> H160 {

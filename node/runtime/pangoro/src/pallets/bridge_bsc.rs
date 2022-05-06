@@ -17,7 +17,7 @@ frame_support::parameter_types! {
 
 impl Config for Runtime {
 	type BscConfiguration = Configuration;
-	type OnHeadersSubmitted = ();
 	type EpochInStorage = EpochInStorage;
+	type OnHeadersSubmitted = ();
 	type WeightInfo = ();
 }

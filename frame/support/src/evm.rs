@@ -75,9 +75,7 @@ where
 		raw_account[0..4].copy_from_slice(b"dvm:");
 		raw_account[11..31].copy_from_slice(&address[..]);
 
-		let checksum: u8 = raw_account[1..31]
-			.iter()
-			.fold(raw_account[0], |sum, &byte| sum ^ byte);
+		let checksum: u8 = raw_account[1..31].iter().fold(raw_account[0], |sum, &byte| sum ^ byte);
 
 		raw_account[31] = checksum;
 
@@ -94,25 +92,23 @@ pub fn recover_signer(transaction: &Transaction) -> Option<H160> {
 			sig[32..64].copy_from_slice(&t.signature.s()[..]);
 			sig[64] = t.signature.standard_v();
 			msg.copy_from_slice(&ethereum::LegacyTransactionMessage::from(t.clone()).hash()[..]);
-		}
+		},
 		Transaction::EIP2930(t) => {
 			sig[0..32].copy_from_slice(&t.r[..]);
 			sig[32..64].copy_from_slice(&t.s[..]);
 			sig[64] = t.odd_y_parity as u8;
 			msg.copy_from_slice(&ethereum::EIP2930TransactionMessage::from(t.clone()).hash()[..]);
-		}
+		},
 		Transaction::EIP1559(t) => {
 			sig[0..32].copy_from_slice(&t.r[..]);
 			sig[32..64].copy_from_slice(&t.s[..]);
 			sig[64] = t.odd_y_parity as u8;
 			msg.copy_from_slice(&ethereum::EIP1559TransactionMessage::from(t.clone()).hash()[..]);
-		}
+		},
 	}
 
 	let pubkey = sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg).ok()?;
-	Some(H160::from(H256::from_slice(
-		Keccak256::digest(&pubkey).as_slice(),
-	)))
+	Some(H160::from(H256::from_slice(Keccak256::digest(&pubkey).as_slice())))
 }
 
 /// Decimal conversion from RING/KTON to Ethereum decimal format.

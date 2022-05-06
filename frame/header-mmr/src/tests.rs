@@ -49,10 +49,8 @@ fn codec_digest_should_work() {
 #[test]
 fn serialize_digest_should_work() {
 	assert_eq!(
-		serde_json::to_string(&Digest {
-			logs: vec![header_parent_mmr_log(Default::default())],
-		})
-		.unwrap(),
+		serde_json::to_string(&Digest { logs: vec![header_parent_mmr_log(Default::default())] })
+			.unwrap(),
 		// 0x90 is compact codec of the length 36, 0x4d4d5252 is prefix "MMRR"
 		r#"{"logs":["0x00904d4d52520000000000000000000000000000000000000000000000000000000000000000"]}"#
 	);
@@ -67,9 +65,7 @@ fn header_digest_should_work() {
 		for _ in 0..10 {
 			assert_eq!(
 				header.digest,
-				Digest {
-					logs: vec![header_parent_mmr_log(parent_mmr_root)]
-				}
+				Digest { logs: vec![header_parent_mmr_log(parent_mmr_root)] }
 			);
 
 			header = new_block();

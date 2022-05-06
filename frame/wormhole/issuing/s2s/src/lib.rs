@@ -168,8 +168,8 @@ pub mod pallet {
 			recipient: H160,
 		) -> DispatchResultWithPostInfo {
 			let user = ensure_signed(origin)?;
-			// the s2s message relay has been verified that the message comes from the backing chain with the
-			// chainID and backing sender address.
+			// the s2s message relay has been verified that the message comes from the backing chain
+			// with the chainID and backing sender address.
 			// here only we need is to check the sender is root
 			ensure_source_account::<T::AccountId, T::BridgedAccountIdConverter>(
 				T::BridgedChainId::get(),
@@ -266,9 +266,7 @@ pub mod pallet {
 	#[cfg(feature = "std")]
 	impl Default for GenesisConfig {
 		fn default() -> Self {
-			Self {
-				mapping_factory_address: Default::default(),
-			}
+			Self { mapping_factory_address: Default::default() }
 		}
 	}
 

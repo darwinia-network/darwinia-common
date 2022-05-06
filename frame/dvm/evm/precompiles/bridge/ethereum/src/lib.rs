@@ -36,7 +36,6 @@ enum Action {
 	TokenRegisterResponse = "token_register_response(address,address,address)",
 }
 
-/// The contract address: 0000000000000000000000000000000000000017
 pub struct EthereumBridge<T> {
 	_marker: PhantomData<T>,
 }
@@ -70,7 +69,7 @@ where
 					}
 					.into();
 				call.encode()
-			}
+			},
 			Action::TokenRegisterResponse => {
 				helper.record_gas(0, 0)?;
 
@@ -80,7 +79,7 @@ where
 					}
 					.into();
 				call.encode()
-			}
+			},
 		};
 
 		Ok(PrecompileOutput {

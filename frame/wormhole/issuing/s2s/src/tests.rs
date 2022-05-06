@@ -69,20 +69,8 @@ fn configure_mapping_token_factory(alice: &AccountInfo) {
 	// setTokenContractLogic
 	let set_token_contract_logic0 = hex2bytes_unchecked("0x3c547e160000000000000000000000000000000000000000000000000000000000000000000000000000000000000000248e85939e48ca12a20cdf80e60d9e3d380ca7f9");
 	let set_token_contract_logic1 = hex2bytes_unchecked("0x3c547e160000000000000000000000000000000000000000000000000000000000000001000000000000000000000000248e85939e48ca12a20cdf80e60d9e3d380ca7f9");
-	alice_call(
-		&alice,
-		set_token_contract_logic0,
-		3,
-		mapping_token_factory_address,
-		0,
-	);
-	alice_call(
-		&alice,
-		set_token_contract_logic1,
-		4,
-		mapping_token_factory_address,
-		0,
-	);
+	alice_call(&alice, set_token_contract_logic0, 3, mapping_token_factory_address, 0);
+	alice_call(&alice, set_token_contract_logic1, 4, mapping_token_factory_address, 0);
 }
 
 #[test]

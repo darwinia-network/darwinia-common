@@ -55,7 +55,6 @@ enum Action {
 		"encode_send_message_dispatch_call(uint32,bytes4,bytes,uint256)",
 }
 
-/// The contract address: 0000000000000000000000000000000000000018
 pub struct Sub2SubBridge<T, S, P> {
 	_marker: PhantomData<(T, S, P)>,
 }
@@ -80,18 +79,14 @@ where
 		helper.check_state_modifier(context, is_static, StateMutability::View)?;
 
 		let output = match action {
-			Action::OutboundLatestGeneratedNonce => {
-				Self::outbound_latest_generated_nonce(data, &mut helper)?
-			}
-			Action::InboundLatestReceivedNonce => {
-				Self::inbound_latest_received_nonce(data, &mut helper)?
-			}
-			Action::EncodeUnlockFromRemoteDispatchCall => {
-				Self::encode_unlock_from_remote_dispatch_call(data, context.caller, &mut helper)?
-			}
-			Action::EncodeSendMessageDispatchCall => {
-				Self::encode_send_message_dispatch_call(data, &mut helper)?
-			}
+			Action::OutboundLatestGeneratedNonce =>
+				Self::outbound_latest_generated_nonce(data, &mut helper)?,
+			Action::InboundLatestReceivedNonce =>
+				Self::inbound_latest_received_nonce(data, &mut helper)?,
+			Action::EncodeUnlockFromRemoteDispatchCall =>
+				Self::encode_unlock_from_remote_dispatch_call(data, context.caller, &mut helper)?,
+			Action::EncodeSendMessageDispatchCall =>
+				Self::encode_send_message_dispatch_call(data, &mut helper)?,
 		};
 
 		Ok(PrecompileOutput {

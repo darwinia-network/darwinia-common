@@ -25,11 +25,9 @@ where
 	pub fn new() -> Self {
 		Self(Default::default())
 	}
+
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 5, 1024, 1025]
-			.into_iter()
-			.map(|x| addr(x))
-			.collect()
+		sp_std::vec![1, 2, 3, 4, 5, 1024, 1025].into_iter().map(|x| addr(x)).collect()
 	}
 }
 impl<R> PrecompileSet for FrontierPrecompiles<R>
@@ -52,12 +50,10 @@ where
 			a if a == addr(4) => Some(Identity::execute(input, target_gas, context, is_static)),
 			a if a == addr(5) => Some(Modexp::execute(input, target_gas, context, is_static)),
 			// Non-Frontier specific nor Ethereum precompiles :
-			a if a == addr(1024) => {
-				Some(Sha3FIPS256::execute(input, target_gas, context, is_static))
-			}
-			a if a == addr(1025) => Some(ECRecoverPublicKey::execute(
-				input, target_gas, context, is_static,
-			)),
+			a if a == addr(1024) =>
+				Some(Sha3FIPS256::execute(input, target_gas, context, is_static)),
+			a if a == addr(1025) =>
+				Some(ECRecoverPublicKey::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
@@ -87,21 +83,21 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	type FeeCalculator = BaseFee;
-	type GasWeightMapping = ();
-	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
-	type IntoAccountId = ConcatConverter<Self::AccountId>;
-	type FindAuthor = FindAuthorTruncated<Aura>;
-	type BlockHashMapping = darwinia_ethereum::EthereumBlockHashMapping<Self>;
-	type Event = Event;
-	type PrecompilesType = FrontierPrecompiles<Self>;
-	type PrecompilesValue = PrecompilesValue;
-	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type Runner = Runner<Self>;
-	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type BlockHashMapping = darwinia_ethereum::EthereumBlockHashMapping<Self>;
+	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
+	type ChainId = ChainId;
+	type Event = Event;
+	type FeeCalculator = BaseFee;
+	type FindAuthor = FindAuthorTruncated<Aura>;
+	type GasWeightMapping = ();
+	type IntoAccountId = ConcatConverter<Self::AccountId>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
+	type PrecompilesType = FrontierPrecompiles<Self>;
+	type PrecompilesValue = PrecompilesValue;
+	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type Runner = Runner<Self>;
 }
 
 fn addr(a: u64) -> H160 {

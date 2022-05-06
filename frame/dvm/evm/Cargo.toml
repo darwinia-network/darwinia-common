@@ -38,10 +38,6 @@ sp-std             = { default-features = false, git = "https://github.com/darwi
 fp-evm     = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
 pallet-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
 
-[dev-dependencies]
-# darwinia-network
-darwinia-support = { features = ["easy-testing"], path = "../../support" }
-
 [features]
 default = ["std"]
 

@@ -30,14 +30,7 @@ use syn::{parse_macro_input, spanned::Spanned, Expr, ExprLit, Ident, ItemEnum, L
 pub fn selector(_: TokenStream, input: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(input as ItemEnum);
 
-	let ItemEnum {
-		attrs,
-		vis,
-		enum_token,
-		ident,
-		variants,
-		..
-	} = item;
+	let ItemEnum { attrs, vis, enum_token, ident, variants, .. } = item;
 
 	let mut ident_expressions: Vec<Ident> = vec![];
 	let mut variant_expressions: Vec<Expr> = vec![];
@@ -45,9 +38,7 @@ pub fn selector(_: TokenStream, input: TokenStream) -> TokenStream {
 		if let Some((_, Expr::Lit(ExprLit { lit, .. }))) = variant.discriminant {
 			if let Lit::Str(lit_str) = lit {
 				let selector = u32::from_be_bytes(
-					Keccak256::digest(lit_str.value().as_ref())[..4]
-						.try_into()
-						.unwrap(),
+					Keccak256::digest(lit_str.value().as_ref())[..4].try_into().unwrap(),
 				);
 				ident_expressions.push(variant.ident);
 				variant_expressions.push(Expr::Lit(ExprLit {

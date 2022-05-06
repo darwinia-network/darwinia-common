@@ -59,7 +59,7 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{
 		ChangeMembers, Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get, IsSubType,
-		ReservableCurrency, SortedMembers,
+		LockableCurrency, ReservableCurrency, SortedMembers,
 	},
 	unsigned::{TransactionValidity, TransactionValidityError},
 	weights::Weight,
@@ -77,7 +77,7 @@ use sp_std::{convert::From, marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRMerge, MerkleProof};
 use darwinia_relay_primitives::relayer_game::*;
-use darwinia_support::{balance::*, traits::EthereumReceipt as EthereumReceiptT};
+use darwinia_support::traits::EthereumReceipt as EthereumReceiptT;
 use ethereum_primitives::{
 	ethashproof::EthashProof,
 	header::EthereumHeader,
@@ -100,8 +100,7 @@ pub trait Config: frame_system::Config {
 
 	type Call: Dispatchable + From<Call<Self>> + IsSubType<Call<Self>> + Clone;
 
-	type Currency: LockableCurrency<AccountId<Self>, Moment = Self::BlockNumber>
-		+ ReservableCurrency<AccountId<Self>>;
+	type Currency: LockableCurrency<AccountId<Self>> + ReservableCurrency<AccountId<Self>>;
 
 	type RelayerGame: RelayerGameProtocol<
 		Relayer = AccountId<Self>,
@@ -592,10 +591,7 @@ impl<T: Config> Module<T> {
 
 		let merkle_root = Self::dag_merkle_root((header.number as usize / 30000) as u64);
 
-		if ethereum_partial
-			.verify_seal_with_proof(&header, &ethash_proof, &merkle_root)
-			.is_err()
-		{
+		if ethereum_partial.verify_seal_with_proof(&header, &ethash_proof, &merkle_root).is_err() {
 			return false;
 		};
 
@@ -620,10 +616,7 @@ impl<T: Config> Module<T> {
 
 		p.verify(
 			mmr_root.into(),
-			leaves
-				.into_iter()
-				.map(|(n, h)| (leaf_index_to_pos(n), h.into()))
-				.collect(),
+			leaves.into_iter().map(|(n, h)| (leaf_index_to_pos(n), h.into())).collect(),
 		)
 		.unwrap_or(false)
 	}
@@ -726,19 +719,10 @@ impl<T: Config> Relayable for Module<T> {
 		relay_proofs: &Self::RelayProofs,
 		optional_best_confirmed_relay_header_id: Option<&Self::RelayHeaderId>,
 	) -> DispatchResult {
-		let Self::RelayHeaderParcel {
-			header,
-			parent_mmr_root,
-		} = relay_header_parcel;
-		let Self::RelayProofs {
-			ethash_proof,
-			mmr_proof,
-		} = relay_proofs;
+		let Self::RelayHeaderParcel { header, parent_mmr_root } = relay_header_parcel;
+		let Self::RelayProofs { ethash_proof, mmr_proof } = relay_proofs;
 
-		ensure!(
-			Self::verify_header(header, ethash_proof),
-			<Error<T>>::HeaderInv
-		);
+		ensure!(Self::verify_header(header, ethash_proof), <Error<T>>::HeaderInv);
 
 		let last_leaf = *relay_header_id - 1;
 		let mmr_root = array_bytes::dyn_into!(parent_mmr_root, 32);
@@ -755,7 +739,7 @@ impl<T: Config> Relayable for Module<T> {
 			// The mmr_root of first submit should includ the hash last confirm block
 			//      mmr_root of 1st
 			//     / \
-			//    -   -
+			//    - -
 			//   /     \
 			//  c  ...  1st
 			//  c: last comfirmed block 1st: 1st submit block
@@ -763,14 +747,8 @@ impl<T: Config> Relayable for Module<T> {
 				Self::verify_mmr(
 					last_leaf,
 					mmr_root,
-					mmr_proof
-						.iter()
-						.map(|h| array_bytes::dyn_into!(h, 32))
-						.collect(),
-					vec![(
-						*best_confirmed_block_number,
-						best_confirmed_block_header_hash
-					)],
+					mmr_proof.iter().map(|h| array_bytes::dyn_into!(h, 32)).collect(),
+					vec![(*best_confirmed_block_number, best_confirmed_block_header_hash)],
 				),
 				<Error<T>>::MMRInv
 			);
@@ -781,16 +759,13 @@ impl<T: Config> Relayable for Module<T> {
 			//     / \
 			//    - ..-
 			//   /   | \
-			//  -  ..c  1st
+			//  - ..c  1st
 			// c: current submit  1st: 1st submit block
 			ensure!(
 				Self::verify_mmr(
 					last_leaf,
 					mmr_root,
-					mmr_proof
-						.iter()
-						.map(|h| array_bytes::dyn_into!(h, 32))
-						.collect(),
+					mmr_proof.iter().map(|h| array_bytes::dyn_into!(h, 32)).collect(),
 					vec![(
 						header.number,
 						array_bytes::dyn_into!(header.hash.ok_or(<Error<T>>::HeaderInv)?, 32)
@@ -854,10 +829,7 @@ impl<T: Config> Relayable for Module<T> {
 	) -> DispatchResult {
 		let relay_block_number = relay_header_parcel.header.number;
 
-		ensure!(
-			relay_block_number > Self::best_confirmed_block_number(),
-			<Error<T>>::HeaderInv
-		);
+		ensure!(relay_block_number > Self::best_confirmed_block_number(), <Error<T>>::HeaderInv);
 		// Not allow to pend on the same block height
 		ensure!(
 			Self::pending_relay_header_parcels()
@@ -913,14 +885,8 @@ impl<T: Config> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 		let (ethereum_header, ethereum_proof_record, mmr_proof) = ethereum_receipt_proof_thing;
 		let header_hash = ethereum_header.hash();
 
-		ensure!(
-			header_hash == ethereum_header.re_compute_hash(),
-			<Error<T>>::HeaderHashMis,
-		);
-		ensure!(
-			ethereum_header.number == mmr_proof.member_leaf_index,
-			<Error<T>>::MMRInv,
-		);
+		ensure!(header_hash == ethereum_header.re_compute_hash(), <Error<T>>::HeaderHashMis,);
+		ensure!(ethereum_header.number == mmr_proof.member_leaf_index, <Error<T>>::MMRInv,);
 
 		// Verify header member to last confirmed block using mmr proof
 		let mmr_root = Self::confirmed_header_parcel_of(mmr_proof.last_leaf_index + 1)
@@ -956,10 +922,7 @@ impl<T: Config> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 	fn gen_receipt_index(proof: &Self::EthereumReceiptProofThing) -> EthereumTransactionIndex {
 		let (_, ethereum_receipt_proof, _) = proof;
 
-		(
-			ethereum_receipt_proof.header_hash,
-			ethereum_receipt_proof.index,
-		)
+		(ethereum_receipt_proof.header_hash, ethereum_receipt_proof.index)
 	}
 }
 
@@ -1011,11 +974,12 @@ impl<T: Config> Debug for CheckEthereumRelayHeaderParcel<T> {
 	}
 }
 impl<T: Send + Sync + Config + TypeInfo> SignedExtension for CheckEthereumRelayHeaderParcel<T> {
-	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderParcel";
 	type AccountId = T::AccountId;
-	type Call = <T as Config>::Call;
 	type AdditionalSigned = ();
+	type Call = <T as Config>::Call;
 	type Pre = ();
+
+	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderParcel";
 
 	fn additional_signed(&self) -> Result<Self::AdditionalSigned, TransactionValidityError> {
 		Ok(())
@@ -1029,10 +993,7 @@ impl<T: Send + Sync + Config + TypeInfo> SignedExtension for CheckEthereumRelayH
 		_: usize,
 	) -> TransactionValidity {
 		match call.is_sub_type() {
-			Some(Call::affirm {
-				ethereum_relay_header_parcel,
-				..
-			}) => {
+			Some(Call::affirm { ethereum_relay_header_parcel, .. }) => {
 				if T::RelayerGame::get_affirmed_relay_header_parcels(&RelayAffirmationId {
 					game_id: ethereum_relay_header_parcel.header.number,
 					round: 0,
@@ -1045,7 +1006,7 @@ impl<T: Send + Sync + Config + TypeInfo> SignedExtension for CheckEthereumRelayH
 				}
 
 				Ok(ValidTransaction::default())
-			}
+			},
 			// TODO
 			// Some(Call::dispute_and_affirm())
 			// Some(Call::extend_affirmation())

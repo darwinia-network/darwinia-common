@@ -42,12 +42,9 @@ pub struct LogEntry {
 impl LogEntry {
 	/// Calculates the bloom of this log entry.
 	pub fn bloom(&self) -> Bloom {
-		self.topics.iter().fold(
-			Bloom::from(Input::Raw(self.address.as_bytes())),
-			|mut b, t| {
-				b.accrue(Input::Raw(t.as_bytes()));
-				b
-			},
-		)
+		self.topics.iter().fold(Bloom::from(Input::Raw(self.address.as_bytes())), |mut b, t| {
+			b.accrue(Input::Raw(t.as_bytes()));
+			b
+		})
 	}
 }

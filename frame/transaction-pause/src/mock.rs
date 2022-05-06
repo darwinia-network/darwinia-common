@@ -42,29 +42,29 @@ parameter_types! {
 }
 
 impl frame_system::Config for Test {
-	type Origin = Origin;
-	type Index = u64;
+	type AccountData = AccountData<Balance>;
+	type AccountId = AccountId;
+	type BaseCallFilter = Everything;
+	type BlockHashCount = BlockHashCount;
+	type BlockLength = ();
 	type BlockNumber = u64;
+	type BlockWeights = ();
 	type Call = Call;
+	type DbWeight = ();
+	type Event = Event;
 	type Hash = H256;
 	type Hashing = ::sp_runtime::traits::BlakeTwo256;
-	type AccountId = AccountId;
-	type Lookup = IdentityLookup<AccountId>;
 	type Header = Header;
-	type Event = Event;
-	type BlockHashCount = BlockHashCount;
-	type BlockWeights = ();
-	type BlockLength = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
+	type Index = u64;
+	type Lookup = IdentityLookup<AccountId>;
 	type OnKilledAccount = ();
-	type DbWeight = ();
-	type BaseCallFilter = Everything;
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type OnNewAccount = ();
 	type OnSetCode = ();
+	type Origin = Origin;
+	type PalletInfo = PalletInfo;
+	type SS58Prefix = ();
+	type SystemWeightInfo = ();
+	type Version = ();
 }
 
 parameter_types! {
@@ -73,16 +73,16 @@ parameter_types! {
 }
 
 impl darwinia_balances::Config<RingInstance> for Test {
+	type AccountStore = System;
 	type Balance = Balance;
+	type BalanceInfo = AccountData<Balance>;
 	type DustRemoval = ();
 	type Event = Event;
 	type ExistentialDeposit = NativeTokenExistentialDeposit;
-	type AccountStore = System;
 	type MaxLocks = ();
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type BalanceInfo = AccountData<Balance>;
 	type OtherCurrencies = ();
+	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
 
@@ -121,9 +121,7 @@ impl Default for ExtBuilder {
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let t = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
-			.unwrap();
+		let t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 		t.into()
 	}

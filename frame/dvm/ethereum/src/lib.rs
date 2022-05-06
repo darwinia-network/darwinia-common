@@ -113,6 +113,7 @@ impl<O: Into<Result<RawOrigin, O>> + From<RawOrigin>> EnsureOrigin<O>
 	for EnsureEthereumTransaction
 {
 	type Success = H160;
+
 	fn try_origin(o: O) -> Result<Self::Success, O> {
 		o.into().and_then(|o| match o {
 			RawOrigin::EthereumTransaction(id) => Ok(id),
@@ -157,10 +158,7 @@ where
 		origin: &H160,
 	) -> Option<Result<(), TransactionValidityError>> {
 		if let Call::transact { transaction } = self {
-			Some(Pallet::<T>::validate_transaction_in_block(
-				*origin,
-				&transaction,
-			))
+			Some(Pallet::<T>::validate_transaction_in_block(*origin, &transaction))
 		} else {
 			None
 		}
@@ -168,10 +166,7 @@ where
 
 	pub fn validate_self_contained(&self, origin: &H160) -> Option<TransactionValidity> {
 		if let Call::transact { transaction } = self {
-			Some(Pallet::<T>::validate_transaction_in_pool(
-				*origin,
-				transaction,
-			))
+			Some(Pallet::<T>::validate_transaction_in_pool(*origin, transaction))
 		} else {
 			None
 		}
@@ -218,9 +213,7 @@ pub mod pallet {
 			);
 			// move block hash pruning window by one block
 			let block_hash_count = T::BlockHashCount::get();
-			let to_remove = n
-				.saturating_sub(block_hash_count)
-				.saturating_sub(One::one());
+			let to_remove = n.saturating_sub(block_hash_count).saturating_sub(One::one());
 			// keep genesis hash
 			if !to_remove.is_zero() {
 				<BlockHash<T>>::remove(U256::from(
@@ -253,10 +246,10 @@ pub mod pallet {
 				}
 			}
 			// Account for `on_finalize` weight:
-			//	- read: frame_system::Pallet::<T>::digest()
-			//	- read: frame_system::Pallet::<T>::block_number()
-			//	- write: <Pallet<T>>::store_block()
-			//	- write: <BlockHash<T>>::remove()
+			// 	- read: frame_system::Pallet::<T>::digest()
+			// 	- read: frame_system::Pallet::<T>::block_number()
+			// 	- write: <Pallet<T>>::store_block()
+			// 	- write: <BlockHash<T>>::remove()
 			weight.saturating_add(T::DbWeight::get().reads_writes(2, 2))
 		}
 	}
@@ -305,7 +298,8 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub fn deposit_event)]
 	/// Ethereum pallet events.
 	pub enum Event<T: Config> {
-		/// An ethereum transaction was successfully executed. \[from, to/contract_address, transaction_hash, exit_reason\]
+		/// An ethereum transaction was successfully executed. \[from, to/contract_address,
+		/// transaction_hash, exit_reason\]
 		Executed(H160, H160, H256, ExitReason),
 		/// DVM transfer. \[from, to, value\]
 		DVMTransfer(T::AccountId, T::AccountId, U256),
@@ -412,11 +406,7 @@ impl<T: Config> Pallet<T> {
 				max_priority_fee_per_gas: None,
 				value: t.value,
 				chain_id: Some(t.chain_id),
-				access_list: t
-					.access_list
-					.iter()
-					.map(|d| (d.address, d.slots.clone()))
-					.collect(),
+				access_list: t.access_list.iter().map(|d| (d.address, d.slots.clone())).collect(),
 			},
 			Transaction::EIP1559(t) => TransactionData {
 				action: t.action,
@@ -428,11 +418,7 @@ impl<T: Config> Pallet<T> {
 				max_priority_fee_per_gas: Some(t.max_priority_fee_per_gas),
 				value: t.value,
 				chain_id: Some(t.chain_id),
-				access_list: t
-					.access_list
-					.iter()
-					.map(|d| (d.address, d.slots.clone()))
-					.collect(),
+				access_list: t.access_list.iter().map(|d| (d.address, d.slots.clone())).collect(),
 			},
 		}
 	}
@@ -507,7 +493,8 @@ impl<T: Config> Pallet<T> {
 		let mut fee = gas_price.saturating_mul(gas_limit);
 		if let Some(max_priority_fee_per_gas) = transaction_data.max_priority_fee_per_gas {
 			// EIP-1559 transaction priority is determined by `max_priority_fee_per_gas`.
-			// If the transaction do not include this optional parameter, priority is now considered zero.
+			// If the transaction do not include this optional parameter, priority is now considered
+			// zero.
 			priority = max_priority_fee_per_gas.unique_saturated_into();
 			// Add the priority tip to the payable fee.
 			fee = fee.saturating_add(max_priority_fee_per_gas.saturating_mul(gas_limit));
@@ -568,9 +555,7 @@ impl<T: Config> Pallet<T> {
 		// In the context of the block, a transaction with a nonce that is
 		// too high should be considered invalid and make the whole block invalid.
 		if transaction_nonce > account_nonce {
-			Err(TransactionValidityError::Invalid(
-				InvalidTransaction::Future,
-			))
+			Err(TransactionValidityError::Invalid(InvalidTransaction::Future))
 		} else if transaction_nonce < account_nonce {
 			Err(TransactionValidityError::Invalid(InvalidTransaction::Stale))
 		} else {
@@ -654,9 +639,8 @@ impl<T: Config> Pallet<T> {
 			let logs = status.clone().logs;
 			let cumulative_gas_used = if let Some((_, _, receipt)) = pending.last() {
 				match receipt {
-					Receipt::Legacy(d) | Receipt::EIP2930(d) | Receipt::EIP1559(d) => {
-						d.used_gas.saturating_add(used_gas)
-					}
+					Receipt::Legacy(d) | Receipt::EIP2930(d) | Receipt::EIP1559(d) =>
+						d.used_gas.saturating_add(used_gas),
 				}
 			} else {
 				used_gas
@@ -705,6 +689,7 @@ impl<T: Config> Pallet<T> {
 	pub fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
 		CurrentTransactionStatuses::<T>::get()
 	}
+
 	/// Get current block.
 	pub fn current_block() -> Option<ethereum::BlockV2> {
 		CurrentBlock::<T>::get()
@@ -738,8 +723,8 @@ impl<T: Config> Pallet<T> {
 		) = match advanced_transaction {
 			AdvancedTransaction::Ethereum(transaction) => {
 				match transaction {
-					// max_fee_per_gas and max_priority_fee_per_gas in legacy and 2930 transactions is
-					// the provided gas_price.
+					// max_fee_per_gas and max_priority_fee_per_gas in legacy and 2930 transactions
+					// is the provided gas_price.
 					Transaction::Legacy(t) => {
 						let base_fee = T::FeeCalculator::min_gas_price();
 						let priority_fee = t
@@ -756,7 +741,7 @@ impl<T: Config> Pallet<T> {
 							t.action,
 							Vec::new(),
 						)
-					}
+					},
 					Transaction::EIP2930(t) => {
 						let base_fee = T::FeeCalculator::min_gas_price();
 						let priority_fee = t
@@ -778,7 +763,7 @@ impl<T: Config> Pallet<T> {
 							t.action,
 							access_list,
 						)
-					}
+					},
 					Transaction::EIP1559(t) => {
 						let access_list: Vec<(H160, Vec<H256>)> = t
 							.access_list
@@ -795,9 +780,9 @@ impl<T: Config> Pallet<T> {
 							t.action,
 							access_list,
 						)
-					}
+					},
 				}
-			}
+			},
 			AdvancedTransaction::Internal(t) => (
 				t.input.clone(),
 				t.value,
@@ -827,7 +812,7 @@ impl<T: Config> Pallet<T> {
 				.map_err(Into::into)?;
 
 				Ok((Some(target), None, CallOrCreateInfo::Call(res)))
-			}
+			},
 			ethereum::TransactionAction::Create => {
 				let res = T::Runner::create(
 					from,
@@ -843,7 +828,7 @@ impl<T: Config> Pallet<T> {
 				.map_err(Into::into)?;
 
 				Ok((None, Some(res.value), CallOrCreateInfo::Create(res)))
-			}
+			},
 		}
 	}
 
@@ -859,9 +844,8 @@ impl<T: Config> Pallet<T> {
 			statuses.push(status);
 			receipts.push(receipt.clone());
 			let (logs, used_gas) = match receipt {
-				Receipt::Legacy(d) | Receipt::EIP2930(d) | Receipt::EIP1559(d) => {
-					(d.logs.clone(), d.used_gas)
-				}
+				Receipt::Legacy(d) | Receipt::EIP2930(d) | Receipt::EIP1559(d) =>
+					(d.logs.clone(), d.used_gas),
 			};
 			cumulative_gas_used = used_gas;
 			Self::logs_bloom(logs, &mut logs_bloom);
@@ -871,8 +855,8 @@ impl<T: Config> Pallet<T> {
 		let receipts_root =
 			ethereum::util::ordered_trie_root(receipts.iter().map(|r| rlp::encode(r)));
 		let partial_header = ethereum::PartialHeader {
-			// Instead of using current_block(), obtain the parent block hash from BlockHash storage to avoid Block type upgrade failures
-			// See: https://github.com/paritytech/frontier/pull/570
+			// Instead of using current_block(), obtain the parent block hash from BlockHash storage
+			// to avoid Block type upgrade failures See: https://github.com/paritytech/frontier/pull/570
 			parent_hash: if block_number > U256::zero() {
 				BlockHash::<T>::get(block_number - 1)
 			} else {

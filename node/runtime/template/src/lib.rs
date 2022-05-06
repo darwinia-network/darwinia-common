@@ -85,10 +85,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
-	NativeVersion {
-		runtime_version: VERSION,
-		can_author_with: Default::default(),
-	}
+	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
 }
 
 frame_support::construct_runtime!(
@@ -154,9 +151,10 @@ impl fp_self_contained::SelfContainedCall for Call {
 		info: Self::SignedInfo,
 	) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfoOf<Self>>> {
 		match self {
-			call @ Call::Ethereum(darwinia_ethereum::Call::transact { .. }) => Some(call.dispatch(
-				Origin::from(darwinia_ethereum::RawOrigin::EthereumTransaction(info)),
-			)),
+			call @ Call::Ethereum(darwinia_ethereum::Call::transact { .. }) =>
+				Some(call.dispatch(Origin::from(
+					darwinia_ethereum::RawOrigin::EthereumTransaction(info),
+				))),
 			_ => None,
 		}
 	}

@@ -73,7 +73,7 @@ use codec::Encode;
 // --- paritytech ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure, log,
-	traits::{Currency, EnsureOrigin, Get, LockIdentifier, WithdrawReasons},
+	traits::{Currency, EnsureOrigin, Get, LockIdentifier, LockableCurrency, WithdrawReasons},
 	weights::Weight,
 	StorageValue,
 };
@@ -87,14 +87,13 @@ use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use darwinia_relay_primitives::relay_authorities::*;
-use darwinia_support::balance::*;
 use types::*;
 
 pub const MAX_SCHEDULED_NUM: usize = 10;
 
 pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {
 	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Config>::Event>;
-	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+	type RingCurrency: LockableCurrency<Self::AccountId>;
 	type LockId: Get<LockIdentifier>;
 	type TermDuration: Get<Self::BlockNumber>;
 	type MaxCandidates: Get<usize>;
@@ -231,7 +230,7 @@ decl_storage! {
 				T::RingCurrency::set_lock(
 					T::LockId::get(),
 					account_id,
-					LockFor::Common { amount: *stake },
+					*stake,
 					WithdrawReasons::all(),
 				);
 
@@ -305,7 +304,7 @@ decl_module! {
 				<Error<T, I>>::AuthorityAE
 			);
 			ensure!(
-				<RingCurrency<T, I>>::usable_balance(&account_id) > stake,
+				<RingCurrency<T, I>>::free_balance(&account_id) > stake,
 				<Error<T, I>>::StakeIns
 			);
 
@@ -340,7 +339,7 @@ decl_module! {
 				<RingCurrency<T, I>>::set_lock(
 					T::LockId::get(),
 					&account_id,
-					LockFor::Common { amount: stake },
+					stake,
 					WithdrawReasons::all()
 				);
 
@@ -748,12 +747,9 @@ where
 		for RelayAuthority { account_id, .. } in authorities {
 			if next_authorities
 				.iter()
-				.position(
-					|RelayAuthority {
-					     account_id: account_id_,
-					     ..
-					 }| account_id_ == &account_id,
-				)
+				.position(|RelayAuthority { account_id: account_id_, .. }| {
+					account_id_ == &account_id
+				})
 				.is_none()
 			{
 				<RingCurrency<T, I>>::remove_lock(T::LockId::get(), &account_id);
@@ -805,9 +801,8 @@ where
 	pub fn mmr_root_signed(block_number: BlockNumberFor<T>) {
 		<MmrRootsToSign<T, I>>::remove(block_number);
 		<MmrRootsToSignKeys<T, I>>::mutate(|mmr_roots_to_sign_keys| {
-			if let Some(position) = mmr_roots_to_sign_keys
-				.iter()
-				.position(|key| key == &block_number)
+			if let Some(position) =
+				mmr_roots_to_sign_keys.iter().position(|key| key == &block_number)
 			{
 				mmr_roots_to_sign_keys.remove(position);
 			}
@@ -820,10 +815,7 @@ where
 				let _ = <Authorities<T, I>>::try_mutate(|authorities| {
 					let mut storage_changed = false;
 
-					for RelayAuthority {
-						account_id, stake, ..
-					} in authorities.iter_mut()
-					{
+					for RelayAuthority { account_id, stake, .. } in authorities.iter_mut() {
 						if signatures
 							.iter()
 							.position(|(authority, _)| authority == account_id)
@@ -972,9 +964,7 @@ where
 	T: Config<I>,
 	I: Instance,
 {
-	authorities
-		.iter()
-		.position(|relay_authority| relay_authority == account_id)
+	authorities.iter().position(|relay_authority| relay_authority == account_id)
 }
 
 pub fn find_signer<T, I>(
@@ -985,9 +975,8 @@ where
 	T: Config<I>,
 	I: Instance,
 {
-	if let Some(position) = authorities
-		.iter()
-		.position(|relay_authority| relay_authority == account_id)
+	if let Some(position) =
+		authorities.iter().position(|relay_authority| relay_authority == account_id)
 	{
 		Some(authorities[position].signer.to_owned())
 	} else {

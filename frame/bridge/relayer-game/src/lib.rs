@@ -61,7 +61,7 @@ mod types {
 // --- paritytech ---
 use frame_support::{
 	decl_error, decl_module, decl_storage, ensure,
-	traits::{Currency, Get, LockIdentifier, OnUnbalanced, WithdrawReasons},
+	traits::{Currency, Get, LockIdentifier, LockableCurrency, OnUnbalanced, WithdrawReasons},
 };
 use frame_system::pallet_prelude::*;
 use sp_runtime::{
@@ -73,12 +73,11 @@ use sp_std::borrow::ToOwned;
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 // --- darwinia-network ---
 use darwinia_relay_primitives::relayer_game::*;
-use darwinia_support::balance::*;
 use types::*;
 
 pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {
 	/// The currency use for stake
-	type RingCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
+	type RingCurrency: LockableCurrency<Self::AccountId>;
 
 	type LockId: Get<LockIdentifier>;
 
@@ -247,15 +246,13 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 		relayer: &AccountId<T>,
 		round: u32,
 		affirmations_count: u32,
-	) -> Result<RingBalance<T, I>, DispatchError> {
-		let stake = T::RelayerGameAdjustor::estimate_stake(round, affirmations_count);
+	) -> Result<(RingBalance<T, I>, RingBalance<T, I>), DispatchError> {
+		let round_stake = T::RelayerGameAdjustor::estimate_stake(round, affirmations_count);
+		let stake = Self::stake_of(relayer).saturating_add(round_stake);
 
-		ensure!(
-			T::RingCurrency::usable_balance(relayer) >= stake,
-			<Error<T, I>>::StakeIns
-		);
+		ensure!(T::RingCurrency::free_balance(relayer) >= stake, <Error<T, I>>::StakeIns);
 
-		Ok(stake)
+		Ok((round_stake, stake))
 	}
 
 	pub fn update_timer_of_game_at(
@@ -289,30 +286,20 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 		Ok(())
 	}
 
-	pub fn update_stakes_with<F>(relayer: &AccountId<T>, calc_stakes: F)
-	where
-		F: FnOnce(RingBalance<T, I>) -> RingBalance<T, I>,
-	{
-		let stakes = calc_stakes(Self::stake_of(relayer));
-
-		if stakes.is_zero() {
+	pub fn update_stake_with(relayer: &AccountId<T>, stake: RingBalance<T, I>) {
+		if stake.is_zero() {
 			T::RingCurrency::remove_lock(T::LockId::get(), relayer);
 
 			<Stakes<T, I>>::take(relayer);
 		} else {
-			T::RingCurrency::set_lock(
-				T::LockId::get(),
-				relayer,
-				LockFor::Common { amount: stakes },
-				WithdrawReasons::all(),
-			);
+			T::RingCurrency::set_lock(T::LockId::get(), relayer, stake, WithdrawReasons::all());
 
-			<Stakes<T, I>>::insert(relayer, stakes);
+			<Stakes<T, I>>::insert(relayer, stake);
 		}
 	}
 
 	pub fn slash_on(relayer: &AccountId<T>, stake: RingBalance<T, I>) {
-		Self::update_stakes_with(relayer, |old_stakes| old_stakes.saturating_sub(stake));
+		Self::update_stake_with(relayer, Self::stake_of(relayer).saturating_sub(stake));
 
 		T::RingSlash::on_unbalanced(T::RingCurrency::slash(relayer, stake).0);
 	}
@@ -321,39 +308,33 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 		honesties: BTreeMap<AccountId<T>, (RingBalance<T, I>, RingBalance<T, I>)>,
 		evils: BTreeMap<AccountId<T>, RingBalance<T, I>>,
 	) {
-		for (relayer, (unstakes, rewards)) in honesties {
-			// Unlock stakes for honesty
-			Self::update_stakes_with(&relayer, |stakes| stakes.saturating_sub(unstakes));
+		for (relayer, (unstake, reward)) in honesties {
+			Self::update_stake_with(&relayer, Self::stake_of(&relayer).saturating_sub(unstake));
 
-			// Reward honesty
-			T::RingCurrency::deposit_creating(&relayer, rewards);
+			T::RingCurrency::deposit_creating(&relayer, reward);
 		}
 
-		for (relayer, slashs) in evils {
-			// Unlock stakes for honesty
-			Self::update_stakes_with(&relayer, |stakes| stakes.saturating_sub(slashs));
+		for (relayer, slash) in evils {
+			Self::update_stake_with(&relayer, Self::stake_of(&relayer).saturating_sub(slash));
 
-			// Punish evil
-			T::RingCurrency::slash(&relayer, slashs);
+			T::RingCurrency::slash(&relayer, slash);
 		}
 	}
 
 	pub fn settle_without_challenge(
 		mut winning_relay_affirmation: RelayAffirmationT<T, I>,
 	) -> Option<RelayHeaderParcel<T, I>> {
-		Self::update_stakes_with(&winning_relay_affirmation.relayer, |stakes| {
-			stakes.saturating_sub(winning_relay_affirmation.stake)
-		});
+		let relayer = &winning_relay_affirmation.relayer;
+
+		Self::update_stake_with(
+			relayer,
+			Self::stake_of(relayer).saturating_sub(winning_relay_affirmation.stake),
+		);
 
 		// TODO: reward on no challenge
 
 		if winning_relay_affirmation.relay_header_parcels.len() == 1 {
-			Some(
-				winning_relay_affirmation
-					.relay_header_parcels
-					.pop()
-					.unwrap(),
-			)
+			Some(winning_relay_affirmation.relay_header_parcels.pop().unwrap())
 		} else {
 			// Should never enter this condition
 			log::error!(target: "relayer-game", "   >  Relay Parcels Count - MISMATCHED");
@@ -374,12 +355,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 		game_id: &RelayHeaderId<T, I>,
 		relay_affirmation: RelayAffirmationT<T, I>,
 	) -> Option<RelayHeaderParcel<T, I>> {
-		let RelayAffirmation {
-			relayer,
-			stake,
-			mut maybe_extended_relay_affirmation_id,
-			..
-		} = relay_affirmation;
+		let RelayAffirmation { relayer, stake, mut maybe_extended_relay_affirmation_id, .. } =
+			relay_affirmation;
 		// BTreeMap<(relayer, unstake, reward)>
 		let mut honesties = <BTreeMap<AccountId<T>, (RingBalance<T, I>, RingBalance<T, I>)>>::new();
 		// BTreeMap<(relayer, slash)>
@@ -405,7 +382,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 				honesties
 					.entry(honesty.to_owned())
-					.and_modify(|(unstakes, _)| *unstakes = unstakes.saturating_add(*stake))
+					.and_modify(|(unstake, _)| *unstake = unstake.saturating_add(*stake))
 					.or_insert((*stake, Zero::zero()));
 
 				for (index_, RelayAffirmation { relayer, stake, .. }) in
@@ -414,10 +391,10 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 					if index_ as u32 != index {
 						honesties
 							.entry(honesty.to_owned())
-							.and_modify(|(_, rewards)| *rewards = rewards.saturating_add(*stake));
+							.and_modify(|(_, reward)| *reward = reward.saturating_add(*stake));
 						evils
 							.entry(relayer.to_owned())
-							.and_modify(|slashs| *slashs = slashs.saturating_add(*stake))
+							.and_modify(|slash| *slash = slash.saturating_add(*stake))
 							.or_insert(*stake);
 					}
 				}
@@ -542,7 +519,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 					honesties
 						.entry(honesty.to_owned())
-						.and_modify(|(unstakes, _)| *unstakes = unstakes.saturating_add(*stake))
+						.and_modify(|(unstake, _)| *unstake = unstake.saturating_add(*stake))
 						.or_insert((*stake, Zero::zero()));
 
 					for (index, RelayAffirmation { relayer, stake, .. }) in
@@ -551,12 +528,10 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 						if index != last_round_winning_relay_chain_index {
 							honesties
 								.entry(honesty.to_owned())
-								.and_modify(|(_, rewards)| {
-									*rewards = rewards.saturating_add(*stake)
-								});
+								.and_modify(|(_, reward)| *reward = reward.saturating_add(*stake));
 							evils
 								.entry(relayer.to_owned())
-								.and_modify(|slashs| *slashs = slashs.saturating_add(*stake))
+								.and_modify(|slash| *slash = slash.saturating_add(*stake))
 								.or_insert(*stake);
 						}
 					}
@@ -579,8 +554,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 							honesties
 								.entry(honesty.to_owned())
-								.and_modify(|(unstakes, _)| {
-									*unstakes = unstakes.saturating_add(*stake)
+								.and_modify(|(unstake, _)| {
+									*unstake = unstake.saturating_add(*stake)
 								})
 								.or_insert((*stake, Zero::zero()));
 
@@ -589,13 +564,11 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 							{
 								if index_ as u32 != index {
 									honesties.entry(honesty.to_owned()).and_modify(
-										|(_, rewards)| *rewards = rewards.saturating_add(*stake),
+										|(_, reward)| *reward = reward.saturating_add(*stake),
 									);
 									evils
 										.entry(relayer.to_owned())
-										.and_modify(|slashs| {
-											*slashs = slashs.saturating_add(*stake)
-										})
+										.and_modify(|slash| *slash = slash.saturating_add(*stake))
 										.or_insert(*stake);
 								}
 							}
@@ -630,13 +603,13 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 					log::error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
 
 					None
-				}
+				},
 				_ => {
 					// Should never enter this condition
 					log::error!(target: "relayer-game", "   >  Honesty Relayer - MORE THAN ONE");
 
 					None
-				}
+				},
 			}
 		} else {
 			// Should never enter this condition
@@ -660,10 +633,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 			T::RelayerGameAdjustor::update_sample_points(game_sample_points);
 			T::RelayableChain::new_round(
 				game_id,
-				game_sample_points
-					.last()
-					.map(ToOwned::to_owned)
-					.unwrap_or_default(),
+				game_sample_points.last().map(ToOwned::to_owned).unwrap_or_default(),
 			);
 		});
 	}
@@ -671,9 +641,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 	pub fn game_over(game_id: RelayHeaderId<T, I>) {
 		// TODO: log::error log::trace
 		let _ = <RelayHeaderParcelToResolve<T, I>>::try_mutate(|relay_header_parcel_to_resolve| {
-			if let Some(i) = relay_header_parcel_to_resolve
-				.iter()
-				.position(|block_id| block_id == &game_id)
+			if let Some(i) =
+				relay_header_parcel_to_resolve.iter().position(|block_id| block_id == &game_id)
 			{
 				relay_header_parcel_to_resolve.remove(i);
 
@@ -724,13 +693,13 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 					{
 						relay_header_parcels.push(relay_header_parcel);
 					}
-				}
+				},
 				// No relayer response for the latest round
 				(_, 0) => {
 					log::trace!(target: "relayer-game", "   >  All Relayers Abstain, Settle Abandon");
 
 					Self::settle_abandon(&game_id);
-				}
+				},
 				// No more challenge found at latest round, only one relayer win
 				(_, 1) => {
 					log::trace!(target: "relayer-game", "   >  No More Challenge, Settle With Challenge");
@@ -744,7 +713,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 						Self::settle_abandon(&game_id);
 					}
-				}
+				},
 				(last_round, _) => {
 					let distance = T::RelayableChain::distance_between(
 						&game_id,
@@ -768,7 +737,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 						continue;
 					}
-				}
+				},
 			}
 
 			Self::game_over(game_id);
@@ -784,19 +753,15 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 }
 
 impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
-	type Relayer = AccountId<T>;
 	type RelayHeaderId = RelayHeaderId<T, I>;
 	type RelayHeaderParcel = RelayHeaderParcel<T, I>;
 	type RelayProofs = RelayProofs<T, I>;
+	type Relayer = AccountId<T>;
 
 	fn get_affirmed_relay_header_parcels(
 		relay_affirmation_id: &RelayAffirmationId<Self::RelayHeaderId>,
 	) -> Option<Vec<Self::RelayHeaderParcel>> {
-		let RelayAffirmationId {
-			game_id,
-			round,
-			index,
-		} = relay_affirmation_id;
+		let RelayAffirmationId { game_id, round, index } = relay_affirmation_id;
 
 		Self::affirmations_of_game_at(&game_id, round)
 			.into_iter()
@@ -824,10 +789,7 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		let game_id = relay_header_parcel.header_id();
 
 		// Check if the proposed header has already been confirmed
-		ensure!(
-			game_id > best_confirmed_relay_header_id,
-			<Error<T, I>>::RelayParcelAR
-		);
+		ensure!(game_id > best_confirmed_relay_header_id, <Error<T, I>>::RelayParcelAR);
 		// Make sure the game is at first round
 		ensure!(
 			<Affirmations<T, I>>::decode_len(&game_id, 1).unwrap_or(0) == 0,
@@ -850,16 +812,16 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			<Error<T, I>>::ActiveGamesTM
 		);
 
-		let stake = Self::ensure_can_stake(relayer, 0, 1)?;
+		let (round_stake, stake) = Self::ensure_can_stake(relayer, 0, 1)?;
 
-		Self::update_stakes_with(relayer, |old_stakes| old_stakes.saturating_add(stake));
+		Self::update_stake_with(relayer, stake);
 
 		let relay_affirmation = {
 			let mut relay_affirmation = RelayAffirmation::new();
 
 			relay_affirmation.relayer = relayer.to_owned();
 			relay_affirmation.relay_header_parcels = proposed_relay_header_parcels;
-			relay_affirmation.stake = stake;
+			relay_affirmation.stake = round_stake;
 
 			// Allow affirm without relay proofs
 			// The relay proofs can be completed later through `complete_proofs`
@@ -906,17 +868,11 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		let game_id = relay_header_parcel.header_id();
 
 		// Check if the proposed header has already been confirmed
-		ensure!(
-			game_id > best_confirmed_relay_header_id,
-			<Error<T, I>>::RelayParcelAR
-		);
+		ensure!(game_id > best_confirmed_relay_header_id, <Error<T, I>>::RelayParcelAR);
 
 		let now = <frame_system::Pallet<T>>::block_number();
 
-		ensure!(
-			Self::is_game_open_at(&game_id, now, 0),
-			<Error<T, I>>::GameAtThisRoundC
-		);
+		ensure!(Self::is_game_open_at(&game_id, now, 0), <Error<T, I>>::GameAtThisRoundC);
 
 		let proposed_relay_header_parcels = vec![relay_header_parcel];
 		let existed_affirmations = Self::affirmations_of_game_at(&game_id, 0);
@@ -928,20 +884,17 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		);
 
 		let existed_relay_affirmations_count = existed_affirmations.len() as u32;
-		let stake = Self::ensure_can_stake(
-			relayer,
-			0,
-			existed_relay_affirmations_count.saturating_add(1),
-		)?;
+		let (round_stake, stake) =
+			Self::ensure_can_stake(relayer, 0, existed_relay_affirmations_count.saturating_add(1))?;
 
-		Self::update_stakes_with(relayer, |old_stakes| old_stakes.saturating_add(stake));
+		Self::update_stake_with(relayer, stake);
 
 		let relay_affirmation = {
 			let mut relay_affirmation = RelayAffirmation::new();
 
 			relay_affirmation.relayer = relayer.to_owned();
 			relay_affirmation.relay_header_parcels = proposed_relay_header_parcels;
-			relay_affirmation.stake = stake;
+			relay_affirmation.stake = round_stake;
 
 			// Allow affirm without relay proofs
 			// The relay proofs can be completed later through `complete_proofs`
@@ -972,18 +925,12 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		relay_affirmation_id: RelayAffirmationId<Self::RelayHeaderId>,
 		relay_proofs: Vec<Self::RelayProofs>,
 	) -> DispatchResult {
-		let RelayAffirmationId {
-			game_id,
-			round,
-			index,
-		} = relay_affirmation_id;
+		let RelayAffirmationId { game_id, round, index } = relay_affirmation_id;
 
 		<Affirmations<T, I>>::try_mutate(&game_id, round, |relay_affirmations| {
 			if let Some(relay_affirmation) = relay_affirmations.get_mut(index as usize) {
-				for (relay_header_parcel, relay_proofs) in relay_affirmation
-					.relay_header_parcels
-					.iter()
-					.zip(relay_proofs.into_iter())
+				for (relay_header_parcel, relay_proofs) in
+					relay_affirmation.relay_header_parcels.iter().zip(relay_proofs.into_iter())
 				{
 					if round == 0 {
 						T::RelayableChain::verify_relay_proofs(
@@ -1025,11 +972,8 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			game_sample_points,
 		);
 
-		let RelayAffirmationId {
-			game_id,
-			round: previous_round,
-			index: previous_index,
-		} = extended_relay_affirmation_id.clone();
+		let RelayAffirmationId { game_id, round: previous_round, index: previous_index } =
+			extended_relay_affirmation_id.clone();
 		let round = previous_round + 1;
 
 		ensure!(
@@ -1056,40 +1000,35 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			.ok_or(<Error<T, I>>::ExtendedRelayAffirmationNE)?;
 
 		// Currently only accept extending from a completed affirmation
-		ensure!(
-			extended_affirmation.verified_on_chain,
-			<Error<T, I>>::PreviousRelayProofsInc
-		);
+		ensure!(extended_affirmation.verified_on_chain, <Error<T, I>>::PreviousRelayProofsInc);
 
 		T::RelayableChain::pre_verify_game_sample_points(
 			&extended_relay_affirmation_id,
 			&game_sample_points,
 		)?;
 
-		let stake = Self::ensure_can_stake(
+		let (round_stake, stake) = Self::ensure_can_stake(
 			relayer,
 			round,
 			(existed_affirmations.len() as u32).saturating_add(1),
 		)?;
 
-		Self::update_stakes_with(relayer, |old_stakes| old_stakes.saturating_add(stake));
+		Self::update_stake_with(relayer, stake);
 
 		let relay_affirmation = {
 			let mut relay_affirmation = RelayAffirmation::new();
 
 			relay_affirmation.relayer = relayer.to_owned();
 			relay_affirmation.relay_header_parcels = game_sample_points;
-			relay_affirmation.stake = stake;
+			relay_affirmation.stake = round_stake;
 			relay_affirmation.maybe_extended_relay_affirmation_id =
 				Some(extended_relay_affirmation_id);
 
 			// Allow affirm without relay proofs
 			// The relay proofs can be completed later through `complete_proofs`
 			if let Some(relay_proofs) = optional_relay_proofs {
-				for (relay_header_parcel, relay_proofs) in relay_affirmation
-					.relay_header_parcels
-					.iter()
-					.zip(relay_proofs.into_iter())
+				for (relay_header_parcel, relay_proofs) in
+					relay_affirmation.relay_header_parcels.iter().zip(relay_proofs.into_iter())
 				{
 					T::RelayableChain::verify_relay_proofs(
 						&game_id,
