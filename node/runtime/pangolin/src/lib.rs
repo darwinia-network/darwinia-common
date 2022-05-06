@@ -518,27 +518,6 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
-		fn market_fee(instance: u8) -> Option<pallet_fee_market_rpc_runtime_api::Fee<Balance>> {
-			match instance {
-				0 => PangoroFeeMarket::market_fee().and_then(|fee| Some(pallet_fee_market_rpc_runtime_api::Fee { amount: fee })),
-				1 => PangolinParachainFeeMarket::market_fee().and_then(|fee| Some(pallet_fee_market_rpc_runtime_api::Fee { amount: fee })),
-				_ => None,
-			}
-		}
-		fn in_process_orders(instance: u8) -> pallet_fee_market_rpc_runtime_api::InProcessOrders {
-			match instance {
-				0 => pallet_fee_market_rpc_runtime_api::InProcessOrders {
-					orders: PangoroFeeMarket::in_process_orders(),
-				},
-				1 => pallet_fee_market_rpc_runtime_api::InProcessOrders {
-					orders: PangolinParachainFeeMarket::in_process_orders(),
-				},
-				_ => Default::default()
-			}
-		}
-	}
-
 	impl fp_rpc::EthereumRuntimeRPCApi<Block> for Runtime {
 		fn chain_id() -> u64 {
 			<Runtime as darwinia_evm::Config>::ChainId::get()

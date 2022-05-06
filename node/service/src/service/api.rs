@@ -33,7 +33,6 @@ impl_runtime_apis![
 	pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>,
 	darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>,
 	darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>,
-	pallet_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance>,
 	fp_rpc::EthereumRuntimeRPCApi<Block>,
 	fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	moonbeam_rpc_primitives_debug::DebugRuntimeApi<Block>,
