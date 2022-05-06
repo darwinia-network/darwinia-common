@@ -1557,7 +1557,6 @@ dependencies = [
  "darwinia-support",
  "frame-support",
  "frame-system",
- "log",
  "pallet-transaction-payment",
  "parity-scale-codec 2.3.1",
  "scale-info 1.0.0",

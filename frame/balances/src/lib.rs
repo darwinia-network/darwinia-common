@@ -534,7 +534,7 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	// --- paritytech ---
 	use frame_support::{
-		ensure,
+		ensure, log,
 		pallet_prelude::*,
 		traits::{
 			fungible::Inspect,
