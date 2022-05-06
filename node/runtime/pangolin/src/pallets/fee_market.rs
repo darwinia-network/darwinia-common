@@ -1,4 +1,4 @@
-pub use darwinia_fee_market::{
+pub use pallet_fee_market::{
 	Instance1 as WithPangoroFeeMarket, Instance2 as WithPangolinParachainFeeMarket,
 };
 
@@ -9,11 +9,11 @@ use frame_support::{traits::LockIdentifier, PalletId};
 use sp_runtime::{traits::UniqueSaturatedInto, Permill};
 // --- darwinia ---
 use crate::*;
-use darwinia_fee_market::{Config, RingBalance, Slasher};
+use pallet_fee_market::{BalanceOf, Config, Slasher};
 
 pub struct FeeMarketSlasher;
 impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
-	fn slash(locked_collateral: RingBalance<T, I>, timeout: T::BlockNumber) -> RingBalance<T, I> {
+	fn slash(locked_collateral: BalanceOf<T, I>, timeout: T::BlockNumber) -> BalanceOf<T, I> {
 		let slash_each_block = 2 * COIN;
 		let slash_value = UniqueSaturatedInto::<Balance>::unique_saturated_into(timeout)
 			.saturating_mul(UniqueSaturatedInto::<Balance>::unique_saturated_into(slash_each_block))
@@ -44,12 +44,12 @@ impl Config<WithPangoroFeeMarket> for Runtime {
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
 	type CollateralPerOrder = CollateralPerOrder;
 	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
+	type Currency = Ring;
 	type Event = Event;
 	type LockId = PangoroFeeMarketLockId;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
 	type MinimumRelayFee = MinimumRelayFee;
 	type PalletId = PangoroFeeMarketId;
-	type RingCurrency = Ring;
 	type Slasher = FeeMarketSlasher;
 	type Slot = Slot;
 	type TreasuryPalletId = TreasuryPalletId;
@@ -59,12 +59,12 @@ impl Config<WithPangolinParachainFeeMarket> for Runtime {
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
 	type CollateralPerOrder = CollateralPerOrder;
 	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
+	type Currency = Ring;
 	type Event = Event;
 	type LockId = PangolinParachainFeeMarketLockId;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
 	type MinimumRelayFee = MinimumRelayFee;
 	type PalletId = PangolinParachainFeeMarketId;
-	type RingCurrency = Ring;
 	type Slasher = FeeMarketSlasher;
 	type Slot = Slot;
 	type TreasuryPalletId = TreasuryPalletId;

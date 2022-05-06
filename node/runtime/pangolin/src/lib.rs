@@ -243,8 +243,8 @@ frame_support::construct_runtime! {
 		BridgePangolinParachainDispatch: pallet_bridge_dispatch::<Instance2>::{Pallet, Event<T>} = 62,
 		BridgePangolinParachainMessages: pallet_bridge_messages::<Instance2>::{Pallet, Call, Storage, Event<T>} = 63,
 
-		PangoroFeeMarket: darwinia_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 53,
-		PangolinParachainFeeMarket: darwinia_fee_market::<Instance2>::{Pallet, Call, Storage, Event<T>} = 64,
+		PangoroFeeMarket: pallet_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 53,
+		PangolinParachainFeeMarket: pallet_fee_market::<Instance2>::{Pallet, Call, Storage, Event<T>} = 64,
 		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 54,
 
 		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
@@ -871,7 +871,7 @@ sp_api::impl_runtime_apis! {
 			list_benchmark!(list, extra, darwinia_evm, EVM);
 			list_benchmark!(list, extra, from_substrate_issuing, Substrate2SubstrateIssuing);
 			list_benchmark!(list, extra, from_ethereum_issuing, EthereumIssuing);
-			list_benchmark!(list, extra, darwinia_fee_market, PangoroFeeMarket);
+			list_benchmark!(list, extra, pallet_fee_market, PangoroFeeMarket);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -894,7 +894,7 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, darwinia_evm, EVM);
 			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
 			add_benchmark!(params, batches, from_ethereum_issuing, EthereumIssuing);
-			add_benchmark!(params, batches, darwinia_fee_market, PangoroFeeMarket);
+			add_benchmark!(params, batches, pallet_fee_market, PangoroFeeMarket);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 
