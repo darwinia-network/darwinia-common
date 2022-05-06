@@ -32,7 +32,6 @@ darwinia-evm-precompile-bridge-s2s      = { default-features = false, path = "..
 darwinia-evm-precompile-dispatch        = { default-features = false, path = "../../../frame/dvm/evm/precompiles/dispatch" }
 darwinia-evm-precompile-transfer        = { default-features = false, path = "../../../frame/dvm/evm/precompiles/transfer" }
 darwinia-fee-market                     = { default-features = false, path = "../../../frame/fee-market" }
-darwinia-fee-market-rpc-runtime-api     = { default-features = false, path = "../../../frame/fee-market/rpc/runtime-api" }
 darwinia-header-mmr                     = { default-features = false, path = "../../../frame/header-mmr" }
 darwinia-relay-authorities              = { default-features = false, path = "../../../frame/bridge/relay-authorities" }
 darwinia-relay-primitives               = { default-features = false, path = "../../../primitives/relay" }
@@ -155,7 +154,6 @@ std = [
 	"darwinia-evm-precompile-dispatch/std",
 	"darwinia-evm-precompile-transfer/std",
 	"darwinia-fee-market/std",
-	"darwinia-fee-market-rpc-runtime-api/std",
 	"darwinia-header-mmr/std",
 	"darwinia-relay-authorities/std",
 	"darwinia-relay-primitives/std",
