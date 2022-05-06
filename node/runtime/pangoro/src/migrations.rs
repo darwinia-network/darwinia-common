@@ -23,6 +23,9 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 }
 
 fn migrate() -> Weight {
-	0
-	// RuntimeBlockWeights::get().max_block
+	darwinia_balances::migration::migrate::<Runtime, RingInstance>();
+	darwinia_balances::migration::migrate::<Runtime, KtonInstance>();
+
+	// 0
+	RuntimeBlockWeights::get().max_block
 }
