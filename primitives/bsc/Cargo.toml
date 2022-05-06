@@ -7,11 +7,11 @@ license     = "GPL-3.0"
 name        = "bsc-primitives"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.8.10"
+version     = "2.8.11"
 
 [dependencies]
 # crates.io
-array-bytes     = { version = "1.4", optional = true }
+array-bytes     = { version = "1.5", optional = true }
 codec           = { package = "parity-scale-codec", version = "2.3", default-features = false }
 ethbloom        = { version = "0.11", default-features = false, features = ["codec", "rlp"] }
 hash-db         = { version = "0.15", default-features = false }
@@ -28,7 +28,7 @@ sp-std     = { default-features = false, git = "https://github.com/darwinia-netw
 
 [dev-dependencies]
 # crates.io
-array-bytes = { version = "1.4", features = ["serde"] }
+array-bytes = { version = "1.5", features = ["serde"] }
 ethbloom    = { version = "0.11", default-features = false, features = ["codec", "rlp", "serialize"] }
 serde_json  = { version = "1.0" }
 
