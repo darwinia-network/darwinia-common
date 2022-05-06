@@ -24,7 +24,7 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 
 [dev-dependencies]
 # crates.io
-array-bytes = { version = "1.4" }
+array-bytes = { version = "1.5" }
 # darwinia-network
 darwinia-balances   = { path = "../../balances" }
 darwinia-header-mmr = { features = ["easy-testing"], path = "../../header-mmr" }

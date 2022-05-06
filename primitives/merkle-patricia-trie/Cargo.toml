@@ -23,7 +23,7 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 
 [dev-dependencies]
 # crates.io
-array-bytes    = { version = "1.4" }
+array-bytes    = { version = "1.5" }
 criterion      = { version = "0.3" }
 ethereum-types = { version = "0.12" }
 hex            = { version = "0.4" }

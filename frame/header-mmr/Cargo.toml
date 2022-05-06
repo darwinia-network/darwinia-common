@@ -29,7 +29,7 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 
 [dev-dependencies]
 # crates.io
-array-bytes = { version = "1.4" }
+array-bytes = { version = "1.5" }
 serde_json  = { version = "1.0" }
 # paritytech
 sp-tracing = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }

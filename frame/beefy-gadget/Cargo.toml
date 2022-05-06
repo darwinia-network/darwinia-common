@@ -30,7 +30,7 @@ sp-runtime       = { default-features = false, git = "https://github.com/darwini
 sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 
 [dev-dependencies]
-array-bytes = { version = "1.4" }
+array-bytes = { version = "1.5" }
 
 [features]
 default = ["std"]
