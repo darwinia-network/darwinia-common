@@ -21,7 +21,6 @@ drml-primitives       = { path = "../primitives" }
 # paritytech
 beefy-gadget                   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 beefy-gadget-rpc               = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-pallet-fee-market-rpc          = { git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
 pallet-transaction-payment-rpc = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 sc-chain-spec                  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 sc-client-api                  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }

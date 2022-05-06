@@ -143,7 +143,7 @@ where
 	R: pallet_fee_market::Config<I>,
 	I: 'static,
 	AccountIdOf<ThisChain<B>>: Clone + PartialEq,
-	pallet_fee_market::RingBalance<R, I>: From<BalanceOf<ThisChain<B>>>,
+	pallet_fee_market::BalanceOf<R, I>: From<BalanceOf<ThisChain<B>>>,
 {
 	type Error = &'static str;
 
@@ -176,7 +176,7 @@ where
 		// Do the delivery_and_dispatch_fee. We assume that the delivery and dispatch fee always
 		// greater than the fee market provided fee.
 		if let Some(market_fee) = pallet_fee_market::Pallet::<R, I>::market_fee() {
-			let message_fee: pallet_fee_market::RingBalance<R, I> =
+			let message_fee: pallet_fee_market::BalanceOf<R, I> =
 				(*delivery_and_dispatch_fee).into();
 
 			// compare with actual fee paid

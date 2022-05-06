@@ -179,7 +179,6 @@ where
 	use darwinia_staking_rpc::*;
 	use moonbeam_rpc_debug::*;
 	use moonbeam_rpc_trace::*;
-	use pallet_fee_market_rpc::*;
 
 	let FullDeps {
 		client,

@@ -2310,7 +2310,6 @@ dependencies = [
  "moonbeam-rpc-debug",
  "moonbeam-rpc-primitives-debug",
  "moonbeam-rpc-trace",
- "pallet-fee-market-rpc",
  "pallet-transaction-payment-rpc",
  "sc-chain-spec",
  "sc-client-api",
@@ -2364,7 +2363,6 @@ dependencies = [
  "moonbeam-rpc-debug",
  "moonbeam-rpc-primitives-debug",
  "moonbeam-rpc-trace",
- "pallet-fee-market-rpc-runtime-api",
  "pallet-im-online",
  "pallet-transaction-payment-rpc-runtime-api",
  "pangolin-runtime",
@@ -6132,34 +6130,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-fee-market-rpc"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=darwinia-v0.12.2#eb05ff1c18e9e4ef480727ba49fbdde6ba9b5e47"
-dependencies = [
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "pallet-fee-market-rpc-runtime-api",
- "parity-scale-codec 2.3.1",
- "sp-api",
- "sp-blockchain",
- "sp-runtime",
-]
-
-[[package]]
-name = "pallet-fee-market-rpc-runtime-api"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=darwinia-v0.12.2#eb05ff1c18e9e4ef480727ba49fbdde6ba9b5e47"
-dependencies = [
- "bp-messages",
- "parity-scale-codec 2.3.1",
- "serde",
- "sp-api",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-grandpa"
 version = "4.0.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.2#5cb17b488d600befa4918915e18d40c28a25353d"
@@ -6591,7 +6561,6 @@ dependencies = [
  "pallet-evm",
  "pallet-evm-precompile-simple",
  "pallet-fee-market",
- "pallet-fee-market-rpc-runtime-api",
  "pallet-grandpa",
  "pallet-identity",
  "pallet-im-online",
@@ -6695,7 +6664,6 @@ dependencies = [
  "pallet-evm",
  "pallet-evm-precompile-simple",
  "pallet-fee-market",
- "pallet-fee-market-rpc-runtime-api",
  "pallet-grandpa",
  "pallet-im-online",
  "pallet-mmr",
