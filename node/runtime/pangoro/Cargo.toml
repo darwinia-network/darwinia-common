@@ -36,6 +36,7 @@ dp-s2s                              = { default-features = false, path = "../../
 drml-common-runtime                 = { default-features = false, path = "../common" }
 drml-primitives                     = { default-features = false, path = "../../primitives" }
 module-transaction-pause            = { default-features = false, path = "../../../frame/transaction-pause" }
+pallet-fee-market                   = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
 to-substrate-backing                = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 # paritytech
 beefy-primitives                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
@@ -63,7 +64,6 @@ pallet-bridge-dispatch                     = { default-features = false, git = "
 pallet-bridge-grandpa                      = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
 pallet-bridge-messages                     = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
 pallet-election-provider-multi-phase       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-pallet-fee-market                          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
 pallet-grandpa                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 pallet-im-online                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 pallet-mmr                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
@@ -132,6 +132,7 @@ std = [
 	"drml-primitives/std",
 	"drml-common-runtime/std",
 	"module-transaction-pause/std",
+	"pallet-fee-market/std",
 	"to-substrate-backing/std",
 	# paritytech
 	"beefy-primitives/std",
@@ -159,7 +160,6 @@ std = [
 	"pallet-bridge-grandpa/std",
 	"pallet-bridge-messages/std",
 	"pallet-election-provider-multi-phase/std",
-	"pallet-fee-market/std",
 	"pallet-grandpa/std",
 	"pallet-im-online/std",
 	"pallet-mmr/std",
