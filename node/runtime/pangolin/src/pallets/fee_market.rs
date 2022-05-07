@@ -25,7 +25,6 @@ impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
 
 frame_support::parameter_types! {
 	// Shared configurations.
-	// pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
 	pub const MinimumRelayFee: Balance = 15 * COIN;
 	pub const CollateralPerOrder: Balance = 50 * COIN;
 	pub const Slot: BlockNumber = 300;
