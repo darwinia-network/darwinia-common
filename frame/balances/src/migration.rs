@@ -10,7 +10,7 @@ pub use try_runtime::*;
 // --- darwinia-network ---
 use crate::*;
 
-pub fn migrate<T, I>()
+pub fn migrate_lock<T, I>()
 where
 	T: Config<I>,
 	I: 'static,
