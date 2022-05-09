@@ -24,7 +24,7 @@ use darwinia_evm::{
 use darwinia_evm_precompile_bridge_ethereum::EthereumBridge;
 use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 use darwinia_evm_precompile_dispatch::Dispatch;
-use darwinia_evm_precompile_fee_market::FeeMarket;
+use darwinia_evm_precompile_state_storage::StateStorage;
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::{
 	evm::ConcatConverter,
@@ -92,15 +92,14 @@ where
 	}
 
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 21, 23, 24, 25, 26, 27].into_iter().map(|x| addr(x)).collect()
+		sp_std::vec![1, 2, 3, 4, 21, 23, 24, 25, 26].into_iter().map(|x| addr(x)).collect()
 	}
 }
 
 impl<R> PrecompileSet for PangolinPrecompiles<R>
 where
 	Transfer<R>: Precompile,
-	FeeMarket<R, WithPangoroFeeMarket>: Precompile,
-	FeeMarket<R, WithPangolinParachainFeeMarket>: Precompile,
+	StateStorage<R>: Precompile,
 	EthereumBridge<R>: Precompile,
 	Sub2SubBridge<R, ToPangoroMessageSender, bm_pangoro::ToPangoroOutboundPayLoad>: Precompile,
 	Dispatch<R>: Precompile,
@@ -132,10 +131,7 @@ where
 			>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(25) =>
 				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(26) => Some(<FeeMarket<R, WithPangoroFeeMarket>>::execute(
-				input, target_gas, context, is_static,
-			)),
-			a if a == addr(27) => Some(<FeeMarket<R, WithPangolinParachainFeeMarket>>::execute(
+			a if a == addr(26) => Some(<StateStorage<R>>::execute(
 				input, target_gas, context, is_static,
 			)),
 			_ => None,

@@ -1859,7 +1859,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-evm-precompile-fee-market"
+name = "darwinia-evm-precompile-state-storage"
 version = "2.8.10"
 dependencies = [
  "array-bytes",
@@ -6590,7 +6590,7 @@ dependencies = [
  "darwinia-evm-precompile-bridge-ethereum",
  "darwinia-evm-precompile-bridge-s2s",
  "darwinia-evm-precompile-dispatch",
- "darwinia-evm-precompile-fee-market",
+ "darwinia-evm-precompile-state-storage",
  "darwinia-evm-precompile-transfer",
  "darwinia-fee-market",
  "darwinia-fee-market-rpc-runtime-api",
@@ -6706,7 +6706,7 @@ dependencies = [
  "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-evm-precompile-bridge-bsc",
- "darwinia-evm-precompile-fee-market",
+ "darwinia-evm-precompile-state-storage",
  "darwinia-evm-precompile-transfer",
  "darwinia-fee-market",
  "darwinia-fee-market-rpc-runtime-api",

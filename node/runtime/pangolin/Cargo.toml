@@ -32,7 +32,7 @@ darwinia-evm                            = { default-features = false, path = "..
 darwinia-evm-precompile-bridge-ethereum = { default-features = false, path = "../../../frame/dvm/evm/precompiles/bridge/ethereum" }
 darwinia-evm-precompile-bridge-s2s      = { default-features = false, path = "../../../frame/dvm/evm/precompiles/bridge/s2s" }
 darwinia-evm-precompile-dispatch        = { default-features = false, path = "../../../frame/dvm/evm/precompiles/dispatch" }
-darwinia-evm-precompile-fee-market      = { default-features = false, path = "../../../frame/dvm/evm/precompiles/fee-market" }
+darwinia-evm-precompile-state-storage   = { default-features = false, path = "../../../frame/dvm/evm/precompiles/state-storage" }
 darwinia-evm-precompile-transfer        = { default-features = false, path = "../../../frame/dvm/evm/precompiles/transfer" }
 darwinia-fee-market                     = { default-features = false, path = "../../../frame/fee-market" }
 darwinia-fee-market-rpc-runtime-api     = { default-features = false, path = "../../../frame/fee-market/rpc/runtime-api" }
@@ -156,7 +156,7 @@ std = [
 	"darwinia-evm-precompile-bridge-ethereum/std",
 	"darwinia-evm-precompile-bridge-s2s/std",
 	"darwinia-evm-precompile-dispatch/std",
-	"darwinia-evm-precompile-fee-market/std",
+	"darwinia-evm-precompile-state-storage/std",
 	"darwinia-evm-precompile-transfer/std",
 	"darwinia-fee-market/std",
 	"darwinia-fee-market-rpc-runtime-api/std",

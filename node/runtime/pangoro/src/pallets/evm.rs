@@ -16,7 +16,7 @@ use darwinia_evm::{
 	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, GasWeightMapping,
 };
 use darwinia_evm_precompile_bridge_bsc::BscBridge;
-use darwinia_evm_precompile_fee_market::FeeMarket;
+use darwinia_evm_precompile_state_storage::StateStorage;
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::ConcatConverter;
 
@@ -51,7 +51,7 @@ where
 impl<R> PrecompileSet for PangoroPrecompiles<R>
 where
 	Transfer<R>: Precompile,
-	FeeMarket<R, WithPangolinFeeMarket>: Precompile,
+	StateStorage<R>: Precompile,
 	BscBridge<R>: Precompile,
 	R: darwinia_ethereum::Config,
 {
@@ -74,9 +74,8 @@ where
 				Some(<Transfer<R>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(26) =>
 				Some(<BscBridge<R>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(27) => Some(<FeeMarket<R, WithPangolinFeeMarket>>::execute(
-				input, target_gas, context, is_static,
-			)),
+			a if a == addr(27) =>
+				Some(<StateStorage<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}

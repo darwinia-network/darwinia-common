@@ -36,17 +36,16 @@ use sp_runtime::SaturatedConversion;
 
 #[darwinia_evm_precompile_utils::selector]
 enum Action {
-	MarketFee = "market_fee()",
+	StateGetStorage = "state_get_storage(bytes)",
 }
 
-pub struct FeeMarket<T, I> {
-	_marker: PhantomData<(T, I)>,
+pub struct StateStorage<T> {
+	_marker: PhantomData<T>,
 }
 
-impl<T, I> Precompile for FeeMarket<T, I>
+impl<T> Precompile for StateStorage<T>
 where
-	I: 'static,
-	T: darwinia_evm::Config + darwinia_fee_market::Config<I>,
+	T: darwinia_evm::Config,
 {
 	fn execute(
 		input: &[u8],
@@ -62,19 +61,16 @@ where
 		helper.check_state_modifier(context, is_static, StateMutability::View)?;
 
 		let output = match action {
-			Action::MarketFee => {
+			Action::StateGetStorage => {
 				// Storage: FeeMarket AssignedRelayers (r:1 w:0)
 				helper.record_gas(1, 0)?;
-
-				darwinia_fee_market::Pallet::<T, I>::market_fee()
-					.map_or(0, |f| f.saturated_into::<u64>())
 			},
 		};
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
 			cost: helper.used_gas(),
-			output: abi_encode_u64(output),
+			output: Default::default(),
 			logs: Default::default(),
 		})
 	}
