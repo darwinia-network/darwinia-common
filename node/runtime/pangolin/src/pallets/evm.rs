@@ -131,9 +131,8 @@ where
 			>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(25) =>
 				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(26) => Some(<StateStorage<R>>::execute(
-				input, target_gas, context, is_static,
-			)),
+			a if a == addr(26) =>
+				Some(<StateStorage<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}

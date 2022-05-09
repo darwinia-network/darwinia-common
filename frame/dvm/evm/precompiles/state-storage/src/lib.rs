@@ -18,15 +18,16 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod tests;
 
 // --- core ---
 use core::marker::PhantomData;
 // --- crates.io ---
+use ethabi::{Function, Param, ParamType, StateMutability, Token};
 use evm::ExitRevert;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{PrecompileHelper, StateMutability};
+use darwinia_evm_precompile_utils::PrecompileHelper;
 use dp_contract::abi_util::abi_encode_u64;
 // --- paritytech ---
 use fp_evm::{
@@ -36,7 +37,7 @@ use sp_runtime::SaturatedConversion;
 
 #[darwinia_evm_precompile_utils::selector]
 enum Action {
-	StateGetStorage = "state_get_storage(bytes)",
+	StateGetStorage = "state_storage(bytes)",
 }
 
 pub struct StateStorage<T> {
@@ -53,8 +54,11 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
+		log::debug!("bear: --- enter the state storage precompile, input {:?}", input);
 		let mut helper = PrecompileHelper::<T>::new(input, target_gas);
-		let (selector, _data) = helper.split_input()?;
+		let (selector, data) = helper.split_input()?;
+		log::debug!("bear: --- selector {:?}", selector);
+		log::debug!("bear: --- data {:?}", data);
 		let action = Action::from_u32(selector)?;
 
 		// Check state modifiers
@@ -64,14 +68,61 @@ where
 			Action::StateGetStorage => {
 				// Storage: FeeMarket AssignedRelayers (r:1 w:0)
 				helper.record_gas(1, 0)?;
+				log::debug!("bear: --- enter the state get storage branch");
+				let tokens = ethabi::decode(&[ParamType::Bytes], data)
+					.map_err(|_| helper.revert("ethabi decoded error"))?;
+
+				let key = match &tokens[0] {
+					Token::Bytes(bs) => bs,
+					_ => todo!(),
+				};
+
+				log::debug!("bear: --- key {:?}", key);
+				// read storage accourding to the storage key
+				let value = frame_support::storage::unhashed::get_raw(key);
+				log::debug!("bear: --- value {:?}", value);
+				value
 			},
 		};
 
+		log::debug!("bear: --- output {:?}", output);
+		use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
 			cost: helper.used_gas(),
-			output: Default::default(),
+			output: output.unwrap_or_default(),
 			logs: Default::default(),
 		})
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use frame_support::Twox128;
+	use frame_support::StorageHasher;
+	use hex::ToHex;
+
+	#[test]
+	fn test_input() {
+		let mut key = vec![0u8; 32];
+		assert_eq!(Twox128::hash(b"Sudo"), [92, 13, 17, 118, 165, 104, 193, 249, 41, 68, 52, 13, 191, 237, 158, 156]);
+		println!("Sudo str: {:?}", Twox128::hash(b"Sudo").encode_hex::<String>());
+		key[0..16].copy_from_slice(&Twox128::hash(b"Sudo"));
+		key[16..32].copy_from_slice(&Twox128::hash(b"Key"));
+		assert_eq!(Twox128::hash(b"Key"), [83, 14, 188, 167, 3, 200, 89, 16, 231, 22, 76, 183, 209, 201, 228, 123]);
+		println!("Key str: {:?}", Twox128::hash(b"Key").encode_hex::<String>());
+		assert_eq!(key, [92, 13, 17, 118, 165, 104, 193, 249, 41, 68, 52, 13, 191, 237, 158, 156, 83, 14, 188, 167, 3, 200, 89, 16, 231, 22, 76, 183, 209, 201, 228, 123]);
+		println!("key: {:?}", [92, 13, 17, 118, 165, 104, 193, 249, 41, 68, 52, 13, 191, 237, 158, 156, 83, 14, 188, 167, 3, 200, 89, 16, 231, 22, 76, 183, 209, 201, 228, 123].encode_hex::<String>());
+		
+		let key_str = "5c0d1176a568c1f92944340dbfed9e9c530ebca703c85910e7164cb7d1c9e47b";
+		let key_bytes = hex::decode(&key_str).unwrap();
+		println!("{:?}", key_bytes);
+
+		let a = b"15";
+		println!("a {:?}", a);
+		let a_hex = hex::decode("1503").unwrap();
+		println!("a_hex {:?}", a_hex);
+
+		assert_eq!(1, 2);
 	}
 }
