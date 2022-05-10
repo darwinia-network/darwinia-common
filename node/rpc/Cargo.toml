@@ -7,18 +7,17 @@ license     = "GPL-3.0"
 name        = "drml-rpc"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.8.10"
+version     = "2.8.11"
 
 [dependencies]
 # crates.io
 jsonrpc-core   = { version = "18.0" }
 jsonrpc-pubsub = { version = "18.0" }
 # darwinia-network
-darwinia-balances-rpc   = { path = "../../frame/balances/rpc" }
-darwinia-ethereum       = { path = "../../frame/dvm/ethereum" }
-darwinia-fee-market-rpc = { path = "../../frame/fee-market/rpc" }
-darwinia-staking-rpc    = { path = "../../frame/staking/rpc" }
-drml-primitives         = { path = "../primitives" }
+darwinia-balances-rpc = { path = "../../frame/balances/rpc" }
+darwinia-ethereum     = { path = "../../frame/dvm/ethereum" }
+darwinia-staking-rpc  = { path = "../../frame/staking/rpc" }
+drml-primitives       = { path = "../primitives" }
 # paritytech
 beefy-gadget                   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 beefy-gadget-rpc               = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }

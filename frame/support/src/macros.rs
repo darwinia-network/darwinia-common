@@ -70,7 +70,7 @@ macro_rules! impl_account_data {
 
 			fn usable(
 				&self,
-				reasons: darwinia_support::balance::LockReasons,
+				reasons: darwinia_support::balance::Reasons,
 				frozen_balance: darwinia_support::balance::FrozenBalance<$btype>,
 			) -> $btype {
 				self.free.saturating_sub(frozen_balance.frozen_for(reasons))
@@ -98,7 +98,7 @@ macro_rules! impl_account_data {
 
 			fn usable(
 				&self,
-				reasons: darwinia_support::balance::LockReasons,
+				reasons: darwinia_support::balance::Reasons,
 				frozen_balance: darwinia_support::balance::FrozenBalance<$btype>,
 			) -> $btype {
 				self.free_kton.saturating_sub(frozen_balance.frozen_for(reasons))

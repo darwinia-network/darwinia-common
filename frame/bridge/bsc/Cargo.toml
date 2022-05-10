@@ -7,11 +7,11 @@ license     = "GPL-3.0"
 name        = "darwinia-bridge-bsc"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.8.10"
+version     = "2.8.11"
 
 [dependencies]
 # crates.io
-array-bytes = { version = "1.4", optional = true }
+array-bytes = { version = "1.5", optional = true }
 codec       = { package = "parity-scale-codec", version = "2.3", default-features = false }
 rlp         = { version = "0.5", default-features = false }
 scale-info  = { version = "1.0", default-features = false, features = ["derive"] }
@@ -29,7 +29,7 @@ sp-std             = { default-features = false, git = "https://github.com/darwi
 
 [dev-dependencies]
 # crates.io
-array-bytes = { version = "1.4" }
+array-bytes = { version = "1.5" }
 serde_json  = { version = "1.0" }
 # paritytech
 pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }

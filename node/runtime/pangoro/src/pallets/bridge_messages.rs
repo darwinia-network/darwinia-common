@@ -4,11 +4,11 @@ pub use pallet_bridge_messages::Instance1 as WithPangolinMessages;
 use crate::*;
 use bp_messages::MessageNonce;
 use bp_runtime::{ChainId, PANGOLIN_CHAIN_ID};
-use darwinia_fee_market::s2s::{
-	FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler, FeeMarketPayment,
-};
 use darwinia_support::evm::{ConcatConverter, IntoAccountId, IntoH160};
 use pallet_bridge_messages::Config;
+use pallet_fee_market::s2s::{
+	FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler, FeeMarketPayment,
+};
 
 frame_support::parameter_types! {
 	pub const MaxMessagesToPruneAtOnce: MessageNonce = 8;
@@ -32,7 +32,7 @@ impl Config<WithPangolinMessages> for Runtime {
 	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
 	type MaxUnrewardedRelayerEntriesAtInboundLane = MaxUnrewardedRelayerEntriesAtInboundLane;
 	type MessageDeliveryAndDispatchPayment =
-		FeeMarketPayment<Runtime, WithPangolinFeeMarket, Ring, RootAccountForPayments>;
+		FeeMarketPayment<Self, WithPangolinFeeMarket, Ring, RootAccountForPayments>;
 	type MessageDispatch = bm_pangolin::FromPangolinMessageDispatch;
 	type OnDeliveryConfirmed =
 		(Substrate2SubstrateBacking, FeeMarketMessageConfirmedHandler<Self, WithPangolinFeeMarket>);

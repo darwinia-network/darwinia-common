@@ -55,7 +55,6 @@ enum Action {
 		"encode_send_message_dispatch_call(uint32,bytes4,bytes,uint256)",
 }
 
-/// The contract address: 0000000000000000000000000000000000000018
 pub struct Sub2SubBridge<T, S, P> {
 	_marker: PhantomData<(T, S, P)>,
 }

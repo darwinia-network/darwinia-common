@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "darwinia-ethereum"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.8.10"
+version     = "2.8.11"
 
 [dependencies]
 # crates.io
@@ -41,7 +41,7 @@ pallet-evm        = { default-features = false, git = "https://github.com/darwin
 
 [dev-dependencies]
 # crates.io
-array-bytes  = { version = "1.4" }
+array-bytes  = { version = "1.5" }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 # darwinia-network
 darwinia-balances = { path = "../../balances" }

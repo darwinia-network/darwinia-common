@@ -9,9 +9,6 @@ pub use pallets::*;
 pub mod bridges_message;
 pub use bridges_message::*;
 
-pub mod migrations;
-pub use migrations::*;
-
 pub mod wasm {
 	//! Make the WASM binary available.
 
@@ -28,6 +25,9 @@ pub mod wasm {
 	}
 }
 pub use wasm::*;
+
+mod migrations;
+use migrations::*;
 
 pub use darwinia_staking::{Forcing, StakerStatus};
 
@@ -97,7 +97,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangoro"),
 	impl_name: sp_runtime::create_runtime_str!("Pangoro"),
 	authoring_version: 0,
-	spec_version: 2_8_10_0,
+	spec_version: 2_8_11_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -153,7 +153,7 @@ frame_support::construct_runtime!(
 		BridgePangolinGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 19,
 		BridgePangolinMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 17,
 
-		PangolinFeeMarket: darwinia_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 22,
+		PangolinFeeMarket: pallet_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 22,
 		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 23,
 
 		Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
@@ -426,18 +426,6 @@ sp_api::impl_runtime_apis! {
 			-> darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo<Power>
 		{
 			Staking::power_of_rpc(account)
-		}
-	}
-
-	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
-		fn market_fee(_instance: u8) -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
-			PangolinFeeMarket::market_fee().and_then(|fee| Some(darwinia_fee_market_rpc_runtime_api::Fee { amount: fee }))
-		}
-
-		fn in_process_orders(_instance: u8) -> darwinia_fee_market_rpc_runtime_api::InProcessOrders {
-			darwinia_fee_market_rpc_runtime_api::InProcessOrders {
-				orders: PangolinFeeMarket::in_process_orders(),
-			}
 		}
 	}
 

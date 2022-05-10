@@ -59,7 +59,7 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{
 		ChangeMembers, Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get, IsSubType,
-		ReservableCurrency, SortedMembers,
+		LockableCurrency, ReservableCurrency, SortedMembers,
 	},
 	unsigned::{TransactionValidity, TransactionValidityError},
 	weights::Weight,
@@ -77,7 +77,7 @@ use sp_std::{convert::From, marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRMerge, MerkleProof};
 use darwinia_relay_primitives::relayer_game::*;
-use darwinia_support::{balance::*, traits::EthereumReceipt as EthereumReceiptT};
+use darwinia_support::traits::EthereumReceipt as EthereumReceiptT;
 use ethereum_primitives::{
 	ethashproof::EthashProof,
 	header::EthereumHeader,
@@ -100,8 +100,7 @@ pub trait Config: frame_system::Config {
 
 	type Call: Dispatchable + From<Call<Self>> + IsSubType<Call<Self>> + Clone;
 
-	type Currency: LockableCurrency<AccountId<Self>, Moment = Self::BlockNumber>
-		+ ReservableCurrency<AccountId<Self>>;
+	type Currency: LockableCurrency<AccountId<Self>> + ReservableCurrency<AccountId<Self>>;
 
 	type RelayerGame: RelayerGameProtocol<
 		Relayer = AccountId<Self>,

@@ -26,9 +26,10 @@ pub mod traits;
 
 pub mod balance {
 	pub use crate::{
-		structs::{BalanceLock, FrozenBalance, LockFor, LockReasons, StakingLock, Unbonding},
-		traits::{BalanceInfo, DustCollector, LockableCurrency},
+		structs::{FrozenBalance, LockFor, OldBalanceLock, StakingLock, Unbonding},
+		traits::{BalanceInfo, DustCollector},
 	};
+	pub use pallet_balances::{BalanceLock, Reasons};
 }
 use sp_std::{vec, vec::Vec};
 

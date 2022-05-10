@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "darwinia-staking"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.8.10"
+version     = "2.8.11"
 
 [dependencies]
 # crates.io
@@ -38,7 +38,6 @@ sp-std                          = { default-features = false, git = "https://git
 rand_chacha = { version = "0.3" }
 # darwinia-network
 darwinia-balances = { path = "../../frame/balances" }
-darwinia-support  = { features = ["easy-testing"], path = "../support" }
 # paritytech
 frame-benchmarking              = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 frame-election-provider-support = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }

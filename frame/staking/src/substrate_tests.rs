@@ -113,7 +113,7 @@ fn basic_setup_works() {
 				stash: 11,
 				active: 1000,
 				ring_staking_lock: StakingLock {
-					staking_amount: 1000,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
 				},
 				..Default::default()
@@ -126,7 +126,7 @@ fn basic_setup_works() {
 				stash: 21,
 				active: 1000,
 				ring_staking_lock: StakingLock {
-					staking_amount: 1000,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
 				},
 				..Default::default()
@@ -151,7 +151,7 @@ fn basic_setup_works() {
 				stash: 101,
 				active: 500,
 				ring_staking_lock: StakingLock {
-					staking_amount: 500,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
 				},
 				..Default::default()
@@ -425,7 +425,7 @@ fn staking_should_work() {
 				stash: 3,
 				active: 1500,
 				ring_staking_lock: StakingLock {
-					staking_amount: 1500,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
 				},
 				claimed_rewards: vec![0],
@@ -1055,7 +1055,7 @@ fn reward_destination_works() {
 			Some(StakingLedger {
 				stash: 11,
 				active: 1000,
-				ring_staking_lock: StakingLock { staking_amount: 1000, ..Default::default() },
+				ring_staking_lock: StakingLock { staking_amount: 0, ..Default::default() },
 				..Default::default()
 			}),
 		);
@@ -1077,10 +1077,7 @@ fn reward_destination_works() {
 			Some(StakingLedger {
 				stash: 11,
 				active: 1000 + total_payout_0,
-				ring_staking_lock: StakingLock {
-					staking_amount: 1000 + total_payout_0,
-					..Default::default()
-				},
+				ring_staking_lock: StakingLock { staking_amount: 0, ..Default::default() },
 				claimed_rewards: vec![0],
 				..Default::default()
 			}),
@@ -1108,10 +1105,7 @@ fn reward_destination_works() {
 			Some(StakingLedger {
 				stash: 11,
 				active: 1000 + total_payout_0,
-				ring_staking_lock: StakingLock {
-					staking_amount: 1000 + total_payout_0,
-					..Default::default()
-				},
+				ring_staking_lock: StakingLock { staking_amount: 0, ..Default::default() },
 				claimed_rewards: vec![0, 1],
 				..Default::default()
 			}),
@@ -1140,10 +1134,7 @@ fn reward_destination_works() {
 			Some(StakingLedger {
 				stash: 11,
 				active: 1000 + total_payout_0,
-				ring_staking_lock: StakingLock {
-					staking_amount: 1000 + total_payout_0,
-					..Default::default()
-				},
+				ring_staking_lock: StakingLock { staking_amount: 0, ..Default::default() },
 				claimed_rewards: vec![0, 1, 2],
 				..Default::default()
 			}),
@@ -1211,7 +1202,7 @@ fn bond_extra_works() {
 			Some(StakingLedger {
 				stash: 11,
 				active: 1000,
-				ring_staking_lock: StakingLock { staking_amount: 1000, ..Default::default() },
+				ring_staking_lock: StakingLock { staking_amount: 0, ..Default::default() },
 				..Default::default()
 			})
 		);
@@ -1227,7 +1218,7 @@ fn bond_extra_works() {
 			Some(StakingLedger {
 				stash: 11,
 				active: 1000 + 100,
-				ring_staking_lock: StakingLock { staking_amount: 1000 + 100, ..Default::default() },
+				ring_staking_lock: StakingLock { staking_amount: 0, ..Default::default() },
 				..Default::default()
 			}),
 		);
@@ -1244,7 +1235,7 @@ fn bond_extra_works() {
 			Some(StakingLedger {
 				stash: 11,
 				active: 1000000,
-				ring_staking_lock: StakingLock { staking_amount: 1000000, ..Default::default() },
+				ring_staking_lock: StakingLock { staking_amount: 0, ..Default::default() },
 				..Default::default()
 			}),
 		);
@@ -1274,6 +1265,13 @@ fn too_many_unbond_calls_should_not_work() {
 		);
 
 		run_to_block(29);
+
+		assert_noop!(
+			Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(1)),
+			<Error<Test>>::NoMoreChunks
+		);
+		// free up.
+		assert_ok!(Staking::withdraw_unbonded(Origin::signed(10), 0));
 
 		// Can add again.
 		assert_ok!(Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(1)));
@@ -1305,7 +1303,7 @@ fn rebond_works() {
 				stash: 11,
 				active: 1000,
 				ring_staking_lock: StakingLock {
-					staking_amount: 1000,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
 				},
 				..Default::default()
@@ -1326,7 +1324,7 @@ fn rebond_works() {
 				stash: 11,
 				active: 100,
 				ring_staking_lock: StakingLock {
-					staking_amount: 100,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(
 						vec![Unbonding {
 							amount: 900,
@@ -1347,7 +1345,7 @@ fn rebond_works() {
 				stash: 11,
 				active: 1000,
 				ring_staking_lock: StakingLock {
-					staking_amount: 1000,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
 				},
 				..Default::default()
@@ -1362,7 +1360,7 @@ fn rebond_works() {
 				stash: 11,
 				active: 100,
 				ring_staking_lock: StakingLock {
-					staking_amount: 100,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(
 						vec![Unbonding {
 							amount: 900,
@@ -1383,7 +1381,7 @@ fn rebond_works() {
 				stash: 11,
 				active: 600,
 				ring_staking_lock: StakingLock {
-					staking_amount: 600,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(
 						vec![Unbonding {
 							amount: 400,
@@ -1404,7 +1402,7 @@ fn rebond_works() {
 				stash: 11,
 				active: 1000,
 				ring_staking_lock: StakingLock {
-					staking_amount: 1000,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
 				},
 				..Default::default()
@@ -1421,7 +1419,7 @@ fn rebond_works() {
 				stash: 11,
 				active: 100,
 				ring_staking_lock: StakingLock {
-					staking_amount: 100,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(
 						vec![
 							Unbonding {
@@ -1452,7 +1450,7 @@ fn rebond_works() {
 				stash: 11,
 				active: 600,
 				ring_staking_lock: StakingLock {
-					staking_amount: 600,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(
 						vec![
 							Unbonding {
@@ -1492,7 +1490,7 @@ fn rebond_is_fifo() {
 				stash: 11,
 				active: 1000,
 				ring_staking_lock: StakingLock {
-					staking_amount: 1000,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
 				},
 				..Default::default()
@@ -1509,7 +1507,7 @@ fn rebond_is_fifo() {
 				stash: 11,
 				active: 600,
 				ring_staking_lock: StakingLock {
-					staking_amount: 600,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(
 						vec![Unbonding { amount: 400, until: 6 + bonding_duration_in_blocks() }],
 						None
@@ -1529,7 +1527,7 @@ fn rebond_is_fifo() {
 				stash: 11,
 				active: 300,
 				ring_staking_lock: StakingLock {
-					staking_amount: 300,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(
 						vec![
 							Unbonding {
@@ -1558,7 +1556,7 @@ fn rebond_is_fifo() {
 				stash: 11,
 				active: 100,
 				ring_staking_lock: StakingLock {
-					staking_amount: 100,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(
 						vec![
 							Unbonding {
@@ -1589,7 +1587,7 @@ fn rebond_is_fifo() {
 				stash: 11,
 				active: 500,
 				ring_staking_lock: StakingLock {
-					staking_amount: 500,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(
 						vec![
 							Unbonding {
@@ -1632,7 +1630,7 @@ fn rebond_emits_right_value_in_event() {
 				stash: 11,
 				active: 100,
 				ring_staking_lock: StakingLock {
-					staking_amount: 100,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(
 						vec![Unbonding {
 							amount: 900,
@@ -1653,7 +1651,7 @@ fn rebond_emits_right_value_in_event() {
 				stash: 11,
 				active: 200,
 				ring_staking_lock: StakingLock {
-					staking_amount: 200,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(
 						vec![Unbonding {
 							amount: 800,
@@ -1675,7 +1673,7 @@ fn rebond_emits_right_value_in_event() {
 			Some(StakingLedger {
 				stash: 11,
 				active: 1000,
-				ring_staking_lock: StakingLock { staking_amount: 1000, ..Default::default() },
+				ring_staking_lock: StakingLock { staking_amount: 0, ..Default::default() },
 				..Default::default()
 			})
 		);
@@ -2012,7 +2010,7 @@ fn bond_with_no_staked_value() {
 				RewardDestination::Controller,
 				0,
 			));
-			assert_eq!(Ring::locks(&1)[0].locked_amount(Some(System::block_number())), 5);
+			assert_eq!(Ring::locks(&1)[0].amount, 5);
 
 			// unbonding even 1 will cause all to be unbonded.
 			assert_ok!(Staking::unbond(Origin::signed(2), StakingBalance::RingBalance(1)));
@@ -3532,7 +3530,7 @@ fn test_payout_stakers() {
 				stash: 11,
 				active: 1000,
 				ring_staking_lock: StakingLock {
-					staking_amount: 1000,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
 				},
 				claimed_rewards: vec![1],
@@ -3557,7 +3555,7 @@ fn test_payout_stakers() {
 				stash: 11,
 				active: 1000,
 				ring_staking_lock: StakingLock {
-					staking_amount: 1000,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
 				},
 				claimed_rewards: (1..=14).collect(),
@@ -3581,7 +3579,7 @@ fn test_payout_stakers() {
 				stash: 11,
 				active: 1000,
 				ring_staking_lock: StakingLock {
-					staking_amount: 1000,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
 				},
 				claimed_rewards: vec![15, 98],
@@ -3599,7 +3597,7 @@ fn test_payout_stakers() {
 				stash: 11,
 				active: 1000,
 				ring_staking_lock: StakingLock {
-					staking_amount: 1000,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
 				},
 				claimed_rewards: vec![15, 23, 42, 69, 98],
@@ -3711,8 +3709,8 @@ fn payout_stakers_handles_weight_refund() {
 		// Reward just the validator.
 		Staking::reward_by_ids(vec![(11, 1)]);
 
-		// Add some `half_max_nom_rewarded` nominators who will start backing the validator in
-		// the next era.
+		// Add some `half_max_nom_rewarded` nominators who will start backing the validator in the
+		// next era.
 		for i in 0..half_max_nom_rewarded {
 			bond_nominator(
 				(1000 + i).into(),
@@ -3796,8 +3794,7 @@ fn payout_stakers_handles_weight_refund() {
 		let info = call.get_dispatch_info();
 		let result = call.dispatch(Origin::signed(20));
 		assert!(result.is_err());
-		// When there is an error the consumed weight == weight when there are 0 nominator
-		// payouts.
+		// When there is an error the consumed weight == weight when there are 0 nominator payouts.
 		assert_eq!(extract_actual_weight(&result, &info), zero_nom_payouts_weight);
 	});
 }
@@ -3813,7 +3810,7 @@ fn bond_during_era_correctly_populates_claimed_rewards() {
 				stash: 9,
 				active: 1000,
 				ring_staking_lock: StakingLock {
-					staking_amount: 1000,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
 				},
 				..Default::default()
@@ -3827,7 +3824,7 @@ fn bond_during_era_correctly_populates_claimed_rewards() {
 				stash: 11,
 				active: 1000,
 				ring_staking_lock: StakingLock {
-					staking_amount: 1000,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
 				},
 				claimed_rewards: (0..5).collect(),
@@ -3842,7 +3839,7 @@ fn bond_during_era_correctly_populates_claimed_rewards() {
 				stash: 13,
 				active: 1000,
 				ring_staking_lock: StakingLock {
-					staking_amount: 1000,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
 				},
 				claimed_rewards: (15..99).collect(),
@@ -4071,7 +4068,7 @@ fn cannot_rebond_to_lower_than_ed() {
 				stash: 21,
 				active: 10 * 1000,
 				ring_staking_lock: StakingLock {
-					staking_amount: 10 * 1000,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
 				},
 				..Default::default()
@@ -4115,7 +4112,7 @@ fn cannot_bond_extra_to_lower_than_ed() {
 				stash: 21,
 				active: 10 * 1000,
 				ring_staking_lock: StakingLock {
-					staking_amount: 10 * 1000,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(vec![], None)
 				},
 				..Default::default()
@@ -4159,7 +4156,7 @@ fn do_not_die_when_active_is_ed() {
 			StakingLedger {
 				stash: 21,
 				active: 1000 * ed,
-				ring_staking_lock: StakingLock { staking_amount: 1000 * ed, ..Default::default() },
+				ring_staking_lock: StakingLock { staking_amount: 0, ..Default::default() },
 				..Default::default()
 			}
 		);
@@ -4175,7 +4172,7 @@ fn do_not_die_when_active_is_ed() {
 				stash: 21,
 				active: ed,
 				ring_staking_lock: StakingLock {
-					staking_amount: 10,
+					staking_amount: 0,
 					unbondings: WeakBoundedVec::force_from(
 						vec![Unbonding { amount: 999 * ed, until: 16 }],
 						None

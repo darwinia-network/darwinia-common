@@ -1,8 +1,8 @@
 // --- paritytech ---
+use pallet_vesting::Config;
 use sp_runtime::traits::ConvertInto;
 // --- darwinia-network ---
 use crate::*;
-use darwinia_vesting::Config;
 
 frame_support::parameter_types! {
 	pub const MinVestedTransfer: Balance = 100 * MILLI;

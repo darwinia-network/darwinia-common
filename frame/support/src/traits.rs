@@ -23,11 +23,11 @@ use codec::{FullCodec, MaxEncodedLen};
 use impl_trait_for_tuples::impl_for_tuples;
 use scale_info::TypeInfo;
 // --- paritytech ---
-use frame_support::traits::{Currency, Get, LockIdentifier, WithdrawReasons};
+use pallet_balances::Reasons;
 use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia-network ---
-use crate::structs::{FrozenBalance, LockFor, LockReasons};
+use crate::structs::FrozenBalance;
 use ethereum_primitives::receipt::EthereumTransactionIndex;
 
 pub trait BalanceInfo<Balance, Module>: MaxEncodedLen {
@@ -41,55 +41,7 @@ pub trait BalanceInfo<Balance, Module>: MaxEncodedLen {
 	fn total(&self) -> Balance;
 
 	/// How much this account's balance can be reduced for the given `reasons`.
-	fn usable(&self, reasons: LockReasons, frozen_balance: FrozenBalance<Balance>) -> Balance;
-}
-
-/// A currency whose accounts can have liquidity restrictions.
-pub trait LockableCurrency<AccountId>: Currency<AccountId> {
-	/// The quantity used to denote time; usually just a `BlockNumber`.
-	type Moment;
-
-	/// The maximum number of locks a user should have on their account.
-	type MaxLocks: Get<u32>;
-
-	/// Create a new balance lock on account `who`.
-	///
-	/// If the new lock is valid (i.e. not already expired), it will push the struct to
-	/// the `Locks` vec in storage. Note that you can lock more funds than a user has.
-	///
-	/// If the lock `id` already exists, this will update it.
-	fn set_lock(
-		id: LockIdentifier,
-		who: &AccountId,
-		lock_for: LockFor<Self::Balance, Self::Moment>,
-		reasons: WithdrawReasons,
-	);
-
-	/// Changes a balance lock (selected by `id`) so that it becomes less liquid in all
-	/// parameters or creates a new one if it does not exist.
-	///
-	/// Calling `extend_lock` on an existing lock `id` differs from `set_lock` in that it
-	/// applies the most severe constraints of the two, while `set_lock` replaces the lock
-	/// with the new parameters. As in, `extend_lock` will set:
-	/// - maximum `amount`
-	/// - bitwise mask of all `reasons`
-	fn extend_lock(
-		id: LockIdentifier,
-		who: &AccountId,
-		amount: Self::Balance,
-		reasons: WithdrawReasons,
-	) -> DispatchResult;
-
-	/// Remove an existing lock.
-	fn remove_lock(id: LockIdentifier, who: &AccountId);
-
-	/// Get the balance of an account that can be used for transfers, reservations, or any other
-	/// non-locking, non-transaction-fee activity. Will be at most `free_balance`.
-	fn usable_balance(who: &AccountId) -> Self::Balance;
-
-	/// Get the balance of an account that can be used for paying transaction fees (not tipping,
-	/// or any other kind of fees, though). Will be at most `free_balance`.
-	fn usable_balance_for_fees(who: &AccountId) -> Self::Balance;
+	fn usable(&self, reasons: Reasons, frozen_balance: FrozenBalance<Balance>) -> Balance;
 }
 
 pub trait DustCollector<AccountId> {

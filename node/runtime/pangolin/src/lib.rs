@@ -27,9 +27,6 @@ pub use pallets::*;
 pub mod bridges_message;
 pub use bridges_message::*;
 
-pub mod migrations;
-pub use migrations::*;
-
 pub mod wasm {
 	//! Make the WASM binary available.
 
@@ -46,6 +43,9 @@ pub mod wasm {
 	}
 }
 pub use wasm::*;
+
+mod migrations;
+use migrations::*;
 
 pub use darwinia_staking::{Forcing, StakerStatus};
 
@@ -125,7 +125,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 0,
-	spec_version: 2_8_10_0,
+	spec_version: 2_8_11_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -178,10 +178,10 @@ frame_support::construct_runtime! {
 		HeaderMMR: darwinia_header_mmr::{Pallet, Storage} = 16,
 
 		// Governance stuff; uncallable initially.
-		Democracy: darwinia_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 17,
+		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 17,
 		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 18,
 		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 19,
-		PhragmenElection: darwinia_elections_phragmen::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
+		PhragmenElection: pallet_elections_phragmen::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
 		TechnicalMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 21,
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 22,
 		KtonTreasury: pallet_treasury::<Instance2>::{Pallet, Call, Storage, Config, Event<T>} = 50,
@@ -194,7 +194,7 @@ frame_support::construct_runtime! {
 		Claims: darwinia_claims::{Pallet, Call, Storage, Config, Event<T>, ValidateUnsigned} = 24,
 
 		// Vesting. Usable initially, but removed once all vesting is finished.
-		Vesting: darwinia_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 25,
+		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 25,
 
 		// Utility module.
 		Utility: pallet_utility::{Pallet, Call, Event} = 26,
@@ -243,8 +243,8 @@ frame_support::construct_runtime! {
 		BridgePangolinParachainDispatch: pallet_bridge_dispatch::<Instance2>::{Pallet, Event<T>} = 62,
 		BridgePangolinParachainMessages: pallet_bridge_messages::<Instance2>::{Pallet, Call, Storage, Event<T>} = 63,
 
-		PangoroFeeMarket: darwinia_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 53,
-		PangolinParachainFeeMarket: darwinia_fee_market::<Instance2>::{Pallet, Call, Storage, Event<T>} = 64,
+		PangoroFeeMarket: pallet_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 53,
+		PangolinParachainFeeMarket: pallet_fee_market::<Instance2>::{Pallet, Call, Storage, Event<T>} = 64,
 		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 54,
 
 		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
@@ -515,27 +515,6 @@ sp_api::impl_runtime_apis! {
 	impl darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power> for Runtime {
 		fn power_of(account: AccountId) -> darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo<Power> {
 			Staking::power_of_rpc(account)
-		}
-	}
-
-	impl darwinia_fee_market_rpc_runtime_api::FeeMarketApi<Block, Balance> for Runtime {
-		fn market_fee(instance: u8) -> Option<darwinia_fee_market_rpc_runtime_api::Fee<Balance>> {
-			match instance {
-				0 => PangoroFeeMarket::market_fee().and_then(|fee| Some(darwinia_fee_market_rpc_runtime_api::Fee { amount: fee })),
-				1 => PangolinParachainFeeMarket::market_fee().and_then(|fee| Some(darwinia_fee_market_rpc_runtime_api::Fee { amount: fee })),
-				_ => None,
-			}
-		}
-		fn in_process_orders(instance: u8) -> darwinia_fee_market_rpc_runtime_api::InProcessOrders {
-			match instance {
-				0 => darwinia_fee_market_rpc_runtime_api::InProcessOrders {
-					orders: PangoroFeeMarket::in_process_orders(),
-				},
-				1 => darwinia_fee_market_rpc_runtime_api::InProcessOrders {
-					orders: PangolinParachainFeeMarket::in_process_orders(),
-				},
-				_ => Default::default()
-			}
 		}
 	}
 
@@ -810,6 +789,56 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
+	impl bp_pangolin_parachain::PangolinParachainFinalityApi<Block> for Runtime{
+		fn best_finalized() -> (bp_pangolin_parachain::BlockNumber, bp_pangolin_parachain::Hash) {
+			use codec::Decode;
+			use sp_runtime::traits::Header;
+
+			let best_pangolin_parachain_head =
+				pallet_bridge_parachains::Pallet::<Runtime, WithRococoParachainsInstance>::best_parachain_head(
+					bm_pangolin_parachain::PANGOLIN_PARACHAIN_ID.into()
+				)
+				.and_then(|encoded_header| bp_pangolin_parachain::Header::decode(&mut &encoded_header.0[..]).ok());
+			match best_pangolin_parachain_head {
+				Some(head) => (*head.number(), head.hash()),
+				None => (Default::default(), Default::default()),
+			}
+		}
+	}
+
+	impl bp_pangolin_parachain::ToPangolinParachainOutboundLaneApi<Block, Balance, bm_pangolin_parachain::ToPangolinParachainMessagePayload> for Runtime {
+		fn message_details(
+			lane: bp_messages::LaneId,
+			begin: bp_messages::MessageNonce,
+			end: bp_messages::MessageNonce,
+		) -> Vec<bp_messages::MessageDetails<Balance>> {
+			bridge_runtime_common::messages_api::outbound_message_details::<
+				Runtime,
+				WithPangolinParachainMessages,
+				bm_pangolin_parachain::WithPangolinParachainMessageBridge,
+			>(lane, begin, end)
+		}
+
+		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgePangolinParachainMessages::outbound_latest_received_nonce(lane)
+		}
+		fn latest_generated_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgePangolinParachainMessages::outbound_latest_generated_nonce(lane)
+		}
+	}
+
+	impl bp_pangolin_parachain::FromPangolinParachainInboundLaneApi<Block> for Runtime {
+		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgePangolinParachainMessages::inbound_latest_received_nonce(lane)
+		}
+		fn latest_confirmed_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
+			BridgePangolinParachainMessages::inbound_latest_confirmed_nonce(lane)
+		}
+		fn unrewarded_relayers_state(lane: bp_messages::LaneId) -> bp_messages::UnrewardedRelayersState {
+			BridgePangolinParachainMessages::inbound_unrewarded_relayers_state(lane)
+		}
+	}
+
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade() -> (frame_support::weights::Weight, frame_support::weights::Weight) {
@@ -842,7 +871,7 @@ sp_api::impl_runtime_apis! {
 			list_benchmark!(list, extra, darwinia_evm, EVM);
 			list_benchmark!(list, extra, from_substrate_issuing, Substrate2SubstrateIssuing);
 			list_benchmark!(list, extra, from_ethereum_issuing, EthereumIssuing);
-			list_benchmark!(list, extra, darwinia_fee_market, PangoroFeeMarket);
+			list_benchmark!(list, extra, pallet_fee_market, PangoroFeeMarket);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -865,7 +894,7 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, darwinia_evm, EVM);
 			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
 			add_benchmark!(params, batches, from_ethereum_issuing, EthereumIssuing);
-			add_benchmark!(params, batches, darwinia_fee_market, PangoroFeeMarket);
+			add_benchmark!(params, batches, pallet_fee_market, PangoroFeeMarket);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 

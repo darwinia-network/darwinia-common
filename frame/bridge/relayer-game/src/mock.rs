@@ -317,13 +317,13 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 	}
 
 	fn estimate_stake(_: u32, _: u32) -> Self::Balance {
-		ESTIMATE_BOND.with(|v| v.borrow().to_owned())
+		ESTIMATE_STAKE.with(|v| v.borrow().to_owned())
 	}
 }
 frame_support::parameter_types! {
 	pub const RelayerGameLockId: LockIdentifier = *b"da/rgame";
 	pub static ChallengeTime: BlockNumber = 6;
-	pub static EstimateBond: Balance = 1;
+	pub static EstimateStake: Balance = 1;
 }
 impl Config for Test {
 	type LockId = RelayerGameLockId;
@@ -374,7 +374,7 @@ impl ExtBuilder {
 
 	pub fn set_associated_constants(&self) {
 		CHALLENGE_TIME.with(|v| v.replace(self.challenge_time));
-		ESTIMATE_BOND.with(|v| v.replace(self.estimate_stake));
+		ESTIMATE_STAKE.with(|v| v.replace(self.estimate_stake));
 	}
 
 	pub fn build(self) -> sp_io::TestExternalities {
