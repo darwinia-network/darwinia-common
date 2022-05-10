@@ -171,6 +171,7 @@ frame_support::parameter_types! {
 pub struct StorageFilter;
 impl StorageFilterT for StorageFilter {
 	fn allow(prefix: &[u8]) -> bool {
+		println!("bear: the prefix here {:?}", prefix);
 		prefix != Twox128::hash(b"EVM") && prefix != Twox128::hash(b"Ethereum")
 	}
 }
@@ -403,12 +404,12 @@ mod tests {
 	use ethabi::{Param, ParamType, StateMutability, Token};
 	// --- paritytech ---
 	use fp_evm::CallOrCreateInfo;
-	use frame_support::{assert_ok, StorageHasher, Twox128};
-	use sp_core::{H160, U256};
+	use frame_support::{assert_ok, Blake2_128Concat, StorageHasher, Twox128};
+	use sp_core::H160;
 	use sp_std::str::FromStr;
 
-	macro_rules! prepare_fee_market {
-		($a1:expr, $a2:expr, $a3:expr) => {
+	macro_rules! prepare {
+		($a1:expr, $a2:expr, $a3:expr, $a4: expr) => {
 			assert_ok!(FeeMarketInstance1::enroll_and_lock_collateral(
 				Origin::signed($a1.clone().account_id),
 				100,
@@ -425,6 +426,18 @@ mod tests {
 				Some(30),
 			));
 			assert_eq!(FeeMarketInstance1::market_fee(), Some(30));
+
+			// Deploy test contract
+			let unsign_tx = LegacyUnsignedTransaction::new(
+				0,
+				1,
+				300000,
+				TransactionAction::Create,
+				0,
+				hex2bytes_unchecked(BYTECODE),
+			);
+			let tx = unsign_tx.sign_with_chain_id(&$a4.private_key, 42);
+			assert_ok!(Ethereum::execute($a4.address, &tx.into(), None));
 		};
 	}
 
@@ -449,21 +462,8 @@ mod tests {
 		let (pairs, mut ext) = new_test_ext(4);
 		let (a1, a2, a3, a4) = (&pairs[0], &pairs[1], &pairs[2], &pairs[3]);
 		ext.execute_with(|| {
-			prepare_fee_market!(a1, a2, a3);
-
-			// Deploy test contract
-			let unsign_tx = LegacyUnsignedTransaction::new(
-				0,
-				1,
-				300000,
-				TransactionAction::Create,
-				0,
-				hex2bytes_unchecked(BYTECODE),
-			);
-			let tx = unsign_tx.sign_with_chain_id(&a4.private_key, 42);
-			assert_ok!(Ethereum::execute(a4.address, &tx.into(), None));
-			let created_addr =
-				H160::from_str("0x35ffc084a84df2c259518c91c0f8b473c4f8d017").unwrap();
+			prepare!(a1, a2, a3, a4);
+			let contract = H160::from_str("0x35ffc084a84df2c259518c91c0f8b473c4f8d017").unwrap();
 
 			let mut key = vec![0u8; 32];
 			key[0..16].copy_from_slice(&Twox128::hash(b"FeeMarketInstance1"));
@@ -483,7 +483,7 @@ mod tests {
 				1,
 				1,
 				300000,
-				TransactionAction::Call(created_addr),
+				TransactionAction::Call(contract),
 				0,
 				hex2bytes_unchecked(bytes2hex("0x", call_function)),
 			);
@@ -495,6 +495,50 @@ mod tests {
 				});
 			println!("{:?}", result);
 			assert!(result.unwrap().len() != 0);
+		});
+	}
+
+	#[test]
+	fn storage_filter_works() {
+		let (pairs, mut ext) = new_test_ext(4);
+		let (a1, a2, a3, a4) = (&pairs[0], &pairs[1], &pairs[2], &pairs[3]);
+		ext.execute_with(|| {
+			prepare!(a1, a2, a3, a4);
+			let contract = H160::from_str("0x35ffc084a84df2c259518c91c0f8b473c4f8d017").unwrap();
+
+			let mut key = Vec::new();
+			key.extend_from_slice(&Twox128::hash(b"EVM"));
+			key.extend_from_slice(&Twox128::hash(b"AccountCodes"));
+			key.extend_from_slice(&Blake2_128Concat::hash(&Encode::encode(&contract)));
+
+			// Call state_storage
+			let call_function = create_function_encode_bytes(
+				"state_storage".to_owned(),
+				vec![Param { name: "key".to_owned(), kind: ParamType::Bytes, internal_type: None }],
+				vec![Param { name: "res".to_owned(), kind: ParamType::Bytes, internal_type: None }],
+				true,
+				StateMutability::NonPayable,
+				&[Token::Bytes(key)],
+			)
+			.unwrap();
+			let unsign_tx = LegacyUnsignedTransaction::new(
+				1,
+				1,
+				300000,
+				TransactionAction::Call(contract),
+				0,
+				hex2bytes_unchecked(bytes2hex("0x", call_function)),
+			);
+			let tx = unsign_tx.sign_with_chain_id(&a4.private_key, 42);
+			let result =
+				Ethereum::execute(a4.address, &tx.into(), None).map(|(_, _, res)| match res {
+					CallOrCreateInfo::Call(info) => info.value,
+					CallOrCreateInfo::Create(_) => todo!(),
+				});
+			assert_eq!(
+				String::from_utf8_lossy(&result.unwrap()),
+				"This state of the module has read restriction"
+			);
 		});
 	}
 }
