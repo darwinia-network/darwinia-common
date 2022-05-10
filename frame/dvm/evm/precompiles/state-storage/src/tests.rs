@@ -51,7 +51,7 @@ use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTrunc
 use darwinia_evm_precompile_utils::test_helper::{
 	address_build, create_function_encode_bytes, AccountInfo, LegacyUnsignedTransaction,
 };
-use darwinia_fee_market::{Config, RingBalance, Slasher};
+use pallet_fee_market::{Config, RingBalance, Slasher};
 use darwinia_support::evm::IntoAccountId;
 
 type Block = MockBlock<Test>;
@@ -59,7 +59,7 @@ type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
 type Balance = u64;
 
-use darwinia_fee_market::Instance1 as F1;
+use pallet_fee_market::Instance1 as F1;
 
 darwinia_support::impl_test_account_data! {}
 
@@ -300,7 +300,7 @@ frame_support::construct_runtime! {
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>},
 		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event<T>, Origin},
-		FeeMarketInstance1: darwinia_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>},
+		FeeMarketInstance1: pallet_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>},
 	}
 }
 

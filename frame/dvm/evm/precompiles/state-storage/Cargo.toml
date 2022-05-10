@@ -17,7 +17,7 @@ ethabi = { version = "15.0", default-features = false }
 # darwinia-network
 darwinia-evm                  = { default-features = false, path = "../.." }
 darwinia-evm-precompile-utils = { default-features = false, path = "../utils" }
-darwinia-fee-market           = { default-features = false, path = "../../../../fee-market" }
+pallet-fee-market      = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
 dp-contract                   = { default-features = false, path = "../../../../../primitives/contract" }
 # paritytech
 frame-support                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
@@ -60,7 +60,7 @@ std = [
 	# darwinia-network
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-utils/std",
-	"darwinia-fee-market/std",
+	"pallet-fee-market/std",
 	"dp-contract/std",
 	# paritytech
 	"frame-support/std",
