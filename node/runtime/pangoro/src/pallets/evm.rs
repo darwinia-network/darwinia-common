@@ -2,7 +2,9 @@
 use core::marker::PhantomData;
 // --- paritytech ---
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
-use frame_support::{pallet_prelude::Weight, traits::FindAuthor, ConsensusEngineId, Twox128, StorageHasher};
+use frame_support::{
+	pallet_prelude::Weight, traits::FindAuthor, ConsensusEngineId, StorageHasher, Twox128,
+};
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use pallet_session::FindAccountFromAuthorIndex;
 use sp_core::{crypto::Public, H160, U256};
@@ -57,9 +59,9 @@ where
 
 impl<R> PrecompileSet for PangoroPrecompiles<R>
 where
-	Transfer<R>: Precompile,
-	StateStorage<R, StorageFilter>: Precompile,
 	BscBridge<R>: Precompile,
+	StateStorage<R, StorageFilter>: Precompile,
+	Transfer<R>: Precompile,
 	R: darwinia_ethereum::Config,
 {
 	fn execute(

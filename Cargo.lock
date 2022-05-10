@@ -1753,7 +1753,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-bridge-bsc"
-version = "2.7.2"
+version = "2.8.11"
 dependencies = [
  "darwinia-bridge-bsc",
  "darwinia-evm",
@@ -1818,7 +1818,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-state-storage"
-version = "2.8.10"
+version = "2.8.11"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
@@ -1834,7 +1834,6 @@ dependencies = [
  "fp-self-contained",
  "frame-support",
  "frame-system",
- "hex",
  "pallet-evm",
  "pallet-fee-market",
  "pallet-timestamp",
@@ -2589,8 +2588,6 @@ dependencies = [
  "anyhow",
  "ethereum-types",
  "hex",
- "serde",
- "serde_json",
  "sha3 0.9.1",
  "thiserror",
  "uint",

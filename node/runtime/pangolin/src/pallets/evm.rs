@@ -105,11 +105,11 @@ where
 
 impl<R> PrecompileSet for PangolinPrecompiles<R>
 where
-	Transfer<R>: Precompile,
-	StateStorage<R, StorageFilter>: Precompile,
-	EthereumBridge<R>: Precompile,
-	Sub2SubBridge<R, ToPangoroMessageSender, bm_pangoro::ToPangoroOutboundPayLoad>: Precompile,
 	Dispatch<R>: Precompile,
+	EthereumBridge<R>: Precompile,
+	StateStorage<R, StorageFilter>: Precompile,
+	Sub2SubBridge<R, ToPangoroMessageSender, bm_pangoro::ToPangoroOutboundPayLoad>: Precompile,
+	Transfer<R>: Precompile,
 	R: darwinia_ethereum::Config,
 {
 	fn execute(

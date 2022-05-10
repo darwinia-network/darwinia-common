@@ -51,8 +51,8 @@ use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTrunc
 use darwinia_evm_precompile_utils::test_helper::{
 	address_build, create_function_encode_bytes, AccountInfo, LegacyUnsignedTransaction,
 };
-use pallet_fee_market::{Config, RingBalance, Slasher};
 use darwinia_support::evm::IntoAccountId;
+use pallet_fee_market::{BalanceOf, Config, Slasher};
 
 type Block = MockBlock<Test>;
 type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
@@ -267,7 +267,7 @@ frame_support::parameter_types! {
 
 pub struct FeeMarketSlasher;
 impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
-	fn slash(_: RingBalance<T, I>, _: T::BlockNumber) -> RingBalance<T, I> {
+	fn slash(_: BalanceOf<T, I>, _: T::BlockNumber) -> BalanceOf<T, I> {
 		todo!("Not implemented for the test");
 	}
 }
@@ -276,12 +276,12 @@ impl Config<F1> for Test {
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
 	type CollateralPerOrder = CollateralPerOrder;
 	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
+	type Currency = Ring;
 	type Event = Event;
 	type LockId = F1FeeMarketLockId;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
 	type MinimumRelayFee = MinimumRelayFee;
 	type PalletId = F1FeeMarketId;
-	type RingCurrency = Ring;
 	type Slasher = FeeMarketSlasher;
 	type Slot = Slot;
 	type TreasuryPalletId = TreasuryPalletId;
