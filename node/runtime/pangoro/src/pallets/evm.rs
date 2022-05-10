@@ -16,7 +16,7 @@ use darwinia_evm::{
 	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, GasWeightMapping,
 };
 use darwinia_evm_precompile_bridge_bsc::BscBridge;
-use darwinia_evm_precompile_state_storage::StateStorage;
+use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::ConcatConverter;
 
@@ -31,6 +31,13 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 
 			H160::from_slice(&authority_id.0.to_raw_vec()[4..24])
 		})
+	}
+}
+
+pub struct StorageFilter;
+impl StorageFilterT for StorageFilter {
+	fn allow(prefix: &[u8]) -> bool {
+		prefix != Twox128::hash(b"EVM") && prefix != Twox128::hash(b"Ethereum")
 	}
 }
 
@@ -51,7 +58,7 @@ where
 impl<R> PrecompileSet for PangoroPrecompiles<R>
 where
 	Transfer<R>: Precompile,
-	StateStorage<R>: Precompile,
+	StateStorage<R, StorageFilter>: Precompile,
 	BscBridge<R>: Precompile,
 	R: darwinia_ethereum::Config,
 {
@@ -74,8 +81,9 @@ where
 				Some(<Transfer<R>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(26) =>
 				Some(<BscBridge<R>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(27) =>
-				Some(<StateStorage<R>>::execute(input, target_gas, context, is_static)),
+			a if a == addr(27) => Some(<StateStorage<R, StorageFilter>>::execute(
+				input, target_gas, context, is_static,
+			)),
 			_ => None,
 		}
 	}

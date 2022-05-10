@@ -6,7 +6,7 @@ use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
 	pallet_prelude::Weight,
 	traits::{FindAuthor, PalletInfoAccess},
-	ConsensusEngineId,
+	ConsensusEngineId, StorageHasher, Twox128,
 };
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use pallet_session::FindAccountFromAuthorIndex;
@@ -24,7 +24,7 @@ use darwinia_evm::{
 use darwinia_evm_precompile_bridge_ethereum::EthereumBridge;
 use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 use darwinia_evm_precompile_dispatch::Dispatch;
-use darwinia_evm_precompile_state_storage::StateStorage;
+use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::{
 	evm::ConcatConverter,
@@ -82,6 +82,13 @@ impl LatestMessageNoncer for ToPangoroMessageSender {
 	}
 }
 
+pub struct StorageFilter;
+impl StorageFilterT for StorageFilter {
+	fn allow(prefix: &[u8]) -> bool {
+		prefix != Twox128::hash(b"EVM") && prefix != Twox128::hash(b"Ethereum")
+	}
+}
+
 pub struct PangolinPrecompiles<R>(PhantomData<R>);
 impl<R> PangolinPrecompiles<R>
 where
@@ -99,7 +106,7 @@ where
 impl<R> PrecompileSet for PangolinPrecompiles<R>
 where
 	Transfer<R>: Precompile,
-	StateStorage<R>: Precompile,
+	StateStorage<R, StorageFilter>: Precompile,
 	EthereumBridge<R>: Precompile,
 	Sub2SubBridge<R, ToPangoroMessageSender, bm_pangoro::ToPangoroOutboundPayLoad>: Precompile,
 	Dispatch<R>: Precompile,
@@ -131,8 +138,9 @@ where
 			>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(25) =>
 				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(26) =>
-				Some(<StateStorage<R>>::execute(input, target_gas, context, is_static)),
+			a if a == addr(26) => Some(<StateStorage<R, StorageFilter>>::execute(
+				input, target_gas, context, is_static,
+			)),
 			_ => None,
 		}
 	}

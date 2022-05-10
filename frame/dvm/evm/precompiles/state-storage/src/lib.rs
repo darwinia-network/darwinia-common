@@ -40,13 +40,18 @@ enum Action {
 	StateGetStorage = "state_storage(bytes)",
 }
 
-pub struct StateStorage<T> {
-	_marker: PhantomData<T>,
+pub trait StorageFilterT {
+	fn allow(prefix: &[u8]) -> bool;
 }
 
-impl<T> Precompile for StateStorage<T>
+pub struct StateStorage<T, F> {
+	_marker: PhantomData<(T, F)>,
+}
+
+impl<T, F> Precompile for StateStorage<T, F>
 where
 	T: darwinia_evm::Config,
+	F: StorageFilterT,
 {
 	fn execute(
 		input: &[u8],
@@ -66,22 +71,25 @@ where
 
 		let output = match action {
 			Action::StateGetStorage => {
+				// todo: add tests
+				if data.len() < 16 || !F::allow(&data[0..16]) {
+					return Err(helper.revert("This state of the module has read restriction"));
+				}
+
+				log::debug!("bear: --- enter the state get storage branch");
 				// Storage: FeeMarket AssignedRelayers (r:1 w:0)
 				helper.record_gas(1, 0)?;
-				log::debug!("bear: --- enter the state get storage branch");
+
 				let tokens = ethabi::decode(&[ParamType::Bytes], data)
 					.map_err(|_| helper.revert("ethabi decoded error"))?;
-
 				let key = match &tokens[0] {
-					Token::Bytes(bs) => bs,
-					_ => todo!(),
+					Token::Bytes(bytes) => bytes,
+					_ => return Err(helper.revert("The input param error")),
 				};
 
 				log::debug!("bear: --- key {:?}", key);
 				// read storage accourding to the storage key
-				let value = frame_support::storage::unhashed::get_raw(key);
-				log::debug!("bear: --- value {:?}", value);
-				value
+				frame_support::storage::unhashed::get_raw(key)
 			},
 		};
 
@@ -138,7 +146,5 @@ mod tests {
 		println!("a {:?}", a);
 		let a_hex = hex::decode("1503").unwrap();
 		println!("a_hex {:?}", a_hex);
-
-		assert_eq!(1, 2);
 	}
 }
