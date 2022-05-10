@@ -21,7 +21,6 @@ darwinia-evm-precompile-utils = { default-features = false, path = "../utils" }
 darwinia-fee-market           = { default-features = false, path = "../../../../fee-market" }
 dp-contract                   = { default-features = false, path = "../../../../../primitives/contract" }
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 # frontier
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
@@ -45,7 +44,6 @@ pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", bran
 sp-core          = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 sp-io            = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 sp-runtime       = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-sp-std           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 # frontier
 fp-self-contained = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
 pallet-evm        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
@@ -66,7 +64,6 @@ std = [
 	"dp-contract/std",
 	# paritytech
 	"sp-runtime/std",
-	"sp-std/std",
 	"frame-support/std",
 	# frontier
 	"fp-evm/std",
