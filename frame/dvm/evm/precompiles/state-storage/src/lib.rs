@@ -18,8 +18,8 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 // --- core ---
 use core::marker::PhantomData;
@@ -102,49 +102,49 @@ where
 	}
 }
 
-#[cfg(test)]
-mod tests {
-	use frame_support::{StorageHasher, Twox128};
-	use hex::ToHex;
+// #[cfg(test)]
+// mod tests {
+// 	use frame_support::{StorageHasher, Twox128};
+// 	use hex::ToHex;
 
-	#[test]
-	fn test_input() {
-		let mut key = vec![0u8; 32];
-		assert_eq!(
-			Twox128::hash(b"Sudo"),
-			[92, 13, 17, 118, 165, 104, 193, 249, 41, 68, 52, 13, 191, 237, 158, 156]
-		);
-		println!("Sudo str: {:?}", Twox128::hash(b"Sudo").encode_hex::<String>());
-		key[0..16].copy_from_slice(&Twox128::hash(b"Sudo"));
-		key[16..32].copy_from_slice(&Twox128::hash(b"Key"));
-		assert_eq!(
-			Twox128::hash(b"Key"),
-			[83, 14, 188, 167, 3, 200, 89, 16, 231, 22, 76, 183, 209, 201, 228, 123]
-		);
-		println!("Key str: {:?}", Twox128::hash(b"Key").encode_hex::<String>());
-		assert_eq!(
-			key,
-			[
-				92, 13, 17, 118, 165, 104, 193, 249, 41, 68, 52, 13, 191, 237, 158, 156, 83, 14,
-				188, 167, 3, 200, 89, 16, 231, 22, 76, 183, 209, 201, 228, 123
-			]
-		);
-		println!(
-			"key: {:?}",
-			[
-				92, 13, 17, 118, 165, 104, 193, 249, 41, 68, 52, 13, 191, 237, 158, 156, 83, 14,
-				188, 167, 3, 200, 89, 16, 231, 22, 76, 183, 209, 201, 228, 123
-			]
-			.encode_hex::<String>()
-		);
+// 	#[test]
+// 	fn test_input() {
+// 		let mut key = vec![0u8; 32];
+// 		assert_eq!(
+// 			Twox128::hash(b"Sudo"),
+// 			[92, 13, 17, 118, 165, 104, 193, 249, 41, 68, 52, 13, 191, 237, 158, 156]
+// 		);
+// 		println!("Sudo str: {:?}", Twox128::hash(b"Sudo").encode_hex::<String>());
+// 		key[0..16].copy_from_slice(&Twox128::hash(b"Sudo"));
+// 		key[16..32].copy_from_slice(&Twox128::hash(b"Key"));
+// 		assert_eq!(
+// 			Twox128::hash(b"Key"),
+// 			[83, 14, 188, 167, 3, 200, 89, 16, 231, 22, 76, 183, 209, 201, 228, 123]
+// 		);
+// 		println!("Key str: {:?}", Twox128::hash(b"Key").encode_hex::<String>());
+// 		assert_eq!(
+// 			key,
+// 			[
+// 				92, 13, 17, 118, 165, 104, 193, 249, 41, 68, 52, 13, 191, 237, 158, 156, 83, 14,
+// 				188, 167, 3, 200, 89, 16, 231, 22, 76, 183, 209, 201, 228, 123
+// 			]
+// 		);
+// 		println!(
+// 			"key: {:?}",
+// 			[
+// 				92, 13, 17, 118, 165, 104, 193, 249, 41, 68, 52, 13, 191, 237, 158, 156, 83, 14,
+// 				188, 167, 3, 200, 89, 16, 231, 22, 76, 183, 209, 201, 228, 123
+// 			]
+// 			.encode_hex::<String>()
+// 		);
 
-		let key_str = "5c0d1176a568c1f92944340dbfed9e9c530ebca703c85910e7164cb7d1c9e47b";
-		let key_bytes = hex::decode(&key_str).unwrap();
-		println!("{:?}", key_bytes);
+// 		let key_str = "5c0d1176a568c1f92944340dbfed9e9c530ebca703c85910e7164cb7d1c9e47b";
+// 		let key_bytes = hex::decode(&key_str).unwrap();
+// 		println!("{:?}", key_bytes);
 
-		let a = b"15";
-		println!("a {:?}", a);
-		let a_hex = hex::decode("1503").unwrap();
-		println!("a_hex {:?}", a_hex);
-	}
-}
+// 		let a = b"15";
+// 		println!("a {:?}", a);
+// 		let a_hex = hex::decode("1503").unwrap();
+// 		println!("a_hex {:?}", a_hex);
+// 	}
+// }

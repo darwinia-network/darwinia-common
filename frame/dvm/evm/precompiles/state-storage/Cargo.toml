@@ -44,6 +44,7 @@ pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", bran
 sp-core          = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 sp-io            = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 sp-runtime       = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+sp-std       = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 # frontier
 fp-self-contained = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
 pallet-evm        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
