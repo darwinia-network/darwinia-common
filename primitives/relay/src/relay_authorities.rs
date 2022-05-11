@@ -126,9 +126,6 @@ pub struct MmrRootToSign<MmrRoot, AccountId, Signature> {
 }
 impl<MmrRoot, AccountId, Signature> MmrRootToSign<MmrRoot, AccountId, Signature> {
 	pub fn new(mmr_root: MmrRoot) -> Self {
-		Self {
-			mmr_root,
-			signatures: vec![],
-		}
+		Self { mmr_root, signatures: vec![] }
 	}
 }

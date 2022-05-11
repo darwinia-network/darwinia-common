@@ -6,11 +6,11 @@ pub use pallet_bridge_messages::{
 use crate::*;
 use bp_messages::MessageNonce;
 use bp_runtime::{ChainId, PANGOLIN_PARACHAIN_CHAIN_ID, PANGORO_CHAIN_ID};
-use darwinia_fee_market::s2s::{
-	FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler, FeeMarketPayment,
-};
 use darwinia_support::evm::{ConcatConverter, IntoAccountId, IntoH160};
 use pallet_bridge_messages::Config;
+use pallet_fee_market::s2s::{
+	FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler, FeeMarketPayment,
+};
 
 frame_support::parameter_types! {
 	// Shared configurations.
@@ -31,67 +31,53 @@ frame_support::parameter_types! {
 }
 
 impl Config<WithPangoroMessages> for Runtime {
-	type Event = Event;
-	type WeightInfo = ();
-	type Parameter = bm_pangoro::PangolinToPangoroMessagesParameter;
-	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
-	type MaxUnrewardedRelayerEntriesAtInboundLane = PangoroMaxUnrewardedRelayerEntriesAtInboundLane;
-	type MaxUnconfirmedMessagesAtInboundLane = PangoroMaxUnconfirmedMessagesAtInboundLane;
-
-	type OutboundPayload = bm_pangoro::ToPangoroMessagePayload;
-	type OutboundMessageFee = bp_pangolin::Balance;
-
-	type InboundPayload = bm_pangoro::FromPangoroMessagePayload;
-	type InboundMessageFee = bp_pangoro::Balance;
-	type InboundRelayer = bp_pangoro::AccountId;
-
 	type AccountIdConverter = bp_pangolin::AccountIdConverter;
-
-	type TargetHeaderChain = bm_pangoro::Pangoro;
-	type LaneMessageVerifier = bm_pangoro::ToPangoroMessageVerifier;
-	type MessageDeliveryAndDispatchPayment =
-		FeeMarketPayment<Runtime, WithPangoroFeeMarket, Ring, RootAccountForPayments>;
-
-	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangoroFeeMarket>;
-	type OnDeliveryConfirmed = (
-		Substrate2SubstrateIssuing,
-		FeeMarketMessageConfirmedHandler<Self, WithPangoroFeeMarket>,
-	);
-
-	type SourceHeaderChain = bm_pangoro::Pangoro;
-	type MessageDispatch = bm_pangoro::FromPangoroMessageDispatch;
 	type BridgedChainId = PangoroChainId;
+	type Event = Event;
+	type InboundMessageFee = bp_pangoro::Balance;
+	type InboundPayload = bm_pangoro::FromPangoroMessagePayload;
+	type InboundRelayer = bp_pangoro::AccountId;
+	type LaneMessageVerifier = bm_pangoro::ToPangoroMessageVerifier;
+	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
+	type MaxUnconfirmedMessagesAtInboundLane = PangoroMaxUnconfirmedMessagesAtInboundLane;
+	type MaxUnrewardedRelayerEntriesAtInboundLane = PangoroMaxUnrewardedRelayerEntriesAtInboundLane;
+	type MessageDeliveryAndDispatchPayment =
+		FeeMarketPayment<Self, WithPangoroFeeMarket, Ring, RootAccountForPayments>;
+	type MessageDispatch = bm_pangoro::FromPangoroMessageDispatch;
+	type OnDeliveryConfirmed =
+		(Substrate2SubstrateIssuing, FeeMarketMessageConfirmedHandler<Self, WithPangoroFeeMarket>);
+	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangoroFeeMarket>;
+	type OutboundMessageFee = bp_pangolin::Balance;
+	type OutboundPayload = bm_pangoro::ToPangoroMessagePayload;
+	type Parameter = bm_pangoro::PangolinToPangoroMessagesParameter;
+	type SourceHeaderChain = bm_pangoro::Pangoro;
+	type TargetHeaderChain = bm_pangoro::Pangoro;
+	type WeightInfo = ();
 }
 impl Config<WithPangolinParachainMessages> for Runtime {
+	type AccountIdConverter = bp_pangolin::AccountIdConverter;
+	type BridgedChainId = PangolinParachainChainId;
 	type Event = Event;
-	type WeightInfo = ();
-	type Parameter = bm_pangolin_parachain::PangolinToPangolinParachainParameter;
+	type InboundMessageFee = bp_pangolin_parachain::Balance;
+	type InboundPayload = bm_pangolin_parachain::FromPangolinParachainMessagePayload;
+	type InboundRelayer = bp_pangolin_parachain::AccountId;
+	type LaneMessageVerifier = bm_pangolin_parachain::ToPangolinParachainMessageVerifier;
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
+	type MaxUnconfirmedMessagesAtInboundLane = PangolinParachainMaxUnconfirmedMessagesAtInboundLane;
 	type MaxUnrewardedRelayerEntriesAtInboundLane =
 		PangolinParachainMaxUnrewardedRelayerEntriesAtInboundLane;
-	type MaxUnconfirmedMessagesAtInboundLane = PangolinParachainMaxUnconfirmedMessagesAtInboundLane;
-
-	type OutboundPayload = bm_pangolin_parachain::ToPangolinParachainMessagePayload;
-	type OutboundMessageFee = Balance;
-
-	type InboundPayload = bm_pangolin_parachain::FromPangolinParachainMessagePayload;
-	type InboundMessageFee = bp_pangolin_parachain::Balance;
-	type InboundRelayer = bp_pangolin_parachain::AccountId;
-
-	type AccountIdConverter = bp_pangolin::AccountIdConverter;
-
-	type TargetHeaderChain = bm_pangolin_parachain::PangolinParachain;
-	type LaneMessageVerifier = bm_pangolin_parachain::ToPangolinParachainMessageVerifier;
 	type MessageDeliveryAndDispatchPayment =
-		FeeMarketPayment<Runtime, WithPangolinParachainFeeMarket, Ring, RootAccountForPayments>;
-
-	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangolinParachainFeeMarket>;
+		FeeMarketPayment<Self, WithPangolinParachainFeeMarket, Ring, RootAccountForPayments>;
+	type MessageDispatch = bm_pangolin_parachain::FromPangolinParachainMessageDispatch;
 	type OnDeliveryConfirmed = (
 		Substrate2SubstrateIssuing,
 		FeeMarketMessageConfirmedHandler<Self, WithPangolinParachainFeeMarket>,
 	);
-
+	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangolinParachainFeeMarket>;
+	type OutboundMessageFee = Balance;
+	type OutboundPayload = bm_pangolin_parachain::ToPangolinParachainMessagePayload;
+	type Parameter = bm_pangolin_parachain::PangolinToPangolinParachainParameter;
 	type SourceHeaderChain = bm_pangolin_parachain::PangolinParachain;
-	type MessageDispatch = bm_pangolin_parachain::FromPangolinParachainMessageDispatch;
-	type BridgedChainId = PangolinParachainChainId;
+	type TargetHeaderChain = bm_pangolin_parachain::PangolinParachain;
+	type WeightInfo = ();
 }

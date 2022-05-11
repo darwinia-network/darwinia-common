@@ -119,10 +119,7 @@ where
 		let raw_message_root = unwrap_or_exit!(
 			<darwinia_ethereum::Pallet<T>>::read_only_call(
 				<CommitmentContract<T>>::get(),
-				unwrap_or_exit!(
-					beefy::commitment(),
-					"Fail to encode `commitment` ABI, exit."
-				)
+				unwrap_or_exit!(beefy::commitment(), "Fail to encode `commitment` ABI, exit.")
 			),
 			"Fail to read message root from DVM, exit."
 		);

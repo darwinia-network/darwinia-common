@@ -65,11 +65,7 @@ impl BasicMappingTokenFactory {
 			state_mutability: StateMutability::View,
 		}
 		.encode_input(
-			vec![
-				Token::Address(backing_address),
-				Token::Address(original_token),
-			]
-			.as_slice(),
+			vec![Token::Address(backing_address), Token::Address(original_token)].as_slice(),
 		)
 	}
 
@@ -175,12 +171,7 @@ impl BasicMappingTokenFactory {
 			state_mutability: StateMutability::NonPayable,
 		}
 		.encode_input(
-			vec![
-				Token::Address(token),
-				Token::Address(recipient),
-				Token::Uint(amount),
-			]
-			.as_slice(),
+			vec![Token::Address(token), Token::Address(recipient), Token::Uint(amount)].as_slice(),
 		)
 	}
 }

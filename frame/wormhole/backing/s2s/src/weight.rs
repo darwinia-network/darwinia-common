@@ -69,22 +69,27 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(11 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
+
 	fn lock_and_remote_issue() -> Weight {
 		(271_083_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(12 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
+
 	fn unlock_from_remote() -> Weight {
 		(115_133_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+
 	fn set_secure_limited_period() -> Weight {
 		(4_000_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+
 	fn set_security_limitation_ring_amount() -> Weight {
 		(4_000_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+
 	fn set_remote_mapping_token_factory_account() -> Weight {
 		(4_000_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -97,22 +102,27 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(11 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 	}
+
 	fn lock_and_remote_issue() -> Weight {
 		(271_083_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(12 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(7 as Weight))
 	}
+
 	fn unlock_from_remote() -> Weight {
 		(115_133_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
+
 	fn set_secure_limited_period() -> Weight {
 		(4_000_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
+
 	fn set_security_limitation_ring_amount() -> Weight {
 		(4_000_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
+
 	fn set_remote_mapping_token_factory_account() -> Weight {
 		(4_000_000 as Weight).saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}

@@ -98,13 +98,7 @@ impl CreatePayload<bp_pangolin::AccountId, bp_pangolin::AccountPublic, bp_pangol
 		dispatch_fee_payment: DispatchFeePayment,
 	) -> Result<Self::Payload, &'static str> {
 		let call = Self::encode_call(PANGORO_S2S_BACKING_PALLET_INDEX, call_params)?;
-		Ok(ToPangoroMessagePayload {
-			spec_version,
-			weight,
-			origin,
-			call,
-			dispatch_fee_payment,
-		})
+		Ok(ToPangoroMessagePayload { spec_version, weight, origin, call, dispatch_fee_payment })
 	}
 }
 
@@ -128,14 +122,14 @@ impl Parameter for PangolinToPangoroMessagesParameter {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct WithPangoroMessageBridge;
 impl MessageBridge for WithPangoroMessageBridge {
-	type ThisChain = Pangolin;
 	type BridgedChain = Pangoro;
+	type ThisChain = Pangolin;
 
-	const RELAYER_FEE_PERCENT: u32 = 10;
-	const THIS_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
 	const BRIDGED_CHAIN_ID: ChainId = PANGORO_CHAIN_ID;
 	const BRIDGED_MESSAGES_PALLET_NAME: &'static str =
 		bp_pangolin::WITH_PANGOLIN_MESSAGES_PALLET_NAME;
+	const RELAYER_FEE_PERCENT: u32 = 10;
+	const THIS_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
 
 	fn bridged_balance_to_this_balance(
 		bridged_balance: BalanceOf<Self::BridgedChain>,
@@ -151,12 +145,12 @@ impl MessageBridge for WithPangoroMessageBridge {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct Pangolin;
 impl ChainWithMessages for Pangolin {
-	type Hash = bp_pangolin::Hash;
 	type AccountId = bp_pangolin::AccountId;
-	type Signer = bp_pangolin::AccountPublic;
-	type Signature = bp_pangolin::Signature;
-	type Weight = Weight;
 	type Balance = bp_pangolin::Balance;
+	type Hash = bp_pangolin::Hash;
+	type Signature = bp_pangolin::Signature;
+	type Signer = bp_pangolin::AccountPublic;
+	type Weight = Weight;
 }
 impl ThisChainWithMessages for Pangolin {
 	type Call = Call;
@@ -188,9 +182,7 @@ impl ThisChainWithMessages for Pangolin {
 	fn transaction_payment(transaction: MessageTransaction<Weight>) -> Self::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			RuntimeBlockWeights::get()
-				.get(DispatchClass::Normal)
-				.base_extrinsic,
+			RuntimeBlockWeights::get().get(DispatchClass::Normal).base_extrinsic,
 			1,
 			FixedU128::zero(),
 			|weight| weight as _,
@@ -203,12 +195,12 @@ impl ThisChainWithMessages for Pangolin {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct Pangoro;
 impl ChainWithMessages for Pangoro {
-	type Hash = bp_pangoro::Hash;
 	type AccountId = bp_pangoro::AccountId;
-	type Signer = bp_pangoro::AccountPublic;
-	type Signature = bp_pangoro::Signature;
-	type Weight = Weight;
 	type Balance = bp_pangoro::Balance;
+	type Hash = bp_pangoro::Hash;
+	type Signature = bp_pangoro::Signature;
+	type Signer = bp_pangoro::AccountPublic;
+	type Weight = Weight;
 }
 impl BridgedChainWithMessages for Pangoro {
 	fn maximal_extrinsic_size() -> u32 {
@@ -221,10 +213,11 @@ impl BridgedChainWithMessages for Pangoro {
 			bp_pangoro::Pangoro::max_extrinsic_weight(),
 		);
 
-		// we're charging for payload bytes in `WithPangoroMessageBridge::transaction_payment` function
+		// we're charging for payload bytes in `WithPangoroMessageBridge::transaction_payment`
+		// function
 		//
-		// this bridge may be used to deliver all kind of messages, so we're not making any assumptions about
-		// minimal dispatch weight here
+		// this bridge may be used to deliver all kind of messages, so we're not making any
+		// assumptions about minimal dispatch weight here
 
 		0..=upper_limit
 	}
@@ -257,9 +250,7 @@ impl BridgedChainWithMessages for Pangoro {
 	fn transaction_payment(transaction: MessageTransaction<Weight>) -> Self::Balance {
 		// in our testnets, both per-byte fee and weight-to-fee are 1:1
 		messages::transaction_payment(
-			bp_pangoro::RuntimeBlockWeights::get()
-				.get(DispatchClass::Normal)
-				.base_extrinsic,
+			bp_pangoro::RuntimeBlockWeights::get().get(DispatchClass::Normal).base_extrinsic,
 			1,
 			FixedU128::zero(),
 			|weight| weight as _,

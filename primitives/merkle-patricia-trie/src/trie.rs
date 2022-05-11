@@ -73,7 +73,7 @@ impl MerklePatriciaTrie {
 
 				trie.root = trie.decode_node(&data)?;
 				Ok(trie)
-			}
+			},
 			None => Err(TrieError::InvalidStateRoot),
 		}
 	}
@@ -162,12 +162,10 @@ impl Trie for MerklePatriciaTrie {
 		let mut path =
 			self.get_path_at(self.root.clone(), &Nibbles::from_raw(key.to_vec(), true))?;
 		match self.root {
-			Node::Empty => {}
+			Node::Empty => {},
 			_ => path.push(self.root.clone()),
 		}
-		Ok(Proof {
-			nodes: path.into_iter().rev().map(|n| self.encode_raw(n)).collect(),
-		})
+		Ok(Proof { nodes: path.into_iter().rev().map(|n| self.encode_raw(n)).collect() })
 	}
 
 	/// return value if key exists, None if key not exist, Error if proof is wrong
@@ -192,11 +190,7 @@ impl MerklePatriciaTrie {
 	pub fn iter(&self) -> TrieIterator {
 		let mut nodes = vec![];
 		nodes.push((self.root.clone()).into());
-		TrieIterator {
-			trie: self,
-			nibble: Nibbles::from_raw(vec![], false),
-			nodes,
-		}
+		TrieIterator { trie: self, nibble: Nibbles::from_raw(vec![], false), nodes }
 	}
 
 	fn get_at(&self, n: Node, partial: &Nibbles) -> TrieResult<Option<Vec<u8>>> {
@@ -210,7 +204,7 @@ impl MerklePatriciaTrie {
 				} else {
 					Ok(None)
 				}
-			}
+			},
 			Node::Branch(branch) => {
 				let borrow_branch = branch.borrow();
 
@@ -220,7 +214,7 @@ impl MerklePatriciaTrie {
 					let index = partial.at(0);
 					self.get_at(borrow_branch.children[index].clone(), &partial.offset(1))
 				}
-			}
+			},
 			Node::Extension(extension) => {
 				let extension = extension.borrow();
 
@@ -231,12 +225,12 @@ impl MerklePatriciaTrie {
 				} else {
 					Ok(None)
 				}
-			}
+			},
 			Node::Hash(hash_node) => {
 				let borrow_hash_node = hash_node.borrow();
 				let n = self.recover_from_db(&borrow_hash_node.hash)?;
 				self.get_at(n, partial)
-			}
+			},
 		}
 	}
 
@@ -254,15 +248,10 @@ impl MerklePatriciaTrie {
 					return Ok(Node::Leaf(leaf.clone()));
 				}
 
-				let mut branch = BranchNode {
-					children: empty_children(),
-					value: None,
-				};
+				let mut branch = BranchNode { children: empty_children(), value: None };
 
-				let n = Node::from_leaf(
-					old_partial.offset(match_index + 1),
-					borrow_leaf.value.clone(),
-				);
+				let n =
+					Node::from_leaf(old_partial.offset(match_index + 1), borrow_leaf.value.clone());
 				branch.insert(old_partial.at(match_index), n);
 
 				let n = Node::from_leaf(partial.offset(match_index + 1), value);
@@ -277,7 +266,7 @@ impl MerklePatriciaTrie {
 					partial.slice(0, match_index),
 					Node::Branch(Rc::new(RefCell::new(branch))),
 				))
-			}
+			},
 			Node::Branch(branch) => {
 				let mut borrow_branch = branch.borrow_mut();
 
@@ -290,7 +279,7 @@ impl MerklePatriciaTrie {
 				let new_child = self.insert_at(child, partial.offset(1), value)?;
 				borrow_branch.children[partial.at(0)] = new_child;
 				Ok(Node::Branch(branch.clone()))
-			}
+			},
 			Node::Extension(ext) => {
 				let mut borrow_ext = ext.borrow_mut();
 
@@ -299,10 +288,7 @@ impl MerklePatriciaTrie {
 				let match_index = partial.common_prefix(&prefix);
 
 				if match_index == 0 {
-					let mut branch = BranchNode {
-						children: empty_children(),
-						value: None,
-					};
+					let mut branch = BranchNode { children: empty_children(), value: None };
 					branch.insert(
 						prefix.at(0),
 						if prefix.len() == 1 {
@@ -326,16 +312,14 @@ impl MerklePatriciaTrie {
 				borrow_ext.prefix = prefix.slice(0, match_index);
 				borrow_ext.node = new_node;
 				Ok(Node::Extension(ext.clone()))
-			}
+			},
 			Node::Hash(hash_node) => {
 				let borrow_hash_node = hash_node.borrow();
 
-				self.passing_keys
-					.borrow_mut()
-					.insert(borrow_hash_node.hash.to_vec());
+				self.passing_keys.borrow_mut().insert(borrow_hash_node.hash.to_vec());
 				let n = self.recover_from_db(&borrow_hash_node.hash)?;
 				self.insert_at(n, partial, value)
-			}
+			},
 		}
 	}
 
@@ -349,7 +333,7 @@ impl MerklePatriciaTrie {
 					return Ok((Node::Empty, true));
 				}
 				Ok((Node::Leaf(leaf.clone()), false))
-			}
+			},
 			Node::Branch(branch) => {
 				let mut borrow_branch = branch.borrow_mut();
 
@@ -367,7 +351,7 @@ impl MerklePatriciaTrie {
 				}
 
 				Ok((Node::Branch(branch.clone()), deleted))
-			}
+			},
 			Node::Extension(ext) => {
 				let mut borrow_ext = ext.borrow_mut();
 
@@ -386,14 +370,14 @@ impl MerklePatriciaTrie {
 				} else {
 					Ok((Node::Extension(ext.clone()), false))
 				}
-			}
+			},
 			Node::Hash(hash_node) => {
 				let hash = hash_node.borrow().hash.clone();
 				self.passing_keys.borrow_mut().insert(hash.clone());
 
 				let n = self.recover_from_db(&hash)?;
 				self.delete_at(n, partial)
-			}
+			},
 		}?;
 
 		if deleted {
@@ -432,7 +416,7 @@ impl MerklePatriciaTrie {
 				} else {
 					Ok(Node::Branch(branch.clone()))
 				}
-			}
+			},
 			Node::Extension(ext) => {
 				let borrow_ext = ext.borrow();
 
@@ -444,13 +428,13 @@ impl MerklePatriciaTrie {
 						let new_prefix = prefix.join(&borrow_sub_ext.prefix);
 						let new_n = Node::from_extension(new_prefix, borrow_sub_ext.node.clone());
 						self.degenerate(new_n)
-					}
+					},
 					Node::Leaf(leaf) => {
 						let borrow_leaf = leaf.borrow();
 
 						let new_prefix = prefix.join(&borrow_leaf.key);
 						Ok(Node::from_leaf(new_prefix, borrow_leaf.value.clone()))
-					}
+					},
 					// try again after recovering node from the db.
 					Node::Hash(hash_node) => {
 						let hash = hash_node.borrow().hash.clone();
@@ -460,10 +444,10 @@ impl MerklePatriciaTrie {
 
 						let n = Node::from_extension(borrow_ext.prefix.clone(), new_node);
 						self.degenerate(n)
-					}
+					},
 					_ => Ok(Node::Extension(ext.clone())),
 				}
-			}
+			},
 			_ => Ok(n),
 		}
 	}
@@ -486,7 +470,7 @@ impl MerklePatriciaTrie {
 					let node = borrow_branch.children[partial.at(0)].clone();
 					self.get_path_at(node, &partial.offset(1))
 				}
-			}
+			},
 			Node::Extension(ext) => {
 				let borrow_ext = ext.borrow();
 
@@ -498,13 +482,13 @@ impl MerklePatriciaTrie {
 				} else {
 					Ok(vec![])
 				}
-			}
+			},
 			Node::Hash(hash_node) => {
 				let n = self.recover_from_db(&hash_node.borrow().hash.clone())?;
 				let mut rest = self.get_path_at(n.clone(), partial)?;
 				rest.push(n);
 				Ok(rest)
-			}
+			},
 		}
 	}
 
@@ -574,7 +558,7 @@ impl MerklePatriciaTrie {
 				stream.append(&borrow_leaf.key.encode_compact());
 				stream.append(&borrow_leaf.value);
 				stream.out().to_vec()
-			}
+			},
 			Node::Branch(branch) => {
 				let borrow_branch = branch.borrow();
 
@@ -594,7 +578,7 @@ impl MerklePatriciaTrie {
 					None => stream.append_empty_data(),
 				};
 				stream.out().to_vec()
-			}
+			},
 			Node::Extension(ext) => {
 				let borrow_ext = ext.borrow();
 
@@ -607,7 +591,7 @@ impl MerklePatriciaTrie {
 					stream.append_raw(&data, 1);
 				}
 				stream.out().to_vec()
-			}
+			},
 			Node::Hash(_hash) => unreachable!(),
 		}
 	}
@@ -629,7 +613,7 @@ impl MerklePatriciaTrie {
 
 					Ok(Node::from_extension(key, n))
 				}
-			}
+			},
 			// branch node
 			Prototype::List(17) => {
 				let mut nodes = empty_children();
@@ -642,21 +626,17 @@ impl MerklePatriciaTrie {
 
 				// The last element is a value node.
 				let value_rlp = r.at(16)?;
-				let value = if value_rlp.is_empty() {
-					None
-				} else {
-					Some(value_rlp.data()?.to_vec())
-				};
+				let value =
+					if value_rlp.is_empty() { None } else { Some(value_rlp.data()?.to_vec()) };
 
 				Ok(Node::from_branch(nodes, value))
-			}
-			_ => {
+			},
+			_ =>
 				if r.is_data() && r.size() == LENGTH {
 					Ok(Node::from_hash(r.data()?.to_vec()))
 				} else {
 					Err(TrieError::InvalidData)
-				}
-			}
+				},
 		}
 	}
 
@@ -698,10 +678,7 @@ impl TraceNode {
 
 impl From<Node> for TraceNode {
 	fn from(node: Node) -> TraceNode {
-		TraceNode {
-			node,
-			status: TraceStatus::Start,
-		}
+		TraceNode { node, status: TraceStatus::Start }
 	}
 }
 
@@ -726,30 +703,30 @@ impl<'a> Iterator for TrieIterator<'a> {
 							Node::Leaf(ref leaf) => {
 								let cur_len = self.nibble.len();
 								self.nibble.truncate(cur_len - leaf.borrow().key.len());
-							}
+							},
 
 							Node::Extension(ref ext) => {
 								let cur_len = self.nibble.len();
 								self.nibble.truncate(cur_len - ext.borrow().prefix.len());
-							}
+							},
 
 							Node::Branch(_) => {
 								self.nibble.pop();
-							}
-							_ => {}
+							},
+							_ => {},
 						}
 						self.nodes.pop();
-					}
+					},
 
 					(TraceStatus::Doing, Node::Extension(ref ext)) => {
 						self.nibble.extend(&ext.borrow().prefix);
 						self.nodes.push((ext.borrow().node.clone()).into());
-					}
+					},
 
 					(TraceStatus::Doing, Node::Leaf(ref leaf)) => {
 						self.nibble.extend(&leaf.borrow().key);
 						return Some((self.nibble.encode_raw().0, leaf.borrow().value.clone()));
-					}
+					},
 
 					(TraceStatus::Doing, Node::Branch(ref branch)) => {
 						let value = branch.borrow().value.clone();
@@ -758,7 +735,7 @@ impl<'a> Iterator for TrieIterator<'a> {
 						} else {
 							return Some((self.nibble.encode_raw().0, value.unwrap()));
 						}
-					}
+					},
 
 					(TraceStatus::Doing, Node::Hash(ref hash_node)) => {
 						if let Ok(n) = self.trie.recover_from_db(&hash_node.borrow().hash.clone()) {
@@ -768,7 +745,7 @@ impl<'a> Iterator for TrieIterator<'a> {
 							//error!();
 							return None;
 						}
-					}
+					},
 
 					(TraceStatus::Child(i), Node::Branch(ref branch)) => {
 						if i == 0 {
@@ -777,14 +754,13 @@ impl<'a> Iterator for TrieIterator<'a> {
 							self.nibble.pop();
 							self.nibble.push(i);
 						}
-						self.nodes
-							.push((branch.borrow().children[i as usize].clone()).into());
-					}
+						self.nodes.push((branch.borrow().children[i as usize].clone()).into());
+					},
 
 					(_, Node::Empty) => {
 						self.nodes.pop();
-					}
-					_ => {}
+					},
+					_ => {},
 				}
 			} else {
 				return None;
@@ -829,11 +805,8 @@ mod tests {
 		let mut trie = MerklePatriciaTrie::new(memdb);
 
 		for _ in 0..1000 {
-			let rand_str: String = thread_rng()
-				.sample_iter(Alphanumeric)
-				.map(char::from)
-				.take(30)
-				.collect();
+			let rand_str: String =
+				thread_rng().sample_iter(Alphanumeric).map(char::from).take(30).collect();
 			let val = rand_str.as_bytes();
 			trie.insert(val.to_vec(), val.to_vec()).unwrap();
 
@@ -866,11 +839,8 @@ mod tests {
 		let mut trie = MerklePatriciaTrie::new(memdb);
 
 		for _ in 0..1000 {
-			let rand_str: String = thread_rng()
-				.sample_iter(Alphanumeric)
-				.map(char::from)
-				.take(30)
-				.collect();
+			let rand_str: String =
+				thread_rng().sample_iter(Alphanumeric).map(char::from).take(30).collect();
 			let val = rand_str.as_bytes();
 			trie.insert(val.to_vec(), val.to_vec()).unwrap();
 
@@ -899,10 +869,7 @@ mod tests {
 		let v2 = trie.get(b"test44").unwrap();
 		assert_eq!(Some(b"test".to_vec()), v2);
 		let root2 = trie.root().unwrap();
-		assert_eq!(
-			array_bytes::bytes2hex("0x", root),
-			array_bytes::bytes2hex("0x", root2)
-		);
+		assert_eq!(array_bytes::bytes2hex("0x", root), array_bytes::bytes2hex("0x", root2));
 	}
 
 	#[test]
@@ -958,18 +925,15 @@ mod tests {
 		let root1 = {
 			let memdb = Rc::new(MemoryDB::new());
 			let mut trie = MerklePatriciaTrie::new(memdb);
-			trie.insert(k0.as_bytes().to_vec(), v.as_bytes().to_vec())
-				.unwrap();
+			trie.insert(k0.as_bytes().to_vec(), v.as_bytes().to_vec()).unwrap();
 			trie.root().unwrap()
 		};
 
 		let root2 = {
 			let memdb = Rc::new(MemoryDB::new());
 			let mut trie = MerklePatriciaTrie::new(memdb);
-			trie.insert(k0.as_bytes().to_vec(), v.as_bytes().to_vec())
-				.unwrap();
-			trie.insert(k1.as_bytes().to_vec(), v.as_bytes().to_vec())
-				.unwrap();
+			trie.insert(k0.as_bytes().to_vec(), v.as_bytes().to_vec()).unwrap();
+			trie.insert(k1.as_bytes().to_vec(), v.as_bytes().to_vec()).unwrap();
 			trie.root().unwrap();
 			trie.remove(k1.as_ref()).unwrap();
 			trie.root().unwrap()
@@ -978,12 +942,8 @@ mod tests {
 		let root3 = {
 			let memdb = Rc::new(MemoryDB::new());
 			let mut trie1 = MerklePatriciaTrie::new(memdb.clone());
-			trie1
-				.insert(k0.as_bytes().to_vec(), v.as_bytes().to_vec())
-				.unwrap();
-			trie1
-				.insert(k1.as_bytes().to_vec(), v.as_bytes().to_vec())
-				.unwrap();
+			trie1.insert(k0.as_bytes().to_vec(), v.as_bytes().to_vec()).unwrap();
+			trie1.insert(k1.as_bytes().to_vec(), v.as_bytes().to_vec()).unwrap();
 			trie1.root().unwrap();
 			let root = trie1.root().unwrap();
 			let mut trie2 = MerklePatriciaTrie::from(Rc::clone(&memdb), &root).unwrap();
@@ -1003,11 +963,9 @@ mod tests {
 		let mut rng = rand::thread_rng();
 		let mut keys = vec![];
 		for _ in 0..100 {
-			let random_bytes: Vec<u8> = (0..rng.gen_range(2..30))
-				.map(|_| rand::random::<u8>())
-				.collect();
-			trie.insert(random_bytes.clone(), random_bytes.clone())
-				.unwrap();
+			let random_bytes: Vec<u8> =
+				(0..rng.gen_range(2..30)).map(|_| rand::random::<u8>()).collect();
+			trie.insert(random_bytes.clone(), random_bytes.clone()).unwrap();
 			keys.push(random_bytes.clone());
 		}
 		trie.commit().unwrap();
@@ -1065,8 +1023,7 @@ mod tests {
 			});
 			root1 = trie.root().unwrap();
 
-			trie.iter()
-				.for_each(|(k, v)| assert_eq!(kv.remove(&k).unwrap(), v));
+			trie.iter().for_each(|(k, v)| assert_eq!(kv.remove(&k).unwrap(), v));
 			assert!(kv.is_empty());
 		}
 
@@ -1098,14 +1055,12 @@ mod tests {
 			kv2.retain(|k, _| !kv_delete.contains(k));
 
 			trie.root().unwrap();
-			trie.iter()
-				.for_each(|(k, v)| assert_eq!(kv2.remove(&k).unwrap(), v));
+			trie.iter().for_each(|(k, v)| assert_eq!(kv2.remove(&k).unwrap(), v));
 			assert!(kv2.is_empty());
 		}
 
 		let trie = MerklePatriciaTrie::from(Rc::clone(&memdb), &root1).unwrap();
-		trie.iter()
-			.for_each(|(k, v)| assert_eq!(kv.remove(&k).unwrap(), v));
+		trie.iter().for_each(|(k, v)| assert_eq!(kv.remove(&k).unwrap(), v));
 		assert!(kv.is_empty());
 	}
 }

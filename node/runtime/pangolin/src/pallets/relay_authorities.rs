@@ -22,18 +22,18 @@ frame_support::parameter_types! {
 }
 
 impl Config<EthereumRelayAuthoritiesInstance> for Runtime {
-	type Event = Event;
-	type RingCurrency = Ring;
-	type LockId = EthereumRelayAuthoritiesLockId;
-	type TermDuration = EthereumRelayAuthoritiesTermDuration;
-	type MaxCandidates = MaxCandidates;
 	type AddOrigin = ApproveOrigin;
+	type DarwiniaMMR = HeaderMMR;
+	type Event = Event;
+	type LockId = EthereumRelayAuthoritiesLockId;
+	type MaxCandidates = MaxCandidates;
+	type OpCodes = OpCodes;
 	type RemoveOrigin = ApproveOrigin;
 	type ResetOrigin = ApproveOrigin;
-	type DarwiniaMMR = HeaderMMR;
+	type RingCurrency = Ring;
 	type Sign = EthereumBacking;
-	type OpCodes = OpCodes;
 	type SignThreshold = SignThreshold;
 	type SubmitDuration = SubmitDuration;
+	type TermDuration = EthereumRelayAuthoritiesTermDuration;
 	type WeightInfo = ();
 }

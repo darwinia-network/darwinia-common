@@ -295,11 +295,8 @@ impl EthashPartial {
 		};
 
 		let expip2_hardfork = header.number() >= self.expip2_transition;
-		let duration_limit = if expip2_hardfork {
-			self.expip2_duration_limit
-		} else {
-			self.duration_limit
-		};
+		let duration_limit =
+			if expip2_hardfork { self.expip2_duration_limit } else { self.duration_limit };
 
 		let frontier_limit = self.homestead_transition;
 
@@ -310,8 +307,10 @@ impl EthashPartial {
 				*parent.difficulty() + (*parent.difficulty() / difficulty_bound_divisor)
 			}
 		} else {
-			//		trace!(target: "ethash", "Calculating difficulty parent.difficulty={}, header.timestamp={}, parent.timestamp={}", parent.difficulty(), header.timestamp(), parent.timestamp());
-			//block_diff = parent_diff + parent_diff // 2048 * max(1 - (block_timestamp - parent_timestamp) // 10, -99)
+			//		trace!(target: "ethash", "Calculating difficulty parent.difficulty={},
+			// header.timestamp={}, parent.timestamp={}", parent.difficulty(), header.timestamp(),
+			// parent.timestamp()); block_diff = parent_diff + parent_diff // 2048 * max(1 -
+			// (block_timestamp - parent_timestamp) // 10, -99)
 			let (increment_divisor, threshold) = if header.number() < self.eip100b_transition {
 				(self.difficulty_increment_divisor, 1)
 			} else if parent_has_uncles {
@@ -354,10 +353,7 @@ impl EthashPartial {
 				let period = ((parent.number() + 1) / EXP_DIFF_PERIOD) as usize;
 				let delay = ((self.ecip1010_continue_transition - self.ecip1010_pause_transition)
 					/ EXP_DIFF_PERIOD) as usize;
-				target = cmp::max(
-					min_difficulty,
-					target + (U256::from(1) << (period - delay - 2)),
-				);
+				target = cmp::max(min_difficulty, target + (U256::from(1) << (period - delay - 2)));
 			}
 		}
 		target
@@ -377,18 +373,11 @@ impl Seal {
 	#[cfg(any(feature = "full-rlp", test))]
 	pub fn parse_seal<T: AsRef<[u8]>>(seal: &[T]) -> Result<Self, Error> {
 		if seal.len() != 2 {
-			Err(BlockError::InvalidSealArity(Mismatch {
-				expected: 2,
-				found: seal.len(),
-			}))?;
+			Err(BlockError::InvalidSealArity(Mismatch { expected: 2, found: seal.len() }))?;
 		}
 
-		let mix_hash = Rlp::new(seal[0].as_ref())
-			.as_val::<H256>()
-			.map_err(RlpError::from)?;
-		let nonce = Rlp::new(seal[1].as_ref())
-			.as_val::<H64>()
-			.map_err(RlpError::from)?;
+		let mix_hash = Rlp::new(seal[0].as_ref()).as_val::<H256>().map_err(RlpError::from)?;
+		let nonce = Rlp::new(seal[1].as_ref()).as_val::<H64>().map_err(RlpError::from)?;
 		let seal = Seal { mix_hash, nonce };
 
 		Ok(seal)

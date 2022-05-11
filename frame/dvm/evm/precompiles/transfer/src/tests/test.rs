@@ -20,17 +20,18 @@
 use array_bytes::{bytes2hex, hex2bytes_unchecked};
 use codec::Decode;
 use ethabi::{Function, Param, ParamType, StateMutability, Token};
+use std::str::FromStr;
 // --- paritytech ---
+use fp_evm::CallOrCreateInfo;
+use frame_support::{assert_err, assert_ok};
+use sp_core::{H160, U256};
 use sp_runtime::DispatchError;
 // --- darwinia-network ---
 use crate::tests::mock::*;
 use darwinia_ethereum::Transaction;
 use darwinia_evm::AccountBasic;
+use darwinia_evm_precompile_utils::PrecompileHelper;
 use darwinia_support::evm::{decimal_convert, IntoAccountId, TRANSFER_ADDR};
-use fp_evm::CallOrCreateInfo;
-use frame_support::{assert_err, assert_ok};
-use sp_core::{H160, U256};
-use std::str::FromStr;
 
 const WITH_DRAW_INPUT: &str = "723908ee9dc8e509d4b93251bd57f68c09bd9d04471c193fabd8f26c54284a4b";
 fn ring_withdraw_unsigned_transaction() -> LegacyUnsignedTransaction {
@@ -94,11 +95,7 @@ fn ring_currency_withdraw_not_enough_balance_should_fail() {
 		let t = transaction.sign(&alice.private_key);
 		assert_err!(
 			Ethereum::execute(alice.address, &t.into(), None,),
-			DispatchError::Module {
-				index: 4,
-				error: 0,
-				message: Some("BalanceLow")
-			}
+			DispatchError::Module { index: 4, error: 0, message: Some("BalanceLow") }
 		);
 
 		// Check caller balance
@@ -110,10 +107,7 @@ fn ring_currency_withdraw_not_enough_balance_should_fail() {
 		let input_bytes: Vec<u8> = hex2bytes_unchecked(WITH_DRAW_INPUT);
 		let dest =
 			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
-		assert_eq!(
-			<Test as darwinia_ethereum::Config>::RingCurrency::free_balance(&dest),
-			0
-		);
+		assert_eq!(<Test as darwinia_ethereum::Config>::RingCurrency::free_balance(&dest), 0);
 	});
 }
 
@@ -141,8 +135,7 @@ fn transfer_and_call(address: H160, value: U256) -> Vec<u8> {
 		constant: false,
 		state_mutability: StateMutability::NonPayable,
 	};
-	func.encode_input(&[Token::Address(address), Token::Uint(value)])
-		.unwrap()
+	func.encode_input(&[Token::Address(address), Token::Uint(value)]).unwrap()
 }
 
 fn contract_balance_encode(address: H160) -> Vec<u8> {
@@ -211,6 +204,27 @@ fn transfer_and_call_transaction(
 }
 
 #[test]
+fn kton_make_call_works() {
+	let (_, mut ext) = new_test_ext(1);
+
+	ext.execute_with(|| {
+		let helper = PrecompileHelper::<Test>::new(&[], Some(100));
+		let mock_address =
+			H160::from_str("Aa01a1bEF0557fa9625581a293F3AA7770192632").unwrap();
+		let mock_value = U256::from(30);
+		let expected_str = "0x47e7ef24000000000000000000000000aa01a1bef0557fa9625581a293f3aa7770192632000000000000000000000000000000000000000000000000000000000000001e";
+		let encoded_str =
+			bytes2hex("0x", crate::kton::Kton::<Test>::make_call_data(mock_address, mock_value, &helper).unwrap());
+		assert_eq!(encoded_str, expected_str);
+
+		let mock_value = sp_core::U256::from(25);
+		let encoded_str =
+			bytes2hex("0x", crate::kton::Kton::<Test>::make_call_data(mock_address, mock_value, &helper).unwrap());
+			assert_ne!(encoded_str, expected_str);
+	});
+}
+
+#[test]
 fn kton_currency_transfer_and_call_works() {
 	let (pairs, mut ext) = new_test_ext(1);
 	let alice = &pairs[0];
@@ -230,10 +244,7 @@ fn kton_currency_transfer_and_call_works() {
 			transfer_and_call_transaction(H160::from_str(WKTON_ADDRESS).unwrap(), transfer_1, 1)
 				.sign(&alice.private_key);
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
-		assert_eq!(
-			KtonAccount::account_basic(&alice.address).balance,
-			origin - transfer_1
-		);
+		assert_eq!(KtonAccount::account_basic(&alice.address).balance, origin - transfer_1);
 		assert_eq!(query_contract_balance(alice, 2), transfer_1);
 		let alice_account_id =
 			<Test as darwinia_evm::Config>::IntoAccountId::into_account_id(alice.address);
@@ -280,7 +291,8 @@ fn kton_currency_transfer_and_call_out_of_fund() {
 
 		// Transfer and call
 		let transfer = decimal_convert(90_000_000_000, None);
-		// send_kton_transfer_and_call_tx(alice, H160::from_str(WKTON_ADDRESS).unwrap(), transfer, 1);
+		// send_kton_transfer_and_call_tx(alice, H160::from_str(WKTON_ADDRESS).unwrap(), transfer,
+		// 1);
 		let t = transfer_and_call_transaction(H160::from_str(WKTON_ADDRESS).unwrap(), transfer, 1)
 			.sign(&alice.private_key);
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
@@ -311,8 +323,7 @@ fn withdraw_encode(to: Vec<u8>, value: U256) -> Vec<u8> {
 		constant: false,
 		state_mutability: StateMutability::NonPayable,
 	};
-	func.encode_input(&[Token::FixedBytes(to), Token::Uint(value)])
-		.unwrap()
+	func.encode_input(&[Token::FixedBytes(to), Token::Uint(value)]).unwrap()
 }
 
 fn kton_withdraw_unsigned_transaction(

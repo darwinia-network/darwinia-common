@@ -1,8 +1,8 @@
 // --- paritytech ---
 use frame_support::traits::{LockIdentifier, U128CurrencyToVote};
+use pallet_elections_phragmen::Config;
 // --- darwinia-network ---
 use crate::*;
-use darwinia_elections_phragmen::Config;
 
 frame_support::parameter_types! {
 	pub const PhragmenElectionPalletId: LockIdentifier = *b"phrelect";
@@ -18,21 +18,21 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	type Event = Event;
-	type PalletId = PhragmenElectionPalletId;
-	type Currency = Ring;
+	type CandidacyBond = CandidacyBond;
 	type ChangeMembers = Council;
+	type Currency = Ring;
+	type CurrencyToVote = U128CurrencyToVote;
+	type DesiredMembers = DesiredMembers;
+	type DesiredRunnersUp = DesiredRunnersUp;
+	type Event = Event;
 	// NOTE: this implies that council's genesis members cannot be set directly and must come from
 	// this module.
 	type InitializeMembers = Council;
-	type CurrencyToVote = U128CurrencyToVote;
-	type CandidacyBond = CandidacyBond;
+	type KickedMember = Treasury;
+	type LoserCandidate = Treasury;
+	type PalletId = PhragmenElectionPalletId;
+	type TermDuration = TermDuration;
 	type VotingBondBase = VotingBondBase;
 	type VotingBondFactor = VotingBondFactor;
-	type LoserCandidate = Treasury;
-	type KickedMember = Treasury;
-	type DesiredMembers = DesiredMembers;
-	type DesiredRunnersUp = DesiredRunnersUp;
-	type TermDuration = TermDuration;
 	type WeightInfo = ();
 }

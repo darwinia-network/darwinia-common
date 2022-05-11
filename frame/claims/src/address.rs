@@ -46,11 +46,7 @@ macro_rules! impl_address {
 				D: Deserializer<'de>,
 			{
 				let base_string = String::deserialize(deserializer)?;
-				let offset = if base_string.starts_with($prefix) {
-					2
-				} else {
-					0
-				};
+				let offset = if base_string.starts_with($prefix) { 2 } else { 0 };
 				let s = &base_string[offset..];
 				if s.len() != 40 {
 					Err(serde::de::Error::custom(concat!(

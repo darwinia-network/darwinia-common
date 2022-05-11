@@ -6,16 +6,16 @@ use pallet_grandpa::Config;
 use crate::*;
 
 impl Config for Runtime {
-	type Event = Event;
 	type Call = Call;
-	type KeyOwnerProofSystem = ();
-	type KeyOwnerProof =
-		<Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
+	type Event = Event;
+	type HandleEquivocation = ();
 	type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
 		KeyTypeId,
 		GrandpaId,
 	)>>::IdentificationTuple;
-	type HandleEquivocation = ();
-	type WeightInfo = ();
+	type KeyOwnerProof =
+		<Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
+	type KeyOwnerProofSystem = ();
 	type MaxAuthorities = MaxAuthorities;
+	type WeightInfo = ();
 }

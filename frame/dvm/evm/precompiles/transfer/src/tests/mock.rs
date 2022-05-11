@@ -30,8 +30,8 @@ use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
 	pallet_prelude::Weight,
 	traits::{Everything, FindAuthor, GenesisBuild},
-	ConsensusEngineId, PalletId,
 	weights::GetDispatchInfo,
+	ConsensusEngineId, PalletId,
 };
 use frame_system::mocking::*;
 use pallet_evm::FeeCalculator;
@@ -40,7 +40,7 @@ use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	transaction_validity::{TransactionValidity, TransactionValidityError, InvalidTransaction},
+	transaction_validity::{InvalidTransaction, TransactionValidity, TransactionValidityError},
 	AccountId32, Perbill, RuntimeDebug,
 };
 use sp_std::{marker::PhantomData, prelude::*};
@@ -67,29 +67,29 @@ frame_support::parameter_types! {
 	pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 }
 impl frame_system::Config for Test {
+	type AccountData = AccountData<Balance>;
+	type AccountId = AccountId32;
 	type BaseCallFilter = Everything;
-	type BlockWeights = ();
+	type BlockHashCount = ();
 	type BlockLength = ();
-	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
-	type Index = u64;
 	type BlockNumber = u64;
+	type BlockWeights = ();
+	type Call = Call;
+	type DbWeight = ();
+	type Event = Event;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = AccountId32;
-	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
-	type BlockHashCount = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
+	type Index = u64;
+	type Lookup = IdentityLookup<Self::AccountId>;
 	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+	type OnNewAccount = ();
 	type OnSetCode = ();
+	type Origin = Origin;
+	type PalletInfo = PalletInfo;
+	type SS58Prefix = ();
+	type SystemWeightInfo = ();
+	type Version = ();
 }
 
 frame_support::parameter_types! {
@@ -99,29 +99,29 @@ frame_support::parameter_types! {
 	pub const ExistentialDeposit: u64 = 500;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type Balance = Balance;
-	type Event = Event;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type MaxLocks = MaxLocks;
 	type BalanceInfo = AccountData<Balance>;
+	type DustRemoval = ();
+	type Event = Event;
+	type ExistentialDeposit = ExistentialDeposit;
+	type MaxLocks = MaxLocks;
+	type MaxReserves = ();
 	type OtherCurrencies = ();
+	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
 impl darwinia_balances::Config<KtonInstance> for Test {
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type Balance = Balance;
-	type Event = Event;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type MaxLocks = MaxLocks;
 	type BalanceInfo = AccountData<Balance>;
+	type DustRemoval = ();
+	type Event = Event;
+	type ExistentialDeposit = ExistentialDeposit;
+	type MaxLocks = MaxLocks;
+	type MaxReserves = ();
 	type OtherCurrencies = ();
+	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
 
@@ -129,9 +129,9 @@ frame_support::parameter_types! {
 	pub const MinimumPeriod: u64 = 6000 / 2;
 }
 impl pallet_timestamp::Config for Test {
+	type MinimumPeriod = MinimumPeriod;
 	type Moment = u64;
 	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
 
@@ -174,11 +174,9 @@ where
 	pub fn new() -> Self {
 		Self(Default::default())
 	}
+
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 21]
-			.into_iter()
-			.map(|x| H160::from_low_u64_be(x))
-			.collect()
+		sp_std::vec![1, 2, 3, 4, 21].into_iter().map(|x| H160::from_low_u64_be(x)).collect()
 	}
 }
 
@@ -199,46 +197,42 @@ where
 
 		match address {
 			// Ethereum precompiles
-			_ if address == to_address(1) => {
-				Some(ECRecover::execute(input, target_gas, context, is_static))
-			}
-			_ if address == to_address(2) => {
-				Some(Sha256::execute(input, target_gas, context, is_static))
-			}
-			_ if address == to_address(3) => {
-				Some(Ripemd160::execute(input, target_gas, context, is_static))
-			}
-			_ if address == to_address(4) => {
-				Some(Identity::execute(input, target_gas, context, is_static))
-			}
+			_ if address == to_address(1) =>
+				Some(ECRecover::execute(input, target_gas, context, is_static)),
+			_ if address == to_address(2) =>
+				Some(Sha256::execute(input, target_gas, context, is_static)),
+			_ if address == to_address(3) =>
+				Some(Ripemd160::execute(input, target_gas, context, is_static)),
+			_ if address == to_address(4) =>
+				Some(Identity::execute(input, target_gas, context, is_static)),
 			// Darwinia precompiles
-			_ if address == to_address(21) => Some(<Transfer<R>>::execute(
-				input, target_gas, context, is_static,
-			)),
+			_ if address == to_address(21) =>
+				Some(<Transfer<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
+
 	fn is_precompile(&self, address: H160) -> bool {
 		Self::used_addresses().contains(&address)
 	}
 }
 
 impl darwinia_evm::Config for Test {
-	type FeeCalculator = FixedGasPrice;
-	type GasWeightMapping = ();
-	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
-	type IntoAccountId = HashedConverter;
-	type Event = Event;
-	type PrecompilesType = MockPrecompiles<Self>;
-	type PrecompilesValue = PrecompilesValue;
-	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
-	type FindAuthor = FindAuthorTruncated;
 	type BlockHashMapping = EthereumBlockHashMapping<Self>;
-	type Runner = Runner<Self>;
-	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
+	type ChainId = ChainId;
+	type Event = Event;
+	type FeeCalculator = FixedGasPrice;
+	type FindAuthor = FindAuthorTruncated;
+	type GasWeightMapping = ();
+	type IntoAccountId = HashedConverter;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
+	type PrecompilesType = MockPrecompiles<Self>;
+	type PrecompilesValue = PrecompilesValue;
+	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type Runner = Runner<Self>;
 }
 
 frame_support::parameter_types! {
@@ -246,11 +240,11 @@ frame_support::parameter_types! {
 }
 
 impl darwinia_ethereum::Config for Test {
-	type PalletId = MockPalletId;
 	type Event = Event;
-	type StateRoot = IntermediateStateRoot;
-	type RingCurrency = Ring;
 	type KtonCurrency = Kton;
+	type PalletId = MockPalletId;
+	type RingCurrency = Ring;
+	type StateRoot = IntermediateStateRoot;
 }
 
 frame_support::construct_runtime! {
@@ -308,9 +302,8 @@ impl fp_self_contained::SelfContainedCall for Call {
 	) -> Option<sp_runtime::DispatchResultWithInfo<sp_runtime::traits::PostDispatchInfoOf<Self>>> {
 		use sp_runtime::traits::Dispatchable as _;
 		match self {
-			call @ Call::Ethereum(darwinia_ethereum::Call::transact { .. }) => {
-				Some(call.dispatch(Origin::from(RawOrigin::EthereumTransaction(info))))
-			}
+			call @ Call::Ethereum(darwinia_ethereum::Call::transact { .. }) =>
+				Some(call.dispatch(Origin::from(RawOrigin::EthereumTransaction(info)))),
 			_ => None,
 		}
 	}
@@ -335,9 +328,9 @@ fn validate_self_contained_inner(
 		let extra_validation =
 			SignedExtra::validate_unsigned(call, &call.get_dispatch_info(), input_len)?;
 		// Then, do the controls defined by the ethereum pallet.
-		let self_contained_validation = eth_call.validate_self_contained(signed_info).ok_or(
-			TransactionValidityError::Invalid(InvalidTransaction::BadProof),
-		)??;
+		let self_contained_validation = eth_call
+			.validate_self_contained(signed_info)
+			.ok_or(TransactionValidityError::Invalid(InvalidTransaction::BadProof))??;
 
 		Ok(extra_validation.combine_with(self_contained_validation))
 	} else {
@@ -388,10 +381,7 @@ impl LegacyUnsignedTransaction {
 	pub fn sign_with_chain_id(&self, key: &H256, chain_id: u64) -> Transaction {
 		let hash = self.signing_hash();
 		let msg = libsecp256k1::Message::parse(hash.as_fixed_bytes());
-		let s = libsecp256k1::sign(
-			&msg,
-			&libsecp256k1::SecretKey::parse_slice(&key[..]).unwrap(),
-		);
+		let s = libsecp256k1::sign(&msg, &libsecp256k1::SecretKey::parse_slice(&key[..]).unwrap());
 		let sig = s.0.serialize();
 
 		let sig = TransactionSignature::new(
@@ -439,17 +429,12 @@ fn address_build(seed: u8) -> AccountInfo {
 // our desired mockup.
 pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExternalities) {
 	// sc_cli::init_logger("");
-	let mut t = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
-		.unwrap();
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-	let pairs = (0..accounts_len)
-		.map(|i| address_build(i as u8))
-		.collect::<Vec<_>>();
+	let pairs = (0..accounts_len).map(|i| address_build(i as u8)).collect::<Vec<_>>();
 
-	let balances: Vec<_> = (0..accounts_len)
-		.map(|i| (pairs[i].account_id.clone(), 100_000_000_000))
-		.collect();
+	let balances: Vec<_> =
+		(0..accounts_len).map(|i| (pairs[i].account_id.clone(), 100_000_000_000)).collect();
 
 	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
 		.assimilate_storage(&mut t)

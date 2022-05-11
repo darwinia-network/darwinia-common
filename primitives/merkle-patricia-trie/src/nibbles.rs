@@ -48,13 +48,13 @@ impl Nibbles {
 
 		let mut is_leaf = false;
 		match flag >> 4 {
-			0x0 => {}
+			0x0 => {},
 			0x1 => hex.push(flag % 16),
 			0x2 => is_leaf = true,
 			0x3 => {
 				is_leaf = true;
 				hex.push(flag % 16);
-			}
+			},
 			_ => panic!("invalid data"),
 		}
 
@@ -76,11 +76,8 @@ impl Nibbles {
 	pub fn encode_compact(&self) -> Vec<u8> {
 		let mut compact = vec![];
 		let is_leaf = self.is_leaf();
-		let mut hex = if is_leaf {
-			&self.hex_data[0..self.hex_data.len() - 1]
-		} else {
-			&self.hex_data[0..]
-		};
+		let mut hex =
+			if is_leaf { &self.hex_data[0..self.hex_data.len() - 1] } else { &self.hex_data[0..] };
 		// node type    path length    |    prefix    hexchar
 		// --------------------------------------------------
 		// extension    even           |    0000      0x0
@@ -106,11 +103,8 @@ impl Nibbles {
 	pub fn encode_raw(&self) -> (Vec<u8>, bool) {
 		let mut raw = vec![];
 		let is_leaf = self.is_leaf();
-		let hex = if is_leaf {
-			&self.hex_data[0..self.hex_data.len() - 1]
-		} else {
-			&self.hex_data[0..]
-		};
+		let hex =
+			if is_leaf { &self.hex_data[0..self.hex_data.len() - 1] } else { &self.hex_data[0..] };
 
 		for i in 0..(hex.len() / 2) {
 			raw.push((hex[i * 2] * 16) + (hex[i * 2 + 1]));

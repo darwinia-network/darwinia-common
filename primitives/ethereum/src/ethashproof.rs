@@ -72,10 +72,7 @@ fn scale_should_work() {
 	let ethash_proof = EthashProof::default();
 	let encoded_ethash_proof = ethash_proof.encode();
 
-	assert_eq!(
-		ethash_proof,
-		EthashProof::decode(&mut &*encoded_ethash_proof).unwrap()
-	);
+	assert_eq!(ethash_proof, EthashProof::decode(&mut &*encoded_ethash_proof).unwrap());
 }
 
 #[test]
@@ -116,9 +113,6 @@ fn serde_should_work() {
 
 	assert_eq!(
 		ethash_proof,
-		EthashProof {
-			proof: vec![Default::default(); 25],
-			..Default::default()
-		}
+		EthashProof { proof: vec![Default::default(); 25], ..Default::default() }
 	);
 }

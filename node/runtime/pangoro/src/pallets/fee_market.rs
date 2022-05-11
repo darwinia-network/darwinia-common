@@ -1,4 +1,4 @@
-pub use darwinia_fee_market::Instance1 as WithPangolinFeeMarket;
+pub use pallet_fee_market::Instance1 as WithPangolinFeeMarket;
 
 // --- core ---
 use core::cmp;
@@ -7,16 +7,18 @@ use frame_support::{traits::LockIdentifier, PalletId};
 use sp_runtime::{traits::UniqueSaturatedInto, Permill};
 // --- darwinia ---
 use crate::*;
-use darwinia_fee_market::{Config, RingBalance, Slasher};
+use pallet_fee_market::{BalanceOf, Config, Slasher};
 
 pub struct FeeMarketSlasher;
-impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
-	fn slash(locked_collateral: RingBalance<T, I>, timeout: T::BlockNumber) -> RingBalance<T, I> {
+impl<T, I> Slasher<T, I> for FeeMarketSlasher
+where
+	T: Config<I>,
+	I: 'static,
+{
+	fn slash(locked_collateral: BalanceOf<T, I>, timeout: T::BlockNumber) -> BalanceOf<T, I> {
 		let slash_each_block = 2 * COIN;
 		let slash_value = UniqueSaturatedInto::<Balance>::unique_saturated_into(timeout)
-			.saturating_mul(UniqueSaturatedInto::<Balance>::unique_saturated_into(
-				slash_each_block,
-			))
+			.saturating_mul(UniqueSaturatedInto::<Balance>::unique_saturated_into(slash_each_block))
 			.unique_saturated_into();
 
 		cmp::min(locked_collateral, slash_value)
@@ -25,12 +27,11 @@ impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
 
 frame_support::parameter_types! {
 	pub const FeeMarketPalletId: PalletId = PalletId(*b"da/feemk");
-	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 
 	pub const MinimumRelayFee: Balance = 15 * COIN;
-	pub const CollateralPerOrder: Balance = 60 * COIN;
-	pub const Slot: BlockNumber = 600;
+	pub const CollateralPerOrder: Balance = 50 * COIN;
+	pub const Slot: BlockNumber = 300;
 
 	pub const AssignedRelayersRewardRatio: Permill = Permill::from_percent(60);
 	pub const MessageRelayersRewardRatio: Permill = Permill::from_percent(80);
@@ -38,20 +39,17 @@ frame_support::parameter_types! {
 }
 
 impl Config<WithPangolinFeeMarket> for Runtime {
-	type PalletId = FeeMarketPalletId;
-	type TreasuryPalletId = TreasuryPalletId;
-	type LockId = FeeMarketLockId;
-
-	type MinimumRelayFee = MinimumRelayFee;
-	type CollateralPerOrder = CollateralPerOrder;
-	type Slot = Slot;
-
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
-	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
+	type CollateralPerOrder = CollateralPerOrder;
 	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
-
-	type Slasher = FeeMarketSlasher;
-	type RingCurrency = Ring;
+	type Currency = Ring;
 	type Event = Event;
+	type LockId = FeeMarketLockId;
+	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
+	type MinimumRelayFee = MinimumRelayFee;
+	type PalletId = FeeMarketPalletId;
+	type Slasher = FeeMarketSlasher;
+	type Slot = Slot;
+	type TreasuryPalletId = TreasuryPalletId;
 	type WeightInfo = ();
 }

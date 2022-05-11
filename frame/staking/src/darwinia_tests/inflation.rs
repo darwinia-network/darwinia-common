@@ -17,6 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 // --- paritytech ---
+use frame_support::traits::Currency;
 use sp_runtime::{assert_eq_error_rate, Perbill};
 // --- darwinia-network ---
 use crate::{
@@ -201,10 +202,7 @@ fn print_total_payout_error_rate() {
 		);
 		let inflation_rate = inflation * 10_000 / (hard_cap - total_left);
 
-		println!(
-			"year {:3}, inflation {:9}, rate {:3}",
-			year, inflation, inflation_rate
-		);
+		println!("year {:3}, inflation {:9}, rate {:3}", year, inflation, inflation_rate);
 
 		total_inflation += inflation;
 		total_left = total_left - inflation;
@@ -224,18 +222,10 @@ fn kton_slash_should_work() {
 		&[395939, 319797, 243655, 162437, 86295],
 		&[477157, 401015, 324873, 243655, 167513, 81218],
 		&[563451, 487309, 411167, 329949, 253807, 167512, 86294],
-		&[
-			644670, 568528, 492386, 411168, 335026, 248731, 167513, 81219,
-		],
-		&[
-			730964, 654822, 578680, 497462, 421320, 335025, 253807, 167513, 86294,
-		],
-		&[
-			822335, 746193, 670051, 588833, 512691, 426396, 345178, 258884, 177665, 91371,
-		],
-		&[
-			908629, 832487, 756345, 675127, 598985, 512690, 431472, 345178, 263959, 177665, 86294,
-		],
+		&[644670, 568528, 492386, 411168, 335026, 248731, 167513, 81219],
+		&[730964, 654822, 578680, 497462, 421320, 335025, 253807, 167513, 86294],
+		&[822335, 746193, 670051, 588833, 512691, 426396, 345178, 258884, 177665, 91371],
+		&[908629, 832487, 756345, 675127, 598985, 512690, 431472, 345178, 263959, 177665, 86294],
 		&[
 			1000000, 923858, 847716, 766498, 690356, 604061, 522843, 436549, 355330, 269036,
 			177665, 91371,
@@ -368,10 +358,52 @@ fn kton_slash_should_work() {
 			let kton_reward = compute_kton_reward::<Test>(10 * COIN, promise_month);
 			let slashes = kton_reward - compute_kton_reward::<Test>(10 * COIN, passed_month);
 
-			assert_eq!(
-				slashes,
-				exp_slashes[promise_month as usize - 1][passed_month as usize]
-			);
+			assert_eq!(slashes, exp_slashes[promise_month as usize - 1][passed_month as usize]);
 		}
 	}
+}
+
+#[test]
+fn inflation_should_be_correct() {
+	ExtBuilder::default().build().execute_with(|| {
+		let initial_issuance = 1_200_000_000 * COIN;
+		let surplus_needed = initial_issuance - Ring::total_issuance();
+		let _ = Ring::deposit_into_existing(&11, surplus_needed);
+
+		assert_eq!(Ring::total_issuance(), initial_issuance);
+	});
+
+	// breakpoint test
+	// ExtBuilder::default().build().execute_with(|| {
+	// 	gen_paired_account!(validator_1_stash(123), validator_1_controller(456), 0);
+	// 	gen_paired_account!(validator_2_stash(234), validator_2_controller(567), 0);
+	// 	gen_paired_account!(nominator_stash(345), nominator_controller(678), 0);
+	//
+	// 	assert_ok!(Staking::validate(
+	// 		Origin::signed(validator_1_controller),
+	// 		ValidatorPrefs::default(),
+	// 	));
+	// 	assert_ok!(Staking::validate(
+	// 		Origin::signed(validator_2_controller),
+	// 		ValidatorPrefs::default(),
+	// 	));
+	// 	assert_ok!(Staking::nominate(
+	// 		Origin::signed(nominator_controller),
+	// 		vec![validator_1_stash, validator_2_stash],
+	// 	));
+	//
+	// 	Timestamp::set_timestamp(1_575_448_345_000 - 12_000);
+	// 	// breakpoint here
+	// 	Staking::new_era(1);
+	//
+	// 	Timestamp::set_timestamp(1_575_448_345_000);
+	// 	// breakpoint here
+	// 	Staking::new_era(2);
+	//
+	// 	// breakpoint here
+	//     inflation::compute_total_payout::<Test>(11_999, 1_295_225_000,
+	// 9_987_999_900_000_000_000);
+	//
+	// 	loop {}
+	// });
 }

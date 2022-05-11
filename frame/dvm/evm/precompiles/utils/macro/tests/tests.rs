@@ -16,7 +16,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-use fp_evm::{ExitError, PrecompileFailure};
+use evm::ExitRevert;
+use fp_evm::PrecompileFailure;
 use sha3::{Digest, Keccak256};
 
 // Expanded to:
@@ -29,12 +30,15 @@ use sha3::{Digest, Keccak256};
 //         match value {
 //             230582047 => Ok(Action::A),
 //             1308091344 => Ok(Action::B),
-//             _ => Err(PrecompileFailure::Error {
-//                 exit_status: ExitError::Other("mismatch the enum value".into()),
+//             _ => Err(PrecompileFailure::Revert {
+//                 exit_status: ExitRevert::Reverted,
+//                 output: b"Unknown action".to_vec(),
+//                 cost: 0,
 //             }),
 //         }
 //     }
 // }
+
 #[darwinia_evm_precompile_utils_macro::selector]
 #[derive(Debug, PartialEq)]
 pub enum Action {
@@ -44,14 +48,8 @@ pub enum Action {
 
 #[test]
 fn test_selector_macro() {
-	assert_eq!(
-		&(Action::A as u32).to_be_bytes()[..],
-		&Keccak256::digest(b"a()")[0..4],
-	);
-	assert_eq!(
-		&(Action::B as u32).to_be_bytes()[..],
-		&Keccak256::digest(b"b()")[0..4],
-	);
+	assert_eq!(&(Action::A as u32).to_be_bytes()[..], &Keccak256::digest(b"a()")[0..4],);
+	assert_eq!(&(Action::B as u32).to_be_bytes()[..], &Keccak256::digest(b"b()")[0..4],);
 	assert_ne!(Action::A as u32, Action::B as u32);
 }
 

@@ -19,7 +19,7 @@
 //! Tests for ethereum-backing.
 
 // --- paritytech ---
-use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency, WeakBoundedVec};
+use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency};
 use sp_runtime::{traits::Dispatchable, AccountId32};
 // --- darwinia-network ---
 use crate::{
@@ -29,7 +29,6 @@ use crate::{
 use darwinia_bridge_ethereum::EthereumRelayHeaderParcel;
 use darwinia_relay_primitives::Sign;
 use darwinia_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
-use darwinia_support::balance::*;
 use ethereum_primitives::receipt::EthereumReceiptProof;
 
 #[test]
@@ -479,7 +478,6 @@ fn verify_redeem_deposit() {
 					start_time: 1599125470000,
 					expire_time: 1630229470000,
 				}],
-				ring_staking_lock: StakingLock { staking_amount: 1001000000001, unbondings: WeakBoundedVec::force_from(vec![], None) },
 				..Default::default()
 			}));
 
@@ -661,23 +659,11 @@ fn lock_should_work() {
 			lock_balance,
 			e_account
 		));
-		assert_eq!(
-			Ring::free_balance(&account),
-			init_balance - lock_balance - advanced_fee
-		);
+		assert_eq!(Ring::free_balance(&account), init_balance - lock_balance - advanced_fee);
 		assert_eq!(Kton::free_balance(&account), init_balance - lock_balance);
-		assert_eq!(
-			Ring::free_balance(&fee_account_id),
-			fee_account_balance + advanced_fee
-		);
-		assert_eq!(
-			Ring::free_balance(&module_account_id),
-			module_account_ring + lock_balance
-		);
-		assert_eq!(
-			Kton::free_balance(&module_account_id),
-			module_account_kton + lock_balance
-		);
+		assert_eq!(Ring::free_balance(&fee_account_id), fee_account_balance + advanced_fee);
+		assert_eq!(Ring::free_balance(&module_account_id), module_account_ring + lock_balance);
+		assert_eq!(Kton::free_balance(&module_account_id), module_account_kton + lock_balance);
 	});
 }
 
@@ -699,12 +685,7 @@ fn lock_failed_rollback_transaction_should_work() {
 		let _advanced_fee = <Test as Config>::AdvancedFee::get();
 
 		assert_noop!(
-			EthereumBacking::lock(
-				Origin::signed(account.clone()),
-				lock_ring,
-				lock_kton,
-				e_account
-			),
+			EthereumBacking::lock(Origin::signed(account.clone()), lock_ring, lock_kton, e_account),
 			<Error<Test>>::KtonLockLim
 		);
 		assert_eq!(Ring::free_balance(&account), init_balance);

@@ -325,10 +325,7 @@ pub mod pallet {
 			let message_nonce =
 				T::MessageNoncer::outbound_latest_generated_nonce(T::MessageLaneId::get());
 			let message_id: BridgeMessageId = (T::MessageLaneId::get(), message_nonce);
-			ensure!(
-				!<TransactionInfos<T>>::contains_key(message_id),
-				Error::<T>::NonceDuplicated
-			);
+			ensure!(!<TransactionInfos<T>>::contains_key(message_id), Error::<T>::NonceDuplicated);
 			<TransactionInfos<T>>::insert(message_id, (user.clone(), value));
 			Self::deposit_event(Event::TokenLocked(
 				T::MessageLaneId::get(),
@@ -357,10 +354,7 @@ pub mod pallet {
 				&user,
 			)?;
 			// Check call params
-			ensure!(
-				token_address == T::RingMetadata::get().address,
-				<Error<T>>::UnsupportedToken
-			);
+			ensure!(token_address == T::RingMetadata::get().address, <Error<T>>::UnsupportedToken);
 
 			let amount = amount.low_u128().saturated_into();
 			// Make sure the total transfer is less than the security limitation
@@ -455,9 +449,9 @@ pub mod pallet {
 				let result = messages.message_dispatch_result(nonce);
 				if let Some((user, amount)) = <TransactionInfos<T>>::take((*lane, nonce)) {
 					if !result {
-						// if remote issue mapped token failed, this fund need to transfer token back
-						// to the user. The balance always comes from the user's locked currency while
-						// calling the dispatch call `lock_and_remote_issue`.
+						// if remote issue mapped token failed, this fund need to transfer token
+						// back to the user. The balance always comes from the user's locked
+						// currency while calling the dispatch call `lock_and_remote_issue`.
 						// This transfer will always successful except some extreme scene, since the
 						// user must lock some currency first, then this transfer can be triggered.
 						let _ = T::RingCurrency::transfer(

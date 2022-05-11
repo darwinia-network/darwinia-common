@@ -155,7 +155,6 @@ where
 		+ fp_rpc::ConvertTransactionRuntimeApi<Block>
 		+ darwinia_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>
 		+ darwinia_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>
-		+ darwinia_fee_market_rpc::FeeMarketRuntimeApi<Block, Balance>
 		+ moonbeam_rpc_primitives_debug::DebugRuntimeApi<Block>,
 	P: 'static + Sync + Send + sc_transaction_pool_api::TransactionPool<Block = Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,
@@ -177,7 +176,6 @@ where
 	use substrate_frame_rpc_system::*;
 	// --- darwinia-network ---
 	use darwinia_balances_rpc::*;
-	use darwinia_fee_market_rpc::*;
 	use darwinia_staking_rpc::*;
 	use moonbeam_rpc_debug::*;
 	use moonbeam_rpc_trace::*;
@@ -188,11 +186,7 @@ where
 		select_chain,
 		chain_spec,
 		deny_unsafe,
-		babe: BabeDeps {
-			keystore,
-			babe_config,
-			shared_epoch_changes,
-		},
+		babe: BabeDeps { keystore, babe_config, shared_epoch_changes },
 		grandpa:
 			GrandpaDeps {
 				shared_voter_state,
@@ -202,10 +196,7 @@ where
 				finality_proof_provider,
 			},
 		beefy:
-			BeefyDeps {
-				beefy_commitment_stream,
-				subscription_executor: beefy_subscription_executor,
-			},
+			BeefyDeps { beefy_commitment_stream, subscription_executor: beefy_subscription_executor },
 		eth:
 			EthDeps {
 				config:
@@ -234,9 +225,7 @@ where
 		pool.clone(),
 		deny_unsafe,
 	)));
-	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
-		client.clone(),
-	)));
+	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(client.clone())));
 	io.extend_with(BabeApi::to_delegate(BabeRpcHandler::new(
 		client.clone(),
 		shared_epoch_changes.clone(),
@@ -265,7 +254,6 @@ where
 	)?));
 	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
 	io.extend_with(StakingApi::to_delegate(Staking::new(client.clone())));
-	io.extend_with(FeeMarketApi::to_delegate(FeeMarket::new(client.clone())));
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
@@ -309,10 +297,7 @@ where
 	)));
 	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client.clone())));
 
-	if ethapi_debug_targets
-		.iter()
-		.any(|cmd| matches!(cmd.as_str(), "debug" | "trace"))
-	{
+	if ethapi_debug_targets.iter().any(|cmd| matches!(cmd.as_str(), "debug" | "trace")) {
 		if let Some(trace_requester) = rpc_requesters.trace {
 			io.extend_with(TraceServer::to_delegate(Trace::new(
 				client,
