@@ -9,7 +9,6 @@ readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
 version     = "2.8.11"
 
-
 [dependencies]
 # crates.io
 evm    = { version = "0.33.1", default-features = false, features = ["with-codec"] }

@@ -34,6 +34,8 @@ use fp_evm::{
 	Context, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput, PrecompileResult,
 };
 
+const PALLET_PREFIX: usize = 16;
+
 #[darwinia_evm_precompile_utils::selector]
 enum Action {
 	StateGetStorage = "state_storage(bytes)",
@@ -74,7 +76,7 @@ where
 					_ => return Err(helper.revert("The input param error")),
 				};
 
-				if key.len() < 16 || !F::allow(&key[0..16]) {
+				if key.len() < PALLET_PREFIX || !F::allow(&key[0..PALLET_PREFIX]) {
 					return Err(helper.revert("This state of the module has read restriction"));
 				}
 
