@@ -34,7 +34,7 @@ use fp_evm::{
 	Context, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput, PrecompileResult,
 };
 
-const PALLET_PREFIX: usize = 16;
+const PALLET_PREFIX_LENGTH: usize = 16;
 
 #[darwinia_evm_precompile_utils::selector]
 enum Action {
@@ -76,7 +76,7 @@ where
 					_ => return Err(helper.revert("The input param error")),
 				};
 
-				if key.len() < PALLET_PREFIX || !F::allow(&key[0..PALLET_PREFIX]) {
+				if key.len() < PALLET_PREFIX_LENGTH || !F::allow(&key[0..PALLET_PREFIX_LENGTH]) {
 					return Err(helper.revert("This state of the module has read restriction"));
 				}
 
