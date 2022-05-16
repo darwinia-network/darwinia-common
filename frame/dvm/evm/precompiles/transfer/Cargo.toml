@@ -17,7 +17,6 @@ ethabi         = { version = "15.0", default-features = false }
 ethereum-types = { version = "0.12", default-features = false }
 evm            = { version = "0.33.1", default-features = false, features = ["with-codec"] }
 log            = { version = "0.4" }
-sha3           = { version = "0.9", default-features = false }
 # darwinia-network
 darwinia-ethereum             = { default-features = false, path = "../../../ethereum" }
 darwinia-evm                  = { default-features = false, path = "../.." }
@@ -35,10 +34,10 @@ fp-evm = { default-features = false, git = "https://github.com/darwinia-network/
 # crates.io
 ethereum     = { version = "0.11.1", default-features = false, features = ["with-codec"] }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
-rlp          = { version = "0.5", default-features = false }
 scale-info   = { version = "1.0", features = ["derive"] }
 # darwinia-network
-darwinia-balances = { path = "../../../../balances" }
+darwinia-balances             = { path = "../../../../balances" }
+darwinia-evm-precompile-utils = { path = "../utils", features = ["testing"] }
 # paritytech
 frame-system     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
@@ -59,7 +58,6 @@ std = [
 	"ethabi/std",
 	"ethereum-types/std",
 	"evm/std",
-	"sha3/std",
 	# darwinia-network
 	"darwinia-ethereum/std",
 	"darwinia-evm/std",
