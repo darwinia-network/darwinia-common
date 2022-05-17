@@ -110,7 +110,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 
 				Ok(PrecompileOutput {
 					exit_status: ExitSucceed::Returned,
-					cost: 20000,
+					cost: helper.used_gas(),
 					output: Default::default(),
 					logs: Default::default(),
 				})

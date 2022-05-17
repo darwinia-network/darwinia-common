@@ -18,6 +18,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(feature = "testing")]
+pub mod test_helper;
+
 pub use darwinia_evm_precompile_utils_macro::selector;
 pub use ethabi::StateMutability;
 
