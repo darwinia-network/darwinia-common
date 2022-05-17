@@ -21,8 +21,11 @@ darwinia-support              = { default-features = false, path = "../../../../
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+sp-std         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 # frontier
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
+
+ethabi = { version = "15.0", default-features = false }
 
 [features]
 default = ["std"]
@@ -30,6 +33,8 @@ default = ["std"]
 std = [
 	# crates.io
 	"codec/std",
+	"ethabi/std",
+	"sp-std/std",
 	# darwinia-network
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-utils/std",
