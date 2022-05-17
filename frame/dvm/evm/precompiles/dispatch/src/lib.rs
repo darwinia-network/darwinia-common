@@ -24,7 +24,7 @@ use darwinia_evm::GasWeightMapping;
 use darwinia_evm_precompile_utils::PrecompileHelper;
 use darwinia_support::evm::IntoAccountId;
 // --- paritytech ---
-use codec::Decode;
+use codec::{Decode, Encode};
 use fp_evm::{
 	Context, ExitError, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
 	PrecompileResult,
@@ -81,7 +81,9 @@ where
 					logs: Default::default(),
 				})
 			},
-			Err(_) => Err(helper.revert("dispatch execution failed")),
+			Err(e) => {
+				Err(helper.revert(&Encode::encode(&e.error)))
+			},
 		}
 	}
 }
