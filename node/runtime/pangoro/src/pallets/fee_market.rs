@@ -3,7 +3,7 @@ pub use pallet_fee_market::Instance1 as WithPangolinFeeMarket;
 // --- core ---
 use core::cmp;
 // --- substrate ---
-use frame_support::{traits::LockIdentifier, PalletId};
+use frame_support::traits::LockIdentifier;
 use sp_runtime::{traits::UniqueSaturatedInto, Permill};
 // --- darwinia ---
 use crate::*;
