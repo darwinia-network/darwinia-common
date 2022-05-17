@@ -24,9 +24,9 @@ use std::str::FromStr;
 use crate::{
 	*, {self as s2s_issuing},
 };
+use darwinia_evm_precompile_utils::test_helper::{AccountInfo, LegacyUnsignedTransaction};
 use dp_asset::{TokenMetadata, NATIVE_TOKEN_TYPE};
 use mock::*;
-
 // --- paritytech ---
 use frame_support::assert_ok;
 use frame_system::RawOrigin;
@@ -42,7 +42,7 @@ fn alice_create(alice: &AccountInfo, input: Vec<u8>, nonce: u32) {
 		value: U256::zero(),
 		input,
 	}
-	.sign(&alice.private_key);
+	.sign_with_chain_id(&alice.private_key, 42);
 	assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 }
 
@@ -56,7 +56,7 @@ fn alice_call(alice: &AccountInfo, input: Vec<u8>, nonce: u32, contract: H160, v
 		value: U256::from(value),
 		input,
 	}
-	.sign(&alice.private_key);
+	.sign_with_chain_id(&alice.private_key, 42);
 	assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 }
 

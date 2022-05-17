@@ -6,7 +6,7 @@ use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
 	pallet_prelude::Weight,
 	traits::{FindAuthor, PalletInfoAccess},
-	ConsensusEngineId,
+	ConsensusEngineId, StorageHasher, Twox128,
 };
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use pallet_session::FindAccountFromAuthorIndex;
@@ -24,6 +24,7 @@ use darwinia_evm::{
 use darwinia_evm_precompile_bridge_ethereum::EthereumBridge;
 use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 use darwinia_evm_precompile_dispatch::Dispatch;
+use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::{
 	evm::ConcatConverter,
@@ -81,6 +82,13 @@ impl LatestMessageNoncer for ToPangoroMessageSender {
 	}
 }
 
+pub struct StorageFilter;
+impl StorageFilterT for StorageFilter {
+	fn allow(prefix: &[u8]) -> bool {
+		prefix != Twox128::hash(b"EVM") && prefix != Twox128::hash(b"Ethereum")
+	}
+}
+
 pub struct PangolinPrecompiles<R>(PhantomData<R>);
 impl<R> PangolinPrecompiles<R>
 where
@@ -91,16 +99,17 @@ where
 	}
 
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 21, 23, 24, 25].into_iter().map(|x| addr(x)).collect()
+		sp_std::vec![1, 2, 3, 4, 21, 23, 24, 25, 26].into_iter().map(|x| addr(x)).collect()
 	}
 }
 
 impl<R> PrecompileSet for PangolinPrecompiles<R>
 where
-	Transfer<R>: Precompile,
-	EthereumBridge<R>: Precompile,
-	Sub2SubBridge<R, ToPangoroMessageSender, bm_pangoro::ToPangoroOutboundPayLoad>: Precompile,
 	Dispatch<R>: Precompile,
+	EthereumBridge<R>: Precompile,
+	StateStorage<R, StorageFilter>: Precompile,
+	Sub2SubBridge<R, ToPangoroMessageSender, bm_pangoro::ToPangoroOutboundPayLoad>: Precompile,
+	Transfer<R>: Precompile,
 	R: darwinia_ethereum::Config,
 {
 	fn execute(
@@ -129,6 +138,9 @@ where
 			>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(25) =>
 				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
+			a if a == addr(26) => Some(<StateStorage<R, StorageFilter>>::execute(
+				input, target_gas, context, is_static,
+			)),
 			_ => None,
 		}
 	}

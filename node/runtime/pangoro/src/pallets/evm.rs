@@ -2,7 +2,9 @@
 use core::marker::PhantomData;
 // --- paritytech ---
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
-use frame_support::{pallet_prelude::Weight, traits::FindAuthor, ConsensusEngineId};
+use frame_support::{
+	pallet_prelude::Weight, traits::FindAuthor, ConsensusEngineId, StorageHasher, Twox128,
+};
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use pallet_session::FindAccountFromAuthorIndex;
 use sp_core::{crypto::Public, H160, U256};
@@ -16,6 +18,7 @@ use darwinia_evm::{
 	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, GasWeightMapping,
 };
 use darwinia_evm_precompile_bridge_bsc::BscBridge;
+use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::ConcatConverter;
 
@@ -33,6 +36,13 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 	}
 }
 
+pub struct StorageFilter;
+impl StorageFilterT for StorageFilter {
+	fn allow(prefix: &[u8]) -> bool {
+		prefix != Twox128::hash(b"EVM") && prefix != Twox128::hash(b"Ethereum")
+	}
+}
+
 pub struct PangoroPrecompiles<R>(PhantomData<R>);
 impl<R> PangoroPrecompiles<R>
 where
@@ -43,14 +53,15 @@ where
 	}
 
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 21, 26].into_iter().map(|x| addr(x)).collect()
+		sp_std::vec![1, 2, 3, 4, 21, 26, 27].into_iter().map(|x| addr(x)).collect()
 	}
 }
 
 impl<R> PrecompileSet for PangoroPrecompiles<R>
 where
-	Transfer<R>: Precompile,
 	BscBridge<R>: Precompile,
+	StateStorage<R, StorageFilter>: Precompile,
+	Transfer<R>: Precompile,
 	R: darwinia_ethereum::Config,
 {
 	fn execute(
@@ -72,6 +83,9 @@ where
 				Some(<Transfer<R>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(26) =>
 				Some(<BscBridge<R>>::execute(input, target_gas, context, is_static)),
+			a if a == addr(27) => Some(<StateStorage<R, StorageFilter>>::execute(
+				input, target_gas, context, is_static,
+			)),
 			_ => None,
 		}
 	}
