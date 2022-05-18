@@ -56,12 +56,9 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 		let (address, to, value) = (context.address, input.dest, context.apparent_value);
 
 		// Ensure the context address should be precompile address
-		let transfer_addr = array_bytes::hex_try_into(TRANSFER_ADDR)
-			.map_err(|_| helper.revert("Transfer(RingBack): invalid address"))?;
-		ensure!(
-			address == transfer_addr,
-			helper.revert("Transfer(RingBack): Invalid context address")
-		);
+		let transfer_addr =
+			array_bytes::hex_try_into(TRANSFER_ADDR).map_err(|_| helper.revert("Invalid addr"))?;
+		ensure!(address == transfer_addr, helper.revert("Invalid context addr"));
 
 		let source = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(address);
 		T::RingAccountBasic::transfer(&source, &to, value)
@@ -89,11 +86,9 @@ impl<T: darwinia_evm::Config> InputData<T> {
 
 			return Ok(InputData {
 				dest: <T as frame_system::Config>::AccountId::decode(&mut dest_bytes.as_ref())
-					.map_err(|_| {
-						helper.revert("Transfer(RingBack): Invalid destination address")
-					})?,
+					.map_err(|_| helper.revert("Invalid dest addr"))?,
 			});
 		}
-		Err(helper.revert("Transfer(RingBack): Invalid input data length"))
+		Err(helper.revert("Invalid input length"))
 	}
 }

@@ -53,13 +53,13 @@ where
 	) -> PrecompileResult {
 		let helper = PrecompileHelper::<T>::new(input, target_gas);
 
-		let call = T::Call::decode(&mut &input[..])
-			.map_err(|_| helper.revert("Dispatch: decode failed"))?;
+		let call =
+			T::Call::decode(&mut &input[..]).map_err(|_| helper.revert("Decode call failed"))?;
 		let info = call.get_dispatch_info();
 
 		let valid_call = info.pays_fee == Pays::Yes && info.class == DispatchClass::Normal;
 		if !valid_call {
-			return Err(helper.revert("Dispatch: invalid call"));
+			return Err(helper.revert("Invalid call"));
 		}
 
 		if let Some(gas) = target_gas {
