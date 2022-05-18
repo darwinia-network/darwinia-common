@@ -19,13 +19,12 @@
 
 // --- crates.io ---
 use core::marker::PhantomData;
-use evm::ExitRevert;
 // --- darwinia-network ---
 use darwinia_evm::GasWeightMapping;
 use darwinia_evm_precompile_utils::PrecompileHelper;
 use darwinia_support::evm::IntoAccountId;
 // --- paritytech ---
-use codec::{Decode, Encode};
+use codec::Decode;
 use fp_evm::{
 	Context, ExitError, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
 	PrecompileResult,
@@ -83,11 +82,7 @@ where
 					logs: Default::default(),
 				})
 			},
-			Err(e) => Err(PrecompileFailure::Revert {
-				exit_status: ExitRevert::Reverted,
-				output: Encode::encode(&e.error),
-				cost: helper.used_gas(),
-			}),
+			Err(e) => Err(helper.revert(e.error.into())),
 		}
 	}
 }
