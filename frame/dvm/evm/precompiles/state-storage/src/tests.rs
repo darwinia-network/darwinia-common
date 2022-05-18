@@ -171,7 +171,6 @@ frame_support::parameter_types! {
 pub struct StorageFilter;
 impl StorageFilterT for StorageFilter {
 	fn allow(prefix: &[u8]) -> bool {
-		println!("bear: the prefix here {:?}", prefix);
 		prefix != Twox128::hash(b"EVM") && prefix != Twox128::hash(b"Ethereum")
 	}
 }
@@ -530,8 +529,10 @@ mod tests {
 					CallOrCreateInfo::Create(_) => todo!(),
 				});
 			assert_eq!(
-				String::from_utf8_lossy(&result.unwrap()),
-				"This state of the module has read restriction"
+				ethabi::decode(&[ParamType::String], &result.unwrap()[4..]).unwrap()[0],
+				Token::String(
+					"StateStorage: This state of the module has read restriction".to_string()
+				)
 			);
 		});
 	}
