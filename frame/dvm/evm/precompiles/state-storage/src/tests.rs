@@ -530,9 +530,7 @@ mod tests {
 				});
 			assert_eq!(
 				ethabi::decode(&[ParamType::String], &result.unwrap()[4..]).unwrap()[0],
-				Token::String(
-					"StateStorage: This state of the module has read restriction".to_string()
-				)
+				Token::String("Read restriction".to_string())
 			);
 		});
 	}
