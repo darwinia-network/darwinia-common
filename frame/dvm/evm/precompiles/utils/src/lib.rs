@@ -117,7 +117,7 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 		let func = Function {
 			name: "Error".to_owned(),
 			inputs: vec![Param {
-				name: "error_message".to_owned(),
+				name: "message".to_owned(),
 				kind: ParamType::String,
 				internal_type: None,
 			}],

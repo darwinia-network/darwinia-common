@@ -69,74 +69,87 @@ where
 		// Check state modifiers
 		helper.check_state_modifier(context, is_static, StateMutability::View)?;
 
-		let output = match action {
-			Action::VerfiySingleStorageProof => {
-				// Storage: BSC FinalizedCheckpoint (r:1 w:0)
-				helper.record_gas(1, 0)?;
+		let output =
+			match action {
+				Action::VerfiySingleStorageProof => {
+					// Storage: BSC FinalizedCheckpoint (r:1 w:0)
+					helper.record_gas(1, 0)?;
 
-				let params = BscSingleStorageVerifyParams::decode(data)
-					.map_err(|_| helper.revert("decode single storage verify info failed"))?;
-				let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
-				let proof = EthereumStorageProof::new(
-					params.lane_address,
-					params.storage_key,
-					params.account_proof,
-					params.storage_proof,
-				);
-				let storage_value = EthereumStorage::<Vec<u8>>::verify_storage_proof(
-					finalized_header.state_root,
-					&proof,
-				)
-				.map_err(|_| helper.revert("verify single storage proof failed"))?;
-				abi_encode_bytes(storage_value.0.as_slice())
-			},
-			Action::VerifyMultiStorageProof => {
-				// Storage: BSC FinalizedCheckpoint (r:1 w:0)
-				helper.record_gas(1, 0)?;
+					let params = BscSingleStorageVerifyParams::decode(data).map_err(|_| {
+						helper.revert("Bsc(VerfiySingleStorageProof): decode single storage verify info failed")
+					})?;
+					let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
+					let proof = EthereumStorageProof::new(
+						params.lane_address,
+						params.storage_key,
+						params.account_proof,
+						params.storage_proof,
+					);
+					let storage_value = EthereumStorage::<Vec<u8>>::verify_storage_proof(
+						finalized_header.state_root,
+						&proof,
+					)
+					.map_err(|_| {
+						helper.revert(
+							"Bsc(VerfiySingleStorageProof): verify single storage proof failed",
+						)
+					})?;
+					abi_encode_bytes(storage_value.0.as_slice())
+				},
+				Action::VerifyMultiStorageProof => {
+					// Storage: BSC FinalizedCheckpoint (r:1 w:0)
+					helper.record_gas(1, 0)?;
 
-				let params = BscMultiStorageVerifyParams::decode(data)
-					.map_err(|_| helper.revert("decode multi storage verify info failed"))?;
-				let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
-				let key_size = params.storage_keys.len();
-				if key_size != params.storage_proofs.len() {
-					return Err(helper.revert("storage keys not match storage proofs"));
-				}
-				if key_size > MAX_MULTI_STORAGEKEY_SIZE {
-					return Err(helper.revert("storage keys size too large"));
-				}
-				let storage_values: Result<Vec<Vec<u8>>, _> = (0..key_size)
-					.map(|idx| {
-						let storage_key = params.storage_keys[idx];
-						let storage_proof = params.storage_proofs[idx].clone();
-						let proof = EthereumStorageProof::new(
-							params.lane_address,
-							storage_key,
-							params.account_proof.clone(),
-							storage_proof,
-						);
-						let storage_value = EthereumStorage::<Vec<u8>>::verify_storage_proof(
-							finalized_header.state_root,
-							&proof,
-						);
-						match storage_value {
-							Ok(value) => {
-								return Ok(value.0.clone());
-							},
-							Err(err) => {
-								// if the key not exist, we should return Zero Value due to the
-								// Zero Value will not be stored.
-								if err == StorageProofError(ProofError::TrieKeyNotExist) {
-									return Ok(vec![]);
-								} else {
-									return Err(helper.revert("verfiy storage failed"));
-								}
-							},
-						}
-					})
-					.collect();
-				abi_encode_array_bytes(storage_values?)
-			},
-		};
+					let params =
+						BscMultiStorageVerifyParams::decode(data).map_err(|_| {
+							helper.revert("Bsc(VerifyMultiStorageProof): decode multi storage verify info failed")
+						})?;
+					let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
+					let key_size = params.storage_keys.len();
+					if key_size != params.storage_proofs.len() {
+						return Err(helper.revert(
+							"Bsc(VerifyMultiStorageProof): storage keys not match storage proofs",
+						));
+					}
+					if key_size > MAX_MULTI_STORAGEKEY_SIZE {
+						return Err(helper
+							.revert("Bsc(VerifyMultiStorageProof): storage keys size too large"));
+					}
+					let storage_values: Result<Vec<Vec<u8>>, _> = (0..key_size)
+						.map(|idx| {
+							let storage_key = params.storage_keys[idx];
+							let storage_proof = params.storage_proofs[idx].clone();
+							let proof = EthereumStorageProof::new(
+								params.lane_address,
+								storage_key,
+								params.account_proof.clone(),
+								storage_proof,
+							);
+							let storage_value = EthereumStorage::<Vec<u8>>::verify_storage_proof(
+								finalized_header.state_root,
+								&proof,
+							);
+							match storage_value {
+								Ok(value) => {
+									return Ok(value.0.clone());
+								},
+								Err(err) => {
+									// if the key not exist, we should return Zero Value due to the
+									// Zero Value will not be stored.
+									if err == StorageProofError(ProofError::TrieKeyNotExist) {
+										return Ok(vec![]);
+									} else {
+										return Err(helper.revert(
+											"Bsc(VerifyMultiStorageProof): verfiy storage failed",
+										));
+									}
+								},
+							}
+						})
+						.collect();
+					abi_encode_array_bytes(storage_values?)
+				},
+			};
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
