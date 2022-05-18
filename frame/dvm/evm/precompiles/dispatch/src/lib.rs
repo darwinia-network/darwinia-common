@@ -19,6 +19,7 @@
 
 // --- crates.io ---
 use core::marker::PhantomData;
+use evm::ExitRevert;
 // --- darwinia-network ---
 use darwinia_evm::GasWeightMapping;
 use darwinia_evm_precompile_utils::PrecompileHelper;
@@ -81,9 +82,11 @@ where
 					logs: Default::default(),
 				})
 			},
-			Err(e) => {
-				Err(helper.revert(&Encode::encode(&e.error)))
-			},
+			Err(e) => Err(PrecompileFailure::Revert {
+				exit_status: ExitRevert::Reverted,
+				output: Encode::encode(&e.error),
+				cost: helper.used_gas(),
+			}),
 		}
 	}
 }
