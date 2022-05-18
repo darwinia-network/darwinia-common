@@ -257,12 +257,7 @@ frame_support::parameter_types! {
 	pub const AssignedRelayersRewardRatio: Permill = Permill::from_percent(60);
 	pub const MessageRelayersRewardRatio: Permill = Permill::from_percent(80);
 	pub const ConfirmRelayersRewardRatio: Permill = Permill::from_percent(20);
-	// F1 configurations.
-	pub const F1FeeMarketId: PalletId = PalletId(*b"da/feem1");
-	pub const F1FeeMarketLockId: LockIdentifier = *b"da/feef1";
-	// F2 configurations.
-	pub const F2FeeMarketId: PalletId = PalletId(*b"da/feem2");
-	pub const F2FeeMarketLockId: LockIdentifier = *b"da/feef2";
+	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 }
 
 pub struct FeeMarketSlasher;
@@ -278,10 +273,9 @@ impl Config<F1> for Test {
 	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
 	type Currency = Ring;
 	type Event = Event;
-	type LockId = F1FeeMarketLockId;
+	type LockId = FeeMarketLockId;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
 	type MinimumRelayFee = MinimumRelayFee;
-	type PalletId = F1FeeMarketId;
 	type Slasher = FeeMarketSlasher;
 	type Slot = Slot;
 	type TreasuryPalletId = TreasuryPalletId;
