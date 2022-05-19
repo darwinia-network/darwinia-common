@@ -53,9 +53,6 @@ use sp_runtime::{
 		Block as BlockT, Dispatchable, Extrinsic, NumberFor, PostDispatchInfoOf, StaticLookup,
 		Verify,
 	},
-	transaction_validity::{
-		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
-	},
 	ApplyExtrinsicResult, SaturatedConversion,
 };
 use sp_std::prelude::*;
@@ -379,10 +376,10 @@ sp_api::impl_runtime_apis! {
 
 	impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
 		fn validate_transaction(
-			source: TransactionSource,
+			source: sp_runtime::transaction_validity::TransactionSource,
 			tx: <Block as BlockT>::Extrinsic,
 			block_hash: <Block as BlockT>::Hash,
-		) -> TransactionValidity {
+		) -> sp_runtime::transaction_validity::TransactionValidity {
 			Executive::validate_transaction(source, tx, block_hash)
 		}
 	}

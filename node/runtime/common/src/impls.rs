@@ -208,7 +208,12 @@ macro_rules! impl_self_contained_call {
 
 			fn check_self_contained(
 				&self,
-			) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
+			) -> Option<
+				Result<
+					Self::SignedInfo,
+					sp_runtime::transaction_validity::TransactionValidityError,
+				>,
+			> {
 				match self {
 					Call::Ethereum(call) => call.check_self_contained(),
 					_ => None,
@@ -218,7 +223,7 @@ macro_rules! impl_self_contained_call {
 			fn validate_self_contained(
 				&self,
 				info: &Self::SignedInfo,
-			) -> Option<TransactionValidity> {
+			) -> Option<sp_runtime::transaction_validity::TransactionValidity> {
 				match self {
 					Call::Ethereum(ref call) =>
 						Some(validate_self_contained_inner(&self, &call, info)),
@@ -229,7 +234,7 @@ macro_rules! impl_self_contained_call {
 			fn pre_dispatch_self_contained(
 				&self,
 				info: &Self::SignedInfo,
-			) -> Option<Result<(), TransactionValidityError>> {
+			) -> Option<Result<(), sp_runtime::transaction_validity::TransactionValidityError>> {
 				match self {
 					Call::Ethereum(call) => call.pre_dispatch_self_contained(info),
 					_ => None,
@@ -254,7 +259,7 @@ macro_rules! impl_self_contained_call {
 			call: &Call,
 			eth_call: &darwinia_ethereum::Call<Runtime>,
 			signed_info: &<Call as fp_self_contained::SelfContainedCall>::SignedInfo,
-		) -> TransactionValidity {
+		) -> sp_runtime::transaction_validity::TransactionValidity {
 			if let darwinia_ethereum::Call::transact { ref transaction } = eth_call {
 				// Previously, ethereum transactions were contained in an unsigned
 				// extrinsic, we now use a new form of dedicated extrinsic defined by
@@ -270,13 +275,16 @@ macro_rules! impl_self_contained_call {
 					SignedExtra::validate_unsigned(call, &call.get_dispatch_info(), input_len)?;
 				// Then, do the controls defined by the ethereum pallet.
 				use fp_self_contained::SelfContainedCall as _;
-				let self_contained_validation = eth_call
-					.validate_self_contained(signed_info)
-					.ok_or(TransactionValidityError::Invalid(InvalidTransaction::BadProof))??;
+				let self_contained_validation =
+					eth_call.validate_self_contained(signed_info).ok_or(
+						sp_runtime::transaction_validity::TransactionValidityError::Invalid(
+							sp_runtime::transaction_validity::InvalidTransaction::BadProof,
+						),
+					)??;
 
 				Ok(extra_validation.combine_with(self_contained_validation))
 			} else {
-				Err(TransactionValidityError::Unknown(
+				Err(sp_runtime::transaction_validity::TransactionValidityError::Unknown(
 					sp_runtime::transaction_validity::UnknownTransaction::CannotLookup,
 				))
 			}
