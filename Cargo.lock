@@ -92,6 +92,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "amcl"
+version = "0.3.0"
+
+[[package]]
 name = "ansi_term"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1748,6 +1752,20 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-bls12-381"
+version = "2.8.11"
+dependencies = [
+ "darwinia-evm",
+ "darwinia-evm-precompile-utils",
+ "dp-contract",
+ "ethereum-primitives",
+ "evm",
+ "fp-evm",
+ "milagro_bls",
  "sp-std",
 ]
 
@@ -5165,6 +5183,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "milagro_bls"
+version = "1.5.0"
+dependencies = [
+ "amcl",
+ "rand 0.8.5",
+ "zeroize",
+]
+
+[[package]]
 name = "minicbor"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6641,6 +6668,7 @@ dependencies = [
  "darwinia-bridge-bsc",
  "darwinia-ethereum",
  "darwinia-evm",
+ "darwinia-evm-precompile-bls12-381",
  "darwinia-evm-precompile-bridge-bsc",
  "darwinia-evm-precompile-state-storage",
  "darwinia-evm-precompile-transfer",

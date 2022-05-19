@@ -18,6 +18,20 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+// --- core ---
+use core::marker::PhantomData;
+// --- crates.io ---
+use evm::ExitRevert;
+use milagro_bls::{AggregatePublicKey, AggregateSignature, PublicKey, Signature};
+// --- darwinia-network ---
+use darwinia_evm_precompile_utils::{PrecompileHelper, StateMutability};
+use dp_contract::{abi_util::abi_encode_bool, bls12381::FastAggregateVerifyParams};
+// --- paritytech ---
+use fp_evm::{
+	Context, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput, PrecompileResult,
+};
+use sp_std::vec::Vec;
+
 #[darwinia_evm_precompile_utils::selector]
 enum Action {
 	FastAggregateVerify = "fast_aggregate_verify(bytes[],bytes,bytes)",
@@ -27,7 +41,7 @@ pub struct BLS12381<T> {
 	_market: PhantomData<T>,
 }
 
-impl<T> Precompile for StateStorage<T>
+impl<T> Precompile for BLS12381<T>
 where
 	T: darwinia_evm::Config,
 {
@@ -37,7 +51,7 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let mut helper = PrecompileHelper::<T>::new(input, target_gas);
+		let helper = PrecompileHelper::<T>::new(input, target_gas);
 		let (selector, data) = helper.split_input()?;
 		let action = Action::from_u32(selector)?;
 
@@ -52,42 +66,35 @@ where
 				let params = FastAggregateVerifyParams::decode(data)
 					.map_err(|_| helper.revert("Invalid input"))?;
 
-				let sig = Signature::from_bytes(&params.signature[..]);
-				if let Err(_e) = sig {
-					helper.revert("Invalid signature");
+				let sig = Signature::from_bytes(&params.signature);
+				if sig.is_err() {
+					return Err(helper.revert("Invalid pubkeys"));
 				}
 
 				let agg_sig = AggregateSignature::from_signature(&sig.unwrap());
 
-				let public_keys_res: Result<Vec<milagro_bls::PublicKey>, _> = params
-					.pubkeys
-					.iter()
-					.map(|bytes| milagro_bls::PublicKey::from_bytes_unchecked(&bytes.0))
-					.collect();
-
-				if let Err(_e) = public_keys_res {
-					match _e {
-						AmclError::InvalidPoint => helper.revert("Invalid point"),
-						_ => helper.revert("Invalid pubkeys"),
-					}
+				let public_keys_res: Result<Vec<PublicKey>, _> =
+					params.pubkeys.iter().map(|bytes| PublicKey::from_bytes(bytes)).collect();
+				if public_keys_res.is_err() {
+					return Err(helper.revert("Invalid pubkeys"));
 				}
 
 				let agg_pub_key_res = AggregatePublicKey::into_aggregate(&public_keys_res.unwrap());
-				if let Err(_e) = agg_pub_key_res {
-					helper.revert("Invalid aggrete public keys");
+				if agg_pub_key_res.is_err() {
+					return Err(helper.revert("Invalid pubkeys"));
 				}
 
 				agg_sig.fast_aggregate_verify_pre_aggregated(
-					&params.message.as_bytes,
+					&params.message,
 					&agg_pub_key_res.unwrap(),
-				);
+				)
 			},
 		};
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			cost: helper.used_gas(),
-			output: abi_encode_bool(&output.unwrap_or_default()),
+			cost: 100_000,
+			output: abi_encode_bool(output),
 			logs: Default::default(),
 		})
 	}
