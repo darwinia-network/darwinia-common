@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-//! bsc light client encode and decode.
+//! bls12-381 precompile function params encode and decode.
 
 pub use ethabi::{Event, Log};
 

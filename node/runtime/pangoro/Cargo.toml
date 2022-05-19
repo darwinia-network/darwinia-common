@@ -123,6 +123,7 @@ std = [
 	"darwinia-bridge-bsc/std",
 	"darwinia-ethereum/std",
 	"darwinia-evm/std",
+	"darwinia-evm-precompile-bls12-381/std",
 	"darwinia-evm-precompile-bridge-bsc/std",
 	"darwinia-evm-precompile-state-storage/std",
 	"darwinia-evm-precompile-transfer/std",

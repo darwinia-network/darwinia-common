@@ -17,6 +17,7 @@ use darwinia_ethereum::{
 use darwinia_evm::{
 	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, GasWeightMapping,
 };
+use darwinia_evm_precompile_bls12_381::BLS12381;
 use darwinia_evm_precompile_bridge_bsc::BscBridge;
 use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
 use darwinia_evm_precompile_transfer::Transfer;
@@ -53,12 +54,13 @@ where
 	}
 
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 21, 26, 27].into_iter().map(|x| addr(x)).collect()
+		sp_std::vec![1, 2, 3, 4, 21, 26, 27, 28].into_iter().map(|x| addr(x)).collect()
 	}
 }
 
 impl<R> PrecompileSet for PangoroPrecompiles<R>
 where
+	BLS12381<R>: Precompile,
 	BscBridge<R>: Precompile,
 	StateStorage<R, StorageFilter>: Precompile,
 	Transfer<R>: Precompile,
@@ -86,6 +88,8 @@ where
 			a if a == addr(27) => Some(<StateStorage<R, StorageFilter>>::execute(
 				input, target_gas, context, is_static,
 			)),
+			a if a == addr(28) =>
+				Some(<BLS12381<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
