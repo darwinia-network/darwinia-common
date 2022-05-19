@@ -102,7 +102,7 @@ where
 					return Err(helper.revert("Storage keys not match"));
 				}
 				if key_size > MAX_MULTI_STORAGEKEY_SIZE {
-					return Err(helper.revert("Key' size too large"));
+					return Err(helper.revert("Key'size too large"));
 				}
 				let storage_values: Result<Vec<Vec<u8>>, _> = (0..key_size)
 					.map(|idx| {
