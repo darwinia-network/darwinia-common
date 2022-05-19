@@ -1762,7 +1762,6 @@ dependencies = [
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
  "dp-contract",
- "ethereum-primitives",
  "evm",
  "fp-evm",
  "milagro_bls",
@@ -5187,6 +5186,8 @@ name = "milagro_bls"
 version = "1.5.0"
 dependencies = [
  "amcl",
+ "hex",
+ "lazy_static",
  "rand 0.8.5",
  "zeroize",
 ]
