@@ -40,7 +40,6 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
 	generic,
 	traits::{Block as BlockT, Dispatchable, NumberFor, PostDispatchInfoOf},
-	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
 	ApplyExtrinsicResult, OpaqueExtrinsic,
 };
 use sp_std::prelude::*;
@@ -122,14 +121,20 @@ impl fp_self_contained::SelfContainedCall for Call {
 		}
 	}
 
-	fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
+	fn check_self_contained(
+		&self,
+	) -> Option<Result<Self::SignedInfo, sp_runtime::transaction_validity::TransactionValidityError>>
+	{
 		match self {
 			Call::Ethereum(call) => call.check_self_contained(),
 			_ => None,
 		}
 	}
 
-	fn validate_self_contained(&self, info: &Self::SignedInfo) -> Option<TransactionValidity> {
+	fn validate_self_contained(
+		&self,
+		info: &Self::SignedInfo,
+	) -> Option<sp_runtime::transaction_validity::TransactionValidity> {
 		match self {
 			Call::Ethereum(call) => call.validate_self_contained(info),
 			_ => None,
@@ -139,7 +144,7 @@ impl fp_self_contained::SelfContainedCall for Call {
 	fn pre_dispatch_self_contained(
 		&self,
 		info: &Self::SignedInfo,
-	) -> Option<Result<(), TransactionValidityError>> {
+	) -> Option<Result<(), sp_runtime::transaction_validity::TransactionValidityError>> {
 		match self {
 			Call::Ethereum(call) => call.pre_dispatch_self_contained(info),
 			_ => None,
@@ -210,10 +215,10 @@ sp_api::impl_runtime_apis! {
 
 	impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
 		fn validate_transaction(
-			source: TransactionSource,
+			source: sp_runtime::transaction_validity::TransactionSource,
 			tx: <Block as BlockT>::Extrinsic,
 			block_hash: <Block as BlockT>::Hash,
-		) -> TransactionValidity {
+		) -> sp_runtime::transaction_validity::TransactionValidity {
 			Executive::validate_transaction(source, tx, block_hash)
 		}
 	}

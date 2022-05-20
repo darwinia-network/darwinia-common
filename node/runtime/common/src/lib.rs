@@ -74,6 +74,9 @@ const_assert!(NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO
 /// pallet-election-provider-multi-phase.
 pub const MINER_MAX_ITERATIONS: u32 = 10;
 
+// According to the EVM gas benchmark, 1 gas ~= 40_000 weight.
+pub const WEIGHT_PER_GAS: u64 = 40_000;
+
 frame_support::parameter_types! {
 	pub const BlockHashCountForPangolin: BlockNumber = 256;
 	pub const BlockHashCountForPangoro: BlockNumber = 2400;
@@ -130,6 +133,3 @@ frame_support::parameter_types! {
 		.max
 		.get(DispatchClass::Normal);
 }
-
-// Accounding to the evm gas benchmark, 1 gas ~= 40_000 weight.
-pub const WEIGHT_PER_GAS: u64 = 40_000;
