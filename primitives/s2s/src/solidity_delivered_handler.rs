@@ -53,18 +53,18 @@ type MessagePayload<T, I> = bp_message_dispatch::MessagePayload<
 pub struct SolidityDeliveredHandler<T, I, T2>(PhantomData<(T, I, T2)>);
 
 impl<T: PalletBridgeMessagesConfig<I>, I: 'static, T2: DarwiniaEthereumConfig> OnDeliveryConfirmed for SolidityDeliveredHandler<T, I, T2> {
-	fn on_messages_delivered(lane: &LaneId, delivered_messages: &DeliveredMessages) -> Weight {
-		for (i, nonce) in (delivered_messages.begin..=delivered_messages.end).enumerate() {
-			if let Some(result) = delivered_messages.dispatch_results.get(i) {
-				if let Some(message_sender) = Self::get_message_sender(*lane, nonce) {
-					if let Ok(call_data) = Self::make_call_data(*lane, nonce, *result) {
+	fn on_messages_delivered(lane: &LaneId, messages: &DeliveredMessages) -> Weight {
 
-						// Run solidity callback
-						if let Err(e) = darwinia_ethereum::Pallet::<T2>::internal_transact(message_sender, call_data) {
-							log::error!("Execute 'internal_transact' failed for messages delivered, {:?}", e.error);
-						}
+		for nonce in messages.begin..=messages.end {
+			let result = messages.message_dispatch_result(nonce);
+			if let Some(message_sender) = Self::get_message_sender(*lane, nonce) {
+				if let Ok(call_data) = Self::make_call_data(*lane, nonce, result) {
 
+					// Run solidity callback
+					if let Err(e) = darwinia_ethereum::Pallet::<T2>::internal_transact(message_sender, call_data) {
+						log::error!("Execute 'internal_transact' failed for messages delivered, {:?}", e.error);
 					}
+
 				}
 			}
 
