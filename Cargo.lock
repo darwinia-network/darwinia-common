@@ -1775,8 +1775,6 @@ dependencies = [
  "darwinia-bridge-bsc",
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
- "dp-contract",
- "ethereum-primitives",
  "evm",
  "fp-evm",
  "sp-std",
@@ -1831,6 +1829,19 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "sp-core",
  "sp-io",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-mpt"
+version = "2.8.11"
+dependencies = [
+ "darwinia-evm",
+ "darwinia-evm-precompile-utils",
+ "dp-contract",
+ "ethereum-primitives",
+ "evm",
+ "fp-evm",
+ "sp-std",
 ]
 
 [[package]]

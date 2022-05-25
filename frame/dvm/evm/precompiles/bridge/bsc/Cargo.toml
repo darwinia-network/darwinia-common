@@ -18,8 +18,6 @@ sp-std = { default-features = false, git = "https://github.com/darwinia-network/
 darwinia-bridge-bsc           = { default-features = false, path = "../../../../../bridge/bsc" }
 darwinia-evm                  = { default-features = false, path = "../../.." }
 darwinia-evm-precompile-utils = { default-features = false, path = "../../utils" }
-dp-contract                   = { default-features = false, path = "../../../../../../primitives/contract" }
-ethereum-primitives           = { default-features = false, features = ["full-codec", "full-rlp"], path = "../../../../../../primitives/ethereum" }
 # frontier
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
 
@@ -35,8 +33,6 @@ std = [
 	"darwinia-bridge-bsc/std",
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-utils/std",
-	"dp-contract/std",
-	"ethereum-primitives/std",
 	# frontier
 	"fp-evm/std",
 ]
