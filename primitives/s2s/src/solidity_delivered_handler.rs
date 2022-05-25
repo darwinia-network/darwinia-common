@@ -50,6 +50,8 @@ type MessagePayload<T, I> = bp_message_dispatch::MessagePayload<
 	Call,
 >;
 
+// type MessagePayloadData = bp_messages::MessagePayload;
+
 pub struct SolidityDeliveredHandler<T, I, T2>(PhantomData<(T, I, T2)>);
 
 impl<T: PalletBridgeMessagesConfig<I>, I: 'static, T2: DarwiniaEthereumConfig> OnDeliveryConfirmed for SolidityDeliveredHandler<T, I, T2> {
@@ -110,14 +112,24 @@ impl<T: PalletBridgeMessagesConfig<I>, I: 'static, T2: DarwiniaEthereumConfig> S
 
 	fn 	get_message_sender(lane: LaneId, nonce: MessageNonce) -> Option<H160> {
 		if let Some(data) = Pallet::<T, I>::outbound_message_data(lane, nonce) {
-			if let Ok(payload) = MessagePayload::<T, I>::decode(&mut &data.payload[..]) {
-				// TODO: SourceRoot, TargetAccount?
-				if let CallOrigin::SourceAccount(account_id) = payload.origin {
-					return Some(H160::from_slice(&account_id.encode()[11..31]));
-				}
-			}
+			return Self::get_origin_from_message_payload_data(data.payload);
 		}
 
+		return None;
+	}
+
+	pub fn get_origin_from_message_payload_data(payload_data: Vec<u8>) -> Option<H160> {
+		if let Ok(payload) = MessagePayload::<T, I>::decode(&mut &payload_data[..]) {
+			// TODO: SourceRoot?
+			let account_id = match payload.origin {
+				CallOrigin::SourceRoot => None,
+				CallOrigin::TargetAccount(account_id, _, _) => Some(account_id),
+				CallOrigin::SourceAccount(account_id) => Some(account_id),
+			};
+			if let Some(account_id) = account_id {
+				return Some(H160::from_slice(&account_id.encode()[11..31]));
+			}
+		}
 		return None;
 	}
 }
@@ -142,14 +154,14 @@ mod tests {
 	fn decode_message_payload_works() {
 		type MessagePayload = bp_message_dispatch::MessagePayload<
 			AccountId32,
-			AccountId32,
-			sp_runtime::MultiSignature,
+			(),
+			(),
 			Vec<u8>,
 		>;
 		let hex = "b06d000080d3309e000000000264766d3a000000000000002b9b61ce0c92db05304f6ba433f7c29a159aefb7e1005d0114026d6f646c64612f6272696e670000000000000000a08601000000000000000000000000000000000000000000000000000000000080d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d00d0ed902e0000000000000000000000";
-		let mut bytes  = &array_bytes::hex2array_unchecked::<&str, 151>(hex)[0..];
+		let bytes  = array_bytes::hex2array_unchecked::<&str, 151>(hex).to_vec();
 
-		let payload = MessagePayload::decode(&mut bytes).unwrap();
+		let payload = MessagePayload::decode(&mut &bytes[..]).unwrap();
 		if let CallOrigin::SourceAccount(account_id) = payload.origin {
 			let str: &[u8] = &account_id.encode()[11..31];
 			let h160 = H160::from_slice(str);
