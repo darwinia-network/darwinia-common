@@ -37,8 +37,8 @@ use sp_runtime::{
 // --- darwinia-network ---
 use crate::{self as s2s_backing, *};
 use darwinia_support::{
-	evm::{ConcatConverter, IntoAccountId, IntoH160},
-	s2s::RelayMessageSender,
+    evm::{ConcatConverter, IntoAccountId, DeriveEtheruemAddress},
+    s2s::RelayMessageSender,
 };
 
 type Block = MockBlock<Test>;
@@ -152,7 +152,7 @@ frame_support::parameter_types! {
 	pub const MockId: PalletId = PalletId(*b"da/s2sba");
 	pub RingMetadata: TokenMetadata = TokenMetadata::new(
 		0,
-		PalletId(*b"da/bring").into_h160(),
+		PalletId(*b"da/bring").derive_ethereum_address(),
 		b"Pangoro Network Native Token".to_vec(),
 		b"ORING".to_vec(),
 		9);

@@ -35,24 +35,54 @@ pub const SELECTOR: usize = 4;
 pub const TRANSFER_ADDR: &'static str = "0x0000000000000000000000000000000000000015";
 
 /// A trait for converting from `AccountId` to H160.
-pub trait IntoH160 {
-	fn into_h160(&self) -> H160;
+pub trait DeriveEtheruemAddress {
+	fn derive_ethereum_address(&self) -> H160;
 }
-impl IntoH160 for PalletId {
-	fn into_h160(&self) -> H160 {
+
+impl DeriveEtheruemAddress for &[u8] {
+	fn derive_ethereum_address(&self) -> H160 {
+		let mut account_id: [u8; 32] = Default::default();
+		let size = sp_std::cmp::min(self.len(), 32);
+		account_id[..size].copy_from_slice(&self[..size]);
+
+		if is_derived_substrate_address(&account_id) {
+			H160::from_slice(&account_id[11..31])
+		} else {
+			H160::from_slice(&account_id[0..20])
+		}
+	}
+}
+
+// https://github.com/darwinia-network/darwinia-common/issues/1231
+impl DeriveEtheruemAddress for AccountId32 {
+	fn derive_ethereum_address(&self) -> H160 {
+		let account_id: &[u8] = self.as_ref();
+		account_id.derive_ethereum_address()
+	}
+}
+
+impl DeriveEtheruemAddress for PalletId {
+	fn derive_ethereum_address(&self) -> H160 {
 		let account_id: AccountId32 = self.into_account();
-		let bytes: &[u8] = account_id.as_ref();
-		H160::from_slice(&bytes[0..20])
+		account_id.derive_ethereum_address()
 	}
 }
-impl IntoH160 for &[u8] {
-	fn into_h160(&self) -> H160 {
-		let mut address: [u8; 20] = Default::default();
-		let size = sp_std::cmp::min(self.len(), 20);
-		address[..size].copy_from_slice(&self[..size]);
-		H160::from_slice(&address[0..20])
-	}
+
+// "dvm:" + 0x00000000000000 + Ethereum_Address + checksum
+fn is_derived_substrate_address(account_id: &[u8; 32]) -> bool {
+	let mut account_id_prefix: [u8; 11] = Default::default();
+	account_id_prefix[0..4].copy_from_slice(b"dvm:");
+
+	// check prefix
+	let correct_prefix = &account_id[0..11] == account_id_prefix.as_slice();
+
+	// check checksum
+	let checksum: u8 = account_id[1..31].iter().fold(account_id[0], |sum, &byte| sum ^ byte);
+	let correct_checksum = account_id[31] == checksum;
+
+	correct_prefix && correct_checksum
 }
+
 /// A trait for converting from H160 to `AccountId`.
 pub trait IntoAccountId<AccountId> {
 	fn into_account_id(address: H160) -> AccountId;
@@ -133,10 +163,36 @@ fn test_into_dvm_account() {
 
 	assert_eq!(
 		H160::from_str("726f6f7400000000000000000000000000000000").unwrap(),
-		(&b"root"[..]).into_h160()
+		(&b"root"[..]).derive_ethereum_address()
 	);
 	assert_eq!(
-		(&b"longbytes..longbytes..longbytes..longbytes"[..]).into_h160(),
-		(&b"longbytes..longbytes"[..]).into_h160()
+		(&b"longbytes..longbytes..longbytes..longbytes"[..]).derive_ethereum_address(),
+		(&b"longbytes..longbytes"[..]).derive_ethereum_address()
+	);
+}
+
+#[test]
+fn test_derive_ethereum_address_from_dvm_account_id() {
+	use std::str::FromStr;
+
+	let account_id = AccountId32::from_str("0x64766d3a000000000000006be02d1d3665660d22ff9624b7be0551ee1ac91bd2").unwrap();
+	let derived_ethereum_address = account_id.derive_ethereum_address();
+
+	assert_eq!(
+		H160::from_str("6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b").unwrap(),
+		derived_ethereum_address
+	);
+}
+
+#[test]
+fn test_derive_ethereum_address_from_normal_account_id() {
+	use std::str::FromStr;
+
+	let account_id = AccountId32::from_str("0x02497755176da60a69586af4c5ea5f5de218eb84011677722646b602eb2d240e").unwrap();
+	let derived_ethereum_address = account_id.derive_ethereum_address();
+
+	assert_eq!(
+		H160::from_str("02497755176da60a69586af4c5ea5f5de218eb84").unwrap(),
+		derived_ethereum_address
 	);
 }

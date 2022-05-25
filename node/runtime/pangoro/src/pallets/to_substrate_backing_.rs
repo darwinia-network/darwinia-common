@@ -5,7 +5,7 @@ use crate::*;
 use bp_messages::LaneId;
 use bp_runtime::{ChainId, PANGOLIN_CHAIN_ID};
 use bridge_runtime_common::lanes::PANGORO_PANGOLIN_LANE;
-use darwinia_support::{evm::IntoH160, s2s::LatestMessageNoncer};
+use darwinia_support::{evm::DeriveEtheruemAddress, s2s::LatestMessageNoncer};
 use dp_asset::{TokenMetadata, NATIVE_TOKEN_TYPE};
 use to_substrate_backing::Config;
 
@@ -24,7 +24,7 @@ frame_support::parameter_types! {
 	pub const PangolinChainId: ChainId = PANGOLIN_CHAIN_ID;
 	pub RingMetadata: TokenMetadata = TokenMetadata::new(
 		NATIVE_TOKEN_TYPE,
-		PalletId(*b"da/bring").into_h160(),
+		PalletId(*b"da/bring").derive_ethereum_address(),
 		b"Pangoro Network Native Token".to_vec(),
 		b"ORING".to_vec(),
 		9);
