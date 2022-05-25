@@ -39,24 +39,30 @@ pub trait DeriveEtheruemAddress {
 	fn derive_ethereum_address(&self) -> H160;
 }
 
+// https://github.com/darwinia-network/darwinia-common/issues/1231
+impl DeriveEtheruemAddress for [u8; 32] {
+	fn derive_ethereum_address(&self) -> H160 {
+		if is_derived_substrate_address(&self) {
+			H160::from_slice(&self[11..31])
+		} else {
+			H160::from_slice(&self[0..20])
+		}
+	}
+}
+
 impl DeriveEtheruemAddress for &[u8] {
 	fn derive_ethereum_address(&self) -> H160 {
 		let mut account_id: [u8; 32] = Default::default();
 		let size = sp_std::cmp::min(self.len(), 32);
 		account_id[..size].copy_from_slice(&self[..size]);
 
-		if is_derived_substrate_address(&account_id) {
-			H160::from_slice(&account_id[11..31])
-		} else {
-			H160::from_slice(&account_id[0..20])
-		}
+		account_id.derive_ethereum_address()
 	}
 }
 
-// https://github.com/darwinia-network/darwinia-common/issues/1231
 impl DeriveEtheruemAddress for AccountId32 {
 	fn derive_ethereum_address(&self) -> H160 {
-		let account_id: &[u8] = self.as_ref();
+		let account_id: &[u8; 32] = self.as_ref();
 		account_id.derive_ethereum_address()
 	}
 }
@@ -70,17 +76,19 @@ impl DeriveEtheruemAddress for PalletId {
 
 // "dvm:" + 0x00000000000000 + Ethereum_Address + checksum
 fn is_derived_substrate_address(account_id: &[u8; 32]) -> bool {
-	let mut account_id_prefix: [u8; 11] = Default::default();
-	account_id_prefix[0..4].copy_from_slice(b"dvm:");
-
 	// check prefix
-	let correct_prefix = &account_id[0..11] == account_id_prefix.as_slice();
+	let mut account_id_prefix = [0u8; 11];
+	account_id_prefix[0..4].copy_from_slice(b"dvm:");
+	let correct_prefix = account_id[0..11] == account_id_prefix.as_slice();
 
 	// check checksum
-	let checksum: u8 = account_id[1..31].iter().fold(account_id[0], |sum, &byte| sum ^ byte);
-	let correct_checksum = account_id[31] == checksum;
+	let correct_checksum = account_id[31] == checksum_of(account_id);
 
 	correct_prefix && correct_checksum
+}
+
+fn checksum_of(account_id: &[u8; 32]) -> u8 {
+	account_id[1..31].iter().fold(account_id[0], |sum, &byte| sum ^ byte)
 }
 
 /// A trait for converting from H160 to `AccountId`.
@@ -104,10 +112,7 @@ where
 
 		raw_account[0..4].copy_from_slice(b"dvm:");
 		raw_account[11..31].copy_from_slice(&address[..]);
-
-		let checksum: u8 = raw_account[1..31].iter().fold(raw_account[0], |sum, &byte| sum ^ byte);
-
-		raw_account[31] = checksum;
+		raw_account[31] = checksum_of(&raw_account);
 
 		raw_account.into()
 	}
