@@ -49,7 +49,7 @@ enum Action {
 }
 
 const MAX_MULTI_STORAGEKEY_SIZE: usize = 32;
-const VERIFY_SINGLE_STORAGE_GAS: u64 = 50_000;
+const VERIFY_SINGLE_STORAGE_GAS: usize = 50_000;
 
 pub struct MPT<T> {
 	_marker: PhantomData<T>,
@@ -65,14 +65,14 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let mut helper = PrecompileHelper::<T>::new(input, target_gas);
+		let helper = PrecompileHelper::<T>::new(input, target_gas);
 		let (selector, data) = helper.split_input()?;
 		let action = Action::from_u32(selector)?;
 
 		// Check state modifiers
 		helper.check_state_modifier(context, is_static, StateMutability::View)?;
 
-		let multiplier: u64 = 1;
+		let mut multiplier: usize = 1;
 
 		let output = match action {
 			Action::VerfiySingleStorageProof => {
@@ -136,9 +136,12 @@ where
 			},
 		};
 
+		let cost: u64 = u64::try_from(multiplier * VERIFY_SINGLE_STORAGE_GAS)
+			.map_err(|_| helper.revert("convert usize error"))?;
+
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			cost: multiplier * VERIFY_SINGLE_STORAGE_GAS,
+			cost,
 			output,
 			logs: Default::default(),
 		})

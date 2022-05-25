@@ -6682,6 +6682,7 @@ dependencies = [
  "darwinia-evm",
  "darwinia-evm-precompile-bls12-381",
  "darwinia-evm-precompile-bridge-bsc",
+ "darwinia-evm-precompile-mpt",
  "darwinia-evm-precompile-state-storage",
  "darwinia-evm-precompile-transfer",
  "darwinia-staking",
