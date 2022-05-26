@@ -94,6 +94,7 @@ dependencies = [
 [[package]]
 name = "amcl"
 version = "0.3.0"
+source = "git+https://github.com/darwinia-network/milagro_bls#421aa3af8a0618a46144560389debbe7e56609db"
 
 [[package]]
 name = "ansi_term"
@@ -5195,6 +5196,7 @@ dependencies = [
 [[package]]
 name = "milagro_bls"
 version = "1.5.0"
+source = "git+https://github.com/darwinia-network/milagro_bls#421aa3af8a0618a46144560389debbe7e56609db"
 dependencies = [
  "amcl",
  "hex",

@@ -60,9 +60,6 @@ where
 
 		let output = match action {
 			Action::FastAggregateVerify => {
-				// Pure function (r:0 w:0)
-				// helper.record_gas(0, 0)?;
-
 				let params = FastAggregateVerifyParams::decode(data)
 					.map_err(|_| helper.revert("Invalid input"))?;
 
