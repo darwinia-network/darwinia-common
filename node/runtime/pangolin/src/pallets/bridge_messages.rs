@@ -71,6 +71,7 @@ impl Config<WithPangolinParachainMessages> for Runtime {
 	type MessageDispatch = bm_pangolin_parachain::FromPangolinParachainMessageDispatch;
 	type OnDeliveryConfirmed = (
 		Substrate2SubstrateIssuing,
+		ToPangolinParachainBacking,
 		FeeMarketMessageConfirmedHandler<Self, WithPangolinParachainFeeMarket>,
 	);
 	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangolinParachainFeeMarket>;

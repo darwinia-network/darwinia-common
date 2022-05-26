@@ -37,6 +37,7 @@ members = [
 	"frame/wormhole/backing/ethereum",
 	"frame/wormhole/backing/s2s",
 	"frame/wormhole/backing/tron",
+	"frame/wormhole/backing/parachain",
 	"frame/wormhole/issuing/ethereum",
 	"frame/wormhole/issuing/s2s",
 	"primitives/asset",

@@ -153,3 +153,6 @@ pub use transaction_pause::*;
 
 pub mod from_substrate_issuing_;
 pub use from_substrate_issuing_::*;
+
+pub mod to_parachain_backing_;
+pub use to_parachain_backing_::*;
