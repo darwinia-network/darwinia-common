@@ -42,7 +42,7 @@ pub trait DeriveEtheruemAddress {
 // https://github.com/darwinia-network/darwinia-common/issues/1231
 impl DeriveEtheruemAddress for [u8; 32] {
 	fn derive_ethereum_address(&self) -> H160 {
-		if is_derived_substrate_address(&self) {
+		if is_derived_substrate_address(self.clone()) {
 			H160::from_slice(&self[11..31])
 		} else {
 			H160::from_slice(&self[0..20])
@@ -75,14 +75,16 @@ impl DeriveEtheruemAddress for PalletId {
 }
 
 // "dvm:" + 0x00000000000000 + Ethereum_Address + checksum
-fn is_derived_substrate_address(account_id: &[u8; 32]) -> bool {
+pub fn is_derived_substrate_address<T>(account_id: T) -> bool where T: Into<[u8; 32]> {
+	let account_id: [u8; 32] = account_id.into();
+
 	// check prefix
 	let mut account_id_prefix = [0u8; 11];
 	account_id_prefix[0..4].copy_from_slice(b"dvm:");
-	let correct_prefix = account_id[0..11] == account_id_prefix.as_slice();
+	let correct_prefix = account_id[0..11] == account_id_prefix;
 
 	// check checksum
-	let correct_checksum = account_id[31] == checksum_of(account_id);
+	let correct_checksum = account_id[31] == checksum_of(&account_id);
 
 	correct_prefix && correct_checksum
 }
