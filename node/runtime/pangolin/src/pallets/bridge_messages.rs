@@ -74,7 +74,7 @@ impl Config<WithPangolinParachainMessages> for Runtime {
 		FeeMarketMessageConfirmedHandler<Self, WithPangolinParachainFeeMarket>,
 	);
 	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangolinParachainFeeMarket>;
-	type OutboundMessageFee = Balance;
+	type OutboundMessageFee = bp_pangolin::Balance;
 	type OutboundPayload = bm_pangolin_parachain::ToPangolinParachainMessagePayload;
 	type Parameter = bm_pangolin_parachain::PangolinToPangolinParachainParameter;
 	type SourceHeaderChain = bm_pangolin_parachain::PangolinParachain;

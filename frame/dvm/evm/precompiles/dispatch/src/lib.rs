@@ -24,7 +24,7 @@ use darwinia_evm::GasWeightMapping;
 use darwinia_evm_precompile_utils::PrecompileHelper;
 use darwinia_support::evm::IntoAccountId;
 // --- paritytech ---
-use codec::{Decode, Encode};
+use codec::Decode;
 use fp_evm::{
 	Context, ExitError, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
 	PrecompileResult,
@@ -52,12 +52,13 @@ where
 	) -> PrecompileResult {
 		let helper = PrecompileHelper::<T>::new(input, target_gas);
 
-		let call = T::Call::decode(&mut &input[..]).map_err(|_| helper.revert("decode failed"))?;
+		let call =
+			T::Call::decode(&mut &input[..]).map_err(|_| helper.revert("Decode call failed"))?;
 		let info = call.get_dispatch_info();
 
 		let valid_call = info.pays_fee == Pays::Yes && info.class == DispatchClass::Normal;
 		if !valid_call {
-			return Err(helper.revert("invalid call"));
+			return Err(helper.revert("Invalid call"));
 		}
 
 		if let Some(gas) = target_gas {
@@ -81,9 +82,7 @@ where
 					logs: Default::default(),
 				})
 			},
-			Err(e) => {
-				Err(helper.revert(&Encode::encode(&e.error)))
-			},
+			Err(e) => Err(helper.revert(e.error.into())),
 		}
 	}
 }

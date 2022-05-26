@@ -75,7 +75,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				// Ensure wkton is a contract
 				ensure!(
 					!<Pallet<T>>::is_contract_code_empty(&wkton),
-					helper.revert("Wkton must be a contract!")
+					helper.revert("WKTON addr error")
 				);
 
 				let caller_account_id =
@@ -104,7 +104,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 						ExitReason::Succeed(_) => {
 							log::debug!("Transfer and call execute success.");
 						},
-						_ => return Err(helper.revert("Call in Kton precompile failed")),
+						_ => return Err(helper.revert("Call contract failed")),
 					}
 				}
 
@@ -126,7 +126,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				// Ensure wkton is a contract
 				ensure!(
 					!<Pallet<T>>::is_contract_code_empty(&source),
-					helper.revert("The caller must be wkton contract")
+					helper.revert("The caller error")
 				);
 
 				let source = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(source);
@@ -170,7 +170,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 			state_mutability: StateMutability::NonPayable,
 		};
 		func.encode_input(&[Token::Address(eth_address), Token::Uint(eth_value)])
-			.map_err(|_| helper.revert("Make call data error happened"))
+			.map_err(|_| helper.revert("Construct call data failed"))
 	}
 }
 
@@ -186,7 +186,7 @@ impl CallData {
 		helper: &PrecompileHelper<T>,
 	) -> Result<Self, PrecompileFailure> {
 		let tokens = ethabi::decode(&[ParamType::Address, ParamType::Uint(256)], &data)
-			.map_err(|_| helper.revert("ethabi decoded error"))?;
+			.map_err(|_| helper.revert("Ethabi decode failed"))?;
 		match (tokens[0].clone(), tokens[1].clone()) {
 			(Token::Address(eth_wkton_address), Token::Uint(eth_value)) => Ok(CallData {
 				wkton_address: util::e2s_address(eth_wkton_address),
@@ -206,7 +206,7 @@ pub struct WithdrawData<T: darwinia_evm::Config> {
 impl<T: darwinia_evm::Config> WithdrawData<T> {
 	pub fn decode(data: &[u8], helper: &PrecompileHelper<T>) -> Result<Self, PrecompileFailure> {
 		let tokens = ethabi::decode(&[ParamType::FixedBytes(32), ParamType::Uint(256)], &data)
-			.map_err(|_| helper.revert("ethabi decoded error"))?;
+			.map_err(|_| helper.revert("Ethabi decode failed"))?;
 		match (tokens[0].clone(), tokens[1].clone()) {
 			(Token::FixedBytes(address), Token::Uint(eth_value)) => Ok(WithdrawData {
 				to_account_id: <T as frame_system::Config>::AccountId::decode(
