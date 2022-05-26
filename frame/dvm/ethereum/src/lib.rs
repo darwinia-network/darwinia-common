@@ -292,6 +292,24 @@ pub mod pallet {
 			);
 			Self::internal_transact(target, input)
 		}
+
+		/// Internal transaction dispatch call.
+		#[pallet::weight(10_000_000)]
+		pub fn substrate_transact(
+			origin: OriginFor<T>,
+			target: H160,
+			input: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let account_id = ensure_signed(origin)?;
+			let source = account_id.encode().as_slice().derive_ethereum_address();
+
+			// Disable transact functionality if PreLog exist.
+			ensure!(
+				fp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
+				Error::<T>::PreLogExists,
+			);
+			Self::internal_transact_with_source_account(source, target, input)
+		}
 	}
 
 	#[pallet::event]
@@ -906,17 +924,15 @@ impl<T: Config> Pallet<T> {
 /// The handler for interacting with The internal transaction.
 pub trait InternalTransactHandler {
 	/// Internal transaction call.
+	fn internal_transact_with_source_account(source: H160, target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo;
+	/// Internal transaction call.
 	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo;
 	/// Read-only call to deployed evm contracts.
 	fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError>;
 }
 
 impl<T: Config> InternalTransactHandler for Pallet<T> {
-	/// Execute transaction from other pallets(internal transaction)
-	/// NOTE: The difference between the rpc transaction and the internal transaction is that
-	/// The internal transactions will catch and throw evm error comes from runner to caller.
-	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
-		let source = T::PalletId::get().derive_ethereum_address();
+	fn internal_transact_with_source_account(source: H160, target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
 		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
 		let transaction = internal_transaction(nonce, target, input);
 
@@ -932,6 +948,14 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 			ExitReason::Revert(_) => Err(<Error<T>>::InternalTransactionRevertError.into()),
 			ExitReason::Fatal(_) => Err(<Error<T>>::InternalTransactionFatalError.into()),
 		})?
+	}
+
+	/// Execute transaction from other pallets(internal transaction)
+	/// NOTE: The difference between the rpc transaction and the internal transaction is that
+	/// The internal transactions will catch and throw evm error comes from runner to caller.
+	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
+		let source = T::PalletId::get().derive_ethereum_address();
+		Self::internal_transact_with_source_account(source, target, input)
 	}
 
 	/// Pure read-only call to contract, the sender is pallet dvm account.
