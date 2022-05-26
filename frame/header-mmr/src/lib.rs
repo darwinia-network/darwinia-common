@@ -105,10 +105,38 @@ pub mod pallet {
 	#[pallet::getter(fn peak_of)]
 	pub type Peaks<T: Config> = StorageMap<_, Identity, NodeIndex, T::Hash, OptionQuery>;
 
+	/// Migration step.
+	#[pallet::storage]
+	#[pallet::getter(fn migration_step)]
+	pub type MigrationStep<T> = StorageValue<_, u32, ValueQuery, DefaultMigrationStep>;
+	#[pallet::type_value]
+	pub fn DefaultMigrationStep() -> u32 {
+		500
+	}
+
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(_n: BlockNumberFor<T>) -> frame_support::weights::Weight {
+			let mut i = 0_u32;
+
+			for _ in
+				frame_support::migration::storage_iter::<u64>(b"DarwiniaHeaderMMR", b"Positions")
+					.drain()
+			{
+				i += 1;
+
+				if i == <MigrationStep<T>>::get() {
+					break;
+				}
+			}
+
+			frame_support::log::info!("Migrate {} MMR keys.", i);
+
+			T::DbWeight::get().reads_writes(i as _, i as _)
+		}
+
 		fn on_finalize(_: BlockNumberFor<T>) {
 			let parent_hash = <frame_system::Pallet<T>>::parent_hash();
 			let mut mmr = <Mmr<RuntimeStorage, T>>::new();
