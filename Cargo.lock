@@ -1752,6 +1752,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-evm-precompile-blake2b"
+version = "2.8.11"
+dependencies = [
+ "darwinia-evm",
+ "darwinia-evm-precompile-utils",
+ "dp-contract",
+ "ethabi",
+ "evm",
+ "fp-evm",
+ "frame-support",
+ "log",
+]
+
+[[package]]
 name = "darwinia-evm-precompile-bridge-bsc"
 version = "2.8.11"
 dependencies = [
@@ -6522,6 +6536,7 @@ dependencies = [
  "darwinia-claims",
  "darwinia-ethereum",
  "darwinia-evm",
+ "darwinia-evm-precompile-blake2b",
  "darwinia-evm-precompile-bridge-ethereum",
  "darwinia-evm-precompile-bridge-s2s",
  "darwinia-evm-precompile-dispatch",
