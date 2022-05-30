@@ -19,6 +19,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod call_params;
-mod solidity_delivered_handler;
 
 pub use call_params::{CallParams, CreatePayload};

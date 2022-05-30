@@ -50,8 +50,6 @@ type MessagePayload<T, I> = bp_message_dispatch::MessagePayload<
 	Call,
 >;
 
-// type MessagePayloadData = bp_messages::MessagePayload;
-
 pub struct SolidityDeliveredHandler<T, I, T2>(PhantomData<(T, I, T2)>);
 
 impl<T: PalletBridgeMessagesConfig<I>, I: 'static, T2: DarwiniaEthereumConfig> OnDeliveryConfirmed for SolidityDeliveredHandler<T, I, T2> {
@@ -127,6 +125,7 @@ impl<T: PalletBridgeMessagesConfig<I>, I: 'static, T2: DarwiniaEthereumConfig> S
 				CallOrigin::SourceAccount(account_id) => Some(account_id),
 			};
 			if let Some(account_id) = account_id {
+				// TODO: use derive_ethereum_address instead
 				return Some(H160::from_slice(&account_id.encode()[11..31]));
 			}
 		}

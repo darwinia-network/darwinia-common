@@ -22,7 +22,10 @@
 
 /// Implementations of some helper traits passed into runtime modules as associated types.
 pub mod impls;
+mod solidity_delivered_handler;
+
 pub use impls::*;
+pub use solidity_delivered_handler::SolidityDeliveredHandler;
 
 pub use frame_support::weights::constants::{ExtrinsicBaseWeight, RocksDbWeight};
 
