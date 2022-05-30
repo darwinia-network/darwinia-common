@@ -341,7 +341,7 @@ fn rebond_event_should_work() {
 
 #[test]
 fn withdraw_unbonded_should_work() {
-	ExtBuilder::default().nominate(false).existential_deposit(0).build().execute_with(|| {
+	ExtBuilder::default().existential_deposit(0).build().execute_with(|| {
 		let _ = Ring::make_free_balance_be(&100, 100);
 
 		Staking::bond(
