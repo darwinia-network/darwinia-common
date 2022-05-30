@@ -32,7 +32,6 @@ darwinia-evm-precompile-bridge-s2s      = { default-features = false, path = "..
 darwinia-evm-precompile-dispatch        = { default-features = false, path = "../../../frame/dvm/evm/precompiles/dispatch" }
 darwinia-evm-precompile-state-storage   = { default-features = false, path = "../../../frame/dvm/evm/precompiles/state-storage" }
 darwinia-evm-precompile-transfer        = { default-features = false, path = "../../../frame/dvm/evm/precompiles/transfer" }
-darwinia-evm-precompile-blake2b         = { default-features = false, path = "../../../frame/dvm/evm/precompiles/blake2b" }
 darwinia-header-mmr                     = { default-features = false, path = "../../../frame/header-mmr" }
 darwinia-relay-authorities              = { default-features = false, path = "../../../frame/bridge/relay-authorities" }
 darwinia-relay-primitives               = { default-features = false, path = "../../../primitives/relay" }

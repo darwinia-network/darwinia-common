@@ -26,7 +26,6 @@ members = [
 	"frame/dvm/evm/precompiles/state-storage",
 	"frame/dvm/evm/precompiles/transfer",
 	"frame/dvm/evm/precompiles/utils",
-	"frame/dvm/evm/precompiles/blake2b",
 	"frame/header-mmr",
 	"frame/header-mmr/rpc",
 	"frame/header-mmr/rpc/runtime-api",

@@ -924,7 +924,11 @@ impl<T: Config> Pallet<T> {
 /// The handler for interacting with The internal transaction.
 pub trait InternalTransactHandler {
 	/// Internal transaction call.
-	fn internal_transact_with_source_account(source: H160, target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo;
+	fn internal_transact_with_source_account(
+		source: H160,
+		target: H160,
+		input: Vec<u8>,
+	) -> DispatchResultWithPostInfo;
 	/// Internal transaction call.
 	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo;
 	/// Read-only call to deployed evm contracts.
@@ -932,7 +936,11 @@ pub trait InternalTransactHandler {
 }
 
 impl<T: Config> InternalTransactHandler for Pallet<T> {
-	fn internal_transact_with_source_account(source: H160, target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
+	fn internal_transact_with_source_account(
+		source: H160,
+		target: H160,
+		input: Vec<u8>,
+	) -> DispatchResultWithPostInfo {
 		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
 		let transaction = internal_transaction(nonce, target, input);
 

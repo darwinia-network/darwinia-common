@@ -75,7 +75,10 @@ impl DeriveEtheruemAddress for PalletId {
 }
 
 // "dvm:" + 0x00000000000000 + Ethereum_Address + checksum
-pub fn is_derived_substrate_address<T>(account_id: T) -> bool where T: Into<[u8; 32]> {
+pub fn is_derived_substrate_address<T>(account_id: T) -> bool
+where
+	T: Into<[u8; 32]>,
+{
 	let account_id: [u8; 32] = account_id.into();
 
 	// check prefix
@@ -182,7 +185,9 @@ fn test_into_dvm_account() {
 fn test_derive_ethereum_address_from_dvm_account_id() {
 	use std::str::FromStr;
 
-	let account_id = AccountId32::from_str("0x64766d3a000000000000006be02d1d3665660d22ff9624b7be0551ee1ac91bd2").unwrap();
+	let account_id =
+		AccountId32::from_str("0x64766d3a000000000000006be02d1d3665660d22ff9624b7be0551ee1ac91bd2")
+			.unwrap();
 	let derived_ethereum_address = account_id.derive_ethereum_address();
 
 	assert_eq!(
@@ -195,7 +200,9 @@ fn test_derive_ethereum_address_from_dvm_account_id() {
 fn test_derive_ethereum_address_from_normal_account_id() {
 	use std::str::FromStr;
 
-	let account_id = AccountId32::from_str("0x02497755176da60a69586af4c5ea5f5de218eb84011677722646b602eb2d240e").unwrap();
+	let account_id =
+		AccountId32::from_str("0x02497755176da60a69586af4c5ea5f5de218eb84011677722646b602eb2d240e")
+			.unwrap();
 	let derived_ethereum_address = account_id.derive_ethereum_address();
 
 	assert_eq!(
