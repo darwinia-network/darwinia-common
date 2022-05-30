@@ -338,3 +338,26 @@ fn rebond_event_should_work() {
 		System::assert_has_event(Event::RingBonded(11, 200, 36000, 36000).into());
 	});
 }
+
+#[test]
+fn withdraw_unbonded_should_work() {
+	ExtBuilder::default().nominate(false).existential_deposit(0).build().execute_with(|| {
+		let _ = Ring::make_free_balance_be(&100, 100);
+
+		Staking::bond(
+			Origin::signed(100),
+			100,
+			StakingBalance::RingBalance(100),
+			RewardDestination::Stash,
+			0,
+		)
+		.unwrap();
+		Staking::unbond(Origin::signed(100), StakingBalance::RingBalance(100)).unwrap();
+
+		run_to_block(60);
+		assert_ok!(Staking::withdraw_unbonded(Origin::signed(100), 0));
+		// Reaped.
+		assert!(Staking::ledger(&100).is_none());
+		assert!(Ring::locks(&100).is_empty());
+	});
+}
