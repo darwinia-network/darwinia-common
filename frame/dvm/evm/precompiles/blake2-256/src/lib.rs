@@ -18,8 +18,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-extern crate core;
-
 // --- core ---
 use core::marker::PhantomData;
 // --- crates.io ---
