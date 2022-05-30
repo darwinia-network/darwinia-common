@@ -342,22 +342,22 @@ fn rebond_event_should_work() {
 #[test]
 fn withdraw_unbonded_should_work() {
 	ExtBuilder::default().existential_deposit(0).build().execute_with(|| {
-		let _ = Ring::make_free_balance_be(&100, 100);
+		let _ = Ring::make_free_balance_be(&67, 100);
 
-		Staking::bond(
-			Origin::signed(100),
-			100,
+		assert_ok!(Staking::bond(
+			Origin::signed(67),
+			67,
 			StakingBalance::RingBalance(100),
 			RewardDestination::Stash,
 			0,
-		)
-		.unwrap();
-		Staking::unbond(Origin::signed(100), StakingBalance::RingBalance(100)).unwrap();
+		));
+		assert_ok!(Staking::unbond(Origin::signed(67), StakingBalance::RingBalance(100)));
 
-		run_to_block(60);
-		assert_ok!(Staking::withdraw_unbonded(Origin::signed(100), 0));
+		run_to_block(16);
+
+		assert_ok!(Staking::withdraw_unbonded(Origin::signed(67), 0));
 		// Reaped.
-		assert!(Staking::ledger(&100).is_none());
-		assert!(Ring::locks(&100).is_empty());
+		assert!(Staking::ledger(&67).is_none());
+		assert!(Ring::locks(&67).is_empty());
 	});
 }
