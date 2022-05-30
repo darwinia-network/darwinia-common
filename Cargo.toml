@@ -19,6 +19,7 @@ members = [
 	"frame/claims",
 	"frame/dvm/ethereum",
 	"frame/dvm/evm",
+	"frame/dvm/evm/precompiles/blake2_256",
 	"frame/dvm/evm/precompiles/bridge/bsc",
 	"frame/dvm/evm/precompiles/bridge/ethereum",
 	"frame/dvm/evm/precompiles/bridge/s2s",

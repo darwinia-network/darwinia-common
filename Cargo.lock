@@ -1752,6 +1752,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-evm-precompile-blake2_256"
+version = "2.8.11"
+dependencies = [
+ "darwinia-evm",
+ "darwinia-evm-precompile-utils",
+ "darwinia-support",
+ "ethabi",
+ "evm",
+ "fp-evm",
+ "frame-support",
+ "parity-scale-codec 2.3.1",
+ "sp-core",
+ "sp-io",
+]
+
+[[package]]
 name = "darwinia-evm-precompile-bridge-bsc"
 version = "2.8.11"
 dependencies = [
