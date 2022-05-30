@@ -38,11 +38,11 @@ enum Action {
 	Blake2_256 = "blake2_256(bytes)",
 }
 
-pub struct Blake2b<T> {
+pub struct Blake2_256<T> {
 	_marker: PhantomData<T>,
 }
 
-impl<T> Precompile for Blake2b<T>
+impl<T> Precompile for Blake2_256<T>
 where
 	T: darwinia_evm::Config,
 {
