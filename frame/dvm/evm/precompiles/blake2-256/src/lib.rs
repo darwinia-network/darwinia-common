@@ -22,9 +22,9 @@ extern crate core;
 
 // --- core ---
 use core::marker::PhantomData;
-use evm::ExitRevert;
 // --- crates.io ---
 use ethabi::{ParamType, StateMutability, Token};
+use evm::ExitRevert;
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::PrecompileHelper;
 // --- paritytech ---
