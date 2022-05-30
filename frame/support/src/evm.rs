@@ -25,6 +25,7 @@ use ethereum_primitives::{H160, H256, U256};
 use frame_support::PalletId;
 use sp_runtime::{traits::AccountIdConversion, AccountId32};
 use sp_std::marker::PhantomData;
+use sp_std::vec::Vec;
 
 pub const POW_9: u32 = 1_000_000_000;
 /// The default gas limit for the internal transaction
@@ -57,6 +58,12 @@ impl DeriveEtheruemAddress for &[u8] {
 		account_id[..size].copy_from_slice(&self[..size]);
 
 		account_id.derive_ethereum_address()
+	}
+}
+
+impl DeriveEtheruemAddress for Vec<u8> {
+	fn derive_ethereum_address(&self) -> H160 {
+		self.as_slice().derive_ethereum_address()
 	}
 }
 

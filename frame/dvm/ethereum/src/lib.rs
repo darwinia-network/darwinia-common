@@ -301,7 +301,7 @@ pub mod pallet {
 			input: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let account_id = ensure_signed(origin)?;
-			let source = account_id.encode().as_slice().derive_ethereum_address();
+			let source = account_id.encode().derive_ethereum_address();
 
 			// Disable transact functionality if PreLog exist.
 			ensure!(
