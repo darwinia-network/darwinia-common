@@ -190,7 +190,7 @@ std = [
 	"frame-executive/std",
 	"frame-support/std",
 	"frame-system/std",
-	"frame-system-benchmarking/std",
+	"frame-system-benchmarking?/std",
 	"frame-system-rpc-runtime-api/std",
 	"frame-try-runtime/std",
 	"pallet-authority-discovery/std",
