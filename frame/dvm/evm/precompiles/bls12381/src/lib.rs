@@ -65,7 +65,7 @@ where
 
 				let sig = Signature::from_bytes(&params.signature);
 				if sig.is_err() {
-					return Err(helper.revert("Invalid pubkeys"));
+					return Err(helper.revert("Invalid signature"));
 				}
 
 				let agg_sig = AggregateSignature::from_signature(&sig.unwrap());
@@ -78,7 +78,7 @@ where
 
 				let agg_pub_key_res = AggregatePublicKey::into_aggregate(&public_keys_res.unwrap());
 				if agg_pub_key_res.is_err() {
-					return Err(helper.revert("Invalid pubkeys"));
+					return Err(helper.revert("Invalid aggregate"));
 				}
 
 				agg_sig.fast_aggregate_verify_pre_aggregated(
