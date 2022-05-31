@@ -100,7 +100,7 @@ where
 	}
 
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 9, 21, 23, 24, 25, 26].into_iter().map(|x| addr(x)).collect()
+		sp_std::vec![1, 2, 3, 4, 9, 21, 23, 24, 25, 27].into_iter().map(|x| addr(x)).collect()
 	}
 }
 
@@ -140,7 +140,7 @@ where
 			>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(25) =>
 				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(26) => Some(<StateStorage<R, StorageFilter>>::execute(
+			a if a == addr(27) => Some(<StateStorage<R, StorageFilter>>::execute(
 				input, target_gas, context, is_static,
 			)),
 			_ => None,
