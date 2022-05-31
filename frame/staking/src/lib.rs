@@ -1237,6 +1237,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::unbond())]
 		pub fn unbond(origin: OriginFor<T>, value: StakingBalanceT<T>) -> DispatchResult {
 			let controller = ensure_signed(origin)?;
+			// TODO: Simplify the unbond logic, do not clear the mature deposit here.
 			let mut ledger = Self::clear_mature_deposits(
 				Self::ledger(&controller).ok_or(<Error<T>>::NotController)?,
 			)
