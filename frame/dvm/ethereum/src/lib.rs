@@ -70,7 +70,7 @@ use sp_runtime::{
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use darwinia_evm::{AccountBasic, BlockHashMapping, GasWeightMapping, Runner};
-use darwinia_support::evm::{recover_signer, DeriveEtheruemAddress, INTERNAL_TX_GAS_LIMIT};
+use darwinia_support::evm::{recover_signer, DeriveEthAddress, INTERNAL_TX_GAS_LIMIT};
 
 /// A type alias for the balance type from this pallet's point of view.
 type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -301,7 +301,7 @@ pub mod pallet {
 			input: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let account_id = ensure_signed(origin)?;
-			let source = account_id.encode().derive_ethereum_address();
+			let source = account_id.encode().derive_eth_address();
 
 			// Disable transact functionality if PreLog exist.
 			ensure!(
@@ -962,7 +962,7 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 	/// NOTE: The difference between the rpc transaction and the internal transaction is that
 	/// The internal transactions will catch and throw evm error comes from runner to caller.
 	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
-		let source = T::PalletId::get().derive_ethereum_address();
+		let source = T::PalletId::get().derive_eth_address();
 		Self::internal_transact_with_source_account(source, target, input)
 	}
 
@@ -970,7 +970,7 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 	/// NOTE: You should never use raw call for any non-read-only operation, be carefully.
 	fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
 		sp_io::storage::start_transaction();
-		let source = T::PalletId::get().derive_ethereum_address();
+		let source = T::PalletId::get().derive_eth_address();
 		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
 		let transaction = internal_transaction(nonce, contract, input);
 

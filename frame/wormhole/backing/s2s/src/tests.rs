@@ -37,7 +37,7 @@ use sp_runtime::{
 // --- darwinia-network ---
 use crate::{self as s2s_backing, *};
 use darwinia_support::{
-	evm::{ConcatConverter, DeriveEtheruemAddress, IntoAccountId},
+	evm::{ConcatConverter, DeriveEthAddress, IntoAccountId},
 	s2s::RelayMessageSender,
 };
 
@@ -152,7 +152,7 @@ frame_support::parameter_types! {
 	pub const MockId: PalletId = PalletId(*b"da/s2sba");
 	pub RingMetadata: TokenMetadata = TokenMetadata::new(
 		0,
-		PalletId(*b"da/bring").derive_ethereum_address(),
+		PalletId(*b"da/bring").derive_eth_address(),
 		b"Pangoro Network Native Token".to_vec(),
 		b"ORING".to_vec(),
 		9);

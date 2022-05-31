@@ -24,8 +24,7 @@ use ethereum_primitives::{H160, H256, U256};
 // --- paritytech ---
 use frame_support::PalletId;
 use sp_runtime::{traits::AccountIdConversion, AccountId32};
-use sp_std::marker::PhantomData;
-use sp_std::vec::Vec;
+use sp_std::{marker::PhantomData, vec::Vec};
 
 pub const POW_9: u32 = 1_000_000_000;
 /// The default gas limit for the internal transaction
@@ -35,14 +34,13 @@ pub const SELECTOR: usize = 4;
 /// The transfer pre-compile address, also as the sender in the when KTON transfer to WKTON.
 pub const TRANSFER_ADDR: &'static str = "0x0000000000000000000000000000000000000015";
 
-/// A trait for converting from `AccountId` to H160.
-pub trait DeriveEtheruemAddress {
-	fn derive_ethereum_address(&self) -> H160;
+/// A trait for converting from Substrate account_id to Ethereum address.
+pub trait DeriveEthAddress {
+	fn derive_eth_address(&self) -> H160;
 }
 
-// https://github.com/darwinia-network/darwinia-common/issues/1231
-impl DeriveEtheruemAddress for [u8; 32] {
-	fn derive_ethereum_address(&self) -> H160 {
+impl DeriveEthAddress for [u8; 32] {
+	fn derive_eth_address(&self) -> H160 {
 		if is_derived_substrate_address(self.clone()) {
 			H160::from_slice(&self[11..31])
 		} else {
@@ -51,33 +49,33 @@ impl DeriveEtheruemAddress for [u8; 32] {
 	}
 }
 
-impl DeriveEtheruemAddress for &[u8] {
-	fn derive_ethereum_address(&self) -> H160 {
+impl DeriveEthAddress for &[u8] {
+	fn derive_eth_address(&self) -> H160 {
 		let mut account_id: [u8; 32] = Default::default();
 		let size = sp_std::cmp::min(self.len(), 32);
 		account_id[..size].copy_from_slice(&self[..size]);
 
-		account_id.derive_ethereum_address()
+		account_id.derive_eth_address()
 	}
 }
 
-impl DeriveEtheruemAddress for Vec<u8> {
-	fn derive_ethereum_address(&self) -> H160 {
-		self.as_slice().derive_ethereum_address()
+impl DeriveEthAddress for Vec<u8> {
+	fn derive_eth_address(&self) -> H160 {
+		self.as_slice().derive_eth_address()
 	}
 }
 
-impl DeriveEtheruemAddress for AccountId32 {
-	fn derive_ethereum_address(&self) -> H160 {
+impl DeriveEthAddress for AccountId32 {
+	fn derive_eth_address(&self) -> H160 {
 		let account_id: &[u8; 32] = self.as_ref();
-		account_id.derive_ethereum_address()
+		account_id.derive_eth_address()
 	}
 }
 
-impl DeriveEtheruemAddress for PalletId {
-	fn derive_ethereum_address(&self) -> H160 {
+impl DeriveEthAddress for PalletId {
+	fn derive_eth_address(&self) -> H160 {
 		let account_id: AccountId32 = self.into_account();
-		account_id.derive_ethereum_address()
+		account_id.derive_eth_address()
 	}
 }
 
@@ -180,11 +178,11 @@ fn test_into_dvm_account() {
 
 	assert_eq!(
 		H160::from_str("726f6f7400000000000000000000000000000000").unwrap(),
-		(&b"root"[..]).derive_ethereum_address()
+		(&b"root"[..]).derive_eth_address()
 	);
 	assert_eq!(
-		(&b"longbytes..longbytes..longbytes..longbytes"[..]).derive_ethereum_address(),
-		(&b"longbytes..longbytes"[..]).derive_ethereum_address()
+		(&b"longbytes..longbytes..longbytes..longbytes"[..]).derive_eth_address(),
+		(&b"longbytes..longbytes"[..]).derive_eth_address()
 	);
 }
 
@@ -195,7 +193,7 @@ fn test_derive_ethereum_address_from_dvm_account_id() {
 	let account_id =
 		AccountId32::from_str("0x64766d3a000000000000006be02d1d3665660d22ff9624b7be0551ee1ac91bd2")
 			.unwrap();
-	let derived_ethereum_address = account_id.derive_ethereum_address();
+	let derived_ethereum_address = account_id.derive_eth_address();
 
 	assert_eq!(
 		H160::from_str("6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b").unwrap(),
@@ -210,7 +208,7 @@ fn test_derive_ethereum_address_from_normal_account_id() {
 	let account_id =
 		AccountId32::from_str("0x02497755176da60a69586af4c5ea5f5de218eb84011677722646b602eb2d240e")
 			.unwrap();
-	let derived_ethereum_address = account_id.derive_ethereum_address();
+	let derived_ethereum_address = account_id.derive_eth_address();
 
 	assert_eq!(
 		H160::from_str("02497755176da60a69586af4c5ea5f5de218eb84").unwrap(),
