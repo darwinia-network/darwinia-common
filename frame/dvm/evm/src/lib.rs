@@ -55,7 +55,7 @@ use sp_core::{H160, H256, U256};
 use sp_runtime::traits::{BadOrigin, UniqueSaturatedInto};
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
-use darwinia_support::evm::IntoAccountId;
+use darwinia_support::evm::DeriveSubAddress;
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 
@@ -87,7 +87,7 @@ pub mod pallet {
 		type ChainId: Get<u64>;
 
 		/// Convert from H160 to account id.
-		type IntoAccountId: IntoAccountId<Self::AccountId>;
+		type DeriveSubAddress: DeriveSubAddress<Self::AccountId>;
 		/// Block number to block hash.
 		type BlockHashMapping: BlockHashMapping;
 		/// Find author for the current block.
@@ -176,7 +176,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			for (address, account) in &self.accounts {
-				let account_id = T::IntoAccountId::into_account_id(*address);
+				let account_id = T::DeriveSubAddress::derive_sub_address(*address);
 
 				// ASSUME: in one single EVM transaction, the nonce will not increase more than
 				// `u128::max_value()`.
@@ -340,7 +340,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn remove_account(address: &H160) {
 			if AccountCodes::<T>::contains_key(address) {
-				let account_id = T::IntoAccountId::into_account_id(*address);
+				let account_id = T::DeriveSubAddress::derive_sub_address(*address);
 				let _ = frame_system::Pallet::<T>::dec_sufficients(&account_id);
 			}
 
@@ -355,7 +355,7 @@ pub mod pallet {
 			}
 
 			if !AccountCodes::<T>::contains_key(&address) {
-				let account_id = T::IntoAccountId::into_account_id(address);
+				let account_id = T::DeriveSubAddress::derive_sub_address(address);
 				let _ = frame_system::Pallet::<T>::inc_sufficients(&account_id);
 			}
 

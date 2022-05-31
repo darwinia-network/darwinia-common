@@ -39,6 +39,11 @@ pub trait DeriveEthAddress {
 	fn derive_eth_address(&self) -> H160;
 }
 
+/// A trait for converting from Ethereum address to Substrate account_id.
+pub trait DeriveSubAddress<AccountId> {
+	fn derive_sub_address(address: H160) -> AccountId;
+}
+
 impl DeriveEthAddress for [u8; 32] {
 	fn derive_eth_address(&self) -> H160 {
 		if is_derived_substrate_address(self.clone()) {
@@ -101,11 +106,6 @@ fn checksum_of(account_id: &[u8; 32]) -> u8 {
 	account_id[1..31].iter().fold(account_id[0], |sum, &byte| sum ^ byte)
 }
 
-/// A trait for converting from H160 to `AccountId`.
-pub trait IntoAccountId<AccountId> {
-	fn into_account_id(address: H160) -> AccountId;
-}
-
 /// Darwinia network address mapping.
 pub struct ConcatConverter<AccountId>(PhantomData<AccountId>);
 /// The ConcatConverter used for transfer from evm 20-length to substrate 32-length address
@@ -113,11 +113,11 @@ pub struct ConcatConverter<AccountId>(PhantomData<AccountId>);
 /// 1. AccountId Prefix: concat("dvm", "0x00000000000000"), length: 11 byetes
 /// 2. EVM address: the original evm address, length: 20 bytes
 /// 3. CheckSum:  byte_xor(AccountId Prefix + EVM address), length: 1 bytes
-impl<AccountId> IntoAccountId<AccountId> for ConcatConverter<AccountId>
+impl<AccountId> DeriveSubAddress<AccountId> for ConcatConverter<AccountId>
 where
 	AccountId: From<[u8; 32]>,
 {
-	fn into_account_id(address: H160) -> AccountId {
+	fn derive_sub_address(address: H160) -> AccountId {
 		let mut raw_account = [0u8; 32];
 
 		raw_account[0..4].copy_from_slice(b"dvm:");
@@ -166,52 +166,59 @@ pub fn decimal_convert(main_balance: u128, remaining_balance: Option<u128>) -> U
 	U256::from(main_balance).saturating_mul(U256::from(POW_9))
 }
 
-#[test]
-fn const_pow_9_should_work() {
-	assert_eq!(U256::from(10).checked_pow(9.into()).unwrap(), POW_9.into())
-}
+#[cfg(test)]
+mod tests {
+	use super::*;
+	
+	#[test]
+	fn const_pow_9_should_work() {
+		assert_eq!(U256::from(10).checked_pow(9.into()).unwrap(), POW_9.into())
+	}
 
-#[test]
-fn test_into_dvm_account() {
-	// --- std ---
-	use std::str::FromStr;
+	#[test]
+	fn test_into_dvm_account() {
+		// --- std ---
+		use std::str::FromStr;
 
-	assert_eq!(
-		H160::from_str("726f6f7400000000000000000000000000000000").unwrap(),
-		(&b"root"[..]).derive_eth_address()
-	);
-	assert_eq!(
-		(&b"longbytes..longbytes..longbytes..longbytes"[..]).derive_eth_address(),
-		(&b"longbytes..longbytes"[..]).derive_eth_address()
-	);
-}
+		assert_eq!(
+			H160::from_str("726f6f7400000000000000000000000000000000").unwrap(),
+			(&b"root"[..]).derive_eth_address()
+		);
+		assert_eq!(
+			(&b"longbytes..longbytes..longbytes..longbytes"[..]).derive_eth_address(),
+			(&b"longbytes..longbytes"[..]).derive_eth_address()
+		);
+	}
 
-#[test]
-fn test_derive_ethereum_address_from_dvm_account_id() {
-	use std::str::FromStr;
+	#[test]
+	fn test_derive_ethereum_address_from_dvm_account_id() {
+		use std::str::FromStr;
 
-	let account_id =
-		AccountId32::from_str("0x64766d3a000000000000006be02d1d3665660d22ff9624b7be0551ee1ac91bd2")
-			.unwrap();
-	let derived_ethereum_address = account_id.derive_eth_address();
+		let account_id = AccountId32::from_str(
+			"0x64766d3a000000000000006be02d1d3665660d22ff9624b7be0551ee1ac91bd2",
+		)
+		.unwrap();
+		let derived_ethereum_address = account_id.derive_eth_address();
 
-	assert_eq!(
-		H160::from_str("6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b").unwrap(),
-		derived_ethereum_address
-	);
-}
+		assert_eq!(
+			H160::from_str("6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b").unwrap(),
+			derived_ethereum_address
+		);
+	}
 
-#[test]
-fn test_derive_ethereum_address_from_normal_account_id() {
-	use std::str::FromStr;
+	#[test]
+	fn test_derive_ethereum_address_from_normal_account_id() {
+		use std::str::FromStr;
 
-	let account_id =
-		AccountId32::from_str("0x02497755176da60a69586af4c5ea5f5de218eb84011677722646b602eb2d240e")
-			.unwrap();
-	let derived_ethereum_address = account_id.derive_eth_address();
+		let account_id = AccountId32::from_str(
+			"0x02497755176da60a69586af4c5ea5f5de218eb84011677722646b602eb2d240e",
+		)
+		.unwrap();
+		let derived_ethereum_address = account_id.derive_eth_address();
 
-	assert_eq!(
-		H160::from_str("02497755176da60a69586af4c5ea5f5de218eb84").unwrap(),
-		derived_ethereum_address
-	);
+		assert_eq!(
+			H160::from_str("02497755176da60a69586af4c5ea5f5de218eb84").unwrap(),
+			derived_ethereum_address
+		);
+	}
 }

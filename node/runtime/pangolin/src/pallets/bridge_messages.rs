@@ -6,7 +6,7 @@ pub use pallet_bridge_messages::{
 use crate::*;
 use bp_messages::MessageNonce;
 use bp_runtime::{ChainId, PANGOLIN_PARACHAIN_CHAIN_ID, PANGORO_CHAIN_ID};
-use darwinia_support::evm::{ConcatConverter, DeriveEthAddress, IntoAccountId};
+use darwinia_support::evm::{ConcatConverter, DeriveEthAddress, DeriveSubAddress};
 use pallet_bridge_messages::Config;
 use pallet_fee_market::s2s::{
 	FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler, FeeMarketPayment,
@@ -15,7 +15,7 @@ use pallet_fee_market::s2s::{
 frame_support::parameter_types! {
 	// Shared configurations.
 	pub const MaxMessagesToPruneAtOnce: MessageNonce = 8;
-	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::into_account_id((&b"root"[..]).derive_eth_address()));
+	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::derive_sub_address((&b"root"[..]).derive_eth_address()));
 	// Pangoro configurations.
 	pub const PangoroMaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =
 		bp_pangoro::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;

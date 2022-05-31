@@ -31,7 +31,7 @@ use sp_std::{borrow::ToOwned, prelude::*, vec::Vec};
 use crate::util;
 use darwinia_evm::{runner::Runner, AccountBasic, AccountId, Pallet};
 use darwinia_evm_precompile_utils::PrecompileHelper;
-use darwinia_support::evm::{IntoAccountId, TRANSFER_ADDR};
+use darwinia_support::evm::{DeriveSubAddress, TRANSFER_ADDR};
 
 #[darwinia_evm_precompile_utils::selector]
 #[derive(Eq, PartialEq)]
@@ -79,9 +79,9 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				);
 
 				let caller_account_id =
-					<T as darwinia_evm::Config>::IntoAccountId::into_account_id(caller);
+					<T as darwinia_evm::Config>::DeriveSubAddress::derive_sub_address(caller);
 				let wkton_account_id =
-					<T as darwinia_evm::Config>::IntoAccountId::into_account_id(wkton);
+					<T as darwinia_evm::Config>::DeriveSubAddress::derive_sub_address(wkton);
 				// Transfer kton from sender to KTON wrapped contract
 				T::KtonAccountBasic::transfer(&caller_account_id, &wkton_account_id, value)
 					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
@@ -129,7 +129,8 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 					helper.revert("The caller error")
 				);
 
-				let source = <T as darwinia_evm::Config>::IntoAccountId::into_account_id(source);
+				let source =
+					<T as darwinia_evm::Config>::DeriveSubAddress::derive_sub_address(source);
 				T::KtonAccountBasic::transfer(&source, &to, value)
 					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 

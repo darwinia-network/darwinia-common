@@ -124,11 +124,11 @@ impl Config for Runtime {
 	type BlockHashMapping = EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type ChainId = ChainId;
+	type DeriveSubAddress = ConcatConverter<Self::AccountId>;
 	type Event = Event;
 	type FeeCalculator = FixedGasPrice;
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type GasWeightMapping = FixedGasWeightMapping;
-	type IntoAccountId = ConcatConverter<Self::AccountId>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<FindAccountFromAuthorIndex<Self, Babe>>;
 	type PrecompilesType = PangoroPrecompiles<Self>;

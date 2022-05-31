@@ -44,7 +44,7 @@ use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::{self as darwinia_ethereum, account_basic::*, *};
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
-use darwinia_support::evm::IntoAccountId;
+use darwinia_support::evm::DeriveSubAddress;
 
 type Block = MockBlock<Test>;
 pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
@@ -144,8 +144,8 @@ impl FindAuthor<H160> for FindAuthorTruncated {
 	}
 }
 pub struct HashedConverter;
-impl IntoAccountId<AccountId32> for HashedConverter {
-	fn into_account_id(address: H160) -> AccountId32 {
+impl DeriveSubAddress<AccountId32> for HashedConverter {
+	fn derive_sub_address(address: H160) -> AccountId32 {
 		let mut raw_account = [0u8; 32];
 		raw_account[0..20].copy_from_slice(&address[..]);
 		raw_account.into()
@@ -211,11 +211,11 @@ impl darwinia_evm::Config for Test {
 	type BlockHashMapping = EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type ChainId = ChainId;
+	type DeriveSubAddress = HashedConverter;
 	type Event = Event;
 	type FeeCalculator = FixedGasPrice;
 	type FindAuthor = FindAuthorTruncated;
 	type GasWeightMapping = ();
-	type IntoAccountId = HashedConverter;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
 	type PrecompilesType = MockPrecompiles<Self>;
