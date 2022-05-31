@@ -292,8 +292,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 			let factory = MappingFactoryAddress::<T>::get();
-			let factory_id =
-				<T as darwinia_evm::Config>::IntoAccountId::derive_account_id(factory);
+			let factory_id = <T as darwinia_evm::Config>::IntoAccountId::derive_account_id(factory);
 			ensure!(factory_id == caller, <Error<T>>::NoAuthority);
 			let register_info =
 				TokenRegisterInfo::decode(&input).map_err(|_| Error::<T>::InvalidInputData)?;
@@ -313,8 +312,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 			let factory = MappingFactoryAddress::<T>::get();
-			let factory_id =
-				<T as darwinia_evm::Config>::IntoAccountId::derive_account_id(factory);
+			let factory_id = <T as darwinia_evm::Config>::IntoAccountId::derive_account_id(factory);
 			ensure!(factory_id == caller, <Error<T>>::NoAuthority);
 			let burn_info =
 				E2dRemoteUnlockInfo::decode(&input).map_err(|_| Error::<T>::InvalidInputData)?;

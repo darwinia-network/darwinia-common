@@ -129,8 +129,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 					helper.revert("The caller error")
 				);
 
-				let source =
-					<T as darwinia_evm::Config>::IntoAccountId::derive_account_id(source);
+				let source = <T as darwinia_evm::Config>::IntoAccountId::derive_account_id(source);
 				T::KtonAccountBasic::transfer(&source, &to, value)
 					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 

@@ -192,11 +192,11 @@ impl Config for Test {
 	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressRoot<Self::AccountId>;
 	type ChainId = ();
-	type IntoAccountId = ConcatConverter<Self::AccountId>;
 	type Event = Event;
 	type FeeCalculator = FixedGasPrice;
 	type FindAuthor = FindAuthorTruncated;
 	type GasWeightMapping = ();
+	type IntoAccountId = ConcatConverter<Self::AccountId>;
 	type KtonAccountBasic = MockAccountBasic<Self>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
 	type PrecompilesType = ();
