@@ -23,8 +23,6 @@
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
-#[cfg(test)]
-mod tests;
 
 pub mod weight;
 pub use weight::WeightInfo;
@@ -65,15 +63,21 @@ pub enum IssuingCall<T: pallet::Config> {
 	ParachainIssuingPalletIssueFromRemote(RingBalance<T>, AccountId<T>),
 }
 
-pub trait IssueFromRemotePayload<SourceChainAccountId, TargetChainAccountPublic, TargetChainSignature, T: pallet::Config> {
-    type Payload: Encode;
-    fn create(
+pub trait IssueFromRemotePayload<
+	SourceChainAccountId,
+	TargetChainAccountPublic,
+	TargetChainSignature,
+	T: pallet::Config,
+>
+{
+	type Payload: Encode;
+	fn create(
 		origin: CallOrigin<SourceChainAccountId, TargetChainAccountPublic, TargetChainSignature>,
-        spec_version: u32,
-        weight: u64,
-        call: IssuingCall<T>,
-        dispatch_fee_payment: DispatchFeePayment,
-    ) -> Result<Self::Payload, &'static str>;
+		spec_version: u32,
+		weight: u64,
+		call: IssuingCall<T>,
+		dispatch_fee_payment: DispatchFeePayment,
+	) -> Result<Self::Payload, &'static str>;
 }
 
 pub use pallet::*;
@@ -126,7 +130,7 @@ pub mod pallet {
 				Self::AccountId,
 				MultiSigner,
 				MultiSignature,
-                Self,
+				Self,
 			>>::Payload,
 			Error = DispatchErrorWithPostInfo<PostDispatchInfo>,
 		>;
@@ -136,13 +140,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Token locked \[lane_id, message_nonce, token address, sender, recipient, amount\]
-		TokenLocked(
-			LaneId,
-			MessageNonce,
-			AccountId<T>,
-			AccountId<T>,
-			RingBalance<T>,
-		),
+		TokenLocked(LaneId, MessageNonce, AccountId<T>, AccountId<T>, RingBalance<T>),
 		/// Token unlocked \[lane_id, message_nonce, recipient, amount\]
 		TokenUnlocked(LaneId, MessageNonce, AccountId<T>, RingBalance<T>),
 		/// Token locked confirmed from remote \[lane_id, message_nonce, user, amount, result\]
@@ -262,7 +260,7 @@ pub mod pallet {
 				<Error<T>>::RingLockLimited
 			);
 			// Make sure the user's balance is enough to lock
-            let total_cost = value + fee;
+			let total_cost = value + fee;
 			ensure!(
 				T::RingCurrency::free_balance(&user) > total_cost,
 				<Error<T>>::InsufficientBalance
@@ -276,10 +274,7 @@ pub mod pallet {
 				CallOrigin::SourceAccount(Self::pallet_account_id()),
 				spec_version,
 				weight,
-                IssuingCall::<T>::ParachainIssuingPalletIssueFromRemote(
-                    value,
-                    recipient.clone(),
-				),
+				IssuingCall::<T>::ParachainIssuingPalletIssueFromRemote(value, recipient.clone()),
 				DispatchFeePayment::AtSourceChain,
 			)?;
 			T::MessagesBridge::send_message(
@@ -334,12 +329,7 @@ pub mod pallet {
 				<Error<T>>::InsufficientBalance
 			);
 
-			T::RingCurrency::transfer(
-				&Self::pallet_account_id(),
-				&recipient,
-				amount,
-				KeepAlive,
-			)?;
+			T::RingCurrency::transfer(&Self::pallet_account_id(), &recipient, amount, KeepAlive)?;
 			<SecureLimitedRingAmount<T>>::mutate(|(used, _)| *used = used.saturating_add(amount));
 			let message_nonce =
 				T::MessageNoncer::inbound_latest_received_nonce(T::MessageLaneId::get()) + 1;
@@ -427,4 +417,3 @@ pub mod pallet {
 		}
 	}
 }
-
