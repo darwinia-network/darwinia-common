@@ -15,18 +15,19 @@ frame_support::parameter_types! {
 	//
 	// Assuming the worst case of every header being finalized, we will keep headers for at least a
 	// week.
-	pub const HeadersToKeep: u32 = 7 * bp_pangoro::DAYS as u32;
+	pub const PangoroHeadersToKeep: u32 = 7 * bp_pangoro::DAYS as u32;
+	pub const RococoHeadersToKeep: u32 = 7 * bp_rococo::DAYS as u32;
 }
 
 impl Config<WithPangoroGrandpa> for Runtime {
 	type BridgedChain = bp_pangoro::Pangoro;
-	type HeadersToKeep = HeadersToKeep;
+	type HeadersToKeep = PangoroHeadersToKeep;
 	type MaxRequests = MaxRequests;
 	type WeightInfo = ();
 }
 impl Config<WithRococoGrandpa> for Runtime {
 	type BridgedChain = bp_rococo::Rococo;
-	type HeadersToKeep = HeadersToKeep;
+	type HeadersToKeep = RococoHeadersToKeep;
 	type MaxRequests = MaxRequests;
 	type WeightInfo = ();
 }

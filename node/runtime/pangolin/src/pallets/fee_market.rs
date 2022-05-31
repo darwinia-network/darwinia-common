@@ -5,7 +5,7 @@ pub use pallet_fee_market::{
 // --- core ---
 use core::cmp;
 // --- substrate ---
-use frame_support::{traits::LockIdentifier, PalletId};
+use frame_support::traits::LockIdentifier;
 use sp_runtime::{traits::UniqueSaturatedInto, Permill};
 // --- darwinia ---
 use crate::*;
@@ -32,10 +32,8 @@ frame_support::parameter_types! {
 	pub const MessageRelayersRewardRatio: Permill = Permill::from_percent(80);
 	pub const ConfirmRelayersRewardRatio: Permill = Permill::from_percent(20);
 	// Pangoro configurations.
-	pub const PangoroFeeMarketId: PalletId = PalletId(*b"da/feemk");
 	pub const PangoroFeeMarketLockId: LockIdentifier = *b"da/feelf";
 	// Pangolin Parachain configurations.
-	pub const PangolinParachainFeeMarketId: PalletId = PalletId(*b"da/feepa");
 	pub const PangolinParachainFeeMarketLockId: LockIdentifier = *b"da/feepa";
 }
 
@@ -48,7 +46,6 @@ impl Config<WithPangoroFeeMarket> for Runtime {
 	type LockId = PangoroFeeMarketLockId;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
 	type MinimumRelayFee = MinimumRelayFee;
-	type PalletId = PangoroFeeMarketId;
 	type Slasher = FeeMarketSlasher;
 	type Slot = Slot;
 	type TreasuryPalletId = TreasuryPalletId;
@@ -63,7 +60,6 @@ impl Config<WithPangolinParachainFeeMarket> for Runtime {
 	type LockId = PangolinParachainFeeMarketLockId;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
 	type MinimumRelayFee = MinimumRelayFee;
-	type PalletId = PangolinParachainFeeMarketId;
 	type Slasher = FeeMarketSlasher;
 	type Slot = Slot;
 	type TreasuryPalletId = TreasuryPalletId;

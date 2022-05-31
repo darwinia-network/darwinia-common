@@ -75,7 +75,7 @@ where
 				helper.record_gas(1, 0)?;
 
 				let params = BscSingleStorageVerifyParams::decode(data)
-					.map_err(|_| helper.revert("decode single storage verify info failed"))?;
+					.map_err(|_| helper.revert("Decode input failed"))?;
 				let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
 				let proof = EthereumStorageProof::new(
 					params.lane_address,
@@ -87,7 +87,7 @@ where
 					finalized_header.state_root,
 					&proof,
 				)
-				.map_err(|_| helper.revert("verify single storage proof failed"))?;
+				.map_err(|_| helper.revert("Verify proof failed"))?;
 				abi_encode_bytes(storage_value.0.as_slice())
 			},
 			Action::VerifyMultiStorageProof => {
@@ -95,14 +95,14 @@ where
 				helper.record_gas(1, 0)?;
 
 				let params = BscMultiStorageVerifyParams::decode(data)
-					.map_err(|_| helper.revert("decode multi storage verify info failed"))?;
+					.map_err(|_| helper.revert("Decode input failed"))?;
 				let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
 				let key_size = params.storage_keys.len();
 				if key_size != params.storage_proofs.len() {
-					return Err(helper.revert("storage keys not match storage proofs"));
+					return Err(helper.revert("Storage keys not match"));
 				}
 				if key_size > MAX_MULTI_STORAGEKEY_SIZE {
-					return Err(helper.revert("storage keys size too large"));
+					return Err(helper.revert("Key'size too large"));
 				}
 				let storage_values: Result<Vec<Vec<u8>>, _> = (0..key_size)
 					.map(|idx| {
@@ -128,7 +128,7 @@ where
 								if err == StorageProofError(ProofError::TrieKeyNotExist) {
 									return Ok(vec![]);
 								} else {
-									return Err(helper.revert("verfiy storage failed"));
+									return Err(helper.revert("Verfiy proof failed"));
 								}
 							},
 						}

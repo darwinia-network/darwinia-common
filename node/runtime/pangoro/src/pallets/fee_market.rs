@@ -3,7 +3,7 @@ pub use pallet_fee_market::Instance1 as WithPangolinFeeMarket;
 // --- core ---
 use core::cmp;
 // --- substrate ---
-use frame_support::{traits::LockIdentifier, PalletId};
+use frame_support::traits::LockIdentifier;
 use sp_runtime::{traits::UniqueSaturatedInto, Permill};
 // --- darwinia ---
 use crate::*;
@@ -26,7 +26,6 @@ where
 }
 
 frame_support::parameter_types! {
-	pub const FeeMarketPalletId: PalletId = PalletId(*b"da/feemk");
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 
 	pub const MinimumRelayFee: Balance = 15 * COIN;
@@ -47,7 +46,6 @@ impl Config<WithPangolinFeeMarket> for Runtime {
 	type LockId = FeeMarketLockId;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
 	type MinimumRelayFee = MinimumRelayFee;
-	type PalletId = FeeMarketPalletId;
 	type Slasher = FeeMarketSlasher;
 	type Slot = Slot;
 	type TreasuryPalletId = TreasuryPalletId;

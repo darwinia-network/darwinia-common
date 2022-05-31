@@ -70,14 +70,14 @@ where
 		let output = match action {
 			Action::StateGetStorage => {
 				let tokens = ethabi::decode(&[ParamType::Bytes], data)
-					.map_err(|_| helper.revert("ethabi decoded error"))?;
+					.map_err(|_| helper.revert("Ethabi decoded failed"))?;
 				let key = match &tokens[0] {
 					Token::Bytes(bytes) => bytes,
-					_ => return Err(helper.revert("The input param error")),
+					_ => return Err(helper.revert("Ethabi decode failed")),
 				};
 
 				if key.len() < PALLET_PREFIX_LENGTH || !F::allow(&key[0..PALLET_PREFIX_LENGTH]) {
-					return Err(helper.revert("This state of the module has read restriction"));
+					return Err(helper.revert("Read restriction"));
 				}
 
 				// Storage: FeeMarket AssignedRelayers (r:1 w:0)
