@@ -964,7 +964,7 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 	/// NOTE: The difference between the rpc transaction and the internal transaction is that
 	/// The internal transactions will catch and throw evm error comes from runner to caller.
 	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
-		let source = T::PalletId::get().derive_eth_address();
+		let source = T::PalletId::get().derive_eth_address().0;
 		Self::internal_transact_with_source_account(source, target, input)
 	}
 
@@ -972,7 +972,7 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 	/// NOTE: You should never use raw call for any non-read-only operation, be carefully.
 	fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
 		sp_io::storage::start_transaction();
-		let source = T::PalletId::get().derive_eth_address();
+		let source = T::PalletId::get().derive_eth_address().0;
 		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
 		let transaction = internal_transaction(nonce, contract, input);
 

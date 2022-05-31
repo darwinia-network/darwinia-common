@@ -16,7 +16,7 @@ frame_support::parameter_types! {
 	// Shared configurations.
 	pub const MaxMessagesToPruneAtOnce: MessageNonce = 8;
 	// TODO: remove this after FeeMarketPayment upgrade
-	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::derive_account_id((&b"root"[..]).derive_eth_address()));
+	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::derive_account_id((&b"root"[..]).derive_eth_address().0));
 	// Pangoro configurations.
 	pub const PangoroMaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =
 		bp_pangoro::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;

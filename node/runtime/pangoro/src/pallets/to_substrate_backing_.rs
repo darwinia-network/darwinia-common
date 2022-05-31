@@ -24,7 +24,7 @@ frame_support::parameter_types! {
 	pub const PangolinChainId: ChainId = PANGOLIN_CHAIN_ID;
 	pub RingMetadata: TokenMetadata = TokenMetadata::new(
 		NATIVE_TOKEN_TYPE,
-		PalletId(*b"da/bring").derive_eth_address(),
+		PalletId(*b"da/bring").derive_eth_address().0,
 		b"Pangoro Network Native Token".to_vec(),
 		b"ORING".to_vec(),
 		9);

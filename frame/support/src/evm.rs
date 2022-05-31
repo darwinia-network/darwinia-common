@@ -38,7 +38,7 @@ const ADDR_PREFIX: &[u8] = b"dvm:";
 
 /// A trait for converting from Substrate account_id to Ethereum address.
 pub trait DeriveEthAddress {
-	fn derive_eth_address(&self) -> H160;
+	fn derive_eth_address(&self) -> (H160, bool);
 }
 
 /// A trait for converting from Ethereum address to Substrate account_id.
@@ -57,7 +57,7 @@ pub fn is_derived_from_eth(account_id: impl AsRef<[u8; 32]>) -> bool {
 }
 
 impl DeriveEthAddress for PalletId {
-	fn derive_eth_address(&self) -> H160 {
+	fn derive_eth_address(&self) -> (H160, bool) {
 		let account_id: AccountId32 = self.into_account();
 		account_id.derive_eth_address()
 	}
@@ -66,19 +66,21 @@ impl DeriveEthAddress for PalletId {
 // If AccountId32 is derived from an Ethereum address before, this should return the orginal
 // Ethereum address, otherwise a new Ethereum address should be generated.
 impl DeriveEthAddress for AccountId32 {
-	fn derive_eth_address(&self) -> H160 {
+	fn derive_eth_address(&self) -> (H160, bool) {
 		let bytes: &[u8; 32] = self.as_ref();
-		if is_derived_from_eth(&self) {
-			H160::from_slice(&bytes[11..31])
+		let is_derived_from_eth = is_derived_from_eth(&self);
+
+		if is_derived_from_eth {
+			(H160::from_slice(&bytes[11..31]), true)
 		} else {
-			H160::from_slice(&bytes[0..20])
+			(H160::from_slice(&bytes[0..20]), false)
 		}
 	}
 }
 
 // TODO: remove it after `FeeMarketPayment` upgrade
 impl DeriveEthAddress for &[u8] {
-	fn derive_eth_address(&self) -> H160 {
+	fn derive_eth_address(&self) -> (H160, bool) {
 		let mut account_id: [u8; 32] = Default::default();
 		let size = sp_std::cmp::min(self.len(), 32);
 		account_id[..size].copy_from_slice(&self[..size]);
@@ -165,7 +167,7 @@ mod tests {
 	#[test]
 	fn test_bytes_to_substrate_id() {
 		assert_eq!(
-			(&b"root"[..]).derive_eth_address(),
+			(&b"root"[..]).derive_eth_address().0,
 			H160::from_str("726f6f7400000000000000000000000000000000").unwrap()
 		);
 		assert_eq!(
@@ -180,14 +182,17 @@ mod tests {
 			"0x64766d3a000000000000006be02d1d3665660d22ff9624b7be0551ee1ac91bd2",
 		)
 		.unwrap();
-		let eth_addr1 = account_id_1.derive_eth_address();
+		let eth_addr1 = account_id_1.derive_eth_address().0;
+		assert_eq!(account_id_1.derive_eth_address().1, true);
 		assert_eq!(H160::from_str("6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b").unwrap(), eth_addr1);
 		assert_eq!(ConcatConverter::<AccountId32>::derive_account_id(eth_addr1), account_id_1);
 
 		let account_id_2 = AccountId32::from_str(
 			"0x02497755176da60a69586af4c5ea5f5de218eb84011677722646b602eb2d240e",
-		).unwrap();
-		let eth_addr2 = account_id_2.derive_eth_address();
+		)
+		.unwrap();
+		let eth_addr2 = account_id_2.derive_eth_address().0;
+		assert_eq!(account_id_2.derive_eth_address().1, false);
 		assert_eq!(H160::from_str("02497755176da60a69586af4c5ea5f5de218eb84").unwrap(), eth_addr2);
 		assert_ne!(ConcatConverter::<AccountId32>::derive_account_id(eth_addr2), account_id_2);
 	}
@@ -211,6 +216,6 @@ mod tests {
 		let eth_addr1 = H160::from_str("1234500000000000000000000000000000000000").unwrap();
 		let derive_account_id_1 = ConcatConverter::<AccountId32>::derive_account_id(eth_addr1);
 
-		assert_eq!(derive_account_id_1.derive_eth_address(), eth_addr1);
+		assert_eq!(derive_account_id_1.derive_eth_address().0, eth_addr1);
 	}
 }

@@ -18,7 +18,7 @@ frame_support::parameter_types! {
 		bp_pangolin::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
 	pub const BridgedChainId: ChainId = PANGOLIN_CHAIN_ID;
 	// TODO: remove this after FeeMarketPayment upgrade
-	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::derive_account_id((&b"root"[..]).derive_eth_address()));
+	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::derive_account_id((&b"root"[..]).derive_eth_address().0));
 }
 
 impl Config<WithPangolinMessages> for Runtime {

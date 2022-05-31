@@ -152,7 +152,7 @@ frame_support::parameter_types! {
 	pub const MockId: PalletId = PalletId(*b"da/s2sba");
 	pub RingMetadata: TokenMetadata = TokenMetadata::new(
 		0,
-		PalletId(*b"da/bring").derive_eth_address(),
+		PalletId(*b"da/bring").derive_eth_address().0,
 		b"Pangoro Network Native Token".to_vec(),
 		b"ORING".to_vec(),
 		9);
