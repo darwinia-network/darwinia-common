@@ -61,11 +61,11 @@ use pallet_evm::FeeCalculator;
 use scale_info::TypeInfo;
 use sp_runtime::{
 	generic::DigestItem,
-	traits::{One, Saturating, UniqueSaturatedInto, Zero},
+	traits::{AccountIdConversion, One, Saturating, UniqueSaturatedInto, Zero},
 	transaction_validity::{
 		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransactionBuilder,
 	},
-	DispatchError, RuntimeDebug,
+	AccountId32, DispatchError, RuntimeDebug,
 };
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
@@ -301,14 +301,16 @@ pub mod pallet {
 			input: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let account_id = ensure_signed(origin)?;
-			let source = account_id.encode().derive_eth_address();
+			// Fix me
+			// let source = account_id.encode().as_slice().derive_eth_address();
 
-			// Disable transact functionality if PreLog exist.
-			ensure!(
-				fp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
-				Error::<T>::PreLogExists,
-			);
-			Self::internal_transact_with_source_account(source, target, input)
+			// // Disable transact functionality if PreLog exist.
+			// ensure!(
+			// 	fp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
+			// 	Error::<T>::PreLogExists,
+			// );
+			// Self::internal_transact_with_source_account(source, target, input)
+			Ok(().into())
 		}
 	}
 
