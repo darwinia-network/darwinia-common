@@ -51,7 +51,7 @@ use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTrunc
 use darwinia_evm_precompile_utils::test_helper::{
 	address_build, create_function_encode_bytes, AccountInfo, LegacyUnsignedTransaction,
 };
-use darwinia_support::evm::DeriveSubAccount;
+use darwinia_support::evm::DeriveSubstrateAddress;
 use pallet_fee_market::{BalanceOf, Config, Slasher};
 
 type Block = MockBlock<Test>;
@@ -153,8 +153,8 @@ impl FindAuthor<H160> for FindAuthorTruncated {
 	}
 }
 pub struct HashedConverter;
-impl DeriveSubAccount<AccountId32> for HashedConverter {
-	fn derive_account_id(address: H160) -> AccountId32 {
+impl DeriveSubstrateAddress<AccountId32> for HashedConverter {
+	fn derive_substrate_address(address: H160) -> AccountId32 {
 		let mut raw_account = [0u8; 32];
 		raw_account[0..20].copy_from_slice(&address[..]);
 		raw_account.into()

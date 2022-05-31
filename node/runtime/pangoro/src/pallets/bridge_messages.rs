@@ -4,7 +4,7 @@ pub use pallet_bridge_messages::Instance1 as WithPangolinMessages;
 use crate::*;
 use bp_messages::MessageNonce;
 use bp_runtime::{ChainId, PANGOLIN_CHAIN_ID};
-use darwinia_support::evm::{ConcatConverter, DeriveEthAddress, DeriveSubAccount};
+use darwinia_support::evm::{ConcatConverter, DeriveEthereumAddress, DeriveSubstrateAddress};
 use pallet_bridge_messages::Config;
 use pallet_fee_market::s2s::{
 	FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler, FeeMarketPayment,
@@ -18,7 +18,7 @@ frame_support::parameter_types! {
 		bp_pangolin::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
 	pub const BridgedChainId: ChainId = PANGOLIN_CHAIN_ID;
 	// TODO: remove this after FeeMarketPayment upgrade
-	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::derive_account_id((&b"root"[..]).derive_eth_address().0));
+	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::derive_substrate_address((&b"root"[..]).derive_ethereum_address()));
 }
 
 impl Config<WithPangolinMessages> for Runtime {

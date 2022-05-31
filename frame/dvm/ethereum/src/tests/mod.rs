@@ -32,7 +32,7 @@ use crate::{
 mod account_basic;
 mod eip1559;
 mod eip2930;
-// mod internal;
+mod internal;
 mod legacy;
 
 // This ERC-20 contract mints the maximum amount of tokens to the contract creator.

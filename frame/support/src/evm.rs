@@ -37,13 +37,13 @@ pub const TRANSFER_ADDR: &'static str = "0x0000000000000000000000000000000000000
 const ADDR_PREFIX: &[u8] = b"dvm:";
 
 /// A trait for converting from Substrate account_id to Ethereum address.
-pub trait DeriveEthAddress {
-	fn derive_eth_address(&self) -> (H160, bool);
+pub trait DeriveEthereumAddress {
+	fn derive_ethereum_address(&self) -> H160;
 }
 
 /// A trait for converting from Ethereum address to Substrate account_id.
-pub trait DeriveSubAccount<AccountId> {
-	fn derive_account_id(address: H160) -> AccountId;
+pub trait DeriveSubstrateAddress<AccountId> {
+	fn derive_substrate_address(address: H160) -> AccountId;
 }
 
 pub fn is_derived_from_eth(account_id: impl AsRef<[u8; 32]>) -> bool {
@@ -56,36 +56,36 @@ pub fn is_derived_from_eth(account_id: impl AsRef<[u8; 32]>) -> bool {
 	account_id[0..11] == account_id_prefix && account_id[31] == checksum_of(&account_id)
 }
 
-impl DeriveEthAddress for PalletId {
-	fn derive_eth_address(&self) -> (H160, bool) {
+impl DeriveEthereumAddress for PalletId {
+	fn derive_ethereum_address(&self) -> H160 {
 		let account_id: AccountId32 = self.into_account();
-		account_id.derive_eth_address()
+		account_id.derive_ethereum_address()
 	}
 }
 
 // If AccountId32 is derived from an Ethereum address before, this should return the orginal
 // Ethereum address, otherwise a new Ethereum address should be generated.
-impl DeriveEthAddress for AccountId32 {
-	fn derive_eth_address(&self) -> (H160, bool) {
+impl DeriveEthereumAddress for AccountId32 {
+	fn derive_ethereum_address(&self) -> H160 {
 		let bytes: &[u8; 32] = self.as_ref();
 		let is_derived_from_eth = is_derived_from_eth(&self);
 
 		if is_derived_from_eth {
-			(H160::from_slice(&bytes[11..31]), true)
+			H160::from_slice(&bytes[11..31])
 		} else {
-			(H160::from_slice(&bytes[0..20]), false)
+			H160::from_slice(&bytes[0..20])
 		}
 	}
 }
 
 // TODO: remove it after `FeeMarketPayment` upgrade
-impl DeriveEthAddress for &[u8] {
-	fn derive_eth_address(&self) -> (H160, bool) {
+impl DeriveEthereumAddress for &[u8] {
+	fn derive_ethereum_address(&self) -> H160 {
 		let mut account_id: [u8; 32] = Default::default();
 		let size = sp_std::cmp::min(self.len(), 32);
 		account_id[..size].copy_from_slice(&self[..size]);
 
-		AccountId32::new(account_id).derive_eth_address()
+		AccountId32::new(account_id).derive_ethereum_address()
 	}
 }
 
@@ -100,11 +100,11 @@ pub struct ConcatConverter<AccountId>(PhantomData<AccountId>);
 /// 1. AccountId Prefix: concat("dvm:", "0x00000000000000"), length: 11 bytes
 /// 2. EVM address: the original evm address, length: 20 bytes
 /// 3. CheckSum:  byte_xor(AccountId Prefix + EVM address), length: 1 bytes
-impl<AccountId> DeriveSubAccount<AccountId> for ConcatConverter<AccountId>
+impl<AccountId> DeriveSubstrateAddress<AccountId> for ConcatConverter<AccountId>
 where
 	AccountId: From<[u8; 32]>,
 {
-	fn derive_account_id(address: H160) -> AccountId {
+	fn derive_substrate_address(address: H160) -> AccountId {
 		let mut raw_account = [0u8; 32];
 
 		raw_account[0..4].copy_from_slice(ADDR_PREFIX);
@@ -167,12 +167,12 @@ mod tests {
 	#[test]
 	fn test_bytes_to_substrate_id() {
 		assert_eq!(
-			(&b"root"[..]).derive_eth_address().0,
+			(&b"root"[..]).derive_ethereum_address(),
 			H160::from_str("726f6f7400000000000000000000000000000000").unwrap()
 		);
 		assert_eq!(
-			(&b"longbytes..longbytes..longbytes..longbytes"[..]).derive_eth_address(),
-			(&b"longbytes..longbytes"[..]).derive_eth_address()
+			(&b"longbytes..longbytes..longbytes..longbytes"[..]).derive_ethereum_address(),
+			(&b"longbytes..longbytes"[..]).derive_ethereum_address()
 		);
 	}
 
@@ -182,19 +182,23 @@ mod tests {
 			"0x64766d3a000000000000006be02d1d3665660d22ff9624b7be0551ee1ac91bd2",
 		)
 		.unwrap();
-		let eth_addr1 = account_id_1.derive_eth_address().0;
-		assert_eq!(account_id_1.derive_eth_address().1, true);
+		let eth_addr1 = account_id_1.derive_ethereum_address();
 		assert_eq!(H160::from_str("6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b").unwrap(), eth_addr1);
-		assert_eq!(ConcatConverter::<AccountId32>::derive_account_id(eth_addr1), account_id_1);
+		assert_eq!(
+			ConcatConverter::<AccountId32>::derive_substrate_address(eth_addr1),
+			account_id_1
+		);
 
 		let account_id_2 = AccountId32::from_str(
 			"0x02497755176da60a69586af4c5ea5f5de218eb84011677722646b602eb2d240e",
 		)
 		.unwrap();
-		let eth_addr2 = account_id_2.derive_eth_address().0;
-		assert_eq!(account_id_2.derive_eth_address().1, false);
+		let eth_addr2 = account_id_2.derive_ethereum_address();
 		assert_eq!(H160::from_str("02497755176da60a69586af4c5ea5f5de218eb84").unwrap(), eth_addr2);
-		assert_ne!(ConcatConverter::<AccountId32>::derive_account_id(eth_addr2), account_id_2);
+		assert_ne!(
+			ConcatConverter::<AccountId32>::derive_substrate_address(eth_addr2),
+			account_id_2
+		);
 	}
 
 	#[test]
@@ -214,8 +218,9 @@ mod tests {
 	#[test]
 	fn test_eth_address_derive() {
 		let eth_addr1 = H160::from_str("1234500000000000000000000000000000000000").unwrap();
-		let derive_account_id_1 = ConcatConverter::<AccountId32>::derive_account_id(eth_addr1);
+		let derive_account_id_1 =
+			ConcatConverter::<AccountId32>::derive_substrate_address(eth_addr1);
 
-		assert_eq!(derive_account_id_1.derive_eth_address().0, eth_addr1);
+		assert_eq!(derive_account_id_1.derive_ethereum_address(), eth_addr1);
 	}
 }

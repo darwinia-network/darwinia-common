@@ -26,7 +26,7 @@ use evm::ExitRevert;
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{PrecompileHelper, StateMutability};
 use darwinia_support::{
-	evm::DeriveSubAccount,
+	evm::DeriveSubstrateAddress,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
 };
 use dp_contract::{
@@ -140,7 +140,7 @@ where
 		let unlock_info = S2sRemoteUnlockInfo::abi_decode(data)
 			.map_err(|_| helper.revert("Decode unlock failed"))?;
 		let payload = P::create(
-			CallOrigin::SourceAccount(T::IntoAccountId::derive_account_id(caller)),
+			CallOrigin::SourceAccount(T::IntoAccountId::derive_substrate_address(caller)),
 			unlock_info.spec_version,
 			unlock_info.weight,
 			CallParams::S2sBackingPalletUnlockFromRemote(

@@ -24,7 +24,7 @@ use std::str::FromStr;
 use super::*;
 use crate::{Config, InternalTransactHandler};
 use darwinia_evm::AccountBasic;
-use darwinia_support::evm::DeriveEthAddress;
+use darwinia_support::evm::DeriveEthereumAddress;
 
 fn legacy_root_unsigned_transaction() -> LegacyUnsignedTransaction {
 	LegacyUnsignedTransaction {

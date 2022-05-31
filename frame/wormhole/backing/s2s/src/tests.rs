@@ -37,7 +37,7 @@ use sp_runtime::{
 // --- darwinia-network ---
 use crate::{self as s2s_backing, *};
 use darwinia_support::{
-	evm::{ConcatConverter, DeriveEthAddress, DeriveSubAccount},
+	evm::{ConcatConverter, DeriveEthereumAddress, DeriveSubstrateAddress},
 	s2s::RelayMessageSender,
 };
 
@@ -152,7 +152,7 @@ frame_support::parameter_types! {
 	pub const MockId: PalletId = PalletId(*b"da/s2sba");
 	pub RingMetadata: TokenMetadata = TokenMetadata::new(
 		0,
-		PalletId(*b"da/bring").derive_eth_address().0,
+		PalletId(*b"da/bring").derive_ethereum_address(),
 		b"Pangoro Network Native Token".to_vec(),
 		b"ORING".to_vec(),
 		9);
@@ -250,9 +250,9 @@ fn test_unlock_from_remote() {
 			H160::from_str("0x61dc46385a09e7ed7688abe6f66bf3d8653618fd").unwrap();
 		// convert dvm address to substrate address
 		let remote_mapping_token_factory_account =
-			ConcatConverter::<AccountId32>::derive_account_id(mapping_token_factory);
+			ConcatConverter::<AccountId32>::derive_substrate_address(mapping_token_factory);
 		// convert remote address to local derived address
-		let hash = derive_account_id::<AccountId32>(
+		let hash = derive_substrate_address::<AccountId32>(
 			<Test as s2s_backing::Config>::BridgedChainId::get(),
 			SourceAccount::Account(remote_mapping_token_factory_account.clone()),
 		);

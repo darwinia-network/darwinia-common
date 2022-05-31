@@ -23,7 +23,7 @@ use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use darwinia_evm::{AccountBasic, AccountId};
 use darwinia_evm_precompile_utils::{PrecompileHelper, StateMutability};
-use darwinia_support::evm::{DeriveSubAccount, TRANSFER_ADDR};
+use darwinia_support::evm::{DeriveSubstrateAddress, TRANSFER_ADDR};
 // --- crates.io ---
 use codec::Decode;
 
@@ -60,7 +60,7 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 			array_bytes::hex_try_into(TRANSFER_ADDR).map_err(|_| helper.revert("Invalid addr"))?;
 		ensure!(address == transfer_addr, helper.revert("Invalid context addr"));
 
-		let source = <T as darwinia_evm::Config>::IntoAccountId::derive_account_id(address);
+		let source = <T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(address);
 		T::RingAccountBasic::transfer(&source, &to, value)
 			.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 

@@ -92,7 +92,7 @@ pub mod s2s {
 		Converter: Convert<H256, AccountId>,
 	{
 		let hex_id =
-			derive_account_id::<AccountId>(chain_id, SourceAccount::Account(source_account));
+		derive_account_id::<AccountId>(chain_id, SourceAccount::Account(source_account));
 		let target_id = Converter::convert(hex_id);
 		ensure!(&target_id == derived_account, BadOrigin);
 		Ok(())

@@ -36,7 +36,7 @@ use crate::{
 	runner::Runner as RunnerT, AccountBasic, AccountCodes, AccountStorages, BlockHashMapping,
 	Config, Error, Event, FeeCalculator, OnChargeEVMTransaction, Pallet,
 };
-use darwinia_support::evm::DeriveSubAccount;
+use darwinia_support::evm::DeriveSubstrateAddress;
 
 #[derive(Default)]
 pub struct Runner<T: Config> {
@@ -501,7 +501,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	}
 
 	fn inc_nonce(&mut self, address: H160) {
-		let account_id = T::IntoAccountId::derive_account_id(address);
+		let account_id = T::IntoAccountId::derive_substrate_address(address);
 		<frame_system::Pallet<T>>::inc_account_nonce(&account_id);
 	}
 
@@ -549,8 +549,8 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	}
 
 	fn transfer(&mut self, transfer: Transfer) -> Result<(), ExitError> {
-		let source = <T as Config>::IntoAccountId::derive_account_id(transfer.source);
-		let target = <T as Config>::IntoAccountId::derive_account_id(transfer.target);
+		let source = <T as Config>::IntoAccountId::derive_substrate_address(transfer.source);
+		let target = <T as Config>::IntoAccountId::derive_substrate_address(transfer.target);
 		T::RingAccountBasic::transfer(&source, &target, transfer.value)?;
 
 		Ok(())

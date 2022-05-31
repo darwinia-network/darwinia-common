@@ -22,7 +22,7 @@ use core::marker::PhantomData;
 // --- darwinia-network ---
 use darwinia_evm::GasWeightMapping;
 use darwinia_evm_precompile_utils::PrecompileHelper;
-use darwinia_support::evm::DeriveSubAccount;
+use darwinia_support::evm::DeriveSubstrateAddress;
 // --- paritytech ---
 use codec::Decode;
 use fp_evm::{
@@ -68,7 +68,7 @@ where
 			}
 		}
 
-		let origin = T::IntoAccountId::derive_account_id(context.caller);
+		let origin = T::IntoAccountId::derive_substrate_address(context.caller);
 
 		match call.dispatch(Some(origin).into()) {
 			Ok(post_info) => {
