@@ -15,6 +15,7 @@ use pallet_fee_market::s2s::{
 frame_support::parameter_types! {
 	// Shared configurations.
 	pub const MaxMessagesToPruneAtOnce: MessageNonce = 8;
+	// TODO: remove this after FeeMarketPayment upgrade
 	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::derive_account_id((&b"root"[..]).derive_eth_address()));
 	// Pangoro configurations.
 	pub const PangoroMaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =

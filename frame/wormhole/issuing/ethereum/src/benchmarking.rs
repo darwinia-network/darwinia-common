@@ -118,7 +118,7 @@ benchmarks! {
 	// https://ropsten.etherscan.io/tx/0x5999253ecbe82b26800534b78567058352cc741c3475c94dba014f5971b5933c
 	deposit_burn_token_event_from_precompile {
 		let factory = H160::from_str("E1586e744b99bF8e4C981DfE4dD4369d6f8Ed88A").unwrap();
-		let caller = <T as darwinia_evm::Config>::DeriveSubAccount::derive_account_id(factory);
+		let caller = <T as darwinia_evm::Config>::IntoAccountId::derive_account_id(factory);
 		let input = array_bytes::hex2bytes_unchecked("0x9fd728bf917e2e38000000000000000000000000b2bea2358d817dae01b0fd0dc3aecb25910e65aa000000000000000000000000a26e0ff781f2d39cc9a9e255a2e74573945c2d790000000000000000000000003bdeafc230636b5d4ecc4e5688dbbf78d68d19e6");
 	}: _(RawOrigin::Signed(caller), input)
 

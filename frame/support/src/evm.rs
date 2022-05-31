@@ -176,23 +176,24 @@ mod tests {
 
 	#[test]
 	fn test_derive_eth_address_from_subaccount_id() {
-		let eth_addr1 = AccountId32::from_str(
+		let account_id_1 = AccountId32::from_str(
 			"0x64766d3a000000000000006be02d1d3665660d22ff9624b7be0551ee1ac91bd2",
 		)
-		.unwrap()
-		.derive_eth_address();
+		.unwrap();
+		let eth_addr1 = account_id_1.derive_eth_address();
 		assert_eq!(H160::from_str("6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b").unwrap(), eth_addr1);
+		assert_eq!(ConcatConverter::<AccountId32>::derive_account_id(eth_addr1), account_id_1);
 
-		let eth_addr2 = AccountId32::from_str(
+		let account_id_2 = AccountId32::from_str(
 			"0x02497755176da60a69586af4c5ea5f5de218eb84011677722646b602eb2d240e",
-		)
-		.unwrap()
-		.derive_eth_address();
+		).unwrap();
+		let eth_addr2 = account_id_2.derive_eth_address();
 		assert_eq!(H160::from_str("02497755176da60a69586af4c5ea5f5de218eb84").unwrap(), eth_addr2);
+		assert_ne!(ConcatConverter::<AccountId32>::derive_account_id(eth_addr2), account_id_2);
 	}
 
 	#[test]
-	fn test_is_derived_from_eth() {
+	fn test_is_derived_from_eth_works() {
 		let account_id_1 = AccountId32::from_str(
 			"0x64766d3a000000000000006be02d1d3665660d22ff9624b7be0551ee1ac91bd2",
 		)
@@ -203,5 +204,13 @@ mod tests {
 		)
 		.unwrap();
 		assert!(!is_derived_from_eth(account_id_1));
+	}
+
+	#[test]
+	fn test_eth_address_derive() {
+		let eth_addr1 = H160::from_str("1234500000000000000000000000000000000000").unwrap();
+		let derive_account_id_1 = ConcatConverter::<AccountId32>::derive_account_id(eth_addr1);
+
+		assert_eq!(derive_account_id_1.derive_eth_address(), eth_addr1);
 	}
 }

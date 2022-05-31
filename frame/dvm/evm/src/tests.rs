@@ -148,14 +148,14 @@ where
 pub struct MockAccountBasic<T>(sp_std::marker::PhantomData<T>);
 impl<T: Config> AccountBasic<T> for MockAccountBasic<T> {
 	fn account_basic(address: &H160) -> Account {
-		let account_id = <T as darwinia_evm::Config>::DeriveSubAccount::derive_account_id(*address);
+		let account_id = <T as darwinia_evm::Config>::IntoAccountId::derive_account_id(*address);
 		let balance =
 			frame_support::storage::unhashed::get(&account_id.encode()).unwrap_or_default();
 		Account { balance, nonce: U256::zero() }
 	}
 
 	fn mutate_account_basic_balance(address: &H160, new_balance: U256) {
-		let account_id = <T as darwinia_evm::Config>::DeriveSubAccount::derive_account_id(*address);
+		let account_id = <T as darwinia_evm::Config>::IntoAccountId::derive_account_id(*address);
 		Self::mutate_account_balance(&account_id, new_balance)
 	}
 
@@ -453,10 +453,9 @@ fn handle_sufficient_reference() {
 	new_test_ext().execute_with(|| {
 		let addr = H160::from_str("1230000000000000000000000000000000000001").unwrap();
 		let addr_2 = H160::from_str("1234000000000000000000000000000000000001").unwrap();
-		let substrate_addr =
-			<Test as darwinia_evm::Config>::DeriveSubAccount::derive_account_id(addr);
+		let substrate_addr = <Test as darwinia_evm::Config>::IntoAccountId::derive_account_id(addr);
 		let substrate_addr_2 =
-			<Test as darwinia_evm::Config>::DeriveSubAccount::derive_account_id(addr_2);
+			<Test as darwinia_evm::Config>::IntoAccountId::derive_account_id(addr_2);
 
 		// Sufficients should increase when creating EVM accounts.
 		let _ = <crate::AccountCodes<Test>>::insert(addr, &vec![0]);

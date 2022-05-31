@@ -76,10 +76,9 @@ fn ring_currency_withdraw_with_enough_balance() {
 			30_000_000_000
 		);
 
-		let transfer_account_id =
-			<Test as darwinia_evm::Config>::DeriveSubAccount::derive_account_id(
-				H160::from_str(TRANSFER_ADDR).unwrap(),
-			);
+		let transfer_account_id = <Test as darwinia_evm::Config>::IntoAccountId::derive_account_id(
+			H160::from_str(TRANSFER_ADDR).unwrap(),
+		);
 		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::DVMTransfer(
 			transfer_account_id,
 			dest,
@@ -251,8 +250,8 @@ fn kton_currency_transfer_and_call_works() {
 		assert_eq!(KtonAccount::account_basic(&alice.address).balance, origin - transfer_1);
 		assert_eq!(query_contract_balance(alice, 2), transfer_1);
 		let alice_account_id =
-			<Test as darwinia_evm::Config>::DeriveSubAccount::derive_account_id(alice.address);
-		let wkton_account_id = <Test as darwinia_evm::Config>::DeriveSubAccount::derive_account_id(
+			<Test as darwinia_evm::Config>::IntoAccountId::derive_account_id(alice.address);
+		let wkton_account_id = <Test as darwinia_evm::Config>::IntoAccountId::derive_account_id(
 			H160::from_str(WKTON_ADDRESS).unwrap(),
 		);
 		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::KtonDVMTransfer(
@@ -377,7 +376,7 @@ fn kton_currency_withdraw() {
 		assert_eq!(KtonAccount::account_balance(&to), withdraw);
 		assert_eq!(query_contract_balance(alice, 3), transfer - withdraw);
 
-		let wkton_account_id = <Test as darwinia_evm::Config>::DeriveSubAccount::derive_account_id(
+		let wkton_account_id = <Test as darwinia_evm::Config>::IntoAccountId::derive_account_id(
 			H160::from_str(WKTON_ADDRESS).unwrap(),
 		);
 		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::KtonDVMTransfer(
