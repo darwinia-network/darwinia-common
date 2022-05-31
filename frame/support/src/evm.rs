@@ -44,63 +44,56 @@ pub trait DeriveSubAddress<AccountId> {
 	fn derive_sub_address(address: H160) -> AccountId;
 }
 
-impl DeriveEthAddress for [u8; 32] {
-	fn derive_eth_address(&self) -> H160 {
-		if is_derived_substrate_address(self.clone()) {
-			H160::from_slice(&self[11..31])
-		} else {
-			H160::from_slice(&self[0..20])
-		}
-	}
-}
-
-impl DeriveEthAddress for &[u8] {
-	fn derive_eth_address(&self) -> H160 {
-		let mut account_id: [u8; 32] = Default::default();
-		let size = sp_std::cmp::min(self.len(), 32);
-		account_id[..size].copy_from_slice(&self[..size]);
-
-		account_id.derive_eth_address()
-	}
-}
-
-impl DeriveEthAddress for Vec<u8> {
-	fn derive_eth_address(&self) -> H160 {
-		self.as_slice().derive_eth_address()
-	}
-}
-
-impl DeriveEthAddress for AccountId32 {
-	fn derive_eth_address(&self) -> H160 {
-		let account_id: &[u8; 32] = self.as_ref();
-		account_id.derive_eth_address()
-	}
-}
-
-impl DeriveEthAddress for PalletId {
-	fn derive_eth_address(&self) -> H160 {
-		let account_id: AccountId32 = self.into_account();
-		account_id.derive_eth_address()
-	}
-}
-
 // "dvm:" + 0x00000000000000 + Ethereum_Address + checksum
-pub fn is_derived_substrate_address<T>(account_id: T) -> bool
-where
-	T: Into<[u8; 32]>,
-{
-	let account_id: [u8; 32] = account_id.into();
+pub fn is_derived_sub_address(account_id: impl AsRef<[u8; 32]>) -> bool {
+	let account_id: &[u8; 32] = account_id.as_ref();
 
-	// check prefix
 	let mut account_id_prefix = [0u8; 11];
 	account_id_prefix[0..4].copy_from_slice(b"dvm:");
-	let correct_prefix = account_id[0..11] == account_id_prefix;
 
-	// check checksum
-	let correct_checksum = account_id[31] == checksum_of(&account_id);
-
-	correct_prefix && correct_checksum
+	// Return true if prefix and checksum valid
+	account_id[0..11] == account_id_prefix && account_id[31] == checksum_of(&account_id)
 }
+
+// impl DeriveEthAddress for [u8; 32] {
+// 	fn derive_eth_address(&self) -> H160 {
+// 		if is_derived_sub_address(self.clone()) {
+// 			H160::from_slice(&self[11..31])
+// 		} else {
+// 			H160::from_slice(&self[0..20])
+// 		}
+// 	}
+// }
+
+// impl DeriveEthAddress for &[u8] {
+// 	fn derive_eth_address(&self) -> H160 {
+// 		let mut account_id: [u8; 32] = Default::default();
+// 		let size = sp_std::cmp::min(self.len(), 32);
+// 		account_id[..size].copy_from_slice(&self[..size]);
+
+// 		account_id.derive_eth_address()
+// 	}
+// }
+
+// impl DeriveEthAddress for Vec<u8> {
+// 	fn derive_eth_address(&self) -> H160 {
+// 		self.as_slice().derive_eth_address()
+// 	}
+// }
+
+// impl DeriveEthAddress for AccountId32 {
+// 	fn derive_eth_address(&self) -> H160 {
+// 		let account_id: &[u8; 32] = self.as_ref();
+// 		account_id.derive_eth_address()
+// 	}
+// }
+
+// impl DeriveEthAddress for PalletId {
+// 	fn derive_eth_address(&self) -> H160 {
+// 		let account_id: AccountId32 = self.into_account();
+// 		account_id.derive_eth_address()
+// 	}
+// }
 
 fn checksum_of(account_id: &[u8; 32]) -> u8 {
 	account_id[1..31].iter().fold(account_id[0], |sum, &byte| sum ^ byte)
@@ -169,56 +162,56 @@ pub fn decimal_convert(main_balance: u128, remaining_balance: Option<u128>) -> U
 #[cfg(test)]
 mod tests {
 	use super::*;
-	
+
 	#[test]
 	fn const_pow_9_should_work() {
 		assert_eq!(U256::from(10).checked_pow(9.into()).unwrap(), POW_9.into())
 	}
 
-	#[test]
-	fn test_into_dvm_account() {
-		// --- std ---
-		use std::str::FromStr;
+	// #[test]
+	// fn test_into_dvm_account() {
+	// 	// --- std ---
+	// 	use std::str::FromStr;
 
-		assert_eq!(
-			H160::from_str("726f6f7400000000000000000000000000000000").unwrap(),
-			(&b"root"[..]).derive_eth_address()
-		);
-		assert_eq!(
-			(&b"longbytes..longbytes..longbytes..longbytes"[..]).derive_eth_address(),
-			(&b"longbytes..longbytes"[..]).derive_eth_address()
-		);
-	}
+	// 	assert_eq!(
+	// 		H160::from_str("726f6f7400000000000000000000000000000000").unwrap(),
+	// 		(&b"root"[..]).derive_eth_address()
+	// 	);
+	// 	assert_eq!(
+	// 		(&b"longbytes..longbytes..longbytes..longbytes"[..]).derive_eth_address(),
+	// 		(&b"longbytes..longbytes"[..]).derive_eth_address()
+	// 	);
+	// }
 
-	#[test]
-	fn test_derive_ethereum_address_from_dvm_account_id() {
-		use std::str::FromStr;
+	// #[test]
+	// fn test_derive_ethereum_address_from_dvm_account_id() {
+	// 	use std::str::FromStr;
 
-		let account_id = AccountId32::from_str(
-			"0x64766d3a000000000000006be02d1d3665660d22ff9624b7be0551ee1ac91bd2",
-		)
-		.unwrap();
-		let derived_ethereum_address = account_id.derive_eth_address();
+	// 	let account_id = AccountId32::from_str(
+	// 		"0x64766d3a000000000000006be02d1d3665660d22ff9624b7be0551ee1ac91bd2",
+	// 	)
+	// 	.unwrap();
+	// 	let derived_ethereum_address = account_id.derive_eth_address();
 
-		assert_eq!(
-			H160::from_str("6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b").unwrap(),
-			derived_ethereum_address
-		);
-	}
+	// 	assert_eq!(
+	// 		H160::from_str("6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b").unwrap(),
+	// 		derived_ethereum_address
+	// 	);
+	// }
 
-	#[test]
-	fn test_derive_ethereum_address_from_normal_account_id() {
-		use std::str::FromStr;
+	// #[test]
+	// fn test_derive_ethereum_address_from_normal_account_id() {
+	// 	use std::str::FromStr;
 
-		let account_id = AccountId32::from_str(
-			"0x02497755176da60a69586af4c5ea5f5de218eb84011677722646b602eb2d240e",
-		)
-		.unwrap();
-		let derived_ethereum_address = account_id.derive_eth_address();
+	// 	let account_id = AccountId32::from_str(
+	// 		"0x02497755176da60a69586af4c5ea5f5de218eb84011677722646b602eb2d240e",
+	// 	)
+	// 	.unwrap();
+	// 	let derived_ethereum_address = account_id.derive_eth_address();
 
-		assert_eq!(
-			H160::from_str("02497755176da60a69586af4c5ea5f5de218eb84").unwrap(),
-			derived_ethereum_address
-		);
-	}
+	// 	assert_eq!(
+	// 		H160::from_str("02497755176da60a69586af4c5ea5f5de218eb84").unwrap(),
+	// 		derived_ethereum_address
+	// 	);
+	// }
 }
