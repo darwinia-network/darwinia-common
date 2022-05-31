@@ -224,7 +224,7 @@ fn test_back_erc20_dvm_address() {
 fn test_pallet_id_to_dvm_address() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(
-			<Test as s2s_backing::Config>::PalletId::get().into_h160(),
+			<Test as s2s_backing::Config>::PalletId::get().derive_ethereum_address(),
 			H160::from_str("0x6d6f646c64612f73327362610000000000000000").unwrap()
 		);
 	});
