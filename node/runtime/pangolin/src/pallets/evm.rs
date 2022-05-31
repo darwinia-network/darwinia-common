@@ -179,7 +179,7 @@ impl Config for Runtime {
 	type BlockHashMapping = EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type ChainId = ChainId;
-	type DeriveSubAddress = ConcatConverter<Self::AccountId>;
+	type IntoAccountId = ConcatConverter<Self::AccountId>;
 	type Event = Event;
 	type FeeCalculator = FixedGasPrice;
 	type FindAuthor = EthereumFindAuthor<Babe>;

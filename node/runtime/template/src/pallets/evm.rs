@@ -87,7 +87,7 @@ impl Config for Runtime {
 	type BlockHashMapping = darwinia_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type ChainId = ChainId;
-	type DeriveSubAddress = ConcatConverter<Self::AccountId>;
+	type IntoAccountId = ConcatConverter<Self::AccountId>;
 	type Event = Event;
 	type FeeCalculator = BaseFee;
 	type FindAuthor = FindAuthorTruncated<Aura>;

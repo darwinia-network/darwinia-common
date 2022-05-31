@@ -49,7 +49,7 @@ use darwinia_ethereum::{
 };
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
 use darwinia_evm_precompile_utils::test_helper::{address_build, AccountInfo};
-use darwinia_support::evm::DeriveSubAddress;
+use darwinia_support::evm::DeriveSubAccount;
 
 type Block = MockBlock<Test>;
 type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
@@ -149,8 +149,8 @@ impl FindAuthor<H160> for FindAuthorTruncated {
 	}
 }
 pub struct HashedConverter;
-impl DeriveSubAddress<AccountId32> for HashedConverter {
-	fn derive_sub_address(address: H160) -> AccountId32 {
+impl DeriveSubAccount<AccountId32> for HashedConverter {
+	fn derive_account_id(address: H160) -> AccountId32 {
 		let mut raw_account = [0u8; 32];
 		raw_account[0..20].copy_from_slice(&address[..]);
 		raw_account.into()
@@ -220,7 +220,7 @@ impl darwinia_evm::Config for Test {
 	type BlockHashMapping = EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated<Self::AccountId>;
 	type ChainId = ChainId;
-	type DeriveSubAddress = HashedConverter;
+	type IntoAccountId = HashedConverter;
 	type Event = Event;
 	type FeeCalculator = FixedGasPrice;
 	type FindAuthor = FindAuthorTruncated;

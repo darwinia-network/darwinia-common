@@ -42,8 +42,8 @@ pub trait DeriveEthAddress {
 }
 
 /// A trait for converting from Ethereum address to Substrate account_id.
-pub trait DeriveSubAddress<AccountId> {
-	fn derive_sub_address(address: H160) -> AccountId;
+pub trait DeriveSubAccount<AccountId> {
+	fn derive_account_id(address: H160) -> AccountId;
 }
 
 pub fn is_derived_from_eth(account_id: impl AsRef<[u8; 32]>) -> bool {
@@ -93,16 +93,16 @@ fn checksum_of(account_id: &[u8; 32]) -> u8 {
 
 /// Darwinia network address mapping.
 pub struct ConcatConverter<AccountId>(PhantomData<AccountId>);
-/// The ConcatConverter used for transfer from evm 20-length to substrate 32-length address
+/// The ConcatConverter used to convert Ethereum address to Substrate account_id
 /// The concat rule included three parts:
-/// 1. AccountId Prefix: concat("dvm:", "0x00000000000000"), length: 11 byetes
+/// 1. AccountId Prefix: concat("dvm:", "0x00000000000000"), length: 11 bytes
 /// 2. EVM address: the original evm address, length: 20 bytes
 /// 3. CheckSum:  byte_xor(AccountId Prefix + EVM address), length: 1 bytes
-impl<AccountId> DeriveSubAddress<AccountId> for ConcatConverter<AccountId>
+impl<AccountId> DeriveSubAccount<AccountId> for ConcatConverter<AccountId>
 where
 	AccountId: From<[u8; 32]>,
 {
-	fn derive_sub_address(address: H160) -> AccountId {
+	fn derive_account_id(address: H160) -> AccountId {
 		let mut raw_account = [0u8; 32];
 
 		raw_account[0..4].copy_from_slice(ADDR_PREFIX);

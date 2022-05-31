@@ -34,7 +34,7 @@ use darwinia_evm_precompile_utils::{
 	test_helper::{AccountInfo, LegacyUnsignedTransaction},
 	PrecompileHelper,
 };
-use darwinia_support::evm::{decimal_convert, DeriveSubAddress, TRANSFER_ADDR};
+use darwinia_support::evm::{decimal_convert, DeriveSubAccount, TRANSFER_ADDR};
 
 const WITH_DRAW_INPUT: &str = "723908ee9dc8e509d4b93251bd57f68c09bd9d04471c193fabd8f26c54284a4b";
 fn ring_withdraw_unsigned_transaction() -> LegacyUnsignedTransaction {
@@ -77,7 +77,7 @@ fn ring_currency_withdraw_with_enough_balance() {
 		);
 
 		let transfer_account_id =
-			<Test as darwinia_evm::Config>::DeriveSubAddress::derive_sub_address(
+			<Test as darwinia_evm::Config>::DeriveSubAccount::derive_account_id(
 				H160::from_str(TRANSFER_ADDR).unwrap(),
 			);
 		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::DVMTransfer(
@@ -251,8 +251,8 @@ fn kton_currency_transfer_and_call_works() {
 		assert_eq!(KtonAccount::account_basic(&alice.address).balance, origin - transfer_1);
 		assert_eq!(query_contract_balance(alice, 2), transfer_1);
 		let alice_account_id =
-			<Test as darwinia_evm::Config>::DeriveSubAddress::derive_sub_address(alice.address);
-		let wkton_account_id = <Test as darwinia_evm::Config>::DeriveSubAddress::derive_sub_address(
+			<Test as darwinia_evm::Config>::DeriveSubAccount::derive_account_id(alice.address);
+		let wkton_account_id = <Test as darwinia_evm::Config>::DeriveSubAccount::derive_account_id(
 			H160::from_str(WKTON_ADDRESS).unwrap(),
 		);
 		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::KtonDVMTransfer(
@@ -377,7 +377,7 @@ fn kton_currency_withdraw() {
 		assert_eq!(KtonAccount::account_balance(&to), withdraw);
 		assert_eq!(query_contract_balance(alice, 3), transfer - withdraw);
 
-		let wkton_account_id = <Test as darwinia_evm::Config>::DeriveSubAddress::derive_sub_address(
+		let wkton_account_id = <Test as darwinia_evm::Config>::DeriveSubAccount::derive_account_id(
 			H160::from_str(WKTON_ADDRESS).unwrap(),
 		);
 		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::KtonDVMTransfer(
