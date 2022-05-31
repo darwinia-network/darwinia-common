@@ -1242,9 +1242,131 @@ fn bond_extra_works() {
 	});
 }
 
-// #[deprecated]
-// #[test]
-// fn bond_extra_and_withdraw_unbonded_works() {}
+#[test]
+fn bond_extra_and_withdraw_unbonded_works() {
+	//
+	// * Should test
+	// * Given an account being bonded [and chosen as a validator](not mandatory)
+	// * It can add extra funds to the bonded account.
+	// * it can unbond a portion of its funds from the stash account.
+	// * Once the unbonding period is done, it can actually take the funds out of the stash.
+	ExtBuilder::default().nominate(false).build_and_execute(|| {
+		// Set payee to controller. avoids confusion
+		assert_ok!(Staking::set_payee(Origin::signed(10), RewardDestination::Controller));
+
+		// Give account 11 some large free balance greater than total
+		let _ = Ring::make_free_balance_be(&11, 1000000);
+
+		// Initial config should be correct
+		assert_eq!(active_era(), 0);
+
+		// check the balance of a validator accounts.
+		assert_eq!(Ring::total_balance(&10), 1);
+
+		// confirm that 10 is a normal validator and gets paid at the end of the era.
+		start_active_era(1);
+
+		// Initial state of 10
+		assert_eq!(
+			Staking::ledger(&10),
+			Some(StakingLedger { stash: 11, active: 1000, ..Default::default() })
+		);
+		assert_eq!(
+			Staking::eras_stakers(active_era(), 11),
+			Exposure {
+				own_ring_balance: 1000,
+				own_power: 142857143,
+				total_power: 142857143,
+				..Default::default()
+			}
+		);
+
+		// deposit the extra 100 units
+		Staking::bond_extra(Origin::signed(11), StakingBalance::RingBalance(100), 0).unwrap();
+
+		assert_eq!(
+			Staking::ledger(&10),
+			Some(StakingLedger { stash: 11, active: 1000 + 100, ..Default::default() })
+		);
+		// Exposure is a snapshot! only updated after the next era update.
+		assert_ne!(
+			Staking::eras_stakers(active_era(), 11),
+			Exposure {
+				own_ring_balance: 1100,
+				own_power: 152777778,
+				total_power: 152777778,
+				..Default::default()
+			}
+		);
+
+		// trigger next era.
+		start_active_era(2);
+		assert_eq!(active_era(), 2);
+
+		// ledger should be the same.
+		assert_eq!(
+			Staking::ledger(&10),
+			Some(StakingLedger { stash: 11, active: 1000 + 100, ..Default::default() })
+		);
+		// Exposure is now updated.
+		assert_eq!(
+			Staking::eras_stakers(active_era(), 11),
+			Exposure {
+				own_ring_balance: 1100,
+				own_power: 152777778,
+				total_power: 152777778,
+				..Default::default()
+			}
+		);
+
+		// Unbond almost all of the funds in stash.
+		Staking::unbond(Origin::signed(10), StakingBalance::RingBalance(1000)).unwrap();
+		assert_eq!(
+			Staking::ledger(&10),
+			Some(StakingLedger {
+				stash: 11,
+				active: 100,
+				ring_staking_lock: StakingLock {
+					staking_amount: 0,
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding { amount: 1000, until: 45 }],
+						None
+					)
+				},
+				..Default::default()
+			}),
+		);
+
+		// Attempting to free the balances now will fail. 2 eras need to pass.
+		assert_ok!(Staking::withdraw_unbonded(Origin::signed(10), 0));
+		assert_eq!(
+			Staking::ledger(&10),
+			Some(StakingLedger {
+				stash: 11,
+				active: 100,
+				ring_staking_lock: StakingLock {
+					staking_amount: 0,
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding { amount: 1000, until: 45 }],
+						None
+					)
+				},
+				..Default::default()
+			}),
+		);
+
+		// trigger next era.
+		start_active_era(3);
+		assert!(System::block_number() >= 45);
+
+		assert_ok!(Staking::withdraw_unbonded(Origin::signed(10), 0));
+		// Now the value is free and the staking ledger is updated.
+		assert_eq!(
+			Staking::ledger(&10),
+			Some(StakingLedger { stash: 11, active: 100, ..Default::default() }),
+		);
+	})
+}
 
 #[test]
 fn too_many_unbond_calls_should_not_work() {
@@ -4164,22 +4286,12 @@ fn do_not_die_when_active_is_ed() {
 		// When unbond all of it except ed.
 		assert_ok!(Staking::unbond(Origin::signed(20), StakingBalance::RingBalance(999 * ed)));
 		start_active_era(3);
+		assert_ok!(Staking::withdraw_unbonded(Origin::signed(20), 100));
 
 		// Then.
 		assert_eq!(
 			Staking::ledger(&20).unwrap(),
-			StakingLedger {
-				stash: 21,
-				active: ed,
-				ring_staking_lock: StakingLock {
-					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(
-						vec![Unbonding { amount: 999 * ed, until: 16 }],
-						None
-					)
-				},
-				..Default::default()
-			}
+			StakingLedger { stash: 21, active: ed, ..Default::default() }
 		);
 	})
 }
