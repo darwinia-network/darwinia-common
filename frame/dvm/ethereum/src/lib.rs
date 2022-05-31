@@ -277,40 +277,30 @@ pub mod pallet {
 			Self::apply_validated_transaction(source, transaction)
 		}
 
-		/// Internal transaction only for root.
-		#[pallet::weight(10_000_000)]
-		pub fn root_transact(
+		#[pallet::weight(<T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(
+			Pallet::<T>::transaction_data(transaction).gas_limit.unique_saturated_into()
+		))]
+		pub fn substrate_transact(
 			origin: OriginFor<T>,
 			target: H160,
 			input: Vec<u8>,
+			gas_limit: U256,
 		) -> DispatchResultWithPostInfo {
-			ensure_root(origin)?;
+			let account_id = ensure_signed(origin)?;
+			let (derived_eth_address, is_derived) =
+				account_id.encode().as_slice().derive_eth_address();
+
 			// Disable transact functionality if PreLog exist.
 			ensure!(
 				fp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
 				Error::<T>::PreLogExists,
 			);
-			Self::internal_transact(target, input)
-		}
 
-		/// Internal transaction dispatch call.
-		#[pallet::weight(10_000_000)]
-		pub fn substrate_transact(
-			origin: OriginFor<T>,
-			target: H160,
-			input: Vec<u8>,
-		) -> DispatchResultWithPostInfo {
-			let account_id = ensure_signed(origin)?;
-			// Fix me
-			// let source = account_id.encode().as_slice().derive_eth_address();
-
-			// // Disable transact functionality if PreLog exist.
-			// ensure!(
-			// 	fp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
-			// 	Error::<T>::PreLogExists,
-			// );
-			// Self::internal_transact_with_source_account(source, target, input)
-			Ok(().into())
+			if is_derived {
+				Self::internal_transact_with_source_account(derived_eth_address, target, input)
+			} else {
+				Ok(().into())
+			}
 		}
 	}
 
