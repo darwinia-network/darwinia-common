@@ -24,7 +24,7 @@ use ethereum_primitives::{H160, H256, U256};
 // --- paritytech ---
 use frame_support::PalletId;
 use sp_runtime::{traits::AccountIdConversion, AccountId32};
-use sp_std::{marker::PhantomData, vec::Vec};
+use sp_std::marker::PhantomData;
 
 pub const POW_9: u32 = 1_000_000_000;
 /// The default gas limit for the internal transaction

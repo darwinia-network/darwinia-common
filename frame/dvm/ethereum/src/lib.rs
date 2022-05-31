@@ -61,11 +61,11 @@ use pallet_evm::FeeCalculator;
 use scale_info::TypeInfo;
 use sp_runtime::{
 	generic::DigestItem,
-	traits::{AccountIdConversion, One, Saturating, UniqueSaturatedInto, Zero},
+	traits::{One, Saturating, UniqueSaturatedInto, Zero},
 	transaction_validity::{
 		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransactionBuilder,
 	},
-	AccountId32, DispatchError, RuntimeDebug,
+	DispatchError, RuntimeDebug,
 };
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
@@ -259,7 +259,7 @@ pub mod pallet {
 	where
 		OriginFor<T>: Into<Result<RawOrigin, OriginFor<T>>>,
 	{
-		/// Transact an Ethereum transaction.
+		/// This the endpoint of RPC Ethereum transaction, consistent with frontier.
 		#[pallet::weight(<T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(
 			Pallet::<T>::transaction_data(transaction).gas_limit.unique_saturated_into()
 		))]
@@ -293,15 +293,14 @@ pub mod pallet {
 			Self::internal_transact(target, input)
 		}
 
-		// #[pallet::weight(<T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(
-		// 	Pallet::<T>::transaction_data(transaction).gas_limit.unique_saturated_into()
-		// ))]
-		#[pallet::weight(10_000_000)]
+		/// This dispatch call serves as a remote ethereum transaction handler in the cross-chain
+		/// scenario. In general, the call will be invoked by the pallet-dispatch.
+		#[pallet::weight(<T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(
+			Pallet::<T>::transaction_data(transaction).gas_limit.unique_saturated_into()
+		))]
 		pub fn substrate_transact(
 			origin: OriginFor<T>,
-			target: H160,
-			input: Vec<u8>,
-			gas_limit: U256,
+			transaction: Transaction,
 		) -> DispatchResultWithPostInfo {
 			let account_id = ensure_signed(origin)?;
 			let derived_eth_address = account_id.encode().as_slice().derive_ethereum_address();
@@ -312,7 +311,11 @@ pub mod pallet {
 				Error::<T>::PreLogExists,
 			);
 
-			Self::internal_transact_with_source_account(derived_eth_address, target, input)
+			if let Err(e) = Self::validate_transaction_in_block(derived_eth_address, &transaction) {
+				return Err(Error::<T>::from(e).into());
+			}
+
+			Self::apply_validated_transaction(derived_eth_address, transaction)
 		}
 	}
 
@@ -342,6 +345,11 @@ pub mod pallet {
 		InternalTransactionFatalError,
 		/// The internal call failed.
 		ReadyOnlyCall,
+		// The substrate transact error types
+		SubstrateTransactInvalidGasLimit,
+		SubstrateTransactInvalidChainId,
+		SubstrateTransactInvalidPayment,
+		SubstrateTransactInvalidNonce,
 	}
 
 	/// Current building block's transactions and receipts.
@@ -999,6 +1007,21 @@ enum TransactionValidationError {
 	InvalidChainId,
 	InvalidSignature,
 	InvalidGasLimit,
+}
+
+impl<T> From<TransactionValidityError> for Error<T> {
+	fn from(t: TransactionValidityError) -> Self {
+		match t {
+			TransactionValidityError::Invalid(InvalidTransaction::Future)
+			| TransactionValidityError::Invalid(InvalidTransaction::Stale) =>
+				Error::<T>::SubstrateTransactInvalidNonce,
+			TransactionValidityError::Invalid(InvalidTransaction::Custom(1)) =>
+				Error::<T>::SubstrateTransactInvalidChainId,
+			TransactionValidityError::Invalid(InvalidTransaction::Custom(3)) =>
+				Error::<T>::SubstrateTransactInvalidGasLimit,
+			_ => todo!(),
+		}
+	}
 }
 
 /// Returns the Ethereum block hash by number.
