@@ -350,6 +350,7 @@ pub mod pallet {
 		SubstrateTransactInvalidChainId,
 		SubstrateTransactInvalidPayment,
 		SubstrateTransactInvalidNonce,
+		SubstrateTransactUnknown,
 	}
 
 	/// Current building block's transactions and receipts.
@@ -1009,6 +1010,7 @@ enum TransactionValidationError {
 	InvalidGasLimit,
 }
 
+// Map all pallet validation error to runtime error type.
 impl<T> From<TransactionValidityError> for Error<T> {
 	fn from(t: TransactionValidityError) -> Self {
 		match t {
@@ -1019,7 +1021,7 @@ impl<T> From<TransactionValidityError> for Error<T> {
 				Error::<T>::SubstrateTransactInvalidChainId,
 			TransactionValidityError::Invalid(InvalidTransaction::Custom(3)) =>
 				Error::<T>::SubstrateTransactInvalidGasLimit,
-			_ => todo!(),
+			_ => Error::<T>::SubstrateTransactUnknown,
 		}
 	}
 }
