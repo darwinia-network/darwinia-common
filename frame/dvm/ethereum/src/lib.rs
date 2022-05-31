@@ -294,7 +294,7 @@ pub mod pallet {
 		}
 
 		/// This dispatch call serves as a remote ethereum transaction handler in the cross-chain
-		/// scenario. In general, the call will be invoked by the pallet-dispatch.
+		/// scenario. In general, the call always be invoked by the pallet-dispatch.
 		#[pallet::weight(<T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(
 			Pallet::<T>::transaction_data(transaction).gas_limit.unique_saturated_into()
 		))]
@@ -304,6 +304,8 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let account_id = ensure_signed(origin)?;
 			let derived_eth_address = account_id.encode().as_slice().derive_ethereum_address();
+			// The origin shouldn't be 0x0
+			ensure!(derived_eth_address != H160::default(), Error::<T>::SubstrateTransactBadOrigin);
 
 			// Disable transact functionality if PreLog exist.
 			ensure!(
@@ -346,6 +348,7 @@ pub mod pallet {
 		/// The internal call failed.
 		ReadyOnlyCall,
 		// The substrate transact error types
+		SubstrateTransactBadOrigin,
 		SubstrateTransactInvalidGasLimit,
 		SubstrateTransactInvalidChainId,
 		SubstrateTransactInvalidPayment,
