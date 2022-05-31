@@ -17,7 +17,6 @@ use darwinia_ethereum::{
 use darwinia_evm::{
 	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, GasWeightMapping,
 };
-use darwinia_evm_precompile_blake2_256::Blake2_256;
 use darwinia_evm_precompile_bridge_bsc::BscBridge;
 use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
 use darwinia_evm_precompile_transfer::Transfer;
@@ -54,7 +53,7 @@ where
 	}
 
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 21, 26, 27, 28].into_iter().map(|x| addr(x)).collect()
+		sp_std::vec![1, 2, 3, 4, 21, 26, 27].into_iter().map(|x| addr(x)).collect()
 	}
 }
 
@@ -87,8 +86,6 @@ where
 			a if a == addr(27) => Some(<StateStorage<R, StorageFilter>>::execute(
 				input, target_gas, context, is_static,
 			)),
-			a if a == addr(28) =>
-				Some(<Blake2_256<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
