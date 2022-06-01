@@ -17,8 +17,8 @@ ethereum-types = { version = "0.12", default-features = false }
 dp-asset            = { default-features = false, path = "../asset" }
 ethereum-primitives = { default-features = false, path = "../ethereum" }
 # paritytech
-bp-messages = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
-sp-std      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+bp-messages = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.3" }
+sp-std      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 
 [dev-dependencies]
 array-bytes = { version = "1.5" }
