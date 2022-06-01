@@ -338,3 +338,149 @@ fn rebond_event_should_work() {
 		System::assert_has_event(Event::RingBonded(11, 200, 36000, 36000).into());
 	});
 }
+
+#[test]
+fn withdraw_unbonded_should_work() {
+	ExtBuilder::default().existential_deposit(0).build().execute_with(|| {
+		let _ = Ring::make_free_balance_be(&67, 100);
+		let _ = Kton::make_free_balance_be(&67, 100);
+
+		// ---
+		// active 100
+		// unbond active 100
+		assert_ok!(Staking::bond(
+			Origin::signed(67),
+			67,
+			StakingBalance::RingBalance(100),
+			RewardDestination::Stash,
+			0,
+		));
+		assert_ok!(Staking::unbond(Origin::signed(67), StakingBalance::RingBalance(100)));
+		assert_eq!(
+			Staking::ledger(67),
+			Some(StakingLedger {
+				stash: 67,
+				ring_staking_lock: StakingLock {
+					staking_amount: 0,
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding { amount: 100, until: 16 }],
+						None
+					)
+				},
+				..Default::default()
+			})
+		);
+
+		run_to_block(16);
+
+		assert_ok!(Staking::withdraw_unbonded(Origin::signed(67), 0));
+		// Reaped.
+		assert!(Staking::ledger(&67).is_none());
+		assert!(Ring::locks(&67).is_empty());
+
+		// ---
+		// active 100, active kton 100
+		// unbond active 100
+
+		assert_ok!(Staking::bond(
+			Origin::signed(67),
+			67,
+			StakingBalance::RingBalance(100),
+			RewardDestination::Stash,
+			0,
+		));
+		assert_ok!(Staking::bond_extra(Origin::signed(67), StakingBalance::KtonBalance(100), 0));
+		assert_ok!(Staking::unbond(Origin::signed(67), StakingBalance::RingBalance(100)));
+		assert_eq!(
+			Staking::ledger(67),
+			Some(StakingLedger {
+				stash: 67,
+				active_kton: 100,
+				ring_staking_lock: StakingLock {
+					staking_amount: 0,
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding { amount: 100, until: 31 }],
+						None
+					)
+				},
+				claimed_rewards: vec![0],
+				..Default::default()
+			})
+		);
+
+		run_to_block(31);
+
+		assert_ok!(Staking::withdraw_unbonded(Origin::signed(67), 0));
+		assert!(Staking::ledger(&67).is_some());
+		// Cleaned.
+		assert!(Ring::locks(&67).is_empty());
+		assert!(!Kton::locks(&67).is_empty());
+
+		// ---
+		// active 100, active kton 100
+		// unbond active kton 100
+		assert_ok!(Staking::bond_extra(Origin::signed(67), StakingBalance::RingBalance(100), 0));
+		assert_ok!(Staking::unbond(Origin::signed(67), StakingBalance::KtonBalance(100)));
+		assert_eq!(
+			Staking::ledger(67),
+			Some(StakingLedger {
+				stash: 67,
+				active: 100,
+				kton_staking_lock: StakingLock {
+					staking_amount: 0,
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding { amount: 100, until: 46 }],
+						None
+					)
+				},
+				claimed_rewards: vec![0],
+				..Default::default()
+			})
+		);
+
+		run_to_block(46);
+
+		assert_ok!(Staking::withdraw_unbonded(Origin::signed(67), 0));
+		assert!(Staking::ledger(&67).is_some());
+		assert!(!Ring::locks(&67).is_empty());
+		// Cleaned.
+		assert!(Kton::locks(&67).is_empty());
+
+		// ---
+		// active 100, active kton 100
+		// unbond active 100, unbond active kton 100
+		assert_ok!(Staking::bond_extra(Origin::signed(67), StakingBalance::KtonBalance(100), 0));
+		assert_ok!(Staking::unbond(Origin::signed(67), StakingBalance::RingBalance(100)));
+		assert_ok!(Staking::unbond(Origin::signed(67), StakingBalance::KtonBalance(100)));
+		assert_eq!(
+			Staking::ledger(67),
+			Some(StakingLedger {
+				stash: 67,
+				ring_staking_lock: StakingLock {
+					staking_amount: 0,
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding { amount: 100, until: 61 }],
+						None
+					)
+				},
+				kton_staking_lock: StakingLock {
+					staking_amount: 0,
+					unbondings: WeakBoundedVec::force_from(
+						vec![Unbonding { amount: 100, until: 61 }],
+						None
+					)
+				},
+				claimed_rewards: vec![0],
+				..Default::default()
+			})
+		);
+
+		run_to_block(61);
+
+		assert_ok!(Staking::withdraw_unbonded(Origin::signed(67), 0));
+		// Reaped,
+		assert!(Staking::ledger(&67).is_none());
+		assert!(Ring::locks(&67).is_empty());
+		assert!(Kton::locks(&67).is_empty());
+	});
+}
