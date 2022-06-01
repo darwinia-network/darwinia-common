@@ -286,7 +286,7 @@ pub mod pallet {
 			}
 			for nonce in messages.begin..=messages.end {
 				// filter the messages not belong here
-				if let Err(_) = Self::judege_self_message(nonce) {
+				if let Err(_) = Self::judge_self_message(nonce) {
 					continue;
 				}
 				let result = messages.message_dispatch_result(nonce);
@@ -331,7 +331,7 @@ impl<T: Config> Pallet<T> {
 		T::InternalTransactHandler::internal_transact(contract, input)
 	}
 
-	pub fn judege_self_message(nonce: MessageNonce) -> DispatchResultWithPostInfo {
+	pub fn judge_self_message(nonce: MessageNonce) -> DispatchResultWithPostInfo {
 		let message_sender = T::OutboundMessager::get_valid_message_sender(nonce)?;
 		ensure!(
 			T::ToEthAddressT::into_ethereum_id(&message_sender)
