@@ -46,7 +46,6 @@ std = [
 	"frame-system/std",
 	"sp-runtime/std",
 	"sp-std/std",
-	# frontier
 ]
 
 runtime-benchmarks = ["frame-benchmarking"]
