@@ -16,10 +16,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+// --- std ---
+use std::str::FromStr;
 // --- crates.io ---
 use array_bytes::{hex2bytes_unchecked, hex_into_unchecked};
-use rustc_hex::FromHex;
-use std::str::FromStr;
 // --- darwinia-network ---
 use crate::{
 	*, {self as s2s_issuing},
@@ -78,8 +78,8 @@ fn register_and_issue_from_remote_success() {
 	let (pairs, mut ext) = new_test_ext(1);
 	let alice = &pairs[0];
 	ext.execute_with(|| {
-        alice_create(&alice, FromHex::from_hex(MAPPING_TOKEN_FACTORY_CONTRACT_BYTECODE).unwrap(), 0);
-        alice_create(&alice, FromHex::from_hex(MAPPING_TOKEN_LOGIC_CONTRACT_BYTECODE).unwrap(), 1);
+        alice_create(&alice, hex2bytes_unchecked(MAPPING_TOKEN_FACTORY_CONTRACT_BYTECODE.trim_end()), 0);
+        alice_create(&alice, hex2bytes_unchecked(MAPPING_TOKEN_LOGIC_CONTRACT_BYTECODE.trim_end()), 1);
         let mapping_token_factory_address: H160 =
             array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
         assert_ok!(S2sIssuing::set_mapping_factory_address(

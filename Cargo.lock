@@ -3321,7 +3321,6 @@ dependencies = [
  "pallet-evm-precompile-simple",
  "pallet-timestamp",
  "parity-scale-codec 2.3.1",
- "rustc-hex",
  "scale-info 1.0.0",
  "sha3 0.9.1",
  "sp-io",
