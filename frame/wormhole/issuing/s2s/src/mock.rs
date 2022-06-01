@@ -50,7 +50,7 @@ use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 use darwinia_evm_precompile_dispatch::Dispatch;
 use darwinia_evm_precompile_utils::test_helper::{address_build, AccountInfo};
 use darwinia_support::{
-	evm::IntoAccountId,
+	evm::DeriveSubstrateAddress,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
 };
 
@@ -152,8 +152,8 @@ impl FeeCalculator for FixedGasPrice {
 }
 
 pub struct HashedConverter;
-impl IntoAccountId<AccountId32> for HashedConverter {
-	fn into_account_id(address: H160) -> AccountId32 {
+impl DeriveSubstrateAddress<AccountId32> for HashedConverter {
+	fn derive_substrate_address(address: H160) -> AccountId32 {
 		let mut data = [0u8; 32];
 		data[0..20].copy_from_slice(&address[..]);
 		AccountId32::from(Into::<[u8; 32]>::into(data))

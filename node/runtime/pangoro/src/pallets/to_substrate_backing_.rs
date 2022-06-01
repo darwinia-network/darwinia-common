@@ -5,7 +5,7 @@ use crate::*;
 use bp_messages::LaneId;
 use bp_runtime::{ChainId, PANGOLIN_CHAIN_ID};
 use bridge_runtime_common::lanes::PANGORO_PANGOLIN_LANE;
-use darwinia_support::{evm::DeriveEtheruemAddress, s2s::LatestMessageNoncer};
+use darwinia_support::{evm::DeriveEthereumAddress, s2s::LatestMessageNoncer};
 use dp_asset::{TokenMetadata, NATIVE_TOKEN_TYPE};
 use to_substrate_backing::Config;
 
