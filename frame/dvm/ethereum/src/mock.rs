@@ -51,6 +51,9 @@ pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
 type Balance = u64;
 
+pub type EthereumTransactCall = darwinia_ethereum::Call<Test>;
+pub type TestRuntimeCall = <Test as frame_system::Config>::Call;
+
 darwinia_support::impl_test_account_data! {}
 
 frame_support::parameter_types! {

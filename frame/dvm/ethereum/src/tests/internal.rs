@@ -22,9 +22,11 @@ use fp_evm::{ExitReason, ExitSucceed};
 use std::str::FromStr;
 // --- darwinia-network ---
 use super::*;
-use crate::{Config, InternalTransactHandler};
+use crate::{tests, Config, InternalTransactHandler};
 use darwinia_evm::AccountBasic;
 use darwinia_support::evm::DeriveEthereumAddress;
+// --- paritytech ---
+use sp_runtime::DispatchError;
 
 fn legacy_root_unsigned_transaction() -> LegacyUnsignedTransaction {
 	LegacyUnsignedTransaction {
@@ -283,4 +285,24 @@ fn test_pallet_id_to_dvm_address() {
 			H160::from_str("0x6d6f646c6461722f64766d700000000000000000").unwrap()
 		)
 	})
+}
+
+#[test]
+fn transact_call_dispatch_should_be_validated() {
+	use frame_support::dispatch::Dispatchable;
+	let (pairs, mut ext) = new_test_ext(1);
+	let alice = &pairs[0];
+
+	ext.execute_with(|| {
+		let mut transaction = tests::legacy::legacy_erc20_creation_unsigned_transaction();
+		transaction.nonce = U256::from(1);
+		let signed = transaction.sign(&alice.private_key);
+
+		let call =
+			TestRuntimeCall::Ethereum(EthereumTransactCall::transact { transaction: signed });
+		assert_err!(
+			call.dispatch(RawOrigin::EthereumTransaction(alice.address).into()),
+			DispatchError::Module { index: 4, error: 5, message: Some("InvalidNonce") }
+		);
+	});
 }
