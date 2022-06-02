@@ -199,6 +199,7 @@ impl pallet_timestamp::Config for Test {
 
 parameter_types! {
 	pub const MaxLocks: u32 = 1024;
+	pub static ExistentialDeposit: Balance = 1;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
 	type AccountStore = System;
@@ -240,7 +241,6 @@ parameter_types! {
 	pub const TotalPower: Power = TOTAL_POWER;
 	pub static SessionsPerEra: SessionIndex = 3;
 	pub static BondingDurationInBlockNumber: BlockNumber = bonding_duration_in_blocks();
-	pub static ExistentialDeposit: Balance = 1;
 	pub static SlashDeferDuration: EraIndex = 0;
 	pub static SessionValidators: (Vec<AccountId>, HashSet<AccountId>) = Default::default();
 	pub static RingRewardRemainderUnbalanced: Balance = 0;

@@ -19,12 +19,12 @@
 use super::*;
 use crate::account_basic::{RemainBalanceOp, RingRemainBalance};
 use darwinia_evm::AccountBasic;
-use darwinia_support::evm::{decimal_convert, IntoAccountId};
+use darwinia_support::evm::{decimal_convert, DeriveSubstrateAddress};
 
 macro_rules! assert_balance {
 	($evm_address:expr, $balance:expr, $left:expr, $right:expr) => {
 		let account_id =
-			<Test as darwinia_evm::Config>::IntoAccountId::into_account_id($evm_address);
+			<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address($evm_address);
 		assert_eq!(RingAccount::account_basic(&$evm_address).balance, $balance);
 		assert_eq!(Ring::free_balance(&account_id), $left);
 		assert_eq!(
