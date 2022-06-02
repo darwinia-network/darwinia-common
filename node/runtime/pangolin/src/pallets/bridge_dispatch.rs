@@ -4,36 +4,56 @@ pub use pallet_bridge_dispatch::{
 
 // --- paritytech ---
 use frame_support::{traits::Everything, weights::PostDispatchInfo};
+use sp_runtime::transaction_validity::TransactionValidityError;
 // --- darwinia-network ---
 use crate::*;
 use bp_messages::{LaneId, MessageNonce};
-use core::str::FromStr;
-use pallet_bridge_dispatch::{Config, EthereumTransactCall};
+use darwinia_support::evm::DeriveEthereumAddress;
+use pallet_bridge_dispatch::{Config, EthereumCallDispatch};
 
 pub struct EthereumCallDispatcher;
+impl EthereumCallDispatch for EthereumCallDispatcher {
+	type AccountId = bp_pangolin::AccountId;
+	type Call = Call;
 
-impl EthereumTransactCall<Call> for EthereumCallDispatcher {
-	fn is_ethereum_call(t: &Call) -> bool {
-		true
-	}
-
-	fn validate(t: &Call) -> bool {
-		true
-	}
-
-	fn dispatch(c: &Call) -> Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfo>> {
+	fn dispatch(
+		c: &Call,
+		origin: &bp_pangolin::AccountId,
+	) -> Result<
+		Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfo>>,
+		TransactionValidityError,
+	> {
 		match c {
 			call @ Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) => {
-				let origin = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-				Ethereum::validate_transaction_in_block(origin, tx);
+				let derive_eth_address = origin.derive_ethereum_address();
+				if let Err(validate_err) =
+					Ethereum::validate_transaction_in_block(derive_eth_address, tx)
+				{
+					return Err(validate_err);
+				}
 
-				Some(call.clone().dispatch(
-					// the 160 should passed from the dispatch
-					Origin::from(darwinia_ethereum::RawOrigin::EthereumTransaction(origin)),
-				))
+				Ok(Some(call.clone().dispatch(Origin::from(
+					darwinia_ethereum::RawOrigin::EthereumTransaction(derive_eth_address),
+				))))
 			},
-			_ => None,
+			_ => Ok(None),
 		}
+	}
+}
+
+pub struct EmptyEthereumCallDispatcher;
+impl EthereumCallDispatch for EmptyEthereumCallDispatcher {
+	type AccountId = bp_pangolin_parachain::AccountId;
+	type Call = Call;
+
+	fn dispatch(
+		_c: &Self::Call,
+		_origin: &Self::AccountId,
+	) -> Result<
+		Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfo>>,
+		TransactionValidityError,
+	> {
+		Ok(None)
 	}
 }
 
@@ -43,7 +63,7 @@ impl Config<WithPangoroDispatch> for Runtime {
 	type Call = Call;
 	type CallFilter = Everything;
 	type EncodedCall = bm_pangoro::FromPangoroEncodedCall;
-	type EthereumTransactValidator = EthereumCallDispatcher;
+	type EthereumCallDispatcher = EthereumCallDispatcher;
 	type Event = Event;
 	type SourceChainAccountId = bp_pangoro::AccountId;
 	type TargetChainAccountPublic = bp_pangolin::AccountPublic;
@@ -55,7 +75,7 @@ impl Config<WithPangolinParachainDispatch> for Runtime {
 	type Call = Call;
 	type CallFilter = Everything;
 	type EncodedCall = bm_pangolin_parachain::FromPangolinParachainEncodedCall;
-	type EthereumTransactValidator = EthereumCallDispatcher;
+	type EthereumCallDispatcher = EmptyEthereumCallDispatcher;
 	type Event = Event;
 	type SourceChainAccountId = bp_pangolin_parachain::AccountId;
 	type TargetChainAccountPublic = bp_pangolin::AccountPublic;
