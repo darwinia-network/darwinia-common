@@ -3350,7 +3350,6 @@ dependencies = [
  "pallet-evm-precompile-simple",
  "pallet-timestamp",
  "parity-scale-codec 2.3.1",
- "rustc-hex",
  "scale-info 1.0.0",
  "sha3 0.9.1",
  "sp-io",
@@ -5177,7 +5176,6 @@ dependencies = [
  "keccak-hash",
  "rand 0.8.5",
  "rlp",
- "sp-std",
  "uuid",
 ]
 
@@ -6129,6 +6127,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-blake2"
+version = "2.0.0-dev"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.2#364ac2da9ec1e26c5b445b4971cfb78d39bf553b"
+dependencies = [
+ "fp-evm",
+ "sp-core",
+ "sp-io",
+]
+
+[[package]]
 name = "pallet-evm-precompile-modexp"
 version = "2.0.0-dev"
 source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.2#364ac2da9ec1e26c5b445b4971cfb78d39bf553b"
@@ -6613,6 +6621,7 @@ dependencies = [
  "pallet-election-provider-multi-phase",
  "pallet-elections-phragmen",
  "pallet-evm",
+ "pallet-evm-precompile-blake2",
  "pallet-evm-precompile-simple",
  "pallet-fee-market",
  "pallet-grandpa",
@@ -6719,6 +6728,7 @@ dependencies = [
  "pallet-bridge-messages",
  "pallet-election-provider-multi-phase",
  "pallet-evm",
+ "pallet-evm-precompile-blake2",
  "pallet-evm-precompile-simple",
  "pallet-fee-market",
  "pallet-grandpa",
