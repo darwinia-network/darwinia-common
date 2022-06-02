@@ -87,7 +87,7 @@ where
 	Balance: Copy + PartialOrd + AtLeast32BitUnsigned + Zero,
 	Moment: Copy + PartialOrd,
 {
-	// Only use for migration.
+	// TODO: Remove this and bring `ledger.total` back.
 	#[inline]
 	pub fn total_unbond_at(&self, at: Moment) -> Balance {
 		self.unbondings
@@ -96,6 +96,7 @@ where
 	}
 
 	#[inline]
+	#[deprecated = "If you know what you are doing now."]
 	pub fn total_unbond(&self) -> Balance {
 		self.unbondings
 			.iter()
