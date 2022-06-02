@@ -18,7 +18,7 @@
 
 #[cfg(test)]
 mod trie_tests {
-	use std::rc::Rc;
+	use alloc::{rc::Rc, vec::Vec};
 
 	use rand::Rng;
 	use rlp::{self};
