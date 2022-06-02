@@ -87,6 +87,14 @@ where
 	Balance: Copy + PartialOrd + AtLeast32BitUnsigned + Zero,
 	Moment: Copy + PartialOrd,
 {
+	// Only use for migration.
+	#[inline]
+	pub fn total_unbond_at(&self, at: Moment) -> Balance {
+		self.unbondings
+			.iter()
+			.fold(Zero::zero(), |acc, unbonding| acc.saturating_add(unbonding.locked_amount(at)))
+	}
+
 	#[inline]
 	pub fn total_unbond(&self) -> Balance {
 		self.unbondings
