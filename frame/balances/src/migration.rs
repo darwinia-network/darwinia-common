@@ -33,6 +33,8 @@ where
 			log::info!("{} locks were migrated.", count);
 		}
 
+		let now = <frame_system::Pallet<T>>::block_number();
+
 		Some(WeakBoundedVec::force_from(
 			locks
 				.into_inner()
@@ -42,7 +44,7 @@ where
 					amount: match lock_for {
 						LockFor::Common { amount } => amount,
 						LockFor::Staking(staking_lock) =>
-							staking_lock.staking_amount + staking_lock.total_unbond(),
+							staking_lock.staking_amount + staking_lock.total_unbond_at(now),
 					},
 					reasons,
 				})
