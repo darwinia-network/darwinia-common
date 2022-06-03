@@ -20,10 +20,11 @@
 
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
+use evm::ExitRevert;
 use scale_info::TypeInfo;
 // --- paritytech ---
 use darwinia_ethereum::{EthereumBlockHashMapping, RawOrigin};
-use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
+use fp_evm::{Context, Precompile, PrecompileFailure, PrecompileResult, PrecompileSet};
 use frame_support::{
 	pallet_prelude::Weight,
 	traits::{Everything, FindAuthor, GenesisBuild},
@@ -192,6 +193,15 @@ where
 		is_static: bool,
 	) -> Option<PrecompileResult> {
 		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
+
+		// Filter known precompile addresses except Ethereum officials
+		if self.is_precompile(address) && address > to_address(9) && address != context.address {
+			return Some(Err(PrecompileFailure::Revert {
+				exit_status: ExitRevert::Reverted,
+				output: b"cannot be called with DELEGATECALL or CALLCODE".to_vec(),
+				cost: 0,
+			}));
+		};
 
 		match address {
 			// Ethereum precompiles
