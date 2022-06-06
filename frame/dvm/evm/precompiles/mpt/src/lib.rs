@@ -48,7 +48,6 @@ enum Action {
 		"verify_multi_storage_proof(bytes32,address,bytes[],bytes32[],bytes[][])",
 }
 
-const MAX_MULTI_STORAGEKEY_SIZE: usize = 32;
 const VERIFY_SINGLE_STORAGE_GAS: usize = 50_000;
 
 pub struct MPT<T> {
@@ -96,10 +95,6 @@ where
 				if key_size != params.storage_proofs.len() {
 					return Err(helper.revert("storage keys not match storage proofs"));
 				}
-				if key_size > MAX_MULTI_STORAGEKEY_SIZE {
-					return Err(helper.revert("storage keys size too large"));
-				}
-
 				multiplier = key_size;
 
 				let storage_values: Result<Vec<Vec<u8>>, _> = (0..key_size)
@@ -136,12 +131,13 @@ where
 			},
 		};
 
-		let cost: u64 = u64::try_from(multiplier * VERIFY_SINGLE_STORAGE_GAS)
-			.map_err(|_| helper.revert("convert usize error"))?;
+		let cost = multiplier
+			.checked_mul(VERIFY_SINGLE_STORAGE_GAS)
+			.ok_or(helper.revert("Calculate cost error"))?;
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			cost,
+			cost: cost as u64,
 			output,
 			logs: Default::default(),
 		})
