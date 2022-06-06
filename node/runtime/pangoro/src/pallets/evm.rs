@@ -56,7 +56,7 @@ where
 	}
 
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 9, 21, 26, 27, 28, 29].into_iter().map(|x| addr(x)).collect()
+		sp_std::vec![1, 2, 3, 4, 9, 21, 26, 27, 2048, 2049].into_iter().map(|x| addr(x)).collect()
 	}
 }
 
@@ -92,9 +92,9 @@ where
 			a if a == addr(27) => Some(<StateStorage<R, StorageFilter>>::execute(
 				input, target_gas, context, is_static,
 			)),
-			a if a == addr(28) =>
+			a if a == addr(2048) =>
 				Some(<BLS12381<R>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(29) => Some(<MPT<R>>::execute(input, target_gas, context, is_static)),
+			a if a == addr(2049) => Some(<MPT<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
