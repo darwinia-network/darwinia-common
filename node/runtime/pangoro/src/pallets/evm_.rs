@@ -21,7 +21,6 @@ use darwinia_evm::{
 	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, GasWeightMapping,
 };
 use darwinia_evm_precompile_bls12_381::BLS12381;
-use darwinia_evm_precompile_bridge_bsc::BscBridge;
 use darwinia_evm_precompile_mpt::MPT;
 use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
 use darwinia_evm_precompile_transfer::Transfer;
@@ -65,7 +64,6 @@ where
 impl<R> PrecompileSet for PangoroPrecompiles<R>
 where
 	BLS12381<R>: Precompile,
-	BscBridge<R>: Precompile,
 	MPT<R>: Precompile,
 	StateStorage<R, StorageFilter>: Precompile,
 	Transfer<R>: Precompile,
@@ -98,8 +96,6 @@ where
 			// Darwinia precompiles
 			a if a == addr(21) =>
 				Some(<Transfer<R>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(26) =>
-				Some(<BscBridge<R>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(27) => Some(<StateStorage<R, StorageFilter>>::execute(
 				input, target_gas, context, is_static,
 			)),
