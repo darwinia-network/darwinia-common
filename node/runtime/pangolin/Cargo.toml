@@ -52,6 +52,7 @@ module-transaction-pause                = { default-features = false, path = "..
 pallet-fee-market                       = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
 to-ethereum-backing                     = { default-features = false, path = "../../../frame/wormhole/backing/ethereum" }
 to-tron-backing                         = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
+to-parachain-backing                    = { default-features = false, path = "../../../frame/wormhole/backing/parachain" }
 # paritytech
 beefy-primitives                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
 bp-message-dispatch                        = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
@@ -176,6 +177,7 @@ std = [
 	"pallet-fee-market/std",
 	"to-ethereum-backing/std",
 	"to-tron-backing/std",
+	"to-parachain-backing/std",
 	# paritytech
 	"beefy-primitives/std",
 	"bp-message-dispatch/std",
@@ -271,6 +273,7 @@ runtime-benchmarks = [
 	"from-ethereum-issuing/runtime-benchmarks",
 	"from-substrate-issuing/runtime-benchmarks",
 	"pallet-fee-market/runtime-benchmarks",
+	"to-parachain-backing/runtime-benchmarks",
 ]
 
 try-runtime = [

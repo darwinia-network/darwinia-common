@@ -35,6 +35,7 @@ members = [
 	"frame/support",
 	"frame/transaction-pause",
 	"frame/wormhole/backing/ethereum",
+	"frame/wormhole/backing/parachain",
 	"frame/wormhole/backing/s2s",
 	"frame/wormhole/backing/tron",
 	"frame/wormhole/issuing/ethereum",
