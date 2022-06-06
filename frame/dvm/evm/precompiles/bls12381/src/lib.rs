@@ -90,7 +90,7 @@ where
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			cost: 100_000,
+			cost: helper.used_gas(),
 			output: abi_encode_bool(output),
 			logs: Default::default(),
 		})
