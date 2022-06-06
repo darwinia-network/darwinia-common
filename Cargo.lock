@@ -92,6 +92,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "amcl"
+version = "0.3.0"
+source = "git+https://github.com/darwinia-network/milagro_bls#076d5fb697b304534b26cb8b7fe488b9a7e70a99"
+
+[[package]]
 name = "ansi_term"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1752,16 +1757,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-evm-precompile-bridge-bsc"
+name = "darwinia-evm-precompile-bls12-381"
 version = "2.8.11"
 dependencies = [
- "darwinia-bridge-bsc",
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
  "dp-contract",
- "ethereum-primitives",
  "evm",
  "fp-evm",
+ "milagro_bls",
  "sp-std",
 ]
 
@@ -1814,6 +1818,19 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "sp-core",
  "sp-io",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-mpt"
+version = "2.8.11"
+dependencies = [
+ "darwinia-evm",
+ "darwinia-evm-precompile-utils",
+ "dp-contract",
+ "ethereum-primitives",
+ "evm",
+ "fp-evm",
+ "sp-std",
 ]
 
 [[package]]
@@ -5163,6 +5180,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "milagro_bls"
+version = "1.5.0"
+source = "git+https://github.com/darwinia-network/milagro_bls#076d5fb697b304534b26cb8b7fe488b9a7e70a99"
+dependencies = [
+ "amcl",
+ "hex",
+ "lazy_static",
+ "rand 0.8.5",
+ "zeroize",
+]
+
+[[package]]
 name = "minicbor"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6652,7 +6681,8 @@ dependencies = [
  "darwinia-bridge-bsc",
  "darwinia-ethereum",
  "darwinia-evm",
- "darwinia-evm-precompile-bridge-bsc",
+ "darwinia-evm-precompile-bls12-381",
+ "darwinia-evm-precompile-mpt",
  "darwinia-evm-precompile-state-storage",
  "darwinia-evm-precompile-transfer",
  "darwinia-staking",
@@ -10728,8 +10758,8 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
- "rand 0.8.5",
+ "cfg-if 0.1.10",
+ "rand 0.7.3",
  "static_assertions",
 ]
 

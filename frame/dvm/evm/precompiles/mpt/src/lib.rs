@@ -26,7 +26,7 @@ use evm::ExitRevert;
 use darwinia_evm_precompile_utils::{PrecompileHelper, StateMutability};
 use dp_contract::{
 	abi_util::{abi_encode_array_bytes, abi_encode_bytes},
-	bsc_light_client::{BscMultiStorageVerifyParams, BscSingleStorageVerifyParams},
+	mpt::{MPTMultiStorageVerifyParams, MPTSingleStorageVerifyParams},
 };
 use ethereum_primitives::{
 	error::{Error::Proof as StorageProofError, ProofError},
@@ -41,20 +41,22 @@ use sp_std::{vec, vec::Vec};
 #[darwinia_evm_precompile_utils::selector]
 enum Action {
 	// account, account_proof, storage_key, storage_proof
-	VerfiySingleStorageProof = "verify_single_storage_proof(address,bytes[],bytes32,bytes[])",
+	VerfiySingleStorageProof =
+		"verify_single_storage_proof(bytes32,address,bytes[],bytes32,bytes[])",
 	// account, account_proof, storage_keys, storage_proofs
-	VerifyMultiStorageProof = "verify_multi_storage_proof(address,bytes[],bytes32[],bytes[][])",
+	VerifyMultiStorageProof =
+		"verify_multi_storage_proof(bytes32,address,bytes[],bytes32[],bytes[][])",
 }
 
-const MAX_MULTI_STORAGEKEY_SIZE: usize = 32;
+const VERIFY_SINGLE_STORAGE_GAS: usize = 50_000;
 
-pub struct BscBridge<T> {
+pub struct MPT<T> {
 	_marker: PhantomData<T>,
 }
 
-impl<T> Precompile for BscBridge<T>
+impl<T> Precompile for MPT<T>
 where
-	T: darwinia_bridge_bsc::Config + darwinia_evm::Config,
+	T: darwinia_evm::Config,
 {
 	fn execute(
 		input: &[u8],
@@ -62,48 +64,39 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let mut helper = PrecompileHelper::<T>::new(input, target_gas);
+		let helper = PrecompileHelper::<T>::new(input, target_gas);
 		let (selector, data) = helper.split_input()?;
 		let action = Action::from_u32(selector)?;
 
 		// Check state modifiers
 		helper.check_state_modifier(context, is_static, StateMutability::View)?;
 
+		let mut multiplier: usize = 1;
+
 		let output = match action {
 			Action::VerfiySingleStorageProof => {
-				// Storage: BSC FinalizedCheckpoint (r:1 w:0)
-				helper.record_gas(1, 0)?;
-
-				let params = BscSingleStorageVerifyParams::decode(data)
-					.map_err(|_| helper.revert("Decode input failed"))?;
-				let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
+				let params = MPTSingleStorageVerifyParams::decode(data)
+					.map_err(|_| helper.revert("decode single storage verify info failed"))?;
 				let proof = EthereumStorageProof::new(
 					params.lane_address,
 					params.storage_key,
 					params.account_proof,
 					params.storage_proof,
 				);
-				let storage_value = EthereumStorage::<Vec<u8>>::verify_storage_proof(
-					finalized_header.state_root,
-					&proof,
-				)
-				.map_err(|_| helper.revert("Verify proof failed"))?;
+				let storage_value =
+					EthereumStorage::<Vec<u8>>::verify_storage_proof(params.state_root, &proof)
+						.map_err(|_| helper.revert("verify single storage proof failed"))?;
 				abi_encode_bytes(storage_value.0.as_slice())
 			},
 			Action::VerifyMultiStorageProof => {
-				// Storage: BSC FinalizedCheckpoint (r:1 w:0)
-				helper.record_gas(1, 0)?;
-
-				let params = BscMultiStorageVerifyParams::decode(data)
-					.map_err(|_| helper.revert("Decode input failed"))?;
-				let finalized_header = darwinia_bridge_bsc::Pallet::<T>::finalized_checkpoint();
+				let params = MPTMultiStorageVerifyParams::decode(data)
+					.map_err(|_| helper.revert("decode multi storage verify info failed"))?;
 				let key_size = params.storage_keys.len();
 				if key_size != params.storage_proofs.len() {
-					return Err(helper.revert("Storage keys not match"));
+					return Err(helper.revert("storage keys not match storage proofs"));
 				}
-				if key_size > MAX_MULTI_STORAGEKEY_SIZE {
-					return Err(helper.revert("Key'size too large"));
-				}
+				multiplier = key_size;
+
 				let storage_values: Result<Vec<Vec<u8>>, _> = (0..key_size)
 					.map(|idx| {
 						let storage_key = params.storage_keys[idx];
@@ -115,7 +108,7 @@ where
 							storage_proof,
 						);
 						let storage_value = EthereumStorage::<Vec<u8>>::verify_storage_proof(
-							finalized_header.state_root,
+							params.state_root,
 							&proof,
 						);
 						match storage_value {
@@ -128,7 +121,7 @@ where
 								if err == StorageProofError(ProofError::TrieKeyNotExist) {
 									return Ok(vec![]);
 								} else {
-									return Err(helper.revert("Verfiy proof failed"));
+									return Err(helper.revert("verfiy storage failed"));
 								}
 							},
 						}
@@ -138,9 +131,13 @@ where
 			},
 		};
 
+		let cost = multiplier
+			.checked_mul(VERIFY_SINGLE_STORAGE_GAS)
+			.ok_or(helper.revert("Calculate cost error"))?;
+
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			cost: helper.used_gas(),
+			cost: cost as u64,
 			output,
 			logs: Default::default(),
 		})
