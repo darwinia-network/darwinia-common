@@ -83,6 +83,7 @@ where
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
+			// TODO: https://github.com/darwinia-network/darwinia-common/issues/1261
 			cost: helper.used_gas().saturating_add(100_000),
 			output: abi_encode_bool(output),
 			logs: Default::default(),
