@@ -27,7 +27,8 @@ use sha3::{Digest, Keccak256};
 // --- paritytech ---
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
-	traits::{Everything, FindAuthor, GenesisBuild},
+	dispatch::Dispatchable,
+	traits::{Contains, Everything, FindAuthor, GenesisBuild},
 	weights::GetDispatchInfo,
 	ConsensusEngineId, PalletId,
 };
@@ -37,7 +38,7 @@ use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
 	AccountId32, Perbill, RuntimeDebug,
 };
 use sp_std::prelude::*;
@@ -45,12 +46,13 @@ use sp_std::prelude::*;
 use crate::{self as darwinia_ethereum, account_basic::*, *};
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
 use darwinia_support::evm::DeriveSubstrateAddress;
+use pallet_bridge_dispatch::EthereumCallDispatch;
 
 type Block = MockBlock<Test>;
-pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
 type Balance = u64;
 
+pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
 pub type EthereumTransactCall = darwinia_ethereum::Call<Test>;
 pub type TestRuntimeCall = <Test as frame_system::Config>::Call;
 
@@ -239,6 +241,106 @@ impl darwinia_ethereum::Config for Test {
 	type StateRoot = IntermediateStateRoot;
 }
 
+// --- pallet-bridge-dispatch config start ---
+
+pub type BridgeMessageId = [u8; 4];
+pub type SubChainId = [u8; 4];
+pub const SOURCE_CHAIN_ID: SubChainId = *b"srce";
+pub const TARGET_CHAIN_ID: SubChainId = *b"trgt";
+
+pub struct AccountIdConverter;
+
+impl sp_runtime::traits::Convert<H256, AccountId32> for AccountIdConverter {
+	fn convert(hash: H256) -> AccountId32 {
+		AccountId32::new(hash.0)
+	}
+}
+
+pub struct TestCallFilter;
+
+impl Contains<Call> for TestCallFilter {
+	fn contains(call: &Call) -> bool {
+		true
+	}
+}
+
+#[derive(Decode, Encode)]
+pub struct EncodedCall(pub Vec<u8>);
+
+impl From<EncodedCall> for Result<Call, ()> {
+	fn from(call: EncodedCall) -> Result<Call, ()> {
+		Call::decode(&mut &call.0[..]).map_err(drop)
+	}
+}
+
+pub struct EthereumCallDispatcher;
+
+impl EthereumCallDispatch for EthereumCallDispatcher {
+	type AccountId = AccountId32;
+	type Call = Call;
+
+	fn dispatch(
+		c: &Self::Call,
+		origin: &Self::AccountId,
+	) -> Result<
+		Option<sp_runtime::DispatchResultWithInfo<PostDispatchInfo>>,
+		TransactionValidityError,
+	> {
+		match c {
+			call @ Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) => {
+				let derive_eth_address = origin.derive_ethereum_address();
+				if let Err(validate_err) =
+					Ethereum::validate_transaction_in_block(derive_eth_address, tx)
+				{
+					return Err(validate_err);
+				}
+
+				Ok(Some(call.clone().dispatch(Origin::from(
+					darwinia_ethereum::RawOrigin::EthereumTransaction(derive_eth_address),
+				))))
+			},
+			_ => Ok(None),
+		}
+	}
+}
+
+#[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
+pub struct TestAccountPublic(AccountId32);
+
+impl IdentifyAccount for TestAccountPublic {
+	type AccountId = AccountId32;
+
+	fn into_account(self) -> AccountId32 {
+		self.0
+	}
+}
+
+#[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
+pub struct TestSignature(AccountId32);
+
+impl Verify for TestSignature {
+	type Signer = TestAccountPublic;
+
+	fn verify<L: sp_runtime::traits::Lazy<[u8]>>(&self, _msg: L, signer: &AccountId32) -> bool {
+		self.0 == *signer
+	}
+}
+
+impl pallet_bridge_dispatch::Config for Test {
+	type AccountIdConverter = AccountIdConverter;
+	type BridgeMessageId = BridgeMessageId;
+	type Call = Call;
+	type CallFilter = TestCallFilter;
+	type EncodedCall = EncodedCall;
+	type EthereumCallDispatcher = EthereumCallDispatcher;
+	type Event = Event;
+	type SourceChainAccountId = AccountId32;
+	type TargetChainAccountPublic = TestAccountPublic;
+	type TargetChainSignature = TestSignature;
+}
+
+// --- pallet-bridge-dispatch config end ---
+
 frame_support::construct_runtime! {
 	pub enum Test where
 		Block = Block,
@@ -251,6 +353,7 @@ frame_support::construct_runtime! {
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>},
 		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event<T>, Origin},
+		Dispatch: pallet_bridge_dispatch::{Pallet, Call, Event<T>},
 	}
 }
 

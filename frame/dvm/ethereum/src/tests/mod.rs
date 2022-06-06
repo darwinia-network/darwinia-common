@@ -30,6 +30,7 @@ use crate::{
 };
 
 mod account_basic;
+mod dispatch_transact;
 mod eip1559;
 mod eip2930;
 mod internal;

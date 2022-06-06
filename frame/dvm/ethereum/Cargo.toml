@@ -45,6 +45,9 @@ array-bytes  = { version = "1.5" }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 # darwinia-network
 darwinia-balances = { path = "../../balances" }
+pallet-bridge-dispatch = { git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "bear-dev-dispatch-eth-call" }
+bp-message-dispatch = { git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "bear-dev-dispatch-eth-call" }
+bp-runtime = { git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "bear-dev-dispatch-eth-call" }
 # frontier
 pallet-evm-precompile-simple = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
 
