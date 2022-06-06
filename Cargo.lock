@@ -6590,6 +6590,7 @@ dependencies = [
  "drml-common-runtime",
  "drml-primitives",
  "ethereum-primitives",
+ "evm",
  "fp-evm",
  "fp-rpc",
  "fp-self-contained",
@@ -6667,6 +6668,7 @@ dependencies = [
  "static_assertions",
  "substrate-wasm-builder",
  "to-ethereum-backing",
+ "to-parachain-backing",
  "to-tron-backing",
 ]
 
@@ -6704,6 +6706,7 @@ dependencies = [
  "dp-s2s",
  "drml-common-runtime",
  "drml-primitives",
+ "evm",
  "fp-evm",
  "fp-rpc",
  "fp-self-contained",
@@ -10428,6 +10431,25 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-staking",
+ "sp-std",
+]
+
+[[package]]
+name = "to-parachain-backing"
+version = "2.8.11"
+dependencies = [
+ "array-bytes",
+ "bp-message-dispatch",
+ "bp-messages",
+ "bp-runtime",
+ "darwinia-support",
+ "ethereum-types",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec 2.3.1",
+ "scale-info 1.0.0",
+ "sp-runtime",
  "sp-std",
 ]
 

@@ -1,0 +1,51 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "FRAME pallet to parachain backing"
+edition     = "2021"
+homepage    = "https://darwinia.network"
+license     = "GPL-3.0"
+name        = "to-parachain-backing"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common"
+version     = "2.8.11"
+
+[dependencies]
+# crates.io
+array-bytes    = { version = "1.5" }
+codec          = { package = "parity-scale-codec", version = "2.3", default-features = false, features = ["derive"] }
+scale-info     = { version = "1.0", default-features = false, features = ["derive"] }
+ethereum-types = { version = "0.12", default-features = false }
+# darwinia-network
+darwinia-support    = { default-features = false, path = "../../../support" }
+# paritytech
+bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
+bp-messages         = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
+bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
+frame-benchmarking  = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+frame-support       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+frame-system        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+
+[features]
+default = ["std"]
+
+std = [
+	# crates.io
+	"codec/std",
+	"ethereum-types/std",
+	"scale-info/std",
+	# darwinia-network
+	"darwinia-support/std",
+	# paritytech
+	"bp-messages/std",
+	"bp-message-dispatch/std",
+	"bp-runtime/std",
+	"frame-benchmarking/std",
+	"frame-support/std",
+	"frame-system/std",
+	"sp-runtime/std",
+	"sp-std/std",
+]
+
+runtime-benchmarks = ["frame-benchmarking"]

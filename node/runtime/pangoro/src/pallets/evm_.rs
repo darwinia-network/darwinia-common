@@ -1,12 +1,11 @@
 // --- core ---
 use core::marker::PhantomData;
+// --- crates.io ---
+use evm::ExitRevert;
 // --- paritytech ---
-use codec::{Decode, Encode};
-use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
+use fp_evm::{Context, Precompile, PrecompileFailure, PrecompileResult, PrecompileSet};
 use frame_support::{
-	pallet_prelude::Weight,
-	traits::{FindAuthor, PalletInfoAccess},
-	ConsensusEngineId, StorageHasher, Twox128,
+	pallet_prelude::Weight, traits::FindAuthor, ConsensusEngineId, StorageHasher, Twox128,
 };
 use pallet_evm_precompile_blake2::Blake2F;
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
@@ -14,7 +13,6 @@ use pallet_session::FindAccountFromAuthorIndex;
 use sp_core::{crypto::Public, H160, U256};
 // --- darwinia-network ---
 use crate::*;
-use bp_messages::LaneId;
 use darwinia_ethereum::{
 	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping,
@@ -22,15 +20,12 @@ use darwinia_ethereum::{
 use darwinia_evm::{
 	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, GasWeightMapping,
 };
-use darwinia_evm_precompile_bridge_ethereum::EthereumBridge;
-use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
-use darwinia_evm_precompile_dispatch::Dispatch;
+use darwinia_evm_precompile_bls12_381::BLS12381;
+use darwinia_evm_precompile_bridge_bsc::BscBridge;
+use darwinia_evm_precompile_mpt::MPT;
 use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
 use darwinia_evm_precompile_transfer::Transfer;
-use darwinia_support::{
-	evm::ConcatConverter,
-	s2s::{LatestMessageNoncer, RelayMessageSender},
-};
+use darwinia_support::evm::ConcatConverter;
 
 pub struct EthereumFindAuthor<F>(PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
@@ -46,43 +41,6 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 	}
 }
 
-pub struct ToPangoroMessageSender;
-impl RelayMessageSender for ToPangoroMessageSender {
-	fn encode_send_message(
-		message_pallet_index: u32,
-		lane_id: LaneId,
-		payload: Vec<u8>,
-		fee: u128,
-	) -> Result<Vec<u8>, &'static str> {
-		let payload = bm_pangoro::ToPangoroMessagePayload::decode(&mut payload.as_slice())
-			.map_err(|_| "decode pangoro payload failed")?;
-
-		let call: Call = match message_pallet_index {
-			_ if message_pallet_index as usize
-				== <BridgePangoroMessages as PalletInfoAccess>::index() =>
-				pallet_bridge_messages::Call::<Runtime, WithPangoroMessages>::send_message {
-					lane_id,
-					payload,
-					delivery_and_dispatch_fee: fee.saturated_into(),
-				}
-				.into(),
-			_ => {
-				return Err("invalid pallet index".into());
-			},
-		};
-		Ok(call.encode())
-	}
-}
-impl LatestMessageNoncer for ToPangoroMessageSender {
-	fn outbound_latest_generated_nonce(lane_id: LaneId) -> u64 {
-		BridgePangoroMessages::outbound_latest_generated_nonce(lane_id).into()
-	}
-
-	fn inbound_latest_received_nonce(lane_id: LaneId) -> u64 {
-		BridgePangoroMessages::inbound_latest_received_nonce(lane_id).into()
-	}
-}
-
 pub struct StorageFilter;
 impl StorageFilterT for StorageFilter {
 	fn allow(prefix: &[u8]) -> bool {
@@ -90,8 +48,8 @@ impl StorageFilterT for StorageFilter {
 	}
 }
 
-pub struct PangolinPrecompiles<R>(PhantomData<R>);
-impl<R> PangolinPrecompiles<R>
+pub struct PangoroPrecompiles<R>(PhantomData<R>);
+impl<R> PangoroPrecompiles<R>
 where
 	R: darwinia_ethereum::Config,
 {
@@ -100,16 +58,16 @@ where
 	}
 
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 9, 21, 23, 24, 25, 27].into_iter().map(|x| addr(x)).collect()
+		sp_std::vec![1, 2, 3, 4, 9, 21, 26, 27, 2048, 2049].into_iter().map(|x| addr(x)).collect()
 	}
 }
 
-impl<R> PrecompileSet for PangolinPrecompiles<R>
+impl<R> PrecompileSet for PangoroPrecompiles<R>
 where
-	Dispatch<R>: Precompile,
-	EthereumBridge<R>: Precompile,
+	BLS12381<R>: Precompile,
+	BscBridge<R>: Precompile,
+	MPT<R>: Precompile,
 	StateStorage<R, StorageFilter>: Precompile,
-	Sub2SubBridge<R, ToPangoroMessageSender, bm_pangoro::ToPangoroOutboundPayLoad>: Precompile,
 	Transfer<R>: Precompile,
 	R: darwinia_ethereum::Config,
 {
@@ -121,6 +79,15 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> Option<PrecompileResult> {
+		// Filter known precompile addresses except Ethereum officials
+		if self.is_precompile(address) && address > addr(9) && address != context.address {
+			return Some(Err(PrecompileFailure::Revert {
+				exit_status: ExitRevert::Reverted,
+				output: b"cannot be called with DELEGATECALL or CALLCODE".to_vec(),
+				cost: 0,
+			}));
+		};
+
 		match address {
 			// Ethereum precompiles
 			a if a == addr(1) => Some(ECRecover::execute(input, target_gas, context, is_static)),
@@ -131,18 +98,14 @@ where
 			// Darwinia precompiles
 			a if a == addr(21) =>
 				Some(<Transfer<R>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(23) =>
-				Some(<EthereumBridge<R>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(24) => Some(<Sub2SubBridge<
-				R,
-				ToPangoroMessageSender,
-				bm_pangoro::ToPangoroOutboundPayLoad,
-			>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(25) =>
-				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
+			a if a == addr(26) =>
+				Some(<BscBridge<R>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(27) => Some(<StateStorage<R, StorageFilter>>::execute(
 				input, target_gas, context, is_static,
 			)),
+			a if a == addr(2048) =>
+				Some(<BLS12381<R>>::execute(input, target_gas, context, is_static)),
+			a if a == addr(2049) => Some(<MPT<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
@@ -171,9 +134,9 @@ impl GasWeightMapping for FixedGasWeightMapping {
 }
 
 frame_support::parameter_types! {
-	pub const ChainId: u64 = 43;
+	pub const ChainId: u64 = 45;
 	pub BlockGasLimit: U256 = U256::from(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WEIGHT_PER_GAS);
-	pub PrecompilesValue: PangolinPrecompiles<Runtime> = PangolinPrecompiles::<_>::new();
+	pub PrecompilesValue: PangoroPrecompiles<Runtime> = PangoroPrecompiles::<_>::new();
 }
 
 impl Config for Runtime {
@@ -188,7 +151,7 @@ impl Config for Runtime {
 	type IntoAccountId = ConcatConverter<Self::AccountId>;
 	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<FindAccountFromAuthorIndex<Self, Babe>>;
-	type PrecompilesType = PangolinPrecompiles<Self>;
+	type PrecompilesType = PangoroPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
 	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
 	type Runner = Runner<Self>;

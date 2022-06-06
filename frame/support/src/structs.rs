@@ -87,7 +87,16 @@ where
 	Balance: Copy + PartialOrd + AtLeast32BitUnsigned + Zero,
 	Moment: Copy + PartialOrd,
 {
+	// TODO: Remove this and bring `ledger.total` back.
 	#[inline]
+	pub fn total_unbond_at(&self, at: Moment) -> Balance {
+		self.unbondings
+			.iter()
+			.fold(Zero::zero(), |acc, unbonding| acc.saturating_add(unbonding.locked_amount(at)))
+	}
+
+	#[inline]
+	#[deprecated = "If you know what you are doing now."]
 	pub fn total_unbond(&self) -> Balance {
 		self.unbondings
 			.iter()
