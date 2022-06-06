@@ -63,28 +63,21 @@ where
 				let params = FastAggregateVerifyParams::decode(data)
 					.map_err(|_| helper.revert("Invalid input"))?;
 
-				let sig = Signature::from_bytes(&params.signature);
-				if sig.is_err() {
-					return Err(helper.revert("Invalid signature"));
-				}
-
-				let agg_sig = AggregateSignature::from_signature(&sig.unwrap());
+				let sig = Signature::from_bytes(&params.signature)
+					.map_err(|_| helper.revert("Invalid signature"))?;
+				let agg_sig = AggregateSignature::from_signature(&sig);
 
 				let public_keys_res: Result<Vec<PublicKey>, _> =
 					params.pubkeys.iter().map(|bytes| PublicKey::from_bytes(bytes)).collect();
-				if public_keys_res.is_err() {
+
+				if let Ok(keys) = public_keys_res {
+					let agg_pub_key_res = AggregatePublicKey::into_aggregate(&keys)
+						.map_err(|_| helper.revert("Invalid aggregate"))?;
+
+					agg_sig.fast_aggregate_verify_pre_aggregated(&params.message, &agg_pub_key_res)
+				} else {
 					return Err(helper.revert("Invalid pubkeys"));
 				}
-
-				let agg_pub_key_res = AggregatePublicKey::into_aggregate(&public_keys_res.unwrap());
-				if agg_pub_key_res.is_err() {
-					return Err(helper.revert("Invalid aggregate"));
-				}
-
-				agg_sig.fast_aggregate_verify_pre_aggregated(
-					&params.message,
-					&agg_pub_key_res.unwrap(),
-				)
 			},
 		};
 
