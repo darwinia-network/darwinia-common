@@ -41,7 +41,7 @@ fp-evm = { default-features = false, git = "https://github.com/darwinia-network/
 # crates.io
 ethereum     = { version = "0.11.1", features = ["with-codec"] }
 evm          = { version = "0.33.1", features = ["with-codec"] }
-libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
+libsecp256k1 = { version = "0.7", features = ["static-context", "hmac"] }
 # darwinia-network
 darwinia-balances                  = { path = "../../../balances" }
 darwinia-evm-precompile-bridge-s2s = { path = "../../../dvm/evm/precompiles/bridge/s2s" }

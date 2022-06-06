@@ -28,7 +28,7 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 
 [dev-dependencies]
 # crates.io
-libsecp256k1 = { version = "0.3" }
+libsecp256k1 = { version = "0.7" }
 # darwinia-network
 darwinia-balances = { path = "../balances" }
 # paritytech
