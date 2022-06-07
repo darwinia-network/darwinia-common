@@ -58,7 +58,7 @@ impl<T: PalletBridgeMessagesConfig<I>, I: 'static, T2: DarwiniaEthereumConfig> O
 		for nonce in messages.begin..=messages.end {
 			let result = messages.message_dispatch_result(nonce);
 			if let Some(message_sender) = Self::get_message_sender(*lane, nonce) {
-				if let Ok(call_data) = Self::make_call_data(*lane, nonce, result) {
+				if let Ok(call_data) = make_call_data(*lane, nonce, result) {
 
 					// Run solidity callback
 					if let Err(e) = darwinia_ethereum::Pallet::<T2>::internal_transact(message_sender, call_data) {
@@ -75,39 +75,6 @@ impl<T: PalletBridgeMessagesConfig<I>, I: 'static, T2: DarwiniaEthereumConfig> O
 }
 
 impl<T: PalletBridgeMessagesConfig<I>, I: 'static, T2: DarwiniaEthereumConfig> SolidityDeliveredHandler<T, I, T2> {
-	fn make_call_data(lane: LaneId, nonce: MessageNonce, result: bool) -> AbiResult<Vec<u8>> {
-		#[allow(deprecated)]
-		let func = Function {
-			name: "onMessageDelivered".into(),
-			inputs: vec![
-				Param {
-					name: "lane".to_owned(),
-					kind: ParamType::FixedBytes(4),
-					internal_type: Some("bytes4".into()),
-				},
-				Param {
-					name: "nonce".to_owned(),
-					kind: ParamType::Uint(64),
-					internal_type: Some("uint64".into()),
-				},
-				Param {
-					name: "result".to_owned(),
-					kind: ParamType::Bool,
-					internal_type: Some("bool".into()),
-				},
-			],
-			outputs: vec![],
-			constant: false,
-			state_mutability: StateMutability::NonPayable,
-		};
-
-		func.encode_input(&[
-			Token::FixedBytes(lane.to_vec()),
-			Token::Uint(nonce.into()),
-			Token::Bool(result),
-		])
-	}
-
 	fn 	get_message_sender(lane: LaneId, nonce: MessageNonce) -> Option<H160> {
 		if let Some(data) = Pallet::<T, I>::outbound_message_data(lane, nonce) {
 			return Self::get_origin_from_message_payload_data(data.payload);
@@ -131,6 +98,39 @@ impl<T: PalletBridgeMessagesConfig<I>, I: 'static, T2: DarwiniaEthereumConfig> S
 		}
 		return None;
 	}
+}
+
+fn make_call_data(lane: LaneId, nonce: MessageNonce, result: bool) -> AbiResult<Vec<u8>> {
+	#[allow(deprecated)]
+	let func = Function {
+		name: "onMessageDelivered".into(),
+		inputs: vec![
+			Param {
+				name: "lane".to_owned(),
+				kind: ParamType::FixedBytes(4),
+				internal_type: Some("bytes4".into()),
+			},
+			Param {
+				name: "nonce".to_owned(),
+				kind: ParamType::Uint(64),
+				internal_type: Some("uint64".into()),
+			},
+			Param {
+				name: "result".to_owned(),
+				kind: ParamType::Bool,
+				internal_type: Some("bool".into()),
+			},
+		],
+		outputs: vec![],
+		constant: false,
+		state_mutability: StateMutability::NonPayable,
+	};
+
+	func.encode_input(&[
+		Token::FixedBytes(lane.to_vec()),
+		Token::Uint(nonce.into()),
+		Token::Bool(result),
+	])
 }
 
 #[cfg(test)]
@@ -166,5 +166,15 @@ mod tests {
 			let h160 = H160::from_slice(str);
 			assert_eq!(h160, H160::from_str("0x2b9b61ce0c92db05304f6ba433f7c29a159aefb7").unwrap());
 		}
+	}
+
+	#[test]
+	fn call_data_is_right() {
+		let call_data = make_call_data([1u8; 4], 12, true).unwrap();
+		let call_data = array_bytes::bytes2hex("0x", call_data);
+
+		// expected result is from remix
+		let expected = "0x871f7c500101010100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000001";
+		assert_eq!(call_data, expected);
 	}
 }
