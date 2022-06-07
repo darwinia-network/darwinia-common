@@ -16,24 +16,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-use sp_std::{borrow::ToOwned, marker::PhantomData, vec, vec::Vec};
-// --- darwinia-network ---
-use bp_message_dispatch::{CallOrigin, Weight};
-use darwinia_ethereum::{Config as DarwiniaEthereumConfig, InternalTransactHandler};
-use pallet_bridge_messages::{Config as PalletBridgeMessagesConfig, Pallet};
-// --- paritytech ---
-use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId, MessageNonce};
+// --- crates.io ---
 use codec::{Decode, Encode};
 use ethabi::{
 	param_type::ParamType, token::Token, Function, Param, Result as AbiResult, StateMutability,
 };
 use ethereum_types::H160;
-use frame_support::traits::Get;
-
+// --- darwinia-network ---
 use crate::bm_pangoro;
 use bm_pangoro::ToPangoroMessagePayload as MessagePayload;
+use bp_message_dispatch::{CallOrigin, Weight};
+use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId, MessageNonce};
+use darwinia_ethereum::{Config as DarwiniaEthereumConfig, InternalTransactHandler};
+use pallet_bridge_messages::{Config as PalletBridgeMessagesConfig, Pallet};
+// --- paritytech ---
+use frame_support::traits::Get;
+use sp_std::{borrow::ToOwned, marker::PhantomData, vec, vec::Vec};
 
 pub struct SolidityDeliveredHandler<T, I>(PhantomData<(T, I)>);
+
 impl<T: PalletBridgeMessagesConfig<I> + DarwiniaEthereumConfig, I: 'static> OnDeliveryConfirmed
 	for SolidityDeliveredHandler<T, I>
 {
