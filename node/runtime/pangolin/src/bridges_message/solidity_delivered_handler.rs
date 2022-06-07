@@ -26,17 +26,31 @@ use ethereum_types::H160;
 use crate::bm_pangoro;
 use bm_pangoro::ToPangoroMessagePayload as MessagePayload;
 use bp_message_dispatch::{CallOrigin, Weight};
-use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId, MessageNonce};
+use bp_messages::{
+	source_chain::OnDeliveryConfirmed, target_chain::MessageDispatch, DeliveredMessages, LaneId,
+	MessageNonce,
+};
+use bridge_runtime_common::messages::{source::FromThisChainMessagePayload, MessageBridge};
 use darwinia_ethereum::{Config as DarwiniaEthereumConfig, InternalTransactHandler};
 use pallet_bridge_messages::{Config as PalletBridgeMessagesConfig, Pallet};
 // --- paritytech ---
 use frame_support::traits::Get;
 use sp_std::{borrow::ToOwned, marker::PhantomData, vec, vec::Vec};
 
-pub struct SolidityDeliveredHandler<T, I>(PhantomData<(T, I)>);
+// You might want to know the dispatch result or do something else based on the cross-china message
+// state in the bridged chain from smart contract side, this would be helpful in this case.
+// Adding  a specific interface in your contract side, the handler will call it once the message has
+// been delivered in the bridges chain.
+pub struct SmartContractDeliveredHandler<Runtime, MessagesPalletInstance, BridgeConfig>(
+	PhantomData<(Runtime, MessagesPalletInstance, BridgeConfig)>,
+);
 
-impl<T: PalletBridgeMessagesConfig<I> + DarwiniaEthereumConfig, I: 'static> OnDeliveryConfirmed
-	for SolidityDeliveredHandler<T, I>
+impl<Runtime, MessagesPalletInstance, BridgeConfig> OnDeliveryConfirmed
+	for SmartContractDeliveredHandler<Runtime, MessagesPalletInstance, BridgeConfig>
+where
+	Runtime: pallet_bridge_messages::Config<MessagesPalletInstance> + darwinia_ethereum::Config,
+	MessagesPalletInstance: 'static,
+	BridgeConfig: MessageBridge,
 {
 	fn on_messages_delivered(lane: &LaneId, messages: &DeliveredMessages) -> Weight {
 		for nonce in messages.begin..=messages.end {
@@ -44,9 +58,10 @@ impl<T: PalletBridgeMessagesConfig<I> + DarwiniaEthereumConfig, I: 'static> OnDe
 			if let Some(message_sender) = Self::get_message_sender(*lane, nonce) {
 				if let Ok(call_data) = make_call_data(*lane, nonce, result) {
 					// Run solidity callback
-					if let Err(e) =
-						darwinia_ethereum::Pallet::<T>::internal_transact(message_sender, call_data)
-					{
+					if let Err(e) = darwinia_ethereum::Pallet::<Runtime>::internal_transact(
+						message_sender,
+						call_data,
+					) {
 						log::error!(
 							"Execute 'internal_transact' failed for messages delivered, {:?}",
 							e.error
@@ -56,34 +71,38 @@ impl<T: PalletBridgeMessagesConfig<I> + DarwiniaEthereumConfig, I: 'static> OnDe
 			}
 		}
 
-		<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
+		<Runtime as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
 	}
 }
 
-impl<T: PalletBridgeMessagesConfig<I> + DarwiniaEthereumConfig, I: 'static>
-	SolidityDeliveredHandler<T, I>
+impl<Runtime, MessagesPalletInstance, BridgeConfig>
+	SmartContractDeliveredHandler<Runtime, MessagesPalletInstance, BridgeConfig>
+where
+	Runtime: pallet_bridge_messages::Config<MessagesPalletInstance> + darwinia_ethereum::Config,
+	MessagesPalletInstance: 'static,
+	BridgeConfig: MessageBridge,
 {
 	fn get_message_sender(lane: LaneId, nonce: MessageNonce) -> Option<H160> {
-		if let Some(data) = Pallet::<T, I>::outbound_message_data(lane, nonce) {
-			return Self::get_origin_from_message_payload_data(data.payload);
-		}
-
-		return None;
-	}
-
-	pub fn get_origin_from_message_payload_data(payload_data: Vec<u8>) -> Option<H160> {
-		if let Ok(payload) = MessagePayload::decode(&mut &payload_data[..]) {
-			// TODO: SourceRoot?
-			let account_id = match payload.origin {
+		if let Some(data) =
+			Pallet::<Runtime, MessagesPalletInstance>::outbound_message_data(lane, nonce)
+		{
+			let decoded_payload =
+				FromThisChainMessagePayload::<BridgeConfig>::decode(&mut &data.payload[..]).ok()?;
+			let origin = match decoded_payload.origin {
 				CallOrigin::SourceRoot => None,
 				CallOrigin::TargetAccount(account_id, _, _) => Some(account_id),
 				CallOrigin::SourceAccount(account_id) => Some(account_id),
 			};
-			if let Some(account_id) = account_id {
-				// TODO: use derive_ethereum_address instead
-				return Some(H160::from_slice(&account_id.encode()[11..31]));
+
+			if let Some(account_id) = origin {
+				let derive_eth_address =
+					<Runtime as darwinia_evm::Config>::IntoAccountId::derive_ethereum_address(
+						account_id,
+					);
+				return Some(derive_eth_address);
 			}
 		}
+
 		return None;
 	}
 }
