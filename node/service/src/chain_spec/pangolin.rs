@@ -291,6 +291,11 @@ pub fn genesis_config() -> ChainSpec {
 			substrate_2_substrate_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
+			to_pangolin_parachain_backing: ToPangolinParachainBackingConfig {
+				secure_limited_period: DAYS,
+				secure_limited_ring_amount: 1_000_000 * COIN,
+				remote_mapping_token_factory_account: Default::default(),
+			},
 		}
 	}
 
@@ -486,6 +491,11 @@ pub fn development_config() -> ChainSpec {
 			substrate_2_substrate_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
 			},
+			to_pangolin_parachain_backing: ToPangolinParachainBackingConfig {
+				secure_limited_period: DAYS,
+				secure_limited_ring_amount: 100_000 * COIN,
+				remote_mapping_token_factory_account: Default::default(),
+			},
 		}
 	}
 
@@ -678,6 +688,11 @@ pub fn local_testnet_config() -> ChainSpec {
 			base_fee: Default::default(),
 			substrate_2_substrate_issuing: Substrate2SubstrateIssuingConfig {
 				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
+			},
+			to_pangolin_parachain_backing: ToPangolinParachainBackingConfig {
+				secure_limited_period: DAYS,
+				secure_limited_ring_amount: 1_000_000 * COIN,
+				remote_mapping_token_factory_account: Default::default(),
 			},
 		}
 	}
