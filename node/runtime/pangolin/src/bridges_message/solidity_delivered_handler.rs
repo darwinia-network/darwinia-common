@@ -31,8 +31,9 @@ use bp_messages::{
 	MessageNonce,
 };
 use bridge_runtime_common::messages::{source::FromThisChainMessagePayload, MessageBridge};
-use darwinia_ethereum::{Config as DarwiniaEthereumConfig, InternalTransactHandler};
-use pallet_bridge_messages::{Config as PalletBridgeMessagesConfig, Pallet};
+use darwinia_ethereum::InternalTransactHandler;
+use darwinia_support::evm::DeriveEthereumAddress;
+use pallet_bridge_messages::Pallet;
 // --- paritytech ---
 use frame_support::traits::Get;
 use sp_std::{borrow::ToOwned, marker::PhantomData, vec, vec::Vec};
@@ -53,9 +54,13 @@ where
 	BridgeConfig: MessageBridge,
 {
 	fn on_messages_delivered(lane: &LaneId, messages: &DeliveredMessages) -> Weight {
+		let mut writes = 0;
+		let mut reads = 0;
 		for nonce in messages.begin..=messages.end {
 			let result = messages.message_dispatch_result(nonce);
-			if let Some(message_sender) = Self::get_message_sender(*lane, nonce) {
+			// TODO: Is it possible to check if the `onMessageDelivered` exist in the contract side?
+			// Extraace the message sender from payload
+			if let Some(message_sender) = Self::extract_message_sender(*lane, nonce) {
 				if let Ok(call_data) = make_call_data(*lane, nonce, result) {
 					// Run solidity callback
 					if let Err(e) = darwinia_ethereum::Pallet::<Runtime>::internal_transact(
@@ -71,7 +76,7 @@ where
 			}
 		}
 
-		<Runtime as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
+		<Runtime as frame_system::Config>::DbWeight::get().reads_writes(reads, writes)
 	}
 }
 
@@ -82,7 +87,7 @@ where
 	MessagesPalletInstance: 'static,
 	BridgeConfig: MessageBridge,
 {
-	fn get_message_sender(lane: LaneId, nonce: MessageNonce) -> Option<H160> {
+	fn extract_message_sender(lane: LaneId, nonce: MessageNonce) -> Option<H160> {
 		if let Some(data) =
 			Pallet::<Runtime, MessagesPalletInstance>::outbound_message_data(lane, nonce)
 		{
@@ -95,15 +100,12 @@ where
 			};
 
 			if let Some(account_id) = origin {
-				let derive_eth_address =
-					<Runtime as darwinia_evm::Config>::IntoAccountId::derive_ethereum_address(
-						account_id,
-					);
+				let derive_eth_address = account_id.encode().as_slice().derive_ethereum_address();
 				return Some(derive_eth_address);
 			}
 		}
 
-		return None;
+		None
 	}
 }
 
