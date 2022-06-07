@@ -36,7 +36,7 @@ pub fn legacy_erc20_creation_unsigned_transaction() -> LegacyUnsignedTransaction
 	}
 }
 
-fn legacy_erc20_creation_transaction(account: &AccountInfo) -> Transaction {
+pub fn legacy_erc20_creation_transaction(account: &AccountInfo) -> Transaction {
 	legacy_erc20_creation_unsigned_transaction().sign(&account.private_key)
 }
 

@@ -690,10 +690,10 @@ dependencies = [
 [[package]]
 name = "bp-darwinia-core"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
 dependencies = [
- "bp-messages",
- "bp-runtime",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
@@ -706,7 +706,7 @@ dependencies = [
 [[package]]
 name = "bp-header-chain"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
 dependencies = [
  "finality-grandpa",
  "frame-support",
@@ -722,9 +722,21 @@ dependencies = [
 [[package]]
 name = "bp-message-dispatch"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
 dependencies = [
- "bp-runtime",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "frame-support",
+ "parity-scale-codec 2.3.1",
+ "scale-info 1.0.0",
+ "sp-std",
+]
+
+[[package]]
+name = "bp-message-dispatch"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=darwinia-v0.12.2#734a60313dd32e77574d8c72298660c291440151"
+dependencies = [
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=darwinia-v0.12.2)",
  "frame-support",
  "parity-scale-codec 2.3.1",
  "scale-info 1.0.0",
@@ -734,10 +746,27 @@ dependencies = [
 [[package]]
 name = "bp-messages"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
 dependencies = [
  "bitvec 0.20.4",
- "bp-runtime",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples",
+ "parity-scale-codec 2.3.1",
+ "scale-info 1.0.0",
+ "serde",
+ "sp-core",
+ "sp-std",
+]
+
+[[package]]
+name = "bp-messages"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=darwinia-v0.12.2#734a60313dd32e77574d8c72298660c291440151"
+dependencies = [
+ "bitvec 0.20.4",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=darwinia-v0.12.2)",
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples",
@@ -751,11 +780,11 @@ dependencies = [
 [[package]]
 name = "bp-pangolin"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
 dependencies = [
  "bp-darwinia-core",
- "bp-messages",
- "bp-runtime",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "frame-support",
  "sp-api",
  "sp-runtime",
@@ -766,11 +795,11 @@ dependencies = [
 [[package]]
 name = "bp-pangolin-parachain"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
 dependencies = [
  "bp-darwinia-core",
- "bp-messages",
- "bp-runtime",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "frame-support",
  "sp-api",
  "sp-runtime",
@@ -781,11 +810,11 @@ dependencies = [
 [[package]]
 name = "bp-pangoro"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
 dependencies = [
  "bp-darwinia-core",
- "bp-messages",
- "bp-runtime",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "frame-support",
  "sp-api",
  "sp-runtime",
@@ -796,10 +825,10 @@ dependencies = [
 [[package]]
 name = "bp-parachains"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
 dependencies = [
  "bp-polkadot-core",
- "bp-runtime",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "frame-support",
  "parity-scale-codec 2.3.1",
  "scale-info 1.0.0",
@@ -810,10 +839,10 @@ dependencies = [
 [[package]]
 name = "bp-polkadot-core"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
 dependencies = [
- "bp-messages",
- "bp-runtime",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "frame-support",
  "frame-system",
  "parity-scale-codec 2.3.1",
@@ -830,11 +859,11 @@ dependencies = [
 [[package]]
 name = "bp-rococo"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
 dependencies = [
- "bp-messages",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "bp-polkadot-core",
- "bp-runtime",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "frame-support",
  "parity-scale-codec 2.3.1",
  "smallvec",
@@ -847,7 +876,25 @@ dependencies = [
 [[package]]
 name = "bp-runtime"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
+dependencies = [
+ "frame-support",
+ "hash-db",
+ "num-traits",
+ "parity-scale-codec 2.3.1",
+ "scale-info 1.0.0",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
+ "sp-trie",
+]
+
+[[package]]
+name = "bp-runtime"
+version = "0.1.0"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=darwinia-v0.12.2#734a60313dd32e77574d8c72298660c291440151"
 dependencies = [
  "frame-support",
  "hash-db",
@@ -865,7 +912,7 @@ dependencies = [
 [[package]]
 name = "bp-test-utils"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
 dependencies = [
  "bp-header-chain",
  "ed25519-dalek",
@@ -880,12 +927,12 @@ dependencies = [
 [[package]]
 name = "bridge-runtime-common"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
 dependencies = [
- "bp-message-dispatch",
- "bp-messages",
+ "bp-message-dispatch 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "bp-polkadot-core",
- "bp-runtime",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "frame-support",
  "hash-db",
  "pallet-bridge-dispatch",
@@ -1698,8 +1745,8 @@ name = "darwinia-ethereum"
 version = "2.8.11"
 dependencies = [
  "array-bytes",
- "bp-message-dispatch",
- "bp-runtime",
+ "bp-message-dispatch 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "darwinia-balances",
  "darwinia-evm",
  "darwinia-support",
@@ -1791,8 +1838,8 @@ dependencies = [
 name = "darwinia-evm-precompile-bridge-s2s"
 version = "2.8.11"
 dependencies = [
- "bp-message-dispatch",
- "bp-runtime",
+ "bp-message-dispatch 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
  "darwinia-support",
@@ -2090,8 +2137,8 @@ dependencies = [
 name = "darwinia-support"
 version = "2.8.11"
 dependencies = [
- "bp-messages",
- "bp-runtime",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "ethereum",
  "ethereum-primitives",
  "frame-support",
@@ -2236,7 +2283,7 @@ name = "dp-contract"
 version = "2.8.11"
 dependencies = [
  "array-bytes",
- "bp-messages",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "dp-asset",
  "ethabi",
  "ethereum-primitives",
@@ -2278,8 +2325,8 @@ name = "dp-s2s"
 version = "2.8.11"
 dependencies = [
  "array-bytes",
- "bp-message-dispatch",
- "bp-runtime",
+ "bp-message-dispatch 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "dp-asset",
  "dp-contract",
  "parity-scale-codec 2.3.1",
@@ -2311,7 +2358,7 @@ dependencies = [
 name = "drml-common-runtime"
 version = "2.8.11"
 dependencies = [
- "bp-messages",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "bridge-runtime-common",
  "darwinia-balances",
  "darwinia-support",
@@ -3314,9 +3361,9 @@ name = "from-substrate-issuing"
 version = "2.8.11"
 dependencies = [
  "array-bytes",
- "bp-message-dispatch",
- "bp-messages",
- "bp-runtime",
+ "bp-message-dispatch 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "darwinia-balances",
  "darwinia-ethereum",
  "darwinia-evm",
@@ -5941,10 +5988,10 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-dispatch"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
 dependencies = [
- "bp-message-dispatch",
- "bp-runtime",
+ "bp-message-dispatch 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "frame-support",
  "frame-system",
  "log",
@@ -5958,10 +6005,10 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
 dependencies = [
  "bp-header-chain",
- "bp-runtime",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "bp-test-utils",
  "finality-grandpa",
  "frame-support",
@@ -5980,12 +6027,12 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-messages"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
 dependencies = [
  "bitvec 0.20.4",
- "bp-message-dispatch",
- "bp-messages",
- "bp-runtime",
+ "bp-message-dispatch 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "frame-support",
  "frame-system",
  "log",
@@ -6001,11 +6048,11 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-parachains"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
 dependencies = [
  "bp-parachains",
  "bp-polkadot-core",
- "bp-runtime",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "frame-support",
  "frame-system",
  "log",
@@ -6163,11 +6210,11 @@ dependencies = [
 [[package]]
 name = "pallet-fee-market"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#e0f3eb4e23cefe1375ece80e2928b20d765a235e"
+source = "git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call#eee8b13eed173ae0b0196d84e69abb9713ef686b"
 dependencies = [
  "bitvec 0.20.4",
- "bp-messages",
- "bp-runtime",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6545,13 +6592,13 @@ version = "2.8.11"
 dependencies = [
  "array-bytes",
  "beefy-primitives",
- "bp-message-dispatch",
- "bp-messages",
+ "bp-message-dispatch 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "bp-pangolin",
  "bp-pangolin-parachain",
  "bp-pangoro",
  "bp-rococo",
- "bp-runtime",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "bridge-runtime-common",
  "bsc-primitives",
  "darwinia-balances",
@@ -6670,11 +6717,11 @@ dependencies = [
  "array-bytes",
  "beefy-primitives",
  "bp-header-chain",
- "bp-message-dispatch",
- "bp-messages",
+ "bp-message-dispatch 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "bp-pangolin",
  "bp-pangoro",
- "bp-runtime",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "bridge-runtime-common",
  "bsc-primitives",
  "darwinia-balances",
@@ -10429,9 +10476,9 @@ name = "to-parachain-backing"
 version = "2.8.11"
 dependencies = [
  "array-bytes",
- "bp-message-dispatch",
- "bp-messages",
- "bp-runtime",
+ "bp-message-dispatch 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=darwinia-v0.12.2)",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=darwinia-v0.12.2)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=darwinia-v0.12.2)",
  "darwinia-support",
  "ethereum-types",
  "frame-benchmarking",
@@ -10448,9 +10495,9 @@ name = "to-substrate-backing"
 version = "2.8.11"
 dependencies = [
  "array-bytes",
- "bp-message-dispatch",
- "bp-messages",
- "bp-runtime",
+ "bp-message-dispatch 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-messages 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
+ "bp-runtime 0.1.0 (git+https://github.com/darwinia-network/darwinia-bridges-substrate?branch=bear-dev-dispatch-eth-call)",
  "darwinia-balances",
  "darwinia-support",
  "dp-asset",

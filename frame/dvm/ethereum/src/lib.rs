@@ -486,6 +486,7 @@ impl<T: Config> Pallet<T> {
 			return Err(InvalidTransaction::Payment.into());
 		};
 
+		println!("bear: --- gas_price {:?} base_fee {:?}", gas_price, base_fee);
 		if gas_price < base_fee {
 			return Err(InvalidTransaction::Payment.into());
 		}
@@ -502,6 +503,7 @@ impl<T: Config> Pallet<T> {
 
 		let account_data = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&origin);
 		let total_payment = transaction_data.value.saturating_add(fee);
+		println!("bear: --- account_data {:?} total_payment {:?}", account_data, total_payment);
 		if account_data.balance < total_payment {
 			return Err(InvalidTransaction::Payment.into());
 		}

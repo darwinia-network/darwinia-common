@@ -16,18 +16,21 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+// --- crates.io ---
+use codec::Encode;
 // --- darwinia-network ---
-
 use super::*;
-use crate::{mock::*, tests, Config, InternalTransactHandler, Pallet, Weight};
+use crate::{tests::legacy::*, Weight};
 use bp_message_dispatch::{CallOrigin, MessageDispatch, MessagePayload, SpecVersion};
 use bp_runtime::messages::DispatchFeePayment;
-use codec::{Decode, Encode, MaxEncodedLen};
-use frame_system::{EventRecord, Phase};
+use darwinia_evm::AccountBasic;
+use darwinia_support::evm::decimal_convert;
+use pallet_bridge_dispatch::EthereumCallValidityError;
+// --- paritytech ---
 use sp_runtime::AccountId32;
 
 const TEST_SPEC_VERSION: SpecVersion = 0;
-const TEST_WEIGHT: Weight = 1_000_000_000;
+const TEST_WEIGHT: Weight = 1_000_000_000_000;
 
 fn prepare_message(
 	origin: CallOrigin<AccountId32, TestAccountPublic, TestSignature>,
@@ -71,17 +74,94 @@ fn test_dispatch_basic_system_call_works() {
 		assert!(result.dispatch_fee_paid_during_dispatch);
 		assert!(result.dispatch_result);
 
-		assert_eq!(
-			System::events(),
-			vec![EventRecord {
-				phase: Phase::Initialization,
-				event: Event::Dispatch(pallet_bridge_dispatch::Event::<Test>::MessageDispatched(
-					SOURCE_CHAIN_ID,
-					id,
-					Ok(())
-				)),
-				topics: vec![],
-			}],
-		);
+		System::assert_has_event(Event::Dispatch(
+			pallet_bridge_dispatch::Event::MessageDispatched(SOURCE_CHAIN_ID, id, Ok(())),
+		));
+	});
+}
+
+#[test]
+fn test_dispatch_ethereum_transact_works() {
+	let (pairs, mut ext) = new_test_ext(1);
+	let alice = &pairs[0];
+	ext.execute_with(|| {
+		let id = [0; 4];
+		let t = legacy_erc20_creation_transaction(alice);
+		let call = TestRuntimeCall::Ethereum(EthereumTransactCall::transact { transaction: t });
+
+		let mut message = prepare_source_message(call);
+		message.dispatch_fee_payment = DispatchFeePayment::AtTargetChain;
+		// Ensure the derive ethereum address has enough balance to cover fee.
+		let origin = H160::from_str("0x308f55f1caf780c5f7a73e2b2b88cb61ee5bec9b").unwrap();
+		RingAccount::mutate_account_basic_balance(&origin, decimal_convert(1000, None));
+
+		System::set_block_number(1);
+		let result =
+			Dispatch::dispatch(SOURCE_CHAIN_ID, TARGET_CHAIN_ID, id, Ok(message), |_, _| Ok(()));
+		assert!(result.dispatch_result);
+		System::assert_has_event(Event::Dispatch(
+			pallet_bridge_dispatch::Event::MessageDispatched(SOURCE_CHAIN_ID, id, Ok(())),
+		));
+		assert_ne!(RingAccount::account_basic(&origin).balance, decimal_convert(1000, None));
+	});
+}
+
+#[test]
+fn test_dispatch_ethereum_transact_invalid_payment() {
+	let (pairs, mut ext) = new_test_ext(1);
+	let alice = &pairs[0];
+	ext.execute_with(|| {
+		let id = [0; 4];
+		let t = legacy_erc20_creation_transaction(alice);
+		let call = TestRuntimeCall::Ethereum(EthereumTransactCall::transact { transaction: t });
+
+		let mut message = prepare_source_message(call);
+		message.dispatch_fee_payment = DispatchFeePayment::AtTargetChain;
+
+		System::set_block_number(1);
+		let result =
+			Dispatch::dispatch(SOURCE_CHAIN_ID, TARGET_CHAIN_ID, id, Ok(message), |_, _| Ok(()));
+
+		assert!(!result.dispatch_result);
+		System::assert_has_event(Event::Dispatch(
+			pallet_bridge_dispatch::Event::EthereumCallValidityError(
+				SOURCE_CHAIN_ID,
+				id,
+				EthereumCallValidityError::InvalidPayment,
+			),
+		));
+	});
+}
+
+#[test]
+fn test_dispatch_ethereum_transact_invalid_nonce() {
+	let (pairs, mut ext) = new_test_ext(1);
+	let alice = &pairs[0];
+	ext.execute_with(|| {
+		let id = [0; 4];
+		let mut unsigned_tx = legacy_erc20_creation_unsigned_transaction();
+		unsigned_tx.nonce = U256::from(3);
+		let t = unsigned_tx.sign(&alice.private_key);
+
+		let call = TestRuntimeCall::Ethereum(EthereumTransactCall::transact { transaction: t });
+
+		let mut message = prepare_source_message(call);
+		message.dispatch_fee_payment = DispatchFeePayment::AtTargetChain;
+		// Ensure the derive ethereum address has enough balance to cover fee.
+		let origin = H160::from_str("0x308f55f1caf780c5f7a73e2b2b88cb61ee5bec9b").unwrap();
+		RingAccount::mutate_account_basic_balance(&origin, decimal_convert(1000, None));
+
+		System::set_block_number(1);
+		let result =
+			Dispatch::dispatch(SOURCE_CHAIN_ID, TARGET_CHAIN_ID, id, Ok(message), |_, _| Ok(()));
+
+		assert!(!result.dispatch_result);
+		System::assert_has_event(Event::Dispatch(
+			pallet_bridge_dispatch::Event::EthereumCallValidityError(
+				SOURCE_CHAIN_ID,
+				id,
+				EthereumCallValidityError::InvalidNonce,
+			),
+		));
 	});
 }

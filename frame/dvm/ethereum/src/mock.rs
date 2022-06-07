@@ -259,7 +259,7 @@ impl sp_runtime::traits::Convert<H256, AccountId32> for AccountIdConverter {
 pub struct TestCallFilter;
 
 impl Contains<Call> for TestCallFilter {
-	fn contains(call: &Call) -> bool {
+	fn contains(_call: &Call) -> bool {
 		true
 	}
 }
@@ -289,9 +289,12 @@ impl EthereumCallDispatch for EthereumCallDispatcher {
 		match c {
 			call @ Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) => {
 				let derive_eth_address = origin.derive_ethereum_address();
+				println!("bear: --- call origin {:?}", origin);
+				println!("bear: --- call origin {:?}", derive_eth_address);
 				if let Err(validate_err) =
 					Ethereum::validate_transaction_in_block(derive_eth_address, tx)
 				{
+					println!("bear: --- validate error {:?}", validate_err);
 					return Err(validate_err);
 				}
 
