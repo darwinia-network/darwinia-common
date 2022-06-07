@@ -18,24 +18,28 @@
 
 use sp_std::{borrow::ToOwned, marker::PhantomData, vec, vec::Vec};
 // --- darwinia-network ---
-use bp_message_dispatch::{CallOrigin, Weight};
+use bp_message_dispatch::Weight;
 use darwinia_ethereum::{Config as DarwiniaEthereumConfig, InternalTransactHandler};
 use pallet_bridge_messages::{Config as PalletBridgeMessagesConfig, Pallet};
 // --- paritytech ---
 use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId, MessageNonce};
-use codec::{Decode, Encode};
+use codec::Encode;
 use ethabi::{
 	param_type::ParamType, token::Token, Function, Param, Result as AbiResult, StateMutability,
 };
 use ethereum_types::H160;
 use frame_support::traits::Get;
 
-use crate::bm_pangoro;
-use bm_pangoro::ToPangoroMessagePayload as MessagePayload;
+pub trait GetOrigin<AccountId> {
+	fn get_origin(payload_data: Vec<u8>) -> Option<AccountId>;
+}
 
-pub struct SolidityDeliveredHandler<T, I>(PhantomData<(T, I)>);
-impl<T: PalletBridgeMessagesConfig<I> + DarwiniaEthereumConfig, I: 'static> OnDeliveryConfirmed
-	for SolidityDeliveredHandler<T, I>
+pub struct SolidityDeliveredHandler<T, I, G>(PhantomData<(T, I, G)>);
+
+impl<T, I: 'static, G> OnDeliveryConfirmed for SolidityDeliveredHandler<T, I, G>
+where
+	T: PalletBridgeMessagesConfig<I> + DarwiniaEthereumConfig,
+	G: GetOrigin<T::AccountId>,
 {
 	fn on_messages_delivered(lane: &LaneId, messages: &DeliveredMessages) -> Weight {
 		for nonce in messages.begin..=messages.end {
@@ -59,31 +63,19 @@ impl<T: PalletBridgeMessagesConfig<I> + DarwiniaEthereumConfig, I: 'static> OnDe
 	}
 }
 
-impl<T: PalletBridgeMessagesConfig<I> + DarwiniaEthereumConfig, I: 'static>
-	SolidityDeliveredHandler<T, I>
+impl<
+		T: PalletBridgeMessagesConfig<I> + DarwiniaEthereumConfig,
+		I: 'static,
+		G: GetOrigin<T::AccountId>,
+	> SolidityDeliveredHandler<T, I, G>
 {
 	fn get_message_sender(lane: LaneId, nonce: MessageNonce) -> Option<H160> {
-		if let Some(data) = Pallet::<T, I>::outbound_message_data(lane, nonce) {
-			return Self::get_origin_from_message_payload_data(data.payload);
-		}
-
-		return None;
-	}
-
-	pub fn get_origin_from_message_payload_data(payload_data: Vec<u8>) -> Option<H160> {
-		if let Ok(payload) = MessagePayload::decode(&mut &payload_data[..]) {
-			// TODO: SourceRoot?
-			let account_id = match payload.origin {
-				CallOrigin::SourceRoot => None,
-				CallOrigin::TargetAccount(account_id, _, _) => Some(account_id),
-				CallOrigin::SourceAccount(account_id) => Some(account_id),
-			};
-			if let Some(account_id) = account_id {
+		Pallet::<T, I>::outbound_message_data(lane, nonce)
+			.map(|data| G::get_origin(data.payload))
+			.map(|account_id| {
 				// TODO: use derive_ethereum_address instead
-				return Some(H160::from_slice(&account_id.encode()[11..31]));
-			}
-		}
-		return None;
+				H160::from_slice(&account_id.encode()[11..31])
+			})
 	}
 }
 

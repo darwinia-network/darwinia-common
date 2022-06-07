@@ -301,3 +301,19 @@ impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for Pangoro {
 		)
 	}
 }
+
+pub struct GetSenderOfToPangoroMessage;
+impl GetOrigin<AccountId> for GetSenderOfToPangoroMessage {
+	fn get_origin(payload_data: Vec<u8>) -> Option<AccountId> {
+		if let Ok(payload) = bm_pangoro::ToPangoroMessagePayload::decode(&mut &payload_data[..]) {
+			// TODO: SourceRoot?
+			match payload.origin {
+				CallOrigin::SourceRoot => None,
+				CallOrigin::TargetAccount(account_id, _, _) => Some(account_id),
+				CallOrigin::SourceAccount(account_id) => Some(account_id),
+			};
+		}
+
+		None
+	}
+}

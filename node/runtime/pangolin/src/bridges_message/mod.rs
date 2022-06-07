@@ -21,6 +21,3 @@ pub use pangoro as bm_pangoro;
 
 pub mod pangolin_parachain;
 pub use pangolin_parachain as bm_pangolin_parachain;
-
-pub mod solidity_delivered_handler;
-pub use solidity_delivered_handler::SolidityDeliveredHandler;
