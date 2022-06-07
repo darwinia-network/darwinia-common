@@ -20,9 +20,10 @@
 
 pub mod abi_util;
 pub mod beefy;
-pub mod bsc_light_client;
+pub mod bls12381;
 pub mod ethereum_backing;
 pub mod mapping_token_factory;
+pub mod mpt;
 
 #[cfg(test)]
 mod tests;

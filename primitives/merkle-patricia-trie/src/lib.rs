@@ -18,6 +18,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[macro_use]
+extern crate alloc;
+
 pub mod trie;
 
 mod db;
@@ -32,7 +35,7 @@ pub use error::TrieError;
 pub use proof::Proof;
 pub use trie::{MerklePatriciaTrie, Trie, TrieResult};
 
-use sp_std::rc::Rc;
+use alloc::rc::Rc;
 
 /// Generates a trie for a vector of key-value tuples
 ///

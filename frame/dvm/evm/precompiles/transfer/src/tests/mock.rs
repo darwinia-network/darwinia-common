@@ -20,10 +20,11 @@
 
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
+use evm::ExitRevert;
 use scale_info::TypeInfo;
 // --- paritytech ---
 use darwinia_ethereum::{EthereumBlockHashMapping, RawOrigin};
-use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
+use fp_evm::{Context, Precompile, PrecompileFailure, PrecompileResult, PrecompileSet};
 use frame_support::{
 	pallet_prelude::Weight,
 	traits::{Everything, FindAuthor, GenesisBuild},
@@ -49,7 +50,7 @@ use darwinia_ethereum::{
 };
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
 use darwinia_evm_precompile_utils::test_helper::{address_build, AccountInfo};
-use darwinia_support::evm::IntoAccountId;
+use darwinia_support::evm::DeriveSubstrateAddress;
 
 type Block = MockBlock<Test>;
 type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
@@ -149,8 +150,8 @@ impl FindAuthor<H160> for FindAuthorTruncated {
 	}
 }
 pub struct HashedConverter;
-impl IntoAccountId<AccountId32> for HashedConverter {
-	fn into_account_id(address: H160) -> AccountId32 {
+impl DeriveSubstrateAddress<AccountId32> for HashedConverter {
+	fn derive_substrate_address(address: H160) -> AccountId32 {
 		let mut raw_account = [0u8; 32];
 		raw_account[0..20].copy_from_slice(&address[..]);
 		raw_account.into()
@@ -192,6 +193,15 @@ where
 		is_static: bool,
 	) -> Option<PrecompileResult> {
 		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
+
+		// Filter known precompile addresses except Ethereum officials
+		if self.is_precompile(address) && address > to_address(9) && address != context.address {
+			return Some(Err(PrecompileFailure::Revert {
+				exit_status: ExitRevert::Reverted,
+				output: b"cannot be called with DELEGATECALL or CALLCODE".to_vec(),
+				cost: 0,
+			}));
+		};
 
 		match address {
 			// Ethereum precompiles

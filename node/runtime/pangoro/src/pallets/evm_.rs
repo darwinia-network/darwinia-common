@@ -1,10 +1,13 @@
 // --- core ---
 use core::marker::PhantomData;
+// --- crates.io ---
+use evm::ExitRevert;
 // --- paritytech ---
-use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
+use fp_evm::{Context, Precompile, PrecompileFailure, PrecompileResult, PrecompileSet};
 use frame_support::{
 	pallet_prelude::Weight, traits::FindAuthor, ConsensusEngineId, StorageHasher, Twox128,
 };
+use pallet_evm_precompile_blake2::Blake2F;
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use pallet_session::FindAccountFromAuthorIndex;
 use sp_core::{crypto::Public, H160, U256};
@@ -17,7 +20,8 @@ use darwinia_ethereum::{
 use darwinia_evm::{
 	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, GasWeightMapping,
 };
-use darwinia_evm_precompile_bridge_bsc::BscBridge;
+use darwinia_evm_precompile_bls12_381::BLS12381;
+use darwinia_evm_precompile_mpt::MPT;
 use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::ConcatConverter;
@@ -53,13 +57,14 @@ where
 	}
 
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 21, 26, 27].into_iter().map(|x| addr(x)).collect()
+		sp_std::vec![1, 2, 3, 4, 9, 21, 26, 27, 2048, 2049].into_iter().map(|x| addr(x)).collect()
 	}
 }
 
 impl<R> PrecompileSet for PangoroPrecompiles<R>
 where
-	BscBridge<R>: Precompile,
+	BLS12381<R>: Precompile,
+	MPT<R>: Precompile,
 	StateStorage<R, StorageFilter>: Precompile,
 	Transfer<R>: Precompile,
 	R: darwinia_ethereum::Config,
@@ -72,20 +77,31 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> Option<PrecompileResult> {
+		// Filter known precompile addresses except Ethereum officials
+		if self.is_precompile(address) && address > addr(9) && address != context.address {
+			return Some(Err(PrecompileFailure::Revert {
+				exit_status: ExitRevert::Reverted,
+				output: b"cannot be called with DELEGATECALL or CALLCODE".to_vec(),
+				cost: 0,
+			}));
+		};
+
 		match address {
 			// Ethereum precompiles
 			a if a == addr(1) => Some(ECRecover::execute(input, target_gas, context, is_static)),
 			a if a == addr(2) => Some(Sha256::execute(input, target_gas, context, is_static)),
 			a if a == addr(3) => Some(Ripemd160::execute(input, target_gas, context, is_static)),
 			a if a == addr(4) => Some(Identity::execute(input, target_gas, context, is_static)),
+			a if a == addr(9) => Some(Blake2F::execute(input, target_gas, context, is_static)),
 			// Darwinia precompiles
 			a if a == addr(21) =>
 				Some(<Transfer<R>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(26) =>
-				Some(<BscBridge<R>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(27) => Some(<StateStorage<R, StorageFilter>>::execute(
 				input, target_gas, context, is_static,
 			)),
+			a if a == addr(2048) =>
+				Some(<BLS12381<R>>::execute(input, target_gas, context, is_static)),
+			a if a == addr(2049) => Some(<MPT<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}

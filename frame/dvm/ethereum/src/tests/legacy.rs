@@ -25,7 +25,7 @@ use darwinia_evm::AccountBasic;
 // --- paritytech ---
 use frame_support::{assert_err, assert_ok, weights::GetDispatchInfo as _};
 
-fn legacy_erc20_creation_unsigned_transaction() -> LegacyUnsignedTransaction {
+pub fn legacy_erc20_creation_unsigned_transaction() -> LegacyUnsignedTransaction {
 	LegacyUnsignedTransaction {
 		nonce: U256::zero(),
 		gas_price: U256::from(1),

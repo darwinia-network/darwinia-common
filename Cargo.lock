@@ -92,6 +92,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "amcl"
+version = "0.3.0"
+source = "git+https://github.com/darwinia-network/milagro_bls#076d5fb697b304534b26cb8b7fe488b9a7e70a99"
+
+[[package]]
 name = "ansi_term"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1752,16 +1757,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-evm-precompile-bridge-bsc"
+name = "darwinia-evm-precompile-bls12-381"
 version = "2.8.11"
 dependencies = [
- "darwinia-bridge-bsc",
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
  "dp-contract",
- "ethereum-primitives",
  "evm",
  "fp-evm",
+ "milagro_bls",
  "sp-std",
 ]
 
@@ -1814,6 +1818,19 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "sp-core",
  "sp-io",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-mpt"
+version = "2.8.11"
+dependencies = [
+ "darwinia-evm",
+ "darwinia-evm-precompile-utils",
+ "dp-contract",
+ "ethereum-primitives",
+ "evm",
+ "fp-evm",
+ "sp-std",
 ]
 
 [[package]]
@@ -3321,7 +3338,6 @@ dependencies = [
  "pallet-evm-precompile-simple",
  "pallet-timestamp",
  "parity-scale-codec 2.3.1",
- "rustc-hex",
  "scale-info 1.0.0",
  "sha3 0.9.1",
  "sp-io",
@@ -5148,7 +5164,6 @@ dependencies = [
  "keccak-hash",
  "rand 0.8.5",
  "rlp",
- "sp-std",
  "uuid",
 ]
 
@@ -5161,6 +5176,18 @@ dependencies = [
  "byteorder",
  "keccak",
  "rand_core 0.5.1",
+ "zeroize",
+]
+
+[[package]]
+name = "milagro_bls"
+version = "1.5.0"
+source = "git+https://github.com/darwinia-network/milagro_bls#076d5fb697b304534b26cb8b7fe488b9a7e70a99"
+dependencies = [
+ "amcl",
+ "hex",
+ "lazy_static",
+ "rand 0.8.5",
  "zeroize",
 ]
 
@@ -6088,6 +6115,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-blake2"
+version = "2.0.0-dev"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.2#364ac2da9ec1e26c5b445b4971cfb78d39bf553b"
+dependencies = [
+ "fp-evm",
+ "sp-core",
+ "sp-io",
+]
+
+[[package]]
 name = "pallet-evm-precompile-modexp"
 version = "2.0.0-dev"
 source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.2#364ac2da9ec1e26c5b445b4971cfb78d39bf553b"
@@ -6543,6 +6580,7 @@ dependencies = [
  "ethabi",
  "ethereum-primitives",
  "ethereum-types",
+ "evm",
  "fp-evm",
  "fp-rpc",
  "fp-self-contained",
@@ -6575,6 +6613,7 @@ dependencies = [
  "pallet-election-provider-multi-phase",
  "pallet-elections-phragmen",
  "pallet-evm",
+ "pallet-evm-precompile-blake2",
  "pallet-evm-precompile-simple",
  "pallet-fee-market",
  "pallet-grandpa",
@@ -6620,6 +6659,7 @@ dependencies = [
  "static_assertions",
  "substrate-wasm-builder",
  "to-ethereum-backing",
+ "to-parachain-backing",
  "to-tron-backing",
 ]
 
@@ -6644,7 +6684,8 @@ dependencies = [
  "darwinia-bridge-bsc",
  "darwinia-ethereum",
  "darwinia-evm",
- "darwinia-evm-precompile-bridge-bsc",
+ "darwinia-evm-precompile-bls12-381",
+ "darwinia-evm-precompile-mpt",
  "darwinia-evm-precompile-state-storage",
  "darwinia-evm-precompile-transfer",
  "darwinia-staking",
@@ -6655,6 +6696,7 @@ dependencies = [
  "dp-s2s",
  "drml-common-runtime",
  "drml-primitives",
+ "evm",
  "fp-evm",
  "fp-rpc",
  "fp-self-contained",
@@ -6679,6 +6721,7 @@ dependencies = [
  "pallet-bridge-messages",
  "pallet-election-provider-multi-phase",
  "pallet-evm",
+ "pallet-evm-precompile-blake2",
  "pallet-evm-precompile-simple",
  "pallet-fee-market",
  "pallet-grandpa",
@@ -10382,6 +10425,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "to-parachain-backing"
+version = "2.8.11"
+dependencies = [
+ "array-bytes",
+ "bp-message-dispatch",
+ "bp-messages",
+ "bp-runtime",
+ "darwinia-support",
+ "ethereum-types",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec 2.3.1",
+ "scale-info 1.0.0",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "to-substrate-backing"
 version = "2.8.11"
 dependencies = [
@@ -10699,8 +10761,8 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
- "rand 0.8.5",
+ "cfg-if 0.1.10",
+ "rand 0.7.3",
  "static_assertions",
 ]
 
