@@ -48,11 +48,7 @@ impl Config<WithPangoroMessages> for Runtime {
 	type OnDeliveryConfirmed = (
 		Substrate2SubstrateIssuing,
 		FeeMarketMessageConfirmedHandler<Self, WithPangoroFeeMarket>,
-		SolidityDeliveredHandler<
-			Self,
-			WithPangoroMessages,
-			bm_pangoro::GetSenderOfToPangoroMessage,
-		>,
+		SolidityDeliveredHandler<Self, WithPangoroMessages, bm_pangoro::WithPangoroMessageBridge>,
 	);
 	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangoroFeeMarket>;
 	type OutboundMessageFee = bp_pangolin::Balance;
