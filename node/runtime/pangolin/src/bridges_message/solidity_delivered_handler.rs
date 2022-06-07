@@ -16,66 +16,53 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-use sp_std::marker::PhantomData;
-use sp_std::vec::Vec;
-use sp_std::vec;
-use sp_std::borrow::ToOwned;
+use sp_std::{borrow::ToOwned, marker::PhantomData, vec, vec::Vec};
 // --- darwinia-network ---
-use pallet_bridge_messages::{Config as PalletBridgeMessagesConfig, Pallet};
 use bp_message_dispatch::{CallOrigin, Weight};
-use darwinia_ethereum::{InternalTransactHandler, Config as DarwiniaEthereumConfig };
+use darwinia_ethereum::{Config as DarwiniaEthereumConfig, InternalTransactHandler};
+use pallet_bridge_messages::{Config as PalletBridgeMessagesConfig, Pallet};
 // --- paritytech ---
-use codec::{Encode, Decode};
-use bp_messages::{
-	source_chain::OnDeliveryConfirmed,
-	DeliveredMessages, LaneId, MessageNonce,
+use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId, MessageNonce};
+use codec::{Decode, Encode};
+use ethabi::{
+	param_type::ParamType, token::Token, Function, Param, Result as AbiResult, StateMutability,
 };
 use ethereum_types::H160;
-use ethabi::{
-	param_type::ParamType, token::Token, Function, Param, Result as AbiResult,
-	StateMutability,
-};
 use frame_support::traits::Get;
 
+use crate::bm_pangoro;
+use bm_pangoro::ToPangoroMessagePayload as MessagePayload;
 
-type AccountIdOfSourceChain<T> = <T as frame_system::Config>::AccountId;
-type AccountIdOfTargetChain<T, I> = <T as PalletBridgeMessagesConfig<I>>::InboundRelayer;
-type TargetChainSignature = sp_runtime::MultiSignature;
-type Call = Vec<u8>;
-
-type MessagePayload<T, I> = bp_message_dispatch::MessagePayload<
-	AccountIdOfSourceChain<T>,
-	AccountIdOfTargetChain<T, I>,
-	TargetChainSignature,
-	Call,
->;
-
-pub struct SolidityDeliveredHandler<T, I, T2>(PhantomData<(T, I, T2)>);
-
-impl<T: PalletBridgeMessagesConfig<I>, I: 'static, T2: DarwiniaEthereumConfig> OnDeliveryConfirmed for SolidityDeliveredHandler<T, I, T2> {
+pub struct SolidityDeliveredHandler<T, I>(PhantomData<(T, I)>);
+impl<T: PalletBridgeMessagesConfig<I> + DarwiniaEthereumConfig, I: 'static> OnDeliveryConfirmed
+	for SolidityDeliveredHandler<T, I>
+{
 	fn on_messages_delivered(lane: &LaneId, messages: &DeliveredMessages) -> Weight {
-
 		for nonce in messages.begin..=messages.end {
 			let result = messages.message_dispatch_result(nonce);
 			if let Some(message_sender) = Self::get_message_sender(*lane, nonce) {
 				if let Ok(call_data) = make_call_data(*lane, nonce, result) {
-
 					// Run solidity callback
-					if let Err(e) = darwinia_ethereum::Pallet::<T2>::internal_transact(message_sender, call_data) {
-						log::error!("Execute 'internal_transact' failed for messages delivered, {:?}", e.error);
+					if let Err(e) =
+						darwinia_ethereum::Pallet::<T>::internal_transact(message_sender, call_data)
+					{
+						log::error!(
+							"Execute 'internal_transact' failed for messages delivered, {:?}",
+							e.error
+						);
 					}
-
 				}
 			}
-
 		}
 
 		<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
 	}
 }
 
-impl<T: PalletBridgeMessagesConfig<I>, I: 'static, T2: DarwiniaEthereumConfig> SolidityDeliveredHandler<T, I, T2> {
-	fn 	get_message_sender(lane: LaneId, nonce: MessageNonce) -> Option<H160> {
+impl<T: PalletBridgeMessagesConfig<I> + DarwiniaEthereumConfig, I: 'static>
+	SolidityDeliveredHandler<T, I>
+{
+	fn get_message_sender(lane: LaneId, nonce: MessageNonce) -> Option<H160> {
 		if let Some(data) = Pallet::<T, I>::outbound_message_data(lane, nonce) {
 			return Self::get_origin_from_message_payload_data(data.payload);
 		}
@@ -84,7 +71,7 @@ impl<T: PalletBridgeMessagesConfig<I>, I: 'static, T2: DarwiniaEthereumConfig> S
 	}
 
 	pub fn get_origin_from_message_payload_data(payload_data: Vec<u8>) -> Option<H160> {
-		if let Ok(payload) = MessagePayload::<T, I>::decode(&mut &payload_data[..]) {
+		if let Ok(payload) = MessagePayload::decode(&mut &payload_data[..]) {
 			// TODO: SourceRoot?
 			let account_id = match payload.origin {
 				CallOrigin::SourceRoot => None,
@@ -135,15 +122,18 @@ fn make_call_data(lane: LaneId, nonce: MessageNonce, result: bool) -> AbiResult<
 
 #[cfg(test)]
 mod tests {
-	use core::str::FromStr;
 	use codec::Encode;
+	use core::str::FromStr;
 
 	use super::*;
 	use sp_runtime::AccountId32;
 
 	#[test]
 	fn send_account_id_to_h160_works() {
-		let account_id = AccountId32::from_str("0x64766d3a000000000000006be02d1d3665660d22ff9624b7be0551ee1ac91bd2").unwrap();
+		let account_id = AccountId32::from_str(
+			"0x64766d3a000000000000006be02d1d3665660d22ff9624b7be0551ee1ac91bd2",
+		)
+		.unwrap();
 
 		let address = H160::from_slice(&account_id.encode()[11..31]);
 		assert_eq!(address, H160::from_str("0x6be02d1d3665660d22ff9624b7be0551ee1ac91b").unwrap());
@@ -151,14 +141,9 @@ mod tests {
 
 	#[test]
 	fn decode_message_payload_works() {
-		type MessagePayload = bp_message_dispatch::MessagePayload<
-			AccountId32,
-			(),
-			(),
-			Vec<u8>,
-		>;
+		type MessagePayload = bp_message_dispatch::MessagePayload<AccountId32, (), (), Vec<u8>>;
 		let hex = "b06d000080d3309e000000000264766d3a000000000000002b9b61ce0c92db05304f6ba433f7c29a159aefb7e1005d0114026d6f646c64612f6272696e670000000000000000a08601000000000000000000000000000000000000000000000000000000000080d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d00d0ed902e0000000000000000000000";
-		let bytes  = array_bytes::hex2array_unchecked::<&str, 151>(hex).to_vec();
+		let bytes = array_bytes::hex2array_unchecked::<&str, 151>(hex).to_vec();
 
 		let payload = MessagePayload::decode(&mut &bytes[..]).unwrap();
 		if let CallOrigin::SourceAccount(account_id) = payload.origin {

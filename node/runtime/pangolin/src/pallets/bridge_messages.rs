@@ -6,6 +6,7 @@ pub use pallet_bridge_messages::{
 use crate::*;
 use bp_messages::MessageNonce;
 use bp_runtime::{ChainId, PANGOLIN_PARACHAIN_CHAIN_ID, PANGORO_CHAIN_ID};
+use bridge_messages::SolidityDeliveredHandler;
 use darwinia_support::evm::{ConcatConverter, IntoAccountId, IntoH160};
 use pallet_bridge_messages::Config;
 use pallet_fee_market::s2s::{
@@ -44,8 +45,11 @@ impl Config<WithPangoroMessages> for Runtime {
 	type MessageDeliveryAndDispatchPayment =
 		FeeMarketPayment<Self, WithPangoroFeeMarket, Ring, RootAccountForPayments>;
 	type MessageDispatch = bm_pangoro::FromPangoroMessageDispatch;
-	type OnDeliveryConfirmed =
-		(Substrate2SubstrateIssuing, FeeMarketMessageConfirmedHandler<Self, WithPangoroFeeMarket>);
+	type OnDeliveryConfirmed = (
+		Substrate2SubstrateIssuing,
+		FeeMarketMessageConfirmedHandler<Self, WithPangoroFeeMarket>,
+		SolidityDeliveredHandler<Self, WithPangoroMessages>,
+	);
 	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangoroFeeMarket>;
 	type OutboundMessageFee = bp_pangolin::Balance;
 	type OutboundPayload = bm_pangoro::ToPangoroMessagePayload;
