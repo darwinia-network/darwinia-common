@@ -4349,6 +4349,9 @@ name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
+dependencies = [
+ "spin",
+]
 
 [[package]]
 name = "lazycell"
@@ -6125,6 +6128,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-bn128"
+version = "2.0.0-dev"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.2#364ac2da9ec1e26c5b445b4971cfb78d39bf553b"
+dependencies = [
+ "fp-evm",
+ "sp-core",
+ "sp-io",
+ "substrate-bn",
+]
+
+[[package]]
 name = "pallet-evm-precompile-modexp"
 version = "2.0.0-dev"
 source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.2#364ac2da9ec1e26c5b445b4971cfb78d39bf553b"
@@ -6611,6 +6625,8 @@ dependencies = [
  "pallet-elections-phragmen",
  "pallet-evm",
  "pallet-evm-precompile-blake2",
+ "pallet-evm-precompile-bn128",
+ "pallet-evm-precompile-modexp",
  "pallet-evm-precompile-simple",
  "pallet-fee-market",
  "pallet-grandpa",
@@ -6719,6 +6735,8 @@ dependencies = [
  "pallet-election-provider-multi-phase",
  "pallet-evm",
  "pallet-evm-precompile-blake2",
+ "pallet-evm-precompile-bn128",
+ "pallet-evm-precompile-modexp",
  "pallet-evm-precompile-simple",
  "pallet-fee-market",
  "pallet-grandpa",
@@ -10060,6 +10078,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "substrate-bn"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72b5bbfa79abbae15dd642ea8176a21a635ff3c00059961d1ea27ad04e5b441c"
+dependencies = [
+ "byteorder",
+ "crunchy",
+ "lazy_static",
+ "rand 0.8.5",
+ "rustc-hex",
+]
+
+[[package]]
 name = "substrate-build-script-utils"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.2#5cb17b488d600befa4918915e18d40c28a25353d"
@@ -10758,8 +10789,8 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 0.1.10",
- "rand 0.7.3",
+ "cfg-if 1.0.0",
+ "rand 0.8.5",
  "static_assertions",
 ]
 
