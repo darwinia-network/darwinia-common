@@ -426,52 +426,13 @@ impl MessageDispatch<bp_pangoro::AccountId, BalanceOf<Pangolin>> for FromPangoli
 		relayer_account: &bp_pangoro::AccountId,
 		message: DispatchMessage<Self::DispatchPayload, BalanceOf<Pangolin>>,
 	) -> MessageDispatchResult {
-		if let Ok(payload) = message.data.payload {
-			if let Ok(c) = payload.call.into() {
-				match c {
-					call
-					@ Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) => {
-						// TODO: calculate the gas fee
-						// let gas_price = tx.gas_price;
-						// let gas_limit = tx.gas_limit;
-					},
-					_ => {
-						todo!();
-					},
-				}
-			}
-
-			let message_id = (message.key.lane_id, message.key.nonce);
-			pallet_bridge_dispatch::Pallet::<Runtime, WithPangolinDispatch>::dispatch(
-				PANGOLIN_CHAIN_ID,
-				PANGORO_CHAIN_ID,
-				message_id,
-				Ok(payload),
-				|dispatch_origin, dispatch_weight| {
-					// let unadjusted_weight_fee =
-					// 	<Runtime as pallet_transaction_payment::Config>::WeightToFee::calc(
-					// 		&dispatch_weight,
-					// 	);
-					// let fee_multiplier =
-					// 	pallet_transaction_payment::Pallet::<Runtime>::next_fee_multiplier();
-					// let adjusted_weight_fee =
-					// fee_multiplier.saturating_mul_int(unadjusted_weight_fee);
-					// if !adjusted_weight_fee.is_zero() {
-					// 	Ring::transfer(
-					// 		Origin::signed(dispatch_origin.clone()),
-					// 		MultiAddress::Id(relayer_account.clone()),
-					// 		adjusted_weight_fee,
-					// 	)
-					// 	.map(|_| ())
-					// 	.map_err(drop)
-					// } else {
-					// 	Ok(())
-					// }
-					Ok(())
-				},
-			)
-		} else {
-			todo!();
-		}
+		let message_id = (message.key.lane_id, message.key.nonce);
+		pallet_bridge_dispatch::Pallet::<Runtime, WithPangolinDispatch>::dispatch(
+			PANGOLIN_CHAIN_ID,
+			PANGORO_CHAIN_ID,
+			message_id,
+			message.data.payload.map_err(drop),
+			|origin, call| Ok(()),
+		)
 	}
 }
