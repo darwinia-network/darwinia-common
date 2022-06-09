@@ -224,6 +224,273 @@ impl darwinia_evm::Config for Test {
 	type Runner = Runner<Self>;
 }
 
+// --- pallet-bridge-messages config start ---
+use bitvec::prelude::*;
+use bp_messages::{
+	source_chain::{
+		LaneMessageVerifier, MessageDeliveryAndDispatchPayment, OnDeliveryConfirmed,
+		OnMessageAccepted, Sender, TargetHeaderChain,
+	},
+	target_chain::{
+		DispatchMessage, MessageDispatch, ProvedLaneMessages, ProvedMessages, SourceHeaderChain,
+	},
+	DeliveredMessages, InboundLaneData, LaneId, Message, MessageData, MessageKey, MessageNonce,
+	OutboundLaneData, Parameter as MessagesParameter, UnrewardedRelayer,
+};
+use bp_runtime::{messages::MessageDispatchResult, Size};
+use frame_support::{
+	parameter_types,
+	weights::{RuntimeDbWeight, Weight},
+};
+use sp_runtime::{
+	testing::Header as SubstrateHeader,
+	FixedU128,
+};
+use std::{
+	collections::{BTreeMap, VecDeque},
+	ops::RangeInclusive,
+};
+frame_support::parameter_types! {
+	pub const MaxMessagesToPruneAtOnce: u64 = 10;
+	pub const MaxUnrewardedRelayerEntriesAtInboundLane: u64 = 16;
+	pub const MaxUnconfirmedMessagesAtInboundLane: u64 = 32;
+	pub storage TokenConversionRate: FixedU128 = 1.into();
+  pub const TestBridgedChainId: bp_runtime::ChainId = *b"test";
+}
+
+#[derive(Debug, Clone, Encode, Decode, PartialEq, Eq, TypeInfo)]
+pub struct TestPayload {
+	/// Field that may be used to identify messages.
+	pub id: u64,
+	/// Dispatch weight that is declared by the message sender.
+	pub declared_weight: Weight,
+	/// Message dispatch result.
+	///
+	/// Note: in correct code `dispatch_result.unspent_weight` will always be <= `declared_weight`,
+	/// but for test purposes we'll be making it larger than `declared_weight` sometimes.
+	pub dispatch_result: MessageDispatchResult,
+	/// Extra bytes that affect payload size.
+	pub extra: Vec<u8>,
+}
+
+impl Size for TestPayload {
+	fn size_hint(&self) -> u32 {
+		16 + self.extra.len() as u32
+	}
+}
+
+pub type TestMessageFee = u64;
+pub type TestRelayer = AccountId32;
+pub const TEST_ERROR: &str = "Test error";
+pub const PAYLOAD_REJECTED_BY_TARGET_CHAIN: TestPayload = message_payload(1, 50);
+
+/// Constructs message payload using given arguments and zero unspent weight.
+pub const fn message_payload(id: u64, declared_weight: Weight) -> TestPayload {
+	TestPayload { id, declared_weight, dispatch_result: dispatch_result(0), extra: Vec::new() }
+}
+
+pub struct AccountIdConverter;
+
+impl sp_runtime::traits::Convert<H256, AccountId32> for AccountIdConverter {
+	fn convert(hash: H256) -> AccountId32 {
+		hash.to_fixed_bytes().into()
+	}
+}
+
+#[derive(Debug, Clone, Encode, Decode, PartialEq, Eq, TypeInfo)]
+pub enum TestMessagesParameter {
+	TokenConversionRate(FixedU128),
+}
+
+impl MessagesParameter for TestMessagesParameter {
+	fn save(&self) {
+		match *self {
+			TestMessagesParameter::TokenConversionRate(conversion_rate) =>
+				TokenConversionRate::set(&conversion_rate),
+		}
+	}
+}
+
+/// Target header chain that is used in tests.
+#[derive(Debug, Default)]
+pub struct TestTargetHeaderChain;
+
+impl TargetHeaderChain<TestPayload, TestRelayer> for TestTargetHeaderChain {
+	type Error = &'static str;
+
+	type MessagesDeliveryProof = ();
+
+	fn verify_message(payload: &TestPayload) -> Result<(), Self::Error> {
+		if *payload == PAYLOAD_REJECTED_BY_TARGET_CHAIN {
+			Err(TEST_ERROR)
+		} else {
+			Ok(())
+		}
+	}
+
+	fn verify_messages_delivery_proof(
+		proof: Self::MessagesDeliveryProof,
+	) -> Result<(LaneId, InboundLaneData<TestRelayer>), Self::Error> {
+		Err(TEST_ERROR)
+	}
+}
+
+/// Lane message verifier that is used in tests.
+#[derive(Debug, Default)]
+pub struct TestLaneMessageVerifier;
+
+impl LaneMessageVerifier<AccountId32, TestPayload, TestMessageFee> for TestLaneMessageVerifier {
+	type Error = &'static str;
+
+	fn verify_message(
+		_submitter: &Sender<AccountId32>,
+		delivery_and_dispatch_fee: &TestMessageFee,
+		_lane: &LaneId,
+		_lane_outbound_data: &OutboundLaneData,
+		_payload: &TestPayload,
+	) -> Result<(), Self::Error> {
+		if *delivery_and_dispatch_fee != 0 {
+			Ok(())
+		} else {
+			Err(TEST_ERROR)
+		}
+	}
+}
+
+/// Message fee payment system that is used in tests.
+#[derive(Debug, Default)]
+pub struct TestMessageDeliveryAndDispatchPayment;
+
+impl TestMessageDeliveryAndDispatchPayment {
+	/// Reject all payments.
+	pub fn reject_payments() {
+		frame_support::storage::unhashed::put(b":reject-message-fee:", &true);
+	}
+
+	/// Returns true if given fee has been paid by given submitter.
+	pub fn is_fee_paid(submitter: AccountId32, fee: TestMessageFee) -> bool {
+		frame_support::storage::unhashed::get(b":message-fee:") ==
+			Some((Sender::Signed(submitter), fee))
+	}
+
+	/// Returns true if given relayer has been rewarded with given balance. The reward-paid flag is
+	/// cleared after the call.
+	pub fn is_reward_paid(relayer: AccountId32, fee: TestMessageFee) -> bool {
+		let key = (b":relayer-reward:", relayer, fee).encode();
+		frame_support::storage::unhashed::take::<bool>(&key).is_some()
+	}
+}
+
+impl MessageDeliveryAndDispatchPayment<AccountId32, TestMessageFee>
+for TestMessageDeliveryAndDispatchPayment
+{
+	type Error = &'static str;
+
+	fn pay_delivery_and_dispatch_fee(
+		submitter: &Sender<AccountId32>,
+		fee: &TestMessageFee,
+		_relayer_fund_account: &AccountId32,
+	) -> Result<(), Self::Error> {
+		if frame_support::storage::unhashed::get(b":reject-message-fee:") == Some(true) {
+			return Err(TEST_ERROR)
+		}
+
+		frame_support::storage::unhashed::put(b":message-fee:", &(submitter, fee));
+		Ok(())
+	}
+
+	fn pay_relayers_rewards(
+		lane_id: LaneId,
+		message_relayers: VecDeque<UnrewardedRelayer<AccountId32>>,
+		_confirmation_relayer: &AccountId32,
+		received_range: &RangeInclusive<MessageNonce>,
+		_relayer_fund_account: &AccountId32,
+	) {
+	}
+}
+
+/// Source header chain that is used in tests.
+#[derive(Debug)]
+pub struct TestSourceHeaderChain;
+
+impl SourceHeaderChain<TestMessageFee> for TestSourceHeaderChain {
+	type Error = &'static str;
+
+	type MessagesProof = ();
+
+	fn verify_messages_proof(
+		_proof: Self::MessagesProof,
+		_messages_count: u32,
+	) -> Result<ProvedMessages<Message<TestMessageFee>>, Self::Error> {
+		Err("Test error")
+	}
+}
+
+/// Source header chain that is used in tests.
+#[derive(Debug)]
+pub struct TestMessageDispatch;
+
+impl MessageDispatch<AccountId32, TestMessageFee> for TestMessageDispatch {
+	type DispatchPayload = TestPayload;
+
+	fn dispatch_weight(message: &DispatchMessage<TestPayload, TestMessageFee>) -> Weight {
+		match message.data.payload.as_ref() {
+			Ok(payload) => payload.declared_weight,
+			Err(_) => 0,
+		}
+	}
+
+	fn dispatch(
+		_relayer_account: &AccountId32,
+		message: DispatchMessage<TestPayload, TestMessageFee>,
+	) -> MessageDispatchResult {
+		match message.data.payload.as_ref() {
+			Ok(payload) => payload.dispatch_result.clone(),
+			Err(_) => dispatch_result(0),
+		}
+	}
+}
+
+/// Returns message dispatch result with given unspent weight.
+pub const fn dispatch_result(unspent_weight: Weight) -> MessageDispatchResult {
+	MessageDispatchResult {
+		dispatch_result: true,
+		unspent_weight,
+		dispatch_fee_paid_during_dispatch: true,
+	}
+}
+
+
+
+impl pallet_bridge_messages::Config for Test {
+	type Event = Event;
+	type WeightInfo = ();
+	type Parameter = TestMessagesParameter;
+	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
+	type MaxUnrewardedRelayerEntriesAtInboundLane = MaxUnrewardedRelayerEntriesAtInboundLane;
+	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
+
+	type OutboundPayload = TestPayload;
+	type OutboundMessageFee = TestMessageFee;
+
+	type InboundPayload = TestPayload;
+	type InboundMessageFee = TestMessageFee;
+	type InboundRelayer = TestRelayer;
+
+	type AccountIdConverter = AccountIdConverter;
+
+	type TargetHeaderChain = TestTargetHeaderChain;
+	type LaneMessageVerifier = TestLaneMessageVerifier;
+	type MessageDeliveryAndDispatchPayment = TestMessageDeliveryAndDispatchPayment;
+	type OnMessageAccepted = ();
+	type OnDeliveryConfirmed = ();
+
+	type SourceHeaderChain = TestSourceHeaderChain;
+	type MessageDispatch = TestMessageDispatch;
+	type BridgedChainId = TestBridgedChainId;
+}
+// --- pallet-bridge-messages config end ---
+
 frame_support::parameter_types! {
 	pub const MockPalletId: PalletId = PalletId(*b"dar/dvmp");
 }

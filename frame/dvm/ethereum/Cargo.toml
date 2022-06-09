@@ -11,6 +11,7 @@ version     = "2.8.11"
 
 [dependencies]
 # crates.io
+bitvec         = { version = "0.20", default-features = false, features = ["alloc"] }
 codec          = { package = "parity-scale-codec", version = "2.3", default-features = false }
 ethereum       = { version = "0.11.1", default-features = false, features = ["with-codec"] }
 ethereum-types = { version = "0.12", default-features = false }
@@ -38,6 +39,10 @@ fp-rpc            = { default-features = false, git = "https://github.com/darwin
 fp-self-contained = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
 fp-storage        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
 pallet-evm        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.2" }
+# darwinia-bridges-substrate
+pallet-bridge-messages = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
+bp-messages            = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
+bp-runtime             = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.2" }
 
 [dev-dependencies]
 # crates.io
@@ -79,6 +84,10 @@ std = [
 	"fp-self-contained/std",
 	"fp-storage/std",
 	"pallet-evm/std",
+	# darwinia-bridges-substrate
+	"pallet-bridge-messages/std",
+	"bp-messages/std",
+	"bp-runtime/std",
 ]
 
 try-runtime = [

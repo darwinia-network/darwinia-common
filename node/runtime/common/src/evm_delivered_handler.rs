@@ -33,11 +33,11 @@ use ethabi::{
 use ethereum_types::H160;
 use frame_support::traits::Get;
 
-pub struct SolidityDeliveredHandler<Runtime, MessagesPalletInstance, BridgeConfig>(
+pub struct EvmDeliveredHandler<Runtime, MessagesPalletInstance, BridgeConfig>(
 	PhantomData<(Runtime, MessagesPalletInstance, BridgeConfig)>,
 );
 
-impl<Runtime, MessagesPalletInstance, BridgeConfig> OnDeliveryConfirmed for SolidityDeliveredHandler<Runtime, MessagesPalletInstance, BridgeConfig>
+impl<Runtime, MessagesPalletInstance, BridgeConfig> OnDeliveryConfirmed for EvmDeliveredHandler<Runtime, MessagesPalletInstance, BridgeConfig>
 where
 	Runtime: PalletBridgeMessagesConfig<MessagesPalletInstance> + DarwiniaEthereumConfig,
 	MessagesPalletInstance: 'static,
@@ -66,7 +66,7 @@ where
 }
 
 impl<Runtime, MessagesPalletInstance, BridgeConfig>
-SolidityDeliveredHandler<Runtime, MessagesPalletInstance, BridgeConfig>
+EvmDeliveredHandler<Runtime, MessagesPalletInstance, BridgeConfig>
 	where
 		Runtime: PalletBridgeMessagesConfig<MessagesPalletInstance> + DarwiniaEthereumConfig,
 		MessagesPalletInstance: 'static,
