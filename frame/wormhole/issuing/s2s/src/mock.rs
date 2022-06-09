@@ -283,13 +283,31 @@ impl ToEthAddress<AccountId32> for TruncateToEthAddress {
 	}
 }
 
+pub struct MockOutboundMessager;
+impl OutboundMessager<AccountId32> for MockOutboundMessager {
+	fn check_lane_id(lane_id: &LaneId) -> bool {
+		return *lane_id == MessageLaneId::get();
+	}
+
+	fn get_valid_message_sender(_nonce: MessageNonce) -> Result<AccountId32, &'static str> {
+		let mapping_token_factory_address: H160 =
+			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
+
+		let mut account = [0u8; 32];
+
+		account[..20].copy_from_slice(&mapping_token_factory_address.as_bytes()[..]);
+
+		return Ok(account.into())
+	}
+}
+
 impl Config for Test {
 	type BackingChainName = PangoroName;
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangoroChainId;
 	type Event = ();
 	type InternalTransactHandler = Ethereum;
-	type MessageLaneId = MessageLaneId;
+	type OutboundMessager = MockOutboundMessager;
 	type PalletId = S2sRelayPalletId;
 	type RingCurrency = Ring;
 	type ToEthAddressT = TruncateToEthAddress;
