@@ -20,8 +20,8 @@ smallvec    = { version = "1.8" }
 bsc-primitives                        = { default-features = false, path = "../../../primitives/bsc" }
 darwinia-balances                     = { default-features = false, path = "../../../frame/balances" }
 darwinia-balances-rpc-runtime-api     = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
-darwinia-beefy-gadget                 = { default-features = false, path = "../../../frame/beefy-gadget" }
-darwinia-beefy-primitives             = { path = "../../../primitives/beefy" }
+# darwinia-beefy-gadget                 = { default-features = false, path = "../../../frame/beefy-gadget" }
+# darwinia-beefy-primitives             = { path = "../../../primitives/beefy" }
 darwinia-bridge-bsc                   = { default-features = false, path = "../../../frame/bridge/bsc" }
 darwinia-ethereum                     = { default-features = false, path = "../../../frame/dvm/ethereum" }
 darwinia-evm                          = { default-features = false, path = "../../../frame/dvm/evm" }
@@ -60,15 +60,15 @@ pallet-authority-discovery                 = { default-features = false, git = "
 pallet-authorship                          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 pallet-babe                                = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 pallet-beefy                               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-pallet-beefy-mmr                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+# pallet-beefy-mmr                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 pallet-bridge-dispatch                     = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.3" }
 pallet-bridge-grandpa                      = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.3" }
 pallet-bridge-messages                     = { default-features = false, git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.3" }
 pallet-election-provider-multi-phase       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 pallet-grandpa                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 pallet-im-online                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-pallet-mmr                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-pallet-mmr-primitives                      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+# pallet-mmr                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+# pallet-mmr-primitives                      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 pallet-offences                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 pallet-scheduler                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 pallet-session                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
@@ -119,8 +119,8 @@ std = [
 	"bsc-primitives/std",
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
-	"darwinia-beefy-gadget/std",
-	"darwinia-bridge-bsc/std",
+	# "darwinia-beefy-gadget/std",
+	# "darwinia-bridge-bsc/std",
 	"darwinia-ethereum/std",
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-bridge-bsc/std",
@@ -158,15 +158,15 @@ std = [
 	"pallet-authorship/std",
 	"pallet-babe/std",
 	"pallet-beefy/std",
-	"pallet-beefy-mmr/std",
+	# "pallet-beefy-mmr/std",
 	"pallet-bridge-dispatch/std",
 	"pallet-bridge-grandpa/std",
 	"pallet-bridge-messages/std",
 	"pallet-election-provider-multi-phase/std",
 	"pallet-grandpa/std",
 	"pallet-im-online/std",
-	"pallet-mmr/std",
-	"pallet-mmr-primitives/std",
+	# "pallet-mmr/std",
+	# "pallet-mmr-primitives/std",
 	"pallet-offences/std",
 	"pallet-scheduler/std",
 	"pallet-session/std",

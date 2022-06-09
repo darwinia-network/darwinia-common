@@ -167,9 +167,9 @@ frame_support::construct_runtime! {
 		Session: pallet_session::{Pallet, Call, Storage, Config<T>, Event} = 12,
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 13,
 		Beefy: pallet_beefy::{Pallet, Storage, Config<T>} = 55,
-		BeefyGadget: darwinia_beefy_gadget::{Pallet, Call, Storage, Config} = 58,
-		Mmr: pallet_mmr::{Pallet, Storage} = 56,
-		MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 57,
+		// BeefyGadget: darwinia_beefy_gadget::{Pallet, Call, Storage, Config} = 58,
+		// Mmr: pallet_mmr::{Pallet, Storage} = 56,
+		// MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 57,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
 		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Config} = 15,
 		HeaderMMR: darwinia_header_mmr::{Pallet, Storage} = 16,
@@ -447,11 +447,11 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl beefy_primitives::BeefyApi<Block> for Runtime {
-		fn validator_set() -> beefy_primitives::ValidatorSet<BeefyId> {
-			Beefy::validator_set()
-		}
-	}
+	// impl beefy_primitives::BeefyApi<Block> for Runtime {
+	// 	fn validator_set() -> beefy_primitives::ValidatorSet<BeefyId> {
+	// 		Beefy::validator_set()
+	// 	}
+	// }
 
 	impl sp_authority_discovery::AuthorityDiscoveryApi<Block> for Runtime {
 		fn authorities() -> Vec<AuthorityDiscoveryId> {

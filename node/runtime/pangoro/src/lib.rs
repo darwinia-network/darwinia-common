@@ -134,9 +134,9 @@ frame_support::construct_runtime!(
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 12,
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event} = 13,
 		Beefy: pallet_beefy::{Pallet, Storage, Config<T>} = 27,
-		BeefyGadget: darwinia_beefy_gadget::{Pallet, Call, Storage, Config} = 30,
-		Mmr: pallet_mmr::{Pallet, Storage} = 28,
-		MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 29,
+		// BeefyGadget: darwinia_beefy_gadget::{Pallet, Call, Storage, Config} = 30,
+		// Mmr: pallet_mmr::{Pallet, Storage} = 28,
+		// MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 29,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
 		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Config} = 15,
 
@@ -356,11 +356,11 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl beefy_primitives::BeefyApi<Block> for Runtime {
-		fn validator_set() -> beefy_primitives::ValidatorSet<BeefyId> {
-			Beefy::validator_set()
-		}
-	}
+	// impl beefy_primitives::BeefyApi<Block> for Runtime {
+	// 	fn validator_set() -> beefy_primitives::ValidatorSet<BeefyId> {
+	// 		Beefy::validator_set()
+	// 	}
+	// }
 
 	impl sp_authority_discovery::AuthorityDiscoveryApi<Block> for Runtime {
 		fn authorities() -> Vec<AuthorityDiscoveryId> {
