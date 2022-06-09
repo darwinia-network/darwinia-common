@@ -408,6 +408,8 @@ use sp_runtime::{traits::Saturating, FixedPointOperand};
 // use bp_message_dispatch::MessageDispatch;
 use bp_message_dispatch::MessageDispatch as _;
 use bp_messages::target_chain::MessageDispatch;
+use darwinia_ethereum::RawOrigin;
+use frame_support::traits::OriginTrait;
 use sp_runtime::MultiAddress;
 
 #[derive(RuntimeDebug, Clone, Copy)]
@@ -432,7 +434,29 @@ impl MessageDispatch<bp_pangoro::AccountId, BalanceOf<Pangolin>> for FromPangoli
 			PANGORO_CHAIN_ID,
 			message_id,
 			message.data.payload.map_err(drop),
-			|origin, call| Ok(()),
+			|origin, call| {
+				match call {
+					call
+					@ Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) => {
+						// TODO: calculate gas fee used for ethereum transaction
+						let tx2 = tx;
+						// Get the 160 derived ethereum address
+						let o = match origin.caller() {
+							OriginCaller::Ethereum(origin) => match origin {
+								RawOrigin::EthereumTransaction(id) => {
+									todo!()
+								},
+								_ => todo!(),
+							},
+							_ => todo!(),
+						};
+						// TODO: Transfer to the derived ethereum address
+					},
+					_ => todo!(),
+				}
+
+				Ok(())
+			},
 		)
 	}
 }
