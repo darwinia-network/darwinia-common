@@ -64,10 +64,12 @@ pub type ToPangolinMessageVerifier =
 pub type FromPangolinEncodedCall = FromBridgedChainEncodedMessageCall<Call>;
 
 /// Call-dispatch based message dispatch for Pangolin -> Pangoro messages.
-// pub type FromPangolinMessageDispatch =
-// 	FromBridgedChainMessageDispatch<WithPangolinMessageBridge, Runtime, Ring, WithPangolinDispatch>;
-pub type FromPangolinMessageDispatch =
-	DarwiniaFromBridgedChainMessageDispatch<WithPangolinMessageBridge, Runtime, Ring, WithPangolinDispatch>;
+pub type FromPangolinMessageDispatch = DarwiniaFromBridgedChainMessageDispatch<
+	WithPangolinMessageBridge,
+	Runtime,
+	Ring,
+	WithPangolinDispatch,
+>;
 
 /// The s2s issuing pallet index in the pangolin chain runtime
 pub const PANGOLIN_S2S_ISSUING_PALLET_INDEX: u8 = 49;

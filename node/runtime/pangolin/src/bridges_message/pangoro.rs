@@ -27,7 +27,7 @@ use frame_support::{
 	RuntimeDebug,
 };
 use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
-use sp_std::{convert::TryFrom, ops::RangeInclusive};
+use sp_std::{convert::TryFrom, marker::PhantomData, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
 use bp_message_dispatch::CallOrigin;
@@ -64,8 +64,14 @@ pub type ToPangoroMessageVerifier =
 pub type FromPangoroEncodedCall = FromBridgedChainEncodedMessageCall<Call>;
 
 /// Call-dispatch based message dispatch for Pangoro -> Pangolin messages.
-pub type FromPangoroMessageDispatch =
-	FromBridgedChainMessageDispatch<WithPangoroMessageBridge, Runtime, Ring, WithPangoroDispatch>;
+// pub type FromPangoroMessageDispatch =
+// 	FromBridgedChainMessageDispatch<WithPangoroMessageBridge, Runtime, Ring, WithPangoroDispatch>;
+pub type FromPangoroMessageDispatch = DarwiniaFromBridgedChainMessageDispatch<
+	WithPangoroMessageBridge,
+	Runtime,
+	Ring,
+	WithPangoroDispatch,
+>;
 
 /// The s2s backing pallet index in the pangoro chain runtime.
 pub const PANGORO_S2S_BACKING_PALLET_INDEX: u8 = 20;
@@ -298,6 +304,89 @@ impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for Pangoro {
 		target::verify_messages_proof::<WithPangoroMessageBridge, Runtime, WithPangoroGrandpa>(
 			proof,
 			messages_count,
+		)
+	}
+}
+
+/// Dispatching Bridged -> This chain messages.
+#[derive(RuntimeDebug, Clone, Copy)]
+pub struct DarwiniaFromBridgedChainMessageDispatch<
+	B,
+	ThisRuntime,
+	ThisCurrency,
+	ThisDispatchInstance,
+> {
+	_marker: PhantomData<(B, ThisRuntime, ThisCurrency, ThisDispatchInstance)>,
+}
+
+use bridge_runtime_common::messages::AccountIdOf;
+use frame_support::{
+	traits::{Currency, ExistenceRequirement},
+	weights::WeightToFeePolynomial,
+};
+use sp_runtime::{traits::Saturating, FixedPointOperand};
+// use bp_message_dispatch::MessageDispatch;
+use bp_message_dispatch::MessageDispatch as _;
+use bp_messages::target_chain::MessageDispatch;
+
+impl<B: MessageBridge, ThisRuntime, ThisCurrency, ThisDispatchInstance>
+	MessageDispatch<AccountIdOf<ThisChain<B>>, BalanceOf<BridgedChain<B>>>
+	for DarwiniaFromBridgedChainMessageDispatch<B, ThisRuntime, ThisCurrency, ThisDispatchInstance>
+where
+	BalanceOf<ThisChain<B>>: Saturating + FixedPointOperand,
+	ThisDispatchInstance: 'static,
+	ThisRuntime: pallet_bridge_dispatch::Config<
+			ThisDispatchInstance,
+			BridgeMessageId = (LaneId, MessageNonce),
+		> + pallet_transaction_payment::Config,
+	<ThisRuntime as pallet_transaction_payment::Config>::OnChargeTransaction:
+		pallet_transaction_payment::OnChargeTransaction<
+			ThisRuntime,
+			Balance = BalanceOf<ThisChain<B>>,
+		>,
+	ThisCurrency: Currency<AccountIdOf<ThisChain<B>>, Balance = BalanceOf<ThisChain<B>>>,
+	pallet_bridge_dispatch::Pallet<ThisRuntime, ThisDispatchInstance>:
+		bp_message_dispatch::MessageDispatch<
+			AccountIdOf<ThisChain<B>>,
+			(LaneId, MessageNonce),
+			Message = FromBridgedChainMessagePayload<B>,
+		>,
+{
+	type DispatchPayload = FromBridgedChainMessagePayload<B>;
+
+	fn dispatch_weight(
+		message: &DispatchMessage<Self::DispatchPayload, BalanceOf<BridgedChain<B>>>,
+	) -> frame_support::weights::Weight {
+		message.data.payload.as_ref().map(|payload| payload.weight).unwrap_or(0)
+	}
+
+	fn dispatch(
+		relayer_account: &AccountIdOf<ThisChain<B>>,
+		message: DispatchMessage<Self::DispatchPayload, BalanceOf<BridgedChain<B>>>,
+	) -> MessageDispatchResult {
+		let message_id = (message.key.lane_id, message.key.nonce);
+		pallet_bridge_dispatch::Pallet::<ThisRuntime, ThisDispatchInstance>::dispatch(
+			B::BRIDGED_CHAIN_ID,
+			B::THIS_CHAIN_ID,
+			message_id,
+			message.data.payload.map_err(drop),
+			|dispatch_origin, dispatch_weight| {
+				let unadjusted_weight_fee = ThisRuntime::WeightToFee::calc(&dispatch_weight);
+				let fee_multiplier =
+					pallet_transaction_payment::Pallet::<ThisRuntime>::next_fee_multiplier();
+				let adjusted_weight_fee = fee_multiplier.saturating_mul_int(unadjusted_weight_fee);
+				if !adjusted_weight_fee.is_zero() {
+					ThisCurrency::transfer(
+						dispatch_origin,
+						relayer_account,
+						adjusted_weight_fee,
+						ExistenceRequirement::AllowDeath,
+					)
+					.map_err(drop)
+				} else {
+					Ok(())
+				}
+			},
 		)
 	}
 }
