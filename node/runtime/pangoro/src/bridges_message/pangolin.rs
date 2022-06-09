@@ -64,12 +64,12 @@ pub type ToPangolinMessageVerifier =
 pub type FromPangolinEncodedCall = FromBridgedChainEncodedMessageCall<Call>;
 
 /// Call-dispatch based message dispatch for Pangolin -> Pangoro messages.
-pub type FromPangolinMessageDispatch = DarwiniaFromBridgedChainMessageDispatch<
-	WithPangolinMessageBridge,
-	Runtime,
-	Ring,
-	WithPangolinDispatch,
->;
+// pub type FromPangolinMessageDispatch = DarwiniaFromBridgedChainMessageDispatch<
+// 	WithPangolinMessageBridge,
+// 	Runtime,
+// 	Ring,
+// 	WithPangolinDispatch,
+// >;
 
 /// The s2s issuing pallet index in the pangolin chain runtime
 pub const PANGOLIN_S2S_ISSUING_PALLET_INDEX: u8 = 49;
@@ -308,17 +308,97 @@ impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for Pangolin {
 	}
 }
 
-/// Dispatching Bridged -> This chain messages.
-#[derive(RuntimeDebug, Clone, Copy)]
-pub struct DarwiniaFromBridgedChainMessageDispatch<
-	B,
-	ThisRuntime,
-	ThisCurrency,
-	ThisDispatchInstance,
-> {
-	_marker: PhantomData<(B, ThisRuntime, ThisCurrency, ThisDispatchInstance)>,
-}
+// pub type FromPangolinMessageDispatch = DarwiniaFromBridgedChainMessageDispatch<
+// 	WithPangolinMessageBridge,
+// 	Runtime,
+// 	Ring,
+// 	WithPangolinDispatch,
+// >;
 
+/// Dispatching Bridged -> This chain messages.
+// #[derive(RuntimeDebug, Clone, Copy)]
+// pub struct DarwiniaFromBridgedChainMessageDispatch<
+// 	B,
+// 	ThisRuntime,
+// 	ThisCurrency,
+// 	ThisDispatchInstance,
+// > {
+// 	_marker: PhantomData<(B, ThisRuntime, ThisCurrency, ThisDispatchInstance)>,
+// }
+
+// use bridge_runtime_common::messages::AccountIdOf;
+// use frame_support::{
+// 	traits::{Currency, ExistenceRequirement},
+// 	weights::WeightToFeePolynomial,
+// };
+// use sp_runtime::{traits::Saturating, FixedPointOperand};
+// // use bp_message_dispatch::MessageDispatch;
+// use bp_message_dispatch::MessageDispatch as _;
+// use bp_messages::target_chain::MessageDispatch;
+
+// impl<B: MessageBridge, ThisRuntime, ThisCurrency, ThisDispatchInstance>
+// 	MessageDispatch<AccountIdOf<ThisChain<B>>, BalanceOf<BridgedChain<B>>>
+// 	for DarwiniaFromBridgedChainMessageDispatch<B, ThisRuntime, ThisCurrency,
+// ThisDispatchInstance> where
+// 	BalanceOf<ThisChain<B>>: Saturating + FixedPointOperand,
+// 	ThisDispatchInstance: 'static,
+// 	ThisRuntime: pallet_bridge_dispatch::Config<
+// 			ThisDispatchInstance,
+// 			BridgeMessageId = (LaneId, MessageNonce),
+// 		> + pallet_transaction_payment::Config,
+// 	<ThisRuntime as pallet_transaction_payment::Config>::OnChargeTransaction:
+// 		pallet_transaction_payment::OnChargeTransaction<
+// 			ThisRuntime,
+// 			Balance = BalanceOf<ThisChain<B>>,
+// 		>,
+// 	ThisCurrency: Currency<AccountIdOf<ThisChain<B>>, Balance = BalanceOf<ThisChain<B>>>,
+// 	pallet_bridge_dispatch::Pallet<ThisRuntime, ThisDispatchInstance>:
+// 		bp_message_dispatch::MessageDispatch<
+// 			AccountIdOf<ThisChain<B>>,
+// 			(LaneId, MessageNonce),
+// 			Message = FromBridgedChainMessagePayload<B>,
+// 		>,
+// {
+// 	type DispatchPayload = FromBridgedChainMessagePayload<B>;
+
+// 	fn dispatch_weight(
+// 		message: &DispatchMessage<Self::DispatchPayload, BalanceOf<BridgedChain<B>>>,
+// 	) -> frame_support::weights::Weight {
+// 		message.data.payload.as_ref().map(|payload| payload.weight).unwrap_or(0)
+// 	}
+
+// 	fn dispatch(
+// 		relayer_account: &AccountIdOf<ThisChain<B>>,
+// 		message: DispatchMessage<Self::DispatchPayload, BalanceOf<BridgedChain<B>>>,
+// 	) -> MessageDispatchResult {
+// 		let message_id = (message.key.lane_id, message.key.nonce);
+// 		pallet_bridge_dispatch::Pallet::<ThisRuntime, ThisDispatchInstance>::dispatch(
+// 			B::BRIDGED_CHAIN_ID,
+// 			B::THIS_CHAIN_ID,
+// 			message_id,
+// 			message.data.payload.map_err(drop),
+// 			|dispatch_origin, dispatch_weight| {
+// 				let unadjusted_weight_fee = ThisRuntime::WeightToFee::calc(&dispatch_weight);
+// 				let fee_multiplier =
+// 					pallet_transaction_payment::Pallet::<ThisRuntime>::next_fee_multiplier();
+// 				let adjusted_weight_fee = fee_multiplier.saturating_mul_int(unadjusted_weight_fee);
+// 				if !adjusted_weight_fee.is_zero() {
+// 					ThisCurrency::transfer(
+// 						dispatch_origin,
+// 						relayer_account,
+// 						adjusted_weight_fee,
+// 						ExistenceRequirement::AllowDeath,
+// 					)
+// 					.map_err(drop)
+// 				} else {
+// 					Ok(())
+// 				}
+// 			},
+// 		)
+// 	}
+// }
+
+// Dispatching Bridged -> This chain messages.
 use bridge_runtime_common::messages::AccountIdOf;
 use frame_support::{
 	traits::{Currency, ExistenceRequirement},
@@ -328,60 +408,45 @@ use sp_runtime::{traits::Saturating, FixedPointOperand};
 // use bp_message_dispatch::MessageDispatch;
 use bp_message_dispatch::MessageDispatch as _;
 use bp_messages::target_chain::MessageDispatch;
+use sp_runtime::MultiAddress;
 
-impl<B: MessageBridge, ThisRuntime, ThisCurrency, ThisDispatchInstance>
-	MessageDispatch<AccountIdOf<ThisChain<B>>, BalanceOf<BridgedChain<B>>>
-	for DarwiniaFromBridgedChainMessageDispatch<B, ThisRuntime, ThisCurrency, ThisDispatchInstance>
-where
-	BalanceOf<ThisChain<B>>: Saturating + FixedPointOperand,
-	ThisDispatchInstance: 'static,
-	ThisRuntime: pallet_bridge_dispatch::Config<
-			ThisDispatchInstance,
-			BridgeMessageId = (LaneId, MessageNonce),
-		> + pallet_transaction_payment::Config,
-	<ThisRuntime as pallet_transaction_payment::Config>::OnChargeTransaction:
-		pallet_transaction_payment::OnChargeTransaction<
-			ThisRuntime,
-			Balance = BalanceOf<ThisChain<B>>,
-		>,
-	ThisCurrency: Currency<AccountIdOf<ThisChain<B>>, Balance = BalanceOf<ThisChain<B>>>,
-	pallet_bridge_dispatch::Pallet<ThisRuntime, ThisDispatchInstance>:
-		bp_message_dispatch::MessageDispatch<
-			AccountIdOf<ThisChain<B>>,
-			(LaneId, MessageNonce),
-			Message = FromBridgedChainMessagePayload<B>,
-		>,
-{
-	type DispatchPayload = FromBridgedChainMessagePayload<B>;
+#[derive(RuntimeDebug, Clone, Copy)]
+pub struct FromPangolinMessageDispatch;
+
+impl MessageDispatch<bp_pangoro::AccountId, BalanceOf<Pangolin>> for FromPangolinMessageDispatch {
+	type DispatchPayload = FromPangolinMessagePayload;
 
 	fn dispatch_weight(
-		message: &DispatchMessage<Self::DispatchPayload, BalanceOf<BridgedChain<B>>>,
+		message: &DispatchMessage<Self::DispatchPayload, BalanceOf<Pangolin>>,
 	) -> frame_support::weights::Weight {
 		message.data.payload.as_ref().map(|payload| payload.weight).unwrap_or(0)
 	}
 
 	fn dispatch(
-		relayer_account: &AccountIdOf<ThisChain<B>>,
-		message: DispatchMessage<Self::DispatchPayload, BalanceOf<BridgedChain<B>>>,
+		relayer_account: &bp_pangoro::AccountId,
+		message: DispatchMessage<Self::DispatchPayload, BalanceOf<Pangolin>>,
 	) -> MessageDispatchResult {
 		let message_id = (message.key.lane_id, message.key.nonce);
-		pallet_bridge_dispatch::Pallet::<ThisRuntime, ThisDispatchInstance>::dispatch(
-			B::BRIDGED_CHAIN_ID,
-			B::THIS_CHAIN_ID,
+		pallet_bridge_dispatch::Pallet::<Runtime, WithPangolinDispatch>::dispatch(
+			PANGOLIN_CHAIN_ID,
+			PANGORO_CHAIN_ID,
 			message_id,
 			message.data.payload.map_err(drop),
 			|dispatch_origin, dispatch_weight| {
-				let unadjusted_weight_fee = ThisRuntime::WeightToFee::calc(&dispatch_weight);
+				let unadjusted_weight_fee =
+					<Runtime as pallet_transaction_payment::Config>::WeightToFee::calc(
+						&dispatch_weight,
+					);
 				let fee_multiplier =
-					pallet_transaction_payment::Pallet::<ThisRuntime>::next_fee_multiplier();
+					pallet_transaction_payment::Pallet::<Runtime>::next_fee_multiplier();
 				let adjusted_weight_fee = fee_multiplier.saturating_mul_int(unadjusted_weight_fee);
 				if !adjusted_weight_fee.is_zero() {
-					ThisCurrency::transfer(
-						dispatch_origin,
-						relayer_account,
+					Ring::transfer(
+						Origin::signed(dispatch_origin.clone()),
+						MultiAddress::Id(relayer_account.clone()),
 						adjusted_weight_fee,
-						ExistenceRequirement::AllowDeath,
 					)
+					.map(|_| ())
 					.map_err(drop)
 				} else {
 					Ok(())
