@@ -16,7 +16,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-use sp_std::{cell::RefCell, prelude::*, rc::Rc};
+use core::cell::RefCell;
+
+use alloc::{rc::Rc, vec::Vec};
 
 use crate::nibbles::Nibbles;
 

@@ -92,6 +92,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "amcl"
+version = "0.3.0"
+source = "git+https://github.com/darwinia-network/milagro_bls#076d5fb697b304534b26cb8b7fe488b9a7e70a99"
+
+[[package]]
 name = "ansi_term"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1752,16 +1757,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-evm-precompile-bridge-bsc"
+name = "darwinia-evm-precompile-bls12-381"
 version = "2.8.11"
 dependencies = [
- "darwinia-bridge-bsc",
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
  "dp-contract",
- "ethereum-primitives",
  "evm",
  "fp-evm",
+ "milagro_bls",
  "sp-std",
 ]
 
@@ -1814,6 +1818,19 @@ dependencies = [
  "parity-scale-codec 2.3.1",
  "sp-core",
  "sp-io",
+]
+
+[[package]]
+name = "darwinia-evm-precompile-mpt"
+version = "2.8.11"
+dependencies = [
+ "darwinia-evm",
+ "darwinia-evm-precompile-utils",
+ "dp-contract",
+ "ethereum-primitives",
+ "evm",
+ "fp-evm",
+ "sp-std",
 ]
 
 [[package]]
@@ -3321,7 +3338,6 @@ dependencies = [
  "pallet-evm-precompile-simple",
  "pallet-timestamp",
  "parity-scale-codec 2.3.1",
- "rustc-hex",
  "scale-info 1.0.0",
  "sha3 0.9.1",
  "sp-io",
@@ -4333,6 +4349,9 @@ name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
+dependencies = [
+ "spin",
+]
 
 [[package]]
 name = "lazycell"
@@ -5148,7 +5167,6 @@ dependencies = [
  "keccak-hash",
  "rand 0.8.5",
  "rlp",
- "sp-std",
  "uuid",
 ]
 
@@ -5161,6 +5179,18 @@ dependencies = [
  "byteorder",
  "keccak",
  "rand_core 0.5.1",
+ "zeroize",
+]
+
+[[package]]
+name = "milagro_bls"
+version = "1.5.0"
+source = "git+https://github.com/darwinia-network/milagro_bls#076d5fb697b304534b26cb8b7fe488b9a7e70a99"
+dependencies = [
+ "amcl",
+ "hex",
+ "lazy_static",
+ "rand 0.8.5",
  "zeroize",
 ]
 
@@ -6088,6 +6118,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-blake2"
+version = "2.0.0-dev"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.2#364ac2da9ec1e26c5b445b4971cfb78d39bf553b"
+dependencies = [
+ "fp-evm",
+ "sp-core",
+ "sp-io",
+]
+
+[[package]]
+name = "pallet-evm-precompile-bn128"
+version = "2.0.0-dev"
+source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.2#364ac2da9ec1e26c5b445b4971cfb78d39bf553b"
+dependencies = [
+ "fp-evm",
+ "sp-core",
+ "sp-io",
+ "substrate-bn",
+]
+
+[[package]]
 name = "pallet-evm-precompile-modexp"
 version = "2.0.0-dev"
 source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.2#364ac2da9ec1e26c5b445b4971cfb78d39bf553b"
@@ -6541,6 +6592,7 @@ dependencies = [
  "drml-common-runtime",
  "drml-primitives",
  "ethereum-primitives",
+ "evm",
  "fp-evm",
  "fp-rpc",
  "fp-self-contained",
@@ -6572,6 +6624,9 @@ dependencies = [
  "pallet-election-provider-multi-phase",
  "pallet-elections-phragmen",
  "pallet-evm",
+ "pallet-evm-precompile-blake2",
+ "pallet-evm-precompile-bn128",
+ "pallet-evm-precompile-modexp",
  "pallet-evm-precompile-simple",
  "pallet-fee-market",
  "pallet-grandpa",
@@ -6617,6 +6672,7 @@ dependencies = [
  "static_assertions",
  "substrate-wasm-builder",
  "to-ethereum-backing",
+ "to-parachain-backing",
  "to-tron-backing",
 ]
 
@@ -6641,7 +6697,8 @@ dependencies = [
  "darwinia-bridge-bsc",
  "darwinia-ethereum",
  "darwinia-evm",
- "darwinia-evm-precompile-bridge-bsc",
+ "darwinia-evm-precompile-bls12-381",
+ "darwinia-evm-precompile-mpt",
  "darwinia-evm-precompile-state-storage",
  "darwinia-evm-precompile-transfer",
  "darwinia-staking",
@@ -6652,6 +6709,7 @@ dependencies = [
  "dp-s2s",
  "drml-common-runtime",
  "drml-primitives",
+ "evm",
  "fp-evm",
  "fp-rpc",
  "fp-self-contained",
@@ -6676,6 +6734,9 @@ dependencies = [
  "pallet-bridge-messages",
  "pallet-election-provider-multi-phase",
  "pallet-evm",
+ "pallet-evm-precompile-blake2",
+ "pallet-evm-precompile-bn128",
+ "pallet-evm-precompile-modexp",
  "pallet-evm-precompile-simple",
  "pallet-fee-market",
  "pallet-grandpa",
@@ -10017,6 +10078,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "substrate-bn"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72b5bbfa79abbae15dd642ea8176a21a635ff3c00059961d1ea27ad04e5b441c"
+dependencies = [
+ "byteorder",
+ "crunchy",
+ "lazy_static",
+ "rand 0.8.5",
+ "rustc-hex",
+]
+
+[[package]]
 name = "substrate-build-script-utils"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.2#5cb17b488d600befa4918915e18d40c28a25353d"
@@ -10375,6 +10449,25 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-staking",
+ "sp-std",
+]
+
+[[package]]
+name = "to-parachain-backing"
+version = "2.8.11"
+dependencies = [
+ "array-bytes",
+ "bp-message-dispatch",
+ "bp-messages",
+ "bp-runtime",
+ "darwinia-support",
+ "ethereum-types",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec 2.3.1",
+ "scale-info 1.0.0",
+ "sp-runtime",
  "sp-std",
 ]
 

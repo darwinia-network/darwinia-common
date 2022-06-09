@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-//! bsc light client encode and decode.
+//! Merkle patricia trie verify function params encode and decode.
 
 pub use ethabi::{Event, Log};
 
@@ -30,17 +30,19 @@ use sp_std::{convert::TryInto, prelude::*};
 pub type MerkleProof = Vec<Vec<u8>>;
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct BscSingleStorageVerifyParams {
+pub struct MPTSingleStorageVerifyParams {
+	pub state_root: H256,
 	pub lane_address: H160,
 	pub account_proof: MerkleProof,
 	pub storage_key: H256,
 	pub storage_proof: MerkleProof,
 }
 
-impl BscSingleStorageVerifyParams {
+impl MPTSingleStorageVerifyParams {
 	pub fn decode(data: &[u8]) -> AbiResult<Self> {
 		let tokens = ethabi::decode(
 			&[
+				ParamType::FixedBytes(32),
 				ParamType::Address,
 				ParamType::Array(Box::new(ParamType::Bytes)),
 				ParamType::FixedBytes(32),
@@ -48,13 +50,21 @@ impl BscSingleStorageVerifyParams {
 			],
 			&data,
 		)?;
-		match (tokens[0].clone(), tokens[1].clone(), tokens[2].clone(), tokens[3].clone()) {
+		match (
+			tokens[0].clone(),
+			tokens[1].clone(),
+			tokens[2].clone(),
+			tokens[3].clone(),
+			tokens[4].clone(),
+		) {
 			(
+				Token::FixedBytes(state_root),
 				Token::Address(lane_address),
 				Token::Array(account_proof),
 				Token::FixedBytes(storage_key),
 				Token::Array(storage_proof),
 			) => {
+				let state_root: [u8; 32] = state_root.try_into().map_err(|_| Error::InvalidData)?;
 				let account_proof: AbiResult<MerkleProof> = account_proof
 					.iter()
 					.map(|proof| match proof {
@@ -72,6 +82,7 @@ impl BscSingleStorageVerifyParams {
 					})
 					.collect();
 				Ok(Self {
+					state_root: state_root.into(),
 					lane_address,
 					account_proof: account_proof?,
 					storage_key: storage_key.into(),
@@ -84,17 +95,19 @@ impl BscSingleStorageVerifyParams {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct BscMultiStorageVerifyParams {
+pub struct MPTMultiStorageVerifyParams {
+	pub state_root: H256,
 	pub lane_address: H160,
 	pub account_proof: MerkleProof,
 	pub storage_keys: Vec<H256>,
 	pub storage_proofs: Vec<MerkleProof>,
 }
 
-impl BscMultiStorageVerifyParams {
+impl MPTMultiStorageVerifyParams {
 	pub fn decode(data: &[u8]) -> AbiResult<Self> {
 		let tokens = ethabi::decode(
 			&[
+				ParamType::FixedBytes(32),
 				ParamType::Address,
 				ParamType::Array(Box::new(ParamType::Bytes)),
 				ParamType::Array(Box::new(ParamType::FixedBytes(32))),
@@ -102,13 +115,21 @@ impl BscMultiStorageVerifyParams {
 			],
 			&data,
 		)?;
-		match (tokens[0].clone(), tokens[1].clone(), tokens[2].clone(), tokens[3].clone()) {
+		match (
+			tokens[0].clone(),
+			tokens[1].clone(),
+			tokens[2].clone(),
+			tokens[3].clone(),
+			tokens[4].clone(),
+		) {
 			(
+				Token::FixedBytes(state_root),
 				Token::Address(lane_address),
 				Token::Array(account_proof),
 				Token::Array(storage_keys),
 				Token::Array(storage_proofs),
 			) => {
+				let state_root: [u8; 32] = state_root.try_into().map_err(|_| Error::InvalidData)?;
 				let account_proof: AbiResult<MerkleProof> = account_proof
 					.iter()
 					.map(|proof| match proof {
@@ -141,6 +162,7 @@ impl BscMultiStorageVerifyParams {
 					})
 					.collect();
 				Ok(Self {
+					state_root: state_root.into(),
 					lane_address,
 					storage_keys: storage_keys?,
 					account_proof: account_proof?,
