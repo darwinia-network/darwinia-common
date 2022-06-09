@@ -427,13 +427,20 @@ impl MessageDispatch<bp_pangoro::AccountId, BalanceOf<Pangolin>> for FromPangoli
 		message: DispatchMessage<Self::DispatchPayload, BalanceOf<Pangolin>>,
 	) -> MessageDispatchResult {
 		if let Ok(payload) = message.data.payload {
-			// let message = match payload {};
-			// let call = match payload.call.into() {
-			// 	Ok(call) => call,
-			// 	Err(_) => {
-			// 		todo!();
-			// 	},
-			// };
+			if let Ok(c) = payload.call.into() {
+				match c {
+					call
+					@ Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) => {
+						// TODO: calculate the gas fee
+						// let gas_price = tx.gas_price;
+						// let gas_limit = tx.gas_limit;
+					},
+					_ => {
+						todo!();
+					},
+				}
+			}
+
 			let message_id = (message.key.lane_id, message.key.nonce);
 			pallet_bridge_dispatch::Pallet::<Runtime, WithPangolinDispatch>::dispatch(
 				PANGOLIN_CHAIN_ID,
