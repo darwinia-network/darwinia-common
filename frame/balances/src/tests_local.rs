@@ -208,8 +208,8 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 			events(),
 			[
 				Event::System(frame_system::Event::NewAccount(1)),
-				Event::Ring(darwinia_balances::Event::Endowed(1, 100)),
-				Event::Ring(darwinia_balances::Event::BalanceSet(1, 100, 0)),
+				Event::Ring(crate::Event::Endowed(1, 100)),
+				Event::Ring(crate::Event::BalanceSet(1, 100, 0)),
 			]
 		);
 
@@ -217,7 +217,7 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 		assert_eq!(res, (NegativeImbalance::new(98), 0));
 
 		// no events
-		assert_eq!(events(), []);
+		assert_eq!(events(), [Event::Ring(crate::Event::Slashed(1, 98))]);
 
 		let res = Ring::slash(&1, 1);
 		assert_eq!(res, (NegativeImbalance::new(1), 0));
@@ -226,7 +226,8 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 			events(),
 			[
 				Event::System(frame_system::Event::KilledAccount(1)),
-				Event::Ring(darwinia_balances::Event::DustLost(1, 1))
+				Event::Ring(crate::Event::DustLost(1, 1)),
+				Event::Ring(crate::Event::Slashed(1, 1)),
 			]
 		);
 	});
@@ -241,8 +242,8 @@ fn dust_collector_should_work() {
 			events(),
 			[
 				Event::System(frame_system::Event::NewAccount(1)),
-				Event::Ring(darwinia_balances::Event::Endowed(1, 100)),
-				Event::Ring(darwinia_balances::Event::BalanceSet(1, 100, 0)),
+				Event::Ring(crate::Event::Endowed(1, 100)),
+				Event::Ring(crate::Event::BalanceSet(1, 100, 0)),
 			]
 		);
 
@@ -252,7 +253,8 @@ fn dust_collector_should_work() {
 			events(),
 			[
 				Event::System(frame_system::Event::KilledAccount(1)),
-				Event::Ring(darwinia_balances::Event::DustLost(1, 99))
+				Event::Ring(crate::Event::DustLost(1, 99)),
+				Event::Ring(crate::Event::Slashed(1, 1)),
 			]
 		);
 
@@ -265,16 +267,16 @@ fn dust_collector_should_work() {
 			events(),
 			[
 				Event::System(frame_system::Event::NewAccount(1)),
-				Event::Ring(darwinia_balances::Event::Endowed(1, 100)),
-				Event::Ring(darwinia_balances::Event::BalanceSet(1, 100, 0)),
-				Event::Kton(darwinia_balances::Event::Endowed(1, 100)),
-				Event::Kton(darwinia_balances::Event::BalanceSet(1, 100, 0)),
+				Event::Ring(crate::Event::Endowed(1, 100)),
+				Event::Ring(crate::Event::BalanceSet(1, 100, 0)),
+				Event::Kton(crate::Event::Endowed(1, 100)),
+				Event::Kton(crate::Event::BalanceSet(1, 100, 0)),
 			]
 		);
 
 		let _ = Ring::slash(&1, 1);
 
-		assert_eq!(events(), []);
+		assert_eq!(events(), [Event::Ring(crate::Event::Slashed(1, 1))]);
 
 		let _ = Kton::slash(&1, 1);
 
@@ -282,8 +284,9 @@ fn dust_collector_should_work() {
 			events(),
 			[
 				Event::System(frame_system::Event::KilledAccount(1)),
-				Event::Ring(darwinia_balances::Event::DustLost(1, 99)),
-				Event::Kton(darwinia_balances::Event::DustLost(1, 99)),
+				Event::Ring(crate::Event::DustLost(1, 99)),
+				Event::Kton(crate::Event::DustLost(1, 99)),
+				Event::Kton(crate::Event::Slashed(1, 1))
 			]
 		);
 	});

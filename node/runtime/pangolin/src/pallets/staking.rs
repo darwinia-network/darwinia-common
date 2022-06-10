@@ -1,8 +1,8 @@
 // --- paritytech ---
 use frame_support::PalletId;
 use sp_npos_elections::NposSolution;
-use sp_staking::SessionIndex;
 use sp_runtime::Perbill;
+use sp_staking::SessionIndex;
 // --- darwinia-network ---
 use crate::*;
 use darwinia_staking::{Config, EraIndex, UseNominatorsMap};
@@ -35,8 +35,8 @@ impl Config for Runtime {
 	// send the slashed funds to the treasury.
 	type KtonSlash = KtonTreasury;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
-	type OffendingValidatorsThreshold = OffendingValidatorsThreshold;
 	type NextNewSession = Session;
+	type OffendingValidatorsThreshold = OffendingValidatorsThreshold;
 	type PalletId = StakingPalletId;
 	type RingCurrency = Ring;
 	// rewards are minted from the void

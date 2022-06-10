@@ -1,6 +1,6 @@
 // --- paritytech ---
 use pallet_session::{historical::NoteHistoricalRoot, Config};
-use sp_runtime::{traits::OpaqueKeys, };
+use sp_runtime::traits::OpaqueKeys;
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::*;
