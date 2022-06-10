@@ -23,7 +23,7 @@ frame-support    = { default-features = false, git = "https://github.com/darwini
 frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 pallet-beefy     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 pallet-beefy-mmr = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-# pallet-mmr       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+pallet-mmr       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
@@ -48,7 +48,7 @@ std = [
 	"frame-system/std",
 	"pallet-beefy/std",
 	"pallet-beefy-mmr/std",
-	# "pallet-mmr/std",
+	"pallet-mmr/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
