@@ -2,6 +2,7 @@
 use frame_support::PalletId;
 use sp_npos_elections::NposSolution;
 use sp_staking::SessionIndex;
+use sp_runtime::Perbill;
 // --- darwinia-network ---
 use crate::*;
 use darwinia_staking::{Config, EraIndex, UseNominatorsMap};
@@ -16,6 +17,7 @@ frame_support::parameter_types! {
 	pub const BondingDurationInBlockNumber: BlockNumber = 14 * DAYS;
 	pub const SlashDeferDuration: EraIndex = BondingDurationInEra::get() - 1;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
+	pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(17);
 	pub const Cap: Balance = RING_HARD_CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 }
@@ -33,6 +35,7 @@ impl Config for Runtime {
 	// send the slashed funds to the treasury.
 	type KtonSlash = KtonTreasury;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
+	type OffendingValidatorsThreshold = OffendingValidatorsThreshold;
 	type NextNewSession = Session;
 	type PalletId = StakingPalletId;
 	type RingCurrency = Ring;

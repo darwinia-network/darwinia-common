@@ -482,6 +482,12 @@ impl<T: Config> Pallet<T> {
 				Self::start_era(start_session);
 			}
 		}
+
+		for (index, disabled) in <OffendingValidators<T>>::get() {
+			if disabled {
+				T::SessionInterface::disable_validator(index);
+			}
+		}
 	}
 
 	/// End a session potentially ending an era.
@@ -565,6 +571,9 @@ impl<T: Config> Pallet<T> {
 			<ErasValidatorReward<T>>::insert(&active_era.index, validator_payout);
 			T::RingCurrency::deposit_creating(&Self::account_id(), validator_payout);
 			T::RingRewardRemainder::on_unbalanced(T::RingCurrency::issue(rest));
+
+			// Clear offending validators.
+			<OffendingValidators<T>>::kill();
 		}
 	}
 
@@ -1541,12 +1550,9 @@ where
 ///
 /// This is needed because `Staking` sets the `ValidatorIdOf` of the `pallet_session::Config`
 pub trait SessionInterface<AccountId>: frame_system::Config {
-	/// Disable a given validator by stash ID.
-	///
-	/// Returns `true` if new era should be forced at the end of this session.
-	/// This allows preventing a situation where there is too many validators
-	/// disabled and block production stalls.
-	fn disable_validator(validator: &AccountId) -> Result<bool, ()>;
+	/// Disable the validator at the given index, returns `false` if the validator was already
+	/// disabled or the index is out of bounds.
+	fn disable_validator(validator_index: u32) -> bool;
 	/// Get the validators from session.
 	fn validators() -> Vec<AccountId>;
 	/// Prune historical session tries up to but not including the given index.
@@ -1563,8 +1569,8 @@ where
 	T::SessionManager: pallet_session::SessionManager<AccountId<T>>,
 	T::ValidatorIdOf: Convert<AccountId<T>, Option<AccountId<T>>>,
 {
-	fn disable_validator(validator: &AccountId<T>) -> Result<bool, ()> {
-		<pallet_session::Pallet<T>>::disable(validator)
+	fn disable_validator(validator_index: u32) -> bool {
+		<pallet_session::Pallet<T>>::disable_index(validator_index)
 	}
 
 	fn validators() -> Vec<AccountId<T>> {
