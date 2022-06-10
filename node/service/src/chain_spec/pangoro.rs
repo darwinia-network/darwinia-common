@@ -110,7 +110,6 @@ pub fn genesis_config() -> ChainSpec {
 				authorities: vec![],
 				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG),
 			},
-			beefy_gadget: Default::default(),
 			balances: BalancesConfig {
 				balances: vec![
 					(root.clone(), BUNCH_OF_COINS),
@@ -213,7 +212,8 @@ pub fn genesis_config() -> ChainSpec {
 					.collect(),
 			},
 			grandpa: Default::default(),
-			// beefy: Default::default(),
+			beefy: Default::default(),
+			// beefy_gadget: Default::default(),
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			treasury: Default::default(),
@@ -314,7 +314,6 @@ pub fn development_config() -> ChainSpec {
 				authorities: vec![],
 				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG),
 			},
-			beefy_gadget: Default::default(),
 			balances: BalancesConfig {
 				balances: endowed_accounts
 					.clone()
@@ -351,7 +350,8 @@ pub fn development_config() -> ChainSpec {
 					.collect(),
 			},
 			grandpa: Default::default(),
-			// beefy: Default::default(),
+			beefy: Default::default(),
+			// beefy_gadget: Default::default(),
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			treasury: Default::default(),

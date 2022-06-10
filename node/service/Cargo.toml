@@ -33,7 +33,7 @@ pangolin-runtime                  = { path = "../runtime/pangolin" }
 pangoro-runtime                   = { path = "../runtime/pangoro" }
 # paritytech
 # beefy-gadget                               = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-# beefy-primitives                           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+beefy-primitives                           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 frame-benchmarking                         = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 pallet-im-online                           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
