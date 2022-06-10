@@ -6,7 +6,7 @@ use frame_support::traits::OriginTrait;
 use crate::*;
 use bp_message_dispatch::{CallFilter as CallFilterT, IntoDispatchOrigin as IntoDispatchOriginT};
 use bp_messages::{LaneId, MessageNonce};
-use darwinia_ethereum::RawOrigin;
+use darwinia_ethereum::{RawOrigin, Transaction};
 use darwinia_support::evm::DeriveEthereumAddress;
 use pallet_bridge_dispatch::Config;
 
@@ -15,10 +15,13 @@ pub struct CallFilter;
 impl CallFilterT<Origin, Call> for CallFilter {
 	fn contains(origin: &Origin, call: &Call) -> bool {
 		match call {
+			// Note: Only supprt Ethereum::transact(LegacyTransaction)
 			Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) => {
 				match origin.caller() {
-					OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => {
-						Ethereum::validate_transaction_in_block(*id, tx).is_err()
+					OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => match tx {
+						Transaction::Legacy(_) =>
+							Ethereum::validate_transaction_in_block(*id, tx).is_err(),
+						_ => false,
 					},
 					_ => false,
 				}

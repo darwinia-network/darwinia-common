@@ -318,7 +318,9 @@ use sp_runtime::{traits::Saturating, FixedPointOperand};
 // use bp_message_dispatch::MessageDispatch;
 use bp_message_dispatch::MessageDispatch as _;
 use bp_messages::target_chain::MessageDispatch;
-use darwinia_ethereum::RawOrigin;
+use darwinia_ethereum::{RawOrigin, Transaction};
+use darwinia_evm::AccountBasic;
+use darwinia_support::evm::DeriveSubstrateAddress;
 use frame_support::traits::OriginTrait;
 use sp_runtime::MultiAddress;
 
@@ -344,28 +346,37 @@ impl MessageDispatch<bp_pangoro::AccountId, BalanceOf<Pangolin>> for FromPangoli
 			PANGORO_CHAIN_ID,
 			message_id,
 			message.data.payload.map_err(drop),
-			|origin, call| {
-				match call {
-					call
-					@ Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) => {
-						// TODO: calculate gas fee used for ethereum transaction
-						let tx2 = tx;
-						// Get the 160 derived ethereum address
-						let o = match origin.caller() {
-							OriginCaller::Ethereum(origin) => match origin {
-								RawOrigin::EthereumTransaction(id) => {
-									todo!()
-								},
-								_ => todo!(),
-							},
-							_ => todo!(),
-						};
-						// TODO: Transfer to the derived ethereum address
-					},
-					_ => todo!(),
-				}
+			|origin, call| match call {
+				// Filter Ethereum transact call
+				Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) =>
+					match origin.caller() {
+						OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => match tx {
+							// Only support legacy transaction now
+							Transaction::Legacy(t) => {
+								let fee = t.gas_limit.saturating_mul(t.gas_limit);
+								let total_payment = fee.saturating_add(t.value);
 
-				Ok(())
+								// Ensure the relayer has enough balance
+								let derived_substrate_address = <Runtime as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
+								if <Runtime as darwinia_evm::Config>::RingAccountBasic::account_balance(relayer_account) >= total_payment {
+										// Ensure the derived ethereum address has enough balance to pay for the transaction
+										<Runtime as darwinia_evm::Config>::RingAccountBasic::transfer(
+											&relayer_account,
+											&derived_substrate_address,
+											total_payment
+										);
+										return Ok(());
+									}
+								Err(())
+							},
+							// Invalid Ethereum transaction type
+							_ => Err(()),
+						},
+						// Invalid call dispatch origin, should return Err.
+						_ => Err(()),
+					},
+				// Do nothing for other calls.
+				_ => Ok(()),
 			},
 		)
 	}
