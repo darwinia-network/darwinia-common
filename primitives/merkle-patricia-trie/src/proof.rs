@@ -16,11 +16,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
-use sp_std::prelude::*;
+use alloc::vec::Vec;
 
-#[derive(Clone)]
-#[cfg_attr(feature = "std", derive(Debug, PartialEq))]
+use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct Proof {
 	pub nodes: Vec<Vec<u8>>,
 }
@@ -64,7 +64,7 @@ mod tests {
 		let expected = Proof { nodes };
 		let rlp_proof = rlp::encode(&expected);
 		let out_proof: Proof = rlp::decode(&rlp_proof).unwrap();
-		println!("{:?}", out_proof);
+		// println!("{:?}", out_proof);
 		assert_eq!(expected, out_proof);
 	}
 }

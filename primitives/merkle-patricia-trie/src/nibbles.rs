@@ -18,7 +18,7 @@
 
 use core::cmp::min;
 
-use sp_std::prelude::*;
+use alloc::vec::Vec;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Nibbles {
@@ -184,14 +184,14 @@ mod tests {
 		let n2 = Nibbles::from_compact(compact.clone());
 		let (raw, is_leaf) = n2.encode_raw();
 
-		println!(
-			"source: {:?} \n n: {:?} \n compact: {:?} \n n2: {:?} \n raw: {:?}",
-			b"key1".to_vec(),
-			n,
-			compact,
-			n2,
-			raw
-		);
+		// println!(
+		// 	"source: {:?} \n n: {:?} \n compact: {:?} \n n2: {:?} \n raw: {:?}",
+		// 	b"key1".to_vec(),
+		// 	n,
+		// 	compact,
+		// 	n2,
+		// 	raw
+		// );
 		assert_eq!(is_leaf, true);
 		assert_eq!(raw, b"key1");
 	}

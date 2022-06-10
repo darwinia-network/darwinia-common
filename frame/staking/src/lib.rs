@@ -1134,14 +1134,15 @@ pub mod pallet {
 			let controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
 			let promise_month = promise_month.min(36);
+			let now = <frame_system::Pallet<T>>::block_number();
 
 			match max_additional {
 				StakingBalance::RingBalance(max_additional) => {
 					let stash_balance = T::RingCurrency::free_balance(&stash);
 
-					if let Some(extra) = stash_balance
-						.checked_sub(&(ledger.active + ledger.ring_staking_lock.total_unbond()))
-					{
+					if let Some(extra) = stash_balance.checked_sub(
+						&(ledger.active + ledger.ring_staking_lock.total_unbond_at(now)),
+					) {
 						let extra = extra.min(max_additional);
 						let (start_time, expire_time) =
 							Self::bond_ring(&stash, &controller, extra, promise_month, ledger)?;
@@ -1158,7 +1159,7 @@ pub mod pallet {
 					let stash_balance = T::KtonCurrency::free_balance(&stash);
 
 					if let Some(extra) = stash_balance.checked_sub(
-						&(ledger.active_kton + ledger.kton_staking_lock.total_unbond()),
+						&(ledger.active_kton + ledger.kton_staking_lock.total_unbond_at(now)),
 					) {
 						let extra = extra.min(max_additional);
 

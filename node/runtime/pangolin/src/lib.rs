@@ -245,6 +245,7 @@ frame_support::construct_runtime! {
 		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 54,
 
 		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
+		ToPangolinParachainBacking: to_parachain_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 65,
 
 		// BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
 	}
@@ -868,6 +869,7 @@ sp_api::impl_runtime_apis! {
 			list_benchmark!(list, extra, darwinia_evm, EVM);
 			list_benchmark!(list, extra, from_substrate_issuing, Substrate2SubstrateIssuing);
 			list_benchmark!(list, extra, from_ethereum_issuing, EthereumIssuing);
+			list_benchmark!(list, extra, to_parachain_backing, ToPangolinParachainBacking);
 			// FIXME: https://github.com/darwinia-network/darwinia-common/issues/1223
 			// list_benchmark!(list, extra, pallet_fee_market, PangoroFeeMarket);
 
@@ -892,6 +894,7 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, darwinia_evm, EVM);
 			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
 			add_benchmark!(params, batches, from_ethereum_issuing, EthereumIssuing);
+			add_benchmark!(params, batches, to_parachain_backing, ToPangolinParachainBacking);
 			// FIXME: https://github.com/darwinia-network/darwinia-common/issues/1223
 			// add_benchmark!(params, batches, pallet_fee_market, PangoroFeeMarket);
 

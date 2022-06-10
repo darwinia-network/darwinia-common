@@ -318,7 +318,7 @@ impl<T: Config> Pallet<T> {
 	/// 	This will also update the stash lock.
 	/// 	DO NOT modify the locks' staking amount outside this function.
 	pub fn update_ledger(controller: &AccountId<T>, ledger: &StakingLedgerT<T>) {
-		fn update_lock<A, B, C, BN>(stash: &A, active: B, staking_lock: &StakingLock<B, BN>)
+		fn update_lock<A, B, C, BN>(stash: &A, active: B, staking_lock: &StakingLock<B, BN>, at: BN)
 		where
 			B: Copy + AtLeast32BitUnsigned + Zero,
 			C: LockableCurrency<A, Balance = B>,
@@ -330,7 +330,7 @@ impl<T: Config> Pallet<T> {
 				C::set_lock(
 					STAKING_ID,
 					stash,
-					active.saturating_add(staking_lock.total_unbond()),
+					active.saturating_add(staking_lock.total_unbond_at(at)),
 					WithdrawReasons::all(),
 				);
 			}
@@ -339,9 +339,10 @@ impl<T: Config> Pallet<T> {
 		let StakingLedger {
 			stash, active, active_kton, ring_staking_lock, kton_staking_lock, ..
 		} = ledger;
+		let now = <frame_system::Pallet<T>>::block_number();
 
-		update_lock::<_, _, T::RingCurrency, _>(&stash, *active, ring_staking_lock);
-		update_lock::<_, _, T::KtonCurrency, _>(&stash, *active_kton, kton_staking_lock);
+		update_lock::<_, _, T::RingCurrency, _>(&stash, *active, ring_staking_lock, now);
+		update_lock::<_, _, T::KtonCurrency, _>(&stash, *active_kton, kton_staking_lock, now);
 
 		<Ledger<T>>::insert(controller, ledger);
 	}

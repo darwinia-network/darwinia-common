@@ -16,10 +16,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+use core::cell::RefCell;
+
+use alloc::{rc::Rc, vec::Vec};
+
 use hash::keccak;
 use hashbrown::{HashMap, HashSet};
 use rlp::{Prototype, Rlp, RlpStream};
-use sp_std::{cell::RefCell, prelude::*, rc::Rc, vec};
 
 use crate::{
 	db::MemoryDB,
@@ -771,12 +774,10 @@ impl<'a> Iterator for TrieIterator<'a> {
 
 #[cfg(test)]
 mod tests {
-	use std::{
-		collections::{HashMap, HashSet},
-		rc::Rc,
-	};
+	use alloc::{rc::Rc, string::String};
 
 	use ethereum_types;
+	use hashbrown::{HashMap, HashSet};
 	use rand::{distributions::Alphanumeric, seq::SliceRandom, thread_rng, Rng};
 
 	use super::*;
@@ -977,9 +978,9 @@ mod tests {
 		}
 		trie.commit().unwrap();
 
-		println!("{:?}", trie);
+		// println!("{:?}", trie);
 		let empty_node_key = hasher_digest(&rlp::NULL_RLP);
-		println!("empty key{:?}", empty_node_key);
+		// println!("empty key{:?}", empty_node_key);
 		let value = trie.db.get(empty_node_key.as_ref()).unwrap();
 		assert_eq!(value, &rlp::NULL_RLP)
 	}

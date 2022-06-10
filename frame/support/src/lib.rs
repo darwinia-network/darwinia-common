@@ -40,7 +40,7 @@ pub mod s2s {
 	// --- darwinia-network ---
 	use ethereum_primitives::{H160, H256};
 	// --- paritytech ---
-	use bp_messages::LaneId;
+	use bp_messages::{LaneId, MessageNonce};
 	use bp_runtime::{derive_account_id, ChainId, SourceAccount};
 	use frame_support::ensure;
 	use sp_runtime::{
@@ -66,6 +66,11 @@ pub mod s2s {
 	pub trait LatestMessageNoncer {
 		fn outbound_latest_generated_nonce(lane_id: LaneId) -> u64;
 		fn inbound_latest_received_nonce(lane_id: LaneId) -> u64;
+	}
+
+	pub trait OutboundMessager<AccountId> {
+		fn check_lane_id(lane_id: &LaneId) -> bool;
+		fn get_valid_message_sender(nonce: MessageNonce) -> Result<AccountId, &'static str>;
 	}
 
 	pub fn ensure_source_root<AccountId, Converter>(

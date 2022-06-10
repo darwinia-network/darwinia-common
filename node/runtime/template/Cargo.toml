@@ -106,10 +106,10 @@ std = [
 	"fp-evm/std",
 	"fp-rpc/std",
 	"fp-self-contained/std",
+	"moonbeam-rpc-primitives-debug/std",
 	"pallet-base-fee/std",
 	"pallet-evm/std",
 	"pallet-evm-precompile-modexp/std",
 	"pallet-evm-precompile-sha3fips/std",
 	"pallet-evm-precompile-simple/std",
-	"moonbeam-rpc-primitives-debug/std",
 ]

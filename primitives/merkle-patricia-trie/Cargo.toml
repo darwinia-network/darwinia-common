@@ -18,8 +18,6 @@ name    = "trie"
 hash      = { package = "keccak-hash", version = "0.8", default-features = false }
 hashbrown = { version = "0.11" }
 rlp       = { version = "0.5", default-features = false }
-# paritytech
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 
 [dev-dependencies]
 # crates.io
@@ -37,6 +35,4 @@ std = [
 	# crates.io
 	"hash/std",
 	"rlp/std",
-	# paritytech
-	"sp-std/std",
 ]

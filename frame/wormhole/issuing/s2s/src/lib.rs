@@ -33,7 +33,7 @@ pub use weight::WeightInfo;
 // --- crates.io ---
 use ethereum_types::{H160, H256, U256};
 // --- paritytech ---
-use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId};
+use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId, MessageNonce};
 use frame_support::{
 	ensure, log,
 	pallet_prelude::*,
@@ -48,7 +48,7 @@ use bp_runtime::ChainId;
 use darwinia_ethereum::InternalTransactHandler;
 use darwinia_support::{
 	mapping_token::*,
-	s2s::{ensure_source_account, ToEthAddress},
+	s2s::{ensure_source_account, OutboundMessager, ToEthAddress},
 	ChainName,
 };
 use dp_asset::TokenMetadata;
@@ -96,8 +96,8 @@ pub mod pallet {
 		/// The remote chain name where the backing module in
 		type BackingChainName: Get<ChainName>;
 
-		/// The lane id of the s2s bridge
-		type MessageLaneId: Get<LaneId>;
+		/// The Outbuound Message Info
+		type OutboundMessager: OutboundMessager<Self::AccountId>;
 	}
 
 	/// Remote Backing Address, this used to verify the remote caller
@@ -252,6 +252,8 @@ pub mod pallet {
 		InvalidIssueEncoding,
 		/// invalid ethereum address length
 		InvalidAddressLen,
+		/// invalid message sender
+		InvalidMessageSender,
 	}
 
 	#[pallet::storage]
@@ -279,10 +281,14 @@ pub mod pallet {
 
 	impl<T: Config> OnDeliveryConfirmed for Pallet<T> {
 		fn on_messages_delivered(lane: &LaneId, messages: &DeliveredMessages) -> Weight {
-			if *lane != T::MessageLaneId::get() {
+			if !T::OutboundMessager::check_lane_id(lane) {
 				return 0;
 			}
 			for nonce in messages.begin..=messages.end {
+				// filter the messages not belong here
+				if let Err(_) = Self::judge_self_message(nonce) {
+					continue;
+				}
 				let result = messages.message_dispatch_result(nonce);
 				if let Ok(input) = smtf::encode_confirm_burn_and_remote_unlock(lane, nonce, result)
 				{
@@ -323,5 +329,15 @@ impl<T: Config> Pallet<T> {
 	pub fn transact_mapping_factory(input: Vec<u8>) -> DispatchResultWithPostInfo {
 		let contract = MappingFactoryAddress::<T>::get();
 		T::InternalTransactHandler::internal_transact(contract, input)
+	}
+
+	pub fn judge_self_message(nonce: MessageNonce) -> DispatchResultWithPostInfo {
+		let message_sender = T::OutboundMessager::get_valid_message_sender(nonce)?;
+		ensure!(
+			T::ToEthAddressT::into_ethereum_id(&message_sender)
+				== <MappingFactoryAddress<T>>::get(),
+			Error::<T>::InvalidMessageSender
+		);
+		Ok(().into())
 	}
 }

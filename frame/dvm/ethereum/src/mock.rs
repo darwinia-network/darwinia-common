@@ -44,12 +44,15 @@ use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::{self as darwinia_ethereum, account_basic::*, *};
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
-use darwinia_support::evm::IntoAccountId;
+use darwinia_support::evm::DeriveSubstrateAddress;
 
 type Block = MockBlock<Test>;
 pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
 type Balance = u64;
+
+pub type EthereumTransactCall = darwinia_ethereum::Call<Test>;
+pub type TestRuntimeCall = <Test as frame_system::Config>::Call;
 
 darwinia_support::impl_test_account_data! {}
 
@@ -144,8 +147,8 @@ impl FindAuthor<H160> for FindAuthorTruncated {
 	}
 }
 pub struct HashedConverter;
-impl IntoAccountId<AccountId32> for HashedConverter {
-	fn into_account_id(address: H160) -> AccountId32 {
+impl DeriveSubstrateAddress<AccountId32> for HashedConverter {
+	fn derive_substrate_address(address: H160) -> AccountId32 {
 		let mut raw_account = [0u8; 32];
 		raw_account[0..20].copy_from_slice(&address[..]);
 		raw_account.into()
