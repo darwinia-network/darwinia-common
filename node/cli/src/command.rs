@@ -23,7 +23,7 @@ use sc_cli::{Error as CliError, Result as CliResult, Role, RuntimeVersion, Subst
 use sc_service::{ChainSpec, DatabaseSource};
 #[cfg(feature = "try-runtime")]
 use sc_service::{Error as ServiceError, TaskManager};
-use sp_core::crypto::{self, Ss58AddressFormat};
+use sp_core::crypto::{self, Ss58AddressFormatRegistry};
 // --- darwinia-network ---
 use crate::cli::*;
 #[cfg(any(feature = "try-runtime", feature = "runtime-benchmarks"))]
@@ -302,12 +302,12 @@ fn get_exec_name() -> Option<String> {
 
 fn set_default_ss58_version(spec: &Box<dyn ChainSpec>) {
 	let ss58_version = if spec.is_pangoro() {
-		Ss58AddressFormat::DarwiniaAccount
+		Ss58AddressFormatRegistry::DarwiniaAccount
 	} else {
-		Ss58AddressFormat::SubstrateAccount
+		Ss58AddressFormatRegistry::SubstrateAccount
 	};
 
-	crypto::set_default_ss58_version(ss58_version);
+	crypto::set_default_ss58_version(ss58_version.into());
 }
 
 fn validate_trace_environment(cli: &Cli) -> CliResult<()> {
