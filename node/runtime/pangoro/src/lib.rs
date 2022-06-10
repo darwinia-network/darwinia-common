@@ -751,8 +751,6 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, to_substrate_backing, Substrate2SubstrateBacking);
 			add_benchmark!(params, batches, darwinia_bridge_bsc, Bsc);
 
-			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
-
 			Ok(batches)
 		}
 	}

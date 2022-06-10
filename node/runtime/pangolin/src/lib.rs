@@ -895,8 +895,6 @@ sp_api::impl_runtime_apis! {
 			// FIXME: https://github.com/darwinia-network/darwinia-common/issues/1223
 			// add_benchmark!(params, batches, pallet_fee_market, PangoroFeeMarket);
 
-			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
-
 			Ok(batches)
 		}
 	}
