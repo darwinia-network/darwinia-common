@@ -617,7 +617,6 @@ fn address_build(seed: u8) -> AccountInfo {
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExternalities) {
-	// sc_cli::init_logger("");
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 	let pairs = (0..accounts_len).map(|i| address_build(i as u8)).collect::<Vec<_>>();
