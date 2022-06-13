@@ -23,15 +23,20 @@ use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{
+	traits::OriginTrait,
 	weights::{DispatchClass, Weight},
 	RuntimeDebug,
 };
 use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
-use sp_std::{convert::TryFrom, marker::PhantomData, ops::RangeInclusive};
+use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
-use bp_message_dispatch::CallOrigin;
-use bp_messages::{source_chain::*, target_chain::*, *};
+use bp_message_dispatch::{CallOrigin, MessageDispatch as _};
+use bp_messages::{
+	source_chain::*,
+	target_chain::{MessageDispatch, *},
+	*,
+};
 use bp_runtime::{messages::*, ChainId, *};
 use bridge_runtime_common::{
 	lanes::*,
@@ -42,6 +47,9 @@ use bridge_runtime_common::{
 		BalanceOf, *,
 	},
 };
+use darwinia_ethereum::{RawOrigin, Transaction};
+use darwinia_evm::AccountBasic;
+use darwinia_support::evm::DeriveSubstrateAddress;
 use dp_s2s::{CallParams, CreatePayload};
 use drml_common_runtime::impls::FromThisChainMessageVerifier;
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
@@ -62,16 +70,6 @@ pub type ToPangoroMessageVerifier =
 
 /// Encoded Pangolin Call as it comes from Pangoro.
 pub type FromPangoroEncodedCall = FromBridgedChainEncodedMessageCall<Call>;
-
-/// Call-dispatch based message dispatch for Pangoro -> Pangolin messages.
-// pub type FromPangoroMessageDispatch =
-// 	FromBridgedChainMessageDispatch<WithPangoroMessageBridge, Runtime, Ring, WithPangoroDispatch>;
-pub type FromPangoroMessageDispatch = DarwiniaFromBridgedChainMessageDispatch<
-	WithPangoroMessageBridge,
-	Runtime,
-	Ring,
-	WithPangoroDispatch,
->;
 
 /// The s2s backing pallet index in the pangoro chain runtime.
 pub const PANGORO_S2S_BACKING_PALLET_INDEX: u8 = 20;
@@ -308,84 +306,59 @@ impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for Pangoro {
 	}
 }
 
-/// Dispatching Bridged -> This chain messages.
+/// Call-dispatch Pangoro -> Pangolin messages.
 #[derive(RuntimeDebug, Clone, Copy)]
-pub struct DarwiniaFromBridgedChainMessageDispatch<
-	B,
-	ThisRuntime,
-	ThisCurrency,
-	ThisDispatchInstance,
-> {
-	_marker: PhantomData<(B, ThisRuntime, ThisCurrency, ThisDispatchInstance)>,
-}
-
-use bridge_runtime_common::messages::AccountIdOf;
-use frame_support::{
-	traits::{Currency, ExistenceRequirement},
-	weights::WeightToFeePolynomial,
-};
-use sp_runtime::{traits::Saturating, FixedPointOperand};
-// use bp_message_dispatch::MessageDispatch;
-use bp_message_dispatch::MessageDispatch as _;
-use bp_messages::target_chain::MessageDispatch;
-
-impl<B: MessageBridge, ThisRuntime, ThisCurrency, ThisDispatchInstance>
-	MessageDispatch<AccountIdOf<ThisChain<B>>, BalanceOf<BridgedChain<B>>>
-	for DarwiniaFromBridgedChainMessageDispatch<B, ThisRuntime, ThisCurrency, ThisDispatchInstance>
-where
-	BalanceOf<ThisChain<B>>: Saturating + FixedPointOperand,
-	ThisDispatchInstance: 'static,
-	ThisRuntime: pallet_bridge_dispatch::Config<
-			ThisDispatchInstance,
-			BridgeMessageId = (LaneId, MessageNonce),
-		> + pallet_transaction_payment::Config,
-	<ThisRuntime as pallet_transaction_payment::Config>::OnChargeTransaction:
-		pallet_transaction_payment::OnChargeTransaction<
-			ThisRuntime,
-			Balance = BalanceOf<ThisChain<B>>,
-		>,
-	ThisCurrency: Currency<AccountIdOf<ThisChain<B>>, Balance = BalanceOf<ThisChain<B>>>,
-	pallet_bridge_dispatch::Pallet<ThisRuntime, ThisDispatchInstance>:
-		bp_message_dispatch::MessageDispatch<
-			AccountIdOf<ThisChain<B>>,
-			(LaneId, MessageNonce),
-			Message = FromBridgedChainMessagePayload<B>,
-		>,
-{
-	type DispatchPayload = FromBridgedChainMessagePayload<B>;
+pub struct FromPangoroMessageDispatch;
+impl MessageDispatch<bp_pangolin::AccountId, bp_pangolin::Balance> for FromPangoroMessageDispatch {
+	type DispatchPayload = FromPangoroMessagePayload;
 
 	fn dispatch_weight(
-		message: &DispatchMessage<Self::DispatchPayload, BalanceOf<BridgedChain<B>>>,
+		message: &DispatchMessage<Self::DispatchPayload, bp_pangolin::Balance>,
 	) -> frame_support::weights::Weight {
 		message.data.payload.as_ref().map(|payload| payload.weight).unwrap_or(0)
 	}
 
 	fn dispatch(
-		relayer_account: &AccountIdOf<ThisChain<B>>,
-		message: DispatchMessage<Self::DispatchPayload, BalanceOf<BridgedChain<B>>>,
+		relayer_account: &bp_pangolin::AccountId,
+		message: DispatchMessage<Self::DispatchPayload, bp_pangolin::Balance>,
 	) -> MessageDispatchResult {
 		let message_id = (message.key.lane_id, message.key.nonce);
-		pallet_bridge_dispatch::Pallet::<ThisRuntime, ThisDispatchInstance>::dispatch(
-			B::BRIDGED_CHAIN_ID,
-			B::THIS_CHAIN_ID,
+		pallet_bridge_dispatch::Pallet::<Runtime, WithPangoroDispatch>::dispatch(
+			PANGOLIN_CHAIN_ID,
+			PANGORO_CHAIN_ID,
 			message_id,
 			message.data.payload.map_err(drop),
-			|dispatch_origin, dispatch_weight| {
-				let unadjusted_weight_fee = ThisRuntime::WeightToFee::calc(&dispatch_weight);
-				let fee_multiplier =
-					pallet_transaction_payment::Pallet::<ThisRuntime>::next_fee_multiplier();
-				let adjusted_weight_fee = fee_multiplier.saturating_mul_int(unadjusted_weight_fee);
-				if !adjusted_weight_fee.is_zero() {
-					ThisCurrency::transfer(
-						dispatch_origin,
-						relayer_account,
-						adjusted_weight_fee,
-						ExistenceRequirement::AllowDeath,
-					)
-					.map_err(drop)
-				} else {
-					Ok(())
-				}
+			|origin, call| match call {
+				// Filter Ethereum transact call
+				Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) =>
+					match origin.caller() {
+						OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => match tx {
+							// Only support legacy transaction now
+							Transaction::Legacy(t) => {
+								let fee = t.gas_limit.saturating_mul(t.gas_limit);
+								let total_payment = fee.saturating_add(t.value);
+
+								// Ensure the relayer has enough balance
+								let derived_substrate_address = <Runtime as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
+								if <Runtime as darwinia_evm::Config>::RingAccountBasic::account_balance(relayer_account) >= total_payment {
+										// Ensure the derived ethereum address has enough balance to pay for the transaction
+										let _ = <Runtime as darwinia_evm::Config>::RingAccountBasic::transfer(
+											&relayer_account,
+											&derived_substrate_address,
+											total_payment
+										);
+										return Ok(());
+									}
+								Err(())
+							},
+							// Invalid Ethereum transaction type
+							_ => Err(()),
+						},
+						// Invalid call dispatch origin, should return Err.
+						_ => Err(()),
+					},
+				// Do nothing for other calls.
+				_ => Ok(()),
 			},
 		)
 	}

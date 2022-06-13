@@ -311,18 +311,18 @@ impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for Pangolin {
 /// Call-dispatch Pangolin -> Pangoro messages.
 #[derive(RuntimeDebug, Clone, Copy)]
 pub struct FromPangolinMessageDispatch;
-impl MessageDispatch<bp_pangoro::AccountId, BalanceOf<Pangoro>> for FromPangolinMessageDispatch {
+impl MessageDispatch<bp_pangoro::AccountId, bp_pangoro::Balance> for FromPangolinMessageDispatch {
 	type DispatchPayload = FromPangolinMessagePayload;
 
 	fn dispatch_weight(
-		message: &DispatchMessage<Self::DispatchPayload, BalanceOf<Pangoro>>,
+		message: &DispatchMessage<Self::DispatchPayload, bp_pangoro::Balance>,
 	) -> frame_support::weights::Weight {
 		message.data.payload.as_ref().map(|payload| payload.weight).unwrap_or(0)
 	}
 
 	fn dispatch(
 		relayer_account: &bp_pangoro::AccountId,
-		message: DispatchMessage<Self::DispatchPayload, BalanceOf<Pangoro>>,
+		message: DispatchMessage<Self::DispatchPayload, bp_pangoro::Balance>,
 	) -> MessageDispatchResult {
 		let message_id = (message.key.lane_id, message.key.nonce);
 		pallet_bridge_dispatch::Pallet::<Runtime, WithPangolinDispatch>::dispatch(
