@@ -297,7 +297,7 @@ impl OutboundMessager<AccountId32> for MockOutboundMessager {
 
 		account[..20].copy_from_slice(&mapping_token_factory_address.as_bytes()[..]);
 
-		return Ok(account.into())
+		return Ok(account.into());
 	}
 }
 
