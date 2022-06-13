@@ -126,7 +126,7 @@ std = [
 	"darwinia-balances/std",
 	"darwinia-balances-rpc-runtime-api/std",
 	# "darwinia-beefy-gadget/std",
-	# "darwinia-bridge-bsc/std",
+	"darwinia-bridge-bsc/std",
 	"darwinia-ethereum/std",
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-bls12-381/std",
