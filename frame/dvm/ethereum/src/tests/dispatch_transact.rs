@@ -44,7 +44,7 @@ fn prepare_message(
 		spec_version: TEST_SPEC_VERSION,
 		weight: TEST_WEIGHT,
 		origin,
-		dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
+		dispatch_fee_payment: DispatchFeePayment::AtTargetChain,
 		call: EncodedCall(call.encode()),
 	}
 }
@@ -110,6 +110,7 @@ fn test_dispatch_ethereum_transact_works() {
                             OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => match tx {
                                 // Only support legacy transaction now
                                 Transaction::Legacy(t) => {
+                                    println!("bear: --- enter callback");
                                     let fee = t.gas_limit.saturating_mul(t.gas_limit);
                                     let total_payment = fee.saturating_add(t.value);
                                     // Ensure the relayer has enough balance
@@ -135,6 +136,8 @@ fn test_dispatch_ethereum_transact_works() {
                     _ => Ok(()),
                 },
             );
+        println!("bear: --- result {:?}", result);
+        println!("bear: --- result {:?}", System::events());
 		assert!(result.dispatch_result);
 		System::assert_has_event(Event::Dispatch(
 			pallet_bridge_dispatch::Event::MessageDispatched(SOURCE_CHAIN_ID, id, Ok(())),
