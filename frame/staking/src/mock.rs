@@ -90,23 +90,14 @@ impl OneSessionHandler<AccountId> for OtherSessionHandler {
 	{
 	}
 
-	fn on_new_session<'a, I: 'a>(_: bool, validators: I, _: I)
+	fn on_new_session<'a, I: 'a>(_: bool, _: I, _: I)
 	where
 		I: Iterator<Item = (&'a AccountId, Self::Key)>,
 		AccountId: 'a,
 	{
-		SESSION_VALIDATORS.with(|x| {
-			*x.borrow_mut() = (validators.map(|x| x.0.clone()).collect(), HashSet::new())
-		});
 	}
 
-	fn on_disabled(validator_index: usize) {
-		SESSION_VALIDATORS.with(|d| {
-			let mut d = d.borrow_mut();
-			let value = d.0[validator_index];
-			d.1.insert(value);
-		})
-	}
+	fn on_disabled(_: u32) {}
 }
 impl sp_runtime::BoundToRuntimeAppPublic for OtherSessionHandler {
 	type Public = UintAuthorityId;
@@ -114,7 +105,12 @@ impl sp_runtime::BoundToRuntimeAppPublic for OtherSessionHandler {
 
 pub fn is_disabled(controller: AccountId) -> bool {
 	let stash = Staking::ledger(&controller).unwrap().stash;
-	SESSION_VALIDATORS.with(|d| d.borrow().1.contains(&stash))
+	let validator_index = match Session::validators().iter().position(|v| *v == stash) {
+		Some(index) => index as u32,
+		None => return false,
+	};
+
+	Session::disabled_validators().contains(&validator_index)
 }
 
 parameter_types! {
@@ -155,12 +151,10 @@ sp_runtime::impl_opaque_keys! {
 	}
 }
 parameter_types! {
-	pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(25);
 	pub static Period: BlockNumber = 5;
 	pub static Offset: BlockNumber = 0;
 }
 impl pallet_session::Config for Test {
-	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
 	type Event = Event;
 	type Keys = SessionKeys;
 	type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
@@ -237,12 +231,12 @@ parameter_types! {
 	pub const StakingPalletId: PalletId = PalletId(*b"da/staki");
 	pub const BondingDurationInEra: EraIndex = 3;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
+	pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(75);
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
 	pub static SessionsPerEra: SessionIndex = 3;
 	pub static BondingDurationInBlockNumber: BlockNumber = bonding_duration_in_blocks();
 	pub static SlashDeferDuration: EraIndex = 0;
-	pub static SessionValidators: (Vec<AccountId>, HashSet<AccountId>) = Default::default();
 	pub static RingRewardRemainderUnbalanced: Balance = 0;
 }
 impl Config for Test {
@@ -257,6 +251,7 @@ impl Config for Test {
 	type KtonSlash = ();
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type NextNewSession = Session;
+	type OffendingValidatorsThreshold = OffendingValidatorsThreshold;
 	type PalletId = StakingPalletId;
 	type RingCurrency = Ring;
 	type RingReward = ();
@@ -536,11 +531,6 @@ impl ExtBuilder {
 		}
 		.assimilate_storage(&mut storage);
 		let mut ext = sp_io::TestExternalities::from(storage);
-
-		ext.execute_with(|| {
-			let validators = Session::validators();
-			SESSION_VALIDATORS.with(|x| *x.borrow_mut() = (validators.clone(), HashSet::new()));
-		});
 
 		if self.initialize_first_session {
 			// We consider all test to start after timestamp is initialized This must be ensured by

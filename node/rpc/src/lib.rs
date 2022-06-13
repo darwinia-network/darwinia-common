@@ -50,8 +50,8 @@ where
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
 	pub grandpa: GrandpaDeps<B>,
-	/// BEEFY specific dependencies.
-	pub beefy: BeefyDeps,
+	// /// BEEFY specific dependencies.
+	// pub beefy: BeefyDeps,
 	/// DVM related rpc helper.
 	pub eth: EthDeps<A>,
 }
@@ -81,13 +81,13 @@ pub struct GrandpaDeps<B> {
 	pub finality_proof_provider: Arc<sc_finality_grandpa::FinalityProofProvider<B, Block>>,
 }
 
-/// Extra dependencies for BEEFY
-pub struct BeefyDeps {
-	/// Receives notifications about signed commitment events from BEEFY.
-	pub beefy_commitment_stream: beefy_gadget::notification::BeefySignedCommitmentStream<Block>,
-	/// Executor to drive the subscription manager in the BEEFY RPC handler.
-	pub subscription_executor: sc_rpc::SubscriptionTaskExecutor,
-}
+// /// Extra dependencies for BEEFY
+// pub struct BeefyDeps {
+// 	/// Receives notifications about signed commitment events from BEEFY.
+// 	pub beefy_commitment_stream: beefy_gadget::notification::BeefySignedCommitmentStream<Block>,
+// 	/// Executor to drive the subscription manager in the BEEFY RPC handler.
+// 	pub subscription_executor: sc_rpc::SubscriptionTaskExecutor,
+// }
 
 pub struct EthDeps<A>
 where
@@ -166,7 +166,7 @@ where
 	use jsonrpc_core::IoHandler;
 	use jsonrpc_pubsub::manager::SubscriptionManager;
 	// --- paritytech ---
-	use beefy_gadget_rpc::*;
+	// use beefy_gadget_rpc::*;
 	use fc_rpc::*;
 	use fp_rpc::*;
 	use pallet_transaction_payment_rpc::*;
@@ -195,8 +195,9 @@ where
 				subscription_executor: grandpa_subscription_executor,
 				finality_proof_provider,
 			},
-		beefy:
-			BeefyDeps { beefy_commitment_stream, subscription_executor: beefy_subscription_executor },
+		// beefy:
+		// BeefyDeps { beefy_commitment_stream, subscription_executor: beefy_subscription_executor
+		// },
 		eth:
 			EthDeps {
 				config:
@@ -241,10 +242,10 @@ where
 		grandpa_subscription_executor,
 		finality_proof_provider,
 	)));
-	io.extend_with(BeefyApi::to_delegate(BeefyRpcHandler::new(
-		beefy_commitment_stream,
-		beefy_subscription_executor,
-	)));
+	// io.extend_with(BeefyApi::to_delegate(BeefyRpcHandler::new(
+	// 	beefy_commitment_stream,
+	// 	beefy_subscription_executor,
+	// )));
 	io.extend_with(SyncStateRpcApi::to_delegate(SyncStateRpcHandler::new(
 		chain_spec,
 		client.clone(),

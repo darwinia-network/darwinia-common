@@ -17,10 +17,10 @@ scale-info = { version = "1.0", default-features = false, features = ["derive"] 
 # darwinia-network
 darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 
 [dev-dependencies]
 # crates.io
@@ -31,8 +31,8 @@ serde      = { version = "1.0" }
 darwinia-balances = { path = "../../balances" }
 darwinia-support  = { path = "../../support" }
 # paritytech
-sp-core = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-sp-io   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+sp-core = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-io   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 
 [features]
 default = ["std"]

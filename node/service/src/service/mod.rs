@@ -118,7 +118,7 @@ where
 	// --- crates.io ---
 	use futures::stream::StreamExt;
 	// --- paritytech ---
-	use beefy_gadget::{notification::BeefySignedCommitmentStream, BeefyParams};
+	// use beefy_gadget::{notification::BeefySignedCommitmentStream, BeefyParams};
 	use fc_rpc::EthBlockDataCache;
 	use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 	use sc_authority_discovery::WorkerConfig;
@@ -148,7 +148,7 @@ where
 	let auth_disc_publish_non_global_ips = config.network.allow_non_globals_in_dht;
 
 	config.network.extra_sets.push(sc_finality_grandpa::grandpa_peers_set_config());
-	config.network.extra_sets.push(beefy_gadget::beefy_peers_set_config());
+	// config.network.extra_sets.push(beefy_gadget::beefy_peers_set_config());
 
 	let backoff_authoring_blocks =
 		Some(sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging::default());
@@ -178,6 +178,7 @@ where
 	let warp_sync = Arc::new(NetworkProvider::new(
 		backend.clone(),
 		grandpa_link.shared_authority_set().clone(),
+		Vec::new(),
 	));
 	let (network, system_rpc_tx, network_starter) =
 		sc_service::build_network(BuildNetworkParams {
@@ -221,13 +222,13 @@ where
 		fee_history_cache: fee_history_cache.clone(),
 		overrides: overrides.clone(),
 	}
-	.spawn_task();
+	.spawn_task(&config.impl_name);
 	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let shared_voter_state = GrandpaSharedVoterState::empty();
 	let babe_config = babe_link.config().clone();
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
 	let justification_stream = grandpa_link.justification_stream();
-	let (beefy_link, beefy_commitment_stream) = BeefySignedCommitmentStream::channel();
+	// let (beefy_link, beefy_commitment_stream) = BeefySignedCommitmentStream::channel();
 	let shared_authority_set = grandpa_link.shared_authority_set().clone();
 	let finality_proof_provider = GrandpaFinalityProofProvider::new_for_service(
 		backend.clone(),
@@ -261,10 +262,10 @@ where
 					subscription_executor: subscription_executor.clone(),
 					finality_proof_provider: finality_proof_provider.clone(),
 				},
-				beefy: BeefyDeps {
-					beefy_commitment_stream: beefy_commitment_stream.clone(),
-					subscription_executor,
-				},
+				// beefy: BeefyDeps {
+				// 	beefy_commitment_stream: beefy_commitment_stream.clone(),
+				// 	subscription_executor,
+				// },
 				eth: EthDeps {
 					config: eth_rpc_config.clone(),
 					graph: transaction_pool.pool().clone(),
@@ -376,18 +377,18 @@ where
 
 	let keystore = if is_authority { Some(keystore_container.sync_keystore()) } else { None };
 
-	task_manager.spawn_essential_handle().spawn_blocking(
-		"beefy-gadget",
-		beefy_gadget::start_beefy_gadget::<_, _, _, _>(BeefyParams {
-			client: client.clone(),
-			backend: backend.clone(),
-			key_store: keystore.clone(),
-			network: network.clone(),
-			signed_commitment_sender: beefy_link,
-			min_block_delta: 4,
-			prometheus_registry: prometheus_registry.clone(),
-		}),
-	);
+	// task_manager.spawn_essential_handle().spawn_blocking(
+	// 	"beefy-gadget",
+	// 	beefy_gadget::start_beefy_gadget::<_, _, _, _>(BeefyParams {
+	// 		client: client.clone(),
+	// 		backend: backend.clone(),
+	// 		key_store: keystore.clone(),
+	// 		network: network.clone(),
+	// 		signed_commitment_sender: beefy_link,
+	// 		min_block_delta: 4,
+	// 		prometheus_registry: prometheus_registry.clone(),
+	// 	}),
+	// );
 
 	if !disable_grandpa {
 		let grandpa_config = GrandpaParams {

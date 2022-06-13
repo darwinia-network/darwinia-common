@@ -774,14 +774,14 @@ macro_rules! decl_tests {
 					assert_ok!(Ring::reserve(&1, 10));
 
 					System::assert_last_event(
-						Event::Ring(darwinia_balances::Event::Reserved(1, 10)),
+						Event::Ring(crate::Event::Reserved(1, 10)),
 					);
 
 					System::set_block_number(3);
 					assert!(Ring::unreserve(&1, 5).is_zero());
 
 					System::assert_last_event(
-						Event::Ring(darwinia_balances::Event::Unreserved(1, 5)),
+						Event::Ring(crate::Event::Unreserved(1, 5)),
 					);
 
 					System::set_block_number(4);
@@ -789,7 +789,7 @@ macro_rules! decl_tests {
 
 					// should only unreserve 5
 					System::assert_last_event(
-						Event::Ring(darwinia_balances::Event::Unreserved(1, 5)),
+						Event::Ring(crate::Event::Unreserved(1, 5)),
 					);
 				});
 		}
@@ -806,8 +806,8 @@ macro_rules! decl_tests {
 						events(),
 						[
 							Event::System(frame_system::Event::NewAccount(1)),
-							Event::Ring(darwinia_balances::Event::Endowed(1, 100)),
-							Event::Ring(darwinia_balances::Event::BalanceSet(1, 100, 0)),
+							Event::Ring(crate::Event::Endowed(1, 100)),
+							Event::Ring(crate::Event::BalanceSet(1, 100, 0)),
 						]
 					);
 
@@ -818,7 +818,8 @@ macro_rules! decl_tests {
 						events(),
 						[
 							Event::System(frame_system::Event::KilledAccount(1)),
-							Event::Ring(darwinia_balances::Event::DustLost(1, 99))
+							Event::Ring(crate::Event::DustLost(1, 99)),
+							Event::Ring(crate::Event::Slashed(1, 1))
 						]
 					);
 				});
@@ -836,8 +837,8 @@ macro_rules! decl_tests {
 						events(),
 						[
 							Event::System(frame_system::Event::NewAccount(1)),
-							Event::Ring(darwinia_balances::Event::Endowed(1, 100)),
-							Event::Ring(darwinia_balances::Event::BalanceSet(1, 100, 0)),
+							Event::Ring(crate::Event::Endowed(1, 100)),
+							Event::Ring(crate::Event::BalanceSet(1, 100, 0)),
 						]
 					);
 
@@ -847,7 +848,8 @@ macro_rules! decl_tests {
 					assert_eq!(
 						events(),
 						[
-							Event::System(frame_system::Event::KilledAccount(1))
+							Event::System(frame_system::Event::KilledAccount(1)),
+							Event::Ring(crate::Event::Slashed(1, 100))
 						]
 					);
 				});
