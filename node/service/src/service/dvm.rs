@@ -34,6 +34,7 @@ where
 	pub rpc_config: drml_rpc::EthRpcConfig,
 	pub fee_history_cache: fc_rpc_core::types::FeeHistoryCache,
 	pub overrides: Arc<fc_rpc::OverrideHandle<B>>,
+	pub sync_from: <B::Header as sp_runtime::traits::Header>::Number,
 }
 impl<'a, B, C, BE> DvmTaskParams<'a, B, C, BE>
 where
@@ -86,6 +87,7 @@ where
 				},
 			fee_history_cache,
 			overrides,
+			sync_from,
 		} = self;
 
 		if is_archive {
@@ -114,8 +116,7 @@ where
 					substrate_backend.clone(),
 					dvm_backend.clone(),
 					3,
-					// sync-from, this value varies depending on the runtime.
-					0,
+					sync_from,
 					SyncStrategy::Normal,
 				)
 				.for_each(|_| futures::future::ready(())),

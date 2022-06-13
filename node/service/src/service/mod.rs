@@ -99,6 +99,8 @@ fn new_full<RuntimeApi, Executor>(
 	mut config: sc_service::Configuration,
 	authority_discovery_disabled: bool,
 	eth_rpc_config: drml_rpc::EthRpcConfig,
+	// TODO: move it to eth_rpc_config?, change the type?
+	sync_from: u32,
 ) -> ServiceResult<(
 	sc_service::TaskManager,
 	Arc<FullClient<RuntimeApi, Executor>>,
@@ -221,6 +223,7 @@ where
 		rpc_config: eth_rpc_config.clone(),
 		fee_history_cache: fee_history_cache.clone(),
 		overrides: overrides.clone(),
+		sync_from,
 	}
 	.spawn_task();
 	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());

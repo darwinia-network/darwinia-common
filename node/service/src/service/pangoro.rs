@@ -57,6 +57,7 @@ pub fn new_full(
 		config,
 		authority_discovery_disabled,
 		eth_rpc_config,
+		0,
 	)?;
 
 	Ok((components, client, rpc_handlers))
