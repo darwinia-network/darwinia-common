@@ -870,8 +870,7 @@ sp_api::impl_runtime_apis! {
 			list_benchmark!(list, extra, from_substrate_issuing, Substrate2SubstrateIssuing);
 			list_benchmark!(list, extra, from_ethereum_issuing, EthereumIssuing);
 			list_benchmark!(list, extra, to_parachain_backing, ToPangolinParachainBacking);
-			// FIXME: https://github.com/darwinia-network/darwinia-common/issues/1223
-			// list_benchmark!(list, extra, pallet_fee_market, PangoroFeeMarket);
+			list_benchmark!(list, extra, pallet_fee_market, PangoroFeeMarket);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -895,8 +894,7 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
 			add_benchmark!(params, batches, from_ethereum_issuing, EthereumIssuing);
 			add_benchmark!(params, batches, to_parachain_backing, ToPangolinParachainBacking);
-			// FIXME: https://github.com/darwinia-network/darwinia-common/issues/1223
-			// add_benchmark!(params, batches, pallet_fee_market, PangoroFeeMarket);
+			add_benchmark!(params, batches, pallet_fee_market, PangoroFeeMarket);
 
 			Ok(batches)
 		}
