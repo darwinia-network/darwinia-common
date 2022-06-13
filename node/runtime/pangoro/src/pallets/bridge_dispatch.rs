@@ -11,7 +11,6 @@ use darwinia_support::evm::DeriveEthereumAddress;
 use pallet_bridge_dispatch::Config;
 
 pub struct CallFilter;
-
 impl CallFilterT<Origin, Call> for CallFilter {
 	fn contains(origin: &Origin, call: &Call) -> bool {
 		match call {
@@ -32,8 +31,6 @@ impl CallFilterT<Origin, Call> for CallFilter {
 }
 
 pub struct IntoDispatchOrigin;
-
-// TODO: check the account_id type
 impl IntoDispatchOriginT<bp_pangoro::AccountId, Call, Origin> for IntoDispatchOrigin {
 	fn into_dispatch_origin(id: &bp_pangoro::AccountId, call: &Call) -> Origin {
 		match call {

@@ -23,15 +23,20 @@ use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{
+	traits::OriginTrait,
 	weights::{DispatchClass, Weight},
 	RuntimeDebug,
 };
 use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
-use sp_std::{convert::TryFrom, marker::PhantomData, ops::RangeInclusive};
+use sp_std::{convert::TryFrom, ops::RangeInclusive};
 // --- darwinia-network ---
 use crate::*;
-use bp_message_dispatch::CallOrigin;
-use bp_messages::{source_chain::*, target_chain::*, *};
+use bp_message_dispatch::{CallOrigin, MessageDispatch as _};
+use bp_messages::{
+	source_chain::*,
+	target_chain::{MessageDispatch, *},
+	*,
+};
 use bp_runtime::{messages::*, ChainId, *};
 use bridge_runtime_common::{
 	lanes::*,
@@ -42,6 +47,9 @@ use bridge_runtime_common::{
 		BalanceOf, *,
 	},
 };
+use darwinia_ethereum::{RawOrigin, Transaction};
+use darwinia_evm::AccountBasic;
+use darwinia_support::evm::DeriveSubstrateAddress;
 use dp_s2s::{CallParams, CreatePayload};
 use drml_common_runtime::impls::FromThisChainMessageVerifier;
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
@@ -62,14 +70,6 @@ pub type ToPangolinMessageVerifier =
 
 /// Encoded Pangoro Call as it comes from Pangolin.
 pub type FromPangolinEncodedCall = FromBridgedChainEncodedMessageCall<Call>;
-
-/// Call-dispatch based message dispatch for Pangolin -> Pangoro messages.
-// pub type FromPangolinMessageDispatch = DarwiniaFromBridgedChainMessageDispatch<
-// 	WithPangolinMessageBridge,
-// 	Runtime,
-// 	Ring,
-// 	WithPangolinDispatch,
-// >;
 
 /// The s2s issuing pallet index in the pangolin chain runtime
 pub const PANGOLIN_S2S_ISSUING_PALLET_INDEX: u8 = 49;
@@ -308,37 +308,21 @@ impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for Pangolin {
 	}
 }
 
-// Dispatching Bridged -> This chain messages.
-use bridge_runtime_common::messages::AccountIdOf;
-use frame_support::{
-	traits::{Currency, ExistenceRequirement},
-	weights::WeightToFeePolynomial,
-};
-use sp_runtime::{traits::Saturating, FixedPointOperand};
-// use bp_message_dispatch::MessageDispatch;
-use bp_message_dispatch::MessageDispatch as _;
-use bp_messages::target_chain::MessageDispatch;
-use darwinia_ethereum::{RawOrigin, Transaction};
-use darwinia_evm::AccountBasic;
-use darwinia_support::evm::DeriveSubstrateAddress;
-use frame_support::traits::OriginTrait;
-use sp_runtime::MultiAddress;
-
+/// Call-dispatch Pangolin -> Pangoro messages.
 #[derive(RuntimeDebug, Clone, Copy)]
 pub struct FromPangolinMessageDispatch;
-
-impl MessageDispatch<bp_pangoro::AccountId, BalanceOf<Pangolin>> for FromPangolinMessageDispatch {
+impl MessageDispatch<bp_pangoro::AccountId, BalanceOf<Pangoro>> for FromPangolinMessageDispatch {
 	type DispatchPayload = FromPangolinMessagePayload;
 
 	fn dispatch_weight(
-		message: &DispatchMessage<Self::DispatchPayload, BalanceOf<Pangolin>>,
+		message: &DispatchMessage<Self::DispatchPayload, BalanceOf<Pangoro>>,
 	) -> frame_support::weights::Weight {
 		message.data.payload.as_ref().map(|payload| payload.weight).unwrap_or(0)
 	}
 
 	fn dispatch(
 		relayer_account: &bp_pangoro::AccountId,
-		message: DispatchMessage<Self::DispatchPayload, BalanceOf<Pangolin>>,
+		message: DispatchMessage<Self::DispatchPayload, BalanceOf<Pangoro>>,
 	) -> MessageDispatchResult {
 		let message_id = (message.key.lane_id, message.key.nonce);
 		pallet_bridge_dispatch::Pallet::<Runtime, WithPangolinDispatch>::dispatch(
@@ -360,7 +344,7 @@ impl MessageDispatch<bp_pangoro::AccountId, BalanceOf<Pangolin>> for FromPangoli
 								let derived_substrate_address = <Runtime as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
 								if <Runtime as darwinia_evm::Config>::RingAccountBasic::account_balance(relayer_account) >= total_payment {
 										// Ensure the derived ethereum address has enough balance to pay for the transaction
-										<Runtime as darwinia_evm::Config>::RingAccountBasic::transfer(
+										let _ = <Runtime as darwinia_evm::Config>::RingAccountBasic::transfer(
 											&relayer_account,
 											&derived_substrate_address,
 											total_payment
