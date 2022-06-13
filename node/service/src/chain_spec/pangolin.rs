@@ -28,7 +28,6 @@ use sp_runtime::Perbill;
 // --- darwinia-network ---
 use super::*;
 use darwinia_bridge_ethereum::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
-use darwinia_claims::ClaimsList;
 use darwinia_evm::GenesisAccount;
 use drml_primitives::*;
 use pangolin_runtime::*;
@@ -122,7 +121,6 @@ pub fn genesis_config() -> ChainSpec {
 				authorities: vec![],
 				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG)
 			},
-			beefy_gadget: Default::default(),
 			balances: BalancesConfig {
 				balances: vec![
 					(root.clone(), BUNCH_OF_COINS),
@@ -207,6 +205,7 @@ pub fn genesis_config() -> ChainSpec {
 			},
 			grandpa: Default::default(),
 			beefy: Default::default(),
+			// beefy_gadget: Default::default(),
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			democracy: Default::default(),
@@ -225,7 +224,6 @@ pub fn genesis_config() -> ChainSpec {
 			},
 			treasury: Default::default(),
 			kton_treasury: Default::default(),
-			claims: Default::default(),
 			vesting: Default::default(),
 			sudo: SudoConfig { key: root.clone() },
 			ethereum_relay: EthereumRelayConfig {
@@ -364,7 +362,6 @@ pub fn development_config() -> ChainSpec {
 				authorities: vec![],
 				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG)
 			},
-			beefy_gadget: Default::default(),
 			balances: BalancesConfig {
 				balances: endowed_accounts
 					.clone()
@@ -402,6 +399,7 @@ pub fn development_config() -> ChainSpec {
 			},
 			grandpa: Default::default(),
 			beefy: Default::default(),
+			// beefy_gadget: Default::default(),
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			democracy: Default::default(),
@@ -420,12 +418,6 @@ pub fn development_config() -> ChainSpec {
 			},
 			treasury: Default::default(),
 			kton_treasury: Default::default(),
-			claims: ClaimsConfig {
-				claims_list: ClaimsList::from_file(
-					"bin/res/claims-list.json",
-					"CLAIMS_LIST_PATH",
-				),
-			},
 			vesting: Default::default(),
 			sudo: SudoConfig { key: root.clone() },
 			ethereum_relay: EthereumRelayConfig {
@@ -562,7 +554,6 @@ pub fn local_testnet_config() -> ChainSpec {
 				authorities: vec![],
 				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG)
 			},
-			beefy_gadget: Default::default(),
 			balances: BalancesConfig {
 				balances: endowed_accounts
 					.clone()
@@ -600,6 +591,7 @@ pub fn local_testnet_config() -> ChainSpec {
 			},
 			grandpa: Default::default(),
 			beefy: Default::default(),
+			// beefy_gadget: Default::default(),
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			democracy: Default::default(),
@@ -618,12 +610,6 @@ pub fn local_testnet_config() -> ChainSpec {
 			},
 			treasury: Default::default(),
 			kton_treasury: Default::default(),
-			claims: ClaimsConfig {
-				claims_list: ClaimsList::from_file(
-					"bin/res/claims-list.json",
-					"CLAIMS_LIST_PATH",
-				),
-			},
 			vesting: Default::default(),
 			sudo: SudoConfig { key: root.clone() },
 			ethereum_relay: EthereumRelayConfig {

@@ -39,7 +39,7 @@ impl<'a, B, C, BE> DvmTaskParams<'a, B, C, BE>
 where
 	B: sp_runtime::traits::Block,
 {
-	pub fn spawn_task(self) -> drml_rpc::EthRpcRequesters
+	pub fn spawn_task(self, network: &str) -> drml_rpc::EthRpcRequesters
 	where
 		C: 'static
 			+ sp_api::ProvideRuntimeApi<B>
@@ -113,6 +113,9 @@ where
 					client.clone(),
 					substrate_backend.clone(),
 					dvm_backend.clone(),
+					3,
+					// TODO: improve this later
+					if network == "Pangoro" { 729781 } else { 0 },
 					SyncStrategy::Normal,
 				)
 				.for_each(|_| futures::future::ready(())),

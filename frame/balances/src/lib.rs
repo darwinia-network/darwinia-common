@@ -251,6 +251,7 @@ pub mod pallet {
 					Ok(())
 				})?;
 				<TotalIssuance<T, I>>::mutate(|t| *t += amount);
+				Self::deposit_event(Event::Deposit(who.clone(), amount));
 				Ok(())
 			}
 
@@ -272,6 +273,7 @@ pub mod pallet {
 					},
 				)?;
 				<TotalIssuance<T, I>>::mutate(|t| *t -= actual);
+				Self::deposit_event(Event::Withdraw(who.clone(), amount));
 				Ok(actual)
 			}
 		}
@@ -339,7 +341,14 @@ pub mod pallet {
 
 		impl<T: Config<I>, I: 'static> Unbalanced<T::AccountId> for Pallet<T, I> {
 			fn set_balance(who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
-				Self::mutate_account(who, |account| account.set_free(amount))?;
+				Self::mutate_account(who, |account| {
+					account.set_free(amount);
+					Self::deposit_event(Event::BalanceSet(
+						who.clone(),
+						account.free(),
+						account.reserved(),
+					));
+				})?;
 				Ok(())
 			}
 
@@ -629,8 +638,6 @@ pub mod pallet {
 		Transfer(T::AccountId, T::AccountId, T::Balance),
 		/// A balance was set by root. \[who, free, reserved\]
 		BalanceSet(T::AccountId, T::Balance, T::Balance),
-		/// Some amount was deposited (e.g. for transaction fees). \[who, deposit\]
-		Deposit(T::AccountId, T::Balance),
 		/// Some balance was reserved (moved from free to reserved). \[who, value\]
 		Reserved(T::AccountId, T::Balance),
 		/// Some balance was unreserved (moved from reserved to free). \[who, value\]
@@ -639,6 +646,14 @@ pub mod pallet {
 		/// Final argument indicates the destination balance type.
 		/// \[from, to, balance, destination_status\]
 		ReserveRepatriated(T::AccountId, T::AccountId, T::Balance, BalanceStatus),
+		/// Some amount was deposited into the account (e.g. for transaction fees). \[who,
+		/// deposit\]
+		Deposit(T::AccountId, T::Balance),
+		/// Some amount was withdrawn from the account (e.g. for transaction fees). \[who, value\]
+		Withdraw(T::AccountId, T::Balance),
+		/// Some amount was removed from the account (e.g. for misbehavior). \[who,
+		/// amount_slashed\]
+		Slashed(T::AccountId, T::Balance),
 	}
 
 	#[pallet::error]
@@ -1532,7 +1547,13 @@ pub mod pallet {
 						}
 					},
 				) {
-					Ok(r) => return r,
+					Ok((imbalance, not_slashed)) => {
+						Self::deposit_event(Event::Slashed(
+							who.clone(),
+							value.saturating_sub(not_slashed),
+						));
+						return (imbalance, not_slashed);
+					},
 					Err(_) => (),
 				}
 			}
@@ -1562,6 +1583,7 @@ pub mod pallet {
 					account.set_free(
 						account.free().checked_add(&value).ok_or(ArithmeticError::Overflow)?,
 					);
+					Self::deposit_event(Event::Deposit(who.clone(), value));
 					Ok(PositiveImbalance::new(value))
 				},
 			)
@@ -1597,6 +1619,7 @@ pub mod pallet {
 						None => return Ok(Self::PositiveImbalance::zero()),
 					});
 
+					Self::deposit_event(Event::Deposit(who.clone(), value));
 					Ok(PositiveImbalance::new(value))
 				},
 			)
@@ -1644,6 +1667,7 @@ pub mod pallet {
 
 					account.set_free(new_free_account);
 
+					Self::deposit_event(Event::Withdraw(who.clone(), value));
 					Ok(NegativeImbalance::new(value))
 				},
 			)
@@ -1682,6 +1706,11 @@ pub mod pallet {
 						SignedImbalance::Negative(NegativeImbalance::new(account.free() - value))
 					};
 					account.set_free(value);
+					Self::deposit_event(Event::BalanceSet(
+						who.clone(),
+						account.free(),
+						account.reserved(),
+					));
 					Ok(imbalance)
 				},
 			)
@@ -1742,7 +1771,13 @@ pub mod pallet {
 					// here.
 					(NegativeImbalance::new(actual), value - actual)
 				}) {
-					Ok(r) => return r,
+					Ok((imbalance, not_slashed)) => {
+						Self::deposit_event(Event::Slashed(
+							who.clone(),
+							value.saturating_sub(not_slashed),
+						));
+						return (imbalance, not_slashed);
+					},
 					Err(_) => (),
 				}
 			}
@@ -2029,6 +2064,7 @@ pub mod pallet {
 						// `actual <= to_change` and `to_change <= amount`; qed;
 						reserves[index].amount -= actual;
 
+						Self::deposit_event(Event::Slashed(who.clone(), actual));
 						(imb, value - actual)
 					},
 					Err(_) => (NegativeImbalance::zero(), value),

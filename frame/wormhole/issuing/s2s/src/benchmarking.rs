@@ -20,7 +20,6 @@
 
 // --- crates.io ---
 use array_bytes::{hex2bytes_unchecked, hex_into_unchecked};
-use rustc_hex::FromHex;
 // darwinia-network
 use super::*;
 use crate::Pallet as S2sIssuing;
@@ -40,7 +39,7 @@ pub const MAPPING_TOKEN_LOGIC_CONTRACT_BYTECODE: &str =
 	include_str!("./res/mapping_erc20_bytecode.txt");
 
 fn deploy_mapping_token_factory<T: Config>() -> H160 {
-	let contract_bytecode = FromHex::from_hex(MAPPING_TOKEN_FACTORY_CONTRACT_BYTECODE).unwrap();
+	let contract_bytecode = hex2bytes_unchecked(MAPPING_TOKEN_FACTORY_CONTRACT_BYTECODE.trim_end());
 	let creator = H160::default();
 
 	let nonce: U256 = U256::zero();
@@ -63,7 +62,7 @@ fn deploy_mapping_token_factory<T: Config>() -> H160 {
 }
 
 fn deploy_mapping_token_logic<T: Config>() -> H160 {
-	let contract_bytecode = FromHex::from_hex(MAPPING_TOKEN_LOGIC_CONTRACT_BYTECODE).unwrap();
+	let contract_bytecode = hex2bytes_unchecked(MAPPING_TOKEN_LOGIC_CONTRACT_BYTECODE.trim_end());
 	let creator = H160::default();
 
 	let nonce: U256 = U256::one();

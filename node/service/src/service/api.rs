@@ -25,7 +25,7 @@ impl_runtime_apis![
 	sp_session::SessionKeys<Block>,
 	sp_consensus_babe::BabeApi<Block>,
 	sp_finality_grandpa::GrandpaApi<Block>,
-	beefy_primitives::BeefyApi<Block>,
+	// beefy_primitives::BeefyApi<Block>,
 	sp_authority_discovery::AuthorityDiscoveryApi<Block>,
 	sp_offchain::OffchainWorkerApi<Block>,
 	sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>,

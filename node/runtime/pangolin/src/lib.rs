@@ -167,9 +167,9 @@ frame_support::construct_runtime! {
 		Session: pallet_session::{Pallet, Call, Storage, Config<T>, Event} = 12,
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 13,
 		Beefy: pallet_beefy::{Pallet, Storage, Config<T>} = 55,
-		BeefyGadget: darwinia_beefy_gadget::{Pallet, Call, Storage, Config} = 58,
-		Mmr: pallet_mmr::{Pallet, Storage} = 56,
-		MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 57,
+		// BeefyGadget: darwinia_beefy_gadget::{Pallet, Call, Storage, Config} = 58,
+		// Mmr: pallet_mmr::{Pallet, Storage} = 56,
+		// MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 57,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
 		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Config} = 15,
 		HeaderMMR: darwinia_header_mmr::{Pallet, Storage} = 16,
@@ -186,9 +186,6 @@ frame_support::construct_runtime! {
 		Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>} = 52,
 
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 23,
-
-		// Claims. Usable initially.
-		Claims: darwinia_claims::{Pallet, Call, Storage, Config, Event<T>, ValidateUnsigned} = 24,
 
 		// Vesting. Usable initially, but removed once all vesting is finished.
 		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 25,
@@ -448,11 +445,11 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl beefy_primitives::BeefyApi<Block> for Runtime {
-		fn validator_set() -> beefy_primitives::ValidatorSet<BeefyId> {
-			Beefy::validator_set()
-		}
-	}
+	// impl beefy_primitives::BeefyApi<Block> for Runtime {
+	// 	fn validator_set() -> beefy_primitives::ValidatorSet<BeefyId> {
+	// 		Beefy::validator_set()
+	// 	}
+	// }
 
 	impl sp_authority_discovery::AuthorityDiscoveryApi<Block> for Runtime {
 		fn authorities() -> Vec<AuthorityDiscoveryId> {
@@ -870,8 +867,7 @@ sp_api::impl_runtime_apis! {
 			list_benchmark!(list, extra, from_substrate_issuing, Substrate2SubstrateIssuing);
 			list_benchmark!(list, extra, from_ethereum_issuing, EthereumIssuing);
 			list_benchmark!(list, extra, to_parachain_backing, ToPangolinParachainBacking);
-			// FIXME: https://github.com/darwinia-network/darwinia-common/issues/1223
-			// list_benchmark!(list, extra, pallet_fee_market, PangoroFeeMarket);
+			list_benchmark!(list, extra, pallet_fee_market, PangoroFeeMarket);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -895,10 +891,7 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
 			add_benchmark!(params, batches, from_ethereum_issuing, EthereumIssuing);
 			add_benchmark!(params, batches, to_parachain_backing, ToPangolinParachainBacking);
-			// FIXME: https://github.com/darwinia-network/darwinia-common/issues/1223
-			// add_benchmark!(params, batches, pallet_fee_market, PangoroFeeMarket);
-
-			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
+			add_benchmark!(params, batches, pallet_fee_market, PangoroFeeMarket);
 
 			Ok(batches)
 		}

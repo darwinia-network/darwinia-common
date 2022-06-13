@@ -6,17 +6,17 @@ version = "2.8.11"
 
 [dependencies]
 codec         = { package = "parity-scale-codec", version = "2.3", default-features = false }
-frame-support = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.2" }
-frame-system  = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.2" }
+frame-support = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.3" }
+frame-system  = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.3" }
 scale-info    = { version = "1.0", default-features = false, features = ["derive"] }
-sp-runtime    = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.2" }
-sp-std        = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.2" }
+sp-runtime    = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.3" }
+sp-std        = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.3" }
 
 [dev-dependencies]
 darwinia-balances = { path = "../balances" }
 darwinia-support  = { path = "../support" }
-sp-core           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-sp-io             = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+sp-core           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-io             = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 
 [features]
 default = ["std"]

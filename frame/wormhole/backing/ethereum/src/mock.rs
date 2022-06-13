@@ -97,23 +97,17 @@ pub struct TestSessionHandler;
 impl pallet_session::SessionHandler<AccountId> for TestSessionHandler {
 	const KEY_TYPE_IDS: &'static [KeyTypeId] = &[key_types::DUMMY];
 
-	fn on_genesis_session<Ks: OpaqueKeys>(_validators: &[(AccountId, Ks)]) {}
+	fn on_genesis_session<Ks: OpaqueKeys>(_: &[(AccountId, Ks)]) {}
 
-	fn on_new_session<Ks: OpaqueKeys>(
-		_changed: bool,
-		_validators: &[(AccountId, Ks)],
-		_queued_validators: &[(AccountId, Ks)],
-	) {
-	}
+	fn on_new_session<Ks: OpaqueKeys>(_: bool, _: &[(AccountId, Ks)], _: &[(AccountId, Ks)]) {}
 
-	fn on_disabled(_validator_index: usize) {}
+	fn on_disabled(_: u32) {}
 }
 frame_support::parameter_types! {
 	pub const Period: BlockNumber = 1;
 	pub const Offset: BlockNumber = 0;
 }
 impl pallet_session::Config for Test {
-	type DisabledValidatorsThreshold = ();
 	type Event = ();
 	type Keys = UintAuthorityId;
 	type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
@@ -177,6 +171,7 @@ impl darwinia_staking::Config for Test {
 	type KtonSlash = ();
 	type MaxNominatorRewardedPerValidator = ();
 	type NextNewSession = Session;
+	type OffendingValidatorsThreshold = ();
 	type PalletId = StakingPalletId;
 	type RingCurrency = Ring;
 	type RingReward = ();

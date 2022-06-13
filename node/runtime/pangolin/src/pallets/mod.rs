@@ -37,14 +37,14 @@ pub use grandpa::*;
 pub mod beefy;
 pub use beefy::*;
 
-pub mod beefy_gadget;
-pub use beefy_gadget::*;
+// pub mod beefy_gadget;
+// pub use beefy_gadget::*;
 
-pub mod mmr;
-pub use mmr::*;
+// pub mod mmr;
+// pub use mmr::*;
 
-pub mod beefy_mmr;
-pub use beefy_mmr::*;
+// pub mod beefy_mmr;
+// pub use beefy_mmr::*;
 
 pub mod im_online;
 pub use im_online::*;
@@ -78,9 +78,6 @@ pub use bounties::*;
 
 pub mod sudo;
 pub use sudo::*;
-
-pub mod claims;
-pub use claims::*;
 
 pub mod vesting;
 pub use vesting::*;
