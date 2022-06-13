@@ -16,7 +16,6 @@ members = [
 	"frame/bridge/ethereum",
 	"frame/bridge/relayer-game",
 	"frame/bridge/relay-authorities",
-	"frame/claims",
 	"frame/dvm/ethereum",
 	"frame/dvm/evm",
 	"frame/dvm/evm/precompiles/bls12381",

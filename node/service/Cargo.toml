@@ -22,7 +22,6 @@ tokio       = { version = "1.15" }
 # darwinia-network
 darwinia-balances-rpc-runtime-api = { path = "../../frame/balances/rpc/runtime-api" }
 darwinia-bridge-ethereum          = { path = "../../frame/bridge/ethereum" }
-darwinia-claims                   = { path = "../../frame/claims" }
 darwinia-ethereum                 = { path = "../../frame/dvm/ethereum" }
 darwinia-evm                      = { path = "../../frame/dvm/evm" }
 darwinia-staking-rpc-runtime-api  = { path = "../../frame/staking/rpc/runtime-api" }
