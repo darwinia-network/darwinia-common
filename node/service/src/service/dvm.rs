@@ -115,7 +115,7 @@ where
 					dvm_backend.clone(),
 					3,
 					// TODO: improve this later
-					if network == "Pangoro" { 100 } else { 0 },
+					if network == "Pangoro" { 729781 } else { 0 },
 					SyncStrategy::Normal,
 				)
 				.for_each(|_| futures::future::ready(())),
