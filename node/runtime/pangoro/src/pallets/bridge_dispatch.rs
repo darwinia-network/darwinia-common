@@ -19,7 +19,7 @@ impl CallFilterT<Origin, Call> for CallFilter {
 				match origin.caller() {
 					OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => match tx {
 						Transaction::Legacy(_) =>
-							Ethereum::validate_transaction_in_block(*id, tx).is_err(),
+							Ethereum::validate_transaction_in_block(*id, tx).is_ok(),
 						_ => false,
 					},
 					_ => false,
