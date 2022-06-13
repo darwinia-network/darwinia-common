@@ -79,9 +79,6 @@ pub use bounties::*;
 pub mod sudo;
 pub use sudo::*;
 
-pub mod claims;
-pub use claims::*;
-
 pub mod vesting;
 pub use vesting::*;
 

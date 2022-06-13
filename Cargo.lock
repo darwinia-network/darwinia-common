@@ -1546,27 +1546,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-claims"
-version = "2.8.12"
-dependencies = [
- "array-bytes",
- "darwinia-balances",
- "darwinia-support",
- "frame-support",
- "frame-system",
- "libsecp256k1 0.3.5",
- "log",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-ethereum"
 version = "2.8.12"
 dependencies = [
@@ -2263,7 +2242,6 @@ dependencies = [
  "beefy-primitives",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-bridge-ethereum",
- "darwinia-claims",
  "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-staking-rpc-runtime-api",
@@ -6316,7 +6294,6 @@ dependencies = [
  "darwinia-balances",
  "darwinia-balances-rpc-runtime-api",
  "darwinia-bridge-ethereum",
- "darwinia-claims",
  "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-evm-precompile-bridge-ethereum",

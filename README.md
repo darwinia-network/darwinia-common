@@ -12,8 +12,6 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 	- Pallet that manages the relayer authorities.
 - [darwinia-relayer-game](./frame/bridge/relayer-game)
 	- Implementation of the Darwinia-Relayer-Game protocol.
-- [darwinia-claims](./frame/claims)
-	- Pallet for airdrop.
 - [darwinia-ethereum](./frame/dvm/ethereum/)
 	- Ethereum block handling pallet of the EVM-compatible DVM system.
 - [darwinia-evm](./frame/dvm/evm)
