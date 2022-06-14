@@ -123,7 +123,7 @@ fn test_dispatch_ethereum_transact_works() {
                                                 total_payment
                                             );
                                             return Ok(());
-                                        }
+                                    } 
                                     Err(())
                                 },
                                 // Invalid Ethereum transaction type
