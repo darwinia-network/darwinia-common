@@ -54,8 +54,12 @@ members = [
 
 [patch."https://github.com/darwinia-network/darwinia-messages-substrate"]
 pallet-bridge-dispatch = { path = "../darwinia-messages-substrate/modules/dispatch" }
+pallet-bridge-grandpa = { path = "../darwinia-messages-substrate/modules/grandpa" }
+pallet-bridge-messages = { path = "../darwinia-messages-substrate/modules/messages" }
 bp-message-dispatch =  { path = "../darwinia-messages-substrate/primitives/message-dispatch" }
 bp-runtime =  { path = "../darwinia-messages-substrate/primitives/runtime" }
+bp-messages =  { path = "../darwinia-messages-substrate/primitives/messages" }
+bridge-runtime-common = { path = "../darwinia-messages-substrate/bin/runtime-common" }
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates
 # that are suspected to be CPU-intensive, and that are unlikely to require debugging (as some of

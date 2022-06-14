@@ -4,15 +4,15 @@ pub use pallet_bridge_dispatch::Instance1 as WithPangolinDispatch;
 use frame_support::traits::OriginTrait;
 // --- darwinia-network ---
 use crate::*;
-use bp_message_dispatch::{CallFilter as CallFilterT, IntoDispatchOrigin as IntoDispatchOriginT};
+use bp_message_dispatch::{IntoDispatchOrigin as IntoDispatchOriginT, MessageValidate};
 use bp_messages::{LaneId, MessageNonce};
 use darwinia_ethereum::{RawOrigin, Transaction};
 use darwinia_support::evm::DeriveEthereumAddress;
 use pallet_bridge_dispatch::Config;
 
-pub struct CallFilter;
-impl CallFilterT<Origin, Call> for CallFilter {
-	fn contains(origin: &Origin, call: &Call) -> bool {
+pub struct MessageValidator;
+impl MessageValidate<Origin, Call> for MessageValidator {
+	fn pre_dispatch(origin: &Origin, call: &Call) -> bool {
 		match call {
 			// Note: Only supprt Ethereum::transact(LegacyTransaction)
 			Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) => {
@@ -47,7 +47,7 @@ impl Config<WithPangolinDispatch> for Runtime {
 	type AccountIdConverter = bp_pangoro::AccountIdConverter;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
-	type CallFilter = CallFilter;
+	type CallFilter = MessageValidator;
 	type EncodedCall = bm_pangolin::FromPangolinEncodedCall;
 	type Event = Event;
 	type IntoDispatchOrigin = IntoDispatchOrigin;
