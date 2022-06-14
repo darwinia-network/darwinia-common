@@ -43,7 +43,7 @@ use sp_runtime::{
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::{self as darwinia_ethereum, account_basic::*, *};
-use bp_message_dispatch::{CallFilter as CallFilterT, IntoDispatchOrigin as IntoDispatchOriginT};
+use bp_message_dispatch::{IntoDispatchOrigin as IntoDispatchOriginT, MessageValidate};
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
 use darwinia_support::evm::DeriveSubstrateAddress;
 
@@ -264,22 +264,43 @@ impl From<EncodedCall> for Result<Call, ()> {
 	}
 }
 
-pub struct CallFilter;
-impl CallFilterT<Origin, Call> for CallFilter {
-	fn contains(origin: &Origin, call: &Call) -> bool {
+pub struct MessageValidator;
+impl MessageValidate<AccountId32, Origin, Call> for MessageValidator {
+	fn pre_dispatch(
+		relayer_account: &AccountId32,
+		origin: &Origin,
+		call: &Call,
+	) -> Result<(), TransactionValidityError> {
 		match call {
 			// Note: Only supprt Ethereum::transact(LegacyTransaction)
-			Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) => {
+			Call::Ethereum(crate::Call::transact { transaction: tx }) => {
 				match origin.caller() {
 					OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => match tx {
-						Transaction::Legacy(_) =>
-							Ethereum::validate_transaction_in_block(*id, tx).is_ok(),
-						_ => false,
+						Transaction::Legacy(t) => {
+							let fee = t.gas_limit.saturating_mul(t.gas_limit);
+							let total_payment = fee.saturating_add(t.value);
+
+							let derived_substrate_address = <Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
+							if <Test as darwinia_evm::Config>::RingAccountBasic::account_balance(
+								relayer_account,
+							) >= total_payment
+							{
+								// Ensure the derived ethereum address has enough balance to pay for
+								// the transaction
+								let _ = <Test as darwinia_evm::Config>::RingAccountBasic::transfer(
+									&relayer_account,
+									&derived_substrate_address,
+									total_payment,
+								);
+							}
+							Ethereum::validate_transaction_in_block(*id, tx)
+						},
+						_ => Err(TransactionValidityError::Invalid(InvalidTransaction::BadProof)),
 					},
-					_ => false,
+					_ => Err(TransactionValidityError::Invalid(InvalidTransaction::BadProof)),
 				}
 			},
-			_ => true,
+			_ => Ok(()),
 		}
 	}
 }
@@ -323,10 +344,10 @@ impl pallet_bridge_dispatch::Config for Test {
 	type AccountIdConverter = AccountIdConverter;
 	type BridgeMessageId = BridgeMessageId;
 	type Call = Call;
-	type CallFilter = CallFilter;
 	type EncodedCall = EncodedCall;
 	type Event = Event;
 	type IntoDispatchOrigin = IntoDispatchOrigin;
+	type MessageValidator = MessageValidator;
 	type SourceChainAccountId = AccountId32;
 	type TargetChainAccountPublic = TestAccountPublic;
 	type TargetChainSignature = TestSignature;

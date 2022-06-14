@@ -36,15 +36,14 @@ fn prepare_message(
 	origin: CallOrigin<AccountId32, TestAccountPublic, TestSignature>,
 	call: Call,
 ) -> <pallet_bridge_dispatch::Pallet<Test> as MessageDispatch<
-	<Test as frame_system::Config>::Origin,
+	AccountId32,
 	<Test as pallet_bridge_dispatch::Config>::BridgeMessageId,
-	<Test as pallet_bridge_dispatch::Config>::Call,
 >>::Message {
 	MessagePayload {
 		spec_version: TEST_SPEC_VERSION,
 		weight: TEST_WEIGHT,
 		origin,
-		dispatch_fee_payment: DispatchFeePayment::AtTargetChain,
+		dispatch_fee_payment: DispatchFeePayment::AtSourceChain,
 		call: EncodedCall(call.encode()),
 	}
 }
@@ -52,9 +51,8 @@ fn prepare_message(
 fn prepare_source_message(
 	call: Call,
 ) -> <pallet_bridge_dispatch::Pallet<Test> as MessageDispatch<
-	<Test as frame_system::Config>::Origin,
+	AccountId32,
 	<Test as pallet_bridge_dispatch::Config>::BridgeMessageId,
-	<Test as pallet_bridge_dispatch::Config>::Call,
 >>::Message {
 	let origin = CallOrigin::SourceAccount(AccountId32::new([1; 32]));
 	prepare_message(origin, call)
@@ -62,7 +60,8 @@ fn prepare_source_message(
 
 #[test]
 fn test_dispatch_basic_system_call_works() {
-	let (_, mut ext) = new_test_ext(1);
+	let (pairs, mut ext) = new_test_ext(1);
+	let relayer_account = &pairs[0];
 
 	ext.execute_with(|| {
 		let id = [0; 4];
@@ -71,8 +70,14 @@ fn test_dispatch_basic_system_call_works() {
 		message.dispatch_fee_payment = DispatchFeePayment::AtTargetChain;
 
 		System::set_block_number(1);
-		let result =
-			Dispatch::dispatch(SOURCE_CHAIN_ID, TARGET_CHAIN_ID, id, Ok(message), |_, _| Ok(()));
+		let result = Dispatch::dispatch(
+			SOURCE_CHAIN_ID,
+			TARGET_CHAIN_ID,
+			&relayer_account.account_id,
+			id,
+			Ok(message),
+			|_, _| Ok(()),
+		);
 		assert!(result.dispatch_fee_paid_during_dispatch);
 		assert!(result.dispatch_result);
 
@@ -90,92 +95,6 @@ fn test_dispatch_ethereum_transact_works() {
 
 	ext.execute_with(|| {
 		let id = [0; 4];
-		let t = legacy_erc20_creation_transaction(alice);
-		let call = TestRuntimeCall::Ethereum(EthereumTransactCall::transact { transaction: t });
-
-		let mut message = prepare_source_message(call);
-		message.dispatch_fee_payment = DispatchFeePayment::AtTargetChain;
-
-		// System::set_block_number(1);
-		// let result =
-		// 	Dispatch::dispatch(
-		//         SOURCE_CHAIN_ID,
-		//         TARGET_CHAIN_ID,
-		//         id,
-		//         Ok(message),
-		//         |origin, call| match call {
-		//             // Filter Ethereum transact call
-		//             Call::Ethereum(crate::Call::transact { transaction: tx }) =>
-		//                 match origin.caller() {
-		//                     OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => match
-		// tx {                         // Only support legacy transaction now
-		//                         Transaction::Legacy(t) => {
-		//                             println!("bear: --- enter callback");
-		//                             let fee = t.gas_limit.saturating_mul(t.gas_limit);
-		//                             let total_payment = fee.saturating_add(t.value);
-		//                             // Ensure the relayer has enough balance
-		//                             let derived_substrate_address = <Test as
-		// darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
-		// if <Test as
-		// darwinia_evm::Config>::RingAccountBasic::account_balance(&relayer_account.account_id) >=
-		// total_payment {                                     // Ensure the derived ethereum
-		// address has enough balance to pay for the transaction
-		// let _ = <Test as darwinia_evm::Config>::RingAccountBasic::transfer(
-		// &relayer_account.account_id,
-		// &derived_substrate_address,                                         total_payment
-		//                                     );
-		//                                     return Ok(());
-		//                             }
-		//                             Err(())
-		//                         },
-		//                         // Invalid Ethereum transaction type
-		//                         _ => Err(()),
-		//                     },
-		//                     // Invalid call dispatch origin, should return Err.
-		//                     _ => Err(()),
-		//                 },
-		//             // Do nothing for other calls.
-		//             _ => Ok(()),
-		//         },
-		//     );
-		// println!("bear: --- result {:?}", result);
-		// println!("bear: --- result {:?}", System::events());
-		// assert!(result.dispatch_result);
-		// System::assert_has_event(Event::Dispatch(
-		// 	pallet_bridge_dispatch::Event::MessageDispatched(SOURCE_CHAIN_ID, id, Ok(())),
-		// ));
-	});
-}
-
-#[test]
-fn test_dispatch_ethereum_transact_invalid_payment() {
-	let (pairs, mut ext) = new_test_ext(1);
-	let alice = &pairs[0];
-	ext.execute_with(|| {
-		let id = [0; 4];
-		let t = legacy_erc20_creation_transaction(alice);
-		let call = TestRuntimeCall::Ethereum(EthereumTransactCall::transact { transaction: t });
-
-		let mut message = prepare_source_message(call);
-		message.dispatch_fee_payment = DispatchFeePayment::AtTargetChain;
-
-		System::set_block_number(1);
-		let result =
-			Dispatch::dispatch(SOURCE_CHAIN_ID, TARGET_CHAIN_ID, id, Ok(message), |_, _| Ok(()));
-
-		assert!(!result.dispatch_result);
-		System::assert_has_event(Event::Dispatch(
-			pallet_bridge_dispatch::Event::MessageCallRejected(SOURCE_CHAIN_ID, id),
-		));
-	});
-}
-
-#[test]
-fn test_dispatch_ethereum_transact_invalid_nonce() {
-	let (pairs, mut ext) = new_test_ext(1);
-	let alice = &pairs[0];
-	ext.execute_with(|| {
-		let id = [0; 4];
 		let mut unsigned_tx = legacy_erc20_creation_unsigned_transaction();
 		unsigned_tx.nonce = U256::from(3);
 		let t = unsigned_tx.sign(&alice.private_key);
@@ -189,8 +108,14 @@ fn test_dispatch_ethereum_transact_invalid_nonce() {
 		RingAccount::mutate_account_basic_balance(&origin, decimal_convert(1000, None));
 
 		System::set_block_number(1);
-		let result =
-			Dispatch::dispatch(SOURCE_CHAIN_ID, TARGET_CHAIN_ID, id, Ok(message), |_, _| Ok(()));
+		let result = Dispatch::dispatch(
+			SOURCE_CHAIN_ID,
+			TARGET_CHAIN_ID,
+			&relayer_account.account_id,
+			id,
+			Ok(message),
+			|_, _| Ok(()),
+		);
 
 		assert!(!result.dispatch_result);
 		System::assert_has_event(Event::Dispatch(
