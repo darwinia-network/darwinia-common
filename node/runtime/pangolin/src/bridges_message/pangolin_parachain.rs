@@ -21,7 +21,6 @@ use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{
-	traits::OriginTrait,
 	weights::{DispatchClass, Weight},
 	RuntimeDebug,
 };
@@ -29,14 +28,9 @@ use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::ops::RangeInclusive;
 // --- darwinia-network ---
 use crate::*;
-use bp_message_dispatch::MessageDispatch as _;
-use bp_messages::{
-	source_chain::*,
-	target_chain::{MessageDispatch, *},
-	*,
-};
+use bp_messages::{source_chain::*, target_chain::*, *};
 use bp_rococo::parachains::ParaId;
-use bp_runtime::{messages::*, ChainId, *};
+use bp_runtime::{ChainId, *};
 use bridge_runtime_common::{
 	lanes::*,
 	messages::{
@@ -46,9 +40,6 @@ use bridge_runtime_common::{
 		BalanceOf, *,
 	},
 };
-use darwinia_ethereum::{RawOrigin, Transaction};
-use darwinia_evm::AccountBasic;
-use darwinia_support::evm::DeriveSubstrateAddress;
 use drml_common_runtime::impls::FromThisChainMessageVerifier;
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
 
