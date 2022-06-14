@@ -43,7 +43,7 @@ use sp_runtime::{
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::{self as darwinia_ethereum, account_basic::*, *};
-use bp_message_dispatch::{IntoDispatchOrigin as IntoDispatchOriginT, MessageValidate};
+use bp_message_dispatch::{IntoDispatchOrigin as IntoDispatchOriginT, CallValidate};
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
 use darwinia_support::evm::DeriveSubstrateAddress;
 
@@ -261,8 +261,8 @@ impl From<EncodedCall> for Result<Call, ()> {
 	}
 }
 
-pub struct MessageValidator;
-impl MessageValidate<AccountId32, Origin, Call> for MessageValidator {
+pub struct CallValidator;
+impl CallValidate<AccountId32, Origin, Call> for CallValidator {
 	fn pre_dispatch(
 		relayer_account: &AccountId32,
 		origin: &Origin,
@@ -344,7 +344,7 @@ impl pallet_bridge_dispatch::Config for Test {
 	type EncodedCall = EncodedCall;
 	type Event = Event;
 	type IntoDispatchOrigin = IntoDispatchOrigin;
-	type MessageValidator = MessageValidator;
+	type CallValidator = CallValidator;
 	type SourceChainAccountId = AccountId32;
 	type TargetChainAccountPublic = TestAccountPublic;
 	type TargetChainSignature = TestSignature;
