@@ -76,6 +76,14 @@ pub type ToPangolinParachainMessageVerifier = FromThisChainMessageVerifier<
 /// Encoded Pangolin Call as it comes from PangolinParachain
 pub type FromPangolinParachainEncodedCall = FromBridgedChainEncodedMessageCall<Call>;
 
+/// Call-dispatch based message dispatch for PangolinParachain -> Pangolin messages.
+pub type FromPangolinParachainMessageDispatch = FromBridgedChainMessageDispatch<
+	WithPangolinParachainMessageBridge,
+	Runtime,
+	Ring,
+	WithPangolinParachainDispatch,
+>;
+
 /// Identifier of PangolinParachain registered in the rococo relay chain.
 pub const PANGOLIN_PARACHAIN_ID: u32 = 2105;
 
@@ -271,65 +279,5 @@ impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for PangolinParacha
 			Runtime,
 			WithRococoParachainsInstance,
 		>(ParaId(PANGOLIN_PARACHAIN_ID), proof, messages_count)
-	}
-}
-
-/// Call-dispatch PangolinParachain -> Pangolin messages.
-#[derive(RuntimeDebug, Clone, Copy)]
-pub struct FromPangolinParachainMessageDispatch;
-impl MessageDispatch<bp_pangolin::AccountId, bp_pangolin::Balance>
-	for FromPangolinParachainMessageDispatch
-{
-	type DispatchPayload = FromPangolinParachainMessagePayload;
-
-	fn dispatch_weight(
-		message: &DispatchMessage<Self::DispatchPayload, bp_pangoro::Balance>,
-	) -> frame_support::weights::Weight {
-		message.data.payload.as_ref().map(|payload| payload.weight).unwrap_or(0)
-	}
-
-	fn dispatch(
-		relayer_account: &bp_pangoro::AccountId,
-		message: DispatchMessage<Self::DispatchPayload, bp_pangoro::Balance>,
-	) -> MessageDispatchResult {
-		let message_id = (message.key.lane_id, message.key.nonce);
-		pallet_bridge_dispatch::Pallet::<Runtime, WithPangolinParachainDispatch>::dispatch(
-			PANGOLIN_CHAIN_ID,
-			PANGORO_CHAIN_ID,
-			message_id,
-			message.data.payload.map_err(drop),
-			|origin, call| match call {
-				// Filter Ethereum transact call
-				Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) =>
-					match origin.caller() {
-						OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => match tx {
-							// Only support legacy transaction now
-							Transaction::Legacy(t) => {
-								let fee = t.gas_limit.saturating_mul(t.gas_limit);
-								let total_payment = fee.saturating_add(t.value);
-
-								// Ensure the relayer has enough balance
-								let derived_substrate_address = <Runtime as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
-								if <Runtime as darwinia_evm::Config>::RingAccountBasic::account_balance(relayer_account) >= total_payment {
-										// Ensure the derived ethereum address has enough balance to pay for the transaction
-										let _ = <Runtime as darwinia_evm::Config>::RingAccountBasic::transfer(
-											&relayer_account,
-											&derived_substrate_address,
-											total_payment
-										);
-										return Ok(());
-									}
-								Err(())
-							},
-							// Invalid Ethereum transaction type
-							_ => Err(()),
-						},
-						// Invalid call dispatch origin, should return Err.
-						_ => Err(()),
-					},
-				// Do nothing for other calls.
-				_ => Ok(()),
-			},
-		)
 	}
 }

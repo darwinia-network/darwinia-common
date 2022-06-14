@@ -6,28 +6,49 @@ pub use pallet_bridge_dispatch::{
 use frame_support::traits::OriginTrait;
 // --- darwinia-network ---
 use crate::*;
-use bp_message_dispatch::{CallFilter as CallFilterT, IntoDispatchOrigin as IntoDispatchOriginT};
+use bp_message_dispatch::{IntoDispatchOrigin as IntoDispatchOriginT, MessageValidate};
 use bp_messages::{LaneId, MessageNonce};
 use darwinia_ethereum::{RawOrigin, Transaction};
-use darwinia_support::evm::DeriveEthereumAddress;
+use darwinia_evm::AccountBasic;
+use darwinia_support::evm::{DeriveEthereumAddress, DeriveSubstrateAddress};
 use pallet_bridge_dispatch::Config;
+use sp_runtime::transaction_validity::{InvalidTransaction, TransactionValidityError};
 
-pub struct CallFilter;
-impl CallFilterT<Origin, Call> for CallFilter {
-	fn contains(origin: &Origin, call: &Call) -> bool {
+pub struct MessageValidator;
+impl MessageValidate<bp_pangolin::AccountId, Origin, Call> for MessageValidator {
+	fn pre_dispatch(
+		relayer_account: &bp_pangolin::AccountId,
+		origin: &Origin,
+		call: &Call,
+	) -> Result<(), TransactionValidityError> {
 		match call {
 			// Note: Only supprt Ethereum::transact(LegacyTransaction)
 			Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) => {
 				match origin.caller() {
-					OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => match tx {
-						Transaction::Legacy(_) =>
-							Ethereum::validate_transaction_in_block(*id, tx).is_ok(),
-						_ => false,
-					},
-					_ => false,
+					OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) =>
+						match tx {
+							Transaction::Legacy(t) => {
+								let fee = t.gas_limit.saturating_mul(t.gas_limit);
+								let total_payment = fee.saturating_add(t.value);
+
+								let derived_substrate_address = <Runtime as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
+								if <Runtime as darwinia_evm::Config>::RingAccountBasic::account_balance(relayer_account) >= total_payment {
+										// Ensure the derived ethereum address has enough balance to pay for the transaction
+										let _ = <Runtime as darwinia_evm::Config>::RingAccountBasic::transfer(
+											&relayer_account,
+											&derived_substrate_address,
+											total_payment
+										);
+								}
+								Ethereum::validate_transaction_in_block(*id, tx)
+							},
+							_ =>
+								Err(TransactionValidityError::Invalid(InvalidTransaction::BadProof)),
+						},
+					_ => Err(TransactionValidityError::Invalid(InvalidTransaction::BadProof)),
 				}
 			},
-			_ => true,
+			_ => Ok(()),
 		}
 	}
 }
@@ -49,10 +70,10 @@ impl Config<WithPangoroDispatch> for Runtime {
 	type AccountIdConverter = bp_pangolin::AccountIdConverter;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
-	type CallFilter = CallFilter;
 	type EncodedCall = bm_pangoro::FromPangoroEncodedCall;
 	type Event = Event;
 	type IntoDispatchOrigin = IntoDispatchOrigin;
+	type MessageValidator = MessageValidator;
 	type SourceChainAccountId = bp_pangoro::AccountId;
 	type TargetChainAccountPublic = bp_pangolin::AccountPublic;
 	type TargetChainSignature = bp_pangolin::Signature;
@@ -61,10 +82,10 @@ impl Config<WithPangolinParachainDispatch> for Runtime {
 	type AccountIdConverter = bp_pangolin::AccountIdConverter;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
-	type CallFilter = CallFilter;
 	type EncodedCall = bm_pangolin_parachain::FromPangolinParachainEncodedCall;
 	type Event = Event;
 	type IntoDispatchOrigin = IntoDispatchOrigin;
+	type MessageValidator = MessageValidator;
 	type SourceChainAccountId = bp_pangolin_parachain::AccountId;
 	type TargetChainAccountPublic = bp_pangolin::AccountPublic;
 	type TargetChainSignature = bp_pangolin::Signature;

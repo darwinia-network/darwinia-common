@@ -748,20 +748,7 @@ dependencies = [
 name = "bp-parachains"
 version = "0.1.0"
 dependencies = [
- "bp-polkadot-core 0.1.0",
- "bp-runtime 0.1.0",
- "frame-support",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
-]
-
-[[package]]
-name = "bp-parachains"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#b165d6005e3be99d12d518be73aaf0a20ce117b4"
-dependencies = [
- "bp-polkadot-core 0.1.0 (git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3)",
+ "bp-polkadot-core",
  "bp-runtime 0.1.0",
  "frame-support",
  "parity-scale-codec",
@@ -773,24 +760,6 @@ dependencies = [
 [[package]]
 name = "bp-polkadot-core"
 version = "0.1.0"
-dependencies = [
- "bp-messages",
- "bp-runtime 0.1.0",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-api",
- "sp-core",
- "sp-runtime",
- "sp-std",
- "sp-version",
-]
-
-[[package]]
-name = "bp-polkadot-core"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#b165d6005e3be99d12d518be73aaf0a20ce117b4"
 dependencies = [
  "bp-messages",
  "bp-runtime 0.1.0",
@@ -813,7 +782,7 @@ version = "0.1.0"
 source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#b165d6005e3be99d12d518be73aaf0a20ce117b4"
 dependencies = [
  "bp-messages",
- "bp-polkadot-core 0.1.0 (git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3)",
+ "bp-polkadot-core",
  "bp-runtime 0.1.0",
  "frame-support",
  "parity-scale-codec",
@@ -879,14 +848,14 @@ version = "0.1.0"
 dependencies = [
  "bp-message-dispatch 0.1.0",
  "bp-messages",
- "bp-polkadot-core 0.1.0",
+ "bp-polkadot-core",
  "bp-runtime 0.1.0",
  "frame-support",
  "hash-db",
  "pallet-bridge-dispatch 0.1.0",
  "pallet-bridge-grandpa",
  "pallet-bridge-messages",
- "pallet-bridge-parachains 0.1.0",
+ "pallet-bridge-parachains",
  "pallet-transaction-payment",
  "parity-scale-codec",
  "scale-info",
@@ -5849,28 +5818,8 @@ dependencies = [
 name = "pallet-bridge-parachains"
 version = "0.1.0"
 dependencies = [
- "bp-parachains 0.1.0",
- "bp-polkadot-core 0.1.0",
- "bp-runtime 0.1.0",
- "frame-support",
- "frame-system",
- "log",
- "pallet-bridge-grandpa",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-runtime",
- "sp-std",
- "sp-trie",
-]
-
-[[package]]
-name = "pallet-bridge-parachains"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#b165d6005e3be99d12d518be73aaf0a20ce117b4"
-dependencies = [
- "bp-parachains 0.1.0 (git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3)",
- "bp-polkadot-core 0.1.0 (git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3)",
+ "bp-parachains",
+ "bp-polkadot-core",
  "bp-runtime 0.1.0",
  "frame-support",
  "frame-system",
@@ -6446,7 +6395,7 @@ dependencies = [
  "pallet-bridge-dispatch 0.1.0",
  "pallet-bridge-grandpa",
  "pallet-bridge-messages",
- "pallet-bridge-parachains 0.1.0 (git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3)",
+ "pallet-bridge-parachains",
  "pallet-collective",
  "pallet-democracy",
  "pallet-election-provider-multi-phase",
