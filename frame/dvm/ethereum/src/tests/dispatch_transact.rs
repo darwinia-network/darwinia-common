@@ -23,10 +23,7 @@ use super::*;
 use crate::{tests::legacy::*, Weight};
 use bp_message_dispatch::{CallOrigin, MessageDispatch, MessagePayload, SpecVersion};
 use bp_runtime::messages::DispatchFeePayment;
-use darwinia_evm::AccountBasic;
-use darwinia_support::evm::{decimal_convert, DeriveSubstrateAddress};
 // --- paritytech ---
-use frame_support::traits::OriginTrait;
 use sp_runtime::AccountId32;
 
 const TEST_SPEC_VERSION: SpecVersion = 0;
@@ -66,8 +63,7 @@ fn test_dispatch_basic_system_call_works() {
 	ext.execute_with(|| {
 		let id = [0; 4];
 		let call = Call::System(frame_system::Call::remark { remark: vec![] });
-		let mut message = prepare_source_message(call);
-		message.dispatch_fee_payment = DispatchFeePayment::AtTargetChain;
+		let message = prepare_source_message(call);
 
 		System::set_block_number(1);
 		let result = Dispatch::dispatch(
@@ -78,7 +74,7 @@ fn test_dispatch_basic_system_call_works() {
 			Ok(message),
 			|_, _| Ok(()),
 		);
-		assert!(result.dispatch_fee_paid_during_dispatch);
+		assert!(!result.dispatch_fee_paid_during_dispatch);
 		assert!(result.dispatch_result);
 
 		System::assert_has_event(Event::Dispatch(
@@ -88,7 +84,38 @@ fn test_dispatch_basic_system_call_works() {
 }
 
 #[test]
-fn test_dispatch_ethereum_transact_works() {
+fn test_dispatch_legacy_ethereum_transaction_works() {
+	let (pairs, mut ext) = new_test_ext(2);
+	let alice = &pairs[0];
+	let relayer_account = &pairs[1];
+
+	ext.execute_with(|| {
+		let id = [0; 4];
+		let unsigned_tx = legacy_erc20_creation_unsigned_transaction();
+		let t = unsigned_tx.sign(&alice.private_key);
+		let call = TestRuntimeCall::Ethereum(EthereumTransactCall::transact { transaction: t });
+
+		let message = prepare_source_message(call);
+
+		System::set_block_number(1);
+		let result = Dispatch::dispatch(
+			SOURCE_CHAIN_ID,
+			TARGET_CHAIN_ID,
+			&relayer_account.account_id,
+			id,
+			Ok(message),
+			|_, _| Ok(()),
+		);
+
+		assert!(result.dispatch_result);
+		System::assert_has_event(Event::Dispatch(
+			pallet_bridge_dispatch::Event::MessageDispatched(SOURCE_CHAIN_ID, id, Ok(())),
+		));
+	});
+}
+
+#[test]
+fn test_dispatch_legacy_ethereum_transaction_invalid_nonce() {
 	let (pairs, mut ext) = new_test_ext(2);
 	let alice = &pairs[0];
 	let relayer_account = &pairs[1];
@@ -96,16 +123,11 @@ fn test_dispatch_ethereum_transact_works() {
 	ext.execute_with(|| {
 		let id = [0; 4];
 		let mut unsigned_tx = legacy_erc20_creation_unsigned_transaction();
-		unsigned_tx.nonce = U256::from(3);
+		unsigned_tx.nonce = U256::from(99);
 		let t = unsigned_tx.sign(&alice.private_key);
-
 		let call = TestRuntimeCall::Ethereum(EthereumTransactCall::transact { transaction: t });
 
-		let mut message = prepare_source_message(call);
-		message.dispatch_fee_payment = DispatchFeePayment::AtTargetChain;
-		// Ensure the derive ethereum address has enough balance to cover fee.
-		let origin = H160::from_str("0x308f55f1caf780c5f7a73e2b2b88cb61ee5bec9b").unwrap();
-		RingAccount::mutate_account_basic_balance(&origin, decimal_convert(1000, None));
+		let message = prepare_source_message(call);
 
 		System::set_block_number(1);
 		let result = Dispatch::dispatch(
@@ -120,6 +142,76 @@ fn test_dispatch_ethereum_transact_works() {
 		assert!(!result.dispatch_result);
 		System::assert_has_event(Event::Dispatch(
 			pallet_bridge_dispatch::Event::MessageCallRejected(SOURCE_CHAIN_ID, id),
+		));
+	});
+}
+
+#[test]
+fn test_dispatch_legacy_ethereum_transaction_invalid_payment() {
+	let (pairs, mut ext) = new_test_ext(2);
+	let alice = &pairs[0];
+	let relayer_account = &pairs[1];
+
+	ext.execute_with(|| {
+		let id = [0; 4];
+		let mut unsigned_tx = legacy_erc20_creation_unsigned_transaction();
+		unsigned_tx.gas_price = U256::from(1000_000_000);
+		let t = unsigned_tx.sign(&alice.private_key);
+		let call = TestRuntimeCall::Ethereum(EthereumTransactCall::transact { transaction: t });
+
+		let message = prepare_source_message(call);
+
+		System::set_block_number(1);
+		let result = Dispatch::dispatch(
+			SOURCE_CHAIN_ID,
+			TARGET_CHAIN_ID,
+			&relayer_account.account_id,
+			id,
+			Ok(message),
+			|_, _| Ok(()),
+		);
+
+		assert!(!result.dispatch_result);
+		System::assert_has_event(Event::Dispatch(
+			pallet_bridge_dispatch::Event::MessageCallRejected(SOURCE_CHAIN_ID, id),
+		));
+	});
+}
+
+#[test]
+fn test_dispatch_legacy_ethereum_transaction_weight_mismatch() {
+	let (pairs, mut ext) = new_test_ext(2);
+	let alice = &pairs[0];
+	let relayer_account = &pairs[1];
+
+	ext.execute_with(|| {
+		let id = [0; 4];
+		let mut unsigned_tx = legacy_erc20_creation_unsigned_transaction();
+		// 62500001 * 16000 > 1_000_000_000_000
+		unsigned_tx.gas_limit = U256::from(62500001);
+		let t = unsigned_tx.sign(&alice.private_key);
+		let call = TestRuntimeCall::Ethereum(EthereumTransactCall::transact { transaction: t });
+
+		let message = prepare_source_message(call);
+
+		System::set_block_number(1);
+		let result = Dispatch::dispatch(
+			SOURCE_CHAIN_ID,
+			TARGET_CHAIN_ID,
+			&relayer_account.account_id,
+			id,
+			Ok(message),
+			|_, _| Ok(()),
+		);
+
+		assert!(!result.dispatch_result);
+		System::assert_has_event(Event::Dispatch(
+			pallet_bridge_dispatch::Event::MessageWeightMismatch(
+				SOURCE_CHAIN_ID,
+				id,
+				1000000016000,
+				1000000000000,
+			),
 		));
 	});
 }

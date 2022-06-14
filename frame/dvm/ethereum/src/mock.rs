@@ -241,14 +241,12 @@ impl darwinia_ethereum::Config for Test {
 }
 
 // --- pallet-bridge-dispatch config start ---
-
-pub type BridgeMessageId = [u8; 4];
-pub type SubChainId = [u8; 4];
-pub const SOURCE_CHAIN_ID: SubChainId = *b"srce";
-pub const TARGET_CHAIN_ID: SubChainId = *b"trgt";
+pub(crate) type BridgeMessageId = [u8; 4];
+pub(crate) type SubChainId = [u8; 4];
+pub(crate) const SOURCE_CHAIN_ID: SubChainId = *b"srce";
+pub(crate) const TARGET_CHAIN_ID: SubChainId = *b"trgt";
 
 pub struct AccountIdConverter;
-
 impl sp_runtime::traits::Convert<H256, AccountId32> for AccountIdConverter {
 	fn convert(hash: H256) -> AccountId32 {
 		AccountId32::new(hash.0)
@@ -257,7 +255,6 @@ impl sp_runtime::traits::Convert<H256, AccountId32> for AccountIdConverter {
 
 #[derive(Decode, Encode)]
 pub struct EncodedCall(pub Vec<u8>);
-
 impl From<EncodedCall> for Result<Call, ()> {
 	fn from(call: EncodedCall) -> Result<Call, ()> {
 		Call::decode(&mut &call.0[..]).map_err(drop)
@@ -293,11 +290,13 @@ impl MessageValidate<AccountId32, Origin, Call> for MessageValidator {
 									total_payment,
 								);
 							}
-							Ethereum::validate_transaction_in_block(*id, tx)
+							let res = Ethereum::validate_transaction_in_block(*id, tx);
+							res
 						},
-						_ => Err(TransactionValidityError::Invalid(InvalidTransaction::BadProof)),
+						_ =>
+							Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(1u8))),
 					},
-					_ => Err(TransactionValidityError::Invalid(InvalidTransaction::BadProof)),
+					_ => Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(0u8))),
 				}
 			},
 			_ => Ok(()),
@@ -320,7 +319,6 @@ impl IntoDispatchOriginT<AccountId32, Call, Origin> for IntoDispatchOrigin {
 
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
 pub struct TestAccountPublic(AccountId32);
-
 impl IdentifyAccount for TestAccountPublic {
 	type AccountId = AccountId32;
 
@@ -331,7 +329,6 @@ impl IdentifyAccount for TestAccountPublic {
 
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
 pub struct TestSignature(AccountId32);
-
 impl Verify for TestSignature {
 	type Signer = TestAccountPublic;
 
@@ -352,7 +349,6 @@ impl pallet_bridge_dispatch::Config for Test {
 	type TargetChainAccountPublic = TestAccountPublic;
 	type TargetChainSignature = TestSignature;
 }
-
 // --- pallet-bridge-dispatch config end ---
 
 frame_support::construct_runtime! {
