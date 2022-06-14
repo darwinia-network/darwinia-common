@@ -4,6 +4,7 @@ pub use pallet_bridge_dispatch::{
 
 // --- paritytech ---
 use frame_support::traits::OriginTrait;
+use sp_runtime::transaction_validity::{InvalidTransaction, TransactionValidityError};
 // --- darwinia-network ---
 use crate::*;
 use bp_message_dispatch::{IntoDispatchOrigin as IntoDispatchOriginT, MessageValidate};
@@ -12,7 +13,6 @@ use darwinia_ethereum::{RawOrigin, Transaction};
 use darwinia_evm::AccountBasic;
 use darwinia_support::evm::{DeriveEthereumAddress, DeriveSubstrateAddress};
 use pallet_bridge_dispatch::Config;
-use sp_runtime::transaction_validity::{InvalidTransaction, TransactionValidityError};
 
 pub struct MessageValidator;
 impl MessageValidate<bp_pangolin::AccountId, Origin, Call> for MessageValidator {
@@ -25,7 +25,7 @@ impl MessageValidate<bp_pangolin::AccountId, Origin, Call> for MessageValidator 
 			// Note: Only supprt Ethereum::transact(LegacyTransaction)
 			Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) => {
 				match origin.caller() {
-					OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) =>
+					OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => {
 						match tx {
 							Transaction::Legacy(t) => {
 								let fee = t.gas_limit.saturating_mul(t.gas_limit);
@@ -40,12 +40,15 @@ impl MessageValidate<bp_pangolin::AccountId, Origin, Call> for MessageValidator 
 											total_payment
 										);
 								}
+
 								Ethereum::validate_transaction_in_block(*id, tx)
 							},
-							_ =>
-								Err(TransactionValidityError::Invalid(InvalidTransaction::BadProof)),
-						},
-					_ => Err(TransactionValidityError::Invalid(InvalidTransaction::BadProof)),
+							_ => Err(TransactionValidityError::Invalid(
+								InvalidTransaction::Custom(1u8),
+							)),
+						}
+					},
+					_ => Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(0u8))),
 				}
 			},
 			_ => Ok(()),
