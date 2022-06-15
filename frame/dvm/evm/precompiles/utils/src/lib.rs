@@ -26,12 +26,11 @@ pub use ethabi::StateMutability;
 
 // --- crates.io ---
 use ethabi::{Function, Param, ParamType, Token};
-use evm::ExitRevert;
 // --- darwinia-network ---
 use darwinia_evm::GasWeightMapping;
 use darwinia_support::evm::SELECTOR;
 // --- paritytech ---
-use fp_evm::{Context, ExitError, PrecompileFailure};
+use fp_evm::{Context, ExitError, ExitRevert, PrecompileFailure};
 use frame_support::traits::Get;
 use sp_core::U256;
 use sp_std::{borrow::ToOwned, marker::PhantomData, vec};
