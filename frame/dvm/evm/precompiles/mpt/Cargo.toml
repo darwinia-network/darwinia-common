@@ -10,8 +10,6 @@ repository  = "https://github.com/darwinia-network/darwinia-common"
 version     = "2.8.11"
 
 [dependencies]
-# crates.io
-evm = { default-features = false, features = ["with-codec"], version = "0.33.1" }
 # paritytech
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 # darwinia-network
@@ -26,8 +24,6 @@ fp-evm = { default-features = false, git = "https://github.com/darwinia-network/
 default = ["std"]
 
 std = [
-	# crates.io
-	"evm/std",
 	# paritytech
 	"sp-std/std",
 	# darwinia-network

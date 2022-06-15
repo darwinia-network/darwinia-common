@@ -25,13 +25,13 @@ mod tests;
 use core::marker::PhantomData;
 // --- crates.io ---
 use ethabi::{ParamType, StateMutability, Token};
-use evm::ExitRevert;
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::PrecompileHelper;
 use dp_contract::abi_util::abi_encode_bytes;
 // --- paritytech ---
 use fp_evm::{
-	Context, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput, PrecompileResult,
+	Context, ExitRevert, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
+	PrecompileResult,
 };
 
 const PALLET_PREFIX_LENGTH: usize = 16;
