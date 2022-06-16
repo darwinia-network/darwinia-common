@@ -47,8 +47,9 @@ use sp_std::{str, vec::Vec};
 use bp_runtime::ChainId;
 use darwinia_ethereum::InternalTransactHandler;
 use darwinia_support::{
+	evm::DeriveEthereumAddress,
 	mapping_token::*,
-	s2s::{ensure_source_account, OutboundMessager, ToEthAddress},
+	s2s::{ensure_source_account, OutboundMessager},
 	ChainName,
 };
 use dp_asset::TokenMetadata;
@@ -86,9 +87,6 @@ pub mod pallet {
 
 		/// The bridged chain id
 		type BridgedChainId: Get<ChainId>;
-
-		/// Convert the substrate account to ethereum account
-		type ToEthAddressT: ToEthAddress<Self::AccountId>;
 
 		/// The handler for internal transaction.
 		type InternalTransactHandler: InternalTransactHandler;
@@ -128,7 +126,7 @@ pub mod pallet {
 				&user,
 			)?;
 
-			let backing_address = T::ToEthAddressT::into_ethereum_id(&user);
+			let backing_address = user.encode().as_slice().derive_ethereum_address();
 			let mut mapping_token =
 				Self::mapped_token_address(backing_address, token_metadata.address)?;
 			ensure!(mapping_token == H160::zero(), "asset has been registered");
@@ -177,7 +175,7 @@ pub mod pallet {
 				&user,
 			)?;
 
-			let backing_address = T::ToEthAddressT::into_ethereum_id(&user);
+			let backing_address = user.encode().as_slice().derive_ethereum_address();
 			let mapping_token = Self::mapped_token_address(backing_address, token_address)?;
 			ensure!(mapping_token != H160::zero(), Error::<T>::TokenUnregistered);
 
@@ -334,7 +332,7 @@ impl<T: Config> Pallet<T> {
 	pub fn judge_self_message(nonce: MessageNonce) -> DispatchResultWithPostInfo {
 		let message_sender = T::OutboundMessager::get_valid_message_sender(nonce)?;
 		ensure!(
-			T::ToEthAddressT::into_ethereum_id(&message_sender)
+			message_sender.encode().as_slice().derive_ethereum_address()
 				== <MappingFactoryAddress<T>>::get(),
 			Error::<T>::InvalidMessageSender
 		);

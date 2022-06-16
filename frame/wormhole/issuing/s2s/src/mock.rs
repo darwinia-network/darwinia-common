@@ -275,14 +275,6 @@ impl LatestMessageNoncer for MockS2sMessageSender {
 	}
 }
 
-pub struct TruncateToEthAddress;
-impl ToEthAddress<AccountId32> for TruncateToEthAddress {
-	fn into_ethereum_id(address: &AccountId32) -> H160 {
-		let account20: &[u8] = &address.as_ref();
-		H160::from_slice(&account20[..20])
-	}
-}
-
 pub struct MockOutboundMessager;
 impl OutboundMessager<AccountId32> for MockOutboundMessager {
 	fn check_lane_id(lane_id: &LaneId) -> bool {
@@ -310,7 +302,6 @@ impl Config for Test {
 	type OutboundMessager = MockOutboundMessager;
 	type PalletId = S2sRelayPalletId;
 	type RingCurrency = Ring;
-	type ToEthAddressT = TruncateToEthAddress;
 	type WeightInfo = ();
 }
 
