@@ -10,7 +10,7 @@
 //
 // Darwinia is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -22,7 +22,6 @@
 use core::marker::PhantomData;
 // --- crates.io ---
 use codec::Encode;
-use evm::ExitRevert;
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{PrecompileHelper, StateMutability};
 use darwinia_support::{
@@ -38,7 +37,8 @@ use dp_s2s::{CallParams, CreatePayload};
 use bp_message_dispatch::CallOrigin;
 use bp_runtime::messages::DispatchFeePayment;
 use fp_evm::{
-	Context, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput, PrecompileResult,
+	Context, ExitRevert, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
+	PrecompileResult,
 };
 use frame_support::sp_runtime::SaturatedConversion;
 use sp_core::H160;

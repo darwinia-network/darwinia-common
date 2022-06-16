@@ -1469,7 +1469,6 @@ dependencies = [
 name = "darwinia-balances"
 version = "2.8.12"
 dependencies = [
- "darwinia-balances-rpc-runtime-api",
  "darwinia-support",
  "frame-support",
  "frame-system",
@@ -1480,31 +1479,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "darwinia-balances-rpc"
-version = "2.8.12"
-dependencies = [
- "darwinia-balances-rpc-runtime-api",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "parity-scale-codec",
- "sp-api",
- "sp-blockchain",
- "sp-runtime",
-]
-
-[[package]]
-name = "darwinia-balances-rpc-runtime-api"
-version = "2.8.12"
-dependencies = [
- "darwinia-support",
- "parity-scale-codec",
- "serde",
- "sp-api",
- "sp-runtime",
 ]
 
 [[package]]
@@ -1627,7 +1601,6 @@ dependencies = [
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
  "dp-contract",
- "evm",
  "fp-evm",
  "milagro_bls",
  "sp-std",
@@ -1639,7 +1612,6 @@ version = "2.8.12"
 dependencies = [
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
- "evm",
  "fp-evm",
  "from-ethereum-issuing",
  "parity-scale-codec",
@@ -1659,7 +1631,6 @@ dependencies = [
  "darwinia-support",
  "dp-contract",
  "dp-s2s",
- "evm",
  "fp-evm",
  "frame-support",
  "log",
@@ -1692,7 +1663,6 @@ dependencies = [
  "darwinia-evm-precompile-utils",
  "dp-contract",
  "ethereum-primitives",
- "evm",
  "fp-evm",
  "sp-std",
 ]
@@ -1710,7 +1680,6 @@ dependencies = [
  "dp-contract",
  "ethabi",
  "ethereum",
- "evm",
  "fp-evm",
  "fp-self-contained",
  "frame-support",
@@ -1739,7 +1708,6 @@ dependencies = [
  "ethabi",
  "ethereum",
  "ethereum-types",
- "evm",
  "fp-evm",
  "fp-self-contained",
  "frame-support",
@@ -1767,7 +1735,6 @@ dependencies = [
  "darwinia-support",
  "ethabi",
  "ethereum",
- "evm",
  "fp-evm",
  "frame-support",
  "frame-system",
@@ -1783,7 +1750,6 @@ dependencies = [
 name = "darwinia-evm-precompile-utils-macro"
 version = "2.8.12"
 dependencies = [
- "evm",
  "fp-evm",
  "proc-macro2",
  "quote",
@@ -2206,7 +2172,6 @@ dependencies = [
 name = "drml-rpc"
 version = "2.8.12"
 dependencies = [
- "darwinia-balances-rpc",
  "darwinia-ethereum",
  "darwinia-staking-rpc",
  "drml-primitives",
@@ -2252,7 +2217,6 @@ dependencies = [
  "array-bytes",
  "async-trait",
  "beefy-primitives",
- "darwinia-balances-rpc-runtime-api",
  "darwinia-bridge-ethereum",
  "darwinia-ethereum",
  "darwinia-evm",
@@ -6300,7 +6264,6 @@ dependencies = [
  "bridge-runtime-common",
  "bsc-primitives",
  "darwinia-balances",
- "darwinia-balances-rpc-runtime-api",
  "darwinia-bridge-ethereum",
  "darwinia-ethereum",
  "darwinia-evm",
@@ -6323,7 +6286,6 @@ dependencies = [
  "drml-common-runtime",
  "drml-primitives",
  "ethereum-primitives",
- "evm",
  "fp-evm",
  "fp-rpc",
  "fp-self-contained",
@@ -6419,7 +6381,6 @@ dependencies = [
  "bridge-runtime-common",
  "bsc-primitives",
  "darwinia-balances",
- "darwinia-balances-rpc-runtime-api",
  "darwinia-bridge-bsc",
  "darwinia-ethereum",
  "darwinia-evm",
@@ -6435,7 +6396,6 @@ dependencies = [
  "dp-s2s",
  "drml-common-runtime",
  "drml-primitives",
- "evm",
  "fp-evm",
  "fp-rpc",
  "fp-self-contained",
