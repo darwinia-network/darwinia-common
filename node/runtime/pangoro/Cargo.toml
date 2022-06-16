@@ -29,7 +29,6 @@ darwinia-evm-precompile-mpt           = { default-features = false, path = "../.
 darwinia-evm-precompile-state-storage = { default-features = false, path = "../../../frame/dvm/evm/precompiles/state-storage" }
 darwinia-evm-precompile-transfer      = { default-features = false, path = "../../../frame/dvm/evm/precompiles/transfer" }
 darwinia-staking                      = { default-features = false, path = "../../../frame/staking" }
-darwinia-staking-rpc-runtime-api      = { default-features = false, path = "../../../frame/staking/rpc/runtime-api" }
 darwinia-support                      = { default-features = false, path = "../../../frame/support" }
 dp-asset                              = { default-features = false, path = "../../../primitives/asset" }
 dp-evm-tracer                         = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
@@ -130,7 +129,6 @@ std = [
 	"darwinia-evm-precompile-state-storage/std",
 	"darwinia-evm-precompile-transfer/std",
 	"darwinia-staking/std",
-	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",
 	"dp-asset/std",
 	"dp-evm-tracer/std",

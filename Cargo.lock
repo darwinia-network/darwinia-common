@@ -1751,7 +1751,6 @@ version = "2.8.12"
 dependencies = [
  "array-bytes",
  "ckb-merkle-mountain-range",
- "darwinia-header-mmr-rpc-runtime-api",
  "darwinia-relay-primitives",
  "darwinia-support",
  "frame-support",
@@ -1765,32 +1764,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sp-tracing",
-]
-
-[[package]]
-name = "darwinia-header-mmr-rpc"
-version = "2.8.12"
-dependencies = [
- "darwinia-header-mmr-rpc-runtime-api",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "parity-scale-codec",
- "sp-api",
- "sp-blockchain",
- "sp-runtime",
-]
-
-[[package]]
-name = "darwinia-header-mmr-rpc-runtime-api"
-version = "2.8.12"
-dependencies = [
- "darwinia-support",
- "parity-scale-codec",
- "serde",
- "sp-api",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -1850,7 +1823,6 @@ name = "darwinia-staking"
 version = "2.8.12"
 dependencies = [
  "darwinia-balances",
- "darwinia-staking-rpc-runtime-api",
  "darwinia-support",
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -1874,31 +1846,6 @@ dependencies = [
  "static_assertions",
  "substrate-fixed",
  "substrate-test-utils",
-]
-
-[[package]]
-name = "darwinia-staking-rpc"
-version = "2.8.12"
-dependencies = [
- "darwinia-staking-rpc-runtime-api",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "parity-scale-codec",
- "sp-api",
- "sp-blockchain",
- "sp-runtime",
-]
-
-[[package]]
-name = "darwinia-staking-rpc-runtime-api"
-version = "2.8.12"
-dependencies = [
- "darwinia-support",
- "parity-scale-codec",
- "serde",
- "sp-api",
- "sp-runtime",
 ]
 
 [[package]]
@@ -2160,7 +2107,6 @@ name = "drml-rpc"
 version = "2.8.12"
 dependencies = [
  "darwinia-ethereum",
- "darwinia-staking-rpc",
  "drml-primitives",
  "fc-db",
  "fc-rpc",
@@ -2207,7 +2153,6 @@ dependencies = [
  "darwinia-bridge-ethereum",
  "darwinia-ethereum",
  "darwinia-evm",
- "darwinia-staking-rpc-runtime-api",
  "dp-evm-trace-ext",
  "drml-primitives",
  "drml-rpc",
@@ -6268,7 +6213,6 @@ dependencies = [
  "darwinia-relay-primitives",
  "darwinia-relayer-game",
  "darwinia-staking",
- "darwinia-staking-rpc-runtime-api",
  "darwinia-support",
  "dp-asset",
  "dp-contract",
@@ -6380,7 +6324,6 @@ dependencies = [
  "darwinia-evm-precompile-state-storage",
  "darwinia-evm-precompile-transfer",
  "darwinia-staking",
- "darwinia-staking-rpc-runtime-api",
  "darwinia-support",
  "dp-asset",
  "dp-evm-tracer",

@@ -21,18 +21,9 @@ use sp_staking::{offence::*, *};
 use sp_std::{borrow::ToOwned, collections::btree_map::BTreeMap, prelude::*};
 // --- darwinia-network ---
 use crate::*;
-use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo;
 use darwinia_support::{balance::StakingLock, traits::OnDepositRedeem};
 
 impl<T: Config> Pallet<T> {
-	darwinia_support::impl_rpc! {
-		pub fn power_of_rpc(
-			stash: impl sp_std::borrow::Borrow<AccountId<T>>,
-		) -> RuntimeDispatchInfo<Power> {
-			RuntimeDispatchInfo { power: Self::power_of(stash.borrow()) }
-		}
-	}
-
 	pub fn account_id() -> AccountId<T> {
 		T::PalletId::get().into_account()
 	}
