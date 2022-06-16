@@ -20,8 +20,6 @@
 # - The latest matching rule, if multiple, takes precedence.
 
 /frame/balances/ @AurevoirXavier @HackFisher
-/frame/balances/rpc/ @AurevoirXavier
-/frame/balances/rpc/runtime-api/ @AurevoirXavier
 /frame/beefy-gadget/ @AurevoirXavier
 /frame/bridge/bsc/ @AurevoirXavier @xiaoch05
 /frame/bridge/ethereum/ @AurevoirXavier @HackFisher
@@ -31,8 +29,6 @@
 /frame/dvm/evm/ @AsceticBear
 /frame/header-mmr/ @AurevoirXavier @HackFisher
 /frame/staking/ @AurevoirXavier @HackFisher
-/frame/staking/rpc/ @AurevoirXavier
-/frame/staking/rpc/runtime-api/ @AurevoirXavier
 /frame/support/ @AurevoirXavier @HackFisher
 /frame/transaction-pause/ @AurevoirXavier @HackFisher
 /frame/backing/*/ @xiaoch05

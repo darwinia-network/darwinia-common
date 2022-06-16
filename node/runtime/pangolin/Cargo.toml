@@ -35,7 +35,6 @@ darwinia-relay-authorities              = { default-features = false, path = "..
 darwinia-relay-primitives               = { default-features = false, path = "../../../primitives/relay" }
 darwinia-relayer-game                   = { default-features = false, path = "../../../frame/bridge/relayer-game" }
 darwinia-staking                        = { default-features = false, path = "../../../frame/staking" }
-darwinia-staking-rpc-runtime-api        = { default-features = false, path = "../../../frame/staking/rpc/runtime-api" }
 darwinia-support                        = { default-features = false, path = "../../../frame/support" }
 dp-asset                                = { default-features = false, path = "../../../primitives/asset" }
 dp-contract                             = { default-features = false, path = "../../../primitives/contract" }
@@ -162,7 +161,6 @@ std = [
 	"darwinia-relay-primitives/std",
 	"darwinia-relayer-game/std",
 	"darwinia-staking/std",
-	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",
 	"dp-asset/std",
 	"dp-contract/std",

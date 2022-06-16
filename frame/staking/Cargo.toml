@@ -16,8 +16,7 @@ scale-info        = { version = "1.0", default-features = false, features = ["de
 serde             = { version = "1.0", optional = true }
 static_assertions = { version = "1.1" }
 # darwinia-network
-darwinia-staking-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }
-darwinia-support                 = { default-features = false, path = "../support" }
+darwinia-support = { default-features = false, path = "../support" }
 # encointer
 substrate-fixed = { default-features = false, git = "https://github.com/encointer/substrate-fixed", tag = "v0.5.8" }
 # paritytech
@@ -57,7 +56,6 @@ std = [
 	"scale-info/std",
 	"serde",
 	# darwinia-network
-	"darwinia-staking-rpc-runtime-api/std",
 	"darwinia-support/std",
 	# encointer
 	"substrate-fixed/std",
