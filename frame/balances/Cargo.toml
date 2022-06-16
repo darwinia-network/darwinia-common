@@ -14,7 +14,7 @@ version     = "2.8.12"
 codec      = { package = "parity-scale-codec", version = "2.3", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 # darwinia-network
-darwinia-support = { default-features = false, path = "../support" }
+darwinia-support = { default-features = false, path = "../support"}
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
@@ -26,6 +26,8 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 sp-core                    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 sp-io                      = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+# darwinia-network
+darwinia-support 		   = { features = ["testing"], path = "../support"}
 
 [features]
 default = ["std"]

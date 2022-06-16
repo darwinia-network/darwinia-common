@@ -36,6 +36,7 @@ darwinia-balances         = { path = "../../../balances" }
 darwinia-bridge-ethereum  = { path = "../../../bridge/ethereum" }
 darwinia-relay-primitives = { path = "../../../../primitives/relay" }
 darwinia-relayer-game     = { path = "../../../bridge/relayer-game" }
+darwinia-support          = { features = ["testing"], path = "../../../support" }
 darwinia-staking          = { path = "../../../../frame/staking" }
 ethereum-primitives       = { features = ["full-serde"], path = "../../../../primitives/ethereum" }
 # paritytech
