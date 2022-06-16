@@ -20,7 +20,10 @@
 use codec::Encode;
 // --- darwinia-network ---
 use super::*;
-use crate::{tests::legacy::*, Weight};
+use crate::{
+	tests::{eip1559::*, legacy::*},
+	Weight,
+};
 use bp_message_dispatch::{CallOrigin, MessageDispatch, MessagePayload, SpecVersion};
 use bp_runtime::messages::DispatchFeePayment;
 // --- paritytech ---
@@ -110,6 +113,40 @@ fn test_dispatch_legacy_ethereum_transaction_works() {
 		assert!(result.dispatch_result);
 		System::assert_has_event(Event::Dispatch(
 			pallet_bridge_dispatch::Event::MessageDispatched(SOURCE_CHAIN_ID, id, Ok(())),
+		));
+	});
+}
+#[test]
+fn test_dispatch_only_legacy_ethereum_transaction_works() {
+	let (pairs, mut ext) = new_test_ext(2);
+	let alice = &pairs[0];
+	let relayer_account = &pairs[1];
+
+	ext.execute_with(|| {
+		let id = [0; 4];
+		let unsigned_tx = eip1559_erc20_creation_unsigned_transaction();
+		let t = unsigned_tx.sign(&alice.private_key, None);
+		let call = TestRuntimeCall::Ethereum(EthereumTransactCall::transact { transaction: t });
+
+		let message = prepare_source_message(call);
+
+		System::set_block_number(1);
+		let result = Dispatch::dispatch(
+			SOURCE_CHAIN_ID,
+			TARGET_CHAIN_ID,
+			&relayer_account.account_id,
+			id,
+			Ok(message),
+			|_, _| Ok(()),
+		);
+
+		assert!(!result.dispatch_result);
+		System::assert_has_event(Event::Dispatch(
+			pallet_bridge_dispatch::Event::MessageCallValidateFailed(
+				SOURCE_CHAIN_ID,
+				id,
+				TransactionValidityError::Invalid(InvalidTransaction::Custom(1)),
+			),
 		));
 	});
 }
