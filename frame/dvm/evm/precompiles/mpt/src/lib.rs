@@ -20,8 +20,6 @@
 
 // --- core ---
 use core::marker::PhantomData;
-// --- crates.io ---
-use evm::ExitRevert;
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{PrecompileHelper, StateMutability};
 use dp_contract::{
@@ -34,7 +32,8 @@ use ethereum_primitives::{
 };
 // --- paritytech ---
 use fp_evm::{
-	Context, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput, PrecompileResult,
+	Context, ExitRevert, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
+	PrecompileResult,
 };
 use sp_std::{vec, vec::Vec};
 

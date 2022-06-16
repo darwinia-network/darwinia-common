@@ -16,8 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-use evm::ExitRevert;
-use fp_evm::PrecompileFailure;
+use fp_evm::{ExitRevert, PrecompileFailure};
 use sha3::{Digest, Keccak256};
 
 // Expanded to:
