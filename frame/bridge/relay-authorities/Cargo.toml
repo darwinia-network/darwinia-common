@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "darwinia-relay-authorities"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.8.11"
+version     = "2.8.12"
 
 [dependencies]
 # crates.io
@@ -17,10 +17,10 @@ scale-info = { version = "1.0", default-features = false, features = ["derive"] 
 darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../support" }
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 
 [dev-dependencies]
 # crates.io
@@ -30,9 +30,9 @@ darwinia-balances   = { path = "../../balances" }
 darwinia-header-mmr = { features = ["easy-testing"], path = "../../header-mmr" }
 darwinia-support    = { path = "../../support" }
 # paritytech
-sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-sp-io      = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-sp-tracing = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-io      = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-tracing = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 
 [features]
 default = ["std"]

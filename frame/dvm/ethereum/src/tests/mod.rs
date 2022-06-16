@@ -32,9 +32,9 @@ use crate::{
 mod account_basic;
 mod eip1559;
 mod eip2930;
+mod evm_delivered_handler;
 mod internal;
 mod legacy;
-mod evm_delivered_handler;
 
 // This ERC-20 contract mints the maximum amount of tokens to the contract creator.
 // pragma solidity ^0.5.0;

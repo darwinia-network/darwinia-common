@@ -23,9 +23,7 @@ use darwinia_ethereum::{Config as DarwiniaEthereumConfig, InternalTransactHandle
 use pallet_bridge_messages::{Config as PalletBridgeMessagesConfig, Pallet};
 // --- paritytech ---
 use bp_messages::{source_chain::OnDeliveryConfirmed, DeliveredMessages, LaneId, MessageNonce};
-use bridge_runtime_common::messages::{
-	source::FromThisChainMessagePayload, MessageBridge,
-};
+use bridge_runtime_common::messages::{source::FromThisChainMessagePayload, MessageBridge};
 use codec::{Decode, Encode};
 use ethabi::{
 	param_type::ParamType, token::Token, Function, Param, Result as AbiResult, StateMutability,
@@ -37,7 +35,8 @@ pub struct EvmDeliveredHandler<Runtime, MessagesPalletInstance, BridgeConfig>(
 	PhantomData<(Runtime, MessagesPalletInstance, BridgeConfig)>,
 );
 
-impl<Runtime, MessagesPalletInstance, BridgeConfig> OnDeliveryConfirmed for EvmDeliveredHandler<Runtime, MessagesPalletInstance, BridgeConfig>
+impl<Runtime, MessagesPalletInstance, BridgeConfig> OnDeliveryConfirmed
+	for EvmDeliveredHandler<Runtime, MessagesPalletInstance, BridgeConfig>
 where
 	Runtime: PalletBridgeMessagesConfig<MessagesPalletInstance> + DarwiniaEthereumConfig,
 	MessagesPalletInstance: 'static,
@@ -49,9 +48,10 @@ where
 			if let Some(message_sender) = Self::get_message_sender(*lane, nonce) {
 				if let Ok(call_data) = make_call_data(*lane, nonce, result) {
 					// Run solidity callback
-					if let Err(e) =
-						darwinia_ethereum::Pallet::<Runtime>::internal_transact(message_sender, call_data)
-					{
+					if let Err(e) = darwinia_ethereum::Pallet::<Runtime>::internal_transact(
+						message_sender,
+						call_data,
+					) {
 						log::error!(
 							"Execute 'internal_transact' failed for messages delivered, {:?}",
 							e.error
@@ -66,14 +66,16 @@ where
 }
 
 impl<Runtime, MessagesPalletInstance, BridgeConfig>
-EvmDeliveredHandler<Runtime, MessagesPalletInstance, BridgeConfig>
-	where
-		Runtime: PalletBridgeMessagesConfig<MessagesPalletInstance> + DarwiniaEthereumConfig,
-		MessagesPalletInstance: 'static,
-		BridgeConfig: MessageBridge,
+	EvmDeliveredHandler<Runtime, MessagesPalletInstance, BridgeConfig>
+where
+	Runtime: PalletBridgeMessagesConfig<MessagesPalletInstance> + DarwiniaEthereumConfig,
+	MessagesPalletInstance: 'static,
+	BridgeConfig: MessageBridge,
 {
 	fn get_message_sender(lane: LaneId, nonce: MessageNonce) -> Option<H160> {
-		if let Some(data) = Pallet::<Runtime, MessagesPalletInstance>::outbound_message_data(lane, nonce) {
+		if let Some(data) =
+			Pallet::<Runtime, MessagesPalletInstance>::outbound_message_data(lane, nonce)
+		{
 			return Self::get_origin_from_message_payload_data(data.payload);
 		}
 
@@ -81,7 +83,9 @@ EvmDeliveredHandler<Runtime, MessagesPalletInstance, BridgeConfig>
 	}
 
 	pub fn get_origin_from_message_payload_data(payload_data: Vec<u8>) -> Option<H160> {
-		if let Ok(payload) = FromThisChainMessagePayload::<BridgeConfig>::decode(&mut &payload_data[..]) {
+		if let Ok(payload) =
+			FromThisChainMessagePayload::<BridgeConfig>::decode(&mut &payload_data[..])
+		{
 			// TODO: SourceRoot?
 			let account_id = match payload.origin {
 				CallOrigin::SourceRoot => None,

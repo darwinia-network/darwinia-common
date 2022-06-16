@@ -22,11 +22,10 @@
 use core::marker::PhantomData;
 // --- crates.io ---
 use codec::Encode;
-use evm::ExitRevert;
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{PrecompileHelper, StateMutability};
 use darwinia_support::{
-	evm::IntoAccountId,
+	evm::DeriveSubstrateAddress,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
 };
 use dp_contract::{
@@ -38,7 +37,8 @@ use dp_s2s::{CallParams, CreatePayload};
 use bp_message_dispatch::CallOrigin;
 use bp_runtime::messages::DispatchFeePayment;
 use fp_evm::{
-	Context, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput, PrecompileResult,
+	Context, ExitRevert, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
+	PrecompileResult,
 };
 use frame_support::sp_runtime::SaturatedConversion;
 use sp_core::H160;
@@ -140,7 +140,7 @@ where
 		let unlock_info = S2sRemoteUnlockInfo::abi_decode(data)
 			.map_err(|_| helper.revert("Decode unlock failed"))?;
 		let payload = P::create(
-			CallOrigin::SourceAccount(T::IntoAccountId::into_account_id(caller)),
+			CallOrigin::SourceAccount(T::IntoAccountId::derive_substrate_address(caller)),
 			unlock_info.spec_version,
 			unlock_info.weight,
 			CallParams::S2sBackingPalletUnlockFromRemote(

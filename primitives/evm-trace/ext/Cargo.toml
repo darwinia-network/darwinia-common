@@ -7,18 +7,18 @@ license     = "GPL-3.0"
 name        = "dp-evm-trace-ext"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common/"
-version     = "2.8.11"
+version     = "2.8.12"
 
 [dependencies]
 # crates.io
 codec          = { package = "parity-scale-codec", version = "2.3", default-features = false }
 ethereum-types = { version = "0.12.0", default-features = false }
 # paritytech
-sp-externalities     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-sp-runtime-interface = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
-sp-std               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.2" }
+sp-externalities     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-runtime-interface = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-std               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 # frontier or moonbeam
-evm-tracing-events = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.2", default-features = false }
+evm-tracing-events = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.3", default-features = false }
 
 [features]
 default = ["std"]

@@ -14,7 +14,7 @@ use frame_support::{
 use frame_system::pallet_prelude::BlockNumberFor;
 use sp_runtime::{
 	helpers_128bit,
-	traits::{AccountIdConversion, Bounded, Convert, Saturating, Zero},
+	traits::{AccountIdConversion, AtLeast32BitUnsigned, Bounded, Convert, Saturating, Zero},
 	Perbill, Perquintill, SaturatedConversion,
 };
 use sp_staking::{offence::*, *};
@@ -22,7 +22,7 @@ use sp_std::{borrow::ToOwned, collections::btree_map::BTreeMap, prelude::*};
 // --- darwinia-network ---
 use crate::*;
 use darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo;
-use darwinia_support::traits::OnDepositRedeem;
+use darwinia_support::{balance::StakingLock, traits::OnDepositRedeem};
 
 impl<T: Config> Pallet<T> {
 	darwinia_support::impl_rpc! {
@@ -318,21 +318,31 @@ impl<T: Config> Pallet<T> {
 	/// 	This will also update the stash lock.
 	/// 	DO NOT modify the locks' staking amount outside this function.
 	pub fn update_ledger(controller: &AccountId<T>, ledger: &StakingLedgerT<T>) {
-		let StakingLedger { active, active_kton, ring_staking_lock, kton_staking_lock, .. } =
-			ledger;
+		fn update_lock<A, B, C, BN>(stash: &A, active: B, staking_lock: &StakingLock<B, BN>, at: BN)
+		where
+			B: Copy + AtLeast32BitUnsigned + Zero,
+			C: LockableCurrency<A, Balance = B>,
+			BN: Copy + PartialOrd,
+		{
+			if active.is_zero() && staking_lock.unbondings.is_empty() {
+				C::remove_lock(STAKING_ID, stash);
+			} else {
+				C::set_lock(
+					STAKING_ID,
+					stash,
+					active.saturating_add(staking_lock.total_unbond_at(at)),
+					WithdrawReasons::all(),
+				);
+			}
+		}
 
-		T::RingCurrency::set_lock(
-			STAKING_ID,
-			&ledger.stash,
-			active.saturating_add(ring_staking_lock.total_unbond()),
-			WithdrawReasons::all(),
-		);
-		T::KtonCurrency::set_lock(
-			STAKING_ID,
-			&ledger.stash,
-			active_kton.saturating_add(kton_staking_lock.total_unbond()),
-			WithdrawReasons::all(),
-		);
+		let StakingLedger {
+			stash, active, active_kton, ring_staking_lock, kton_staking_lock, ..
+		} = ledger;
+		let now = <frame_system::Pallet<T>>::block_number();
+
+		update_lock::<_, _, T::RingCurrency, _>(&stash, *active, ring_staking_lock, now);
+		update_lock::<_, _, T::KtonCurrency, _>(&stash, *active_kton, kton_staking_lock, now);
 
 		<Ledger<T>>::insert(controller, ledger);
 	}
@@ -473,6 +483,12 @@ impl<T: Config> Pallet<T> {
 				Self::start_era(start_session);
 			}
 		}
+
+		for (index, disabled) in <OffendingValidators<T>>::get() {
+			if disabled {
+				T::SessionInterface::disable_validator(index);
+			}
+		}
 	}
 
 	/// End a session potentially ending an era.
@@ -556,6 +572,9 @@ impl<T: Config> Pallet<T> {
 			<ErasValidatorReward<T>>::insert(&active_era.index, validator_payout);
 			T::RingCurrency::deposit_creating(&Self::account_id(), validator_payout);
 			T::RingRewardRemainder::on_unbalanced(T::RingCurrency::issue(rest));
+
+			// Clear offending validators.
+			<OffendingValidators<T>>::kill();
 		}
 	}
 
@@ -1532,12 +1551,9 @@ where
 ///
 /// This is needed because `Staking` sets the `ValidatorIdOf` of the `pallet_session::Config`
 pub trait SessionInterface<AccountId>: frame_system::Config {
-	/// Disable a given validator by stash ID.
-	///
-	/// Returns `true` if new era should be forced at the end of this session.
-	/// This allows preventing a situation where there is too many validators
-	/// disabled and block production stalls.
-	fn disable_validator(validator: &AccountId) -> Result<bool, ()>;
+	/// Disable the validator at the given index, returns `false` if the validator was already
+	/// disabled or the index is out of bounds.
+	fn disable_validator(validator_index: u32) -> bool;
 	/// Get the validators from session.
 	fn validators() -> Vec<AccountId>;
 	/// Prune historical session tries up to but not including the given index.
@@ -1554,8 +1570,8 @@ where
 	T::SessionManager: pallet_session::SessionManager<AccountId<T>>,
 	T::ValidatorIdOf: Convert<AccountId<T>, Option<AccountId<T>>>,
 {
-	fn disable_validator(validator: &AccountId<T>) -> Result<bool, ()> {
-		<pallet_session::Pallet<T>>::disable(validator)
+	fn disable_validator(validator_index: u32) -> bool {
+		<pallet_session::Pallet<T>>::disable_index(validator_index)
 	}
 
 	fn validators() -> Vec<AccountId<T>> {

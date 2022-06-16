@@ -16,8 +16,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+use core::cell::RefCell;
+
+use alloc::vec::Vec;
+
 use hashbrown::HashMap;
-use sp_std::{cell::RefCell, prelude::*};
 
 #[derive(Debug)]
 pub struct MemoryDB {

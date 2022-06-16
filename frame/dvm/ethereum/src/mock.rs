@@ -44,12 +44,15 @@ use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::{self as darwinia_ethereum, account_basic::*, *};
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
-use darwinia_support::evm::IntoAccountId;
+use darwinia_support::evm::DeriveSubstrateAddress;
 
 type Block = MockBlock<Test>;
 pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
 type Balance = u64;
+
+pub type EthereumTransactCall = darwinia_ethereum::Call<Test>;
+pub type TestRuntimeCall = <Test as frame_system::Config>::Call;
 
 darwinia_support::impl_test_account_data! {}
 
@@ -144,8 +147,8 @@ impl FindAuthor<H160> for FindAuthorTruncated {
 	}
 }
 pub struct HashedConverter;
-impl IntoAccountId<AccountId32> for HashedConverter {
-	fn into_account_id(address: H160) -> AccountId32 {
+impl DeriveSubstrateAddress<AccountId32> for HashedConverter {
+	fn derive_substrate_address(address: H160) -> AccountId32 {
 		let mut raw_account = [0u8; 32];
 		raw_account[0..20].copy_from_slice(&address[..]);
 		raw_account.into()
@@ -242,10 +245,7 @@ use frame_support::{
 	parameter_types,
 	weights::{RuntimeDbWeight, Weight},
 };
-use sp_runtime::{
-	testing::Header as SubstrateHeader,
-	FixedU128,
-};
+use sp_runtime::{testing::Header as SubstrateHeader, FixedU128};
 use std::{
 	collections::{BTreeMap, VecDeque},
 	ops::RangeInclusive,
@@ -317,7 +317,6 @@ pub struct TestTargetHeaderChain;
 
 impl TargetHeaderChain<TestPayload, TestRelayer> for TestTargetHeaderChain {
 	type Error = &'static str;
-
 	type MessagesDeliveryProof = ();
 
 	fn verify_message(payload: &TestPayload) -> Result<(), Self::Error> {
@@ -369,8 +368,8 @@ impl TestMessageDeliveryAndDispatchPayment {
 
 	/// Returns true if given fee has been paid by given submitter.
 	pub fn is_fee_paid(submitter: AccountId32, fee: TestMessageFee) -> bool {
-		frame_support::storage::unhashed::get(b":message-fee:") ==
-			Some((Sender::Signed(submitter), fee))
+		frame_support::storage::unhashed::get(b":message-fee:")
+			== Some((Sender::Signed(submitter), fee))
 	}
 
 	/// Returns true if given relayer has been rewarded with given balance. The reward-paid flag is
@@ -382,7 +381,7 @@ impl TestMessageDeliveryAndDispatchPayment {
 }
 
 impl MessageDeliveryAndDispatchPayment<AccountId32, TestMessageFee>
-for TestMessageDeliveryAndDispatchPayment
+	for TestMessageDeliveryAndDispatchPayment
 {
 	type Error = &'static str;
 
@@ -392,7 +391,7 @@ for TestMessageDeliveryAndDispatchPayment
 		_relayer_fund_account: &AccountId32,
 	) -> Result<(), Self::Error> {
 		if frame_support::storage::unhashed::get(b":reject-message-fee:") == Some(true) {
-			return Err(TEST_ERROR)
+			return Err(TEST_ERROR);
 		}
 
 		frame_support::storage::unhashed::put(b":message-fee:", &(submitter, fee));
@@ -415,7 +414,6 @@ pub struct TestSourceHeaderChain;
 
 impl SourceHeaderChain<TestMessageFee> for TestSourceHeaderChain {
 	type Error = &'static str;
-
 	type MessagesProof = ();
 
 	fn verify_messages_proof(
@@ -460,34 +458,27 @@ pub const fn dispatch_result(unspent_weight: Weight) -> MessageDispatchResult {
 	}
 }
 
-
-
 impl pallet_bridge_messages::Config for Test {
-	type Event = Event;
-	type WeightInfo = ();
-	type Parameter = TestMessagesParameter;
-	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
-	type MaxUnrewardedRelayerEntriesAtInboundLane = MaxUnrewardedRelayerEntriesAtInboundLane;
-	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
-
-	type OutboundPayload = TestPayload;
-	type OutboundMessageFee = TestMessageFee;
-
-	type InboundPayload = TestPayload;
-	type InboundMessageFee = TestMessageFee;
-	type InboundRelayer = TestRelayer;
-
 	type AccountIdConverter = AccountIdConverter;
-
-	type TargetHeaderChain = TestTargetHeaderChain;
-	type LaneMessageVerifier = TestLaneMessageVerifier;
-	type MessageDeliveryAndDispatchPayment = TestMessageDeliveryAndDispatchPayment;
-	type OnMessageAccepted = ();
-	type OnDeliveryConfirmed = ();
-
-	type SourceHeaderChain = TestSourceHeaderChain;
-	type MessageDispatch = TestMessageDispatch;
 	type BridgedChainId = TestBridgedChainId;
+	type Event = Event;
+	type InboundMessageFee = TestMessageFee;
+	type InboundPayload = TestPayload;
+	type InboundRelayer = TestRelayer;
+	type LaneMessageVerifier = TestLaneMessageVerifier;
+	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
+	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
+	type MaxUnrewardedRelayerEntriesAtInboundLane = MaxUnrewardedRelayerEntriesAtInboundLane;
+	type MessageDeliveryAndDispatchPayment = TestMessageDeliveryAndDispatchPayment;
+	type MessageDispatch = TestMessageDispatch;
+	type OnDeliveryConfirmed = ();
+	type OnMessageAccepted = ();
+	type OutboundMessageFee = TestMessageFee;
+	type OutboundPayload = TestPayload;
+	type Parameter = TestMessagesParameter;
+	type SourceHeaderChain = TestSourceHeaderChain;
+	type TargetHeaderChain = TestTargetHeaderChain;
+	type WeightInfo = ();
 }
 // --- pallet-bridge-messages config end ---
 

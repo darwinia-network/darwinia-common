@@ -388,6 +388,10 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxNominatorRewardedPerValidator: Get<u32>;
 
+		/// The fraction of the validator set that is safe to be offending.
+		/// After the threshold is reached a new era will be forced.
+		type OffendingValidatorsThreshold: Get<Perbill>;
+
 		/// Something that can provide a sorted list of voters in a somewhat sorted way. The
 		/// original use case for this was designed with [`pallet_bags_list::Pallet`] in mind. If
 		/// the bags-list is not desired, [`impls::UseNominatorsMap`] is likely the desired option.
@@ -821,6 +825,19 @@ pub mod pallet {
 	#[pallet::getter(fn current_planned_session)]
 	pub type CurrentPlannedSession<T> = StorageValue<_, SessionIndex, ValueQuery>;
 
+	/// Indices of validators that have offended in the active era and whether they are currently
+	/// disabled.
+	///
+	/// This value should be a superset of disabled validators since not all offences lead to the
+	/// validator being disabled (if there was no slash). This is needed to track the percentage of
+	/// validators that have offended in the current era, ensuring a new era is forced if
+	/// `OffendingValidatorsThreshold` is reached. The vec is always kept sorted so that we can find
+	/// whether a given validator has previously offended using binary search. It gets cleared when
+	/// the era ends.
+	#[pallet::storage]
+	#[pallet::getter(fn offending_validators)]
+	pub type OffendingValidators<T: Config> = StorageValue<_, Vec<(u32, bool)>, ValueQuery>;
+
 	/// True if network has been upgraded to this version.
 	/// Storage version of the pallet.
 	///
@@ -1117,14 +1134,15 @@ pub mod pallet {
 			let controller = Self::bonded(&stash).ok_or(<Error<T>>::NotStash)?;
 			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
 			let promise_month = promise_month.min(36);
+			let now = <frame_system::Pallet<T>>::block_number();
 
 			match max_additional {
 				StakingBalance::RingBalance(max_additional) => {
 					let stash_balance = T::RingCurrency::free_balance(&stash);
 
-					if let Some(extra) = stash_balance
-						.checked_sub(&(ledger.active + ledger.ring_staking_lock.total_unbond()))
-					{
+					if let Some(extra) = stash_balance.checked_sub(
+						&(ledger.active + ledger.ring_staking_lock.total_unbond_at(now)),
+					) {
 						let extra = extra.min(max_additional);
 						let (start_time, expire_time) =
 							Self::bond_ring(&stash, &controller, extra, promise_month, ledger)?;
@@ -1141,7 +1159,7 @@ pub mod pallet {
 					let stash_balance = T::KtonCurrency::free_balance(&stash);
 
 					if let Some(extra) = stash_balance.checked_sub(
-						&(ledger.active_kton + ledger.kton_staking_lock.total_unbond()),
+						&(ledger.active_kton + ledger.kton_staking_lock.total_unbond_at(now)),
 					) {
 						let extra = extra.min(max_additional);
 
@@ -1237,6 +1255,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::unbond())]
 		pub fn unbond(origin: OriginFor<T>, value: StakingBalanceT<T>) -> DispatchResult {
 			let controller = ensure_signed(origin)?;
+			// TODO: Simplify the unbond logic, do not clear the mature deposit here.
 			let mut ledger = Self::clear_mature_deposits(
 				Self::ledger(&controller).ok_or(<Error<T>>::NotController)?,
 			)
@@ -1425,9 +1444,10 @@ pub mod pallet {
 			} = &ledger;
 
 			let post_info_weight = if ring_staking_lock.unbondings.is_empty()
-				&& active < &T::RingCurrency::minimum_balance()
+			    // Some chains' ED might be 0.
+				&& (active < &T::RingCurrency::minimum_balance() || active.is_zero())
 				&& kton_staking_lock.unbondings.is_empty()
-				&& active_kton < &T::KtonCurrency::minimum_balance()
+				&& (active_kton < &T::KtonCurrency::minimum_balance() || active_kton.is_zero())
 			{
 				// This account must have called `unbond()` with some value that caused the active
 				// portion to fall below existential deposit + will have no more unlocking chunks

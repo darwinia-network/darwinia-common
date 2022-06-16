@@ -23,6 +23,9 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 }
 
 fn migrate() -> Weight {
-	// RuntimeBlockWeights::get().max_block
-	0
+	migration::remove_storage_prefix(b"DarwiniaClaims", b"ClaimsFromEth", &[]);
+	migration::remove_storage_prefix(b"DarwiniaClaims", b"ClaimsFromTron", &[]);
+
+	RuntimeBlockWeights::get().max_block
+	// 0
 }

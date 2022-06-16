@@ -50,7 +50,7 @@ use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 use darwinia_evm_precompile_dispatch::Dispatch;
 use darwinia_evm_precompile_utils::test_helper::{address_build, AccountInfo};
 use darwinia_support::{
-	evm::IntoAccountId,
+	evm::DeriveSubstrateAddress,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
 };
 
@@ -152,8 +152,8 @@ impl FeeCalculator for FixedGasPrice {
 }
 
 pub struct HashedConverter;
-impl IntoAccountId<AccountId32> for HashedConverter {
-	fn into_account_id(address: H160) -> AccountId32 {
+impl DeriveSubstrateAddress<AccountId32> for HashedConverter {
+	fn derive_substrate_address(address: H160) -> AccountId32 {
 		let mut data = [0u8; 32];
 		data[0..20].copy_from_slice(&address[..]);
 		AccountId32::from(Into::<[u8; 32]>::into(data))
@@ -283,13 +283,31 @@ impl ToEthAddress<AccountId32> for TruncateToEthAddress {
 	}
 }
 
+pub struct MockOutboundMessager;
+impl OutboundMessager<AccountId32> for MockOutboundMessager {
+	fn check_lane_id(lane_id: &LaneId) -> bool {
+		return *lane_id == MessageLaneId::get();
+	}
+
+	fn get_valid_message_sender(_nonce: MessageNonce) -> Result<AccountId32, &'static str> {
+		let mapping_token_factory_address: H160 =
+			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
+
+		let mut account = [0u8; 32];
+
+		account[..20].copy_from_slice(&mapping_token_factory_address.as_bytes()[..]);
+
+		return Ok(account.into());
+	}
+}
+
 impl Config for Test {
 	type BackingChainName = PangoroName;
 	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangoroChainId;
 	type Event = ();
 	type InternalTransactHandler = Ethereum;
-	type MessageLaneId = MessageLaneId;
+	type OutboundMessager = MockOutboundMessager;
 	type PalletId = S2sRelayPalletId;
 	type RingCurrency = Ring;
 	type ToEthAddressT = TruncateToEthAddress;

@@ -199,7 +199,7 @@ pub fn new_full(
 		fee_history_cache: fee_history_cache.clone(),
 		overrides: overrides.clone(),
 	}
-	.spawn_task();
+	.spawn_task("Template");
 	let role = config.role.clone();
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let is_authority = config.role.is_authority();

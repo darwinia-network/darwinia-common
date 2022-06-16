@@ -20,9 +20,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+mod evm_delivered_handler;
 /// Implementations of some helper traits passed into runtime modules as associated types.
 pub mod impls;
-mod evm_delivered_handler;
 pub use evm_delivered_handler::EvmDeliveredHandler;
 
 pub use impls::*;

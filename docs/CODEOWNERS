@@ -19,48 +19,34 @@
 #   an email.
 # - The latest matching rule, if multiple, takes precedence.
 
-/node/cli/ @AurevoirXavier
-/node/primitives/ @AurevoirXavier
-/node/rpc/ @AurevoirXavier
-/node/runtime/pangolin/ @AsceticBear @AurevoirXavier
-/node/runtime/pangoro/ @AurevoirXavier
-/node/service/ @AurevoirXavier
-
-/client/dvm/ @AsceticBear
-
 /frame/balances/ @AurevoirXavier @HackFisher
 /frame/balances/rpc/ @AurevoirXavier
 /frame/balances/rpc/runtime-api/ @AurevoirXavier
-/frame/bridge/ethereum/backing/ @AurevoirXavier @HackFisher
-/frame/bridge/ethereum/issuing/ @xiaoch05
-/frame/bridge/ethereum/relay/ @AurevoirXavier @HackFisher
+/frame/beefy-gadget/ @AurevoirXavier
+/frame/bridge/bsc/ @AurevoirXavier @xiaoch05
+/frame/bridge/ethereum/ @AurevoirXavier @HackFisher
 /frame/bridge/relay-authorities/ @AurevoirXavier
 /frame/bridge/relayer-game/ @AurevoirXavier
-/frame/bridge/tron/backing/ @AurevoirXavier @HackFisher
-/frame/claims/ @AurevoirXavier @HackFisher
-/frame/democracy/ @AurevoirXavier
-/frame/dvm/ @AsceticBear @AurevoirXavier @HackFisher
-/frame/dvm/rpc/ @AsceticBear @AurevoirXavier
-/frame/dvm/rpc/runtime-api/ @AsceticBear @AurevoirXavier
-/frame/dvm-dynamic-fee/ @AsceticBear @AurevoirXavier @HackFisher
-/frame/elections-phragmen/ @AurevoirXavier
-/frame/evm/ @AsceticBear @HackFisher
-/frame/evm/precompile/ @AsceticBear @HackFisher @xiaoch05
-/frame/fee-market/ @AsceticBear @HackFisher
-/frame/fee-market/rpc/ @AsceticBear
-/frame/fee-market/rpc/runtime-api/ @AsceticBear
+/frame/dvm/ethereum/ @AsceticBear
+/frame/dvm/evm/ @AsceticBear
 /frame/header-mmr/ @AurevoirXavier @HackFisher
 /frame/staking/ @AurevoirXavier @HackFisher
 /frame/staking/rpc/ @AurevoirXavier
 /frame/staking/rpc/runtime-api/ @AurevoirXavier
 /frame/support/ @AurevoirXavier @HackFisher
-/frame/vesting/ @AurevoirXavier
+/frame/transaction-pause/ @AurevoirXavier @HackFisher
+/frame/backing/*/ @xiaoch05
+/frame/issuing/*/ @xiaoch05
 
-/primitives/consensus/ @AsceticBear
-/primitives/ethereum/ @AurevoirXavier @HackFisher
-/primitives/evm/ @AsceticBear
-/primitives/fee-market/ @AsceticBear
-/primitives/merkle-patricia-trie/ @AurevoirXavier @HackFisher
+/node/*/ @AurevoirXavier
+/node/*/*/ @AurevoirXavier
+
+/primitives/asset/ @xiaoch05
+/primitives/beefy/ @AurevoirXavier
+/primitives/bsc/ @xiaoch05
+/primitives/contract/ @AsceticBear @xiaoch05
+/primitives/ethereum/ @AsceticBear
+/primitives/evm-trace/ @AsceticBear
+/primitives/merkle-patricia-trie/ @AurevoirXavier
 /primitives/relay/ @AurevoirXavier
-/primitives/rpc/ @AsceticBear
-/primitives/storage/ @AsceticBear
+/primitives/s2s/ @AsceticBear @xiaoch05

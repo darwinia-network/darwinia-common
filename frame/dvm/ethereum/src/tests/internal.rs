@@ -22,9 +22,11 @@ use fp_evm::{ExitReason, ExitSucceed};
 use std::str::FromStr;
 // --- darwinia-network ---
 use super::*;
-use crate::{Config, InternalTransactHandler};
+use crate::{tests, Config, InternalTransactHandler};
 use darwinia_evm::AccountBasic;
-use darwinia_support::evm::IntoH160;
+use darwinia_support::evm::DeriveEthereumAddress;
+// --- paritytech ---
+use sp_runtime::DispatchError;
 
 fn legacy_root_unsigned_transaction() -> LegacyUnsignedTransaction {
 	LegacyUnsignedTransaction {
@@ -127,7 +129,7 @@ fn read_only_call_should_works() {
 			]
 		);
 		// Check nonce
-		let source = <Test as Config>::PalletId::get().into_h160();
+		let source = <Test as Config>::PalletId::get().derive_ethereum_address();
 		assert_eq!(RingAccount::account_basic(&source).nonce, U256::from(0));
 	});
 }
@@ -185,11 +187,32 @@ fn internal_transact_dispatch_error() {
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 		let contract_address = contract_address(alice.address, 0);
 		let mock_foo: Vec<u8> = hex2bytes_unchecked("00000000");
-		let source = <Test as self::Config>::PalletId::get().into_h160();
+		let source = <Test as self::Config>::PalletId::get().derive_ethereum_address();
 
 		// Call foo use internal transaction
 		assert_err!(
 			Ethereum::internal_transact(contract_address, mock_foo),
+			<Error<Test>>::InternalTransactionRevertError
+		);
+		assert_eq!(RingAccount::account_basic(&source).nonce, U256::from(1));
+	});
+}
+
+#[test]
+fn internal_transact_revert_error() {
+	let (pairs, mut ext) = new_test_ext(1);
+	let alice = &pairs[0];
+
+	ext.execute_with(|| {
+		let t = legacy_root_unsigned_transaction().sign(&alice.private_key);
+		// Deploy contract
+		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
+		let contract_address = contract_address(alice.address, 0);
+		let bar: Vec<u8> = hex2bytes_unchecked("febb0f7e");
+		let source = <Test as self::Config>::PalletId::get().derive_ethereum_address();
+		// Call bar use internal transaction
+		assert_err!(
+			Ethereum::internal_transact(contract_address, bar),
 			<Error<Test>>::InternalTransactionRevertError
 		);
 		assert_eq!(RingAccount::account_basic(&source).nonce, U256::from(1));
@@ -207,7 +230,7 @@ fn internal_transaction_nonce_increase() {
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 		let contract_address = contract_address(alice.address, 0);
 		let foo: Vec<u8> = hex2bytes_unchecked("c2985578");
-		let source = <Test as self::Config>::PalletId::get().into_h160();
+		let source = <Test as self::Config>::PalletId::get().derive_ethereum_address();
 
 		// Call foo use internal transaction
 		assert_ok!(Ethereum::internal_transact(contract_address, foo.clone()));
@@ -232,9 +255,8 @@ fn internal_transaction_should_works() {
 
 		// Call foo use internal transaction
 		assert_ok!(Ethereum::internal_transact(contract_address, foo.clone()));
-		assert_eq!(System::event_count(), 2);
 		System::assert_last_event(Event::Ethereum(crate::Event::Executed(
-			<Test as self::Config>::PalletId::get().into_h160(),
+			<Test as self::Config>::PalletId::get().derive_ethereum_address(),
 			contract_address,
 			H256::from_str("0xabdebc2d8a79e4c40d6d66c614bafc2be138d4fc0fd21e28d318f3a032cbee39")
 				.unwrap(),
@@ -242,9 +264,8 @@ fn internal_transaction_should_works() {
 		)));
 
 		assert_ok!(Ethereum::internal_transact(contract_address, foo));
-		assert_eq!(System::event_count(), 3);
 		System::assert_last_event(Event::Ethereum(crate::Event::Executed(
-			<Test as self::Config>::PalletId::get().into_h160(),
+			<Test as self::Config>::PalletId::get().derive_ethereum_address(),
 			contract_address,
 			H256::from_str("0x2028ce5eef8d4531d4f955c9860b28f9e8cd596b17fea2326d2be49a8d3dc7ac")
 				.unwrap(),
@@ -258,8 +279,28 @@ fn test_pallet_id_to_dvm_address() {
 	let (_, mut ext) = new_test_ext(1);
 	ext.execute_with(|| {
 		assert_eq!(
-			<Test as self::Config>::PalletId::get().into_h160(),
+			<Test as self::Config>::PalletId::get().derive_ethereum_address(),
 			H160::from_str("0x6d6f646c6461722f64766d700000000000000000").unwrap()
 		)
 	})
+}
+
+#[test]
+fn transact_call_dispatch_should_be_validated() {
+	use frame_support::dispatch::Dispatchable;
+	let (pairs, mut ext) = new_test_ext(1);
+	let alice = &pairs[0];
+
+	ext.execute_with(|| {
+		let mut transaction = tests::legacy::legacy_erc20_creation_unsigned_transaction();
+		transaction.nonce = U256::from(1);
+		let signed = transaction.sign(&alice.private_key);
+
+		let call =
+			TestRuntimeCall::Ethereum(EthereumTransactCall::transact { transaction: signed });
+		assert_err!(
+			call.dispatch(RawOrigin::EthereumTransaction(alice.address).into()),
+			DispatchError::Module { index: 4, error: 5, message: Some("InvalidNonce") }
+		);
+	});
 }
