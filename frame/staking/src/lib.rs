@@ -1552,7 +1552,7 @@ pub mod pallet {
 						))
 					.max(1u32.into()) * 3u32.into();
 				// Can only pay the penalty from usable balance.
-				// Not allow to use bonded kton to pay the penalty.
+				// Not allow to use bonded KTON to pay the penalty.
 				let new_kton_balance =
 					T::KtonCurrency::free_balance(stash).saturating_sub(kton_penalty);
 

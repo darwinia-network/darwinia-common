@@ -23,7 +23,7 @@ use crate::{
 	mock::{mock_relay::*, BlockNumber, *},
 	*,
 };
-use darwinia_support::balance::*;
+use darwinia_balances::{BalanceLock, Reasons};
 
 // #[test]
 // fn events_should_work() {
@@ -402,8 +402,8 @@ fn slash_and_reward_should_work() {
 			let round_index = relay_header_parcels_a.len() as _;
 			let mut stake = estimate_stake;
 
-			assert_eq!(Ring::usable_balance(&relayer_a), 1000);
-			assert_eq!(Ring::usable_balance(&relayer_b), 2000);
+			assert_eq!(usable_balance(&relayer_a), 1000);
+			assert_eq!(usable_balance(&relayer_b), 2000);
 
 			assert_ok!(RelayerGame::affirm(
 				&relayer_a,
@@ -437,10 +437,10 @@ fn slash_and_reward_should_work() {
 				stake += estimate_stake;
 			}
 
-			assert_eq!(Ring::usable_balance(&relayer_a), 1000 + stake);
+			assert_eq!(usable_balance(&relayer_a), 1000 + stake);
 			assert!(Ring::locks(relayer_a).is_empty());
 
-			assert_eq!(Ring::usable_balance(&relayer_b), 2000 - stake);
+			assert_eq!(usable_balance(&relayer_b), 2000 - stake);
 			assert!(Ring::locks(relayer_b).is_empty());
 		});
 	}
@@ -453,7 +453,7 @@ fn settle_without_challenge_should_work() {
 			MockRelayHeader::gen_continuous(1, vec![1, 1, 1, 1, 1], true).into_iter().rev().zip(1..)
 		{
 			assert_ok!(RelayerGame::affirm(&1, relay_header_parcel.clone(), None));
-			assert!(Ring::usable_balance(&1) < 100);
+			assert!(usable_balance(&1) < 100);
 			assert!(!Ring::locks(1).is_empty());
 
 			run_to_block(7 * i);
@@ -462,7 +462,7 @@ fn settle_without_challenge_should_work() {
 				Relay::confirmed_header_of(relay_header_parcel.number),
 				Some(relay_header_parcel)
 			);
-			assert_eq!(Ring::usable_balance(&1), 100);
+			assert_eq!(usable_balance(&1), 100);
 			assert!(Ring::locks(1).is_empty());
 		}
 	})
@@ -532,8 +532,8 @@ fn settle_abandon_should_work() {
 		let game_id = relay_header_parcels_a.len() as _;
 		let round_index = relay_header_parcels_a.len() as u32 - 1;
 
-		assert_eq!(Ring::usable_balance(&relayer_a), 100);
-		assert_eq!(Ring::usable_balance(&relayer_b), 200);
+		assert_eq!(usable_balance(&relayer_a), 100);
+		assert_eq!(usable_balance(&relayer_b), 200);
 
 		assert_ok!(RelayerGame::affirm(&relayer_a, relay_header_parcels_a[0].clone(), Some(())));
 		assert_ok!(RelayerGame::dispute_and_affirm(
@@ -563,10 +563,10 @@ fn settle_abandon_should_work() {
 
 		run_to_block(challenge_time() * 5 + 1);
 
-		assert_eq!(Ring::usable_balance(&relayer_a), 100 - 4);
+		assert_eq!(usable_balance(&relayer_a), 100 - 4);
 		assert!(Ring::locks(relayer_a).is_empty());
 
-		assert_eq!(Ring::usable_balance(&relayer_b), 200 - 4);
+		assert_eq!(usable_balance(&relayer_b), 200 - 4);
 		assert!(Ring::locks(relayer_b).is_empty());
 	});
 }
@@ -626,8 +626,8 @@ fn no_honesty_should_work() {
 		let game_id = relay_header_parcels_a.len() as _;
 		let round_index = relay_header_parcels_a.len() as _;
 
-		assert_eq!(Ring::usable_balance(&relayer_a), 100);
-		assert_eq!(Ring::usable_balance(&relayer_b), 200);
+		assert_eq!(usable_balance(&relayer_a), 100);
+		assert_eq!(usable_balance(&relayer_b), 200);
 
 		assert_ok!(RelayerGame::affirm(&relayer_a, relay_header_parcels_a[0].clone(), Some(())));
 		assert_ok!(RelayerGame::dispute_and_affirm(
@@ -655,10 +655,10 @@ fn no_honesty_should_work() {
 			run_to_block(challenge_time() * (i as BlockNumber + 1) + 1);
 		}
 
-		assert_eq!(Ring::usable_balance(&relayer_a), 100 - 5);
+		assert_eq!(usable_balance(&relayer_a), 100 - 5);
 		assert!(Ring::locks(relayer_a).is_empty());
 
-		assert_eq!(Ring::usable_balance(&relayer_b), 200 - 5);
+		assert_eq!(usable_balance(&relayer_b), 200 - 5);
 		assert!(Ring::locks(relayer_b).is_empty());
 	});
 }

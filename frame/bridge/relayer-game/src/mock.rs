@@ -433,3 +433,7 @@ pub fn println_game(game_id: MockRelayBlockNumber) {
 		<RelayerGame as Store>::Affirmations::iter_prefix_values(game_id).collect::<Vec<_>>()
 	);
 }
+
+pub fn usable_balance(who: &AccountId) -> Balance {
+	Ring::account(who).free.saturating_sub(Ring::frozen_balance(who).frozen_for(Reasons::Misc))
+}
