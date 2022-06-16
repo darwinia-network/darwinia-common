@@ -39,17 +39,15 @@ fp-self-contained = { default-features = false, git = "https://github.com/darwin
 fp-storage        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
 pallet-evm        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
 
-
 [dev-dependencies]
 # crates.io
 array-bytes  = { version = "1.5" }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 # darwinia-network
-# bp-runtime             = { git = "https://github.com/darwinia-network/darwinia-bridges-substrate", branch = "darwinia-v0.12.3" }
+bp-message-dispatch    = { git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.3" }
+bp-runtime             = { git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.3" }
 darwinia-balances      = { path = "../../balances" }
-bp-message-dispatch    = { path = "/home/bear/working/darwinia/darwinia-messages-substrate/primitives/message-dispatch" }
-pallet-bridge-dispatch = { path = "/home/bear/working/darwinia/darwinia-messages-substrate/modules/dispatch" }
-bp-runtime = { path = "/home/bear/working/darwinia/darwinia-messages-substrate/primitives/runtime" }
+pallet-bridge-dispatch = { git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.3" }
 # frontier
 pallet-evm-precompile-simple = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
 

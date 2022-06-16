@@ -7,7 +7,7 @@ use frame_support::traits::OriginTrait;
 use sp_runtime::transaction_validity::{InvalidTransaction, TransactionValidityError};
 // --- darwinia-network ---
 use crate::*;
-use bp_message_dispatch::{IntoDispatchOrigin as IntoDispatchOriginT, CallValidate};
+use bp_message_dispatch::{CallValidate, IntoDispatchOrigin as IntoDispatchOriginT};
 use bp_messages::{LaneId, MessageNonce};
 use darwinia_ethereum::{RawOrigin, Transaction};
 use darwinia_evm::AccountBasic;
@@ -73,10 +73,10 @@ impl Config<WithPangoroDispatch> for Runtime {
 	type AccountIdConverter = bp_pangolin::AccountIdConverter;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
+	type CallValidator = CallValidator;
 	type EncodedCall = bm_pangoro::FromPangoroEncodedCall;
 	type Event = Event;
 	type IntoDispatchOrigin = IntoDispatchOrigin;
-	type CallValidator = CallValidator;
 	type SourceChainAccountId = bp_pangoro::AccountId;
 	type TargetChainAccountPublic = bp_pangolin::AccountPublic;
 	type TargetChainSignature = bp_pangolin::Signature;
@@ -85,10 +85,10 @@ impl Config<WithPangolinParachainDispatch> for Runtime {
 	type AccountIdConverter = bp_pangolin::AccountIdConverter;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
+	type CallValidator = CallValidator;
 	type EncodedCall = bm_pangolin_parachain::FromPangolinParachainEncodedCall;
 	type Event = Event;
 	type IntoDispatchOrigin = IntoDispatchOrigin;
-	type CallValidator = CallValidator;
 	type SourceChainAccountId = bp_pangolin_parachain::AccountId;
 	type TargetChainAccountPublic = bp_pangolin::AccountPublic;
 	type TargetChainSignature = bp_pangolin::Signature;
