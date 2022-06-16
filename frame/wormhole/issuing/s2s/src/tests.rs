@@ -149,15 +149,6 @@ fn register_and_issue_from_remote_success() {
         let approve_mtf = hex2bytes_unchecked("0x095ea7b300000000000000000000000032dcab0ef3fb2de2fce1d2e0799d36239671f04a0fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         alice_call(&alice, approve_mtf, 6, mapping_token, 0);
 
-        // let balance_of_factory = hex2bytes_unchecked("0x70a0823100000000000000000000000032dcab0ef3fb2de2fce1d2e0799d36239671f04a");
-        //
-        // let balance_factory_before = Ethereum::read_only_call(mapping_token, balance_of_factory.clone()).unwrap();
-        //
-        // assert_eq!(
-        //     U256::from_big_endian(balance_factory_before.as_slice()),
-        //     U256::from(9_999_990_000u128)
-        // );
-
         // burnAndRemoteUnlockWaitingConfirm(
         //     1,
         //     1,
@@ -174,12 +165,9 @@ fn register_and_issue_from_remote_success() {
             U256::from(9_999_990_000u128)
             );
 
-        // let balance_factory_after = Ethereum::read_only_call(mapping_token, balance_of_factory).unwrap();
-        //
-        // assert_eq!(
-        //     U256::from_big_endian(balance_factory_after.as_slice()),
-        //     U256::from(9_999_990_000u128)
-        // );
+
+        // let balance_of_factory = hex2bytes_unchecked("0x70a0823100000000000000000000000032dcab0ef3fb2de2fce1d2e0799d36239671f04a");
+        // TODO: add test for call back
     });
 }
 
