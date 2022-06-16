@@ -79,8 +79,8 @@ pub use transaction_pause::*;
 pub mod to_substrate_backing_;
 pub use to_substrate_backing_::*;
 
-pub mod evm_;
-pub use evm_::*;
+pub mod evm;
+pub use evm::*;
 
 pub mod ethereum;
 pub use ethereum::*;

@@ -10,7 +10,7 @@
 //
 // Darwinia is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -26,12 +26,11 @@ pub use ethabi::StateMutability;
 
 // --- crates.io ---
 use ethabi::{Function, Param, ParamType, Token};
-use evm::ExitRevert;
 // --- darwinia-network ---
 use darwinia_evm::GasWeightMapping;
 use darwinia_support::evm::SELECTOR;
 // --- paritytech ---
-use fp_evm::{Context, ExitError, PrecompileFailure};
+use fp_evm::{Context, ExitError, ExitRevert, PrecompileFailure};
 use frame_support::traits::Get;
 use sp_core::U256;
 use sp_std::{borrow::ToOwned, marker::PhantomData, vec};

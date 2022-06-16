@@ -20,11 +20,10 @@
 
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
-use evm::ExitRevert;
 use scale_info::TypeInfo;
 // --- paritytech ---
 use darwinia_ethereum::{EthereumBlockHashMapping, RawOrigin};
-use fp_evm::{Context, Precompile, PrecompileFailure, PrecompileResult, PrecompileSet};
+use fp_evm::{Context, ExitRevert, Precompile, PrecompileFailure, PrecompileResult, PrecompileSet};
 use frame_support::{
 	pallet_prelude::Weight,
 	traits::{Everything, FindAuthor, GenesisBuild},
