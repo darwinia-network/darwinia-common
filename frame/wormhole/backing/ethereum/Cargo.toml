@@ -36,8 +36,8 @@ darwinia-balances         = { path = "../../../balances" }
 darwinia-bridge-ethereum  = { path = "../../../bridge/ethereum" }
 darwinia-relay-primitives = { path = "../../../../primitives/relay" }
 darwinia-relayer-game     = { path = "../../../bridge/relayer-game" }
-darwinia-support          = { features = ["testing"], path = "../../../support" }
 darwinia-staking          = { path = "../../../../frame/staking" }
+darwinia-support          = { features = ["testing"], path = "../../../support" }
 ethereum-primitives       = { features = ["full-serde"], path = "../../../../primitives/ethereum" }
 # paritytech
 frame-election-provider-support = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }

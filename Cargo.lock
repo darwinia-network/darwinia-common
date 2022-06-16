@@ -3127,7 +3127,6 @@ dependencies = [
  "ethereum",
  "ethereum-primitives",
  "ethereum-types",
- "evm",
  "fp-evm",
  "fp-self-contained",
  "frame-benchmarking",
