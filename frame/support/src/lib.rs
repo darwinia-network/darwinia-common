@@ -38,7 +38,7 @@ pub mod s2s {
 	// --- crates.io ---
 	use codec::Encode;
 	// --- darwinia-network ---
-	use ethereum_primitives::{H160, H256};
+	use ethereum_primitives::H256;
 	// --- paritytech ---
 	use bp_messages::{LaneId, MessageNonce};
 	use bp_runtime::{derive_account_id, ChainId, SourceAccount};
@@ -48,10 +48,6 @@ pub mod s2s {
 		DispatchError,
 	};
 	use sp_std::{cmp::PartialEq, vec::Vec};
-
-	pub trait ToEthAddress<A> {
-		fn into_ethereum_id(address: &A) -> H160;
-	}
 
 	// RelayMessageSender send message to pallet-messages
 	pub trait RelayMessageSender {

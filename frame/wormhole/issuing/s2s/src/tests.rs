@@ -21,9 +21,7 @@ use std::str::FromStr;
 // --- crates.io ---
 use array_bytes::{hex2bytes_unchecked, hex_into_unchecked};
 // --- darwinia-network ---
-use crate::{
-	*, {self as s2s_issuing},
-};
+use crate::*;
 use darwinia_evm_precompile_utils::test_helper::{AccountInfo, LegacyUnsignedTransaction};
 use dp_asset::{TokenMetadata, NATIVE_TOKEN_TYPE};
 use mock::*;
@@ -101,9 +99,7 @@ fn register_and_issue_from_remote_success() {
             );
         let drived_remote_backing_account: AccountId32 =
             hex_into_unchecked("77c1308128b230173f735cb97d6c62e5d8eeb86b148ff8461835c836945b1d84");
-        let backing_address = <Test as s2s_issuing::Config>::ToEthAddressT::into_ethereum_id(
-            &drived_remote_backing_account,
-            );
+        let backing_address = drived_remote_backing_account.derive_ethereum_address();
 
         assert_ok!(S2sIssuing::set_remote_backing_account(
                 RawOrigin::Root.into(),
@@ -168,5 +164,19 @@ fn register_and_issue_from_remote_success() {
             U256::from_big_endian(balance_after.as_slice()),
             U256::from(9_999_990_000u128)
             );
+
+
+        // let balance_of_factory = hex2bytes_unchecked("0x70a0823100000000000000000000000032dcab0ef3fb2de2fce1d2e0799d36239671f04a");
+        // TODO: add test for call back
+    });
+}
+
+#[test]
+fn test_judge_self_message() {
+    let (_, mut ext) = new_test_ext(1);
+    ext.execute_with(|| {
+        use crate::Pallet as S2sIssuing;
+        assert_ok!(<S2sIssuing<Test>>::set_mapping_factory_address(RawOrigin::Root.into(), H160::from_str("32dcab0ef3fb2de2fce1d2e0799d36239671f04a").unwrap()));
+        assert_ok!(<S2sIssuing<Test>>::judge_self_message(0));
     });
 }
