@@ -67,10 +67,6 @@ macro_rules! impl_account_data {
 			fn total(&self) -> $btype {
 				self.free.saturating_add(self.reserved)
 			}
-
-			fn usable(&self, reasons: Reasons, frozen_balance: FrozenBalance<$btype>) -> $btype {
-				self.free.saturating_sub(frozen_balance.frozen_for(reasons))
-			}
 		}
 
 		impl BalanceInfo<$btype, $kton_instance> for AccountData<$btype> {
@@ -81,10 +77,6 @@ macro_rules! impl_account_data {
 			fn set_reserved(&mut self, new_reserved_kton: $btype) { self.reserved_kton = new_reserved_kton; }
 
 			fn total(&self) -> $btype { self.free_kton.saturating_add(self.reserved_kton) }
-
-			fn usable(&self, reasons: Reasons, frozen_balance: FrozenBalance<$btype>) -> $btype {
-				self.free_kton.saturating_sub(frozen_balance.frozen_for(reasons))
-			}
 		}
 	};
 }

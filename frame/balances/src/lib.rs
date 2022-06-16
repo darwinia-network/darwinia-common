@@ -997,16 +997,8 @@ pub mod pallet {
 			Self::account(who.borrow()).free()
 		}
 
-		/// Get the balance of an account that can be used for transfers, reservations, or any other
-		/// non-locking, non-transaction-fee activity. Will be at most `free_balance`.
-		pub fn usable_balance(who: &T::AccountId) -> T::Balance {
-			let account = Self::account(who);
-
-			account.usable(Reasons::Misc, Self::frozen_balance(who))
-		}
-
 		/// Get the frozen balance of an account.
-		fn frozen_balance(who: impl Borrow<T::AccountId>) -> FrozenBalance<T::Balance> {
+		pub fn frozen_balance(who: impl Borrow<T::AccountId>) -> FrozenBalance<T::Balance> {
 			let mut frozen_balance = <FrozenBalance<T::Balance>>::zero();
 			for lock in Self::locks(who.borrow()).iter() {
 				let locked_amount = lock.amount;
@@ -1029,7 +1021,7 @@ pub mod pallet {
 		}
 
 		/// Get both the free and reserved balances of an account.
-		fn account(who: &T::AccountId) -> T::BalanceInfo {
+		pub fn account(who: &T::AccountId) -> T::BalanceInfo {
 			T::AccountStore::get(&who)
 		}
 
@@ -2192,9 +2184,6 @@ pub mod pallet {
 		/// The total balance in this account including any that is reserved and ignoring any
 		/// frozen.
 		fn total(&self) -> Balance;
-
-		/// How much this account's balance can be reduced for the given `reasons`.
-		fn usable(&self, reasons: Reasons, frozen_balance: FrozenBalance<Balance>) -> Balance;
 	}
 
 	// A value placed in storage that represents the current version of the Balances storage.
