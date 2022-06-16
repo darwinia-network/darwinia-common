@@ -81,7 +81,6 @@ pub mod pallet {
 	use sp_std::prelude::*;
 	// --- darwinia-network ---
 	use crate::{primitives::*, weights::WeightInfo};
-	use darwinia_header_mmr_rpc_runtime_api::{Proof, RuntimeDispatchInfo};
 	use darwinia_relay_primitives::MMR as MMRT;
 
 	/// The prefix of [`MerkleMountainRangeRootLog`]
@@ -131,30 +130,6 @@ pub mod pallet {
 		}
 	}
 	impl<T: Config> Pallet<T> {
-		darwinia_support::impl_rpc! {
-			pub fn gen_proof_rpc(
-				block_number_of_member_leaf: NodeIndex,
-				block_number_of_last_leaf: NodeIndex,
-			) -> RuntimeDispatchInfo<T::Hash> {
-				if block_number_of_member_leaf <= block_number_of_last_leaf {
-					let mmr_size = mmr::leaf_index_to_mmr_size(block_number_of_last_leaf);
-
-					if mmr_size <= <MmrSize<T>>::get() {
-						let mmr = <Mmr<OffchainStorage, T>>::with_size(mmr_size);
-
-						if let Ok(merkle_proof) = mmr.gen_proof(block_number_of_member_leaf) {
-							return RuntimeDispatchInfo {
-								mmr_size,
-								proof: Proof(merkle_proof.proof_items().to_vec()),
-							};
-						}
-					}
-				}
-
-				Default::default()
-			}
-		}
-
 		pub fn offchain_key(position: NodeIndex) -> Vec<u8> {
 			(T::INDEXING_PREFIX, position).encode()
 		}

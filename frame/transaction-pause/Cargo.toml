@@ -5,27 +5,35 @@ name    = "module-transaction-pause"
 version = "2.8.12"
 
 [dependencies]
+# crates.io
 codec         = { package = "parity-scale-codec", version = "2.3", default-features = false }
+scale-info    = { version = "1.0", default-features = false, features = ["derive"] }
+# paritytech
 frame-support = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.3" }
 frame-system  = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.3" }
-scale-info    = { version = "1.0", default-features = false, features = ["derive"] }
 sp-runtime    = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.3" }
 sp-std        = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.3" }
 
 [dev-dependencies]
+# darwinia-network
 darwinia-balances = { path = "../balances" }
-darwinia-support  = { path = "../support" }
+darwinia-support  = { features = ["testing"], path = "../support" }
+# paritytech
 sp-core           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 sp-io             = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 
 [features]
 default = ["std"]
+
 std = [
+	# crates.io
 	"codec/std",
 	"scale-info/std",
+	# paritytech
 	"sp-runtime/std",
 	"frame-support/std",
 	"frame-system/std",
 	"sp-std/std",
 ]
+
 try-runtime = ["frame-support/try-runtime"]
