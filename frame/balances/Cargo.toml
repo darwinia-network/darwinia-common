@@ -26,6 +26,8 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 pallet-transaction-payment = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 sp-core                    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 sp-io                      = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+# darwinia-network
+darwinia-support = { features = ["testing"], path = "../support" }
 
 [features]
 default = ["std"]
