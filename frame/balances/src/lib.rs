@@ -78,7 +78,7 @@
 //! fungible assets system.
 //! - [`ReservableCurrency`](frame_support::traits::ReservableCurrency):
 //! Functions for dealing with assets that can be reserved from an account.
-//! - [`LockableCurrency`](darwinia_support::traits::LockableCurrency): Functions for
+//! - [`LockableCurrency`](frame_support::traits::LockableCurrency): Functions for
 //! dealing with accounts that allow liquidity restrictions.
 //! - [`Imbalance`](frame_support::traits::Imbalance): Functions for handling
 //! imbalances between total issuance in the system and account balances. Must be used when a
@@ -567,7 +567,6 @@ pub mod pallet {
 	use sp_std::{borrow::Borrow, cmp, fmt::Debug, mem, prelude::*};
 	// --- darwinia-network ---
 	use crate::weights::WeightInfo;
-	use darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo;
 	use darwinia_support::balance::*;
 
 	#[pallet::config]
@@ -991,14 +990,6 @@ pub mod pallet {
 	}
 
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
-		darwinia_support::impl_rpc! {
-			fn usable_balance_rpc(who: impl Borrow<T::AccountId>) -> RuntimeDispatchInfo<T::Balance> {
-				RuntimeDispatchInfo {
-					usable_balance: Self::usable_balance(who.borrow()),
-				}
-			}
-		}
-
 		// PRIVATE MUTABLES
 
 		/// Get the free balance of an account.

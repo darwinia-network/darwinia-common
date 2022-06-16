@@ -1460,7 +1460,6 @@ dependencies = [
 name = "darwinia-balances"
 version = "2.8.12"
 dependencies = [
- "darwinia-balances-rpc-runtime-api",
  "darwinia-support",
  "frame-support",
  "frame-system",
@@ -1471,31 +1470,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "darwinia-balances-rpc"
-version = "2.8.12"
-dependencies = [
- "darwinia-balances-rpc-runtime-api",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "parity-scale-codec",
- "sp-api",
- "sp-blockchain",
- "sp-runtime",
-]
-
-[[package]]
-name = "darwinia-balances-rpc-runtime-api"
-version = "2.8.12"
-dependencies = [
- "darwinia-support",
- "parity-scale-codec",
- "serde",
- "sp-api",
- "sp-runtime",
 ]
 
 [[package]]
@@ -2185,7 +2159,6 @@ dependencies = [
 name = "drml-rpc"
 version = "2.8.12"
 dependencies = [
- "darwinia-balances-rpc",
  "darwinia-ethereum",
  "darwinia-staking-rpc",
  "drml-primitives",
@@ -2231,7 +2204,6 @@ dependencies = [
  "array-bytes",
  "async-trait",
  "beefy-primitives",
- "darwinia-balances-rpc-runtime-api",
  "darwinia-bridge-ethereum",
  "darwinia-ethereum",
  "darwinia-evm",
@@ -6283,7 +6255,6 @@ dependencies = [
  "bridge-runtime-common",
  "bsc-primitives",
  "darwinia-balances",
- "darwinia-balances-rpc-runtime-api",
  "darwinia-bridge-ethereum",
  "darwinia-ethereum",
  "darwinia-evm",
@@ -6401,7 +6372,6 @@ dependencies = [
  "bridge-runtime-common",
  "bsc-primitives",
  "darwinia-balances",
- "darwinia-balances-rpc-runtime-api",
  "darwinia-bridge-bsc",
  "darwinia-ethereum",
  "darwinia-evm",

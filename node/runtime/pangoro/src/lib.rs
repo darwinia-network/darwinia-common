@@ -406,18 +406,6 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl darwinia_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance> for Runtime {
-		fn usable_balance(instance: u8, account: AccountId)
-			-> darwinia_balances_rpc_runtime_api::RuntimeDispatchInfo<Balance>
-		{
-			match instance {
-				0 => Ring::usable_balance_rpc(account),
-				1 => Kton::usable_balance_rpc(account),
-				_ => Default::default()
-			}
-		}
-	}
-
 	impl darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power> for Runtime {
 		fn power_of(account: AccountId)
 			-> darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo<Power>
