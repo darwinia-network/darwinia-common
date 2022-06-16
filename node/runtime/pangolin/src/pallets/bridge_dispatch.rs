@@ -28,16 +28,21 @@ impl CallValidate<bp_pangolin::AccountId, Origin, Call> for CallValidator {
 					OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => {
 						match tx {
 							Transaction::Legacy(t) => {
+								// Only non-payable call supported.
+								if t.value != U256::zero() {
+									return Err(TransactionValidityError::Invalid(
+										InvalidTransaction::Payment,
+									));
+								}
 								let fee = t.gas_limit.saturating_mul(t.gas_limit);
-								let total_payment = fee.saturating_add(t.value);
 
 								let derived_substrate_address = <Runtime as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
-								if <Runtime as darwinia_evm::Config>::RingAccountBasic::account_balance(relayer_account) >= total_payment {
+								if <Runtime as darwinia_evm::Config>::RingAccountBasic::account_balance(relayer_account) >= fee {
 										// Ensure the derived ethereum address has enough balance to pay for the transaction
 										let _ = <Runtime as darwinia_evm::Config>::RingAccountBasic::transfer(
 											&relayer_account,
 											&derived_substrate_address,
-											total_payment
+											fee
 										);
 								}
 

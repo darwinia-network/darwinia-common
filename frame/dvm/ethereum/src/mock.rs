@@ -274,20 +274,25 @@ impl CallValidate<AccountId32, Origin, Call> for CallValidator {
 				match origin.caller() {
 					OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => match tx {
 						Transaction::Legacy(t) => {
+							// Only non-payable call supported.
+							if t.value != U256::zero() {
+								return Err(TransactionValidityError::Invalid(
+									InvalidTransaction::Payment,
+								));
+							}
 							let fee = t.gas_limit.saturating_mul(t.gas_limit);
-							let total_payment = fee.saturating_add(t.value);
 
 							let derived_substrate_address = <Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
 							if <Test as darwinia_evm::Config>::RingAccountBasic::account_balance(
 								relayer_account,
-							) >= total_payment
+							) >= fee
 							{
 								// Ensure the derived ethereum address has enough balance to pay for
 								// the transaction
 								let _ = <Test as darwinia_evm::Config>::RingAccountBasic::transfer(
 									&relayer_account,
 									&derived_substrate_address,
-									total_payment,
+									fee,
 								);
 							}
 							let res = Ethereum::validate_transaction_in_block(*id, tx);
