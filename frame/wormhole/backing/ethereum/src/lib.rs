@@ -578,10 +578,8 @@ pub mod pallet {
 				if is_ring { <Error<T>>::RingLockedNSBA } else { <Error<T>>::KtonLockedNSBA }
 			);
 			// // Checking redeemer have enough of balance to pay fee, make sure follow up transfer
-			// will success. ensure!(
-			// 	T::RingCurrency::usable_balance(redeemer) >= fee,
-			// 	<Error<T>>::FeeIns
-			// );
+			// will success.
+			// ? still need this or not
 
 			C::transfer(
 				&Self::account_id(),
@@ -704,11 +702,9 @@ pub mod pallet {
 				Self::parse_deposit_redeem_proof(&proof)?;
 
 			ensure!(Self::pot::<T::RingCurrency>() >= redeemed_ring, <Error<T>>::RingLockedNSBA);
-			// // Checking redeemer have enough of balance to pay fee, make sure follow up fee
-			// transfer will success. ensure!(
-			// 	T::RingCurrency::usable_balance(redeemer) >= fee,
-			// 	<Error<T>>::FeeIns
-			// );
+			// Checking redeemer have enough of balance to pay fee, make sure follow up fee
+			// transfer will success.
+			// ? still need this or not
 
 			T::OnDepositRedeem::on_deposit_redeem(
 				&Self::account_id(),
