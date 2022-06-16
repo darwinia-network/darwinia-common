@@ -282,14 +282,10 @@ impl OutboundMessager<AccountId32> for MockOutboundMessager {
 	}
 
 	fn get_valid_message_sender(_nonce: MessageNonce) -> Result<AccountId32, &'static str> {
-		let mapping_token_factory_address: H160 =
-			array_bytes::hex_into_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
+		let derived_substrate_account = darwinia_support::evm::ConcatConverter::<AccountId32>::derive_substrate_address(
+			H160::from_str("32dcab0ef3fb2de2fce1d2e0799d36239671f04a").unwrap());
 
-		let mut account = [0u8; 32];
-
-		account[..20].copy_from_slice(&mapping_token_factory_address.as_bytes()[..]);
-
-		return Ok(account.into());
+		return Ok(derived_substrate_account);
 	}
 }
 
