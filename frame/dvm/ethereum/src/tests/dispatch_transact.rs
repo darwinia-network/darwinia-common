@@ -141,7 +141,11 @@ fn test_dispatch_legacy_ethereum_transaction_invalid_nonce() {
 
 		assert!(!result.dispatch_result);
 		System::assert_has_event(Event::Dispatch(
-			pallet_bridge_dispatch::Event::MessageCallRejected(SOURCE_CHAIN_ID, id),
+			pallet_bridge_dispatch::Event::MessageCallValidateFailed(
+				SOURCE_CHAIN_ID,
+				id,
+				TransactionValidityError::Invalid(InvalidTransaction::Future),
+			),
 		));
 	});
 }
@@ -173,7 +177,11 @@ fn test_dispatch_legacy_ethereum_transaction_invalid_payment() {
 
 		assert!(!result.dispatch_result);
 		System::assert_has_event(Event::Dispatch(
-			pallet_bridge_dispatch::Event::MessageCallRejected(SOURCE_CHAIN_ID, id),
+			pallet_bridge_dispatch::Event::MessageCallValidateFailed(
+				SOURCE_CHAIN_ID,
+				id,
+				TransactionValidityError::Invalid(InvalidTransaction::Payment),
+			),
 		));
 	});
 }
