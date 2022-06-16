@@ -19,30 +19,14 @@
 // --- core ---
 use core::fmt::Debug;
 // --- crates.io ---
-use codec::{FullCodec, MaxEncodedLen};
+use codec::FullCodec;
 use impl_trait_for_tuples::impl_for_tuples;
 use scale_info::TypeInfo;
 // --- paritytech ---
-use pallet_balances::Reasons;
 use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia-network ---
-use crate::structs::FrozenBalance;
 use ethereum_primitives::receipt::EthereumTransactionIndex;
-
-pub trait BalanceInfo<Balance, Module>: MaxEncodedLen {
-	fn free(&self) -> Balance;
-	fn set_free(&mut self, new_free: Balance);
-
-	fn reserved(&self) -> Balance;
-	fn set_reserved(&mut self, new_reserved: Balance);
-
-	/// The total balance in this account including any that is reserved and ignoring any frozen.
-	fn total(&self) -> Balance;
-
-	/// How much this account's balance can be reduced for the given `reasons`.
-	fn usable(&self, reasons: Reasons, frozen_balance: FrozenBalance<Balance>) -> Balance;
-}
 
 pub trait DustCollector<AccountId> {
 	fn is_dust(who: &AccountId) -> bool;

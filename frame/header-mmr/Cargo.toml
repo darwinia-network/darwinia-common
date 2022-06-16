@@ -15,10 +15,9 @@ codec      = { package = "parity-scale-codec", version = "2.3", default-features
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 serde      = { version = "1.0", optional = true, features = ["derive"] }
 # darwinia-network
-darwinia-header-mmr-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }
-darwinia-relay-primitives           = { default-features = false, path = "../../primitives/relay" }
-darwinia-support                    = { default-features = false, path = "../support" }
-mmr                                 = { package = "ckb-merkle-mountain-range", default-features = false, git = "https://github.com/darwinia-network/merkle-mountain-range" }
+darwinia-relay-primitives = { default-features = false, path = "../../primitives/relay" }
+darwinia-support          = { default-features = false, path = "../support" }
+mmr                       = { package = "ckb-merkle-mountain-range", default-features = false, git = "https://github.com/darwinia-network/merkle-mountain-range" }
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
@@ -43,7 +42,6 @@ std = [
 	"scale-info/std",
 	"serde",
 	# darwinia-network
-	"darwinia-header-mmr-rpc-runtime-api/std",
 	"darwinia-relay-primitives/std",
 	"darwinia-support/std",
 	"mmr/std",

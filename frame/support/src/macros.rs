@@ -32,7 +32,7 @@ macro_rules! impl_account_data {
 			$($(pub)? $fname:ident: $ftype:ty),*
 		}
 	) => {
-		use darwinia_support::balance::BalanceInfo;
+		use darwinia_balances::{BalanceInfo, FrozenBalance, Reasons};
 
 		$(#[$attr])*
 		#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
@@ -67,42 +67,16 @@ macro_rules! impl_account_data {
 			fn total(&self) -> $btype {
 				self.free.saturating_add(self.reserved)
 			}
-
-			fn usable(
-				&self,
-				reasons: darwinia_support::balance::Reasons,
-				frozen_balance: darwinia_support::balance::FrozenBalance<$btype>,
-			) -> $btype {
-				self.free.saturating_sub(frozen_balance.frozen_for(reasons))
-			}
 		}
 
 		impl BalanceInfo<$btype, $kton_instance> for AccountData<$btype> {
-			fn free(&self) -> $btype {
-				self.free_kton
-			}
-			fn set_free(&mut self, new_free_kton: $btype) {
-				self.free_kton = new_free_kton;
-			}
+			fn free(&self) -> $btype { self.free_kton }
+			fn set_free(&mut self, new_free_kton: $btype) { self.free_kton = new_free_kton; }
 
-			fn reserved(&self) -> $btype {
-				self.reserved_kton
-			}
-			fn set_reserved(&mut self, new_reserved_kton: $btype) {
-				self.reserved_kton = new_reserved_kton;
-			}
+			fn reserved(&self) -> $btype { self.reserved_kton }
+			fn set_reserved(&mut self, new_reserved_kton: $btype) { self.reserved_kton = new_reserved_kton; }
 
-			fn total(&self) -> $btype {
-				self.free_kton.saturating_add(self.reserved_kton)
-			}
-
-			fn usable(
-				&self,
-				reasons: darwinia_support::balance::Reasons,
-				frozen_balance: darwinia_support::balance::FrozenBalance<$btype>,
-			) -> $btype {
-				self.free_kton.saturating_sub(frozen_balance.frozen_for(reasons))
-			}
+			fn total(&self) -> $btype { self.free_kton.saturating_add(self.reserved_kton) }
 		}
 	};
 }
@@ -137,81 +111,6 @@ macro_rules! impl_genesis {
 			pub fn from_str(data: &str) -> Self {
 				serde_json::from_str(data).unwrap()
 			}
-		}
-	};
-}
-
-// TODO: https://github.com/serde-rs/serde/issues/1634
-// serde(bound(serialize = concat!(stringify!($ftype), ": core::fmt::Display")))
-// serde(bound(deserialize = concat!(stringify!($ftype), ": std::str::FromStr")))
-#[macro_export]
-macro_rules! impl_runtime_dispatch_info {
-	(
-		$(pub)? struct $sname:ident$(<$($gtype:ident),+>)? {
-			$($(pub)? $fname:ident: $ftype:ty),+
-		}
-	) => {
-		#[cfg(feature = "std")]
-		use serde::{Serialize, Serializer};
-
-		#[cfg(not(feature = "std"))]
-		#[derive(Default, Eq, PartialEq, Encode, Decode)]
-		pub struct $sname$(<$($gtype),+>)? {
-			$(
-				pub $fname: $ftype
-			),+
-		}
-
-		#[cfg(feature = "std")]
-		#[derive(Debug, Default, Eq, PartialEq, Encode, Decode, Serialize)]
-		#[serde(rename_all = "camelCase")]
-		pub struct $sname$(<$($gtype),+>)?
-		$(
-		where
-			$($gtype: core::fmt::Debug + core::fmt::Display),+
-		)?
-		{
-			$(
-				#[serde(serialize_with = "serialize_as_string")]
-				pub $fname: $ftype
-			),+
-		}
-
-		#[cfg(feature = "std")]
-		fn serialize_as_string<S, T>(
-			t: &T,
-			serializer: S,
-		) -> Result<S::Ok, S::Error>
-		where
-			S: Serializer,
-			T: core::fmt::Display
-		{
-			serializer.serialize_str(&t.to_string())
-		}
-	};
-}
-
-// TODO: https://github.com/serde-rs/serde/issues/1634
-#[macro_export]
-macro_rules! impl_rpc {
-	(
-		$(pub)? fn $fnname:ident($($params:tt)*) -> $respname:ident$(<$($gtype:ty),+>)? {
-			$($fnbody:tt)*
-		}
-	) => {
-		#[cfg(feature = "std")]
-		pub fn $fnname($($params)*) -> $respname$(<$($gtype),+>)?
-		$(
-		where
-			$($gtype: core::fmt::Display + std::str::FromStr),+
-		)?
-		{
-			$($fnbody)*
-		}
-
-		#[cfg(not(feature = "std"))]
-		pub fn $fnname($($params)*) -> $respname$(<$($gtype),+>)? {
-			$($fnbody)*
 		}
 	};
 }

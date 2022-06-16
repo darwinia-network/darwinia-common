@@ -20,15 +20,14 @@ serde       = { version = "1.0", features = ["derive"] }
 serde_json  = { version = "1.0" }
 tokio       = { version = "1.15" }
 # darwinia-network
-darwinia-bridge-ethereum         = { path = "../../frame/bridge/ethereum" }
-darwinia-ethereum                = { path = "../../frame/dvm/ethereum" }
-darwinia-evm                     = { path = "../../frame/dvm/evm" }
-darwinia-staking-rpc-runtime-api = { path = "../../frame/staking/rpc/runtime-api" }
-dp-evm-trace-ext                 = { default-features = false, path = "../../primitives/evm-trace/ext" }
-drml-primitives                  = { path = "../primitives" }
-drml-rpc                         = { path = "../rpc" }
-pangolin-runtime                 = { path = "../runtime/pangolin" }
-pangoro-runtime                  = { path = "../runtime/pangoro" }
+darwinia-bridge-ethereum = { path = "../../frame/bridge/ethereum" }
+darwinia-ethereum        = { path = "../../frame/dvm/ethereum" }
+darwinia-evm             = { path = "../../frame/dvm/evm" }
+dp-evm-trace-ext         = { default-features = false, path = "../../primitives/evm-trace/ext" }
+drml-primitives          = { path = "../primitives" }
+drml-rpc                 = { path = "../rpc" }
+pangolin-runtime         = { path = "../runtime/pangolin" }
+pangoro-runtime          = { path = "../runtime/pangoro" }
 # paritytech
 # beefy-gadget                               = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 beefy-primitives                           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
