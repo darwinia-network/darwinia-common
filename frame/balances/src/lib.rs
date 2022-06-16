@@ -538,6 +538,8 @@ pub mod pallet {
 	}
 	pub use imbalances::{NegativeImbalance, PositiveImbalance};
 
+	// --- core ---
+	use core::ops::BitOr;
 	// --- crates.io ---
 	use codec::{Codec, EncodeLike, MaxEncodedLen};
 	use scale_info::TypeInfo;
@@ -2189,6 +2191,21 @@ pub mod pallet {
 		}
 	}
 
+	pub trait BalanceInfo<Balance, Module>: MaxEncodedLen {
+		fn free(&self) -> Balance;
+		fn set_free(&mut self, new_free: Balance);
+
+		fn reserved(&self) -> Balance;
+		fn set_reserved(&mut self, new_reserved: Balance);
+
+		/// The total balance in this account including any that is reserved and ignoring any
+		/// frozen.
+		fn total(&self) -> Balance;
+
+		/// How much this account's balance can be reduced for the given `reasons`.
+		fn usable(&self, reasons: Reasons, frozen_balance: FrozenBalance<Balance>) -> Balance;
+	}
+
 	// A value placed in storage that represents the current version of the Balances storage.
 	// This value is used by the `on_runtime_upgrade` logic to determine whether we run
 	// storage migration logic. This should match directly with the semantic versions of the Rust
@@ -2211,6 +2228,80 @@ pub mod pallet {
 		pub id: ReserveIdentifier,
 		/// The amount of the named reserve.
 		pub amount: Balance,
+	}
+
+	/// Simplified reasons for withdrawing balance.
+	#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+	pub enum Reasons {
+		/// Paying system transaction fees.
+		Fee = 0,
+		/// Any reason other than paying system transaction fees.
+		Misc = 1,
+		/// Any reason at all.
+		All = 2,
+	}
+
+	impl From<WithdrawReasons> for Reasons {
+		fn from(r: WithdrawReasons) -> Reasons {
+			if r == WithdrawReasons::from(WithdrawReasons::TRANSACTION_PAYMENT) {
+				Reasons::Fee
+			} else if r.contains(WithdrawReasons::TRANSACTION_PAYMENT) {
+				Reasons::All
+			} else {
+				Reasons::Misc
+			}
+		}
+	}
+
+	impl BitOr for Reasons {
+		type Output = Reasons;
+
+		fn bitor(self, other: Reasons) -> Reasons {
+			if self == other {
+				return self;
+			}
+			Reasons::All
+		}
+	}
+
+	/// A single lock on a balance. There can be many of these on an account and they "overlap", so
+	/// the same balance is frozen by multiple locks.
+	#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+	pub struct BalanceLock<Balance> {
+		/// An identifier for this lock. Only one lock may be in existence for each identifier.
+		pub id: LockIdentifier,
+		/// The amount which the free balance may not drop below when this lock is in effect.
+		pub amount: Balance,
+		/// If true, then the lock remains in effect even for payment of transaction fees.
+		pub reasons: Reasons,
+	}
+
+	/// Frozen balance information for an account.
+	pub struct FrozenBalance<Balance> {
+		/// The amount that `free` may not drop below when withdrawing specifically for transaction
+		/// fee payment.
+		pub fee: Balance,
+		/// The amount that `free` may not drop below when withdrawing for *anything except
+		/// transaction fee payment*.
+		pub misc: Balance,
+	}
+	impl<Balance> FrozenBalance<Balance>
+	where
+		Balance: Copy + Ord + Zero,
+	{
+		pub fn zero() -> Self {
+			Self { fee: Zero::zero(), misc: Zero::zero() }
+		}
+
+		/// The amount that this account's free balance may not be reduced beyond for the given
+		/// `reasons`.
+		pub fn frozen_for(self, reasons: Reasons) -> Balance {
+			match reasons {
+				Reasons::All => self.misc.max(self.fee),
+				Reasons::Misc => self.misc,
+				Reasons::Fee => self.fee,
+			}
+		}
 	}
 
 	pub struct DustCleaner<T: Config<I>, I: 'static = ()>(

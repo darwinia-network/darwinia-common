@@ -32,7 +32,7 @@ macro_rules! impl_account_data {
 			$($(pub)? $fname:ident: $ftype:ty),*
 		}
 	) => {
-		use darwinia_support::balance::BalanceInfo;
+		use darwinia_balances::{BalanceInfo, FrozenBalance, Reasons};
 
 		$(#[$attr])*
 		#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
@@ -68,39 +68,21 @@ macro_rules! impl_account_data {
 				self.free.saturating_add(self.reserved)
 			}
 
-			fn usable(
-				&self,
-				reasons: darwinia_support::balance::Reasons,
-				frozen_balance: darwinia_support::balance::FrozenBalance<$btype>,
-			) -> $btype {
+			fn usable(&self, reasons: Reasons, frozen_balance: FrozenBalance<$btype>) -> $btype {
 				self.free.saturating_sub(frozen_balance.frozen_for(reasons))
 			}
 		}
 
 		impl BalanceInfo<$btype, $kton_instance> for AccountData<$btype> {
-			fn free(&self) -> $btype {
-				self.free_kton
-			}
-			fn set_free(&mut self, new_free_kton: $btype) {
-				self.free_kton = new_free_kton;
-			}
+			fn free(&self) -> $btype { self.free_kton }
+			fn set_free(&mut self, new_free_kton: $btype) { self.free_kton = new_free_kton; }
 
-			fn reserved(&self) -> $btype {
-				self.reserved_kton
-			}
-			fn set_reserved(&mut self, new_reserved_kton: $btype) {
-				self.reserved_kton = new_reserved_kton;
-			}
+			fn reserved(&self) -> $btype { self.reserved_kton }
+			fn set_reserved(&mut self, new_reserved_kton: $btype) { self.reserved_kton = new_reserved_kton; }
 
-			fn total(&self) -> $btype {
-				self.free_kton.saturating_add(self.reserved_kton)
-			}
+			fn total(&self) -> $btype { self.free_kton.saturating_add(self.reserved_kton) }
 
-			fn usable(
-				&self,
-				reasons: darwinia_support::balance::Reasons,
-				frozen_balance: darwinia_support::balance::FrozenBalance<$btype>,
-			) -> $btype {
+			fn usable(&self, reasons: Reasons, frozen_balance: FrozenBalance<$btype>) -> $btype {
 				self.free_kton.saturating_sub(frozen_balance.frozen_for(reasons))
 			}
 		}
