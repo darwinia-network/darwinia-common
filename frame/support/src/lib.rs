@@ -21,6 +21,7 @@
 pub mod evm;
 pub mod macros;
 pub mod structs;
+#[cfg(feature = "testing")]
 pub mod testing;
 pub mod traits;
 

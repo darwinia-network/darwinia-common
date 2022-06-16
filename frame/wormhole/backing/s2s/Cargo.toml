@@ -34,10 +34,12 @@ sp-runtime          = { default-features = false, git = "https://github.com/darw
 sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 
 [dev-dependencies]
-# paritytech
+# darwinia-network
 darwinia-balances = { path = "../../../balances" }
-pallet-timestamp  = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-sp-io             = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+darwinia-support  = { features = ["testing"], path = "../../../support" }
+# paritytech
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-io            = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 
 [features]
 default = ["std"]
@@ -50,15 +52,15 @@ std = [
 	"serde",
 	"serde_json",
 	# darwinia-network
+	"bp-messages/std",
+	"bp-message-dispatch/std",
+	"bp-runtime/std",
 	"dp-asset/std",
 	"dp-contract/std",
 	"dp-s2s/std",
 	"ethereum-primitives/std",
 	"darwinia-support/std",
 	# paritytech
-	"bp-messages/std",
-	"bp-message-dispatch/std",
-	"bp-runtime/std",
 	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",

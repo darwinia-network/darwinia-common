@@ -40,13 +40,13 @@ fp-evm = { default-features = false, git = "https://github.com/darwinia-network/
 [dev-dependencies]
 # crates.io
 ethereum     = { version = "0.11.1", features = ["with-codec"] }
-evm          = { version = "0.33.1", features = ["with-codec"] }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 # darwinia-network
 darwinia-balances                  = { path = "../../../balances" }
 darwinia-evm-precompile-bridge-s2s = { path = "../../../dvm/evm/precompiles/bridge/s2s" }
 darwinia-evm-precompile-dispatch   = { path = "../../../dvm/evm/precompiles/dispatch" }
 darwinia-evm-precompile-utils      = { features = ["testing"], path = "../../../dvm/evm/precompiles/utils" }
+darwinia-support                   = { features = ["testing"], path = "../../../support" }
 # paritytech
 pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 # frontier

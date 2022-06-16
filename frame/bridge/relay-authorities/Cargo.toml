@@ -28,7 +28,7 @@ array-bytes = { version = "1.5" }
 # darwinia-network
 darwinia-balances   = { path = "../../balances" }
 darwinia-header-mmr = { features = ["easy-testing"], path = "../../header-mmr" }
-darwinia-support    = { path = "../../support" }
+darwinia-support    = { features = ["testing"], path = "../../support" }
 # paritytech
 sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 sp-io      = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
