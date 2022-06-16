@@ -406,14 +406,6 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl darwinia_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power> for Runtime {
-		fn power_of(account: AccountId)
-			-> darwinia_staking_rpc_runtime_api::RuntimeDispatchInfo<Power>
-		{
-			Staking::power_of_rpc(account)
-		}
-	}
-
 	impl fp_rpc::EthereumRuntimeRPCApi<Block> for Runtime {
 		fn chain_id() -> u64 {
 			<Runtime as darwinia_evm::Config>::ChainId::get()
