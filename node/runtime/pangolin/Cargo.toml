@@ -18,9 +18,8 @@ serde             = { version = "1.0", optional = true }
 smallvec          = { version = "1.8" }
 static_assertions = { version = "1.1" }
 # darwinia-network
-bsc-primitives                    = { default-features = false, path = "../../../primitives/bsc" }
-darwinia-balances                 = { default-features = false, path = "../../../frame/balances" }
-darwinia-balances-rpc-runtime-api = { default-features = false, path = "../../../frame/balances/rpc/runtime-api" }
+bsc-primitives    = { default-features = false, path = "../../../primitives/bsc" }
+darwinia-balances = { default-features = false, path = "../../../frame/balances" }
 # darwinia-beefy-gadget                   = { default-features = false, path = "../../../frame/beefy-gadget" }
 # darwinia-beefy-primitives               = { path = "../../../primitives/beefy" }
 darwinia-bridge-ethereum                = { default-features = false, path = "../../../frame/bridge/ethereum" }
@@ -149,7 +148,6 @@ std = [
 	# darwinia-network
 	"bsc-primitives/std",
 	"darwinia-balances/std",
-	"darwinia-balances-rpc-runtime-api/std",
 	# "darwinia-beefy-gadget/std",
 	"darwinia-bridge-ethereum/std",
 	"darwinia-ethereum/std",
