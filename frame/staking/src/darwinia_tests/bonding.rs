@@ -2,6 +2,7 @@
 use frame_support::{assert_err, assert_ok, traits::Currency, WeakBoundedVec};
 // --- darwinia-network ---
 use crate::{mock::*, Event, *};
+use darwinia_balances::{BalanceLock, Reasons};
 use darwinia_support::balance::*;
 
 #[test]

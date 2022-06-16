@@ -1859,7 +1859,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples",
- "pallet-balances",
  "parity-scale-codec",
  "scale-info",
  "sha3 0.9.1",
