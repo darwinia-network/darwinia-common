@@ -276,8 +276,8 @@ impl CallValidate<AccountId32, Origin, Call> for CallValidator {
 		call: &Call,
 	) -> Result<(), TransactionValidityError> {
 		match call {
-			// Note: Only supprt Ethereum::transact(LegacyTransaction)
-			Call::Ethereum(crate::Call::transact { transaction: tx }) => {
+			// Note: Only support Ethereum::message_transact(LegacyTransaction)
+			Call::Ethereum(crate::Call::message_transact { transaction: tx }) => {
 				match origin.caller() {
 					OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => match tx {
 						Transaction::Legacy(t) => {
@@ -287,7 +287,8 @@ impl CallValidate<AccountId32, Origin, Call> for CallValidator {
 									InvalidTransaction::Payment,
 								));
 							}
-							let fee = t.gas_limit.saturating_mul(t.gas_limit);
+							let gas_price = <Test as darwinia_evm::Config>::FeeCalculator::min_gas_price();
+							let fee = t.gas_limit.saturating_mul(gas_price);
 
 							let derived_substrate_address = <Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
 							if <Test as darwinia_evm::Config>::RingAccountBasic::account_balance(
@@ -302,8 +303,7 @@ impl CallValidate<AccountId32, Origin, Call> for CallValidator {
 									fee,
 								);
 							}
-							let res = Ethereum::validate_transaction_in_block(*id, tx);
-							res
+							Ok(())
 						},
 						_ =>
 							Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(1u8))),

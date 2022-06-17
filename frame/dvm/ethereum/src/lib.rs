@@ -307,6 +307,8 @@ pub mod pallet {
 				_ => Err(Error::<T>::MessageTransactionError),
 			}?;
 
+			ensure!(Self::validate_transaction_in_block(source, &extracted_transaction).is_ok(), Error::<T>::MessageValidateError);
+
 			Self::apply_validated_transaction(source, extracted_transaction)
 		}
 
@@ -354,7 +356,9 @@ pub mod pallet {
 		/// The internal call failed.
 		ReadyOnlyCall,
 		/// Message transaction invalid
-		MessageTransactionError
+		MessageTransactionError,
+		/// Message validate invalid
+		MessageValidateError
 	}
 
 	/// Current building block's transactions and receipts.

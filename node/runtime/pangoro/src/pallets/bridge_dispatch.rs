@@ -47,13 +47,14 @@ impl CallValidate<bp_pangoro::AccountId, Origin, Call> for CallValidator {
 	) -> Result<(), &'static str> {
 		match extract_tx_from_call(None, call) {
 			Ok((None, t)) => {
-				let fee = t.gas_limit.saturating_mul(t.gas_limit);
+				let gas_price = <Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price();
+				let fee = t.gas_limit.saturating_mul(gas_price);
 				// TODO: check tx fee can not too high
 
 				// TODO: check relayer balance usable balance is enough
 				Ok(())
 			},
-			_ => Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(0u8))),
+			_ => Err("Error"),
 		}
 	}
 
@@ -69,7 +70,8 @@ impl CallValidate<bp_pangoro::AccountId, Origin, Call> for CallValidator {
 					return Err(TransactionValidityError::Invalid(InvalidTransaction::Payment));
 				}
 
-				let fee = t.gas_limit.saturating_mul(t.gas_limit);
+				let gas_price = <Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price();
+				let fee = t.gas_limit.saturating_mul(gas_price);
 				let derived_substrate_address =
 					<Runtime as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(
 						eth_origin,
@@ -87,7 +89,7 @@ impl CallValidate<bp_pangoro::AccountId, Origin, Call> for CallValidator {
 					);
 				}
 
-				Ethereum::validate_transaction_in_block(eth_origin, &t.into())
+				Ok(())
 			},
 			_ => Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(0u8))),
 		}
