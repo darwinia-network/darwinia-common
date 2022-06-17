@@ -127,6 +127,8 @@ fn register_and_issue_from_remote_success() {
         //setDailyLimit
         let set_dailylimit = hex2bytes_unchecked("0x2803212f000000000000000000000000deb21a862ebe470d8982423a03d525b50ea66c8c000000000000000000000000000000000000000000000000002386f26fc10000");
         alice_call(&alice, set_dailylimit, 5, mapping_token_factory_address, 0);
+        let set_lane_id = hex2bytes_unchecked("0xc48322896c746f7200000000000000000000000000000000000000000000000000000000");
+        alice_call(&alice, set_lane_id, 6, mapping_token_factory_address, 0);
         let alice_h160 = H160::from_str("1a642f0e3c3af545e7acbd38b07251b3990914f1").unwrap();
         assert_ok!(S2sIssuing::issue_from_remote(
                 Origin::signed(drived_remote_backing_account.clone()),
@@ -147,7 +149,7 @@ fn register_and_issue_from_remote_success() {
         //     0x0fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         //  );
         let approve_mtf = hex2bytes_unchecked("0x095ea7b300000000000000000000000032dcab0ef3fb2de2fce1d2e0799d36239671f04a0fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        alice_call(&alice, approve_mtf, 6, mapping_token, 0);
+        alice_call(&alice, approve_mtf, 7, mapping_token, 0);
 
         // burnAndRemoteUnlockWaitingConfirm(
         //     1,
@@ -157,26 +159,60 @@ fn register_and_issue_from_remote_success() {
         //     10000
         //  );
         let burn_info = hex2bytes_unchecked("0x0c90193d00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001000000000000000000000000deb21a862ebe470d8982423a03d525b50ea66c8c00000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000000000271000000000000000000000000000000000000000000000000000000000000000101010101010101010101010101010101000000000000000000000000000000000");
-        alice_call(&alice, burn_info, 7, mapping_token_factory_address, 10000);
+        alice_call(&alice, burn_info.clone(), 8, mapping_token_factory_address, 10000);
 
-        let balance_after = Ethereum::read_only_call(mapping_token, balance_of_alice).unwrap();
+         let balance_of_factory = hex2bytes_unchecked("0x70a0823100000000000000000000000032dcab0ef3fb2de2fce1d2e0799d36239671f04a");
+
+        // before confirm
+        let balance_of_alice_after_burn = Ethereum::read_only_call(mapping_token, balance_of_alice.clone()).unwrap();
         assert_eq!(
-            U256::from_big_endian(balance_after.as_slice()),
+            U256::from_big_endian(balance_of_alice_after_burn.as_slice()),
             U256::from(9_999_990_000u128)
             );
+        let balance_of_mtf_after_burn = Ethereum::read_only_call(mapping_token, balance_of_factory.clone()).unwrap();
+        assert_eq!(
+            U256::from_big_endian(balance_of_mtf_after_burn.as_slice()),
+            U256::from(10_000u128)
+            );
 
+        // confirm message
+        // if result == false, balance back to alice
+        S2sIssuing::on_messages_delivered(&MessageLaneId::get(), &DeliveredMessages::new(0, false));
+        let balance_of_alice_after_confirm_false = Ethereum::read_only_call(mapping_token, balance_of_alice.clone()).unwrap();
+        assert_eq!(
+            U256::from_big_endian(balance_of_alice_after_confirm_false.as_slice()),
+            U256::from(10_000_000_000u128)
+            );
+        let balance_of_mtf_after_confirm_false = Ethereum::read_only_call(mapping_token, balance_of_factory.clone()).unwrap();
+        assert_eq!(
+            U256::from_big_endian(balance_of_mtf_after_confirm_false.as_slice()),
+            U256::from(0u128)
+            );
 
-        // let balance_of_factory = hex2bytes_unchecked("0x70a0823100000000000000000000000032dcab0ef3fb2de2fce1d2e0799d36239671f04a");
-        // TODO: add test for call back
+        // burn again, test confirm result == true
+        alice_call(&alice, burn_info, 9, mapping_token_factory_address, 10000);
+        S2sIssuing::on_messages_delivered(&MessageLaneId::get(), &DeliveredMessages::new(0, true));
+        let balance_of_alice_after_confirm_true = Ethereum::read_only_call(mapping_token, balance_of_alice).unwrap();
+        assert_eq!(
+            U256::from_big_endian(balance_of_alice_after_confirm_true.as_slice()),
+            U256::from(9_999_990_000u128)
+            );
+        let balance_of_mtf_after_confirm_true = Ethereum::read_only_call(mapping_token, balance_of_factory).unwrap();
+        assert_eq!(
+            U256::from_big_endian(balance_of_mtf_after_confirm_true.as_slice()),
+            U256::from(0u128)
+            );
     });
 }
 
 #[test]
 fn test_judge_self_message() {
-    let (_, mut ext) = new_test_ext(1);
-    ext.execute_with(|| {
-        use crate::Pallet as S2sIssuing;
-        assert_ok!(<S2sIssuing<Test>>::set_mapping_factory_address(RawOrigin::Root.into(), H160::from_str("32dcab0ef3fb2de2fce1d2e0799d36239671f04a").unwrap()));
-        assert_ok!(<S2sIssuing<Test>>::judge_self_message(0));
-    });
+	let (_, mut ext) = new_test_ext(1);
+	ext.execute_with(|| {
+		assert_ok!(S2sIssuing::set_mapping_factory_address(
+			RawOrigin::Root.into(),
+			H160::from_str("32dcab0ef3fb2de2fce1d2e0799d36239671f04a").unwrap()
+		));
+		assert_ok!(S2sIssuing::judge_self_message(0));
+	});
 }
