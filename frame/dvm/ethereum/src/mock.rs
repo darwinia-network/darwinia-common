@@ -263,7 +263,14 @@ impl From<EncodedCall> for Result<Call, ()> {
 
 pub struct CallValidator;
 impl CallValidate<AccountId32, Origin, Call> for CallValidator {
-	fn pre_dispatch(
+	fn check_receiving_before_dispatch(
+		relayer_account: &AccountId,
+		call: &Call,
+	) -> Result<(), &'static str> {
+		Ok(())
+	}
+
+	fn call_validate(
 		relayer_account: &AccountId32,
 		origin: &Origin,
 		call: &Call,

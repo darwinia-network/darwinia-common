@@ -14,7 +14,14 @@ use pallet_bridge_dispatch::Config;
 
 pub struct CallValidator;
 impl CallValidate<bp_pangoro::AccountId, Origin, Call> for CallValidator {
-	fn pre_dispatch(
+	fn check_receiving_before_dispatch(
+		relayer_account: &bp_pangoro::AccountId,
+		call: &Call,
+	) -> Result<(), &'static str> {
+		Ok(())
+	}
+
+	fn call_validate(
 		relayer_account: &bp_pangoro::AccountId,
 		origin: &Origin,
 		call: &Call,
