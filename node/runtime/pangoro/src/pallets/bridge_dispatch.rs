@@ -1,7 +1,9 @@
 pub use pallet_bridge_dispatch::Instance1 as WithPangolinDispatch;
 
+use ethereum::LegacyTransaction;
 // --- paritytech ---
 use frame_support::traits::OriginTrait;
+use sp_core::H160;
 use sp_runtime::transaction_validity::{InvalidTransaction, TransactionValidityError};
 // --- darwinia-network ---
 use crate::*;
@@ -12,13 +14,47 @@ use darwinia_evm::AccountBasic;
 use darwinia_support::evm::{DeriveEthereumAddress, DeriveSubstrateAddress};
 use pallet_bridge_dispatch::Config;
 
+fn extract_tx_from_call(
+	dispatch_origin: Option<&Origin>,
+	call: &Call,
+) -> Result<(Option<H160>, LegacyTransaction), bool> {
+	let origin = if let Some(o) = dispatch_origin {
+		match o.caller() {
+			OriginCaller::Ethereum(RawOrigin::EthereumTransaction(eth_origin)) =>
+				Some(eth_origin.clone()),
+			_ => return Err(false),
+		}
+	} else {
+		None
+	};
+
+	let tx = match call {
+		Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) => match tx {
+			Transaction::Legacy(t) => t.clone(),
+			_ => return Err(false),
+		},
+		_ => return Err(false),
+	};
+
+	Ok((origin, tx))
+}
+
 pub struct CallValidator;
 impl CallValidate<bp_pangoro::AccountId, Origin, Call> for CallValidator {
 	fn check_receiving_before_dispatch(
 		relayer_account: &bp_pangoro::AccountId,
 		call: &Call,
 	) -> Result<(), &'static str> {
-		Ok(())
+		match extract_tx_from_call(None, call) {
+			Ok((None, t)) => {
+				let fee = t.gas_limit.saturating_mul(t.gas_limit);
+				// TODO: check tx fee can not too high
+
+				// TODO: check relayer balance usable balance is enough
+				Ok(())
+			},
+			_ => Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(0u8))),
+		}
 	}
 
 	fn call_validate(
@@ -26,42 +62,34 @@ impl CallValidate<bp_pangoro::AccountId, Origin, Call> for CallValidator {
 		origin: &Origin,
 		call: &Call,
 	) -> Result<(), TransactionValidityError> {
-		match call {
-			// Note: Only supprt Ethereum::transact(LegacyTransaction)
-			Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) => {
-				match origin.caller() {
-					OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => {
-						match tx {
-							Transaction::Legacy(t) => {
-								// Only non-payable call supported.
-								if t.value != U256::zero() {
-									return Err(TransactionValidityError::Invalid(
-										InvalidTransaction::Payment,
-									));
-								}
-								let fee = t.gas_limit.saturating_mul(t.gas_limit);
-
-								let derived_substrate_address = <Runtime as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
-								if <Runtime as darwinia_evm::Config>::RingAccountBasic::account_balance(relayer_account) >= fee {
-										// Ensure the derived ethereum address has enough balance to pay for the transaction
-										let _ = <Runtime as darwinia_evm::Config>::RingAccountBasic::transfer(
-											&relayer_account,
-											&derived_substrate_address,
-											fee
-										);
-								}
-
-								Ethereum::validate_transaction_in_block(*id, tx)
-							},
-							_ => Err(TransactionValidityError::Invalid(
-								InvalidTransaction::Custom(1u8),
-							)),
-						}
-					},
-					_ => Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(0u8))),
+		match extract_tx_from_call(Some(origin), call) {
+			Ok((Some(eth_origin), t)) => {
+				// Only non-payable call supported.
+				if t.value != U256::zero() {
+					return Err(TransactionValidityError::Invalid(InvalidTransaction::Payment));
 				}
+
+				let fee = t.gas_limit.saturating_mul(t.gas_limit);
+				let derived_substrate_address =
+					<Runtime as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(
+						eth_origin,
+					);
+				if <Runtime as darwinia_evm::Config>::RingAccountBasic::account_balance(
+					relayer_account,
+				) >= fee
+				{
+					// Ensure the derived ethereum address has enough balance to pay for the
+					// transaction
+					let _ = <Runtime as darwinia_evm::Config>::RingAccountBasic::transfer(
+						&relayer_account,
+						&derived_substrate_address,
+						fee,
+					);
+				}
+
+				Ethereum::validate_transaction_in_block(eth_origin, &t.into())
 			},
-			_ => Ok(()),
+			_ => Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(0u8))),
 		}
 	}
 }
