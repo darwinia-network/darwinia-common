@@ -14,29 +14,8 @@ use darwinia_evm::AccountBasic;
 use darwinia_support::evm::{DeriveEthereumAddress, DeriveSubstrateAddress};
 use pallet_bridge_dispatch::Config;
 
-fn extract_tx_from_call(
-	dispatch_origin: Option<&Origin>,
-	call: &Call,
-) -> Result<(Option<H160>, LegacyTransaction), bool> {
-	let origin = if let Some(o) = dispatch_origin {
-		match o.caller() {
-			OriginCaller::Ethereum(RawOrigin::EthereumTransaction(eth_origin)) =>
-				Some(eth_origin.clone()),
-			_ => return Err(false),
-		}
-	} else {
-		None
-	};
-
-	let tx = match call {
-		Call::Ethereum(darwinia_ethereum::Call::message_transact { transaction: tx }) => match tx {
-			Transaction::Legacy(t) => t.clone(),
-			_ => return Err(false),
-		},
-		_ => return Err(false),
-	};
-
-	Ok((origin, tx))
+frame_support::parameter_types! {
+	pub const MaxUsableBalanceFromRelayer: Balance = 100 * COIN;
 }
 
 pub struct CallValidator;
@@ -45,16 +24,22 @@ impl CallValidate<bp_pangoro::AccountId, Origin, Call> for CallValidator {
 		relayer_account: &bp_pangoro::AccountId,
 		call: &Call,
 	) -> Result<(), &'static str> {
-		match extract_tx_from_call(None, call) {
-			Ok((None, t)) => {
-				let gas_price = <Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price();
-				let fee = t.gas_limit.saturating_mul(gas_price);
-				// TODO: check tx fee can not too high
+		match call {
+			Call::Ethereum(darwinia_ethereum::Call::message_transact { transaction: tx }) => match tx {
+				Transaction::Legacy(t) => {
+					let gas_price = <Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price();
+					let fee = t.gas_limit.saturating_mul(gas_price);
 
-				// TODO: check relayer balance usable balance is enough
-				Ok(())
+					let max_usable_balance_from_relayer = MaxUsableBalanceFromRelayer::get();
+					// TODO
+					// if !evm_ensure_can_withdraw(relayer_account, Transfer, cmp::min(max_usable_balance_from_relayer * 10 ** 9, fee))
+					// return Err
+
+					Ok(())
+				},
+				_ => Ok(()),
 			},
-			_ => Err("Error"),
+			_ => Ok(()),
 		}
 	}
 
@@ -63,35 +48,50 @@ impl CallValidate<bp_pangoro::AccountId, Origin, Call> for CallValidator {
 		origin: &Origin,
 		call: &Call,
 	) -> Result<(), TransactionValidityError> {
-		match extract_tx_from_call(Some(origin), call) {
-			Ok((Some(eth_origin), t)) => {
-				// Only non-payable call supported.
-				if t.value != U256::zero() {
-					return Err(TransactionValidityError::Invalid(InvalidTransaction::Payment));
-				}
+		match call {
+			// Note: Only supprt Ethereum::message_transact(LegacyTransaction)
+			Call::Ethereum(darwinia_ethereum::Call::message_transact { transaction: tx }) => {
+				match origin.caller() {
+					OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => match tx {
+						Transaction::Legacy(t) => {
+							// Only non-payable call supported.
+							if t.value != U256::zero() {
+								return Err(TransactionValidityError::Invalid(InvalidTransaction::Payment));
+							}
 
-				let gas_price = <Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price();
-				let fee = t.gas_limit.saturating_mul(gas_price);
-				let derived_substrate_address =
-					<Runtime as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(
-						eth_origin,
-					);
-				if <Runtime as darwinia_evm::Config>::RingAccountBasic::account_balance(
-					relayer_account,
-				) >= fee
-				{
-					// Ensure the derived ethereum address has enough balance to pay for the
-					// transaction
-					let _ = <Runtime as darwinia_evm::Config>::RingAccountBasic::transfer(
-						&relayer_account,
-						&derived_substrate_address,
-						fee,
-					);
-				}
+							let gas_price = <Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price();
+							let fee = t.gas_limit.saturating_mul(gas_price);
 
-				Ok(())
+							let max_usable_balance_from_relayer = MaxUsableBalanceFromRelayer::get();
+							// TODO: make sure fee <= max_usable_balance_from_relayer
+
+							let derived_substrate_address =
+								<Runtime as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
+
+							// TODO: change following to evm_ensure_can_withdraw
+							if <Runtime as darwinia_evm::Config>::RingAccountBasic::account_balance(
+								relayer_account,
+							) >= fee
+							{
+								// Ensure the derived ethereum address has enough balance to pay for the
+								// transaction
+								let _ = <Runtime as darwinia_evm::Config>::RingAccountBasic::transfer(
+									&relayer_account,
+									&derived_substrate_address,
+									fee,
+								);
+							}
+
+							Ok(())
+						},
+						_ => Err(TransactionValidityError::Invalid(
+							InvalidTransaction::Custom(1u8),
+						)),
+					},
+					_ => Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(0u8))),
+				}
 			},
-			_ => Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(0u8))),
+			_ => Ok(()),
 		}
 	}
 }

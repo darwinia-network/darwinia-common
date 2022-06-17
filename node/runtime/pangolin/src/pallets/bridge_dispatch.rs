@@ -14,13 +14,34 @@ use darwinia_evm::AccountBasic;
 use darwinia_support::evm::{DeriveEthereumAddress, DeriveSubstrateAddress};
 use pallet_bridge_dispatch::Config;
 
+
+frame_support::parameter_types! {
+	pub const MaxUsableBalanceFromRelayer: Balance = 100 * COIN;
+}
+
 pub struct CallValidator;
 impl CallValidate<bp_pangolin::AccountId, Origin, Call> for CallValidator {
 	fn check_receiving_before_dispatch(
 		relayer_account: &bp_pangolin::AccountId,
 		call: &Call,
 	) -> Result<(), &'static str> {
-		Ok(())
+		match call {
+			Call::Ethereum(darwinia_ethereum::Call::message_transact { transaction: tx }) => match tx {
+				Transaction::Legacy(t) => {
+					let gas_price = <Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price();
+					let fee = t.gas_limit.saturating_mul(gas_price);
+
+					let max_usable_balance_from_relayer = MaxUsableBalanceFromRelayer::get();
+					// TODO
+					// if !evm_ensure_can_withdraw(relayer_account, Transfer, cmp::min(max_usable_balance_from_relayer * 10 ** 9, fee))
+					// return Err
+
+					Ok(())
+				},
+				_ => Ok(()),
+			},
+			_ => Ok(()),
+		}
 	}
 
 	fn call_validate(
