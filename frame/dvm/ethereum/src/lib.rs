@@ -277,6 +277,33 @@ pub mod pallet {
 			Self::apply_validated_transaction(source, transaction)
 		}
 
+		/// This is message transact only for substrate to substrate LCMP to call
+		#[pallet::weight(<T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(
+		Pallet::<T>::transaction_data(transaction).gas_limit.unique_saturated_into()
+		))]
+		pub fn message_transact(
+			origin: OriginFor<T>,
+			transaction: Transaction,
+		) -> DispatchResultWithPostInfo {
+			// Source address supposed to be derived address generate from message layer
+			let source = ensure_ethereum_transaction(origin)?;
+
+			let extracted_transaction = match transaction {
+				Transaction::Legacy(t) => Ok(Transaction::Legacy(ethereum::LegacyTransaction {
+					nonce: <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce,	// auto set
+					gas_price: T::FeeCalculator::min_gas_price(),	// auto set
+					gas_limit: t.gas_limit,
+					action: t.action,
+					value: t.value,
+					input: t.input,
+					signature: t.signature,	// not used.
+				})) ,
+				_ => Err(Error::<T>::MessageTransactionError),
+			}?;
+
+			Self::apply_validated_transaction(source, extracted_transaction)
+		}
+
 		/// Internal transaction only for root.
 		#[pallet::weight(10_000_000)]
 		pub fn root_transact(
@@ -320,6 +347,8 @@ pub mod pallet {
 		InternalTransactionFatalError,
 		/// The internal call failed.
 		ReadyOnlyCall,
+		/// Message transaction invalid
+		MessageTransactionError
 	}
 
 	/// Current building block's transactions and receipts.
