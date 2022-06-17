@@ -29,7 +29,7 @@ fn extract_tx_from_call(
 	};
 
 	let tx = match call {
-		Call::Ethereum(darwinia_ethereum::Call::transact { transaction: tx }) => match tx {
+		Call::Ethereum(darwinia_ethereum::Call::message_transact { transaction: tx }) => match tx {
 			Transaction::Legacy(t) => t.clone(),
 			_ => return Err(false),
 		},
@@ -100,7 +100,7 @@ pub struct IntoDispatchOrigin;
 impl IntoDispatchOriginT<bp_pangoro::AccountId, Call, Origin> for IntoDispatchOrigin {
 	fn into_dispatch_origin(id: &bp_pangoro::AccountId, call: &Call) -> Origin {
 		match call {
-			Call::Ethereum(darwinia_ethereum::Call::transact { .. }) => {
+			Call::Ethereum(darwinia_ethereum::Call::message_transact { .. }) => {
 				let derive_eth_address = id.derive_ethereum_address();
 				darwinia_ethereum::RawOrigin::EthereumTransaction(derive_eth_address).into()
 			},

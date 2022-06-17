@@ -320,7 +320,7 @@ pub struct IntoDispatchOrigin;
 impl IntoDispatchOriginT<AccountId32, Call, Origin> for IntoDispatchOrigin {
 	fn into_dispatch_origin(id: &AccountId32, call: &Call) -> Origin {
 		match call {
-			Call::Ethereum(darwinia_ethereum::Call::transact { .. }) => {
+			Call::Ethereum(darwinia_ethereum::Call::message_transact { .. }) => {
 				let derive_eth_address = id.derive_ethereum_address();
 				darwinia_ethereum::RawOrigin::EthereumTransaction(derive_eth_address).into()
 			},
