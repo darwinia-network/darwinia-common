@@ -275,15 +275,17 @@ impl LatestMessageNoncer for MockS2sMessageSender {
 	}
 }
 
-pub struct MockOutboundMessager;
-impl OutboundMessager<AccountId32> for MockOutboundMessager {
+pub struct MockOutboundMessenger;
+impl OutboundMessenger<AccountId32> for MockOutboundMessenger {
 	fn check_lane_id(lane_id: &LaneId) -> bool {
 		return *lane_id == MessageLaneId::get();
 	}
 
 	fn get_valid_message_sender(_nonce: MessageNonce) -> Result<AccountId32, &'static str> {
-		let derived_substrate_account = darwinia_support::evm::ConcatConverter::<AccountId32>::derive_substrate_address(
-			H160::from_str("32dcab0ef3fb2de2fce1d2e0799d36239671f04a").unwrap());
+		let derived_substrate_account =
+			darwinia_support::evm::ConcatConverter::<AccountId32>::derive_substrate_address(
+				H160::from_str("32dcab0ef3fb2de2fce1d2e0799d36239671f04a").unwrap(),
+			);
 
 		return Ok(derived_substrate_account);
 	}
@@ -295,7 +297,7 @@ impl Config for Test {
 	type BridgedChainId = PangoroChainId;
 	type Event = ();
 	type InternalTransactHandler = Ethereum;
-	type OutboundMessager = MockOutboundMessager;
+	type OutboundMessenger = MockOutboundMessenger;
 	type PalletId = S2sRelayPalletId;
 	type RingCurrency = Ring;
 	type WeightInfo = ();

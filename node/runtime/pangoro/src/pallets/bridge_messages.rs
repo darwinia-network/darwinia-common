@@ -12,13 +12,13 @@ use pallet_fee_market::s2s::{
 
 frame_support::parameter_types! {
 	pub const MaxMessagesToPruneAtOnce: MessageNonce = 8;
+	// TODO: remove this after FeeMarketPayment upgrade
+	pub const RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::derive_substrate_address((&b"root"[..]).derive_ethereum_address()));
 	pub const MaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =
 		bp_pangolin::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
 	pub const MaxUnconfirmedMessagesAtInboundLane: MessageNonce =
 		bp_pangolin::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
 	pub const BridgedChainId: ChainId = PANGOLIN_CHAIN_ID;
-	// TODO: remove this after FeeMarketPayment upgrade
-	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::derive_substrate_address((&b"root"[..]).derive_ethereum_address()));
 }
 
 impl Config<WithPangolinMessages> for Runtime {

@@ -1,3 +1,4 @@
+// --- crates.io ---
 use codec::Decode;
 // --- paritytech ---
 use frame_support::PalletId;
@@ -8,11 +9,11 @@ use bp_message_dispatch::CallOrigin;
 use bp_messages::{LaneId, MessageNonce};
 use bp_runtime::{ChainId, PANGORO_CHAIN_ID};
 use bridge_runtime_common::lanes::PANGORO_PANGOLIN_LANE;
-use darwinia_support::{s2s::OutboundMessager, ChainName};
+use darwinia_support::{s2s::OutboundMessenger, ChainName};
 use from_substrate_issuing::Config;
 
 pub struct OutboundMessageDataInfo;
-impl OutboundMessager<AccountId32> for OutboundMessageDataInfo {
+impl OutboundMessenger<AccountId32> for OutboundMessageDataInfo {
 	fn check_lane_id(lane_id: &LaneId) -> bool {
 		return *lane_id == PANGORO_PANGOLIN_LANE;
 	}
@@ -41,7 +42,7 @@ impl Config for Runtime {
 	type BridgedChainId = PangoroChainId;
 	type Event = Event;
 	type InternalTransactHandler = Ethereum;
-	type OutboundMessager = OutboundMessageDataInfo;
+	type OutboundMessenger = OutboundMessageDataInfo;
 	type PalletId = S2sIssuingPalletId;
 	type RingCurrency = Ring;
 	type WeightInfo = ();

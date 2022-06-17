@@ -64,7 +64,7 @@ pub mod s2s {
 		fn inbound_latest_received_nonce(lane_id: LaneId) -> u64;
 	}
 
-	pub trait OutboundMessager<AccountId> {
+	pub trait OutboundMessenger<AccountId> {
 		fn check_lane_id(lane_id: &LaneId) -> bool;
 		fn get_valid_message_sender(nonce: MessageNonce) -> Result<AccountId, &'static str>;
 	}
