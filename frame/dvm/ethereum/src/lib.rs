@@ -288,6 +288,12 @@ pub mod pallet {
 			// Source address supposed to be derived address generate from message layer
 			let source = ensure_ethereum_transaction(origin)?;
 
+			// Disable transact functionality if PreLog exist.
+			ensure!(
+				fp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
+				Error::<T>::PreLogExists,
+			);
+
 			let extracted_transaction = match transaction {
 				Transaction::Legacy(t) => Ok(Transaction::Legacy(ethereum::LegacyTransaction {
 					nonce: <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce,	// auto set
