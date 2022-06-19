@@ -296,18 +296,22 @@ pub mod pallet {
 
 			let extracted_transaction = match transaction {
 				Transaction::Legacy(t) => Ok(Transaction::Legacy(ethereum::LegacyTransaction {
-					nonce: <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce,	// auto set
-					gas_price: T::FeeCalculator::min_gas_price(),	// auto set
+					nonce: <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source)
+						.nonce, // auto set
+					gas_price: T::FeeCalculator::min_gas_price(), // auto set
 					gas_limit: t.gas_limit,
 					action: t.action,
 					value: t.value,
 					input: t.input,
-					signature: t.signature,	// not used.
-				})) ,
+					signature: t.signature, // not used.
+				})),
 				_ => Err(Error::<T>::MessageTransactionError),
 			}?;
 
-			ensure!(Self::validate_transaction_in_block(source, &extracted_transaction).is_ok(), Error::<T>::MessageValidateError);
+			ensure!(
+				Self::validate_transaction_in_block(source, &extracted_transaction).is_ok(),
+				Error::<T>::MessageValidateError
+			);
 
 			Self::apply_validated_transaction(source, extracted_transaction)
 		}
@@ -358,7 +362,7 @@ pub mod pallet {
 		/// Message transaction invalid
 		MessageTransactionError,
 		/// Message validate invalid
-		MessageValidateError
+		MessageValidateError,
 	}
 
 	/// Current building block's transactions and receipts.

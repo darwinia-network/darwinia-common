@@ -287,7 +287,8 @@ impl CallValidate<AccountId32, Origin, Call> for CallValidator {
 									InvalidTransaction::Payment,
 								));
 							}
-							let gas_price = <Test as darwinia_evm::Config>::FeeCalculator::min_gas_price();
+							let gas_price =
+								<Test as darwinia_evm::Config>::FeeCalculator::min_gas_price();
 							let fee = t.gas_limit.saturating_mul(gas_price);
 
 							let derived_substrate_address = <Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
