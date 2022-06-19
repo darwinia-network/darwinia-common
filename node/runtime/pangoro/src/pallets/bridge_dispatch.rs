@@ -25,12 +25,13 @@ frame_support::parameter_types! {
 	pub const MaxUsableBalanceFromRelayer: Balance = 100 * COIN;
 }
 
+/// Ensure the account has enough balance to withdraw.
 fn evm_ensure_can_withdraw(
 	who: &bp_pangoro::AccountId,
 	amount: U256,
 	reasons: WithdrawReasons,
 ) -> Result<(), TransactionValidityError> {
-	// Ensure the account's evm account has enough balance to withdraw.
+	// Ensure the evm balance of the account large than the withdraw amount
 	let old_evm_balance = <Runtime as darwinia_evm::Config>::RingAccountBasic::account_balance(who);
 	let (_old_sub, old_remaining) = old_evm_balance.div_mod(U256::from(POW_9));
 	ensure!(
@@ -38,11 +39,14 @@ fn evm_ensure_can_withdraw(
 		TransactionValidityError::Invalid(InvalidTransaction::Payment)
 	);
 
+	// Because of precision difference, the amount also needs to convert.
 	let (mut amount_sub, amount_remaining) = amount.div_mod(U256::from(POW_9));
 	if old_remaining < amount_remaining {
+		// Add 1, if the substrate balance part touched
 		amount_sub = amount_sub.saturating_add(U256::from(1));
 	}
 
+	// Calculate the new substrate balance part
 	let new_evm_balance = old_evm_balance.saturating_sub(amount);
 	let (new_sub, _new_remaining) = new_evm_balance.div_mod(U256::from(POW_9));
 
@@ -76,7 +80,8 @@ impl CallValidate<bp_pangoro::AccountId, Origin, Call> for CallValidator {
 							<Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price();
 						let fee = t.gas_limit.saturating_mul(gas_price);
 
-						// Ensure the relayer's account has enough balance to withdraw.
+						// Ensure the relayer's account has enough balance to withdraw. If not,
+						// reject the call.
 						ensure!(
 							evm_ensure_can_withdraw(
 								relayer_account,
@@ -120,6 +125,7 @@ impl CallValidate<bp_pangoro::AccountId, Origin, Call> for CallValidator {
 								<Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price();
 							let fee = t.gas_limit.saturating_mul(gas_price);
 
+							// Ensure the relayer's account has enough balance to withdraw.
 							if evm_ensure_can_withdraw(
 								relayer_account,
 								cmp::min(
