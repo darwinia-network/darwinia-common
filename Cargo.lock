@@ -615,7 +615,7 @@ dependencies = [
 [[package]]
 name = "bp-darwinia-core"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#22f831be59cb773877506cb5682a7d1ee27341db"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
  "bp-messages",
  "bp-runtime",
@@ -631,22 +631,7 @@ dependencies = [
 [[package]]
 name = "bp-header-chain"
 version = "0.1.0"
-dependencies = [
- "finality-grandpa",
- "frame-support",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-finality-grandpa",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "bp-header-chain"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#22f831be59cb773877506cb5682a7d1ee27341db"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
  "finality-grandpa",
  "frame-support",
@@ -662,6 +647,7 @@ dependencies = [
 [[package]]
 name = "bp-message-dispatch"
 version = "0.1.0"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
  "bp-runtime",
  "frame-support",
@@ -674,6 +660,7 @@ dependencies = [
 [[package]]
 name = "bp-messages"
 version = "0.1.0"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
  "bitvec",
  "bp-runtime",
@@ -690,7 +677,7 @@ dependencies = [
 [[package]]
 name = "bp-pangolin"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#22f831be59cb773877506cb5682a7d1ee27341db"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
  "bp-darwinia-core",
  "bp-messages",
@@ -705,7 +692,7 @@ dependencies = [
 [[package]]
 name = "bp-pangolin-parachain"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#22f831be59cb773877506cb5682a7d1ee27341db"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
  "bp-darwinia-core",
  "bp-messages",
@@ -720,7 +707,7 @@ dependencies = [
 [[package]]
 name = "bp-pangoro"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#22f831be59cb773877506cb5682a7d1ee27341db"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
  "bp-darwinia-core",
  "bp-messages",
@@ -735,6 +722,7 @@ dependencies = [
 [[package]]
 name = "bp-parachains"
 version = "0.1.0"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
  "bp-polkadot-core",
  "bp-runtime",
@@ -748,6 +736,7 @@ dependencies = [
 [[package]]
 name = "bp-polkadot-core"
 version = "0.1.0"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
  "bp-messages",
  "bp-runtime",
@@ -767,7 +756,7 @@ dependencies = [
 [[package]]
 name = "bp-rococo"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#22f831be59cb773877506cb5682a7d1ee27341db"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
  "bp-messages",
  "bp-polkadot-core",
@@ -784,6 +773,7 @@ dependencies = [
 [[package]]
 name = "bp-runtime"
 version = "0.1.0"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
  "frame-support",
  "hash-db",
@@ -801,8 +791,9 @@ dependencies = [
 [[package]]
 name = "bp-test-utils"
 version = "0.1.0"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
- "bp-header-chain 0.1.0",
+ "bp-header-chain",
  "ed25519-dalek",
  "finality-grandpa",
  "parity-scale-codec",
@@ -815,6 +806,7 @@ dependencies = [
 [[package]]
 name = "bridge-runtime-common"
 version = "0.1.0"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
  "bp-message-dispatch",
  "bp-messages",
@@ -5620,6 +5612,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-dispatch"
 version = "0.1.0"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
  "bp-message-dispatch",
  "bp-runtime",
@@ -5636,8 +5629,9 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-grandpa"
 version = "0.1.0"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
- "bp-header-chain 0.1.0",
+ "bp-header-chain",
  "bp-runtime",
  "bp-test-utils",
  "finality-grandpa",
@@ -5657,6 +5651,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-messages"
 version = "0.1.0"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
  "bitvec",
  "bp-message-dispatch",
@@ -5677,6 +5672,7 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-parachains"
 version = "0.1.0"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
  "bp-parachains",
  "bp-polkadot-core",
@@ -5849,7 +5845,7 @@ dependencies = [
 [[package]]
 name = "pallet-fee-market"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#22f831be59cb773877506cb5682a7d1ee27341db"
+source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3#3fb097c5ca82d449c5be6973df74daa4b07d1964"
 dependencies = [
  "bitvec",
  "bp-messages",
@@ -6314,7 +6310,7 @@ version = "2.8.12"
 dependencies = [
  "array-bytes",
  "beefy-primitives",
- "bp-header-chain 0.1.0 (git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.3)",
+ "bp-header-chain",
  "bp-message-dispatch",
  "bp-messages",
  "bp-pangolin",
@@ -10297,7 +10293,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "rand 0.8.5",
  "static_assertions",
 ]
