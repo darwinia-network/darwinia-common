@@ -1,12 +1,10 @@
 pub use pallet_bridge_dispatch::Instance1 as WithPangolinDispatch;
 
-use ethereum::LegacyTransaction;
 // --- paritytech ---
 use frame_support::{
 	ensure,
 	traits::{Currency, OriginTrait, WithdrawReasons},
 };
-use sp_core::H160;
 use sp_runtime::{
 	traits::UniqueSaturatedInto,
 	transaction_validity::{InvalidTransaction, TransactionValidityError},
@@ -34,7 +32,7 @@ fn evm_ensure_can_withdraw(
 ) -> Result<(), TransactionValidityError> {
 	// Ensure the account's evm account has enough balance to withdraw.
 	let old_evm_balance = <Runtime as darwinia_evm::Config>::RingAccountBasic::account_balance(who);
-	let (old_sub, old_remaining) = old_evm_balance.div_mod(U256::from(POW_9));
+	let (_old_sub, old_remaining) = old_evm_balance.div_mod(U256::from(POW_9));
 	ensure!(
 		old_evm_balance > amount,
 		TransactionValidityError::Invalid(InvalidTransaction::Payment)
@@ -46,7 +44,7 @@ fn evm_ensure_can_withdraw(
 	}
 
 	let new_evm_balance = old_evm_balance.saturating_sub(amount);
-	let (new_sub, new_remaining) = new_evm_balance.div_mod(U256::from(POW_9));
+	let (new_sub, _new_remaining) = new_evm_balance.div_mod(U256::from(POW_9));
 
 	// Ensure the account underlying substrate account has no liquidity restrictions.
 	ensure!(

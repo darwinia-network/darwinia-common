@@ -126,16 +126,3 @@ fn mutate_account_dec_balance_existential_by_90() {
 		assert_balance!(test_addr, new, 500, 0);
 	});
 }
-#[test]
-fn mutate_account_dec_balance_existential_by_990() {
-	let (_, mut ext) = new_test_ext(1);
-	ext.execute_with(|| {
-		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
-		let origin = decimal_convert(500, Some(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, origin);
-
-		let new = origin.saturating_sub(U256::from(990));
-		RingAccount::mutate_account_basic_balance(&test_addr, new);
-		assert_balance!(test_addr, U256::zero(), 0, 0);
-	});
-}

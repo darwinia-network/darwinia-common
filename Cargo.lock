@@ -6337,7 +6337,6 @@ dependencies = [
  "dp-s2s",
  "drml-common-runtime",
  "drml-primitives",
- "ethereum",
  "fp-evm",
  "fp-rpc",
  "fp-self-contained",

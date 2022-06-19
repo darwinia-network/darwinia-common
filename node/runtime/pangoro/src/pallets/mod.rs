@@ -82,8 +82,8 @@ pub use to_substrate_backing_::*;
 pub mod evm;
 pub use evm::*;
 
-pub mod ethereum_;
-pub use ethereum_::*;
+pub mod ethereum;
+pub use ethereum::*;
 
 pub mod base_fee;
 pub use base_fee::*;
