@@ -25,6 +25,7 @@ darwinia-bridge-bsc                   = { default-features = false, path = "../.
 darwinia-ethereum                     = { default-features = false, path = "../../../frame/dvm/ethereum" }
 darwinia-evm                          = { default-features = false, path = "../../../frame/dvm/evm" }
 darwinia-evm-precompile-bls12-381     = { default-features = false, path = "../../../frame/dvm/evm/precompiles/bls12381" }
+darwinia-evm-precompile-dispatch      = { default-features = false, path = "../../../frame/dvm/evm/precompiles/dispatch" }
 darwinia-evm-precompile-mpt           = { default-features = false, path = "../../../frame/dvm/evm/precompiles/mpt" }
 darwinia-evm-precompile-state-storage = { default-features = false, path = "../../../frame/dvm/evm/precompiles/state-storage" }
 darwinia-evm-precompile-transfer      = { default-features = false, path = "../../../frame/dvm/evm/precompiles/transfer" }
@@ -125,6 +126,7 @@ std = [
 	"darwinia-ethereum/std",
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-bls12-381/std",
+	"darwinia-evm-precompile-dispatch/std",
 	"darwinia-evm-precompile-mpt/std",
 	"darwinia-evm-precompile-state-storage/std",
 	"darwinia-evm-precompile-transfer/std",
