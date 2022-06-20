@@ -126,7 +126,9 @@ pub mod pallet {
 				&user,
 			)?;
 
-			let backing_address = user.encode().as_slice().derive_ethereum_address();
+			let backing_address = sp_runtime::AccountId32::try_from(
+				user.encode().as_slice()).map_err(|_| Error::<T>::InvalidMessageSender)?.derive_ethereum_address();
+
 			let mut mapping_token =
 				Self::mapped_token_address(backing_address, token_metadata.address)?;
 			ensure!(mapping_token == H160::zero(), "asset has been registered");
@@ -175,7 +177,8 @@ pub mod pallet {
 				&user,
 			)?;
 
-			let backing_address = user.encode().as_slice().derive_ethereum_address();
+			let backing_address = sp_runtime::AccountId32::try_from(
+				user.encode().as_slice()).map_err(|_| Error::<T>::InvalidMessageSender)?.derive_ethereum_address();
 			let mapping_token = Self::mapped_token_address(backing_address, token_address)?;
 			ensure!(mapping_token != H160::zero(), Error::<T>::TokenUnregistered);
 
@@ -331,8 +334,11 @@ impl<T: Config> Pallet<T> {
 
 	pub fn judge_self_message(nonce: MessageNonce) -> DispatchResultWithPostInfo {
 		let message_sender = T::OutboundMessager::get_valid_message_sender(nonce)?;
+
+		let account_id = sp_runtime::AccountId32::try_from(message_sender.encode().as_slice()).map_err(|_| Error::<T>::InvalidMessageSender)?;
+
 		ensure!(
-			message_sender.encode().as_slice().derive_ethereum_address()
+			account_id.derive_ethereum_address()
 				== <MappingFactoryAddress<T>>::get(),
 			Error::<T>::InvalidMessageSender
 		);

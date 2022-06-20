@@ -78,17 +78,6 @@ impl DeriveEthereumAddress for AccountId32 {
 	}
 }
 
-// TODO: remove it after `FeeMarketPayment` upgrade
-impl DeriveEthereumAddress for &[u8] {
-	fn derive_ethereum_address(&self) -> H160 {
-		let mut account_id: [u8; 32] = Default::default();
-		let size = sp_std::cmp::min(self.len(), 32);
-		account_id[..size].copy_from_slice(&self[..size]);
-
-		AccountId32::new(account_id).derive_ethereum_address()
-	}
-}
-
 fn checksum_of(account_id: &[u8; 32]) -> u8 {
 	account_id[1..31].iter().fold(account_id[0], |sum, &byte| sum ^ byte)
 }
