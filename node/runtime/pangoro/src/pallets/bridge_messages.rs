@@ -17,8 +17,8 @@ frame_support::parameter_types! {
 		bp_pangolin::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
 	pub const MaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =
 		bp_pangolin::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
-	// TODO: remove this after FeeMarketPayment upgrade
-	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::derive_substrate_address(H160::from_slice(&[0x72, 0x6f, 0x6f, 0x74, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])));
+	// 0x726f6f7400000000000000000000000000000000, b"root"
+	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::derive_substrate_address(H160([0x72u8, 0x6f, 0x6f, 0x74, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])));
 }
 
 impl Config<WithPangolinMessages> for Runtime {
