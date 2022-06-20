@@ -125,27 +125,23 @@ impl CallValidate<bp_pangolin::AccountId, Origin, Call> for CallValidator {
 								<Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price();
 							let fee = t.gas_limit.saturating_mul(gas_price);
 
-							// Ensure the relayer's account has enough balance to withdraw.
-							if evm_ensure_can_withdraw(
-								relayer_account,
-								cmp::min(
-									fee,
-									decimal_convert(MaxUsableBalanceFromRelayer::get(), None),
-								),
-								WithdrawReasons::TRANSFER,
-							)
-							.is_ok()
-							{
-								let derived_substrate_address =
-										<Runtime as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
-								// Ensure the derived ethereum address has enough balance to pay for
-								// the transaction
-								let _ =
-									<Runtime as darwinia_evm::Config>::RingAccountBasic::transfer(
-										&relayer_account,
-										&derived_substrate_address,
-										fee,
-									);
+							// MaxUsableBalanceFromRelayer is the cap limitation for fee in case gas_limit is too large for relayer
+							if fee > decimal_convert(MaxUsableBalanceFromRelayer::get(), None) {
+								return Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(2u8)));
+							}
+
+							// Already done `evm_ensure_can_withdraw` in check_receiving_before_dispatch
+							let derived_substrate_address =
+								<Runtime as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
+
+							let result = <Runtime as darwinia_evm::Config>::RingAccountBasic::transfer(
+								&relayer_account,
+								&derived_substrate_address,
+								fee,
+							);
+
+							if result.is_err() {
+								return Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(3u8)));
 							}
 
 							Ok(())
