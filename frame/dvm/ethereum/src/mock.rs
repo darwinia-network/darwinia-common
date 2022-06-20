@@ -363,29 +363,25 @@ impl CallValidate<AccountId32, Origin, Call> for CallValidator {
 								<Test as darwinia_evm::Config>::FeeCalculator::min_gas_price();
 							let fee = t.gas_limit.saturating_mul(gas_price);
 
-							if evm_ensure_can_withdraw(
-								relayer_account,
-								cmp::min(
-									fee,
-									decimal_convert(
-										MaxUsableBalanceFromRelayer::get().into(),
-										None,
-									),
-								),
-								WithdrawReasons::TRANSFER,
-							)
-							.is_ok()
-							{
-								let derived_substrate_address =
-									<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
-								// Ensure the derived ethereum address has enough balance to pay for
-								// the transaction
-								let _ = <Test as darwinia_evm::Config>::RingAccountBasic::transfer(
-									&relayer_account,
-									&derived_substrate_address,
-									fee,
-								);
+							// MaxUsableBalanceFromRelayer is the cap limitation for fee in case gas_limit is too large for relayer
+							if fee > decimal_convert(MaxUsableBalanceFromRelayer::get().into(), None) {
+								return Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(2u8)));
 							}
+
+							// Already done `evm_ensure_can_withdraw` in check_receiving_before_dispatch
+							let derived_substrate_address =
+								<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
+
+							let result = <Test as darwinia_evm::Config>::RingAccountBasic::transfer(
+								&relayer_account,
+								&derived_substrate_address,
+								fee,
+							);
+
+							if result.is_err() {
+								return Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(3u8)));
+							}
+
 							Ok(())
 						},
 						_ =>
