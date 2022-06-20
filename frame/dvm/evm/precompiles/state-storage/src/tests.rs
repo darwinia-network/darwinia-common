@@ -486,7 +486,6 @@ mod tests {
 					CallOrCreateInfo::Call(info) => info.value,
 					CallOrCreateInfo::Create(_) => todo!(),
 				});
-			println!("{:?}", result);
 			assert!(result.unwrap().len() != 0);
 		});
 	}

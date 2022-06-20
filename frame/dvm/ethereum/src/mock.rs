@@ -27,7 +27,7 @@ use sha3::{Digest, Keccak256};
 // --- paritytech ---
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
-	traits::{Everything, FindAuthor, GenesisBuild},
+	traits::{Everything, FindAuthor, GenesisBuild, OriginTrait, WithdrawReasons},
 	weights::GetDispatchInfo,
 	ConsensusEngineId, PalletId,
 };
@@ -37,20 +37,23 @@ use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
 	AccountId32, Perbill, RuntimeDebug,
 };
-use sp_std::prelude::*;
+use sp_std::{cmp, prelude::*};
 // --- darwinia-network ---
 use crate::{self as darwinia_ethereum, account_basic::*, *};
+use bp_message_dispatch::{CallValidate, IntoDispatchOrigin as IntoDispatchOriginT};
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
-use darwinia_support::evm::DeriveSubstrateAddress;
+use darwinia_support::evm::{
+	decimal_convert, DeriveEthereumAddress, DeriveSubstrateAddress, POW_9,
+};
 
 type Block = MockBlock<Test>;
-pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
 type Balance = u64;
 
+pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
 pub type EthereumTransactCall = darwinia_ethereum::Call<Test>;
 pub type TestRuntimeCall = <Test as frame_system::Config>::Call;
 
@@ -92,7 +95,7 @@ frame_support::parameter_types! {
 	// For weight estimation, we assume that the most locks on an individual account will be 50.
 	// This number may need to be adjusted in the future if this assumption no longer holds true.
 	pub const MaxLocks: u32 = 10;
-	pub const ExistentialDeposit: u64 = 500;
+	pub const ExistentialDeposit: u64 = 0;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
 	type AccountStore = System;
@@ -239,6 +242,206 @@ impl darwinia_ethereum::Config for Test {
 	type StateRoot = IntermediateStateRoot;
 }
 
+// --- pallet-bridge-dispatch config start ---
+pub(crate) type BridgeMessageId = [u8; 4];
+pub(crate) type SubChainId = [u8; 4];
+pub(crate) const SOURCE_CHAIN_ID: SubChainId = *b"srce";
+pub(crate) const TARGET_CHAIN_ID: SubChainId = *b"trgt";
+
+frame_support::parameter_types! {
+	pub const MaxUsableBalanceFromRelayer: Balance = 100;
+}
+
+fn evm_ensure_can_withdraw(
+	who: &AccountId32,
+	amount: U256,
+	reasons: WithdrawReasons,
+) -> Result<(), TransactionValidityError> {
+	// Ensure the account's evm account has enough balance to withdraw.
+	let old_evm_balance = <Test as darwinia_evm::Config>::RingAccountBasic::account_balance(who);
+	let (_old_sub, old_remaining) = old_evm_balance.div_mod(U256::from(POW_9));
+	ensure!(
+		old_evm_balance > amount,
+		TransactionValidityError::Invalid(InvalidTransaction::Payment)
+	);
+
+	let (mut amount_sub, amount_remaining) = amount.div_mod(U256::from(POW_9));
+	if old_remaining < amount_remaining {
+		amount_sub = amount_sub.saturating_add(U256::from(1));
+	}
+
+	let new_evm_balance = old_evm_balance.saturating_sub(amount);
+	let (new_sub, _new_remaining) = new_evm_balance.div_mod(U256::from(POW_9));
+
+	// Ensure the account underlying substrate account has no liquidity restrictions.
+	ensure!(
+		Ring::ensure_can_withdraw(
+			who,
+			amount_sub.low_u128().unique_saturated_into(),
+			reasons,
+			new_sub.low_u128().unique_saturated_into(),
+		)
+		.is_ok(),
+		TransactionValidityError::Invalid(InvalidTransaction::Payment)
+	);
+
+	Ok(())
+}
+
+pub struct AccountIdConverter;
+impl sp_runtime::traits::Convert<H256, AccountId32> for AccountIdConverter {
+	fn convert(hash: H256) -> AccountId32 {
+		AccountId32::new(hash.0)
+	}
+}
+
+#[derive(Decode, Encode, Clone)]
+pub struct EncodedCall(pub Vec<u8>);
+impl From<EncodedCall> for Result<Call, ()> {
+	fn from(call: EncodedCall) -> Result<Call, ()> {
+		Call::decode(&mut &call.0[..]).map_err(drop)
+	}
+}
+
+pub struct CallValidator;
+impl CallValidate<AccountId32, Origin, Call> for CallValidator {
+	fn check_receiving_before_dispatch(
+		relayer_account: &AccountId32,
+		call: &Call,
+	) -> Result<(), &'static str> {
+		match call {
+			Call::Ethereum(darwinia_ethereum::Call::message_transact { transaction: tx }) =>
+				match tx {
+					Transaction::Legacy(t) => {
+						// Use fixed gas price now.
+						let gas_price =
+							<Test as darwinia_evm::Config>::FeeCalculator::min_gas_price();
+						let fee = t.gas_limit.saturating_mul(gas_price);
+
+						// Ensure the relayer's account has enough balance to withdraw.
+						ensure!(
+							evm_ensure_can_withdraw(
+								relayer_account,
+								cmp::min(
+									fee,
+									decimal_convert(
+										MaxUsableBalanceFromRelayer::get().into(),
+										None
+									)
+								),
+								WithdrawReasons::TRANSFER
+							)
+							.is_ok(),
+							TransactionValidityError::Invalid(InvalidTransaction::Payment)
+						);
+						Ok(())
+					},
+					_ => Ok(()),
+				},
+			_ => Ok(()),
+		}
+	}
+
+	fn call_validate(
+		relayer_account: &AccountId32,
+		origin: &Origin,
+		call: &Call,
+	) -> Result<(), TransactionValidityError> {
+		match call {
+			// Note: Only support Ethereum::message_transact(LegacyTransaction)
+			Call::Ethereum(crate::Call::message_transact { transaction: tx }) => {
+				match origin.caller() {
+					OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => match tx {
+						Transaction::Legacy(t) => {
+							// Only non-payable call supported.
+							if t.value != U256::zero() {
+								return Err(TransactionValidityError::Invalid(
+									InvalidTransaction::Payment,
+								));
+							}
+							let gas_price =
+								<Test as darwinia_evm::Config>::FeeCalculator::min_gas_price();
+							let fee = t.gas_limit.saturating_mul(gas_price);
+
+							// MaxUsableBalanceFromRelayer is the cap limitation for fee in case gas_limit is too large for relayer
+							if fee > decimal_convert(MaxUsableBalanceFromRelayer::get().into(), None) {
+								return Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(2u8)));
+							}
+
+							// Already done `evm_ensure_can_withdraw` in check_receiving_before_dispatch
+							let derived_substrate_address =
+								<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
+
+							let result = <Test as darwinia_evm::Config>::RingAccountBasic::transfer(
+								&relayer_account,
+								&derived_substrate_address,
+								fee,
+							);
+
+							if result.is_err() {
+								return Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(3u8)));
+							}
+
+							Ok(())
+						},
+						_ =>
+							Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(1u8))),
+					},
+					_ => Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(0u8))),
+				}
+			},
+			_ => Ok(()),
+		}
+	}
+}
+
+pub struct IntoDispatchOrigin;
+impl IntoDispatchOriginT<AccountId32, Call, Origin> for IntoDispatchOrigin {
+	fn into_dispatch_origin(id: &AccountId32, call: &Call) -> Origin {
+		match call {
+			Call::Ethereum(darwinia_ethereum::Call::message_transact { .. }) => {
+				let derive_eth_address = id.derive_ethereum_address();
+				darwinia_ethereum::RawOrigin::EthereumTransaction(derive_eth_address).into()
+			},
+			_ => frame_system::RawOrigin::Signed(id.clone()).into(),
+		}
+	}
+}
+
+#[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
+pub struct TestAccountPublic(AccountId32);
+impl IdentifyAccount for TestAccountPublic {
+	type AccountId = AccountId32;
+
+	fn into_account(self) -> AccountId32 {
+		self.0
+	}
+}
+
+#[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
+pub struct TestSignature(AccountId32);
+impl Verify for TestSignature {
+	type Signer = TestAccountPublic;
+
+	fn verify<L: sp_runtime::traits::Lazy<[u8]>>(&self, _msg: L, signer: &AccountId32) -> bool {
+		self.0 == *signer
+	}
+}
+
+impl pallet_bridge_dispatch::Config for Test {
+	type AccountIdConverter = AccountIdConverter;
+	type BridgeMessageId = BridgeMessageId;
+	type Call = Call;
+	type CallValidator = CallValidator;
+	type EncodedCall = EncodedCall;
+	type Event = Event;
+	type IntoDispatchOrigin = IntoDispatchOrigin;
+	type SourceChainAccountId = AccountId32;
+	type TargetChainAccountPublic = TestAccountPublic;
+	type TargetChainSignature = TestSignature;
+}
+// --- pallet-bridge-dispatch config end ---
+
 frame_support::construct_runtime! {
 	pub enum Test where
 		Block = Block,
@@ -251,6 +454,7 @@ frame_support::construct_runtime! {
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>},
 		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event<T>, Origin},
+		Dispatch: pallet_bridge_dispatch::{Pallet, Call, Event<T>},
 	}
 }
 
@@ -521,7 +725,6 @@ fn address_build(seed: u8) -> AccountInfo {
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExternalities) {
-	// sc_cli::init_logger("");
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 	let pairs = (0..accounts_len).map(|i| address_build(i as u8)).collect::<Vec<_>>();
