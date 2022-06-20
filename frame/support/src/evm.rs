@@ -154,18 +154,6 @@ mod tests {
 	}
 
 	#[test]
-	fn test_bytes_to_substrate_id() {
-		assert_eq!(
-			(&b"root"[..]).derive_ethereum_address(),
-			H160::from_str("726f6f7400000000000000000000000000000000").unwrap()
-		);
-		assert_eq!(
-			(&b"longbytes..longbytes..longbytes..longbytes"[..]).derive_ethereum_address(),
-			(&b"longbytes..longbytes"[..]).derive_ethereum_address()
-		);
-	}
-
-	#[test]
 	fn test_derive_eth_address_from_subaccount_id() {
 		let account_id_1 = AccountId32::from_str(
 			"0x64766d3a000000000000006be02d1d3665660d22ff9624b7be0551ee1ac91bd2",

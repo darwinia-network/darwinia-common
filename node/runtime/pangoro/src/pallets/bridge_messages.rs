@@ -11,12 +11,12 @@ use pallet_fee_market::s2s::{
 };
 
 frame_support::parameter_types! {
+	pub const BridgedChainId: ChainId = PANGOLIN_CHAIN_ID;
 	pub const MaxMessagesToPruneAtOnce: MessageNonce = 8;
-	pub const MaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =
-		bp_pangolin::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
 	pub const MaxUnconfirmedMessagesAtInboundLane: MessageNonce =
 		bp_pangolin::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
-	pub const BridgedChainId: ChainId = PANGOLIN_CHAIN_ID;
+	pub const MaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =
+		bp_pangolin::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
 	// TODO: remove this after FeeMarketPayment upgrade
 	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::derive_substrate_address(H160::from_slice(&[0x72, 0x6f, 0x6f, 0x74, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])));
 }

@@ -49,7 +49,7 @@ use darwinia_ethereum::InternalTransactHandler;
 use darwinia_support::{
 	evm::DeriveEthereumAddress,
 	mapping_token::*,
-	s2s::{ensure_source_account, OutboundMessager},
+	s2s::{ensure_source_account, OutboundMessenger},
 	ChainName,
 };
 use dp_asset::TokenMetadata;
@@ -95,7 +95,7 @@ pub mod pallet {
 		type BackingChainName: Get<ChainName>;
 
 		/// The Outbuound Message Info
-		type OutboundMessager: OutboundMessager<Self::AccountId>;
+		type OutboundMessenger: OutboundMessenger<Self::AccountId>;
 	}
 
 	/// Remote Backing Address, this used to verify the remote caller
@@ -282,7 +282,7 @@ pub mod pallet {
 
 	impl<T: Config> OnDeliveryConfirmed for Pallet<T> {
 		fn on_messages_delivered(lane: &LaneId, messages: &DeliveredMessages) -> Weight {
-			if !T::OutboundMessager::check_lane_id(lane) {
+			if !T::OutboundMessenger::check_lane_id(lane) {
 				return 0;
 			}
 			for nonce in messages.begin..=messages.end {
@@ -333,10 +333,9 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn judge_self_message(nonce: MessageNonce) -> DispatchResultWithPostInfo {
-		let message_sender = T::OutboundMessager::get_valid_message_sender(nonce)?;
+		let message_sender = T::OutboundMessenger::get_valid_message_sender(nonce)?;
 
 		let account_id = sp_runtime::AccountId32::try_from(message_sender.encode().as_slice()).map_err(|_| Error::<T>::InvalidMessageSender)?;
-
 		ensure!(
 			account_id.derive_ethereum_address()
 				== <MappingFactoryAddress<T>>::get(),

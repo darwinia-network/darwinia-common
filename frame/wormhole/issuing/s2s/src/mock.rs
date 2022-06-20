@@ -275,8 +275,8 @@ impl LatestMessageNoncer for MockS2sMessageSender {
 	}
 }
 
-pub struct MockOutboundMessager;
-impl OutboundMessager<AccountId32> for MockOutboundMessager {
+pub struct MockOutboundMessenger;
+impl OutboundMessenger<AccountId32> for MockOutboundMessenger {
 	fn check_lane_id(lane_id: &LaneId) -> bool {
 		return *lane_id == MessageLaneId::get();
 	}
@@ -297,7 +297,7 @@ impl Config for Test {
 	type BridgedChainId = PangoroChainId;
 	type Event = ();
 	type InternalTransactHandler = Ethereum;
-	type OutboundMessager = MockOutboundMessager;
+	type OutboundMessenger = MockOutboundMessenger;
 	type PalletId = S2sRelayPalletId;
 	type RingCurrency = Ring;
 	type WeightInfo = ();

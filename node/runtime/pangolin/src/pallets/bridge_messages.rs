@@ -18,17 +18,17 @@ frame_support::parameter_types! {
 	// 0x726f6f7400000000000000000000000000000000, b"root"
 	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::derive_substrate_address(H160::from_slice(&[0x72, 0x6f, 0x6f, 0x74, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])));
 	// Pangoro configurations.
-	pub const PangoroMaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =
-		bp_pangoro::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
+	pub const PangoroChainId: ChainId = PANGORO_CHAIN_ID;
 	pub const PangoroMaxUnconfirmedMessagesAtInboundLane: MessageNonce =
 		bp_pangoro::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
-	pub const PangoroChainId: ChainId = PANGORO_CHAIN_ID;
+	pub const PangoroMaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =
+		bp_pangoro::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
 	// Pangolin Parachain configurations.
-	pub const PangolinParachainMaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =
-		bp_pangolin_parachain::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
+	pub const PangolinParachainChainId: ChainId = PANGOLIN_PARACHAIN_CHAIN_ID;
 	pub const PangolinParachainMaxUnconfirmedMessagesAtInboundLane: MessageNonce =
 		bp_pangolin_parachain::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
-	pub const PangolinParachainChainId: ChainId = PANGOLIN_PARACHAIN_CHAIN_ID;
+	pub const PangolinParachainMaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =
+		bp_pangolin_parachain::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
 }
 
 impl Config<WithPangoroMessages> for Runtime {
