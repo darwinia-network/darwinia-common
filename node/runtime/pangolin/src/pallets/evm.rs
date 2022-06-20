@@ -102,7 +102,7 @@ where
 	}
 
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 21, 23, 24, 25, 27]
+		sp_std::vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 21, 23, 24, 25, 1024, 1025]
 			.into_iter()
 			.map(|x| addr(x))
 			.collect()
@@ -113,10 +113,10 @@ impl<R> PrecompileSet for PangolinPrecompiles<R>
 where
 	Dispatch<R>: Precompile,
 	EthereumBridge<R>: Precompile,
+	R: darwinia_ethereum::Config,
 	StateStorage<R, StorageFilter>: Precompile,
 	Sub2SubBridge<R, ToPangoroMessageSender, bm_pangoro::ToPangoroOutboundPayLoad>: Precompile,
 	Transfer<R>: Precompile,
-	R: darwinia_ethereum::Config,
 {
 	fn execute(
 		&self,
@@ -146,10 +146,11 @@ where
 			a if a == addr(7) => Some(Bn128Mul::execute(input, target_gas, context, is_static)),
 			a if a == addr(8) => Some(Bn128Pairing::execute(input, target_gas, context, is_static)),
 			a if a == addr(9) => Some(Blake2F::execute(input, target_gas, context, is_static)),
-			// Darwinia precompiles: 1024+ for stable precompiles, 2048+ for experimental
-			// precompiles
+			// Darwinia precompiles: 1024+ for stable precompiles.
+			// FIXME: Change the transfer precompile address after https://github.com/darwinia-network/darwinia-common/issues/1259
 			a if a == addr(21) =>
 				Some(<Transfer<R>>::execute(input, target_gas, context, is_static)),
+			// TODO: Delete EthereumBridge and Sub2SubBridge precompiles in the futures.
 			a if a == addr(23) =>
 				Some(<EthereumBridge<R>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(24) => Some(<Sub2SubBridge<
@@ -157,11 +158,14 @@ where
 				ToPangoroMessageSender,
 				bm_pangoro::ToPangoroOutboundPayLoad,
 			>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(25) =>
-				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(27) => Some(<StateStorage<R, StorageFilter>>::execute(
+			// There are two Dispatch precompile instance now, the 25-Dispatch reserved to
+			// keep the compatibility, which will be removed in the future.
+			a if a == addr(25) => Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
+			a if a == addr(1024) => Some(<StateStorage<R, StorageFilter>>::execute(
 				input, target_gas, context, is_static,
 			)),
+			a if a == addr(1025) =>
+				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
