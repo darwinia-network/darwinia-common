@@ -6323,6 +6323,7 @@ dependencies = [
  "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-evm-precompile-bls12-381",
+ "darwinia-evm-precompile-dispatch",
  "darwinia-evm-precompile-mpt",
  "darwinia-evm-precompile-state-storage",
  "darwinia-evm-precompile-transfer",
