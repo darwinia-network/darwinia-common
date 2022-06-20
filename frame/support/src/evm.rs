@@ -78,17 +78,6 @@ impl DeriveEthereumAddress for AccountId32 {
 	}
 }
 
-// TODO: remove it after `FeeMarketPayment` upgrade
-impl DeriveEthereumAddress for &[u8] {
-	fn derive_ethereum_address(&self) -> H160 {
-		let mut account_id: [u8; 32] = Default::default();
-		let size = sp_std::cmp::min(self.len(), 32);
-		account_id[..size].copy_from_slice(&self[..size]);
-
-		AccountId32::new(account_id).derive_ethereum_address()
-	}
-}
-
 fn checksum_of(account_id: &[u8; 32]) -> u8 {
 	account_id[1..31].iter().fold(account_id[0], |sum, &byte| sum ^ byte)
 }
@@ -162,18 +151,6 @@ mod tests {
 	#[test]
 	fn const_pow_9_should_work() {
 		assert_eq!(U256::from(10).checked_pow(9.into()).unwrap(), POW_9.into())
-	}
-
-	#[test]
-	fn test_bytes_to_substrate_id() {
-		assert_eq!(
-			(&b"root"[..]).derive_ethereum_address(),
-			H160::from_str("726f6f7400000000000000000000000000000000").unwrap()
-		);
-		assert_eq!(
-			(&b"longbytes..longbytes..longbytes..longbytes"[..]).derive_ethereum_address(),
-			(&b"longbytes..longbytes"[..]).derive_ethereum_address()
-		);
 	}
 
 	#[test]
