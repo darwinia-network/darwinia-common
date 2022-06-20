@@ -22,7 +22,7 @@ use array_bytes::{bytes2hex, hex2bytes};
 use super::*;
 use darwinia_evm::AccountBasic;
 
-fn eip1559_erc20_creation_unsigned_transaction() -> EIP1559UnsignedTransaction {
+pub fn eip1559_erc20_creation_unsigned_transaction() -> EIP1559UnsignedTransaction {
 	EIP1559UnsignedTransaction {
 		nonce: U256::zero(),
 		max_priority_fee_per_gas: U256::from(1),
