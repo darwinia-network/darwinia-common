@@ -2,12 +2,12 @@
 authors = ["Acala Developers"]
 edition = "2021"
 name    = "module-transaction-pause"
-version = "2.8.12"
+version = "2.8.13"
 
 [dependencies]
 # crates.io
-codec         = { package = "parity-scale-codec", version = "2.3", default-features = false }
-scale-info    = { version = "1.0", default-features = false, features = ["derive"] }
+codec      = { package = "parity-scale-codec", version = "2.3", default-features = false }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 # paritytech
 frame-support = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.3" }
 frame-system  = { git = "https://github.com/darwinia-network/substrate", default-features = false, branch = "darwinia-v0.12.3" }
@@ -19,8 +19,8 @@ sp-std        = { git = "https://github.com/darwinia-network/substrate", default
 darwinia-balances = { path = "../balances" }
 darwinia-support  = { features = ["testing"], path = "../support" }
 # paritytech
-sp-core           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-sp-io             = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-core = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-io   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 
 [features]
 default = ["std"]
