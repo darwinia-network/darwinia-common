@@ -57,7 +57,7 @@ impl<T: darwinia_ethereum::Config> RingBack<T> {
 
 		// Ensure the context address should be precompile address
 		let transfer_addr =
-			array_bytes::hex_try_into(TRANSFER_ADDR).map_err(|_| helper.revert("Invalid addr"))?;
+			array_bytes::hex_into(TRANSFER_ADDR).map_err(|_| helper.revert("Invalid addr"))?;
 		ensure!(address == transfer_addr, helper.revert("Invalid context addr"));
 
 		let source = <T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(address);

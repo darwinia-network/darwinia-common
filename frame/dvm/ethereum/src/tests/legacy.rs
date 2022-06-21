@@ -267,7 +267,7 @@ fn call_should_handle_errors() {
 		match info {
 			CallOrCreateInfo::Call(info) => {
 				assert_eq!(
-					bytes2hex("0x", info.value),
+					bytes2hex("0x", &info.value),
 					"0x0000000000000000000000000000000000000000000000000000000000000001".to_owned()
 				);
 			},

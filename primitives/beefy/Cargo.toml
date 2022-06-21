@@ -12,6 +12,6 @@ version     = "2.8.12"
 [dependencies]
 
 [dev-dependencies]
-array-bytes = { version = "1.5" }
+array-bytes = { version = "2.0" }
 
 [features]

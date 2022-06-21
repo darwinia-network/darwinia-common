@@ -122,9 +122,15 @@ dependencies = [
 
 [[package]]
 name = "array-bytes"
-version = "1.5.2"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b48bc78d3fa4a9a0925d5009f731cbf7e5613d2a4f1a937208f6dde89a287bab"
+checksum = "c5b210fcebfebcdd3ac59145390e5a4c16a980f4a18d4b676cd96dee09926854"
+
+[[package]]
+name = "array-bytes"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "30725d201df311b571b927e5a175a394e3763e11451c2e6415a84dc6e891fb6d"
 dependencies = [
  "serde",
 ]
@@ -195,9 +201,9 @@ dependencies = [
 
 [[package]]
 name = "async-global-executor"
-version = "2.1.0"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd8b508d585e01084059b60f06ade4cb7415cd2e4084b71dd1cb44e7d3fb9880"
+checksum = "5262ed948da60dd8956c6c5aca4d4163593dddb7b32d73267c93dab7b2e98940"
 dependencies = [
  "async-channel",
  "async-executor",
@@ -205,6 +211,7 @@ dependencies = [
  "async-lock",
  "blocking",
  "futures-lite",
+ "num_cpus",
  "once_cell",
 ]
 
@@ -837,7 +844,7 @@ checksum = "771fe0050b883fcc3ea2359b1a96bcfbc090b7116eae7c3c512c7a083fdf23d3"
 name = "bsc-primitives"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "ethbloom",
  "hash-db",
  "parity-scale-codec",
@@ -1476,7 +1483,7 @@ dependencies = [
 name = "darwinia-bridge-bsc"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "bsc-primitives",
  "ethereum-primitives",
  "frame-benchmarking",
@@ -1497,7 +1504,7 @@ dependencies = [
 name = "darwinia-bridge-ethereum"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "blake2-rfc",
  "ckb-merkle-mountain-range",
  "darwinia-balances",
@@ -1523,7 +1530,7 @@ dependencies = [
 name = "darwinia-ethereum"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "bp-message-dispatch",
  "bp-runtime",
  "darwinia-balances",
@@ -1560,7 +1567,7 @@ dependencies = [
 name = "darwinia-evm"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "darwinia-balances",
  "darwinia-support",
  "evm",
@@ -1662,7 +1669,7 @@ dependencies = [
 name = "darwinia-evm-precompile-state-storage"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 1.6.0",
  "darwinia-balances",
  "darwinia-ethereum",
  "darwinia-evm",
@@ -1690,7 +1697,7 @@ dependencies = [
 name = "darwinia-evm-precompile-transfer"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "darwinia-balances",
  "darwinia-ethereum",
  "darwinia-evm",
@@ -1752,7 +1759,7 @@ dependencies = [
 name = "darwinia-header-mmr"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "ckb-merkle-mountain-range",
  "darwinia-relay-primitives",
  "darwinia-support",
@@ -1773,7 +1780,7 @@ dependencies = [
 name = "darwinia-relay-authorities"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "darwinia-balances",
  "darwinia-header-mmr",
  "darwinia-relay-primitives",
@@ -1999,7 +2006,7 @@ dependencies = [
 name = "dp-contract"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "bp-messages",
  "dp-asset",
  "ethabi",
@@ -2041,7 +2048,7 @@ dependencies = [
 name = "dp-s2s"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "bp-message-dispatch",
  "bp-runtime",
  "dp-asset",
@@ -2150,7 +2157,7 @@ dependencies = [
 name = "drml-service"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "async-trait",
  "beefy-primitives",
  "darwinia-bridge-ethereum",
@@ -2409,7 +2416,7 @@ dependencies = [
 name = "ethereum-primitives"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "ethash",
  "ethbloom",
  "ethereum-types",
@@ -3035,7 +3042,7 @@ dependencies = [
 name = "from-ethereum-issuing"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "darwinia-bridge-ethereum",
  "darwinia-ethereum",
  "darwinia-evm",
@@ -3058,7 +3065,7 @@ dependencies = [
 name = "from-substrate-issuing"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "bp-message-dispatch",
  "bp-messages",
  "bp-runtime",
@@ -4851,7 +4858,7 @@ checksum = "71d96e3f3c0b6325d8ccd83c33b28acb183edcb6c67938ba104ec546854b0882"
 name = "merkle-patricia-trie"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "criterion",
  "ethereum-types",
  "hashbrown 0.11.2",
@@ -6196,7 +6203,7 @@ dependencies = [
 name = "pangolin-runtime"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "beefy-primitives",
  "bp-message-dispatch",
  "bp-messages",
@@ -6313,7 +6320,7 @@ dependencies = [
 name = "pangoro-runtime"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "beefy-primitives",
  "bp-header-chain",
  "bp-message-dispatch",
@@ -9936,7 +9943,7 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 name = "to-ethereum-backing"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "darwinia-balances",
  "darwinia-bridge-ethereum",
  "darwinia-relay-primitives",
@@ -9966,7 +9973,7 @@ dependencies = [
 name = "to-parachain-backing"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "bp-message-dispatch",
  "bp-messages",
  "bp-runtime",
@@ -9985,7 +9992,7 @@ dependencies = [
 name = "to-substrate-backing"
 version = "2.8.12"
 dependencies = [
- "array-bytes",
+ "array-bytes 2.0.1",
  "bp-message-dispatch",
  "bp-messages",
  "bp-runtime",

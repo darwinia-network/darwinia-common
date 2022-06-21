@@ -278,14 +278,14 @@ fn encode_message_should_work() {
 	let message = {
 		_S {
 			_1: RuntimeString::from("DRML"),
-			_2: array_bytes::hex2array_unchecked::<_, 4>("0x479fbdf9"),
+			_2: array_bytes::hex2array_unchecked::<4>("0x479fbdf9"),
 			_3: 789u32,
 			_4: [0u8; 32],
 		}
 		.encode()
 	};
 	println!("{:?}", message);
-	println!("{}", array_bytes::bytes2hex("0x", message));
+	println!("{}", array_bytes::bytes2hex("0x", &message));
 
 	// The message is composed of:
 	//
@@ -300,14 +300,14 @@ fn encode_message_should_work() {
 	let message = {
 		_S {
 			_1: RuntimeString::from("DRML"),
-			_2: array_bytes::hex2array_unchecked::<_, 4>("0xb4bcf497"),
+			_2: array_bytes::hex2array_unchecked::<4>("0xb4bcf497"),
 			_3: 789u32,
 			_4: vec![[7u8; 20], [8u8; 20], [9u8; 20]],
 		}
 		.encode()
 	};
 	println!("{:?}", message);
-	println!("{}", array_bytes::bytes2hex("0x", message));
+	println!("{}", array_bytes::bytes2hex("0x", &message));
 }
 
 #[test]

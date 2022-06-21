@@ -46,7 +46,7 @@ impl EthashProof {
 			data[48..64].copy_from_slice(&(r.0));
 
 			// `H256` is 32 length, truncate is safe; qed
-			array_bytes::dyn_into!(subhasher::sha2_256(&data)[16..], 16)
+			array_bytes::slice_n_into_unchecked(&subhasher::sha2_256(&data)[16..])
 		}
 
 		let mut data = [0u8; 128];
@@ -54,7 +54,7 @@ impl EthashProof {
 		data[64..].copy_from_slice(&(self.dag_nodes[1].0));
 
 		// `H256` is 32 length, truncate is safe; qed
-		let mut leaf = array_bytes::dyn_into!(subhasher::sha2_256(&data)[16..], 16);
+		let mut leaf = array_bytes::slice_n_into_unchecked(&subhasher::sha2_256(&data)[16..]);
 		for i in 0..self.proof.len() {
 			if (index >> i as u64) % 2 == 0 {
 				leaf = hash_h128(leaf, self.proof[i]);

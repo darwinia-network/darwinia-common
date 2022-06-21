@@ -286,7 +286,7 @@ mod tests {
 		}"#).unwrap();
 
 		assert_eq!(
-			array_bytes::hex_into_unchecked::<_, Hash, 32>(
+			array_bytes::hex_into_unchecked::<Hash, 32>(
 				"0x7e1db1179427e17c11a42019f19a3dddf326b6177b0266749639c85c78c607bb"
 			),
 			header.compute_hash()
