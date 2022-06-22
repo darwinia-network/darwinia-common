@@ -49,7 +49,7 @@ fn extract_authorities_should_work() {
 			"0xee226379db83cffc681495730c11fdde79ba4c0c",
 		]
 		.iter()
-		.map(array_bytes::hex_into_unchecked)
+		.map(|&s| array_bytes::hex_into_unchecked(s))
 		.collect::<Vec<_>>();
 
 		assert_eq!(signers, expected_signers);
@@ -70,7 +70,7 @@ fn extract_authorities_should_work() {
 			"0xe625dd7ad2f7b88723857946a41af646c589c336",
 		]
 		.iter()
-		.map(array_bytes::hex_into_unchecked)
+		.map(|&s| array_bytes::hex_into_unchecked(s))
 		.collect::<Vec<_>>();
 
 		assert_eq!(signers, expected_signers);

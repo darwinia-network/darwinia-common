@@ -12,7 +12,6 @@ version     = "2.8.13"
 
 [dependencies]
 # crates.io
-array-bytes    = { version = "1.5" }
 blake2-rfc     = { version = "0.2", default-features = false }
 codec          = { package = "parity-scale-codec", version = "2.3", default-features = false }
 ethereum-types = { version = "0.12", default-features = false }
@@ -34,6 +33,8 @@ sp-runtime    = { default-features = false, git = "https://github.com/darwinia-n
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 
 [dev-dependencies]
+# crates.io
+array-bytes = { version = "2.0" }
 # darwinia-network
 darwinia-balances   = { path = "../../balances" }
 darwinia-support    = { features = ["testing"], path = "../../support" }

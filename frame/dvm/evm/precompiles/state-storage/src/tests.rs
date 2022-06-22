@@ -478,7 +478,7 @@ mod tests {
 				300000,
 				TransactionAction::Call(contract),
 				0,
-				hex2bytes_unchecked(bytes2hex("0x", call_function)),
+				hex2bytes_unchecked(&bytes2hex("0x", &call_function)),
 			);
 			let tx = unsign_tx.sign_with_chain_id(&a4.private_key, 42);
 			let result =
@@ -519,7 +519,7 @@ mod tests {
 				300000,
 				TransactionAction::Call(contract),
 				0,
-				hex2bytes_unchecked(bytes2hex("0x", call_function)),
+				hex2bytes_unchecked(&bytes2hex("0x", &call_function)),
 			);
 			let tx = unsign_tx.sign_with_chain_id(&a4.private_key, 42);
 			let result =

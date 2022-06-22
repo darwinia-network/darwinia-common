@@ -24,7 +24,7 @@ fp-evm = { default-features = false, git = "https://github.com/darwinia-network/
 
 [dev-dependencies]
 # crates.io
-array-bytes = { version = "1.4" }
+array-bytes = { version = "2.0" }
 codec       = { package = "parity-scale-codec", version = "2.3" }
 ethereum    = { version = "0.11.1", features = ["with-codec"] }
 scale-info  = { version = "1.0", features = ["derive"] }

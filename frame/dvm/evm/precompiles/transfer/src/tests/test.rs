@@ -165,7 +165,7 @@ fn query_contract_balance(sender: &AccountInfo, nonce: u64) -> U256 {
 		gas_limit: U256::from(0x300000),
 		action: ethereum::TransactionAction::Call(H160::from_str(WKTON_ADDRESS).unwrap()),
 		value: U256::from(0),
-		input: hex2bytes_unchecked(bytes2hex("0x", contract_balance_encode(sender.address))),
+		input: hex2bytes_unchecked(&bytes2hex("0x", &contract_balance_encode(sender.address))),
 	}
 	.sign_with_chain_id(&sender.private_key, 42);
 
@@ -218,12 +218,12 @@ fn kton_make_call_works() {
 		let mock_value = U256::from(30);
 		let expected_str = "0x47e7ef24000000000000000000000000aa01a1bef0557fa9625581a293f3aa7770192632000000000000000000000000000000000000000000000000000000000000001e";
 		let encoded_str =
-			bytes2hex("0x", crate::kton::Kton::<Test>::make_call_data(mock_address, mock_value, &helper).unwrap());
+			bytes2hex("0x", &crate::kton::Kton::<Test>::make_call_data(mock_address, mock_value, &helper).unwrap());
 		assert_eq!(encoded_str, expected_str);
 
 		let mock_value = sp_core::U256::from(25);
 		let encoded_str =
-			bytes2hex("0x", crate::kton::Kton::<Test>::make_call_data(mock_address, mock_value, &helper).unwrap());
+			bytes2hex("0x", &crate::kton::Kton::<Test>::make_call_data(mock_address, mock_value, &helper).unwrap());
 			assert_ne!(encoded_str, expected_str);
 	});
 }

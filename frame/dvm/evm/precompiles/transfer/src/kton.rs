@@ -88,7 +88,7 @@ impl<T: darwinia_ethereum::Config> Kton<T> {
 				// Call WKTON wrapped contract deposit
 				let raw_input = Self::make_call_data(caller, value, &helper)?;
 				if let Ok(call_res) = T::Runner::call(
-					array_bytes::hex_try_into(TRANSFER_ADDR)
+					array_bytes::hex_into(TRANSFER_ADDR)
 						.map_err(|_| helper.revert("Invalid transfer address"))?,
 					wkton,
 					raw_input.to_vec(),

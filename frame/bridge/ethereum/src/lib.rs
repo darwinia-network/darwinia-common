@@ -725,7 +725,7 @@ impl<T: Config> Relayable for Module<T> {
 		ensure!(Self::verify_header(header, ethash_proof), <Error<T>>::HeaderInv);
 
 		let last_leaf = *relay_header_id - 1;
-		let mmr_root = array_bytes::dyn_into!(parent_mmr_root, 32);
+		let mmr_root = parent_mmr_root.to_owned();
 
 		if let Some(best_confirmed_block_number) = optional_best_confirmed_relay_header_id {
 			let maybe_best_confirmed_block_header_hash =
@@ -736,24 +736,24 @@ impl<T: Config> Relayable for Module<T> {
 			let best_confirmed_block_header_hash =
 				maybe_best_confirmed_block_header_hash.ok_or(<Error<T>>::HeaderHashInv)?;
 
-			// The mmr_root of first submit should includ the hash last confirm block
+			// The mmr_root of first submit should include the hash last confirm block
 			//      mmr_root of 1st
 			//     / \
 			//    - -
 			//   /     \
 			//  c  ...  1st
-			//  c: last comfirmed block 1st: 1st submit block
+			//  c: last confirmed block 1st: 1st submit block
 			ensure!(
 				Self::verify_mmr(
 					last_leaf,
 					mmr_root,
-					mmr_proof.iter().map(|h| array_bytes::dyn_into!(h, 32)).collect(),
+					mmr_proof.to_owned(),
 					vec![(*best_confirmed_block_number, best_confirmed_block_header_hash)],
 				),
 				<Error<T>>::MMRInv
 			);
 		} else {
-			// last confirm no exsit the mmr verification will be passed
+			// last confirm not exist the mmr verification will be passed
 			//
 			//      mmr_root of 1st
 			//     / \
@@ -765,11 +765,8 @@ impl<T: Config> Relayable for Module<T> {
 				Self::verify_mmr(
 					last_leaf,
 					mmr_root,
-					mmr_proof.iter().map(|h| array_bytes::dyn_into!(h, 32)).collect(),
-					vec![(
-						header.number,
-						array_bytes::dyn_into!(header.hash.ok_or(<Error<T>>::HeaderInv)?, 32)
-					)],
+					mmr_proof.to_owned(),
+					vec![(header.number, header.hash.ok_or(<Error<T>>::HeaderInv)?)],
 				),
 				<Error<T>>::MMRInv
 			);
@@ -900,10 +897,7 @@ impl<T: Config> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 				mmr_proof.proof.to_vec(),
 				vec![(
 					ethereum_header.number,
-					array_bytes::dyn_into!(
-						ethereum_header.hash.ok_or(<Error<T>>::HeaderHashInv)?,
-						32
-					)
+					ethereum_header.hash.ok_or(<Error<T>>::HeaderHashInv)?,
 				)]
 			),
 			<Error<T>>::MMRInv

@@ -32,11 +32,11 @@ mod trie_tests {
 			trie.insert(k.to_vec(), v.to_vec()).unwrap();
 		}
 		let r = trie.root().unwrap();
-		let rs = array_bytes::bytes2hex("0x", r.clone());
+		let rs = array_bytes::bytes2hex("0x", &r);
 		assert_eq!(rs.as_str(), hash);
 		let mut trie = MerklePatriciaTrie::from(Rc::clone(&memdb), &r).unwrap();
 		let r2 = trie.root().unwrap();
-		let rs2 = array_bytes::bytes2hex("0x", r2);
+		let rs2 = array_bytes::bytes2hex("0x", &r2);
 		assert_eq!(rs2.as_str(), hash);
 	}
 
@@ -680,7 +680,7 @@ mod trie_tests {
 			trie.insert(k.to_vec(), v.to_vec()).unwrap();
 		}
 		let r = trie.root().unwrap();
-		let rs = array_bytes::bytes2hex("0x", r.clone());
+		let rs = array_bytes::bytes2hex("0x", &r);
 
 		assert_eq!(rs.as_str(), hash);
 
