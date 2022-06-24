@@ -539,8 +539,6 @@ where
 					*timestamp,
 					slot_duration,
 				);
-			let uncles =
-				sp_authorship::InherentDataProvider::<<Block as BlockT>::Header>::check_inherents();
 
 			Ok((timestamp, slot, uncles))
 		},
