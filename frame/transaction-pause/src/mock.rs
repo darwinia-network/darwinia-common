@@ -81,7 +81,6 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type ExistentialDeposit = NativeTokenExistentialDeposit;
 	type MaxLocks = ();
 	type MaxReserves = ();
-	type OtherCurrencies = ();
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }

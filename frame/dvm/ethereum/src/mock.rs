@@ -106,7 +106,6 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type MaxLocks = MaxLocks;
 	type MaxReserves = ();
-	type OtherCurrencies = ();
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
@@ -119,7 +118,6 @@ impl darwinia_balances::Config<KtonInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type MaxLocks = MaxLocks;
 	type MaxReserves = ();
-	type OtherCurrencies = ();
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
@@ -363,12 +361,18 @@ impl CallValidate<AccountId32, Origin, Call> for CallValidator {
 								<Test as darwinia_evm::Config>::FeeCalculator::min_gas_price();
 							let fee = t.gas_limit.saturating_mul(gas_price);
 
-							// MaxUsableBalanceFromRelayer is the cap limitation for fee in case gas_limit is too large for relayer
-							if fee > decimal_convert(MaxUsableBalanceFromRelayer::get().into(), None) {
-								return Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(2u8)));
+							// MaxUsableBalanceFromRelayer is the cap limitation for fee in case
+							// gas_limit is too large for relayer
+							if fee
+								> decimal_convert(MaxUsableBalanceFromRelayer::get().into(), None)
+							{
+								return Err(TransactionValidityError::Invalid(
+									InvalidTransaction::Custom(2u8),
+								));
 							}
 
-							// Already done `evm_ensure_can_withdraw` in check_receiving_before_dispatch
+							// Already done `evm_ensure_can_withdraw` in
+							// check_receiving_before_dispatch
 							let derived_substrate_address =
 								<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
 
@@ -379,7 +383,9 @@ impl CallValidate<AccountId32, Origin, Call> for CallValidator {
 							);
 
 							if result.is_err() {
-								return Err(TransactionValidityError::Invalid(InvalidTransaction::Custom(3u8)));
+								return Err(TransactionValidityError::Invalid(
+									InvalidTransaction::Custom(3u8),
+								));
 							}
 
 							Ok(())
