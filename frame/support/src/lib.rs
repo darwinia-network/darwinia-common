@@ -26,10 +26,7 @@ pub mod testing;
 pub mod traits;
 
 pub mod balance {
-	pub use crate::{
-		structs::{StakingLock, Unbonding},
-		traits::DustCollector,
-	};
+	pub use crate::structs::{StakingLock, Unbonding};
 }
 use sp_std::{vec, vec::Vec};
 

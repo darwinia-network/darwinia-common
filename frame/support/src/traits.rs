@@ -20,35 +20,12 @@
 use core::fmt::Debug;
 // --- crates.io ---
 use codec::FullCodec;
-use impl_trait_for_tuples::impl_for_tuples;
 use scale_info::TypeInfo;
 // --- paritytech ---
 use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use ethereum_primitives::receipt::EthereumTransactionIndex;
-
-pub trait DustCollector<AccountId> {
-	fn is_dust(who: &AccountId) -> bool;
-
-	fn collect(who: &AccountId);
-}
-#[impl_for_tuples(30)]
-impl<AccountId> DustCollector<AccountId> for Currencies {
-	fn is_dust(who: &AccountId) -> bool {
-		for_tuples!( #(
-			if !Currencies::is_dust(who) {
-				return false;
-			}
-		)* );
-
-		true
-	}
-
-	fn collect(who: &AccountId) {
-		for_tuples!( #( Currencies::collect(who); )* );
-	}
-}
 
 /// Callback on ethereum-backing module
 pub trait OnDepositRedeem<AccountId, Balance> {
