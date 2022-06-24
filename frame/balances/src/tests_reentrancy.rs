@@ -111,7 +111,6 @@ impl Config<RingInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type MaxLocks = MaxLocks;
 	type MaxReserves = MaxReserves;
-	type OtherCurrencies = ();
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }

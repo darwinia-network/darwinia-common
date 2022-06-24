@@ -1862,7 +1862,6 @@ dependencies = [
  "ethereum-primitives",
  "frame-support",
  "frame-system",
- "impl-trait-for-tuples",
  "parity-scale-codec",
  "scale-info",
  "sha3 0.9.1",

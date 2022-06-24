@@ -567,7 +567,6 @@ pub mod pallet {
 	use sp_std::{borrow::Borrow, cmp, fmt::Debug, mem, prelude::*};
 	// --- darwinia-network ---
 	use crate::weights::WeightInfo;
-	use darwinia_support::balance::*;
 
 	#[pallet::config]
 	pub trait Config<I: 'static = ()>: frame_system::Config {
@@ -622,9 +621,6 @@ pub mod pallet {
 			+ Default
 			+ EncodeLike
 			+ TypeInfo;
-
-		// A handle to check if other currencies drop below existential deposit.
-		type OtherCurrencies: DustCollector<Self::AccountId>;
 	}
 
 	#[pallet::event]
@@ -856,7 +852,7 @@ pub mod pallet {
 			let wipeout = {
 				let new_total = new_free + new_reserved;
 
-				new_total < existential_deposit && T::OtherCurrencies::is_dust(&who)
+				new_total < existential_deposit
 			};
 			let new_free = if wipeout { Zero::zero() } else { new_free };
 			let new_reserved = if wipeout { Zero::zero() } else { new_reserved };
@@ -1034,12 +1030,12 @@ pub mod pallet {
 		/// - `Some` containing the the `new` account, iff the account has sufficient balance.
 		/// - `Some` containing the dust to be dropped, iff some dust should be dropped.
 		fn post_mutation(
-			who: &T::AccountId,
+			_who: &T::AccountId,
 			new: T::BalanceInfo,
 		) -> (Option<T::BalanceInfo>, Option<NegativeImbalance<T, I>>) {
 			let total = new.total();
 
-			if total < T::ExistentialDeposit::get() && T::OtherCurrencies::is_dust(who) {
+			if total < T::ExistentialDeposit::get() {
 				if total.is_zero() {
 					(None, None)
 				} else {
@@ -1051,7 +1047,7 @@ pub mod pallet {
 		}
 
 		fn deposit_consequence(
-			who: &T::AccountId,
+			_who: &T::AccountId,
 			amount: T::Balance,
 			account: &T::BalanceInfo,
 		) -> DepositConsequence {
@@ -1068,8 +1064,7 @@ pub mod pallet {
 				None => return DepositConsequence::Overflow,
 			};
 
-			if new_total_balance < T::ExistentialDeposit::get() && T::OtherCurrencies::is_dust(who)
-			{
+			if new_total_balance < T::ExistentialDeposit::get() {
 				return DepositConsequence::BelowMinimum;
 			}
 
@@ -1102,7 +1097,7 @@ pub mod pallet {
 			// NOTE: This assumes that the pallet is a provider (which is true). Is this ever
 			// changes, then this will need to adapt accordingly.
 			let ed = T::ExistentialDeposit::get();
-			let success = if new_total_balance < ed && T::OtherCurrencies::is_dust(who) {
+			let success = if new_total_balance < ed {
 				if frame_system::Pallet::<T>::can_dec_provider(who) {
 					WithdrawConsequence::ReducedToZero(new_total_balance)
 				} else {
@@ -1430,10 +1425,7 @@ pub mod pallet {
 							);
 
 							let ed = T::ExistentialDeposit::get();
-							ensure!(
-								to_account.total() >= ed || !T::OtherCurrencies::is_dust(dest),
-								<Error<T, I>>::ExistentialDeposit
-							);
+							ensure!(to_account.total() >= ed, <Error<T, I>>::ExistentialDeposit);
 
 							Self::ensure_can_withdraw(
 								transactor,
@@ -1450,10 +1442,7 @@ pub mod pallet {
 							let allow_death = allow_death
 								&& <frame_system::Pallet<T>>::can_dec_provider(transactor);
 							ensure!(
-								allow_death
-									|| from_account.total() >= ed || !T::OtherCurrencies::is_dust(
-									transactor
-								),
+								allow_death || from_account.total() >= ed,
 								<Error<T, I>>::KeepAlive
 							);
 
@@ -1561,10 +1550,7 @@ pub mod pallet {
 			Self::try_mutate_account(
 				who,
 				|account, is_new| -> Result<Self::PositiveImbalance, DispatchError> {
-					ensure!(
-						!is_new || !T::OtherCurrencies::is_dust(who),
-						<Error<T, I>>::DeadAccount
-					);
+					ensure!(!is_new, <Error<T, I>>::DeadAccount);
 					account.set_free(
 						account.free().checked_add(&value).ok_or(ArithmeticError::Overflow)?,
 					);
@@ -1592,10 +1578,7 @@ pub mod pallet {
 				who,
 				|account, is_new| -> Result<Self::PositiveImbalance, DispatchError> {
 					let ed = T::ExistentialDeposit::get();
-					ensure!(
-						value >= ed || !is_new || !T::OtherCurrencies::is_dust(who),
-						<Error<T, I>>::ExistentialDeposit
-					);
+					ensure!(value >= ed || !is_new, <Error<T, I>>::ExistentialDeposit);
 
 					// defensive only: overflow should never happen, however in case it does, then
 					// this operation is a no-op.
@@ -1634,14 +1617,13 @@ pub mod pallet {
 
 					// bail if we need to keep the account alive and this would kill it.
 					let ed = T::ExistentialDeposit::get();
-					let others_is_dust = T::OtherCurrencies::is_dust(who);
 					let would_be_dead = {
 						let new_total = new_free_account + account.reserved();
-						new_total < ed && others_is_dust
+						new_total < ed
 					};
 					let would_kill = {
 						let old_total = account.free() + account.reserved();
-						would_be_dead && (old_total >= ed || !others_is_dust)
+						would_be_dead && (old_total >= ed)
 					};
 					ensure!(
 						liveness == ExistenceRequirement::AllowDeath || !would_kill,
@@ -1680,10 +1662,7 @@ pub mod pallet {
 					// equal and opposite cause (returned as an Imbalance), then in the
 					// instance that there's no other accounts on the system at all, we might
 					// underflow the issuance and our arithmetic will be off.
-					ensure!(
-						total >= ed || !is_new || !T::OtherCurrencies::is_dust(who),
-						<Error<T, I>>::ExistentialDeposit
-					);
+					ensure!(total >= ed || !is_new, <Error<T, I>>::ExistentialDeposit);
 
 					let imbalance = if account.free() <= value {
 						SignedImbalance::Positive(PositiveImbalance::new(value - account.free()))
@@ -2154,26 +2133,6 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config<I>, I: 'static> DustCollector<T::AccountId> for Pallet<T, I> {
-		fn is_dust(who: &T::AccountId) -> bool {
-			let total = Self::total_balance(who);
-
-			total < T::ExistentialDeposit::get() || total.is_zero()
-		}
-
-		fn collect(who: &T::AccountId) {
-			let dropped = Self::total_balance(who);
-
-			if !dropped.is_zero() {
-				T::DustRemoval::on_unbalanced(NegativeImbalance::new(dropped));
-				if let Err(e) = <frame_system::Pallet<T>>::dec_providers(who) {
-					log::error!("Logic error: Unexpected {:?}", e);
-				}
-				Self::deposit_event(Event::DustLost(who.clone(), dropped));
-			}
-		}
-	}
-
 	pub trait BalanceInfo<Balance, Module>: MaxEncodedLen {
 		fn free(&self) -> Balance;
 		fn set_free(&mut self, new_free: Balance);
@@ -2290,12 +2249,8 @@ pub mod pallet {
 	impl<T: Config<I>, I: 'static> Drop for DustCleaner<T, I> {
 		fn drop(&mut self) {
 			if let Some((who, dust)) = self.0.take() {
-				if T::OtherCurrencies::is_dust(&who) {
-					T::OtherCurrencies::collect(&who);
-
-					<Pallet<T, I>>::deposit_event(Event::DustLost(who, dust.peek()));
-					T::DustRemoval::on_unbalanced(dust);
-				}
+				<Pallet<T, I>>::deposit_event(Event::DustLost(who, dust.peek()));
+				T::DustRemoval::on_unbalanced(dust);
 			}
 		}
 	}

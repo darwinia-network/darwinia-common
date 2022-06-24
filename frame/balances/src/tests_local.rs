@@ -108,7 +108,6 @@ impl Config<RingInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type MaxLocks = ();
 	type MaxReserves = MaxReserves;
-	type OtherCurrencies = (Kton,);
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
@@ -126,7 +125,6 @@ impl Config<KtonInstance> for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type MaxLocks = ();
 	type MaxReserves = MaxReserves;
-	type OtherCurrencies = (Ring,);
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
@@ -228,65 +226,6 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 				Event::System(frame_system::Event::KilledAccount(1)),
 				Event::Ring(crate::Event::DustLost(1, 1)),
 				Event::Ring(crate::Event::Slashed(1, 1)),
-			]
-		);
-	});
-}
-
-#[test]
-fn dust_collector_should_work() {
-	<ExtBuilder>::default().existential_deposit(100).build().execute_with(|| {
-		assert_ok!(Ring::set_balance(RawOrigin::Root.into(), 1, 100, 0));
-
-		assert_eq!(
-			events(),
-			[
-				Event::System(frame_system::Event::NewAccount(1)),
-				Event::Ring(crate::Event::Endowed(1, 100)),
-				Event::Ring(crate::Event::BalanceSet(1, 100, 0)),
-			]
-		);
-
-		let _ = Ring::slash(&1, 1);
-
-		assert_eq!(
-			events(),
-			[
-				Event::System(frame_system::Event::KilledAccount(1)),
-				Event::Ring(crate::Event::DustLost(1, 99)),
-				Event::Ring(crate::Event::Slashed(1, 1)),
-			]
-		);
-
-		// ---
-
-		assert_ok!(Ring::set_balance(RawOrigin::Root.into(), 1, 100, 0));
-		assert_ok!(Kton::set_balance(RawOrigin::Root.into(), 1, 100, 0));
-
-		assert_eq!(
-			events(),
-			[
-				Event::System(frame_system::Event::NewAccount(1)),
-				Event::Ring(crate::Event::Endowed(1, 100)),
-				Event::Ring(crate::Event::BalanceSet(1, 100, 0)),
-				Event::Kton(crate::Event::Endowed(1, 100)),
-				Event::Kton(crate::Event::BalanceSet(1, 100, 0)),
-			]
-		);
-
-		let _ = Ring::slash(&1, 1);
-
-		assert_eq!(events(), [Event::Ring(crate::Event::Slashed(1, 1))]);
-
-		let _ = Kton::slash(&1, 1);
-
-		assert_eq!(
-			events(),
-			[
-				Event::System(frame_system::Event::KilledAccount(1)),
-				Event::Ring(crate::Event::DustLost(1, 99)),
-				Event::Kton(crate::Event::DustLost(1, 99)),
-				Event::Kton(crate::Event::Slashed(1, 1))
 			]
 		);
 	});

@@ -133,7 +133,6 @@ impl darwinia_balances::Config<KtonInstance> for Test {
 	type ExistentialDeposit = ();
 	type MaxLocks = ();
 	type MaxReserves = ();
-	type OtherCurrencies = ();
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
@@ -146,7 +145,6 @@ impl darwinia_balances::Config<RingInstance> for Test {
 	type ExistentialDeposit = ();
 	type MaxLocks = ();
 	type MaxReserves = ();
-	type OtherCurrencies = ();
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
