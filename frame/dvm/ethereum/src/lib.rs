@@ -182,10 +182,6 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// How Ethereum state root is calculated.
 		type StateRoot: Get<H256>;
-		// /// *RING* balances module.
-		// type RingCurrency: Currency<Self::AccountId>;
-		// /// *KTON* balances module.
-		// type KtonCurrency: Currency<Self::AccountId>;
 	}
 
 	#[pallet::pallet]
