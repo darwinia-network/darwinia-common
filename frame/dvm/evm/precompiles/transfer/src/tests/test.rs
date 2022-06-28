@@ -71,10 +71,7 @@ fn ring_currency_withdraw_with_enough_balance() {
 		let input_bytes: Vec<u8> = hex2bytes_unchecked(WITH_DRAW_INPUT);
 		let dest =
 			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
-		// assert_eq!(
-		// 	<Test as darwinia_ethereum::Config>::RingCurrency::free_balance(dest.clone()),
-		// 	30_000_000_000
-		// );
+		assert_eq!(RingAccount::account_balance(&dest), decimal_convert(30_000_000_000, None));
 
 		let transfer_account_id =
 			<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(
@@ -111,7 +108,7 @@ fn ring_currency_withdraw_not_enough_balance_should_fail() {
 		let input_bytes: Vec<u8> = hex2bytes_unchecked(WITH_DRAW_INPUT);
 		let dest =
 			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
-		// assert_eq!(<Test as darwinia_ethereum::Config>::RingCurrency::free_balance(&dest), 0);
+		assert_eq!(RingAccount::account_balance(&dest), decimal_convert(0, None));
 	});
 }
 
