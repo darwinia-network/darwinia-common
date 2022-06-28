@@ -181,6 +181,7 @@ where
 
 	/// Mutate account balance.
 	fn mutate_account_balance(account_id: &T::AccountId, new_balance: U256) {
+		debug_assert_eq!(C::minimum_balance().saturated_into::<u128>(), 0, "The Ed must be zero!");
 		let helper = U256::from(POW_9);
 
 		let current = Self::account_balance(account_id);
