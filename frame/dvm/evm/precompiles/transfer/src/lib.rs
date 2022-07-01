@@ -192,6 +192,7 @@ pub fn make_call_data<T: darwinia_evm::Config>(
 	func.encode_input(&[Token::Address(eth_address), Token::Uint(eth_value)])
 		.map_err(|_| helper.revert("Construct call data failed"))
 }
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct CallData {
 	wkton_address: H160,
