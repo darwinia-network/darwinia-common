@@ -1,0 +1,17 @@
+[package]
+authors     = ["Darwinia Network <hello@darwinia.network>"]
+description = "Withdraw precompile for EVM pallet."
+edition     = "2021"
+homepage    = "https://darwinia.network"
+license     = "GPL-3.0"
+name        = "darwinia-evm-precompile-kton-erc20"
+readme      = "README.md"
+repository  = "https://github.com/darwinia-network/darwinia-common"
+version     = "2.8.14"
+
+[dependencies]
+
+[features]
+default = ["std"]
+
+std = []
