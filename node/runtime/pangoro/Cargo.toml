@@ -17,11 +17,9 @@ scale-info  = { version = "1.0", default-features = false, features = ["derive"]
 serde       = { version = "1.0", features = ["derive"], optional = true }
 smallvec    = { version = "1.8" }
 # darwinia-network
-bsc-primitives    = { default-features = false, path = "../../../primitives/bsc" }
 darwinia-balances = { default-features = false, path = "../../../frame/balances" }
 # darwinia-beefy-gadget                 = { default-features = false, path = "../../../frame/beefy-gadget" }
 # darwinia-beefy-primitives             = { path = "../../../primitives/beefy" }
-darwinia-bridge-bsc                   = { default-features = false, path = "../../../frame/bridge/bsc" }
 darwinia-ethereum                     = { default-features = false, path = "../../../frame/dvm/ethereum" }
 darwinia-evm                          = { default-features = false, path = "../../../frame/dvm/evm" }
 darwinia-evm-precompile-bls12-381     = { default-features = false, path = "../../../frame/dvm/evm/precompiles/bls12381" }
@@ -119,10 +117,8 @@ std = [
 	"scale-info/std",
 	"serde",
 	# darwinia-network
-	"bsc-primitives/std",
 	"darwinia-balances/std",
 	# "darwinia-beefy-gadget/std",
-	"darwinia-bridge-bsc/std",
 	"darwinia-ethereum/std",
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-bls12-381/std",
@@ -217,7 +213,6 @@ runtime-benchmarks = [
 	"frame-system/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	# darwinia-network
-	"darwinia-bridge-bsc/runtime-benchmarks",
 	"darwinia-ethereum/runtime-benchmarks",
 	"darwinia-evm/runtime-benchmarks",
 	"to-substrate-backing/runtime-benchmarks",

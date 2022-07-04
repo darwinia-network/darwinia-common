@@ -835,26 +835,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "771fe0050b883fcc3ea2359b1a96bcfbc090b7116eae7c3c512c7a083fdf23d3"
 
 [[package]]
-name = "bsc-primitives"
-version = "2.8.14"
-dependencies = [
- "array-bytes",
- "ethbloom",
- "hash-db",
- "parity-scale-codec",
- "plain_hasher",
- "primitive-types",
- "rlp",
- "scale-info",
- "serde",
- "serde_json",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "triehash",
-]
-
-[[package]]
 name = "bstr"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1474,27 +1454,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-bridge-bsc"
-version = "2.8.14"
-dependencies = [
- "array-bytes",
- "bsc-primitives",
- "ethereum-primitives",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-timestamp",
- "parity-scale-codec",
- "rlp",
- "scale-info",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-bridge-ethereum"
 version = "2.8.14"
 dependencies = [
@@ -2056,7 +2015,6 @@ dependencies = [
 name = "drml"
 version = "2.8.14"
 dependencies = [
- "bsc-primitives",
  "drml-primitives",
  "drml-rpc",
  "drml-service",
@@ -6206,7 +6164,6 @@ dependencies = [
  "bp-rococo",
  "bp-runtime",
  "bridge-runtime-common",
- "bsc-primitives",
  "darwinia-balances",
  "darwinia-bridge-ethereum",
  "darwinia-ethereum",
@@ -6322,9 +6279,7 @@ dependencies = [
  "bp-pangoro",
  "bp-runtime",
  "bridge-runtime-common",
- "bsc-primitives",
  "darwinia-balances",
- "darwinia-bridge-bsc",
  "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-evm-precompile-bls12-381",
@@ -6717,15 +6672,6 @@ name = "pkg-config"
 version = "0.3.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1df8c4ec4b0627e53bdf214615ad287367e482558cf84b109250b37464dc03ae"
-
-[[package]]
-name = "plain_hasher"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e19e6491bdde87c2c43d70f4c194bc8a758f2eb732df00f61e43f7362e3b4cc"
-dependencies = [
- "crunchy",
-]
 
 [[package]]
 name = "platforms"
