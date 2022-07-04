@@ -23,9 +23,8 @@ use ethabi::{Function, Param, ParamType, StateMutability, Token};
 use std::str::FromStr;
 // --- paritytech ---
 use fp_evm::CallOrCreateInfo;
-use frame_support::{assert_err, assert_ok};
+use frame_support::assert_ok;
 use sp_core::{H160, U256};
-use sp_runtime::DispatchError;
 // --- darwinia-network ---
 use crate::tests::mock::*;
 use darwinia_ethereum::Transaction;
@@ -35,82 +34,6 @@ use darwinia_evm_precompile_utils::{
 	PrecompileHelper,
 };
 use darwinia_support::evm::{decimal_convert, DeriveSubstrateAddress, TRANSFER_ADDR};
-
-const WITH_DRAW_INPUT: &str = "723908ee9dc8e509d4b93251bd57f68c09bd9d04471c193fabd8f26c54284a4b";
-fn ring_withdraw_unsigned_transaction() -> LegacyUnsignedTransaction {
-	LegacyUnsignedTransaction {
-		nonce: U256::zero(),
-		gas_price: U256::from(1),
-		gas_limit: U256::from(0x100000),
-		action: ethereum::TransactionAction::Call(H160::from_str(TRANSFER_ADDR).unwrap()),
-		value: decimal_convert(30_000_000_000, None),
-		input: hex2bytes_unchecked(WITH_DRAW_INPUT),
-	}
-}
-
-fn ring_withdraw_creation_transaction(account: &AccountInfo) -> Transaction {
-	ring_withdraw_unsigned_transaction().sign_with_chain_id(&account.private_key, 42)
-}
-
-#[test]
-fn ring_currency_withdraw_with_enough_balance() {
-	let (pairs, mut ext) = new_test_ext(1);
-	let alice = &pairs[0];
-
-	ext.execute_with(|| {
-		let t = ring_withdraw_creation_transaction(alice);
-		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
-
-		// Check caller balance
-		assert_eq!(
-			RingAccount::account_basic(&alice.address).balance,
-			// gas fee: 21512
-			decimal_convert(70_000_000_000, None).saturating_sub(U256::from(21512))
-		);
-		// Check the dest balance
-		let input_bytes: Vec<u8> = hex2bytes_unchecked(WITH_DRAW_INPUT);
-		let dest =
-			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
-		assert_eq!(RingAccount::account_balance(&dest), decimal_convert(30_000_000_000, None));
-
-		let transfer_account_id =
-			<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(
-				H160::from_str(TRANSFER_ADDR).unwrap(),
-			);
-		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::DVMTransfer(
-			transfer_account_id,
-			dest,
-			decimal_convert(30_000_000_000, None),
-		)));
-	});
-}
-
-#[test]
-fn ring_currency_withdraw_not_enough_balance_should_fail() {
-	let (pairs, mut ext) = new_test_ext(1);
-	let alice = &pairs[0];
-
-	ext.execute_with(|| {
-		let mut transaction = ring_withdraw_unsigned_transaction();
-		transaction.value = decimal_convert(120_000_000_000, None);
-		let t = transaction.sign_with_chain_id(&alice.private_key, 42);
-		assert_err!(
-			Ethereum::execute(alice.address, &t.into(), None,),
-			DispatchError::Module { index: 4, error: 0, message: Some("BalanceLow") }
-		);
-
-		// Check caller balance
-		assert_eq!(
-			RingAccount::account_basic(&alice.address).balance,
-			decimal_convert(100_000_000_000, None),
-		);
-		// Check target balance
-		let input_bytes: Vec<u8> = hex2bytes_unchecked(WITH_DRAW_INPUT);
-		let dest =
-			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
-		assert_eq!(RingAccount::account_balance(&dest), decimal_convert(0, None));
-	});
-}
 
 const WKTON_ADDRESS: &str = "32dcab0ef3fb2de2fce1d2e0799d36239671f04a";
 // WKTON Contract: https://github.com/darwinia-network/darwinia-bridge-sol/blob/master/contracts/tokens/contracts/WKTON.sol
@@ -215,12 +138,12 @@ fn kton_make_call_works() {
 		let mock_value = U256::from(30);
 		let expected_str = "0x47e7ef24000000000000000000000000aa01a1bef0557fa9625581a293f3aa7770192632000000000000000000000000000000000000000000000000000000000000001e";
 		let encoded_str =
-			bytes2hex("0x", &crate::kton::Kton::<Test>::make_call_data(mock_address, mock_value, &helper).unwrap());
+			bytes2hex("0x", &crate::make_call_data::<Test>(mock_address, mock_value, &helper).unwrap());
 		assert_eq!(encoded_str, expected_str);
 
 		let mock_value = sp_core::U256::from(25);
 		let encoded_str =
-			bytes2hex("0x", &crate::kton::Kton::<Test>::make_call_data(mock_address, mock_value, &helper).unwrap());
+			bytes2hex("0x", &crate::make_call_data::<Test>(mock_address, mock_value, &helper).unwrap());
 			assert_ne!(encoded_str, expected_str);
 	});
 }

@@ -363,5 +363,4 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 	(pairs, ext.into())
 }
 
-pub type RingAccount = <Test as darwinia_evm::Config>::RingAccountBasic;
 pub type KtonAccount = <Test as darwinia_evm::Config>::KtonAccountBasic;

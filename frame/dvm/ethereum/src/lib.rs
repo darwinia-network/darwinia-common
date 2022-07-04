@@ -950,7 +950,7 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
 		let source = T::PalletId::get().derive_ethereum_address();
 		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
-		let transaction = internal_transaction(nonce, target, input);
+		let transaction = internal_transaction::<T>(nonce, target, input);
 
 		Self::raw_transact(source, transaction).map(|(reason, used_gas)| match reason {
 			// Only when exit_reason is successful, return Ok(...)
@@ -972,7 +972,7 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 		sp_io::storage::start_transaction();
 		let source = T::PalletId::get().derive_ethereum_address();
 		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
-		let transaction = internal_transaction(nonce, contract, input);
+		let transaction = internal_transaction::<T>(nonce, contract, input);
 
 		let (_, _, info) = Self::execute(source, &transaction, None)?;
 		sp_io::storage::rollback_transaction();
@@ -1053,7 +1053,11 @@ impl From<Transaction> for AdvancedTransaction {
 	}
 }
 
-pub fn internal_transaction(nonce: U256, target: H160, input: Vec<u8>) -> AdvancedTransaction {
+pub fn internal_transaction<T: Config>(
+	nonce: U256,
+	target: H160,
+	input: Vec<u8>,
+) -> AdvancedTransaction {
 	let transaction = ethereum::TransactionV0 {
 		nonce,
 		// Not used, and will be overwritten by None later.
@@ -1065,9 +1069,9 @@ pub fn internal_transaction(nonce: U256, target: H160, input: Vec<u8>) -> Advanc
 		signature: ethereum::TransactionSignature::new(
 			// Reference https://github.com/ethereum/EIPs/issues/155
 			//
-			// But this transaction is sent by darwinia-issuing system from `0x0`
-			// So ignore signature checking, simply set `chain_id` to `1`
-			1 * 2 + 36,
+			// The internal transaction is sent by specific pallets, no signature
+			// validation, just create a valid transaction signature is enough.
+			T::ChainId::get() * 2 + 36,
 			H256::from_slice(&[55u8; 32]),
 			H256::from_slice(&[55u8; 32]),
 		)
