@@ -136,9 +136,7 @@ frame_support::parameter_types! {
 
 impl darwinia_ethereum::Config for Test {
 	type Event = ();
-	type KtonCurrency = Kton;
 	type PalletId = DvmPalletId;
-	type RingCurrency = Ring;
 	type StateRoot = IntermediateStateRoot;
 }
 
