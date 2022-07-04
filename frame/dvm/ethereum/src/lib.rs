@@ -52,7 +52,7 @@ use frame_support::storage::unhashed;
 use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
 	ensure,
-	traits::{Currency, EnsureOrigin, Get},
+	traits::{EnsureOrigin, Get},
 	weights::{Pays, PostDispatchInfo, Weight},
 	PalletId,
 };
@@ -71,13 +71,6 @@ use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use darwinia_evm::{AccountBasic, BlockHashMapping, GasWeightMapping, Runner};
 use darwinia_support::evm::{recover_signer, DeriveEthereumAddress, INTERNAL_TX_GAS_LIMIT};
-
-/// A type alias for the balance type from this pallet's point of view.
-type AccountId<T> = <T as frame_system::Config>::AccountId;
-type RingCurrency<T> = <T as Config>::RingCurrency;
-type KtonCurrency<T> = <T as Config>::KtonCurrency;
-type RingBalance<T> = <RingCurrency<T> as Currency<AccountId<T>>>::Balance;
-type KtonBalance<T> = <KtonCurrency<T> as Currency<AccountId<T>>>::Balance;
 
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum RawOrigin {
@@ -189,10 +182,6 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// How Ethereum state root is calculated.
 		type StateRoot: Get<H256>;
-		/// *RING* balances module.
-		type RingCurrency: Currency<Self::AccountId>;
-		/// *KTON* balances module.
-		type KtonCurrency: Currency<Self::AccountId>;
 	}
 
 	#[pallet::pallet]
@@ -386,13 +375,13 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn get_ring_remaining_balances)]
 	pub(super) type RemainingRingBalance<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, RingBalance<T>, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, T::AccountId, u128, ValueQuery>;
 
 	/// Remaining kton balance for dvm account.
 	#[pallet::storage]
 	#[pallet::getter(fn get_kton_remaining_balances)]
 	pub(super) type RemainingKtonBalance<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, KtonBalance<T>, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, T::AccountId, u128, ValueQuery>;
 
 	/// Mapping for block number and hashes.
 	#[pallet::storage]

@@ -23,43 +23,38 @@ use evm::ExitError;
 // --- paritytech ---
 use frame_support::{ensure, traits::Currency};
 use sp_core::{H160, U256};
-use sp_runtime::{
-	traits::{Saturating, UniqueSaturatedInto},
-	SaturatedConversion,
-};
+use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
 // --- darwinia-network ---
-use crate::{
-	Config, Event, KtonBalance, Pallet, RemainingKtonBalance, RemainingRingBalance, RingBalance,
-};
+use crate::{Config, Event, Pallet, RemainingKtonBalance, RemainingRingBalance};
 use darwinia_evm::{Account as EVMAccount, AccountBasic};
 use darwinia_support::evm::{decimal_convert, DeriveSubstrateAddress, POW_9};
 
 /// The operations for the remaining balance.
-pub trait RemainBalanceOp<T: Config, B> {
+pub trait RemainBalanceOp<T: Config> {
 	/// Get the remaining balance
-	fn remaining_balance(account_id: &T::AccountId) -> B;
+	fn remaining_balance(account_id: &T::AccountId) -> u128;
 	/// Set the remaining balance
-	fn set_remaining_balance(account_id: &T::AccountId, value: B);
+	fn set_remaining_balance(account_id: &T::AccountId, value: u128);
 	/// Remove the remaining balance
 	fn remove_remaining_balance(account_id: &T::AccountId);
 	/// Inc remaining balance
-	fn inc_remaining_balance(account_id: &T::AccountId, value: B);
+	fn inc_remaining_balance(account_id: &T::AccountId, value: u128);
 	/// Dec remaining balance
-	fn dec_remaining_balance(account_id: &T::AccountId, value: B);
+	fn dec_remaining_balance(account_id: &T::AccountId, value: u128);
 	/// Deposit dvm related transfer events
 	fn deposit_dvm_transfer_event(source: &T::AccountId, target: &T::AccountId, value: U256);
 }
 
 /// The Remaining *RING* balance.
 pub struct RingRemainBalance;
-impl<T: Config> RemainBalanceOp<T, RingBalance<T>> for RingRemainBalance {
+impl<T: Config> RemainBalanceOp<T> for RingRemainBalance {
 	/// Get the remaining balance.
-	fn remaining_balance(account_id: &T::AccountId) -> RingBalance<T> {
+	fn remaining_balance(account_id: &T::AccountId) -> u128 {
 		<RemainingRingBalance<T>>::get(account_id)
 	}
 
 	/// Set the remaining balance.
-	fn set_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
+	fn set_remaining_balance(account_id: &T::AccountId, value: u128) {
 		<RemainingRingBalance<T>>::insert(account_id, value)
 	}
 
@@ -69,17 +64,15 @@ impl<T: Config> RemainBalanceOp<T, RingBalance<T>> for RingRemainBalance {
 	}
 
 	/// Inc remaining balance.
-	fn inc_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
-		let remain_balance =
-			<Self as RemainBalanceOp<T, RingBalance<T>>>::remaining_balance(account_id);
+	fn inc_remaining_balance(account_id: &T::AccountId, value: u128) {
+		let remain_balance = <Self as RemainBalanceOp<T>>::remaining_balance(account_id);
 		let updated_balance = remain_balance.saturating_add(value);
 		<RemainingRingBalance<T>>::insert(account_id, updated_balance);
 	}
 
 	/// Dec remaining balance.
-	fn dec_remaining_balance(account_id: &T::AccountId, value: RingBalance<T>) {
-		let remain_balance =
-			<Self as RemainBalanceOp<T, RingBalance<T>>>::remaining_balance(account_id);
+	fn dec_remaining_balance(account_id: &T::AccountId, value: u128) {
+		let remain_balance = <Self as RemainBalanceOp<T>>::remaining_balance(account_id);
 		let updated_balance = remain_balance.saturating_sub(value);
 		<RemainingRingBalance<T>>::insert(account_id, updated_balance);
 	}
@@ -92,14 +85,14 @@ impl<T: Config> RemainBalanceOp<T, RingBalance<T>> for RingRemainBalance {
 
 /// The Remaining *KTON* balance.
 pub struct KtonRemainBalance;
-impl<T: Config> RemainBalanceOp<T, KtonBalance<T>> for KtonRemainBalance {
+impl<T: Config> RemainBalanceOp<T> for KtonRemainBalance {
 	/// Get the remaining balance.
-	fn remaining_balance(account_id: &T::AccountId) -> KtonBalance<T> {
+	fn remaining_balance(account_id: &T::AccountId) -> u128 {
 		<RemainingKtonBalance<T>>::get(account_id)
 	}
 
 	/// Set the remaining balance.
-	fn set_remaining_balance(account_id: &T::AccountId, value: KtonBalance<T>) {
+	fn set_remaining_balance(account_id: &T::AccountId, value: u128) {
 		<RemainingKtonBalance<T>>::insert(account_id, value)
 	}
 
@@ -109,17 +102,15 @@ impl<T: Config> RemainBalanceOp<T, KtonBalance<T>> for KtonRemainBalance {
 	}
 
 	/// Inc remaining balance.
-	fn inc_remaining_balance(account_id: &T::AccountId, value: KtonBalance<T>) {
-		let remain_balance =
-			<Self as RemainBalanceOp<T, KtonBalance<T>>>::remaining_balance(account_id);
+	fn inc_remaining_balance(account_id: &T::AccountId, value: u128) {
+		let remain_balance = <Self as RemainBalanceOp<T>>::remaining_balance(account_id);
 		let updated_balance = remain_balance.saturating_add(value);
 		<RemainingKtonBalance<T>>::insert(account_id, updated_balance);
 	}
 
 	/// Dec remaining balance.
-	fn dec_remaining_balance(account_id: &T::AccountId, value: KtonBalance<T>) {
-		let remain_balance =
-			<Self as RemainBalanceOp<T, KtonBalance<T>>>::remaining_balance(account_id);
+	fn dec_remaining_balance(account_id: &T::AccountId, value: u128) {
+		let remain_balance = <Self as RemainBalanceOp<T>>::remaining_balance(account_id);
 		let updated_balance = remain_balance.saturating_sub(value);
 		<RemainingKtonBalance<T>>::insert(account_id, updated_balance);
 	}
@@ -134,7 +125,7 @@ impl<T: Config> RemainBalanceOp<T, KtonBalance<T>> for KtonRemainBalance {
 pub struct DvmAccountBasic<T, C, RB>(sp_std::marker::PhantomData<(T, C, RB)>);
 impl<T: Config, C, RB> AccountBasic<T> for DvmAccountBasic<T, C, RB>
 where
-	RB: RemainBalanceOp<T, C::Balance>,
+	RB: RemainBalanceOp<T>,
 	C: Currency<T::AccountId>,
 {
 	/// Get the account basic in EVM format.
@@ -190,6 +181,7 @@ where
 
 	/// Mutate account balance.
 	fn mutate_account_balance(account_id: &T::AccountId, new_balance: U256) {
+		debug_assert_eq!(C::minimum_balance().saturated_into::<u128>(), 0, "The Ed must be zero!");
 		let helper = U256::from(POW_9);
 
 		let current = Self::account_balance(account_id);
@@ -209,16 +201,10 @@ where
 						.saturating_sub(diff_remaining);
 
 					C::slash(&account_id, (diff_main + 1).low_u128().unique_saturated_into());
-					RB::set_remaining_balance(
-						&account_id,
-						remaining_balance.low_u128().saturated_into(),
-					);
+					RB::set_remaining_balance(&account_id, remaining_balance.low_u128());
 				} else {
 					C::slash(&account_id, diff_main.low_u128().unique_saturated_into());
-					RB::dec_remaining_balance(
-						&account_id,
-						diff_remaining.low_u128().saturated_into(),
-					);
+					RB::dec_remaining_balance(&account_id, diff_remaining.low_u128());
 				}
 			},
 			cb if cb < nb => {
@@ -235,36 +221,13 @@ where
 						&account_id,
 						(diff_main + 1).low_u128().unique_saturated_into(),
 					);
-					RB::set_remaining_balance(
-						&account_id,
-						remaining_balance.low_u128().saturated_into(),
-					);
+					RB::set_remaining_balance(&account_id, remaining_balance.low_u128());
 				} else {
 					C::deposit_creating(&account_id, diff_main.low_u128().unique_saturated_into());
-					RB::inc_remaining_balance(
-						&account_id,
-						diff_remaining.low_u128().saturated_into(),
-					);
+					RB::inc_remaining_balance(&account_id, diff_remaining.low_u128());
 				}
 			},
 			_ => return,
-		}
-
-		// Handle existential deposit.
-		let ring_min = <T as Config>::RingCurrency::minimum_balance().saturated_into::<u128>();
-		let kton_min = <T as Config>::KtonCurrency::minimum_balance().saturated_into::<u128>();
-		let ring_ed = decimal_convert(ring_min, None);
-		let kton_ed = decimal_convert(kton_min, None);
-
-		let ring_account = T::RingAccountBasic::account_balance(&account_id);
-		let kton_account = T::KtonAccountBasic::account_balance(&account_id);
-		if ring_account < ring_ed && kton_account < kton_ed {
-			<RingRemainBalance as RemainBalanceOp<T, RingBalance<T>>>::remove_remaining_balance(
-				&account_id,
-			);
-			<KtonRemainBalance as RemainBalanceOp<T, KtonBalance<T>>>::remove_remaining_balance(
-				&account_id,
-			);
 		}
 	}
 }

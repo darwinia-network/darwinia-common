@@ -28,7 +28,7 @@ macro_rules! assert_balance {
 		assert_eq!(RingAccount::account_basic(&$evm_address).balance, $balance);
 		assert_eq!(Ring::free_balance(&account_id), $left);
 		assert_eq!(
-			<RingRemainBalance as RemainBalanceOp<Test, u64>>::remaining_balance(&account_id),
+			<RingRemainBalance as RemainBalanceOp<Test>>::remaining_balance(&account_id),
 			$right
 		);
 	};
