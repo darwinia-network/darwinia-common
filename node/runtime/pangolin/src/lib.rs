@@ -243,8 +243,6 @@ frame_support::construct_runtime! {
 
 		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 		ToPangolinParachainBacking: to_parachain_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 65,
-
-		// BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
 	}
 }
 

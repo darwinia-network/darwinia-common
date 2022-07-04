@@ -19,7 +19,6 @@ name = "drml"
 log       = { version = "0.4" }
 structopt = { version = "0.3", optional = true }
 # darwinia-network
-bsc-primitives  = { path = "../../primitives/bsc" }
 drml-primitives = { path = "../primitives", optional = true }
 drml-rpc        = { path = "../rpc" }
 drml-service    = { path = "../service" }
