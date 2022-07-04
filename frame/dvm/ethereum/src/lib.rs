@@ -1080,7 +1080,7 @@ pub fn internal_transaction<T: Config>(
 		signature: ethereum::TransactionSignature::new(
 			// Reference https://github.com/ethereum/EIPs/issues/155
 			//
-			// The internal transaction is sent by specific internal pallet, no signature
+			// The internal transaction is sent by specific pallets, no signature
 			// validation, just create a valid transaction signature is enough.
 			T::ChainId::get() * 2 + 36,
 			H256::from_slice(&[55u8; 32]),
