@@ -41,7 +41,7 @@ use frame_support::{
 	transactional, PalletId,
 };
 use frame_system::ensure_signed;
-use sp_runtime::{traits::Convert, DispatchError};
+use sp_runtime::{traits::Convert, AccountId32, DispatchError};
 use sp_std::{str, vec::Vec};
 // --- darwinia-network ---
 use bp_runtime::ChainId;
@@ -126,8 +126,9 @@ pub mod pallet {
 				&user,
 			)?;
 
-			let backing_address = sp_runtime::AccountId32::try_from(
-				user.encode().as_slice()).map_err(|_| Error::<T>::InvalidMessageSender)?.derive_ethereum_address();
+			let backing_address = AccountId32::try_from(user.encode().as_slice())
+				.map_err(|_| Error::<T>::InvalidMessageSender)?
+				.derive_ethereum_address();
 
 			let mut mapping_token =
 				Self::mapped_token_address(backing_address, token_metadata.address)?;
@@ -177,8 +178,9 @@ pub mod pallet {
 				&user,
 			)?;
 
-			let backing_address = sp_runtime::AccountId32::try_from(
-				user.encode().as_slice()).map_err(|_| Error::<T>::InvalidMessageSender)?.derive_ethereum_address();
+			let backing_address = AccountId32::try_from(user.encode().as_slice())
+				.map_err(|_| Error::<T>::InvalidMessageSender)?
+				.derive_ethereum_address();
 			let mapping_token = Self::mapped_token_address(backing_address, token_address)?;
 			ensure!(mapping_token != H160::zero(), Error::<T>::TokenUnregistered);
 
@@ -335,10 +337,10 @@ impl<T: Config> Pallet<T> {
 	pub fn judge_self_message(nonce: MessageNonce) -> DispatchResultWithPostInfo {
 		let message_sender = T::OutboundMessenger::get_valid_message_sender(nonce)?;
 
-		let account_id = sp_runtime::AccountId32::try_from(message_sender.encode().as_slice()).map_err(|_| Error::<T>::InvalidMessageSender)?;
+		let account_id = AccountId32::try_from(message_sender.encode().as_slice())
+			.map_err(|_| Error::<T>::InvalidMessageSender)?;
 		ensure!(
-			account_id.derive_ethereum_address()
-				== <MappingFactoryAddress<T>>::get(),
+			account_id.derive_ethereum_address() == <MappingFactoryAddress<T>>::get(),
 			Error::<T>::InvalidMessageSender
 		);
 		Ok(().into())
