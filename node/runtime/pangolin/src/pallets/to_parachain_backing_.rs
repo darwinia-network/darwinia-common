@@ -22,7 +22,6 @@ impl LatestMessageNoncer for PangolinParachainMessageNoncer {
 	}
 }
 
-pub const PANGOLIN_PARACHAIN_ISSUING_PALLET_INDEX: u8 = 24;
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ToPangolinParachainOutboundPayLoad;
 impl
@@ -46,15 +45,11 @@ impl
 		call_params: IssuingCall<Runtime>,
 		dispatch_fee_payment: DispatchFeePayment,
 	) -> Result<Self::Payload, &'static str> {
+		const PANGOLIN_PARACHAIN_ISSUING_PALLET_INDEX: u8 = 24;
+
 		let mut call = vec![PANGOLIN_PARACHAIN_ISSUING_PALLET_INDEX];
 		call.append(&mut call_params.encode());
-		Ok(ToPangolinParachainMessagePayload {
-			spec_version,
-			weight,
-			origin,
-			call,
-			dispatch_fee_payment,
-		})
+		Ok(Self::Payload { spec_version, weight, origin, call, dispatch_fee_payment })
 	}
 }
 
