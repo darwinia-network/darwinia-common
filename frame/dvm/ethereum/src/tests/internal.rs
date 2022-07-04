@@ -258,7 +258,7 @@ fn internal_transaction_should_works() {
 		System::assert_last_event(Event::Ethereum(crate::Event::Executed(
 			<Test as self::Config>::PalletId::get().derive_ethereum_address(),
 			contract_address,
-			H256::from_str("0xabdebc2d8a79e4c40d6d66c614bafc2be138d4fc0fd21e28d318f3a032cbee39")
+			H256::from_str("0xad9426a685cbd9077fc6945dfd294c1d42862950e0ac292ea2e9d34ecf7a9007")
 				.unwrap(),
 			ExitReason::Succeed(ExitSucceed::Returned),
 		)));
@@ -267,7 +267,7 @@ fn internal_transaction_should_works() {
 		System::assert_last_event(Event::Ethereum(crate::Event::Executed(
 			<Test as self::Config>::PalletId::get().derive_ethereum_address(),
 			contract_address,
-			H256::from_str("0x2028ce5eef8d4531d4f955c9860b28f9e8cd596b17fea2326d2be49a8d3dc7ac")
+			H256::from_str("0x85a0a4a2620d7adb3d15a4a295ec4e786b8b5ca115e76a2fe89bb90c876ab694")
 				.unwrap(),
 			ExitReason::Succeed(ExitSucceed::Returned),
 		)));
