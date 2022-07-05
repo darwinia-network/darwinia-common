@@ -1509,7 +1509,6 @@ dependencies = [
  "libsecp256k1 0.5.0",
  "log",
  "pallet-bridge-dispatch",
- "pallet-evm",
  "pallet-evm-precompile-simple",
  "pallet-timestamp",
  "parity-scale-codec 2.3.1",
@@ -1538,7 +1537,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec 2.3.1",
  "primitive-types",
@@ -1642,7 +1640,6 @@ dependencies = [
  "fp-self-contained",
  "frame-support",
  "frame-system",
- "pallet-evm",
  "pallet-fee-market",
  "pallet-timestamp",
  "parity-scale-codec 2.3.1",
@@ -1672,7 +1669,6 @@ dependencies = [
  "frame-system",
  "libsecp256k1 0.5.0",
  "log",
- "pallet-evm",
  "pallet-evm-precompile-simple",
  "pallet-timestamp",
  "parity-scale-codec 2.3.1",
@@ -3045,7 +3041,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "libsecp256k1 0.5.0",
- "pallet-evm",
  "pallet-evm-precompile-simple",
  "pallet-timestamp",
  "parity-scale-codec 2.3.1",
@@ -5847,32 +5842,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-evm"
-version = "6.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.4#d2dad79fbfd638db7a8f25c0033187a4f88a166d"
-dependencies = [
- "evm",
- "fp-evm",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex",
- "log",
- "pallet-balances",
- "pallet-timestamp",
- "parity-scale-codec 2.3.1",
- "primitive-types",
- "rlp",
- "scale-info 1.0.0",
- "serde",
- "sha3 0.10.1",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-evm-precompile-blake2"
 version = "2.0.0-dev"
 source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.4#d2dad79fbfd638db7a8f25c0033187a4f88a166d"
@@ -6328,7 +6297,6 @@ dependencies = [
  "pallet-democracy",
  "pallet-election-provider-multi-phase",
  "pallet-elections-phragmen",
- "pallet-evm",
  "pallet-evm-precompile-blake2",
  "pallet-evm-precompile-bn128",
  "pallet-evm-precompile-modexp",
@@ -6429,7 +6397,6 @@ dependencies = [
  "pallet-bridge-grandpa",
  "pallet-bridge-messages",
  "pallet-election-provider-multi-phase",
- "pallet-evm",
  "pallet-evm-precompile-blake2",
  "pallet-evm-precompile-bn128",
  "pallet-evm-precompile-modexp",
@@ -8798,16 +8765,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sha3"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "881bf8156c87b6301fc5ca6b27f11eeb2761224c7081e69b409d5a1951a70c86"
-dependencies = [
- "digest 0.10.3",
- "keccak",
-]
-
-[[package]]
 name = "sharded-slab"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9939,7 +9896,6 @@ dependencies = [
  "moonbeam-rpc-primitives-debug",
  "pallet-aura",
  "pallet-base-fee",
- "pallet-evm",
  "pallet-evm-precompile-modexp",
  "pallet-evm-precompile-sha3fips",
  "pallet-evm-precompile-simple",

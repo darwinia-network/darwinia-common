@@ -46,6 +46,7 @@ use evm::{Config as EvmConfig, ExitError, ExitReason};
 use serde::{Deserialize, Serialize};
 // --- paritytech ---
 use fp_evm::FeeCalculator;
+use fp_evm::GenesisAccount;
 use frame_support::{
 	traits::FindAuthor,
 	weights::{PostDispatchInfo, Weight},
