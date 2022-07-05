@@ -25,14 +25,13 @@ use rlp::RlpStream;
 use scale_info::TypeInfo;
 use sha3::{Digest, Keccak256};
 // --- paritytech ---
-use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
+use fp_evm::{Context, FeeCalculator, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
 	traits::{Currency, Everything, FindAuthor, GenesisBuild, OriginTrait, WithdrawReasons},
 	weights::GetDispatchInfo,
 	ConsensusEngineId, PalletId,
 };
 use frame_system::mocking::*;
-use pallet_evm::FeeCalculator;
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use sp_core::{H160, H256, U256};
 use sp_runtime::{

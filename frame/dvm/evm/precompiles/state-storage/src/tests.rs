@@ -24,7 +24,7 @@ use ethereum::TransactionAction;
 use scale_info::TypeInfo;
 // --- paritytech ---
 use darwinia_ethereum::{EthereumBlockHashMapping, RawOrigin};
-use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
+use fp_evm::{Context, FeeCalculator, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
 	pallet_prelude::Weight,
 	traits::{Everything, FindAuthor, GenesisBuild, LockIdentifier},
@@ -32,7 +32,6 @@ use frame_support::{
 	ConsensusEngineId, PalletId, StorageHasher, Twox128,
 };
 use frame_system::mocking::*;
-use pallet_evm::FeeCalculator;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,

@@ -46,7 +46,7 @@ sp-runtime       = { git = "https://github.com/darwinia-network/substrate", bran
 sp-std           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 # frontier
 fp-self-contained            = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
-pallet-evm                   = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
+fp-evm                   = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
 pallet-evm-precompile-simple = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
 
 [features]

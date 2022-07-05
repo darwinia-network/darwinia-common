@@ -42,7 +42,7 @@ use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
 // --- paritytech ---
 use fp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
-use fp_evm::CallOrCreateInfo;
+use fp_evm::{CallOrCreateInfo, FeeCalculator};
 use fp_rpc::TransactionStatus;
 #[cfg(feature = "std")]
 use fp_storage::{EthereumStorageSchema, PALLET_ETHEREUM_SCHEMA};
@@ -56,7 +56,6 @@ use frame_support::{
 	PalletId,
 };
 use frame_system::{pallet_prelude::OriginFor, WeightInfo};
-use pallet_evm::FeeCalculator;
 use scale_info::TypeInfo;
 use sp_runtime::{
 	generic::DigestItem,

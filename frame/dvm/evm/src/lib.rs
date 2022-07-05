@@ -45,12 +45,12 @@ use evm::{Config as EvmConfig, ExitError, ExitReason};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 // --- paritytech ---
+use fp_evm::FeeCalculator;
 use frame_support::{
 	traits::FindAuthor,
 	weights::{PostDispatchInfo, Weight},
 };
 use frame_system::RawOrigin;
-use pallet_evm::FeeCalculator;
 use sp_core::{H160, H256, U256};
 use sp_runtime::traits::{BadOrigin, UniqueSaturatedInto};
 use sp_std::{marker::PhantomData, prelude::*};
@@ -532,18 +532,4 @@ where
 			r => Err(OuterOrigin::from(r)),
 		})
 	}
-}
-
-/// Account used for genesis block construction.
-#[cfg(feature = "std")]
-#[derive(Clone, Debug, Default, Eq, PartialEq, Encode, Decode, Serialize, Deserialize)]
-pub struct GenesisAccount {
-	/// Account nonce.
-	pub nonce: U256,
-	/// Account balance.
-	pub balance: U256,
-	/// Full account storage.
-	pub storage: BTreeMap<H256, H256>,
-	/// Account code.
-	pub code: Vec<u8>,
 }

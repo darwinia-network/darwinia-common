@@ -37,7 +37,6 @@ fp-evm            = { default-features = false, git = "https://github.com/darwin
 fp-rpc            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
 fp-self-contained = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
 fp-storage        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
-pallet-evm        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
 
 [dev-dependencies]
 # crates.io
@@ -82,7 +81,6 @@ std = [
 	"fp-rpc/std",
 	"fp-self-contained/std",
 	"fp-storage/std",
-	"pallet-evm/std",
 ]
 
 try-runtime = [

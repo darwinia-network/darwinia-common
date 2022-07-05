@@ -25,7 +25,7 @@ use sp_core::sr25519;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 // --- darwinia-network ---
 use super::*;
-use darwinia_evm::GenesisAccount;
+use fp_evm::GenesisAccount;
 use template_runtime::*;
 
 pub type ChainSpec = GenericChainSpec<GenesisConfig>;

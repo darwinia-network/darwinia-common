@@ -23,14 +23,13 @@ use array_bytes::hex2bytes_unchecked;
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 // --- paritytech ---
-use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
+use fp_evm::{Context, FeeCalculator, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
 	traits::{Everything, GenesisBuild},
 	weights::GetDispatchInfo,
 	PalletId,
 };
 use frame_system::mocking::*;
-use pallet_evm::FeeCalculator;
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use sp_runtime::{
 	testing::Header,

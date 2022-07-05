@@ -28,12 +28,12 @@ pub use wasm::*;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
+use fp_evm::FeeCalculator;
 use frame_support::traits::KeyOwnerProofSystem;
 use frame_system::{
 	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
 	CheckWeight, EnsureRoot,
 };
-use pallet_evm::FeeCalculator;
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
 use pallet_transaction_payment::{ChargeTransactionPayment, FeeDetails, RuntimeDispatchInfo};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};

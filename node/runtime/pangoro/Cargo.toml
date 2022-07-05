@@ -98,7 +98,6 @@ fp-rpc                        = { default-features = false, git = "https://githu
 fp-self-contained             = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
 moonbeam-rpc-primitives-debug = { default-features = false, git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.4" }
 pallet-base-fee               = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
-pallet-evm                    = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
 pallet-evm-precompile-blake2  = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
 pallet-evm-precompile-bn128   = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
 pallet-evm-precompile-modexp  = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
@@ -201,7 +200,6 @@ std = [
 	"pallet-evm-precompile-modexp/std",
 	"pallet-evm-precompile-simple/std",
 	"pallet-base-fee/std",
-	"pallet-evm/std",
 ]
 
 fast-runtime = ["drml-primitives/fast-runtime"]
