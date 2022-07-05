@@ -341,6 +341,7 @@ sp_api::impl_runtime_apis! {
 				None
 			};
 
+			let is_transactional = false;
 			<Runtime as darwinia_evm::Config>::Runner::call(
 				from,
 				to,
@@ -351,6 +352,7 @@ sp_api::impl_runtime_apis! {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list.unwrap_or_default(),
+				is_transactional,
 				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
@@ -374,6 +376,7 @@ sp_api::impl_runtime_apis! {
 				None
 			};
 
+			let is_transactional = false;
 			<Runtime as darwinia_evm::Config>::Runner::create(
 				from,
 				data,
@@ -383,6 +386,7 @@ sp_api::impl_runtime_apis! {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list.unwrap_or_default(),
+				is_transactional,
 				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}

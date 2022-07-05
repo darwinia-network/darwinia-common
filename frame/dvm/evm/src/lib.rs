@@ -45,8 +45,7 @@ use evm::{Config as EvmConfig, ExitError, ExitReason};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 // --- paritytech ---
-use fp_evm::FeeCalculator;
-use fp_evm::GenesisAccount;
+use fp_evm::{FeeCalculator, GenesisAccount};
 use frame_support::{
 	traits::FindAuthor,
 	weights::{PostDispatchInfo, Weight},
@@ -215,6 +214,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
+			let is_transactional = true;
 			let info = T::Runner::call(
 				source,
 				target,
@@ -225,6 +225,7 @@ pub mod pallet {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list,
+				is_transactional,
 				T::config(),
 			)?;
 
@@ -261,6 +262,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
+			let is_transactional = true;
 			let info = T::Runner::create(
 				source,
 				init,
@@ -270,6 +272,7 @@ pub mod pallet {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list,
+				is_transactional,
 				T::config(),
 			)?;
 			match info {
@@ -307,6 +310,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
+			let is_transactional = true;
 			let info = T::Runner::create2(
 				source,
 				init,
@@ -317,6 +321,7 @@ pub mod pallet {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list,
+				is_transactional,
 				T::config(),
 			)?;
 			match info {

@@ -69,6 +69,7 @@ benchmarks! {
 
 		let value = U256::default();
 		let gas_limit_create: u64 = 1_250_000 * 1_000_000_000;
+		let is_transactional = true;
 		let create_runner_results = T::Runner::create(
 			caller,
 			contract_bytecode,
@@ -78,6 +79,7 @@ benchmarks! {
 			None,
 			Some(nonce_as_u256),
 			Vec::new(),
+			is_transactional,
 			T::config(),
 		);
 		assert_eq!(create_runner_results.is_ok(), true, "create() failed");
@@ -98,6 +100,7 @@ benchmarks! {
 
 		nonce = nonce + 1;
 		let nonce_as_u256: U256 = nonce.into();
+		let is_transactional = true;
 
 		let call_runner_results = T::Runner::call(
 			caller,
@@ -109,6 +112,7 @@ benchmarks! {
 			None,
 			Some(nonce_as_u256),
 			Vec::new(),
+			is_transactional,
 			T::config(),
 		);
 		assert_eq!(call_runner_results.is_ok(), true, "call() failed");
