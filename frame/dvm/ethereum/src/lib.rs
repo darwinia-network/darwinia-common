@@ -25,17 +25,16 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod account_basic;
+#[cfg(all(feature = "std", test))]
+mod mock;
+#[cfg(all(feature = "std", test))]
+mod tests;
 
 #[doc(no_inline)]
 pub use ethereum::{
 	AccessListItem, BlockV2 as Block, LegacyTransactionMessage, Log, ReceiptV3 as Receipt,
 	TransactionAction, TransactionSignature, TransactionV2 as Transaction,
 };
-
-#[cfg(test)]
-mod mock;
-#[cfg(test)]
-mod tests;
 
 // --- crates.io ---
 use codec::{Decode, Encode};
@@ -917,7 +916,7 @@ impl<T: Config> Pallet<T> {
 		BlockHash::<T>::insert(block_number, block.header.hash());
 
 		if post_log {
-			let digest = DigestItem::<T::Hash>::Consensus(
+			let digest = DigestItem::Consensus(
 				FRONTIER_ENGINE_ID,
 				PostLog::Hashes(fp_consensus::Hashes::from_block(block)).encode(),
 			);

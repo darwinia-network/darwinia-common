@@ -19,12 +19,18 @@
 #![cfg(feature = "runtime-benchmarks")]
 
 //! Benchmarking
-use crate::{runner::Runner, Config, Pallet};
 use frame_benchmarking::benchmarks;
 use rlp::RlpStream;
 use sha3::{Digest, Keccak256};
 use sp_core::{H160, U256};
 use sp_std::prelude::*;
+
+use crate::{runner::Runner, Config, Pallet};
+#[cfg(test)]
+fn new_test_ext() -> sp_io::TestExternalities {
+	let t = frame_system::GenesisConfig::default().build_storage::<crate::mock::Test>().unwrap();
+	sp_io::TestExternalities::new(t)
+}
 
 benchmarks! {
 
@@ -107,4 +113,5 @@ benchmarks! {
 		);
 		assert_eq!(call_runner_results.is_ok(), true, "call() failed");
 	}
+	impl_benchmark_test_suite!(Pallet, self::new_test_ext(), crate::mock::Test);
 }
