@@ -120,7 +120,7 @@ pub fn run() -> CliResult<()> {
 
 			if chain_spec.is_pangolin() {
 				runner.async_run(|mut $config| {
-					let ($client, $backend, $import_queue, task_manager) = drml_node_servicervice::new_chain_ops::<
+					let ($client, $backend, $import_queue, task_manager) = drml_node_service::new_chain_ops::<
 						PangoroRuntimeApi,
 						PangolinExecutor,
 					>(&mut $config)?;
@@ -129,7 +129,7 @@ pub fn run() -> CliResult<()> {
 				})
 			} else {
 				runner.async_run(|mut $config| {
-					let ($client, $backend, $import_queue, task_manager) = drml_node_servicervice::new_chain_ops::<
+					let ($client, $backend, $import_queue, task_manager) = drml_node_service::new_chain_ops::<
 						PangolinRuntimeApi,
 						PangoroExecutor,
 					>(&mut $config)?;
@@ -234,7 +234,7 @@ pub fn run() -> CliResult<()> {
 			runner.sync_run(|config| {
 				// Remove dvm offchain db
 				let dvm_database_config = DatabaseSource::RocksDb {
-					path: drml_node_servicervice::dvm::db_path(&config),
+					path: drml_node_service::dvm::db_path(&config),
 					cache_size: 0,
 				};
 

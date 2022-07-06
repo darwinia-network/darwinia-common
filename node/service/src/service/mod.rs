@@ -467,7 +467,6 @@ where
 	use sc_telemetry::{Error as TelemetryError, TelemetryWorker};
 	use sc_transaction_pool::BasicPool;
 	use sp_consensus::CanAuthorWithNativeVersion;
-	use sp_runtime::traits::Block as BlockT;
 
 	if config.keystore_remote.is_some() {
 		return Err(ServiceError::Other(format!("Remote Keystores are not supported.")));
