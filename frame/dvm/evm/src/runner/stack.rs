@@ -72,10 +72,11 @@ impl<T: Config> Runner<T> {
 				ensure!(max_fee_per_gas >= base_fee, Error::<T>::GasPriceTooLow);
 				max_fee_per_gas
 			},
+			// Use default gas price for internal transaction
+			(None, true) => Default::default(),
 			// Gas price check is skipped for non-transactional calls that don't
 			// define a `max_fee_per_gas` input.
 			(None, false) => Default::default(),
-			_ => return Err(Error::<T>::GasPriceTooLow),
 		};
 
 		if let Some(max_priority_fee) = max_priority_fee_per_gas {
