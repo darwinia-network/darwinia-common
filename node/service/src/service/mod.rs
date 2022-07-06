@@ -221,8 +221,8 @@ where
 		rpc_config: eth_rpc_config.clone(),
 		fee_history_cache: fee_history_cache.clone(),
 		overrides: overrides.clone(),
-		sync_from: match Executor::native_version().runtime_version.spec_name.as_ref() {
-			b"Pangoro" => 729781,
+		sync_from: match config.chain_spec.name() {
+			"Pangoro" => 729781,
 			_ => 0,
 		},
 	}
