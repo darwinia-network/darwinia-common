@@ -21,7 +21,7 @@ structopt = { version = "0.3", optional = true }
 # darwinia-network
 drml-primitives = { path = "../primitives", optional = true }
 drml-rpc        = { path = "../rpc" }
-drml-service    = { path = "../service" }
+drml-node-service    = { path = "../service" }
 # paritytech
 frame-benchmarking-cli = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 sc-cli                 = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
