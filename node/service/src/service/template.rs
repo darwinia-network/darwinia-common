@@ -198,7 +198,7 @@ pub fn new_full(
 		rpc_config: eth_rpc_config.clone(),
 		fee_history_cache: fee_history_cache.clone(),
 		overrides: overrides.clone(),
-		0,
+		sync_from: 0,
 	}
 	.spawn_task("Template");
 	let role = config.role.clone();
