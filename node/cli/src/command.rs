@@ -79,7 +79,7 @@ impl SubstrateCli for Cli {
 				.iter()
 				.cloned()
 				.find(|&chain| n.starts_with(chain))
-				.unwrap_or("pangoro")
+				.unwrap_or("pangolin")
 		} else {
 			id
 		};
