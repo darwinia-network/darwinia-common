@@ -320,7 +320,6 @@ where
 			create_inherent_data_providers: move |parent, ()| {
 				let client_clone = client_clone.clone();
 				async move {
-					// TODO: https://github.com/paritytech/polkadot/pull/5750
 					let uncles = sc_consensus_uncles::create_uncles_inherent_data_provider(
 						&*client_clone,
 						parent,
