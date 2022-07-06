@@ -351,7 +351,7 @@ pub fn development_config() -> ChainSpec {
 	}
 
 	ChainSpec::from_genesis(
-		"Pangoro",
+		"Pangoro Development Testnet",
 		"pangoro_dev",
 		ChainType::Development,
 		genesis,
