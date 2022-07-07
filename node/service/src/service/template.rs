@@ -198,8 +198,9 @@ pub fn new_full(
 		rpc_config: eth_rpc_config.clone(),
 		fee_history_cache: fee_history_cache.clone(),
 		overrides: overrides.clone(),
+		sync_from: 0,
 	}
-	.spawn_task("Template");
+	.spawn_task();
 	let role = config.role.clone();
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let is_authority = config.role.is_authority();

@@ -21,7 +21,7 @@ structopt = { version = "0.3", optional = true }
 # darwinia-network
 drml-primitives = { path = "../primitives", optional = true }
 drml-rpc        = { path = "../rpc" }
-drml-service    = { path = "../service" }
+drml-node-service    = { path = "../service" }
 # paritytech
 frame-benchmarking-cli = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 sc-cli                 = { optional = true, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
@@ -52,22 +52,22 @@ cli = [
 	"sc-service",
 ]
 
-db = ["drml-service/db"]
+db = ["drml-node-service/db"]
 
-full-node = ["drml-service/full-node"]
+full-node = ["drml-node-service/full-node"]
 
 wasmtime = ["sc-cli/wasmtime"]
 
-fast-runtime = ["drml-service/fast-runtime"]
+fast-runtime = ["drml-node-service/fast-runtime"]
 
-evm-tracing = ["drml-service/evm-tracing"]
+evm-tracing = ["drml-node-service/evm-tracing"]
 
-template = ["drml-service/template"]
+template = ["drml-node-service/template"]
 
 runtime-benchmarks = [
 	# darwinia-network
 	"drml-primitives",
-	"drml-service/runtime-benchmarks",
+	"drml-node-service/runtime-benchmarks",
 	# paritytech
 	"frame-benchmarking-cli",
 ]
@@ -75,7 +75,7 @@ runtime-benchmarks = [
 try-runtime = [
 	# darwinia-network
 	"drml-primitives",
-	"drml-service/try-runtime",
+	"drml-node-service/try-runtime",
 	# paritytech
 	"try-runtime-cli",
 ]

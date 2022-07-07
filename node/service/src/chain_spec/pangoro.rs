@@ -106,17 +106,11 @@ pub fn genesis_config() -> ChainSpec {
 				code: wasm_binary_unwrap().to_vec(),
 				changes_trie_config: Default::default(),
 			},
-			babe: BabeConfig {
-				authorities: vec![],
-				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG),
-			},
+			babe: BabeConfig { authorities: vec![], epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG) },
 			balances: BalancesConfig {
 				balances: vec![
 					(root.clone(), BUNCH_OF_COINS),
-					(
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-						A_FEW_COINS,
-					),
+					(get_account_id_from_seed::<sr25519::Public>("Alice"), A_FEW_COINS),
 				]
 				.into_iter()
 				.chain(
@@ -124,15 +118,9 @@ pub fn genesis_config() -> ChainSpec {
 						.iter()
 						.map(|AuthorityKeys { stash_key, .. }| (stash_key.to_owned(), A_FEW_COINS)),
 				)
+				.chain(initial_nominators.iter().map(|n| (n.to_owned(), A_FEW_COINS)))
 				.chain(
-					initial_nominators
-						.iter()
-						.map(|n| (n.to_owned(), A_FEW_COINS)),
-				)
-				.chain(
-					TEAM_MEMBERS
-						.iter()
-						.map(|m| (array_bytes::hex_into_unchecked(m), MANY_COINS)),
+					TEAM_MEMBERS.iter().map(|m| (array_bytes::hex_into_unchecked(m), MANY_COINS)),
 				)
 				.collect(),
 			},
@@ -140,17 +128,11 @@ pub fn genesis_config() -> ChainSpec {
 				balances: vec![(root.clone(), BUNCH_OF_COINS)]
 					.into_iter()
 					.chain(
-						initial_authorities
-							.iter()
-							.map(|AuthorityKeys { stash_key, .. }| {
-								(stash_key.to_owned(), A_FEW_COINS)
-							}),
+						initial_authorities.iter().map(|AuthorityKeys { stash_key, .. }| {
+							(stash_key.to_owned(), A_FEW_COINS)
+						}),
 					)
-					.chain(
-						initial_nominators
-							.iter()
-							.map(|n| (n.to_owned(), A_FEW_COINS)),
-					)
+					.chain(initial_nominators.iter().map(|n| (n.to_owned(), A_FEW_COINS)))
 					.chain(
 						TEAM_MEMBERS
 							.iter()
@@ -182,12 +164,7 @@ pub fn genesis_config() -> ChainSpec {
 							.map(|c| c.stash_key.clone())
 							.collect::<Vec<_>>();
 
-						(
-							n.clone(),
-							n.clone(),
-							A_FEW_COINS,
-							StakerStatus::Nominator(nominations),
-						)
+						(n.clone(), n.clone(), A_FEW_COINS, StakerStatus::Nominator(nominations))
 					}))
 					.collect(),
 				slash_reward_fraction: Perbill::from_percent(10),
@@ -197,18 +174,9 @@ pub fn genesis_config() -> ChainSpec {
 			session: SessionConfig {
 				keys: initial_authorities
 					.iter()
-					.map(
-						|AuthorityKeys {
-						     stash_key,
-						     session_keys,
-						 }| {
-							(
-								stash_key.to_owned(),
-								stash_key.to_owned(),
-								session_keys.to_owned(),
-							)
-						},
-					)
+					.map(|AuthorityKeys { stash_key, session_keys }| {
+						(stash_key.to_owned(), stash_key.to_owned(), session_keys.to_owned())
+					})
 					.collect(),
 			},
 			grandpa: Default::default(),
@@ -223,12 +191,9 @@ pub fn genesis_config() -> ChainSpec {
 				secure_limited_ring_amount: 1_000_000 * COIN,
 				remote_mapping_token_factory_account: Default::default(),
 			},
-			evm: EVMConfig {
-				accounts: evm_accounts,
-			},
+			evm: EVMConfig { accounts: evm_accounts },
 			ethereum: Default::default(),
 			base_fee: Default::default(),
-
 		}
 	}
 
@@ -291,23 +256,12 @@ pub fn development_config() -> ChainSpec {
 				code: wasm_binary_unwrap().to_vec(),
 				changes_trie_config: Default::default(),
 			},
-			babe: BabeConfig {
-				authorities: vec![],
-				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG),
-			},
+			babe: BabeConfig { authorities: vec![], epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG) },
 			balances: BalancesConfig {
-				balances: endowed_accounts
-					.clone()
-					.into_iter()
-					.map(|a| (a, MANY_COINS))
-					.collect(),
+				balances: endowed_accounts.clone().into_iter().map(|a| (a, MANY_COINS)).collect(),
 			},
 			kton: KtonConfig {
-				balances: endowed_accounts
-					.clone()
-					.into_iter()
-					.map(|a| (a, A_FEW_COINS))
-					.collect(),
+				balances: endowed_accounts.clone().into_iter().map(|a| (a, A_FEW_COINS)).collect(),
 			},
 			staking: StakingConfig {
 				minimum_validator_count: 1,
@@ -342,16 +296,14 @@ pub fn development_config() -> ChainSpec {
 				secure_limited_ring_amount: 100_000 * COIN,
 				remote_mapping_token_factory_account: Default::default(),
 			},
-			evm: EVMConfig {
-				accounts: evm_accounts,
-			},
+			evm: EVMConfig { accounts: evm_accounts },
 			ethereum: Default::default(),
 			base_fee: Default::default(),
 		}
 	}
 
 	ChainSpec::from_genesis(
-		"Pangoro",
+		"Pangoro Development Testnet",
 		"pangoro_dev",
 		ChainType::Development,
 		genesis,
