@@ -10,8 +10,25 @@ repository  = "https://github.com/darwinia-network/darwinia-common"
 version     = "2.8.14"
 
 [dependencies]
+# crates.io
+ethabi = { version = "15.0", default-features = false }
+darwinia-evm-precompile-utils = { default-features = false, path = "../utils" }
+# paritytech
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+# frontier
+fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
+
 
 [features]
 default = ["std"]
 
-std = []
+std = [
+    # crates.io
+	"ethabi/std",
+    # darwinia-network
+    "darwinia-evm-precompile-utils/std",
+    # paritytech
+	"frame-support/std",
+	# frontier
+	"fp-evm/std",
+]

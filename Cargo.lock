@@ -1607,6 +1607,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-evm-precompile-kton-erc20"
+version = "2.8.14"
+dependencies = [
+ "darwinia-evm-precompile-utils",
+ "ethabi",
+ "fp-evm",
+ "frame-support",
+]
+
+[[package]]
 name = "darwinia-evm-precompile-mpt"
 version = "2.8.14"
 dependencies = [
