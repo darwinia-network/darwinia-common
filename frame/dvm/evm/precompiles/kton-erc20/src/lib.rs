@@ -100,12 +100,15 @@ where
 	fn balance_of(input: &[u8]) -> Result<Vec<u8>, Error> {
 		// 1. decode the input
 		let who: Address = decode_params(&["address"], input)
-			.and_then(|tokens| Ok(tokens.into_iter().nth(0)))
-			.and_then(|token| Ok(token.unwrap().into_address()))
-			.and_then(|addr| Ok(addr.unwrap()))
+			.map(|tokens| tokens.into_iter().nth(0))
+			.map(|token| token.and_then(|t| t.into_address()))
+			.map(|addr| addr.unwrap())
 			.map_err(|e| Error::InvalidData)?;
 
-		// .map_err(|e| todo!());
+		// if let Ok(tokens) = decode_params(&["address"], input) {
+		// 	let address =
+		// 		tokens.into_iter().nth(0).and_then(|t| t.into_address()).unwrap_or_default();
+		// }
 
 		// 2. query the balance
 		Ok(vec![])
