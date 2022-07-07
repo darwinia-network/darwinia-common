@@ -6,8 +6,6 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 	- Provides functionality of handling balances.
 - [darwinia-bridge-ethereum](./frame/bridge/ethereum/relay)
 	- Pallet of the Ethereum > Darwinia relay.
-- [darwinia-bridge-bsc](./frame/bridge/bsc)
-	- Pallet that verifies BSC(Binance Smart Chain) headers and authority set finality.
 - [darwinia-relay-authorities](./frame/bridge/relay-authorities)
 	- Pallet that manages the relayer authorities.
 - [darwinia-relayer-game](./frame/bridge/relayer-game)

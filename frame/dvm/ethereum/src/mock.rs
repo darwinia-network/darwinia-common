@@ -27,7 +27,7 @@ use sha3::{Digest, Keccak256};
 // --- paritytech ---
 use fp_evm::{Context, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
-	traits::{Everything, FindAuthor, GenesisBuild, OriginTrait, WithdrawReasons},
+	traits::{Currency, Everything, FindAuthor, GenesisBuild, OriginTrait, WithdrawReasons},
 	weights::GetDispatchInfo,
 	ConsensusEngineId, PalletId,
 };
@@ -234,9 +234,7 @@ frame_support::parameter_types! {
 
 impl darwinia_ethereum::Config for Test {
 	type Event = Event;
-	type KtonCurrency = Kton;
 	type PalletId = MockPalletId;
-	type RingCurrency = Ring;
 	type StateRoot = IntermediateStateRoot;
 }
 
