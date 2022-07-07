@@ -21,23 +21,105 @@
 use core::marker::PhantomData;
 // --- crates.io ---
 use ethabi::{ParamType, StateMutability, Token};
+// --- darwinia-network ---
+use darwinia_evm_precompile_utils::PrecompileHelper;
+use dp_contract::abi_util::abi_encode_bytes;
 // --- paritytech ---
 use fp_evm::{
 	Context, ExitRevert, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
 	PrecompileResult,
 };
+use sp_core::{H160, U256};
+
+type BalanceOf<T> = <T as darwinia_balances::Config>::Balance;
+
+#[darwinia_evm_precompile_utils::selector]
+enum Action {
+	TotalSupply = "totalSupply()",
+	BalanceOf = "balanceOf(address)",
+	Transfer = "transfer(address,uint256)",
+	Allowance = "allowance(address,address)",
+	Approve = "approve(address,uint256)",
+	TransferFrom = "transferFrom(address,address,uint256)",
+}
 
 pub struct KtonErc20<T> {
 	_marker: PhantomData<T>,
 }
 
-impl<T> Precompile for KtonErc20<T> {
+impl<T> Precompile for KtonErc20<T>
+where
+	T: darwinia_evm::Config + darwinia_balances::Config,
+	BalanceOf<T>: Into<U256>,
+{
 	fn execute(
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
 		_is_static: bool,
 	) -> PrecompileResult {
+		let mut helper = PrecompileHelper::<T>::new(input, target_gas);
+		let (selector, data) = helper.split_input()?;
+		let action = Action::from_u32(selector)?;
+
+		// TODO: Add state modifier checker
+		let output = match action {
+			Action::TotalSupply => Self::total_supply(),
+			Action::BalanceOf => Self::balance_of(data),
+			Action::Transfer => Self::transfer(data),
+			Action::Allowance => Self::allowance(data),
+			Action::Approve => Self::approve(data),
+			Action::TransferFrom => Self::transfer_from(data),
+		};
+
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Returned,
+			cost: helper.used_gas(),
+			output: abi_encode_bytes(&output),
+			logs: Default::default(),
+		})
+	}
+}
+
+impl<T> KtonErc20<T>
+where
+	T: darwinia_evm::Config + darwinia_balances::Config,
+	BalanceOf<T>: Into<U256>,
+{
+	fn total_supply() -> Vec<u8> {
+		let total_supply: U256 = darwinia_balances::Pallet::<T>::total_issuance().into();
+		todo!();
+	}
+
+	fn balance_of(input: &[u8]) -> Vec<u8> {
+		// 1. decode the input
+		// let who =
+
+		// 2. query the balance
+		todo!();
+	}
+
+	fn transfer(input: &[u8]) -> Vec<u8> {
+		// 1. decode the input
+		// 2. others
+		todo!();
+	}
+
+	fn allowance(input: &[u8]) -> Vec<u8> {
+		// 1. decode the input
+		// 2. others
+		todo!();
+	}
+
+	fn approve(input: &[u8]) -> Vec<u8> {
+		// 1. decode the input
+		// 2. others
+		todo!();
+	}
+
+	fn transfer_from(input: &[u8]) -> Vec<u8> {
+		// 1. decode the input
+		// 2. others
 		todo!();
 	}
 }
