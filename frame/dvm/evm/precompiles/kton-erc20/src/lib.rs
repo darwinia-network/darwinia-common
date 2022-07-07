@@ -17,10 +17,15 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+mod abi;
+
+use abi::decode_params;
+
 // --- core ---
 use core::marker::PhantomData;
+use ethereum_types::Address;
 // --- crates.io ---
-use ethabi::{ParamType, StateMutability, Token};
+use ethabi::{token::Token, Error, ParamType, StateMutability};
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::PrecompileHelper;
 use dp_contract::abi_util::abi_encode_bytes;
@@ -65,7 +70,7 @@ where
 		// TODO: Add state modifier checker
 		let output = match action {
 			Action::TotalSupply => Self::total_supply(),
-			Action::BalanceOf => Self::balance_of(data),
+			Action::BalanceOf => Self::balance_of(data).unwrap(),
 			Action::Transfer => Self::transfer(data),
 			Action::Allowance => Self::allowance(data),
 			Action::Approve => Self::approve(data),
@@ -75,7 +80,8 @@ where
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
 			cost: helper.used_gas(),
-			output: abi_encode_bytes(&output),
+			// output: abi_encode_bytes(&output),
+			output: vec![],
 			logs: Default::default(),
 		})
 	}
@@ -91,12 +97,18 @@ where
 		todo!();
 	}
 
-	fn balance_of(input: &[u8]) -> Vec<u8> {
+	fn balance_of(input: &[u8]) -> Result<Vec<u8>, Error> {
 		// 1. decode the input
-		// let who =
+		let who: Address = decode_params(&["address"], input)
+			.and_then(|tokens| Ok(tokens.into_iter().nth(0)))
+			.and_then(|token| Ok(token.unwrap().into_address()))
+			.and_then(|addr| Ok(addr.unwrap()))
+			.map_err(|e| Error::InvalidData)?;
+
+		// .map_err(|e| todo!());
 
 		// 2. query the balance
-		todo!();
+		Ok(vec![])
 	}
 
 	fn transfer(input: &[u8]) -> Vec<u8> {
