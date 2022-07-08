@@ -25,14 +25,10 @@ use ethabi::{token::Token, Error, ParamType, StateMutability};
 use darwinia_evm::AccountBasic;
 use darwinia_evm_precompile_utils::{prelude::*, PrecompileHelper};
 use darwinia_support::evm::DeriveSubstrateAddress;
-use dp_contract::abi_util::abi_encode_bytes;
 // --- paritytech ---
-use fp_evm::{
-	Context, ExitRevert, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
-	PrecompileResult,
-};
+use fp_evm::{Context, ExitRevert, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput};
 use frame_support::{
-	storage::types::{StorageDoubleMap, StorageMap, ValueQuery},
+	storage::types::{StorageDoubleMap, ValueQuery},
 	traits::StorageInstance,
 	Blake2_128Concat,
 };
@@ -62,6 +58,9 @@ enum Action {
 	Approve = "approve(address,uint256)",
 	TransferFrom = "transferFrom(address,address,uint256)",
 	Withdraw = "withdraw(bytes32,uint256)",
+	Name = "name()",
+	Symbol = "symbol()",
+	Decimals = "decimals()",
 }
 
 pub struct KtonErc20<T> {
@@ -87,6 +86,9 @@ where
 
 		match action {
 			Action::TotalSupply => Self::total_supply(&mut helper),
+			Action::Name => Self::name(&mut helper),
+			Action::Symbol => Self::symbol(&mut helper),
+			Action::Decimals => Self::decimals(&mut helper),
 			Action::BalanceOf => Self::balance_of(&mut helper, data),
 			Action::Transfer => Self::transfer(&mut helper, data, context),
 			Action::Allowance => Self::allowance(&mut helper, data),
@@ -151,7 +153,7 @@ where
 		let to = <T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(to);
 
 		<T as darwinia_evm::Config>::KtonAccountBasic::transfer(&origin, &to, amount)
-			.map_err(|e| helper.revert("Transfer failed"))?;
+			.map_err(|_| helper.revert("Transfer failed"))?;
 
 		// TODO: Add log
 
@@ -279,6 +281,33 @@ where
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
 			output: EvmDataWriter::new().write(true).build(),
+			cost: helper.used_gas(),
+			logs: vec![],
+		})
+	}
+
+	fn name(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Returned,
+			output: EvmDataWriter::new().write::<Bytes>("Wrapped KTON".into()).build(),
+			cost: helper.used_gas(),
+			logs: vec![],
+		})
+	}
+
+	fn symbol(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Returned,
+			output: EvmDataWriter::new().write::<Bytes>("WKTON".into()).build(),
+			cost: helper.used_gas(),
+			logs: vec![],
+		})
+	}
+
+	fn decimals(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Returned,
+			output: EvmDataWriter::new().write(18u8).build(),
 			cost: helper.used_gas(),
 			logs: vec![],
 		})
