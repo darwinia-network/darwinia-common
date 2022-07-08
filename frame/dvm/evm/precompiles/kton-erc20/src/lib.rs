@@ -65,12 +65,12 @@ where
 		// TODO: Add state modifier checker
 
 		match action {
-			Action::TotalSupply => Self::total_supply(),
-			Action::BalanceOf => Self::balance_of(data),
-			Action::Transfer => Self::transfer(data),
-			Action::Allowance => Self::allowance(data),
-			Action::Approve => Self::approve(data),
-			Action::TransferFrom => Self::transfer_from(data),
+			Action::TotalSupply => Self::total_supply(&mut helper),
+			Action::BalanceOf => Self::balance_of(&mut helper, data),
+			Action::Transfer => Self::transfer(&mut helper, data),
+			Action::Allowance => Self::allowance(&mut helper, data),
+			Action::Approve => Self::approve(&mut helper, data),
+			Action::TransferFrom => Self::transfer_from(&mut helper, data),
 		}
 	}
 }
@@ -80,12 +80,20 @@ where
 	T: darwinia_evm::Config + darwinia_balances::Config,
 	BalanceOf<T>: Into<U256>,
 {
-	fn total_supply() -> EvmResult<PrecompileOutput> {
-		let total_supply: U256 = darwinia_balances::Pallet::<T>::total_issuance().into();
-		todo!();
+	fn total_supply(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
+		helper.record_gas(1, 0);
+
+		let amount: U256 = darwinia_balances::Pallet::<T>::total_issuance().into();
+
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Returned,
+			output: EvmDataWriter::new().write(amount).build(),
+			cost: helper.used_gas(),
+			logs: vec![],
+		})
 	}
 
-	fn balance_of(input: &[u8]) -> EvmResult<PrecompileOutput> {
+	fn balance_of(helper: &mut PrecompileHelper<T>, input: &[u8]) -> EvmResult<PrecompileOutput> {
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(1)?;
 		let owner: H160 = reader.read::<Address>()?.into();
@@ -93,7 +101,7 @@ where
 		todo!()
 	}
 
-	fn transfer(input: &[u8]) -> EvmResult<PrecompileOutput> {
+	fn transfer(helper: &mut PrecompileHelper<T>, input: &[u8]) -> EvmResult<PrecompileOutput> {
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(2)?;
 
@@ -103,7 +111,7 @@ where
 		todo!();
 	}
 
-	fn allowance(input: &[u8]) -> EvmResult<PrecompileOutput> {
+	fn allowance(helper: &mut PrecompileHelper<T>, input: &[u8]) -> EvmResult<PrecompileOutput> {
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(2)?;
 
@@ -113,8 +121,7 @@ where
 		todo!();
 	}
 
-	fn approve(input: &[u8]) -> EvmResult<PrecompileOutput> {
-		// 1. decode the input
+	fn approve(helper: &mut PrecompileHelper<T>, input: &[u8]) -> EvmResult<PrecompileOutput> {
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(2)?;
 
@@ -124,7 +131,10 @@ where
 		todo!();
 	}
 
-	fn transfer_from(input: &[u8]) -> EvmResult<PrecompileOutput> {
+	fn transfer_from(
+		helper: &mut PrecompileHelper<T>,
+		input: &[u8],
+	) -> EvmResult<PrecompileOutput> {
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(3)?;
 
