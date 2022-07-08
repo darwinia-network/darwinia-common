@@ -31,9 +31,27 @@ use fp_evm::{
 	Context, ExitRevert, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
 	PrecompileResult,
 };
+use frame_support::{
+	storage::types::{StorageDoubleMap, StorageMap, ValueQuery},
+	traits::StorageInstance,
+	Blake2_128Concat,
+};
 use sp_core::{Decode, H160, H256, U256};
 
 type BalanceOf<T> = <T as darwinia_balances::Config>::Balance;
+
+pub struct Approves;
+
+impl StorageInstance for Approves {
+	const STORAGE_PREFIX: &'static str = "Approves";
+
+	fn pallet_prefix() -> &'static str {
+		"ERC20Kton"
+	}
+}
+
+pub type ApprovesStorage =
+	StorageDoubleMap<Approves, Blake2_128Concat, H160, Blake2_128Concat, H160, U256, ValueQuery>;
 
 #[darwinia_evm_precompile_utils::selector]
 enum Action {
@@ -72,7 +90,7 @@ where
 			Action::BalanceOf => Self::balance_of(&mut helper, data),
 			Action::Transfer => Self::transfer(&mut helper, data, context),
 			Action::Allowance => Self::allowance(&mut helper, data),
-			Action::Approve => Self::approve(&mut helper, data),
+			Action::Approve => Self::approve(&mut helper, data, context),
 			Action::TransferFrom => Self::transfer_from(&mut helper, data, context),
 			Action::Withdraw => Self::withdraw(&mut helper, data, context),
 		}
@@ -125,7 +143,6 @@ where
 
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(2)?;
-
 		let to: H160 = reader.read::<Address>()?.into();
 		let amount: U256 = reader.read()?;
 
@@ -152,24 +169,42 @@ where
 
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(2)?;
-
 		let owner: H160 = reader.read::<Address>()?.into();
 		let spender: H160 = reader.read::<Address>()?.into();
 
-		todo!();
+		let amount: U256 = ApprovesStorage::get(owner, spender).into();
+
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Returned,
+			output: EvmDataWriter::new().write(amount).build(),
+			cost: helper.used_gas(),
+			logs: vec![],
+		})
 	}
 
-	fn approve(helper: &mut PrecompileHelper<T>, input: &[u8]) -> EvmResult<PrecompileOutput> {
+	fn approve(
+		helper: &mut PrecompileHelper<T>,
+		input: &[u8],
+		context: &Context,
+	) -> EvmResult<PrecompileOutput> {
 		// TODO: update the gas record
 		helper.record_gas(1, 0)?;
 
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(2)?;
-
 		let spender: H160 = reader.read::<Address>()?.into();
 		let amount: U256 = reader.read()?;
 
-		todo!();
+		ApprovesStorage::insert(context.caller, spender, amount);
+
+		// TODO: add log
+
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Returned,
+			output: EvmDataWriter::new().write(true).build(),
+			cost: helper.used_gas(),
+			logs: vec![],
+		})
 	}
 
 	fn transfer_from(
@@ -183,11 +218,39 @@ where
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(3)?;
 
+		let caller = context.caller;
 		let from: H160 = reader.read::<Address>()?.into();
 		let to: H160 = reader.read::<Address>()?.into();
 		let amount: U256 = reader.read()?;
 
-		todo!();
+		if caller != from {
+			ApprovesStorage::mutate(from.clone(), caller, |value| {
+				let new_value = value
+					.checked_sub(amount)
+					.ok_or_else(|| helper.revert("trying to spend more than allowed"))?;
+
+				*value = new_value;
+				EvmResult::Ok(())
+			})?;
+		}
+
+		let from_account_id =
+			<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(from);
+		let to_account_id =
+			<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(to);
+		<T as darwinia_evm::Config>::KtonAccountBasic::transfer(
+			&from_account_id,
+			&to_account_id,
+			amount,
+		)
+		.map_err(|_| helper.revert("Transfer failed"))?;
+
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Returned,
+			output: EvmDataWriter::new().write(true).build(),
+			cost: helper.used_gas(),
+			logs: vec![],
+		})
 	}
 
 	fn withdraw(
@@ -211,7 +274,7 @@ where
 			.map_err(|_| helper.revert("Invalid target address"))?;
 
 		<T as darwinia_evm::Config>::KtonAccountBasic::transfer(&origin, &to, amount)
-			.map_err(|e| helper.revert("Transfer failed"))?;
+			.map_err(|_| helper.revert("Transfer failed"))?;
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
