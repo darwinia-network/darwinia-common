@@ -26,7 +26,7 @@ use sp_core::{H160, U256};
 use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
 // --- darwinia-network ---
 use crate::{Config, Event, Pallet, RemainingKtonBalance, RemainingRingBalance};
-use darwinia_evm::{Account as EVMAccount, AccountBasic};
+use darwinia_evm::AccountBasic;
 use darwinia_support::evm::{decimal_convert, DeriveSubstrateAddress, POW_9};
 
 /// The operations for the remaining balance.
@@ -129,26 +129,22 @@ where
 	C: Currency<T::AccountId>,
 {
 	/// Get the account basic in EVM format.
-	fn account_basic(address: &H160) -> EVMAccount {
+	fn evm_balance(address: &H160) -> U256 {
 		let account_id =
 			<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*address);
-		let nonce = <frame_system::Pallet<T>>::account_nonce(&account_id);
 
-		EVMAccount {
-			nonce: nonce.saturated_into::<u128>().into(),
-			balance: Self::account_balance(&account_id),
-		}
+		Self::account_balance(&account_id)
 	}
 
 	/// Mutate the basic account.
-	fn mutate_account_basic_balance(address: &H160, new_balance: U256) {
+	fn mutate_evm_balance(address: &H160, new_balance: U256) {
 		let account_id =
 			<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*address);
 		Self::mutate_account_balance(&account_id, new_balance)
 	}
 
 	/// Transfer value.
-	fn transfer(
+	fn evm_transfer(
 		source: &T::AccountId,
 		target: &T::AccountId,
 		value: U256,

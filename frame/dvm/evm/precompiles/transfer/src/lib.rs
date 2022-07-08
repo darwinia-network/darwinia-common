@@ -101,7 +101,7 @@ impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
 				let wkton_account_id =
 					<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(wkton);
 				// Transfer kton from sender to KTON wrapped contract
-				T::KtonAccountBasic::transfer(&caller_account_id, &wkton_account_id, value)
+				T::KtonAccountBasic::evm_transfer(&caller_account_id, &wkton_account_id, value)
 					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 				// Call WKTON wrapped contract deposit
 				let raw_input = make_call_data(caller, value, &helper)?;
@@ -149,7 +149,7 @@ impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
 
 				let source =
 					<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(source);
-				T::KtonAccountBasic::transfer(&source, &to, value)
+				T::KtonAccountBasic::evm_transfer(&source, &to, value)
 					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 
 				Ok(PrecompileOutput {

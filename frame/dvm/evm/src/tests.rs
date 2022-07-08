@@ -153,7 +153,7 @@ impl<T: Config> AccountBasic<T> for MockAccountBasic<T> {
 		Account { balance, nonce: U256::zero() }
 	}
 
-	fn mutate_account_basic_balance(address: &H160, new_balance: U256) {
+	fn mutate_evm_balance(address: &H160, new_balance: U256) {
 		let account_id =
 			<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*address);
 		Self::mutate_account_balance(&account_id, new_balance)
@@ -267,10 +267,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 #[test]
 fn fail_call_return_ok() {
 	new_test_ext().execute_with(|| {
-		<Test as Config>::RingAccountBasic::mutate_account_basic_balance(
-			&H160::default(),
-			U256::max_value(),
-		);
+		<Test as Config>::RingAccountBasic::mutate_evm_balance(&H160::default(), U256::max_value());
 
 		assert_ok!(EVM::call(
 			Origin::root(),
@@ -306,7 +303,7 @@ fn fee_deduction() {
 		// Create an EVM address and the corresponding Substrate address that will be charged fees and refunded
 		let evm_addr = H160::from_str("1000000000000000000000000000000000000003").unwrap();
 		// Seed account
-		<Test as Config>::RingAccountBasic::mutate_account_basic_balance(
+		<Test as Config>::RingAccountBasic::mutate_evm_balance(
 			&evm_addr,
 			U256::from(100),
 		);

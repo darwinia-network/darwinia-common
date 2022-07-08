@@ -83,7 +83,7 @@ impl CallValidate<bp_pangoro::AccountId, Origin, Call> for CallValidator {
 							let derived_substrate_address =
 								<Runtime as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
 
-							<Runtime as darwinia_evm::Config>::RingAccountBasic::transfer(
+							<Runtime as darwinia_evm::Config>::RingAccountBasic::evm_transfer(
 								&relayer_account,
 								&derived_substrate_address,
 								fee,

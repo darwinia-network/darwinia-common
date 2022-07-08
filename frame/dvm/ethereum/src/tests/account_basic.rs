@@ -40,7 +40,7 @@ fn mutate_account_works_well() {
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		let origin = decimal_convert(123456789, Some(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, origin);
+		RingAccount::mutate_evm_balance(&test_addr, origin);
 		assert_balance!(test_addr, origin, 123456789, 90);
 	});
 }
@@ -51,10 +51,10 @@ fn mutate_account_inc_balance_by_10() {
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		let origin = decimal_convert(600, Some(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, origin);
+		RingAccount::mutate_evm_balance(&test_addr, origin);
 
 		let new = origin.saturating_add(U256::from(10));
-		RingAccount::mutate_account_basic_balance(&test_addr, new);
+		RingAccount::mutate_evm_balance(&test_addr, new);
 		assert_balance!(test_addr, new, 600, 100);
 	});
 }
@@ -65,10 +65,10 @@ fn mutate_account_inc_balance_by_999_999_910() {
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		let origin = decimal_convert(600, Some(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, origin);
+		RingAccount::mutate_evm_balance(&test_addr, origin);
 
 		let new = origin.saturating_add(U256::from(999999910u128));
-		RingAccount::mutate_account_basic_balance(&test_addr, new);
+		RingAccount::mutate_evm_balance(&test_addr, new);
 		assert_balance!(test_addr, new, 601, 0);
 	});
 }
@@ -79,10 +79,10 @@ fn mutate_account_inc_by_1000_000_000() {
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		let origin = decimal_convert(600, Some(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, origin);
+		RingAccount::mutate_evm_balance(&test_addr, origin);
 
 		let new = origin.saturating_add(U256::from(1000_000_000u128));
-		RingAccount::mutate_account_basic_balance(&test_addr, new);
+		RingAccount::mutate_evm_balance(&test_addr, new);
 		assert_balance!(test_addr, new, 601, 90);
 	});
 }
@@ -93,10 +93,10 @@ fn mutate_account_dec_balance_by_90() {
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		let origin = decimal_convert(600, Some(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, origin);
+		RingAccount::mutate_evm_balance(&test_addr, origin);
 
 		let new = origin.saturating_sub(U256::from(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, new);
+		RingAccount::mutate_evm_balance(&test_addr, new);
 		assert_balance!(test_addr, new, 600, 0);
 	});
 }
@@ -106,10 +106,10 @@ fn mutate_account_dec_balance_by_990() {
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		let origin = decimal_convert(600, Some(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, origin);
+		RingAccount::mutate_evm_balance(&test_addr, origin);
 
 		let new = origin.saturating_sub(U256::from(990));
-		RingAccount::mutate_account_basic_balance(&test_addr, new);
+		RingAccount::mutate_evm_balance(&test_addr, new);
 		assert_balance!(test_addr, new, 599, 1_000_000_090 - 990);
 	});
 }
@@ -119,10 +119,10 @@ fn mutate_account_dec_balance_existential_by_90() {
 	ext.execute_with(|| {
 		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
 		let origin = decimal_convert(500, Some(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, origin);
+		RingAccount::mutate_evm_balance(&test_addr, origin);
 
 		let new = origin.saturating_sub(U256::from(90));
-		RingAccount::mutate_account_basic_balance(&test_addr, new);
+		RingAccount::mutate_evm_balance(&test_addr, new);
 		assert_balance!(test_addr, new, 500, 0);
 	});
 }

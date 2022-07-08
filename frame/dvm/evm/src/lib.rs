@@ -187,7 +187,7 @@ pub mod pallet {
 					frame_system::Pallet::<T>::inc_account_nonce(&account_id);
 				}
 
-				T::RingAccountBasic::mutate_account_basic_balance(&address, account.balance);
+				T::RingAccountBasic::mutate_evm_balance(&address, account.balance);
 				Pallet::<T>::create_account(*address, account.code.clone());
 				for (index, value) in &account.storage {
 					AccountStorages::<T>::insert(address, index, value);
@@ -436,9 +436,9 @@ where
 	type LiquidityInfo = U256;
 
 	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, Error<T>> {
-		let account = T::RingAccountBasic::account_basic(who);
-		let new_account_balance = account.balance.saturating_sub(fee);
-		T::RingAccountBasic::mutate_account_basic_balance(&who, new_account_balance);
+		let balance = T::RingAccountBasic::evm_balance(who);
+		let new_account_balance = balance.saturating_sub(fee);
+		T::RingAccountBasic::mutate_evm_balance(&who, new_account_balance);
 		Ok(fee)
 	}
 
@@ -447,10 +447,10 @@ where
 		corrected_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
 	) {
-		let account = T::RingAccountBasic::account_basic(who);
+		let balance = T::RingAccountBasic::evm_balance(who);
 		let refund = already_withdrawn.saturating_sub(corrected_fee);
-		let new_account_balance = account.balance.saturating_add(refund);
-		T::RingAccountBasic::mutate_account_basic_balance(&who, new_account_balance);
+		let new_account_balance = balance.saturating_add(refund);
+		T::RingAccountBasic::mutate_evm_balance(&who, new_account_balance);
 	}
 
 	fn pay_priority_fee(tip: U256) {
@@ -486,16 +486,14 @@ pub trait EnsureAddressOrigin<OuterOrigin> {
 
 /// A trait for operating account basic info.
 pub trait AccountBasic<T: frame_system::Config> {
-	/// Get the account basic in EVM format.
-	fn account_basic(address: &H160) -> Account;
-	/// Mutate the basic account.
-	fn mutate_account_basic_balance(address: &H160, new_balance: U256);
-	/// Transfer value.
-	fn transfer(source: &T::AccountId, target: &T::AccountId, value: U256)
-		-> Result<(), ExitError>;
-	/// Get account balance.
+	fn evm_balance(address: &H160) -> U256;
 	fn account_balance(account_id: &T::AccountId) -> U256;
-	/// Mutate account balance.
+	fn evm_transfer(
+		source: &T::AccountId,
+		target: &T::AccountId,
+		value: U256,
+	) -> Result<(), ExitError>;
+	fn mutate_evm_balance(address: &H160, new_balance: U256);
 	fn mutate_account_balance(account_id: &T::AccountId, balance: U256);
 }
 

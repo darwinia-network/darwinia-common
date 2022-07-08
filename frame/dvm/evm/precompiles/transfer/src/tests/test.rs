@@ -155,7 +155,7 @@ fn kton_currency_transfer_and_call_works() {
 
 	ext.execute_with(|| {
 		let origin = decimal_convert(70_000_000_000, None);
-		KtonAccount::mutate_account_basic_balance(&alice.address, origin);
+		KtonAccount::mutate_evm_balance(&alice.address, origin);
 		assert_eq!(KtonAccount::account_basic(&alice.address).balance, origin);
 
 		// Deploy WKTON contract
@@ -208,7 +208,7 @@ fn kton_currency_transfer_and_call_out_of_fund() {
 
 	ext.execute_with(|| {
 		let origin = decimal_convert(70_000_000_000, None);
-		KtonAccount::mutate_account_basic_balance(&alice.address, origin);
+		KtonAccount::mutate_evm_balance(&alice.address, origin);
 
 		// Deploy WKTON contract
 		let t = wkton_creation_transaction(alice);
@@ -273,7 +273,7 @@ fn kton_currency_withdraw() {
 
 	ext.execute_with(|| {
 		let origin = decimal_convert(70_000_000_000, None);
-		KtonAccount::mutate_account_basic_balance(&alice.address, origin);
+		KtonAccount::mutate_evm_balance(&alice.address, origin);
 
 		// Deploy WKTON contract
 		let t = wkton_creation_transaction(alice);
@@ -317,7 +317,7 @@ fn kton_currency_withdraw_out_of_fund() {
 
 	ext.execute_with(|| {
 		let origin = decimal_convert(70_000_000_000, None);
-		KtonAccount::mutate_account_basic_balance(&alice.address, origin);
+		KtonAccount::mutate_evm_balance(&alice.address, origin);
 
 		// Deploy WKTON contract
 		let t = wkton_creation_transaction(alice);
