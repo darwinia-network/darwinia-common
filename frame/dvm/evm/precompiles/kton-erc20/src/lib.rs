@@ -19,11 +19,10 @@
 
 // --- core ---
 use core::marker::PhantomData;
-use ethereum_types::Address;
 // --- crates.io ---
 use ethabi::{token::Token, Error, ParamType, StateMutability};
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::PrecompileHelper;
+use darwinia_evm_precompile_utils::{prelude::*, PrecompileHelper};
 use dp_contract::abi_util::abi_encode_bytes;
 // --- paritytech ---
 use fp_evm::{
@@ -58,28 +57,21 @@ where
 		target_gas: Option<u64>,
 		context: &Context,
 		_is_static: bool,
-	) -> PrecompileResult {
+	) -> EvmResult<PrecompileOutput> {
 		let mut helper = PrecompileHelper::<T>::new(input, target_gas);
 		let (selector, data) = helper.split_input()?;
 		let action = Action::from_u32(selector)?;
 
 		// TODO: Add state modifier checker
-		let output = match action {
+
+		match action {
 			Action::TotalSupply => Self::total_supply(),
-			Action::BalanceOf => Self::balance_of(data).unwrap(),
+			Action::BalanceOf => Self::balance_of(data),
 			Action::Transfer => Self::transfer(data),
 			Action::Allowance => Self::allowance(data),
 			Action::Approve => Self::approve(data),
 			Action::TransferFrom => Self::transfer_from(data),
-		};
-
-		Ok(PrecompileOutput {
-			exit_status: ExitSucceed::Returned,
-			cost: helper.used_gas(),
-			// output: abi_encode_bytes(&output),
-			output: vec![],
-			logs: Default::default(),
-		})
+		}
 	}
 }
 
@@ -88,49 +80,58 @@ where
 	T: darwinia_evm::Config + darwinia_balances::Config,
 	BalanceOf<T>: Into<U256>,
 {
-	fn total_supply() -> Vec<u8> {
+	fn total_supply() -> EvmResult<PrecompileOutput> {
 		let total_supply: U256 = darwinia_balances::Pallet::<T>::total_issuance().into();
 		todo!();
 	}
 
-	fn balance_of(input: &[u8]) -> Result<Vec<u8>, Error> {
-		// 1. decode the input
-		let who: Address = decode_params(&["address"], input)
-			.map(|tokens| tokens.into_iter().nth(0))
-			.map(|token| token.and_then(|t| t.into_address()))
-			.map(|addr| addr.unwrap())
-			.map_err(|e| Error::InvalidData)?;
+	fn balance_of(input: &[u8]) -> EvmResult<PrecompileOutput> {
+		let mut reader = EvmDataReader::new_skip_selector(input)?;
+		reader.expect_arguments(1)?;
+		let owner: H160 = reader.read::<Address>()?.into();
 
-		// if let Ok(tokens) = decode_params(&["address"], input) {
-		// 	let address =
-		// 		tokens.into_iter().nth(0).and_then(|t| t.into_address()).unwrap_or_default();
-		// }
-
-		// 2. query the balance
-		Ok(vec![])
+		todo!()
 	}
 
-	fn transfer(input: &[u8]) -> Vec<u8> {
-		// 1. decode the input
-		// 2. others
+	fn transfer(input: &[u8]) -> EvmResult<PrecompileOutput> {
+		let mut reader = EvmDataReader::new_skip_selector(input)?;
+		reader.expect_arguments(2)?;
+
+		let to: H160 = reader.read::<Address>()?.into();
+		let amount: U256 = reader.read()?;
+
 		todo!();
 	}
 
-	fn allowance(input: &[u8]) -> Vec<u8> {
-		// 1. decode the input
-		// 2. others
+	fn allowance(input: &[u8]) -> EvmResult<PrecompileOutput> {
+		let mut reader = EvmDataReader::new_skip_selector(input)?;
+		reader.expect_arguments(2)?;
+
+		let owner: H160 = reader.read::<Address>()?.into();
+		let spender: H160 = reader.read::<Address>()?.into();
+
 		todo!();
 	}
 
-	fn approve(input: &[u8]) -> Vec<u8> {
+	fn approve(input: &[u8]) -> EvmResult<PrecompileOutput> {
 		// 1. decode the input
-		// 2. others
+		let mut reader = EvmDataReader::new_skip_selector(input)?;
+		reader.expect_arguments(2)?;
+
+		let spender: H160 = reader.read::<Address>()?.into();
+		let amount: U256 = reader.read()?;
+
 		todo!();
 	}
 
-	fn transfer_from(input: &[u8]) -> Vec<u8> {
-		// 1. decode the input
-		// 2. others
+	fn transfer_from(input: &[u8]) -> EvmResult<PrecompileOutput> {
+		let mut reader = EvmDataReader::new_skip_selector(input)?;
+		reader.expect_arguments(3)?;
+
+		let from: H160 = reader.read::<Address>()?.into();
+		let to: H160 = reader.read::<Address>()?.into();
+		let amount: U256 = reader.read()?;
+
 		todo!();
 	}
 }

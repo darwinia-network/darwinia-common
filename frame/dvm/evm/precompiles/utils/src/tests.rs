@@ -128,24 +128,24 @@ fn read_u256() {
 	assert_eq!(value, parsed);
 }
 
-// #[test]
-// fn read_selector() {
-// 	use sha3::{Digest, Keccak256};
+#[test]
+fn read_selector() {
+	use sha3::{Digest, Keccak256};
 
-// 	#[precompile_utils_macro::generate_function_selector]
-// 	#[derive(Debug, PartialEq)]
-// 	enum FakeAction {
-// 		Action1 = "action1()",
-// 	}
+	#[darwinia_evm_precompile_utils_macro::selector]
+	#[derive(Debug, PartialEq)]
+	enum FakeAction {
+		Action1 = "action1()",
+	}
 
-// 	let selector = &Keccak256::digest(b"action1()")[0..4];
+	let selector = &Keccak256::digest(b"action1()")[0..4];
 
-// 	let parsed_selector =
-// 		EvmDataReader::read_selector::<FakeAction>(selector).expect("there is a selector");
-// 	EvmDataReader::new_skip_selector(selector).expect("there is a selector");
+	let parsed_selector =
+		EvmDataReader::read_selector::<FakeAction>(selector).expect("there is a selector");
+	EvmDataReader::new_skip_selector(selector).expect("there is a selector");
 
-// 	assert_eq!(parsed_selector, FakeAction::Action1)
-// }
+	assert_eq!(parsed_selector, FakeAction::Action1)
+}
 
 #[test]
 #[should_panic(expected = "to correctly parse U256")]

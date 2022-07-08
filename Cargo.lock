@@ -1621,9 +1621,9 @@ dependencies = [
  "darwinia-evm-precompile-utils",
  "dp-contract",
  "ethabi",
- "ethereum-types",
  "fp-evm",
  "frame-support",
+ "num_enum",
  "sp-core",
 ]
 
@@ -1727,6 +1727,7 @@ name = "darwinia-evm-precompile-utils-macro"
 version = "2.8.15"
 dependencies = [
  "fp-evm",
+ "num_enum",
  "proc-macro2",
  "quote",
  "sha3 0.9.1",
