@@ -1560,6 +1560,7 @@ dependencies = [
  "dp-contract",
  "fp-evm",
  "milagro_bls",
+ "num_enum",
  "sp-std",
 ]
 
@@ -1571,6 +1572,7 @@ dependencies = [
  "darwinia-evm-precompile-utils",
  "fp-evm",
  "from-ethereum-issuing",
+ "num_enum",
  "parity-scale-codec",
  "sp-core",
  "sp-io",
@@ -1591,6 +1593,7 @@ dependencies = [
  "fp-evm",
  "frame-support",
  "log",
+ "num_enum",
  "parity-scale-codec",
  "sp-core",
  "sp-io",
@@ -1638,6 +1641,7 @@ dependencies = [
  "dp-contract",
  "ethereum-primitives",
  "fp-evm",
+ "num_enum",
  "sp-std",
 ]
 
@@ -1658,6 +1662,7 @@ dependencies = [
  "fp-self-contained",
  "frame-support",
  "frame-system",
+ "num_enum",
  "pallet-evm",
  "pallet-fee-market",
  "pallet-timestamp",
@@ -1688,6 +1693,7 @@ dependencies = [
  "frame-system",
  "libsecp256k1 0.5.0",
  "log",
+ "num_enum",
  "pallet-evm",
  "pallet-evm-precompile-simple",
  "pallet-timestamp",

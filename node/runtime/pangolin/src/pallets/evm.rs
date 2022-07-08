@@ -169,8 +169,8 @@ where
 			)),
 			a if a == addr(1025) =>
 				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
-			// a if a == addr(1026) =>
-			// 	Some(<KtonErc20<R>>::execute(input, target_gas, context, is_static)),
+			a if a == addr(1026) =>
+				Some(<KtonErc20<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
