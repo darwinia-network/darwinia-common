@@ -93,7 +93,7 @@ impl<T: Config> Runner<T> {
 			max_base_fee.checked_add(max_priority_fee).ok_or(<Error<T>>::FeeOverflow)?;
 
 		let total_payment = value.checked_add(total_fee).ok_or(Error::<T>::PaymentOverflow)?;
-		let source_account = T::RingAccountBasic::account_basic(&source);
+		let source_account = Pallet::<T>::account_basic(&source);
 		ensure!(source_account.balance >= total_payment, <Error<T>>::BalanceLow);
 
 		if let Some(nonce) = nonce {
@@ -443,7 +443,7 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 	}
 
 	fn basic(&self, address: H160) -> evm::backend::Basic {
-		let account = T::RingAccountBasic::account_basic(&address);
+		let account = Pallet::<T>::account_basic(&address);
 
 		evm::backend::Basic { balance: account.balance, nonce: account.nonce }
 	}

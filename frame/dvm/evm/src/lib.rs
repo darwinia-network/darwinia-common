@@ -52,7 +52,10 @@ use frame_support::{
 use frame_system::RawOrigin;
 use pallet_evm::FeeCalculator;
 use sp_core::{H160, H256, U256};
-use sp_runtime::traits::{BadOrigin, UniqueSaturatedInto};
+use sp_runtime::{
+	traits::{BadOrigin, UniqueSaturatedInto},
+	SaturatedConversion,
+};
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use darwinia_support::evm::DeriveSubstrateAddress;
@@ -338,6 +341,15 @@ pub mod pallet {
 		}
 	}
 	impl<T: Config> Pallet<T> {
+		pub fn account_basic(address: &H160) -> Account {
+			let account_id = T::IntoAccountId::derive_substrate_address(*address);
+			let nonce = <frame_system::Pallet<T>>::account_nonce(&account_id);
+			Account {
+				nonce: nonce.saturated_into::<u128>().into(),
+				balance: T::RingAccountBasic::account_balance(&account_id),
+			}
+		}
+
 		pub fn remove_account(address: &H160) {
 			if AccountCodes::<T>::contains_key(address) {
 				let account_id = T::IntoAccountId::derive_substrate_address(*address);
@@ -364,7 +376,7 @@ pub mod pallet {
 
 		/// Check whether an account is empty.
 		pub fn is_account_empty(address: &H160) -> bool {
-			let account = T::RingAccountBasic::account_basic(address);
+			let account = Self::account_basic(address);
 			let code_len = AccountCodes::<T>::decode_len(address).unwrap_or(0);
 
 			account.nonce == U256::zero() && account.balance == U256::zero() && code_len == 0
