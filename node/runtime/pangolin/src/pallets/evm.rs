@@ -27,6 +27,7 @@ use darwinia_evm::{
 use darwinia_evm_precompile_bridge_ethereum::EthereumBridge;
 use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 use darwinia_evm_precompile_dispatch::Dispatch;
+use darwinia_evm_precompile_kton_erc20::KtonErc20;
 use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::{
@@ -112,6 +113,7 @@ where
 impl<R> PrecompileSet for PangolinPrecompiles<R>
 where
 	Dispatch<R>: Precompile,
+	KtonErc20<R>: Precompile,
 	EthereumBridge<R>: Precompile,
 	R: darwinia_ethereum::Config,
 	StateStorage<R, StorageFilter>: Precompile,
@@ -167,6 +169,8 @@ where
 			)),
 			a if a == addr(1025) =>
 				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
+			// a if a == addr(1026) =>
+			// 	Some(<KtonErc20<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}

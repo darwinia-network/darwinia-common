@@ -17,10 +17,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod abi;
-
-use abi::decode_params;
-
 // --- core ---
 use core::marker::PhantomData;
 use ethereum_types::Address;

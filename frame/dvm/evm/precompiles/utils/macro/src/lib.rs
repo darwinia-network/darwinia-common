@@ -61,6 +61,8 @@ pub fn selector(_: TokenStream, input: TokenStream) -> TokenStream {
 
 	(quote! {
 		#(#attrs)*
+		#[derive(num_enum::TryFromPrimitive, num_enum::IntoPrimitive)]
+		#[repr(u32)]
 		#vis #enum_token #ident {
 			#(
 				#ident_expressions = #variant_expressions,

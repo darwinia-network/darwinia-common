@@ -18,8 +18,11 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod data;
 #[cfg(feature = "testing")]
 pub mod test_helper;
+#[cfg(test)]
+pub mod tests;
 
 pub use darwinia_evm_precompile_utils_macro::selector;
 pub use ethabi::StateMutability;
@@ -34,6 +37,9 @@ use fp_evm::{Context, ExitError, ExitRevert, PrecompileFailure};
 use frame_support::traits::Get;
 use sp_core::U256;
 use sp_std::{borrow::ToOwned, marker::PhantomData, vec};
+
+/// Alias for Result returning an EVM precompile error.
+pub type EvmResult<T = ()> = Result<T, PrecompileFailure>;
 
 #[derive(Clone, Copy, Debug)]
 pub struct PrecompileHelper<'a, T> {
@@ -131,4 +137,20 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 			cost: self.used_gas,
 		}
 	}
+}
+
+pub fn revert(output: impl AsRef<[u8]>) -> PrecompileFailure {
+	PrecompileFailure::Revert {
+		exit_status: ExitRevert::Reverted,
+		output: output.as_ref().to_owned(),
+		//  TODO update this cost
+		cost: 0,
+	}
+}
+
+pub mod prelude {
+	pub use crate::{
+		data::{Address, Bytes, EvmData, EvmDataReader, EvmDataWriter},
+		EvmResult,
+	};
 }
