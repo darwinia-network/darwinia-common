@@ -7,14 +7,14 @@ license     = "GPL-3.0"
 name        = "darwinia-support"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.8.14"
+version     = "2.8.15"
 
 [dependencies]
 # crates.io
-codec                 = { package = "parity-scale-codec", version = "2.3", default-features = false, features = ["derive"] }
-ethereum              = { version = "0.11.1", default-features = false, features = ["with-codec"] }
-scale-info            = { version = "1.0", default-features = false, features = ["derive"] }
-sha3                  = { version = "0.9", default-features = false }
+codec      = { package = "parity-scale-codec", version = "2.3", default-features = false, features = ["derive"] }
+ethereum   = { version = "0.11.1", default-features = false, features = ["with-codec"] }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+sha3       = { version = "0.9", default-features = false }
 # darwinia-network
 ethereum-primitives = { default-features = false, path = "../../primitives/ethereum" }
 # paritytech
