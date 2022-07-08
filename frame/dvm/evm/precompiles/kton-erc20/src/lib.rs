@@ -22,14 +22,16 @@ use core::marker::PhantomData;
 // --- crates.io ---
 use ethabi::{token::Token, Error, ParamType, StateMutability};
 // --- darwinia-network ---
+use darwinia_evm::AccountBasic;
 use darwinia_evm_precompile_utils::{prelude::*, PrecompileHelper};
+use darwinia_support::evm::DeriveSubstrateAddress;
 use dp_contract::abi_util::abi_encode_bytes;
 // --- paritytech ---
 use fp_evm::{
 	Context, ExitRevert, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
 	PrecompileResult,
 };
-use sp_core::{H160, U256};
+use sp_core::{Decode, H160, H256, U256};
 
 type BalanceOf<T> = <T as darwinia_balances::Config>::Balance;
 
@@ -41,6 +43,7 @@ enum Action {
 	Allowance = "allowance(address,address)",
 	Approve = "approve(address,uint256)",
 	TransferFrom = "transferFrom(address,address,uint256)",
+	Withdraw = "withdraw(bytes32,uint256)",
 }
 
 pub struct KtonErc20<T> {
@@ -67,10 +70,11 @@ where
 		match action {
 			Action::TotalSupply => Self::total_supply(&mut helper),
 			Action::BalanceOf => Self::balance_of(&mut helper, data),
-			Action::Transfer => Self::transfer(&mut helper, data),
+			Action::Transfer => Self::transfer(&mut helper, data, context),
 			Action::Allowance => Self::allowance(&mut helper, data),
 			Action::Approve => Self::approve(&mut helper, data),
-			Action::TransferFrom => Self::transfer_from(&mut helper, data),
+			Action::TransferFrom => Self::transfer_from(&mut helper, data, context),
+			Action::Withdraw => Self::withdraw(&mut helper, data, context),
 		}
 	}
 }
@@ -81,8 +85,9 @@ where
 	BalanceOf<T>: Into<U256>,
 {
 	fn total_supply(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
-		helper.record_gas(1, 0);
+		helper.record_gas(1, 0)?;
 
+		// TODO: precision check
 		let amount: U256 = darwinia_balances::Pallet::<T>::total_issuance().into();
 
 		Ok(PrecompileOutput {
@@ -94,24 +99,57 @@ where
 	}
 
 	fn balance_of(helper: &mut PrecompileHelper<T>, input: &[u8]) -> EvmResult<PrecompileOutput> {
+		helper.record_gas(1, 0)?;
+
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(1)?;
 		let owner: H160 = reader.read::<Address>()?.into();
 
-		todo!()
+		let amount = <T as darwinia_evm::Config>::KtonAccountBasic::account_basic(&owner).balance;
+
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Returned,
+			output: EvmDataWriter::new().write(amount).build(),
+			cost: helper.used_gas(),
+			logs: vec![],
+		})
 	}
 
-	fn transfer(helper: &mut PrecompileHelper<T>, input: &[u8]) -> EvmResult<PrecompileOutput> {
+	fn transfer(
+		helper: &mut PrecompileHelper<T>,
+		input: &[u8],
+		context: &Context,
+	) -> EvmResult<PrecompileOutput> {
+		// TODO: update the gas record
+		helper.record_gas(1, 0)?;
+
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(2)?;
 
 		let to: H160 = reader.read::<Address>()?.into();
 		let amount: U256 = reader.read()?;
 
-		todo!();
+		let origin =
+			<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(context.caller);
+		let to = <T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(to);
+
+		<T as darwinia_evm::Config>::KtonAccountBasic::transfer(&origin, &to, amount)
+			.map_err(|e| helper.revert("Transfer failed"))?;
+
+		// TODO: Add log
+
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Returned,
+			output: EvmDataWriter::new().write(true).build(),
+			cost: helper.used_gas(),
+			logs: vec![],
+		})
 	}
 
 	fn allowance(helper: &mut PrecompileHelper<T>, input: &[u8]) -> EvmResult<PrecompileOutput> {
+		// TODO: update the gas record
+		helper.record_gas(1, 0)?;
+
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(2)?;
 
@@ -122,6 +160,9 @@ where
 	}
 
 	fn approve(helper: &mut PrecompileHelper<T>, input: &[u8]) -> EvmResult<PrecompileOutput> {
+		// TODO: update the gas record
+		helper.record_gas(1, 0)?;
+
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(2)?;
 
@@ -134,7 +175,11 @@ where
 	fn transfer_from(
 		helper: &mut PrecompileHelper<T>,
 		input: &[u8],
+		context: &Context,
 	) -> EvmResult<PrecompileOutput> {
+		// TODO: update the gas record
+		helper.record_gas(1, 0)?;
+
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(3)?;
 
@@ -143,5 +188,36 @@ where
 		let amount: U256 = reader.read()?;
 
 		todo!();
+	}
+
+	fn withdraw(
+		helper: &mut PrecompileHelper<T>,
+		input: &[u8],
+		context: &Context,
+	) -> EvmResult<PrecompileOutput> {
+		// TODO: update the gas record
+		helper.record_gas(1, 0)?;
+
+		let mut reader = EvmDataReader::new_skip_selector(input)?;
+		reader.expect_arguments(2)?;
+
+		// TODO: check this value
+		let to_account_id: H256 = reader.read()?;
+		let amount: U256 = reader.read()?;
+
+		let origin =
+			<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(context.caller);
+		let to = <T as frame_system::Config>::AccountId::decode(&mut to_account_id.as_bytes())
+			.map_err(|_| helper.revert("Invalid target address"))?;
+
+		<T as darwinia_evm::Config>::KtonAccountBasic::transfer(&origin, &to, amount)
+			.map_err(|e| helper.revert("Transfer failed"))?;
+
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Returned,
+			output: EvmDataWriter::new().write(true).build(),
+			cost: helper.used_gas(),
+			logs: vec![],
+		})
 	}
 }

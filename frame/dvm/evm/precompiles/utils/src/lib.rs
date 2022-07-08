@@ -33,7 +33,7 @@ use ethabi::{Function, Param, ParamType, Token};
 use darwinia_evm::GasWeightMapping;
 use darwinia_support::evm::SELECTOR;
 // --- paritytech ---
-use fp_evm::{Context, ExitError, ExitRevert, PrecompileFailure};
+use fp_evm::{Context, ExitError, ExitRevert, ExitSucceed, PrecompileFailure, PrecompileOutput};
 use frame_support::traits::Get;
 use sp_core::U256;
 use sp_std::{borrow::ToOwned, marker::PhantomData, vec};
