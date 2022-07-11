@@ -18,7 +18,7 @@ use sp_core::{crypto::Public, H160, U256};
 use crate::*;
 use bp_messages::LaneId;
 use darwinia_ethereum::{
-	account_basic::{BalanceAdapter, KtonRemainBalance, RingRemainBalance},
+	adapter::{BalanceAdapter, KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping,
 };
 use darwinia_evm::{

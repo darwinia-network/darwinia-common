@@ -9,7 +9,7 @@ use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripe
 use sp_core::crypto::Public;
 // --- darwinia-network ---
 use crate::*;
-use darwinia_ethereum::account_basic::{BalanceAdapter, KtonRemainBalance, RingRemainBalance};
+use darwinia_ethereum::adapter::{BalanceAdapter, KtonRemainBalance, RingRemainBalance};
 use darwinia_evm::{
 	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, Precompile,
 	PrecompileSet,
