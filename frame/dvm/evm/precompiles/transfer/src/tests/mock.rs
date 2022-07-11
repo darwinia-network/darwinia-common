@@ -363,4 +363,4 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 	(pairs, ext.into())
 }
 
-pub type KtonAccount = <Test as darwinia_evm::Config>::KtonBalanceAdapter;
+pub type KtonBalanceAdapter = <Test as darwinia_evm::Config>::KtonBalanceAdapter;

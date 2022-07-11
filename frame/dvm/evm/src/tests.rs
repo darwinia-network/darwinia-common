@@ -171,6 +171,10 @@ impl<T: Config> BalanceAdapt<T> for MockBalanceAdapter<T> {
 	fn mutate_account_balance(account_id: &T::AccountId, balance: U256) {
 		frame_support::storage::unhashed::put(&account_id.encode(), &balance);
 	}
+
+	fn evm_total_supply() -> U256 {
+		U256::default()
+	}
 }
 
 impl Config for Test {
