@@ -171,6 +171,7 @@ pub fn revert(output: impl AsRef<[u8]>) -> PrecompileFailure {
 pub mod prelude {
 	pub use crate::{
 		data::{Address, Bytes, EvmData, EvmDataReader, EvmDataWriter},
+		log::{log0, log1, log2, log3},
 		EvmResult,
 	};
 	pub use darwinia_evm_precompile_utils_macro::{keccak256, selector};

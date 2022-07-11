@@ -170,18 +170,25 @@ where
 
 		let origin =
 			<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(context.caller);
-		let to = <T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(to);
+		let to_account_id =
+			<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(to);
 
-		<T as darwinia_evm::Config>::KtonAccountBasic::transfer(&origin, &to, amount)
+		<T as darwinia_evm::Config>::KtonAccountBasic::transfer(&origin, &to_account_id, amount)
 			.map_err(|_| helper.revert("Transfer failed"))?;
 
-		// TODO: Add log
+		let log = log3(
+			context.address,
+			SELECTOR_LOG_TRANSFER,
+			context.caller,
+			to,
+			EvmDataWriter::new().write(amount).build(),
+		);
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
 			output: EvmDataWriter::new().write(true).build(),
 			cost: helper.used_gas(),
-			logs: vec![],
+			logs: vec![log],
 		})
 	}
 
@@ -219,13 +226,19 @@ where
 
 		ApprovesStorage::insert(context.caller, spender, amount);
 
-		// TODO: add log
+		let log = log3(
+			context.address,
+			SELECTOR_LOG_APPROVAL,
+			context.caller,
+			spender,
+			EvmDataWriter::new().write(amount).build(),
+		);
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
 			output: EvmDataWriter::new().write(true).build(),
 			cost: helper.used_gas(),
-			logs: vec![],
+			logs: vec![log],
 		})
 	}
 
@@ -298,11 +311,18 @@ where
 		<T as darwinia_evm::Config>::KtonAccountBasic::transfer(&origin, &to, amount)
 			.map_err(|_| helper.revert("Transfer failed"))?;
 
+		let log = log2(
+			context.address,
+			SELECTOR_LOG_WITHDRAWAL,
+			context.caller,
+			EvmDataWriter::new().write(amount).build(),
+		);
+
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
 			output: EvmDataWriter::new().write(true).build(),
 			cost: helper.used_gas(),
-			logs: vec![],
+			logs: vec![log],
 		})
 	}
 
@@ -326,11 +346,18 @@ where
 		)
 		.map_err(|_| helper.revert("Transfer failed"))?;
 
+		let log = log2(
+			context.address,
+			SELECTOR_LOG_DEPOSIT,
+			context.caller,
+			EvmDataWriter::new().write(*apparent_value).build(),
+		);
+
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
 			output: EvmDataWriter::new().write::<Bytes>(TOKEN_NAME.into()).build(),
 			cost: helper.used_gas(),
-			logs: vec![],
+			logs: vec![log],
 		})
 	}
 
