@@ -19,8 +19,8 @@
 
 extern crate alloc;
 
-use alloc::vec;
 // --- core ---
+use alloc::vec;
 use core::marker::PhantomData;
 // --- crates.io ---
 use ethabi::{token::Token, Error, ParamType, StateMutability};
@@ -37,10 +37,11 @@ use frame_support::{
 };
 use sp_core::{Decode, H160, H256, U256};
 
-type BalanceOf<T> = <T as darwinia_balances::Config>::Balance;
+const TOKEN_NAME: &str = "Wrapped KTON";
+const TOKEN_SYMBOL: &str = "WKTON";
+const TOKEN_DECIMAL: u8 = 18;
 
-pub struct Approves;
-
+struct Approves;
 impl StorageInstance for Approves {
 	const STORAGE_PREFIX: &'static str = "Approves";
 
@@ -49,7 +50,7 @@ impl StorageInstance for Approves {
 	}
 }
 
-pub type ApprovesStorage =
+type ApprovesStorage =
 	StorageDoubleMap<Approves, Blake2_128Concat, H160, Blake2_128Concat, H160, U256, ValueQuery>;
 
 #[darwinia_evm_precompile_utils::selector]
@@ -66,26 +67,31 @@ enum Action {
 	Decimals = "decimals()",
 }
 
-pub struct KtonErc20<T> {
-	_marker: PhantomData<T>,
-}
+pub struct KtonErc20<T>(PhantomData<T>);
 
 impl<T> Precompile for KtonErc20<T>
 where
-	T: darwinia_evm::Config + darwinia_balances::Config,
-	BalanceOf<T>: Into<U256>,
+	T: darwinia_evm::Config,
 {
 	fn execute(
 		input: &[u8],
 		target_gas: Option<u64>,
 		context: &Context,
-		_is_static: bool,
+		is_static: bool,
 	) -> EvmResult<PrecompileOutput> {
 		let mut helper = PrecompileHelper::<T>::new(input, target_gas);
 		let (selector, data) = helper.split_input()?;
 		let action = Action::from_u32(selector)?;
 
-		// TODO: Add state modifier checker
+		match action {
+			Action::Transfer
+			| Action::Allowance
+			| Action::Approve
+			| Action::TransferFrom
+			| Action::Withdraw =>
+				helper.check_state_modifier(context, is_static, StateMutability::NonPayable)?,
+			_ => helper.check_state_modifier(context, is_static, StateMutability::View)?,
+		};
 
 		match action {
 			Action::TotalSupply => Self::total_supply(&mut helper),
@@ -104,18 +110,16 @@ where
 
 impl<T> KtonErc20<T>
 where
-	T: darwinia_evm::Config + darwinia_balances::Config,
-	BalanceOf<T>: Into<U256>,
+	T: darwinia_evm::Config,
 {
 	fn total_supply(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
 		helper.record_gas(1, 0)?;
 
-		// TODO: precision check
-		let amount: U256 = darwinia_balances::Pallet::<T>::total_issuance().into();
+		// TODO
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			output: EvmDataWriter::new().write(amount).build(),
+			output: EvmDataWriter::new().write(0u8).build(),
 			cost: helper.used_gas(),
 			logs: vec![],
 		})
@@ -292,7 +296,7 @@ where
 	fn name(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			output: EvmDataWriter::new().write::<Bytes>("Wrapped KTON".into()).build(),
+			output: EvmDataWriter::new().write::<Bytes>(TOKEN_NAME.into()).build(),
 			cost: helper.used_gas(),
 			logs: vec![],
 		})
@@ -301,7 +305,7 @@ where
 	fn symbol(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			output: EvmDataWriter::new().write::<Bytes>("WKTON".into()).build(),
+			output: EvmDataWriter::new().write::<Bytes>(TOKEN_SYMBOL.into()).build(),
 			cost: helper.used_gas(),
 			logs: vec![],
 		})
@@ -310,7 +314,7 @@ where
 	fn decimals(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			output: EvmDataWriter::new().write(18u8).build(),
+			output: EvmDataWriter::new().write(TOKEN_DECIMAL).build(),
 			cost: helper.used_gas(),
 			logs: vec![],
 		})
