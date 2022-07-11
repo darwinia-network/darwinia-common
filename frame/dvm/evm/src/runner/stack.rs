@@ -33,7 +33,7 @@ use sp_runtime::{traits::UniqueSaturatedInto, ArithmeticError, DispatchError};
 use sp_std::{collections::btree_set::BTreeSet, marker::PhantomData, mem, prelude::*};
 // --- darwinia-network ---
 use crate::{
-	runner::Runner as RunnerT, AccountBasic, AccountCodes, AccountStorages, BlockHashMapping,
+	runner::Runner as RunnerT, AccountCodes, AccountStorages, BalanceAdapt, BlockHashMapping,
 	Config, Error, Event, FeeCalculator, OnChargeEVMTransaction, Pallet,
 };
 use darwinia_support::evm::DeriveSubstrateAddress;
@@ -551,7 +551,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	fn transfer(&mut self, transfer: Transfer) -> Result<(), ExitError> {
 		let source = <T as Config>::IntoAccountId::derive_substrate_address(transfer.source);
 		let target = <T as Config>::IntoAccountId::derive_substrate_address(transfer.target);
-		T::RingAccountBasic::evm_transfer(&source, &target, transfer.value)?;
+		T::RingBalanceAdapter::evm_transfer(&source, &target, transfer.value)?;
 
 		Ok(())
 	}

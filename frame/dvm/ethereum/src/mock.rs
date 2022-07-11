@@ -45,7 +45,7 @@ use sp_std::{cmp, prelude::*};
 use crate::{self as darwinia_ethereum, account_basic::*, *};
 use bp_message_dispatch::{CallValidate, IntoDispatchOrigin as IntoDispatchOriginT};
 use darwinia_evm::{
-	runner::stack::Runner, AccountBasic, EVMCurrencyAdapter, EnsureAddressTruncated,
+	runner::stack::Runner, BalanceAdapt, EVMCurrencyAdapter, EnsureAddressTruncated,
 };
 use darwinia_support::evm::{
 	decimal_convert, DeriveEthereumAddress, DeriveSubstrateAddress, POW_9,
@@ -222,11 +222,11 @@ impl darwinia_evm::Config for Test {
 	type FindAuthor = FindAuthorTruncated;
 	type GasWeightMapping = ();
 	type IntoAccountId = HashedConverter;
-	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
+	type KtonBalanceAdapter = BalanceAdapter<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
 	type PrecompilesType = MockPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type RingBalanceAdapter = BalanceAdapter<Self, Ring, RingRemainBalance>;
 	type Runner = Runner<Self>;
 }
 
@@ -256,7 +256,7 @@ fn evm_ensure_can_withdraw(
 	reasons: WithdrawReasons,
 ) -> Result<(), TransactionValidityError> {
 	// Ensure the account's evm account has enough balance to withdraw.
-	let old_evm_balance = <Test as darwinia_evm::Config>::RingAccountBasic::account_balance(who);
+	let old_evm_balance = <Test as darwinia_evm::Config>::RingBalanceAdapter::account_balance(who);
 	let (_old_sub, old_remaining) = old_evm_balance.div_mod(U256::from(POW_9));
 	ensure!(
 		old_evm_balance > amount,
@@ -376,11 +376,12 @@ impl CallValidate<AccountId32, Origin, Call> for CallValidator {
 							let derived_substrate_address =
 								<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
 
-							let result = <Test as darwinia_evm::Config>::RingAccountBasic::transfer(
-								&relayer_account,
-								&derived_substrate_address,
-								fee,
-							);
+							let result =
+								<Test as darwinia_evm::Config>::RingBalanceAdapter::transfer(
+									&relayer_account,
+									&derived_substrate_address,
+									fee,
+								);
 
 							if result.is_err() {
 								return Err(TransactionValidityError::Invalid(

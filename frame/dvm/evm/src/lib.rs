@@ -97,9 +97,9 @@ pub mod pallet {
 		type FindAuthor: FindAuthor<H160>;
 
 		/// *RING* account basic
-		type RingAccountBasic: AccountBasic<Self>;
+		type RingBalanceAdapter: BalanceAdapt<Self>;
 		/// *KTON* account basic
-		type KtonAccountBasic: AccountBasic<Self>;
+		type KtonBalanceAdapter: BalanceAdapt<Self>;
 
 		/// Precompiles associated with this EVM engine.
 		type PrecompilesType: PrecompileSet;
@@ -187,7 +187,7 @@ pub mod pallet {
 					frame_system::Pallet::<T>::inc_account_nonce(&account_id);
 				}
 
-				T::RingAccountBasic::mutate_evm_balance(&address, account.balance);
+				T::RingBalanceAdapter::mutate_evm_balance(&address, account.balance);
 				Pallet::<T>::create_account(*address, account.code.clone());
 				for (index, value) in &account.storage {
 					AccountStorages::<T>::insert(address, index, value);
@@ -346,7 +346,7 @@ pub mod pallet {
 			let nonce = <frame_system::Pallet<T>>::account_nonce(&account_id);
 			Account {
 				nonce: nonce.saturated_into::<u128>().into(),
-				balance: T::RingAccountBasic::account_balance(&account_id),
+				balance: T::RingBalanceAdapter::account_balance(&account_id),
 			}
 		}
 
@@ -436,9 +436,9 @@ where
 	type LiquidityInfo = U256;
 
 	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, Error<T>> {
-		let balance = T::RingAccountBasic::evm_balance(who);
+		let balance = T::RingBalanceAdapter::evm_balance(who);
 		let new_account_balance = balance.saturating_sub(fee);
-		T::RingAccountBasic::mutate_evm_balance(&who, new_account_balance);
+		T::RingBalanceAdapter::mutate_evm_balance(&who, new_account_balance);
 		Ok(fee)
 	}
 
@@ -447,19 +447,19 @@ where
 		corrected_fee: U256,
 		already_withdrawn: Self::LiquidityInfo,
 	) {
-		let balance = T::RingAccountBasic::evm_balance(who);
+		let balance = T::RingBalanceAdapter::evm_balance(who);
 		let refund = already_withdrawn.saturating_sub(corrected_fee);
 		let new_account_balance = balance.saturating_add(refund);
-		T::RingAccountBasic::mutate_evm_balance(&who, new_account_balance);
+		T::RingBalanceAdapter::mutate_evm_balance(&who, new_account_balance);
 	}
 
 	fn pay_priority_fee(tip: U256) {
 		let digest = <frame_system::Pallet<T>>::digest();
 		let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
 		if let Some(author) = F::find_author(pre_runtime_digests) {
-			let account_balance = T::RingAccountBasic::account_balance(&author);
+			let account_balance = T::RingBalanceAdapter::account_balance(&author);
 			let new_account_balance = account_balance.saturating_add(tip);
-			T::RingAccountBasic::mutate_account_balance(&author, new_account_balance);
+			T::RingBalanceAdapter::mutate_account_balance(&author, new_account_balance);
 		}
 	}
 }
@@ -485,7 +485,7 @@ pub trait EnsureAddressOrigin<OuterOrigin> {
 }
 
 /// A trait for operating account basic info.
-pub trait AccountBasic<T: Config> {
+pub trait BalanceAdapt<T: Config> {
 	fn account_balance(account_id: &T::AccountId) -> U256;
 	fn mutate_account_balance(account_id: &T::AccountId, balance: U256);
 

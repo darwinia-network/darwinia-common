@@ -26,7 +26,7 @@ use sp_core::U256;
 use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
 // --- darwinia-network ---
 use crate::{Config, Event, Pallet, RemainingKtonBalance, RemainingRingBalance};
-use darwinia_evm::AccountBasic;
+use darwinia_evm::BalanceAdapt;
 use darwinia_support::evm::{decimal_convert, POW_9};
 
 /// The operations for the remaining balance.
@@ -122,8 +122,8 @@ impl<T: Config> RemainBalanceOp<T> for KtonRemainBalance {
 }
 
 /// The basic management of RING and KTON balance for dvm account.
-pub struct DvmAccountBasic<T, C, RB>(sp_std::marker::PhantomData<(T, C, RB)>);
-impl<T: Config, C, RB> AccountBasic<T> for DvmAccountBasic<T, C, RB>
+pub struct BalanceAdapter<T, C, RB>(sp_std::marker::PhantomData<(T, C, RB)>);
+impl<T: Config, C, RB> BalanceAdapt<T> for BalanceAdapter<T, C, RB>
 where
 	RB: RemainBalanceOp<T>,
 	C: Currency<T::AccountId>,

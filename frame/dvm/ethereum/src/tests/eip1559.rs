@@ -20,7 +20,7 @@
 use array_bytes::{bytes2hex, hex2bytes};
 // --- darwinia-network ---
 use super::*;
-use darwinia_evm::AccountBasic;
+use darwinia_evm::BalanceAdapt;
 
 pub fn eip1559_erc20_creation_unsigned_transaction() -> EIP1559UnsignedTransaction {
 	EIP1559UnsignedTransaction {

@@ -23,7 +23,7 @@ use std::str::FromStr;
 // --- darwinia-network ---
 use super::*;
 use crate::{tests, Config, InternalTransactHandler};
-use darwinia_evm::AccountBasic;
+use darwinia_evm::BalanceAdapt;
 use darwinia_support::evm::DeriveEthereumAddress;
 // --- paritytech ---
 use sp_runtime::DispatchError;

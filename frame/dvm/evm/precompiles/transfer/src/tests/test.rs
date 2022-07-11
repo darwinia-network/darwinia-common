@@ -28,7 +28,7 @@ use sp_core::{H160, U256};
 // --- darwinia-network ---
 use crate::tests::mock::*;
 use darwinia_ethereum::Transaction;
-use darwinia_evm::AccountBasic;
+use darwinia_evm::BalanceAdapt;
 use darwinia_evm_precompile_utils::{
 	test_helper::{AccountInfo, LegacyUnsignedTransaction},
 	PrecompileHelper,

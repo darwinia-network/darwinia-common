@@ -52,7 +52,7 @@ use frame_support::ensure;
 use sp_core::{H160, U256};
 use sp_std::{borrow::ToOwned, marker::PhantomData, prelude::*, vec::Vec};
 // --- darwinia-network ---
-use darwinia_evm::{runner::Runner, AccountBasic, AccountId, Pallet};
+use darwinia_evm::{runner::Runner, AccountId, BalanceAdapt, Pallet};
 use darwinia_evm_precompile_utils::PrecompileHelper;
 use darwinia_support::evm::{DeriveSubstrateAddress, TRANSFER_ADDR};
 
@@ -101,7 +101,7 @@ impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
 				let wkton_account_id =
 					<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(wkton);
 				// Transfer kton from sender to KTON wrapped contract
-				T::KtonAccountBasic::evm_transfer(&caller_account_id, &wkton_account_id, value)
+				T::KtonBalanceAdapter::evm_transfer(&caller_account_id, &wkton_account_id, value)
 					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 				// Call WKTON wrapped contract deposit
 				let raw_input = make_call_data(caller, value, &helper)?;
@@ -149,7 +149,7 @@ impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
 
 				let source =
 					<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(source);
-				T::KtonAccountBasic::evm_transfer(&source, &to, value)
+				T::KtonBalanceAdapter::evm_transfer(&source, &to, value)
 					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 
 				Ok(PrecompileOutput {

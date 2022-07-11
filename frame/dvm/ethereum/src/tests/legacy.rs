@@ -21,7 +21,7 @@ use array_bytes::{bytes2hex, hex2bytes};
 use std::str::FromStr;
 // --- darwinia-network ---
 use super::*;
-use darwinia_evm::AccountBasic;
+use darwinia_evm::BalanceAdapt;
 // --- paritytech ---
 use frame_support::{assert_err, assert_ok, weights::GetDispatchInfo as _};
 

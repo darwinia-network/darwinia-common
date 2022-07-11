@@ -42,7 +42,7 @@ use crate::{
 	*, {self as s2s_issuing},
 };
 use darwinia_ethereum::{
-	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
+	account_basic::{BalanceAdapter, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot, RawOrigin,
 };
 use darwinia_evm::{EVMCurrencyAdapter, EnsureAddressTruncated, SubstrateBlockHashMapping};
@@ -171,11 +171,11 @@ impl darwinia_evm::Config for Test {
 	type FindAuthor = ();
 	type GasWeightMapping = ();
 	type IntoAccountId = HashedConverter;
-	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
+	type KtonBalanceAdapter = BalanceAdapter<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
 	type PrecompilesType = MockPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type RingBalanceAdapter = BalanceAdapter<Self, Ring, RingRemainBalance>;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 }
 
