@@ -96,9 +96,9 @@ pub mod pallet {
 		/// Find author for the current block.
 		type FindAuthor: FindAuthor<H160>;
 
-		/// *RING* account basic
+		/// *RING* balance adapter for decimal convert
 		type RingBalanceAdapter: BalanceAdapt<Self>;
-		/// *KTON* account basic
+		/// *KTON* balance adapter for decimal convert
 		type KtonBalanceAdapter: BalanceAdapt<Self>;
 
 		/// Precompiles associated with this EVM engine.
@@ -484,7 +484,7 @@ pub trait EnsureAddressOrigin<OuterOrigin> {
 	) -> Result<Self::Success, OuterOrigin>;
 }
 
-/// A trait for operating account basic info.
+/// A trait for handling balance decimal difference between native and evm tokens.
 pub trait BalanceAdapt<T: Config> {
 	fn account_balance(account_id: &T::AccountId) -> U256;
 	fn mutate_account_balance(account_id: &T::AccountId, balance: U256);

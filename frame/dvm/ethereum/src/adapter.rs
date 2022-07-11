@@ -121,14 +121,14 @@ impl<T: Config> RemainBalanceOp<T> for KtonRemainBalance {
 	}
 }
 
-/// The basic management of RING and KTON balance for dvm account.
+/// A balance adapter to deal with different decimal between native and evm tokens.
 pub struct BalanceAdapter<T, C, RB>(sp_std::marker::PhantomData<(T, C, RB)>);
 impl<T: Config, C, RB> BalanceAdapt<T> for BalanceAdapter<T, C, RB>
 where
 	RB: RemainBalanceOp<T>,
 	C: Currency<T::AccountId>,
 {
-	/// Get account balance.
+	/// Get account balance, the decimal of the returned result is consistent with Ethereum.
 	fn account_balance(account_id: &T::AccountId) -> U256 {
 		// Get main balance from Currency.
 		let main_balance = C::free_balance(&account_id).saturated_into::<u128>();
@@ -160,7 +160,7 @@ where
 		Ok(())
 	}
 
-	/// Mutate account balance.
+	/// Mutate account balance, the new_balance's decimal should be the same as Ethereum.
 	fn mutate_account_balance(account_id: &T::AccountId, new_balance: U256) {
 		debug_assert_eq!(C::minimum_balance().saturated_into::<u128>(), 0, "The Ed must be zero!");
 		let helper = U256::from(POW_9);
