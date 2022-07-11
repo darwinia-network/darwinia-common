@@ -85,7 +85,7 @@ impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
 				// Storage: Ethereum RemainingRingBalance (r:2 w:2)
 				// Storage: EVM AccountCodes (r:1 w:0)
 				// Storage: EVM AccountStorages (r:2 w:2)
-				helper.record_gas(7, 6)?;
+				helper.record_db_gas(7, 6)?;
 
 				let call_data = CallData::decode(data, &helper)?;
 				let (caller, wkton, value) =
@@ -137,7 +137,7 @@ impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
 				// Storage: System Account (r:2 w:2)
 				// Storage: Ethereum RemainingRingBalance (r:2 w:2)
 				// Storage: EVM AccountCodes (r:1 w:0)
-				helper.record_gas(5, 4)?;
+				helper.record_db_gas(5, 4)?;
 
 				let wd = WithdrawData::<T>::decode(data, &helper)?;
 				let (source, to, value) = (context.caller, wd.to_account_id, wd.kton_value);

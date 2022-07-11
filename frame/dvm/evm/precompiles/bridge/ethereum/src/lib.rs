@@ -61,7 +61,7 @@ where
 
 		let output = match action {
 			Action::BurnAndRemoteUnlock => {
-				helper.record_gas(0, 0)?;
+				helper.record_db_gas(0, 0)?;
 
 				let call: T::Call =
 					from_ethereum_issuing::Call::<T>::deposit_burn_token_event_from_precompile {
@@ -71,7 +71,7 @@ where
 				call.encode()
 			},
 			Action::TokenRegisterResponse => {
-				helper.record_gas(0, 0)?;
+				helper.record_db_gas(0, 0)?;
 
 				let call: T::Call =
 					from_ethereum_issuing::Call::<T>::register_response_from_contract {

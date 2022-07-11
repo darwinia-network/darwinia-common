@@ -109,7 +109,7 @@ where
 		helper: &mut PrecompileHelper<T>,
 	) -> Result<Vec<u8>, PrecompileFailure> {
 		// Storage: ParityBridgeMessages OutboundLanes (r:1 w:0)
-		helper.record_gas(1, 0)?;
+		helper.record_db_gas(1, 0)?;
 
 		let lane_id =
 			abi_decode_bytes4(data).map_err(|_| helper.revert("Decode lane id failed"))?;
@@ -122,7 +122,7 @@ where
 		helper: &mut PrecompileHelper<T>,
 	) -> Result<Vec<u8>, PrecompileFailure> {
 		// Storage: ParityBridgeMessages INboundLanes (r:1 w:0)
-		helper.record_gas(1, 0)?;
+		helper.record_db_gas(1, 0)?;
 
 		let lane_id =
 			abi_decode_bytes4(data).map_err(|_| helper.revert("Decode lane id failed"))?;
@@ -135,7 +135,7 @@ where
 		caller: H160,
 		helper: &mut PrecompileHelper<T>,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		helper.record_gas(0, 0)?;
+		helper.record_db_gas(0, 0)?;
 
 		let unlock_info = S2sRemoteUnlockInfo::abi_decode(data)
 			.map_err(|_| helper.revert("Decode unlock failed"))?;
@@ -158,7 +158,7 @@ where
 		data: &[u8],
 		helper: &mut PrecompileHelper<T>,
 	) -> Result<Vec<u8>, PrecompileFailure> {
-		helper.record_gas(0, 0)?;
+		helper.record_db_gas(0, 0)?;
 
 		let params =
 			S2sSendMessageParams::decode(data).map_err(|_| helper.revert("Decode input failed"))?;

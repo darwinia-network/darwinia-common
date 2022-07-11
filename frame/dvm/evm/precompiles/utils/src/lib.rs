@@ -19,6 +19,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod data;
+pub mod log;
+
 #[cfg(feature = "testing")]
 pub mod test_helper;
 #[cfg(test)]
@@ -84,7 +86,7 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 		Ok(())
 	}
 
-	pub fn record_gas(&mut self, reads: u64, writes: u64) -> Result<(), PrecompileFailure> {
+	pub fn record_db_gas(&mut self, reads: u64, writes: u64) -> Result<(), PrecompileFailure> {
 		let reads_cost = <T as darwinia_evm::Config>::GasWeightMapping::weight_to_gas(
 			<T as frame_system::Config>::DbWeight::get().read,
 		)
@@ -100,6 +102,24 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 		self.used_gas = self
 			.used_gas
 			.checked_add(cost)
+			.ok_or(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })?;
+
+		match self.target_gas {
+			Some(gas_limit) if self.used_gas > gas_limit =>
+				Err(PrecompileFailure::Error { exit_status: ExitError::OutOfGas }),
+			_ => Ok(()),
+		}
+	}
+
+	pub fn record_log_gas(
+		&mut self,
+		topics: usize,
+		data_len: usize,
+	) -> Result<(), PrecompileFailure> {
+		let log_costs = log::log_costs(topics, data_len)?;
+		self.used_gas = self
+			.used_gas
+			.checked_add(log_costs)
 			.ok_or(PrecompileFailure::Error { exit_status: ExitError::OutOfGas })?;
 
 		match self.target_gas {
@@ -153,4 +173,5 @@ pub mod prelude {
 		data::{Address, Bytes, EvmData, EvmDataReader, EvmDataWriter},
 		EvmResult,
 	};
+	pub use darwinia_evm_precompile_utils_macro::{keccak256, selector};
 }

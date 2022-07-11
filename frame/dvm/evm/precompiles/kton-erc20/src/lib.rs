@@ -41,6 +41,15 @@ const TOKEN_NAME: &str = "Wrapped KTON";
 const TOKEN_SYMBOL: &str = "WKTON";
 const TOKEN_DECIMAL: u8 = 18;
 
+/// Solidity selector of the Transfer log, which is the Keccak of the Log signature.
+pub const SELECTOR_LOG_TRANSFER: [u8; 32] = keccak256!("Transfer(address,address,uint256)");
+/// Solidity selector of the Approval log, which is the Keccak of the Log signature.
+pub const SELECTOR_LOG_APPROVAL: [u8; 32] = keccak256!("Approval(address,address,uint256)");
+/// Solidity selector of the Deposit log, which is the Keccak of the Log signature.
+pub const SELECTOR_LOG_DEPOSIT: [u8; 32] = keccak256!("Deposit(address,uint256)");
+/// Solidity selector of the Withdraw log, which is the Keccak of the Log signature.
+pub const SELECTOR_LOG_WITHDRAWAL: [u8; 32] = keccak256!("Withdrawal(address,uint256)");
+
 struct Approves;
 impl StorageInstance for Approves {
 	const STORAGE_PREFIX: &'static str = "Approves";
@@ -117,7 +126,7 @@ where
 	T: darwinia_evm::Config,
 {
 	fn total_supply(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
-		helper.record_gas(1, 0)?;
+		helper.record_db_gas(1, 0)?;
 
 		// TODO
 
@@ -130,7 +139,7 @@ where
 	}
 
 	fn balance_of(helper: &mut PrecompileHelper<T>, input: &[u8]) -> EvmResult<PrecompileOutput> {
-		helper.record_gas(1, 0)?;
+		helper.record_db_gas(1, 0)?;
 
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(1)?;
@@ -152,7 +161,7 @@ where
 		context: &Context,
 	) -> EvmResult<PrecompileOutput> {
 		// TODO: update the gas record
-		helper.record_gas(1, 0)?;
+		helper.record_db_gas(1, 0)?;
 
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(2)?;
@@ -178,7 +187,7 @@ where
 
 	fn allowance(helper: &mut PrecompileHelper<T>, input: &[u8]) -> EvmResult<PrecompileOutput> {
 		// TODO: update the gas record
-		helper.record_gas(1, 0)?;
+		helper.record_db_gas(1, 0)?;
 
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(2)?;
@@ -201,7 +210,7 @@ where
 		context: &Context,
 	) -> EvmResult<PrecompileOutput> {
 		// TODO: update the gas record
-		helper.record_gas(1, 0)?;
+		helper.record_db_gas(1, 0)?;
 
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(2)?;
@@ -226,7 +235,7 @@ where
 		context: &Context,
 	) -> EvmResult<PrecompileOutput> {
 		// TODO: update the gas record
-		helper.record_gas(1, 0)?;
+		helper.record_db_gas(1, 0)?;
 
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(3)?;
@@ -272,7 +281,7 @@ where
 		context: &Context,
 	) -> EvmResult<PrecompileOutput> {
 		// TODO: update the gas record
-		helper.record_gas(1, 0)?;
+		helper.record_db_gas(1, 0)?;
 
 		let mut reader = EvmDataReader::new_skip_selector(input)?;
 		reader.expect_arguments(2)?;
@@ -299,7 +308,7 @@ where
 
 	fn deposit(helper: &mut PrecompileHelper<T>, context: &Context) -> EvmResult<PrecompileOutput> {
 		// TODO: update the gas record
-		helper.record_gas(1, 0)?;
+		helper.record_db_gas(1, 0)?;
 
 		let Context { caller, address, apparent_value } = context;
 		let caller = <T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*caller);

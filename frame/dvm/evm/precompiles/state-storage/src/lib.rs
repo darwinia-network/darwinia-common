@@ -81,7 +81,7 @@ where
 				}
 
 				// Storage: FeeMarket AssignedRelayers (r:1 w:0)
-				helper.record_gas(1, 0)?;
+				helper.record_db_gas(1, 0)?;
 
 				frame_support::storage::unhashed::get_raw(key)
 			},
