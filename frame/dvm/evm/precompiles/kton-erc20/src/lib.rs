@@ -62,6 +62,7 @@ enum Action {
 	Approve = "approve(address,uint256)",
 	TransferFrom = "transferFrom(address,address,uint256)",
 	Withdraw = "withdraw(bytes32,uint256)",
+	Deposit = "deposit()",
 	Name = "name()",
 	Symbol = "symbol()",
 	Decimals = "decimals()",
@@ -90,6 +91,8 @@ where
 			| Action::TransferFrom
 			| Action::Withdraw =>
 				helper.check_state_modifier(context, is_static, StateMutability::NonPayable)?,
+			Action::Deposit =>
+				helper.check_state_modifier(context, is_static, StateMutability::Payable)?,
 			_ => helper.check_state_modifier(context, is_static, StateMutability::View)?,
 		};
 
@@ -104,6 +107,7 @@ where
 			Action::Approve => Self::approve(&mut helper, data, context),
 			Action::TransferFrom => Self::transfer_from(&mut helper, data, context),
 			Action::Withdraw => Self::withdraw(&mut helper, data, context),
+			Action::Deposit => Self::deposit(&mut helper, context),
 		}
 	}
 }
@@ -288,6 +292,34 @@ where
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
 			output: EvmDataWriter::new().write(true).build(),
+			cost: helper.used_gas(),
+			logs: vec![],
+		})
+	}
+
+	fn deposit(helper: &mut PrecompileHelper<T>, context: &Context) -> EvmResult<PrecompileOutput> {
+		// TODO: update the gas record
+		helper.record_gas(1, 0)?;
+
+		let Context { caller, address, apparent_value } = context;
+		let caller = <T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*caller);
+		let precompile =
+			<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*address);
+
+		if *apparent_value == U256::from(0u32) {
+			return Err(helper.revert("deposited amount must be non-zero"));
+		}
+
+		<T as darwinia_evm::Config>::KtonAccountBasic::transfer(
+			&precompile,
+			&caller,
+			*apparent_value,
+		)
+		.map_err(|_| helper.revert("Transfer failed"))?;
+
+		Ok(PrecompileOutput {
+			exit_status: ExitSucceed::Returned,
+			output: EvmDataWriter::new().write::<Bytes>(TOKEN_NAME.into()).build(),
 			cost: helper.used_gas(),
 			logs: vec![],
 		})
