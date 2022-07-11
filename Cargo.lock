@@ -1620,16 +1620,25 @@ name = "darwinia-evm-precompile-kton-erc20"
 version = "2.8.14"
 dependencies = [
  "darwinia-balances",
+ "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
  "darwinia-support",
  "dp-contract",
  "ethabi",
  "fp-evm",
+ "fp-self-contained",
  "frame-support",
  "frame-system",
  "num_enum",
+ "pallet-evm",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

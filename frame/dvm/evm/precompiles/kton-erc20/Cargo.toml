@@ -26,6 +26,19 @@ sp-core = { default-features = false, git = "https://github.com/darwinia-network
 # frontier
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
 
+[dev-dependencies]
+darwinia-balances             = { path = "../../../../balances" }
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+pallet-evm                   = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
+darwinia-ethereum   = { path = "../../../ethereum" }
+sp-runtime       = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+fp-self-contained            = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
+sp-std           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+scale-info   = { version = "1.0", features = ["derive"] }
+darwinia-evm-precompile-utils = { path = "../utils", features = ["testing"] }
+sp-io            = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+codec          = { package = "parity-scale-codec", version = "2.3", default-features = false }
+darwinia-support              = { features = ["testing"], path = "../../../../support" }
 
 [features]
 default = ["std"]
