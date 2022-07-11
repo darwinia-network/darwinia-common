@@ -44,7 +44,7 @@ use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use crate::{StateStorage, StorageFilterT};
 use darwinia_ethereum::{
-	account_basic::{BalanceAdapter, KtonRemainBalance, RingRemainBalance},
+	adapter::{BalanceAdapter, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
 };
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};

@@ -42,7 +42,7 @@ use sp_runtime::{
 };
 use sp_std::{cmp, prelude::*};
 // --- darwinia-network ---
-use crate::{self as darwinia_ethereum, account_basic::*, *};
+use crate::{self as darwinia_ethereum, adapter::*, *};
 use bp_message_dispatch::{CallValidate, IntoDispatchOrigin as IntoDispatchOriginT};
 use darwinia_evm::{
 	runner::stack::Runner, BalanceAdapt, EVMCurrencyAdapter, EnsureAddressTruncated,
@@ -377,7 +377,7 @@ impl CallValidate<AccountId32, Origin, Call> for CallValidator {
 								<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
 
 							let result =
-								<Test as darwinia_evm::Config>::RingBalanceAdapter::transfer(
+								<Test as darwinia_evm::Config>::RingBalanceAdapter::evm_transfer(
 									&relayer_account,
 									&derived_substrate_address,
 									fee,

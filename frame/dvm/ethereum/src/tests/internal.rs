@@ -23,7 +23,6 @@ use std::str::FromStr;
 // --- darwinia-network ---
 use super::*;
 use crate::{tests, Config, InternalTransactHandler};
-use darwinia_evm::BalanceAdapt;
 use darwinia_support::evm::DeriveEthereumAddress;
 // --- paritytech ---
 use sp_runtime::DispatchError;
@@ -130,7 +129,7 @@ fn read_only_call_should_works() {
 		);
 		// Check nonce
 		let source = <Test as Config>::PalletId::get().derive_ethereum_address();
-		assert_eq!(RingAccount::account_basic(&source).nonce, U256::from(0));
+		assert_eq!(EVM::account_basic(&source).nonce, U256::from(0));
 	});
 }
 
@@ -194,7 +193,7 @@ fn internal_transact_dispatch_error() {
 			Ethereum::internal_transact(contract_address, mock_foo),
 			<Error<Test>>::InternalTransactionRevertError
 		);
-		assert_eq!(RingAccount::account_basic(&source).nonce, U256::from(1));
+		assert_eq!(EVM::account_basic(&source).nonce, U256::from(1));
 	});
 }
 
@@ -215,7 +214,7 @@ fn internal_transact_revert_error() {
 			Ethereum::internal_transact(contract_address, bar),
 			<Error<Test>>::InternalTransactionRevertError
 		);
-		assert_eq!(RingAccount::account_basic(&source).nonce, U256::from(1));
+		assert_eq!(EVM::account_basic(&source).nonce, U256::from(1));
 	});
 }
 
@@ -234,10 +233,10 @@ fn internal_transaction_nonce_increase() {
 
 		// Call foo use internal transaction
 		assert_ok!(Ethereum::internal_transact(contract_address, foo.clone()));
-		assert_eq!(RingAccount::account_basic(&source).nonce, U256::from(1));
+		assert_eq!(EVM::account_basic(&source).nonce, U256::from(1));
 
 		assert_ok!(Ethereum::internal_transact(contract_address, foo));
-		assert_eq!(RingAccount::account_basic(&source).nonce, U256::from(2));
+		assert_eq!(EVM::account_basic(&source).nonce, U256::from(2));
 	});
 }
 

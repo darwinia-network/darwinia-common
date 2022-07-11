@@ -138,7 +138,7 @@ where
 		decimal_convert(main_balance, Some(remaining_balance))
 	}
 
-	/// Transfer value.
+	/// Transfer value. the value's decimal should be the same as Ethereum.
 	fn evm_transfer(
 		source: &T::AccountId,
 		target: &T::AccountId,

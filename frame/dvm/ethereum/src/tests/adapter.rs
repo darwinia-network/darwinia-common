@@ -17,7 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 use super::*;
-use crate::account_basic::{RemainBalanceOp, RingRemainBalance};
+use crate::adapter::{RemainBalanceOp, RingRemainBalance};
 use darwinia_evm::BalanceAdapt;
 use darwinia_support::evm::{decimal_convert, DeriveSubstrateAddress};
 
@@ -25,7 +25,7 @@ macro_rules! assert_balance {
 	($evm_address:expr, $balance:expr, $left:expr, $right:expr) => {
 		let account_id =
 			<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address($evm_address);
-		assert_eq!(RingAccount::account_basic(&$evm_address).balance, $balance);
+		assert_eq!(RingAccount::evm_balance(&$evm_address), $balance);
 		assert_eq!(Ring::free_balance(&account_id), $left);
 		assert_eq!(
 			<RingRemainBalance as RemainBalanceOp<Test>>::remaining_balance(&account_id),

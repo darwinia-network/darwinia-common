@@ -143,23 +143,9 @@ where
 	}
 }
 
-pub struct MockAccountBasic<T>(sp_std::marker::PhantomData<T>);
-impl<T: Config> BalanceAdapt<T> for MockAccountBasic<T> {
-	fn account_basic(address: &H160) -> Account {
-		let account_id =
-			<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*address);
-		let balance =
-			frame_support::storage::unhashed::get(&account_id.encode()).unwrap_or_default();
-		Account { balance, nonce: U256::zero() }
-	}
-
-	fn mutate_evm_balance(address: &H160, new_balance: U256) {
-		let account_id =
-			<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*address);
-		Self::mutate_account_balance(&account_id, new_balance)
-	}
-
-	fn transfer(
+pub struct MockBalanceAdapter<T>(sp_std::marker::PhantomData<T>);
+impl<T: Config> BalanceAdapt<T> for MockBalanceAdapter<T> {
+	fn evm_transfer(
 		source: &T::AccountId,
 		target: &T::AccountId,
 		value: U256,
@@ -197,11 +183,11 @@ impl Config for Test {
 	type FindAuthor = FindAuthorTruncated;
 	type GasWeightMapping = ();
 	type IntoAccountId = ConcatConverter<Self::AccountId>;
-	type KtonBalanceAdapter = MockAccountBasic<Self>;
+	type KtonBalanceAdapter = MockBalanceAdapter<Self>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
 	type PrecompilesType = ();
 	type PrecompilesValue = ();
-	type RingBalanceAdapter = MockAccountBasic<Self>;
+	type RingBalanceAdapter = MockBalanceAdapter<Self>;
 	type Runner = Runner<Self>;
 }
 
@@ -311,21 +297,21 @@ fn fee_deduction() {
 			U256::from(100),
 		);
 		assert_eq!(
-			<Test as Config>::RingBalanceAdapter::account_basic(&evm_addr).balance,
+			<Test as Config>::RingBalanceAdapter::evm_balance(&evm_addr),
 			U256::from(100)
 		);
 
 		// Deduct fees as 10 units
 		let imbalance = <<Test as Config>::OnChargeTransaction as OnChargeEVMTransaction<Test>>::withdraw_fee(&evm_addr, U256::from(10)).unwrap();
 		assert_eq!(
-			<Test as Config>::RingBalanceAdapter::account_basic(&evm_addr).balance,
+			<Test as Config>::RingBalanceAdapter::evm_balance(&evm_addr),
 			U256::from(90)
 		);
 
 		// Refund fees as 5 units
 		<<Test as Config>::OnChargeTransaction as OnChargeEVMTransaction<Test>>::correct_and_deposit_fee(&evm_addr, U256::from(5), imbalance);
 		assert_eq!(
-			<Test as Config>::RingBalanceAdapter::account_basic(&evm_addr).balance,
+			<Test as Config>::RingBalanceAdapter::evm_balance(&evm_addr),
 			U256::from(95)
 		);
 	});
@@ -344,7 +330,7 @@ fn find_author() {
 fn author_should_get_tip() {
 	new_test_ext().execute_with(|| {
 		let author = EVM::find_author();
-		let before_tip = <Test as Config>::RingBalanceAdapter::account_basic(&author).balance;
+		let before_tip = <Test as Config>::RingBalanceAdapter::evm_balance(&author);
 		let _ = EVM::call(
 			Origin::root(),
 			H160::default(),
@@ -357,7 +343,7 @@ fn author_should_get_tip() {
 			None,
 			Vec::new(),
 		);
-		let after_tip = <Test as Config>::RingBalanceAdapter::account_basic(&author).balance;
+		let after_tip = <Test as Config>::RingBalanceAdapter::evm_balance(&author);
 		assert_eq!(after_tip, (before_tip + 21000));
 	});
 }
@@ -366,7 +352,7 @@ fn author_should_get_tip() {
 fn author_same_balance_without_tip() {
 	new_test_ext().execute_with(|| {
 		let author = EVM::find_author();
-		let before_tip = <Test as Config>::RingBalanceAdapter::account_basic(&author).balance;
+		let before_tip = <Test as Config>::RingBalanceAdapter::evm_balance(&author);
 		let _ = EVM::call(
 			Origin::root(),
 			H160::default(),
@@ -379,7 +365,7 @@ fn author_same_balance_without_tip() {
 			None,
 			Vec::new(),
 		);
-		let after_tip = <Test as Config>::RingBalanceAdapter::account_basic(&author).balance;
+		let after_tip = <Test as Config>::RingBalanceAdapter::evm_balance(&author);
 		assert_eq!(after_tip, before_tip);
 	});
 }
@@ -387,8 +373,7 @@ fn author_same_balance_without_tip() {
 #[test]
 fn refunds_should_work() {
 	new_test_ext().execute_with(|| {
-		let before_call =
-			<Test as Config>::RingBalanceAdapter::account_basic(&H160::default()).balance;
+		let before_call = <Test as Config>::RingBalanceAdapter::evm_balance(&H160::default());
 		// Gas price is not part of the actual fee calculations anymore, only the base fee.
 		//
 		// Because we first deduct max_fee_per_gas * gas_limit (2_000_000_000 * 1000000) we need
@@ -407,8 +392,7 @@ fn refunds_should_work() {
 		);
 		let total_cost =
 			(U256::from(21_000) * <Test as Config>::FeeCalculator::min_gas_price()) + U256::from(1);
-		let after_call =
-			<Test as Config>::RingBalanceAdapter::account_basic(&H160::default()).balance;
+		let after_call = <Test as Config>::RingBalanceAdapter::evm_balance(&H160::default());
 		assert_eq!(after_call, before_call - total_cost);
 	});
 }
@@ -418,9 +402,8 @@ fn refunds_should_work() {
 fn refunds_and_priority_should_work() {
 	new_test_ext().execute_with(|| {
 		let author = EVM::find_author();
-		let before_tip = <Test as Config>::RingBalanceAdapter::account_basic(&author).balance;
-		let before_call =
-			<Test as Config>::RingBalanceAdapter::account_basic(&H160::default()).balance;
+		let before_tip = <Test as Config>::RingBalanceAdapter::evm_balance(&author);
+		let before_call = <Test as Config>::RingBalanceAdapter::evm_balance(&H160::default());
 		let tip = 5;
 		// The tip is deducted but never refunded to the caller.
 		let _ = EVM::call(
@@ -439,11 +422,10 @@ fn refunds_and_priority_should_work() {
 		let total_cost = (U256::from(21_000) * <Test as Config>::FeeCalculator::min_gas_price())
 			+ U256::from(1)
 			+ U256::from(tip);
-		let after_call =
-			<Test as Config>::RingBalanceAdapter::account_basic(&H160::default()).balance;
+		let after_call = <Test as Config>::RingBalanceAdapter::evm_balance(&H160::default());
 		assert_eq!(after_call, before_call - total_cost);
 
-		let after_tip = <Test as Config>::RingBalanceAdapter::account_basic(&author).balance;
+		let after_tip = <Test as Config>::RingBalanceAdapter::evm_balance(&author);
 		assert_eq!(after_tip, (before_tip + tip));
 	});
 }

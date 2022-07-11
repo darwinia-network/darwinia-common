@@ -42,7 +42,7 @@ use crate::{
 	*, {self as s2s_issuing},
 };
 use darwinia_ethereum::{
-	account_basic::{BalanceAdapter, KtonRemainBalance, RingRemainBalance},
+	adapter::{BalanceAdapter, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot, RawOrigin,
 };
 use darwinia_evm::{EVMCurrencyAdapter, EnsureAddressTruncated, SubstrateBlockHashMapping};
@@ -67,7 +67,7 @@ pub const MAPPING_TOKEN_LOGIC_CONTRACT_BYTECODE: &str =
 darwinia_support::impl_test_account_data! {}
 
 frame_support::parameter_types! {
-	pub const ExistentialDeposit: u64 = 1;
+	pub const ExistentialDeposit: u64 = 0;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
 	type AccountStore = System;

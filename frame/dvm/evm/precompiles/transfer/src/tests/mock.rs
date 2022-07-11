@@ -44,7 +44,7 @@ use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use crate::Transfer;
 use darwinia_ethereum::{
-	account_basic::{BalanceAdapter, KtonRemainBalance, RingRemainBalance},
+	adapter::{BalanceAdapter, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
 };
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
@@ -94,7 +94,7 @@ frame_support::parameter_types! {
 	// For weight estimation, we assume that the most locks on an individual account will be 50.
 	// This number may need to be adjusted in the future if this assumption no longer holds true.
 	pub const MaxLocks: u32 = 10;
-	pub const ExistentialDeposit: u64 = 500;
+	pub const ExistentialDeposit: u64 = 0;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
 	type AccountStore = System;
