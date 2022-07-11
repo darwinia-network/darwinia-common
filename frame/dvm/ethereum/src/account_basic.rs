@@ -22,12 +22,12 @@
 use evm::ExitError;
 // --- paritytech ---
 use frame_support::{ensure, traits::Currency};
-use sp_core::{H160, U256};
+use sp_core::U256;
 use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
 // --- darwinia-network ---
 use crate::{Config, Event, Pallet, RemainingKtonBalance, RemainingRingBalance};
 use darwinia_evm::AccountBasic;
-use darwinia_support::evm::{decimal_convert, DeriveSubstrateAddress, POW_9};
+use darwinia_support::evm::{decimal_convert, POW_9};
 
 /// The operations for the remaining balance.
 pub trait RemainBalanceOp<T: Config> {
@@ -128,19 +128,14 @@ where
 	RB: RemainBalanceOp<T>,
 	C: Currency<T::AccountId>,
 {
-	/// Get the account basic in EVM format.
-	fn evm_balance(address: &H160) -> U256 {
-		let account_id =
-			<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*address);
-
-		Self::account_balance(&account_id)
-	}
-
-	/// Mutate the basic account.
-	fn mutate_evm_balance(address: &H160, new_balance: U256) {
-		let account_id =
-			<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*address);
-		Self::mutate_account_balance(&account_id, new_balance)
+	/// Get account balance.
+	fn account_balance(account_id: &T::AccountId) -> U256 {
+		// Get main balance from Currency.
+		let main_balance = C::free_balance(&account_id).saturated_into::<u128>();
+		// Get remaining balance from Dvm.
+		let remaining_balance = RB::remaining_balance(&account_id).saturated_into::<u128>();
+		// final_balance = balance * 10^9 + remaining_balance.
+		decimal_convert(main_balance, Some(remaining_balance))
 	}
 
 	/// Transfer value.
@@ -163,16 +158,6 @@ where
 
 		RB::deposit_dvm_transfer_event(source, target, value);
 		Ok(())
-	}
-
-	/// Get account balance.
-	fn account_balance(account_id: &T::AccountId) -> U256 {
-		// Get main balance from Currency.
-		let main_balance = C::free_balance(&account_id).saturated_into::<u128>();
-		// Get remaining balance from Dvm.
-		let remaining_balance = RB::remaining_balance(&account_id).saturated_into::<u128>();
-		// final_balance = balance * 10^9 + remaining_balance.
-		decimal_convert(main_balance, Some(remaining_balance))
 	}
 
 	/// Mutate account balance.

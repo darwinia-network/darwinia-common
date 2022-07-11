@@ -485,16 +485,25 @@ pub trait EnsureAddressOrigin<OuterOrigin> {
 }
 
 /// A trait for operating account basic info.
-pub trait AccountBasic<T: frame_system::Config> {
-	fn evm_balance(address: &H160) -> U256;
+pub trait AccountBasic<T: Config> {
 	fn account_balance(account_id: &T::AccountId) -> U256;
+	fn mutate_account_balance(account_id: &T::AccountId, balance: U256);
+
 	fn evm_transfer(
 		source: &T::AccountId,
 		target: &T::AccountId,
 		value: U256,
 	) -> Result<(), ExitError>;
-	fn mutate_evm_balance(address: &H160, new_balance: U256);
-	fn mutate_account_balance(account_id: &T::AccountId, balance: U256);
+
+	fn evm_balance(address: &H160) -> U256 {
+		let account_id = <T as Config>::IntoAccountId::derive_substrate_address(*address);
+		Self::account_balance(&account_id)
+	}
+
+	fn mutate_evm_balance(address: &H160, new_balance: U256) {
+		let account_id = <T as Config>::IntoAccountId::derive_substrate_address(*address);
+		Self::mutate_account_balance(&account_id, new_balance)
+	}
 }
 
 /// A mapping function that converts Ethereum gas to Substrate weight.
