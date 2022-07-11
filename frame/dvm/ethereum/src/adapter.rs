@@ -138,6 +138,12 @@ where
 		decimal_convert(main_balance, Some(remaining_balance))
 	}
 
+	/// Get the total supply of token in Ethereum decimal.
+	fn evm_total_supply() -> U256 {
+		let main_balance = C::total_issuance().saturated_into::<u128>();
+		decimal_convert(main_balance, None)
+	}
+
 	/// Transfer value. the value's decimal should be the same as Ethereum.
 	fn evm_transfer(
 		source: &T::AccountId,

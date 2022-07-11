@@ -487,6 +487,7 @@ pub trait EnsureAddressOrigin<OuterOrigin> {
 /// A trait for handling balance decimal difference between native and evm tokens.
 pub trait BalanceAdapt<T: Config> {
 	fn account_balance(account_id: &T::AccountId) -> U256;
+	fn evm_total_supply() -> U256;
 	fn mutate_account_balance(account_id: &T::AccountId, balance: U256);
 
 	fn evm_transfer(
