@@ -554,7 +554,7 @@ sp_api::impl_runtime_apis! {
 			// add_benchmark!(params, batches, darwinia_balances::<Instance1>, Balances);
 			// add_benchmark!(params, batches, darwinia_balances::<Instance2>, Kton);
 			add_benchmark!(params, batches, pallet_grandpa, Grandpa);
-			
+
 			Ok(batches)
 		}
 	}
