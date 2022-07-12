@@ -121,7 +121,7 @@ impl<T: Config> RemainBalanceOp<T> for KtonRemainBalance {
 	}
 }
 
-/// A balance adapter to deal with different decimal between native and evm tokens.
+/// A currency adapter to deal with different decimal between native and evm tokens.
 pub struct CurrencyAdapter<T, C, RB>(sp_std::marker::PhantomData<(T, C, RB)>);
 impl<T: Config, C, RB> CurrencyAdapt<T> for CurrencyAdapter<T, C, RB>
 where
