@@ -18,7 +18,7 @@
 
 use super::*;
 use crate::adapter::{RemainBalanceOp, RingRemainBalance};
-use darwinia_evm::BalanceAdapt;
+use darwinia_evm::CurrencyAdapt;
 use darwinia_support::evm::{decimal_convert, DeriveSubstrateAddress};
 
 macro_rules! assert_balance {

@@ -144,7 +144,7 @@ where
 }
 
 pub struct MockBalanceAdapter<T>(sp_std::marker::PhantomData<T>);
-impl<T: Config> BalanceAdapt<T> for MockBalanceAdapter<T> {
+impl<T: Config> CurrencyAdapt<T> for MockBalanceAdapter<T> {
 	fn evm_transfer(
 		source: &T::AccountId,
 		target: &T::AccountId,

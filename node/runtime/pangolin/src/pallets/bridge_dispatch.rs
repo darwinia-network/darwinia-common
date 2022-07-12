@@ -16,7 +16,7 @@ use crate::*;
 use bp_message_dispatch::{CallValidate, Everything, IntoDispatchOrigin as IntoDispatchOriginT};
 use bp_messages::{LaneId, MessageNonce};
 use darwinia_ethereum::{RawOrigin, Transaction};
-use darwinia_evm::BalanceAdapt;
+use darwinia_evm::CurrencyAdapt;
 use darwinia_support::evm::{
 	decimal_convert, DeriveEthereumAddress, DeriveSubstrateAddress, POW_9,
 };

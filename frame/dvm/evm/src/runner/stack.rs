@@ -33,8 +33,8 @@ use sp_runtime::{traits::UniqueSaturatedInto, ArithmeticError, DispatchError};
 use sp_std::{collections::btree_set::BTreeSet, marker::PhantomData, mem, prelude::*};
 // --- darwinia-network ---
 use crate::{
-	runner::Runner as RunnerT, AccountCodes, AccountStorages, BalanceAdapt, BlockHashMapping,
-	Config, Error, Event, FeeCalculator, OnChargeEVMTransaction, Pallet,
+	runner::Runner as RunnerT, AccountCodes, AccountStorages, BlockHashMapping, Config,
+	CurrencyAdapt, Error, Event, FeeCalculator, OnChargeEVMTransaction, Pallet,
 };
 use darwinia_support::evm::DeriveSubstrateAddress;
 

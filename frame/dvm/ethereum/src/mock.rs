@@ -45,7 +45,7 @@ use sp_std::{cmp, prelude::*};
 use crate::{self as darwinia_ethereum, adapter::*, *};
 use bp_message_dispatch::{CallValidate, IntoDispatchOrigin as IntoDispatchOriginT};
 use darwinia_evm::{
-	runner::stack::Runner, BalanceAdapt, EVMCurrencyAdapter, EnsureAddressTruncated,
+	runner::stack::Runner, CurrencyAdapt, EVMCurrencyAdapter, EnsureAddressTruncated,
 };
 use darwinia_support::evm::{
 	decimal_convert, DeriveEthereumAddress, DeriveSubstrateAddress, POW_9,
@@ -222,11 +222,11 @@ impl darwinia_evm::Config for Test {
 	type FindAuthor = FindAuthorTruncated;
 	type GasWeightMapping = ();
 	type IntoAccountId = HashedConverter;
-	type KtonBalanceAdapter = BalanceAdapter<Self, Kton, KtonRemainBalance>;
+	type KtonBalanceAdapter = CurrencyAdapter<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
 	type PrecompilesType = MockPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type RingBalanceAdapter = BalanceAdapter<Self, Ring, RingRemainBalance>;
+	type RingBalanceAdapter = CurrencyAdapter<Self, Ring, RingRemainBalance>;
 	type Runner = Runner<Self>;
 }
 

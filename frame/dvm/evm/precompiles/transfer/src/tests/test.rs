@@ -28,7 +28,7 @@ use sp_core::{H160, U256};
 // --- darwinia-network ---
 use crate::tests::mock::*;
 use darwinia_ethereum::Transaction;
-use darwinia_evm::BalanceAdapt;
+use darwinia_evm::CurrencyAdapt;
 use darwinia_evm_precompile_utils::{
 	test_helper::{AccountInfo, LegacyUnsignedTransaction},
 	PrecompileHelper,
@@ -188,7 +188,10 @@ fn kton_currency_transfer_and_call_works() {
 			transfer_and_call_transaction(H160::from_str(WKTON_ADDRESS).unwrap(), transfer_2, 3)
 				.sign_with_chain_id(&alice.private_key, 42);
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
-		assert_eq!(KtonBalanceAdapter::evm_balance(&alice.address), origin - transfer_1 - transfer_2);
+		assert_eq!(
+			KtonBalanceAdapter::evm_balance(&alice.address),
+			origin - transfer_1 - transfer_2
+		);
 		assert_eq!(query_contract_balance(alice, 4), transfer_1 + transfer_2);
 		System::assert_has_event(Event::Ethereum(darwinia_ethereum::Event::KtonDVMTransfer(
 			alice_account_id,

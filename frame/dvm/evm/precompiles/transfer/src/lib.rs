@@ -52,7 +52,7 @@ use frame_support::ensure;
 use sp_core::{H160, U256};
 use sp_std::{borrow::ToOwned, marker::PhantomData, prelude::*, vec::Vec};
 // --- darwinia-network ---
-use darwinia_evm::{runner::Runner, AccountId, BalanceAdapt, Pallet};
+use darwinia_evm::{runner::Runner, AccountId, CurrencyAdapt, Pallet};
 use darwinia_evm_precompile_utils::PrecompileHelper;
 use darwinia_support::evm::{DeriveSubstrateAddress, TRANSFER_ADDR};
 

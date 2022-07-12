@@ -14,7 +14,7 @@ use sp_core::{crypto::Public, H160, U256};
 // --- darwinia-network ---
 use crate::*;
 use darwinia_ethereum::{
-	adapter::{BalanceAdapter, KtonRemainBalance, RingRemainBalance},
+	adapter::{CurrencyAdapter, KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping,
 };
 use darwinia_evm::{
@@ -158,11 +158,11 @@ impl Config for Runtime {
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type GasWeightMapping = FixedGasWeightMapping;
 	type IntoAccountId = ConcatConverter<Self::AccountId>;
-	type KtonBalanceAdapter = BalanceAdapter<Self, Kton, KtonRemainBalance>;
+	type KtonBalanceAdapter = CurrencyAdapter<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<FindAccountFromAuthorIndex<Self, Babe>>;
 	type PrecompilesType = PangoroPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type RingBalanceAdapter = BalanceAdapter<Self, Ring, RingRemainBalance>;
+	type RingBalanceAdapter = CurrencyAdapter<Self, Ring, RingRemainBalance>;
 	type Runner = Runner<Self>;
 }
 
