@@ -151,7 +151,7 @@ impl FindAuthor<H160> for FindAuthorTruncated {
 }
 pub struct HashedConverter;
 impl DeriveSubstrateAddress<AccountId32> for HashedConverter {
-	fn derive_substrate_address(address: H160) -> AccountId32 {
+	fn derive_substrate_address(address: &H160) -> AccountId32 {
 		let mut raw_account = [0u8; 32];
 		raw_account[0..20].copy_from_slice(&address[..]);
 		raw_account.into()
@@ -374,7 +374,7 @@ impl CallValidate<AccountId32, Origin, Call> for CallValidator {
 							// Already done `evm_ensure_can_withdraw` in
 							// check_receiving_before_dispatch
 							let derived_substrate_address =
-								<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
+								<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(id);
 
 							let result =
 								<Test as darwinia_evm::Config>::RingBalanceAdapter::evm_transfer(
