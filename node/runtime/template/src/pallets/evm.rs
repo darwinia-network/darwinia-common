@@ -9,7 +9,7 @@ use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripe
 use sp_core::crypto::Public;
 // --- darwinia-network ---
 use crate::*;
-use darwinia_ethereum::account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance};
+use darwinia_ethereum::adapter::{CurrencyAdapter, KtonRemainBalance, RingRemainBalance};
 use darwinia_evm::{
 	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, Precompile,
 	PrecompileSet,
@@ -92,11 +92,11 @@ impl Config for Runtime {
 	type FindAuthor = FindAuthorTruncated<Aura>;
 	type GasWeightMapping = ();
 	type IntoAccountId = ConcatConverter<Self::AccountId>;
-	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
+	type KtonBalanceAdapter = CurrencyAdapter<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
 	type PrecompilesType = FrontierPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type RingBalanceAdapter = CurrencyAdapter<Self, Ring, RingRemainBalance>;
 	type Runner = Runner<Self>;
 }
 

@@ -28,7 +28,7 @@ use sp_core::{H160, U256};
 // --- darwinia-network ---
 use crate::tests::mock::*;
 use darwinia_ethereum::Transaction;
-use darwinia_evm::AccountBasic;
+use darwinia_evm::CurrencyAdapt;
 use darwinia_evm_precompile_utils::{
 	test_helper::{AccountInfo, LegacyUnsignedTransaction},
 	PrecompileHelper,
@@ -155,8 +155,8 @@ fn kton_currency_transfer_and_call_works() {
 
 	ext.execute_with(|| {
 		let origin = decimal_convert(70_000_000_000, None);
-		KtonAccount::mutate_account_basic_balance(&alice.address, origin);
-		assert_eq!(KtonAccount::account_basic(&alice.address).balance, origin);
+		KtonBalanceAdapter::mutate_evm_balance(&alice.address, origin);
+		assert_eq!(KtonBalanceAdapter::evm_balance(&alice.address), origin);
 
 		// Deploy WKTON contract
 		let t = wkton_creation_transaction(alice);
@@ -168,7 +168,7 @@ fn kton_currency_transfer_and_call_works() {
 			transfer_and_call_transaction(H160::from_str(WKTON_ADDRESS).unwrap(), transfer_1, 1)
 				.sign_with_chain_id(&alice.private_key, 42);
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
-		assert_eq!(KtonAccount::account_basic(&alice.address).balance, origin - transfer_1);
+		assert_eq!(KtonBalanceAdapter::evm_balance(&alice.address), origin - transfer_1);
 		assert_eq!(query_contract_balance(alice, 2), transfer_1);
 		let alice_account_id =
 			<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(alice.address);
@@ -189,7 +189,7 @@ fn kton_currency_transfer_and_call_works() {
 				.sign_with_chain_id(&alice.private_key, 42);
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 		assert_eq!(
-			KtonAccount::account_basic(&alice.address).balance,
+			KtonBalanceAdapter::evm_balance(&alice.address),
 			origin - transfer_1 - transfer_2
 		);
 		assert_eq!(query_contract_balance(alice, 4), transfer_1 + transfer_2);
@@ -208,7 +208,7 @@ fn kton_currency_transfer_and_call_out_of_fund() {
 
 	ext.execute_with(|| {
 		let origin = decimal_convert(70_000_000_000, None);
-		KtonAccount::mutate_account_basic_balance(&alice.address, origin);
+		KtonBalanceAdapter::mutate_evm_balance(&alice.address, origin);
 
 		// Deploy WKTON contract
 		let t = wkton_creation_transaction(alice);
@@ -223,7 +223,7 @@ fn kton_currency_transfer_and_call_out_of_fund() {
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 
 		// Check balances
-		assert_eq!(KtonAccount::account_basic(&alice.address).balance, origin);
+		assert_eq!(KtonBalanceAdapter::evm_balance(&alice.address), origin);
 		assert_eq!(query_contract_balance(alice, 2), U256::from(0));
 	});
 }
@@ -273,7 +273,7 @@ fn kton_currency_withdraw() {
 
 	ext.execute_with(|| {
 		let origin = decimal_convert(70_000_000_000, None);
-		KtonAccount::mutate_account_basic_balance(&alice.address, origin);
+		KtonBalanceAdapter::mutate_evm_balance(&alice.address, origin);
 
 		// Deploy WKTON contract
 		let t = wkton_creation_transaction(alice);
@@ -295,7 +295,7 @@ fn kton_currency_withdraw() {
 		assert_ok!(Ethereum::execute(alice.address, &t.into(), None,));
 
 		let to = <Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
-		assert_eq!(KtonAccount::account_balance(&to), withdraw);
+		assert_eq!(KtonBalanceAdapter::account_balance(&to), withdraw);
 		assert_eq!(query_contract_balance(alice, 3), transfer - withdraw);
 
 		let wkton_account_id =
@@ -317,7 +317,7 @@ fn kton_currency_withdraw_out_of_fund() {
 
 	ext.execute_with(|| {
 		let origin = decimal_convert(70_000_000_000, None);
-		KtonAccount::mutate_account_basic_balance(&alice.address, origin);
+		KtonBalanceAdapter::mutate_evm_balance(&alice.address, origin);
 
 		// Deploy WKTON contract
 		let t = wkton_creation_transaction(alice);
@@ -341,7 +341,7 @@ fn kton_currency_withdraw_out_of_fund() {
 
 		// Check balances
 		let to = <Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
-		assert_eq!(KtonAccount::account_balance(&to), U256::from(0));
+		assert_eq!(KtonBalanceAdapter::account_balance(&to), U256::from(0));
 		assert_eq!(query_contract_balance(alice, 4), transfer);
 	});
 }

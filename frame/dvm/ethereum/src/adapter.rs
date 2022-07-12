@@ -22,12 +22,12 @@
 use evm::ExitError;
 // --- paritytech ---
 use frame_support::{ensure, traits::Currency};
-use sp_core::{H160, U256};
+use sp_core::U256;
 use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
 // --- darwinia-network ---
 use crate::{Config, Event, Pallet, RemainingKtonBalance, RemainingRingBalance};
-use darwinia_evm::{Account as EVMAccount, AccountBasic};
-use darwinia_support::evm::{decimal_convert, DeriveSubstrateAddress, POW_9};
+use darwinia_evm::CurrencyAdapt;
+use darwinia_support::evm::{decimal_convert, POW_9};
 
 /// The operations for the remaining balance.
 pub trait RemainBalanceOp<T: Config> {
@@ -121,34 +121,31 @@ impl<T: Config> RemainBalanceOp<T> for KtonRemainBalance {
 	}
 }
 
-/// The basic management of RING and KTON balance for dvm account.
-pub struct DvmAccountBasic<T, C, RB>(sp_std::marker::PhantomData<(T, C, RB)>);
-impl<T: Config, C, RB> AccountBasic<T> for DvmAccountBasic<T, C, RB>
+/// A currency adapter to deal with different decimal between native and evm tokens.
+pub struct CurrencyAdapter<T, C, RB>(sp_std::marker::PhantomData<(T, C, RB)>);
+impl<T: Config, C, RB> CurrencyAdapt<T> for CurrencyAdapter<T, C, RB>
 where
 	RB: RemainBalanceOp<T>,
 	C: Currency<T::AccountId>,
 {
-	/// Get the account basic in EVM format.
-	fn account_basic(address: &H160) -> EVMAccount {
-		let account_id =
-			<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*address);
-		let nonce = <frame_system::Pallet<T>>::account_nonce(&account_id);
-
-		EVMAccount {
-			nonce: nonce.saturated_into::<u128>().into(),
-			balance: Self::account_balance(&account_id),
-		}
+	/// Get account balance, the decimal of the returned result is consistent with Ethereum.
+	fn account_balance(account_id: &T::AccountId) -> U256 {
+		// Get main balance from Currency.
+		let main_balance = C::free_balance(&account_id).saturated_into::<u128>();
+		// Get remaining balance from Dvm.
+		let remaining_balance = RB::remaining_balance(&account_id).saturated_into::<u128>();
+		// final_balance = balance * 10^9 + remaining_balance.
+		decimal_convert(main_balance, Some(remaining_balance))
 	}
 
-	/// Mutate the basic account.
-	fn mutate_account_basic_balance(address: &H160, new_balance: U256) {
-		let account_id =
-			<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*address);
-		Self::mutate_account_balance(&account_id, new_balance)
+	/// Get the total supply of token in Ethereum decimal.
+	fn evm_total_supply() -> U256 {
+		let main_balance = C::total_issuance().saturated_into::<u128>();
+		decimal_convert(main_balance, None)
 	}
 
-	/// Transfer value.
-	fn transfer(
+	/// Transfer value. the value's decimal should be the same as Ethereum.
+	fn evm_transfer(
 		source: &T::AccountId,
 		target: &T::AccountId,
 		value: U256,
@@ -169,17 +166,7 @@ where
 		Ok(())
 	}
 
-	/// Get account balance.
-	fn account_balance(account_id: &T::AccountId) -> U256 {
-		// Get main balance from Currency.
-		let main_balance = C::free_balance(&account_id).saturated_into::<u128>();
-		// Get remaining balance from Dvm.
-		let remaining_balance = RB::remaining_balance(&account_id).saturated_into::<u128>();
-		// final_balance = balance * 10^9 + remaining_balance.
-		decimal_convert(main_balance, Some(remaining_balance))
-	}
-
-	/// Mutate account balance.
+	/// Mutate account balance, the new_balance's decimal should be the same as Ethereum.
 	fn mutate_account_balance(account_id: &T::AccountId, new_balance: U256) {
 		debug_assert_eq!(C::minimum_balance().saturated_into::<u128>(), 0, "The Ed must be zero!");
 		let helper = U256::from(POW_9);
