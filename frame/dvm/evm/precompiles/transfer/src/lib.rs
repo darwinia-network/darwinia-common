@@ -53,7 +53,7 @@ use sp_core::{H160, U256};
 use sp_std::{borrow::ToOwned, marker::PhantomData, prelude::*, vec::Vec};
 // --- darwinia-network ---
 use darwinia_evm::{runner::Runner, AccountId, CurrencyAdapt, Pallet};
-use darwinia_evm_precompile_utils::PrecompileHelper;
+use darwinia_evm_precompile_utils::{revert, PrecompileHelper};
 use darwinia_support::evm::{DeriveSubstrateAddress, TRANSFER_ADDR};
 
 #[darwinia_evm_precompile_utils::selector]
@@ -72,12 +72,12 @@ impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let mut helper = PrecompileHelper::<T>::new(input, target_gas);
+		let mut helper = PrecompileHelper::<T>::new(input, target_gas, context, is_static);
 		let (selector, data) = helper.split_input()?;
 		let action = Action::from_u32(selector)?;
 
 		// Check state modifiers
-		helper.check_state_modifier(context, is_static, StateMutability::NonPayable)?;
+		helper.check_state_modifier(StateMutability::NonPayable)?;
 
 		match action {
 			Action::TransferAndCall => {
@@ -87,14 +87,11 @@ impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
 				// Storage: EVM AccountStorages (r:2 w:2)
 				helper.record_db_gas(7, 6)?;
 
-				let call_data = CallData::decode(data, &helper)?;
+				let call_data = CallData::decode(data)?;
 				let (caller, wkton, value) =
 					(context.caller, call_data.wkton_address, call_data.value);
 				// Ensure wkton is a contract
-				ensure!(
-					!<Pallet<T>>::is_contract_code_empty(&wkton),
-					helper.revert("WKTON addr error")
-				);
+				ensure!(!<Pallet<T>>::is_contract_code_empty(&wkton), revert("WKTON addr error"));
 
 				let caller_account_id =
 					<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(caller);
@@ -104,10 +101,10 @@ impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
 				T::KtonBalanceAdapter::evm_transfer(&caller_account_id, &wkton_account_id, value)
 					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 				// Call WKTON wrapped contract deposit
-				let raw_input = make_call_data(caller, value, &helper)?;
+				let raw_input = make_call_data(caller, value)?;
 				if let Ok(call_res) = T::Runner::call(
 					array_bytes::hex_into(TRANSFER_ADDR)
-						.map_err(|_| helper.revert("Invalid transfer address"))?,
+						.map_err(|_| revert("Invalid transfer address"))?,
 					wkton,
 					raw_input.to_vec(),
 					U256::zero(),
@@ -122,7 +119,7 @@ impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
 						ExitReason::Succeed(_) => {
 							log::debug!("Transfer and call execute success.");
 						},
-						_ => return Err(helper.revert("Call contract failed")),
+						_ => return Err(revert("Call contract failed")),
 					}
 				}
 
@@ -139,13 +136,10 @@ impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
 				// Storage: EVM AccountCodes (r:1 w:0)
 				helper.record_db_gas(5, 4)?;
 
-				let wd = WithdrawData::<T>::decode(data, &helper)?;
+				let wd = WithdrawData::<T>::decode(data)?;
 				let (source, to, value) = (context.caller, wd.to_account_id, wd.kton_value);
 				// Ensure wkton is a contract
-				ensure!(
-					!<Pallet<T>>::is_contract_code_empty(&source),
-					helper.revert("The caller error")
-				);
+				ensure!(!<Pallet<T>>::is_contract_code_empty(&source), revert("The caller error"));
 
 				let source =
 					<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(source);
@@ -163,10 +157,9 @@ impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
 	}
 }
 
-pub fn make_call_data<T: darwinia_evm::Config>(
+pub fn make_call_data(
 	sp_address: sp_core::H160,
 	sp_value: sp_core::U256,
-	helper: &PrecompileHelper<T>,
 ) -> Result<Vec<u8>, PrecompileFailure> {
 	let eth_address = util::s2e_address(sp_address);
 	let eth_value = util::s2e_u256(sp_value);
@@ -190,7 +183,7 @@ pub fn make_call_data<T: darwinia_evm::Config>(
 		state_mutability: StateMutability::NonPayable,
 	};
 	func.encode_input(&[Token::Address(eth_address), Token::Uint(eth_value)])
-		.map_err(|_| helper.revert("Construct call data failed"))
+		.map_err(|_| revert("Construct call data failed"))
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -200,18 +193,15 @@ pub struct CallData {
 }
 
 impl CallData {
-	pub fn decode<T: darwinia_evm::Config>(
-		data: &[u8],
-		helper: &PrecompileHelper<T>,
-	) -> Result<Self, PrecompileFailure> {
+	pub fn decode(data: &[u8]) -> Result<Self, PrecompileFailure> {
 		let tokens = ethabi::decode(&[ParamType::Address, ParamType::Uint(256)], &data)
-			.map_err(|_| helper.revert("Ethabi decode failed"))?;
+			.map_err(|_| revert("Ethabi decode failed"))?;
 		match (tokens[0].clone(), tokens[1].clone()) {
 			(Token::Address(eth_wkton_address), Token::Uint(eth_value)) => Ok(CallData {
 				wkton_address: util::e2s_address(eth_wkton_address),
 				value: util::e2s_u256(eth_value),
 			}),
-			_ => Err(helper.revert("Invlid call data")),
+			_ => Err(revert("Invlid call data")),
 		}
 	}
 }
@@ -223,18 +213,18 @@ pub struct WithdrawData<T: darwinia_evm::Config> {
 }
 
 impl<T: darwinia_evm::Config> WithdrawData<T> {
-	pub fn decode(data: &[u8], helper: &PrecompileHelper<T>) -> Result<Self, PrecompileFailure> {
+	pub fn decode(data: &[u8]) -> Result<Self, PrecompileFailure> {
 		let tokens = ethabi::decode(&[ParamType::FixedBytes(32), ParamType::Uint(256)], &data)
-			.map_err(|_| helper.revert("Ethabi decode failed"))?;
+			.map_err(|_| revert("Ethabi decode failed"))?;
 		match (tokens[0].clone(), tokens[1].clone()) {
 			(Token::FixedBytes(address), Token::Uint(eth_value)) => Ok(WithdrawData {
 				to_account_id: <T as frame_system::Config>::AccountId::decode(
 					&mut address.as_ref(),
 				)
-				.map_err(|_| helper.revert("Invalid destination address"))?,
+				.map_err(|_| revert("Invalid destination address"))?,
 				kton_value: util::e2s_u256(eth_value),
 			}),
-			_ => Err(helper.revert("Invalid withdraw input data")),
+			_ => Err(revert("Invalid withdraw input data")),
 		}
 	}
 }

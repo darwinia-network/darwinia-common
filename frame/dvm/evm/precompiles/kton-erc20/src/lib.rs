@@ -223,7 +223,7 @@ where
 		let origin = <IntoAccountId<T>>::derive_substrate_address(context.caller);
 		let to_account_id = <IntoAccountId<T>>::derive_substrate_address(to);
 		<KtonBalanceAdapter<T>>::evm_transfer(&origin, &to_account_id, amount)
-			.map_err(|_| revert("Transfer failed", helper.used_gas()))?;
+			.map_err(|_| revert("Transfer failed"))?;
 
 		let transfer_log = log3(
 			context.address,
@@ -256,9 +256,9 @@ where
 		let caller = context.caller;
 		if caller != from {
 			ApprovesStorage::mutate(from, caller, |value| {
-				let new_value = value.checked_sub(amount).ok_or_else(|| {
-					revert("trying to spend more than allowed", helper.used_gas())
-				})?;
+				let new_value = value
+					.checked_sub(amount)
+					.ok_or_else(|| revert("trying to spend more than allowed"))?;
 
 				*value = new_value;
 				EvmResult::Ok(())
@@ -268,7 +268,7 @@ where
 		let origin = <IntoAccountId<T>>::derive_substrate_address(from);
 		let to_account_id = <IntoAccountId<T>>::derive_substrate_address(to);
 		<KtonBalanceAdapter<T>>::evm_transfer(&origin, &to_account_id, amount)
-			.map_err(|_| revert("Transfer failed", helper.used_gas()))?;
+			.map_err(|_| revert("Transfer failed"))?;
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
@@ -290,11 +290,11 @@ where
 		let precompile = <IntoAccountId<T>>::derive_substrate_address(address);
 
 		if apparent_value == U256::from(0u32) {
-			return Err(revert("deposited amount must be non-zero", helper.used_gas()));
+			return Err(revert("deposited amount must be non-zero"));
 		}
 
 		<KtonBalanceAdapter<T>>::evm_transfer(&precompile, &caller, apparent_value)
-			.map_err(|_| revert("Transfer failed", helper.used_gas()))?;
+			.map_err(|_| revert("Transfer failed"))?;
 
 		let deposit_log = log2(
 			context.address,
@@ -325,10 +325,10 @@ where
 
 		let origin = <IntoAccountId<T>>::derive_substrate_address(context.caller);
 		let to_account_id = <T as frame_system::Config>::AccountId::decode(&mut to.as_bytes())
-			.map_err(|_| revert("Invalid target address", helper.used_gas()))?;
+			.map_err(|_| revert("Invalid target address"))?;
 
 		<KtonBalanceAdapter<T>>::evm_transfer(&origin, &to_account_id, amount)
-			.map_err(|_| revert("Transfer failed", helper.used_gas()))?;
+			.map_err(|_| revert("Transfer failed"))?;
 
 		let withdraw_log = log2(
 			context.address,

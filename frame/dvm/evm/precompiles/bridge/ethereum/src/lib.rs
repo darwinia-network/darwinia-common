@@ -52,12 +52,12 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let mut helper = PrecompileHelper::<T>::new(input, target_gas);
+		let mut helper = PrecompileHelper::<T>::new(input, target_gas, context, is_static);
 		let (selector, data) = helper.split_input()?;
 		let action = Action::from_u32(selector)?;
 
 		// Check state modifiers
-		helper.check_state_modifier(context, is_static, StateMutability::View)?;
+		helper.check_state_modifier(StateMutability::View)?;
 
 		let output = match action {
 			Action::BurnAndRemoteUnlock => {

@@ -23,7 +23,7 @@ use core::marker::PhantomData;
 // --- crates.io ---
 use codec::Encode;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{PrecompileHelper, StateMutability};
+use darwinia_evm_precompile_utils::{revert, PrecompileHelper, StateMutability};
 use darwinia_support::{
 	evm::DeriveSubstrateAddress,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
@@ -71,12 +71,12 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let mut helper = PrecompileHelper::new(input, target_gas);
+		let mut helper = PrecompileHelper::new(input, target_gas, context, is_static);
 		let (selector, data) = helper.split_input()?;
 		let action = Action::from_u32(selector)?;
 
 		// Check state modifiers
-		helper.check_state_modifier(context, is_static, StateMutability::View)?;
+		helper.check_state_modifier(StateMutability::View)?;
 
 		let output = match action {
 			Action::OutboundLatestGeneratedNonce =>
@@ -111,8 +111,7 @@ where
 		// Storage: ParityBridgeMessages OutboundLanes (r:1 w:0)
 		helper.record_db_gas(1, 0)?;
 
-		let lane_id =
-			abi_decode_bytes4(data).map_err(|_| helper.revert("Decode lane id failed"))?;
+		let lane_id = abi_decode_bytes4(data).map_err(|_| revert("Decode lane id failed"))?;
 		let nonce = <S as LatestMessageNoncer>::outbound_latest_generated_nonce(lane_id);
 		Ok(abi_encode_u64(nonce))
 	}
@@ -124,8 +123,7 @@ where
 		// Storage: ParityBridgeMessages INboundLanes (r:1 w:0)
 		helper.record_db_gas(1, 0)?;
 
-		let lane_id =
-			abi_decode_bytes4(data).map_err(|_| helper.revert("Decode lane id failed"))?;
+		let lane_id = abi_decode_bytes4(data).map_err(|_| revert("Decode lane id failed"))?;
 		let nonce = <S as LatestMessageNoncer>::inbound_latest_received_nonce(lane_id);
 		Ok(abi_encode_u64(nonce))
 	}
@@ -137,8 +135,8 @@ where
 	) -> Result<Vec<u8>, PrecompileFailure> {
 		helper.record_db_gas(0, 0)?;
 
-		let unlock_info = S2sRemoteUnlockInfo::abi_decode(data)
-			.map_err(|_| helper.revert("Decode unlock failed"))?;
+		let unlock_info =
+			S2sRemoteUnlockInfo::abi_decode(data).map_err(|_| revert("Decode unlock failed"))?;
 		let payload = P::create(
 			CallOrigin::SourceAccount(T::IntoAccountId::derive_substrate_address(caller)),
 			unlock_info.spec_version,
@@ -150,7 +148,7 @@ where
 			),
 			DispatchFeePayment::AtSourceChain,
 		)
-		.map_err(|_| helper.revert("Create payload failed"))?;
+		.map_err(|_| revert("Create payload failed"))?;
 		Ok(abi_encode_bytes(payload.encode().as_slice()))
 	}
 
@@ -161,14 +159,14 @@ where
 		helper.record_db_gas(0, 0)?;
 
 		let params =
-			S2sSendMessageParams::decode(data).map_err(|_| helper.revert("Decode input failed"))?;
+			S2sSendMessageParams::decode(data).map_err(|_| revert("Decode input failed"))?;
 		let encoded = <S as RelayMessageSender>::encode_send_message(
 			params.pallet_index,
 			params.lane_id,
 			params.payload,
 			params.fee.low_u128().saturated_into(),
 		)
-		.map_err(|_| helper.revert("Encode send message failed"))?;
+		.map_err(|_| revert("Encode send message failed"))?;
 		Ok(abi_encode_bytes(encoded.as_slice()))
 	}
 }

@@ -63,6 +63,18 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 		Self { input, target_gas, context, is_static, used_gas: 0, _marker: PhantomData }
 	}
 
+	// FIXME: Replace this with selector and data reader in the next prs.
+	pub fn split_input(&self) -> Result<(u32, &'a [u8]), PrecompileFailure> {
+		if self.input.len() < 4 {
+			return Err(revert("input length less than 4 bytes"));
+		}
+
+		let mut buffer = [0u8; 4];
+		buffer.copy_from_slice(&self.input[0..4]);
+		let selector = u32::from_be_bytes(buffer);
+		Ok((selector, &self.input[4..]))
+	}
+
 	pub fn selector<U>(&self) -> EvmResult<U>
 	where
 		U: num_enum::TryFromPrimitive<Primitive = u32>,
@@ -78,14 +90,11 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 	/// called into.
 	pub fn check_state_modifier(&self, modifier: StateMutability) -> EvmResult<()> {
 		if self.is_static && modifier != StateMutability::View {
-			return Err(revert(
-				"can't call non-static function in static context",
-				self.used_gas(),
-			));
+			return Err(revert("can't call non-static function in static context"));
 		}
 
 		if modifier != StateMutability::Payable && self.context.apparent_value > U256::zero() {
-			return Err(revert("function is not payable", self.used_gas()));
+			return Err(revert("function is not payable"));
 		}
 
 		Ok(())
@@ -96,13 +105,13 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 			<T as frame_system::Config>::DbWeight::get().read,
 		)
 		.checked_mul(reads)
-		.ok_or(revert("Cost Overflow", 0))?;
+		.ok_or(revert("Cost Overflow"))?;
 		let writes_cost = <T as darwinia_evm::Config>::GasWeightMapping::weight_to_gas(
 			<T as frame_system::Config>::DbWeight::get().write,
 		)
 		.checked_mul(writes)
-		.ok_or(revert("Cost Overflow", 0))?;
-		let cost = reads_cost.checked_add(writes_cost).ok_or(revert("Cost Overflow", 0))?;
+		.ok_or(revert("Cost Overflow"))?;
+		let cost = reads_cost.checked_add(writes_cost).ok_or(revert("Cost Overflow"))?;
 
 		self.used_gas = self
 			.used_gas
@@ -139,7 +148,7 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 /// recorded cost. It is better to **revert** instead of **error** as
 /// erroring consumes the entire gas limit, and **revert** returns an error
 /// message to the calling contract.
-pub fn revert(message: &'static str, cost: u64) -> PrecompileFailure {
+pub fn revert(message: &'static str) -> PrecompileFailure {
 	#[allow(deprecated)]
 	let func = Function {
 		name: "Error".to_owned(),
@@ -156,7 +165,7 @@ pub fn revert(message: &'static str, cost: u64) -> PrecompileFailure {
 	PrecompileFailure::Revert {
 		exit_status: ExitRevert::Reverted,
 		output: func.encode_input(&[Token::String(message.to_owned())]).unwrap_or_default(),
-		cost,
+		cost: 0,
 	}
 }
 
