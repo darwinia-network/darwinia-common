@@ -44,7 +44,7 @@ use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use crate::Transfer;
 use darwinia_ethereum::{
-	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
+	adapter::{CurrencyAdapter, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
 };
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
@@ -94,7 +94,7 @@ frame_support::parameter_types! {
 	// For weight estimation, we assume that the most locks on an individual account will be 50.
 	// This number may need to be adjusted in the future if this assumption no longer holds true.
 	pub const MaxLocks: u32 = 10;
-	pub const ExistentialDeposit: u64 = 500;
+	pub const ExistentialDeposit: u64 = 0;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
 	type AccountStore = System;
@@ -232,11 +232,11 @@ impl darwinia_evm::Config for Test {
 	type FindAuthor = FindAuthorTruncated;
 	type GasWeightMapping = ();
 	type IntoAccountId = HashedConverter;
-	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
+	type KtonBalanceAdapter = CurrencyAdapter<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
 	type PrecompilesType = MockPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type RingBalanceAdapter = CurrencyAdapter<Self, Ring, RingRemainBalance>;
 	type Runner = Runner<Self>;
 }
 
@@ -246,9 +246,7 @@ frame_support::parameter_types! {
 
 impl darwinia_ethereum::Config for Test {
 	type Event = Event;
-	type KtonCurrency = Kton;
 	type PalletId = MockPalletId;
-	type RingCurrency = Ring;
 	type StateRoot = IntermediateStateRoot;
 }
 
@@ -365,5 +363,4 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 	(pairs, ext.into())
 }
 
-pub type RingAccount = <Test as darwinia_evm::Config>::RingAccountBasic;
-pub type KtonAccount = <Test as darwinia_evm::Config>::KtonAccountBasic;
+pub type KtonBalanceAdapter = <Test as darwinia_evm::Config>::KtonBalanceAdapter;

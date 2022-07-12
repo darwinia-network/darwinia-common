@@ -221,8 +221,12 @@ where
 		rpc_config: eth_rpc_config.clone(),
 		fee_history_cache: fee_history_cache.clone(),
 		overrides: overrides.clone(),
+		sync_from: match config.chain_spec.name() {
+			"Pangoro" => 729781,
+			_ => 0,
+		},
 	}
-	.spawn_task(&config.impl_name);
+	.spawn_task();
 	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let shared_voter_state = GrandpaSharedVoterState::empty();
 	let babe_config = babe_link.config().clone();
@@ -467,7 +471,6 @@ where
 	use sc_telemetry::{Error as TelemetryError, TelemetryWorker};
 	use sc_transaction_pool::BasicPool;
 	use sp_consensus::CanAuthorWithNativeVersion;
-	use sp_runtime::traits::Block as BlockT;
 
 	if config.keystore_remote.is_some() {
 		return Err(ServiceError::Other(format!("Remote Keystores are not supported.")));
@@ -539,10 +542,8 @@ where
 					*timestamp,
 					slot_duration,
 				);
-			let uncles =
-				sp_authorship::InherentDataProvider::<<Block as BlockT>::Header>::check_inherents();
 
-			Ok((timestamp, slot, uncles))
+			Ok((timestamp, slot))
 		},
 		&task_manager.spawn_essential_handle(),
 		config.prometheus_registry(),

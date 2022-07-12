@@ -106,17 +106,11 @@ pub fn genesis_config() -> ChainSpec {
 				code: wasm_binary_unwrap().to_vec(),
 				changes_trie_config: Default::default(),
 			},
-			babe: BabeConfig {
-				authorities: vec![],
-				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG),
-			},
+			babe: BabeConfig { authorities: vec![], epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG) },
 			balances: BalancesConfig {
 				balances: vec![
 					(root.clone(), BUNCH_OF_COINS),
-					(
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-						A_FEW_COINS,
-					),
+					(get_account_id_from_seed::<sr25519::Public>("Alice"), A_FEW_COINS),
 				]
 				.into_iter()
 				.chain(
@@ -124,15 +118,9 @@ pub fn genesis_config() -> ChainSpec {
 						.iter()
 						.map(|AuthorityKeys { stash_key, .. }| (stash_key.to_owned(), A_FEW_COINS)),
 				)
+				.chain(initial_nominators.iter().map(|n| (n.to_owned(), A_FEW_COINS)))
 				.chain(
-					initial_nominators
-						.iter()
-						.map(|n| (n.to_owned(), A_FEW_COINS)),
-				)
-				.chain(
-					TEAM_MEMBERS
-						.iter()
-						.map(|m| (array_bytes::hex_into_unchecked(m), MANY_COINS)),
+					TEAM_MEMBERS.iter().map(|m| (array_bytes::hex_into_unchecked(m), MANY_COINS)),
 				)
 				.collect(),
 			},
@@ -140,17 +128,11 @@ pub fn genesis_config() -> ChainSpec {
 				balances: vec![(root.clone(), BUNCH_OF_COINS)]
 					.into_iter()
 					.chain(
-						initial_authorities
-							.iter()
-							.map(|AuthorityKeys { stash_key, .. }| {
-								(stash_key.to_owned(), A_FEW_COINS)
-							}),
+						initial_authorities.iter().map(|AuthorityKeys { stash_key, .. }| {
+							(stash_key.to_owned(), A_FEW_COINS)
+						}),
 					)
-					.chain(
-						initial_nominators
-							.iter()
-							.map(|n| (n.to_owned(), A_FEW_COINS)),
-					)
+					.chain(initial_nominators.iter().map(|n| (n.to_owned(), A_FEW_COINS)))
 					.chain(
 						TEAM_MEMBERS
 							.iter()
@@ -182,12 +164,7 @@ pub fn genesis_config() -> ChainSpec {
 							.map(|c| c.stash_key.clone())
 							.collect::<Vec<_>>();
 
-						(
-							n.clone(),
-							n.clone(),
-							A_FEW_COINS,
-							StakerStatus::Nominator(nominations),
-						)
+						(n.clone(), n.clone(), A_FEW_COINS, StakerStatus::Nominator(nominations))
 					}))
 					.collect(),
 				slash_reward_fraction: Perbill::from_percent(10),
@@ -197,18 +174,9 @@ pub fn genesis_config() -> ChainSpec {
 			session: SessionConfig {
 				keys: initial_authorities
 					.iter()
-					.map(
-						|AuthorityKeys {
-						     stash_key,
-						     session_keys,
-						 }| {
-							(
-								stash_key.to_owned(),
-								stash_key.to_owned(),
-								session_keys.to_owned(),
-							)
-						},
-					)
+					.map(|AuthorityKeys { stash_key, session_keys }| {
+						(stash_key.to_owned(), stash_key.to_owned(), session_keys.to_owned())
+					})
 					.collect(),
 			},
 			grandpa: Default::default(),
@@ -223,31 +191,9 @@ pub fn genesis_config() -> ChainSpec {
 				secure_limited_ring_amount: 1_000_000 * COIN,
 				remote_mapping_token_factory_account: Default::default(),
 			},
-			evm: EVMConfig {
-				accounts: evm_accounts,
-			},
+			evm: EVMConfig { accounts: evm_accounts },
 			ethereum: Default::default(),
 			base_fee: Default::default(),
-			bsc: BscConfig {
-				genesis_header: serde_json::from_str(r#"{
-					"difficulty": "0x2",
-					"extraData": "0xd683010108846765746886676f312e3137856c696e757800000000005865ba3c049153b8dae0a232ac90d20c78f1a5d1de7b7dc51284214b9b9c85549ab3d2b972df0deef66ac2c935552c16704d214347f29fa77f77da6d75d7c7524df189c73c714dd636a99aa4f3317ccd72a05d62980a75ecd1309ea12fa2ed87a8744fbfc9b863d5a2959d3f95eae5dc7d70144ce1b73b403b7eb6e0adac84746417fbfba17480e6cbc1360bca54330eb71b214cb885500844365e95cd9942c7276e7fd8f474cf03cceff28abc65c9cbae594f725c80e12d862d7205d7212bea8032fe2d71b6e182e72ccf9a18e2bddb9ffdfc189587c2f20a17afce0ccf13fb0b7eab75bffb94483caf97cdb63751c0fa85ba6120e397ed00",
-					"gasLimit": "0x1c9c380",
-					"gasUsed": "0xdd591",
-					"logsBloom": "0x00020000000000000040000000004000810000000000002000004000000000000008000000200000200000000000100000010000000000000000000001002008000000100000800000000008000000002010000000000000a0000000000040000000002000024000040000000000000408400100010000000002001000080100200000002000000001000000000000000000244002400000800000000000002000000002000000000000008000000000000000000000000000000000000000000000000a004000000000400000000000000008000008040000000002000000000000000000000200010000000000008000010000000000400000080000000400",
-					"miner": "0xa2959d3f95eae5dc7d70144ce1b73b403b7eb6e0",
-					"mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-					"nonce": "0x0000000000000000",
-					"number": "0xfe37b0",
-					"parentHash": "0x2a9a3f5769fbc24bd736eb5dc81ca663dd1f8b6a9f294fedfb4d43d9194c11dd",
-					"receiptsRoot": "0x61bf3a54af15912a2e3661ae5458265a48567c1bf41e9c54638d5f6ed7cba594",
-					"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-					"stateRoot": "0x0556c6bfceb4595b11f1efd339c6a0841ab1009c8de1c821bdfc05175e9ecf31",
-					"timestamp": "0x62064e60",
-					"transactionsRoot": "0x71ec83a4e5176046dab6255a6c3afd6cf8144ab5907d4431d521144b2174373a"
-				}"#).unwrap()
-			},
-
 		}
 	}
 
@@ -310,23 +256,12 @@ pub fn development_config() -> ChainSpec {
 				code: wasm_binary_unwrap().to_vec(),
 				changes_trie_config: Default::default(),
 			},
-			babe: BabeConfig {
-				authorities: vec![],
-				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG),
-			},
+			babe: BabeConfig { authorities: vec![], epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG) },
 			balances: BalancesConfig {
-				balances: endowed_accounts
-					.clone()
-					.into_iter()
-					.map(|a| (a, MANY_COINS))
-					.collect(),
+				balances: endowed_accounts.clone().into_iter().map(|a| (a, MANY_COINS)).collect(),
 			},
 			kton: KtonConfig {
-				balances: endowed_accounts
-					.clone()
-					.into_iter()
-					.map(|a| (a, A_FEW_COINS))
-					.collect(),
+				balances: endowed_accounts.clone().into_iter().map(|a| (a, A_FEW_COINS)).collect(),
 			},
 			staking: StakingConfig {
 				minimum_validator_count: 1,
@@ -361,35 +296,14 @@ pub fn development_config() -> ChainSpec {
 				secure_limited_ring_amount: 100_000 * COIN,
 				remote_mapping_token_factory_account: Default::default(),
 			},
-			evm: EVMConfig {
-				accounts: evm_accounts,
-			},
+			evm: EVMConfig { accounts: evm_accounts },
 			ethereum: Default::default(),
 			base_fee: Default::default(),
-			bsc: BscConfig {
-				genesis_header: serde_json::from_str(r#"{
-					"difficulty": "0x2",
-					"extraData": "0xd683010108846765746886676f312e3137856c696e757800000000005865ba3c049153b8dae0a232ac90d20c78f1a5d1de7b7dc51284214b9b9c85549ab3d2b972df0deef66ac2c935552c16704d214347f29fa77f77da6d75d7c7524df189c73c714dd636a99aa4f3317ccd72a05d62980a75ecd1309ea12fa2ed87a8744fbfc9b863d5a2959d3f95eae5dc7d70144ce1b73b403b7eb6e0adac84746417fbfba17480e6cbc1360bca54330eb71b214cb885500844365e95cd9942c7276e7fd8f474cf03cceff28abc65c9cbae594f725c80e12d862d7205d7212bea8032fe2d71b6e182e72ccf9a18e2bddb9ffdfc189587c2f20a17afce0ccf13fb0b7eab75bffb94483caf97cdb63751c0fa85ba6120e397ed00",
-					"gasLimit": "0x1c9c380",
-					"gasUsed": "0xdd591",
-					"logsBloom": "0x00020000000000000040000000004000810000000000002000004000000000000008000000200000200000000000100000010000000000000000000001002008000000100000800000000008000000002010000000000000a0000000000040000000002000024000040000000000000408400100010000000002001000080100200000002000000001000000000000000000244002400000800000000000002000000002000000000000008000000000000000000000000000000000000000000000000a004000000000400000000000000008000008040000000002000000000000000000000200010000000000008000010000000000400000080000000400",
-					"miner": "0xa2959d3f95eae5dc7d70144ce1b73b403b7eb6e0",
-					"mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-					"nonce": "0x0000000000000000",
-					"number": "0xfe37b0",
-					"parentHash": "0x2a9a3f5769fbc24bd736eb5dc81ca663dd1f8b6a9f294fedfb4d43d9194c11dd",
-					"receiptsRoot": "0x61bf3a54af15912a2e3661ae5458265a48567c1bf41e9c54638d5f6ed7cba594",
-					"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-					"stateRoot": "0x0556c6bfceb4595b11f1efd339c6a0841ab1009c8de1c821bdfc05175e9ecf31",
-					"timestamp": "0x62064e60",
-					"transactionsRoot": "0x71ec83a4e5176046dab6255a6c3afd6cf8144ab5907d4431d521144b2174373a"
-				}"#).unwrap()
-			},
 		}
 	}
 
 	ChainSpec::from_genesis(
-		"Pangoro",
+		"Pangoro Development Testnet",
 		"pangoro_dev",
 		ChainType::Development,
 		genesis,

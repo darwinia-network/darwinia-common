@@ -122,7 +122,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 0,
-	spec_version: 2_8_13_0,
+	spec_version: 2_8_15_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -243,8 +243,6 @@ frame_support::construct_runtime! {
 
 		Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 		ToPangolinParachainBacking: to_parachain_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 65,
-
-		// BSC: darwinia_bridge_bsc::{Pallet, Call, Storage, Config} = 46,
 	}
 }
 
@@ -505,10 +503,7 @@ sp_api::impl_runtime_apis! {
 		}
 
 		fn account_basic(address: H160) -> darwinia_evm::Account {
-			// --- darwinia-network ---
-			use darwinia_evm::AccountBasic;
-
-			<Runtime as darwinia_evm::Config>::RingAccountBasic::account_basic(&address)
+			EVM::account_basic(&address)
 		}
 
 		fn account_code_at(address: H160) -> Vec<u8> {

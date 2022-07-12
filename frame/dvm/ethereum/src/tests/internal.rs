@@ -23,7 +23,6 @@ use std::str::FromStr;
 // --- darwinia-network ---
 use super::*;
 use crate::{tests, Config, InternalTransactHandler};
-use darwinia_evm::AccountBasic;
 use darwinia_support::evm::DeriveEthereumAddress;
 // --- paritytech ---
 use sp_runtime::DispatchError;
@@ -130,7 +129,7 @@ fn read_only_call_should_works() {
 		);
 		// Check nonce
 		let source = <Test as Config>::PalletId::get().derive_ethereum_address();
-		assert_eq!(RingAccount::account_basic(&source).nonce, U256::from(0));
+		assert_eq!(EVM::account_basic(&source).nonce, U256::from(0));
 	});
 }
 
@@ -194,7 +193,7 @@ fn internal_transact_dispatch_error() {
 			Ethereum::internal_transact(contract_address, mock_foo),
 			<Error<Test>>::InternalTransactionRevertError
 		);
-		assert_eq!(RingAccount::account_basic(&source).nonce, U256::from(1));
+		assert_eq!(EVM::account_basic(&source).nonce, U256::from(1));
 	});
 }
 
@@ -215,7 +214,7 @@ fn internal_transact_revert_error() {
 			Ethereum::internal_transact(contract_address, bar),
 			<Error<Test>>::InternalTransactionRevertError
 		);
-		assert_eq!(RingAccount::account_basic(&source).nonce, U256::from(1));
+		assert_eq!(EVM::account_basic(&source).nonce, U256::from(1));
 	});
 }
 
@@ -234,10 +233,10 @@ fn internal_transaction_nonce_increase() {
 
 		// Call foo use internal transaction
 		assert_ok!(Ethereum::internal_transact(contract_address, foo.clone()));
-		assert_eq!(RingAccount::account_basic(&source).nonce, U256::from(1));
+		assert_eq!(EVM::account_basic(&source).nonce, U256::from(1));
 
 		assert_ok!(Ethereum::internal_transact(contract_address, foo));
-		assert_eq!(RingAccount::account_basic(&source).nonce, U256::from(2));
+		assert_eq!(EVM::account_basic(&source).nonce, U256::from(2));
 	});
 }
 
@@ -258,7 +257,7 @@ fn internal_transaction_should_works() {
 		System::assert_last_event(Event::Ethereum(crate::Event::Executed(
 			<Test as self::Config>::PalletId::get().derive_ethereum_address(),
 			contract_address,
-			H256::from_str("0xabdebc2d8a79e4c40d6d66c614bafc2be138d4fc0fd21e28d318f3a032cbee39")
+			H256::from_str("0xad9426a685cbd9077fc6945dfd294c1d42862950e0ac292ea2e9d34ecf7a9007")
 				.unwrap(),
 			ExitReason::Succeed(ExitSucceed::Returned),
 		)));
@@ -267,7 +266,7 @@ fn internal_transaction_should_works() {
 		System::assert_last_event(Event::Ethereum(crate::Event::Executed(
 			<Test as self::Config>::PalletId::get().derive_ethereum_address(),
 			contract_address,
-			H256::from_str("0x2028ce5eef8d4531d4f955c9860b28f9e8cd596b17fea2326d2be49a8d3dc7ac")
+			H256::from_str("0x85a0a4a2620d7adb3d15a4a295ec4e786b8b5ca115e76a2fe89bb90c876ab694")
 				.unwrap(),
 			ExitReason::Succeed(ExitSucceed::Returned),
 		)));

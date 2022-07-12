@@ -42,7 +42,7 @@ use crate::{
 	*, {self as s2s_issuing},
 };
 use darwinia_ethereum::{
-	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
+	adapter::{CurrencyAdapter, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot, RawOrigin,
 };
 use darwinia_evm::{EVMCurrencyAdapter, EnsureAddressTruncated, SubstrateBlockHashMapping};
@@ -67,7 +67,7 @@ pub const MAPPING_TOKEN_LOGIC_CONTRACT_BYTECODE: &str =
 darwinia_support::impl_test_account_data! {}
 
 frame_support::parameter_types! {
-	pub const ExistentialDeposit: u64 = 1;
+	pub const ExistentialDeposit: u64 = 0;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
 	type AccountStore = System;
@@ -136,9 +136,7 @@ frame_support::parameter_types! {
 
 impl darwinia_ethereum::Config for Test {
 	type Event = ();
-	type KtonCurrency = Kton;
 	type PalletId = DvmPalletId;
-	type RingCurrency = Ring;
 	type StateRoot = IntermediateStateRoot;
 }
 
@@ -173,11 +171,11 @@ impl darwinia_evm::Config for Test {
 	type FindAuthor = ();
 	type GasWeightMapping = ();
 	type IntoAccountId = HashedConverter;
-	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
+	type KtonBalanceAdapter = CurrencyAdapter<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
 	type PrecompilesType = MockPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type RingBalanceAdapter = CurrencyAdapter<Self, Ring, RingRemainBalance>;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 }
 

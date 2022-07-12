@@ -44,7 +44,7 @@ use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use crate::{StateStorage, StorageFilterT};
 use darwinia_ethereum::{
-	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
+	adapter::{CurrencyAdapter, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
 };
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
@@ -225,11 +225,11 @@ impl darwinia_evm::Config for Test {
 	type FindAuthor = FindAuthorTruncated;
 	type GasWeightMapping = ();
 	type IntoAccountId = HashedConverter;
-	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
+	type KtonBalanceAdapter = CurrencyAdapter<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
 	type PrecompilesType = MockPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type RingBalanceAdapter = CurrencyAdapter<Self, Ring, RingRemainBalance>;
 	type Runner = Runner<Self>;
 }
 
@@ -239,9 +239,7 @@ frame_support::parameter_types! {
 
 impl darwinia_ethereum::Config for Test {
 	type Event = Event;
-	type KtonCurrency = Kton;
 	type PalletId = MockPalletId;
-	type RingCurrency = Ring;
 	type StateRoot = IntermediateStateRoot;
 }
 

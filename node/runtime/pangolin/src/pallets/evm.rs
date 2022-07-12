@@ -18,7 +18,7 @@ use sp_core::{crypto::Public, H160, U256};
 use crate::*;
 use bp_messages::LaneId;
 use darwinia_ethereum::{
-	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
+	adapter::{CurrencyAdapter, KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping,
 };
 use darwinia_evm::{
@@ -160,7 +160,8 @@ where
 			>>::execute(input, target_gas, context, is_static)),
 			// There are two Dispatch precompile instance now, the 25-Dispatch reserved to
 			// keep the compatibility, which will be removed in the future.
-			a if a == addr(25) => Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
+			a if a == addr(25) =>
+				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
 			a if a == addr(1024) => Some(<StateStorage<R, StorageFilter>>::execute(
 				input, target_gas, context, is_static,
 			)),
@@ -209,11 +210,11 @@ impl Config for Runtime {
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type GasWeightMapping = FixedGasWeightMapping;
 	type IntoAccountId = ConcatConverter<Self::AccountId>;
-	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
+	type KtonBalanceAdapter = CurrencyAdapter<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<FindAccountFromAuthorIndex<Self, Babe>>;
 	type PrecompilesType = PangolinPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type RingBalanceAdapter = CurrencyAdapter<Self, Ring, RingRemainBalance>;
 	type Runner = Runner<Self>;
 }
 

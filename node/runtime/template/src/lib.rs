@@ -299,8 +299,7 @@ sp_api::impl_runtime_apis! {
 		}
 
 		fn account_basic(address: H160) -> darwinia_evm::Account {
-			use darwinia_evm::AccountBasic;
-			<Runtime as darwinia_evm::Config>::RingAccountBasic::account_basic(&address)
+			EVM::account_basic(&address)
 		}
 
 		fn gas_price() -> U256 {
