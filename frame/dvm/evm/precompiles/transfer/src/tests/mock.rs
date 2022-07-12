@@ -148,7 +148,7 @@ impl FindAuthor<H160> for FindAuthorTruncated {
 }
 pub struct HashedConverter;
 impl DeriveSubstrateAddress<AccountId32> for HashedConverter {
-	fn derive_substrate_address(address: H160) -> AccountId32 {
+	fn derive_substrate_address(address: &H160) -> AccountId32 {
 		let mut raw_account = [0u8; 32];
 		raw_account[0..20].copy_from_slice(&address[..]);
 		raw_account.into()

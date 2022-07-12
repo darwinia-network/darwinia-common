@@ -179,7 +179,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			for (address, account) in &self.accounts {
-				let account_id = T::IntoAccountId::derive_substrate_address(*address);
+				let account_id = T::IntoAccountId::derive_substrate_address(address);
 
 				// ASSUME: in one single EVM transaction, the nonce will not increase more than
 				// `u128::max_value()`.
@@ -188,7 +188,7 @@ pub mod pallet {
 				}
 
 				T::RingBalanceAdapter::mutate_evm_balance(&address, account.balance);
-				Pallet::<T>::create_account(*address, account.code.clone());
+				Pallet::<T>::create_account(address, account.code.clone());
 				for (index, value) in &account.storage {
 					AccountStorages::<T>::insert(address, index, value);
 				}
@@ -342,7 +342,7 @@ pub mod pallet {
 	}
 	impl<T: Config> Pallet<T> {
 		pub fn account_basic(address: &H160) -> Account {
-			let account_id = T::IntoAccountId::derive_substrate_address(*address);
+			let account_id = T::IntoAccountId::derive_substrate_address(address);
 			let nonce = <frame_system::Pallet<T>>::account_nonce(&account_id);
 			Account {
 				nonce: nonce.saturated_into::<u128>().into(),
@@ -352,7 +352,7 @@ pub mod pallet {
 
 		pub fn remove_account(address: &H160) {
 			if AccountCodes::<T>::contains_key(address) {
-				let account_id = T::IntoAccountId::derive_substrate_address(*address);
+				let account_id = T::IntoAccountId::derive_substrate_address(address);
 				let _ = frame_system::Pallet::<T>::dec_sufficients(&account_id);
 			}
 
@@ -361,7 +361,7 @@ pub mod pallet {
 		}
 
 		/// Create an account.
-		pub fn create_account(address: H160, code: Vec<u8>) {
+		pub fn create_account(address: &H160, code: Vec<u8>) {
 			if code.is_empty() {
 				return;
 			}
@@ -497,12 +497,12 @@ pub trait CurrencyAdapt<T: Config> {
 	) -> Result<(), ExitError>;
 
 	fn evm_balance(address: &H160) -> U256 {
-		let account_id = <T as Config>::IntoAccountId::derive_substrate_address(*address);
+		let account_id = <T as Config>::IntoAccountId::derive_substrate_address(address);
 		Self::account_balance(&account_id)
 	}
 
 	fn mutate_evm_balance(address: &H160, new_balance: U256) {
-		let account_id = <T as Config>::IntoAccountId::derive_substrate_address(*address);
+		let account_id = <T as Config>::IntoAccountId::derive_substrate_address(address);
 		Self::mutate_account_balance(&account_id, new_balance)
 	}
 }

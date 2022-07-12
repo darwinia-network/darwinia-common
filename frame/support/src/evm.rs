@@ -43,7 +43,7 @@ pub trait DeriveEthereumAddress {
 
 /// A trait for converting from Ethereum address to Substrate account_id.
 pub trait DeriveSubstrateAddress<AccountId> {
-	fn derive_substrate_address(address: H160) -> AccountId;
+	fn derive_substrate_address(address: &H160) -> AccountId;
 }
 
 pub fn is_derived_from_eth(account_id: impl AsRef<[u8; 32]>) -> bool {
@@ -93,7 +93,7 @@ impl<AccountId> DeriveSubstrateAddress<AccountId> for ConcatConverter<AccountId>
 where
 	AccountId: From<[u8; 32]>,
 {
-	fn derive_substrate_address(address: H160) -> AccountId {
+	fn derive_substrate_address(address: &H160) -> AccountId {
 		let mut raw_account = [0u8; 32];
 
 		raw_account[0..4].copy_from_slice(ADDR_PREFIX);

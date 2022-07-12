@@ -149,7 +149,7 @@ impl FeeCalculator for FixedGasPrice {
 
 pub struct HashedConverter;
 impl DeriveSubstrateAddress<AccountId32> for HashedConverter {
-	fn derive_substrate_address(address: H160) -> AccountId32 {
+	fn derive_substrate_address(address: &H160) -> AccountId32 {
 		let mut data = [0u8; 32];
 		data[0..20].copy_from_slice(&address[..]);
 		AccountId32::from(Into::<[u8; 32]>::into(data))

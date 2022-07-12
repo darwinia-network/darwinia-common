@@ -68,7 +68,7 @@ where
 			}
 		}
 
-		let origin = T::IntoAccountId::derive_substrate_address(context.caller);
+		let origin = T::IntoAccountId::derive_substrate_address(&context.caller);
 
 		match call.dispatch(Some(origin).into()) {
 			Ok(post_info) => {

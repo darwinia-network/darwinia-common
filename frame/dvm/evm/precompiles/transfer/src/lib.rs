@@ -97,9 +97,9 @@ impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
 				);
 
 				let caller_account_id =
-					<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(caller);
+					<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(&caller);
 				let wkton_account_id =
-					<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(wkton);
+					<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(&wkton);
 				// Transfer kton from sender to KTON wrapped contract
 				T::KtonBalanceAdapter::evm_transfer(&caller_account_id, &wkton_account_id, value)
 					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
@@ -148,7 +148,7 @@ impl<T: darwinia_ethereum::Config> Precompile for Transfer<T> {
 				);
 
 				let source =
-					<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(source);
+					<T as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(&source);
 				T::KtonBalanceAdapter::evm_transfer(&source, &to, value)
 					.map_err(|e| PrecompileFailure::Error { exit_status: e })?;
 
