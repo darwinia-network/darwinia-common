@@ -162,7 +162,7 @@ mod tests {
 		let eth_addr1 = account_id_1.derive_ethereum_address();
 		assert_eq!(H160::from_str("6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b").unwrap(), eth_addr1);
 		assert_eq!(
-			ConcatConverter::<AccountId32>::derive_substrate_address(eth_addr1),
+			ConcatConverter::<AccountId32>::derive_substrate_address(&eth_addr1),
 			account_id_1
 		);
 
@@ -173,7 +173,7 @@ mod tests {
 		let eth_addr2 = account_id_2.derive_ethereum_address();
 		assert_eq!(H160::from_str("02497755176da60a69586af4c5ea5f5de218eb84").unwrap(), eth_addr2);
 		assert_ne!(
-			ConcatConverter::<AccountId32>::derive_substrate_address(eth_addr2),
+			ConcatConverter::<AccountId32>::derive_substrate_address(&eth_addr2),
 			account_id_2
 		);
 	}
@@ -196,7 +196,7 @@ mod tests {
 	fn test_eth_address_derive() {
 		let eth_addr1 = H160::from_str("1234500000000000000000000000000000000000").unwrap();
 		let derive_account_id_1 =
-			ConcatConverter::<AccountId32>::derive_substrate_address(eth_addr1);
+			ConcatConverter::<AccountId32>::derive_substrate_address(&eth_addr1);
 
 		assert_eq!(derive_account_id_1.derive_ethereum_address(), eth_addr1);
 	}

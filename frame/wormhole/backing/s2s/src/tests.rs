@@ -249,7 +249,7 @@ fn test_unlock_from_remote() {
 			H160::from_str("0x61dc46385a09e7ed7688abe6f66bf3d8653618fd").unwrap();
 		// convert dvm address to substrate address
 		let remote_mapping_token_factory_account =
-			ConcatConverter::<AccountId32>::derive_substrate_address(mapping_token_factory);
+			ConcatConverter::<AccountId32>::derive_substrate_address(&mapping_token_factory);
 		// convert remote address to local derived address
 		let hash = derive_account_id::<AccountId32>(
 			<Test as s2s_backing::Config>::BridgedChainId::get(),

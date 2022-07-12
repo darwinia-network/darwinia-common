@@ -280,7 +280,7 @@ impl OutboundMessenger<AccountId32> for MockOutboundMessenger {
 	fn get_valid_message_sender(_nonce: MessageNonce) -> Result<AccountId32, &'static str> {
 		let derived_substrate_account =
 			darwinia_support::evm::ConcatConverter::<AccountId32>::derive_substrate_address(
-				H160::from_str("32dcab0ef3fb2de2fce1d2e0799d36239671f04a").unwrap(),
+				&H160::from_str("32dcab0ef3fb2de2fce1d2e0799d36239671f04a").unwrap(),
 			);
 
 		return Ok(derived_substrate_account);

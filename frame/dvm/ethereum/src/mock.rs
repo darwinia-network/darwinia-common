@@ -374,7 +374,7 @@ impl CallValidate<AccountId32, Origin, Call> for CallValidator {
 							// Already done `evm_ensure_can_withdraw` in
 							// check_receiving_before_dispatch
 							let derived_substrate_address =
-								<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
+								<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(id);
 
 							let result =
 								<Test as darwinia_evm::Config>::RingBalanceAdapter::evm_transfer(
