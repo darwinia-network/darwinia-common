@@ -97,34 +97,31 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> EvmResult<PrecompileOutput> {
-		let mut helper = PrecompileHelper::<T>::new(input, target_gas);
-		let (selector, data) = helper.split_input()?;
-		let action = Action::from_u32(selector)?;
+		let mut helper = PrecompileHelper::<T>::new(input, target_gas, context, is_static);
+		let action = helper.selector().unwrap_or_else(|_| Action::Name);
 
 		match action {
 			Action::Transfer
 			| Action::Allowance
 			| Action::Approve
 			| Action::TransferFrom
-			| Action::Withdraw =>
-				helper.check_state_modifier(context, is_static, StateMutability::NonPayable)?,
-			Action::Deposit =>
-				helper.check_state_modifier(context, is_static, StateMutability::Payable)?,
-			_ => helper.check_state_modifier(context, is_static, StateMutability::View)?,
+			| Action::Withdraw => helper.check_state_modifier(StateMutability::NonPayable)?,
+			Action::Deposit => helper.check_state_modifier(StateMutability::Payable)?,
+			_ => helper.check_state_modifier(StateMutability::View)?,
 		};
 
 		match action {
-			Action::TotalSupply => Self::total_supply(&mut helper, data),
+			Action::TotalSupply => Self::total_supply(&mut helper),
 			Action::Name => Self::name(&mut helper),
 			Action::Symbol => Self::symbol(&mut helper),
 			Action::Decimals => Self::decimals(&mut helper),
-			Action::BalanceOf => Self::balance_of(&mut helper, data),
-			Action::Transfer => Self::transfer(&mut helper, data, context),
-			Action::Allowance => Self::allowance(&mut helper, data),
-			Action::Approve => Self::approve(&mut helper, data, context),
-			Action::TransferFrom => Self::transfer_from(&mut helper, data, context),
-			Action::Withdraw => Self::withdraw(&mut helper, data, context),
-			Action::Deposit => Self::deposit(&mut helper, data, context),
+			Action::BalanceOf => Self::balance_of(&mut helper),
+			Action::Transfer => Self::transfer(&mut helper, context),
+			Action::Allowance => Self::allowance(&mut helper),
+			Action::Approve => Self::approve(&mut helper, context),
+			Action::TransferFrom => Self::transfer_from(&mut helper, context),
+			Action::Withdraw => Self::withdraw(&mut helper, context),
+			Action::Deposit => Self::deposit(&mut helper, context),
 		}
 	}
 }
@@ -133,8 +130,8 @@ impl<T> KtonErc20<T>
 where
 	T: darwinia_evm::Config,
 {
-	fn total_supply(helper: &mut PrecompileHelper<T>, input: &[u8]) -> EvmResult<PrecompileOutput> {
-		let reader = EvmDataReader::new_skip_selector(input)?;
+	fn total_supply(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
+		let reader = helper.reader()?;
 		reader.expect_arguments(0)?;
 
 		helper.record_db_gas(1, 0)?;
@@ -149,8 +146,8 @@ where
 		})
 	}
 
-	fn balance_of(helper: &mut PrecompileHelper<T>, input: &[u8]) -> EvmResult<PrecompileOutput> {
-		let mut reader = EvmDataReader::new_skip_selector(input)?;
+	fn balance_of(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
+		let mut reader = helper.reader()?;
 		reader.expect_arguments(1)?;
 		let owner: H160 = reader.read::<Address>()?.into();
 
@@ -166,8 +163,8 @@ where
 		})
 	}
 
-	fn allowance(helper: &mut PrecompileHelper<T>, input: &[u8]) -> EvmResult<PrecompileOutput> {
-		let mut reader = EvmDataReader::new_skip_selector(input)?;
+	fn allowance(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
+		let mut reader = helper.reader()?;
 		reader.expect_arguments(2)?;
 		let owner: H160 = reader.read::<Address>()?.into();
 		let spender: H160 = reader.read::<Address>()?.into();
@@ -184,12 +181,8 @@ where
 		})
 	}
 
-	fn approve(
-		helper: &mut PrecompileHelper<T>,
-		input: &[u8],
-		context: &Context,
-	) -> EvmResult<PrecompileOutput> {
-		let mut reader = EvmDataReader::new_skip_selector(input)?;
+	fn approve(helper: &mut PrecompileHelper<T>, context: &Context) -> EvmResult<PrecompileOutput> {
+		let mut reader = helper.reader()?;
 		reader.expect_arguments(2)?;
 		let spender: H160 = reader.read::<Address>()?.into();
 		let amount: U256 = reader.read()?;
@@ -217,10 +210,9 @@ where
 
 	fn transfer(
 		helper: &mut PrecompileHelper<T>,
-		input: &[u8],
 		context: &Context,
 	) -> EvmResult<PrecompileOutput> {
-		let mut reader = EvmDataReader::new_skip_selector(input)?;
+		let mut reader = helper.reader()?;
 		reader.expect_arguments(2)?;
 		let to: H160 = reader.read::<Address>()?.into();
 		let amount: U256 = reader.read()?;
@@ -231,7 +223,7 @@ where
 		let origin = <IntoAccountId<T>>::derive_substrate_address(context.caller);
 		let to_account_id = <IntoAccountId<T>>::derive_substrate_address(to);
 		<KtonBalanceAdapter<T>>::evm_transfer(&origin, &to_account_id, amount)
-			.map_err(|_| helper.revert("Transfer failed"))?;
+			.map_err(|_| revert("Transfer failed", helper.used_gas()))?;
 
 		let transfer_log = log3(
 			context.address,
@@ -251,10 +243,9 @@ where
 
 	fn transfer_from(
 		helper: &mut PrecompileHelper<T>,
-		input: &[u8],
 		context: &Context,
 	) -> EvmResult<PrecompileOutput> {
-		let mut reader = EvmDataReader::new_skip_selector(input)?;
+		let mut reader = helper.reader()?;
 		reader.expect_arguments(3)?;
 		let from: H160 = reader.read::<Address>()?.into();
 		let to: H160 = reader.read::<Address>()?.into();
@@ -265,9 +256,9 @@ where
 		let caller = context.caller;
 		if caller != from {
 			ApprovesStorage::mutate(from, caller, |value| {
-				let new_value = value
-					.checked_sub(amount)
-					.ok_or_else(|| helper.revert("trying to spend more than allowed"))?;
+				let new_value = value.checked_sub(amount).ok_or_else(|| {
+					revert("trying to spend more than allowed", helper.used_gas())
+				})?;
 
 				*value = new_value;
 				EvmResult::Ok(())
@@ -277,7 +268,7 @@ where
 		let origin = <IntoAccountId<T>>::derive_substrate_address(from);
 		let to_account_id = <IntoAccountId<T>>::derive_substrate_address(to);
 		<KtonBalanceAdapter<T>>::evm_transfer(&origin, &to_account_id, amount)
-			.map_err(|_| helper.revert("Transfer failed"))?;
+			.map_err(|_| revert("Transfer failed", helper.used_gas()))?;
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
@@ -287,12 +278,8 @@ where
 		})
 	}
 
-	fn deposit(
-		helper: &mut PrecompileHelper<T>,
-		input: &[u8],
-		context: &Context,
-	) -> EvmResult<PrecompileOutput> {
-		let reader = EvmDataReader::new_skip_selector(input)?;
+	fn deposit(helper: &mut PrecompileHelper<T>, context: &Context) -> EvmResult<PrecompileOutput> {
+		let reader = helper.reader()?;
 		reader.expect_arguments(0)?;
 
 		helper.record_db_gas(2, 2)?;
@@ -303,11 +290,11 @@ where
 		let precompile = <IntoAccountId<T>>::derive_substrate_address(address);
 
 		if apparent_value == U256::from(0u32) {
-			return Err(helper.revert("deposited amount must be non-zero"));
+			return Err(revert("deposited amount must be non-zero", helper.used_gas()));
 		}
 
 		<KtonBalanceAdapter<T>>::evm_transfer(&precompile, &caller, apparent_value)
-			.map_err(|_| helper.revert("Transfer failed"))?;
+			.map_err(|_| revert("Transfer failed", helper.used_gas()))?;
 
 		let deposit_log = log2(
 			context.address,
@@ -326,10 +313,9 @@ where
 
 	fn withdraw(
 		helper: &mut PrecompileHelper<T>,
-		input: &[u8],
 		context: &Context,
 	) -> EvmResult<PrecompileOutput> {
-		let mut reader = EvmDataReader::new_skip_selector(input)?;
+		let mut reader = helper.reader()?;
 		reader.expect_arguments(2)?;
 		let to: Bytes = reader.read()?;
 		let amount: U256 = reader.read()?;
@@ -339,10 +325,10 @@ where
 
 		let origin = <IntoAccountId<T>>::derive_substrate_address(context.caller);
 		let to_account_id = <T as frame_system::Config>::AccountId::decode(&mut to.as_bytes())
-			.map_err(|_| helper.revert("Invalid target address"))?;
+			.map_err(|_| revert("Invalid target address", helper.used_gas()))?;
 
 		<KtonBalanceAdapter<T>>::evm_transfer(&origin, &to_account_id, amount)
-			.map_err(|_| helper.revert("Transfer failed"))?;
+			.map_err(|_| revert("Transfer failed", helper.used_gas()))?;
 
 		let withdraw_log = log2(
 			context.address,

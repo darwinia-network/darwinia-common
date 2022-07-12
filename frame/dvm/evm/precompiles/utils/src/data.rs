@@ -98,7 +98,7 @@ impl<'a> EvmDataReader<'a> {
 		T: num_enum::TryFromPrimitive<Primitive = u32>,
 	{
 		if input.len() < 4 {
-			return Err(revert("tried to parse selector out of bounds"));
+			return Err(revert("tried to parse selector out of bounds", 0));
 		}
 
 		let mut buffer = [0u8; 4];
@@ -109,7 +109,7 @@ impl<'a> EvmDataReader<'a> {
 				"Failed to match function selector for {}",
 				type_name::<T>()
 			);
-			revert("unknown selector")
+			revert("unknown selector", 0)
 		})?;
 
 		Ok(selector)
@@ -118,7 +118,7 @@ impl<'a> EvmDataReader<'a> {
 	/// Create a new input parser from a selector-initial input.
 	pub fn new_skip_selector(input: &'a [u8]) -> EvmResult<Self> {
 		if input.len() < 4 {
-			return Err(revert("input is too short"));
+			return Err(revert("input is too short", 0));
 		}
 
 		Ok(Self::new(&input[4..]))
@@ -130,7 +130,7 @@ impl<'a> EvmDataReader<'a> {
 		if self.input.len() >= self.cursor + args * 32 {
 			Ok(())
 		} else {
-			Err(revert("input doesn't match expected length"))
+			Err(revert("input doesn't match expected length", 0))
 		}
 	}
 
@@ -148,7 +148,7 @@ impl<'a> EvmDataReader<'a> {
 		let data = self
 			.input
 			.get(range)
-			.ok_or_else(|| revert("tried to parse raw bytes out of bounds"))?;
+			.ok_or_else(|| revert("tried to parse raw bytes out of bounds", 0))?;
 
 		Ok(data)
 	}
@@ -157,12 +157,12 @@ impl<'a> EvmDataReader<'a> {
 	pub fn read_pointer(&mut self) -> EvmResult<Self> {
 		let offset: usize = self
 			.read::<U256>()
-			.map_err(|_| revert("tried to parse array offset out of bounds"))?
+			.map_err(|_| revert("tried to parse array offset out of bounds", 0))?
 			.try_into()
-			.map_err(|_| revert("array offset is too large"))?;
+			.map_err(|_| revert("array offset is too large", 0))?;
 
 		if offset >= self.input.len() {
-			return Err(revert("pointer points out of bounds"));
+			return Err(revert("pointer points out of bounds", 0));
 		}
 
 		Ok(Self { input: &self.input[offset..], cursor: 0 })
@@ -175,7 +175,7 @@ impl<'a> EvmDataReader<'a> {
 		let data = self
 			.input
 			.get(range)
-			.ok_or_else(|| revert("tried to parse raw bytes out of bounds"))?;
+			.ok_or_else(|| revert("tried to parse raw bytes out of bounds", 0))?;
 
 		Ok(data)
 	}
@@ -185,8 +185,10 @@ impl<'a> EvmDataReader<'a> {
 	/// Checks cursor overflows.
 	fn move_cursor(&mut self, len: usize) -> EvmResult<Range<usize>> {
 		let start = self.cursor;
-		let end =
-			self.cursor.checked_add(len).ok_or_else(|| revert("data reading cursor overflow"))?;
+		let end = self
+			.cursor
+			.checked_add(len)
+			.ok_or_else(|| revert("data reading cursor overflow", 0))?;
 
 		self.cursor = end;
 
@@ -336,8 +338,10 @@ impl EvmData for H256 {
 	fn read(reader: &mut EvmDataReader) -> EvmResult<Self> {
 		let range = reader.move_cursor(32)?;
 
-		let data =
-			reader.input.get(range).ok_or_else(|| revert("tried to parse H256 out of bounds"))?;
+		let data = reader
+			.input
+			.get(range)
+			.ok_or_else(|| revert("tried to parse H256 out of bounds", 0))?;
 
 		Ok(H256::from_slice(data))
 	}
@@ -355,8 +359,10 @@ impl EvmData for Address {
 	fn read(reader: &mut EvmDataReader) -> EvmResult<Self> {
 		let range = reader.move_cursor(32)?;
 
-		let data =
-			reader.input.get(range).ok_or_else(|| revert("tried to parse H160 out of bounds"))?;
+		let data = reader
+			.input
+			.get(range)
+			.ok_or_else(|| revert("tried to parse H160 out of bounds", 0))?;
 
 		Ok(H160::from_slice(&data[12..32]).into())
 	}
@@ -374,8 +380,10 @@ impl EvmData for U256 {
 	fn read(reader: &mut EvmDataReader) -> EvmResult<Self> {
 		let range = reader.move_cursor(32)?;
 
-		let data =
-			reader.input.get(range).ok_or_else(|| revert("tried to parse U256 out of bounds"))?;
+		let data = reader
+			.input
+			.get(range)
+			.ok_or_else(|| revert("tried to parse U256 out of bounds", 0))?;
 
 		Ok(U256::from_big_endian(data))
 	}
@@ -400,10 +408,7 @@ macro_rules! impl_evmdata_for_uints {
 
 					value256
 						.try_into()
-						.map_err(|_| revert(alloc::format!(
-							"value too big for {}",
-							core::any::type_name::<Self>()
-						)))
+						.map_err(|_| revert("value too big for this type", 0))
 				}
 
 				fn write(writer: &mut EvmDataWriter, value: Self) {
@@ -422,7 +427,8 @@ impl_evmdata_for_uints!(u8, u16, u32, u64, u128,);
 
 impl EvmData for bool {
 	fn read(reader: &mut EvmDataReader) -> EvmResult<Self> {
-		let h256 = H256::read(reader).map_err(|_| revert("tried to parse bool out of bounds"))?;
+		let h256 =
+			H256::read(reader).map_err(|_| revert("tried to parse bool out of bounds", 0))?;
 
 		Ok(!h256.is_zero())
 	}
@@ -447,9 +453,9 @@ impl<T: EvmData> EvmData for Vec<T> {
 
 		let array_size: usize = inner_reader
 			.read::<U256>()
-			.map_err(|_| revert("tried to parse array length out of bounds"))?
+			.map_err(|_| revert("tried to parse array length out of bounds", 0))?
 			.try_into()
-			.map_err(|_| revert("array length is too large"))?;
+			.map_err(|_| revert("array length is too large", 0))?;
 
 		let mut array = vec![];
 
@@ -457,7 +463,7 @@ impl<T: EvmData> EvmData for Vec<T> {
 			input: inner_reader
 				.input
 				.get(32..)
-				.ok_or_else(|| revert("try to read array items out of bound"))?,
+				.ok_or_else(|| revert("try to read array items out of bound", 0))?,
 			cursor: 0,
 		};
 
@@ -502,9 +508,9 @@ impl EvmData for Bytes {
 		// Read bytes/string size.
 		let array_size: usize = inner_reader
 			.read::<U256>()
-			.map_err(|_| revert("tried to parse bytes/string length out of bounds"))?
+			.map_err(|_| revert("tried to parse bytes/string length out of bounds", 0))?
 			.try_into()
-			.map_err(|_| revert("bytes/string length is too large"))?;
+			.map_err(|_| revert("bytes/string length is too large", 0))?;
 
 		// Get valid range over the bytes data.
 		let range = inner_reader.move_cursor(array_size)?;
@@ -512,7 +518,7 @@ impl EvmData for Bytes {
 		let data = inner_reader
 			.input
 			.get(range)
-			.ok_or_else(|| revert("tried to parse bytes/string out of bounds"))?;
+			.ok_or_else(|| revert("tried to parse bytes/string out of bounds", 0))?;
 
 		let bytes = Self(data.to_owned());
 

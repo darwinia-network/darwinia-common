@@ -32,8 +32,8 @@ pub use ethabi::StateMutability;
 // --- crates.io ---
 use ethabi::{Function, Param, ParamType, Token};
 // --- darwinia-network ---
+use crate::prelude::EvmDataReader;
 use darwinia_evm::GasWeightMapping;
-use darwinia_support::evm::SELECTOR;
 // --- paritytech ---
 use fp_evm::{Context, ExitError, ExitRevert, PrecompileFailure};
 use frame_support::traits::Get;
@@ -47,57 +47,62 @@ pub type EvmResult<T = ()> = Result<T, PrecompileFailure>;
 pub struct PrecompileHelper<'a, T> {
 	input: &'a [u8],
 	target_gas: Option<u64>,
+	context: &'a Context,
+	is_static: bool,
 	used_gas: u64,
 	_marker: PhantomData<T>,
 }
 
 impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
-	pub fn new(input: &'a [u8], target_gas: Option<u64>) -> Self {
-		Self { input, target_gas, used_gas: 0, _marker: PhantomData }
+	pub fn new(
+		input: &'a [u8],
+		target_gas: Option<u64>,
+		context: &'a Context,
+		is_static: bool,
+	) -> Self {
+		Self { input, target_gas, context, is_static, used_gas: 0, _marker: PhantomData }
 	}
 
-	pub fn split_input(&self) -> Result<(u32, &'a [u8]), PrecompileFailure> {
-		if self.input.len() < SELECTOR {
-			return Err(self.revert("input length less than 4 bytes"));
-		}
+	pub fn selector<U>(&self) -> EvmResult<U>
+	where
+		U: num_enum::TryFromPrimitive<Primitive = u32>,
+	{
+		EvmDataReader::read_selector(self.input)
+	}
 
-		let mut buffer = [0u8; SELECTOR];
-		buffer.copy_from_slice(&self.input[0..SELECTOR]);
-		let selector = u32::from_be_bytes(buffer);
-		Ok((selector, &self.input[SELECTOR..]))
+	pub fn reader(&self) -> EvmResult<EvmDataReader> {
+		EvmDataReader::new_skip_selector(self.input)
 	}
 
 	/// Check that a function call is compatible with the context it is
 	/// called into.
-	pub fn check_state_modifier(
-		&self,
-		context: &Context,
-		is_static: bool,
-		modifier: StateMutability,
-	) -> Result<(), PrecompileFailure> {
-		if is_static && modifier != StateMutability::View {
-			return Err(self.revert("can't call non-static function in static context"));
+	pub fn check_state_modifier(&self, modifier: StateMutability) -> EvmResult<()> {
+		if self.is_static && modifier != StateMutability::View {
+			return Err(revert(
+				"can't call non-static function in static context",
+				self.used_gas(),
+			));
 		}
 
-		if modifier != StateMutability::Payable && context.apparent_value > U256::zero() {
-			return Err(self.revert("function is not payable"));
+		if modifier != StateMutability::Payable && self.context.apparent_value > U256::zero() {
+			return Err(revert("function is not payable", self.used_gas()));
 		}
 
 		Ok(())
 	}
 
-	pub fn record_db_gas(&mut self, reads: u64, writes: u64) -> Result<(), PrecompileFailure> {
+	pub fn record_db_gas(&mut self, reads: u64, writes: u64) -> EvmResult<()> {
 		let reads_cost = <T as darwinia_evm::Config>::GasWeightMapping::weight_to_gas(
 			<T as frame_system::Config>::DbWeight::get().read,
 		)
 		.checked_mul(reads)
-		.ok_or(self.revert("Cost Overflow"))?;
+		.ok_or(revert("Cost Overflow", 0))?;
 		let writes_cost = <T as darwinia_evm::Config>::GasWeightMapping::weight_to_gas(
 			<T as frame_system::Config>::DbWeight::get().write,
 		)
 		.checked_mul(writes)
-		.ok_or(self.revert("Cost Overflow"))?;
-		let cost = reads_cost.checked_add(writes_cost).ok_or(self.revert("Cost Overflow"))?;
+		.ok_or(revert("Cost Overflow", 0))?;
+		let cost = reads_cost.checked_add(writes_cost).ok_or(revert("Cost Overflow", 0))?;
 
 		self.used_gas = self
 			.used_gas
@@ -111,11 +116,7 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 		}
 	}
 
-	pub fn record_log_gas(
-		&mut self,
-		topics: usize,
-		data_len: usize,
-	) -> Result<(), PrecompileFailure> {
+	pub fn record_log_gas(&mut self, topics: usize, data_len: usize) -> EvmResult<()> {
 		let log_costs = log::log_costs(topics, data_len)?;
 		self.used_gas = self
 			.used_gas
@@ -132,39 +133,30 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 	pub fn used_gas(&self) -> u64 {
 		self.used_gas
 	}
-
-	/// Revert the execution, making the user pay for the the currently
-	/// recorded cost. It is better to **revert** instead of **error** as
-	/// erroring consumes the entire gas limit, and **revert** returns an error
-	/// message to the calling contract.
-	pub fn revert(&self, message: &'static str) -> PrecompileFailure {
-		#[allow(deprecated)]
-		let func = Function {
-			name: "Error".to_owned(),
-			inputs: vec![Param {
-				name: "message".to_owned(),
-				kind: ParamType::String,
-				internal_type: None,
-			}],
-			outputs: vec![],
-			constant: false,
-			state_mutability: StateMutability::NonPayable,
-		};
-
-		PrecompileFailure::Revert {
-			exit_status: ExitRevert::Reverted,
-			output: func.encode_input(&[Token::String(message.to_owned())]).unwrap_or_default(),
-			cost: self.used_gas,
-		}
-	}
 }
 
-pub fn revert(output: impl AsRef<[u8]>) -> PrecompileFailure {
+/// Revert the execution, making the user pay for the the currently
+/// recorded cost. It is better to **revert** instead of **error** as
+/// erroring consumes the entire gas limit, and **revert** returns an error
+/// message to the calling contract.
+pub fn revert(message: &'static str, cost: u64) -> PrecompileFailure {
+	#[allow(deprecated)]
+	let func = Function {
+		name: "Error".to_owned(),
+		inputs: vec![Param {
+			name: "message".to_owned(),
+			kind: ParamType::String,
+			internal_type: None,
+		}],
+		outputs: vec![],
+		constant: false,
+		state_mutability: StateMutability::NonPayable,
+	};
+
 	PrecompileFailure::Revert {
 		exit_status: ExitRevert::Reverted,
-		output: output.as_ref().to_owned(),
-		//  TODO update this cost
-		cost: 0,
+		output: func.encode_input(&[Token::String(message.to_owned())]).unwrap_or_default(),
+		cost,
 	}
 }
 
@@ -172,7 +164,7 @@ pub mod prelude {
 	pub use crate::{
 		data::{Address, Bytes, EvmData, EvmDataReader, EvmDataWriter},
 		log::{log0, log1, log2, log3},
-		EvmResult,
+		revert, EvmResult,
 	};
 	pub use darwinia_evm_precompile_utils_macro::{keccak256, selector};
 }
