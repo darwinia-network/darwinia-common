@@ -33,8 +33,8 @@ use sp_runtime::{traits::UniqueSaturatedInto, ArithmeticError, DispatchError};
 use sp_std::{collections::btree_set::BTreeSet, marker::PhantomData, mem, prelude::*};
 // --- darwinia-network ---
 use crate::{
-	runner::Runner as RunnerT, AccountBasic, AccountCodes, AccountStorages, BlockHashMapping,
-	Config, Error, Event, FeeCalculator, OnChargeEVMTransaction, Pallet,
+	runner::Runner as RunnerT, AccountCodes, AccountStorages, BlockHashMapping, Config,
+	CurrencyAdapt, Error, Event, FeeCalculator, OnChargeEVMTransaction, Pallet,
 };
 use darwinia_support::evm::DeriveSubstrateAddress;
 
@@ -93,7 +93,7 @@ impl<T: Config> Runner<T> {
 			max_base_fee.checked_add(max_priority_fee).ok_or(<Error<T>>::FeeOverflow)?;
 
 		let total_payment = value.checked_add(total_fee).ok_or(Error::<T>::PaymentOverflow)?;
-		let source_account = T::RingAccountBasic::account_basic(&source);
+		let source_account = Pallet::<T>::account_basic(&source);
 		ensure!(source_account.balance >= total_payment, <Error<T>>::BalanceLow);
 
 		if let Some(nonce) = nonce {
@@ -443,7 +443,7 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 	}
 
 	fn basic(&self, address: H160) -> evm::backend::Basic {
-		let account = T::RingAccountBasic::account_basic(&address);
+		let account = Pallet::<T>::account_basic(&address);
 
 		evm::backend::Basic { balance: account.balance, nonce: account.nonce }
 	}
@@ -551,7 +551,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	fn transfer(&mut self, transfer: Transfer) -> Result<(), ExitError> {
 		let source = <T as Config>::IntoAccountId::derive_substrate_address(transfer.source);
 		let target = <T as Config>::IntoAccountId::derive_substrate_address(transfer.target);
-		T::RingAccountBasic::transfer(&source, &target, transfer.value)?;
+		T::RingBalanceAdapter::evm_transfer(&source, &target, transfer.value)?;
 
 		Ok(())
 	}
