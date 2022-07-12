@@ -124,8 +124,8 @@ runtime-benchmarks = [
 	"frame-system-benchmarking",
 	"frame-system/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
-	"pallet-timestamp/runtime-benchmarks",
 	"pallet-grandpa/runtime-benchmarks",
+	"pallet-timestamp/runtime-benchmarks",
 	# darwinia-network
 	"darwinia-ethereum/runtime-benchmarks",
 	"darwinia-evm/runtime-benchmarks",
