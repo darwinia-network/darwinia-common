@@ -18,10 +18,8 @@
 
 use crate::{mock::*, *};
 use codec::Encode;
-use darwinia_evm_precompile_utils::{data::Bytes, test_helper::LegacyUnsignedTransaction};
+use darwinia_evm_precompile_utils::data::Bytes;
 use darwinia_support::evm::decimal_convert;
-use ethabi::{ParamType, Token};
-use fp_evm::CallOrCreateInfo;
 use sha3::{Digest, Keccak256};
 use std::str::FromStr;
 
@@ -60,21 +58,14 @@ fn test_total_supply() {
 
 	ext.execute_with(|| {
 		let nonce = 0;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::TotalSupply).build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE, None)).build(),
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(
+			&EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE, None)).build(),
 		);
 	});
 }
@@ -86,22 +77,13 @@ fn test_token_name() {
 
 	ext.execute_with(|| {
 		let nonce = 0;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Name).build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write::<Bytes>(TOKEN_NAME.into()).build(),
-		);
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write::<Bytes>(TOKEN_NAME.into()).build());
 	});
 }
 
@@ -112,22 +94,13 @@ fn test_token_symbol() {
 
 	ext.execute_with(|| {
 		let nonce = 0;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Symbol).build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write::<Bytes>(TOKEN_SYMBOL.into()).build(),
-		);
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write::<Bytes>(TOKEN_SYMBOL.into()).build());
 	});
 }
 
@@ -138,19 +111,13 @@ fn test_token_decimals() {
 
 	ext.execute_with(|| {
 		let nonce = 0;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Decimals).build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-
-		assert_eq!(executed_info.unwrap().value, EvmDataWriter::new().write(TOKEN_DECIMAL).build(),);
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(TOKEN_DECIMAL).build());
 	});
 }
 
@@ -161,23 +128,16 @@ fn test_balance_of_known_user() {
 
 	ext.execute_with(|| {
 		let nonce = 0;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(alice.address.into())
 				.build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE, None)).build(),
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(
+			&EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE, None)).build(),
 		);
 	});
 }
@@ -191,24 +151,15 @@ fn test_balance_of_unknown_user() {
 		let mock_address = H160::from_low_u64_be(100);
 
 		let nonce = 0;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write(decimal_convert(0, None)).build(),
-		);
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(decimal_convert(0, None)).build());
 	});
 }
 
@@ -222,32 +173,23 @@ fn test_approve() {
 		let approve_value = decimal_convert(500, None);
 
 		let nonce = 0;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Approve)
 				.write::<Address>(mock_address.into())
 				.write::<U256>(approve_value.into())
 				.build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-
-		assert_eq!(executed_info.clone().unwrap().value, EvmDataWriter::new().write(true).build());
-		assert_eq!(
-			executed_info.unwrap().logs,
-			vec![log3(
-				H160::from_str(PRECOMPILE_ADDR).unwrap(),
-				SELECTOR_LOG_APPROVAL,
-				alice.address,
-				mock_address,
-				EvmDataWriter::new().write(approve_value).build()
-			)]
-		);
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(true).build())
+		.assert_has_log(&log3(
+			H160::from_str(PRECOMPILE_ADDR).unwrap(),
+			SELECTOR_LOG_APPROVAL,
+			alice.address,
+			mock_address,
+			EvmDataWriter::new().write(approve_value).build(),
+		));
 	});
 }
 
@@ -259,43 +201,32 @@ fn test_allowance_exist() {
 	ext.execute_with(|| {
 		let mock_address = H160::from_low_u64_be(100);
 		let approve_value = decimal_convert(500, None);
-		let precompile_address = H160::from_str(PRECOMPILE_ADDR).unwrap();
 
 		// Approve
 		let mut nonce = 0;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Approve)
 				.write::<Address>(mock_address.into())
 				.write::<U256>(approve_value.into())
 				.build(),
-			&alice.private_key,
-		);
-		let _ = Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-			CallOrCreateInfo::Call(info) => info,
-			CallOrCreateInfo::Create(_) => todo!(),
-		});
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(true).build());
 
 		// Allowance
 		nonce += 1;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Allowance)
 				.write::<Address>(alice.address.into())
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-		assert_eq!(
-			executed_info.clone().unwrap().value,
-			EvmDataWriter::new().write(approve_value).build()
-		);
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(approve_value).build());
 	});
 }
 
@@ -309,21 +240,16 @@ fn test_allowance_not_exist() {
 
 		// Allowance
 		let nonce = 0;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Allowance)
 				.write::<Address>(alice.address.into())
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-		assert_eq!(executed_info.clone().unwrap().value, EvmDataWriter::new().write(0u8).build());
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(0u8).build());
 	});
 }
 
@@ -337,64 +263,43 @@ fn test_transfer() {
 		let transfer_value = decimal_convert(500, None);
 
 		let mut nonce = 0;
-		let tx = prepare_transaction(
+		// Transfer
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Transfer)
 				.write::<Address>(mock_address.into())
 				.write::<U256>(transfer_value.into())
 				.build(),
-			&alice.private_key,
-		);
-
-		// Transfer
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-		assert_eq!(executed_info.clone().unwrap().value, EvmDataWriter::new().write(true).build());
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(true).build());
 
 		// Check source account balance
 		nonce += 1;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(alice.address.into())
 				.build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE - 500, None)).build(),
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(
+			&EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE - 500, None)).build(),
 		);
 
 		// Check target account balance
 		nonce += 1;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write(transfer_value).build(),
-		);
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(transfer_value).build());
 	});
 }
 
@@ -409,66 +314,44 @@ fn test_transfer_not_enough_fund() {
 
 		// Transfer
 		let mut nonce = 0;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Transfer)
 				.write::<Address>(mock_address.into())
 				.write::<U256>(transfer_value.into())
 				.build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-
-		assert_eq!(
-			executed_info.unwrap().value[4..],
-			EvmDataWriter::new().write(Bytes("Transfer failed".as_bytes().to_vec())).build(),
+			&alice,
+		)
+		.execute()
+		.assert_revert(
+			&EvmDataWriter::new().write(Bytes("Transfer failed".as_bytes().to_vec())).build(),
 		);
 
 		// Check source account balance
 		nonce += 1;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(alice.address.into())
 				.build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE, None)).build(),
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(
+			&EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE, None)).build(),
 		);
 
 		// Check target account balance
 		nonce += 1;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice.private_key,
-		);
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write(decimal_convert(0, None)).build(),
-		);
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(decimal_convert(0, None)).build());
 	});
 }
 
@@ -482,101 +365,72 @@ fn test_transfer_from() {
 		let mock_address = H160::from_low_u64_be(100);
 		let approve_value = decimal_convert(500, None);
 		let transfer_value = decimal_convert(400, None);
-		let precompile_address = H160::from_str(PRECOMPILE_ADDR).unwrap();
 
 		// Approve
 		let mut alice_nonce = 0;
-		let mut bob_nonce = 0;
-		let tx = prepare_transaction(
+		let bob_nonce = 0;
+		construct_tx_asserter(
 			alice_nonce,
 			EvmDataWriter::new_with_selector(Action::Approve)
 				.write::<Address>(bob.address.into())
 				.write::<U256>(approve_value.into())
 				.build(),
-			&alice.private_key,
-		);
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-		assert_eq!(executed_info.clone().unwrap().value, EvmDataWriter::new().write(true).build());
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(true).build());
 
 		// Transfer from
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			bob_nonce,
 			EvmDataWriter::new_with_selector(Action::TransferFrom)
 				.write::<Address>(alice.address.into())
 				.write::<Address>(mock_address.into())
 				.write::<U256>(transfer_value.into())
 				.build(),
-			&bob.private_key,
-		);
-		let executed_info =
-			Ethereum::execute(bob.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-		assert_eq!(executed_info.unwrap().value, EvmDataWriter::new().write(true).build());
+			&bob,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(true).build());
 
 		// Check source account balance
 		alice_nonce += 1;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			alice_nonce,
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(alice.address.into())
 				.build(),
-			&alice.private_key,
-		);
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE - 400, None)).build(),
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(
+			&EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE - 400, None)).build(),
 		);
 
 		// Check target account balance
 		alice_nonce += 1;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			alice_nonce,
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice.private_key,
-		);
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write(decimal_convert(400, None)).build(),
-		);
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(decimal_convert(400, None)).build());
 
 		// Check Allowance
 		alice_nonce += 1;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			alice_nonce,
 			EvmDataWriter::new_with_selector(Action::Allowance)
 				.write::<Address>(alice.address.into())
 				.write::<Address>(bob.address.into())
 				.build(),
-			&alice.private_key,
-		);
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-		assert_eq!(
-			executed_info.clone().unwrap().value,
-			EvmDataWriter::new().write(decimal_convert(100, None)).build()
-		);
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(decimal_convert(100, None)).build());
 	});
 }
 
@@ -592,105 +446,74 @@ fn test_transfer_from_above_allowance() {
 		let transfer_value = decimal_convert(700, None);
 
 		let mut alice_nonce = 0;
-		let mut bob_nonce = 0;
+		let bob_nonce = 0;
 		// Approve
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			alice_nonce,
 			EvmDataWriter::new_with_selector(Action::Approve)
 				.write::<Address>(bob.address.into())
 				.write::<U256>(approve_value.into())
 				.build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-		assert_eq!(executed_info.clone().unwrap().value, EvmDataWriter::new().write(true).build());
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(true).build());
 
 		// Transfer from
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			bob_nonce,
 			EvmDataWriter::new_with_selector(Action::TransferFrom)
 				.write::<Address>(alice.address.into())
 				.write::<Address>(mock_address.into())
 				.write::<U256>(transfer_value.into())
 				.build(),
-			&bob.private_key,
-		);
-		let executed_info =
-			Ethereum::execute(bob.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-		assert_eq!(
-			executed_info.unwrap().value[4..],
-			EvmDataWriter::new()
+			&bob,
+		)
+		.execute()
+		.assert_revert(
+			&EvmDataWriter::new()
 				.write(Bytes("trying to spend more than allowed".as_bytes().to_vec()))
 				.build(),
 		);
 
 		// Check source account balance
 		alice_nonce += 1;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			alice_nonce,
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(alice.address.into())
 				.build(),
-			&alice.private_key,
-		);
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE, None)).build(),
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(
+			&EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE, None)).build(),
 		);
 
 		// Check target account balance
 		alice_nonce += 1;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			alice_nonce,
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write(decimal_convert(0, None)).build(),
-		);
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(decimal_convert(0, None)).build());
 
 		// Check Allowance
 		alice_nonce += 1;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			alice_nonce,
 			EvmDataWriter::new_with_selector(Action::Allowance)
 				.write::<Address>(alice.address.into())
 				.write::<Address>(bob.address.into())
 				.build(),
-			&alice.private_key,
-		);
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-		assert_eq!(
-			executed_info.clone().unwrap().value,
-			EvmDataWriter::new().write(approve_value).build()
-		);
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(approve_value).build());
 	});
 }
 
@@ -698,71 +521,50 @@ fn test_transfer_from_above_allowance() {
 fn test_transfer_from_self() {
 	let (pairs, mut ext) = new_test_ext(2);
 	let alice = &pairs[0];
-	let bob = &pairs[1];
 
 	ext.execute_with(|| {
 		let mock_address = H160::from_low_u64_be(100);
-		let approve_value = decimal_convert(500, None);
 		let transfer_value = decimal_convert(400, None);
-		let precompile_address = H160::from_str(PRECOMPILE_ADDR).unwrap();
 
 		// Transfer from
 		let mut nonce = 0;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::TransferFrom)
 				.write::<Address>(alice.address.into())
 				.write::<Address>(mock_address.into())
 				.write::<U256>(transfer_value.into())
 				.build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-		assert_eq!(executed_info.unwrap().value, EvmDataWriter::new().write(true).build());
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(true).build());
 
 		// Check source account balance
 		nonce += 1;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(alice.address.into())
 				.build(),
-			&alice.private_key,
-		);
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE - 400, None)).build(),
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(
+			&EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE - 400, None)).build(),
 		);
 
 		// Check target account balance
 		nonce += 1;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice.private_key,
-		);
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write(decimal_convert(400, None)).build(),
-		);
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(decimal_convert(400, None)).build());
 	});
 }
 
@@ -770,71 +572,51 @@ fn test_transfer_from_self() {
 fn test_withdraw() {
 	let (pairs, mut ext) = new_test_ext(2);
 	let alice = &pairs[0];
-	let bob = &pairs[1];
 
 	ext.execute_with(|| {
 		let mock_address = H160::from_low_u64_be(100);
 		let mock_account_id =
 			<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(mock_address);
 		let withdraw_value = decimal_convert(500, None);
-		let precompile_address = H160::from_str(PRECOMPILE_ADDR).unwrap();
 
 		// Withdraw
 		let mut nonce = 0;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Withdraw)
 				.write::<Bytes>(Bytes(mock_account_id.encode()))
 				.write::<U256>(withdraw_value.into())
 				.build(),
-			&alice.private_key,
-		);
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-		assert_eq!(executed_info.unwrap().value, EvmDataWriter::new().write(true).build());
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(true).build());
 
 		// Check source account balance
 		nonce += 1;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(alice.address.into())
 				.build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE - 500, None)).build(),
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(
+			&EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE - 500, None)).build(),
 		);
 
 		// Check target account balance
 		nonce += 1;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice.private_key,
-		);
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write(decimal_convert(500, None)).build(),
-		);
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(decimal_convert(500, None)).build());
 	});
 }
 
@@ -842,73 +624,52 @@ fn test_withdraw() {
 fn test_withdraw_not_enough() {
 	let (pairs, mut ext) = new_test_ext(2);
 	let alice = &pairs[0];
-	let bob = &pairs[1];
 
 	ext.execute_with(|| {
 		let mock_address = H160::from_low_u64_be(100);
 		let mock_account_id =
 			<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(mock_address);
 		let withdraw_value = decimal_convert(INITIAL_BALANCE + 500, None);
-		let precompile_address = H160::from_str(PRECOMPILE_ADDR).unwrap();
 
 		// Withdraw
 		let mut nonce = 0;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Withdraw)
 				.write::<Bytes>(Bytes(mock_account_id.encode()))
 				.write::<U256>(withdraw_value.into())
 				.build(),
-			&alice.private_key,
-		);
-
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-		assert_eq!(
-			ethabi::decode(&[ParamType::String], &executed_info.unwrap().value[4..]).unwrap()[0],
-			Token::String("Transfer failed".to_string())
+			&alice,
+		)
+		.execute()
+		.assert_revert(
+			&EvmDataWriter::new().write(Bytes("Transfer failed".as_bytes().to_vec())).build(),
 		);
 
 		// Check source account balance
 		nonce += 1;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(alice.address.into())
 				.build(),
-			&alice.private_key,
-		);
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE, None)).build(),
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(
+			&EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE, None)).build(),
 		);
 
 		// Check target account balance
 		nonce += 1;
-		let tx = prepare_transaction(
+		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice.private_key,
-		);
-		let executed_info =
-			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
-				CallOrCreateInfo::Call(info) => info,
-				CallOrCreateInfo::Create(_) => todo!(),
-			});
-
-		assert_eq!(
-			executed_info.unwrap().value,
-			EvmDataWriter::new().write(decimal_convert(0, None)).build(),
-		);
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(decimal_convert(0, None)).build());
 	});
 }
