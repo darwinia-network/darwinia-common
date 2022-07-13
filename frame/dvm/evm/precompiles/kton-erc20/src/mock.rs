@@ -2,7 +2,6 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 // --- paritytech ---
-use darwinia_ethereum::{EthereumBlockHashMapping, RawOrigin};
 use fp_evm::{Context, ExitRevert, Precompile, PrecompileFailure, PrecompileResult, PrecompileSet};
 use frame_support::{
 	pallet_prelude::Weight,
@@ -23,8 +22,8 @@ use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use crate::KtonErc20;
 use darwinia_ethereum::{
-	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
-	IntermediateStateRoot,
+	adapter::{CurrencyAdapter, KtonRemainBalance, RingRemainBalance},
+	EthereumBlockHashMapping, IntermediateStateRoot, RawOrigin,
 };
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
 use darwinia_evm_precompile_utils::test_helper::{address_build, AccountInfo};
@@ -201,11 +200,11 @@ impl darwinia_evm::Config for Test {
 	type FindAuthor = FindAuthorTruncated;
 	type GasWeightMapping = ();
 	type IntoAccountId = HashedConverter;
-	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
+	type KtonBalanceAdapter = CurrencyAdapter<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
 	type PrecompilesType = MockPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type RingBalanceAdapter = CurrencyAdapter<Self, Ring, RingRemainBalance>;
 	type Runner = Runner<Self>;
 }
 
@@ -323,7 +322,10 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 	let balances: Vec<_> =
 		(0..accounts_len).map(|i| (pairs[i].account_id.clone(), 100_000_000_000)).collect();
 
-	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
+	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances: balances.clone() }
+		.assimilate_storage(&mut t)
+		.unwrap();
+	darwinia_balances::GenesisConfig::<Test, KtonInstance> { balances }
 		.assimilate_storage(&mut t)
 		.unwrap();
 	let mut ext = sp_io::TestExternalities::new(t);
@@ -332,4 +334,4 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 	(pairs, ext.into())
 }
 
-pub type KtonAccount = <Test as darwinia_evm::Config>::KtonAccountBasic;
+pub type KtonBalanceAdapter = <Test as darwinia_evm::Config>::KtonBalanceAdapter;
