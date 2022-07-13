@@ -50,8 +50,6 @@ const TOKEN_DECIMAL: u8 = 18;
 pub const SELECTOR_LOG_TRANSFER: [u8; 32] = keccak256!("Transfer(address,address,uint256)");
 /// Solidity selector of the Approval log, which is the Keccak of the Log signature.
 pub const SELECTOR_LOG_APPROVAL: [u8; 32] = keccak256!("Approval(address,address,uint256)");
-/// Solidity selector of the Deposit log, which is the Keccak of the Log signature.
-pub const SELECTOR_LOG_DEPOSIT: [u8; 32] = keccak256!("Deposit(address,uint256)");
 /// Solidity selector of the Withdraw log, which is the Keccak of the Log signature.
 pub const SELECTOR_LOG_WITHDRAWAL: [u8; 32] = keccak256!("Withdrawal(address,uint256)");
 
@@ -79,7 +77,6 @@ enum Action {
 	Approve = "approve(address,uint256)",
 	TransferFrom = "transferFrom(address,address,uint256)",
 	Withdraw = "withdraw(bytes32,uint256)",
-	Deposit = "deposit()",
 	Name = "name()",
 	Symbol = "symbol()",
 	Decimals = "decimals()",
@@ -106,7 +103,6 @@ where
 			| Action::Approve
 			| Action::TransferFrom
 			| Action::Withdraw => helper.check_state_modifier(StateMutability::NonPayable)?,
-			Action::Deposit => helper.check_state_modifier(StateMutability::Payable)?,
 			_ => helper.check_state_modifier(StateMutability::View)?,
 		};
 
@@ -121,7 +117,6 @@ where
 			Action::Approve => Self::approve(&mut helper, context),
 			Action::TransferFrom => Self::transfer_from(&mut helper, context),
 			Action::Withdraw => Self::withdraw(&mut helper, context),
-			Action::Deposit => Self::deposit(&mut helper, context),
 		}
 	}
 }
@@ -275,39 +270,6 @@ where
 			output: EvmDataWriter::new().write(true).build(),
 			cost: helper.used_gas(),
 			logs: vec![],
-		})
-	}
-
-	fn deposit(helper: &mut PrecompileHelper<T>, context: &Context) -> EvmResult<PrecompileOutput> {
-		let reader = helper.reader()?;
-		reader.expect_arguments(0)?;
-
-		helper.record_db_gas(2, 2)?;
-		helper.record_log_gas(2, 32)?;
-
-		let Context { caller, address, apparent_value } = *context;
-		let caller = <IntoAccountId<T>>::derive_substrate_address(caller);
-		let precompile = <IntoAccountId<T>>::derive_substrate_address(address);
-
-		if apparent_value == U256::from(0u32) {
-			return Err(revert("deposited amount must be non-zero"));
-		}
-
-		<KtonBalanceAdapter<T>>::evm_transfer(&precompile, &caller, apparent_value)
-			.map_err(|_| revert("Transfer failed"))?;
-
-		let deposit_log = log2(
-			context.address,
-			SELECTOR_LOG_DEPOSIT,
-			context.caller,
-			EvmDataWriter::new().write(apparent_value).build(),
-		);
-
-		Ok(PrecompileOutput {
-			exit_status: ExitSucceed::Returned,
-			output: EvmDataWriter::new().write(apparent_value).build(),
-			cost: helper.used_gas(),
-			logs: vec![deposit_log],
 		})
 	}
 

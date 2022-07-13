@@ -17,7 +17,8 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{mock::*, *};
-use darwinia_evm_precompile_utils::test_helper::LegacyUnsignedTransaction;
+use codec::Encode;
+use darwinia_evm_precompile_utils::{data::Bytes, test_helper::LegacyUnsignedTransaction};
 use darwinia_support::evm::decimal_convert;
 use ethabi::{ParamType, Token};
 use fp_evm::CallOrCreateInfo;
@@ -34,7 +35,6 @@ fn selector() {
 	assert_eq!(Action::TransferFrom as u32, 0x23b872dd);
 	assert_eq!(Action::Name as u32, 0x06fdde03);
 	assert_eq!(Action::Symbol as u32, 0x95d89b41);
-	assert_eq!(Action::Deposit as u32, 0xd0e30db0);
 	assert_eq!(Action::Withdraw as u32, 0x40cf020);
 
 	assert_eq!(
@@ -46,8 +46,6 @@ fn selector() {
 		crate::SELECTOR_LOG_APPROVAL,
 		&Keccak256::digest(b"Approval(address,address,uint256)")[..]
 	);
-
-	assert_eq!(crate::SELECTOR_LOG_DEPOSIT, &Keccak256::digest(b"Deposit(address,uint256)")[..]);
 
 	assert_eq!(
 		crate::SELECTOR_LOG_WITHDRAWAL,
@@ -876,6 +874,179 @@ fn test_transfer_from_self() {
 		assert_eq!(
 			executed_info.unwrap().value,
 			EvmDataWriter::new().write(decimal_convert(400, None)).build(),
+		);
+	});
+}
+
+#[test]
+fn test_withdraw() {
+	let (pairs, mut ext) = new_test_ext(2);
+	let alice = &pairs[0];
+	let bob = &pairs[1];
+
+	ext.execute_with(|| {
+		let mock_address = H160::from_low_u64_be(100);
+		let mock_account_id =
+			<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(mock_address);
+		let withdraw_value = decimal_convert(500, None);
+		let precompile_address =
+			H160::from_str("0x000000000000000000000000000000000000000a").unwrap();
+
+		// Withdraw
+		let unsign_tx = LegacyUnsignedTransaction::new(
+			0,
+			1,
+			1000000,
+			ethereum::TransactionAction::Call(precompile_address),
+			0,
+			EvmDataWriter::new_with_selector(Action::Withdraw)
+				.write::<Bytes>(Bytes(mock_account_id.encode()))
+				.write::<U256>(withdraw_value.into())
+				.build(),
+		);
+		let tx = unsign_tx.sign_with_chain_id(&alice.private_key, 42);
+		let executed_info =
+			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
+				CallOrCreateInfo::Call(info) => info,
+				CallOrCreateInfo::Create(_) => todo!(),
+			});
+		assert_eq!(executed_info.unwrap().value, EvmDataWriter::new().write(true).build());
+
+		// Check source account balance
+		let unsign_tx = LegacyUnsignedTransaction::new(
+			1,
+			1,
+			1000000,
+			ethereum::TransactionAction::Call(
+				H160::from_str("0x000000000000000000000000000000000000000a").unwrap(),
+			),
+			0,
+			EvmDataWriter::new_with_selector(Action::BalanceOf)
+				.write::<Address>(alice.address.into())
+				.build(),
+		);
+		let tx = unsign_tx.sign_with_chain_id(&alice.private_key, 42);
+		let executed_info =
+			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
+				CallOrCreateInfo::Call(info) => info,
+				CallOrCreateInfo::Create(_) => todo!(),
+			});
+		assert_eq!(
+			executed_info.unwrap().value,
+			EvmDataWriter::new().write(decimal_convert(100_000_000_000 - 500, None)).build(),
+		);
+
+		// Check target account balance
+		let unsign_tx = LegacyUnsignedTransaction::new(
+			2,
+			1,
+			1000000,
+			ethereum::TransactionAction::Call(
+				H160::from_str("0x000000000000000000000000000000000000000a").unwrap(),
+			),
+			0,
+			EvmDataWriter::new_with_selector(Action::BalanceOf)
+				.write::<Address>(mock_address.into())
+				.build(),
+		);
+		let tx = unsign_tx.sign_with_chain_id(&alice.private_key, 42);
+		let executed_info =
+			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
+				CallOrCreateInfo::Call(info) => info,
+				CallOrCreateInfo::Create(_) => todo!(),
+			});
+
+		assert_eq!(
+			executed_info.unwrap().value,
+			EvmDataWriter::new().write(decimal_convert(500, None)).build(),
+		);
+	});
+}
+
+#[test]
+fn test_withdraw_not_enough() {
+	let (pairs, mut ext) = new_test_ext(2);
+	let alice = &pairs[0];
+	let bob = &pairs[1];
+
+	ext.execute_with(|| {
+		let mock_address = H160::from_low_u64_be(100);
+		let mock_account_id =
+			<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(mock_address);
+		let withdraw_value = decimal_convert(100_000_000_000 + 500, None);
+		let precompile_address =
+			H160::from_str("0x000000000000000000000000000000000000000a").unwrap();
+
+		// Withdraw
+		let unsign_tx = LegacyUnsignedTransaction::new(
+			0,
+			1,
+			1000000,
+			ethereum::TransactionAction::Call(precompile_address),
+			0,
+			EvmDataWriter::new_with_selector(Action::Withdraw)
+				.write::<Bytes>(Bytes(mock_account_id.encode()))
+				.write::<U256>(withdraw_value.into())
+				.build(),
+		);
+		let tx = unsign_tx.sign_with_chain_id(&alice.private_key, 42);
+		let executed_info =
+			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
+				CallOrCreateInfo::Call(info) => info,
+				CallOrCreateInfo::Create(_) => todo!(),
+			});
+		assert_eq!(
+			ethabi::decode(&[ParamType::String], &executed_info.unwrap().value[4..]).unwrap()[0],
+			Token::String("Transfer failed".to_string())
+		);
+
+		// Check source account balance
+		let unsign_tx = LegacyUnsignedTransaction::new(
+			1,
+			1,
+			1000000,
+			ethereum::TransactionAction::Call(
+				H160::from_str("0x000000000000000000000000000000000000000a").unwrap(),
+			),
+			0,
+			EvmDataWriter::new_with_selector(Action::BalanceOf)
+				.write::<Address>(alice.address.into())
+				.build(),
+		);
+		let tx = unsign_tx.sign_with_chain_id(&alice.private_key, 42);
+		let executed_info =
+			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
+				CallOrCreateInfo::Call(info) => info,
+				CallOrCreateInfo::Create(_) => todo!(),
+			});
+		assert_eq!(
+			executed_info.unwrap().value,
+			EvmDataWriter::new().write(decimal_convert(100_000_000_000, None)).build(),
+		);
+
+		// Check target account balance
+		let unsign_tx = LegacyUnsignedTransaction::new(
+			2,
+			1,
+			1000000,
+			ethereum::TransactionAction::Call(
+				H160::from_str("0x000000000000000000000000000000000000000a").unwrap(),
+			),
+			0,
+			EvmDataWriter::new_with_selector(Action::BalanceOf)
+				.write::<Address>(mock_address.into())
+				.build(),
+		);
+		let tx = unsign_tx.sign_with_chain_id(&alice.private_key, 42);
+		let executed_info =
+			Ethereum::execute(alice.address, &tx.into(), None).map(|(_, _, res)| match res {
+				CallOrCreateInfo::Call(info) => info,
+				CallOrCreateInfo::Create(_) => todo!(),
+			});
+
+		assert_eq!(
+			executed_info.unwrap().value,
+			EvmDataWriter::new().write(decimal_convert(0, None)).build(),
 		);
 	});
 }
