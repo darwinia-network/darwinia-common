@@ -18,23 +18,28 @@ use sp_runtime::{
 	transaction_validity::{InvalidTransaction, TransactionValidity, TransactionValidityError},
 	AccountId32, Perbill, RuntimeDebug,
 };
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 // --- darwinia-network ---
 use crate::KtonErc20;
 use darwinia_ethereum::{
 	adapter::{CurrencyAdapter, KtonRemainBalance, RingRemainBalance},
-	EthereumBlockHashMapping, IntermediateStateRoot, RawOrigin,
+	EthereumBlockHashMapping, IntermediateStateRoot, RawOrigin, Transaction, TransactionAction,
 };
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
-use darwinia_evm_precompile_utils::test_helper::{address_build, AccountInfo};
+use darwinia_evm_precompile_utils::test_helper::{
+	address_build, AccountInfo, LegacyUnsignedTransaction,
+};
 use darwinia_support::evm::DeriveSubstrateAddress;
 
 type Block = MockBlock<Test>;
 type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
-type Balance = u64;
+type Balance = u128;
 
 darwinia_support::impl_test_account_data! {}
+
+pub const INITIAL_BALANCE: Balance = 1_000;
+pub const PRECOMPILE_ADDR: &str = "0x000000000000000000000000000000000000000a";
 
 frame_support::parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -314,13 +319,12 @@ fn validate_self_contained_inner(
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExternalities) {
-	// sc_cli::init_logger("");
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 	let pairs = (0..accounts_len).map(|i| address_build(i as u8)).collect::<Vec<_>>();
 
 	let balances: Vec<_> =
-		(0..accounts_len).map(|i| (pairs[i].account_id.clone(), 100_000_000_000)).collect();
+		(0..accounts_len).map(|i| (pairs[i].account_id.clone(), INITIAL_BALANCE)).collect();
 
 	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances: balances.clone() }
 		.assimilate_storage(&mut t)
@@ -332,4 +336,16 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 	ext.execute_with(|| System::set_block_number(1));
 
 	(pairs, ext.into())
+}
+
+pub fn prepare_transaction(nonce: u64, input: Vec<u8>, private_key: &H256) -> Transaction {
+	LegacyUnsignedTransaction {
+		nonce: U256::from(nonce),
+		gas_price: <Test as darwinia_evm::Config>::FeeCalculator::min_gas_price(),
+		gas_limit: U256::from(1_000_000),
+		action: ethereum::TransactionAction::Call(H160::from_str(PRECOMPILE_ADDR).unwrap()),
+		value: U256::zero(),
+		input,
+	}
+	.sign_with_chain_id(&private_key, <Test as darwinia_evm::Config>::ChainId::get())
 }
