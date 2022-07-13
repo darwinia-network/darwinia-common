@@ -423,9 +423,10 @@ fn test_transfer_not_enough_fund() {
 				CallOrCreateInfo::Call(info) => info,
 				CallOrCreateInfo::Create(_) => todo!(),
 			});
+
 		assert_eq!(
-			ethabi::decode(&[ParamType::String], &executed_info.unwrap().value[4..]).unwrap()[0],
-			Token::String("Transfer failed".to_string())
+			executed_info.unwrap().value[4..],
+			EvmDataWriter::new().write(Bytes("Transfer failed".as_bytes().to_vec())).build(),
 		);
 
 		// Check source account balance
@@ -625,8 +626,10 @@ fn test_transfer_from_above_allowance() {
 				CallOrCreateInfo::Create(_) => todo!(),
 			});
 		assert_eq!(
-			ethabi::decode(&[ParamType::String], &executed_info.unwrap().value[4..]).unwrap()[0],
-			Token::String("trying to spend more than allowed".to_string())
+			executed_info.unwrap().value[4..],
+			EvmDataWriter::new()
+				.write(Bytes("trying to spend more than allowed".as_bytes().to_vec()))
+				.build(),
 		);
 
 		// Check source account balance

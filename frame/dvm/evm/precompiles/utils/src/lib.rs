@@ -30,15 +30,15 @@ pub use darwinia_evm_precompile_utils_macro::selector;
 pub use ethabi::StateMutability;
 
 // --- crates.io ---
-use ethabi::{Function, Param, ParamType, Token};
+use sha3::{Digest, Keccak256};
 // --- darwinia-network ---
-use crate::prelude::EvmDataReader;
+use crate::prelude::*;
 use darwinia_evm::GasWeightMapping;
 // --- paritytech ---
 use fp_evm::{Context, ExitError, ExitRevert, PrecompileFailure};
 use frame_support::traits::Get;
 use sp_core::U256;
-use sp_std::{borrow::ToOwned, marker::PhantomData, vec};
+use sp_std::marker::PhantomData;
 
 /// Alias for Result returning an EVM precompile error.
 pub type EvmResult<T = ()> = Result<T, PrecompileFailure>;
@@ -148,23 +148,15 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 /// recorded cost. It is better to **revert** instead of **error** as
 /// erroring consumes the entire gas limit, and **revert** returns an error
 /// message to the calling contract.
-pub fn revert(message: &'static str) -> PrecompileFailure {
-	#[allow(deprecated)]
-	let func = Function {
-		name: "Error".to_owned(),
-		inputs: vec![Param {
-			name: "message".to_owned(),
-			kind: ParamType::String,
-			internal_type: None,
-		}],
-		outputs: vec![],
-		constant: false,
-		state_mutability: StateMutability::NonPayable,
-	};
+pub fn revert(message: impl AsRef<[u8]>) -> PrecompileFailure {
+	let selector =
+		u32::from_be_bytes(Keccak256::digest(b"Error(string)")[0..4].try_into().unwrap());
 
 	PrecompileFailure::Revert {
 		exit_status: ExitRevert::Reverted,
-		output: func.encode_input(&[Token::String(message.to_owned())]).unwrap_or_default(),
+		output: EvmDataWriter::new_with_selector(selector)
+			.write::<Bytes>(Bytes(message.as_ref().to_vec()))
+			.build(),
 		cost: 0,
 	}
 }
