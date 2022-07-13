@@ -23,6 +23,8 @@ use core::fmt::Debug;
 // --- crates.io ---
 use codec::{Decode, Encode, FullCodec};
 use scale_info::TypeInfo;
+#[cfg(feature = "std")]
+use serde::{de::DeserializeOwned, Serialize};
 // --- paritytech ---
 use sp_runtime::{DispatchResult, RuntimeDebug};
 use sp_std::prelude::*;
@@ -33,6 +35,17 @@ pub type Term = u32;
 pub trait Sign<BlockNumber> {
 	type Signature: Clone + Debug + PartialEq + FullCodec + TypeInfo;
 	type Message: Clone + Debug + Default + PartialEq + FullCodec + TypeInfo;
+	#[cfg(feature = "std")]
+	type Signer: Clone
+		+ Debug
+		+ Default
+		+ Ord
+		+ PartialEq
+		+ FullCodec
+		+ TypeInfo
+		+ DeserializeOwned
+		+ Serialize;
+	#[cfg(not(feature = "std"))]
 	type Signer: Clone + Debug + Default + Ord + PartialEq + FullCodec + TypeInfo;
 
 	fn hash(raw_message: impl AsRef<[u8]>) -> Self::Message;
@@ -57,14 +70,10 @@ pub trait RelayAuthorityProtocol<BlockNumber> {
 	fn sync_authorities_change() -> DispatchResult;
 }
 
-pub trait MMR<BlockNumber, Root> {
-	fn get_root() -> Option<Root>;
-}
-// Only for test
-impl<BlockNumber, Root> MMR<BlockNumber, Root> for () {
-	fn get_root() -> Option<Root> {
-		None
-	}
+pub trait Mmr {
+	type Hash: Clone + Debug + PartialEq + FullCodec + TypeInfo;
+
+	fn get_root() -> Option<Self::Hash>;
 }
 
 // Avoid duplicate type
@@ -126,6 +135,6 @@ pub struct MmrRootToSign<MmrRoot, AccountId, Signature> {
 }
 impl<MmrRoot, AccountId, Signature> MmrRootToSign<MmrRoot, AccountId, Signature> {
 	pub fn new(mmr_root: MmrRoot) -> Self {
-		Self { mmr_root, signatures: vec![] }
+		Self { mmr_root, signatures: Vec::new() }
 	}
 }
