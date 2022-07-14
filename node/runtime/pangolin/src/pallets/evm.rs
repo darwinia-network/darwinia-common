@@ -24,7 +24,6 @@ use darwinia_ethereum::{
 use darwinia_evm::{
 	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, GasWeightMapping,
 };
-use darwinia_evm_precompile_bridge_ethereum::EthereumBridge;
 use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 use darwinia_evm_precompile_dispatch::Dispatch;
 use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
@@ -102,7 +101,7 @@ where
 	}
 
 	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 21, 23, 24, 25, 1024, 1025]
+		sp_std::vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 21, 24, 25, 1024, 1025]
 			.into_iter()
 			.map(|x| addr(x))
 			.collect()
@@ -112,7 +111,6 @@ where
 impl<R> PrecompileSet for PangolinPrecompiles<R>
 where
 	Dispatch<R>: Precompile,
-	EthereumBridge<R>: Precompile,
 	R: darwinia_ethereum::Config,
 	StateStorage<R, StorageFilter>: Precompile,
 	Sub2SubBridge<R, ToPangoroMessageSender, bm_pangoro::ToPangoroOutboundPayLoad>: Precompile,
@@ -150,9 +148,7 @@ where
 			// FIXME: Change the transfer precompile address after https://github.com/darwinia-network/darwinia-common/issues/1259
 			a if a == addr(21) =>
 				Some(<Transfer<R>>::execute(input, target_gas, context, is_static)),
-			// TODO: Delete EthereumBridge and Sub2SubBridge precompiles in the futures.
-			a if a == addr(23) =>
-				Some(<EthereumBridge<R>>::execute(input, target_gas, context, is_static)),
+			// TODO: Delete Sub2SubBridge precompiles in the futures.
 			a if a == addr(24) => Some(<Sub2SubBridge<
 				R,
 				ToPangoroMessageSender,
