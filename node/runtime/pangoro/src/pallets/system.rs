@@ -4,7 +4,7 @@ use frame_system::Config;
 use sp_runtime::traits::AccountIdLookup;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
-use crate::*;
+use crate::{weights::frame_system::WeightInfo, *};
 use module_transaction_pause::PausedTransactionFilter;
 
 pub struct BaseFilter;
@@ -47,6 +47,6 @@ impl Config for Runtime {
 	type Origin = Origin;
 	type PalletInfo = PalletInfo;
 	type SS58Prefix = SS58Prefix;
-	type SystemWeightInfo = ();
+	type SystemWeightInfo = WeightInfo<Runtime>;
 	type Version = Version;
 }
