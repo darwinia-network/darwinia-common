@@ -846,7 +846,8 @@ sp_api::impl_runtime_apis! {
 			// add_benchmark!(params, batches, darwinia_relayer_game, EthereumRelayerGame);
 			// add_benchmark!(params, batches, darwinia_relay_authorities, EthereumRelayAuthorities);
 			// add_benchmark!(params, batches, to_tron_backing, TronBacking);
-			add_benchmark!(params, batches, pallet_bridge_grandpa, BridgePangoroGrandpa);
+			// TODO FIX
+			// add_benchmark!(params, batches, pallet_bridge_grandpa, BridgePangoroGrandpa);
 			// TODO: https://github.com/darwinia-network/darwinia-parachain/issues/66
 			// add_benchmark!(params, batches, pallet_bridge_messages, BridgePangoroMessages);
 			// add_benchmark!(params, batches, pallet_bridge_messages, BridgePangolinParachainMessages);
