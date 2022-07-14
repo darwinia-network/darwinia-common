@@ -5,7 +5,6 @@ use sp_runtime::traits::AccountIdLookup;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use crate::*;
-use crate::weights::frame_system::WeightInfo;
 
 frame_support::parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
@@ -34,6 +33,6 @@ impl Config for Runtime {
 	type Origin = Origin;
 	type PalletInfo = PalletInfo;
 	type SS58Prefix = SS58Prefix;
-	type SystemWeightInfo = WeightInfo<Runtime>;
+	type SystemWeightInfo = ();
 	type Version = Version;
 }
