@@ -14,6 +14,7 @@ version     = "2.8.15"
 codec      = { package = "parity-scale-codec", version = "2.3", default-features = false, features = ["derive"] }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 # darwinia-network
+darwinia-header-mmr       = { default-features = false, path = "../../../frame/header-mmr" }
 darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
 darwinia-support          = { default-features = false, path = "../../support" }
 # paritytech
@@ -42,6 +43,7 @@ std = [
 	"codec/std",
 	"scale-info/std",
 	# darwinia-network
+	"darwinia-header-mmr/std",
 	"darwinia-relay-primitives/std",
 	"darwinia-support/std",
 	# paritytech

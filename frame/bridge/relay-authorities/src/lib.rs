@@ -30,28 +30,35 @@ mod test;
 mod weights;
 pub use weights::WeightInfo;
 
+// --- crates.io ---
+use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{
+	log,
 	pallet_prelude::*,
 	traits::{Currency, Get, LockIdentifier, LockableCurrency, WithdrawReasons},
 	transactional,
 };
 use frame_system::pallet_prelude::*;
-use sp_runtime::Perbill;
-// --- darwinia-network ---
-use darwinia_relay_primitives::{
-	Mmr, MmrRootToSign, OpCode, RelayAuthority, ScheduledAuthoritiesChange, Sign, Term, _S,
+use sp_runtime::{
+	traits::{Saturating, Zero},
+	Perbill, RuntimeDebug, SaturatedConversion,
 };
+// --- darwinia-network ---
+use darwinia_header_mmr::GetRoot;
+use darwinia_relay_primitives::{OpCode, RelayAuthority, RelayAuthorityProtocol, Sign, Term};
 
+// Alias only.
 type AccountId<T> = <T as frame_system::Config>::AccountId;
-
+type MaxMembers<T, I> = <T as Config<I>>::MaxMembers;
+// Basics.
 type Balance<T, I> = <<T as Config<I>>::Currency as Currency<AccountId<T>>>::Balance;
-type MmrRoot<T, I> = <<T as Config<I>>::Mmr as Mmr>::Hash;
-
+type MmrRoot<T, I> = <<T as Config<I>>::Mmr as GetRoot>::Hash;
+// Sign things.
 type RelayAuthoritySigner<T, I> = <<T as Config<I>>::Sign as Sign<BlockNumberFor<T>>>::Signer;
 type RelayAuthorityMessage<T, I> = <<T as Config<I>>::Sign as Sign<BlockNumberFor<T>>>::Message;
 type RelayAuthoritySignature<T, I> = <<T as Config<I>>::Sign as Sign<BlockNumberFor<T>>>::Signature;
-
+// Authority things.
 type RelayAuthorityT<T, I> =
 	RelayAuthority<AccountId<T>, RelayAuthoritySigner<T, I>, Balance<T, I>, BlockNumberFor<T>>;
 type ScheduledAuthoritiesChangeT<T, I> = ScheduledAuthoritiesChange<
@@ -59,14 +66,15 @@ type ScheduledAuthoritiesChangeT<T, I> = ScheduledAuthoritiesChange<
 	RelayAuthoritySigner<T, I>,
 	Balance<T, I>,
 	BlockNumberFor<T>,
+	MaxMembers<T, I>,
 >;
+
+const MAX_SCHEDULED_NUM: usize = 10;
 
 #[frame_support::pallet]
 pub mod pallet {
 	// --- darwinia-network ---
 	use crate::*;
-
-	pub const MAX_SCHEDULED_NUM: usize = 10;
 
 	#[pallet::config]
 	pub trait Config<I: 'static = ()>: frame_system::Config {
@@ -78,7 +86,7 @@ pub mod pallet {
 		type RemoveOrigin: EnsureOrigin<Self::Origin>;
 		type ResetOrigin: EnsureOrigin<Self::Origin>;
 		// Commitments.
-		type Mmr: Mmr;
+		type Mmr: GetRoot;
 		type Sign: Sign<Self::BlockNumber>;
 		// Constants.
 		#[pallet::constant]
@@ -172,7 +180,7 @@ pub mod pallet {
 	pub type Authorities<T: Config<I>, I: 'static = ()> =
 		StorageValue<_, BoundedVec<RelayAuthorityT<T, I>, T::MaxMembers>, ValueQuery>;
 
-	/// The incoming authorities set for the next term.
+	/// The incoming authorities for the next term.
 	#[pallet::storage]
 	#[pallet::getter(fn next_authorities)]
 	pub type NextAuthorities<T: Config<I>, I: 'static = ()> =
@@ -222,7 +230,7 @@ pub mod pallet {
 		_,
 		Identity,
 		T::BlockNumber,
-		MmrRootToSign<MmrRoot<T, I>, AccountId<T>, RelayAuthoritySignature<T, I>>,
+		MmrRootToSign<MmrRoot<T, I>, T::AccountId, RelayAuthoritySignature<T, I>, T::MaxMembers>,
 		OptionQuery,
 	>;
 
@@ -270,6 +278,17 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	pub struct Pallet<T, I = ()>(PhantomData<(T, I)>);
+	#[pallet::hooks]
+	impl<T: Config<I>, I: 'static> Hooks<T::BlockNumber> for Pallet<T, I> {
+		fn on_initialize(now: T::BlockNumber) -> Weight {
+			Self::prepare_mmr_root_to_sign(now);
+			// Deal with the slash thing.
+			// If authority didn't do his job before the deadline.
+			Self::check_misbehavior(now);
+
+			0
+		}
+	}
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		/// Request to be an authority.
@@ -285,7 +304,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			stake: Balance<T, I>,
 			signer: RelayAuthoritySigner<T, I>,
-		) -> DispatchResultWithPostInfo {
+		) -> DispatchResult {
 			let account_id = ensure_signed(origin)?;
 
 			if let Some(scheduled_authorities_change) = <NextAuthorities<T, I>>::get() {
@@ -341,26 +360,26 @@ pub mod pallet {
 				DispatchResult::Ok(())
 			})?;
 
-			Ok(().into())
+			Ok(())
 		}
 
 		/// Cancel the request to be an authority.
 		///
 		/// This will remove you from the candidates queue immediately.
 		#[pallet::weight(10_000_000)]
-		pub fn cancel_request(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+		pub fn cancel_request(origin: OriginFor<T>) -> DispatchResult {
 			let account_id = ensure_signed(origin)?;
 
 			Self::remove_candidate_by_id_with(&account_id, || {
 				T::Currency::remove_lock(T::LockId::get(), &account_id)
 			})?;
 
-			Ok(().into())
+			Ok(())
 		}
 
 		/// Remove all the candidates.
 		#[pallet::weight(10_000_000)]
-		pub fn kill_candidates(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+		pub fn kill_candidates(origin: OriginFor<T>) -> DispatchResult {
 			T::ResetOrigin::ensure_origin(origin)?;
 
 			let lock_id = T::LockId::get();
@@ -369,33 +388,33 @@ pub mod pallet {
 				T::Currency::remove_lock(lock_id, &account_id);
 			}
 
-			Ok(().into())
+			Ok(())
 		}
 
-		/// Require add origin
+		/// Add an authority from the candidates.
 		///
-		/// Add an authority from the candidates
-		///
-		/// This call is disallowed during the authorities change
+		/// This call is disallowed during the authorities change.
 		#[pallet::weight(10_000_000)]
+		#[transactional]
 		pub fn add_authorities(
 			origin: OriginFor<T>,
-			account_ids: Vec<AccountId<T>>,
-		) -> DispatchResultWithPostInfo {
+			account_ids: Vec<T::AccountId>,
+		) -> DispatchResult {
 			T::AddOrigin::ensure_origin(origin)?;
 
 			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
-			// Won't check duplicated here, MUST make this authority sure is unique
+			// Won't check duplicated here, MUST make sure this authority is unique
 			// As we already make a check in `request_authority`
 			let next_authorities = {
 				let mut authorities = <Authorities<T, I>>::get();
 
 				for account_id in account_ids {
 					let mut authority = Self::remove_candidate_by_id_with(&account_id, || ())?;
+
 					authority.term =
 						<frame_system::Pallet<T>>::block_number() + T::TermDuration::get();
 
-					authorities.push(authority);
+					authorities.try_push(authority).map_err(|_| <Error<T, I>>::TooManyMembers)?;
 				}
 
 				authorities
@@ -403,581 +422,614 @@ pub mod pallet {
 
 			Self::schedule_authorities_change(next_authorities);
 
-			Ok(().into())
-		}
-	}
-	impl<T: Config<I>, I: 'static> Pallet<T, I> {
-		pub fn remove_candidate_by_id_with<F>(
-			account_id: &AccountId<T>,
-			f: F,
-		) -> Result<RelayAuthorityT<T, I>, DispatchError>
-		where
-			F: Fn(),
-		{
-			Ok(<Candidates<T, I>>::try_mutate(|candidates| {
-				if let Some(position) = find_authority_position::<T, I>(&candidates, account_id) {
-					f();
-
-					Ok(candidates.remove(position))
-				} else {
-					Err(<Error<T, I>>::CandidateNE)
-				}
-			})?)
+			Ok(())
 		}
 
-		pub fn on_authorities_change() -> bool {
-			<NextAuthorities<T, I>>::exists()
+		/// Renounce the authority of the account.
+		///
+		/// This call is disallowed during the authorities change.
+		/// No-op if can't find the authority.
+		/// Will fail if you still in the term.
+		#[pallet::weight(10_000_000)]
+		#[transactional]
+		pub fn renounce_authority(origin: OriginFor<T>) -> DispatchResult {
+			let account_id = ensure_signed(origin)?;
+
+			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
+
+			let next_authorities =
+				Self::remove_authority_by_ids_with(&[account_id], |authority| {
+					if authority.term >= <frame_system::Pallet<T>>::block_number() {
+						Some(<Error<T, I>>::AuthorityIT)
+					} else {
+						None
+					}
+				})?;
+
+			if next_authorities.is_empty() {
+				Err(<Error<T, I>>::AuthoritiesCountTL)?;
+			}
+
+			Self::schedule_authorities_change(next_authorities);
+
+			Ok(())
 		}
 
-		pub fn schedule_authorities_change(next_authorities: Vec<RelayAuthorityT<T, I>>) {
-			// The message is composed of:
-			//
-			// hash(
-			// 	codec(
-			// 		spec_name: String,
-			// 		op_code: OpCode,
-			// 		term: Compact<u32>,
-			// 		next authorities: Vec<Signer>
-			// 	)
-			// )
-			let message = T::Sign::hash(
-				&_S {
-					_1: T::Version::get().spec_name,
-					_2: T::OpCodes::get().1,
-					_3: <NextTerm<I>>::get(),
-					_4: next_authorities
-						.iter()
-						.map(|authority| authority.signer.clone())
-						.collect::<Vec<_>>(),
-				}
-				.encode(),
-			);
+		/// Remove the given authorities.
+		///
+		/// This call is disallowed during the authorities change.
+		#[pallet::weight(10_000_000)]
+		pub fn remove_authorities(
+			origin: OriginFor<T>,
+			account_ids: Vec<T::AccountId>,
+		) -> DispatchResult {
+			T::RemoveOrigin::ensure_origin(origin)?;
 
-			<AuthoritiesToSign<T, I>>::put((
-				&message,
-				<Vec<(AccountId<T>, RelayAuthoritySignature<T, I>)>>::new(),
-			));
+			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
 
-			let submit_duration = T::SubmitDuration::get();
+			let next_authorities = Self::remove_authority_by_ids_with(&account_ids, |_| None)?;
 
-			<NextAuthorities<T, I>>::put(ScheduledAuthoritiesChange {
-				next_authorities,
-				deadline: <frame_system::Pallet<T>>::block_number() + submit_duration,
-			});
-			<SubmitDuration<T, I>>::mutate(|submit_duration_| *submit_duration_ += submit_duration);
+			if next_authorities.is_empty() {
+				Err(<Error<T, I>>::AuthoritiesCountTL)?;
+			}
 
-			Self::deposit_event(<Event<T, I>>::ScheduleAuthoritiesChange(message));
+			Self::schedule_authorities_change(next_authorities);
+
+			Ok(())
 		}
+
+		#[pallet::weight(10_000_000)]
+		pub fn kill_authorities(origin: OriginFor<T>) -> DispatchResult {
+			T::ResetOrigin::ensure_origin(origin)?;
+
+			let lock_id = T::LockId::get();
+
+			for RelayAuthority { account_id, .. } in <Authorities<T, I>>::take() {
+				T::Currency::remove_lock(lock_id, &account_id);
+			}
+
+			<NextAuthorities<T, I>>::kill();
+			<AuthoritiesToSign<T, I>>::kill();
+			{
+				<MmrRootsToSign<T, I>>::remove_all(None);
+				let schedule = (<frame_system::Pallet<T>>::block_number().saturated_into::<u64>()
+					/ 10 * 10 + 10)
+					.saturated_into();
+				<MmrRootsToSignKeys<T, I>>::mutate(|schedules| *schedules = vec![schedule]);
+				Self::schedule_mmr_root(schedule)?;
+			}
+			<SubmitDuration<T, I>>::kill();
+
+			Ok(())
+		}
+
+		#[pallet::weight(10_000_000)]
+		pub fn force_new_term(origin: OriginFor<T>) -> DispatchResult {
+			T::ResetOrigin::ensure_origin(origin)?;
+
+			Self::apply_authorities_change()?;
+			Self::sync_authorities_change()?;
+
+			<NextAuthorities<T, I>>::kill();
+
+			Ok(())
+		}
+
+		// 		/// Require authority origin
+		// 		///
+		// 		/// This call is disallowed during the authorities change
+		// 		///
+		// 		/// No-op if already submit
+		// 		///
+		// 		/// Verify
+		// 		/// - the relay requirement is valid
+		// 		/// - the signature is signed by the submitter
+		// 		#[weight = 10_000_000]
+		// 		pub fn submit_signed_mmr_root(
+		// 			origin,
+		// 			block_number: T::BlockNumber,
+		// 			signature: RelayAuthoritySignature<T, I>
+		// 		) {
+		// 			let authority = ensure_signed(origin)?;
+
+		// 			// Not allow to submit during the authority set change
+		// 			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
+
+		// 			let mut to_sign =
+		// 				<MmrRootsToSign<T, I>>::get(block_number).ok_or(<Error<T, I>>::ScheduledSignNE)?;
+
+		// 			// No-op if was already submitted
+		// 			if to_sign.signatures.iter().position(|(signer, _)| signer == &authority).is_some() {
+		// 				return Ok(());
+		// 			}
+
+		// 			let authorities = <Authorities<T, I>>::get();
+		// 			let signer = find_signer::<T, I>(
+		// 				&authorities,
+		// 				&authority
+		// 			).ok_or(<Error<T, I>>::AuthorityNE)?;
+
+		// 			// The message is composed of:
+		// 			//
+		// 			// hash(
+		// 			// 	codec(
+		// 			// 		spec_name: String,
+		// 			// 		op_code: OpCode,
+		// 			// 		block number: Compact<BlockNumber>,
+		// 			// 		mmr_root: Hash
+		// 			// 	)
+		// 			// )
+		// 			let message = T::Sign::hash(
+		// 				&_S {
+		// 					_1: T::Version::get().spec_name,
+		// 					_2: T::OpCodes::get().0,
+		// 					_3: block_number,
+		// 					_4: to_sign.mmr_root
+		// 				}
+		// 				.encode()
+		// 			);
+
+		// 			ensure!(
+		// 				T::Sign::verify_signature(&signature, &message, &signer),
+		// 				 <Error<T, I>>::SignatureInv
+		// 			);
+
+		// 			to_sign.signatures.push((authority, signature));
+
+		// 			if Perbill::from_rational(to_sign.signatures.len() as u32, authorities.len() as _)
+		// 				>= T::SignThreshold::get()
+		// 			{
+		// 				// TODO: clean the mmr root which was contains in this mmr root?
+
+		// 				Self::mmr_root_signed(block_number);
+		// 				Self::deposit_event(RawEvent::MMRRootSigned(block_number, to_sign.mmr_root,
+		// to_sign.signatures)); 			} else {
+		// 				<MmrRootsToSign<T, I>>::insert(block_number, to_sign);
+		// 			}
+		// 		}
+
+		// 		/// Require authority origin
+		// 		///
+		// 		/// This call is only allowed during the authorities change
+		// 		///
+		// 		/// No-op if already submit
+		// 		///
+		// 		/// Verify
+		// 		/// - the relay requirement is valid
+		// 		/// - the signature is signed by the submitter
+		// 		#[weight = 10_000_000]
+		// 		pub fn submit_signed_authorities(origin, signature: RelayAuthoritySignature<T, I>) {
+		// 			let authority = ensure_signed(origin)?;
+
+		// 			ensure!(Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
+
+		// 			let (message, mut signatures) = if let Some(signatures) = <AuthoritiesToSign<T,
+		// I>>::get() { 				signatures
+		// 			} else {
+		// 				return Ok(());
+		// 			};
+
+		// 			if signatures
+		// 				.iter()
+		// 				.position(|(authority_, _)| authority_ == &authority)
+		// 				.is_some()
+		// 			{
+		// 				return Ok(());
+		// 			}
+
+		// 			let authorities = <Authorities<T, I>>::get();
+		// 			let signer = find_signer::<T, I>(
+		// 				&authorities,
+		// 				&authority
+		// 			).ok_or(<Error<T, I>>::AuthorityNE)?;
+
+		// 			ensure!(
+		// 				T::Sign::verify_signature(&signature, &message, &signer),
+		// 				 <Error<T, I>>::SignatureInv
+		// 			);
+
+		// 			signatures.push((authority, signature));
+
+		// 			if Perbill::from_rational(signatures.len() as u32, authorities.len() as _)
+		// 				>= T::SignThreshold::get()
+		// 			{
+		// 				Self::apply_authorities_change()?;
+		// 				Self::deposit_event(RawEvent::AuthoritiesChangeSigned(
+		// 					<NextTerm<I>>::get(),
+		// 					<NextAuthorities<T, I>>::get()
+		// 						.ok_or(<Error<T, I>>::NextAuthoritiesNE)?
+		// 						.next_authorities
+		// 						.into_iter()
+		// 						.map(|authority| authority.signer)
+		// 						.collect(),
+		// 					signatures
+		// 				));
+		// 			} else {
+		// 				<AuthoritiesToSign<T, I>>::put((message, signatures));
+		// 			}
+		// 		}
+		// 	}
 	}
 }
 pub use pallet::*;
 
-// decl_module! {
-// 	pub struct Module<T: Config<I>, I: Instance = DefaultInstance> for enum Call
-// 	where
-// 		origin: T::Origin
-// 	{
-
-// 		// Deal with the slash thing. If authority didn't do his job before the deadline
-// 		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
-// 			Self::prepare_mmr_root_to_sign(now);
-// 			Self::check_misbehavior(now);
-
-// 			0
-// 		}
-
-// 		/// Renounce the authority for you
-// 		///
-// 		/// This call is disallowed during the authorities change
-// 		///
-// 		/// No-op if can't find the authority
-// 		///
-// 		/// Will fail if you still in the term
-// 		#[weight = 10_000_000]
-// 		pub fn renounce_authority(origin) {
-// 			let account_id = ensure_signed(origin)?;
-
-// 			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
-
-// 			let next_authorities = Self::remove_authority_by_ids_with(
-// 				vec![account_id],
-// 				|authority| if authority.term >= <frame_system::Pallet<T>>::block_number() {
-// 					Some(<Error<T, I>>::AuthorityIT)
-// 				} else {
-// 					None
-// 				}
-// 			)?;
-
-// 			if next_authorities.is_empty() {
-// 				Err(<Error<T, I>>::AuthoritiesCountTL)?;
-// 			}
-
-// 			Self::schedule_authorities_change(next_authorities);
-// 		}
-
-// 		/// Require remove origin
-// 		///
-// 		/// This call is disallowed during the authorities change
-// 		#[weight = 10_000_000]
-// 		pub fn remove_authorities(origin, account_ids: Vec<AccountId<T>>) {
-// 			T::RemoveOrigin::ensure_origin(origin)?;
-
-// 			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
-
-// 			let next_authorities = Self::remove_authority_by_ids_with(account_ids, |_| None)?;
-
-// 			if next_authorities.is_empty() {
-// 				Err(<Error<T, I>>::AuthoritiesCountTL)?;
-// 			}
-
-// 			Self::schedule_authorities_change(next_authorities);
-// 		}
-
-// 		/// Require authority origin
-// 		///
-// 		/// This call is disallowed during the authorities change
-// 		///
-// 		/// No-op if already submit
-// 		///
-// 		/// Verify
-// 		/// - the relay requirement is valid
-// 		/// - the signature is signed by the submitter
-// 		#[weight = 10_000_000]
-// 		pub fn submit_signed_mmr_root(
-// 			origin,
-// 			block_number: BlockNumberFor<T>,
-// 			signature: RelayAuthoritySignature<T, I>
-// 		) {
-// 			let authority = ensure_signed(origin)?;
-
-// 			// Not allow to submit during the authority set change
-// 			ensure!(!Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
-
-// 			let mut to_sign =
-// 				<MmrRootsToSign<T, I>>::get(block_number).ok_or(<Error<T, I>>::ScheduledSignNE)?;
-
-// 			// No-op if was already submitted
-// 			if to_sign.signatures.iter().position(|(signer, _)| signer == &authority).is_some() {
-// 				return Ok(());
-// 			}
-
-// 			let authorities = <Authorities<T, I>>::get();
-// 			let signer = find_signer::<T, I>(
-// 				&authorities,
-// 				&authority
-// 			).ok_or(<Error<T, I>>::AuthorityNE)?;
-
-// 			// The message is composed of:
-// 			//
-// 			// hash(
-// 			// 	codec(
-// 			// 		spec_name: String,
-// 			// 		op_code: OpCode,
-// 			// 		block number: Compact<BlockNumber>,
-// 			// 		mmr_root: Hash
-// 			// 	)
-// 			// )
-// 			let message = T::Sign::hash(
-// 				&_S {
-// 					_1: T::Version::get().spec_name,
-// 					_2: T::OpCodes::get().0,
-// 					_3: block_number,
-// 					_4: to_sign.mmr_root
-// 				}
-// 				.encode()
-// 			);
-
-// 			ensure!(
-// 				T::Sign::verify_signature(&signature, &message, &signer),
-// 				 <Error<T, I>>::SignatureInv
-// 			);
-
-// 			to_sign.signatures.push((authority, signature));
-
-// 			if Perbill::from_rational(to_sign.signatures.len() as u32, authorities.len() as _)
-// 				>= T::SignThreshold::get()
-// 			{
-// 				// TODO: clean the mmr root which was contains in this mmr root?
-
-// 				Self::mmr_root_signed(block_number);
-// 				Self::deposit_event(RawEvent::MMRRootSigned(block_number, to_sign.mmr_root, to_sign.signatures));
-// 			} else {
-// 				<MmrRootsToSign<T, I>>::insert(block_number, to_sign);
-// 			}
-// 		}
-
-// 		/// Require authority origin
-// 		///
-// 		/// This call is only allowed during the authorities change
-// 		///
-// 		/// No-op if already submit
-// 		///
-// 		/// Verify
-// 		/// - the relay requirement is valid
-// 		/// - the signature is signed by the submitter
-// 		#[weight = 10_000_000]
-// 		pub fn submit_signed_authorities(origin, signature: RelayAuthoritySignature<T, I>) {
-// 			let authority = ensure_signed(origin)?;
-
-// 			ensure!(Self::on_authorities_change(), <Error<T, I>>::OnAuthoritiesChangeDis);
-
-// 			let (message, mut signatures) = if let Some(signatures) = <AuthoritiesToSign<T, I>>::get() {
-// 				signatures
-// 			} else {
-// 				return Ok(());
-// 			};
-
-// 			if signatures
-// 				.iter()
-// 				.position(|(authority_, _)| authority_ == &authority)
-// 				.is_some()
-// 			{
-// 				return Ok(());
-// 			}
-
-// 			let authorities = <Authorities<T, I>>::get();
-// 			let signer = find_signer::<T, I>(
-// 				&authorities,
-// 				&authority
-// 			).ok_or(<Error<T, I>>::AuthorityNE)?;
-
-// 			ensure!(
-// 				T::Sign::verify_signature(&signature, &message, &signer),
-// 				 <Error<T, I>>::SignatureInv
-// 			);
-
-// 			signatures.push((authority, signature));
-
-// 			if Perbill::from_rational(signatures.len() as u32, authorities.len() as _)
-// 				>= T::SignThreshold::get()
-// 			{
-// 				Self::apply_authorities_change()?;
-// 				Self::deposit_event(RawEvent::AuthoritiesChangeSigned(
-// 					<NextTerm<I>>::get(),
-// 					<NextAuthorities<T, I>>::get()
-// 						.ok_or(<Error<T, I>>::NextAuthoritiesNE)?
-// 						.next_authorities
-// 						.into_iter()
-// 						.map(|authority| authority.signer)
-// 						.collect(),
-// 					signatures
-// 				));
-// 			} else {
-// 				<AuthoritiesToSign<T, I>>::put((message, signatures));
-// 			}
-// 		}
-
-// 		#[weight = 10_000_000]
-// 		pub fn kill_authorities(origin) {
-// 			T::ResetOrigin::ensure_origin(origin)?;
-
-// 			let lock_id = T::LockId::get();
-
-// 			for RelayAuthority { account_id, .. } in <Authorities<T, I>>::take() {
-// 				T::Currency::remove_lock(lock_id, &account_id);
-// 			}
-
-// 			<NextAuthorities<T, I>>::kill();
-// 			<AuthoritiesToSign<T, I>>::kill();
-// 			{
-// 				<MmrRootsToSign<T, I>>::remove_all(None);
-// 				let schedule = (
-// 					<frame_system::Pallet<T>>::block_number().saturated_into::<u64>() / 10 * 10 + 10
-// 				).saturated_into();
-// 				<MmrRootsToSignKeys<T, I>>::mutate(|schedules| *schedules = vec![schedule]);
-// 				Self::schedule_mmr_root(schedule)?;
-// 			}
-// 			<SubmitDuration<T, I>>::kill();
-// 		}
-
-// 		#[weight = 10_000_000]
-// 		pub fn force_new_term(origin) {
-// 			T::ResetOrigin::ensure_origin(origin)?;
-
-// 			Self::apply_authorities_change()?;
-// 			Self::sync_authorities_change()?;
-
-// 			<NextAuthorities<T, I>>::kill();
-// 		}
-// 	}
-// }
-
-// impl<T, I> Module<T, I>
-// where
-// 	T: Config<I>,
-// 	I: Instance,
-// {
-
-// 	pub fn remove_authority_by_ids_with<F>(
-// 		account_ids: Vec<AccountId<T>>,
-// 		f: F,
-// 	) -> Result<Vec<RelayAuthorityT<T, I>>, DispatchError>
-// 	where
-// 		F: Fn(&RelayAuthorityT<T, I>) -> Option<Error<T, I>>,
-// 	{
-// 		let mut authorities = <Authorities<T, I>>::get();
-// 		let mut remove_authorities = vec![];
-
-// 		for account_id in account_ids.iter() {
-// 			let position = find_authority_position::<T, I>(&authorities, account_id)
-// 				.ok_or(<Error<T, I>>::AuthorityNE)?;
-
-// 			if let Some(e) = f(&authorities[position]) {
-// 				Err(e)?;
-// 			}
-
-// 			authorities.remove(position);
-// 			remove_authorities.push(account_id);
-// 		}
-
-// 		if remove_authorities.is_empty() {
-// 			Err(<Error<T, I>>::AuthorityNE)?
-// 		}
-
-// 		// TODO: optimize DB R/W, but it's ok in real case, since the set won't grow so large
-// 		for key in <MmrRootsToSignKeys<T, I>>::get() {
-// 			if let Some(mut mmr_root_to_sign) = <MmrRootsToSign<T, I>>::get(key) {
-// 				for account_id in &remove_authorities {
-// 					if let Some(position) = mmr_root_to_sign
-// 						.signatures
-// 						.iter()
-// 						.position(|(authority, _)| &authority == account_id)
-// 					{
-// 						mmr_root_to_sign.signatures.remove(position);
-// 					}
-
-// 					<MmrRootsToSign<T, I>>::insert(key, &mmr_root_to_sign);
-// 				}
-// 			} else {
-// 				// Should never enter this condition
-// 				// TODO: error log
-// 			}
-// 		}
-
-// 		Ok(authorities)
-// 	}
-
-// 	pub fn apply_authorities_change() -> DispatchResult {
-// 		let next_authorities = <NextAuthorities<T, I>>::get()
-// 			.ok_or(<Error<T, I>>::NextAuthoritiesNE)?
-// 			.next_authorities;
-// 		let authorities = <Authorities<T, I>>::get();
-
-// 		for RelayAuthority { account_id, .. } in authorities {
-// 			if next_authorities
-// 				.iter()
-// 				.position(|RelayAuthority { account_id: account_id_, .. }| {
-// 					account_id_ == &account_id
-// 				})
-// 				.is_none()
-// 			{
-// 				T::Currency::remove_lock(T::LockId::get(), &account_id);
-// 			}
-// 		}
-
-// 		<AuthoritiesToSign<T, I>>::kill();
-// 		<SubmitDuration<T, I>>::kill();
-
-// 		Ok(())
-// 	}
-
-// 	pub fn prepare_mmr_root_to_sign(block_number: BlockNumberFor<T>) {
-// 		if let Some(schedule) = <MmrRootsToSignKeys<T, I>>::get()
-// 			.into_iter()
-// 			// In order to get the schedule block number's MMR root
-// 			// 	1. MMR root doesn't contain itself(header hash)
-// 			// 	1. MMR's state change on finalize
-// 			// That's why we need to plus `2` to the scheduled block number
-// 			.find(|schedule| *schedule + 2_u32.into() == block_number)
-// 		{
-// 			if let Some(mmr_root) = T::DarwiniaMMR::get_root() {
-// 				let _ = <MmrRootsToSign<T, I>>::try_mutate(schedule, |maybe_mmr_root_to_sign| {
-// 					if maybe_mmr_root_to_sign.is_none() {
-// 						*maybe_mmr_root_to_sign = Some(MmrRootToSign::new(mmr_root));
-
-// 						log::trace!(
-// 							"Success to `prepare_mmr_root_to_sign` `{:?}` for block `{:?}` at block `{:?}`",
-// 							mmr_root,
-// 							schedule,
-// 							block_number
-// 						);
-
-// 						Ok(())
-// 					} else {
-// 						Err(())
-// 					}
-// 				});
-// 			} else {
-// 				log::error!(
-// 					"Failed to `get_root` while `prepare_mmr_root_to_sign` for block `{:?}` at block `{:?}`",
-// 					schedule,
-// 					block_number
-// 				);
-// 			}
-// 		}
-// 	}
-
-// 	pub fn mmr_root_signed(block_number: BlockNumberFor<T>) {
-// 		<MmrRootsToSign<T, I>>::remove(block_number);
-// 		<MmrRootsToSignKeys<T, I>>::mutate(|mmr_roots_to_sign_keys| {
-// 			if let Some(position) =
-// 				mmr_roots_to_sign_keys.iter().position(|key| key == &block_number)
-// 			{
-// 				mmr_roots_to_sign_keys.remove(position);
-// 			}
-// 		});
-// 	}
-
-// 	pub fn check_misbehavior(now: BlockNumberFor<T>) {
-// 		let find_and_slash_misbehavior =
-// 			|signatures: Vec<(AccountId<T>, RelayAuthoritySignature<T, I>)>| {
-// 				let _ = <Authorities<T, I>>::try_mutate(|authorities| {
-// 					let mut storage_changed = false;
-
-// 					for RelayAuthority { account_id, stake, .. } in authorities.iter_mut() {
-// 						if signatures
-// 							.iter()
-// 							.position(|(authority, _)| authority == account_id)
-// 							.is_none()
-// 						{
-// 							Self::deposit_event(RawEvent::SlashOnMisbehavior(
-// 								account_id.to_owned(),
-// 								*stake,
-// 							));
-
-// 							if !stake.is_zero() {
-// 								// Can not set lock 0, so remove the lock
-// 								T::Currency::remove_lock(T::LockId::get(), account_id);
-// 								T::Currency::slash(account_id, *stake);
-
-// 								*stake = 0u32.into();
-// 								storage_changed = true;
-// 							}
-
-// 							// TODO: schedule a new set
-// 						}
-// 					}
-
-// 					if storage_changed {
-// 						Ok(())
-// 					} else {
-// 						Err(())
-// 					}
-// 				});
-// 			};
-
-// 		if let Some(mut scheduled_authorities_change) = <NextAuthorities<T, I>>::get() {
-// 			if scheduled_authorities_change.deadline == now {
-// 				if let Some((_, signatures)) = <AuthoritiesToSign<T, I>>::get() {
-// 					find_and_slash_misbehavior(signatures);
-// 				} else {
-// 					// Should never enter this condition
-// 					// TODO: error log
-// 				}
-
-// 				let submit_duration = T::SubmitDuration::get();
-
-// 				scheduled_authorities_change.deadline += submit_duration;
-
-// 				<NextAuthorities<T, I>>::put(scheduled_authorities_change);
-// 				<SubmitDuration<T, I>>::mutate(|submit_duration_| {
-// 					*submit_duration_ += submit_duration
-// 				});
-// 			}
-// 		} else {
-// 			let at = now.saturating_sub(<SubmitDuration<T, I>>::get());
-
-// 			if let Some(mmr_root_to_sign) = <MmrRootsToSign<T, I>>::take(at) {
-// 				let _ = <MmrRootsToSignKeys<T, I>>::try_mutate(|keys| {
-// 					if let Some(position) = keys.iter().position(|key| key == &at) {
-// 						keys.remove(position);
-
-// 						Ok(())
-// 					} else {
-// 						Err(())
-// 					}
-// 				});
-
-// 				find_and_slash_misbehavior(mmr_root_to_sign.signatures);
-
-// 				// TODO: schedule a new mmr root (greatest one in the keys)
-// 			}
-// 		}
-// 	}
-// }
-
-// impl<T, I> RelayAuthorityProtocol<BlockNumberFor<T>> for Module<T, I>
-// where
-// 	T: Config<I>,
-// 	I: Instance,
-// {
-// 	type Signer = RelayAuthoritySigner<T, I>;
-
-// 	fn schedule_mmr_root(block_number: BlockNumberFor<T>) -> DispatchResult {
-// 		if <MmrRootsToSignKeys<T, I>>::exists() {
-// 			if let Some(scheduled_num) = <MmrRootsToSignKeys<T, I>>::decode_len() {
-// 				if scheduled_num > MAX_SCHEDULED_NUM {
-// 					Err(<Error<T, I>>::ScheduledTM)?;
-// 				}
-// 			} else {
-// 				Err("Failed to get `decode_len`")?;
-// 			}
-// 		}
-
-// 		let _ = <MmrRootsToSignKeys<T, I>>::try_mutate(|mmr_roots_to_sign_keys| {
-// 			// No-op if the sign was already scheduled
-// 			if mmr_roots_to_sign_keys.contains(&block_number) {
-// 				return Err(());
-// 			}
-
-// 			mmr_roots_to_sign_keys.push(block_number);
-
-// 			Self::deposit_event(RawEvent::ScheduleMMRRoot(block_number));
-
-// 			Ok(())
-// 		});
-
-// 		Ok(())
-// 	}
-
-// 	fn check_authorities_change_to_sync(
-// 		term: Term,
-// 		mut authorities_change_to_sync: Vec<Self::Signer>,
-// 	) -> DispatchResult {
-// 		ensure!(term == <NextTerm<I>>::get(), <Error<T, I>>::TermMis);
-
-// 		let mut next_authorities = <NextAuthorities<T, I>>::get()
-// 			.ok_or(<Error<T, I>>::NextAuthoritiesNE)?
-// 			.next_authorities
-// 			.into_iter()
-// 			.map(|authority| authority.signer)
-// 			.collect::<Vec<_>>();
-
-// 		authorities_change_to_sync.sort();
-// 		next_authorities.sort();
-
-// 		if authorities_change_to_sync == next_authorities {
-// 			Ok(())
-// 		} else {
-// 			Err(<Error<T, I>>::AuthoritiesMis)?
-// 		}
-// 	}
-
-// 	fn sync_authorities_change() -> DispatchResult {
-// 		let next_authorities = <NextAuthorities<T, I>>::take()
-// 			.ok_or(<Error<T, I>>::NextAuthoritiesNE)?
-// 			.next_authorities;
-
-// 		<Authorities<T, I>>::put(next_authorities);
-// 		<NextTerm<I>>::mutate(|next_term| *next_term += 1);
-
-// 		Ok(())
-// 	}
-// }
+impl<T: Config<I>, I: 'static> Pallet<T, I> {
+	fn remove_candidate_by_id_with<F>(
+		account_id: &T::AccountId,
+		f: F,
+	) -> Result<RelayAuthorityT<T, I>, DispatchError>
+	where
+		F: Fn(),
+	{
+		Ok(<Candidates<T, I>>::try_mutate(|candidates| {
+			if let Some(position) = find_authority_position::<T, I>(&candidates, account_id) {
+				f();
+
+				Ok(candidates.remove(position))
+			} else {
+				Err(<Error<T, I>>::CandidateNE)
+			}
+		})?)
+	}
+
+	fn on_authorities_change() -> bool {
+		<NextAuthorities<T, I>>::exists()
+	}
+
+	fn schedule_authorities_change(
+		next_authorities: BoundedVec<RelayAuthorityT<T, I>, T::MaxMembers>,
+	) {
+		// The message is composed of:
+		//
+		// hash(
+		// 	codec(
+		// 		spec_name: String,
+		// 		op_code: OpCode,
+		// 		term: Compact<u32>,
+		// 		next authorities: Vec<Signer>
+		// 	)
+		// )
+		let message = T::Sign::hash(
+			&Message {
+				_1: T::Version::get().spec_name,
+				_2: T::OpCodes::get().1,
+				_3: <NextTerm<T, I>>::get(),
+				_4: next_authorities
+					.iter()
+					.map(|authority| authority.signer.clone())
+					.collect::<Vec<_>>(),
+			}
+			.encode(),
+		);
+
+		<AuthoritiesToSign<T, I>>::put((
+			&message,
+			<BoundedVec<(T::AccountId, RelayAuthoritySignature<T, I>), T::MaxMembers>>::default(),
+		));
+
+		let submit_duration = T::SubmitDuration::get();
+
+		<NextAuthorities<T, I>>::put(ScheduledAuthoritiesChange {
+			next_authorities,
+			deadline: <frame_system::Pallet<T>>::block_number() + submit_duration,
+		});
+		<SubmitDuration<T, I>>::mutate(|submit_duration_| *submit_duration_ += submit_duration);
+
+		Self::deposit_event(<Event<T, I>>::ScheduleAuthoritiesChange(message));
+	}
+
+	fn remove_authority_by_ids_with<F>(
+		account_ids: &[T::AccountId],
+		f: F,
+	) -> Result<BoundedVec<RelayAuthorityT<T, I>, T::MaxMembers>, DispatchError>
+	where
+		F: Fn(&RelayAuthorityT<T, I>) -> Option<Error<T, I>>,
+	{
+		let mut authorities = <Authorities<T, I>>::get();
+		let mut remove_authorities = Vec::new();
+
+		for account_id in account_ids.iter() {
+			let position = find_authority_position::<T, I>(&authorities, account_id)
+				.ok_or(<Error<T, I>>::AuthorityNE)?;
+
+			if let Some(e) = f(&authorities[position]) {
+				Err(e)?;
+			}
+
+			authorities.remove(position);
+			remove_authorities.push(account_id);
+		}
+
+		if remove_authorities.is_empty() {
+			Err(<Error<T, I>>::AuthorityNE)?
+		}
+
+		// TODO: optimize DB R/W, but it's ok in real case, since the set won't grow so large
+		for key in <MmrRootsToSignKeys<T, I>>::get() {
+			if let Some(mut mmr_root_to_sign) = <MmrRootsToSign<T, I>>::get(key) {
+				for account_id in &remove_authorities {
+					if let Some(position) = mmr_root_to_sign
+						.signatures
+						.iter()
+						.position(|(authority, _)| &authority == account_id)
+					{
+						mmr_root_to_sign.signatures.remove(position);
+					}
+
+					<MmrRootsToSign<T, I>>::insert(key, &mmr_root_to_sign);
+				}
+			} else {
+				// Should never enter this condition
+				// TODO: error log
+			}
+		}
+
+		Ok(authorities)
+	}
+
+	fn prepare_mmr_root_to_sign(block_number: T::BlockNumber) {
+		if let Some(schedule) = <MmrRootsToSignKeys<T, I>>::get()
+			.into_iter()
+			// In order to get the schedule block number's MMR root.
+			// 	1. MMR root doesn't contain itself(header hash)
+			// 	1. MMR's state change on finalize
+			// That's why we need to plus `2` to the scheduled block number.
+			.find(|schedule| *schedule + 2_u32.into() == block_number)
+		{
+			if let Some(mmr_root) = T::Mmr::get_root() {
+				let _ = <MmrRootsToSign<T, I>>::try_mutate(schedule, |maybe_mmr_root_to_sign| {
+					if maybe_mmr_root_to_sign.is_none() {
+						*maybe_mmr_root_to_sign = Some(MmrRootToSign::new(mmr_root));
+
+						Ok(())
+					} else {
+						Err(())
+					}
+				});
+			} else {
+				log::error!(
+						"Failed to `get_root` while `prepare_mmr_root_to_sign` for block `{:?}` at block `{:?}`",
+						schedule,
+						block_number
+					);
+			}
+		}
+	}
+
+	fn apply_authorities_change() -> DispatchResult {
+		let next_authorities = <NextAuthorities<T, I>>::get()
+			.ok_or(<Error<T, I>>::NextAuthoritiesNE)?
+			.next_authorities;
+		let authorities = <Authorities<T, I>>::get();
+
+		for RelayAuthority { account_id, .. } in authorities {
+			if next_authorities
+				.iter()
+				.position(|RelayAuthority { account_id: account_id_, .. }| {
+					account_id_ == &account_id
+				})
+				.is_none()
+			{
+				T::Currency::remove_lock(T::LockId::get(), &account_id);
+			}
+		}
+
+		<AuthoritiesToSign<T, I>>::kill();
+		<SubmitDuration<T, I>>::kill();
+
+		Ok(())
+	}
+
+	fn mmr_root_signed(block_number: T::BlockNumber) {
+		<MmrRootsToSign<T, I>>::remove(block_number);
+		<MmrRootsToSignKeys<T, I>>::mutate(|mmr_roots_to_sign_keys| {
+			if let Some(position) =
+				mmr_roots_to_sign_keys.iter().position(|key| key == &block_number)
+			{
+				mmr_roots_to_sign_keys.remove(position);
+			}
+		});
+	}
+
+	fn check_misbehavior(now: T::BlockNumber) {
+		let find_and_slash_misbehavior = |signatures: BoundedVec<
+			(T::AccountId, RelayAuthoritySignature<T, I>),
+			T::MaxMembers,
+		>| {
+			let _ = <Authorities<T, I>>::try_mutate(|authorities| {
+				let mut storage_changed = false;
+
+				for RelayAuthority { account_id, stake, .. } in authorities.as_mut().iter_mut() {
+					if signatures
+						.iter()
+						.position(|(authority, _)| authority == account_id)
+						.is_none()
+					{
+						Self::deposit_event(<Event<T, I>>::SlashOnMisbehavior(
+							account_id.to_owned(),
+							*stake,
+						));
+
+						if !stake.is_zero() {
+							// Can not set lock 0, so remove the lock
+							T::Currency::remove_lock(T::LockId::get(), account_id);
+							T::Currency::slash(account_id, *stake);
+
+							*stake = 0_u32.into();
+							storage_changed = true;
+						}
+
+						// TODO: schedule a new set
+					}
+				}
+
+				if storage_changed {
+					Ok(())
+				} else {
+					Err(())
+				}
+			});
+		};
+
+		if let Some(mut scheduled_authorities_change) = <NextAuthorities<T, I>>::get() {
+			if scheduled_authorities_change.deadline == now {
+				if let Some((_, signatures)) = <AuthoritiesToSign<T, I>>::get() {
+					find_and_slash_misbehavior(signatures);
+				} else {
+					// Should never enter this condition
+					// TODO: error log
+				}
+
+				let submit_duration = T::SubmitDuration::get();
+
+				scheduled_authorities_change.deadline += submit_duration;
+
+				<NextAuthorities<T, I>>::put(scheduled_authorities_change);
+				<SubmitDuration<T, I>>::mutate(|submit_duration_| {
+					*submit_duration_ += submit_duration
+				});
+			}
+		} else {
+			let at = now.saturating_sub(<SubmitDuration<T, I>>::get());
+
+			if let Some(mmr_root_to_sign) = <MmrRootsToSign<T, I>>::take(at) {
+				let _ = <MmrRootsToSignKeys<T, I>>::try_mutate(|keys| {
+					if let Some(position) = keys.iter().position(|key| key == &at) {
+						keys.remove(position);
+
+						Ok(())
+					} else {
+						Err(())
+					}
+				});
+
+				find_and_slash_misbehavior(mmr_root_to_sign.signatures);
+
+				// TODO: schedule a new mmr root (greatest one in the keys)
+			}
+		}
+	}
+}
+impl<T, I> RelayAuthorityProtocol<T::BlockNumber> for Pallet<T, I>
+where
+	T: Config<I>,
+	I: 'static,
+{
+	type Signer = RelayAuthoritySigner<T, I>;
+
+	fn schedule_mmr_root(block_number: T::BlockNumber) -> DispatchResult {
+		if <MmrRootsToSignKeys<T, I>>::exists() {
+			if let Some(scheduled_num) = <MmrRootsToSignKeys<T, I>>::decode_len() {
+				if scheduled_num > MAX_SCHEDULED_NUM {
+					Err(<Error<T, I>>::ScheduledTM)?;
+				}
+			} else {
+				Err("Failed to get `decode_len`")?;
+			}
+		}
+
+		let _ = <MmrRootsToSignKeys<T, I>>::try_mutate(|mmr_roots_to_sign_keys| {
+			// No-op if the sign was already scheduled
+			if mmr_roots_to_sign_keys.contains(&block_number) {
+				return Err(());
+			}
+
+			mmr_roots_to_sign_keys.push(block_number);
+
+			Self::deposit_event(<Event<T, I>>::ScheduleMMRRoot(block_number));
+
+			Ok(())
+		});
+
+		Ok(())
+	}
+
+	fn check_authorities_change_to_sync(
+		term: Term,
+		mut authorities_change_to_sync: Vec<Self::Signer>,
+	) -> DispatchResult {
+		ensure!(term == <NextTerm<T, I>>::get(), <Error<T, I>>::TermMis);
+
+		let mut next_authorities = <NextAuthorities<T, I>>::get()
+			.ok_or(<Error<T, I>>::NextAuthoritiesNE)?
+			.next_authorities
+			.into_iter()
+			.map(|authority| authority.signer)
+			.collect::<Vec<_>>();
+
+		authorities_change_to_sync.sort();
+		next_authorities.sort();
+
+		if authorities_change_to_sync == next_authorities {
+			Ok(())
+		} else {
+			Err(<Error<T, I>>::AuthoritiesMis)?
+		}
+	}
+
+	fn sync_authorities_change() -> DispatchResult {
+		let next_authorities = <NextAuthorities<T, I>>::take()
+			.ok_or(<Error<T, I>>::NextAuthoritiesNE)?
+			.next_authorities;
+
+		<Authorities<T, I>>::put(next_authorities);
+		<NextTerm<T, I>>::mutate(|next_term| *next_term += 1);
+
+		Ok(())
+	}
+}
+
+/// The scheduled change of authority set.
+#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[scale_info(skip_type_params(MaxMembers))]
+pub struct ScheduledAuthoritiesChange<AccountId, Signer, RingBalance, BlockNumber, MaxMembers>
+where
+	MaxMembers: Get<u32>,
+{
+	/// The incoming new authorities.
+	next_authorities:
+		BoundedVec<RelayAuthority<AccountId, Signer, RingBalance, BlockNumber>, MaxMembers>,
+	/// The deadline of the previous authorities to sign for the next authorities.
+	deadline: BlockNumber,
+}
+
+#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[scale_info(skip_type_params(MaxMembers))]
+pub struct MmrRootToSign<MmrRoot, AccountId, Signature, MaxMembers>
+where
+	MaxMembers: Get<u32>,
+{
+	mmr_root: MmrRoot,
+	signatures: BoundedVec<(AccountId, Signature), MaxMembers>,
+}
+impl<MmrRoot, AccountId, Signature, MaxMembers>
+	MmrRootToSign<MmrRoot, AccountId, Signature, MaxMembers>
+where
+	MaxMembers: Get<u32>,
+{
+	fn new(mmr_root: MmrRoot) -> Self {
+		Self { mmr_root, signatures: BoundedVec::default() }
+	}
+}
+
+#[derive(Encode)]
+struct Message<_1, _2, _3, _4>
+where
+	_1: Encode,
+	_2: Encode,
+	_3: Encode,
+	_4: Encode,
+{
+	_1: _1,
+	_2: _2,
+	#[codec(compact)]
+	_3: _3,
+	_4: _4,
+}
 
 fn find_authority_position<T, I>(
 	authorities: &[RelayAuthorityT<T, I>],
-	account_id: &AccountId<T>,
+	account_id: &T::AccountId,
 ) -> Option<usize>
 where
 	T: Config<I>,
@@ -986,19 +1038,19 @@ where
 	authorities.iter().position(|relay_authority| relay_authority == account_id)
 }
 
-// pub fn find_signer<T, I>(
-// 	authorities: &[RelayAuthorityT<T, I>],
-// 	account_id: &AccountId<T>,
-// ) -> Option<RelayAuthoritySigner<T, I>>
-// where
-// 	T: Config<I>,
-// 	I: Instance,
-// {
-// 	if let Some(position) =
-// 		authorities.iter().position(|relay_authority| relay_authority == account_id)
-// 	{
-// 		Some(authorities[position].signer.to_owned())
-// 	} else {
-// 		None
-// 	}
-// }
+fn find_signer<T, I>(
+	authorities: &[RelayAuthorityT<T, I>],
+	account_id: &T::AccountId,
+) -> Option<RelayAuthoritySigner<T, I>>
+where
+	T: Config<I>,
+	I: 'static,
+{
+	if let Some(position) =
+		authorities.iter().position(|relay_authority| relay_authority == account_id)
+	{
+		Some(authorities[position].signer.to_owned())
+	} else {
+		None
+	}
+}

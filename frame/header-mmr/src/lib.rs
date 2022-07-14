@@ -60,31 +60,33 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod primitives;
+pub use primitives::*;
+
+mod weights;
+pub use weights::WeightInfo;
+
+// --- crates.io ---
+use scale_info::TypeInfo;
+#[cfg(feature = "std")]
+use serde::Serialize;
+// --- paritytech ---
+use frame_support::{log, pallet_prelude::*};
+use frame_system::pallet_prelude::*;
+use sp_runtime::generic::DigestItem;
+#[cfg(any(test, feature = "easy-testing"))]
+use sp_runtime::{generic::OpaqueDigestItemId, traits::Header};
+use sp_std::prelude::*;
+
+type NodeIndex = u64;
+
+/// The prefix of [`MerkleMountainRangeRootLog`]
+pub const LOG_PREFIX: [u8; 4] = *b"MMRR";
+
 #[frame_support::pallet]
 pub mod pallet {
-	pub mod types {
-		/// The type use for indexing a node
-		pub type NodeIndex = u64;
-	}
-	pub use types::*;
-
-	// --- crates.io ---
-	use scale_info::TypeInfo;
-	#[cfg(feature = "std")]
-	use serde::Serialize;
-	// --- paritytech ---
-	use frame_support::{log, pallet_prelude::*};
-	use frame_system::pallet_prelude::*;
-	use sp_runtime::generic::DigestItem;
-	#[cfg(any(test, feature = "easy-testing"))]
-	use sp_runtime::{generic::OpaqueDigestItemId, traits::Header};
-	use sp_std::prelude::*;
 	// --- darwinia-network ---
-	use crate::{primitives::*, weights::WeightInfo};
-	use darwinia_relay_primitives::MMR as MMRT;
-
-	/// The prefix of [`MerkleMountainRangeRootLog`]
-	pub const LOG_PREFIX: [u8; 4] = *b"MMRR";
+	use crate::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -129,54 +131,42 @@ pub mod pallet {
 			}
 		}
 	}
-	impl<T: Config> Pallet<T> {
-		pub fn offchain_key(position: NodeIndex) -> Vec<u8> {
-			(T::INDEXING_PREFIX, position).encode()
-		}
-
-		// Remove the cfg, once there's a requirement from runtime usage
-		#[cfg(any(test, feature = "easy-testing"))]
-		pub fn find_parent_mmr_root(header: &T::Header) -> Option<T::Hash> {
-			let find_parent_mmr_root = |m: MerkleMountainRangeRootLog<_>| match m.prefix {
-				LOG_PREFIX => Some(m.parent_mmr_root),
-				_ => None,
-			};
-
-			// find the first other digest with the right prefix which converts to
-			// the right kind of mmr root log.
-			header.digest().convert_first(|d| {
-				d.try_to(OpaqueDigestItemId::Other).and_then(find_parent_mmr_root)
-			})
-		}
-	}
-	impl<T: Config> MMRT<BlockNumberFor<T>, T::Hash> for Pallet<T> {
-		fn get_root() -> Option<T::Hash> {
-			<Mmr<RuntimeStorage, T>>::with_size(<MmrSize<T>>::get()).get_root().ok()
-		}
-	}
-
-	#[cfg_attr(feature = "std", derive(Serialize))]
-	#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
-	pub struct MerkleMountainRangeRootLog<Hash> {
-		/// Specific prefix to identify the mmr root log in the digest items with Other type.
-		pub prefix: [u8; 4],
-		/// The merkle mountain range root hash.
-		pub parent_mmr_root: Hash,
-	}
 }
 pub use pallet::*;
 
-pub mod primitives;
-
-pub mod weights;
-
-pub mod migration {
-	#[cfg(feature = "try-runtime")]
-	pub mod try_runtime {
-		pub fn pre_migrate() -> Result<(), &'static str> {
-			Ok(())
-		}
+impl<T: Config> Pallet<T> {
+	fn offchain_key(position: NodeIndex) -> Vec<u8> {
+		(T::INDEXING_PREFIX, position).encode()
 	}
 
-	pub fn migrate() {}
+	// Remove the cfg, once there's a requirement from runtime usage
+	#[cfg(any(test, feature = "easy-testing"))]
+	pub fn find_parent_mmr_root(header: &T::Header) -> Option<T::Hash> {
+		let find_parent_mmr_root = |m: MerkleMountainRangeRootLog<_>| match m.prefix {
+			LOG_PREFIX => Some(m.parent_mmr_root),
+			_ => None,
+		};
+
+		// find the first other digest with the right prefix which converts to
+		// the right kind of mmr root log.
+		header
+			.digest()
+			.convert_first(|d| d.try_to(OpaqueDigestItemId::Other).and_then(find_parent_mmr_root))
+	}
+}
+impl<T: Config> GetRoot for Pallet<T> {
+	type Hash = T::Hash;
+
+	fn get_root() -> Option<Self::Hash> {
+		<Mmr<RuntimeStorage, T>>::with_size(<MmrSize<T>>::get()).get_root().ok()
+	}
+}
+
+#[cfg_attr(feature = "std", derive(Serialize))]
+#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+pub struct MerkleMountainRangeRootLog<Hash> {
+	/// Specific prefix to identify the mmr root log in the digest items with Other type.
+	pub prefix: [u8; 4],
+	/// The merkle mountain range root hash.
+	pub parent_mmr_root: Hash,
 }

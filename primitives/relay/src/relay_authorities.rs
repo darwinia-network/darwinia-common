@@ -70,12 +70,6 @@ pub trait RelayAuthorityProtocol<BlockNumber> {
 	fn sync_authorities_change() -> DispatchResult;
 }
 
-pub trait Mmr {
-	type Hash: Clone + Debug + PartialEq + FullCodec + TypeInfo;
-
-	fn get_root() -> Option<Self::Hash>;
-}
-
 // Avoid duplicate type
 // Use `RelayAuthority` instead `Authority`
 #[derive(Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
@@ -101,40 +95,5 @@ where
 {
 	fn eq(&self, account_id: &AccountId) -> bool {
 		&self.account_id == account_id
-	}
-}
-
-#[derive(Encode)]
-pub struct _S<_1, _2, _3, _4>
-where
-	_1: Encode,
-	_2: Encode,
-	_3: Encode,
-	_4: Encode,
-{
-	pub _1: _1,
-	pub _2: _2,
-	#[codec(compact)]
-	pub _3: _3,
-	pub _4: _4,
-}
-
-/// The scheduled change of authority set
-#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
-pub struct ScheduledAuthoritiesChange<AccountId, Signer, RingBalance, BlockNumber> {
-	/// The new authorities after the change
-	pub next_authorities: Vec<RelayAuthority<AccountId, Signer, RingBalance, BlockNumber>>,
-	/// The deadline of the previous authorities to sign for the next authorities
-	pub deadline: BlockNumber,
-}
-
-#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
-pub struct MmrRootToSign<MmrRoot, AccountId, Signature> {
-	pub mmr_root: MmrRoot,
-	pub signatures: Vec<(AccountId, Signature)>,
-}
-impl<MmrRoot, AccountId, Signature> MmrRootToSign<MmrRoot, AccountId, Signature> {
-	pub fn new(mmr_root: MmrRoot) -> Self {
-		Self { mmr_root, signatures: Vec::new() }
 	}
 }

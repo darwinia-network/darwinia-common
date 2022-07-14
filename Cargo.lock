@@ -1720,7 +1720,6 @@ version = "2.8.15"
 dependencies = [
  "array-bytes",
  "ckb-merkle-mountain-range",
- "darwinia-relay-primitives",
  "darwinia-support",
  "frame-support",
  "frame-system",

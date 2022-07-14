@@ -35,18 +35,19 @@ use sp_runtime::{
 use crate::{self as darwinia_relay_authorities, *};
 use darwinia_relay_primitives::relay_authorities::Sign as SignT;
 
-pub type Block = MockBlock<Test>;
-pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+type Block = MockBlock<Test>;
+type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
-pub type Hash = H256;
-pub type BlockNumber = u64;
-pub type AccountId = u64;
-pub type Index = u64;
-pub type Balance = u128;
+pub(super) type BlockNumber = u64;
+pub(super) type AccountId = u64;
+pub(super) type Balance = u128;
 
-pub type RelayAuthoritiesError = Error<Test, DefaultInstance>;
+pub(super) type RelayAuthoritiesError = Error<Test>;
 
-pub const DEFAULT_SIGNATURE: [u8; 65] = [0; 65];
+type Hash = H256;
+type Index = u64;
+
+const DEFAULT_SIGNATURE: [u8; 65] = [0; 65];
 
 darwinia_support::impl_test_account_data! {}
 
@@ -77,7 +78,7 @@ impl frame_system::Config for Test {
 }
 
 frame_support::parameter_types! {
-	pub const MaxLocks: u32 = 1024;
+	 const MaxLocks: u32 = 1024;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
 	type AccountStore = System;
@@ -112,28 +113,43 @@ impl SignT<BlockNumber> for Sign {
 		true
 	}
 }
+impl Clone for MaxMembers {
+	fn clone(&self) -> Self {
+		Self {}
+	}
+}
+impl core::fmt::Debug for MaxMembers {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		f.debug_struct("MaxMembers").finish()
+	}
+}
+impl PartialEq for MaxMembers {
+	fn eq(&self, other: &Self) -> bool {
+		true
+	}
+}
 frame_support::parameter_types! {
-	pub const LockId: LockIdentifier = *b"lockidts";
-	pub const TermDuration: BlockNumber = 10;
-	pub const MaxCandidates: usize = 7;
-	pub const SignThreshold: Perbill = Perbill::from_percent(60);
-	pub const SubmitDuration: BlockNumber = 3;
+	  pub const LockId: LockIdentifier = *b"lockidts";
+	  pub const TermDuration: BlockNumber = 10;
+	  pub const MaxMembers: u32 = 7;
+	  pub const SignThreshold: Perbill = Perbill::from_percent(60);
+	  pub const SubmitDuration: BlockNumber = 3;
 }
 impl Config for Test {
 	type AddOrigin = EnsureRoot<Self::AccountId>;
-	type DarwiniaMMR = HeaderMmr;
+	type Currency = Ring;
 	type Event = Event;
 	type LockId = LockId;
-	type MaxCandidates = MaxCandidates;
+	type MaxMembers = MaxMembers;
+	type Mmr = HeaderMmr;
 	type OpCodes = ();
 	type RemoveOrigin = EnsureRoot<Self::AccountId>;
 	type ResetOrigin = EnsureRoot<Self::AccountId>;
-	type RingCurrency = Ring;
 	type Sign = Sign;
 	type SignThreshold = SignThreshold;
 	type SubmitDuration = SubmitDuration;
 	type TermDuration = TermDuration;
-	type WeightInfo = ();
+	// type WeightInfo = ();
 }
 
 frame_support::construct_runtime! {
@@ -163,23 +179,21 @@ pub fn new_test_ext() -> TestExternalities {
 	}
 	.assimilate_storage(&mut storage)
 	.unwrap();
-	darwinia_relay_authorities::GenesisConfig::<Test, DefaultInstance> {
-		authorities: vec![(9, signer_of(9), 1)],
-	}
-	.assimilate_storage(&mut storage)
-	.unwrap();
+	darwinia_relay_authorities::GenesisConfig::<Test> { authorities: vec![(9, signer_of(9), 1)] }
+		.assimilate_storage(&mut storage)
+		.unwrap();
 
 	storage.into()
 }
 
-pub fn run_to_block(n: BlockNumber) {
+pub(super) fn run_to_block(n: BlockNumber) {
 	for b in System::block_number() + 1..=n {
 		System::set_block_number(b);
-		RelayAuthorities::on_initialize(b);
+		<RelayAuthorities as OnInitialize<_>>::on_initialize(b);
 	}
 }
 
-pub fn run_to_block_from_genesis(n: BlockNumber) -> Vec<Header> {
+pub(super) fn run_to_block_from_genesis(n: BlockNumber) -> Vec<Header> {
 	let mut headers = vec![<frame_system::Pallet<Test>>::finalize()];
 
 	for block_number in 1..=n {
@@ -191,8 +205,8 @@ pub fn run_to_block_from_genesis(n: BlockNumber) -> Vec<Header> {
 			&Default::default(),
 			Default::default(),
 		);
-		RelayAuthorities::on_initialize(block_number);
-		HeaderMmr::on_finalize(block_number);
+		<RelayAuthorities as OnInitialize<_>>::on_initialize(block_number);
+		<HeaderMmr as OnFinalize<_>>::on_finalize(block_number);
 
 		headers.push(<frame_system::Pallet<Test>>::finalize());
 	}
@@ -200,7 +214,7 @@ pub fn run_to_block_from_genesis(n: BlockNumber) -> Vec<Header> {
 	headers
 }
 
-pub fn events() -> Vec<Event> {
+pub(super) fn events() -> Vec<Event> {
 	let events = System::events().into_iter().map(|evt| evt.event).collect::<Vec<_>>();
 
 	System::reset_events();
@@ -208,18 +222,21 @@ pub fn events() -> Vec<Event> {
 	events
 }
 
-pub fn relay_authorities_events() -> Vec<Event> {
+pub(super) fn relay_authorities_events() -> Vec<Event> {
 	events().into_iter().filter(|e| matches!(e, Event::RelayAuthorities(_))).collect()
 }
 
-pub fn request_authority(account_id: AccountId) -> DispatchResult {
+pub(super) fn request_authority(account_id: AccountId) -> DispatchResult {
 	RelayAuthorities::request_authority(Origin::signed(account_id), 1, signer_of(account_id))
 }
 
-pub fn request_authority_with_stake(account_id: AccountId, stake: Balance) -> DispatchResult {
+pub(super) fn request_authority_with_stake(
+	account_id: AccountId,
+	stake: Balance,
+) -> DispatchResult {
 	RelayAuthorities::request_authority(Origin::signed(account_id), stake, signer_of(account_id))
 }
 
-pub fn signer_of(account_id: AccountId) -> [u8; 20] {
+pub(super) fn signer_of(account_id: AccountId) -> [u8; 20] {
 	[account_id as _; 20]
 }
