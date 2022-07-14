@@ -47,7 +47,7 @@ pub(super) type RelayAuthoritiesError = Error<Test>;
 type Hash = H256;
 type Index = u64;
 
-const DEFAULT_SIGNATURE: [u8; 65] = [0; 65];
+pub(super) const DEFAULT_SIGNATURE: [u8; 65] = [0; 65];
 
 darwinia_support::impl_test_account_data! {}
 
@@ -124,7 +124,7 @@ impl core::fmt::Debug for MaxMembers {
 	}
 }
 impl PartialEq for MaxMembers {
-	fn eq(&self, other: &Self) -> bool {
+	fn eq(&self, _: &Self) -> bool {
 		true
 	}
 }
@@ -132,6 +132,7 @@ frame_support::parameter_types! {
 	  pub const LockId: LockIdentifier = *b"lockidts";
 	  pub const TermDuration: BlockNumber = 10;
 	  pub const MaxMembers: u32 = 7;
+	  pub const MaxSchedules: u32 = 10;
 	  pub const SignThreshold: Perbill = Perbill::from_percent(60);
 	  pub const SubmitDuration: BlockNumber = 3;
 }
@@ -141,6 +142,7 @@ impl Config for Test {
 	type Event = Event;
 	type LockId = LockId;
 	type MaxMembers = MaxMembers;
+	type MaxSchedules = MaxSchedules;
 	type Mmr = HeaderMmr;
 	type OpCodes = ();
 	type RemoveOrigin = EnsureRoot<Self::AccountId>;
