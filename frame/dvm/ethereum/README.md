@@ -9,9 +9,8 @@ Those pallets are part of the DVM system:
 - `darwinia-ethereum`: Ethereum block handling.
 - `darwinia-evm`: EVM execution handling.
 
-## EVM Pallet Customed Precompiles
+## EVM Pallet Customized Precompiles
 
-- `darwinia-evm-precompile-bridge-ethereum`: The encoder precompile for ethereum bridge.
 - `darwinia-evm-precompile-bridge-s2s`: The encoder precompile for s2s bridge.
 - `darwinia-evm-precompile-bls12-381`: The BLS12381 precompile.
 - `darwinia-evm-precompile-mpt`: The precompile to verify merkle patricia trie storage proof.

@@ -1564,20 +1564,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-evm-precompile-bridge-ethereum"
-version = "2.8.15"
-dependencies = [
- "darwinia-evm",
- "darwinia-evm-precompile-utils",
- "fp-evm",
- "from-ethereum-issuing",
- "parity-scale-codec",
- "sp-core",
- "sp-io",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-evm-precompile-bridge-s2s"
 version = "2.8.15"
 dependencies = [
@@ -2991,29 +2977,6 @@ source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.1
 dependencies = [
  "frame-support",
  "sp-api",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "from-ethereum-issuing"
-version = "2.8.15"
-dependencies = [
- "array-bytes",
- "darwinia-bridge-ethereum",
- "darwinia-ethereum",
- "darwinia-evm",
- "darwinia-relay-primitives",
- "darwinia-support",
- "dp-contract",
- "ethereum-primitives",
- "fp-evm",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sha3 0.9.1",
  "sp-runtime",
  "sp-std",
 ]
@@ -6174,7 +6137,6 @@ dependencies = [
  "darwinia-bridge-ethereum",
  "darwinia-ethereum",
  "darwinia-evm",
- "darwinia-evm-precompile-bridge-ethereum",
  "darwinia-evm-precompile-bridge-s2s",
  "darwinia-evm-precompile-dispatch",
  "darwinia-evm-precompile-state-storage",
@@ -6203,7 +6165,6 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "from-ethereum-issuing",
  "from-substrate-issuing",
  "module-transaction-pause",
  "moonbeam-rpc-primitives-debug",
