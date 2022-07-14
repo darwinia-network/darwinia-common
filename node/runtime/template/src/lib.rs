@@ -527,8 +527,8 @@ sp_api::impl_runtime_apis! {
 
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
-			// list_benchmark!(list, extra, darwinia_balances::<Instance1>, Balances);
-			// list_benchmark!(list, extra, darwinia_balances::<Instance2>, Kton);
+			// list_benchmark!(list, extra, darwinia_balances, Balances);
+			// list_benchmark!(list, extra, darwinia_balances, Kton);
 			list_benchmark!(list, extra, pallet_grandpa, Grandpa);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
@@ -551,9 +551,9 @@ sp_api::impl_runtime_apis! {
 
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			// add_benchmark!(params, batches, darwinia_balances::<Instance1>, Balances);
-			// add_benchmark!(params, batches, darwinia_balances::<Instance2>, Kton);
-			add_benchmark!(params, batches, pallet_grandpa, Grandpa);
+			// add_benchmark!(params, batches, darwinia_balances, Balances);
+			// add_benchmark!(params, batches, darwinia_balances, Kton);
+			// add_benchmark!(params, batches, pallet_grandpa, Grandpa);
 
 			Ok(batches)
 		}
