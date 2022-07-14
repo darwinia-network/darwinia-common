@@ -1,0 +1,14 @@
+pub mod frame_system;
+pub mod from_substrate_issuing;
+pub mod pallet_democracy;
+pub mod pallet_identity;
+pub mod pallet_im_online;
+pub mod pallet_multisig;
+pub mod pallet_proxy;
+pub mod pallet_scheduler;
+pub mod pallet_timestamp;
+pub mod pallet_tips;
+pub mod pallet_treasury_kton_treasury;
+pub mod pallet_treasury_treasury;
+pub mod pallet_utility;
+pub mod pallet_vesting;
