@@ -709,7 +709,7 @@ sp_api::impl_runtime_apis! {
 			// list_benchmark!(list, extra, darwinia_balances, Balances);
 			// list_benchmark!(list, extra, darwinia_balances, Kton);
 			list_benchmark!(list, extra, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
-			// TODO wait for https://github.com/paritytech/substrate/issues/11068
+			// TODO  https://github.com/paritytech/substrate/issues/11068
 			// list_benchmark!(list, extra, pallet_session, SessionBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_grandpa, Grandpa);
 			list_benchmark!(list, extra, pallet_im_online, ImOnline);
@@ -740,15 +740,17 @@ sp_api::impl_runtime_apis! {
 			let params = (&config, &whitelist);
 
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_babe, Babe);
+			// TODO https://github.com/paritytech/substrate/issues/11834
+			// add_benchmark!(params, batches, pallet_babe, Babe);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
 			// add_benchmark!(params, batches, darwinia_balances, Balances);
 			// add_benchmark!(params, batches, darwinia_balances, Kton);
 			// TODO FIX
 			// add_benchmark!(params, batches, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
-			// TODO wait for https://github.com/paritytech/substrate/issues/11068
+			// TODO https://github.com/paritytech/substrate/issues/11068
 			// add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_grandpa, Grandpa);
+			// TODO https://github.com/paritytech/substrate/issues/11835
+			// add_benchmark!(params, batches, pallet_grandpa, Grandpa);
 			add_benchmark!(params, batches, pallet_im_online, ImOnline);
 			add_benchmark!(params, batches, pallet_treasury, Treasury);
 			add_benchmark!(params, batches, pallet_scheduler, Scheduler);
