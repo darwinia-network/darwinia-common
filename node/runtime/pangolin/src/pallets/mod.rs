@@ -109,9 +109,6 @@ pub use bridge_ethereum::*;
 pub mod to_ethereum_backing_;
 pub use to_ethereum_backing_::*;
 
-pub mod from_ethereum_issuing_;
-pub use from_ethereum_issuing_::*;
-
 pub mod relayer_game;
 pub use relayer_game::*;
 
