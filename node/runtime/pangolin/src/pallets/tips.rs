@@ -1,7 +1,7 @@
 // --- paritytech ---
 use sp_runtime::Percent;
 // --- darwinia-network ---
-use crate::*;
+use crate::{weights::pallet_tips::WeightInfo, *};
 use pallet_tips::Config;
 
 frame_support::parameter_types! {
@@ -20,5 +20,5 @@ impl Config for Runtime {
 	type TipFindersFee = TipFindersFee;
 	type TipReportDepositBase = TipReportDepositBase;
 	type Tippers = PhragmenElection;
-	type WeightInfo = ();
+	type WeightInfo = WeightInfo<Runtime>;
 }

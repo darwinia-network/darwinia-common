@@ -3,7 +3,7 @@ use frame_support::weights::Weight;
 use pallet_scheduler::Config;
 use sp_runtime::Perbill;
 // --- darwinia-network ---
-use crate::*;
+use crate::{weights::pallet_scheduler::WeightInfo, *};
 
 frame_support::parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80)
@@ -19,5 +19,5 @@ impl Config for Runtime {
 	type Origin = Origin;
 	type PalletsOrigin = OriginCaller;
 	type ScheduleOrigin = RootOrigin;
-	type WeightInfo = ();
+	type WeightInfo = WeightInfo<Runtime>;
 }
