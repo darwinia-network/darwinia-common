@@ -12,9 +12,8 @@ pub use try_runtime::*;
 use crate::*;
 
 #[allow(unused)]
-pub fn migrate<T, I>()
+pub fn migrate<T>()
 where
-	T: Config<I>,
-	I: 'static,
+	T: Config,
 {
 }

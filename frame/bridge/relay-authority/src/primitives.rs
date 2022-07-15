@@ -26,22 +26,22 @@ pub type Term = u32;
 // Alias only.
 pub(super) type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub(super) type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
-pub(super) type MaxMembers<T, I> = <T as Config<I>>::MaxMembers;
+pub(super) type MaxMembers<T> = <T as Config>::MaxMembers;
 // Basics.
-pub(super) type Balance<T, I> = <<T as Config<I>>::Currency as Currency<AccountId<T>>>::Balance;
+pub(super) type Balance<T> = <<T as Config>::Currency as Currency<AccountId<T>>>::Balance;
 // Sign things.
-pub(super) type RelayAuthoritySigner<T, I> = <<T as Config<I>>::Sign as Sign>::Signer;
-pub(super) type RelayAuthorityMessage<T, I> = <<T as Config<I>>::Sign as Sign>::Message;
-pub(super) type RelayAuthoritySignature<T, I> = <<T as Config<I>>::Sign as Sign>::Signature;
+pub(super) type RelayAuthoritySigner<T> = <<T as Config>::Sign as Sign>::Signer;
+pub(super) type RelayAuthorityMessage<T> = <<T as Config>::Sign as Sign>::Message;
+pub(super) type RelayAuthoritySignature<T> = <<T as Config>::Sign as Sign>::Signature;
 // Authority things.
-pub(super) type RelayAuthorityT<T, I> =
-	RelayAuthority<AccountId<T>, RelayAuthoritySigner<T, I>, Balance<T, I>, BlockNumber<T>>;
-pub(super) type ScheduledAuthoritiesChangeT<T, I> = ScheduledAuthoritiesChange<
+pub(super) type RelayAuthorityT<T> =
+	RelayAuthority<AccountId<T>, RelayAuthoritySigner<T>, Balance<T>, BlockNumber<T>>;
+pub(super) type ScheduledAuthoritiesChangeT<T> = ScheduledAuthoritiesChange<
 	AccountId<T>,
-	RelayAuthoritySigner<T, I>,
-	Balance<T, I>,
+	RelayAuthoritySigner<T>,
+	Balance<T>,
 	BlockNumber<T>,
-	MaxMembers<T, I>,
+	MaxMembers<T>,
 >;
 
 pub trait RelayAuthorityProtocol<BlockNumber> {

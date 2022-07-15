@@ -66,7 +66,7 @@ pub mod pallet {
 	use sp_std::{convert::TryFrom, prelude::*};
 	// --- darwinia-network ---
 	use crate::weights::WeightInfo;
-	use darwinia_relay_authority::{RelayAuthorityProtocol, Term, EcdsaSigner};
+	use darwinia_relay_authority::{EcdsaSigner, RelayAuthorityProtocol, Term};
 	use darwinia_support::traits::{EthereumReceipt, OnDepositRedeem};
 	use ethereum_primitives::{
 		log_entry::LogEntry, receipt::EthereumTransactionIndex, EthereumAddress, U256,
@@ -112,10 +112,7 @@ pub mod pallet {
 		type AdvancedFee: Get<RingBalance<Self>>;
 		#[pallet::constant]
 		type SyncReward: Get<RingBalance<Self>>;
-		type EcdsaRelayAuthority: RelayAuthorityProtocol<
-			Self::BlockNumber,
-			Signer = EcdsaSigner,
-		>;
+		type EcdsaRelayAuthority: RelayAuthorityProtocol<Self::BlockNumber, Signer = EcdsaSigner>;
 	}
 
 	#[pallet::event]

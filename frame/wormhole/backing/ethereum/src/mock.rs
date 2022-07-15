@@ -37,13 +37,12 @@ use sp_runtime::{
 // --- darwinia-network ---
 use crate::{self as to_ethereum_backing, pallet::*};
 use darwinia_bridge_ethereum::{EthereumRelayHeaderParcel, EthereumRelayProofs, MMRProof};
+use darwinia_relay_authority::{EcdsaSigner, RelayAuthorityProtocol, Term};
 use darwinia_staking::{Exposure, ExposureOf};
-use ethereum_primitives::{
-	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumBlockNumber,
-	EthereumNetwork,
-};
-use darwinia_relay_authority::{Term, RelayAuthorityProtocol, EcdsaSigner};
 use dp_relayer_game::*;
+use ethereum_primitives::{
+	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumBlockNumber, EthereumNetwork,
+};
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
