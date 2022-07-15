@@ -27,11 +27,12 @@ mod mock;
 #[cfg(test)]
 mod test;
 
+mod primitives;
+pub use primitives::*;
+
 mod weights;
 pub use weights::WeightInfo;
 
-// --- crates.io ---
-use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{
 	log,
@@ -41,32 +42,11 @@ use frame_support::{
 use frame_system::pallet_prelude::*;
 use sp_runtime::{
 	traits::{Saturating, Zero},
-	Perbill, RuntimeDebug, SaturatedConversion,
+	Perbill, SaturatedConversion,
 };
 // --- darwinia-network ---
 use darwinia_header_mmr::GetRoot;
-use darwinia_relay_primitives::{OpCode, RelayAuthority, RelayAuthorityProtocol, Sign, Term};
-
-// Alias only.
-type AccountId<T> = <T as frame_system::Config>::AccountId;
-type MaxMembers<T, I> = <T as Config<I>>::MaxMembers;
-// Basics.
-type Balance<T, I> = <<T as Config<I>>::Currency as Currency<AccountId<T>>>::Balance;
-type MmrRoot<T, I> = <<T as Config<I>>::Mmr as GetRoot>::Hash;
-// Sign things.
-type RelayAuthoritySigner<T, I> = <<T as Config<I>>::Sign as Sign<BlockNumberFor<T>>>::Signer;
-type RelayAuthorityMessage<T, I> = <<T as Config<I>>::Sign as Sign<BlockNumberFor<T>>>::Message;
-type RelayAuthoritySignature<T, I> = <<T as Config<I>>::Sign as Sign<BlockNumberFor<T>>>::Signature;
-// Authority things.
-type RelayAuthorityT<T, I> =
-	RelayAuthority<AccountId<T>, RelayAuthoritySigner<T, I>, Balance<T, I>, BlockNumberFor<T>>;
-type ScheduledAuthoritiesChangeT<T, I> = ScheduledAuthoritiesChange<
-	AccountId<T>,
-	RelayAuthoritySigner<T, I>,
-	Balance<T, I>,
-	BlockNumberFor<T>,
-	MaxMembers<T, I>,
->;
+use darwinia_relay_primitives::{RelayAuthorityProtocol, Term};
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -84,7 +64,7 @@ pub mod pallet {
 		type ResetOrigin: EnsureOrigin<Self::Origin>;
 		// Commitments.
 		type Mmr: GetRoot;
-		type Sign: Sign<Self::BlockNumber>;
+		type Sign: Sign;
 		// Constants.
 		#[pallet::constant]
 		type MaxMembers: Get<u32>;
@@ -101,7 +81,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxSchedules: Get<u32>;
 		// Weights.
-		// type WeightInfo: WeightInfo;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::event]
@@ -210,7 +190,6 @@ pub mod pallet {
 	/// The `MmrRootsToSign` keys cache.
 	///
 	/// Only use for update the `MmrRootsToSign` once the authorities changed.
-	// TODO: bounded
 	#[pallet::storage]
 	#[pallet::getter(fn mmr_root_to_sign_keys)]
 	pub type MmrRootsToSignKeys<T: Config<I>, I: 'static = ()> =
@@ -993,54 +972,6 @@ where
 
 		Ok(())
 	}
-}
-
-/// The scheduled change of authority set.
-#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
-#[scale_info(skip_type_params(MaxMembers))]
-pub struct ScheduledAuthoritiesChange<AccountId, Signer, RingBalance, BlockNumber, MaxMembers>
-where
-	MaxMembers: Get<u32>,
-{
-	/// The incoming new authorities.
-	next_authorities:
-		BoundedVec<RelayAuthority<AccountId, Signer, RingBalance, BlockNumber>, MaxMembers>,
-	/// The deadline of the previous authorities to sign for the next authorities.
-	deadline: BlockNumber,
-}
-
-#[derive(Clone, Default, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
-#[scale_info(skip_type_params(MaxMembers))]
-pub struct MmrRootToSign<MmrRoot, AccountId, Signature, MaxMembers>
-where
-	MaxMembers: Get<u32>,
-{
-	mmr_root: MmrRoot,
-	signatures: BoundedVec<(AccountId, Signature), MaxMembers>,
-}
-impl<MmrRoot, AccountId, Signature, MaxMembers>
-	MmrRootToSign<MmrRoot, AccountId, Signature, MaxMembers>
-where
-	MaxMembers: Get<u32>,
-{
-	fn new(mmr_root: MmrRoot) -> Self {
-		Self { mmr_root, signatures: BoundedVec::default() }
-	}
-}
-
-#[derive(Encode)]
-struct Message<_1, _2, _3, _4>
-where
-	_1: Encode,
-	_2: Encode,
-	_3: Encode,
-	_4: Encode,
-{
-	_1: _1,
-	_2: _2,
-	#[codec(compact)]
-	_3: _3,
-	_4: _4,
 }
 
 fn find_authority_position<T, I>(

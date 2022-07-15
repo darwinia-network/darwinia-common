@@ -38,8 +38,6 @@ pub mod pallet {
 		// Simple type
 		pub type Balance = u128;
 		pub type DepositId = U256;
-		pub type EcdsaSignature = [u8; 65];
-		pub type EcdsaMessage = [u8; 32];
 		// Generic type
 		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 		pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
@@ -62,7 +60,6 @@ pub mod pallet {
 		PalletId,
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_io::{crypto, hashing};
 	use sp_runtime::traits::{AccountIdConversion, SaturatedConversion, Saturating, Zero};
 	#[cfg(not(feature = "std"))]
 	use sp_std::borrow::ToOwned;
@@ -902,46 +899,6 @@ pub mod pallet {
 			};
 
 			Ok((term, authorities, beneficiary))
-		}
-	}
-	impl<T: Config> Sign<BlockNumberFor<T>> for Pallet<T> {
-		type Message = EcdsaMessage;
-		type Signature = EcdsaSignature;
-		type Signer = EthereumAddress;
-
-		fn hash(raw_message: impl AsRef<[u8]>) -> Self::Message {
-			hashing::keccak_256(raw_message.as_ref())
-		}
-
-		fn verify_signature(
-			signature: &Self::Signature,
-			message: &Self::Message,
-			signer: &Self::Signer,
-		) -> bool {
-			fn eth_signable_message(message: &[u8]) -> Vec<u8> {
-				let mut l = message.len();
-				let mut rev = Vec::new();
-
-				while l > 0 {
-					rev.push(b'0' + (l % 10) as u8);
-					l /= 10;
-				}
-
-				let mut v = b"\x19Ethereum Signed Message:\n".to_vec();
-
-				v.extend(rev.into_iter().rev());
-				v.extend_from_slice(message);
-
-				v
-			}
-
-			let message = hashing::keccak_256(&eth_signable_message(message));
-
-			if let Ok(public_key) = crypto::secp256k1_ecdsa_recover(signature, &message) {
-				hashing::keccak_256(&public_key)[12..] == signer.0
-			} else {
-				false
-			}
 		}
 	}
 

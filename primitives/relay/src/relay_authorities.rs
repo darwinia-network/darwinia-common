@@ -18,44 +18,11 @@
 
 //! Relay Authorities Primitives
 
-// --- core ---
-use core::fmt::Debug;
-// --- crates.io ---
-use codec::{Decode, Encode, FullCodec};
-use scale_info::TypeInfo;
-#[cfg(feature = "std")]
-use serde::{de::DeserializeOwned, Serialize};
 // --- paritytech ---
-use sp_runtime::{DispatchResult, RuntimeDebug};
+use sp_runtime::DispatchResult;
 use sp_std::prelude::*;
 
-pub type OpCode = [u8; 4];
 pub type Term = u32;
-
-pub trait Sign<BlockNumber> {
-	type Signature: Clone + Debug + PartialEq + FullCodec + TypeInfo;
-	type Message: Clone + Debug + Default + PartialEq + FullCodec + TypeInfo;
-	#[cfg(feature = "std")]
-	type Signer: Clone
-		+ Debug
-		+ Default
-		+ Ord
-		+ PartialEq
-		+ FullCodec
-		+ TypeInfo
-		+ DeserializeOwned
-		+ Serialize;
-	#[cfg(not(feature = "std"))]
-	type Signer: Clone + Debug + Default + Ord + PartialEq + FullCodec + TypeInfo;
-
-	fn hash(raw_message: impl AsRef<[u8]>) -> Self::Message;
-
-	fn verify_signature(
-		signature: &Self::Signature,
-		message: &Self::Message,
-		signer: &Self::Signer,
-	) -> bool;
-}
 
 pub trait RelayAuthorityProtocol<BlockNumber> {
 	type Signer;
@@ -68,32 +35,4 @@ pub trait RelayAuthorityProtocol<BlockNumber> {
 	) -> DispatchResult;
 
 	fn sync_authorities_change() -> DispatchResult;
-}
-
-// Avoid duplicate type
-// Use `RelayAuthority` instead `Authority`
-#[derive(Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
-pub struct RelayAuthority<AccountId, Signer, RingBalance, BlockNumber> {
-	pub account_id: AccountId,
-	pub signer: Signer,
-	pub stake: RingBalance,
-	pub term: BlockNumber,
-}
-impl<AccountId, Signer, RingBalance, BlockNumber> PartialEq
-	for RelayAuthority<AccountId, Signer, RingBalance, BlockNumber>
-where
-	AccountId: PartialEq,
-{
-	fn eq(&self, other: &Self) -> bool {
-		self.account_id == other.account_id
-	}
-}
-impl<AccountId, Signer, RingBalance, BlockNumber> PartialEq<AccountId>
-	for RelayAuthority<AccountId, Signer, RingBalance, BlockNumber>
-where
-	AccountId: PartialEq,
-{
-	fn eq(&self, account_id: &AccountId) -> bool {
-		&self.account_id == account_id
-	}
 }
