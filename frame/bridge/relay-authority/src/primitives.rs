@@ -35,7 +35,7 @@ pub(super) type RelayAuthorityMessage<T> = <<T as Config>::Sign as Sign>::Messag
 pub(super) type RelayAuthoritySignature<T> = <<T as Config>::Sign as Sign>::Signature;
 // Authority things.
 pub(super) type RelayAuthorityT<T> =
-	RelayAuthority<AccountId<T>, RelayAuthoritySigner<T>, Balance<T>, BlockNumber<T>>;
+	Authority<AccountId<T>, RelayAuthoritySigner<T>, Balance<T>, BlockNumber<T>>;
 pub(super) type ScheduledAuthoritiesChangeT<T> = ScheduledAuthoritiesChange<
 	AccountId<T>,
 	RelayAuthoritySigner<T>,
@@ -123,17 +123,15 @@ impl Sign for EcdsaSign {
 	}
 }
 
-// Avoid duplicate type
-// Use `RelayAuthority` instead `Authority`
 #[derive(Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
-pub struct RelayAuthority<AccountId, Signer, RingBalance, BlockNumber> {
+pub struct Authority<AccountId, Signer, RingBalance, BlockNumber> {
 	pub(super) account_id: AccountId,
 	pub(super) signer: Signer,
 	pub(super) stake: RingBalance,
 	pub(super) term: BlockNumber,
 }
 impl<AccountId, Signer, RingBalance, BlockNumber> PartialEq
-	for RelayAuthority<AccountId, Signer, RingBalance, BlockNumber>
+	for Authority<AccountId, Signer, RingBalance, BlockNumber>
 where
 	AccountId: PartialEq,
 {
@@ -142,7 +140,7 @@ where
 	}
 }
 impl<AccountId, Signer, RingBalance, BlockNumber> PartialEq<AccountId>
-	for RelayAuthority<AccountId, Signer, RingBalance, BlockNumber>
+	for Authority<AccountId, Signer, RingBalance, BlockNumber>
 where
 	AccountId: PartialEq,
 {
@@ -160,7 +158,7 @@ where
 {
 	/// The incoming new authorities.
 	pub(super) next_authorities:
-		BoundedVec<RelayAuthority<AccountId, Signer, RingBalance, BlockNumber>, MaxMembers>,
+		BoundedVec<Authority<AccountId, Signer, RingBalance, BlockNumber>, MaxMembers>,
 	/// The deadline of the previous authorities to sign for the next authorities.
 	pub(super) deadline: BlockNumber,
 }

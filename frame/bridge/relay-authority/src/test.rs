@@ -154,10 +154,10 @@ fn add_authorities_should_work() {
 		assert_eq!(
 			RelayAuthorities::next_authorities().unwrap().next_authorities,
 			vec![
-				RelayAuthority { account_id: 9, signer: [0; 20], stake: 1, term: 10 },
-				RelayAuthority { account_id: 1, signer: [0; 20], stake: 1, term: 10 },
-				RelayAuthority { account_id: 2, signer: [0; 20], stake: 1, term: 10 },
-				RelayAuthority { account_id: 3, signer: [0; 20], stake: 1, term: 10 }
+				Authority { account_id: 9, signer: [0; 20], stake: 1, term: 10 },
+				Authority { account_id: 1, signer: [0; 20], stake: 1, term: 10 },
+				Authority { account_id: 2, signer: [0; 20], stake: 1, term: 10 },
+				Authority { account_id: 3, signer: [0; 20], stake: 1, term: 10 }
 			]
 		);
 	});
@@ -203,10 +203,10 @@ fn remove_authorities_should_work() {
 		assert_eq!(
 			RelayAuthorities::authorities(),
 			vec![
-				RelayAuthority { account_id: 9, signer: [0; 20], stake: 1, term: 10 },
-				RelayAuthority { account_id: 3, signer: [0; 20], stake: 1, term: 10 },
-				RelayAuthority { account_id: 4, signer: [0; 20], stake: 1, term: 10 },
-				RelayAuthority { account_id: 5, signer: [0; 20], stake: 1, term: 10 }
+				Authority { account_id: 9, signer: [0; 20], stake: 1, term: 10 },
+				Authority { account_id: 3, signer: [0; 20], stake: 1, term: 10 },
+				Authority { account_id: 4, signer: [0; 20], stake: 1, term: 10 },
+				Authority { account_id: 5, signer: [0; 20], stake: 1, term: 10 }
 			]
 		);
 
@@ -217,7 +217,7 @@ fn remove_authorities_should_work() {
 
 		assert_eq!(
 			RelayAuthorities::authorities(),
-			vec![RelayAuthority { account_id: 3, signer: [0; 20], stake: 1, term: 10 }]
+			vec![Authority { account_id: 3, signer: [0; 20], stake: 1, term: 10 }]
 		);
 	});
 }
@@ -439,12 +439,11 @@ fn schedule_authorities_change_should_work() {
 		assert_ok!(request_authority(1));
 		assert_ok!(RelayAuthorities::add_authorities(Origin::root(), vec![1]));
 
-		let authorities =
-			vec![RelayAuthority { account_id: 9, signer: [0; 20], stake: 1, term: 10 }];
+		let authorities = vec![Authority { account_id: 9, signer: [0; 20], stake: 1, term: 10 }];
 		let schedule_authorities_change = ScheduledAuthoritiesChange {
 			next_authorities: BoundedVec::try_from(vec![
-				RelayAuthority { account_id: 9, signer: [0; 20], stake: 1, term: 10 },
-				RelayAuthority { account_id: 1, signer: [0; 20], stake: 1, term: 10 },
+				Authority { account_id: 9, signer: [0; 20], stake: 1, term: 10 },
+				Authority { account_id: 1, signer: [0; 20], stake: 1, term: 10 },
 			])
 			.unwrap(),
 			deadline: 3,
@@ -478,8 +477,8 @@ fn kill_authorities_and_force_new_term_should_work() {
 		assert_eq!(
 			RelayAuthorities::authorities(),
 			vec![
-				RelayAuthority { account_id: 9, signer: [0; 20], stake: 1, term: 10 },
-				RelayAuthority { account_id: 1, signer: [0; 20], stake: 1, term: 10 }
+				Authority { account_id: 9, signer: [0; 20], stake: 1, term: 10 },
+				Authority { account_id: 1, signer: [0; 20], stake: 1, term: 10 }
 			]
 		);
 		assert!(RelayAuthorities::next_authorities().is_none());
@@ -498,9 +497,9 @@ fn kill_authorities_and_force_new_term_should_work() {
 		assert_eq!(
 			RelayAuthorities::authorities(),
 			vec![
-				RelayAuthority { account_id: 9, signer: [0; 20], stake: 1, term: 10 },
-				RelayAuthority { account_id: 1, signer: [0; 20], stake: 1, term: 10 },
-				RelayAuthority { account_id: 2, signer: [0; 20], stake: 1, term: 10 }
+				Authority { account_id: 9, signer: [0; 20], stake: 1, term: 10 },
+				Authority { account_id: 1, signer: [0; 20], stake: 1, term: 10 },
+				Authority { account_id: 2, signer: [0; 20], stake: 1, term: 10 }
 			]
 		);
 		assert!(RelayAuthorities::next_authorities().is_none());
@@ -513,7 +512,7 @@ fn kill_authorities_and_force_new_term_should_work() {
 
 		assert_eq!(
 			RelayAuthorities::authorities(),
-			vec![RelayAuthority { account_id: 3, signer: [0; 20], stake: 1, term: 10 },]
+			vec![Authority { account_id: 3, signer: [0; 20], stake: 1, term: 10 },]
 		);
 		assert!(RelayAuthorities::next_authorities().is_none());
 		assert_eq!(RelayAuthorities::submit_duration(), SubmitDuration::get());

@@ -241,7 +241,7 @@ pub mod pallet {
 			for (account_id, signer, stake) in self.authorities.iter() {
 				T::Currency::set_lock(T::LockId::get(), account_id, *stake, WithdrawReasons::all());
 
-				authorities.push(RelayAuthority {
+				authorities.push(Authority {
 					account_id: account_id.to_owned(),
 					signer: signer.to_owned(),
 					stake: *stake,
@@ -333,7 +333,7 @@ pub mod pallet {
 				T::Currency::set_lock(T::LockId::get(), &account_id, stake, WithdrawReasons::all());
 
 				candidates
-					.try_push(RelayAuthority { account_id, signer, stake, term: 0_u32.into() })
+					.try_push(Authority { account_id, signer, stake, term: 0_u32.into() })
 					.map_err(|_| <Error<T>>::TooManyMembers)?;
 
 				DispatchResult::Ok(())
@@ -363,7 +363,7 @@ pub mod pallet {
 
 			let lock_id = T::LockId::get();
 
-			for RelayAuthority { account_id, .. } in <Candidates<T>>::take() {
+			for Authority { account_id, .. } in <Candidates<T>>::take() {
 				T::Currency::remove_lock(lock_id, &account_id);
 			}
 
@@ -464,7 +464,7 @@ pub mod pallet {
 
 			let lock_id = T::LockId::get();
 
-			for RelayAuthority { account_id, .. } in <Authorities<T>>::take() {
+			for Authority { account_id, .. } in <Authorities<T>>::take() {
 				T::Currency::remove_lock(lock_id, &account_id);
 			}
 
@@ -794,12 +794,10 @@ impl<T: Config> Pallet<T> {
 			<NextAuthorities<T>>::get().ok_or(<Error<T>>::NextAuthoritiesNE)?.next_authorities;
 		let authorities = <Authorities<T>>::get();
 
-		for RelayAuthority { account_id, .. } in authorities {
+		for Authority { account_id, .. } in authorities {
 			if next_authorities
 				.iter()
-				.position(|RelayAuthority { account_id: account_id_, .. }| {
-					account_id_ == &account_id
-				})
+				.position(|Authority { account_id: account_id_, .. }| account_id_ == &account_id)
 				.is_none()
 			{
 				T::Currency::remove_lock(T::LockId::get(), &account_id);
@@ -829,8 +827,7 @@ impl<T: Config> Pallet<T> {
 				let _ = <Authorities<T>>::try_mutate(|authorities| {
 					let mut storage_changed = false;
 
-					for RelayAuthority { account_id, stake, .. } in authorities.as_mut().iter_mut()
-					{
+					for Authority { account_id, stake, .. } in authorities.as_mut().iter_mut() {
 						if signatures
 							.iter()
 							.position(|(authority, _)| authority == account_id)
