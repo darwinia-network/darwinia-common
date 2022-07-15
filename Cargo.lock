@@ -1467,9 +1467,9 @@ dependencies = [
  "blake2-rfc",
  "ckb-merkle-mountain-range",
  "darwinia-balances",
- "darwinia-relay-primitives",
  "darwinia-relayer-game",
  "darwinia-support",
+ "dp-relayer-game",
  "ethereum-primitives",
  "ethereum-types",
  "frame-support",
@@ -1741,23 +1741,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-relay-primitives"
-version = "2.8.15"
-dependencies = [
- "frame-support",
- "parity-scale-codec",
- "scale-info",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-relayer-game"
 version = "2.8.15"
 dependencies = [
  "darwinia-balances",
- "darwinia-relay-primitives",
  "darwinia-support",
+ "dp-relayer-game",
  "env_logger",
  "frame-support",
  "frame-system",
@@ -1983,6 +1972,17 @@ dependencies = [
  "parity-scale-codec",
  "sp-core",
  "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "dp-relayer-game"
+version = "2.8.15"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec",
+ "scale-info",
  "sp-runtime",
  "sp-std",
 ]
@@ -6142,13 +6142,13 @@ dependencies = [
  "darwinia-evm-precompile-transfer",
  "darwinia-header-mmr",
  "darwinia-relay-authority",
- "darwinia-relay-primitives",
  "darwinia-relayer-game",
  "darwinia-staking",
  "darwinia-support",
  "dp-asset",
  "dp-contract",
  "dp-evm-tracer",
+ "dp-relayer-game",
  "dp-s2s",
  "drml-common-runtime",
  "drml-primitives",
@@ -9855,6 +9855,7 @@ dependencies = [
  "darwinia-relayer-game",
  "darwinia-staking",
  "darwinia-support",
+ "dp-relayer-game",
  "ethabi",
  "ethereum-primitives",
  "frame-election-provider-support",

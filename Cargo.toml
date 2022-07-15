@@ -38,7 +38,7 @@ members = [
 	"primitives/evm-trace/ext",
 	"primitives/evm-trace/tracer",
 	"primitives/merkle-patricia-trie",
-	"primitives/relay",
+	"primitives/relayer-game",
 	"primitives/s2s",
 ]
 

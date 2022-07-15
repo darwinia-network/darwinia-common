@@ -19,6 +19,7 @@ serde       = { version = "1.0", optional = true }
 serde_json  = { version = "1.0", optional = true }
 # darwinia-network
 darwinia-relay-authority = { default-features = false, path = "../../../bridge/relay-authority" }
+dp-relayer-game = { default-features = false, path = "../../../../primitives/relayer-game" }
 darwinia-support         = { default-features = false, path = "../../../support" }
 ethereum-primitives      = { default-features = false, path = "../../../../primitives/ethereum" }
 # paritytech
@@ -58,6 +59,7 @@ std = [
 	# darwinia-network
 	"darwinia-relay-authority/std",
 	"darwinia-support/std",
+	"dp-relayer-game/std",
 	"ethereum-primitives/std",
 	# paritytech
 	"frame-support/std",

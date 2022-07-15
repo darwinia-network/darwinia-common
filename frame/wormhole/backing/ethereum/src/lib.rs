@@ -66,7 +66,7 @@ pub mod pallet {
 	use sp_std::{convert::TryFrom, prelude::*};
 	// --- darwinia-network ---
 	use crate::weights::WeightInfo;
-	use darwinia_relay_authority::{RelayAuthorityProtocol, Term, EcdsaAddress};
+	use darwinia_relay_authority::{RelayAuthorityProtocol, Term, EcdsaSigner};
 	use darwinia_support::traits::{EthereumReceipt, OnDepositRedeem};
 	use ethereum_primitives::{
 		log_entry::LogEntry, receipt::EthereumTransactionIndex, EthereumAddress, U256,
@@ -114,7 +114,7 @@ pub mod pallet {
 		type SyncReward: Get<RingBalance<Self>>;
 		type EcdsaRelayAuthority: RelayAuthorityProtocol<
 			Self::BlockNumber,
-			Signer = EcdsaAddress,
+			Signer = EcdsaSigner,
 		>;
 	}
 
@@ -839,7 +839,7 @@ pub mod pallet {
 		// https://ropsten.etherscan.io/tx/0x652528b9421ecb495610a734a4ab70d054b5510dbbf3a9d5c7879c43c7dde4e9#eventlog
 		fn parse_authorities_set_proof(
 			proof_record: &EthereumReceiptProofThing<T>,
-		) -> Result<(Term, Vec<EcdsaAddress>, AccountId<T>), DispatchError> {
+		) -> Result<(Term, Vec<EcdsaSigner>, AccountId<T>), DispatchError> {
 			let log = {
 				let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)?;
 				let eth_event = EthEvent {

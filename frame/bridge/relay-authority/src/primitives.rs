@@ -16,7 +16,7 @@ use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::Config;
 
-pub type EcdsaAddress = [u8; 20];
+pub type EcdsaSigner = [u8; 20];
 pub type EcdsaMessage = [u8; 32];
 pub type EcdsaSignature = [u8; 65];
 
@@ -85,7 +85,7 @@ pub enum EcdsaSign {}
 impl Sign for EcdsaSign {
 	type Message = EcdsaMessage;
 	type Signature = EcdsaSignature;
-	type Signer = EcdsaAddress;
+	type Signer = EcdsaSigner;
 
 	fn hash(raw_message: impl AsRef<[u8]>) -> Self::Message {
 		hashing::keccak_256(raw_message.as_ref())

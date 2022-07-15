@@ -37,12 +37,13 @@ use sp_runtime::{
 // --- darwinia-network ---
 use crate::{self as to_ethereum_backing, pallet::*};
 use darwinia_bridge_ethereum::{EthereumRelayHeaderParcel, EthereumRelayProofs, MMRProof};
-use darwinia_relay_primitives::*;
 use darwinia_staking::{Exposure, ExposureOf};
 use ethereum_primitives::{
-	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumAddress, EthereumBlockNumber,
+	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumBlockNumber,
 	EthereumNetwork,
 };
+use darwinia_relay_authority::{Term, RelayAuthorityProtocol, EcdsaSigner};
+use dp_relayer_game::*;
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
@@ -265,7 +266,7 @@ impl darwinia_bridge_ethereum::Config for Test {
 
 pub struct EcdsaRelayAuthority;
 impl RelayAuthorityProtocol<BlockNumber> for EcdsaRelayAuthority {
-	type Signer = EthereumAddress;
+	type Signer = EcdsaSigner;
 
 	fn schedule_mmr_root(_: BlockNumber) -> DispatchResult {
 		Ok(())

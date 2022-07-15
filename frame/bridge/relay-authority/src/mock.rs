@@ -33,7 +33,7 @@ use sp_runtime::{
 };
 // --- darwinia-network ---
 use crate::{self as darwinia_relay_authority, *};
-use darwinia_relay_primitives::relay_authorities::Sign as SignT;
+use darwinia_relay_authority::Sign as SignT;
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
@@ -99,11 +99,24 @@ impl darwinia_header_mmr::Config for Test {
 	const INDEXING_PREFIX: &'static [u8] = b"";
 }
 
+pub enum MmrRoot {}
+impl Get<Option<Hash>> for MmrRoot {
+	fn get() -> Option<Hash> {
+		HeaderMmr::get_root()
+	}
+}
+// TODO
+pub enum MessageRoot {}
+impl Get<Hash> for MessageRoot {
+	fn get() -> Hash {
+		Default::default()
+	}
+}
 pub struct Sign;
-impl SignT<BlockNumber> for Sign {
-	type Message = [u8; 32];
-	type Signature = [u8; 65];
-	type Signer = [u8; 20];
+impl SignT for Sign {
+	type Message = EcdsaMessage;
+	type Signature = EcdsaSignature;
+	type Signer = EcdsaSigner;
 
 	fn hash(raw_message: impl AsRef<[u8]>) -> Self::Message {
 		hashing::blake2_256(raw_message.as_ref())
@@ -143,7 +156,10 @@ impl Config for Test {
 	type LockId = LockId;
 	type MaxMembers = MaxMembers;
 	type MaxSchedules = MaxSchedules;
-	type Mmr = HeaderMmr;
+	type MessageRoot = MessageRoot;
+	type MessageRootT = Self::Hash;
+	type MmrRoot = MmrRoot;
+	type MmrRootT = Self::Hash;
 	type OpCodes = ();
 	type RemoveOrigin = EnsureRoot<Self::AccountId>;
 	type ResetOrigin = EnsureRoot<Self::AccountId>;
@@ -151,7 +167,7 @@ impl Config for Test {
 	type SignThreshold = SignThreshold;
 	type SubmitDuration = SubmitDuration;
 	type TermDuration = TermDuration;
-	// type WeightInfo = ();
+	type WeightInfo = ();
 }
 
 frame_support::construct_runtime! {
@@ -164,7 +180,7 @@ frame_support::construct_runtime! {
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		HeaderMmr: darwinia_header_mmr::{Pallet, Storage},
-		RelayAuthorities: darwinia_relay_authority{Pallet, Call, Storage, Config<T>, Event<T>}
+		RelayAuthorities: darwinia_relay_authority::{Pallet, Call, Storage, Config<T>, Event<T>}
 	}
 }
 
@@ -181,7 +197,7 @@ pub fn new_test_ext() -> TestExternalities {
 	}
 	.assimilate_storage(&mut storage)
 	.unwrap();
-	darwinia_relay_authorityGenesisConfig::<Test> { authorities: vec![(9, signer_of(9), 1)] }
+	darwinia_relay_authority::GenesisConfig::<Test> { authorities: vec![(9, signer_of(9), 1)] }
 		.assimilate_storage(&mut storage)
 		.unwrap();
 

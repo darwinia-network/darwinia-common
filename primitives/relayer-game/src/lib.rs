@@ -18,6 +18,8 @@
 
 //! Relayer Game Primitives
 
+#![cfg_attr(not(feature = "std"), no_std)]
+
 // --- core ---
 use core::fmt::Debug;
 // --- crates.io ---

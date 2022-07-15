@@ -4,7 +4,7 @@ pub use darwinia_relayer_game::Instance1 as EthereumRelayerGameInstance;
 use frame_support::traits::LockIdentifier;
 // --- darwinia-network ---
 use crate::*;
-use darwinia_relay_primitives::AdjustableRelayerGame;
+use dp_relayer_game::AdjustableRelayerGame;
 use darwinia_relayer_game::Config;
 use ethereum_primitives::EthereumBlockNumber;
 
