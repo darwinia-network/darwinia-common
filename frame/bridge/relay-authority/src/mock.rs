@@ -47,7 +47,7 @@ pub(super) type RelayAuthoritiesError = Error<Test>;
 type Hash = H256;
 type Index = u64;
 
-pub(super) const DEFAULT_SIGNATURE: [u8; 65] = [0; 65];
+pub(super) const DEFAULT_SIGNATURE: EcdsaSignature = [0; 65];
 
 darwinia_support::impl_test_account_data! {}
 
