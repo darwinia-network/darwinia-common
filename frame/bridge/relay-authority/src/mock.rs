@@ -32,7 +32,7 @@ use sp_runtime::{
 	RuntimeDebug,
 };
 // --- darwinia-network ---
-use crate::{self as darwinia_relay_authorities, *};
+use crate::{self as darwinia_relay_authority, *};
 use darwinia_relay_primitives::relay_authorities::Sign as SignT;
 
 type Block = MockBlock<Test>;
@@ -164,7 +164,7 @@ frame_support::construct_runtime! {
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Ring: darwinia_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		HeaderMmr: darwinia_header_mmr::{Pallet, Storage},
-		RelayAuthorities: darwinia_relay_authorities::{Pallet, Call, Storage, Config<T>, Event<T>}
+		RelayAuthorities: darwinia_relay_authority{Pallet, Call, Storage, Config<T>, Event<T>}
 	}
 }
 
@@ -181,7 +181,7 @@ pub fn new_test_ext() -> TestExternalities {
 	}
 	.assimilate_storage(&mut storage)
 	.unwrap();
-	darwinia_relay_authorities::GenesisConfig::<Test> { authorities: vec![(9, signer_of(9), 1)] }
+	darwinia_relay_authorityGenesisConfig::<Test> { authorities: vec![(9, signer_of(9), 1)] }
 		.assimilate_storage(&mut storage)
 		.unwrap();
 

@@ -18,8 +18,5 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod relay_authorities;
-pub use relay_authorities::*;
-
 pub mod relayer_game;
 pub use relayer_game::*;

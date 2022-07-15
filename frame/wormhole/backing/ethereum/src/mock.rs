@@ -263,8 +263,8 @@ impl darwinia_bridge_ethereum::Config for Test {
 	type WeightInfo = ();
 }
 
-pub struct EcdsaAuthorities;
-impl RelayAuthorityProtocol<BlockNumber> for EcdsaAuthorities {
+pub struct EcdsaRelayAuthority;
+impl RelayAuthorityProtocol<BlockNumber> for EcdsaRelayAuthority {
 	type Signer = EthereumAddress;
 
 	fn schedule_mmr_root(_: BlockNumber) -> DispatchResult {
@@ -279,6 +279,7 @@ impl RelayAuthorityProtocol<BlockNumber> for EcdsaAuthorities {
 		Ok(())
 	}
 }
+
 frame_support::parameter_types! {
 	pub const EthereumBackingPalletId: PalletId = PalletId(*b"da/backi");
 	pub const EthereumBackingFeePalletId: PalletId = PalletId(*b"da/ethfe");
@@ -288,7 +289,7 @@ frame_support::parameter_types! {
 }
 impl Config for Test {
 	type AdvancedFee = AdvancedFee;
-	type EcdsaAuthorities = EcdsaAuthorities;
+	type EcdsaRelayAuthority = EcdsaRelayAuthority;
 	type EthereumRelay = EthereumRelay;
 	type Event = ();
 	type FeePalletId = EthereumBackingFeePalletId;

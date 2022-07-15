@@ -12,7 +12,7 @@ members = [
 	# "frame/beefy-gadget",
 	"frame/bridge/ethereum",
 	"frame/bridge/relayer-game",
-	"frame/bridge/relay-authorities",
+	"frame/bridge/relay-authority",
 	"frame/dvm/ethereum",
 	"frame/dvm/evm",
 	"frame/dvm/evm/precompiles/bls12381",

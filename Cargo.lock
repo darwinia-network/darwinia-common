@@ -1721,13 +1721,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-relay-authorities"
+name = "darwinia-relay-authority"
 version = "2.8.15"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
  "darwinia-header-mmr",
- "darwinia-relay-primitives",
  "darwinia-support",
  "frame-support",
  "frame-system",
@@ -6142,7 +6141,7 @@ dependencies = [
  "darwinia-evm-precompile-state-storage",
  "darwinia-evm-precompile-transfer",
  "darwinia-header-mmr",
- "darwinia-relay-authorities",
+ "darwinia-relay-authority",
  "darwinia-relay-primitives",
  "darwinia-relayer-game",
  "darwinia-staking",
@@ -9852,7 +9851,7 @@ dependencies = [
  "array-bytes",
  "darwinia-balances",
  "darwinia-bridge-ethereum",
- "darwinia-relay-primitives",
+ "darwinia-relay-authority",
  "darwinia-relayer-game",
  "darwinia-staking",
  "darwinia-support",

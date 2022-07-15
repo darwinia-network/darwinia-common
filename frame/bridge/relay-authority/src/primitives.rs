@@ -1,25 +1,27 @@
 // --- core ---
 use core::fmt::Debug;
 // --- crates.io ---
-use codec::{Decode,FullCodec, Encode};
+use codec::{Decode, Encode, FullCodec};
 use scale_info::TypeInfo;
 // --- crates.io ---
 use frame_support::{
 	traits::{Currency, Get},
 	BoundedVec,
 };
-use sp_runtime::RuntimeDebug;
-use sp_io::{hashing, crypto};
 #[cfg(feature = "std")]
 use serde::{de::DeserializeOwned, Serialize};
+use sp_io::{crypto, hashing};
+use sp_runtime::{DispatchResult, RuntimeDebug};
+use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::Config;
-use darwinia_header_mmr::GetRoot;
 
-pub type EcdsaSignature = [u8; 65];
+pub type EcdsaAddress = [u8; 20];
 pub type EcdsaMessage = [u8; 32];
-pub type EthereumAddress = [u8; 20];
+pub type EcdsaSignature = [u8; 65];
+
 pub type OpCode = [u8; 4];
+pub type Term = u32;
 
 // Alias only.
 pub(super) type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -27,14 +29,10 @@ pub(super) type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
 pub(super) type MaxMembers<T, I> = <T as Config<I>>::MaxMembers;
 // Basics.
 pub(super) type Balance<T, I> = <<T as Config<I>>::Currency as Currency<AccountId<T>>>::Balance;
-pub(super) type MmrRoot<T, I> = <<T as Config<I>>::Mmr as GetRoot>::Hash;
 // Sign things.
-pub(super) type RelayAuthoritySigner<T, I> =
-	<<T as Config<I>>::Sign as Sign>::Signer;
-pub(super) type RelayAuthorityMessage<T, I> =
-	<<T as Config<I>>::Sign as Sign>::Message;
-pub(super) type RelayAuthoritySignature<T, I> =
-	<<T as Config<I>>::Sign as Sign>::Signature;
+pub(super) type RelayAuthoritySigner<T, I> = <<T as Config<I>>::Sign as Sign>::Signer;
+pub(super) type RelayAuthorityMessage<T, I> = <<T as Config<I>>::Sign as Sign>::Message;
+pub(super) type RelayAuthoritySignature<T, I> = <<T as Config<I>>::Sign as Sign>::Signature;
 // Authority things.
 pub(super) type RelayAuthorityT<T, I> =
 	RelayAuthority<AccountId<T>, RelayAuthoritySigner<T, I>, Balance<T, I>, BlockNumber<T>>;
@@ -45,6 +43,19 @@ pub(super) type ScheduledAuthoritiesChangeT<T, I> = ScheduledAuthoritiesChange<
 	BlockNumber<T>,
 	MaxMembers<T, I>,
 >;
+
+pub trait RelayAuthorityProtocol<BlockNumber> {
+	type Signer;
+
+	fn schedule_mmr_root(block_number: BlockNumber) -> DispatchResult;
+
+	fn check_authorities_change_to_sync(
+		term: Term,
+		authorities: Vec<Self::Signer>,
+	) -> DispatchResult;
+
+	fn sync_authorities_change() -> DispatchResult;
+}
 
 pub trait Sign {
 	type Signature: Clone + Debug + PartialEq + FullCodec + TypeInfo;
@@ -74,7 +85,7 @@ pub enum EcdsaSign {}
 impl Sign for EcdsaSign {
 	type Message = EcdsaMessage;
 	type Signature = EcdsaSignature;
-	type Signer = EthereumAddress;
+	type Signer = EcdsaAddress;
 
 	fn hash(raw_message: impl AsRef<[u8]>) -> Self::Message {
 		hashing::keccak_256(raw_message.as_ref())

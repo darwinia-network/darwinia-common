@@ -139,6 +139,10 @@ impl<T: Config> Pallet<T> {
 		(T::INDEXING_PREFIX, position).encode()
 	}
 
+	pub fn get_root() -> Option<T::Hash> {
+		<Mmr<RuntimeStorage, T>>::with_size(<MmrSize<T>>::get()).get_root().ok()
+	}
+
 	// Remove the cfg, once there's a requirement from runtime usage
 	#[cfg(any(test, feature = "easy-testing"))]
 	pub fn find_parent_mmr_root(header: &T::Header) -> Option<T::Hash> {
@@ -152,13 +156,6 @@ impl<T: Config> Pallet<T> {
 		header
 			.digest()
 			.convert_first(|d| d.try_to(OpaqueDigestItemId::Other).and_then(find_parent_mmr_root))
-	}
-}
-impl<T: Config> GetRoot for Pallet<T> {
-	type Hash = T::Hash;
-
-	fn get_root() -> Option<Self::Hash> {
-		<Mmr<RuntimeStorage, T>>::with_size(<MmrSize<T>>::get()).get_root().ok()
 	}
 }
 

@@ -1,9 +1,7 @@
 pub use mmr::MMR;
 
-// --- core ---
-use core::fmt::Debug;
 // --- crates.io ---
-use codec::{Decode, Encode, FullCodec};
+use codec::{Decode, Encode};
 // --- github.com ---
 use mmr::{Error, MMRStore, Merge, MerkleProof, Result as MMRResult};
 // --- paritytech ---
@@ -14,12 +12,6 @@ use sp_runtime::traits::Hash;
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use crate::*;
-
-pub trait GetRoot {
-	type Hash: Clone + Debug + PartialEq + FullCodec + TypeInfo;
-
-	fn get_root() -> Option<Self::Hash>;
-}
 
 pub struct Hasher<T>(PhantomData<T>);
 impl<T: Config> Merge for Hasher<T> {

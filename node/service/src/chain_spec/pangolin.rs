@@ -267,7 +267,7 @@ pub fn genesis_config() -> ChainSpec {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			ethereum_relay_authorities: EthereumRelayAuthoritiesConfig {
+			ecdsa_relay_authority: EcdsaRelayAuthorityConfig {
 				authorities: vec![(
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
@@ -457,7 +457,7 @@ pub fn development_config() -> ChainSpec {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			ethereum_relay_authorities: EthereumRelayAuthoritiesConfig {
+			ecdsa_relay_authority: EcdsaRelayAuthorityConfig {
 				authorities: vec![(
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
@@ -645,7 +645,7 @@ pub fn local_testnet_config() -> ChainSpec {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			ethereum_relay_authorities: EthereumRelayAuthoritiesConfig {
+			ecdsa_relay_authority: EcdsaRelayAuthorityConfig {
 				authorities: vec![(
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),

@@ -33,6 +33,10 @@ pub use primitives::*;
 mod weights;
 pub use weights::WeightInfo;
 
+// --- core ---
+use core::fmt::Debug;
+// --- crates.io ---
+use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{
 	log,
@@ -44,9 +48,7 @@ use sp_runtime::{
 	traits::{Saturating, Zero},
 	Perbill, SaturatedConversion,
 };
-// --- darwinia-network ---
-use darwinia_header_mmr::GetRoot;
-use darwinia_relay_primitives::{RelayAuthorityProtocol, Term};
+use sp_std::{borrow::ToOwned, prelude::*};
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -55,15 +57,20 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config<I: 'static = ()>: frame_system::Config {
-		// Basics.
+		// Overrides.
 		type Event: From<Event<Self, I>> + IsType<<Self as frame_system::Config>::Event>;
+		// Basics.
 		type Currency: LockableCurrency<Self::AccountId>;
+		type WeightInfo: WeightInfo;
 		// Origins.
 		type AddOrigin: EnsureOrigin<Self::Origin>;
 		type RemoveOrigin: EnsureOrigin<Self::Origin>;
 		type ResetOrigin: EnsureOrigin<Self::Origin>;
 		// Commitments.
-		type Mmr: GetRoot;
+		type MmrRootT: Clone + Debug + PartialEq + Encode + Decode + TypeInfo;
+		type MmrRoot: Get<Option<Self::MmrRootT>>;
+		type MessageRootT: Clone + Debug + PartialEq + Encode + Decode + TypeInfo;
+		type MessageRoot: Get<Self::MessageRootT>;
 		type Sign: Sign;
 		// Constants.
 		#[pallet::constant]
@@ -80,8 +87,6 @@ pub mod pallet {
 		type SubmitDuration: Get<Self::BlockNumber>;
 		#[pallet::constant]
 		type MaxSchedules: Get<u32>;
-		// Weights.
-		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::event]
@@ -92,7 +97,7 @@ pub mod pallet {
 		/// MMR Root Signed. \[block number of the mmr root, mmr root, signatures\]
 		MmrRootSigned(
 			T::BlockNumber,
-			MmrRoot<T, I>,
+			T::MmrRootT,
 			Vec<(T::AccountId, RelayAuthoritySignature<T, I>)>,
 		),
 		/// A New Authority Set Change Scheduled Request to be Signed. \[message to sign\]
@@ -208,7 +213,7 @@ pub mod pallet {
 		_,
 		Identity,
 		T::BlockNumber,
-		MmrRootToSign<MmrRoot<T, I>, T::AccountId, RelayAuthoritySignature<T, I>, T::MaxMembers>,
+		MmrRootToSign<T::MmrRootT, T::AccountId, RelayAuthoritySignature<T, I>, T::MaxMembers>,
 		OptionQuery,
 	>;
 
@@ -770,7 +775,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 			// That's why we need to plus `2` to the scheduled block number.
 			.find(|schedule| *schedule + 2_u32.into() == block_number)
 		{
-			if let Some(mmr_root) = T::Mmr::get_root() {
+			if let Some(mmr_root) = T::MmrRoot::get() {
 				let _ = <MmrRootsToSign<T, I>>::try_mutate(schedule, |maybe_mmr_root_to_sign| {
 					if maybe_mmr_root_to_sign.is_none() {
 						*maybe_mmr_root_to_sign = Some(MmrRootToSign::new(mmr_root));

@@ -23,7 +23,7 @@
 /frame/beefy-gadget/ @AurevoirXavier
 /frame/bridge/bsc/ @AurevoirXavier @xiaoch05
 /frame/bridge/ethereum/ @AurevoirXavier @HackFisher
-/frame/bridge/relay-authorities/ @AurevoirXavier
+/frame/bridge/relay-authority/ @AurevoirXavier
 /frame/bridge/relayer-game/ @AurevoirXavier
 /frame/dvm/ethereum/ @AsceticBear
 /frame/dvm/evm/ @AsceticBear

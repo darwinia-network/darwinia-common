@@ -66,7 +66,7 @@ pub mod pallet {
 	use sp_std::{convert::TryFrom, prelude::*};
 	// --- darwinia-network ---
 	use crate::weights::WeightInfo;
-	use darwinia_relay_primitives::relay_authorities::*;
+	use darwinia_relay_authority::{RelayAuthorityProtocol, Term, EcdsaAddress};
 	use darwinia_support::traits::{EthereumReceipt, OnDepositRedeem};
 	use ethereum_primitives::{
 		log_entry::LogEntry, receipt::EthereumTransactionIndex, EthereumAddress, U256,
@@ -112,7 +112,10 @@ pub mod pallet {
 		type AdvancedFee: Get<RingBalance<Self>>;
 		#[pallet::constant]
 		type SyncReward: Get<RingBalance<Self>>;
-		type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
+		type EcdsaRelayAuthority: RelayAuthorityProtocol<
+			Self::BlockNumber,
+			Signer = EcdsaAddress,
+		>;
 	}
 
 	#[pallet::event]
@@ -370,7 +373,7 @@ pub mod pallet {
 			}
 
 			if locked {
-				T::EcdsaAuthorities::schedule_mmr_root(
+				T::EcdsaRelayAuthority::schedule_mmr_root(
 					(<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() / 10 * 10
 						+ 10)
 						.saturated_into(),
@@ -396,8 +399,8 @@ pub mod pallet {
 
 			let (term, authorities, beneficiary) = Self::parse_authorities_set_proof(&proof)?;
 
-			T::EcdsaAuthorities::check_authorities_change_to_sync(term, authorities)?;
-			T::EcdsaAuthorities::sync_authorities_change()?;
+			T::EcdsaRelayAuthority::check_authorities_change_to_sync(term, authorities)?;
+			T::EcdsaRelayAuthority::sync_authorities_change()?;
 
 			<VerifiedProof<T>>::insert(tx_index, true);
 
@@ -836,7 +839,7 @@ pub mod pallet {
 		// https://ropsten.etherscan.io/tx/0x652528b9421ecb495610a734a4ab70d054b5510dbbf3a9d5c7879c43c7dde4e9#eventlog
 		fn parse_authorities_set_proof(
 			proof_record: &EthereumReceiptProofThing<T>,
-		) -> Result<(Term, Vec<EthereumAddress>, AccountId<T>), DispatchError> {
+		) -> Result<(Term, Vec<EcdsaAddress>, AccountId<T>), DispatchError> {
 			let log = {
 				let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)?;
 				let eth_event = EthEvent {
@@ -884,7 +887,7 @@ pub mod pallet {
 				let mut authorities = vec![];
 
 				for token in log.params[1].value.clone().into_array().ok_or(<Error<T>>::ArrayCF)? {
-					authorities.push(token.into_address().ok_or(<Error<T>>::AddressCF)?);
+					authorities.push(token.into_address().ok_or(<Error<T>>::AddressCF)?.0);
 				}
 
 				authorities
