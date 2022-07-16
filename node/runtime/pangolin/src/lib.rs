@@ -774,9 +774,8 @@ sp_api::impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_multisig, Multisig);
 			// list_benchmark!(list, extra, darwinia_bridge_ethereum, EthereumRelay);
 			// list_benchmark!(list, extra, to_ethereum_backing, EthereumBacking);
-			list_benchmark!(list, extra, from_ethereum_issuing, EthereumIssuing);
 			// list_benchmark!(list, extra, darwinia_relayer_game, EthereumRelayerGame);
-			// list_benchmark!(list, extra, darwinia_relay_authorities, EthereumRelayAuthorities);
+			// list_benchmark!(list, extra, darwinia_relay_authority, EcdsaRelayAuthority);
 			// list_benchmark!(list, extra, to_tron_backing, TronBacking);
 			list_benchmark!(list, extra, pallet_bridge_grandpa, BridgePangoroGrandpa);
 			// TODO: https://github.com/darwinia-network/darwinia-parachain/issues/66
@@ -839,10 +838,8 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_multisig, Multisig);
 			// add_benchmark!(params, batches, darwinia_bridge_ethereum, EthereumRelay);
 			// add_benchmark!(params, batches, to_ethereum_backing, EthereumBacking);
-			// TODO FIX
-			// add_benchmark!(params, batches, from_ethereum_issuing, EthereumIssuing);
 			// add_benchmark!(params, batches, darwinia_relayer_game, EthereumRelayerGame);
-			// add_benchmark!(params, batches, darwinia_relay_authorities, EthereumRelayAuthorities);
+			// add_benchmark!(list, extra, darwinia_relay_authority, EcdsaRelayAuthority);
 			// add_benchmark!(params, batches, to_tron_backing, TronBacking);
 			// TODO FIX
 			// add_benchmark!(params, batches, pallet_bridge_grandpa, BridgePangoroGrandpa);
