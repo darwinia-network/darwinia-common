@@ -237,7 +237,7 @@ use frame_system::mocking::*;
 use sp_runtime::RuntimeDebug;
 // --- darwinia-network ---
 use crate::{self as darwinia_relayer_game, *};
-use darwinia_relay_primitives::relayer_game::*;
+use dp_relayer_game::*;
 use mock_relay::{MockRelayBlockNumber, MockRelayHeader};
 
 pub type Block = MockBlock<Test>;

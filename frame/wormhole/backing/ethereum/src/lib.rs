@@ -38,8 +38,6 @@ pub mod pallet {
 		// Simple type
 		pub type Balance = u128;
 		pub type DepositId = U256;
-		pub type EcdsaSignature = [u8; 65];
-		pub type EcdsaMessage = [u8; 32];
 		// Generic type
 		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 		pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
@@ -62,14 +60,13 @@ pub mod pallet {
 		PalletId,
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_io::{crypto, hashing};
 	use sp_runtime::traits::{AccountIdConversion, SaturatedConversion, Saturating, Zero};
 	#[cfg(not(feature = "std"))]
 	use sp_std::borrow::ToOwned;
 	use sp_std::{convert::TryFrom, prelude::*};
 	// --- darwinia-network ---
 	use crate::weights::WeightInfo;
-	use darwinia_relay_primitives::relay_authorities::*;
+	use darwinia_relay_authority::{EcdsaSigner, RelayAuthorityProtocol, Term};
 	use darwinia_support::traits::{EthereumReceipt, OnDepositRedeem};
 	use ethereum_primitives::{
 		log_entry::LogEntry, receipt::EthereumTransactionIndex, EthereumAddress, U256,
@@ -115,7 +112,7 @@ pub mod pallet {
 		type AdvancedFee: Get<RingBalance<Self>>;
 		#[pallet::constant]
 		type SyncReward: Get<RingBalance<Self>>;
-		type EcdsaAuthorities: RelayAuthorityProtocol<Self::BlockNumber, Signer = EthereumAddress>;
+		type EcdsaRelayAuthority: RelayAuthorityProtocol<Self::BlockNumber, Signer = EcdsaSigner>;
 	}
 
 	#[pallet::event]
@@ -373,7 +370,7 @@ pub mod pallet {
 			}
 
 			if locked {
-				T::EcdsaAuthorities::schedule_mmr_root(
+				T::EcdsaRelayAuthority::schedule_mmr_root(
 					(<frame_system::Pallet<T>>::block_number().saturated_into::<u32>() / 10 * 10
 						+ 10)
 						.saturated_into(),
@@ -399,8 +396,8 @@ pub mod pallet {
 
 			let (term, authorities, beneficiary) = Self::parse_authorities_set_proof(&proof)?;
 
-			T::EcdsaAuthorities::check_authorities_change_to_sync(term, authorities)?;
-			T::EcdsaAuthorities::sync_authorities_change()?;
+			T::EcdsaRelayAuthority::check_authorities_change_to_sync(term, authorities)?;
+			T::EcdsaRelayAuthority::sync_authorities_change()?;
 
 			<VerifiedProof<T>>::insert(tx_index, true);
 
@@ -839,7 +836,7 @@ pub mod pallet {
 		// https://ropsten.etherscan.io/tx/0x652528b9421ecb495610a734a4ab70d054b5510dbbf3a9d5c7879c43c7dde4e9#eventlog
 		fn parse_authorities_set_proof(
 			proof_record: &EthereumReceiptProofThing<T>,
-		) -> Result<(Term, Vec<EthereumAddress>, AccountId<T>), DispatchError> {
+		) -> Result<(Term, Vec<EcdsaSigner>, AccountId<T>), DispatchError> {
 			let log = {
 				let verified_receipt = T::EthereumRelay::verify_receipt(proof_record)?;
 				let eth_event = EthEvent {
@@ -887,7 +884,7 @@ pub mod pallet {
 				let mut authorities = vec![];
 
 				for token in log.params[1].value.clone().into_array().ok_or(<Error<T>>::ArrayCF)? {
-					authorities.push(token.into_address().ok_or(<Error<T>>::AddressCF)?);
+					authorities.push(token.into_address().ok_or(<Error<T>>::AddressCF)?.0);
 				}
 
 				authorities
@@ -902,46 +899,6 @@ pub mod pallet {
 			};
 
 			Ok((term, authorities, beneficiary))
-		}
-	}
-	impl<T: Config> Sign<BlockNumberFor<T>> for Pallet<T> {
-		type Message = EcdsaMessage;
-		type Signature = EcdsaSignature;
-		type Signer = EthereumAddress;
-
-		fn hash(raw_message: impl AsRef<[u8]>) -> Self::Message {
-			hashing::keccak_256(raw_message.as_ref())
-		}
-
-		fn verify_signature(
-			signature: &Self::Signature,
-			message: &Self::Message,
-			signer: &Self::Signer,
-		) -> bool {
-			fn eth_signable_message(message: &[u8]) -> Vec<u8> {
-				let mut l = message.len();
-				let mut rev = Vec::new();
-
-				while l > 0 {
-					rev.push(b'0' + (l % 10) as u8);
-					l /= 10;
-				}
-
-				let mut v = b"\x19Ethereum Signed Message:\n".to_vec();
-
-				v.extend(rev.into_iter().rev());
-				v.extend_from_slice(message);
-
-				v
-			}
-
-			let message = hashing::keccak_256(&eth_signable_message(message));
-
-			if let Ok(public_key) = crypto::secp256k1_ecdsa_recover(signature, &message) {
-				hashing::keccak_256(&public_key)[12..] == signer.0
-			} else {
-				false
-			}
 		}
 	}
 

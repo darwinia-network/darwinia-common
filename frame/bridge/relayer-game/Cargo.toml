@@ -15,7 +15,7 @@ codec      = { package = "parity-scale-codec", version = "2.3", default-features
 log        = { version = "0.4" }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 # darwinia-network
-darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
+dp-relayer-game = { default-features = false, path = "../../../primitives/relayer-game" }
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
@@ -42,7 +42,7 @@ std = [
 	"codec/std",
 	"scale-info/std",
 	# darwinia-network
-	"darwinia-relay-primitives/std",
+	"dp-relayer-game/std",
 	# paritytech
 	"frame-support/std",
 	"frame-system/std",

@@ -12,7 +12,7 @@ members = [
 	# "frame/beefy-gadget",
 	"frame/bridge/ethereum",
 	"frame/bridge/relayer-game",
-	"frame/bridge/relay-authorities",
+	"frame/bridge/relay-authority",
 	"frame/dvm/ethereum",
 	"frame/dvm/evm",
 	"frame/dvm/evm/precompiles/bls12381",
@@ -38,7 +38,7 @@ members = [
 	"primitives/evm-trace/ext",
 	"primitives/evm-trace/tracer",
 	"primitives/merkle-patricia-trie",
-	"primitives/relay",
+	"primitives/relayer-game",
 	"primitives/s2s",
 ]
 

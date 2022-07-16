@@ -171,7 +171,8 @@ frame_support::construct_runtime! {
 		// MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 57,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
 		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Config} = 15,
-		HeaderMMR: darwinia_header_mmr::{Pallet, Storage} = 16,
+		HeaderMmr: darwinia_header_mmr::{Pallet, Storage} = 16,
+		EcdsaRelayAuthority: darwinia_relay_authority::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
 
 		// Governance stuff; uncallable initially.
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 17,
@@ -216,7 +217,6 @@ frame_support::construct_runtime! {
 		EthereumRelay: darwinia_bridge_ethereum::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
 		EthereumBacking: to_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
 		EthereumRelayerGame: darwinia_relayer_game::<Instance1>::{Pallet, Storage} = 37,
-		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
 
 		TronBacking: to_tron_backing::{Pallet, Config<T>} = 39,
 

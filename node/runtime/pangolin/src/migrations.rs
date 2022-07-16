@@ -28,6 +28,10 @@ fn migrate() -> Weight {
 	migration::remove_storage_prefix(b"EthereumIssuing", b"VerifiedIssuingProof", &[]);
 	migration::remove_storage_prefix(b"EthereumIssuing", b"BurnTokenEvents", &[]);
 
+	migration::move_pallet(b"HeaderMMR", b"HeaderMmr");
+
+	migration::move_pallet(b"Instance1DarwiniaRelayAuthorities", b"EcdsaRelayAuthority");
+
 	RuntimeBlockWeights::get().max_block
 	// 0
 }
