@@ -135,6 +135,7 @@ impl pallet_timestamp::Config for Test {
 	type OnTimestampSet = ();
 	type WeightInfo = ();
 }
+
 pub struct FixedGasPrice;
 impl FeeCalculator for FixedGasPrice {
 	fn min_gas_price() -> U256 {
@@ -158,21 +159,12 @@ impl DeriveSubstrateAddress<AccountId32> for HashedConverter {
 		raw_account.into()
 	}
 }
-
-frame_support::parameter_types! {
-	pub const TransactionByteFee: u64 = 1;
-	pub const ChainId: u64 = 42;
-	pub const BlockGasLimit: U256 = U256::MAX;
-	pub PrecompilesValue: MockPrecompiles<Test> = MockPrecompiles::<_>::new();
-}
-
 pub struct StorageFilter;
 impl StorageFilterT for StorageFilter {
 	fn allow(prefix: &[u8]) -> bool {
 		prefix != Twox128::hash(b"EVM") && prefix != Twox128::hash(b"Ethereum")
 	}
 }
-
 pub struct MockPrecompiles<R>(PhantomData<R>);
 impl<R> MockPrecompiles<R>
 where
@@ -182,11 +174,10 @@ where
 		Self(Default::default())
 	}
 
-	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1].into_iter().map(|x| H160::from_low_u64_be(x)).collect()
+	pub fn used_addresses() -> [H160; 1] {
+		[addr(1)]
 	}
 }
-
 impl<R> PrecompileSet for MockPrecompiles<R>
 where
 	StateStorage<R, StorageFilter>: Precompile,
@@ -200,10 +191,8 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> Option<PrecompileResult> {
-		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
-
 		match address {
-			a if a == to_address(1) => Some(<StateStorage<R, StorageFilter>>::execute(
+			a if a == addr(1) => Some(<StateStorage<R, StorageFilter>>::execute(
 				input, target_gas, context, is_static,
 			)),
 			_ => None,
@@ -214,7 +203,15 @@ where
 		Self::used_addresses().contains(&address)
 	}
 }
-
+fn addr(a: u64) -> H160 {
+	H160::from_low_u64_be(a)
+}
+frame_support::parameter_types! {
+	pub const TransactionByteFee: u64 = 1;
+	pub const ChainId: u64 = 42;
+	pub const BlockGasLimit: U256 = U256::MAX;
+	pub PrecompilesValue: MockPrecompiles<Test> = MockPrecompiles::<_>::new();
+}
 impl darwinia_evm::Config for Test {
 	type BlockGasLimit = BlockGasLimit;
 	type BlockHashMapping = EthereumBlockHashMapping<Self>;
@@ -236,13 +233,18 @@ impl darwinia_evm::Config for Test {
 frame_support::parameter_types! {
 	pub const MockPalletId: PalletId = PalletId(*b"dar/dvmp");
 }
-
 impl darwinia_ethereum::Config for Test {
 	type Event = Event;
 	type PalletId = MockPalletId;
 	type StateRoot = IntermediateStateRoot;
 }
 
+pub struct FeeMarketSlasher;
+impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
+	fn slash(_: BalanceOf<T, I>, _: T::BlockNumber) -> BalanceOf<T, I> {
+		todo!("Not implemented for the test");
+	}
+}
 frame_support::parameter_types! {
 	// Shared configurations.
 	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
@@ -254,14 +256,6 @@ frame_support::parameter_types! {
 	pub const ConfirmRelayersRewardRatio: Permill = Permill::from_percent(20);
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 }
-
-pub struct FeeMarketSlasher;
-impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
-	fn slash(_: BalanceOf<T, I>, _: T::BlockNumber) -> BalanceOf<T, I> {
-		todo!("Not implemented for the test");
-	}
-}
-
 impl Config<F1> for Test {
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
 	type CollateralPerOrder = CollateralPerOrder;
