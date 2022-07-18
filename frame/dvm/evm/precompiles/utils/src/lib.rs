@@ -23,8 +23,6 @@ pub mod log;
 
 #[cfg(feature = "testing")]
 pub mod test_helper;
-#[cfg(test)]
-pub mod tests;
 
 pub use darwinia_evm_precompile_utils_macro::selector;
 pub use ethabi::StateMutability;

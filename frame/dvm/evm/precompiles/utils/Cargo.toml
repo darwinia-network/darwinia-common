@@ -11,6 +11,7 @@ version     = "2.8.15"
 
 [dependencies]
 # crates.io
+array-bytes           = { version = "2.0" }
 impl-trait-for-tuples = { version = "0.2.2" }
 num_enum              = { version = "0.5.3", default-features = false }
 ethabi                = { version = "15.0", default-features = false }
@@ -33,7 +34,6 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
 
 [dev-dependencies]
-# sha3     = { version = "0.9" }
 hex-literal = "0.3.1"
 
 [features]

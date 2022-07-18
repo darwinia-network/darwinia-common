@@ -1698,6 +1698,7 @@ dependencies = [
 name = "darwinia-evm-precompile-utils"
 version = "2.8.15"
 dependencies = [
+ "array-bytes",
  "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-evm-precompile-utils-macro",
