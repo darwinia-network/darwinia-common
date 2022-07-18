@@ -26,16 +26,20 @@ on:
       - "**.ts"
 
 env:
+  GITHUB_CACHE_VERSION: 3
+
+  NODE_VERSION: 12
+
   RUST_TOOLCHAIN: nightly
   RUST_BACKTRACE: full
   RUSTC_WRAPPER: sccache
+
   SCCACHE_LINK: https://github.com/mozilla/sccache/releases/download
   SCCACHE_VERSION: v0.2.15
   SCCACHE_DIR: /home/runner/.cache/sccache
+
   SUBALFRED_LINK: https://github.com/hack-ink/subalfred/releases/download
   SUBALFRED_VERSION: v0.9.0-rc1
-  NODE_VERSION: 12
-  GITHUB_CACHE_VERSION: 3
 
 jobs:
   basic-checks:
@@ -125,7 +129,7 @@ jobs:
           drml --ethapi-debug-targets=debug,trace --wasm-runtime-overrides . --unsafe-ws-external --unsafe-rpc-external --rpc-cors all --rpc-methods unsafe --chain pangolin-dev --alice &
           # Need some time to start the non-optimized node
           sleep 60
-      - name: Install NodeJS ${{ env.NODE_VERSION }}
+      - name: Install Node ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v1
         with:
           node-version: ${{ env.NODE_VERSION }}
