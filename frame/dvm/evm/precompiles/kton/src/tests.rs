@@ -16,12 +16,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{mock::*, *};
+// --- crates.io ---
 use codec::Encode;
-use darwinia_evm_precompile_utils::data::Bytes;
-use darwinia_support::evm::decimal_convert;
 use sha3::{Digest, Keccak256};
 use std::str::FromStr;
+// --- darwinia-network ---
+use crate::{mock::*, *};
+use darwinia_evm_precompile_utils::data::Bytes;
+use darwinia_support::evm::decimal_convert;
 
 #[test]
 fn selector() {
@@ -576,7 +578,7 @@ fn test_withdraw() {
 	ext.execute_with(|| {
 		let mock_address = H160::from_low_u64_be(100);
 		let mock_account_id =
-			<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(mock_address);
+			<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(&mock_address);
 		let withdraw_value = decimal_convert(500, None);
 
 		// Withdraw
@@ -628,7 +630,7 @@ fn test_withdraw_not_enough() {
 	ext.execute_with(|| {
 		let mock_address = H160::from_low_u64_be(100);
 		let mock_account_id =
-			<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(mock_address);
+			<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(&mock_address);
 		let withdraw_value = decimal_convert(INITIAL_BALANCE + 500, None);
 
 		// Withdraw

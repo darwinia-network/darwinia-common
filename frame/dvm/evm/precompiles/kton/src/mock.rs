@@ -1,3 +1,21 @@
+// This file is part of Darwinia.
+//
+// Copyright (C) 2018-2022 Darwinia Network
+// SPDX-License-Identifier: GPL-3.0
+//
+// Darwinia is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Darwinia is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
+
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -23,10 +41,11 @@ use sp_runtime::{
 };
 use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 // --- darwinia-network ---
-use crate::KtonErc20;
+use crate::KtonERC20;
 use darwinia_ethereum::{
 	adapter::{CurrencyAdapter, KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping, IntermediateStateRoot, Log, RawOrigin, Transaction,
+	TransactionAction,
 };
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
 use darwinia_evm_precompile_utils::test_helper::{
@@ -134,7 +153,7 @@ impl FindAuthor<H160> for FindAuthorTruncated {
 }
 pub struct HashedConverter;
 impl DeriveSubstrateAddress<AccountId32> for HashedConverter {
-	fn derive_substrate_address(address: H160) -> AccountId32 {
+	fn derive_substrate_address(address: &H160) -> AccountId32 {
 		let mut raw_account = [0u8; 32];
 		raw_account[0..20].copy_from_slice(&address[..]);
 		raw_account.into()
@@ -164,7 +183,7 @@ where
 
 impl<R> PrecompileSet for MockPrecompiles<R>
 where
-	KtonErc20<R>: Precompile,
+	KtonERC20<R>: Precompile,
 	R: darwinia_ethereum::Config,
 {
 	fn execute(
@@ -188,7 +207,7 @@ where
 
 		match address {
 			_ if address == to_address(10) =>
-				Some(<KtonErc20<R>>::execute(input, target_gas, context, is_static)),
+				Some(<KtonERC20<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
@@ -346,7 +365,7 @@ pub fn construct_tx_asserter(nonce: u64, input: Vec<u8>, account: &AccountInfo) 
 		nonce: U256::from(nonce),
 		gas_price: <Test as darwinia_evm::Config>::FeeCalculator::min_gas_price(),
 		gas_limit: U256::from(1_000_000),
-		action: ethereum::TransactionAction::Call(H160::from_str(PRECOMPILE_ADDR).unwrap()),
+		action: TransactionAction::Call(H160::from_str(PRECOMPILE_ADDR).unwrap()),
 		value: U256::zero(),
 		input,
 	}

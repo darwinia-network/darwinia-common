@@ -4,55 +4,55 @@ description = "Withdraw precompile for EVM pallet."
 edition     = "2021"
 homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
-name        = "darwinia-evm-precompile-kton-erc20"
+name        = "darwinia-evm-precompile-kton"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.8.14"
+version     = "2.8.15"
 
 [dependencies]
 # crates.io
-num_enum = { version = "0.5.3", default-features = false }
-# ethabi = { version = "15.0", default-features = false, features = ["full-serde"] }
-ethabi = { version = "15.0", default-features = false }
+num_enum = { default-features = false, version = "0.5.3" }
+# darwinia-network
+darwinia-balances             = { default-features = false, path = "./../../../../balances" }
 darwinia-evm                  = { default-features = false, path = "../.." }
-darwinia-balances                  = { default-features = false, path = "./../../../../balances" }
 darwinia-evm-precompile-utils = { default-features = false, path = "../utils" }
 darwinia-support              = { default-features = false, path = "../../../../support" }
-dp-contract   = { default-features = false, path = "../../../../../primitives/contract" }
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 # frontier
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
 
 [dev-dependencies]
-ethereum    = { version = "0.11.1", features = ["with-codec"] }
+# crates.io
+codec      = { package = "parity-scale-codec", version = "2.3", default-features = false }
+scale-info = { version = "1.0", features = ["derive"] }
+sha3       = { version = "0.8" }
+# darwinia-network
 darwinia-balances             = { path = "../../../../balances" }
-pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-pallet-evm                   = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
-darwinia-ethereum   = { path = "../../../ethereum" }
-sp-runtime       = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-fp-self-contained            = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
-sp-std           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-scale-info   = { version = "1.0", features = ["derive"] }
+darwinia-ethereum             = { path = "../../../ethereum" }
 darwinia-evm-precompile-utils = { path = "../utils", features = ["testing"] }
-sp-io            = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-codec          = { package = "parity-scale-codec", version = "2.3", default-features = false }
 darwinia-support              = { features = ["testing"], path = "../../../../support" }
-sha3 = "0.8"
+# paritytech
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-io            = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-runtime       = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-std           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+# frontier
+fp-self-contained = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
+pallet-evm        = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
 
 [features]
 default = ["std"]
 
 std = [
     # crates.io
-	"ethabi/std",
+	"num_enum/std",
     # darwinia-network
     "darwinia-evm/std",
     "darwinia-support/std",
     "darwinia-balances/std",
-    "dp-contract/std",
     "darwinia-evm-precompile-utils/std",
     # paritytech
 	"frame-support/std",

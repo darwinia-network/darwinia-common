@@ -27,11 +27,9 @@ extern crate alloc;
 // --- core ---
 use alloc::vec;
 use core::marker::PhantomData;
-// --- crates.io ---
-use ethabi::StateMutability;
 // --- darwinia-network ---
 use darwinia_evm::CurrencyAdapt;
-use darwinia_evm_precompile_utils::{prelude::*, PrecompileHelper};
+use darwinia_evm_precompile_utils::{prelude::*, PrecompileHelper, StateMutability};
 use darwinia_support::evm::DeriveSubstrateAddress;
 // --- paritytech ---
 use fp_evm::{Context, ExitRevert, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput};
@@ -82,9 +80,9 @@ enum Action {
 	Decimals = "decimals()",
 }
 
-pub struct KtonErc20<T>(PhantomData<T>);
+pub struct KtonERC20<T>(PhantomData<T>);
 
-impl<T> Precompile for KtonErc20<T>
+impl<T> Precompile for KtonERC20<T>
 where
 	T: darwinia_evm::Config,
 {
@@ -121,7 +119,7 @@ where
 	}
 }
 
-impl<T> KtonErc20<T>
+impl<T> KtonERC20<T>
 where
 	T: darwinia_evm::Config,
 {

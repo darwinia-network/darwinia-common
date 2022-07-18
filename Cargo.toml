@@ -20,7 +20,7 @@ members = [
 	"frame/dvm/evm/precompiles/dispatch",
 	"frame/dvm/evm/precompiles/mpt",
 	"frame/dvm/evm/precompiles/state-storage",
-	"frame/dvm/evm/precompiles/kton-erc20",
+	"frame/dvm/evm/precompiles/kton",
 	"frame/dvm/evm/precompiles/transfer",
 	"frame/dvm/evm/precompiles/utils",
 	"frame/header-mmr",
