@@ -28,5 +28,6 @@ default = ["std"]
 
 std = [
 	# crates.io
+	"num_enum/std",
 	"sha3/std",
 ]
