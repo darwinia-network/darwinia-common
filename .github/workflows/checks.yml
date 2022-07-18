@@ -189,7 +189,7 @@ jobs:
       - id: check-pangolin-runtime-storage
         name: Check Pangolin storage prefix
         run: |
-          OUTPUT=$(subalfred check runtime-storage --executable drml --chain pangolin --live https://pangolin-rpc.darwinia.network --property storage)
+          OUTPUT=$(subalfred check runtime --executable drml --chain pangolin --live https://pangolin-rpc.darwinia.network --property storage)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
@@ -197,7 +197,7 @@ jobs:
       - id: check-pangoro-runtime-version
         name: Check Pangoro runtime version
         run: |
-          OUTPUT=$(subalfred check runtime-version --executable drml --chain pangoro --live https://pangoro-rpc.darwinia.network --property version)
+          OUTPUT=$(subalfred check runtime --executable drml --chain pangoro --live https://pangoro-rpc.darwinia.network --property version)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
@@ -205,7 +205,7 @@ jobs:
       - id: check-pangoro-runtime-storage
         name: Check Pangoro storage prefix
         run: |
-          OUTPUT=$(subalfred check runtime-storage --executable drml --chain pangoro --live https://pangoro-rpc.darwinia.network --property storage)
+          OUTPUT=$(subalfred check runtime --executable drml --chain pangoro --live https://pangoro-rpc.darwinia.network --property storage)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
