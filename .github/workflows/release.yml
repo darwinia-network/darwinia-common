@@ -3,10 +3,48 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
+      - v*.*.*
+
+env:
+  NODE_VERSION: 16
+
+  RUST_TOOLCHAIN: nightly
 
 jobs:
-  build-release:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch latest code
+        uses: actions/checkout@v3
+      - name: Install Rust nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          default: true
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+      - name: Prepare release files
+        run: |
+          mv target/release/drml .
+          mv target/release/wbuild/pangolin-runtime/pangolin_runtime.compact.compressed.wasm .
+          mv target/release/wbuild/pangoro-runtime/pangoro_runtime.compact.compressed.wasm .
+          tar cf drml.tar.zst drml -I pzstd
+      - name: Hash
+        run: sha256sum drml.tar.zst drml pangolin_runtime.compact.compressed.wasm pangoro_runtime.compact.compressed.wasm | tee SHA256
+      - name: Publish
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            drml.tar.zst
+            pangolin_runtime.compact.compressed.wasm
+            pangoro_runtime.compact.compressed.wasm
+            SHA256
+
+  rustdoc:
     name: Rustdoc
     runs-on: ubuntu-latest
     steps:
@@ -23,11 +61,11 @@ jobs:
         with:
           command: doc
           args: --all --no-deps --locked
-      - name: Install Node 16
+      - name: Install Node ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v2
         with:
-          node-version: "16"
-      - name: Install vercel
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install Vercel
         run: npm i -g vercel
       - name: Deploy Rustdoc
         run: |
