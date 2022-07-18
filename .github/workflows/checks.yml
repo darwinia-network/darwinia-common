@@ -16,7 +16,6 @@ on:
     types: [opened, synchronize, ready_for_review]
     branches:
       - main
-      - master
     paths:
       - "**.rs"
       - "**.toml"
@@ -33,51 +32,36 @@ env:
   SCCACHE_LINK: https://github.com/mozilla/sccache/releases/download
   SCCACHE_VERSION: v0.2.15
   SCCACHE_DIR: /home/runner/.cache/sccache
+  SUBALFRED_LINK: https://github.com/hack-ink/subalfred/releases/download
+  SUBALFRED_VERSION: v0.9.0-rc1
   NODE_VERSION: 12
   GITHUB_CACHE_VERSION: 3
 
 jobs:
   basic-checks:
-    name: Task ${{ matrix.action }} ${{ matrix.task.target }}
+    name: Task ${{ matrix.action }} drml
     if: github.event_name == 'push' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     strategy:
       matrix:
         action: [build, test]
-        task:
-          - target: drml
-            repository: darwinia-network/darwinia-common
-          - target: subalfred
-            repository: hack-ink/subalfred
-        exclude:
-          - action: test
-            task:
-              target: subalfred
         include:
           - action: build
             flags: --features template,evm-tracing
-            task:
-              target: drml
-
     steps:
       - name: Install Rust ${{ env.RUST_TOOLCHAIN }} toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           default: true
-
       - name: Install Sccache
         run: |
           export SCCACHE_FILE=sccache-${{ env.SCCACHE_VERSION }}-x86_64-unknown-linux-musl
           curl -L ${{ env.SCCACHE_LINK }}/${{ env.SCCACHE_VERSION }}/$SCCACHE_FILE.tar.gz | tar xz
           sudo mv $SCCACHE_FILE/sccache /usr/bin
           sudo chmod u+x /usr/bin/sccache
-
       - name: Fetch latest code
-        uses: actions/checkout@v2
-        with:
-          repository: ${{ matrix.task.repository }}
-
+        uses: actions/checkout@v3
       - name: Cache cargo
         uses: actions/cache@v2
         with:
@@ -85,34 +69,31 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: cargo-${{ matrix.action }}-${{ matrix.task.target }}-${{ env.GITHUB_CACHE_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: cargo-${{ matrix.action }}-${{ matrix.task.target }}-${{ env.GITHUB_CACHE_VERSION }}-
-
+          key: cargo-${{ matrix.action }}-${{ env.GITHUB_CACHE_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: cargo-${{ matrix.action }}-${{ env.GITHUB_CACHE_VERSION }}-
       - name: Cache sccache
         uses: actions/cache@v2
         with:
           path: ${{ env.SCCACHE_DIR}}
-          key: sccache-${{ matrix.action }}-${{ matrix.task.target }}-${{ env.GITHUB_CACHE_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: sccache-${{ matrix.action }}-${{ matrix.task.target }}-${{ env.GITHUB_CACHE_VERSION }}-
-
+          key: sccache-${{ matrix.action }}-${{ env.GITHUB_CACHE_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: sccache-${{ matrix.action }}-${{ env.GITHUB_CACHE_VERSION }}-
       - name: Action ${{ matrix.action }}
-        run: cargo ${{ matrix.action }} ${{ matrix.flags }} --release --locked
-
-      - name: Compress ${{ matrix.task.target }}
+        uses: actions-rs/cargo@v1
+        with:
+          command: ${{ matrix.action }}
+          args: --release --locked ${{ matrix.flags }}
+      - name: Compress
         if: matrix.action != 'test'
         run: |
-          mv target/release/${{ matrix.task.target }} .
-          tar cf ${{ matrix.task.target }}.tar.zst ${{ matrix.task.target }} -I pzstd
-
-      - name: Upload ${{ matrix.task.target }}
+          mv target/release/drml .
+          tar cf drml.tar.zst drml -I pzstd
+      - name: Upload
         if: matrix.action != 'test'
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.task.target }}
-          path: ${{ matrix.task.target }}.tar.zst
-
+          name: drml
+          path: drml.tar.zst
       - name: Purge large cache
-        if: matrix.task.target == 'drml'
         run: .github/purge-large-cache.sh
 
   dvm-checks:
@@ -129,33 +110,27 @@ jobs:
             run: |
               npm run build
               npm run test
-
     steps:
       - name: Download drml
         uses: actions/download-artifact@v2
         with:
           name: drml
-
       - name: Uncompress drml
         run: |
           tar xf drml.tar.zst -I pzstd
           sudo mv drml /usr/bin
-
       - name: Launch drml
         if: matrix.task.target == 'darwinia'
         run: |
           drml --ethapi-debug-targets=debug,trace --wasm-runtime-overrides . --unsafe-ws-external --unsafe-rpc-external --rpc-cors all --rpc-methods unsafe --chain pangolin-dev --alice &
           # Need some time to start the non-optimized node
           sleep 60
-
       - name: Install nodejs ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v1
         with:
           node-version: ${{ env.NODE_VERSION }}
-
       - name: Fetch latest code
-        uses: actions/checkout@v2
-
+        uses: actions/checkout@v3
       - name: Action test
         run: |
           cd tests/dvm/${{ matrix.task.target }}
@@ -165,24 +140,24 @@ jobs:
   code-checks:
     name: Task check code
     if: github.event_name == 'push' || !github.event.pull_request.draft
-    needs: [basic-checks]
     runs-on: ubuntu-latest
     steps:
-      - name: Download subalfred
-        uses: actions/download-artifact@v2
+      - name: Install Rust ${{ env.RUST_TOOLCHAIN }} toolchain
+        uses: actions-rs/toolchain@v1
         with:
-          name: subalfred
-
-      - name: Uncompress subalfred
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          default: true
+      - name: Install Subalfred
         run: |
-          tar xf subalfred.tar.zst -I pzstd
+          curl -L ${{ env.SUBALFRED_LINK }}/${{ env.SUBALFRED_VERSION }}/subalfred.tar.zst | tar x -I pzstd
           sudo mv subalfred /usr/bin
-
+          sudo chmod u+x /usr/bin/subalfred
       - name: Fetch latest code
-        uses: actions/checkout@v2
-
+        uses: actions/checkout@v3
       - name: Run checker
-        run: subalfred check default-features -p ../darwinia-common
+        run: |
+          unset RUSTC_WRAPPER
+          subalfred check std-feature
 
   runtime-checks:
     name: Task check runtime
@@ -190,59 +165,51 @@ jobs:
     needs: [basic-checks]
     runs-on: ubuntu-latest
     steps:
+      - name: Install Subalfred
+        run: |
+          curl -L ${{ env.SUBALFRED_LINK }}/${{ env.SUBALFRED_VERSION }}/subalfred.tar.zst | tar x -I pzstd
+          sudo mv subalfred /usr/bin
+          sudo chmod u+x /usr/bin/subalfred
       - name: Download drml
         uses: actions/download-artifact@v2
         with:
           name: drml
-
-      - name: Download subalfred
-        uses: actions/download-artifact@v2
-        with:
-          name: subalfred
-
-      - name: Uncompress drml and subalfred
+      - name: Uncompress drml
         run: |
           tar xf drml.tar.zst -I pzstd
-          tar xf subalfred.tar.zst -I pzstd
           sudo mv drml /usr/bin
-          sudo mv subalfred /usr/bin
-
       - id: check-pangolin-runtime-version
         name: Check Pangolin runtime version
         run: |
-          OUTPUT=$(subalfred check runtime-version -e drml -c pangolin -l https://pangolin-rpc.darwinia.network)
+          OUTPUT=$(subalfred check runtime --executable drml --chain pangolin --live https://pangolin-rpc.darwinia.network --property version)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
           echo "::set-output name=check-pangolin-runtime-version::$OUTPUT"
-
-      - id: check-pangolin-storage-prefix
+      - id: check-pangolin-runtime-storage
         name: Check Pangolin storage prefix
         run: |
-          OUTPUT=$(subalfred check storage-prefix -e drml -c pangolin -l https://pangolin-rpc.darwinia.network)
+          OUTPUT=$(subalfred check runtime-storage --executable drml --chain pangolin --live https://pangolin-rpc.darwinia.network --property storage)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
-          echo "::set-output name=check-pangolin-storage-prefix::$OUTPUT"
-
+          echo "::set-output name=check-pangolin-runtime-storage::$OUTPUT"
       - id: check-pangoro-runtime-version
         name: Check Pangoro runtime version
         run: |
-          OUTPUT=$(subalfred check runtime-version -e drml -c pangoro -l https://pangoro-rpc.darwinia.network)
+          OUTPUT=$(subalfred check runtime-version --executable drml --chain pangoro --live https://pangoro-rpc.darwinia.network --property version)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
           echo "::set-output name=check-pangoro-runtime-version::$OUTPUT"
-
-      - id: check-pangoro-storage-prefix
+      - id: check-pangoro-runtime-storage
         name: Check Pangoro storage prefix
         run: |
-          OUTPUT=$(subalfred check storage-prefix -e drml -c pangoro -l https://pangoro-rpc.darwinia.network)
+          OUTPUT=$(subalfred check runtime-storage --executable drml --chain pangoro --live https://pangoro-rpc.darwinia.network --property storage)
           OUTPUT="${OUTPUT//'%'/'%25'}​"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
-          echo "::set-output name=check-pangoro-storage-prefix::$OUTPUT"
-
+          echo "::set-output name=check-pangoro-runtime-storage::$OUTPUT"
       - if: github.ref != 'refs/heads/master'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
@@ -258,7 +225,7 @@ jobs:
             ```
             > Check Storage Prefix
             ```diff
-            ${{ steps.check-pangolin-storage-prefix.outputs.check-pangolin-storage-prefix }}
+            ${{ steps.check-pangolin-runtime-storage.outputs.check-pangolin-runtime-storage }}
             ```
 
             **Pangoro**
@@ -268,7 +235,7 @@ jobs:
             ```
             > Check Storage Prefix
             ```diff
-            ${{ steps.check-pangoro-storage-prefix.outputs.check-pangoro-storage-prefix }}
+            ${{ steps.check-pangoro-runtime-storage.outputs.check-pangoro-runtime-storage }}
             ```
             </details>
 
