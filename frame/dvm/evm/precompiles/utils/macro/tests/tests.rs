@@ -16,6 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
+use darwinia_evm_precompile_utils_macro::{keccak256, selector};
 use fp_evm::{ExitRevert, PrecompileFailure};
 use sha3::{Digest, Keccak256};
 
@@ -38,7 +39,7 @@ use sha3::{Digest, Keccak256};
 //     }
 // }
 
-#[darwinia_evm_precompile_utils_macro::selector]
+#[selector]
 #[derive(Debug, PartialEq)]
 pub enum Action {
 	A = "a()",
@@ -58,4 +59,11 @@ fn test_from_u32() {
 	assert_eq!(Action::B, Action::from_u32(1308091344).unwrap());
 
 	assert!(Action::from_u32(230582047 + 1).is_err());
+}
+
+#[test]
+fn test_keccak256() {
+	assert_eq!(keccak256!(""), Keccak256::digest(b"").as_ref(),);
+	assert_eq!(keccak256!("toto()"), Keccak256::digest(b"toto()").as_ref(),);
+	assert_ne!(keccak256!("toto()"), Keccak256::digest(b"tata()").as_ref(),);
 }

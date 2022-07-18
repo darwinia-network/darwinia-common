@@ -18,8 +18,8 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod data;
-pub mod log;
+mod data;
+mod log;
 
 #[cfg(feature = "testing")]
 pub mod test_helper;
@@ -162,7 +162,7 @@ pub fn revert(message: impl AsRef<[u8]>) -> PrecompileFailure {
 pub mod prelude {
 	pub use crate::{
 		data::{Address, Bytes, EvmData, EvmDataReader, EvmDataWriter},
-		log::{log0, log1, log2, log3},
+		log::{log0, log1, log2, log3, log4},
 		revert, EvmResult,
 	};
 	pub use darwinia_evm_precompile_utils_macro::{keccak256, selector};

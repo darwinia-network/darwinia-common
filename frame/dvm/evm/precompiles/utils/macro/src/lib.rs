@@ -17,8 +17,6 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![crate_type = "proc-macro"]
-extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use proc_macro2::Literal;
@@ -43,7 +41,6 @@ impl ::std::fmt::Debug for Bytes {
 	}
 }
 
-// TODO: Add test about this macro
 #[proc_macro]
 pub fn keccak256(input: TokenStream) -> TokenStream {
 	let lit_str = parse_macro_input!(input as LitStr);
