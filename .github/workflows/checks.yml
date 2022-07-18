@@ -130,7 +130,7 @@ jobs:
           # Need some time to start the non-optimized node
           sleep 60
       - name: Install Node ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Fetch latest code
