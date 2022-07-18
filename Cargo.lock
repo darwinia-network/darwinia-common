@@ -1565,24 +1565,6 @@ dependencies = [
 ]
 
 [[package]]
-<<<<<<< HEAD
-name = "darwinia-evm-precompile-bridge-ethereum"
-version = "2.8.15"
-dependencies = [
- "darwinia-evm",
- "darwinia-evm-precompile-utils",
- "fp-evm",
- "from-ethereum-issuing",
- "num_enum",
- "parity-scale-codec",
- "sp-core",
- "sp-io",
- "sp-std",
-]
-
-[[package]]
-=======
->>>>>>> main
 name = "darwinia-evm-precompile-bridge-s2s"
 version = "2.8.15"
 dependencies = [
@@ -5417,6 +5399,7 @@ version = "0.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3b0498641e53dd6ac1a4f22547548caa6864cc4933784319cd1775271c5a46ce"
 dependencies = [
+ "proc-macro-crate 1.1.3",
  "proc-macro2",
  "quote",
  "syn",

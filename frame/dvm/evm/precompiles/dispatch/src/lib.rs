@@ -79,7 +79,10 @@ where
 					logs: Default::default(),
 				})
 			},
-			Err(e) => Err(revert(e.error.into())),
+			Err(e) => {
+				let error_msg: &'static str = e.error.into();
+				Err(revert(error_msg))
+			},
 		}
 	}
 }

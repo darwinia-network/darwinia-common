@@ -215,8 +215,8 @@ where
 		helper.record_db_gas(2, 2)?;
 		helper.record_log_gas(3, 32)?;
 
-		let origin = <IntoAccountId<T>>::derive_substrate_address(context.caller);
-		let to_account_id = <IntoAccountId<T>>::derive_substrate_address(to);
+		let origin = <IntoAccountId<T>>::derive_substrate_address(&context.caller);
+		let to_account_id = <IntoAccountId<T>>::derive_substrate_address(&to);
 		<KtonBalanceAdapter<T>>::evm_transfer(&origin, &to_account_id, amount)
 			.map_err(|_| revert("Transfer failed"))?;
 
@@ -260,8 +260,8 @@ where
 			})?;
 		}
 
-		let origin = <IntoAccountId<T>>::derive_substrate_address(from);
-		let to_account_id = <IntoAccountId<T>>::derive_substrate_address(to);
+		let origin = <IntoAccountId<T>>::derive_substrate_address(&from);
+		let to_account_id = <IntoAccountId<T>>::derive_substrate_address(&to);
 		<KtonBalanceAdapter<T>>::evm_transfer(&origin, &to_account_id, amount)
 			.map_err(|_| revert("Transfer failed"))?;
 
@@ -285,7 +285,7 @@ where
 		helper.record_db_gas(1, 0)?;
 		helper.record_log_gas(2, 32)?;
 
-		let origin = <IntoAccountId<T>>::derive_substrate_address(context.caller);
+		let origin = <IntoAccountId<T>>::derive_substrate_address(&context.caller);
 		let to_account_id = <T as frame_system::Config>::AccountId::decode(&mut to.as_bytes())
 			.map_err(|_| revert("Invalid target address"))?;
 
