@@ -125,7 +125,7 @@ jobs:
           drml --ethapi-debug-targets=debug,trace --wasm-runtime-overrides . --unsafe-ws-external --unsafe-rpc-external --rpc-cors all --rpc-methods unsafe --chain pangolin-dev --alice &
           # Need some time to start the non-optimized node
           sleep 60
-      - name: Install nodejs ${{ env.NODE_VERSION }}
+      - name: Install NodeJS ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v1
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -154,7 +154,7 @@ jobs:
           sudo chmod u+x /usr/bin/subalfred
       - name: Fetch latest code
         uses: actions/checkout@v3
-      - name: Run checker
+      - name: Check
         run: |
           unset RUSTC_WRAPPER
           subalfred check std-feature
