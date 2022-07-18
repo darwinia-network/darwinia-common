@@ -17,7 +17,6 @@ use darwinia_evm::{
 use darwinia_support::evm::ConcatConverter;
 
 pub struct FrontierPrecompiles<R>(PhantomData<R>);
-
 impl<R> FrontierPrecompiles<R>
 where
 	R: darwinia_ethereum::Config,
@@ -26,8 +25,8 @@ where
 		Self(Default::default())
 	}
 
-	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 5, 1024, 1025].into_iter().map(|x| addr(x)).collect()
+	pub fn used_addresses() -> [H160; 7] {
+		[addr(1), addr(2), addr(3), addr(4), addr(5), addr(1024), addr(1025)]
 	}
 }
 impl<R> PrecompileSet for FrontierPrecompiles<R>
@@ -43,13 +42,13 @@ where
 		is_static: bool,
 	) -> Option<PrecompileResult> {
 		match address {
-			// Ethereum precompiles :
+			// Ethereum precompiles:
 			a if a == addr(1) => Some(ECRecover::execute(input, target_gas, context, is_static)),
 			a if a == addr(2) => Some(Sha256::execute(input, target_gas, context, is_static)),
 			a if a == addr(3) => Some(Ripemd160::execute(input, target_gas, context, is_static)),
 			a if a == addr(4) => Some(Identity::execute(input, target_gas, context, is_static)),
 			a if a == addr(5) => Some(Modexp::execute(input, target_gas, context, is_static)),
-			// Non-Frontier specific nor Ethereum precompiles :
+			// Non-Frontier specific nor Ethereum precompiles:
 			a if a == addr(1024) =>
 				Some(Sha3FIPS256::execute(input, target_gas, context, is_static)),
 			a if a == addr(1025) =>
@@ -76,6 +75,10 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 	}
 }
 
+fn addr(a: u64) -> H160 {
+	H160::from_low_u64_be(a)
+}
+
 frame_support::parameter_types! {
 	pub const ChainId: u64 = 42;
 	pub BlockGasLimit: U256 = U256::from(u32::max_value());
@@ -98,8 +101,4 @@ impl Config for Runtime {
 	type PrecompilesValue = PrecompilesValue;
 	type RingBalanceAdapter = CurrencyAdapter<Self, Ring, RingRemainBalance>;
 	type Runner = Runner<Self>;
-}
-
-fn addr(a: u64) -> H160 {
-	H160::from_low_u64_be(a)
 }

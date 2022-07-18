@@ -148,20 +148,12 @@ impl FindAuthor<H160> for FindAuthorTruncated {
 }
 pub struct HashedConverter;
 impl DeriveSubstrateAddress<AccountId32> for HashedConverter {
-	fn derive_substrate_address(address: H160) -> AccountId32 {
+	fn derive_substrate_address(address: &H160) -> AccountId32 {
 		let mut raw_account = [0u8; 32];
 		raw_account[0..20].copy_from_slice(&address[..]);
 		raw_account.into()
 	}
 }
-
-frame_support::parameter_types! {
-	pub const TransactionByteFee: u64 = 1;
-	pub const ChainId: u64 = 42;
-	pub const BlockGasLimit: U256 = U256::MAX;
-	pub PrecompilesValue: MockPrecompiles<Test> = MockPrecompiles::<_>::new();
-}
-
 pub struct MockPrecompiles<R>(PhantomData<R>);
 impl<R> MockPrecompiles<R>
 where
@@ -171,11 +163,10 @@ where
 		Self(Default::default())
 	}
 
-	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 21].into_iter().map(|x| H160::from_low_u64_be(x)).collect()
+	pub fn used_addresses() -> [H160; 5] {
+		[addr(1), addr(2), addr(3), addr(4), addr(21)]
 	}
 }
-
 impl<R> PrecompileSet for MockPrecompiles<R>
 where
 	Transfer<R>: Precompile,
@@ -189,10 +180,8 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> Option<PrecompileResult> {
-		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
-
 		// Filter known precompile addresses except Ethereum officials
-		if self.is_precompile(address) && address > to_address(9) && address != context.address {
+		if self.is_precompile(address) && address > addr(9) && address != context.address {
 			return Some(Err(PrecompileFailure::Revert {
 				exit_status: ExitRevert::Reverted,
 				output: b"cannot be called with DELEGATECALL or CALLCODE".to_vec(),
@@ -202,16 +191,12 @@ where
 
 		match address {
 			// Ethereum precompiles
-			_ if address == to_address(1) =>
-				Some(ECRecover::execute(input, target_gas, context, is_static)),
-			_ if address == to_address(2) =>
-				Some(Sha256::execute(input, target_gas, context, is_static)),
-			_ if address == to_address(3) =>
-				Some(Ripemd160::execute(input, target_gas, context, is_static)),
-			_ if address == to_address(4) =>
-				Some(Identity::execute(input, target_gas, context, is_static)),
+			a if a == addr(1) => Some(ECRecover::execute(input, target_gas, context, is_static)),
+			a if a == addr(2) => Some(Sha256::execute(input, target_gas, context, is_static)),
+			a if a == addr(3) => Some(Ripemd160::execute(input, target_gas, context, is_static)),
+			a if a == addr(4) => Some(Identity::execute(input, target_gas, context, is_static)),
 			// Darwinia precompiles
-			_ if address == to_address(21) =>
+			a if a == addr(21) =>
 				Some(<Transfer<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
@@ -221,7 +206,15 @@ where
 		Self::used_addresses().contains(&address)
 	}
 }
-
+fn addr(a: u64) -> H160 {
+	H160::from_low_u64_be(a)
+}
+frame_support::parameter_types! {
+	pub const TransactionByteFee: u64 = 1;
+	pub const ChainId: u64 = 42;
+	pub const BlockGasLimit: U256 = U256::MAX;
+	pub PrecompilesValue: MockPrecompiles<Test> = MockPrecompiles::<_>::new();
+}
 impl darwinia_evm::Config for Test {
 	type BlockGasLimit = BlockGasLimit;
 	type BlockHashMapping = EthereumBlockHashMapping<Self>;

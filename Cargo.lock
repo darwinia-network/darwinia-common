@@ -1467,9 +1467,9 @@ dependencies = [
  "blake2-rfc",
  "ckb-merkle-mountain-range",
  "darwinia-balances",
- "darwinia-relay-primitives",
  "darwinia-relayer-game",
  "darwinia-support",
+ "dp-relayer-game",
  "ethereum-primitives",
  "ethereum-types",
  "frame-support",
@@ -1565,6 +1565,7 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 name = "darwinia-evm-precompile-bridge-ethereum"
 version = "2.8.15"
 dependencies = [
@@ -1580,6 +1581,8 @@ dependencies = [
 ]
 
 [[package]]
+=======
+>>>>>>> main
 name = "darwinia-evm-precompile-bridge-s2s"
 version = "2.8.15"
 dependencies = [
@@ -1758,7 +1761,6 @@ version = "2.8.15"
 dependencies = [
  "array-bytes",
  "ckb-merkle-mountain-range",
- "darwinia-relay-primitives",
  "darwinia-support",
  "frame-support",
  "frame-system",
@@ -1774,18 +1776,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-relay-authorities"
+name = "darwinia-relay-authority"
 version = "2.8.15"
 dependencies = [
  "array-bytes",
  "darwinia-balances",
  "darwinia-header-mmr",
- "darwinia-relay-primitives",
  "darwinia-support",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
  "scale-info",
+ "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -1794,23 +1796,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-relay-primitives"
-version = "2.8.15"
-dependencies = [
- "frame-support",
- "parity-scale-codec",
- "scale-info",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-relayer-game"
 version = "2.8.15"
 dependencies = [
  "darwinia-balances",
- "darwinia-relay-primitives",
  "darwinia-support",
+ "dp-relayer-game",
  "env_logger",
  "frame-support",
  "frame-system",
@@ -2036,6 +2027,17 @@ dependencies = [
  "parity-scale-codec",
  "sp-core",
  "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "dp-relayer-game"
+version = "2.8.15"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec",
+ "scale-info",
  "sp-runtime",
  "sp-std",
 ]
@@ -3029,29 +3031,6 @@ source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.1
 dependencies = [
  "frame-support",
  "sp-api",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "from-ethereum-issuing"
-version = "2.8.15"
-dependencies = [
- "array-bytes",
- "darwinia-bridge-ethereum",
- "darwinia-ethereum",
- "darwinia-evm",
- "darwinia-relay-primitives",
- "darwinia-support",
- "dp-contract",
- "ethereum-primitives",
- "fp-evm",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sha3 0.9.1",
  "sp-runtime",
  "sp-std",
 ]
@@ -6232,21 +6211,20 @@ dependencies = [
  "darwinia-bridge-ethereum",
  "darwinia-ethereum",
  "darwinia-evm",
- "darwinia-evm-precompile-bridge-ethereum",
  "darwinia-evm-precompile-bridge-s2s",
  "darwinia-evm-precompile-dispatch",
  "darwinia-evm-precompile-kton-erc20",
  "darwinia-evm-precompile-state-storage",
  "darwinia-evm-precompile-transfer",
  "darwinia-header-mmr",
- "darwinia-relay-authorities",
- "darwinia-relay-primitives",
+ "darwinia-relay-authority",
  "darwinia-relayer-game",
  "darwinia-staking",
  "darwinia-support",
  "dp-asset",
  "dp-contract",
  "dp-evm-tracer",
+ "dp-relayer-game",
  "dp-s2s",
  "drml-common-runtime",
  "drml-primitives",
@@ -6262,7 +6240,6 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "from-ethereum-issuing",
  "from-substrate-issuing",
  "module-transaction-pause",
  "moonbeam-rpc-primitives-debug",
@@ -9950,10 +9927,11 @@ dependencies = [
  "array-bytes",
  "darwinia-balances",
  "darwinia-bridge-ethereum",
- "darwinia-relay-primitives",
+ "darwinia-relay-authority",
  "darwinia-relayer-game",
  "darwinia-staking",
  "darwinia-support",
+ "dp-relayer-game",
  "ethabi",
  "ethereum-primitives",
  "frame-election-provider-support",

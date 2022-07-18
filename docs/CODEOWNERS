@@ -23,7 +23,7 @@
 /frame/beefy-gadget/ @AurevoirXavier
 /frame/bridge/bsc/ @AurevoirXavier @xiaoch05
 /frame/bridge/ethereum/ @AurevoirXavier @HackFisher
-/frame/bridge/relay-authorities/ @AurevoirXavier
+/frame/bridge/relay-authority/ @AurevoirXavier
 /frame/bridge/relayer-game/ @AurevoirXavier
 /frame/dvm/ethereum/ @AsceticBear
 /frame/dvm/evm/ @AsceticBear
@@ -31,7 +31,7 @@
 /frame/staking/ @AurevoirXavier @HackFisher
 /frame/support/ @AurevoirXavier @HackFisher
 /frame/transaction-pause/ @AurevoirXavier @HackFisher
-/frame/backing/*/ @xiaoch05
+/frame/backing/*/ @AurevoirXavier @xiaoch05
 /frame/issuing/*/ @xiaoch05
 
 /node/*/ @AurevoirXavier
@@ -39,10 +39,9 @@
 
 /primitives/asset/ @xiaoch05
 /primitives/beefy/ @AurevoirXavier
-/primitives/bsc/ @xiaoch05
 /primitives/contract/ @AsceticBear @xiaoch05
 /primitives/ethereum/ @AsceticBear
 /primitives/evm-trace/ @AsceticBear
 /primitives/merkle-patricia-trie/ @AurevoirXavier
-/primitives/relay/ @AurevoirXavier
+/primitives/relayer-game/ @AurevoirXavier
 /primitives/s2s/ @AsceticBear @xiaoch05

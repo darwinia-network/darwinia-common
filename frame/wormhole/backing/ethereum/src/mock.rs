@@ -37,11 +37,11 @@ use sp_runtime::{
 // --- darwinia-network ---
 use crate::{self as to_ethereum_backing, pallet::*};
 use darwinia_bridge_ethereum::{EthereumRelayHeaderParcel, EthereumRelayProofs, MMRProof};
-use darwinia_relay_primitives::*;
+use darwinia_relay_authority::{EcdsaSigner, RelayAuthorityProtocol, Term};
 use darwinia_staking::{Exposure, ExposureOf};
+use dp_relayer_game::*;
 use ethereum_primitives::{
-	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumAddress, EthereumBlockNumber,
-	EthereumNetwork,
+	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumBlockNumber, EthereumNetwork,
 };
 
 type Block = MockBlock<Test>;
@@ -263,9 +263,9 @@ impl darwinia_bridge_ethereum::Config for Test {
 	type WeightInfo = ();
 }
 
-pub struct EcdsaAuthorities;
-impl RelayAuthorityProtocol<BlockNumber> for EcdsaAuthorities {
-	type Signer = EthereumAddress;
+pub struct EcdsaRelayAuthority;
+impl RelayAuthorityProtocol<BlockNumber> for EcdsaRelayAuthority {
+	type Signer = EcdsaSigner;
 
 	fn schedule_mmr_root(_: BlockNumber) -> DispatchResult {
 		Ok(())
@@ -279,6 +279,7 @@ impl RelayAuthorityProtocol<BlockNumber> for EcdsaAuthorities {
 		Ok(())
 	}
 }
+
 frame_support::parameter_types! {
 	pub const EthereumBackingPalletId: PalletId = PalletId(*b"da/backi");
 	pub const EthereumBackingFeePalletId: PalletId = PalletId(*b"da/ethfe");
@@ -288,7 +289,7 @@ frame_support::parameter_types! {
 }
 impl Config for Test {
 	type AdvancedFee = AdvancedFee;
-	type EcdsaAuthorities = EcdsaAuthorities;
+	type EcdsaRelayAuthority = EcdsaRelayAuthority;
 	type EthereumRelay = EthereumRelay;
 	type Event = ();
 	type FeePalletId = EthereumBackingFeePalletId;

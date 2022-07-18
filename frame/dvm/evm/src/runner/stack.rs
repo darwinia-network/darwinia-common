@@ -501,7 +501,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	}
 
 	fn inc_nonce(&mut self, address: H160) {
-		let account_id = T::IntoAccountId::derive_substrate_address(address);
+		let account_id = T::IntoAccountId::derive_substrate_address(&address);
 		<frame_system::Pallet<T>>::inc_account_nonce(&account_id);
 	}
 
@@ -545,12 +545,12 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 			code.len(),
 			address
 		);
-		Pallet::<T>::create_account(address, code);
+		Pallet::<T>::create_account(&address, code);
 	}
 
 	fn transfer(&mut self, transfer: Transfer) -> Result<(), ExitError> {
-		let source = <T as Config>::IntoAccountId::derive_substrate_address(transfer.source);
-		let target = <T as Config>::IntoAccountId::derive_substrate_address(transfer.target);
+		let source = <T as Config>::IntoAccountId::derive_substrate_address(&transfer.source);
+		let target = <T as Config>::IntoAccountId::derive_substrate_address(&transfer.target);
 		T::RingBalanceAdapter::evm_transfer(&source, &target, transfer.value)?;
 
 		Ok(())

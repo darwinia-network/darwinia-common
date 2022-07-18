@@ -151,20 +151,12 @@ impl FindAuthor<H160> for FindAuthorTruncated {
 }
 pub struct HashedConverter;
 impl DeriveSubstrateAddress<AccountId32> for HashedConverter {
-	fn derive_substrate_address(address: H160) -> AccountId32 {
+	fn derive_substrate_address(address: &H160) -> AccountId32 {
 		let mut raw_account = [0u8; 32];
 		raw_account[0..20].copy_from_slice(&address[..]);
 		raw_account.into()
 	}
 }
-
-frame_support::parameter_types! {
-	pub const TransactionByteFee: u64 = 1;
-	pub const ChainId: u64 = 42;
-	pub const BlockGasLimit: U256 = U256::MAX;
-	pub PrecompilesValue: MockPrecompiles<Test> = MockPrecompiles::<_>::new();
-}
-
 pub struct MockPrecompiles<R>(PhantomData<R>);
 impl<R> MockPrecompiles<R>
 where
@@ -174,11 +166,10 @@ where
 		Self(Default::default())
 	}
 
-	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4].into_iter().map(|x| H160::from_low_u64_be(x)).collect()
+	pub fn used_addresses() -> [H160; 4] {
+		[addr(1), addr(2), addr(3), addr(4)]
 	}
 }
-
 impl<R> PrecompileSet for MockPrecompiles<R>
 where
 	R: darwinia_ethereum::Config,
@@ -191,18 +182,12 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> Option<PrecompileResult> {
-		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
-
 		match address {
 			// Ethereum precompiles
-			_ if address == to_address(1) =>
-				Some(ECRecover::execute(input, target_gas, context, is_static)),
-			_ if address == to_address(2) =>
-				Some(Sha256::execute(input, target_gas, context, is_static)),
-			_ if address == to_address(3) =>
-				Some(Ripemd160::execute(input, target_gas, context, is_static)),
-			_ if address == to_address(4) =>
-				Some(Identity::execute(input, target_gas, context, is_static)),
+			a if a == addr(1) => Some(ECRecover::execute(input, target_gas, context, is_static)),
+			a if a == addr(2) => Some(Sha256::execute(input, target_gas, context, is_static)),
+			a if a == addr(3) => Some(Ripemd160::execute(input, target_gas, context, is_static)),
+			a if a == addr(4) => Some(Identity::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
@@ -211,7 +196,15 @@ where
 		Self::used_addresses().contains(&address)
 	}
 }
-
+fn addr(a: u64) -> H160 {
+	H160::from_low_u64_be(a)
+}
+frame_support::parameter_types! {
+	pub const TransactionByteFee: u64 = 1;
+	pub const ChainId: u64 = 42;
+	pub const BlockGasLimit: U256 = U256::MAX;
+	pub PrecompilesValue: MockPrecompiles<Test> = MockPrecompiles::<_>::new();
+}
 impl darwinia_evm::Config for Test {
 	type BlockGasLimit = BlockGasLimit;
 	type BlockHashMapping = EthereumBlockHashMapping<Self>;
@@ -233,7 +226,6 @@ impl darwinia_evm::Config for Test {
 frame_support::parameter_types! {
 	pub const MockPalletId: PalletId = PalletId(*b"dar/dvmp");
 }
-
 impl darwinia_ethereum::Config for Test {
 	type Event = Event;
 	type PalletId = MockPalletId;
@@ -246,53 +238,12 @@ pub(crate) type SubChainId = [u8; 4];
 pub(crate) const SOURCE_CHAIN_ID: SubChainId = *b"srce";
 pub(crate) const TARGET_CHAIN_ID: SubChainId = *b"trgt";
 
-frame_support::parameter_types! {
-	pub const MaxUsableBalanceFromRelayer: Balance = 100;
-}
-
-fn evm_ensure_can_withdraw(
-	who: &AccountId32,
-	amount: U256,
-	reasons: WithdrawReasons,
-) -> Result<(), TransactionValidityError> {
-	// Ensure the account's evm account has enough balance to withdraw.
-	let old_evm_balance = <Test as darwinia_evm::Config>::RingBalanceAdapter::account_balance(who);
-	let (_old_sub, old_remaining) = old_evm_balance.div_mod(U256::from(POW_9));
-	ensure!(
-		old_evm_balance > amount,
-		TransactionValidityError::Invalid(InvalidTransaction::Payment)
-	);
-
-	let (mut amount_sub, amount_remaining) = amount.div_mod(U256::from(POW_9));
-	if old_remaining < amount_remaining {
-		amount_sub = amount_sub.saturating_add(U256::from(1));
-	}
-
-	let new_evm_balance = old_evm_balance.saturating_sub(amount);
-	let (new_sub, _new_remaining) = new_evm_balance.div_mod(U256::from(POW_9));
-
-	// Ensure the account underlying substrate account has no liquidity restrictions.
-	ensure!(
-		Ring::ensure_can_withdraw(
-			who,
-			amount_sub.low_u128().unique_saturated_into(),
-			reasons,
-			new_sub.low_u128().unique_saturated_into(),
-		)
-		.is_ok(),
-		TransactionValidityError::Invalid(InvalidTransaction::Payment)
-	);
-
-	Ok(())
-}
-
 pub struct AccountIdConverter;
 impl sp_runtime::traits::Convert<H256, AccountId32> for AccountIdConverter {
 	fn convert(hash: H256) -> AccountId32 {
 		AccountId32::new(hash.0)
 	}
 }
-
 #[derive(Decode, Encode, Clone)]
 pub struct EncodedCall(pub Vec<u8>);
 impl From<EncodedCall> for Result<Call, ()> {
@@ -300,7 +251,6 @@ impl From<EncodedCall> for Result<Call, ()> {
 		Call::decode(&mut &call.0[..]).map_err(drop)
 	}
 }
-
 pub struct CallValidator;
 impl CallValidate<AccountId32, Origin, Call> for CallValidator {
 	fn check_receiving_before_dispatch(
@@ -374,7 +324,7 @@ impl CallValidate<AccountId32, Origin, Call> for CallValidator {
 							// Already done `evm_ensure_can_withdraw` in
 							// check_receiving_before_dispatch
 							let derived_substrate_address =
-								<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(*id);
+								<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(id);
 
 							let result =
 								<Test as darwinia_evm::Config>::RingBalanceAdapter::evm_transfer(
@@ -401,7 +351,6 @@ impl CallValidate<AccountId32, Origin, Call> for CallValidator {
 		}
 	}
 }
-
 pub struct IntoDispatchOrigin;
 impl IntoDispatchOriginT<AccountId32, Call, Origin> for IntoDispatchOrigin {
 	fn into_dispatch_origin(id: &AccountId32, call: &Call) -> Origin {
@@ -414,7 +363,6 @@ impl IntoDispatchOriginT<AccountId32, Call, Origin> for IntoDispatchOrigin {
 		}
 	}
 }
-
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
 pub struct TestAccountPublic(AccountId32);
 impl IdentifyAccount for TestAccountPublic {
@@ -424,7 +372,6 @@ impl IdentifyAccount for TestAccountPublic {
 		self.0
 	}
 }
-
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
 pub struct TestSignature(AccountId32);
 impl Verify for TestSignature {
@@ -434,7 +381,44 @@ impl Verify for TestSignature {
 		self.0 == *signer
 	}
 }
+fn evm_ensure_can_withdraw(
+	who: &AccountId32,
+	amount: U256,
+	reasons: WithdrawReasons,
+) -> Result<(), TransactionValidityError> {
+	// Ensure the account's evm account has enough balance to withdraw.
+	let old_evm_balance = <Test as darwinia_evm::Config>::RingBalanceAdapter::account_balance(who);
+	let (_old_sub, old_remaining) = old_evm_balance.div_mod(U256::from(POW_9));
+	ensure!(
+		old_evm_balance > amount,
+		TransactionValidityError::Invalid(InvalidTransaction::Payment)
+	);
 
+	let (mut amount_sub, amount_remaining) = amount.div_mod(U256::from(POW_9));
+	if old_remaining < amount_remaining {
+		amount_sub = amount_sub.saturating_add(U256::from(1));
+	}
+
+	let new_evm_balance = old_evm_balance.saturating_sub(amount);
+	let (new_sub, _new_remaining) = new_evm_balance.div_mod(U256::from(POW_9));
+
+	// Ensure the account underlying substrate account has no liquidity restrictions.
+	ensure!(
+		Ring::ensure_can_withdraw(
+			who,
+			amount_sub.low_u128().unique_saturated_into(),
+			reasons,
+			new_sub.low_u128().unique_saturated_into(),
+		)
+		.is_ok(),
+		TransactionValidityError::Invalid(InvalidTransaction::Payment)
+	);
+
+	Ok(())
+}
+frame_support::parameter_types! {
+	pub const MaxUsableBalanceFromRelayer: Balance = 100;
+}
 impl pallet_bridge_dispatch::Config for Test {
 	type AccountIdConverter = AccountIdConverter;
 	type BridgeMessageId = BridgeMessageId;

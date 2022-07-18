@@ -21,9 +21,9 @@ serde          = { version = "1.0", optional = true }
 serde_json     = { version = "1.0", optional = true }
 # darwinia-network
 ckb-merkle-mountain-range = { default-features = false, git = "https://github.com/darwinia-network/merkle-mountain-range" }
-darwinia-relay-primitives = { default-features = false, path = "../../../primitives/relay" }
 darwinia-relayer-game     = { default-features = false, path = "../relayer-game" }
 darwinia-support          = { default-features = false, path = "../../support" }
+dp-relayer-game           = { default-features = false, path = "../../../primitives/relayer-game" }
 ethereum-primitives       = { default-features = false, features = ["full-codec", "full-rlp"], path = "../../../primitives/ethereum" }
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
@@ -58,8 +58,8 @@ std = [
 	# darwinia-network
 	"ckb-merkle-mountain-range/std",
 	"darwinia-relayer-game/std",
-	"darwinia-relay-primitives/std",
 	"darwinia-support/std",
+	"dp-relayer-game/std",
 	"ethereum-primitives/std",
 	"ethereum-primitives/full-serde",
 	# paritytech

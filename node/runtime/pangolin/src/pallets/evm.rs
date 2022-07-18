@@ -24,7 +24,6 @@ use darwinia_ethereum::{
 use darwinia_evm::{
 	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, GasWeightMapping,
 };
-use darwinia_evm_precompile_bridge_ethereum::EthereumBridge;
 use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 use darwinia_evm_precompile_dispatch::Dispatch;
 use darwinia_evm_precompile_kton_erc20::KtonErc20;
@@ -102,19 +101,29 @@ where
 		Self(Default::default())
 	}
 
-	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 21, 23, 24, 25, 1024, 1025]
-			.into_iter()
-			.map(|x| addr(x))
-			.collect()
+	pub fn used_addresses() -> [H160; 14] {
+		[
+			addr(1),
+			addr(2),
+			addr(3),
+			addr(4),
+			addr(5),
+			addr(6),
+			addr(7),
+			addr(8),
+			addr(9),
+			addr(21),
+			addr(24),
+			addr(25),
+			addr(1024),
+			addr(1025),
+		]
 	}
 }
-
 impl<R> PrecompileSet for PangolinPrecompiles<R>
 where
 	Dispatch<R>: Precompile,
 	KtonErc20<R>: Precompile,
-	EthereumBridge<R>: Precompile,
 	R: darwinia_ethereum::Config,
 	StateStorage<R, StorageFilter>: Precompile,
 	Sub2SubBridge<R, ToPangoroMessageSender, bm_pangoro::ToPangoroOutboundPayLoad>: Precompile,
@@ -152,9 +161,7 @@ where
 			// FIXME: Change the transfer precompile address after https://github.com/darwinia-network/darwinia-common/issues/1259
 			a if a == addr(21) =>
 				Some(<Transfer<R>>::execute(input, target_gas, context, is_static)),
-			// TODO: Delete EthereumBridge and Sub2SubBridge precompiles in the futures.
-			a if a == addr(23) =>
-				Some(<EthereumBridge<R>>::execute(input, target_gas, context, is_static)),
+			// TODO: Delete Sub2SubBridge precompiles in the futures.
 			a if a == addr(24) => Some(<Sub2SubBridge<
 				R,
 				ToPangoroMessageSender,
@@ -198,6 +205,10 @@ impl GasWeightMapping for FixedGasWeightMapping {
 	}
 }
 
+fn addr(a: u64) -> H160 {
+	H160::from_low_u64_be(a)
+}
+
 frame_support::parameter_types! {
 	pub const ChainId: u64 = 43;
 	pub BlockGasLimit: U256 = U256::from(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WEIGHT_PER_GAS);
@@ -220,8 +231,4 @@ impl Config for Runtime {
 	type PrecompilesValue = PrecompilesValue;
 	type RingBalanceAdapter = CurrencyAdapter<Self, Ring, RingRemainBalance>;
 	type Runner = Runner<Self>;
-}
-
-fn addr(a: u64) -> H160 {
-	H160::from_low_u64_be(a)
 }

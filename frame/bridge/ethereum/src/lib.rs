@@ -76,8 +76,8 @@ use sp_std::borrow::ToOwned;
 use sp_std::{convert::From, marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRMerge, MerkleProof};
-use darwinia_relay_primitives::relayer_game::*;
 use darwinia_support::traits::EthereumReceipt as EthereumReceiptT;
+use dp_relayer_game::*;
 use ethereum_primitives::{
 	ethashproof::EthashProof,
 	header::EthereumHeader,

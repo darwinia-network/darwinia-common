@@ -134,8 +134,8 @@ pub fn new_block_with_parent_hash(parent_hash: Hash) -> Header {
 		&Default::default(),
 		Default::default(),
 	);
-	HeaderMmr::on_initialize(number);
-	HeaderMmr::on_finalize(number);
+	<HeaderMmr as OnInitialize<BlockNumber>>::on_initialize(number);
+	<HeaderMmr as OnFinalize<BlockNumber>>::on_finalize(number);
 	<frame_system::Pallet<Test>>::finalize()
 }
 
