@@ -20,12 +20,10 @@
 
 mod data;
 mod log;
+mod modifier;
 
 #[cfg(feature = "testing")]
 pub mod test_helper;
-
-pub use darwinia_evm_precompile_utils_macro::selector;
-pub use ethabi::StateMutability;
 
 // --- crates.io ---
 use sha3::{Digest, Keccak256};
@@ -35,7 +33,6 @@ use darwinia_evm::GasWeightMapping;
 // --- paritytech ---
 use fp_evm::{Context, ExitError, ExitRevert, PrecompileFailure};
 use frame_support::traits::Get;
-use sp_core::U256;
 use sp_std::marker::PhantomData;
 
 /// Alias for Result returning an EVM precompile error.
@@ -84,18 +81,8 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 		EvmDataReader::new_skip_selector(self.input)
 	}
 
-	/// Check that a function call is compatible with the context it is
-	/// called into.
 	pub fn check_state_modifier(&self, modifier: StateMutability) -> EvmResult<()> {
-		if self.is_static && modifier != StateMutability::View {
-			return Err(revert("can't call non-static function in static context"));
-		}
-
-		if modifier != StateMutability::Payable && self.context.apparent_value > U256::zero() {
-			return Err(revert("function is not payable"));
-		}
-
-		Ok(())
+		check_function_modifier(self.context, self.is_static, modifier)
 	}
 
 	pub fn record_db_gas(&mut self, reads: u64, writes: u64) -> EvmResult<()> {
@@ -163,7 +150,9 @@ pub mod prelude {
 	pub use crate::{
 		data::{Address, Bytes, EvmData, EvmDataReader, EvmDataWriter},
 		log::{log0, log1, log2, log3, log4},
+		modifier::check_function_modifier,
 		revert, EvmResult,
 	};
 	pub use darwinia_evm_precompile_utils_macro::{keccak256, selector};
+	pub use ethabi::StateMutability;
 }
