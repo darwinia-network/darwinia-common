@@ -15,7 +15,6 @@ codec          = { package = "parity-scale-codec", version = "2.3", default-feat
 ethereum       = { version = "0.11.1", default-features = false, features = ["with-codec"] }
 ethereum-types = { version = "0.12", default-features = false }
 evm            = { version = "0.33.1", default-features = false, features = ["with-codec"] }
-log            = { version = "0.4" }
 rlp            = { version = "0.5", default-features = false }
 scale-info     = { version = "1.0", default-features = false, features = ["derive"] }
 serde          = { version = "1.0", optional = true }

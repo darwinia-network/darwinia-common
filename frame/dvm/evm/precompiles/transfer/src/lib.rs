@@ -48,7 +48,7 @@ use fp_evm::{
 	Context, ExitReason, ExitRevert, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
 	PrecompileResult,
 };
-use frame_support::ensure;
+use frame_support::{ensure, log};
 use sp_core::{H160, U256};
 use sp_std::{borrow::ToOwned, marker::PhantomData, prelude::*, vec::Vec};
 // --- darwinia-network ---
