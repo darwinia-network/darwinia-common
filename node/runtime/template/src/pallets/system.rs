@@ -1,7 +1,6 @@
 // --- paritytech ---
 use frame_support::{traits::Everything, weights::constants::RocksDbWeight};
 use frame_system::Config;
-use sp_runtime::traits::AccountIdLookup;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use crate::*;
