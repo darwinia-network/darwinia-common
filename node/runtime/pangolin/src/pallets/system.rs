@@ -1,10 +1,16 @@
+// --- core ---
+use core::{fmt::Debug, marker::PhantomData};
+// --- crates.io ---
+use codec::Codec;
+use scale_info::StaticTypeInfo;
 // --- paritytech ---
 use frame_support::{traits::Contains, weights::constants::RocksDbWeight};
 use frame_system::Config;
-use sp_runtime::traits::AccountIdLookup;
+use sp_runtime::{traits::LookupError, MultiAddress};
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use crate::*;
+use darwinia_support::evm::{ConcatConverter, DeriveSubstrateAddress};
 use module_transaction_pause::PausedTransactionFilter;
 
 pub struct BaseFilter;
@@ -17,6 +23,29 @@ impl Contains<Call> for BaseFilter {
 		}
 
 		true
+	}
+}
+
+pub struct DarwiniaAccountLookup<AccountId>(PhantomData<AccountId>);
+impl<AccountId> StaticLookup for DarwiniaAccountLookup<AccountId>
+where
+	AccountId: Clone + Debug + From<[u8; 32]> + PartialEq + Codec,
+	MultiAddress<AccountId, ()>: Codec + StaticTypeInfo,
+{
+	type Source = MultiAddress<AccountId, ()>;
+	type Target = AccountId;
+
+	fn lookup(x: Self::Source) -> Result<Self::Target, LookupError> {
+		match x {
+			MultiAddress::Id(i) => Ok(i),
+			MultiAddress::Address20(address) =>
+				Ok(ConcatConverter::derive_substrate_address(&H160(address))),
+			_ => Err(LookupError),
+		}
+	}
+
+	fn unlookup(x: Self::Target) -> Self::Source {
+		MultiAddress::Id(x)
 	}
 }
 
@@ -40,7 +69,7 @@ impl Config for Runtime {
 	type Hashing = Hashing;
 	type Header = Header;
 	type Index = Nonce;
-	type Lookup = AccountIdLookup<AccountId, ()>;
+	type Lookup = DarwiniaAccountLookup<AccountId>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();
