@@ -22,7 +22,6 @@ use sha3::{Digest, Keccak256};
 use std::str::FromStr;
 // --- darwinia-network ---
 use crate::{mock::*, *};
-use darwinia_evm_precompile_utils::data::Bytes;
 use darwinia_support::evm::decimal_convert;
 
 #[test]

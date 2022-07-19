@@ -26,7 +26,7 @@ use core::marker::PhantomData;
 // --- crates.io ---
 use ethabi::{ParamType, StateMutability, Token};
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{revert, PrecompileHelper};
+use darwinia_evm_precompile_utils::{prelude::*, revert, PrecompileHelper};
 use dp_contract::abi_util::abi_encode_bytes;
 // --- paritytech ---
 use fp_evm::{
@@ -36,7 +36,7 @@ use fp_evm::{
 
 const PALLET_PREFIX_LENGTH: usize = 16;
 
-#[darwinia_evm_precompile_utils::selector]
+#[selector]
 enum Action {
 	StateGetStorage = "state_storage(bytes)",
 }

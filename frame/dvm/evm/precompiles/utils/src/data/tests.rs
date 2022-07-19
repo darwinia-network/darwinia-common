@@ -348,30 +348,6 @@ fn read_address_array() {
 	assert_eq!(array, parsed);
 }
 
-// #[test]
-// fn read_address_array_size_too_big() {
-// 	let array = vec![
-// 		Address(H160::repeat_byte(0x11)),
-// 		Address(H160::repeat_byte(0x22)),
-// 		Address(H160::repeat_byte(0x33)),
-// 		Address(H160::repeat_byte(0x44)),
-// 		Address(H160::repeat_byte(0x55)),
-// 	];
-// 	let mut writer_output = EvmDataWriter::new().write(array).build();
-
-// 	U256::from(6u32).to_big_endian(&mut writer_output[0x20..0x40]);
-
-// 	let mut reader = EvmDataReader::new(&writer_output);
-
-// 	match reader.read::<Vec<Address>>() {
-// 		Ok(_) => panic!("should not parse correctly"),
-// 		Err(PrecompileFailure::Revert { output: err, .. }) => {
-// 			assert_eq!(err, b"tried to parse H160 out of bounds")
-// 		},
-// 		Err(_) => panic!("unexpected error"),
-// 	}
-// }
-
 #[test]
 fn write_address_nested_array() {
 	let array = vec![

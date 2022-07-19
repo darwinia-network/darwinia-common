@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-
 use crate::{revert, EvmResult};
 use ethabi::StateMutability;
 use fp_evm::Context;

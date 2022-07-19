@@ -53,10 +53,10 @@ use sp_core::{H160, U256};
 use sp_std::{borrow::ToOwned, marker::PhantomData, prelude::*, vec::Vec};
 // --- darwinia-network ---
 use darwinia_evm::{runner::Runner, AccountId, CurrencyAdapt, Pallet};
-use darwinia_evm_precompile_utils::{revert, PrecompileHelper};
+use darwinia_evm_precompile_utils::{prelude::*, revert, PrecompileHelper};
 use darwinia_support::evm::{DeriveSubstrateAddress, TRANSFER_ADDR};
 
-#[darwinia_evm_precompile_utils::selector]
+#[selector]
 #[derive(Eq, PartialEq)]
 pub enum Action {
 	TransferAndCall = "transfer_and_call(address,uint256)",

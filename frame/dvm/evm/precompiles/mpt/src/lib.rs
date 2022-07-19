@@ -21,7 +21,7 @@
 // --- core ---
 use core::marker::PhantomData;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{revert, PrecompileHelper, StateMutability};
+use darwinia_evm_precompile_utils::{prelude::*, revert, PrecompileHelper};
 use dp_contract::{
 	abi_util::{abi_encode_array_bytes, abi_encode_bytes},
 	mpt::{MPTMultiStorageVerifyParams, MPTSingleStorageVerifyParams},
@@ -37,7 +37,7 @@ use fp_evm::{
 };
 use sp_std::{vec, vec::Vec};
 
-#[darwinia_evm_precompile_utils::selector]
+#[selector]
 enum Action {
 	// account, account_proof, storage_key, storage_proof
 	VerfiySingleStorageProof =

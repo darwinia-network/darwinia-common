@@ -29,7 +29,7 @@ use alloc::vec;
 use core::marker::PhantomData;
 // --- darwinia-network ---
 use darwinia_evm::CurrencyAdapt;
-use darwinia_evm_precompile_utils::{prelude::*, PrecompileHelper, StateMutability};
+use darwinia_evm_precompile_utils::{prelude::*, PrecompileHelper};
 use darwinia_support::evm::DeriveSubstrateAddress;
 // --- paritytech ---
 use fp_evm::{Context, ExitRevert, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput};
@@ -66,7 +66,7 @@ impl StorageInstance for Approves {
 type ApprovesStorage =
 	StorageDoubleMap<Approves, Blake2_128Concat, H160, Blake2_128Concat, H160, U256, ValueQuery>;
 
-#[darwinia_evm_precompile_utils::selector]
+#[selector]
 enum Action {
 	TotalSupply = "totalSupply()",
 	BalanceOf = "balanceOf(address)",

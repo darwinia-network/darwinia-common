@@ -23,7 +23,7 @@ use core::marker::PhantomData;
 // --- crates.io ---
 use milagro_bls::{AggregatePublicKey, AggregateSignature, PublicKey, Signature};
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{revert, PrecompileHelper, StateMutability};
+use darwinia_evm_precompile_utils::{prelude::*, revert, PrecompileHelper};
 use dp_contract::{abi_util::abi_encode_bool, bls12381::FastAggregateVerifyParams};
 // --- paritytech ---
 use fp_evm::{
@@ -32,7 +32,7 @@ use fp_evm::{
 };
 use sp_std::vec::Vec;
 
-#[darwinia_evm_precompile_utils::selector]
+#[selector]
 enum Action {
 	FastAggregateVerify = "fast_aggregate_verify(bytes[],bytes,bytes)",
 }

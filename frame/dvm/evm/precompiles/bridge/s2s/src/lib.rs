@@ -23,7 +23,7 @@ use core::marker::PhantomData;
 // --- crates.io ---
 use codec::Encode;
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{revert, PrecompileHelper, StateMutability};
+use darwinia_evm_precompile_utils::{prelude::*, revert, PrecompileHelper};
 use darwinia_support::{
 	evm::DeriveSubstrateAddress,
 	s2s::{LatestMessageNoncer, RelayMessageSender},
@@ -45,7 +45,7 @@ use sp_core::H160;
 use sp_runtime::{MultiSignature, MultiSigner};
 use sp_std::vec::Vec;
 
-#[darwinia_evm_precompile_utils::selector]
+#[selector]
 enum Action {
 	OutboundLatestGeneratedNonce = "outbound_latest_generated_nonce(bytes4)",
 	InboundLatestReceivedNonce = "inbound_latest_received_nonce(bytes4)",
