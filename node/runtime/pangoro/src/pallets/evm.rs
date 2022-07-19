@@ -23,7 +23,6 @@ use darwinia_evm::{
 use darwinia_evm_precompile_bls12_381::BLS12381;
 use darwinia_evm_precompile_dispatch::Dispatch;
 use darwinia_evm_precompile_kton::KtonERC20;
-use darwinia_evm_precompile_mpt::MPT;
 use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::ConcatConverter;
@@ -58,7 +57,7 @@ where
 		Self(Default::default())
 	}
 
-	pub fn used_addresses() -> [H160; 15] {
+	pub fn used_addresses() -> [H160; 14] {
 		[
 			addr(1),
 			addr(2),
@@ -74,7 +73,6 @@ where
 			addr(1025),
 			addr(1026),
 			addr(2048),
-			addr(2049),
 		]
 	}
 }
@@ -84,7 +82,6 @@ where
 	BLS12381<R>: Precompile,
 	Dispatch<R>: Precompile,
 	KtonERC20<R>: Precompile,
-	MPT<R>: Precompile,
 	R: darwinia_ethereum::Config,
 	StateStorage<R, StorageFilter>: Precompile,
 	Transfer<R>: Precompile,
@@ -131,7 +128,6 @@ where
 			// Darwinia precompiles: 2048+ for experimental precompiles.
 			a if a == addr(2048) =>
 				Some(<BLS12381<R>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(2049) => Some(<MPT<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
