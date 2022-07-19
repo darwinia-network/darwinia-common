@@ -13,6 +13,8 @@ version     = "2.8.16"
 # paritytech
 sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+# darwinia-network
+darwinia-support = { default-features = false, path = "../../frame/support" }
 
 [features]
 default = ["std"]
@@ -21,6 +23,8 @@ std = [
 	# paritytech
 	"sp-core/std",
 	"sp-runtime/std",
+	# darwinia-network
+	"darwinia-support/std",
 ]
 
 fast-runtime = []
