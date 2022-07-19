@@ -129,7 +129,6 @@ fn kton_make_call_works() {
 	let (_, mut ext) = new_test_ext(1);
 
 	ext.execute_with(|| {
-		// let helper = PrecompileHelper::<Test>::new(&[], Some(100));
 		let mock_address =
 			H160::from_str("Aa01a1bEF0557fa9625581a293F3AA7770192632").unwrap();
 		let mock_value = U256::from(30);
