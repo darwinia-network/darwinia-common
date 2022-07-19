@@ -1,6 +1,6 @@
 [package]
 authors     = ["Darwinia Network <hello@darwinia.network>"]
-description = "Withdraw precompile for EVM pallet."
+description = "KtonERC20 precompile for EVM pallet."
 edition     = "2021"
 homepage    = "https://darwinia.network"
 license     = "GPL-3.0"

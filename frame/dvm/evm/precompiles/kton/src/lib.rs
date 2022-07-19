@@ -59,7 +59,7 @@ impl StorageInstance for Approves {
 	const STORAGE_PREFIX: &'static str = "Approves";
 
 	fn pallet_prefix() -> &'static str {
-		"KtonErc20"
+		"KtonERC20"
 	}
 }
 

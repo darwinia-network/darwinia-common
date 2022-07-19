@@ -176,8 +176,8 @@ where
 		Self(Default::default())
 	}
 
-	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![10].into_iter().map(|x| H160::from_low_u64_be(x)).collect()
+	pub fn used_addresses() -> [H160; 1] {
+		[addr(10)]
 	}
 }
 
@@ -215,6 +215,9 @@ where
 	fn is_precompile(&self, address: H160) -> bool {
 		Self::used_addresses().contains(&address)
 	}
+}
+fn addr(a: u64) -> H160 {
+	H160::from_low_u64_be(a)
 }
 
 impl darwinia_evm::Config for Test {
