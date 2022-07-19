@@ -1599,7 +1599,7 @@ dependencies = [
 
 [[package]]
 name = "darwinia-evm-precompile-kton"
-version = "2.8.15"
+version = "2.8.16"
 dependencies = [
  "darwinia-balances",
  "darwinia-ethereum",
