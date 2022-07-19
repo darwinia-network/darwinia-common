@@ -709,8 +709,7 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_im_online, ImOnline);
 			add_benchmark!(params, batches, pallet_treasury, Treasury);
 			add_benchmark!(params, batches, pallet_scheduler, Scheduler);
-			// TODO FIX
-			// add_benchmark!(params, batches, pallet_bridge_grandpa, BridgePangolinGrandpa);
+			add_benchmark!(params, batches, pallet_bridge_grandpa, BridgePangolinGrandpa);
 			// TODO: https://github.com/darwinia-network/darwinia-parachain/issues/66
 			// add_benchmark!(params, batches, pallet_bridge_messages, BridgePangolinMessages);
 			add_benchmark!(params, batches, pallet_fee_market, PangolinFeeMarket);

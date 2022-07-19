@@ -1,5 +1,7 @@
 pub mod frame_system;
 pub mod from_substrate_issuing;
+pub mod pallet_bridge_grandpa_bridge_pangoro_grandpa;
+pub mod pallet_bridge_grandpa_bridge_rococo_grandpa;
 pub mod pallet_democracy;
 pub mod pallet_identity;
 pub mod pallet_im_online;

@@ -20,7 +20,7 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2022-07-19, STEPS: `2`, REPEAT: 2, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("pangoro-dev"), DB CACHE: 128
+//! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("pangolin-dev"), DB CACHE: 128
 
 // Executed Command:
 // ./target/release/drml
@@ -36,9 +36,9 @@
 // --repeat
 // 2
 // --chain
-// pangoro-dev
+// pangolin-dev
 // --output
-// node/runtime/pangoro/src/weights/
+// node/runtime/pangolin/src/weights/
 // --extrinsic
 // *
 // --pallet
@@ -55,19 +55,19 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `pallet_bridge_grandpa`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_bridge_grandpa::WeightInfo for WeightInfo<T> {
-	// Storage: BridgePangolinGrandpa IsHalted (r:1 w:0)
-	// Storage: BridgePangolinGrandpa RequestCount (r:1 w:1)
-	// Storage: BridgePangolinGrandpa BestFinalized (r:1 w:1)
-	// Storage: BridgePangolinGrandpa ImportedHeaders (r:1 w:2)
-	// Storage: BridgePangolinGrandpa CurrentAuthoritySet (r:1 w:0)
-	// Storage: BridgePangolinGrandpa ImportedHashesPointer (r:1 w:1)
-	// Storage: BridgePangolinGrandpa ImportedHashes (r:1 w:1)
+	// Storage: BridgePangoroGrandpa IsHalted (r:1 w:0)
+	// Storage: BridgePangoroGrandpa RequestCount (r:1 w:1)
+	// Storage: BridgePangoroGrandpa BestFinalized (r:1 w:1)
+	// Storage: BridgePangoroGrandpa ImportedHeaders (r:1 w:2)
+	// Storage: BridgePangoroGrandpa CurrentAuthoritySet (r:1 w:0)
+	// Storage: BridgePangoroGrandpa ImportedHashesPointer (r:1 w:1)
+	// Storage: BridgePangoroGrandpa ImportedHashes (r:1 w:1)
 	fn submit_finality_proof(p: u32, v: u32, ) -> Weight {
-		(1_554_916_000 as Weight)
-			// Standard Error: 239_000
-			.saturating_add((32_090_000 as Weight).saturating_mul(p as Weight))
-			// Standard Error: 245_000
-			.saturating_add((1_717_000 as Weight).saturating_mul(v as Weight))
+		(198_044_000 as Weight)
+			// Standard Error: 1_078_000
+			.saturating_add((33_182_000 as Weight).saturating_mul(p as Weight))
+			// Standard Error: 1_104_000
+			.saturating_add((3_275_000 as Weight).saturating_mul(v as Weight))
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}

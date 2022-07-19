@@ -778,6 +778,7 @@ sp_api::impl_runtime_apis! {
 			// list_benchmark!(list, extra, darwinia_relay_authority, EcdsaRelayAuthority);
 			// list_benchmark!(list, extra, to_tron_backing, TronBacking);
 			list_benchmark!(list, extra, pallet_bridge_grandpa, BridgePangoroGrandpa);
+			list_benchmark!(list, extra, pallet_bridge_grandpa, BridgeRococoGrandpa);
 			// TODO: https://github.com/darwinia-network/darwinia-parachain/issues/66
 			// list_benchmark!(list, extra, pallet_bridge_messages, BridgePangoroMessages);
 			// list_benchmark!(list, extra, pallet_bridge_messages, BridgePangolinParachainMessages);
@@ -841,8 +842,8 @@ sp_api::impl_runtime_apis! {
 			// add_benchmark!(params, batches, darwinia_relayer_game, EthereumRelayerGame);
 			// add_benchmark!(list, extra, darwinia_relay_authority, EcdsaRelayAuthority);
 			// add_benchmark!(params, batches, to_tron_backing, TronBacking);
-			// TODO FIX
-			// add_benchmark!(params, batches, pallet_bridge_grandpa, BridgePangoroGrandpa);
+			add_benchmark!(params, batches, pallet_bridge_grandpa, BridgePangoroGrandpa);
+			add_benchmark!(params, batches, pallet_bridge_grandpa, BridgeRococoGrandpa);
 			// TODO: https://github.com/darwinia-network/darwinia-parachain/issues/66
 			// add_benchmark!(params, batches, pallet_bridge_messages, BridgePangoroMessages);
 			// add_benchmark!(params, batches, pallet_bridge_messages, BridgePangolinParachainMessages);

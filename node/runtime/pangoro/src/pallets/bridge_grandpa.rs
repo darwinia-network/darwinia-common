@@ -3,7 +3,7 @@ pub use pallet_bridge_grandpa::Instance1 as WithPangolinGrandpa;
 // --- paritytech ---
 use pallet_bridge_grandpa::Config;
 // --- darwinia-network ---
-use crate::*;
+use crate::{weights::pallet_bridge_grandpa::WeightInfo, *};
 
 frame_support::parameter_types! {
 	// This is a pretty unscientific cap.
@@ -22,5 +22,5 @@ impl Config<WithPangolinGrandpa> for Runtime {
 	type BridgedChain = bp_pangolin::Pangolin;
 	type HeadersToKeep = HeadersToKeep;
 	type MaxRequests = MaxRequests;
-	type WeightInfo = ();
+	type WeightInfo = WeightInfo<Runtime>;
 }
