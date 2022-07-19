@@ -20,6 +20,8 @@
 use codec::Encode;
 use sha3::{Digest, Keccak256};
 use std::str::FromStr;
+// --- paritytech ---
+use frame_support::{Blake2_128Concat, StorageHasher, Twox128};
 // --- darwinia-network ---
 use crate::{mock::*, *};
 use darwinia_support::evm::decimal_convert;
@@ -191,6 +193,38 @@ fn test_approve() {
 			mock_address,
 			EvmDataWriter::new().write(approve_value).build(),
 		));
+	});
+}
+
+#[test]
+fn test_approve_storage() {
+	let (pairs, mut ext) = new_test_ext(1);
+	let alice = &pairs[0];
+
+	ext.execute_with(|| {
+		let mock_address = H160::from_low_u64_be(100);
+		let approve_value = decimal_convert(500, None);
+
+		let nonce = 0;
+		construct_tx_asserter(
+			nonce,
+			EvmDataWriter::new_with_selector(Action::Approve)
+				.write::<Address>(mock_address.into())
+				.write::<U256>(approve_value.into())
+				.build(),
+			&alice,
+		)
+		.execute()
+		.assert_executed_value(&EvmDataWriter::new().write(true).build());
+
+		let mut key = Vec::new();
+		key.extend_from_slice(&Twox128::hash(b"KtonERC20"));
+		key.extend_from_slice(&Twox128::hash(b"Approves"));
+		key.extend_from_slice(&Blake2_128Concat::hash(&Encode::encode(&alice.address)));
+		key.extend_from_slice(&Blake2_128Concat::hash(&Encode::encode(&mock_address)));
+
+		let storage = frame_support::storage::unhashed::get_raw(&key).unwrap();
+		assert_eq!(approve_value, U256::from_little_endian(&storage));
 	});
 }
 
