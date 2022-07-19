@@ -22,7 +22,6 @@ use darwinia_evm::{
 };
 use darwinia_evm_precompile_bls12_381::BLS12381;
 use darwinia_evm_precompile_dispatch::Dispatch;
-use darwinia_evm_precompile_mpt::MPT;
 use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::ConcatConverter;
@@ -69,7 +68,6 @@ impl<R> PrecompileSet for PangoroPrecompiles<R>
 where
 	BLS12381<R>: Precompile,
 	Dispatch<R>: Precompile,
-	MPT<R>: Precompile,
 	R: darwinia_ethereum::Config,
 	StateStorage<R, StorageFilter>: Precompile,
 	Transfer<R>: Precompile,
@@ -114,7 +112,6 @@ where
 			// Darwinia precompiles: 2048+ for experimental precompiles.
 			a if a == addr(2048) =>
 				Some(<BLS12381<R>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(2049) => Some(<MPT<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
