@@ -33,9 +33,6 @@ sp-std        = { default-features = false, git = "https://github.com/darwinia-n
 # frontier
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
 
-[dev-dependencies]
-hex-literal = "0.3.1"
-
 [features]
 default = ["std"]
 
