@@ -3,6 +3,7 @@ use frame_support::traits::{LockIdentifier, U128CurrencyToVote};
 use pallet_elections_phragmen::Config;
 // --- darwinia-network ---
 use crate::*;
+use crate::weights::pallet_elections_phragmen::WeightInfo;
 
 #[cfg(feature = "runtime-benchmarks")]
 frame_support::parameter_types! {
@@ -45,5 +46,5 @@ impl Config for Runtime {
 	type TermDuration = TermDuration;
 	type VotingBondBase = VotingBondBase;
 	type VotingBondFactor = VotingBondFactor;
-	type WeightInfo = ();
+	type WeightInfo = WeightInfo<Runtime>;
 }
