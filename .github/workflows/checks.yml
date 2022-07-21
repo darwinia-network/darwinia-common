@@ -251,7 +251,5 @@ jobs:
       - name: Clean artifacts
         uses: geekyeggo/delete-artifact@v1
         with:
-          name: |
-            drml
-            subalfred
+          name: drml
     runs-on: ubuntu-latest
