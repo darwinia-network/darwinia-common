@@ -36,7 +36,6 @@ fn selector() {
 	assert_eq!(Action::TransferFrom as u32, 0x23b872dd);
 	assert_eq!(Action::Name as u32, 0x06fdde03);
 	assert_eq!(Action::Symbol as u32, 0x95d89b41);
-	assert_eq!(Action::Withdraw as u32, 0x40cf020);
 
 	assert_eq!(
 		crate::SELECTOR_LOG_TRANSFER,
@@ -46,11 +45,6 @@ fn selector() {
 	assert_eq!(
 		crate::SELECTOR_LOG_APPROVAL,
 		&Keccak256::digest(b"Approval(address,address,uint256)")[..]
-	);
-
-	assert_eq!(
-		crate::SELECTOR_LOG_WITHDRAWAL,
-		&Keccak256::digest(b"Withdrawal(address,uint256)")[..]
 	);
 }
 
@@ -600,111 +594,5 @@ fn test_transfer_from_self() {
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(decimal_convert(400, None)).build());
-	});
-}
-
-#[test]
-fn test_withdraw() {
-	let (pairs, mut ext) = new_test_ext(2);
-	let alice = &pairs[0];
-
-	ext.execute_with(|| {
-		let mock_address = H160::from_low_u64_be(100);
-		let mock_account_id =
-			<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(&mock_address);
-		let withdraw_value = decimal_convert(500, None);
-
-		// Withdraw
-		let mut nonce = 0;
-		construct_tx_asserter(
-			nonce,
-			EvmDataWriter::new_with_selector(Action::Withdraw)
-				.write::<Bytes>(Bytes(mock_account_id.encode()))
-				.write::<U256>(withdraw_value.into())
-				.build(),
-			&alice,
-		)
-		.execute()
-		.assert_executed_value(&EvmDataWriter::new().write(true).build());
-
-		// Check source account balance
-		nonce += 1;
-		construct_tx_asserter(
-			nonce,
-			EvmDataWriter::new_with_selector(Action::BalanceOf)
-				.write::<Address>(alice.address.into())
-				.build(),
-			&alice,
-		)
-		.execute()
-		.assert_executed_value(
-			&EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE - 500, None)).build(),
-		);
-
-		// Check target account balance
-		nonce += 1;
-		construct_tx_asserter(
-			nonce,
-			EvmDataWriter::new_with_selector(Action::BalanceOf)
-				.write::<Address>(mock_address.into())
-				.build(),
-			&alice,
-		)
-		.execute()
-		.assert_executed_value(&EvmDataWriter::new().write(decimal_convert(500, None)).build());
-	});
-}
-
-#[test]
-fn test_withdraw_not_enough() {
-	let (pairs, mut ext) = new_test_ext(2);
-	let alice = &pairs[0];
-
-	ext.execute_with(|| {
-		let mock_address = H160::from_low_u64_be(100);
-		let mock_account_id =
-			<Test as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(&mock_address);
-		let withdraw_value = decimal_convert(INITIAL_BALANCE + 500, None);
-
-		// Withdraw
-		let mut nonce = 0;
-		construct_tx_asserter(
-			nonce,
-			EvmDataWriter::new_with_selector(Action::Withdraw)
-				.write::<Bytes>(Bytes(mock_account_id.encode()))
-				.write::<U256>(withdraw_value.into())
-				.build(),
-			&alice,
-		)
-		.execute()
-		.assert_revert(
-			&EvmDataWriter::new().write(Bytes("Transfer failed".as_bytes().to_vec())).build(),
-		);
-
-		// Check source account balance
-		nonce += 1;
-		construct_tx_asserter(
-			nonce,
-			EvmDataWriter::new_with_selector(Action::BalanceOf)
-				.write::<Address>(alice.address.into())
-				.build(),
-			&alice,
-		)
-		.execute()
-		.assert_executed_value(
-			&EvmDataWriter::new().write(decimal_convert(INITIAL_BALANCE, None)).build(),
-		);
-
-		// Check target account balance
-		nonce += 1;
-		construct_tx_asserter(
-			nonce,
-			EvmDataWriter::new_with_selector(Action::BalanceOf)
-				.write::<Address>(mock_address.into())
-				.build(),
-			&alice,
-		)
-		.execute()
-		.assert_executed_value(&EvmDataWriter::new().write(decimal_convert(0, None)).build());
 	});
 }

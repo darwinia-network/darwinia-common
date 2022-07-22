@@ -38,7 +38,7 @@ use frame_support::{
 	traits::StorageInstance,
 	Blake2_128Concat,
 };
-use sp_core::{Decode, H160, U256};
+use sp_core::{H160, U256};
 
 const TOKEN_NAME: &str = "Wrapped KTON";
 const TOKEN_SYMBOL: &str = "WKTON";
@@ -48,8 +48,6 @@ const TOKEN_DECIMAL: u8 = 18;
 pub const SELECTOR_LOG_TRANSFER: [u8; 32] = keccak256!("Transfer(address,address,uint256)");
 /// Solidity selector of the Approval log, which is the Keccak of the Log signature.
 pub const SELECTOR_LOG_APPROVAL: [u8; 32] = keccak256!("Approval(address,address,uint256)");
-/// Solidity selector of the Withdraw log, which is the Keccak of the Log signature.
-pub const SELECTOR_LOG_WITHDRAWAL: [u8; 32] = keccak256!("Withdrawal(address,uint256)");
 
 type KtonBalanceAdapter<T> = <T as darwinia_evm::Config>::KtonBalanceAdapter;
 type IntoAccountId<T> = <T as darwinia_evm::Config>::IntoAccountId;
@@ -74,7 +72,6 @@ enum Action {
 	Allowance = "allowance(address,address)",
 	Approve = "approve(address,uint256)",
 	TransferFrom = "transferFrom(address,address,uint256)",
-	Withdraw = "withdraw(bytes32,uint256)",
 	Name = "name()",
 	Symbol = "symbol()",
 	Decimals = "decimals()",
@@ -96,11 +93,8 @@ where
 		let action = helper.selector().unwrap_or_else(|_| Action::Name);
 
 		match action {
-			Action::Transfer
-			| Action::Allowance
-			| Action::Approve
-			| Action::TransferFrom
-			| Action::Withdraw => helper.check_state_modifier(StateMutability::NonPayable)?,
+			Action::Transfer | Action::Allowance | Action::Approve | Action::TransferFrom =>
+				helper.check_state_modifier(StateMutability::NonPayable)?,
 			_ => helper.check_state_modifier(StateMutability::View)?,
 		};
 
@@ -114,7 +108,6 @@ where
 			Action::Allowance => Self::allowance(&mut helper),
 			Action::Approve => Self::approve(&mut helper, context),
 			Action::TransferFrom => Self::transfer_from(&mut helper, context),
-			Action::Withdraw => Self::withdraw(&mut helper, context),
 		}
 	}
 }
@@ -268,40 +261,6 @@ where
 			output: EvmDataWriter::new().write(true).build(),
 			cost: helper.used_gas(),
 			logs: vec![],
-		})
-	}
-
-	fn withdraw(
-		helper: &mut PrecompileHelper<T>,
-		context: &Context,
-	) -> EvmResult<PrecompileOutput> {
-		let mut reader = helper.reader()?;
-		reader.expect_arguments(2)?;
-		let to: Bytes = reader.read()?;
-		let amount: U256 = reader.read()?;
-
-		helper.record_db_gas(1, 0)?;
-		helper.record_log_gas(2, 32)?;
-
-		let origin = <IntoAccountId<T>>::derive_substrate_address(&context.caller);
-		let to_account_id = <T as frame_system::Config>::AccountId::decode(&mut to.as_bytes())
-			.map_err(|_| revert("Invalid target address"))?;
-
-		<KtonBalanceAdapter<T>>::evm_transfer(&origin, &to_account_id, amount)
-			.map_err(|_| revert("Transfer failed"))?;
-
-		let withdraw_log = log2(
-			context.address,
-			SELECTOR_LOG_WITHDRAWAL,
-			context.caller,
-			EvmDataWriter::new().write(amount).build(),
-		);
-
-		Ok(PrecompileOutput {
-			exit_status: ExitSucceed::Returned,
-			output: EvmDataWriter::new().write(true).build(),
-			cost: helper.used_gas(),
-			logs: vec![withdraw_log],
 		})
 	}
 
