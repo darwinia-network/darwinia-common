@@ -1729,6 +1729,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-relay-authority-v2"
+version = "2.8.16"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "darwinia-relayer-game"
 version = "2.8.16"
 dependencies = [
