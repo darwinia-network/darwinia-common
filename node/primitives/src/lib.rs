@@ -33,7 +33,6 @@ use sp_runtime::{
 // --- darwinia-network ---
 use darwinia_support::evm::{ConcatConverter, DeriveSubstrateAddress};
 
-
 macro_rules! development_or_production {
 	($doc:expr, $name:ident, $type:ty, $development_value:expr, $production_value:expr) => {
 		#[doc = $doc]

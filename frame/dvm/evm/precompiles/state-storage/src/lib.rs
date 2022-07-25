@@ -26,7 +26,7 @@ use core::marker::PhantomData;
 // --- crates.io ---
 use ethabi::{ParamType, StateMutability, Token};
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::PrecompileHelper;
+use darwinia_evm_precompile_utils::{prelude::*, revert, PrecompileHelper};
 use dp_contract::abi_util::abi_encode_bytes;
 // --- paritytech ---
 use fp_evm::{
@@ -36,7 +36,7 @@ use fp_evm::{
 
 const PALLET_PREFIX_LENGTH: usize = 16;
 
-#[darwinia_evm_precompile_utils::selector]
+#[selector]
 enum Action {
 	StateGetStorage = "state_storage(bytes)",
 }
@@ -60,28 +60,27 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let mut helper = PrecompileHelper::<T>::new(input, target_gas);
+		let mut helper = PrecompileHelper::<T>::new(input, target_gas, context, is_static);
 		let (selector, data) = helper.split_input()?;
 		let action = Action::from_u32(selector)?;
 
 		// Check state modifiers
-		helper.check_state_modifier(context, is_static, StateMutability::View)?;
+		helper.check_state_modifier(StateMutability::View)?;
 
 		let output = match action {
 			Action::StateGetStorage => {
 				let tokens = ethabi::decode(&[ParamType::Bytes], data)
-					.map_err(|_| helper.revert("Ethabi decoded failed"))?;
+					.map_err(|_| revert("Ethabi decoded failed"))?;
 				let key = match &tokens[0] {
 					Token::Bytes(bytes) => bytes,
-					_ => return Err(helper.revert("Ethabi decode failed")),
+					_ => return Err(revert("Ethabi decode failed")),
 				};
 
 				if key.len() < PALLET_PREFIX_LENGTH || !F::allow(&key[0..PALLET_PREFIX_LENGTH]) {
-					return Err(helper.revert("Read restriction"));
+					return Err(revert("Read restriction"));
 				}
 
-				// Storage: FeeMarket AssignedRelayers (r:1 w:0)
-				helper.record_gas(1, 0)?;
+				helper.record_db_gas(1, 0)?;
 
 				frame_support::storage::unhashed::get_raw(key)
 			},

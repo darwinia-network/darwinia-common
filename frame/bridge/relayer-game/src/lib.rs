@@ -60,7 +60,7 @@ mod types {
 
 // --- paritytech ---
 use frame_support::{
-	decl_error, decl_module, decl_storage, ensure,
+	decl_error, decl_module, decl_storage, ensure, log,
 	traits::{Currency, Get, LockIdentifier, LockableCurrency, OnUnbalanced, WithdrawReasons},
 };
 use frame_system::pallet_prelude::*;
