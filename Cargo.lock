@@ -1659,7 +1659,6 @@ dependencies = [
  "darwinia-evm-precompile-utils",
  "fp-evm",
  "num_enum",
- "sp-std",
 ]
 
 [[package]]

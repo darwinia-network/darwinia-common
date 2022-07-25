@@ -36,9 +36,10 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+// --- core ---
+use core::marker::PhantomData;
 // --- paritytech ---
 use fp_evm::{Context, ExitRevert, Precompile, PrecompileFailure, PrecompileResult};
-use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{prelude::*, revert, PrecompileHelper};
 

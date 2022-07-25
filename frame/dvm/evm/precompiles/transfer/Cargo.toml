@@ -15,8 +15,6 @@ num_enum = { version = "0.5.3", default-features = false }
 # darwinia-network
 darwinia-evm                  = { default-features = false, path = "../../../evm" }
 darwinia-evm-precompile-utils = { default-features = false, path = "../utils" }
-# paritytech
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 # frontier
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
 
@@ -29,8 +27,6 @@ std = [
 	# darwinia-network
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-utils/std",
-	# paritytech
-	"sp-std/std",
 	# frontier
 	"fp-evm/std",
 ]
