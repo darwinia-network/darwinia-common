@@ -19,7 +19,7 @@ smallvec    = { version = "1.9" }
 # darwinia-network
 darwinia-balances = { default-features = false, path = "../../../frame/balances" }
 # darwinia-beefy-gadget                 = { default-features = false, path = "../../../frame/beefy-gadget" }
-# darwinia-beefy-primitives             = { path = "../../../primitives/beefy" }
+# dp-beefy             = { path = "../../../primitives/beefy" }
 darwinia-ethereum                     = { default-features = false, path = "../../../frame/dvm/ethereum" }
 darwinia-evm                          = { default-features = false, path = "../../../frame/dvm/evm" }
 darwinia-evm-precompile-bls12-381     = { default-features = false, path = "../../../frame/dvm/evm/precompiles/bls12381" }

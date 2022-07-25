@@ -76,7 +76,7 @@ use sp_io::hashing;
 use sp_runtime::{generic::DigestItem, RuntimeDebug};
 use sp_std::borrow::ToOwned;
 // --- darwinia-network ---
-use darwinia_beefy_primitives::network_ids::AsciiId;
+use dp_beefy::network_ids::AsciiId;
 use darwinia_ethereum::InternalTransactHandler;
 use dp_contract::beefy;
 

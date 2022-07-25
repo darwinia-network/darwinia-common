@@ -20,7 +20,7 @@ static_assertions = { version = "1.1" }
 # darwinia-network
 darwinia-balances = { default-features = false, path = "../../../frame/balances" }
 # darwinia-beefy-gadget                   = { default-features = false, path = "../../../frame/beefy-gadget" }
-# darwinia-beefy-primitives               = { path = "../../../primitives/beefy" }
+# dp-beefy               = { path = "../../../primitives/beefy" }
 darwinia-bridge-ethereum              = { default-features = false, path = "../../../frame/bridge/ethereum" }
 darwinia-ethereum                     = { default-features = false, path = "../../../frame/dvm/ethereum" }
 darwinia-evm                          = { default-features = false, path = "../../../frame/dvm/evm" }

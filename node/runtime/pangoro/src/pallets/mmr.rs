@@ -4,7 +4,7 @@ use sp_runtime::traits::{Hash, Keccak256};
 // --- darwinia-network ---
 use crate::*;
 use darwinia_beefy_gadget::DepositBeefyDigest;
-use darwinia_beefy_primitives::network_ids;
+use dp_beefy::network_ids;
 
 pub type MmrHash = <Keccak256 as Hash>::Output;
 
