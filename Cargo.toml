@@ -32,7 +32,7 @@ members = [
 	"frame/wormhole/backing/tron",
 	"frame/wormhole/issuing/s2s",
 	"primitives/asset",
-	# "primitives/beefy",
+	"primitives/beefy",
 	"primitives/contract",
 	"primitives/ethereum",
 	"primitives/evm-trace/ext",

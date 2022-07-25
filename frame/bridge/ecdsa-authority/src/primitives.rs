@@ -1,6 +1,4 @@
 // --- crates.io ---
-use codec::Encode;
-// --- crates.io ---
 use sp_io::{crypto, hashing};
 use sp_std::prelude::*;
 
@@ -13,8 +11,8 @@ pub(crate) const AUTHORITY_SENTINEL: [u8; 20] =
 
 pub(crate) enum Sign {}
 impl Sign {
-	pub(crate) fn hash(raw_message: impl AsRef<[u8]>) -> Message {
-		hashing::keccak_256(raw_message.as_ref())
+	pub(crate) fn hash(data: &[u8]) -> Message {
+		hashing::keccak_256(data)
 	}
 
 	pub(crate) fn verify_signature(
@@ -22,7 +20,7 @@ impl Sign {
 		message: &Message,
 		address: &Address,
 	) -> bool {
-		fn eth_signable_message(message: &[u8]) -> Vec<u8> {
+		fn eth_signable_message(message: &Message) -> Vec<u8> {
 			let mut l = message.len();
 			let mut rev = Vec::new();
 
@@ -49,20 +47,17 @@ impl Sign {
 	}
 }
 
-#[derive(Encode)]
-pub(crate) struct RelayMessage<_1, _2, _3, _4, _5, _6>
-where
-	_1: Encode,
-	_2: Encode,
-	_3: Encode,
-	_4: Encode,
-	_5: Encode,
-	_6: Encode,
-{
-	pub(crate) _1: _1,
-	pub(crate) _2: _2,
-	pub(crate) _3: _3,
-	pub(crate) _4: _4,
-	pub(crate) _5: _5,
-	pub(crate) _6: _6,
+pub(crate) enum Method {
+	AddMember { new: Address },
+	RemoveMember { pre: Address, old: Address },
+	SwapMembers { pre: Address, old: Address, new: Address },
+}
+impl Method {
+	pub(crate) fn id(&self) -> [u8; 4] {
+		match self {
+			Method::AddMember { .. } => [0, 0, 0, 0],
+			Method::RemoveMember { .. } => [0, 0, 0, 1],
+			Method::SwapMembers { .. } => [0, 0, 0, 2],
+		}
+	}
 }
