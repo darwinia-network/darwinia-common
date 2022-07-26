@@ -88,12 +88,18 @@ pub mod pallet {
 		AuthorityExisted,
 		TooManyAuthorities,
 		NotAuthority,
+		NotPreviousAuthority,
 		AtLeastOneAuthority,
 		OnAuthoritiesChange,
 		NoAuthoritiesChange,
 		NoNewMessageRoot,
 		BadSignature,
 	}
+
+	#[pallet::storage]
+	#[pallet::getter(fn previous_authorities)]
+	pub type PreviousAuthorities<T: Config> =
+		StorageValue<_, BoundedVec<Address, T::MaxAuthorities>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn authorities)]
@@ -132,6 +138,7 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
+			<PreviousAuthorities<T>>::put(BoundedVec::try_from(self.authorities.clone()).unwrap());
 			<Authorities<T>>::put(BoundedVec::try_from(self.authorities.clone()).unwrap());
 		}
 	}
@@ -153,6 +160,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000_000)]
+		#[frame_support::transactional]
 		pub fn add_authority(origin: OriginFor<T>, new: Address) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -163,6 +171,7 @@ pub mod pallet {
 					return Err(<Error<T>>::AuthorityExisted)?;
 				}
 
+				<PreviousAuthorities<T>>::put(&*authorities);
 				authorities.try_insert(0, new).map_err(|_| <Error<T>>::TooManyAuthorities)?;
 
 				Ok::<_, DispatchError>(authorities.len() as u32)
@@ -174,6 +183,7 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000_000)]
+		#[frame_support::transactional]
 		pub fn remove_authority(origin: OriginFor<T>, old: Address) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -187,6 +197,7 @@ pub mod pallet {
 					return Err(<Error<T>>::AtLeastOneAuthority)?;
 				}
 
+				<PreviousAuthorities<T>>::put(&*authorities);
 				authorities.remove(i);
 
 				Ok::<_, DispatchError>((
@@ -201,6 +212,7 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000_000)]
+		#[frame_support::transactional]
 		pub fn swap_authority(origin: OriginFor<T>, old: Address, new: Address) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -210,6 +222,7 @@ pub mod pallet {
 				let i =
 					authorities.iter().position(|a| a == &old).ok_or(<Error<T>>::NotAuthority)?;
 
+				<PreviousAuthorities<T>>::put(&*authorities);
 				authorities[i] = new;
 
 				Ok::<_, DispatchError>((
@@ -224,6 +237,7 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000_000)]
+		#[frame_support::transactional]
 		pub fn submit_authorities_change_signature(
 			origin: OriginFor<T>,
 			address: Address,
@@ -231,7 +245,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			ensure_signed(origin)?;
 
-			let authorities = Self::ensure_authority(&address)?;
+			let previous_authorities = Self::ensure_previous_authority(&address)?;
 			let mut authorities_change_to_sign =
 				<AuthoritiesChangeToSign<T>>::take().ok_or(<Error<T>>::NoAuthoritiesChange)?;
 			let (message, collected) = &mut authorities_change_to_sign;
@@ -243,7 +257,7 @@ pub mod pallet {
 
 			collected.try_push((address, signature)).map_err(|_| <Error<T>>::TooManyAuthorities)?;
 
-			if Perbill::from_rational(collected.len() as u32, authorities.len() as u32)
+			if Perbill::from_rational(collected.len() as u32, previous_authorities.len() as u32)
 				>= T::SignThreshold::get()
 			{
 				let authorities_change_to_sign =
@@ -260,6 +274,7 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(10_000_000)]
+		#[frame_support::transactional]
 		pub fn submit_new_message_root_signature(
 			origin: OriginFor<T>,
 			address: Address,
@@ -298,6 +313,14 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		fn network_id() -> NetworkId {
 			network_ids::convert(T::Version::get().spec_name.as_ref())
+		}
+
+		fn ensure_previous_authority(address: &Address) -> Result<BoundedVec<Address, T::MaxAuthorities>, DispatchError> {
+			let previous_authorities = <PreviousAuthorities<T>>::get();
+
+			ensure!(previous_authorities.iter().any(|a| a == address), <Error<T>>::NotPreviousAuthority);
+
+			Ok(previous_authorities)
 		}
 
 		fn ensure_authority(
