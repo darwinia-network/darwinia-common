@@ -23,10 +23,10 @@
 
 pub mod migration;
 
-// #[cfg(test)]
-// mod mock;
-// #[cfg(test)]
-// mod test;
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
 
 pub mod primitives;
 use primitives::*;
@@ -65,7 +65,8 @@ pub mod pallet {
 		type MessageRoot: Get<Option<Hash>>;
 		#[pallet::constant]
 		type SignThreshold: Get<Perbill>;
-		//
+		// Checkpoints.
+		// `SyncInterval` must be shorter than `MaxPendingPeriod`.
 		#[pallet::constant]
 		type SyncInterval: Get<Self::BlockNumber>;
 		#[pallet::constant]
@@ -84,8 +85,10 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
+		AuthorityExisted,
 		TooManyAuthorities,
 		NotAuthority,
+		AtLeastOneAuthority,
 		OnAuthoritiesChange,
 		NoAuthoritiesChange,
 		NoNewMessageRoot,
@@ -119,12 +122,12 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn previous_message_root)]
-	pub type PreviousMessageRoot<T: Config> = StorageValue<_, (T::BlockNumber, Hash), ValueQuery>;
+	pub type PreviousMessageRoot<T: Config> = StorageValue<_, (T::BlockNumber, Hash), OptionQuery>;
 
 	#[derive(Default)]
 	#[pallet::genesis_config]
 	pub struct GenesisConfig {
-		authorities: Vec<Address>,
+		pub authorities: Vec<Address>,
 	}
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
@@ -155,19 +158,15 @@ pub mod pallet {
 
 			Self::ensure_not_on_authorities_change()?;
 
-			ensure!(
-				<Authorities<T>>::decode_len()
-					.map(|l| l as u32)
-					.unwrap_or(T::MaxAuthorities::get())
-					< T::MaxAuthorities::get(),
-				<Error<T>>::TooManyAuthorities
-			);
+			let authorities_count = <Authorities<T>>::try_mutate(|authorities| {
+				if authorities.contains(&new) {
+					return Err(<Error<T>>::AuthorityExisted)?;
+				}
 
-			let authorities_count = <Authorities<T>>::mutate(|authorities| {
-				let _ = authorities.try_insert(0, new);
+				authorities.try_insert(0, new).map_err(|_| <Error<T>>::TooManyAuthorities)?;
 
-				authorities.len() as u32
-			});
+				Ok::<_, DispatchError>(authorities.len() as u32)
+			})?;
 
 			Self::on_authorities_change(Method::AddMember { new }, authorities_count);
 
@@ -184,11 +183,15 @@ pub mod pallet {
 				let i =
 					authorities.iter().position(|a| a == &old).ok_or(<Error<T>>::NotAuthority)?;
 
+				if authorities.len() == 1 {
+					return Err(<Error<T>>::AtLeastOneAuthority)?;
+				}
+
 				authorities.remove(i);
 
 				Ok::<_, DispatchError>((
 					authorities.len() as u32,
-					authorities.get(i - 1).map(Clone::clone).unwrap_or(AUTHORITY_SENTINEL),
+					if i == 0 { AUTHORITY_SENTINEL } else { authorities[i - 1] },
 				))
 			})?;
 
@@ -211,7 +214,7 @@ pub mod pallet {
 
 				Ok::<_, DispatchError>((
 					authorities.len() as u32,
-					authorities.get(i - 1).map(Clone::clone).unwrap_or(AUTHORITY_SENTINEL),
+					if i == 0 { AUTHORITY_SENTINEL } else { authorities[i - 1] },
 				))
 			})?;
 
@@ -340,7 +343,7 @@ pub mod pallet {
 
 				*nonce
 			});
-			let message = Sign::hash(&ethabi::encode(&[
+			let message = Sign::eth_signable_message(&ethabi::encode(&[
 				Token::Bytes(RELAY_TYPE_HASH.as_ref().into()),
 				Token::Bytes(Self::network_id().into()),
 				Token::Bytes(method.id().into()),
@@ -360,15 +363,23 @@ pub mod pallet {
 				return None;
 			};
 
-			<PreviousMessageRoot<T>>::try_mutate(|(recorded_at, previous_message_root)| {
-				// if this is a new root
-				if &message_root != previous_message_root {
-					// use a new root if reach the max pending period
-					if at.saturating_sub(*recorded_at) > T::MaxPendingPeriod::get() {
-						*previous_message_root = message_root.clone();
+			<PreviousMessageRoot<T>>::try_mutate(|maybe_previous_message_root| {
+				if let Some((recorded_at, previous_message_root)) = maybe_previous_message_root {
+					// only if the chain is still collecting signatures will enter this condition
+					// if this is a new root
+					if &message_root != previous_message_root {
+						// use a new root if reach the max pending period
+						if at.saturating_sub(*recorded_at) > T::MaxPendingPeriod::get() {
+							*recorded_at = at;
+							*previous_message_root = message_root.clone();
 
-						return Ok(message_root);
+							return Ok(message_root);
+						}
 					}
+				} else {
+					*maybe_previous_message_root = Some((at, message_root.clone()));
+
+					return Ok(message_root);
 				}
 
 				Err(())
@@ -377,7 +388,7 @@ pub mod pallet {
 		}
 
 		fn on_new_message_root(message_root: Hash) {
-			let message = Sign::hash(&ethabi::encode(&[
+			let message = Sign::eth_signable_message(&ethabi::encode(&[
 				Token::Bytes(COMMIT_TYPE_HASH.as_ref().into()),
 				Token::Bytes(Self::network_id().into()),
 				Token::Bytes(message_root.as_ref().into()),

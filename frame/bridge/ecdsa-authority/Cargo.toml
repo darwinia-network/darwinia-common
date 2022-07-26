@@ -4,7 +4,7 @@ description = "Relayer Authorities Protocal Implementation"
 edition     = "2021"
 homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
-name        = "darwinia-relay-authority-v2"
+name        = "darwinia-ecdsa-authority"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
 version     = "2.8.16"
@@ -23,6 +23,9 @@ sp-core       = { default-features = false, git = "https://github.com/darwinia-n
 sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+
+[dev-dependencies]
+libsecp256k1 = { version = "0.7" }
 
 [features]
 default = ["std"]

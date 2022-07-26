@@ -1,12 +1,12 @@
+pub(crate) use sp_core::ecdsa::Signature;
+
 // --- paritytech ---
 use sp_core::{H160, H256};
 use sp_io::{crypto, hashing};
-use sp_std::prelude::*;
 
 pub(crate) type Address = H160;
 pub(crate) type Hash = H256;
 pub(crate) type Message = [u8; 32];
-pub(crate) type Signature = [u8; 65];
 
 // address(0x1)
 pub(crate) const AUTHORITY_SENTINEL: H160 =
@@ -24,8 +24,21 @@ pub(crate) const COMMIT_TYPE_HASH: H256 = H256([
 
 pub(crate) enum Sign {}
 impl Sign {
-	pub(crate) fn hash(data: &[u8]) -> Message {
+	fn hash(data: &[u8]) -> [u8; 32] {
 		hashing::keccak_256(data).into()
+	}
+
+	pub(crate) fn eth_signable_message(data: &[u8]) -> Message {
+		// "\x19\x01" + keccak256("EcdsaAuthority()")
+		let mut v = vec![
+			25, 1, 101, 44, 46, 220, 101, 125, 125, 234, 202, 24, 100, 124, 39, 60, 190, 127, 35,
+			130, 10, 168, 215, 250, 243, 136, 57, 63, 133, 96, 239, 199, 15, 135,
+		];
+		let message = Self::hash(data);
+
+		v.extend_from_slice(&message);
+
+		Self::hash(&v)
 	}
 
 	pub(crate) fn verify_signature(
@@ -33,31 +46,8 @@ impl Sign {
 		message: &Message,
 		address: &Address,
 	) -> bool {
-		fn eth_signable_message(message: &Message) -> Vec<u8> {
-			let mut l = message.len();
-			let mut rev = Vec::new();
-
-			while l > 0 {
-				rev.push(b'0' + (l % 10) as u8);
-				l /= 10;
-			}
-
-			// "\x19\x01" + keccak256("EcdsaAuthority()")
-			let mut v = vec![
-				25, 1, 101, 44, 46, 220, 101, 125, 125, 234, 202, 24, 100, 124, 39, 60, 190, 127,
-				35, 130, 10, 168, 215, 250, 243, 136, 57, 63, 133, 96, 239, 199, 15, 135,
-			];
-
-			v.extend(rev.into_iter().rev());
-			v.extend_from_slice(message);
-
-			v
-		}
-
-		let message = hashing::keccak_256(&eth_signable_message(message));
-
-		if let Ok(public_key) = crypto::secp256k1_ecdsa_recover(signature, &message) {
-			hashing::keccak_256(&public_key)[12..] == address[..]
+		if let Ok(public_key) = crypto::secp256k1_ecdsa_recover(signature.as_ref(), &message) {
+			Self::hash(&public_key)[12..] == address[..]
 		} else {
 			false
 		}
