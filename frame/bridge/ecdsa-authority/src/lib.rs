@@ -68,10 +68,6 @@ pub mod pallet {
 		type MessageRoot: Get<Self::MessageRootT>;
 		#[pallet::constant]
 		type SignThreshold: Get<Perbill>;
-		#[pallet::constant]
-		type RelayTypeHash: Get<[u8; 32]>;
-		#[pallet::constant]
-		type CommitTypeHash: Get<[u8; 32]>;
 	}
 
 	#[pallet::event]
@@ -283,7 +279,7 @@ pub mod pallet {
 				*nonce
 			});
 			let message = Sign::hash(&ethabi::encode(&[
-				Token::Bytes(T::RelayTypeHash::get().into()),
+				Token::Bytes(RELAY_TYPE_HASH.into()),
 				Token::Bytes(network_ids::convert(T::Version::get().spec_name.as_ref()).into()),
 				Token::Bytes(method.id().into()),
 				Token::Bytes(authorities_changes),
