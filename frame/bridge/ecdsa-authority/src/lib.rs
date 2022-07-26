@@ -17,6 +17,7 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 //! # Relay Authorities Module
+//! Works with https://github.com/darwinia-network/darwinia-messages-sol/pull/217
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
