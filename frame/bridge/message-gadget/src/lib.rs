@@ -18,12 +18,20 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+// --- core ---
+use core::marker::PhantomData;
+// --- darwinia-network ---
+use darwinia_ethereum::InternalTransactHandler;
+use dp_contract::beefy;
+// --- paritytech ---
+use frame_support::{log, pallet_prelude::*, traits::Get};
+use frame_system::pallet_prelude::*;
+use sp_core::{H160, H256};
+
 #[frame_support::pallet]
 pub mod pallet {
-	// --- paritytech ---
-	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::*;
-	use sp_core::H160;
+	// --- darwinia-network ---
+	use crate::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {}
@@ -63,47 +71,14 @@ pub mod pallet {
 }
 pub use pallet::*;
 
-// --- core ---
-use core::marker::PhantomData;
-// --- crates.io ---
-use codec::Encode;
-// --- paritytech ---
-use beefy_primitives::{ConsensusLog, BEEFY_ENGINE_ID};
-use frame_support::log;
-use pallet_mmr::primitives::{LeafDataProvider, OnNewRoot};
-use sp_core::H256;
-use sp_io::hashing;
-use sp_runtime::{generic::DigestItem, RuntimeDebug};
-use sp_std::borrow::ToOwned;
-// --- darwinia-network ---
-use dp_beefy::network_ids::AsciiId;
-use darwinia_ethereum::InternalTransactHandler;
-use dp_contract::beefy;
+const LOG_TARGET: &str = "runtime::message-gadget";
 
-pub const LOG_TARGET: &str = "runtime::beefy-gadget";
-
-#[derive(Encode, RuntimeDebug)]
-pub struct BeefyPayload<T>
+pub struct MessageRootGetter<T>(PhantomData<T>);
+impl<T> Get<Option<H256>> for MessageRootGetter<T>
 where
-	T: Encode,
+	T: Config + darwinia_ethereum::Config,
 {
-	network_id: [u8; 32],
-	mmr_root: H256,
-	message_root: H256,
-	next_authority_set: T,
-}
-
-pub struct DepositBeefyDigest<T, A>(PhantomData<(T, A)>);
-impl<T, A> OnNewRoot<H256> for DepositBeefyDigest<T, A>
-where
-	T: Config
-		+ pallet_mmr::Config<Hash = H256>
-		+ pallet_beefy::Config
-		+ pallet_beefy_mmr::Config
-		+ darwinia_ethereum::Config,
-	A: AsciiId,
-{
-	fn on_new_root(root: &<T as pallet_mmr::Config>::Hash) {
+	fn get() -> Option<H256> {
 		macro_rules! unwrap_or_exit {
 			($r:expr, $err_msg:expr) => {
 				if let Ok(r) = $r {
@@ -111,7 +86,7 @@ where
 				} else {
 					log::error!(target: LOG_TARGET, "{}", $err_msg);
 
-					return;
+					return None;
 				}
 			};
 		}
@@ -131,35 +106,9 @@ where
 				raw_message_root
 			);
 
-			return;
+			return None;
 		}
 
-		let beefy_payload = BeefyPayload {
-			network_id: A::ascii_id(),
-			mmr_root: root.to_owned(),
-			message_root: H256::from_slice(&raw_message_root),
-			next_authority_set: <pallet_beefy_mmr::Pallet<T>>::leaf_data().beefy_next_authority_set,
-		};
-
-		log::debug!(target: LOG_TARGET, "🥩 beefy_payload: {:?}", beefy_payload);
-
-		let encoded_payload = beefy_payload.encode();
-		let payload_hash = hashing::keccak_256(&encoded_payload).into();
-
-		log::debug!(
-			target: LOG_TARGET,
-			"\
-			🥩 encoded_payload: {:?}\
-			🥩 payload_hash: {:?}\
-			",
-			encoded_payload,
-			payload_hash
-		);
-
-		<frame_system::Pallet<T>>::deposit_log(DigestItem::Consensus(
-			BEEFY_ENGINE_ID,
-			<ConsensusLog<<T as pallet_beefy::Config>::BeefyId>>::DarwiniaBeefyDigest(payload_hash)
-				.encode(),
-		));
+		Some(H256::from_slice(&raw_message_root))
 	}
 }

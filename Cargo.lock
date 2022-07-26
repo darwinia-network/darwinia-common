@@ -1709,6 +1709,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "darwinia-message-gadget"
+version = "2.8.16"
+dependencies = [
+ "array-bytes",
+ "darwinia-ethereum",
+ "dp-contract",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+]
+
+[[package]]
 name = "darwinia-relay-authority"
 version = "2.8.16"
 dependencies = [
@@ -1732,12 +1746,13 @@ dependencies = [
 name = "darwinia-relay-authority-v2"
 version = "2.8.16"
 dependencies = [
- "dp-beefy",
+ "dp-message",
  "ethabi",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
  "scale-info",
+ "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -1938,13 +1953,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dp-beefy"
-version = "2.8.16"
-dependencies = [
- "array-bytes",
-]
-
-[[package]]
 name = "dp-contract"
 version = "2.8.16"
 dependencies = [
@@ -1984,6 +1992,13 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "dp-message"
+version = "2.8.16"
+dependencies = [
+ "array-bytes",
 ]
 
 [[package]]
@@ -6152,6 +6167,7 @@ dependencies = [
  "darwinia-evm-precompile-state-storage",
  "darwinia-evm-precompile-transfer",
  "darwinia-header-mmr",
+ "darwinia-message-gadget",
  "darwinia-relay-authority",
  "darwinia-relayer-game",
  "darwinia-staking",
@@ -6263,6 +6279,7 @@ dependencies = [
  "darwinia-evm-precompile-dispatch",
  "darwinia-evm-precompile-state-storage",
  "darwinia-evm-precompile-transfer",
+ "darwinia-message-gadget",
  "darwinia-staking",
  "darwinia-support",
  "dp-asset",

@@ -34,17 +34,17 @@ use primitives::*;
 mod weights;
 pub use weights::WeightInfo;
 
-// --- core ---
-use core::fmt::Debug;
 // --- crates.io ---
 use ethabi::Token;
-use scale_info::TypeInfo;
 // --- darwinia-network ---
-use dp_beefy::network_ids;
+use dp_message::network_ids::{self, NetworkId};
 // --- paritytech ---
 use frame_support::{pallet_prelude::*, traits::Get};
 use frame_system::pallet_prelude::*;
-use sp_runtime::Perbill;
+use sp_runtime::{
+	traits::{Saturating, Zero},
+	Perbill,
+};
 use sp_std::prelude::*;
 
 #[frame_support::pallet]
@@ -58,16 +58,18 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		// Basics.
 		type WeightInfo: WeightInfo;
-		// Members.
-		#[pallet::constant]
-		type SentinelMember: Get<Address>;
+		// Members
 		#[pallet::constant]
 		type MaxAuthorities: Get<u32>;
 		// Commitment relates.
-		type MessageRootT: Clone + Debug + PartialEq + Encode + Decode + TypeInfo;
-		type MessageRoot: Get<Self::MessageRootT>;
+		type MessageRoot: Get<Option<Hash>>;
 		#[pallet::constant]
 		type SignThreshold: Get<Perbill>;
+		//
+		#[pallet::constant]
+		type SyncInterval: Get<Self::BlockNumber>;
+		#[pallet::constant]
+		type MaxPendingPeriod: Get<Self::BlockNumber>;
 	}
 
 	#[pallet::event]
@@ -77,7 +79,7 @@ pub mod pallet {
 		CollectedEnoughAuthoritiesChangeSignatures((Message, Vec<(Address, Signature)>)),
 
 		CollectingNewMessageRootSignature(Message),
-		CollectedEnoughNewMessageRootSignatures,
+		CollectedEnoughNewMessageRootSignatures((Message, Vec<(Address, Signature)>)),
 	}
 
 	#[pallet::error]
@@ -86,6 +88,7 @@ pub mod pallet {
 		NotAuthority,
 		OnAuthoritiesChange,
 		NoAuthoritiesChange,
+		NoNewMessageRoot,
 		BadSignature,
 	}
 
@@ -106,10 +109,17 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	// #[pallet::storage]
-	// #[pallet::getter(new_message_root_signatures)]
-	// pub type NewMessageRootSignatures<T: Config> =
-	// 	StorageValue<_, BoundedVec<(Address, EcdsaSignature), T::MaxAuthorities>, ValueQuery>;
+	#[pallet::storage]
+	#[pallet::getter(fn new_message_root_to_sign)]
+	pub type NewMessageRootToSign<T: Config> = StorageValue<
+		_,
+		(Message, BoundedVec<(Address, Signature), T::MaxAuthorities>),
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn previous_message_root)]
+	pub type PreviousMessageRoot<T: Config> = StorageValue<_, (T::BlockNumber, Hash), ValueQuery>;
 
 	#[derive(Default)]
 	#[pallet::genesis_config]
@@ -125,6 +135,18 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(PhantomData<T>);
+	#[pallet::hooks]
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+		fn on_initialize(now: T::BlockNumber) -> Weight {
+			if (now % T::SyncInterval::get()).is_zero() {
+				if let Some(message_root) = Self::try_update_message_root(now) {
+					Self::on_new_message_root(message_root);
+				}
+			}
+
+			10_000_000
+		}
+	}
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000_000)]
@@ -233,8 +255,48 @@ pub mod pallet {
 
 			Ok(())
 		}
+
+		#[pallet::weight(10_000_000)]
+		pub fn submit_new_message_root_signature(
+			origin: OriginFor<T>,
+			address: Address,
+			signature: Signature,
+		) -> DispatchResult {
+			ensure_signed(origin)?;
+
+			let authorities = Self::ensure_authority(&address)?;
+			let mut new_message_root_to_sign =
+				<NewMessageRootToSign<T>>::take().ok_or(<Error<T>>::NoNewMessageRoot)?;
+			let (message, collected) = &mut new_message_root_to_sign;
+
+			ensure!(
+				Sign::verify_signature(&signature, message, &address),
+				<Error<T>>::BadSignature
+			);
+
+			collected.try_push((address, signature)).map_err(|_| <Error<T>>::TooManyAuthorities)?;
+
+			if Perbill::from_rational(collected.len() as u32, authorities.len() as u32)
+				>= T::SignThreshold::get()
+			{
+				let new_message_root_to_sign =
+					(new_message_root_to_sign.0, new_message_root_to_sign.1.to_vec());
+
+				Self::deposit_event(<Event<T>>::CollectedEnoughNewMessageRootSignatures(
+					new_message_root_to_sign,
+				));
+			} else {
+				<NewMessageRootToSign<T>>::put(new_message_root_to_sign);
+			}
+
+			Ok(())
+		}
 	}
 	impl<T: Config> Pallet<T> {
+		fn network_id() -> NetworkId {
+			network_ids::convert(T::Version::get().spec_name.as_ref())
+		}
+
 		fn ensure_authority(
 			address: &Address,
 		) -> Result<BoundedVec<Address, T::MaxAuthorities>, DispatchError> {
@@ -279,14 +341,52 @@ pub mod pallet {
 				*nonce
 			});
 			let message = Sign::hash(&ethabi::encode(&[
-				Token::Bytes(RELAY_TYPE_HASH.into()),
-				Token::Bytes(network_ids::convert(T::Version::get().spec_name.as_ref()).into()),
+				Token::Bytes(RELAY_TYPE_HASH.as_ref().into()),
+				Token::Bytes(Self::network_id().into()),
 				Token::Bytes(method.id().into()),
 				Token::Bytes(authorities_changes),
 				Token::Uint(nonce.into()),
 			]));
 
+			<AuthoritiesChangeToSign<T>>::put((message, BoundedVec::default()));
+
 			Self::deposit_event(<Event<T>>::CollectingAuthoritiesChangeSignature(message));
+		}
+
+		fn try_update_message_root(at: T::BlockNumber) -> Option<Hash> {
+			let message_root = if let Some(message_root) = T::MessageRoot::get() {
+				message_root
+			} else {
+				return None;
+			};
+
+			<PreviousMessageRoot<T>>::try_mutate(|(recorded_at, previous_message_root)| {
+				// if this is a new root
+				if &message_root != previous_message_root {
+					// use a new root if reach the max pending period
+					if at.saturating_sub(*recorded_at) > T::MaxPendingPeriod::get() {
+						*previous_message_root = message_root.clone();
+
+						return Ok(message_root);
+					}
+				}
+
+				Err(())
+			})
+			.ok()
+		}
+
+		fn on_new_message_root(message_root: Hash) {
+			let message = Sign::hash(&ethabi::encode(&[
+				Token::Bytes(COMMIT_TYPE_HASH.as_ref().into()),
+				Token::Bytes(Self::network_id().into()),
+				Token::Bytes(message_root.as_ref().into()),
+				Token::Uint(<Nonce<T>>::get().into()),
+			]));
+
+			<NewMessageRootToSign<T>>::put((message, BoundedVec::default()));
+
+			Self::deposit_event(<Event<T>>::CollectingNewMessageRootSignature(message));
 		}
 	}
 }

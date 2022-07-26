@@ -1,5 +1,5 @@
 // --- paritytech ---
-use darwinia_beefy_gadget::Config;
+use darwinia_message_gadget::Config;
 // --- darwinia-network ---
 use crate::*;
 

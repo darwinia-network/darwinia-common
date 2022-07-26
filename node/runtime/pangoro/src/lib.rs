@@ -133,7 +133,7 @@ frame_support::construct_runtime!(
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 12,
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event} = 13,
 		Beefy: pallet_beefy::{Pallet, Storage, Config<T>} = 27,
-		// BeefyGadget: darwinia_beefy_gadget::{Pallet, Call, Storage, Config} = 30,
+		MessageGadget: darwinia_message_gadget::{Pallet, Call, Storage, Config} = 30,
 		// Mmr: pallet_mmr::{Pallet, Storage} = 28,
 		// MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 29,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,

@@ -3,8 +3,8 @@ use pallet_mmr::Config;
 use sp_runtime::traits::{Hash, Keccak256};
 // --- darwinia-network ---
 use crate::*;
-use darwinia_beefy_gadget::DepositBeefyDigest;
-use dp_beefy::network_ids;
+use darwinia_message_gadget::DepositBeefyDigest;
+use dp_message::network_ids;
 
 pub type MmrHash = <Keccak256 as Hash>::Output;
 

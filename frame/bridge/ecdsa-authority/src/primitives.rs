@@ -1,29 +1,31 @@
-// --- crates.io ---
+// --- paritytech ---
+use sp_core::{H160, H256};
 use sp_io::{crypto, hashing};
 use sp_std::prelude::*;
 
-pub(crate) type Address = [u8; 20];
+pub(crate) type Address = H160;
+pub(crate) type Hash = H256;
 pub(crate) type Message = [u8; 32];
 pub(crate) type Signature = [u8; 65];
 
 // address(0x1)
-pub(crate) const AUTHORITY_SENTINEL: [u8; 20] =
-	[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+pub(crate) const AUTHORITY_SENTINEL: H160 =
+	H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]);
 // keccak256("ChangeRelayer(bytes32 network,bytes4 sig,bytes params,uint256 nonce)");
-pub(crate) const RELAY_TYPE_HASH: [u8; 32] = [
+pub(crate) const RELAY_TYPE_HASH: H256 = H256([
 	3, 36, 202, 12, 164, 213, 41, 224, 238, 252, 198, 209, 35, 189, 23, 236, 152, 36, 152, 207, 46,
 	115, 33, 96, 204, 71, 210, 80, 72, 37, 228, 178,
-];
+]);
 // keccak256("SignCommitment(bytes32 network,bytes32 commitment,uint256 nonce)");
-pub(crate) const COMMIT_TYPE_HASH: [u8; 32] = [
+pub(crate) const COMMIT_TYPE_HASH: H256 = H256([
 	9, 64, 53, 206, 220, 62, 70, 239, 84, 120, 16, 153, 130, 131, 113, 234, 48, 235, 223, 241, 173,
 	144, 226, 255, 196, 208, 61, 76, 80, 87, 251, 230,
-];
+]);
 
 pub(crate) enum Sign {}
 impl Sign {
 	pub(crate) fn hash(data: &[u8]) -> Message {
-		hashing::keccak_256(data)
+		hashing::keccak_256(data).into()
 	}
 
 	pub(crate) fn verify_signature(

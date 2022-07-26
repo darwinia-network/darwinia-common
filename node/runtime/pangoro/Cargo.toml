@@ -17,15 +17,14 @@ scale-info  = { version = "1.0", default-features = false, features = ["derive"]
 serde       = { version = "1.0", features = ["derive"], optional = true }
 smallvec    = { version = "1.9" }
 # darwinia-network
-darwinia-balances = { default-features = false, path = "../../../frame/balances" }
-# darwinia-beefy-gadget                 = { default-features = false, path = "../../../frame/beefy-gadget" }
-# dp-beefy             = { path = "../../../primitives/beefy" }
+darwinia-balances                     = { default-features = false, path = "../../../frame/balances" }
 darwinia-ethereum                     = { default-features = false, path = "../../../frame/dvm/ethereum" }
 darwinia-evm                          = { default-features = false, path = "../../../frame/dvm/evm" }
 darwinia-evm-precompile-bls12-381     = { default-features = false, path = "../../../frame/dvm/evm/precompiles/bls12381" }
 darwinia-evm-precompile-dispatch      = { default-features = false, path = "../../../frame/dvm/evm/precompiles/dispatch" }
 darwinia-evm-precompile-state-storage = { default-features = false, path = "../../../frame/dvm/evm/precompiles/state-storage" }
 darwinia-evm-precompile-transfer      = { default-features = false, path = "../../../frame/dvm/evm/precompiles/transfer" }
+darwinia-message-gadget               = { default-features = false, path = "../../../frame/bridge/message-gadget" }
 darwinia-staking                      = { default-features = false, path = "../../../frame/staking" }
 darwinia-support                      = { default-features = false, path = "../../../frame/support" }
 dp-asset                              = { default-features = false, path = "../../../primitives/asset" }
@@ -117,13 +116,13 @@ std = [
 	"serde",
 	# darwinia-network
 	"darwinia-balances/std",
-	# "darwinia-beefy-gadget/std",
 	"darwinia-ethereum/std",
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-bls12-381/std",
 	"darwinia-evm-precompile-dispatch/std",
 	"darwinia-evm-precompile-state-storage/std",
 	"darwinia-evm-precompile-transfer/std",
+	"darwinia-message-gadget/std",
 	"darwinia-staking/std",
 	"darwinia-support/std",
 	"dp-asset/std",

@@ -23,12 +23,7 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 }
 
 fn migrate() -> Weight {
-	let module = b"Bsc";
-
-	migration::remove_storage_prefix(module, b"FinalizedAuthorities", &[]);
-	migration::remove_storage_prefix(module, b"FinalizedCheckpoint", &[]);
-	migration::remove_storage_prefix(module, b"Authorities", &[]);
-	migration::remove_storage_prefix(module, b"AuthoritiesOfRound", &[]);
+	migration::move_pallet(b"BeefyGadget", b"MessageGadget");
 
 	RuntimeBlockWeights::get().max_block
 	// 0
