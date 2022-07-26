@@ -55,9 +55,9 @@ pub(crate) enum Method {
 impl Method {
 	pub(crate) fn id(&self) -> [u8; 4] {
 		match self {
-			Method::AddMember { .. } => [0, 0, 0, 0],
-			Method::RemoveMember { .. } => [0, 0, 0, 1],
-			Method::SwapMembers { .. } => [0, 0, 0, 2],
+			Method::AddMember { .. } => [178, 143, 99, 28],
+			Method::RemoveMember { .. } => [134, 33, 209, 250],
+			Method::SwapMembers { .. } => [203, 118, 8, 91],
 		}
 	}
 }
