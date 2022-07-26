@@ -19,6 +19,7 @@ members = [
 	"frame/dvm/evm/precompiles/bls12381",
 	"frame/dvm/evm/precompiles/bridge/s2s",
 	"frame/dvm/evm/precompiles/dispatch",
+	"frame/dvm/evm/precompiles/kton",
 	"frame/dvm/evm/precompiles/state-storage",
 	"frame/dvm/evm/precompiles/transfer",
 	"frame/dvm/evm/precompiles/utils",

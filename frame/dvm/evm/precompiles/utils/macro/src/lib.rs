@@ -17,14 +17,43 @@
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![crate_type = "proc-macro"]
-extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use proc_macro2::Literal;
 use quote::{quote, quote_spanned};
 use sha3::{Digest, Keccak256};
-use syn::{parse_macro_input, spanned::Spanned, Expr, ExprLit, Ident, ItemEnum, Lit};
+use syn::{parse_macro_input, spanned::Spanned, Expr, ExprLit, Ident, ItemEnum, Lit, LitStr};
+
+struct Bytes(Vec<u8>);
+
+impl ::std::fmt::Debug for Bytes {
+	#[inline]
+	fn fmt(&self, f: &mut std::fmt::Formatter) -> ::std::fmt::Result {
+		let data = &self.0;
+		write!(f, "[")?;
+		if !data.is_empty() {
+			write!(f, "{:#04x}u8", data[0])?;
+			for unit in data.iter().skip(1) {
+				write!(f, ", {:#04x}", unit)?;
+			}
+		}
+		write!(f, "]")
+	}
+}
+
+#[proc_macro]
+pub fn keccak256(input: TokenStream) -> TokenStream {
+	let lit_str = parse_macro_input!(input as LitStr);
+
+	let hash = Keccak256::digest(lit_str.value().as_ref());
+
+	let bytes = Bytes(hash.to_vec());
+	let eval_str = format!("{:?}", bytes);
+	let eval_ts: proc_macro2::TokenStream = eval_str.parse().unwrap_or_else(|_| {
+		panic!("Failed to parse the string \"{}\" to TokenStream.", eval_str);
+	});
+	quote!(#eval_ts).into()
+}
 
 #[proc_macro_attribute]
 pub fn selector(_: TokenStream, input: TokenStream) -> TokenStream {
@@ -61,6 +90,8 @@ pub fn selector(_: TokenStream, input: TokenStream) -> TokenStream {
 
 	(quote! {
 		#(#attrs)*
+		#[derive(num_enum::TryFromPrimitive, num_enum::IntoPrimitive)]
+		#[repr(u32)]
 		#vis #enum_token #ident {
 			#(
 				#ident_expressions = #variant_expressions,

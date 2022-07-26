@@ -12,6 +12,7 @@ version     = "2.8.16"
 [dependencies]
 # crates.io
 milagro_bls = { default-features = false, git = "https://github.com/darwinia-network/milagro_bls" }
+num_enum    = { default-features = false, version = "0.5.3" }
 # paritytech
 sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 # darwinia-network
@@ -27,6 +28,7 @@ default = ["std"]
 std = [
 	# crates.io
 	"milagro_bls/std",
+	"num_enum/std",
 	# paritytech
 	"sp-std/std",
 	# darwinia-network

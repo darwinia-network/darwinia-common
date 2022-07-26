@@ -29,10 +29,7 @@ use sp_core::{H160, U256};
 use crate::tests::mock::*;
 use darwinia_ethereum::Transaction;
 use darwinia_evm::CurrencyAdapt;
-use darwinia_evm_precompile_utils::{
-	test_helper::{AccountInfo, LegacyUnsignedTransaction},
-	PrecompileHelper,
-};
+use darwinia_evm_precompile_utils::test_helper::{AccountInfo, LegacyUnsignedTransaction};
 use darwinia_support::evm::{decimal_convert, DeriveSubstrateAddress, TRANSFER_ADDR};
 
 const WKTON_ADDRESS: &str = "32dcab0ef3fb2de2fce1d2e0799d36239671f04a";
@@ -132,18 +129,17 @@ fn kton_make_call_works() {
 	let (_, mut ext) = new_test_ext(1);
 
 	ext.execute_with(|| {
-		let helper = PrecompileHelper::<Test>::new(&[], Some(100));
 		let mock_address =
 			H160::from_str("Aa01a1bEF0557fa9625581a293F3AA7770192632").unwrap();
 		let mock_value = U256::from(30);
 		let expected_str = "0x47e7ef24000000000000000000000000aa01a1bef0557fa9625581a293f3aa7770192632000000000000000000000000000000000000000000000000000000000000001e";
 		let encoded_str =
-			bytes2hex("0x", &crate::make_call_data::<Test>(mock_address, mock_value, &helper).unwrap());
+			bytes2hex("0x", &crate::make_call_data(mock_address, mock_value).unwrap());
 		assert_eq!(encoded_str, expected_str);
 
 		let mock_value = sp_core::U256::from(25);
 		let encoded_str =
-			bytes2hex("0x", &crate::make_call_data::<Test>(mock_address, mock_value, &helper).unwrap());
+			bytes2hex("0x", &crate::make_call_data(mock_address, mock_value).unwrap());
 			assert_ne!(encoded_str, expected_str);
 	});
 }
