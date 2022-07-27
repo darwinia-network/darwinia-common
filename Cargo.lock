@@ -1489,6 +1489,7 @@ dependencies = [
 name = "darwinia-ecdsa-authority"
 version = "2.8.16"
 dependencies = [
+ "array-bytes",
  "ethabi",
  "frame-support",
  "frame-system",
@@ -6238,6 +6239,7 @@ dependencies = [
  "bridge-runtime-common",
  "darwinia-balances",
  "darwinia-bridge-ethereum",
+ "darwinia-ecdsa-authority",
  "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-evm-precompile-bridge-s2s",
