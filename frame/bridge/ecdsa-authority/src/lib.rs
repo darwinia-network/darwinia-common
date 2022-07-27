@@ -61,7 +61,7 @@ pub mod pallet {
 		type MaxAuthorities: Get<u32>;
 		// Commitment relates.
 		#[pallet::constant]
-		type ChainId: Get<u32>;
+		type ChainId: Get<&'static [u8]>;
 		#[pallet::constant]
 		type SignThreshold: Get<Perbill>;
 		type MessageRoot: Get<Option<Hash>>;
@@ -368,13 +368,14 @@ pub mod pallet {
 				*nonce
 			});
 			let message = Sign::eth_signable_message(
+				T::ChainId::get(),
+				T::Version::get().spec_name.as_ref(),
 				&ethabi::encode(&[
 					Token::Bytes(RELAY_TYPE_HASH.as_ref().into()),
 					Token::Bytes(method.id().into()),
 					Token::Bytes(authorities_changes),
 					Token::Uint(nonce.into()),
 				]),
-				T::ChainId::get(),
 			);
 
 			<AuthoritiesChangeToSign<T>>::put((message, BoundedVec::default()));
@@ -415,12 +416,13 @@ pub mod pallet {
 
 		fn on_new_message_root(message_root: Hash) {
 			let message = Sign::eth_signable_message(
+				T::ChainId::get(),
+				T::Version::get().spec_name.as_ref(),
 				&ethabi::encode(&[
 					Token::Bytes(COMMIT_TYPE_HASH.as_ref().into()),
 					Token::Bytes(message_root.as_ref().into()),
 					Token::Uint(<Nonce<T>>::get().into()),
 				]),
-				T::ChainId::get(),
 			);
 
 			<NewMessageRootToSign<T>>::put((message, BoundedVec::default()));

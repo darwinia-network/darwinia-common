@@ -28,16 +28,16 @@ impl Sign {
 		hashing::keccak_256(data).into()
 	}
 
-	pub(crate) fn eth_signable_message(data: &[u8], chain_id: u32) -> Message {
-		// b"\x19\x01SpecName::darwinia-ecdsa-authority:\n"
-		let mut v =
-			[b"\x19\x01".as_slice(), &chain_id.to_le_bytes(), b"::darwinia-ecdsa-authority:\n"]
-				.concat();
-		let message = Self::hash(data);
-
-		v.extend_from_slice(&message);
-
-		Self::hash(&v)
+	pub(crate) fn eth_signable_message(chain_id: &[u8], spec_name: &[u8], data: &[u8]) -> Message {
+		// \x19\01 + keccack256(46Darwinia::ecdsa-authority) + struct_hash
+		Self::hash(
+			&[
+				b"\x19\01".as_slice(),
+				&Self::hash(&[chain_id, spec_name, b"::ecdsa-authority"].concat()),
+				data,
+			]
+			.concat(),
+		)
 	}
 
 	pub(crate) fn verify_signature(

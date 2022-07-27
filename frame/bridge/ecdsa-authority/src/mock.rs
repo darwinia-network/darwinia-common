@@ -27,7 +27,9 @@ use sp_io::{hashing, TestExternalities};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
+	RuntimeString,
 };
+use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use crate::{self as darwinia_ecdsa_authority, *};
 
@@ -40,6 +42,9 @@ type BlockNumber = u64;
 type AccountId = u64;
 type Index = u64;
 
+frame_support::parameter_types! {
+	pub Version: RuntimeVersion = RuntimeVersion { spec_name: RuntimeString::Owned("Darwinia".into()), ..Default::default() };
+}
 impl frame_system::Config for Test {
 	type AccountData = ();
 	type AccountId = AccountId;
@@ -63,11 +68,11 @@ impl frame_system::Config for Test {
 	type PalletInfo = PalletInfo;
 	type SS58Prefix = ();
 	type SystemWeightInfo = ();
-	type Version = ();
+	type Version = Version;
 }
 
 frame_support::parameter_types! {
-	pub const ChainId: u32 = 46;
+	pub const ChainId: &'static [u8] = b"46";
 	pub const MaxAuthorities: u32 = 3;
 	pub const MaxPendingPeriod: BlockNumber = 5;
 	pub const SignThreshold: Perbill = Perbill::from_percent(60);
