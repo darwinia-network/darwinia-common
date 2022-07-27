@@ -184,9 +184,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(now: T::BlockNumber) -> Weight {
-			if (now % T::SyncInterval::get()).is_zero()
-				&& Self::ensure_not_on_authorities_change().is_ok()
-			{
+			if (now % T::SyncInterval::get()).is_zero() {
 				if let Some(message_root) = Self::try_update_message_root(now) {
 					Self::on_new_message_root(message_root);
 				}
@@ -438,6 +436,11 @@ pub mod pallet {
 		}
 
 		fn try_update_message_root(at: T::BlockNumber) -> Option<Hash> {
+			if Self::ensure_not_on_authorities_change().is_err() {
+				// Not allow to relay the messages if the new authorities set is not verified.
+				return None;
+			}
+			
 			let message_root = if let Some(message_root) = T::MessageRoot::get() {
 				message_root
 			} else {
