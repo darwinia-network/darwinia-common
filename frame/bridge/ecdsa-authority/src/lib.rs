@@ -446,7 +446,7 @@ pub mod pallet {
 
 			<PreviousMessageRoot<T>>::try_mutate(|maybe_previous_message_root| {
 				if let Some((recorded_at, previous_message_root)) = maybe_previous_message_root {
-					// Only if the chain is still collecting signatures will enter this condition
+					// Only if the chain is still collecting signatures will enter this condition.
 
 					// If this is a new root.
 					if &message_root != previous_message_root {
