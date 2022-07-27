@@ -6,6 +6,7 @@ use pallet_collective::Prime;
 use pallet_membership::Config;
 // --- darwinia-network ---
 use crate::*;
+use crate::weights::pallet_membership::WeightInfo;
 
 pub struct MembershipChangedGroup;
 impl ChangeMembers<AccountId> for MembershipChangedGroup {
@@ -37,5 +38,5 @@ impl Config<TechnicalMembershipInstance> for Runtime {
 	type RemoveOrigin = EnsureRootOrMoreThanHalfCouncil;
 	type ResetOrigin = EnsureRootOrMoreThanHalfCouncil;
 	type SwapOrigin = EnsureRootOrMoreThanHalfCouncil;
-	type WeightInfo = ();
+	type WeightInfo = WeightInfo<Runtime>;
 }

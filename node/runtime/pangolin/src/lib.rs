@@ -823,7 +823,6 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_collective, Council);
 			add_benchmark!(params, batches, pallet_collective, TechnicalCommittee);
 			add_benchmark!(params, batches, pallet_elections_phragmen, PhragmenElection);
-			// TODO FIX
 			add_benchmark!(params, batches, pallet_membership, TechnicalMembership);
 			add_benchmark!(params, batches, pallet_treasury, Treasury);
 			add_benchmark!(params, batches, pallet_treasury, KtonTreasury);
