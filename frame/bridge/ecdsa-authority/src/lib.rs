@@ -148,7 +148,9 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(now: T::BlockNumber) -> Weight {
-			if (now % T::SyncInterval::get()).is_zero() {
+			if (now % T::SyncInterval::get()).is_zero()
+				&& Self::ensure_not_on_authorities_change().is_ok()
+			{
 				if let Some(message_root) = Self::try_update_message_root(now) {
 					Self::on_new_message_root(message_root);
 				}
