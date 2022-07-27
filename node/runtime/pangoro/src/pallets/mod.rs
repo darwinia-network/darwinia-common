@@ -40,6 +40,9 @@ pub use beefy::*;
 pub mod message_gadget;
 pub use message_gadget::*;
 
+pub mod ecdsa_authority;
+pub use ecdsa_authority::*;
+
 // pub mod mmr;
 // pub use mmr::*;
 

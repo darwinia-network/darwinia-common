@@ -167,12 +167,13 @@ frame_support::construct_runtime! {
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 13,
 		Beefy: pallet_beefy::{Pallet, Storage, Config<T>} = 55,
 		MessageGadget: darwinia_message_gadget::{Pallet, Call, Storage, Config} = 58,
+		EcdsaRelayAuthority: darwinia_relay_authority::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
+		EcdsaAuthority: darwinia_ecdsa_authority::{Pallet, Call, Storage, Config, Event<T>} = 66,
 		// Mmr: pallet_mmr::{Pallet, Storage} = 56,
 		// MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 57,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
 		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Config} = 15,
 		HeaderMmr: darwinia_header_mmr::{Pallet, Storage} = 16,
-		EcdsaRelayAuthority: darwinia_relay_authority::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
 
 		// Governance stuff; uncallable initially.
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 17,

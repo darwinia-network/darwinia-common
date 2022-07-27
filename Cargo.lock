@@ -6354,6 +6354,7 @@ dependencies = [
  "bp-runtime",
  "bridge-runtime-common",
  "darwinia-balances",
+ "darwinia-ecdsa-authority",
  "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-evm-precompile-bls12-381",
@@ -6427,6 +6428,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-trie",
  "sp-version",
+ "static_assertions",
  "substrate-wasm-builder",
  "to-substrate-backing",
 ]

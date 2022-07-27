@@ -134,6 +134,7 @@ frame_support::construct_runtime!(
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event} = 13,
 		Beefy: pallet_beefy::{Pallet, Storage, Config<T>} = 27,
 		MessageGadget: darwinia_message_gadget::{Pallet, Call, Storage, Config} = 30,
+		EcdsaAuthority: darwinia_ecdsa_authority::{Pallet, Call, Storage, Config, Event<T>} = 32,
 		// Mmr: pallet_mmr::{Pallet, Storage} = 28,
 		// MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 29,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,

@@ -40,6 +40,12 @@ pub use beefy::*;
 pub mod message_gadget;
 pub use message_gadget::*;
 
+pub mod relay_authority;
+pub use relay_authority::*;
+
+pub mod ecdsa_authority;
+pub use ecdsa_authority::*;
+
 // pub mod mmr;
 // pub use mmr::*;
 
@@ -111,9 +117,6 @@ pub use to_ethereum_backing_::*;
 
 pub mod relayer_game;
 pub use relayer_game::*;
-
-pub mod relay_authority;
-pub use relay_authority::*;
 
 pub mod to_tron_backing_;
 pub use to_tron_backing_::*;
