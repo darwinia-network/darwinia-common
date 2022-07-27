@@ -8,7 +8,6 @@ fn add_authority() {
 	let address = Address::repeat_byte(0);
 
 	ExtBuilder::default().build().execute_with(|| {
-		// Case 1.
 		assert!(EcdsaAuthority::authorities().is_empty());
 		assert_eq!(EcdsaAuthority::nonce(), 0);
 		assert_ok!(EcdsaAuthority::add_authority(Origin::root(), address));
@@ -24,29 +23,29 @@ fn add_authority() {
 		);
 		assert_eq!(
 			ecdsa_authority_events(),
-			vec![Event::CollectingAuthoritiesChangeSignature(message)]
+			vec![Event::CollectingAuthoritiesChangeSignatures(message)]
 		);
 
-		// Case 2.
+		// Case 1.
 		assert_noop!(
 			EcdsaAuthority::add_authority(Origin::root(), address),
 			EcdsaAuthorityError::OnAuthoritiesChange
 		);
 		clear_authorities_change();
 
-		// Case 3.
+		// Case 2.
 		assert_noop!(
 			EcdsaAuthority::add_authority(Origin::signed(Default::default()), address),
 			DispatchError::BadOrigin
 		);
 
-		// Case 4.
+		// Case 3.
 		assert_noop!(
 			EcdsaAuthority::add_authority(Origin::root(), address),
 			EcdsaAuthorityError::AuthorityExisted
 		);
 
-		// Case 5.
+		// Case 4.
 		for i in 1..MaxAuthorities::get() {
 			assert_ok!(EcdsaAuthority::add_authority(Origin::root(), Address::repeat_byte(i as _)));
 			assert_eq!(EcdsaAuthority::nonce(), 1 + i);
@@ -77,7 +76,6 @@ fn remove_authority() {
 	let address_2 = Address::repeat_byte(2);
 
 	ExtBuilder::default().authorities(vec![address_1, address_2]).build().execute_with(|| {
-		// Case 1.
 		assert_eq!(EcdsaAuthority::authorities(), vec![address_1, address_2]);
 		assert_eq!(EcdsaAuthority::nonce(), 0);
 		assert_ok!(EcdsaAuthority::remove_authority(Origin::root(), address_1));
@@ -93,29 +91,29 @@ fn remove_authority() {
 		);
 		assert_eq!(
 			ecdsa_authority_events(),
-			vec![Event::CollectingAuthoritiesChangeSignature(message)]
+			vec![Event::CollectingAuthoritiesChangeSignatures(message)]
 		);
 
-		// Case 2.
+		// Case 1.
 		assert_noop!(
 			EcdsaAuthority::add_authority(Origin::root(), address_1),
 			EcdsaAuthorityError::OnAuthoritiesChange
 		);
 		clear_authorities_change();
 
-		// Case 3.
+		// Case 2.
 		assert_noop!(
 			EcdsaAuthority::remove_authority(Origin::signed(Default::default()), address_2),
 			DispatchError::BadOrigin
 		);
 
-		// Case 4.
+		// Case 3.
 		assert_noop!(
 			EcdsaAuthority::remove_authority(Origin::root(), address_1),
 			EcdsaAuthorityError::NotAuthority
 		);
 
-		// Case 5.
+		// Case 4.
 		assert_noop!(
 			EcdsaAuthority::remove_authority(Origin::root(), address_2),
 			EcdsaAuthorityError::AtLeastOneAuthority
@@ -129,7 +127,6 @@ fn swap_authority() {
 	let address_2 = Address::repeat_byte(2);
 
 	ExtBuilder::default().authorities(vec![address_1]).build().execute_with(|| {
-		// Case 1.
 		assert_eq!(EcdsaAuthority::authorities(), vec![address_1]);
 		assert_eq!(EcdsaAuthority::nonce(), 0);
 		assert_ok!(EcdsaAuthority::swap_authority(Origin::root(), address_1, address_2));
@@ -145,23 +142,23 @@ fn swap_authority() {
 		);
 		assert_eq!(
 			ecdsa_authority_events(),
-			vec![Event::CollectingAuthoritiesChangeSignature(message)]
+			vec![Event::CollectingAuthoritiesChangeSignatures(message)]
 		);
 
-		// Case 2.
+		// Case 1.
 		assert_noop!(
 			EcdsaAuthority::swap_authority(Origin::root(), address_2, address_1),
 			EcdsaAuthorityError::OnAuthoritiesChange
 		);
 		clear_authorities_change();
 
-		// Case 3.
+		// Case 2.
 		assert_noop!(
 			EcdsaAuthority::swap_authority(Origin::signed(1), address_2, address_1),
 			DispatchError::BadOrigin
 		);
 
-		// Case 4.
+		// Case 3.
 		assert_noop!(
 			EcdsaAuthority::swap_authority(Origin::root(), address_1, address_2),
 			EcdsaAuthorityError::NotAuthority
@@ -185,7 +182,7 @@ fn sync_interval_and_max_pending_period() {
 		assert_eq!(EcdsaAuthority::new_message_root_to_sign(), Some((message, Default::default())));
 		assert_eq!(
 			ecdsa_authority_events(),
-			vec![Event::CollectingNewMessageRootSignature(message)]
+			vec![Event::CollectingNewMessageRootSignatures(message)]
 		);
 
 		// Use a new message root while exceeding the max pending period.
@@ -236,7 +233,6 @@ fn submit_authorities_change_signature() {
 			EcdsaAuthorityError::NoAuthoritiesChange
 		);
 
-		// Case 2.
 		assert_ok!(EcdsaAuthority::add_authority(Origin::root(), address_3));
 		let message = [
 			171, 151, 18, 33, 161, 152, 40, 140, 39, 231, 61, 172, 224, 239, 228, 158, 100, 128,
@@ -248,10 +244,10 @@ fn submit_authorities_change_signature() {
 		);
 		assert_eq!(
 			ecdsa_authority_events(),
-			vec![Event::CollectingAuthoritiesChangeSignature(message)]
+			vec![Event::CollectingAuthoritiesChangeSignatures(message)]
 		);
 
-		// Case 3.
+		// Case 2.
 		assert_noop!(
 			EcdsaAuthority::submit_authorities_change_signature(
 				Origin::signed(Default::default()),
@@ -261,7 +257,7 @@ fn submit_authorities_change_signature() {
 			EcdsaAuthorityError::BadSignature
 		);
 
-		// Case 4.
+		// Case 3.
 		let signature_3 = sign(&secret_key_3, &message);
 		assert_noop!(
 			EcdsaAuthority::submit_authorities_change_signature(
@@ -272,7 +268,6 @@ fn submit_authorities_change_signature() {
 			EcdsaAuthorityError::NotPreviousAuthority
 		);
 
-		// Case 5.
 		let signature_1 = sign(&secret_key_1, &message);
 		assert_ok!(EcdsaAuthority::submit_authorities_change_signature(
 			Origin::signed(Default::default()),
@@ -284,7 +279,6 @@ fn submit_authorities_change_signature() {
 			Some((message, BoundedVec::try_from(vec![(address_1, signature_1.clone())]).unwrap()))
 		);
 
-		// Case 6.
 		let signature_2 = sign(&secret_key_2, &message);
 		assert_ok!(EcdsaAuthority::submit_authorities_change_signature(
 			Origin::signed(Default::default()),
@@ -319,7 +313,6 @@ fn submit_new_message_root_signature() {
 			EcdsaAuthorityError::NoNewMessageRoot
 		);
 
-		// Case 2.
 		run_to_block(SyncInterval::get());
 		let message = [
 			177, 8, 115, 132, 134, 245, 108, 127, 183, 106, 146, 37, 87, 27, 171, 191, 142, 162,
@@ -328,10 +321,10 @@ fn submit_new_message_root_signature() {
 		assert_eq!(EcdsaAuthority::new_message_root_to_sign(), Some((message, Default::default())));
 		assert_eq!(
 			ecdsa_authority_events(),
-			vec![Event::CollectingNewMessageRootSignature(message)]
+			vec![Event::CollectingNewMessageRootSignatures(message)]
 		);
 
-		// Case 3.
+		// Case 2.
 		assert_noop!(
 			EcdsaAuthority::submit_new_message_root_signature(
 				Origin::signed(Default::default()),
@@ -341,7 +334,7 @@ fn submit_new_message_root_signature() {
 			EcdsaAuthorityError::BadSignature
 		);
 
-		// Case 4.
+		// Case 3.
 		let signature_3 = sign(&secret_key_3, &message);
 		assert_noop!(
 			EcdsaAuthority::submit_new_message_root_signature(
@@ -352,7 +345,6 @@ fn submit_new_message_root_signature() {
 			EcdsaAuthorityError::NotAuthority
 		);
 
-		// Case 5.
 		let signature_1 = sign(&secret_key_1, &message);
 		assert_ok!(EcdsaAuthority::submit_new_message_root_signature(
 			Origin::signed(Default::default()),
@@ -364,7 +356,6 @@ fn submit_new_message_root_signature() {
 			Some((message, BoundedVec::try_from(vec![(address_1, signature_1.clone())]).unwrap()))
 		);
 
-		// Case 6.
 		let signature_2 = sign(&secret_key_2, &message);
 		assert_ok!(EcdsaAuthority::submit_new_message_root_signature(
 			Origin::signed(Default::default()),

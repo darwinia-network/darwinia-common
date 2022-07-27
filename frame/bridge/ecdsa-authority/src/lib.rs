@@ -21,8 +21,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod migration;
-
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -56,19 +54,31 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		// Basics.
 		type WeightInfo: WeightInfo;
-		// Members
+		/// The maximum number of authorities.
 		#[pallet::constant]
 		type MaxAuthorities: Get<u32>;
 		// Commitment relates.
+		/// Chain's ID, which is using for constructing the message. (follow EIP-712 SPEC)
 		#[pallet::constant]
 		type ChainId: Get<&'static [u8]>;
+		/// The signing threshold.
+		///
+		/// Once `signatures_count / authorities_count >= threshold`, we say the message is trusted.
 		#[pallet::constant]
 		type SignThreshold: Get<Perbill>;
+		/// The Darwinia message root.
+		///
+		/// If it changed, it means there are some new messages which are waiting for relaying.
 		type MessageRoot: Get<Option<Hash>>;
 		// Checkpoints.
 		// `SyncInterval` must be shorter than `MaxPendingPeriod`.
+		/// The interval of checking the message root.
 		#[pallet::constant]
 		type SyncInterval: Get<Self::BlockNumber>;
+		/// How long should we wait for the message root to be signed.
+		///
+		/// If the collecting new message root signatures process takes more than
+		/// `MaxPendingPeriod`, we will drop the root. And update the root with a new one.
 		#[pallet::constant]
 		type MaxPendingPeriod: Get<Self::BlockNumber>;
 	}
@@ -76,40 +86,61 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		CollectingAuthoritiesChangeSignature(Message),
+		/// Authorities changed. Collecting authorities change signatures. \[Message\]
+		CollectingAuthoritiesChangeSignatures(Message),
+		/// Collected enough authorities change signatures. \[(Message, Vec<Address, Signature>)\]
 		CollectedEnoughAuthoritiesChangeSignatures((Message, Vec<(Address, Signature)>)),
 
-		CollectingNewMessageRootSignature(Message),
+		/// New message root found. Collecting new message root signatures. \[Message\]
+		CollectingNewMessageRootSignatures(Message),
+		/// Collected enough new message root signatures. \[(Message, Vec<Address, Signature>)\]
 		CollectedEnoughNewMessageRootSignatures((Message, Vec<(Address, Signature)>)),
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
+		/// The authority is already existed.
 		AuthorityExisted,
+		/// Too many authorities.
 		TooManyAuthorities,
+		/// This is not an authority.
 		NotAuthority,
+		/// This is not a previous authority.
+		/// Only the old authority can sign for the new authorities set.
 		NotPreviousAuthority,
+		/// Require at least one authority. Not allow to decrease below one.
 		AtLeastOneAuthority,
+		/// Currently, the authorities is changing.
 		OnAuthoritiesChange,
+		/// Didn't find any authorities changes to sign.
 		NoAuthoritiesChange,
+		/// Didn't find any new message root to sign.
 		NoNewMessageRoot,
+		/// Failed to verify the signature.
 		BadSignature,
 	}
 
+	/// Record the previous authorities.
+	///
+	/// When the `Authorities` changed, the members of previous authorities need to submit the
+	/// signatures, and only they could do this.
 	#[pallet::storage]
 	#[pallet::getter(fn previous_authorities)]
 	pub type PreviousAuthorities<T: Config> =
 		StorageValue<_, BoundedVec<Address, T::MaxAuthorities>, ValueQuery>;
 
+	/// The current active authorities.
 	#[pallet::storage]
 	#[pallet::getter(fn authorities)]
 	pub type Authorities<T: Config> =
 		StorageValue<_, BoundedVec<Address, T::MaxAuthorities>, ValueQuery>;
 
+	/// The nonce of the current active authorities. AKA term/session/era.
 	#[pallet::storage]
 	#[pallet::getter(fn nonce)]
 	pub type Nonce<T: Config> = StorageValue<_, u32, ValueQuery>;
 
+	/// The authorities change waiting for signing.
 	#[pallet::storage]
 	#[pallet::getter(fn authorities_change_to_sign)]
 	pub type AuthoritiesChangeToSign<T: Config> = StorageValue<
@@ -118,6 +149,7 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	/// The new message root waiting for signing.
 	#[pallet::storage]
 	#[pallet::getter(fn new_message_root_to_sign)]
 	pub type NewMessageRootToSign<T: Config> = StorageValue<
@@ -126,6 +158,10 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	/// Record the previous message root.
+	///
+	/// Use for checking if the message root getter get the same message root as the previous one.
+	/// And if this is empty, it means the message root is require to be relayed.
 	#[pallet::storage]
 	#[pallet::getter(fn previous_message_root)]
 	pub type PreviousMessageRoot<T: Config> = StorageValue<_, (T::BlockNumber, Hash), OptionQuery>;
@@ -161,6 +197,10 @@ pub mod pallet {
 	}
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Add a authority and trigger `on_authorities_change`.
+		///
+		/// Not allow to call while authorities is changing.
+		/// This will insert new authority into the index 0 of authorities.
 		#[pallet::weight(10_000_000)]
 		#[frame_support::transactional]
 		pub fn add_authority(origin: OriginFor<T>, new: Address) -> DispatchResult {
@@ -184,6 +224,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Remove a authority and trigger `on_authorities_change`.
+		///
+		/// Not allow to call while authorities is changing.
 		#[pallet::weight(10_000_000)]
 		#[frame_support::transactional]
 		pub fn remove_authority(origin: OriginFor<T>, old: Address) -> DispatchResult {
@@ -213,6 +256,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Swap the old authority with the new authority and trigger `on_authorities_change`.
+		///
+		/// Not allow to call while authorities is changing.
 		#[pallet::weight(10_000_000)]
 		#[frame_support::transactional]
 		pub fn swap_authority(origin: OriginFor<T>, old: Address, new: Address) -> DispatchResult {
@@ -238,6 +284,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Submit the authorities change signature.
 		#[pallet::weight(10_000_000)]
 		#[frame_support::transactional]
 		pub fn submit_authorities_change_signature(
@@ -248,6 +295,8 @@ pub mod pallet {
 			ensure_signed(origin)?;
 
 			let previous_authorities = Self::ensure_previous_authority(&address)?;
+			// Take the value here.
+			// If collected enough signatures, leave the empty `AuthoritiesChangeToSign` in storage.
 			let mut authorities_change_to_sign =
 				<AuthoritiesChangeToSign<T>>::take().ok_or(<Error<T>>::NoAuthoritiesChange)?;
 			let (message, collected) = &mut authorities_change_to_sign;
@@ -275,6 +324,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Submit the new message root signature.
 		#[pallet::weight(10_000_000)]
 		#[frame_support::transactional]
 		pub fn submit_new_message_root_signature(
@@ -285,6 +335,8 @@ pub mod pallet {
 			ensure_signed(origin)?;
 
 			let authorities = Self::ensure_authority(&address)?;
+			// Take the value here.
+			// If collected enough signatures, leave the empty `NewMessageRootToSign` in storage
 			let mut new_message_root_to_sign =
 				<NewMessageRootToSign<T>>::take().ok_or(<Error<T>>::NoNewMessageRoot)?;
 			let (message, collected) = &mut new_message_root_to_sign;
@@ -382,7 +434,7 @@ pub mod pallet {
 
 			<AuthoritiesChangeToSign<T>>::put((message, BoundedVec::default()));
 
-			Self::deposit_event(<Event<T>>::CollectingAuthoritiesChangeSignature(message));
+			Self::deposit_event(<Event<T>>::CollectingAuthoritiesChangeSignatures(message));
 		}
 
 		fn try_update_message_root(at: T::BlockNumber) -> Option<Hash> {
@@ -394,10 +446,12 @@ pub mod pallet {
 
 			<PreviousMessageRoot<T>>::try_mutate(|maybe_previous_message_root| {
 				if let Some((recorded_at, previous_message_root)) = maybe_previous_message_root {
-					// only if the chain is still collecting signatures will enter this condition
-					// if this is a new root
+					// Only if the chain is still collecting signatures will enter this condition
+
+					// If this is a new root.
 					if &message_root != previous_message_root {
-						// use a new root if reach the max pending period
+						// Update the root with a new one if exceed the max pending period.
+						// Also update the recorded time.
 						if at.saturating_sub(*recorded_at) > T::MaxPendingPeriod::get() {
 							*recorded_at = at;
 							*previous_message_root = message_root.clone();
@@ -406,6 +460,8 @@ pub mod pallet {
 						}
 					}
 				} else {
+					// If no previous message root is recorded, starting to relay the incoming
+					// messages.
 					*maybe_previous_message_root = Some((at, message_root.clone()));
 
 					return Ok(message_root);
@@ -429,7 +485,7 @@ pub mod pallet {
 
 			<NewMessageRootToSign<T>>::put((message, BoundedVec::default()));
 
-			Self::deposit_event(<Event<T>>::CollectingNewMessageRootSignature(message));
+			Self::deposit_event(<Event<T>>::CollectingNewMessageRootSignatures(message));
 		}
 	}
 }
