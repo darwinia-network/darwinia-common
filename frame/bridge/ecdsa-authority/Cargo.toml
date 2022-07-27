@@ -14,8 +14,6 @@ version     = "2.8.16"
 codec      = { package = "parity-scale-codec", version = "2.3", default-features = false }
 ethabi     = { version = "15.0", default-features = false }
 scale-info = { version = "1.0", default-features = false }
-# darwinia-network
-dp-message = { path = "../../../primitives/message" }
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }

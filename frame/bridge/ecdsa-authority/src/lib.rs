@@ -36,8 +36,6 @@ pub use weights::WeightInfo;
 
 // --- crates.io ---
 use ethabi::Token;
-// --- darwinia-network ---
-use dp_message::network_ids::{self, NetworkId};
 // --- paritytech ---
 use frame_support::{pallet_prelude::*, traits::Get};
 use frame_system::pallet_prelude::*;
@@ -62,9 +60,11 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxAuthorities: Get<u32>;
 		// Commitment relates.
-		type MessageRoot: Get<Option<Hash>>;
+		#[pallet::constant]
+		type ChainId: Get<u32>;
 		#[pallet::constant]
 		type SignThreshold: Get<Perbill>;
+		type MessageRoot: Get<Option<Hash>>;
 		// Checkpoints.
 		// `SyncInterval` must be shorter than `MaxPendingPeriod`.
 		#[pallet::constant]
@@ -311,14 +311,15 @@ pub mod pallet {
 		}
 	}
 	impl<T: Config> Pallet<T> {
-		fn network_id() -> NetworkId {
-			network_ids::convert(T::Version::get().spec_name.as_ref())
-		}
-
-		fn ensure_previous_authority(address: &Address) -> Result<BoundedVec<Address, T::MaxAuthorities>, DispatchError> {
+		fn ensure_previous_authority(
+			address: &Address,
+		) -> Result<BoundedVec<Address, T::MaxAuthorities>, DispatchError> {
 			let previous_authorities = <PreviousAuthorities<T>>::get();
 
-			ensure!(previous_authorities.iter().any(|a| a == address), <Error<T>>::NotPreviousAuthority);
+			ensure!(
+				previous_authorities.iter().any(|a| a == address),
+				<Error<T>>::NotPreviousAuthority
+			);
 
 			Ok(previous_authorities)
 		}
@@ -366,13 +367,15 @@ pub mod pallet {
 
 				*nonce
 			});
-			let message = Sign::eth_signable_message(&ethabi::encode(&[
-				Token::Bytes(RELAY_TYPE_HASH.as_ref().into()),
-				Token::Bytes(Self::network_id().into()),
-				Token::Bytes(method.id().into()),
-				Token::Bytes(authorities_changes),
-				Token::Uint(nonce.into()),
-			]));
+			let message = Sign::eth_signable_message(
+				&ethabi::encode(&[
+					Token::Bytes(RELAY_TYPE_HASH.as_ref().into()),
+					Token::Bytes(method.id().into()),
+					Token::Bytes(authorities_changes),
+					Token::Uint(nonce.into()),
+				]),
+				T::ChainId::get(),
+			);
 
 			<AuthoritiesChangeToSign<T>>::put((message, BoundedVec::default()));
 
@@ -411,12 +414,14 @@ pub mod pallet {
 		}
 
 		fn on_new_message_root(message_root: Hash) {
-			let message = Sign::eth_signable_message(&ethabi::encode(&[
-				Token::Bytes(COMMIT_TYPE_HASH.as_ref().into()),
-				Token::Bytes(Self::network_id().into()),
-				Token::Bytes(message_root.as_ref().into()),
-				Token::Uint(<Nonce<T>>::get().into()),
-			]));
+			let message = Sign::eth_signable_message(
+				&ethabi::encode(&[
+					Token::Bytes(COMMIT_TYPE_HASH.as_ref().into()),
+					Token::Bytes(message_root.as_ref().into()),
+					Token::Uint(<Nonce<T>>::get().into()),
+				]),
+				T::ChainId::get(),
+			);
 
 			<NewMessageRootToSign<T>>::put((message, BoundedVec::default()));
 

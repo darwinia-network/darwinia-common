@@ -67,13 +67,15 @@ impl frame_system::Config for Test {
 }
 
 frame_support::parameter_types! {
-	  pub const MaxAuthorities: u32 = 3;
-	  pub const MaxPendingPeriod: BlockNumber = 5;
-	  pub const SignThreshold: Perbill = Perbill::from_percent(60);
-	  pub const SyncInterval: BlockNumber = 3;
-	  pub static MessageRoot: Option<Hash> = Some(Default::default());
+	pub const ChainId: u32 = 46;
+	pub const MaxAuthorities: u32 = 3;
+	pub const MaxPendingPeriod: BlockNumber = 5;
+	pub const SignThreshold: Perbill = Perbill::from_percent(60);
+	pub const SyncInterval: BlockNumber = 3;
+	pub static MessageRoot: Option<Hash> = Some(Default::default());
 }
 impl Config for Test {
+	type ChainId = ChainId;
 	type Event = Event;
 	type MaxAuthorities = MaxAuthorities;
 	type MaxPendingPeriod = MaxPendingPeriod;
