@@ -77,4 +77,8 @@ fn eth_signable_message() {
 		array_bytes::bytes2hex("0x", &Sign::eth_signable_message(b"46", b"Darwinia", &[0; 32])),
 		"0x8c2f82fe9a2be0813e57092c9dd86742130362f7d552992b9a17c96d64945cb1"
 	);
+	assert_eq!(
+		array_bytes::bytes2hex("0x", &Sign::hash(b"46Darwinia::ecdsa-authority")),
+		"0xf8a76f5ceeff36d74ff99c4efc0077bcc334721f17d1d5f17cfca78455967e1e"
+	);
 }
