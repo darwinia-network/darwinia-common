@@ -419,8 +419,8 @@ pub mod pallet {
 					T::ChainId::get(),
 					T::Version::get().spec_name.as_ref(),
 					&ethabi::encode(&[
-						Token::Bytes(RELAY_TYPE_HASH.as_ref().into()),
-						Token::Bytes(method.id().into()),
+						Token::FixedBytes(RELAY_TYPE_HASH.as_ref().into()),
+						Token::FixedBytes(method.id().into()),
 						Token::Bytes(authorities_changes),
 						Token::Uint((*nonce).into()),
 					]),
@@ -481,8 +481,8 @@ pub mod pallet {
 				T::ChainId::get(),
 				T::Version::get().spec_name.as_ref(),
 				&ethabi::encode(&[
-					Token::Bytes(COMMIT_TYPE_HASH.as_ref().into()),
-					Token::Bytes(message_root.as_ref().into()),
+					Token::FixedBytes(COMMIT_TYPE_HASH.as_ref().into()),
+					Token::FixedBytes(message_root.as_ref().into()),
 					Token::Uint(<Nonce<T>>::get().into()),
 				]),
 			);
