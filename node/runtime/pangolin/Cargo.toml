@@ -18,10 +18,9 @@ serde             = { version = "1.0", optional = true }
 smallvec          = { version = "1.9" }
 static_assertions = { version = "1.1" }
 # darwinia-network
-darwinia-balances = { default-features = false, path = "../../../frame/balances" }
-# darwinia-beefy-gadget                   = { default-features = false, path = "../../../frame/beefy-gadget" }
-# darwinia-beefy-primitives               = { path = "../../../primitives/beefy" }
+darwinia-balances                     = { default-features = false, path = "../../../frame/balances" }
 darwinia-bridge-ethereum              = { default-features = false, path = "../../../frame/bridge/ethereum" }
+darwinia-ecdsa-authority              = { default-features = false, path = "../../../frame/bridge/ecdsa-authority" }
 darwinia-ethereum                     = { default-features = false, path = "../../../frame/dvm/ethereum" }
 darwinia-evm                          = { default-features = false, path = "../../../frame/dvm/evm" }
 darwinia-evm-precompile-bridge-s2s    = { default-features = false, path = "../../../frame/dvm/evm/precompiles/bridge/s2s" }
@@ -30,6 +29,7 @@ darwinia-evm-precompile-kton          = { default-features = false, path = "../.
 darwinia-evm-precompile-state-storage = { default-features = false, path = "../../../frame/dvm/evm/precompiles/state-storage" }
 darwinia-evm-precompile-transfer      = { default-features = false, path = "../../../frame/dvm/evm/precompiles/transfer" }
 darwinia-header-mmr                   = { default-features = false, path = "../../../frame/header-mmr" }
+darwinia-message-gadget               = { default-features = false, path = "../../../frame/bridge/message-gadget" }
 darwinia-relay-authority              = { default-features = false, path = "../../../frame/bridge/relay-authority" }
 darwinia-relayer-game                 = { default-features = false, path = "../../../frame/bridge/relayer-game" }
 darwinia-staking                      = { default-features = false, path = "../../../frame/staking" }
@@ -144,8 +144,8 @@ std = [
 	"serde",
 	# darwinia-network
 	"darwinia-balances/std",
-	# "darwinia-beefy-gadget/std",
 	"darwinia-bridge-ethereum/std",
+	"darwinia-ecdsa-authority/std",
 	"darwinia-ethereum/std",
 	"darwinia-evm/std",
 	"darwinia-evm-precompile-bridge-s2s/std",
@@ -154,6 +154,7 @@ std = [
 	"darwinia-evm-precompile-state-storage/std",
 	"darwinia-evm-precompile-transfer/std",
 	"darwinia-header-mmr/std",
+	"darwinia-message-gadget/std",
 	"darwinia-relay-authority/std",
 	"darwinia-relayer-game/std",
 	"darwinia-staking/std",

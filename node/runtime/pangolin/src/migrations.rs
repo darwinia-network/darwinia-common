@@ -23,14 +23,13 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 }
 
 fn migrate() -> Weight {
-	migration::remove_storage_prefix(b"EthereumIssuing", b"MappingFactoryAddress", &[]);
-	migration::remove_storage_prefix(b"EthereumIssuing", b"EthereumBackingAddress", &[]);
-	migration::remove_storage_prefix(b"EthereumIssuing", b"VerifiedIssuingProof", &[]);
-	migration::remove_storage_prefix(b"EthereumIssuing", b"BurnTokenEvents", &[]);
-
-	migration::move_pallet(b"HeaderMMR", b"HeaderMmr");
-
-	migration::move_pallet(b"Instance1DarwiniaRelayAuthorities", b"EcdsaRelayAuthority");
+	migration::move_pallet(b"BeefyGadget", b"MessageGadget");
+	<darwinia_ecdsa_authority::Authorities<Runtime>>::put(
+		frame_support::BoundedVec::try_from(vec![array_bytes::hex_into_unchecked(
+			"0x68898db1012808808c903f390909c52d9f706749",
+		)])
+		.unwrap(),
+	);
 
 	RuntimeBlockWeights::get().max_block
 	// 0
