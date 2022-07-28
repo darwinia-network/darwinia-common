@@ -394,23 +394,20 @@ pub mod pallet {
 
 		fn on_authorities_change(method: Method, authorities_count: u32) {
 			let authorities_changes = {
-				let require_sign_count = (T::SignThreshold::get() * authorities_count).into();
-
 				match method {
 					Method::AddMember { new } => ethabi::encode(&[
 						Token::Address(new.into()),
-						Token::Uint(require_sign_count),
+						Token::Uint((T::SignThreshold::get() * authorities_count).into()),
 					]),
 					Method::RemoveMember { pre, old } => ethabi::encode(&[
 						Token::Address(pre.into()),
 						Token::Address(old.into()),
-						Token::Uint(require_sign_count),
+						Token::Uint((T::SignThreshold::get() * authorities_count).into()),
 					]),
 					Method::SwapMembers { pre, old, new } => ethabi::encode(&[
 						Token::Address(pre.into()),
 						Token::Address(old.into()),
 						Token::Address(new.into()),
-						Token::Uint(require_sign_count),
 					]),
 				}
 			};
