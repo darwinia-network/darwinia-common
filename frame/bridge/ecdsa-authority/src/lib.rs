@@ -118,6 +118,8 @@ pub mod pallet {
 		NoNewMessageRoot,
 		/// Failed to verify the signature.
 		BadSignature,
+		/// This authority had already finished his job.
+		AlreadySubmitted,
 	}
 
 	/// Record the previous authorities.
@@ -283,13 +285,15 @@ pub mod pallet {
 		}
 
 		/// Submit the authorities change signature.
+		///
+		/// Free to submit the first-correct signature.
 		#[pallet::weight(10_000_000)]
 		#[frame_support::transactional]
 		pub fn submit_authorities_change_signature(
 			origin: OriginFor<T>,
 			address: Address,
 			signature: Signature,
-		) -> DispatchResult {
+		) -> DispatchResultWithPostInfo {
 			ensure_signed(origin)?;
 
 			let previous_authorities = Self::ensure_previous_authority(&address)?;
@@ -298,6 +302,8 @@ pub mod pallet {
 			let mut authorities_change_to_sign =
 				<AuthoritiesChangeToSign<T>>::take().ok_or(<Error<T>>::NoAuthoritiesChange)?;
 			let (message, collected) = &mut authorities_change_to_sign;
+
+			Self::ensure_not_submitted(&address, &collected)?;
 
 			ensure!(
 				Sign::verify_signature(&signature, message, &address),
@@ -319,17 +325,19 @@ pub mod pallet {
 				<AuthoritiesChangeToSign<T>>::put(authorities_change_to_sign);
 			}
 
-			Ok(())
+			Ok(Pays::No.into())
 		}
 
 		/// Submit the new message root signature.
+		///
+		/// Free to submit the first-correct signature.
 		#[pallet::weight(10_000_000)]
 		#[frame_support::transactional]
 		pub fn submit_new_message_root_signature(
 			origin: OriginFor<T>,
 			address: Address,
 			signature: Signature,
-		) -> DispatchResult {
+		) -> DispatchResultWithPostInfo {
 			ensure_signed(origin)?;
 
 			let authorities = Self::ensure_authority(&address)?;
@@ -338,6 +346,8 @@ pub mod pallet {
 			let mut new_message_root_to_sign =
 				<NewMessageRootToSign<T>>::take().ok_or(<Error<T>>::NoNewMessageRoot)?;
 			let (message, collected) = &mut new_message_root_to_sign;
+
+			Self::ensure_not_submitted(&address, &collected)?;
 
 			ensure!(
 				Sign::verify_signature(&signature, message, &address),
@@ -359,7 +369,7 @@ pub mod pallet {
 				<NewMessageRootToSign<T>>::put(new_message_root_to_sign);
 			}
 
-			Ok(())
+			Ok(Pays::No.into())
 		}
 	}
 	impl<T: Config> Pallet<T> {
@@ -388,6 +398,15 @@ pub mod pallet {
 
 		fn ensure_not_on_authorities_change() -> DispatchResult {
 			ensure!(!<AuthoritiesChangeToSign<T>>::exists(), <Error<T>>::OnAuthoritiesChange);
+
+			Ok(())
+		}
+
+		fn ensure_not_submitted(
+			who: &Address,
+			collected: &[(Address, Signature)],
+		) -> DispatchResult {
+			ensure!(!collected.iter().any(|(a, _)| a == who), <Error<T>>::AlreadySubmitted);
 
 			Ok(())
 		}
