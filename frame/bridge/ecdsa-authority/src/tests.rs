@@ -14,8 +14,8 @@ fn add_authority() {
 		assert_eq!(EcdsaAuthority::authorities(), vec![address]);
 		assert_eq!(EcdsaAuthority::nonce(), 1);
 		let message = [
-			174, 100, 4, 94, 82, 79, 48, 42, 207, 105, 194, 101, 109, 239, 60, 24, 73, 199, 88, 37,
-			51, 111, 217, 230, 235, 89, 84, 199, 89, 119, 21, 159,
+			148, 59, 97, 103, 13, 193, 254, 124, 188, 130, 233, 223, 118, 19, 181, 141, 90, 83,
+			193, 148, 55, 72, 155, 129, 85, 199, 41, 141, 9, 20, 60, 148,
 		];
 		assert_eq!(
 			EcdsaAuthority::authorities_change_to_sign(),
@@ -235,8 +235,8 @@ fn submit_authorities_change_signature() {
 
 		assert_ok!(EcdsaAuthority::add_authority(Origin::root(), address_3));
 		let message = [
-			221, 253, 108, 189, 214, 200, 30, 115, 171, 233, 233, 167, 132, 76, 171, 243, 138, 51,
-			146, 139, 168, 96, 192, 82, 237, 176, 78, 1, 157, 40, 210, 81,
+			101, 4, 129, 33, 98, 19, 93, 221, 229, 215, 253, 59, 214, 217, 235, 189, 233, 206, 134,
+			200, 233, 237, 128, 113, 3, 131, 51, 113, 245, 178, 41, 240,
 		];
 		assert_eq!(
 			EcdsaAuthority::authorities_change_to_sign(),

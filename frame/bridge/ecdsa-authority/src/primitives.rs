@@ -11,12 +11,14 @@ pub(crate) type Message = [u8; 32];
 // address(0x1)
 pub(crate) const AUTHORITY_SENTINEL: H160 =
 	H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]);
-// keccak256("ChangeRelayer(bytes32 network,bytes4 sig,bytes params,uint256 nonce)");
+// keccak256("ChangeRelayer(bytes4 sig,bytes params,uint256 nonce)");
+// 0x30a82982a8d5050d1c83bbea574aea301a4d317840a8c4734a308ffaa6a63bc8
 pub(crate) const RELAY_TYPE_HASH: H256 = H256([
 	3, 36, 202, 12, 164, 213, 41, 224, 238, 252, 198, 209, 35, 189, 23, 236, 152, 36, 152, 207, 46,
 	115, 33, 96, 204, 71, 210, 80, 72, 37, 228, 178,
 ]);
-// keccak256("SignCommitment(bytes32 network,bytes32 commitment,uint256 nonce)");
+// keccak256("SignCommitment(bytes32 commitment,uint256 nonce)");
+// 0x2ea67489b4c8762e92cdf00de12ced5672416d28fa4265cd7fb78ddd61dd3f32
 pub(crate) const COMMIT_TYPE_HASH: H256 = H256([
 	9, 64, 53, 206, 220, 62, 70, 239, 84, 120, 16, 153, 130, 131, 113, 234, 48, 235, 223, 241, 173,
 	144, 226, 255, 196, 208, 61, 76, 80, 87, 251, 230,
@@ -61,8 +63,9 @@ pub(crate) enum Method {
 impl Method {
 	pub(crate) fn id(&self) -> [u8; 4] {
 		match self {
-			// bytes4(keccak256("add_relayer_with_threshold(address,uint256)"))
-			Method::AddMember { .. } => [178, 143, 99, 28],
+			// bytes4(keccak256("add_relayer(address,uint256)"))
+			// 0xb7aafe32
+			Method::AddMember { .. } => [183, 170, 254, 50],
 			// bytes4(keccak256("remove_relayer(address,address,uint256)"))
 			Method::RemoveMember { .. } => [134, 33, 209, 250],
 			// bytes4(keccak256("swap_relayer(address,address,address)"))
