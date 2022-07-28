@@ -118,7 +118,7 @@ pub mod pallet {
 		NoNewMessageRoot,
 		/// Failed to verify the signature.
 		BadSignature,
-		/// This authority had already finished his job.
+		/// This authority had already finished his duty.
 		AlreadySubmitted,
 	}
 
