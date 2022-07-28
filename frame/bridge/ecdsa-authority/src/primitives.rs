@@ -31,7 +31,7 @@ impl Sign {
 	}
 
 	pub(crate) fn eth_signable_message(chain_id: &[u8], spec_name: &[u8], data: &[u8]) -> Message {
-		// \x19\01 + keccack256(46Darwinia::ecdsa-authority) + struct_hash
+		// \x19\01 + keccack256(ChainIDSpecName::ecdsa-authority) + struct_hash
 		Self::hash(
 			&[
 				b"\x19\01".as_slice(),
@@ -67,8 +67,10 @@ impl Method {
 			// 0xb7aafe32
 			Method::AddMember { .. } => [183, 170, 254, 50],
 			// bytes4(keccak256("remove_relayer(address,address,uint256)"))
+			// 0x8621d1fa
 			Method::RemoveMember { .. } => [134, 33, 209, 250],
 			// bytes4(keccak256("swap_relayer(address,address,address)"))
+			// 0xcb76085b
 			Method::SwapMembers { .. } => [203, 118, 8, 91],
 		}
 	}
