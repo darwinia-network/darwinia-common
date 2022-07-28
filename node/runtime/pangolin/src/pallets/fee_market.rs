@@ -8,7 +8,13 @@ use core::cmp;
 use frame_support::traits::LockIdentifier;
 use sp_runtime::{traits::UniqueSaturatedInto, Permill};
 // --- darwinia ---
-use crate::*;
+use crate::{
+	weights::{
+		pallet_fee_market_pangolin_parachain_fee_market::WeightInfo as PangolinParachainWeightInfo,
+		pallet_fee_market_pangoro_fee_market::WeightInfo as PangoroWeightInfo,
+	},
+	*,
+};
 use pallet_fee_market::{BalanceOf, Config, Slasher};
 
 pub struct FeeMarketSlasher;
@@ -49,7 +55,7 @@ impl Config<WithPangoroFeeMarket> for Runtime {
 	type Slasher = FeeMarketSlasher;
 	type Slot = Slot;
 	type TreasuryPalletId = TreasuryPalletId;
-	type WeightInfo = ();
+	type WeightInfo = PangoroWeightInfo<Runtime>;
 }
 impl Config<WithPangolinParachainFeeMarket> for Runtime {
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
@@ -63,5 +69,5 @@ impl Config<WithPangolinParachainFeeMarket> for Runtime {
 	type Slasher = FeeMarketSlasher;
 	type Slot = Slot;
 	type TreasuryPalletId = TreasuryPalletId;
-	type WeightInfo = ();
+	type WeightInfo = PangolinParachainWeightInfo<Runtime>;
 }
