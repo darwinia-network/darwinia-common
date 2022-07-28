@@ -849,7 +849,6 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_fee_market, PangolinParachainFeeMarket);
 			// add_benchmark!(params, batches, module_transaction_pause, TransactionPause);
 			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
-			// TODO FIX
 			add_benchmark!(params, batches, to_parachain_backing, ToPangolinParachainBacking);
 
 			Ok(batches)

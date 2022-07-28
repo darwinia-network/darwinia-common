@@ -67,7 +67,7 @@ impl<T: frame_system::Config> to_parachain_backing::WeightInfo for WeightInfo<T>
 	// Storage: ToPangolinParachainBacking TransactionInfos (r:1 w:1)
 	// Storage: BridgePangolinParachainMessages OutboundMessages (r:0 w:1)
 	fn lock_and_remote_issue() -> Weight {
-		(182_542_000 as Weight)
+		(125_715_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(12 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
@@ -82,18 +82,18 @@ impl<T: frame_system::Config> to_parachain_backing::WeightInfo for WeightInfo<T>
 	// Storage: System Events (r:1 w:1)
 	// Storage: BridgePangolinParachainMessages InboundLanes (r:1 w:0)
 	fn unlock_from_remote() -> Weight {
-		(103_664_000 as Weight)
+		(60_034_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(11 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
 	// Storage: ToPangolinParachainBacking SecureLimitedPeriod (r:0 w:1)
 	fn set_secure_limited_period() -> Weight {
-		(5_631_000 as Weight)
+		(3_269_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: ToPangolinParachainBacking SecureLimitedRingAmount (r:1 w:1)
 	fn set_security_limitation_ring_amount() -> Weight {
-		(10_951_000 as Weight)
+		(5_506_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -103,7 +103,7 @@ impl<T: frame_system::Config> to_parachain_backing::WeightInfo for WeightInfo<T>
 	// Storage: System Events (r:1 w:1)
 	// Storage: ToPangolinParachainBacking RemoteMappingTokenFactoryAccount (r:0 w:1)
 	fn set_remote_mapping_token_factory_account() -> Weight {
-		(28_613_000 as Weight)
+		(18_131_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}

@@ -16,3 +16,4 @@ pub mod pallet_treasury_kton_treasury;
 pub mod pallet_treasury_treasury;
 pub mod pallet_utility;
 pub mod pallet_vesting;
+pub mod to_parachain_backing;

@@ -10,6 +10,7 @@ use bp_runtime::{messages::DispatchFeePayment, ChainId, PANGOLIN_PARACHAIN_CHAIN
 use bridge_runtime_common::lanes::PANGOLIN_PANGOLIN_PARACHAIN_LANE;
 use darwinia_support::s2s::LatestMessageNoncer;
 use to_parachain_backing::{Config, IssueFromRemotePayload, IssuingCall};
+use crate::weights::to_parachain_backing::WeightInfo;
 
 pub struct PangolinParachainMessageNoncer;
 impl LatestMessageNoncer for PangolinParachainMessageNoncer {
@@ -71,5 +72,5 @@ impl Config for Runtime {
 	type OutboundPayloadCreator = ToPangolinParachainOutboundPayLoad;
 	type PalletId = S2sBackingPalletId;
 	type RingCurrency = Ring;
-	type WeightInfo = ();
+	type WeightInfo = WeightInfo<Runtime>;
 }
