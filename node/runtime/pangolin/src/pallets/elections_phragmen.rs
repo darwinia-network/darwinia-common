@@ -2,8 +2,7 @@
 use frame_support::traits::{LockIdentifier, U128CurrencyToVote};
 use pallet_elections_phragmen::Config;
 // --- darwinia-network ---
-use crate::*;
-use crate::weights::pallet_elections_phragmen::WeightInfo;
+use crate::{weights::pallet_elections_phragmen::WeightInfo, *};
 
 #[cfg(feature = "runtime-benchmarks")]
 frame_support::parameter_types! {

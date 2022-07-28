@@ -5,8 +5,7 @@ use frame_support::traits::ChangeMembers;
 use pallet_collective::Prime;
 use pallet_membership::Config;
 // --- darwinia-network ---
-use crate::*;
-use crate::weights::pallet_membership::WeightInfo;
+use crate::{weights::pallet_membership::WeightInfo, *};
 
 pub struct MembershipChangedGroup;
 impl ChangeMembers<AccountId> for MembershipChangedGroup {

@@ -147,6 +147,7 @@ where
 {
 	type Error = &'static str;
 
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	fn verify_message(
 		submitter: &Sender<AccountIdOf<ThisChain<B>>>,
 		delivery_and_dispatch_fee: &BalanceOf<ThisChain<B>>,
@@ -189,6 +190,17 @@ where
 			return Err(NO_MARKET_FEE);
 		}
 
+		Ok(())
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn verify_message(
+		_submitter: &Sender<AccountIdOf<ThisChain<B>>>,
+		_delivery_and_dispatch_fee: &BalanceOf<ThisChain<B>>,
+		_lane: &LaneId,
+		_lane_outbound_data: &OutboundLaneData,
+		_payload: &FromThisChainMessagePayload<B>,
+	) -> Result<(), Self::Error> {
 		Ok(())
 	}
 }

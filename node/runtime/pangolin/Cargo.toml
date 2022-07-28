@@ -287,6 +287,7 @@ runtime-benchmarks = [
 	"from-substrate-issuing/runtime-benchmarks",
 	"pallet-fee-market/runtime-benchmarks",
 	"to-parachain-backing/runtime-benchmarks",
+	"drml-common-runtime/runtime-benchmarks",
 ]
 
 try-runtime = [

@@ -225,6 +225,7 @@ runtime-benchmarks = [
 	"darwinia-ethereum/runtime-benchmarks",
 	"darwinia-evm/runtime-benchmarks",
 	"pallet-fee-market/runtime-benchmarks",
+	"drml-common-runtime/runtime-benchmarks",
 ]
 
 try-runtime = [
