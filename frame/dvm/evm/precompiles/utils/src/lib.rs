@@ -25,8 +25,6 @@ mod modifier;
 #[cfg(feature = "testing")]
 pub mod test_helper;
 
-// --- crates.io ---
-use sha3::{Digest, Keccak256};
 // --- darwinia-network ---
 use crate::prelude::*;
 use darwinia_evm::GasWeightMapping;
@@ -134,8 +132,8 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 /// erroring consumes the entire gas limit, and **revert** returns an error
 /// message to the calling contract.
 pub fn revert(message: impl AsRef<[u8]>) -> PrecompileFailure {
-	let selector =
-		u32::from_be_bytes(Keccak256::digest(b"Error(string)")[0..4].try_into().unwrap());
+	const ERROR_SELECTOR: [u8; 32] = keccak256!("Error(string)");
+	let selector = u32::from_be_bytes(ERROR_SELECTOR[0..4].try_into().unwrap());
 
 	PrecompileFailure::Revert {
 		exit_status: ExitRevert::Reverted,
