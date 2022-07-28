@@ -3,14 +3,13 @@ use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{PalletId, RuntimeDebug};
 // --- darwinia-network ---
-use crate::{pangolin_parachain::*, *};
+use crate::{pangolin_parachain::*, weights::to_parachain_backing::WeightInfo, *};
 use bp_message_dispatch::CallOrigin;
 use bp_messages::LaneId;
 use bp_runtime::{messages::DispatchFeePayment, ChainId, PANGOLIN_PARACHAIN_CHAIN_ID};
 use bridge_runtime_common::lanes::PANGOLIN_PANGOLIN_PARACHAIN_LANE;
 use darwinia_support::s2s::LatestMessageNoncer;
 use to_parachain_backing::{Config, IssueFromRemotePayload, IssuingCall};
-use crate::weights::to_parachain_backing::WeightInfo;
 
 pub struct PangolinParachainMessageNoncer;
 impl LatestMessageNoncer for PangolinParachainMessageNoncer {
