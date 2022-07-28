@@ -751,7 +751,7 @@ sp_api::impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
 			// list_benchmark!(list, extra, darwinia_balances, Balances);
 			// list_benchmark!(list, extra, darwinia_balances, Kton);
-			// list_benchmark!(list, extra, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
+			list_benchmark!(list, extra, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
 			// TODO wait for https://github.com/paritytech/substrate/issues/11068
 			// list_benchmark!(list, extra, pallet_session, SessionBench::<Runtime>);
 			list_benchmark!(list, extra, pallet_grandpa, Grandpa);
@@ -806,17 +806,17 @@ sp_api::impl_runtime_apis! {
 			let params = (&config, &whitelist);
 
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			// TODO https://github.com/paritytech/substrate/issues/11834
+			// TODO https://github.com/darwinia-network/darwinia-common/issues/1356
 			// add_benchmark!(params, batches, pallet_babe, Babe);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
 			// add_benchmark!(params, batches, darwinia_balances, Balances);
 			// add_benchmark!(params, batches, darwinia_balances, Kton);
-			// Disable due to difference between `darwinia-staking` & `pallet-staking`
+			// FIXME https://github.com/darwinia-network/darwinia-common/issues/1359
 			// add_benchmark!(params, batches, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
 			// TODO https://github.com/paritytech/substrate/issues/11068
 			// add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
-			// TODO https://github.com/paritytech/substrate/issues/11835
-			add_benchmark!(params, batches, pallet_grandpa, Grandpa);
+			// TODO https://github.com/darwinia-network/darwinia-common/issues/1356
+			// add_benchmark!(params, batches, pallet_grandpa, Grandpa);
 			add_benchmark!(params, batches, pallet_im_online, ImOnline);
 			// add_benchmark!(params, batches, darwinia_header_mmr, HeaderMMR);
 			add_benchmark!(params, batches, pallet_democracy, Democracy);
@@ -827,8 +827,8 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_treasury, Treasury);
 			add_benchmark!(params, batches, pallet_treasury, KtonTreasury);
 			add_benchmark!(params, batches, pallet_tips, Tips);
-			// TODO FIX
-			add_benchmark!(params, batches, pallet_bounties, Bounties);
+			// FIXME https://github.com/darwinia-network/darwinia-common/issues/1360
+			// add_benchmark!(params, batches, pallet_bounties, Bounties);
 			add_benchmark!(params, batches, pallet_vesting, Vesting);
 			add_benchmark!(params, batches, pallet_utility, Utility);
 			add_benchmark!(params, batches, pallet_identity, Identity);

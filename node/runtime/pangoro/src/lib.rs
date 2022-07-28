@@ -700,7 +700,7 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
 			// add_benchmark!(params, batches, darwinia_balances, Balances);
 			// add_benchmark!(params, batches, darwinia_balances, Kton);
-			// TODO FIX
+			// FIXME https://github.com/darwinia-network/darwinia-common/issues/1359
 			// add_benchmark!(params, batches, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
 			// TODO https://github.com/paritytech/substrate/issues/11068
 			// add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
