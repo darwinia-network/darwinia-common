@@ -828,7 +828,7 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_treasury, KtonTreasury);
 			add_benchmark!(params, batches, pallet_tips, Tips);
 			// TODO FIX
-			// add_benchmark!(params, batches, pallet_bounties, Bounties);
+			add_benchmark!(params, batches, pallet_bounties, Bounties);
 			add_benchmark!(params, batches, pallet_vesting, Vesting);
 			add_benchmark!(params, batches, pallet_utility, Utility);
 			add_benchmark!(params, batches, pallet_identity, Identity);
@@ -850,7 +850,7 @@ sp_api::impl_runtime_apis! {
 			// add_benchmark!(params, batches, module_transaction_pause, TransactionPause);
 			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
 			// TODO FIX
-			// add_benchmark!(params, batches, to_parachain_backing, ToPangolinParachainBacking);
+			add_benchmark!(params, batches, to_parachain_backing, ToPangolinParachainBacking);
 
 			Ok(batches)
 		}
