@@ -14,8 +14,8 @@ fn add_authority() {
 		assert_eq!(EcdsaAuthority::authorities(), vec![address]);
 		assert_eq!(EcdsaAuthority::nonce(), 1);
 		let message = [
-			166, 80, 52, 161, 60, 39, 155, 164, 20, 0, 64, 191, 253, 155, 55, 205, 154, 180, 85,
-			72, 37, 72, 222, 120, 180, 148, 249, 153, 51, 235, 141, 239,
+			174, 100, 4, 94, 82, 79, 48, 42, 207, 105, 194, 101, 109, 239, 60, 24, 73, 199, 88, 37,
+			51, 111, 217, 230, 235, 89, 84, 199, 89, 119, 21, 159,
 		];
 		assert_eq!(
 			EcdsaAuthority::authorities_change_to_sign(),
@@ -82,8 +82,8 @@ fn remove_authority() {
 		assert_eq!(EcdsaAuthority::authorities(), vec![address_2]);
 		assert_eq!(EcdsaAuthority::nonce(), 1);
 		let message = [
-			31, 184, 183, 33, 195, 43, 32, 46, 109, 42, 9, 39, 226, 164, 78, 90, 44, 123, 153, 162,
-			53, 27, 104, 80, 63, 107, 29, 40, 250, 163, 142, 171,
+			108, 234, 113, 175, 5, 108, 151, 151, 10, 4, 193, 178, 252, 85, 226, 155, 30, 36, 40,
+			61, 123, 54, 94, 45, 57, 108, 72, 214, 37, 30, 197, 216,
 		];
 		assert_eq!(
 			EcdsaAuthority::authorities_change_to_sign(),
@@ -133,8 +133,8 @@ fn swap_authority() {
 		assert_eq!(EcdsaAuthority::authorities(), vec![address_2]);
 		assert_eq!(EcdsaAuthority::nonce(), 1);
 		let message = [
-			247, 205, 122, 93, 139, 169, 77, 15, 141, 225, 69, 158, 253, 229, 5, 33, 120, 69, 151,
-			241, 150, 172, 51, 136, 59, 108, 107, 171, 36, 34, 109, 182,
+			155, 114, 191, 93, 68, 113, 219, 91, 99, 71, 240, 175, 58, 249, 231, 60, 60, 80, 243,
+			98, 122, 86, 24, 52, 139, 163, 232, 159, 92, 78, 65, 218,
 		];
 		assert_eq!(
 			EcdsaAuthority::authorities_change_to_sign(),
@@ -235,8 +235,8 @@ fn submit_authorities_change_signature() {
 
 		assert_ok!(EcdsaAuthority::add_authority(Origin::root(), address_3));
 		let message = [
-			171, 151, 18, 33, 161, 152, 40, 140, 39, 231, 61, 172, 224, 239, 228, 158, 100, 128,
-			74, 220, 26, 89, 246, 82, 47, 58, 169, 246, 178, 41, 197, 11,
+			221, 253, 108, 189, 214, 200, 30, 115, 171, 233, 233, 167, 132, 76, 171, 243, 138, 51,
+			146, 139, 168, 96, 192, 82, 237, 176, 78, 1, 157, 40, 210, 81,
 		];
 		assert_eq!(
 			EcdsaAuthority::authorities_change_to_sign(),

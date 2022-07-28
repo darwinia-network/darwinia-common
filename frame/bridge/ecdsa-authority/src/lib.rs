@@ -414,21 +414,22 @@ pub mod pallet {
 					]),
 				}
 			};
-			let nonce = <Nonce<T>>::mutate(|nonce| {
+			let message = <Nonce<T>>::mutate(|nonce| {
+				let message = Sign::eth_signable_message(
+					T::ChainId::get(),
+					T::Version::get().spec_name.as_ref(),
+					&ethabi::encode(&[
+						Token::Bytes(RELAY_TYPE_HASH.as_ref().into()),
+						Token::Bytes(method.id().into()),
+						Token::Bytes(authorities_changes),
+						Token::Uint((*nonce).into()),
+					]),
+				);
+
 				*nonce += 1;
 
-				*nonce
+				message
 			});
-			let message = Sign::eth_signable_message(
-				T::ChainId::get(),
-				T::Version::get().spec_name.as_ref(),
-				&ethabi::encode(&[
-					Token::Bytes(RELAY_TYPE_HASH.as_ref().into()),
-					Token::Bytes(method.id().into()),
-					Token::Bytes(authorities_changes),
-					Token::Uint(nonce.into()),
-				]),
-			);
 
 			<AuthoritiesChangeToSign<T>>::put((message, BoundedVec::default()));
 
@@ -440,7 +441,7 @@ pub mod pallet {
 				// Not allow to relay the messages if the new authorities set is not verified.
 				return None;
 			}
-			
+
 			let message_root = if let Some(message_root) = T::MessageRoot::get() {
 				message_root
 			} else {
