@@ -1,5 +1,5 @@
 // --- paritytech ---
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_noop, assert_ok, weights::PostDispatchInfo};
 // --- darwinia-network ---
 use crate::{mock::*, Event, *};
 
@@ -46,11 +46,11 @@ fn add_authority() {
 		);
 
 		// Case 4.
-		for i in 1..MaxAuthorities::get() {
+		(1..MaxAuthorities::get()).for_each(|i| {
 			assert_ok!(EcdsaAuthority::add_authority(Origin::root(), Address::repeat_byte(i as _)));
 			assert_eq!(EcdsaAuthority::nonce(), 1 + i);
 			clear_authorities_change();
-		}
+		});
 		assert_noop!(
 			EcdsaAuthority::add_authority(
 				Origin::root(),
@@ -170,10 +170,10 @@ fn swap_authority() {
 fn sync_interval_and_max_pending_period() {
 	ExtBuilder::default().build().execute_with(|| {
 		// Check new message root while reaching the sync interval checkpoint.
-		for i in 2..SyncInterval::get() {
+		(2..SyncInterval::get()).for_each(|i| {
 			run_to_block(i);
 			assert!(EcdsaAuthority::new_message_root_to_sign().is_none());
-		}
+		});
 		run_to_block(SyncInterval::get());
 		let message = [
 			59, 15, 82, 229, 131, 148, 234, 209, 165, 229, 179, 234, 227, 103, 200, 159, 241, 53,
@@ -188,13 +188,13 @@ fn sync_interval_and_max_pending_period() {
 		// Use a new message root while exceeding the max pending period.
 		new_message_root(1);
 		let offset = System::block_number() + 1;
-		for i in offset..offset + MaxPendingPeriod::get() {
+		(offset..offset + MaxPendingPeriod::get()).for_each(|i| {
 			run_to_block(i);
 			assert_eq!(
 				EcdsaAuthority::new_message_root_to_sign(),
 				Some((message, Default::default()))
 			);
-		}
+		});
 		run_to_block(offset + MaxPendingPeriod::get());
 		let message = [
 			154, 33, 89, 195, 164, 222, 169, 115, 244, 147, 76, 79, 40, 78, 145, 92, 220, 91, 73,
@@ -206,13 +206,13 @@ fn sync_interval_and_max_pending_period() {
 		assert_ok!(EcdsaAuthority::add_authority(Origin::root(), Default::default()));
 		new_message_root(2);
 		let offset = System::block_number() + 1;
-		for i in offset..=offset + MaxPendingPeriod::get() {
+		(offset..=offset + MaxPendingPeriod::get()).for_each(|i| {
 			run_to_block(i);
 			assert_eq!(
 				EcdsaAuthority::new_message_root_to_sign(),
 				Some((message, Default::default()))
 			);
-		}
+		});
 	});
 }
 
@@ -369,6 +369,67 @@ fn submit_new_message_root_signature() {
 				message,
 				vec![(address_1, signature_1), (address_2, signature_2)]
 			))]
+		);
+	});
+}
+
+#[test]
+fn tx_fee() {
+	let (secret_key_1, address_1) = gen_pair(1);
+	let (_, address_2) = gen_pair(2);
+
+	ExtBuilder::default().authorities(vec![address_1, address_2]).build().execute_with(|| {
+		(2..SyncInterval::get()).for_each(|i| run_to_block(i));
+		run_to_block(SyncInterval::get());
+		let message = [
+			59, 15, 82, 229, 131, 148, 234, 209, 165, 229, 179, 234, 227, 103, 200, 159, 241, 53,
+			137, 112, 79, 255, 63, 224, 213, 254, 10, 47, 122, 129, 109, 41,
+		];
+
+		// Free for first-correct signature.
+		assert_eq!(
+			EcdsaAuthority::submit_new_message_root_signature(
+				Origin::signed(Default::default()),
+				address_1,
+				sign(&secret_key_1, &message),
+			),
+			Ok(PostDispatchInfo { actual_weight: None, pays_fee: Pays::No })
+		);
+
+		// Forbidden for submitting multiple times once the previous one succeeds.
+		assert_noop!(
+			EcdsaAuthority::submit_new_message_root_signature(
+				Origin::signed(Default::default()),
+				address_1,
+				Default::default(),
+			),
+			EcdsaAuthorityError::AlreadySubmitted
+		);
+
+		assert_ok!(EcdsaAuthority::remove_authority(Origin::root(), address_1));
+		let message = [
+			167, 201, 211, 207, 38, 190, 116, 179, 123, 66, 81, 106, 39, 89, 201, 78, 59, 3, 100,
+			51, 179, 121, 18, 192, 243, 120, 61, 167, 48, 135, 125, 32,
+		];
+
+		// Free for first-correct signature.
+		assert_eq!(
+			EcdsaAuthority::submit_authorities_change_signature(
+				Origin::signed(Default::default()),
+				address_1,
+				sign(&secret_key_1, &message),
+			),
+			Ok(PostDispatchInfo { actual_weight: None, pays_fee: Pays::No })
+		);
+
+		// Forbidden for submitting multiple times once the previous one succeeds.
+		assert_noop!(
+			EcdsaAuthority::submit_authorities_change_signature(
+				Origin::signed(Default::default()),
+				address_1,
+				Default::default(),
+			),
+			EcdsaAuthorityError::AlreadySubmitted
 		);
 	});
 }
