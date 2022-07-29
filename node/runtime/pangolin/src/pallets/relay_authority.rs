@@ -34,7 +34,7 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	type AddOrigin = ApproveOrigin;
+	type AddOrigin = RootOrAtLeastThreeFifth<CouncilCollective>;
 	type Currency = Ring;
 	type Event = Event;
 	type LockId = EcdsaRelayAuthoritiesLockId;
@@ -45,8 +45,8 @@ impl Config for Runtime {
 	type MmrRoot = MmrRoot;
 	type MmrRootT = Self::Hash;
 	type OpCodes = OpCodes;
-	type RemoveOrigin = ApproveOrigin;
-	type ResetOrigin = ApproveOrigin;
+	type RemoveOrigin = RootOrAtLeastThreeFifth<CouncilCollective>;
+	type ResetOrigin = RootOrAtLeastThreeFifth<CouncilCollective>;
 	type Sign = EcdsaSign;
 	type SignThreshold = SignThreshold;
 	type SubmitDuration = SubmitDuration;

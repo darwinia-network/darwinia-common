@@ -38,7 +38,7 @@ use frame_support::{log, traits::KeyOwnerProofSystem, weights::GetDispatchInfo};
 use frame_system::{
 	offchain::{AppCrypto, CreateSignedTransaction, SendTransactionTypes, SigningTypes},
 	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
-	CheckWeight, EnsureRoot,
+	CheckWeight,
 };
 use pallet_evm::FeeCalculator;
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
@@ -84,8 +84,6 @@ pub type Executive = frame_executive::Executive<
 	CustomOnRuntimeUpgrade,
 >;
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
-
-pub type RootOrigin = EnsureRoot<AccountId>;
 
 type Ring = Balances;
 
