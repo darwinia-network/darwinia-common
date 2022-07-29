@@ -12,6 +12,7 @@ fn add_authority() {
 		assert_eq!(EcdsaAuthority::nonce(), 0);
 		assert_ok!(EcdsaAuthority::add_authority(Origin::root(), address));
 		assert_eq!(EcdsaAuthority::authorities(), vec![address]);
+		assert_eq!(EcdsaAuthority::previous_authorities(), vec![]);
 		assert_eq!(EcdsaAuthority::nonce(), 1);
 		let message = [
 			95, 104, 154, 117, 185, 44, 82, 85, 71, 213, 152, 243, 143, 82, 23, 37, 45, 55, 74,
@@ -80,6 +81,7 @@ fn remove_authority() {
 		assert_eq!(EcdsaAuthority::nonce(), 0);
 		assert_ok!(EcdsaAuthority::remove_authority(Origin::root(), address_1));
 		assert_eq!(EcdsaAuthority::authorities(), vec![address_2]);
+		assert_eq!(EcdsaAuthority::previous_authorities(), vec![address_1, address_2]);
 		assert_eq!(EcdsaAuthority::nonce(), 1);
 		let message = [
 			44, 25, 30, 94, 69, 250, 185, 115, 202, 60, 67, 106, 30, 177, 187, 35, 107, 25, 207,
@@ -131,6 +133,7 @@ fn swap_authority() {
 		assert_eq!(EcdsaAuthority::nonce(), 0);
 		assert_ok!(EcdsaAuthority::swap_authority(Origin::root(), address_1, address_2));
 		assert_eq!(EcdsaAuthority::authorities(), vec![address_2]);
+		assert_eq!(EcdsaAuthority::previous_authorities(), vec![address_1]);
 		assert_eq!(EcdsaAuthority::nonce(), 1);
 		let message = [
 			80, 165, 90, 130, 101, 89, 244, 106, 39, 22, 87, 235, 108, 75, 101, 52, 41, 12, 235, 9,
