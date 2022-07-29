@@ -12,8 +12,8 @@ env:
   RUST_TOOLCHAIN: nightly
 
 jobs:
-  release:
-    name: Release
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Fetch latest code
@@ -30,19 +30,63 @@ jobs:
           args: --release
       - name: Prepare release files
         run: |
-          mv target/release/drml .
-          mv target/release/wbuild/pangolin-runtime/*.compressed.wasm .
-          mv target/release/wbuild/pangoro-runtime/*.compressed.wasm .
+          mkdir artifacts
+          mv target/release/drml artifacts
+          mv target/release/wbuild/pangolin-runtime/*.compressed.wasm artifacts
+          mv target/release/wbuild/pangoro-runtime/*.compressed.wasm artifacts
           tar cf drml.tar.zst drml -I pzstd
+          mv drml.tar.zst artifacts
+      - name: Upload
+        uses: actions/upload-artifact@v2.2.4
+        with:
+          name: artifacts
+          path: artifacts
+
+  build-with-evm-tracing:
+    name: Build with evm-tracing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch latest code
+        uses: actions/checkout@v3
+      - name: Install Rust nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          default: true
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --features evm-tracing
+      - name: Prepare release files
+        run: |
+          mkdir artifacts
+          mv target/release/drml artifacts
+          tar cf drml-tracing-node.tar.zst drml -I pzstd
+          mv drml-tracing-node.tar.zst artifacts
+      - name: Upload
+        uses: actions/upload-artifact@v2.2.4
+        with:
+          name: artifacts
+          path: artifacts
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download
+        uses: actions/download-artifact@v2
+        with:
+          name: artifacts
+          path: artifacts
       - name: Hash
-        run: sha256sum drml.tar.zst drml *.wasm | tee SHA256
+        run: |
+          cd artifacts
+          sha256sum * | tee SHA256
       - name: Publish
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            drml.tar.zst
-            *.wasm
-            SHA256
+          files: artifacts/*
 
   rustdoc:
     name: Rustdoc
