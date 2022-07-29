@@ -27,8 +27,10 @@ frame-election-provider-support = { default-features = false, git = "https://git
 frame-support                   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 frame-system                    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 pallet-authorship               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+pallet-collective               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 pallet-transaction-payment      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 pallet-treasury                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-core                         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 sp-io                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 sp-npos-elections               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
 sp-runtime                      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
@@ -56,9 +58,11 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"pallet-authorship/std",
+	"pallet-collective/std",
 	"pallet-bridge-dispatch/std",
 	"pallet-transaction-payment/std",
 	"pallet-treasury/std",
+	"sp-core/std",
 	"sp-io/std",
 	"sp-npos-elections/std",
 	"sp-runtime/std",

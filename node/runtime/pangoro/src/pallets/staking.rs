@@ -47,7 +47,7 @@ impl Config for Runtime {
 	type RingSlash = ();
 	type SessionInterface = Self;
 	type SessionsPerEra = SessionsPerEra;
-	type SlashCancelOrigin = RootOrigin;
+	type SlashCancelOrigin = Root;
 	type SlashDeferDuration = SlashDeferDuration;
 	// Use the nominator map to iter voter AND no-ops for all SortedListProvider hooks. The
 	// migration to bags-list is a no-op, but the storage version will be updated.
