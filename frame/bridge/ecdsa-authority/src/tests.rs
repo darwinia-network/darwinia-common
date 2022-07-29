@@ -179,8 +179,8 @@ fn sync_interval_and_max_pending_period() {
 		});
 		run_to_block(SyncInterval::get());
 		let message = [
-			59, 15, 82, 229, 131, 148, 234, 209, 165, 229, 179, 234, 227, 103, 200, 159, 241, 53,
-			137, 112, 79, 255, 63, 224, 213, 254, 10, 47, 122, 129, 109, 41,
+			133, 114, 57, 204, 144, 64, 169, 237, 233, 199, 174, 125, 64, 103, 84, 67, 66, 187, 19,
+			42, 56, 99, 189, 232, 211, 129, 3, 137, 223, 73, 240, 111,
 		];
 		assert_eq!(EcdsaAuthority::new_message_root_to_sign(), Some((message, Default::default())));
 		assert_eq!(
@@ -200,8 +200,8 @@ fn sync_interval_and_max_pending_period() {
 		});
 		run_to_block(offset + MaxPendingPeriod::get());
 		let message = [
-			154, 33, 89, 195, 164, 222, 169, 115, 244, 147, 76, 79, 40, 78, 145, 92, 220, 91, 73,
-			233, 104, 157, 167, 222, 64, 65, 39, 221, 83, 165, 6, 228,
+			5, 54, 174, 35, 39, 215, 2, 70, 154, 16, 20, 142, 27, 189, 79, 180, 122, 215, 90, 44,
+			144, 133, 199, 254, 229, 113, 225, 236, 43, 255, 34, 238,
 		];
 		assert_eq!(EcdsaAuthority::new_message_root_to_sign(), Some((message, Default::default())));
 
@@ -318,8 +318,8 @@ fn submit_new_message_root_signature() {
 
 		run_to_block(SyncInterval::get());
 		let message = [
-			59, 15, 82, 229, 131, 148, 234, 209, 165, 229, 179, 234, 227, 103, 200, 159, 241, 53,
-			137, 112, 79, 255, 63, 224, 213, 254, 10, 47, 122, 129, 109, 41,
+			133, 114, 57, 204, 144, 64, 169, 237, 233, 199, 174, 125, 64, 103, 84, 67, 66, 187, 19,
+			42, 56, 99, 189, 232, 211, 129, 3, 137, 223, 73, 240, 111,
 		];
 		assert_eq!(EcdsaAuthority::new_message_root_to_sign(), Some((message, Default::default())));
 		assert_eq!(

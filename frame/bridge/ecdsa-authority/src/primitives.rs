@@ -17,8 +17,8 @@ pub(crate) const RELAY_TYPE_HASH: H256 = H256([
 	3, 36, 202, 12, 164, 213, 41, 224, 238, 252, 198, 209, 35, 189, 23, 236, 152, 36, 152, 207, 46,
 	115, 33, 96, 204, 71, 210, 80, 72, 37, 228, 178,
 ]);
-// keccak256("SignCommitment(bytes32 commitment,uint256 nonce)");
-// 0x2ea67489b4c8762e92cdf00de12ced5672416d28fa4265cd7fb78ddd61dd3f32
+// keccak256("Commitment(uint32 block_number, bytes32 message_root, uint256 nonce)");
+// 0x1927575a20e860281e614acf70aa85920a1187ed2fb847ee50d71702e80e2b8f
 pub(crate) const COMMIT_TYPE_HASH: H256 = H256([
 	9, 64, 53, 206, 220, 62, 70, 239, 84, 120, 16, 153, 130, 131, 113, 234, 48, 235, 223, 241, 173,
 	144, 226, 255, 196, 208, 61, 76, 80, 87, 251, 230,
