@@ -72,6 +72,7 @@ jobs:
 
   release:
     name: Release
+    needs: [build, build-with-evm-tracing]
     runs-on: ubuntu-latest
     steps:
       - name: Download
