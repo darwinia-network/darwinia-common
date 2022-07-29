@@ -38,7 +38,7 @@ use ethabi::Token;
 use frame_support::{pallet_prelude::*, traits::Get};
 use frame_system::pallet_prelude::*;
 use sp_runtime::{
-	traits::{Saturating, Zero},
+	traits::{SaturatedConversion, Saturating, Zero},
 	Perbill,
 };
 use sp_std::prelude::*;
@@ -188,7 +188,7 @@ pub mod pallet {
 		fn on_initialize(now: T::BlockNumber) -> Weight {
 			if (now % T::SyncInterval::get()).is_zero() {
 				if let Some(message_root) = Self::try_update_message_root(now) {
-					Self::on_new_message_root(message_root);
+					Self::on_new_message_root(now, message_root);
 				}
 			}
 
@@ -492,12 +492,13 @@ pub mod pallet {
 			.ok()
 		}
 
-		fn on_new_message_root(message_root: Hash) {
+		fn on_new_message_root(at: T::BlockNumber, message_root: Hash) {
 			let message = Sign::eth_signable_message(
 				T::ChainId::get(),
 				T::Version::get().spec_name.as_ref(),
 				&ethabi::encode(&[
 					Token::FixedBytes(COMMIT_TYPE_HASH.as_ref().into()),
+					Token::Uint(at.saturated_into::<u32>().into()),
 					Token::FixedBytes(message_root.as_ref().into()),
 					Token::Uint(<Nonce<T>>::get().into()),
 				]),
