@@ -30,12 +30,12 @@ jobs:
           args: --release
       - name: Prepare release files
         run: |
+          mv target/release/drml .
+          tar cf drml.tar.zst drml -I pzstd
           mkdir artifacts
-          mv target/release/drml artifacts
+          mv drml.tar.zst artifacts
           mv target/release/wbuild/pangolin-runtime/*.compressed.wasm artifacts
           mv target/release/wbuild/pangoro-runtime/*.compressed.wasm artifacts
-          tar cf drml.tar.zst drml -I pzstd
-          mv drml.tar.zst artifacts
       - name: Upload
         uses: actions/upload-artifact@v2.2.4
         with:
@@ -60,9 +60,9 @@ jobs:
           args: --release --features evm-tracing
       - name: Prepare release files
         run: |
-          mkdir artifacts
-          mv target/release/drml artifacts
+          mv target/release/drml .
           tar cf drml-tracing-node.tar.zst drml -I pzstd
+          mkdir artifacts
           mv drml-tracing-node.tar.zst artifacts
       - name: Upload
         uses: actions/upload-artifact@v2.2.4
