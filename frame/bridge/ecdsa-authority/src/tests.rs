@@ -34,6 +34,7 @@ fn add_authority() {
 			EcdsaAuthorityError::OnAuthoritiesChange
 		);
 		presume_authority_change_succeed();
+		assert_eq!(EcdsaAuthority::authorities(), vec![address]);
 		assert_eq!(EcdsaAuthority::nonce(), 1);
 
 		// Case 2.
@@ -108,6 +109,7 @@ fn remove_authority() {
 			EcdsaAuthorityError::OnAuthoritiesChange
 		);
 		presume_authority_change_succeed();
+		assert_eq!(EcdsaAuthority::authorities(), vec![address_2]);
 		assert_eq!(EcdsaAuthority::nonce(), 1);
 
 		// Case 2.
@@ -172,6 +174,7 @@ fn swap_authority() {
 			EcdsaAuthorityError::OnAuthoritiesChange
 		);
 		presume_authority_change_succeed();
+		assert_eq!(EcdsaAuthority::authorities(), vec![address_2]);
 		assert_eq!(EcdsaAuthority::nonce(), 1);
 
 		// Case 2.

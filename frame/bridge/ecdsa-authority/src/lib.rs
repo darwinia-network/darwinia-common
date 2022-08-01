@@ -295,7 +295,7 @@ pub mod pallet {
 			// Take the value here.
 			// If collected enough signatures, leave the empty `AuthoritiesChangeToSign` in storage.
 			let mut authorities_change_to_sign =
-				<AuthoritiesChangeToSign<T>>::take().ok_or(<Error<T>>::NoAuthoritiesChange)?;
+				<AuthoritiesChangeToSign<T>>::get().ok_or(<Error<T>>::NoAuthoritiesChange)?;
 			let ((_, message), collected) = &mut authorities_change_to_sign;
 
 			Self::ensure_not_submitted(&address, &collected)?;
@@ -317,6 +317,9 @@ pub mod pallet {
 					message,
 					collected.to_vec(),
 				)));
+				Self::apply_next_authorities(
+
+				);
 			} else {
 				<AuthoritiesChangeToSign<T>>::put(authorities_change_to_sign);
 			}
@@ -429,6 +432,12 @@ pub mod pallet {
 			<AuthoritiesChangeToSign<T>>::put(((operation, message), BoundedVec::default()));
 
 			Self::deposit_event(<Event<T>>::CollectingAuthoritiesChangeSignatures(message));
+		}
+
+		pub (crate) fn apply_next_authorities() {
+			<AuthoritiesChangeToSign<T>>::kill();
+			<Authorities<T>>::put(<NextAuthorities<T>>::get());
+			<Nonce<T>>::mutate(|nonce| *nonce += 1);
 		}
 
 		fn try_update_message_root(at: T::BlockNumber) -> Option<Hash> {

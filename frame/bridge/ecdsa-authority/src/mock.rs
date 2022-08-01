@@ -154,9 +154,7 @@ pub(crate) fn sign(secret_key: &SecretKey, message: &Message) -> Signature {
 }
 
 pub(crate) fn presume_authority_change_succeed() {
-	<AuthoritiesChangeToSign<Test>>::kill();
-	<Authorities<Test>>::put(<NextAuthorities<Test>>::get());
-	<Nonce<Test>>::mutate(|nonce| *nonce += 1);
+	EcdsaAuthority::apply_next_authorities();
 }
 
 pub(crate) fn new_message_root(byte: u8) {
