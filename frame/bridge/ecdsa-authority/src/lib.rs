@@ -180,6 +180,18 @@ pub mod pallet {
 	pub struct Pallet<T>(PhantomData<T>);
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+		fn on_runtime_upgrade() -> Weight {
+			frame_support::migration::remove_storage_prefix(
+				Self::name().as_bytes(),
+				b"PreviousAuthorities",
+				&[],
+			);
+
+			<NextAuthorities<T>>::put(<Authorities<T>>::get());
+
+			T::DbWeight::get().reads_writes(1, 1)
+		}
+
 		fn on_initialize(now: T::BlockNumber) -> Weight {
 			if (now % T::SyncInterval::get()).is_zero() {
 				if let Some(message_root) = Self::try_update_message_root(now) {
@@ -317,9 +329,7 @@ pub mod pallet {
 					message,
 					collected.to_vec(),
 				)));
-				Self::apply_next_authorities(
-
-				);
+				Self::apply_next_authorities();
 			} else {
 				<AuthoritiesChangeToSign<T>>::put(authorities_change_to_sign);
 			}
@@ -434,7 +444,7 @@ pub mod pallet {
 			Self::deposit_event(<Event<T>>::CollectingAuthoritiesChangeSignatures(message));
 		}
 
-		pub (crate) fn apply_next_authorities() {
+		pub(crate) fn apply_next_authorities() {
 			<AuthoritiesChangeToSign<T>>::kill();
 			<Authorities<T>>::put(<NextAuthorities<T>>::get());
 			<Nonce<T>>::mutate(|nonce| *nonce += 1);
@@ -495,6 +505,11 @@ pub mod pallet {
 			<NewMessageRootToSign<T>>::put((message, BoundedVec::default()));
 
 			Self::deposit_event(<Event<T>>::CollectingNewMessageRootSignatures(message));
+		}
+
+		#[cfg(test)]
+		pub(crate) fn test_on_runtime_upgrade() ->Vec<u8> {
+			Self::name().as_bytes().to_vec()
 		}
 	}
 }

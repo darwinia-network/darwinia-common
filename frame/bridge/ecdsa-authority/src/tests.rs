@@ -448,3 +448,10 @@ fn tx_fee() {
 		);
 	});
 }
+
+#[test]
+fn on_runtime_upgrade() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_eq!(EcdsaAuthority::test_on_runtime_upgrade(), b"EcdsaAuthority");
+	});
+}
