@@ -153,8 +153,10 @@ pub(crate) fn sign(secret_key: &SecretKey, message: &Message) -> Signature {
 	Signature(signature)
 }
 
-pub(crate) fn clear_authorities_change() {
+pub(crate) fn presume_authority_change_succeed() {
 	<AuthoritiesChangeToSign<Test>>::kill();
+	<Authorities<Test>>::put(<NextAuthorities<Test>>::get());
+	<Nonce<Test>>::mutate(|nonce| *nonce += 1);
 }
 
 pub(crate) fn new_message_root(byte: u8) {

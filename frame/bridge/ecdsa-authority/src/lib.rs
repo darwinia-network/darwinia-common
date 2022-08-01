@@ -88,8 +88,9 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// Authorities changed. Collecting authorities change signatures. \[Message\]
 		CollectingAuthoritiesChangeSignatures(Message),
-		/// Collected enough authorities change signatures. \[(Message, Vec<Address, Signature>)\]
-		CollectedEnoughAuthoritiesChangeSignatures((Message, Vec<(Address, Signature)>)),
+		/// Collected enough authorities change signatures. \[((Operation, Message), Vec<Address,
+		/// Signature>)\]
+		CollectedEnoughAuthoritiesChangeSignatures((Operation, Message, Vec<(Address, Signature)>)),
 
 		/// New message root found. Collecting new message root signatures. \[Message\]
 		CollectingNewMessageRootSignatures(Message),
@@ -105,9 +106,6 @@ pub mod pallet {
 		TooManyAuthorities,
 		/// This is not an authority.
 		NotAuthority,
-		/// This is not a previous authority.
-		/// Only the old authority can sign for the new authorities set.
-		NotPreviousAuthority,
 		/// Require at least one authority. Not allow to decrease below one.
 		AtLeastOneAuthority,
 		/// Currently, the authorities is changing.
@@ -122,19 +120,16 @@ pub mod pallet {
 		AlreadySubmitted,
 	}
 
-	/// Record the previous authorities.
-	///
-	/// When the `Authorities` changed, the members of previous authorities need to submit the
-	/// signatures, and only they could do this.
-	#[pallet::storage]
-	#[pallet::getter(fn previous_authorities)]
-	pub type PreviousAuthorities<T: Config> =
-		StorageValue<_, BoundedVec<Address, T::MaxAuthorities>, ValueQuery>;
-
 	/// The current active authorities.
 	#[pallet::storage]
 	#[pallet::getter(fn authorities)]
 	pub type Authorities<T: Config> =
+		StorageValue<_, BoundedVec<Address, T::MaxAuthorities>, ValueQuery>;
+
+	/// The incoming authorities.
+	#[pallet::storage]
+	#[pallet::getter(fn next_authorities)]
+	pub type NextAuthorities<T: Config> =
 		StorageValue<_, BoundedVec<Address, T::MaxAuthorities>, ValueQuery>;
 
 	/// The nonce of the current active authorities. AKA term/session/era.
@@ -147,7 +142,7 @@ pub mod pallet {
 	#[pallet::getter(fn authorities_change_to_sign)]
 	pub type AuthoritiesChangeToSign<T: Config> = StorageValue<
 		_,
-		(Message, BoundedVec<(Address, Signature), T::MaxAuthorities>),
+		((Operation, Message), BoundedVec<(Address, Signature), T::MaxAuthorities>),
 		OptionQuery,
 	>;
 
@@ -176,8 +171,8 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			<PreviousAuthorities<T>>::put(BoundedVec::try_from(self.authorities.clone()).unwrap());
 			<Authorities<T>>::put(BoundedVec::try_from(self.authorities.clone()).unwrap());
+			<NextAuthorities<T>>::put(BoundedVec::try_from(self.authorities.clone()).unwrap());
 		}
 	}
 
@@ -208,18 +203,17 @@ pub mod pallet {
 
 			Self::ensure_not_on_authorities_change()?;
 
-			let authorities_count = <Authorities<T>>::try_mutate(|authorities| {
+			let authorities_count = <NextAuthorities<T>>::try_mutate(|authorities| {
 				if authorities.contains(&new) {
 					return Err(<Error<T>>::AuthorityExisted)?;
 				}
 
-				<PreviousAuthorities<T>>::put(&*authorities);
 				authorities.try_insert(0, new).map_err(|_| <Error<T>>::TooManyAuthorities)?;
 
 				Ok::<_, DispatchError>(authorities.len() as u32)
 			})?;
 
-			Self::on_authorities_change(Method::AddMember { new }, authorities_count);
+			Self::on_authorities_change(Operation::AddMember { new }, authorities_count);
 
 			Ok(())
 		}
@@ -234,7 +228,7 @@ pub mod pallet {
 
 			Self::ensure_not_on_authorities_change()?;
 
-			let (authorities_count, pre) = <Authorities<T>>::try_mutate(|authorities| {
+			let (authorities_count, pre) = <NextAuthorities<T>>::try_mutate(|authorities| {
 				let i =
 					authorities.iter().position(|a| a == &old).ok_or(<Error<T>>::NotAuthority)?;
 
@@ -242,7 +236,6 @@ pub mod pallet {
 					return Err(<Error<T>>::AtLeastOneAuthority)?;
 				}
 
-				<PreviousAuthorities<T>>::put(&*authorities);
 				authorities.remove(i);
 
 				Ok::<_, DispatchError>((
@@ -251,7 +244,7 @@ pub mod pallet {
 				))
 			})?;
 
-			Self::on_authorities_change(Method::RemoveMember { pre, old }, authorities_count);
+			Self::on_authorities_change(Operation::RemoveMember { pre, old }, authorities_count);
 
 			Ok(())
 		}
@@ -266,11 +259,10 @@ pub mod pallet {
 
 			Self::ensure_not_on_authorities_change()?;
 
-			let (authorities_count, pre) = <Authorities<T>>::try_mutate(|authorities| {
+			let (authorities_count, pre) = <NextAuthorities<T>>::try_mutate(|authorities| {
 				let i =
 					authorities.iter().position(|a| a == &old).ok_or(<Error<T>>::NotAuthority)?;
 
-				<PreviousAuthorities<T>>::put(&*authorities);
 				authorities[i] = new;
 
 				Ok::<_, DispatchError>((
@@ -279,7 +271,10 @@ pub mod pallet {
 				))
 			})?;
 
-			Self::on_authorities_change(Method::SwapMembers { pre, old, new }, authorities_count);
+			Self::on_authorities_change(
+				Operation::SwapMembers { pre, old, new },
+				authorities_count,
+			);
 
 			Ok(())
 		}
@@ -296,12 +291,12 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure_signed(origin)?;
 
-			let previous_authorities = Self::ensure_previous_authority(&address)?;
+			let authorities = Self::ensure_authority(&address)?;
 			// Take the value here.
 			// If collected enough signatures, leave the empty `AuthoritiesChangeToSign` in storage.
 			let mut authorities_change_to_sign =
 				<AuthoritiesChangeToSign<T>>::take().ok_or(<Error<T>>::NoAuthoritiesChange)?;
-			let (message, collected) = &mut authorities_change_to_sign;
+			let ((_, message), collected) = &mut authorities_change_to_sign;
 
 			Self::ensure_not_submitted(&address, &collected)?;
 
@@ -312,15 +307,16 @@ pub mod pallet {
 
 			collected.try_push((address, signature)).map_err(|_| <Error<T>>::TooManyAuthorities)?;
 
-			if Perbill::from_rational(collected.len() as u32, previous_authorities.len() as u32)
+			if Perbill::from_rational(collected.len() as u32, authorities.len() as u32)
 				>= T::SignThreshold::get()
 			{
-				let authorities_change_to_sign =
-					(authorities_change_to_sign.0, authorities_change_to_sign.1.to_vec());
+				let ((operation, message), collected) = authorities_change_to_sign;
 
-				Self::deposit_event(<Event<T>>::CollectedEnoughAuthoritiesChangeSignatures(
-					authorities_change_to_sign,
-				));
+				Self::deposit_event(<Event<T>>::CollectedEnoughAuthoritiesChangeSignatures((
+					operation,
+					message,
+					collected.to_vec(),
+				)));
 			} else {
 				<AuthoritiesChangeToSign<T>>::put(authorities_change_to_sign);
 			}
@@ -362,6 +358,8 @@ pub mod pallet {
 				let new_message_root_to_sign =
 					(new_message_root_to_sign.0, new_message_root_to_sign.1.to_vec());
 
+				<Nonce<T>>::mutate(|nonce| *nonce += 1);
+
 				Self::deposit_event(<Event<T>>::CollectedEnoughNewMessageRootSignatures(
 					new_message_root_to_sign,
 				));
@@ -373,19 +371,6 @@ pub mod pallet {
 		}
 	}
 	impl<T: Config> Pallet<T> {
-		fn ensure_previous_authority(
-			address: &Address,
-		) -> Result<BoundedVec<Address, T::MaxAuthorities>, DispatchError> {
-			let previous_authorities = <PreviousAuthorities<T>>::get();
-
-			ensure!(
-				previous_authorities.iter().any(|a| a == address),
-				<Error<T>>::NotPreviousAuthority
-			);
-
-			Ok(previous_authorities)
-		}
-
 		fn ensure_authority(
 			address: &Address,
 		) -> Result<BoundedVec<Address, T::MaxAuthorities>, DispatchError> {
@@ -411,43 +396,37 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn on_authorities_change(method: Method, authorities_count: u32) {
+		fn on_authorities_change(operation: Operation, authorities_count: u32) {
 			let authorities_changes = {
-				match method {
-					Method::AddMember { new } => ethabi::encode(&[
+				match operation {
+					Operation::AddMember { new } => ethabi::encode(&[
 						Token::Address(new.into()),
 						Token::Uint((T::SignThreshold::get() * authorities_count).into()),
 					]),
-					Method::RemoveMember { pre, old } => ethabi::encode(&[
+					Operation::RemoveMember { pre, old } => ethabi::encode(&[
 						Token::Address(pre.into()),
 						Token::Address(old.into()),
 						Token::Uint((T::SignThreshold::get() * authorities_count).into()),
 					]),
-					Method::SwapMembers { pre, old, new } => ethabi::encode(&[
+					Operation::SwapMembers { pre, old, new } => ethabi::encode(&[
 						Token::Address(pre.into()),
 						Token::Address(old.into()),
 						Token::Address(new.into()),
 					]),
 				}
 			};
-			let message = <Nonce<T>>::mutate(|nonce| {
-				let message = Sign::eth_signable_message(
-					T::ChainId::get(),
-					T::Version::get().spec_name.as_ref(),
-					&ethabi::encode(&[
-						Token::FixedBytes(RELAY_TYPE_HASH.as_ref().into()),
-						Token::FixedBytes(method.id().into()),
-						Token::Bytes(authorities_changes),
-						Token::Uint((*nonce).into()),
-					]),
-				);
+			let message = Sign::eth_signable_message(
+				T::ChainId::get(),
+				T::Version::get().spec_name.as_ref(),
+				&ethabi::encode(&[
+					Token::FixedBytes(RELAY_TYPE_HASH.as_ref().into()),
+					Token::FixedBytes(operation.id().into()),
+					Token::Bytes(authorities_changes),
+					Token::Uint(<Nonce<T>>::get().into()),
+				]),
+			);
 
-				*nonce += 1;
-
-				message
-			});
-
-			<AuthoritiesChangeToSign<T>>::put((message, BoundedVec::default()));
+			<AuthoritiesChangeToSign<T>>::put(((operation, message), BoundedVec::default()));
 
 			Self::deposit_event(<Event<T>>::CollectingAuthoritiesChangeSignatures(message));
 		}
