@@ -49,7 +49,7 @@ use darwinia_ethereum::{
 };
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
 use darwinia_evm_precompile_utils::test_helper::{
-	address_build, create_function_encode_bytes, AccountInfo, LegacyUnsignedTransaction,
+	address_build, AccountInfo, LegacyUnsignedTransaction,
 };
 use darwinia_support::evm::DeriveSubstrateAddress;
 use pallet_fee_market::{BalanceOf, Config, Slasher};
@@ -382,10 +382,11 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use crate::*;
 	// --- crates.io ---
 	use array_bytes::{bytes2hex, hex2bytes_unchecked};
-	use ethabi::{Param, ParamType, StateMutability, Token};
 	// --- paritytech ---
+	use darwinia_evm_precompile_utils::prelude::*;
 	use fp_evm::CallOrCreateInfo;
 	use frame_support::{assert_ok, Blake2_128Concat, StorageHasher, Twox128};
 	use sp_core::H160;
@@ -452,16 +453,9 @@ mod tests {
 			key[0..16].copy_from_slice(&Twox128::hash(b"FeeMarketInstance1"));
 			key[16..32].copy_from_slice(&Twox128::hash(b"AssignedRelayers"));
 
-			// Call state_storage
-			let call_function = create_function_encode_bytes(
-				"state_storage".to_owned(),
-				vec![Param { name: "key".to_owned(), kind: ParamType::Bytes, internal_type: None }],
-				vec![Param { name: "res".to_owned(), kind: ParamType::Bytes, internal_type: None }],
-				true,
-				StateMutability::NonPayable,
-				&[Token::Bytes(key)],
-			)
-			.unwrap();
+			let call_function = EvmDataWriter::new_with_selector(Action::StateGetStorage)
+				.write::<Bytes>(Bytes(key.to_vec()))
+				.build();
 			let unsign_tx = LegacyUnsignedTransaction::new(
 				1,
 				1,
@@ -476,6 +470,7 @@ mod tests {
 					CallOrCreateInfo::Call(info) => info.value,
 					CallOrCreateInfo::Create(_) => todo!(),
 				});
+			println!("The result {:?}", result);
 			assert!(result.unwrap().len() != 0);
 		});
 	}
@@ -493,16 +488,9 @@ mod tests {
 			key.extend_from_slice(&Twox128::hash(b"AccountCodes"));
 			key.extend_from_slice(&Blake2_128Concat::hash(&Encode::encode(&contract)));
 
-			// Call state_storage
-			let call_function = create_function_encode_bytes(
-				"state_storage".to_owned(),
-				vec![Param { name: "key".to_owned(), kind: ParamType::Bytes, internal_type: None }],
-				vec![Param { name: "res".to_owned(), kind: ParamType::Bytes, internal_type: None }],
-				true,
-				StateMutability::NonPayable,
-				&[Token::Bytes(key)],
-			)
-			.unwrap();
+			let call_function = EvmDataWriter::new_with_selector(Action::StateGetStorage)
+				.write::<Bytes>(Bytes(key.to_vec()))
+				.build();
 			let unsign_tx = LegacyUnsignedTransaction::new(
 				1,
 				1,
@@ -518,8 +506,10 @@ mod tests {
 					CallOrCreateInfo::Create(_) => todo!(),
 				});
 			assert_eq!(
-				ethabi::decode(&[ParamType::String], &result.unwrap()[4..]).unwrap()[0],
-				Token::String("Read restriction".to_string())
+				result.unwrap(),
+				EvmDataWriter::new_with_selector(Error::Generic)
+					.write::<Bytes>(Bytes(b"Read restriction".to_vec()))
+					.build()
 			);
 		});
 	}

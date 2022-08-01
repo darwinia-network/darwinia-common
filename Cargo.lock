@@ -1651,7 +1651,6 @@ dependencies = [
  "darwinia-evm-precompile-utils",
  "darwinia-support",
  "dp-contract",
- "ethabi",
  "ethereum",
  "fp-evm",
  "fp-self-contained",

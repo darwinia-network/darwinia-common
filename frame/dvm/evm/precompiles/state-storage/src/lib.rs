@@ -23,11 +23,8 @@ mod tests;
 
 // --- core ---
 use core::marker::PhantomData;
-// --- crates.io ---
-use ethabi::{ParamType, StateMutability, Token};
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{prelude::*, revert, PrecompileHelper};
-use dp_contract::abi_util::abi_encode_bytes;
 // --- paritytech ---
 use fp_evm::{
 	Context, ExitRevert, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
@@ -37,7 +34,7 @@ use fp_evm::{
 const PALLET_PREFIX_LENGTH: usize = 16;
 
 #[selector]
-enum Action {
+pub enum Action {
 	StateGetStorage = "state_storage(bytes)",
 }
 
@@ -61,7 +58,7 @@ where
 		is_static: bool,
 	) -> PrecompileResult {
 		let mut helper = PrecompileHelper::<T>::new(input, target_gas, context, is_static);
-		let (selector, data) = helper.split_input()?;
+		let (selector, _data) = helper.split_input()?;
 		let action = Action::from_u32(selector)?;
 
 		// Check state modifiers
@@ -69,27 +66,25 @@ where
 
 		let output = match action {
 			Action::StateGetStorage => {
-				let tokens = ethabi::decode(&[ParamType::Bytes], data)
-					.map_err(|_| revert("Ethabi decoded failed"))?;
-				let key = match &tokens[0] {
-					Token::Bytes(bytes) => bytes,
-					_ => return Err(revert("Ethabi decode failed")),
-				};
+				let mut reader = helper.reader()?;
+				reader.expect_arguments(1)?;
+				let key: Bytes = reader.read()?;
 
-				if key.len() < PALLET_PREFIX_LENGTH || !F::allow(&key[0..PALLET_PREFIX_LENGTH]) {
+				if key.0.len() < PALLET_PREFIX_LENGTH || !F::allow(&key.0[0..PALLET_PREFIX_LENGTH])
+				{
 					return Err(revert("Read restriction"));
 				}
 
 				helper.record_db_gas(1, 0)?;
 
-				frame_support::storage::unhashed::get_raw(key)
+				frame_support::storage::unhashed::get_raw(&key.0)
 			},
 		};
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
 			cost: helper.used_gas(),
-			output: abi_encode_bytes(&output.unwrap_or_default()),
+			output: EvmDataWriter::new().write(output.unwrap_or_default()).build(),
 			logs: Default::default(),
 		})
 	}
