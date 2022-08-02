@@ -153,8 +153,8 @@ pub(crate) fn sign(secret_key: &SecretKey, message: &Message) -> Signature {
 	Signature(signature)
 }
 
-pub(crate) fn clear_authorities_change() {
-	<AuthoritiesChangeToSign<Test>>::kill();
+pub(crate) fn presume_authority_change_succeed() {
+	EcdsaAuthority::apply_next_authorities();
 }
 
 pub(crate) fn new_message_root(byte: u8) {
