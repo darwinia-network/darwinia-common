@@ -283,7 +283,9 @@ fn submit_authorities_change_signature() {
 			EcdsaAuthorityError::BadSignature
 		);
 
+		let nonce = EcdsaAuthority::nonce();
 		let signature_1 = sign(&secret_key_1, &message);
+		assert_eq!(EcdsaAuthority::nonce(), nonce);
 		assert_ok!(EcdsaAuthority::submit_authorities_change_signature(
 			Origin::signed(Default::default()),
 			address_1,
@@ -291,7 +293,10 @@ fn submit_authorities_change_signature() {
 		));
 		assert_eq!(
 			EcdsaAuthority::authorities_change_to_sign(),
-			Some(((operation.clone(), message), BoundedVec::try_from(vec![(address_1, signature_1.clone())]).unwrap()))
+			Some((
+				(operation.clone(), message),
+				BoundedVec::try_from(vec![(address_1, signature_1.clone())]).unwrap()
+			))
 		);
 
 		let signature_2 = sign(&secret_key_2, &message);
@@ -300,11 +305,13 @@ fn submit_authorities_change_signature() {
 			address_2,
 			signature_2.clone(),
 		));
+		assert_eq!(EcdsaAuthority::nonce(), nonce + 1);
 		assert!(EcdsaAuthority::authorities_change_to_sign().is_none());
 		assert_eq!(
 			ecdsa_authority_events(),
 			vec![Event::CollectedEnoughAuthoritiesChangeSignatures((
-				operation, message,
+				operation,
+				message,
 				vec![(address_1, signature_1), (address_2, signature_2)]
 			))]
 		);
@@ -360,7 +367,9 @@ fn submit_new_message_root_signature() {
 			EcdsaAuthorityError::NotAuthority
 		);
 
+		let nonce = EcdsaAuthority::nonce();
 		let signature_1 = sign(&secret_key_1, &message);
+		assert_eq!(EcdsaAuthority::nonce(), nonce);
 		assert_ok!(EcdsaAuthority::submit_new_message_root_signature(
 			Origin::signed(Default::default()),
 			address_1,
@@ -377,6 +386,7 @@ fn submit_new_message_root_signature() {
 			address_2,
 			signature_2.clone(),
 		));
+		assert_eq!(EcdsaAuthority::nonce(), nonce);
 		assert!(EcdsaAuthority::new_message_root_to_sign().is_none());
 		assert_eq!(
 			ecdsa_authority_events(),

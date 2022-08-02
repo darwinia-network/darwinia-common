@@ -304,8 +304,6 @@ pub mod pallet {
 			ensure_signed(origin)?;
 
 			let authorities = Self::ensure_authority(&address)?;
-			// Take the value here.
-			// If collected enough signatures, leave the empty `AuthoritiesChangeToSign` in storage.
 			let mut authorities_change_to_sign =
 				<AuthoritiesChangeToSign<T>>::get().ok_or(<Error<T>>::NoAuthoritiesChange)?;
 			let ((_, message), collected) = &mut authorities_change_to_sign;
@@ -319,9 +317,9 @@ pub mod pallet {
 
 			collected.try_push((address, signature)).map_err(|_| <Error<T>>::TooManyAuthorities)?;
 
-			if Perbill::from_rational(collected.len() as u32, authorities.len() as u32)
-				>= T::SignThreshold::get()
-			{
+			if Self::check_threshold(collected.len() as _, authorities.len() as _) {
+				Self::apply_next_authorities();
+
 				let ((operation, message), collected) = authorities_change_to_sign;
 
 				Self::deposit_event(<Event<T>>::CollectedEnoughAuthoritiesChangeSignatures((
@@ -329,7 +327,6 @@ pub mod pallet {
 					message,
 					collected.to_vec(),
 				)));
-				Self::apply_next_authorities();
 			} else {
 				<AuthoritiesChangeToSign<T>>::put(authorities_change_to_sign);
 			}
@@ -350,10 +347,8 @@ pub mod pallet {
 			ensure_signed(origin)?;
 
 			let authorities = Self::ensure_authority(&address)?;
-			// Take the value here.
-			// If collected enough signatures, leave the empty `NewMessageRootToSign` in storage
 			let mut new_message_root_to_sign =
-				<NewMessageRootToSign<T>>::take().ok_or(<Error<T>>::NoNewMessageRoot)?;
+				<NewMessageRootToSign<T>>::get().ok_or(<Error<T>>::NoNewMessageRoot)?;
 			let (message, collected) = &mut new_message_root_to_sign;
 
 			Self::ensure_not_submitted(&address, &collected)?;
@@ -365,17 +360,15 @@ pub mod pallet {
 
 			collected.try_push((address, signature)).map_err(|_| <Error<T>>::TooManyAuthorities)?;
 
-			if Perbill::from_rational(collected.len() as u32, authorities.len() as u32)
-				>= T::SignThreshold::get()
-			{
-				let new_message_root_to_sign =
-					(new_message_root_to_sign.0, new_message_root_to_sign.1.to_vec());
+			if Self::check_threshold(collected.len() as _, authorities.len() as _) {
+				<NewMessageRootToSign<T>>::kill();
 
-				<Nonce<T>>::mutate(|nonce| *nonce += 1);
+				let (message, collected) = new_message_root_to_sign;
 
-				Self::deposit_event(<Event<T>>::CollectedEnoughNewMessageRootSignatures(
-					new_message_root_to_sign,
-				));
+				Self::deposit_event(<Event<T>>::CollectedEnoughNewMessageRootSignatures((
+					message,
+					collected.to_vec(),
+				)));
 			} else {
 				<NewMessageRootToSign<T>>::put(new_message_root_to_sign);
 			}
@@ -444,6 +437,10 @@ pub mod pallet {
 			Self::deposit_event(<Event<T>>::CollectingAuthoritiesChangeSignatures(message));
 		}
 
+		fn check_threshold(p: u32, q: u32) -> bool {
+			Perbill::from_rational(p, q) >= T::SignThreshold::get()
+		}
+
 		pub(crate) fn apply_next_authorities() {
 			<AuthoritiesChangeToSign<T>>::kill();
 			<Authorities<T>>::put(<NextAuthorities<T>>::get());
@@ -508,7 +505,7 @@ pub mod pallet {
 		}
 
 		#[cfg(test)]
-		pub(crate) fn test_on_runtime_upgrade() ->Vec<u8> {
+		pub(crate) fn test_on_runtime_upgrade() -> Vec<u8> {
 			Self::name().as_bytes().to_vec()
 		}
 	}
