@@ -142,7 +142,7 @@ pub mod pallet {
 	#[pallet::getter(fn authorities_change_to_sign)]
 	pub type AuthoritiesChangeToSign<T: Config> = StorageValue<
 		_,
-		((Operation, Message), BoundedVec<(Address, Signature), T::MaxAuthorities>),
+		(Operation, Message, BoundedVec<(Address, Signature), T::MaxAuthorities>),
 		OptionQuery,
 	>;
 
@@ -306,7 +306,7 @@ pub mod pallet {
 			let authorities = Self::ensure_authority(&address)?;
 			let mut authorities_change_to_sign =
 				<AuthoritiesChangeToSign<T>>::get().ok_or(<Error<T>>::NoAuthoritiesChange)?;
-			let ((_, message), collected) = &mut authorities_change_to_sign;
+			let (_, message, collected) = &mut authorities_change_to_sign;
 
 			Self::ensure_not_submitted(&address, &collected)?;
 
@@ -320,7 +320,7 @@ pub mod pallet {
 			if Self::check_threshold(collected.len() as _, authorities.len() as _) {
 				Self::apply_next_authorities();
 
-				let ((operation, message), collected) = authorities_change_to_sign;
+				let (operation, message, collected) = authorities_change_to_sign;
 
 				Self::deposit_event(<Event<T>>::CollectedEnoughAuthoritiesChangeSignatures((
 					operation,
@@ -432,7 +432,7 @@ pub mod pallet {
 				]),
 			);
 
-			<AuthoritiesChangeToSign<T>>::put(((operation, message), BoundedVec::default()));
+			<AuthoritiesChangeToSign<T>>::put((operation, message, BoundedVec::default()));
 
 			Self::deposit_event(<Event<T>>::CollectingAuthoritiesChangeSignatures(message));
 		}

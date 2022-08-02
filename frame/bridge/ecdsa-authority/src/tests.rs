@@ -21,7 +21,7 @@ fn add_authority() {
 		];
 		assert_eq!(
 			EcdsaAuthority::authorities_change_to_sign(),
-			Some(((Operation::AddMember { new: address }, message), Default::default()))
+			Some((Operation::AddMember { new: address }, message, Default::default()))
 		);
 		assert_eq!(
 			ecdsa_authority_events(),
@@ -94,7 +94,8 @@ fn remove_authority() {
 		assert_eq!(
 			EcdsaAuthority::authorities_change_to_sign(),
 			Some((
-				(Operation::RemoveMember { pre: AUTHORITY_SENTINEL, old: address_1 }, message),
+				Operation::RemoveMember { pre: AUTHORITY_SENTINEL, old: address_1 },
+				message,
 				Default::default()
 			))
 		);
@@ -152,14 +153,8 @@ fn swap_authority() {
 		assert_eq!(
 			EcdsaAuthority::authorities_change_to_sign(),
 			Some((
-				(
-					Operation::SwapMembers {
-						pre: AUTHORITY_SENTINEL,
-						old: address_1,
-						new: address_2
-					},
-					message
-				),
+				Operation::SwapMembers { pre: AUTHORITY_SENTINEL, old: address_1, new: address_2 },
+				message,
 				Default::default()
 			))
 		);
@@ -266,7 +261,7 @@ fn submit_authorities_change_signature() {
 		];
 		assert_eq!(
 			EcdsaAuthority::authorities_change_to_sign(),
-			Some(((operation.clone(), message), Default::default()))
+			Some((operation.clone(), message, Default::default()))
 		);
 		assert_eq!(
 			ecdsa_authority_events(),
@@ -294,7 +289,8 @@ fn submit_authorities_change_signature() {
 		assert_eq!(
 			EcdsaAuthority::authorities_change_to_sign(),
 			Some((
-				(operation.clone(), message),
+				operation.clone(),
+				message,
 				BoundedVec::try_from(vec![(address_1, signature_1.clone())]).unwrap()
 			))
 		);
