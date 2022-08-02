@@ -1,8 +1,12 @@
 pub(crate) use sp_core::ecdsa::Signature;
 
+// --- crates.io ---
+use codec::{Decode, Encode};
+use scale_info::TypeInfo;
 // --- paritytech ---
 use sp_core::{H160, H256};
 use sp_io::{crypto, hashing};
+use sp_runtime::RuntimeDebug;
 
 pub(crate) type Address = H160;
 pub(crate) type Hash = H256;
@@ -55,23 +59,24 @@ impl Sign {
 	}
 }
 
-pub(crate) enum Method {
+#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+pub enum Operation {
 	AddMember { new: Address },
 	RemoveMember { pre: Address, old: Address },
 	SwapMembers { pre: Address, old: Address, new: Address },
 }
-impl Method {
+impl Operation {
 	pub(crate) fn id(&self) -> [u8; 4] {
 		match self {
 			// bytes4(keccak256("add_relayer(address,uint256)"))
 			// 0xb7aafe32
-			Method::AddMember { .. } => [183, 170, 254, 50],
+			Self::AddMember { .. } => [183, 170, 254, 50],
 			// bytes4(keccak256("remove_relayer(address,address,uint256)"))
 			// 0x8621d1fa
-			Method::RemoveMember { .. } => [134, 33, 209, 250],
+			Self::RemoveMember { .. } => [134, 33, 209, 250],
 			// bytes4(keccak256("swap_relayer(address,address,address)"))
 			// 0xcb76085b
-			Method::SwapMembers { .. } => [203, 118, 8, 91],
+			Self::SwapMembers { .. } => [203, 118, 8, 91],
 		}
 	}
 }
