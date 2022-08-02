@@ -49,6 +49,5 @@ fn migrate() -> Weight {
 	}
 
 	// 0
-	// <Runtime as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
 	RuntimeBlockWeights::get().max_block
 }
