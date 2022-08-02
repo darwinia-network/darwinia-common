@@ -38,7 +38,7 @@ default = ["std"]
 
 std = [
 	# crates.io
-	# "ethabi/std",
+	"ethabi/std",
 	"num_enum/std",
 	"sha3/std",
 	# darwinia-network

@@ -381,12 +381,13 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 
 #[cfg(test)]
 mod tests {
-	use super::*;
-	use crate::*;
 	// --- crates.io ---
 	use array_bytes::{bytes2hex, hex2bytes_unchecked};
-	// --- paritytech ---
+	// --- darwinia-network ---
+	use super::*;
+	use crate::*;
 	use darwinia_evm_precompile_utils::prelude::*;
+	// --- paritytech ---
 	use fp_evm::CallOrCreateInfo;
 	use frame_support::{assert_ok, Blake2_128Concat, StorageHasher, Twox128};
 	use sp_core::H160;
@@ -470,7 +471,6 @@ mod tests {
 					CallOrCreateInfo::Call(info) => info.value,
 					CallOrCreateInfo::Create(_) => todo!(),
 				});
-			println!("The result {:?}", result);
 			assert!(result.unwrap().len() != 0);
 		});
 	}

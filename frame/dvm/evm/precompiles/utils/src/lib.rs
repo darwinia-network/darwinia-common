@@ -149,22 +149,9 @@ pub fn revert(message: impl AsRef<[u8]>) -> PrecompileFailure {
 	}
 }
 
-pub fn decode_revert_message(encoded: &[u8]) -> &[u8] {
-	let encoded_len = encoded.len();
-	// selector 4 + offset 32 + string length 32
-	if encoded_len > 68 {
-		let message_len = encoded[36..68].iter().sum::<u8>();
-		if encoded_len >= 68 + message_len as usize {
-			return &encoded[68..68 + message_len as usize];
-		}
-	}
-	b"decode_revert_message: error"
-}
-
 pub mod prelude {
 	pub use crate::{
 		data::{Address, Bytes, EvmData, EvmDataReader, EvmDataWriter},
-		decode_revert_message,
 		log::{log0, log1, log2, log3, log4},
 		modifier::check_function_modifier,
 		revert, Error, EvmResult,

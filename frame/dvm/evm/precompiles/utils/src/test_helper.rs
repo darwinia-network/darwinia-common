@@ -19,7 +19,6 @@
 //! Test utilities
 
 // --- crates.io ---
-// use ethabi::{Bytes, Function, Param, Result, StateMutability, Token};
 use ethereum::{TransactionAction, TransactionSignature};
 use rlp::RlpStream;
 use sha3::{Digest, Keccak256};
