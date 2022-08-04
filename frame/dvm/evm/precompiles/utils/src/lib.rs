@@ -33,6 +33,14 @@ use fp_evm::{Context, ExitError, ExitRevert, PrecompileFailure};
 use frame_support::traits::Get;
 use sp_std::marker::PhantomData;
 
+/// Generic error to build abi-encoded revert output.
+/// See: https://docs.soliditylang.org/en/latest/control-structures.html?highlight=revert#revert
+#[selector]
+#[derive(Debug, PartialEq)]
+pub enum Error {
+	Generic = "Error(string)",
+}
+
 /// Alias for Result returning an EVM precompile error.
 pub type EvmResult<T = ()> = Result<T, PrecompileFailure>;
 
@@ -132,12 +140,9 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 /// erroring consumes the entire gas limit, and **revert** returns an error
 /// message to the calling contract.
 pub fn revert(message: impl AsRef<[u8]>) -> PrecompileFailure {
-	const ERROR_SELECTOR: [u8; 32] = keccak256!("Error(string)");
-	let selector = u32::from_be_bytes(ERROR_SELECTOR[0..4].try_into().unwrap());
-
 	PrecompileFailure::Revert {
 		exit_status: ExitRevert::Reverted,
-		output: EvmDataWriter::new_with_selector(selector)
+		output: EvmDataWriter::new_with_selector(Error::Generic)
 			.write::<Bytes>(Bytes(message.as_ref().to_vec()))
 			.build(),
 		cost: 0,
@@ -149,7 +154,7 @@ pub mod prelude {
 		data::{Address, Bytes, EvmData, EvmDataReader, EvmDataWriter},
 		log::{log0, log1, log2, log3, log4},
 		modifier::check_function_modifier,
-		revert, EvmResult,
+		revert, Error, EvmResult,
 	};
 	pub use darwinia_evm_precompile_utils_macro::{keccak256, selector};
 	pub use ethabi::StateMutability;
