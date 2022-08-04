@@ -2168,17 +2168,15 @@ pub mod pallet {
 			let total_kton = T::KtonCurrency::total_balance(&stash);
 			let ed_ring = T::RingCurrency::minimum_balance();
 			let ed_kton = T::KtonCurrency::minimum_balance();
-			let mut reapable = false;
-
-			if let Some(ledger) =
+			let reapable = if let Some(ledger) =
 				Self::ledger(Self::bonded(stash.clone()).ok_or(Error::<T>::NotStash)?)
 			{
-				reapable = ((total_ring.is_zero() || total_ring < ed_ring)
+				((total_ring.is_zero() || total_ring < ed_ring)
 					&& (total_kton.is_zero() || total_kton < ed_kton))
-					|| (ledger.active < ed_ring && ledger.active_kton < ed_kton);
+					|| (ledger.active < ed_ring && ledger.active_kton < ed_kton)
 			} else {
-				reapable = true;
-			}
+				true
+			};
 
 			ensure!(reapable, <Error<T>>::FundedTarget);
 
