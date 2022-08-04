@@ -18,6 +18,6 @@ impl Config for Runtime {
 	type MaximumWeight = MaximumSchedulerWeight;
 	type Origin = Origin;
 	type PalletsOrigin = OriginCaller;
-	type ScheduleOrigin = RootOrigin;
+	type ScheduleOrigin = Root;
 	type WeightInfo = WeightInfo<Runtime>;
 }

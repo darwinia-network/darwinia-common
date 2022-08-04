@@ -20,9 +20,9 @@
 # - The latest matching rule, if multiple, takes precedence.
 
 /frame/balances/ @AurevoirXavier @HackFisher
-/frame/beefy-gadget/ @AurevoirXavier
 /frame/bridge/bsc/ @AurevoirXavier @xiaoch05
 /frame/bridge/ethereum/ @AurevoirXavier @HackFisher
+/frame/bridge/message-gadget/ @AurevoirXavier
 /frame/bridge/relay-authority/ @AurevoirXavier
 /frame/bridge/relayer-game/ @AurevoirXavier
 /frame/dvm/ethereum/ @AsceticBear
@@ -38,8 +38,8 @@
 /node/*/*/ @AurevoirXavier
 
 /primitives/asset/ @xiaoch05
-/primitives/beefy/ @AurevoirXavier
-/primitives/contract/ @AsceticBear @xiaoch05
+/primitives/message/ @AurevoirXavier
+/primitives/contract/ @AsceticBear @AurevoirXavier @xiaoch05
 /primitives/ethereum/ @AsceticBear
 /primitives/evm-trace/ @AsceticBear
 /primitives/merkle-patricia-trie/ @AurevoirXavier

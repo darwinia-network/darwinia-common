@@ -40,7 +40,7 @@ use frame_support::{log, traits::KeyOwnerProofSystem, weights::GetDispatchInfo};
 use frame_system::{
 	offchain::{AppCrypto, CreateSignedTransaction, SendTransactionTypes, SigningTypes},
 	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
-	CheckWeight, EnsureRoot,
+	CheckWeight,
 };
 use pallet_evm::FeeCalculator;
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
@@ -87,15 +87,13 @@ pub type Executive = frame_executive::Executive<
 >;
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
-pub type RootOrigin = EnsureRoot<AccountId>;
-
 type Ring = Balances;
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangoro"),
 	impl_name: sp_runtime::create_runtime_str!("Pangoro"),
 	authoring_version: 0,
-	spec_version: 2_8_15_0,
+	spec_version: 2_8_18_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -135,7 +133,8 @@ frame_support::construct_runtime!(
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 12,
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event} = 13,
 		Beefy: pallet_beefy::{Pallet, Storage, Config<T>} = 27,
-		// BeefyGadget: darwinia_beefy_gadget::{Pallet, Call, Storage, Config} = 30,
+		MessageGadget: darwinia_message_gadget::{Pallet, Call, Storage, Config} = 30,
+		EcdsaAuthority: darwinia_ecdsa_authority::{Pallet, Call, Storage, Config, Event<T>} = 32,
 		// Mmr: pallet_mmr::{Pallet, Storage} = 28,
 		// MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 29,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,

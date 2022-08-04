@@ -23,7 +23,7 @@ use core::marker::PhantomData;
 // --- crates.io ---
 use milagro_bls::{AggregatePublicKey, AggregateSignature, PublicKey, Signature};
 // --- darwinia-network ---
-use darwinia_evm_precompile_utils::{PrecompileHelper, StateMutability};
+use darwinia_evm_precompile_utils::{prelude::*, revert, PrecompileHelper};
 use dp_contract::{abi_util::abi_encode_bool, bls12381::FastAggregateVerifyParams};
 // --- paritytech ---
 use fp_evm::{
@@ -32,7 +32,7 @@ use fp_evm::{
 };
 use sp_std::vec::Vec;
 
-#[darwinia_evm_precompile_utils::selector]
+#[selector]
 enum Action {
 	FastAggregateVerify = "fast_aggregate_verify(bytes[],bytes,bytes)",
 }
@@ -51,20 +51,20 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> PrecompileResult {
-		let helper = PrecompileHelper::<T>::new(input, target_gas);
+		let helper = PrecompileHelper::<T>::new(input, target_gas, context, is_static);
 		let (selector, data) = helper.split_input()?;
 		let action = Action::from_u32(selector)?;
 
 		// Check state modifiers
-		helper.check_state_modifier(context, is_static, StateMutability::View)?;
+		helper.check_state_modifier(StateMutability::View)?;
 
 		let output = match action {
 			Action::FastAggregateVerify => {
-				let params = FastAggregateVerifyParams::decode(data)
-					.map_err(|_| helper.revert("Invalid input"))?;
+				let params =
+					FastAggregateVerifyParams::decode(data).map_err(|_| revert("Invalid input"))?;
 
 				let sig = Signature::from_bytes(&params.signature)
-					.map_err(|_| helper.revert("Invalid signature"))?;
+					.map_err(|_| revert("Invalid signature"))?;
 				let agg_sig = AggregateSignature::from_signature(&sig);
 
 				let public_keys_res: Result<Vec<PublicKey>, _> =
@@ -72,11 +72,11 @@ where
 
 				if let Ok(keys) = public_keys_res {
 					let agg_pub_key_res = AggregatePublicKey::into_aggregate(&keys)
-						.map_err(|_| helper.revert("Invalid aggregate"))?;
+						.map_err(|_| revert("Invalid aggregate"))?;
 
 					agg_sig.fast_aggregate_verify_pre_aggregated(&params.message, &agg_pub_key_res)
 				} else {
-					return Err(helper.revert("Invalid pubkeys"));
+					return Err(revert("Invalid pubkeys"));
 				}
 			},
 		};

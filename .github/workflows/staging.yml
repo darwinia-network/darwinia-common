@@ -1,0 +1,53 @@
+name: Staging
+
+on:
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: 16
+
+  RUST_TOOLCHAIN: nightly
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch latest code
+        uses: actions/checkout@v3
+      - name: Install Rust nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          default: true
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+      - name: Prepare release files
+        run: |
+          mv target/release/drml .
+          mv target/release/wbuild/pangolin-runtime/*.compressed.wasm .
+          mv target/release/wbuild/pangoro-runtime/*.compressed.wasm .
+          tar cf drml.tar.zst drml -I pzstd
+      - name: Hash
+        run: sha256sum drml.tar.zst drml *.wasm | tee SHA256
+
+  rustdoc:
+    name: Rustdoc
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch latest code
+        uses: actions/checkout@v3
+      - name: Install Rust nightly-2021-02-25 toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly-2021-02-25
+          target: wasm32-unknown-unknown
+          default: true
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --release --locked --all --no-deps

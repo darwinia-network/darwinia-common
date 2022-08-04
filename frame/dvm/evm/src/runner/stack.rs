@@ -27,7 +27,7 @@ use evm::{
 use sha3::{Digest, Keccak256};
 // --- paritytech ---
 use fp_evm::{CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
-use frame_support::{ensure, traits::Get};
+use frame_support::{ensure, log, traits::Get};
 use sp_core::{H160, H256, U256};
 use sp_runtime::{traits::UniqueSaturatedInto, ArithmeticError, DispatchError};
 use sp_std::{collections::btree_set::BTreeSet, marker::PhantomData, mem, prelude::*};

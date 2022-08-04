@@ -4,10 +4,10 @@ description = "Primitives of Darwinia BEEFY."
 edition     = "2021"
 homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
-name        = "darwinia-beefy-primitives"
+name        = "dp-message"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.8.15"
+version     = "2.8.18"
 
 [dependencies]
 

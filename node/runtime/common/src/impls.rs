@@ -51,21 +51,12 @@ pub struct ToAuthor<R>(PhantomData<R>);
 impl<R> OnUnbalanced<RingNegativeImbalance<R>> for ToAuthor<R>
 where
 	R: darwinia_balances::Config<RingInstance> + pallet_authorship::Config,
-	<R as frame_system::Config>::AccountId: From<AccountId> + Into<AccountId>,
-	<R as frame_system::Config>::Event: From<darwinia_balances::Event<R, RingInstance>>,
 {
 	fn on_nonzero_unbalanced(amount: RingNegativeImbalance<R>) {
-		let numeric_amount = amount.peek();
-		let author = <pallet_authorship::Pallet<R>>::author();
-
 		<darwinia_balances::Pallet<R, RingInstance>>::resolve_creating(
 			&<pallet_authorship::Pallet<R>>::author(),
 			amount,
 		);
-		<frame_system::Pallet<R>>::deposit_event(darwinia_balances::Event::Deposit(
-			author,
-			numeric_amount,
-		));
 	}
 }
 

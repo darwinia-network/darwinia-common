@@ -34,14 +34,6 @@ pub fn abi_encode_bytes4(data: [u8; 4]) -> Vec<u8> {
 	ethabi::encode(&[Token::FixedBytes(data.to_vec())])
 }
 
-pub fn abi_decode_bytes(data: &[u8]) -> AbiResult<Vec<u8>> {
-	let tokens = ethabi::decode(&[ParamType::Bytes], &data)?;
-	if let Token::Bytes(decoded) = tokens[0].clone() {
-		return Ok(decoded);
-	}
-	Err(Error::InvalidData)
-}
-
 pub fn abi_encode_bytes(data: &[u8]) -> Vec<u8> {
 	ethabi::encode(&[Token::Bytes(data.to_vec())])
 }
@@ -52,9 +44,4 @@ pub fn abi_encode_bool(data: bool) -> Vec<u8> {
 
 pub fn abi_encode_u64(data: u64) -> Vec<u8> {
 	ethabi::encode(&[Token::Uint(data.into())])
-}
-
-pub fn abi_encode_array_bytes(data: Vec<Vec<u8>>) -> Vec<u8> {
-	let array = data.into_iter().map(|v| Token::Bytes(v)).collect();
-	ethabi::encode(&[Token::Array(array)])
 }

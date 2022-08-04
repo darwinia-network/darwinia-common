@@ -3,15 +3,98 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-rc[0-9]+"
+
+env:
+  NODE_VERSION: 16
+
+  RUST_TOOLCHAIN: nightly
 
 jobs:
-  build-release:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch latest code
+        uses: actions/checkout@v3
+      - name: Install Rust nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          default: true
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+      - name: Prepare release files
+        run: |
+          mv target/release/drml .
+          tar cf drml.tar.zst drml -I pzstd
+          mkdir artifacts
+          mv drml.tar.zst artifacts
+          mv target/release/wbuild/pangolin-runtime/*.compressed.wasm artifacts
+          mv target/release/wbuild/pangoro-runtime/*.compressed.wasm artifacts
+      - name: Upload
+        uses: actions/upload-artifact@v2.2.4
+        with:
+          name: artifacts
+          path: artifacts
+
+  build-with-evm-tracing:
+    name: Build with evm-tracing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch latest code
+        uses: actions/checkout@v3
+      - name: Install Rust nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          default: true
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --features evm-tracing
+      - name: Prepare release files
+        run: |
+          mv target/release/drml .
+          tar cf drml-tracing-node.tar.zst drml -I pzstd
+          mkdir artifacts
+          mv drml-tracing-node.tar.zst artifacts
+      - name: Upload
+        uses: actions/upload-artifact@v2.2.4
+        with:
+          name: artifacts
+          path: artifacts
+
+  release:
+    name: Release
+    needs: [build, build-with-evm-tracing]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download
+        uses: actions/download-artifact@v2
+        with:
+          name: artifacts
+          path: artifacts
+      - name: Hash
+        run: |
+          cd artifacts
+          sha256sum * | tee SHA256
+      - name: Publish
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/*
+
+  rustdoc:
     name: Rustdoc
     runs-on: ubuntu-latest
     steps:
       - name: Fetch latest code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Install Rust nightly-2021-02-25 toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -22,12 +105,12 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: doc
-          args: --all --no-deps --locked
-      - name: Install Node 16
+          args: --release --locked --all --no-deps
+      - name: Install Node ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v2
         with:
-          node-version: "16"
-      - name: Install vercel
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install Vercel
         run: npm i -g vercel
       - name: Deploy Rustdoc
         run: |

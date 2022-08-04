@@ -16,14 +16,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-//! Test utilities
-
 // --- crates.io ---
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 // --- paritytech ---
-use darwinia_ethereum::{EthereumBlockHashMapping, RawOrigin};
-use fp_evm::{Context, ExitRevert, Precompile, PrecompileFailure, PrecompileResult, PrecompileSet};
+use fp_evm::{
+	CallOrCreateInfo, Context, ExitRevert, Precompile, PrecompileFailure, PrecompileResult,
+	PrecompileSet,
+};
 use frame_support::{
 	pallet_prelude::Weight,
 	traits::{Everything, FindAuthor, GenesisBuild},
@@ -32,7 +32,6 @@ use frame_support::{
 };
 use frame_system::mocking::*;
 use pallet_evm::FeeCalculator;
-use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
@@ -40,23 +39,29 @@ use sp_runtime::{
 	transaction_validity::{InvalidTransaction, TransactionValidity, TransactionValidityError},
 	AccountId32, Perbill, RuntimeDebug,
 };
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 // --- darwinia-network ---
-use crate::Transfer;
+use crate::KtonERC20;
 use darwinia_ethereum::{
 	adapter::{CurrencyAdapter, KtonRemainBalance, RingRemainBalance},
-	IntermediateStateRoot,
+	EthereumBlockHashMapping, IntermediateStateRoot, Log, RawOrigin, Transaction,
+	TransactionAction,
 };
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
-use darwinia_evm_precompile_utils::test_helper::{address_build, AccountInfo};
+use darwinia_evm_precompile_utils::test_helper::{
+	address_build, AccountInfo, LegacyUnsignedTransaction,
+};
 use darwinia_support::evm::DeriveSubstrateAddress;
 
 type Block = MockBlock<Test>;
 type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
-type Balance = u64;
+type Balance = u128;
 
 darwinia_support::impl_test_account_data! {}
+
+pub const INITIAL_BALANCE: Balance = 1_000;
+pub const PRECOMPILE_ADDR: &str = "0x000000000000000000000000000000000000000a";
 
 frame_support::parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -154,6 +159,14 @@ impl DeriveSubstrateAddress<AccountId32> for HashedConverter {
 		raw_account.into()
 	}
 }
+
+frame_support::parameter_types! {
+	pub const TransactionByteFee: u64 = 1;
+	pub const ChainId: u64 = 42;
+	pub const BlockGasLimit: U256 = U256::MAX;
+	pub PrecompilesValue: MockPrecompiles<Test> = MockPrecompiles::<_>::new();
+}
+
 pub struct MockPrecompiles<R>(PhantomData<R>);
 impl<R> MockPrecompiles<R>
 where
@@ -163,13 +176,14 @@ where
 		Self(Default::default())
 	}
 
-	pub fn used_addresses() -> [H160; 5] {
-		[addr(1), addr(2), addr(3), addr(4), addr(21)]
+	pub fn used_addresses() -> [H160; 1] {
+		[addr(10)]
 	}
 }
+
 impl<R> PrecompileSet for MockPrecompiles<R>
 where
-	Transfer<R>: Precompile,
+	KtonERC20<R>: Precompile,
 	R: darwinia_ethereum::Config,
 {
 	fn execute(
@@ -180,8 +194,10 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> Option<PrecompileResult> {
+		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
+
 		// Filter known precompile addresses except Ethereum officials
-		if self.is_precompile(address) && address > addr(9) && address != context.address {
+		if self.is_precompile(address) && address > to_address(9) && address != context.address {
 			return Some(Err(PrecompileFailure::Revert {
 				exit_status: ExitRevert::Reverted,
 				output: b"cannot be called with DELEGATECALL or CALLCODE".to_vec(),
@@ -190,14 +206,8 @@ where
 		};
 
 		match address {
-			// Ethereum precompiles
-			a if a == addr(1) => Some(ECRecover::execute(input, target_gas, context, is_static)),
-			a if a == addr(2) => Some(Sha256::execute(input, target_gas, context, is_static)),
-			a if a == addr(3) => Some(Ripemd160::execute(input, target_gas, context, is_static)),
-			a if a == addr(4) => Some(Identity::execute(input, target_gas, context, is_static)),
-			// Darwinia precompiles
-			a if a == addr(21) =>
-				Some(<Transfer<R>>::execute(input, target_gas, context, is_static)),
+			_ if address == to_address(10) =>
+				Some(<KtonERC20<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
@@ -209,12 +219,7 @@ where
 fn addr(a: u64) -> H160 {
 	H160::from_low_u64_be(a)
 }
-frame_support::parameter_types! {
-	pub const TransactionByteFee: u64 = 1;
-	pub const ChainId: u64 = 42;
-	pub const BlockGasLimit: U256 = U256::MAX;
-	pub PrecompilesValue: MockPrecompiles<Test> = MockPrecompiles::<_>::new();
-}
+
 impl darwinia_evm::Config for Test {
 	type BlockGasLimit = BlockGasLimit;
 	type BlockHashMapping = EthereumBlockHashMapping<Self>;
@@ -339,15 +344,17 @@ fn validate_self_contained_inner(
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup.
 pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExternalities) {
-	// sc_cli::init_logger("");
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 	let pairs = (0..accounts_len).map(|i| address_build(i as u8)).collect::<Vec<_>>();
 
 	let balances: Vec<_> =
-		(0..accounts_len).map(|i| (pairs[i].account_id.clone(), 100_000_000_000)).collect();
+		(0..accounts_len).map(|i| (pairs[i].account_id.clone(), INITIAL_BALANCE)).collect();
 
-	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances }
+	darwinia_balances::GenesisConfig::<Test, RingInstance> { balances: balances.clone() }
+		.assimilate_storage(&mut t)
+		.unwrap();
+	darwinia_balances::GenesisConfig::<Test, KtonInstance> { balances }
 		.assimilate_storage(&mut t)
 		.unwrap();
 	let mut ext = sp_io::TestExternalities::new(t);
@@ -356,4 +363,54 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 	(pairs, ext.into())
 }
 
-pub type KtonBalanceAdapter = <Test as darwinia_evm::Config>::KtonBalanceAdapter;
+pub fn construct_tx_asserter(nonce: u64, input: Vec<u8>, account: &AccountInfo) -> Asserter {
+	let tx = LegacyUnsignedTransaction {
+		nonce: U256::from(nonce),
+		gas_price: <Test as darwinia_evm::Config>::FeeCalculator::min_gas_price(),
+		gas_limit: U256::from(1_000_000),
+		action: TransactionAction::Call(H160::from_str(PRECOMPILE_ADDR).unwrap()),
+		value: U256::zero(),
+		input,
+	}
+	.sign_with_chain_id(&account.private_key, <Test as darwinia_evm::Config>::ChainId::get());
+
+	Asserter { sender: account.address, tx, executed_value: None, logs: None }
+}
+
+#[derive(Debug, Clone)]
+pub struct Asserter {
+	pub sender: H160,
+	pub tx: Transaction,
+	pub executed_value: Option<Vec<u8>>,
+	pub logs: Option<Vec<Log>>,
+}
+
+impl Asserter {
+	pub fn execute(mut self) -> Self {
+		let info =
+			Ethereum::execute(self.sender, &self.tx.clone().into(), None).map(|(_, _, res)| {
+				match res {
+					CallOrCreateInfo::Call(info) => info,
+					CallOrCreateInfo::Create(_) => todo!(),
+				}
+			});
+		self.executed_value = info.clone().ok().map(|info| info.value);
+		self.logs = info.ok().map(|info| info.logs);
+		self
+	}
+
+	pub fn assert_executed_value(&self, actual: &[u8]) -> &Self {
+		assert_eq!(self.executed_value, Some(actual.to_vec()));
+		self
+	}
+
+	pub fn assert_has_log(&self, log: &Log) -> &Self {
+		assert!(self.logs.as_ref().unwrap().contains(log));
+		self
+	}
+
+	pub fn assert_revert(&self, revert_value: &[u8]) -> &Self {
+		assert_eq!(self.executed_value.clone().unwrap()[4..], revert_value.to_vec());
+		self
+	}
+}

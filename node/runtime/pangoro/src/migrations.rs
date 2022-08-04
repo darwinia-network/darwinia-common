@@ -23,6 +23,6 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 }
 
 fn migrate() -> Weight {
-	// RuntimeBlockWeights::get().max_block
 	0
+	// RuntimeBlockWeights::get().max_block
 }
