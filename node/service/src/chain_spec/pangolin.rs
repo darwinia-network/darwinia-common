@@ -114,7 +114,6 @@ pub fn genesis_config() -> ChainSpec {
 		GenesisConfig {
 			system: SystemConfig {
 				code: wasm_binary_unwrap().to_vec(),
-				changes_trie_config: Default::default(),
 			},
 			babe: BabeConfig {
 				authorities: vec![],
@@ -356,7 +355,6 @@ pub fn development_config() -> ChainSpec {
 		GenesisConfig {
 			system: SystemConfig {
 				code: wasm_binary_unwrap().to_vec(),
-				changes_trie_config: Default::default(),
 			},
 			babe: BabeConfig {
 				authorities: vec![],
@@ -549,7 +547,6 @@ pub fn local_testnet_config() -> ChainSpec {
 		GenesisConfig {
 			system: SystemConfig {
 				code: wasm_binary_unwrap().to_vec(),
-				changes_trie_config: Default::default(),
 			},
 			babe: BabeConfig {
 				authorities: vec![],

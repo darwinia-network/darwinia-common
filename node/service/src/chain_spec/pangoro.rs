@@ -103,10 +103,7 @@ pub fn genesis_config() -> ChainSpec {
 		};
 
 		GenesisConfig {
-			system: SystemConfig {
-				code: wasm_binary_unwrap().to_vec(),
-				changes_trie_config: Default::default(),
-			},
+			system: SystemConfig { code: wasm_binary_unwrap().to_vec() },
 			babe: BabeConfig { authorities: vec![], epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG) },
 			balances: BalancesConfig {
 				balances: vec![
@@ -256,10 +253,7 @@ pub fn development_config() -> ChainSpec {
 		};
 
 		GenesisConfig {
-			system: SystemConfig {
-				code: wasm_binary_unwrap().to_vec(),
-				changes_trie_config: Default::default(),
-			},
+			system: SystemConfig { code: wasm_binary_unwrap().to_vec() },
 			babe: BabeConfig { authorities: vec![], epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG) },
 			balances: BalancesConfig {
 				balances: endowed_accounts.clone().into_iter().map(|a| (a, MANY_COINS)).collect(),
