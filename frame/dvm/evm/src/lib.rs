@@ -46,7 +46,7 @@ use evm::{Config as EvmConfig, ExitError, ExitReason};
 use serde::{Deserialize, Serialize};
 // --- paritytech ---
 use frame_support::{
-	traits::FindAuthor,
+	traits::{FindAuthor, WithdrawReasons},
 	weights::{PostDispatchInfo, Weight},
 };
 use frame_system::RawOrigin;
@@ -486,16 +486,28 @@ pub trait EnsureAddressOrigin<OuterOrigin> {
 
 /// A trait for handling currency decimal difference between native and evm tokens.
 pub trait CurrencyAdapt<T: Config> {
+	/// Get account balance, the decimal of the returned result is consistent with Ethereum.
 	fn account_balance(account_id: &T::AccountId) -> U256;
+	/// Get the total supply of token in Ethereum decimal.
 	fn evm_total_supply() -> U256;
+	/// Mutate account balance, the new_balance's decimal should be the same as Ethereum.
 	fn mutate_account_balance(account_id: &T::AccountId, balance: U256);
+	/// Ensure that an account can withdraw from their fee balance.
+	fn ensure_can_withdraw(
+		who: &T::AccountId,
+		amount: U256,
+		reasons: WithdrawReasons,
+	) -> Result<(), ExitError>;
 
+	/// Transfer value. the value's decimal should be the same as Ethereum.
 	fn evm_transfer(
 		source: &T::AccountId,
 		target: &T::AccountId,
 		value: U256,
 	) -> Result<(), ExitError>;
 
+	/// Get the account balance by ethereum address, the decimal of the returned result is
+	/// consistent with Ethereum.
 	fn evm_balance(address: &H160) -> U256 {
 		let account_id = <T as Config>::IntoAccountId::derive_substrate_address(address);
 		Self::account_balance(&account_id)

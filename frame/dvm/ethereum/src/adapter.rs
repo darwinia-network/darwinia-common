@@ -21,7 +21,10 @@
 // --- crates.io ---
 use evm::ExitError;
 // --- paritytech ---
-use frame_support::{ensure, traits::Currency};
+use frame_support::{
+	ensure,
+	traits::{Currency, WithdrawReasons},
+};
 use sp_core::U256;
 use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
 // --- darwinia-network ---
@@ -216,5 +219,38 @@ where
 			},
 			_ => return,
 		}
+	}
+
+	/// Ensure that an account can withdraw from their fee balance.The account's decimal is the same
+	/// as Ethereum.
+	fn ensure_can_withdraw(
+		who: &T::AccountId,
+		amount: U256,
+		reasons: WithdrawReasons,
+	) -> Result<(), ExitError> {
+		// Ensure the evm balance of the account large than the withdraw amount
+		let old_evm_balance = Self::account_balance(who);
+		let (_old_sub, old_remaining) = old_evm_balance.div_mod(U256::from(POW_9));
+		ensure!(old_evm_balance >= amount, ExitError::OutOfFund);
+
+		// Because of precision difference, the amount also needs to convert.
+		let (mut amount_sub, amount_remaining) = amount.div_mod(U256::from(POW_9));
+		if old_remaining < amount_remaining {
+			// Add 1, if the substrate balance part touched
+			amount_sub = amount_sub.saturating_add(U256::from(1));
+		}
+
+		// Calculate the new substrate balance part
+		let new_evm_balance = old_evm_balance.saturating_sub(amount);
+		let (new_sub, _new_remaining) = new_evm_balance.div_mod(U256::from(POW_9));
+
+		// Ensure the account underlying substrate account has no liquidity restrictions.
+		C::ensure_can_withdraw(
+			who,
+			amount_sub.low_u128().unique_saturated_into(),
+			reasons,
+			new_sub.low_u128().unique_saturated_into(),
+		)
+		.map_err(|_| ExitError::OutOfFund)
 	}
 }
