@@ -48,7 +48,7 @@
 //! has multiple misbehaviors. However, accounting for such cases is necessary
 //! to deter a class of "rage-quit" attacks.
 //!
-//! Based on research at <https://w3f-research.readthedocs.io/en/latest/polkadot/slashing/npos.html>
+//! Based on research at <https://research.web3.foundation/en/latest/polkadot/slashing/npos.html>
 
 // --- crates.io ---
 use codec::{Decode, Encode};
