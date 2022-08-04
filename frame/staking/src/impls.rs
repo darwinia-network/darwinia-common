@@ -159,6 +159,10 @@ impl<T: Config> Pallet<T> {
 			.unwrap_or_default()
 	}
 
+	pub fn weight_of_fn() -> Box<dyn Fn(&T::AccountId) -> VoteWeight> {
+		Box::new(Self::weight_of)
+	}
+
 	pub fn weight_of(who: &AccountId<T>) -> VoteWeight {
 		Self::power_of(who) as _
 	}
