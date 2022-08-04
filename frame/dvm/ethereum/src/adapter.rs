@@ -254,6 +254,6 @@ where
 			reasons,
 			new_sub.low_u128().unique_saturated_into(),
 		)
-		.map_err(|_| ExitError::Other("Liquidity Restrictions"))
+		.map_err(|_| ExitError::Other("Liquidity Restrictions".into()))
 	}
 }
