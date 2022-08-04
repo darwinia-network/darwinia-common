@@ -1905,48 +1905,35 @@ fn reward_to_stake_works() {
 
 #[test]
 fn reap_stash_works() {
-	ExtBuilder::default()
-		.existential_deposit(10)
-		.balance_factor(10)
-		.build_and_execute(|| {
-			// given
-			assert_eq!(Ring::free_balance(10), 10);
-			assert_eq!(Ring::free_balance(11), 10 * 1000);
-			assert_eq!(Staking::bonded(&11), Some(10));
+	ExtBuilder::default().existential_deposit(10).balance_factor(10).build_and_execute(|| {
+		// given
+		assert_eq!(Ring::free_balance(10), 10);
+		assert_eq!(Ring::free_balance(11), 10 * 1000);
+		assert_eq!(Staking::bonded(&11), Some(10));
 
-			assert!(<Ledger<Test>>::contains_key(&10));
-			assert!(<Bonded<Test>>::contains_key(&11));
-			assert!(<Validators<Test>>::contains_key(&11));
-			assert!(<Payee<Test>>::contains_key(&11));
+		assert!(<Ledger<Test>>::contains_key(&10));
+		assert!(<Bonded<Test>>::contains_key(&11));
+		assert!(<Validators<Test>>::contains_key(&11));
+		assert!(<Payee<Test>>::contains_key(&11));
 
-			// stash is not reapable
-			assert_noop!(
-				Staking::reap_stash(Origin::signed(20), 11, 0),
-				<Error<Test>>::FundedTarget
-			);
-			// controller or any other account is not reapable
-			assert_noop!(Staking::reap_stash(Origin::signed(20), 10, 0), Error::<Test>::NotStash);
+		// stash is not reapable
+		assert_noop!(Staking::reap_stash(Origin::signed(20), 11, 0), <Error<Test>>::FundedTarget);
+		// controller or any other account is not reapable
+		assert_noop!(Staking::reap_stash(Origin::signed(20), 10, 0), Error::<Test>::NotStash);
 
-			// no easy way to cause an account to go below ED, we tweak their staking ledger
-			// instead.
-			<Ledger<Test>>::insert(
-				10,
-				StakingLedger {
-					stash: 11,
-					active: 5,
-					..Default::default()
-				},
-			);
+		// no easy way to cause an account to go below ED, we tweak their staking ledger
+		// instead.
+		<Ledger<Test>>::insert(10, StakingLedger { stash: 11, active: 5, ..Default::default() });
 
-			// reap-able
-			assert_ok!(Staking::reap_stash(Origin::signed(20), 11, 0));
+		// reap-able
+		assert_ok!(Staking::reap_stash(Origin::signed(20), 11, 0));
 
-			// then
-			assert!(!<Ledger<Test>>::contains_key(&10));
-			assert!(!<Bonded<Test>>::contains_key(&11));
-			assert!(!<Validators<Test>>::contains_key(&11));
-			assert!(!<Payee<Test>>::contains_key(&11));
-		});
+		// then
+		assert!(!<Ledger<Test>>::contains_key(&10));
+		assert!(!<Bonded<Test>>::contains_key(&11));
+		assert!(!<Validators<Test>>::contains_key(&11));
+		assert!(!<Payee<Test>>::contains_key(&11));
+	});
 }
 
 #[test]
