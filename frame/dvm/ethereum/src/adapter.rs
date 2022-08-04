@@ -156,6 +156,9 @@ where
 		if value == U256::zero() || source == target {
 			return Ok(());
 		}
+
+		Self::ensure_can_withdraw(source, value, WithdrawReasons::all())?;
+
 		let source_balance = Self::account_balance(source);
 		ensure!(source_balance >= value, ExitError::OutOfFund);
 		let new_source_balance = source_balance.saturating_sub(value);

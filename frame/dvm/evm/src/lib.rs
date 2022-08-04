@@ -488,10 +488,13 @@ pub trait EnsureAddressOrigin<OuterOrigin> {
 pub trait CurrencyAdapt<T: Config> {
 	/// Get account balance, the decimal of the returned result is consistent with Ethereum.
 	fn account_balance(account_id: &T::AccountId) -> U256;
+
 	/// Get the total supply of token in Ethereum decimal.
 	fn evm_total_supply() -> U256;
+
 	/// Mutate account balance, the new_balance's decimal should be the same as Ethereum.
 	fn mutate_account_balance(account_id: &T::AccountId, balance: U256);
+
 	/// Ensure that an account can withdraw from their fee balance.
 	fn ensure_can_withdraw(
 		who: &T::AccountId,
