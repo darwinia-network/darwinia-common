@@ -19,7 +19,7 @@
 // --- std ---
 use std::{env, path::PathBuf};
 // --- paritytech ---
-use sc_cli::{Error as CliError, Result as CliResult, Role, RuntimeVersion, SubstrateCli};
+use sc_cli::{Error as CliError, Result as CliResult, RuntimeVersion, SubstrateCli};
 use sc_service::{ChainSpec, DatabaseSource};
 #[cfg(feature = "try-runtime")]
 use sc_service::{Error as ServiceError, TaskManager};
@@ -174,29 +174,15 @@ pub fn run() -> CliResult<()> {
 
 			if chain_spec.is_pangolin() {
 				runner.run_node_until_exit(|config| async move {
-					match config.role {
-						Role::Light => panic!("Not support light client"),
-						_ => pangolin_service::new_full(
-							config,
-							authority_discovery_disabled,
-							eth_rpc_config,
-						)
-						.map(|(task_manager, _, _)| task_manager),
-					}
-					.map_err(CliError::from)
+					pangolin_service::new_full(config, authority_discovery_disabled, eth_rpc_config)
+						.map(|(task_manager, _, _)| task_manager)
+						.map_err(CliError::from)
 				})
 			} else {
 				runner.run_node_until_exit(|config| async move {
-					match config.role {
-						Role::Light => panic!("Not support light client"),
-						_ => pangoro_service::new_full(
-							config,
-							authority_discovery_disabled,
-							eth_rpc_config,
-						)
-						.map(|(task_manager, _, _)| task_manager),
-					}
-					.map_err(CliError::from)
+					pangoro_service::new_full(config, authority_discovery_disabled, eth_rpc_config)
+						.map(|(task_manager, _, _)| task_manager)
+						.map_err(CliError::from)
 				})
 			}
 		},
