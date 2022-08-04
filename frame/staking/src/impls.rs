@@ -1214,7 +1214,6 @@ impl<T: Config> ElectionDataProvider<AccountId<T>, BlockNumberFor<T>> for Pallet
 		targets: Vec<AccountId<T>>,
 		target_stake: Option<VoteWeight>,
 	) {
-		use sp_std::convert::TryFrom;
 		targets.into_iter().for_each(|v| {
 			let stake: BalanceOf<T> = target_stake
 				.and_then(|w| <BalanceOf<T>>::try_from(w).ok())
