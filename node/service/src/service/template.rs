@@ -278,7 +278,11 @@ pub fn new_full(
 				},
 			});
 			// we spawn the future on a background thread managed by service.
-			task_manager.spawn_essential_handle().spawn_blocking("manual-seal", authorship_future);
+			task_manager.spawn_essential_handle().spawn_blocking(
+				"manual-seal",
+				None,
+				authorship_future,
+			);
 		} else {
 			let authorship_future = manual_seal::run_instant_seal(InstantSealParams {
 				block_import,
@@ -294,7 +298,11 @@ pub fn new_full(
 				},
 			});
 			// we spawn the future on a background thread managed by service.
-			task_manager.spawn_essential_handle().spawn_blocking("instant-seal", authorship_future);
+			task_manager.spawn_essential_handle().spawn_blocking(
+				"instant-seal",
+				None,
+				authorship_future,
+			);
 		}
 
 		log::info!("Manual Seal Ready");

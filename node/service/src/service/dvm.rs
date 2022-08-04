@@ -96,6 +96,8 @@ where
 			// Spawn Frontier FeeHistory cache maintenance task.
 			task_manager.spawn_essential_handle().spawn(
 				"frontier-fee-history",
+				// TODO: cc @AsceticBear
+				Some("frontier-fee-history"),
 				EthTask::fee_history_task(
 					client.clone(),
 					overrides.clone(),
@@ -106,6 +108,8 @@ where
 			// Spawn mapping sync worker task.
 			task_manager.spawn_essential_handle().spawn(
 				"frontier-mapping-sync-worker",
+				// TODO: cc @AsceticBear
+				Some("frontier-mapping-sync"),
 				MappingSyncWorker::new(
 					client.import_notification_stream(),
 					Duration::new(6, 0),
@@ -124,6 +128,8 @@ where
 				const FILTER_RETAIN_THRESHOLD: u64 = 100;
 				task_manager.spawn_essential_handle().spawn(
 					"frontier-filter-pool",
+					// TODO: cc @AsceticBear
+					Some("frontier-filter-pool"),
 					EthTask::filter_pool_task(client.clone(), filter_pool, FILTER_RETAIN_THRESHOLD),
 				);
 			}
@@ -164,15 +170,23 @@ where
 			// `trace_filter` cache task. Essential.
 			// Proxies rpc requests to it's handler.
 			if let Some(trace_filter_task) = trace_filter_task {
-				task_manager
-					.spawn_essential_handle()
-					.spawn("trace-filter-cache", trace_filter_task);
+				task_manager.spawn_essential_handle().spawn(
+					"trace-filter-cache",
+					// TODO: cc @AsceticBear
+					Some("trace-filter-cache"),
+					trace_filter_task,
+				);
 			}
 
 			// `debug` task if enabled. Essential.
 			// Proxies rpc requests to it's handler.
 			if let Some(debug_task) = debug_task {
-				task_manager.spawn_essential_handle().spawn("ethapi-debug", debug_task);
+				task_manager.spawn_essential_handle().spawn(
+					"ethapi-debug",
+					// TODO: cc @AsceticBear
+					Some("ethapi-debug"),
+					debug_task,
+				);
 			}
 
 			EthRpcRequesters { debug: debug_requester, trace: trace_filter_requester }

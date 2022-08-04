@@ -348,7 +348,7 @@ where
 		};
 		let babe = sc_consensus_babe::start_babe(babe_config)?;
 
-		task_manager.spawn_essential_handle().spawn_blocking("babe", babe);
+		task_manager.spawn_essential_handle().spawn_blocking("babe", None, babe);
 	}
 
 	if is_authority && !authority_discovery_disabled {
@@ -374,9 +374,11 @@ where
 				prometheus_registry.clone(),
 			);
 
-		task_manager
-			.spawn_handle()
-			.spawn("authority-discovery-worker", authority_discovery_worker.run());
+		task_manager.spawn_handle().spawn(
+			"authority-discovery-worker",
+			Some("authority-discovery"),
+			authority_discovery_worker.run(),
+		);
 	}
 
 	let keystore = if is_authority { Some(keystore_container.sync_keystore()) } else { None };
@@ -416,6 +418,7 @@ where
 
 		task_manager.spawn_essential_handle().spawn_blocking(
 			"grandpa-voter",
+			None,
 			sc_finality_grandpa::run_grandpa_voter(grandpa_config)?,
 		);
 	}
@@ -501,7 +504,7 @@ where
 			executor,
 		)?;
 	let telemetry = telemetry.map(|(worker, telemetry)| {
-		task_manager.spawn_handle().spawn("telemetry", worker.run());
+		task_manager.spawn_handle().spawn("telemetry", Some("telemetry"), worker.run());
 		telemetry
 	});
 	let client = Arc::new(client);
