@@ -928,6 +928,8 @@ impl<T: Config> Pallet<T> {
 		let mut nominators_taken = 0u32;
 		// track every nominator iterated over, but not necessarily added to `all_voters`
 		let mut nominators_seen = 0u32;
+		// cache the total-issuance once in this function
+		let weight_of = Self::weight_of_fn();
 		let mut nominators_iter = T::SortedListProvider::iter();
 
 		while nominators_taken < nominators_quota && nominators_seen < nominators_quota * 2 {
@@ -942,6 +944,12 @@ impl<T: Config> Pallet<T> {
 			if let Some(Nominations { submitted_in, mut targets, suppressed: _ }) =
 				<Nominators<T>>::get(&nominator)
 			{
+				log!(
+					trace,
+					"fetched nominator {:?} with weight {:?}",
+					nominator,
+					weight_of(&nominator)
+				);
 				targets.retain(|stash| {
 					slashing_spans
 						.get(stash)
@@ -949,11 +957,11 @@ impl<T: Config> Pallet<T> {
 				});
 
 				if !targets.len().is_zero() {
-					all_voters.push((nominator.clone(), Self::weight_of(&nominator), targets));
+					all_voters.push((nominator.clone(), weight_of(&nominator), targets));
 					nominators_taken.saturating_inc();
 				}
 			} else {
-				log!(error, "invalid item in `SortedListProvider`: {:?}", nominator)
+				log!(error, "DEFENSIVE: invalid item in `SortedListProvider`: {:?}", nominator)
 			}
 		}
 
