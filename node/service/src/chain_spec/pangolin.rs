@@ -57,9 +57,8 @@ const DEPOSIT_REDEEM_ADDRESS: &str = "0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e
 const SET_AUTHORITIES_ADDRESS: &str = "0xD35Bb6F1bc1C84b53E0995c1830454AB7C4147f1";
 const RING_TOKEN_ADDRESS: &str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
 const KTON_TOKEN_ADDRESS: &str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
-const ETHEREUM_RELAY_AUTHORITY_SIGNER: &str = "0x68898db1012808808c903f390909c52d9f706749";
+const ECDSA_AUTHORITY: &str = "0x68898db1012808808c903f390909c52d9f706749";
 const MAPPING_FACTORY_ADDRESS: &str = "0xE1586e744b99bF8e4C981DfE4dD4369d6f8Ed88A";
-const ETHEREUM_BACKING_ADDRESS: &str = "0xb2Bea2358d817dAE01B0FD0DC3aECB25910E65AA";
 
 impl_authority_keys!();
 
@@ -115,7 +114,6 @@ pub fn genesis_config() -> ChainSpec {
 		GenesisConfig {
 			system: SystemConfig {
 				code: wasm_binary_unwrap().to_vec(),
-				changes_trie_config: Default::default(),
 			},
 			babe: BabeConfig {
 				authorities: vec![],
@@ -205,7 +203,19 @@ pub fn genesis_config() -> ChainSpec {
 			},
 			grandpa: Default::default(),
 			beefy: Default::default(),
-			// beefy_gadget: Default::default(),
+			message_gadget: Default::default(),
+			ecdsa_relay_authority: EcdsaRelayAuthorityConfig {
+				authorities: vec![(
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					array_bytes::hex_into_unchecked(ECDSA_AUTHORITY),
+					1
+				)]
+			},
+			ecdsa_authority: EcdsaAuthorityConfig {
+				authorities: vec![
+					array_bytes::hex_into_unchecked(ECDSA_AUTHORITY),
+				]
+			},
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			democracy: Default::default(),
@@ -267,17 +277,6 @@ pub fn genesis_config() -> ChainSpec {
 				kton_token_address: array_bytes::hex_into_unchecked(KTON_TOKEN_ADDRESS),
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
-			},
-			ethereum_issuing: EthereumIssuingConfig {
-				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
-				ethereum_backing_address: array_bytes::hex_into_unchecked(ETHEREUM_BACKING_ADDRESS),
-			},
-			ethereum_relay_authorities: EthereumRelayAuthoritiesConfig {
-				authorities: vec![(
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
-					1
-				)]
 			},
 			tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
@@ -356,7 +355,6 @@ pub fn development_config() -> ChainSpec {
 		GenesisConfig {
 			system: SystemConfig {
 				code: wasm_binary_unwrap().to_vec(),
-				changes_trie_config: Default::default(),
 			},
 			babe: BabeConfig {
 				authorities: vec![],
@@ -399,7 +397,19 @@ pub fn development_config() -> ChainSpec {
 			},
 			grandpa: Default::default(),
 			beefy: Default::default(),
-			// beefy_gadget: Default::default(),
+			message_gadget: Default::default(),
+			ecdsa_relay_authority: EcdsaRelayAuthorityConfig {
+				authorities: vec![(
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					array_bytes::hex_into_unchecked(ECDSA_AUTHORITY),
+					1
+				)]
+			},
+			ecdsa_authority: EcdsaAuthorityConfig {
+				authorities: vec![
+					array_bytes::hex_into_unchecked(ECDSA_AUTHORITY),
+				]
+			},
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			democracy: Default::default(),
@@ -462,17 +472,6 @@ pub fn development_config() -> ChainSpec {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			ethereum_issuing: EthereumIssuingConfig {
-				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
-				ethereum_backing_address: array_bytes::hex_into_unchecked(ETHEREUM_BACKING_ADDRESS),
-			},
-			ethereum_relay_authorities: EthereumRelayAuthoritiesConfig {
-				authorities: vec![(
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
-					1
-				)]
-			},
 			tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
@@ -492,7 +491,7 @@ pub fn development_config() -> ChainSpec {
 	}
 
 	ChainSpec::from_genesis(
-		"Pangolin",
+		"Pangolin Development Testnet",
 		"pangolin_dev",
 		ChainType::Development,
 		genesis,
@@ -548,7 +547,6 @@ pub fn local_testnet_config() -> ChainSpec {
 		GenesisConfig {
 			system: SystemConfig {
 				code: wasm_binary_unwrap().to_vec(),
-				changes_trie_config: Default::default(),
 			},
 			babe: BabeConfig {
 				authorities: vec![],
@@ -591,7 +589,19 @@ pub fn local_testnet_config() -> ChainSpec {
 			},
 			grandpa: Default::default(),
 			beefy: Default::default(),
-			// beefy_gadget: Default::default(),
+			message_gadget: Default::default(),
+			ecdsa_relay_authority: EcdsaRelayAuthorityConfig {
+				authorities: vec![(
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					array_bytes::hex_into_unchecked(ECDSA_AUTHORITY),
+					1
+				)]
+			},
+			ecdsa_authority: EcdsaAuthorityConfig {
+				authorities: vec![
+					array_bytes::hex_into_unchecked(ECDSA_AUTHORITY),
+				]
+			},
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			democracy: Default::default(),
@@ -654,17 +664,6 @@ pub fn local_testnet_config() -> ChainSpec {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
 			},
-			ethereum_issuing: EthereumIssuingConfig {
-				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
-				ethereum_backing_address: array_bytes::hex_into_unchecked(ETHEREUM_BACKING_ADDRESS),
-			},
-			ethereum_relay_authorities: EthereumRelayAuthoritiesConfig {
-				authorities: vec![(
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					array_bytes::hex_into_unchecked(ETHEREUM_RELAY_AUTHORITY_SIGNER),
-					1
-				)]
-			},
 			tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
@@ -684,7 +683,7 @@ pub fn local_testnet_config() -> ChainSpec {
 	}
 
 	ChainSpec::from_genesis(
-		"Pangolin",
+		"Pangolin Local Testnet",
 		"pangolin_dev",
 		ChainType::Development,
 		genesis,

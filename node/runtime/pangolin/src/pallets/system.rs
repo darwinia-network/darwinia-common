@@ -1,7 +1,6 @@
 // --- paritytech ---
 use frame_support::{traits::Contains, weights::constants::RocksDbWeight};
 use frame_system::Config;
-use sp_runtime::traits::AccountIdLookup;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use crate::*;
@@ -40,7 +39,7 @@ impl Config for Runtime {
 	type Hashing = Hashing;
 	type Header = Header;
 	type Index = Nonce;
-	type Lookup = AccountIdLookup<AccountId, ()>;
+	type Lookup = DarwiniaAccountLookup;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();

@@ -19,7 +19,6 @@
 //! Test utilities
 
 // --- crates.io ---
-use ethabi::{Bytes, Function, Param, Result, StateMutability, Token};
 use ethereum::{TransactionAction, TransactionSignature};
 use rlp::RlpStream;
 use sha3::{Digest, Keccak256};
@@ -128,17 +127,4 @@ impl LegacyUnsignedTransaction {
 			signature: sig,
 		})
 	}
-}
-
-pub fn create_function_encode_bytes(
-	name: String,
-	inputs: Vec<Param>,
-	outputs: Vec<Param>,
-	constant: bool,
-	state_mutability: StateMutability,
-	tokens: &[Token],
-) -> Result<Bytes> {
-	#[allow(deprecated)]
-	let function = Function { name, inputs, outputs, constant, state_mutability };
-	function.encode_input(tokens)
 }

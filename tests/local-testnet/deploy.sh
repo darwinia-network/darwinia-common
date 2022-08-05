@@ -30,10 +30,6 @@ cargo build --release
 
 index=100
 
-if [[ "$CHAIN" == "pangolin" ]] ; then
-  index=100
-fi
-
 if [[ "$CHAIN" == "pangoro" ]] ; then
   index=200
 fi

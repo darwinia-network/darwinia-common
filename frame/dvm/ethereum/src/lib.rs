@@ -24,7 +24,7 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod account_basic;
+pub mod adapter;
 #[cfg(all(feature = "std", test))]
 mod mock;
 #[cfg(all(feature = "std", test))]
@@ -67,7 +67,7 @@ use sp_runtime::{
 };
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
-use darwinia_evm::{AccountBasic, BlockHashMapping, GasWeightMapping, Runner};
+use darwinia_evm::{BlockHashMapping, GasWeightMapping, Runner};
 use darwinia_support::evm::{recover_signer, DeriveEthereumAddress, INTERNAL_TX_GAS_LIMIT};
 
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
@@ -283,9 +283,8 @@ pub mod pallet {
 
 			let extracted_transaction = match transaction {
 				Transaction::Legacy(t) => Ok(Transaction::Legacy(ethereum::LegacyTransaction {
-					nonce: <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source)
-						.nonce, // auto set
-					gas_price: T::FeeCalculator::min_gas_price(), // auto set
+					nonce: darwinia_evm::Pallet::<T>::account_basic(&source).nonce, // auto set
+					gas_price: T::FeeCalculator::min_gas_price(),                   // auto set
 					gas_limit: t.gas_limit,
 					action: t.action,
 					value: t.value,
@@ -535,7 +534,7 @@ impl<T: Config> Pallet<T> {
 
 		let fee = max_fee_per_gas.saturating_mul(gas_limit);
 
-		let account_data = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&origin);
+		let account_data = darwinia_evm::Pallet::<T>::account_basic(&origin);
 		let total_payment = transaction_data.value.saturating_add(fee);
 		if account_data.balance < total_payment {
 			return Err(InvalidTransaction::Payment.into());
@@ -943,7 +942,7 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 	/// The internal transactions will catch and throw evm error comes from runner to caller.
 	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
 		let source = T::PalletId::get().derive_ethereum_address();
-		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
+		let nonce = darwinia_evm::Pallet::<T>::account_basic(&source).nonce;
 		let transaction = internal_transaction::<T>(nonce, target, input);
 
 		Self::raw_transact(source, transaction).map(|(reason, used_gas)| match reason {
@@ -965,7 +964,7 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 	fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
 		sp_io::storage::start_transaction();
 		let source = T::PalletId::get().derive_ethereum_address();
-		let nonce = <T as darwinia_evm::Config>::RingAccountBasic::account_basic(&source).nonce;
+		let nonce = darwinia_evm::Pallet::<T>::account_basic(&source).nonce;
 		let transaction = internal_transaction::<T>(nonce, contract, input);
 
 		let (_, _, info) = Self::execute(source, &transaction, None)?;

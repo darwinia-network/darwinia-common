@@ -21,7 +21,7 @@
 use core::marker::PhantomData;
 // --- darwinia-network ---
 use darwinia_evm::GasWeightMapping;
-use darwinia_evm_precompile_utils::PrecompileHelper;
+use darwinia_evm_precompile_utils::revert;
 use darwinia_support::evm::DeriveSubstrateAddress;
 // --- paritytech ---
 use codec::Decode;
@@ -50,15 +50,12 @@ where
 		context: &Context,
 		_is_static: bool,
 	) -> PrecompileResult {
-		let helper = PrecompileHelper::<T>::new(input, target_gas);
-
-		let call =
-			T::Call::decode(&mut &input[..]).map_err(|_| helper.revert("Decode call failed"))?;
+		let call = T::Call::decode(&mut &input[..]).map_err(|_| revert("Decode call failed"))?;
 		let info = call.get_dispatch_info();
 
 		let valid_call = info.pays_fee == Pays::Yes && info.class == DispatchClass::Normal;
 		if !valid_call {
-			return Err(helper.revert("Invalid call"));
+			return Err(revert("Invalid call"));
 		}
 
 		if let Some(gas) = target_gas {
@@ -68,7 +65,7 @@ where
 			}
 		}
 
-		let origin = T::IntoAccountId::derive_substrate_address(context.caller);
+		let origin = T::IntoAccountId::derive_substrate_address(&context.caller);
 
 		match call.dispatch(Some(origin).into()) {
 			Ok(post_info) => {
@@ -82,7 +79,10 @@ where
 					logs: Default::default(),
 				})
 			},
-			Err(e) => Err(helper.revert(e.error.into())),
+			Err(e) => {
+				let error_msg: &'static str = e.error.into();
+				Err(revert(error_msg))
+			},
 		}
 	}
 }

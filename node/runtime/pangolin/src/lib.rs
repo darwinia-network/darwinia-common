@@ -122,7 +122,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 0,
-	spec_version: 2_8_14_0,
+	spec_version: 2_8_18_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -167,12 +167,14 @@ frame_support::construct_runtime! {
 		Session: pallet_session::{Pallet, Call, Storage, Config<T>, Event} = 12,
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 13,
 		Beefy: pallet_beefy::{Pallet, Storage, Config<T>} = 55,
-		// BeefyGadget: darwinia_beefy_gadget::{Pallet, Call, Storage, Config} = 58,
+		MessageGadget: darwinia_message_gadget::{Pallet, Call, Storage, Config} = 58,
+		EcdsaRelayAuthority: darwinia_relay_authority::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
+		EcdsaAuthority: darwinia_ecdsa_authority::{Pallet, Call, Storage, Config, Event<T>} = 66,
 		// Mmr: pallet_mmr::{Pallet, Storage} = 56,
 		// MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 57,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
 		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Config} = 15,
-		HeaderMMR: darwinia_header_mmr::{Pallet, Storage} = 16,
+		HeaderMmr: darwinia_header_mmr::{Pallet, Storage} = 16,
 
 		// Governance stuff; uncallable initially.
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 17,
@@ -216,9 +218,7 @@ frame_support::construct_runtime! {
 
 		EthereumRelay: darwinia_bridge_ethereum::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
 		EthereumBacking: to_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
-		EthereumIssuing: from_ethereum_issuing::{Pallet, Call, Storage, Config, Event<T>} = 42,
 		EthereumRelayerGame: darwinia_relayer_game::<Instance1>::{Pallet, Storage} = 37,
-		EthereumRelayAuthorities: darwinia_relay_authorities::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
 
 		TronBacking: to_tron_backing::{Pallet, Config<T>} = 39,
 
@@ -503,10 +503,7 @@ sp_api::impl_runtime_apis! {
 		}
 
 		fn account_basic(address: H160) -> darwinia_evm::Account {
-			// --- darwinia-network ---
-			use darwinia_evm::AccountBasic;
-
-			<Runtime as darwinia_evm::Config>::RingAccountBasic::account_basic(&address)
+			EVM::account_basic(&address)
 		}
 
 		fn account_code_at(address: H160) -> Vec<u8> {
@@ -725,99 +722,6 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl bp_pangoro::PangoroFinalityApi<Block> for Runtime {
-		fn best_finalized() -> (bp_pangoro::BlockNumber, bp_pangoro::Hash) {
-			let header = BridgePangoroGrandpa::best_finalized();
-			(header.number, header.hash())
-		}
-	}
-
-	impl bp_pangoro::ToPangoroOutboundLaneApi<Block, Balance, bm_pangoro::ToPangoroMessagePayload> for Runtime {
-		fn message_details(
-			lane: bp_messages::LaneId,
-			begin: bp_messages::MessageNonce,
-			end: bp_messages::MessageNonce,
-		) -> Vec<bp_messages::MessageDetails<Balance>> {
-			bridge_runtime_common::messages_api::outbound_message_details::<
-				Runtime,
-				WithPangoroMessages,
-				bm_pangoro::WithPangoroMessageBridge,
-			>(lane, begin, end)
-		}
-
-		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgePangoroMessages::outbound_latest_received_nonce(lane)
-		}
-
-		fn latest_generated_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgePangoroMessages::outbound_latest_generated_nonce(lane)
-		}
-	}
-
-	impl bp_pangoro::FromPangoroInboundLaneApi<Block> for Runtime {
-		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgePangoroMessages::inbound_latest_received_nonce(lane)
-		}
-
-		fn latest_confirmed_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgePangoroMessages::inbound_latest_confirmed_nonce(lane)
-		}
-
-		fn unrewarded_relayers_state(lane: bp_messages::LaneId) -> bp_messages::UnrewardedRelayersState {
-			BridgePangoroMessages::inbound_unrewarded_relayers_state(lane)
-		}
-	}
-
-	impl bp_pangolin_parachain::PangolinParachainFinalityApi<Block> for Runtime{
-		fn best_finalized() -> (bp_pangolin_parachain::BlockNumber, bp_pangolin_parachain::Hash) {
-			use codec::Decode;
-			use sp_runtime::traits::Header;
-
-			let best_pangolin_parachain_head =
-				pallet_bridge_parachains::Pallet::<Runtime, WithRococoParachainsInstance>::best_parachain_head(
-					bm_pangolin_parachain::PANGOLIN_PARACHAIN_ID.into()
-				)
-				.and_then(|encoded_header| bp_pangolin_parachain::Header::decode(&mut &encoded_header.0[..]).ok());
-			match best_pangolin_parachain_head {
-				Some(head) => (*head.number(), head.hash()),
-				None => (Default::default(), Default::default()),
-			}
-		}
-	}
-
-	impl bp_pangolin_parachain::ToPangolinParachainOutboundLaneApi<Block, Balance, bm_pangolin_parachain::ToPangolinParachainMessagePayload> for Runtime {
-		fn message_details(
-			lane: bp_messages::LaneId,
-			begin: bp_messages::MessageNonce,
-			end: bp_messages::MessageNonce,
-		) -> Vec<bp_messages::MessageDetails<Balance>> {
-			bridge_runtime_common::messages_api::outbound_message_details::<
-				Runtime,
-				WithPangolinParachainMessages,
-				bm_pangolin_parachain::WithPangolinParachainMessageBridge,
-			>(lane, begin, end)
-		}
-
-		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgePangolinParachainMessages::outbound_latest_received_nonce(lane)
-		}
-		fn latest_generated_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgePangolinParachainMessages::outbound_latest_generated_nonce(lane)
-		}
-	}
-
-	impl bp_pangolin_parachain::FromPangolinParachainInboundLaneApi<Block> for Runtime {
-		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgePangolinParachainMessages::inbound_latest_received_nonce(lane)
-		}
-		fn latest_confirmed_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgePangolinParachainMessages::inbound_latest_confirmed_nonce(lane)
-		}
-		fn unrewarded_relayers_state(lane: bp_messages::LaneId) -> bp_messages::UnrewardedRelayersState {
-			BridgePangolinParachainMessages::inbound_unrewarded_relayers_state(lane)
-		}
-	}
-
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade() -> (frame_support::weights::Weight, frame_support::weights::Weight) {
@@ -840,16 +744,17 @@ sp_api::impl_runtime_apis! {
 			Vec<frame_benchmarking::BenchmarkList>,
 			Vec<frame_support::traits::StorageInfo>,
 		) {
-			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_benchmarking::{list_benchmark, baseline, Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
+			use baseline::Pallet as BaselineBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 
+			list_benchmark!(list, extra, frame_benchmarking, BaselineBench::<Runtime>);
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, darwinia_evm, EVM);
 			list_benchmark!(list, extra, from_substrate_issuing, Substrate2SubstrateIssuing);
-			list_benchmark!(list, extra, from_ethereum_issuing, EthereumIssuing);
 			list_benchmark!(list, extra, to_parachain_backing, ToPangolinParachainBacking);
 			list_benchmark!(list, extra, pallet_fee_market, PangoroFeeMarket);
 
@@ -861,42 +766,25 @@ sp_api::impl_runtime_apis! {
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
+			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 			use frame_system_benchmarking::Pallet as SystemBench;
+			use baseline::Pallet as BaselineBench;
 
 			impl frame_system_benchmarking::Config for Runtime {}
+			impl baseline::Config for Runtime {}
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
+			add_benchmark!(params, batches, frame_benchmarking, BaselineBench::<Runtime>);
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, darwinia_evm, EVM);
 			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
-			add_benchmark!(params, batches, from_ethereum_issuing, EthereumIssuing);
 			add_benchmark!(params, batches, to_parachain_backing, ToPangolinParachainBacking);
 			add_benchmark!(params, batches, pallet_fee_market, PangoroFeeMarket);
 
 			Ok(batches)
 		}
 	}
-}
-
-pub fn pangolin_to_pangoro_account_ownership_digest<Call, AccountId, SpecVersion>(
-	pangoro_call: &Call,
-	pangolin_account_id: AccountId,
-	pangoro_spec_version: SpecVersion,
-) -> Vec<u8>
-where
-	Call: Encode,
-	AccountId: Encode,
-	SpecVersion: Encode,
-{
-	pallet_bridge_dispatch::account_ownership_digest(
-		pangoro_call,
-		pangolin_account_id,
-		pangoro_spec_version,
-		PANGOLIN_CHAIN_ID,
-		PANGORO_CHAIN_ID,
-	)
 }

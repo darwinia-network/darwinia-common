@@ -37,8 +37,11 @@ pub use grandpa::*;
 pub mod beefy;
 pub use beefy::*;
 
-// pub mod beefy_gadget;
-// pub use beefy_gadget::*;
+pub mod message_gadget;
+pub use message_gadget::*;
+
+pub mod ecdsa_authority;
+pub use ecdsa_authority::*;
 
 // pub mod mmr;
 // pub use mmr::*;

@@ -104,7 +104,7 @@ pub fn register_offchain_ext(ext: &mut TestExternalities) {
 	ext.register_extension(OffchainWorkerExt::new(offchain));
 }
 
-pub fn header_parent_mmr_log(hash: Hash) -> DigestItem<Hash> {
+pub fn header_parent_mmr_log(hash: Hash) -> DigestItem {
 	let mmr_root_log =
 		MerkleMountainRangeRootLog::<Hash> { prefix: LOG_PREFIX, parent_mmr_root: hash };
 
@@ -134,8 +134,8 @@ pub fn new_block_with_parent_hash(parent_hash: Hash) -> Header {
 		&Default::default(),
 		Default::default(),
 	);
-	HeaderMmr::on_initialize(number);
-	HeaderMmr::on_finalize(number);
+	<HeaderMmr as OnInitialize<BlockNumber>>::on_initialize(number);
+	<HeaderMmr as OnFinalize<BlockNumber>>::on_finalize(number);
 	<frame_system::Pallet<Test>>::finalize()
 }
 

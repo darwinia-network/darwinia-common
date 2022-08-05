@@ -40,7 +40,7 @@ use frame_support::{log, traits::KeyOwnerProofSystem, weights::GetDispatchInfo};
 use frame_system::{
 	offchain::{AppCrypto, CreateSignedTransaction, SendTransactionTypes, SigningTypes},
 	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
-	CheckWeight, EnsureRoot,
+	CheckWeight,
 };
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
 use pallet_transaction_payment::ChargeTransactionPayment;
@@ -86,15 +86,13 @@ pub type Executive = frame_executive::Executive<
 >;
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
-pub type RootOrigin = EnsureRoot<AccountId>;
-
 type Ring = Balances;
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangoro"),
 	impl_name: sp_runtime::create_runtime_str!("Pangoro"),
 	authoring_version: 0,
-	spec_version: 2_8_14_0,
+	spec_version: 2_8_18_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
@@ -134,7 +132,8 @@ frame_support::construct_runtime!(
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 12,
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event} = 13,
 		Beefy: pallet_beefy::{Pallet, Storage, Config<T>} = 27,
-		// BeefyGadget: darwinia_beefy_gadget::{Pallet, Call, Storage, Config} = 30,
+		MessageGadget: darwinia_message_gadget::{Pallet, Call, Storage, Config} = 30,
+		EcdsaAuthority: darwinia_ecdsa_authority::{Pallet, Call, Storage, Config, Event<T>} = 32,
 		// Mmr: pallet_mmr::{Pallet, Storage} = 28,
 		// MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 29,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
@@ -414,10 +413,7 @@ sp_api::impl_runtime_apis! {
 		}
 
 		fn account_basic(address: H160) -> darwinia_evm::Account {
-			// --- darwinia-network ---
-			use darwinia_evm::AccountBasic;
-
-			<Runtime as darwinia_evm::Config>::RingAccountBasic::account_basic(&address)
+			EVM::account_basic(&address)
 		}
 
 		fn account_code_at(address: H160) -> Vec<u8> {
@@ -636,49 +632,6 @@ sp_api::impl_runtime_apis! {
 		}
 	}
 
-	impl bp_pangolin::PangolinFinalityApi<Block> for Runtime {
-		fn best_finalized() -> (bp_pangolin::BlockNumber, bp_pangolin::Hash) {
-			let header = BridgePangolinGrandpa::best_finalized();
-			(header.number, header.hash())
-		}
-	}
-
-	impl bp_pangolin::ToPangolinOutboundLaneApi<Block, Balance, bm_pangolin::ToPangolinMessagePayload> for Runtime {
-		fn message_details(
-			lane: bp_messages::LaneId,
-			begin: bp_messages::MessageNonce,
-			end: bp_messages::MessageNonce,
-		) -> Vec<bp_messages::MessageDetails<Balance>> {
-			bridge_runtime_common::messages_api::outbound_message_details::<
-				Runtime,
-				WithPangolinMessages,
-				bm_pangolin::WithPangolinMessageBridge,
-			>(lane, begin, end)
-		}
-
-		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgePangolinMessages::outbound_latest_received_nonce(lane)
-		}
-
-		fn latest_generated_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgePangolinMessages::outbound_latest_generated_nonce(lane)
-		}
-	}
-
-	impl bp_pangolin::FromPangolinInboundLaneApi<Block> for Runtime {
-		fn latest_received_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgePangolinMessages::inbound_latest_received_nonce(lane)
-		}
-
-		fn latest_confirmed_nonce(lane: bp_messages::LaneId) -> bp_messages::MessageNonce {
-			BridgePangolinMessages::inbound_latest_confirmed_nonce(lane)
-		}
-
-		fn unrewarded_relayers_state(lane: bp_messages::LaneId) -> bp_messages::UnrewardedRelayersState {
-			BridgePangolinMessages::inbound_unrewarded_relayers_state(lane)
-		}
-	}
-
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
 		fn on_runtime_upgrade() -> (frame_support::weights::Weight, frame_support::weights::Weight) {
@@ -701,12 +654,14 @@ sp_api::impl_runtime_apis! {
 			Vec<frame_benchmarking::BenchmarkList>,
 			Vec<frame_support::traits::StorageInfo>,
 		) {
-			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_benchmarking::{list_benchmark, baseline, Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
+			use baseline::Pallet as BaselineBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 
+			list_benchmark!(list, extra, frame_benchmarking, BaselineBench::<Runtime>);
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
 			list_benchmark!(list, extra, to_substrate_backing, Substrate2SubstrateBacking);
 
@@ -718,44 +673,23 @@ sp_api::impl_runtime_apis! {
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
+			use frame_benchmarking::{baseline, Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
 			use frame_system_benchmarking::Pallet as SystemBench;
+			use baseline::Pallet as BaselineBench;
 
 
 			impl frame_system_benchmarking::Config for Runtime {}
+			impl baseline::Config for Runtime {}
 
 			let whitelist: Vec<TrackedStorageKey> = vec![];
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
+			add_benchmark!(params, batches, frame_benchmarking, BaselineBench::<Runtime>);
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, to_substrate_backing, Substrate2SubstrateBacking);
 
 			Ok(batches)
 		}
 	}
-}
-
-/// Pangolin account ownership digest from Pangoro.
-///
-/// The byte vector returned by this function should be signed with a Pangolin account private key.
-/// This way, the owner of `pangoro_account_id` on Pangoro proves that the Pangolin account private
-/// key is also under his control.
-pub fn pangoro_to_pangolin_account_ownership_digest<Call, AccountId, SpecVersion>(
-	pangolin_call: &Call,
-	pangoro_account_id: AccountId,
-	pangolin_spec_version: SpecVersion,
-) -> sp_std::vec::Vec<u8>
-where
-	Call: Encode,
-	AccountId: Encode,
-	SpecVersion: Encode,
-{
-	pallet_bridge_dispatch::account_ownership_digest(
-		pangolin_call,
-		pangoro_account_id,
-		pangolin_spec_version,
-		PANGORO_CHAIN_ID,
-		PANGOLIN_CHAIN_ID,
-	)
 }

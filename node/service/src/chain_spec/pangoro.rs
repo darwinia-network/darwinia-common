@@ -35,6 +35,7 @@ pub type ChainSpec = GenericChainSpec<GenesisConfig, Extensions>;
 
 const PANGORO_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
+const ECDSA_AUTHORITY: &str = "0x68898db1012808808c903f390909c52d9f706749";
 const EVM_ACCOUNTS: &[&str] = &[
 	"0x68898db1012808808c903f390909c52d9f706749",
 	"0x6be02d1d3665660d22ff9624b7be0551ee1ac91b",
@@ -102,10 +103,7 @@ pub fn genesis_config() -> ChainSpec {
 		};
 
 		GenesisConfig {
-			system: SystemConfig {
-				code: wasm_binary_unwrap().to_vec(),
-				changes_trie_config: Default::default(),
-			},
+			system: SystemConfig { code: wasm_binary_unwrap().to_vec() },
 			babe: BabeConfig { authorities: vec![], epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG) },
 			balances: BalancesConfig {
 				balances: vec![
@@ -181,7 +179,10 @@ pub fn genesis_config() -> ChainSpec {
 			},
 			grandpa: Default::default(),
 			beefy: Default::default(),
-			// beefy_gadget: Default::default(),
+			message_gadget: Default::default(),
+			ecdsa_authority: EcdsaAuthorityConfig {
+				authorities: vec![array_bytes::hex_into_unchecked(ECDSA_AUTHORITY)],
+			},
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			treasury: Default::default(),
@@ -252,10 +253,7 @@ pub fn development_config() -> ChainSpec {
 		};
 
 		GenesisConfig {
-			system: SystemConfig {
-				code: wasm_binary_unwrap().to_vec(),
-				changes_trie_config: Default::default(),
-			},
+			system: SystemConfig { code: wasm_binary_unwrap().to_vec() },
 			babe: BabeConfig { authorities: vec![], epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG) },
 			balances: BalancesConfig {
 				balances: endowed_accounts.clone().into_iter().map(|a| (a, MANY_COINS)).collect(),
@@ -286,7 +284,10 @@ pub fn development_config() -> ChainSpec {
 			},
 			grandpa: Default::default(),
 			beefy: Default::default(),
-			// beefy_gadget: Default::default(),
+			message_gadget: Default::default(),
+			ecdsa_authority: EcdsaAuthorityConfig {
+				authorities: vec![array_bytes::hex_into_unchecked(ECDSA_AUTHORITY)],
+			},
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			treasury: Default::default(),
@@ -303,7 +304,7 @@ pub fn development_config() -> ChainSpec {
 	}
 
 	ChainSpec::from_genesis(
-		"Pangoro",
+		"Pangoro Development Testnet",
 		"pangoro_dev",
 		ChainType::Development,
 		genesis,

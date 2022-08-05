@@ -187,7 +187,6 @@ where
 			transaction_pool: transaction_pool.clone(),
 			spawn_handle: task_manager.spawn_handle(),
 			import_queue,
-			on_demand: None,
 			block_announce_validator_builder: None,
 			warp_sync: Some(warp_sync),
 		})?;
@@ -221,8 +220,12 @@ where
 		rpc_config: eth_rpc_config.clone(),
 		fee_history_cache: fee_history_cache.clone(),
 		overrides: overrides.clone(),
+		sync_from: match config.chain_spec.name() {
+			"Pangoro" => 729781,
+			_ => 0,
+		},
 	}
-	.spawn_task(&config.impl_name);
+	.spawn_task();
 	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let shared_voter_state = GrandpaSharedVoterState::empty();
 	let babe_config = babe_link.config().clone();
@@ -292,8 +295,6 @@ where
 		rpc_extensions_builder,
 		transaction_pool: transaction_pool.clone(),
 		task_manager: &mut task_manager,
-		on_demand: None,
-		remote_blockchain: None,
 		system_rpc_tx,
 		telemetry: telemetry.as_mut(),
 	})?;
@@ -344,7 +345,7 @@ where
 		};
 		let babe = sc_consensus_babe::start_babe(babe_config)?;
 
-		task_manager.spawn_essential_handle().spawn_blocking("babe", babe);
+		task_manager.spawn_essential_handle().spawn_blocking("babe", None, babe);
 	}
 
 	if is_authority && !authority_discovery_disabled {
@@ -370,9 +371,11 @@ where
 				prometheus_registry.clone(),
 			);
 
-		task_manager
-			.spawn_handle()
-			.spawn("authority-discovery-worker", authority_discovery_worker.run());
+		task_manager.spawn_handle().spawn(
+			"authority-discovery-worker",
+			Some("authority-discovery"),
+			authority_discovery_worker.run(),
+		);
 	}
 
 	let keystore = if is_authority { Some(keystore_container.sync_keystore()) } else { None };
@@ -412,6 +415,7 @@ where
 
 		task_manager.spawn_essential_handle().spawn_blocking(
 			"grandpa-voter",
+			None,
 			sc_finality_grandpa::run_grandpa_voter(grandpa_config)?,
 		);
 	}
@@ -467,7 +471,6 @@ where
 	use sc_telemetry::{Error as TelemetryError, TelemetryWorker};
 	use sc_transaction_pool::BasicPool;
 	use sp_consensus::CanAuthorWithNativeVersion;
-	use sp_runtime::traits::Block as BlockT;
 
 	if config.keystore_remote.is_some() {
 		return Err(ServiceError::Other(format!("Remote Keystores are not supported.")));
@@ -498,7 +501,7 @@ where
 			executor,
 		)?;
 	let telemetry = telemetry.map(|(worker, telemetry)| {
-		task_manager.spawn_handle().spawn("telemetry", worker.run());
+		task_manager.spawn_handle().spawn("telemetry", Some("telemetry"), worker.run());
 		telemetry
 	});
 	let client = Arc::new(client);
@@ -539,10 +542,8 @@ where
 					*timestamp,
 					slot_duration,
 				);
-			let uncles =
-				sp_authorship::InherentDataProvider::<<Block as BlockT>::Header>::check_inherents();
 
-			Ok((timestamp, slot, uncles))
+			Ok((timestamp, slot))
 		},
 		&task_manager.spawn_essential_handle(),
 		config.prometheus_registry(),

@@ -43,12 +43,12 @@ use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use crate::{StateStorage, StorageFilterT};
 use darwinia_ethereum::{
-	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
+	adapter::{CurrencyAdapter, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot,
 };
 use darwinia_evm::{runner::stack::Runner, EVMCurrencyAdapter, EnsureAddressTruncated};
 use darwinia_evm_precompile_utils::test_helper::{
-	address_build, create_function_encode_bytes, AccountInfo, LegacyUnsignedTransaction,
+	address_build, AccountInfo, LegacyUnsignedTransaction,
 };
 use darwinia_support::evm::DeriveSubstrateAddress;
 use pallet_fee_market::{BalanceOf, Config, Slasher};
@@ -134,6 +134,7 @@ impl pallet_timestamp::Config for Test {
 	type OnTimestampSet = ();
 	type WeightInfo = ();
 }
+
 pub struct FixedGasPrice;
 impl FeeCalculator for FixedGasPrice {
 	fn min_gas_price() -> U256 {
@@ -151,27 +152,18 @@ impl FindAuthor<H160> for FindAuthorTruncated {
 }
 pub struct HashedConverter;
 impl DeriveSubstrateAddress<AccountId32> for HashedConverter {
-	fn derive_substrate_address(address: H160) -> AccountId32 {
+	fn derive_substrate_address(address: &H160) -> AccountId32 {
 		let mut raw_account = [0u8; 32];
 		raw_account[0..20].copy_from_slice(&address[..]);
 		raw_account.into()
 	}
 }
-
-frame_support::parameter_types! {
-	pub const TransactionByteFee: u64 = 1;
-	pub const ChainId: u64 = 42;
-	pub const BlockGasLimit: U256 = U256::MAX;
-	pub PrecompilesValue: MockPrecompiles<Test> = MockPrecompiles::<_>::new();
-}
-
 pub struct StorageFilter;
 impl StorageFilterT for StorageFilter {
 	fn allow(prefix: &[u8]) -> bool {
 		prefix != Twox128::hash(b"EVM") && prefix != Twox128::hash(b"Ethereum")
 	}
 }
-
 pub struct MockPrecompiles<R>(PhantomData<R>);
 impl<R> MockPrecompiles<R>
 where
@@ -181,11 +173,10 @@ where
 		Self(Default::default())
 	}
 
-	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1].into_iter().map(|x| H160::from_low_u64_be(x)).collect()
+	pub fn used_addresses() -> [H160; 1] {
+		[addr(1)]
 	}
 }
-
 impl<R> PrecompileSet for MockPrecompiles<R>
 where
 	StateStorage<R, StorageFilter>: Precompile,
@@ -199,10 +190,8 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> Option<PrecompileResult> {
-		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
-
 		match address {
-			a if a == to_address(1) => Some(<StateStorage<R, StorageFilter>>::execute(
+			a if a == addr(1) => Some(<StateStorage<R, StorageFilter>>::execute(
 				input, target_gas, context, is_static,
 			)),
 			_ => None,
@@ -213,7 +202,15 @@ where
 		Self::used_addresses().contains(&address)
 	}
 }
-
+fn addr(a: u64) -> H160 {
+	H160::from_low_u64_be(a)
+}
+frame_support::parameter_types! {
+	pub const TransactionByteFee: u64 = 1;
+	pub const ChainId: u64 = 42;
+	pub const BlockGasLimit: U256 = U256::MAX;
+	pub PrecompilesValue: MockPrecompiles<Test> = MockPrecompiles::<_>::new();
+}
 impl darwinia_evm::Config for Test {
 	type BlockGasLimit = BlockGasLimit;
 	type BlockHashMapping = EthereumBlockHashMapping<Self>;
@@ -224,24 +221,29 @@ impl darwinia_evm::Config for Test {
 	type FindAuthor = FindAuthorTruncated;
 	type GasWeightMapping = ();
 	type IntoAccountId = HashedConverter;
-	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
+	type KtonBalanceAdapter = CurrencyAdapter<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
 	type PrecompilesType = MockPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type RingBalanceAdapter = CurrencyAdapter<Self, Ring, RingRemainBalance>;
 	type Runner = Runner<Self>;
 }
 
 frame_support::parameter_types! {
 	pub const MockPalletId: PalletId = PalletId(*b"dar/dvmp");
 }
-
 impl darwinia_ethereum::Config for Test {
 	type Event = Event;
 	type PalletId = MockPalletId;
 	type StateRoot = IntermediateStateRoot;
 }
 
+pub struct FeeMarketSlasher;
+impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
+	fn slash(_: BalanceOf<T, I>, _: T::BlockNumber) -> BalanceOf<T, I> {
+		todo!("Not implemented for the test");
+	}
+}
 frame_support::parameter_types! {
 	// Shared configurations.
 	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
@@ -253,14 +255,6 @@ frame_support::parameter_types! {
 	pub const ConfirmRelayersRewardRatio: Permill = Permill::from_percent(20);
 	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
 }
-
-pub struct FeeMarketSlasher;
-impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
-	fn slash(_: BalanceOf<T, I>, _: T::BlockNumber) -> BalanceOf<T, I> {
-		todo!("Not implemented for the test");
-	}
-}
-
 impl Config<F1> for Test {
 	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
 	type CollateralPerOrder = CollateralPerOrder;
@@ -386,10 +380,12 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 
 #[cfg(test)]
 mod tests {
-	use super::*;
 	// --- crates.io ---
 	use array_bytes::{bytes2hex, hex2bytes_unchecked};
-	use ethabi::{Param, ParamType, StateMutability, Token};
+	// --- darwinia-network ---
+	use super::*;
+	use crate::*;
+	use darwinia_evm_precompile_utils::prelude::*;
 	// --- paritytech ---
 	use fp_evm::CallOrCreateInfo;
 	use frame_support::{assert_ok, Blake2_128Concat, StorageHasher, Twox128};
@@ -457,16 +453,9 @@ mod tests {
 			key[0..16].copy_from_slice(&Twox128::hash(b"FeeMarketInstance1"));
 			key[16..32].copy_from_slice(&Twox128::hash(b"AssignedRelayers"));
 
-			// Call state_storage
-			let call_function = create_function_encode_bytes(
-				"state_storage".to_owned(),
-				vec![Param { name: "key".to_owned(), kind: ParamType::Bytes, internal_type: None }],
-				vec![Param { name: "res".to_owned(), kind: ParamType::Bytes, internal_type: None }],
-				true,
-				StateMutability::NonPayable,
-				&[Token::Bytes(key)],
-			)
-			.unwrap();
+			let call_function = EvmDataWriter::new_with_selector(Action::StateGetStorage)
+				.write::<Bytes>(Bytes(key.to_vec()))
+				.build();
 			let unsign_tx = LegacyUnsignedTransaction::new(
 				1,
 				1,
@@ -498,16 +487,9 @@ mod tests {
 			key.extend_from_slice(&Twox128::hash(b"AccountCodes"));
 			key.extend_from_slice(&Blake2_128Concat::hash(&Encode::encode(&contract)));
 
-			// Call state_storage
-			let call_function = create_function_encode_bytes(
-				"state_storage".to_owned(),
-				vec![Param { name: "key".to_owned(), kind: ParamType::Bytes, internal_type: None }],
-				vec![Param { name: "res".to_owned(), kind: ParamType::Bytes, internal_type: None }],
-				true,
-				StateMutability::NonPayable,
-				&[Token::Bytes(key)],
-			)
-			.unwrap();
+			let call_function = EvmDataWriter::new_with_selector(Action::StateGetStorage)
+				.write::<Bytes>(Bytes(key.to_vec()))
+				.build();
 			let unsign_tx = LegacyUnsignedTransaction::new(
 				1,
 				1,
@@ -523,8 +505,10 @@ mod tests {
 					CallOrCreateInfo::Create(_) => todo!(),
 				});
 			assert_eq!(
-				ethabi::decode(&[ParamType::String], &result.unwrap()[4..]).unwrap()[0],
-				Token::String("Read restriction".to_string())
+				result.unwrap(),
+				EvmDataWriter::new_with_selector(Error::Generic)
+					.write::<Bytes>(Bytes(b"Read restriction".to_vec()))
+					.build()
 			);
 		});
 	}

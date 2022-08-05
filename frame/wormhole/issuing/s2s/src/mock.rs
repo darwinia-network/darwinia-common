@@ -41,7 +41,7 @@ use crate::{
 	*, {self as s2s_issuing},
 };
 use darwinia_ethereum::{
-	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
+	adapter::{CurrencyAdapter, KtonRemainBalance, RingRemainBalance},
 	IntermediateStateRoot, RawOrigin,
 };
 use darwinia_evm::{EVMCurrencyAdapter, EnsureAddressTruncated, SubstrateBlockHashMapping};
@@ -65,8 +65,34 @@ pub const MAPPING_TOKEN_LOGIC_CONTRACT_BYTECODE: &str =
 
 darwinia_support::impl_test_account_data! {}
 
+impl frame_system::Config for Test {
+	type AccountData = AccountData<Balance>;
+	type AccountId = AccountId32;
+	type BaseCallFilter = Everything;
+	type BlockHashCount = ();
+	type BlockLength = ();
+	type BlockNumber = u64;
+	type BlockWeights = ();
+	type Call = Call;
+	type DbWeight = ();
+	type Event = ();
+	type Hash = H256;
+	type Hashing = BlakeTwo256;
+	type Header = Header;
+	type Index = u64;
+	type Lookup = IdentityLookup<Self::AccountId>;
+	type OnKilledAccount = ();
+	type OnNewAccount = ();
+	type OnSetCode = ();
+	type Origin = Origin;
+	type PalletInfo = PalletInfo;
+	type SS58Prefix = ();
+	type SystemWeightInfo = ();
+	type Version = ();
+}
+
 frame_support::parameter_types! {
-	pub const ExistentialDeposit: u64 = 1;
+	pub const ExistentialDeposit: u64 = 0;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
 	type AccountStore = System;
@@ -103,36 +129,9 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-impl frame_system::Config for Test {
-	type AccountData = AccountData<Balance>;
-	type AccountId = AccountId32;
-	type BaseCallFilter = Everything;
-	type BlockHashCount = ();
-	type BlockLength = ();
-	type BlockNumber = u64;
-	type BlockWeights = ();
-	type Call = Call;
-	type DbWeight = ();
-	type Event = ();
-	type Hash = H256;
-	type Hashing = BlakeTwo256;
-	type Header = Header;
-	type Index = u64;
-	type Lookup = IdentityLookup<Self::AccountId>;
-	type OnKilledAccount = ();
-	type OnNewAccount = ();
-	type OnSetCode = ();
-	type Origin = Origin;
-	type PalletInfo = PalletInfo;
-	type SS58Prefix = ();
-	type SystemWeightInfo = ();
-	type Version = ();
-}
-
 frame_support::parameter_types! {
 	pub const DvmPalletId: PalletId = PalletId(*b"dar/dvmp");
 }
-
 impl darwinia_ethereum::Config for Test {
 	type Event = ();
 	type PalletId = DvmPalletId;
@@ -145,16 +144,64 @@ impl FeeCalculator for FixedGasPrice {
 		1.into()
 	}
 }
-
 pub struct HashedConverter;
 impl DeriveSubstrateAddress<AccountId32> for HashedConverter {
-	fn derive_substrate_address(address: H160) -> AccountId32 {
+	fn derive_substrate_address(address: &H160) -> AccountId32 {
 		let mut data = [0u8; 32];
 		data[0..20].copy_from_slice(&address[..]);
 		AccountId32::from(Into::<[u8; 32]>::into(data))
 	}
 }
+pub struct MockPrecompiles<R>(PhantomData<R>);
+impl<R> MockPrecompiles<R>
+where
+	R: darwinia_evm::Config,
+{
+	pub fn new() -> Self {
+		Self(Default::default())
+	}
 
+	pub fn used_addresses() -> [H160; 6] {
+		[addr(1), addr(2), addr(3), addr(4), addr(24), addr(25)]
+	}
+}
+impl<R> PrecompileSet for MockPrecompiles<R>
+where
+	Sub2SubBridge<R, MockS2sMessageSender, ()>: Precompile,
+	Dispatch<R>: Precompile,
+	R: darwinia_evm::Config,
+{
+	fn execute(
+		&self,
+		address: H160,
+		input: &[u8],
+		target_gas: Option<u64>,
+		context: &Context,
+		is_static: bool,
+	) -> Option<PrecompileResult> {
+		match address {
+			// Ethereum precompiles
+			a if a == addr(1) => Some(ECRecover::execute(input, target_gas, context, is_static)),
+			a if a == addr(2) => Some(Sha256::execute(input, target_gas, context, is_static)),
+			a if a == addr(3) => Some(Ripemd160::execute(input, target_gas, context, is_static)),
+			a if a == addr(4) => Some(Identity::execute(input, target_gas, context, is_static)),
+			// Darwinia precompiles
+			a if a == addr(24) => Some(<Sub2SubBridge<R, MockS2sMessageSender, ()>>::execute(
+				input, target_gas, context, is_static,
+			)),
+			a if a == addr(25) =>
+				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
+			_ => None,
+		}
+	}
+
+	fn is_precompile(&self, address: H160) -> bool {
+		Self::used_addresses().contains(&address)
+	}
+}
+fn addr(a: u64) -> H160 {
+	H160::from_low_u64_be(a)
+}
 frame_support::parameter_types! {
 	pub const ChainId: u64 = 42;
 	pub const BlockGasLimit: U256 = U256::MAX;
@@ -170,11 +217,11 @@ impl darwinia_evm::Config for Test {
 	type FindAuthor = ();
 	type GasWeightMapping = ();
 	type IntoAccountId = HashedConverter;
-	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
+	type KtonBalanceAdapter = CurrencyAdapter<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<()>;
 	type PrecompilesType = MockPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type RingBalanceAdapter = CurrencyAdapter<Self, Ring, RingRemainBalance>;
 	type Runner = darwinia_evm::runner::stack::Runner<Self>;
 }
 
@@ -184,62 +231,6 @@ frame_support::parameter_types! {
 	pub RootAccountForPayments: Option<AccountId32> = Some([1;32].into());
 	pub PangoroName: Vec<u8> = (b"Pangoro").to_vec();
 	pub MessageLaneId: [u8; 4] = *b"ltor";
-}
-
-pub struct MockPrecompiles<R>(PhantomData<R>);
-impl<R> MockPrecompiles<R>
-where
-	R: darwinia_evm::Config,
-{
-	pub fn new() -> Self {
-		Self(Default::default())
-	}
-
-	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 24, 25].into_iter().map(|x| H160::from_low_u64_be(x)).collect()
-	}
-}
-
-impl<R> PrecompileSet for MockPrecompiles<R>
-where
-	Sub2SubBridge<R, MockS2sMessageSender, ()>: Precompile,
-	Dispatch<R>: Precompile,
-	R: darwinia_evm::Config,
-{
-	fn execute(
-		&self,
-		address: H160,
-		input: &[u8],
-		target_gas: Option<u64>,
-		context: &Context,
-		is_static: bool,
-	) -> Option<PrecompileResult> {
-		let to_address = |n: u64| -> H160 { H160::from_low_u64_be(n) };
-
-		match address {
-			// Ethereum precompiles
-			_ if address == to_address(1) =>
-				Some(ECRecover::execute(input, target_gas, context, is_static)),
-			_ if address == to_address(2) =>
-				Some(Sha256::execute(input, target_gas, context, is_static)),
-			_ if address == to_address(3) =>
-				Some(Ripemd160::execute(input, target_gas, context, is_static)),
-			_ if address == to_address(4) =>
-				Some(Identity::execute(input, target_gas, context, is_static)),
-			// Darwinia precompiles
-			_ if address == to_address(24) =>
-				Some(<Sub2SubBridge<R, MockS2sMessageSender, ()>>::execute(
-					input, target_gas, context, is_static,
-				)),
-			_ if address == to_address(25) =>
-				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
-			_ => None,
-		}
-	}
-
-	fn is_precompile(&self, address: H160) -> bool {
-		Self::used_addresses().contains(&address)
-	}
 }
 
 pub struct AccountIdConverter;
@@ -279,7 +270,7 @@ impl OutboundMessenger<AccountId32> for MockOutboundMessenger {
 	fn get_valid_message_sender(_nonce: MessageNonce) -> Result<AccountId32, &'static str> {
 		let derived_substrate_account =
 			darwinia_support::evm::ConcatConverter::<AccountId32>::derive_substrate_address(
-				H160::from_str("32dcab0ef3fb2de2fce1d2e0799d36239671f04a").unwrap(),
+				&H160::from_str("32dcab0ef3fb2de2fce1d2e0799d36239671f04a").unwrap(),
 			);
 
 		return Ok(derived_substrate_account);

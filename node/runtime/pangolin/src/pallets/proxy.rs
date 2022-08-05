@@ -79,12 +79,12 @@ impl InstanceFilter<Call> for ProxyType {
 							// Specifically omitting the entire CrabBacking pallet
 							Call::EthereumRelay(..) |
 							// Specifically omitting the entire EthereumBacking pallet
-							Call::EthereumRelayAuthorities(..) /* Specifically omitting the entire
-				                                       * TronBacking pallet
-				                                       * Specifically omitting the entire EVM
-				                                       * pallet
-				                                       * Specifically omitting the entire
-				                                       * Ethereum pallet */
+							Call::EcdsaRelayAuthority(..) /* Specifically omitting the entire
+				                                  * TronBacking pallet
+				                                  * Specifically omitting the entire EVM
+				                                  * pallet
+				                                  * Specifically omitting the entire
+				                                  * Ethereum pallet */
 			),
 			ProxyType::Governance => matches!(
 				c,
@@ -97,9 +97,7 @@ impl InstanceFilter<Call> for ProxyType {
 			ProxyType::Staking => matches!(c, Call::Staking(..)),
 			ProxyType::EthereumBridge => matches!(
 				c,
-				Call::EthereumBacking(..)
-					| Call::EthereumRelay(..)
-					| Call::EthereumRelayAuthorities(..)
+				Call::EthereumBacking(..) | Call::EthereumRelay(..) | Call::EcdsaRelayAuthority(..)
 			),
 		}
 	}

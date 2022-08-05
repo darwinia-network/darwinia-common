@@ -29,7 +29,7 @@ use ethabi::{
 };
 // --- paritytech ---
 use bp_messages::{LaneId, MessageNonce};
-use sp_std::{convert::TryInto, prelude::*};
+use sp_std::prelude::*;
 
 pub struct Sub2SubMappingTokenFactory;
 

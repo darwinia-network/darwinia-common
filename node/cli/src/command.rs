@@ -19,16 +19,16 @@
 // --- std ---
 use std::{env, path::PathBuf};
 // --- paritytech ---
-use sc_cli::{Error as CliError, Result as CliResult, Role, RuntimeVersion, SubstrateCli};
+use sc_cli::{Error as CliError, Result as CliResult, RuntimeVersion, SubstrateCli};
 use sc_service::{ChainSpec, DatabaseSource};
 #[cfg(feature = "try-runtime")]
 use sc_service::{Error as ServiceError, TaskManager};
 use sp_core::crypto::{self, Ss58AddressFormatRegistry};
 // --- darwinia-network ---
 use crate::cli::*;
+use drml_node_service::*;
 #[cfg(any(feature = "try-runtime", feature = "runtime-benchmarks"))]
 use drml_primitives::OpaqueBlock as Block;
-use drml_service::*;
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
@@ -79,7 +79,7 @@ impl SubstrateCli for Cli {
 				.iter()
 				.cloned()
 				.find(|&chain| n.starts_with(chain))
-				.unwrap_or("pangoro")
+				.unwrap_or("pangolin")
 		} else {
 			id
 		};
@@ -120,7 +120,7 @@ pub fn run() -> CliResult<()> {
 
 			if chain_spec.is_pangolin() {
 				runner.async_run(|mut $config| {
-					let ($client, $backend, $import_queue, task_manager) = drml_service::new_chain_ops::<
+					let ($client, $backend, $import_queue, task_manager) = drml_node_service::new_chain_ops::<
 						PangoroRuntimeApi,
 						PangolinExecutor,
 					>(&mut $config)?;
@@ -129,7 +129,7 @@ pub fn run() -> CliResult<()> {
 				})
 			} else {
 				runner.async_run(|mut $config| {
-					let ($client, $backend, $import_queue, task_manager) = drml_service::new_chain_ops::<
+					let ($client, $backend, $import_queue, task_manager) = drml_node_service::new_chain_ops::<
 						PangolinRuntimeApi,
 						PangoroExecutor,
 					>(&mut $config)?;
@@ -174,29 +174,15 @@ pub fn run() -> CliResult<()> {
 
 			if chain_spec.is_pangolin() {
 				runner.run_node_until_exit(|config| async move {
-					match config.role {
-						Role::Light => panic!("Not support light client"),
-						_ => pangolin_service::new_full(
-							config,
-							authority_discovery_disabled,
-							eth_rpc_config,
-						)
-						.map(|(task_manager, _, _)| task_manager),
-					}
-					.map_err(CliError::from)
+					pangolin_service::new_full(config, authority_discovery_disabled, eth_rpc_config)
+						.map(|(task_manager, _, _)| task_manager)
+						.map_err(CliError::from)
 				})
 			} else {
 				runner.run_node_until_exit(|config| async move {
-					match config.role {
-						Role::Light => panic!("Not support light client"),
-						_ => pangoro_service::new_full(
-							config,
-							authority_discovery_disabled,
-							eth_rpc_config,
-						)
-						.map(|(task_manager, _, _)| task_manager),
-					}
-					.map_err(CliError::from)
+					pangoro_service::new_full(config, authority_discovery_disabled, eth_rpc_config)
+						.map(|(task_manager, _, _)| task_manager)
+						.map_err(CliError::from)
 				})
 			}
 		},
@@ -234,7 +220,7 @@ pub fn run() -> CliResult<()> {
 			runner.sync_run(|config| {
 				// Remove dvm offchain db
 				let dvm_database_config = DatabaseSource::RocksDb {
-					path: drml_service::dvm::db_path(&config),
+					path: drml_node_service::dvm::db_path(&config),
 					cache_size: 0,
 				};
 

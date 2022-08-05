@@ -60,7 +60,7 @@ mod types {
 
 // --- paritytech ---
 use frame_support::{
-	decl_error, decl_module, decl_storage, ensure,
+	decl_error, decl_module, decl_storage, ensure, log,
 	traits::{Currency, Get, LockIdentifier, LockableCurrency, OnUnbalanced, WithdrawReasons},
 };
 use frame_system::pallet_prelude::*;
@@ -72,7 +72,7 @@ use sp_runtime::{
 use sp_std::borrow::ToOwned;
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 // --- darwinia-network ---
-use darwinia_relay_primitives::relayer_game::*;
+use dp_relayer_game::*;
 use types::*;
 
 pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {

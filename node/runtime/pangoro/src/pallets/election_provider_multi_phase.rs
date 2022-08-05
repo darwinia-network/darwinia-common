@@ -54,7 +54,7 @@ impl Config for Runtime {
 	type EstimateCallFee = TransactionPayment;
 	type Event = Event;
 	type Fallback = Fallback;
-	type ForceOrigin = RootOrigin;
+	type ForceOrigin = Root;
 	type MinerMaxLength = OffchainSolutionLengthLimit;
 	type MinerMaxWeight = OffchainSolutionWeightLimit;
 	type MinerTxPriority = NposSolutionPriority;

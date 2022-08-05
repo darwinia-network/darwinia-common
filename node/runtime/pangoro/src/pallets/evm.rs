@@ -14,7 +14,7 @@ use sp_core::{crypto::Public, H160, U256};
 // --- darwinia-network ---
 use crate::*;
 use darwinia_ethereum::{
-	account_basic::{DvmAccountBasic, KtonRemainBalance, RingRemainBalance},
+	adapter::{CurrencyAdapter, KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping,
 };
 use darwinia_evm::{
@@ -22,7 +22,7 @@ use darwinia_evm::{
 };
 use darwinia_evm_precompile_bls12_381::BLS12381;
 use darwinia_evm_precompile_dispatch::Dispatch;
-use darwinia_evm_precompile_mpt::MPT;
+use darwinia_evm_precompile_kton::KtonERC20;
 use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::ConcatConverter;
@@ -57,11 +57,23 @@ where
 		Self(Default::default())
 	}
 
-	pub fn used_addresses() -> sp_std::vec::Vec<H160> {
-		sp_std::vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 21, 1024, 1025, 2048, 2049]
-			.into_iter()
-			.map(|x| addr(x))
-			.collect()
+	pub fn used_addresses() -> [H160; 14] {
+		[
+			addr(1),
+			addr(2),
+			addr(3),
+			addr(4),
+			addr(5),
+			addr(6),
+			addr(7),
+			addr(8),
+			addr(9),
+			addr(21),
+			addr(1024),
+			addr(1025),
+			addr(1026),
+			addr(2048),
+		]
 	}
 }
 
@@ -69,7 +81,7 @@ impl<R> PrecompileSet for PangoroPrecompiles<R>
 where
 	BLS12381<R>: Precompile,
 	Dispatch<R>: Precompile,
-	MPT<R>: Precompile,
+	KtonERC20<R>: Precompile,
 	R: darwinia_ethereum::Config,
 	StateStorage<R, StorageFilter>: Precompile,
 	Transfer<R>: Precompile,
@@ -111,10 +123,11 @@ where
 			)),
 			a if a == addr(1025) =>
 				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
+			a if a == addr(1026) =>
+				Some(<KtonERC20<R>>::execute(input, target_gas, context, is_static)),
 			// Darwinia precompiles: 2048+ for experimental precompiles.
 			a if a == addr(2048) =>
 				Some(<BLS12381<R>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(2049) => Some(<MPT<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}
@@ -158,11 +171,11 @@ impl Config for Runtime {
 	type FindAuthor = EthereumFindAuthor<Babe>;
 	type GasWeightMapping = FixedGasWeightMapping;
 	type IntoAccountId = ConcatConverter<Self::AccountId>;
-	type KtonAccountBasic = DvmAccountBasic<Self, Kton, KtonRemainBalance>;
+	type KtonBalanceAdapter = CurrencyAdapter<Self, Kton, KtonRemainBalance>;
 	type OnChargeTransaction = EVMCurrencyAdapter<FindAccountFromAuthorIndex<Self, Babe>>;
 	type PrecompilesType = PangoroPrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type RingAccountBasic = DvmAccountBasic<Self, Ring, RingRemainBalance>;
+	type RingBalanceAdapter = CurrencyAdapter<Self, Ring, RingRemainBalance>;
 	type Runner = Runner<Self>;
 }
 

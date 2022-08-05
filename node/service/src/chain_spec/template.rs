@@ -42,10 +42,7 @@ pub fn development_config() -> ChainSpec {
 		];
 
 		GenesisConfig {
-			system: SystemConfig {
-				code: wasm_binary_unwrap().to_vec(),
-				changes_trie_config: Default::default(),
-			},
+			system: SystemConfig { code: wasm_binary_unwrap().to_vec() },
 			balances: BalancesConfig {
 				balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
 			},
