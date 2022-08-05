@@ -117,32 +117,31 @@ where
 		signers.push(Box::new(EthDevSigner::new()) as Box<dyn EthSigner>);
 	}
 
-	// TODO: cc @AsceticBear
-	// io.extend_with(EthApiServer::to_delegate(EthApi::new(
-	// 	client.clone(),
-	// 	pool.clone(),
-	// 	graph,
-	// 	Some(TransactionConverter),
-	// 	network.clone(),
-	// 	signers,
-	// 	overrides.clone(),
-	// 	backend.clone(),
-	// 	is_authority,
-	// 	max_past_logs,
-	// 	block_data_cache.clone(),
-	// 	fee_history_limit,
-	// 	fee_history_cache,
-	// )));
-	//
-	// if let Some(filter_pool) = filter_pool {
-	// 	io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
-	// 		client.clone(),
-	// 		filter_pool.clone(),
-	// 		500 as usize, // max stored filters
-	// 		max_past_logs,
-	// 		block_data_cache.clone(),
-	// 	)));
-	// }
+	io.extend_with(EthApiServer::to_delegate(EthApi::new(
+		client.clone(),
+		pool.clone(),
+		graph,
+		Some(TransactionConverter),
+		network.clone(),
+		signers,
+		overrides.clone(),
+		backend.clone(),
+		is_authority,
+		// max_past_logs,
+		block_data_cache.clone(),
+		fee_history_limit,
+		fee_history_cache,
+	)));
+
+	if let Some(filter_pool) = filter_pool {
+		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
+			client.clone(),
+			filter_pool.clone(),
+			500 as usize, // max stored filters
+			max_past_logs,
+			block_data_cache.clone(),
+		)));
+	}
 
 	io.extend_with(NetApiServer::to_delegate(NetApi::new(
 		client.clone(),
