@@ -187,15 +187,9 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
-			frame_support::migration::remove_storage_prefix(
-				Self::name().as_bytes(),
-				b"PreviousAuthorities",
-				&[],
-			);
+			<NewMessageRootToSign<T>>::kill();
 
-			<NextAuthorities<T>>::put(<Authorities<T>>::get());
-
-			T::DbWeight::get().reads_writes(1, 1)
+			T::DbWeight::get().reads_writes(0, 1)
 		}
 
 		fn on_initialize(now: T::BlockNumber) -> Weight {
@@ -514,11 +508,6 @@ pub mod pallet {
 			<NewMessageRootToSign<T>>::put((commitment, message, BoundedVec::default()));
 
 			Self::deposit_event(Event::<T>::CollectingNewMessageRootSignatures { message });
-		}
-
-		#[cfg(test)]
-		pub(crate) fn test_on_runtime_upgrade() -> Vec<u8> {
-			Self::name().as_bytes().to_vec()
 		}
 	}
 }
