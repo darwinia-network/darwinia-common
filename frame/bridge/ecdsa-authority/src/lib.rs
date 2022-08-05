@@ -94,9 +94,9 @@ pub mod pallet {
 			message: Message,
 			signatures: Vec<(Address, Signature)>,
 		},
-		/// New message root found. Collecting new message root signatures. \[Message\]
+		/// New message root found. Collecting new message root signatures.
 		CollectingNewMessageRootSignatures { message: Message },
-		/// Collected enough new message root signatures. \[(Message, Vec<Address, Signature>)\]
+		/// Collected enough new message root signatures.
 		CollectedEnoughNewMessageRootSignatures {
 			commitment: Commitment,
 			message: Message,
