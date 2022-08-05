@@ -86,16 +86,22 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Authorities changed. Collecting authorities change signatures. \[Message\]
-		CollectingAuthoritiesChangeSignatures(Message),
-		/// Collected enough authorities change signatures. \[((Operation, Message), Vec<Address,
-		/// Signature>)\]
-		CollectedEnoughAuthoritiesChangeSignatures((Operation, Message, Vec<(Address, Signature)>)),
-
+		/// Authorities changed. Collecting authorities change signatures.
+		CollectingAuthoritiesChangeSignatures { message: Message },
+		/// Collected enough authorities change signatures.
+		CollectedEnoughAuthoritiesChangeSignatures {
+			operation: Operation,
+			message: Message,
+			signatures: Vec<(Address, Signature)>,
+		},
 		/// New message root found. Collecting new message root signatures. \[Message\]
-		CollectingNewMessageRootSignatures(Message),
+		CollectingNewMessageRootSignatures { message: Message },
 		/// Collected enough new message root signatures. \[(Message, Vec<Address, Signature>)\]
-		CollectedEnoughNewMessageRootSignatures((Message, Vec<(Address, Signature)>)),
+		CollectedEnoughNewMessageRootSignatures {
+			commitment: Commitment,
+			message: Message,
+			signatures: Vec<(Address, Signature)>,
+		},
 	}
 
 	#[pallet::error]
@@ -151,7 +157,7 @@ pub mod pallet {
 	#[pallet::getter(fn new_message_root_to_sign)]
 	pub type NewMessageRootToSign<T: Config> = StorageValue<
 		_,
-		(Message, BoundedVec<(Address, Signature), T::MaxAuthorities>),
+		(Commitment, Message, BoundedVec<(Address, Signature), T::MaxAuthorities>),
 		OptionQuery,
 	>;
 
@@ -322,11 +328,11 @@ pub mod pallet {
 
 				let (operation, message, collected) = authorities_change_to_sign;
 
-				Self::deposit_event(<Event<T>>::CollectedEnoughAuthoritiesChangeSignatures((
+				Self::deposit_event(Event::<T>::CollectedEnoughAuthoritiesChangeSignatures {
 					operation,
 					message,
-					collected.to_vec(),
-				)));
+					signatures: collected.to_vec(),
+				});
 			} else {
 				<AuthoritiesChangeToSign<T>>::put(authorities_change_to_sign);
 			}
@@ -349,7 +355,7 @@ pub mod pallet {
 			let authorities = Self::ensure_authority(&address)?;
 			let mut new_message_root_to_sign =
 				<NewMessageRootToSign<T>>::get().ok_or(<Error<T>>::NoNewMessageRoot)?;
-			let (message, collected) = &mut new_message_root_to_sign;
+			let (_, message, collected) = &mut new_message_root_to_sign;
 
 			Self::ensure_not_submitted(&address, &collected)?;
 
@@ -363,12 +369,13 @@ pub mod pallet {
 			if Self::check_threshold(collected.len() as _, authorities.len() as _) {
 				<NewMessageRootToSign<T>>::kill();
 
-				let (message, collected) = new_message_root_to_sign;
+				let (commitment, message, collected) = new_message_root_to_sign;
 
-				Self::deposit_event(<Event<T>>::CollectedEnoughNewMessageRootSignatures((
+				Self::deposit_event(Event::<T>::CollectedEnoughNewMessageRootSignatures {
+					commitment,
 					message,
-					collected.to_vec(),
-				)));
+					signatures: collected.to_vec(),
+				});
 			} else {
 				<NewMessageRootToSign<T>>::put(new_message_root_to_sign);
 			}
@@ -434,7 +441,7 @@ pub mod pallet {
 
 			<AuthoritiesChangeToSign<T>>::put((operation, message, BoundedVec::default()));
 
-			Self::deposit_event(<Event<T>>::CollectingAuthoritiesChangeSignatures(message));
+			Self::deposit_event(Event::<T>::CollectingAuthoritiesChangeSignatures { message });
 		}
 
 		fn check_threshold(p: u32, q: u32) -> bool {
@@ -488,20 +495,25 @@ pub mod pallet {
 		}
 
 		fn on_new_message_root(at: T::BlockNumber, message_root: Hash) {
+			let commitment = Commitment {
+				block_number: at.saturated_into::<u32>(),
+				message_root,
+				nonce: <Nonce<T>>::get(),
+			};
 			let message = Sign::eth_signable_message(
 				T::ChainId::get(),
 				T::Version::get().spec_name.as_ref(),
 				&ethabi::encode(&[
 					Token::FixedBytes(COMMIT_TYPE_HASH.as_ref().into()),
-					Token::Uint(at.saturated_into::<u32>().into()),
-					Token::FixedBytes(message_root.as_ref().into()),
-					Token::Uint(<Nonce<T>>::get().into()),
+					Token::Uint(commitment.block_number.into()),
+					Token::FixedBytes(commitment.message_root.as_ref().into()),
+					Token::Uint(commitment.nonce.into()),
 				]),
 			);
 
-			<NewMessageRootToSign<T>>::put((message, BoundedVec::default()));
+			<NewMessageRootToSign<T>>::put((commitment, message, BoundedVec::default()));
 
-			Self::deposit_event(<Event<T>>::CollectingNewMessageRootSignatures(message));
+			Self::deposit_event(Event::<T>::CollectingNewMessageRootSignatures { message });
 		}
 
 		#[cfg(test)]
