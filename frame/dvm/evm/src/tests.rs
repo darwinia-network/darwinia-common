@@ -164,6 +164,10 @@ impl<T: Config> CurrencyAdapt<T> for MockBalanceAdapter<T> {
 		Ok(())
 	}
 
+	fn ensure_can_withdraw(_: &T::AccountId, _: U256, _: WithdrawReasons) -> Result<(), ExitError> {
+		Ok(())
+	}
+
 	fn account_balance(account_id: &T::AccountId) -> U256 {
 		frame_support::storage::unhashed::get(&account_id.encode()).unwrap_or_default()
 	}
