@@ -88,7 +88,7 @@ impl<T: Config> Runner<T> {
 			max_fee_per_gas.checked_mul(U256::from(gas_limit)).ok_or(Error::<T>::FeeOverflow)?;
 
 		let total_payment = value.checked_add(total_fee).ok_or(Error::<T>::PaymentOverflow)?;
-		let source_account = T::RingAccountBasic::account_basic(&source);
+		let source_account = Pallet::<T>::account_basic(&source);
 		// Account balance check is skipped if fee is Zero.
 		// This case is previously verified to only happen on either:
 		// 	- Non-transactional calls.

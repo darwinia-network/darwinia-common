@@ -98,15 +98,15 @@ pub fn genesis_config() -> ChainSpec {
 		let evm_accounts = {
 			let mut map = BTreeMap::new();
 
-			for account in EVM_ACCOUNTS.iter() {
-				map.insert(
-					array_bytes::hex_into_unchecked(account),
-					GenesisAccount {
-						balance: (MANY_COINS * (10 as Balance).pow(9)).into(),
-						..Default::default()
-					},
-				);
-			}
+			// for account in EVM_ACCOUNTS.iter() {
+			// 	map.insert(
+			// 		array_bytes::hex_into_unchecked(account),
+			// 		GenesisAccount {
+			// 			balance: (MANY_COINS * (10 as Balance).pow(9)).into(),
+			// 			..Default::default()
+			// 		},
+			// 	);
+			// }
 
 			map
 		};
@@ -339,15 +339,15 @@ pub fn development_config() -> ChainSpec {
 		let evm_accounts = {
 			let mut map = BTreeMap::new();
 
-			for account in EVM_ACCOUNTS.iter() {
-				map.insert(
-					array_bytes::hex_into_unchecked(account),
-					GenesisAccount {
-						balance: (123_456_789_000_000_000_000_090 as Balance).into(),
-						..Default::default()
-					},
-				);
-			}
+			// for account in EVM_ACCOUNTS.iter() {
+			// 	map.insert(
+			// 		array_bytes::hex_into_unchecked(account),
+			// 		GenesisAccount {
+			// 			balance: (123_456_789_000_000_000_000_090 as Balance).into(),
+			// 			..Default::default()
+			// 		},
+			// 	);
+			// }
 
 			map
 		};
@@ -531,15 +531,15 @@ pub fn local_testnet_config() -> ChainSpec {
 		let evm_accounts = {
 			let mut map = BTreeMap::new();
 
-			for account in EVM_ACCOUNTS.iter() {
-				map.insert(
-					array_bytes::hex_into_unchecked(account),
-					GenesisAccount {
-						balance: (123_456_789_000_000_000_000_090 as Balance).into(),
-						..Default::default()
-					},
-				);
-			}
+			// for account in EVM_ACCOUNTS.iter() {
+			// 	map.insert(
+			// 		array_bytes::hex_into_unchecked(account),
+			// 		GenesisAccount {
+			// 			balance: (123_456_789_000_000_000_000_090 as Balance).into(),
+			// 			..Default::default()
+			// 		},
+			// 	);
+			// }
 
 			map
 		};
