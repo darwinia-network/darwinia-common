@@ -190,7 +190,6 @@ arg_enum! {
 		Instant,
 	}
 }
-
 #[cfg(feature = "template")]
 impl Sealing {
 	pub fn is_manual(&self) -> bool {

@@ -20,10 +20,9 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 // --- paritytech ---
-use darwinia_ethereum::{EthereumBlockHashMapping, RawOrigin};
 use fp_evm::{
-	Context, ExitRevert, FeeCalculator, Precompile, PrecompileFailure, PrecompileResult,
-	PrecompileSet,
+	CallOrCreateInfo, Context, ExitRevert, FeeCalculator, Precompile, PrecompileFailure,
+	PrecompileResult, PrecompileSet,
 };
 use frame_support::{
 	pallet_prelude::Weight,
@@ -32,8 +31,7 @@ use frame_support::{
 	ConsensusEngineId, PalletId,
 };
 use frame_system::mocking::*;
-use pallet_evm::FeeCalculator;
-use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
+// use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
