@@ -39,11 +39,7 @@ pub use fp_evm::{
 #[cfg(feature = "std")]
 use std::collections::BTreeMap;
 // --- crates.io ---
-#[cfg(feature = "std")]
-use codec::{Decode, Encode};
 use evm::{Config as EvmConfig, ExitError, ExitReason};
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 // --- paritytech ---
 use fp_evm::FeeCalculator;
 #[cfg(feature = "std")]

@@ -29,7 +29,7 @@ use sha3::{Digest, Keccak256};
 use fp_evm::{CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
 use frame_support::{ensure, log, traits::Get};
 use sp_core::{H160, H256, U256};
-use sp_runtime::{traits::UniqueSaturatedInto, ArithmeticError, DispatchError};
+use sp_runtime::traits::UniqueSaturatedInto;
 use sp_std::{collections::btree_set::BTreeSet, marker::PhantomData, mem, prelude::*};
 // --- darwinia-network ---
 use crate::{
@@ -73,10 +73,11 @@ impl<T: Config> Runner<T> {
 				max_fee_per_gas
 			},
 			// Use default gas price for internal transaction
-			(None, true) => Default::default(),
+			// (None, true) => Default::default(),
 			// Gas price check is skipped for non-transactional calls that don't
 			// define a `max_fee_per_gas` input.
 			(None, false) => Default::default(),
+			_ => return Err(Error::<T>::GasPriceTooLow),
 		};
 
 		if let Some(max_priority_fee) = max_priority_fee_per_gas {
@@ -101,6 +102,7 @@ impl<T: Config> Runner<T> {
 			ensure!(source_account.nonce == nonce, <Error<T>>::InvalidNonce);
 		}
 
+		// Deduct fee from the `source` account.
 		let fee = T::OnChargeTransaction::withdraw_fee(&source, total_fee)?;
 
 		// Execute the EVM call.

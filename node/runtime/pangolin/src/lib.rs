@@ -52,7 +52,6 @@ pub use darwinia_staking::{Forcing, StakerStatus};
 // --- crates.io ---
 use codec::Encode;
 // --- paritytech ---
-use bp_runtime::{PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use fp_evm::FeeCalculator;
 use frame_support::{log, traits::KeyOwnerProofSystem, weights::GetDispatchInfo};
 use frame_system::{

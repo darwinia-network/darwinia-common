@@ -19,7 +19,7 @@
 // --- std ---
 use std::{collections::BTreeMap, str::FromStr};
 // --- crates.io ---
-use codec::MaxEncodedLen;
+use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{
@@ -36,7 +36,11 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- darwinia-network ---
-use crate::{self as darwinia_evm, runner::stack::Runner, *};
+use crate::{
+	self as darwinia_evm,
+	runner::{stack::Runner, Runner as RunnerT},
+	*,
+};
 use darwinia_support::evm::ConcatConverter;
 
 type Block = MockBlock<Test>;
@@ -406,9 +410,8 @@ fn refunds_should_work() {
 fn refunds_and_priority_should_work() {
 	new_test_ext().execute_with(|| {
 		let author = EVM::find_author();
-		let before_tip = <Test as Config>::RingAccountBasic::account_basic(&author).balance;
-		let before_call =
-			<Test as Config>::RingAccountBasic::account_basic(&H160::default()).balance;
+		let before_tip = <Test as Config>::RingBalanceAdapter::evm_balance(&author);
+		let before_call = <Test as Config>::RingBalanceAdapter::evm_balance(&H160::default());
 		// We deliberately set a base fee + max tip > max fee.
 		// The effective priority tip will be 1GWEI instead 1.5GWEI:
 		// 		(max_fee_per_gas - base_fee).min(max_priority_fee)
@@ -432,11 +435,10 @@ fn refunds_and_priority_should_work() {
 		let actual_tip = (max_fee_per_gas - base_fee).min(tip) * used_gas;
 		let total_cost = (used_gas * base_fee) + U256::from(actual_tip) + U256::from(1);
 		// The tip is deducted but never refunded to the caller.
-		let after_call =
-			<Test as Config>::RingAccountBasic::account_basic(&H160::default()).balance;
+		let after_call = <Test as Config>::RingBalanceAdapter::evm_balance(&H160::default());
 		assert_eq!(after_call, before_call - total_cost);
 
-		let after_tip = <Test as Config>::RingAccountBasic::account_basic(&author).balance;
+		let after_tip = <Test as Config>::RingBalanceAdapter::evm_balance(&author);
 		assert_eq!(after_tip, (before_tip + actual_tip.low_u128()));
 	});
 }
