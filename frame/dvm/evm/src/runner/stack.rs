@@ -72,7 +72,10 @@ impl<T: Config> Runner<T> {
 				ensure!(max_fee_per_gas >= base_fee, Error::<T>::GasPriceTooLow);
 				max_fee_per_gas
 			},
-			// Use default gas price for internal transaction
+			// For the internal transaction, the gas_price is None and is_transactional is true
+			// which is legal in our chain. Note that non-internal transaction with gas_price None
+			// will be rejected before entering the runner.
+			// TODO: Delete this after s2s related pallets are removed later.
 			(None, true) => Default::default(),
 			// Gas price check is skipped for non-transactional calls that don't
 			// define a `max_fee_per_gas` input.

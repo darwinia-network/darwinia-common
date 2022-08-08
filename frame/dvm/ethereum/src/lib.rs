@@ -968,17 +968,21 @@ impl<T: Config> InternalTransactHandler for Pallet<T> {
 		let nonce = darwinia_evm::Pallet::<T>::account_basic(&source).nonce;
 		let transaction = internal_transaction::<T>(nonce, contract, input);
 
-		let (_, _, info) = Self::execute(source, &transaction, None)?;
-		sp_io::storage::rollback_transaction();
-		match info {
-			CallOrCreateInfo::Call(info) => match info.exit_reason {
-				ExitReason::Succeed(_) => Ok(info.value),
-				ExitReason::Error(_) => Err(<Error<T>>::InternalTransactionExitError.into()),
-				ExitReason::Revert(_) => Err(<Error<T>>::InternalTransactionRevertError.into()),
-				ExitReason::Fatal(_) => Err(<Error<T>>::InternalTransactionFatalError.into()),
+		let res = match Self::execute(source, &transaction, None) {
+			Ok((_, _, info)) => match info {
+				CallOrCreateInfo::Call(info) => match info.exit_reason {
+					ExitReason::Succeed(_) => Ok(info.value),
+					ExitReason::Error(_) => Err(<Error<T>>::InternalTransactionExitError.into()),
+					ExitReason::Revert(_) => Err(<Error<T>>::InternalTransactionRevertError.into()),
+					ExitReason::Fatal(_) => Err(<Error<T>>::InternalTransactionFatalError.into()),
+				},
+				_ => Err(<Error<T>>::ReadyOnlyCall.into()),
 			},
-			_ => Err(<Error<T>>::ReadyOnlyCall.into()),
-		}
+			Err(e) => Err(e),
+		};
+		// Rollback the storage changes no matter success or failed
+		sp_io::storage::rollback_transaction();
+		res
 	}
 }
 
