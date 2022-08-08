@@ -21,6 +21,7 @@ use std::{collections::BTreeMap, marker::PhantomData, str::FromStr};
 // --- crates.io ---
 use rand::{seq::SliceRandom, Rng};
 // --- paritytech ---
+use fp_evm::GenesisAccount;
 use sc_chain_spec::{ChainType, GenericChainSpec, Properties};
 use sc_telemetry::TelemetryEndpoints;
 use sp_core::{crypto::UncheckedInto, sr25519};
@@ -29,7 +30,6 @@ use sp_runtime::Perbill;
 use super::*;
 use darwinia_bridge_ethereum::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
 use drml_primitives::*;
-use fp_evm::GenesisAccount;
 use pangolin_runtime::*;
 
 pub type ChainSpec = GenericChainSpec<GenesisConfig, Extensions>;

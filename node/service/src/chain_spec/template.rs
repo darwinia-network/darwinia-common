@@ -19,13 +19,13 @@
 // --- std ---
 use std::{collections::BTreeMap, str::FromStr};
 // --- paritytech ---
+use fp_evm::GenesisAccount;
 use sc_service::{ChainType, GenericChainSpec};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::sr25519;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 // --- darwinia-network ---
 use super::*;
-use fp_evm::GenesisAccount;
 use template_runtime::*;
 
 pub type ChainSpec = GenericChainSpec<GenesisConfig>;
