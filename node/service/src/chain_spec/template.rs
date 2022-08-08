@@ -66,7 +66,9 @@ pub fn development_config() -> ChainSpec {
 						GenesisAccount {
 							balance: FromStr::from_str("0xffffffffffffffffffffffffffffffff")
 								.unwrap(),
-							..Default::default()
+							code: Default::default(),
+							nonce: Default::default(),
+							storage: Default::default(),
 						},
 					);
 					map

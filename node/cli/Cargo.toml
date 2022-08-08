@@ -16,6 +16,7 @@ name = "drml"
 
 [dependencies]
 # crates.io
+# clap      = { version = "3.0", features = ["derive"] }
 log       = { version = "0.4" }
 structopt = { version = "0.3", optional = true }
 # darwinia-network

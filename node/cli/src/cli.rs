@@ -180,13 +180,15 @@ impl DvmArgs {
 }
 
 #[cfg(feature = "template")]
-/// Available Sealing methods.
-#[derive(Debug, Copy, Clone, clap::ArgEnum)]
-pub enum Sealing {
-	// Seal using rpc method.
-	Manual,
-	// Seal when transaction is executed.
-	Instant,
+arg_enum! {
+	/// Available Sealing methods.
+	#[derive(Debug, Copy, Clone, StructOpt)]
+	pub enum Sealing {
+		// Seal using rpc method.
+		Manual,
+		// Seal when transaction is executed.
+		Instant,
+	}
 }
 
 #[cfg(feature = "template")]
