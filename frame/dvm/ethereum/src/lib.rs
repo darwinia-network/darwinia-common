@@ -25,9 +25,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod adapter;
-#[cfg(all(feature = "std", test))]
+
+#[cfg(test)]
 mod mock;
-#[cfg(all(feature = "std", test))]
+#[cfg(test)]
 mod tests;
 
 #[doc(no_inline)]

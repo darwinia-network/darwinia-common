@@ -31,7 +31,6 @@ use frame_support::{
 	ConsensusEngineId, PalletId,
 };
 use frame_system::mocking::*;
-// use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
