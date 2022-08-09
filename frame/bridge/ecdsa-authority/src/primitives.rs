@@ -81,6 +81,13 @@ impl Operation {
 	}
 }
 
+#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+pub struct Commitment {
+	pub(crate) block_number: u32,
+	pub(crate) message_root: Hash,
+	pub(crate) nonce: u32,
+}
+
 #[test]
 fn eth_signable_message() {
 	assert_eq!(

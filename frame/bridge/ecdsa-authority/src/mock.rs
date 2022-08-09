@@ -157,8 +157,12 @@ pub(crate) fn presume_authority_change_succeed() {
 	EcdsaAuthority::apply_next_authorities();
 }
 
+pub(crate) fn message_root_of(byte: u8) -> Hash {
+	Hash::repeat_byte(byte)
+}
+
 pub(crate) fn new_message_root(byte: u8) {
-	MESSAGE_ROOT.with(|v| *v.borrow_mut() = Some(Hash::repeat_byte(byte)));
+	MESSAGE_ROOT.with(|v| *v.borrow_mut() = Some(message_root_of(byte)));
 }
 
 pub(crate) fn run_to_block(n: BlockNumber) {
