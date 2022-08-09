@@ -167,10 +167,10 @@ frame_support::parameter_types! {
 	pub PrecompilesValue: MockPrecompiles<Test> = MockPrecompiles::<_>::new();
 }
 
-pub struct MockPrecompiles<R>(PhantomData<R>);
-impl<R> MockPrecompiles<R>
+pub struct MockPrecompiles<Runtime>(PhantomData<Runtime>);
+impl<Runtime> MockPrecompiles<Runtime>
 where
-	R: darwinia_ethereum::Config,
+	Runtime: darwinia_ethereum::Config,
 {
 	pub fn new() -> Self {
 		Self(Default::default())
@@ -199,10 +199,10 @@ impl Erc20Metadata for MockERC20MetaData {
 	}
 }
 
-impl<R> PrecompileSet for MockPrecompiles<R>
+impl<Runtime> PrecompileSet for MockPrecompiles<Runtime>
 where
-	KtonERC20<R, MockERC20MetaData>: Precompile,
-	R: darwinia_ethereum::Config,
+	KtonERC20<Runtime, MockERC20MetaData>: Precompile,
+	Runtime: darwinia_ethereum::Config,
 {
 	fn execute(
 		&self,
@@ -224,9 +224,10 @@ where
 		};
 
 		match address {
-			_ if address == to_address(10) => Some(<KtonERC20<R, MockERC20MetaData>>::execute(
-				input, target_gas, context, is_static,
-			)),
+			_ if address == to_address(10) =>
+				Some(<KtonERC20<Runtime, MockERC20MetaData>>::execute(
+					input, target_gas, context, is_static,
+				)),
 			_ => None,
 		}
 	}

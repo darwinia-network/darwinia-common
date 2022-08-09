@@ -57,8 +57,8 @@ pub const SELECTOR_LOG_TRANSFER: [u8; 32] = keccak256!("Transfer(address,address
 /// Solidity selector of the Approval log, which is the Keccak of the Log signature.
 pub const SELECTOR_LOG_APPROVAL: [u8; 32] = keccak256!("Approval(address,address,uint256)");
 
-type KtonBalanceAdapter<T> = <T as darwinia_evm::Config>::KtonBalanceAdapter;
-type IntoAccountId<T> = <T as darwinia_evm::Config>::IntoAccountId;
+type KtonBalanceAdapter<Runtime> = <Runtime as darwinia_evm::Config>::KtonBalanceAdapter;
+type IntoAccountId<Runtime> = <Runtime as darwinia_evm::Config>::IntoAccountId;
 
 struct Approves;
 impl StorageInstance for Approves {
@@ -85,11 +85,11 @@ enum Action {
 	Decimals = "decimals()",
 }
 
-pub struct KtonERC20<T, Metadata>(PhantomData<(T, Metadata)>);
+pub struct KtonERC20<Runtime, Metadata>(PhantomData<(Runtime, Metadata)>);
 
-impl<T, Metadata> Precompile for KtonERC20<T, Metadata>
+impl<Runtime, Metadata> Precompile for KtonERC20<Runtime, Metadata>
 where
-	T: darwinia_evm::Config,
+	Runtime: darwinia_evm::Config,
 	Metadata: Erc20Metadata,
 {
 	fn execute(
@@ -98,7 +98,7 @@ where
 		context: &Context,
 		is_static: bool,
 	) -> EvmResult<PrecompileOutput> {
-		let mut helper = PrecompileHelper::<T>::new(input, target_gas, context, is_static);
+		let mut helper = PrecompileHelper::<Runtime>::new(input, target_gas, context, is_static);
 		let action = helper.selector().unwrap_or_else(|_| Action::Name);
 
 		match action {
@@ -121,18 +121,18 @@ where
 	}
 }
 
-impl<T, Metadata> KtonERC20<T, Metadata>
+impl<Runtime, Metadata> KtonERC20<Runtime, Metadata>
 where
-	T: darwinia_evm::Config,
+	Runtime: darwinia_evm::Config,
 	Metadata: Erc20Metadata,
 {
-	fn total_supply(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
+	fn total_supply(helper: &mut PrecompileHelper<Runtime>) -> EvmResult<PrecompileOutput> {
 		let reader = helper.reader()?;
 		reader.expect_arguments(0)?;
 
 		helper.record_db_gas(1, 0)?;
 
-		let amount = <KtonBalanceAdapter<T>>::evm_total_supply();
+		let amount = <KtonBalanceAdapter<Runtime>>::evm_total_supply();
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
@@ -142,14 +142,14 @@ where
 		})
 	}
 
-	fn balance_of(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
+	fn balance_of(helper: &mut PrecompileHelper<Runtime>) -> EvmResult<PrecompileOutput> {
 		let mut reader = helper.reader()?;
 		reader.expect_arguments(1)?;
 		let owner: H160 = reader.read::<Address>()?.into();
 
 		helper.record_db_gas(2, 0)?;
 
-		let amount = <KtonBalanceAdapter<T>>::evm_balance(&owner);
+		let amount = <KtonBalanceAdapter<Runtime>>::evm_balance(&owner);
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
@@ -159,7 +159,7 @@ where
 		})
 	}
 
-	fn allowance(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
+	fn allowance(helper: &mut PrecompileHelper<Runtime>) -> EvmResult<PrecompileOutput> {
 		let mut reader = helper.reader()?;
 		reader.expect_arguments(2)?;
 		let owner: H160 = reader.read::<Address>()?.into();
@@ -177,7 +177,10 @@ where
 		})
 	}
 
-	fn approve(helper: &mut PrecompileHelper<T>, context: &Context) -> EvmResult<PrecompileOutput> {
+	fn approve(
+		helper: &mut PrecompileHelper<Runtime>,
+		context: &Context,
+	) -> EvmResult<PrecompileOutput> {
 		let mut reader = helper.reader()?;
 		reader.expect_arguments(2)?;
 		let spender: H160 = reader.read::<Address>()?.into();
@@ -205,7 +208,7 @@ where
 	}
 
 	fn transfer(
-		helper: &mut PrecompileHelper<T>,
+		helper: &mut PrecompileHelper<Runtime>,
 		context: &Context,
 	) -> EvmResult<PrecompileOutput> {
 		let mut reader = helper.reader()?;
@@ -216,9 +219,9 @@ where
 		helper.record_db_gas(2, 2)?;
 		helper.record_log_gas(3, 32)?;
 
-		let origin = <IntoAccountId<T>>::derive_substrate_address(&context.caller);
-		let to_account_id = <IntoAccountId<T>>::derive_substrate_address(&to);
-		<KtonBalanceAdapter<T>>::evm_transfer(&origin, &to_account_id, amount)
+		let origin = <IntoAccountId<Runtime>>::derive_substrate_address(&context.caller);
+		let to_account_id = <IntoAccountId<Runtime>>::derive_substrate_address(&to);
+		<KtonBalanceAdapter<Runtime>>::evm_transfer(&origin, &to_account_id, amount)
 			.map_err(|_| revert("Transfer failed"))?;
 
 		let transfer_log = log3(
@@ -238,7 +241,7 @@ where
 	}
 
 	fn transfer_from(
-		helper: &mut PrecompileHelper<T>,
+		helper: &mut PrecompileHelper<Runtime>,
 		context: &Context,
 	) -> EvmResult<PrecompileOutput> {
 		let mut reader = helper.reader()?;
@@ -261,9 +264,9 @@ where
 			})?;
 		}
 
-		let origin = <IntoAccountId<T>>::derive_substrate_address(&from);
-		let to_account_id = <IntoAccountId<T>>::derive_substrate_address(&to);
-		<KtonBalanceAdapter<T>>::evm_transfer(&origin, &to_account_id, amount)
+		let origin = <IntoAccountId<Runtime>>::derive_substrate_address(&from);
+		let to_account_id = <IntoAccountId<Runtime>>::derive_substrate_address(&to);
+		<KtonBalanceAdapter<Runtime>>::evm_transfer(&origin, &to_account_id, amount)
 			.map_err(|_| revert("Transfer failed"))?;
 
 		Ok(PrecompileOutput {
@@ -274,7 +277,7 @@ where
 		})
 	}
 
-	fn name(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
+	fn name(helper: &mut PrecompileHelper<Runtime>) -> EvmResult<PrecompileOutput> {
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
 			output: EvmDataWriter::new().write::<Bytes>(Metadata::name().into()).build(),
@@ -283,7 +286,7 @@ where
 		})
 	}
 
-	fn symbol(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
+	fn symbol(helper: &mut PrecompileHelper<Runtime>) -> EvmResult<PrecompileOutput> {
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
 			output: EvmDataWriter::new().write::<Bytes>(Metadata::symbol().into()).build(),
@@ -292,7 +295,7 @@ where
 		})
 	}
 
-	fn decimals(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
+	fn decimals(helper: &mut PrecompileHelper<Runtime>) -> EvmResult<PrecompileOutput> {
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
 			output: EvmDataWriter::new().write(Metadata::decimals()).build(),
