@@ -41,7 +41,7 @@ use frame_support::{
 use sp_core::{H160, U256};
 
 /// Metadata of an ERC20 token.
-pub trait Erc20Metadata {
+pub trait ERC20Metadata {
 	/// Returns the name of the token.
 	fn name() -> &'static str;
 
@@ -90,7 +90,7 @@ pub struct KtonERC20<Runtime, Metadata>(PhantomData<(Runtime, Metadata)>);
 impl<Runtime, Metadata> Precompile for KtonERC20<Runtime, Metadata>
 where
 	Runtime: darwinia_evm::Config,
-	Metadata: Erc20Metadata,
+	Metadata: ERC20Metadata,
 {
 	fn execute(
 		input: &[u8],
@@ -124,7 +124,7 @@ where
 impl<Runtime, Metadata> KtonERC20<Runtime, Metadata>
 where
 	Runtime: darwinia_evm::Config,
-	Metadata: Erc20Metadata,
+	Metadata: ERC20Metadata,
 {
 	fn total_supply(helper: &mut PrecompileHelper<Runtime>) -> EvmResult<PrecompileOutput> {
 		let reader = helper.reader()?;

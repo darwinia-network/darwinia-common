@@ -185,7 +185,7 @@ pub(crate) const TOKEN_NAME: &str = "MockERC20";
 pub(crate) const TOKEN_SYMBOL: &str = "MOCK";
 pub(crate) const TOKEN_DECIMAL: u8 = 18;
 pub struct MockERC20MetaData;
-impl Erc20Metadata for MockERC20MetaData {
+impl ERC20Metadata for MockERC20MetaData {
 	fn name() -> &'static str {
 		TOKEN_NAME
 	}
