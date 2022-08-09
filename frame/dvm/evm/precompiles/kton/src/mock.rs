@@ -41,7 +41,7 @@ use sp_runtime::{
 };
 use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 // --- darwinia-network ---
-use crate::KtonERC20;
+use crate::*;
 use darwinia_ethereum::{
 	adapter::{CurrencyAdapter, KtonRemainBalance, RingRemainBalance},
 	EthereumBlockHashMapping, IntermediateStateRoot, Log, RawOrigin, Transaction,
@@ -181,9 +181,27 @@ where
 	}
 }
 
+pub(crate) const TOKEN_NAME: &str = "MockERC20";
+pub(crate) const TOKEN_SYMBOL: &str = "MOCK";
+pub(crate) const TOKEN_DECIMAL: u8 = 18;
+pub struct MockERC20MetaData;
+impl Erc20Metadata for MockERC20MetaData {
+	fn name() -> &'static str {
+		TOKEN_NAME
+	}
+
+	fn symbol() -> &'static str {
+		TOKEN_SYMBOL
+	}
+
+	fn decimals() -> u8 {
+		TOKEN_DECIMAL
+	}
+}
+
 impl<R> PrecompileSet for MockPrecompiles<R>
 where
-	KtonERC20<R>: Precompile,
+	KtonERC20<R, MockERC20MetaData>: Precompile,
 	R: darwinia_ethereum::Config,
 {
 	fn execute(
@@ -206,8 +224,9 @@ where
 		};
 
 		match address {
-			_ if address == to_address(10) =>
-				Some(<KtonERC20<R>>::execute(input, target_gas, context, is_static)),
+			_ if address == to_address(10) => Some(<KtonERC20<R, MockERC20MetaData>>::execute(
+				input, target_gas, context, is_static,
+			)),
 			_ => None,
 		}
 	}

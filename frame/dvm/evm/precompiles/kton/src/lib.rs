@@ -40,9 +40,17 @@ use frame_support::{
 };
 use sp_core::{H160, U256};
 
-const TOKEN_NAME: &str = "Wrapped KTON";
-const TOKEN_SYMBOL: &str = "WKTON";
-const TOKEN_DECIMAL: u8 = 18;
+/// Metadata of an ERC20 token.
+pub trait Erc20Metadata {
+	/// Returns the name of the token.
+	fn name() -> &'static str;
+
+	/// Returns the symbol of the token.
+	fn symbol() -> &'static str;
+
+	/// Returns the decimals places of the token.
+	fn decimals() -> u8;
+}
 
 /// Solidity selector of the Transfer log, which is the Keccak of the Log signature.
 pub const SELECTOR_LOG_TRANSFER: [u8; 32] = keccak256!("Transfer(address,address,uint256)");
@@ -77,11 +85,12 @@ enum Action {
 	Decimals = "decimals()",
 }
 
-pub struct KtonERC20<T>(PhantomData<T>);
+pub struct KtonERC20<T, Metadata>(PhantomData<(T, Metadata)>);
 
-impl<T> Precompile for KtonERC20<T>
+impl<T, Metadata> Precompile for KtonERC20<T, Metadata>
 where
 	T: darwinia_evm::Config,
+	Metadata: Erc20Metadata,
 {
 	fn execute(
 		input: &[u8],
@@ -112,9 +121,10 @@ where
 	}
 }
 
-impl<T> KtonERC20<T>
+impl<T, Metadata> KtonERC20<T, Metadata>
 where
 	T: darwinia_evm::Config,
+	Metadata: Erc20Metadata,
 {
 	fn total_supply(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
 		let reader = helper.reader()?;
@@ -267,7 +277,7 @@ where
 	fn name(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			output: EvmDataWriter::new().write::<Bytes>(TOKEN_NAME.into()).build(),
+			output: EvmDataWriter::new().write::<Bytes>(Metadata::name().into()).build(),
 			cost: helper.used_gas(),
 			logs: vec![],
 		})
@@ -276,7 +286,7 @@ where
 	fn symbol(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			output: EvmDataWriter::new().write::<Bytes>(TOKEN_SYMBOL.into()).build(),
+			output: EvmDataWriter::new().write::<Bytes>(Metadata::symbol().into()).build(),
 			cost: helper.used_gas(),
 			logs: vec![],
 		})
@@ -285,7 +295,7 @@ where
 	fn decimals(helper: &mut PrecompileHelper<T>) -> EvmResult<PrecompileOutput> {
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
-			output: EvmDataWriter::new().write(TOKEN_DECIMAL).build(),
+			output: EvmDataWriter::new().write(Metadata::decimals()).build(),
 			cost: helper.used_gas(),
 			logs: vec![],
 		})
