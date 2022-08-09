@@ -25,7 +25,7 @@ fn add_authority() {
 		);
 		assert_eq!(
 			ecdsa_authority_events(),
-			vec![Event::CollectingAuthoritiesChangeSignatures(message)]
+			vec![Event::CollectingAuthoritiesChangeSignatures { message }]
 		);
 
 		// Case 1.
@@ -101,7 +101,7 @@ fn remove_authority() {
 		);
 		assert_eq!(
 			ecdsa_authority_events(),
-			vec![Event::CollectingAuthoritiesChangeSignatures(message)]
+			vec![Event::CollectingAuthoritiesChangeSignatures { message }]
 		);
 
 		// Case 1.
@@ -160,7 +160,7 @@ fn swap_authority() {
 		);
 		assert_eq!(
 			ecdsa_authority_events(),
-			vec![Event::CollectingAuthoritiesChangeSignatures(message)]
+			vec![Event::CollectingAuthoritiesChangeSignatures { message }]
 		);
 
 		// Case 1.
@@ -199,10 +199,21 @@ fn sync_interval_and_max_pending_period() {
 			133, 114, 57, 204, 144, 64, 169, 237, 233, 199, 174, 125, 64, 103, 84, 67, 66, 187, 19,
 			42, 56, 99, 189, 232, 211, 129, 3, 137, 223, 73, 240, 111,
 		];
-		assert_eq!(EcdsaAuthority::new_message_root_to_sign(), Some((message, Default::default())));
+		assert_eq!(
+			EcdsaAuthority::new_message_root_to_sign(),
+			Some((
+				Commitment {
+					block_number: System::block_number() as _,
+					message_root: Default::default(),
+					nonce: 0
+				},
+				message,
+				Default::default()
+			))
+		);
 		assert_eq!(
 			ecdsa_authority_events(),
-			vec![Event::CollectingNewMessageRootSignatures(message)]
+			vec![Event::CollectingNewMessageRootSignatures { message }]
 		);
 
 		// Use a new message root while exceeding the max pending period.
@@ -212,7 +223,11 @@ fn sync_interval_and_max_pending_period() {
 			run_to_block(i);
 			assert_eq!(
 				EcdsaAuthority::new_message_root_to_sign(),
-				Some((message, Default::default()))
+				Some((
+					Commitment { block_number: 3, message_root: Default::default(), nonce: 0 },
+					message,
+					Default::default()
+				))
 			);
 		});
 		run_to_block(offset + MaxPendingPeriod::get());
@@ -220,7 +235,14 @@ fn sync_interval_and_max_pending_period() {
 			5, 54, 174, 35, 39, 215, 2, 70, 154, 16, 20, 142, 27, 189, 79, 180, 122, 215, 90, 44,
 			144, 133, 199, 254, 229, 113, 225, 236, 43, 255, 34, 238,
 		];
-		assert_eq!(EcdsaAuthority::new_message_root_to_sign(), Some((message, Default::default())));
+		assert_eq!(
+			EcdsaAuthority::new_message_root_to_sign(),
+			Some((
+				Commitment { block_number: 9, message_root: message_root_of(1), nonce: 0 },
+				message,
+				Default::default()
+			))
+		);
 
 		// Not allow to update the message root while authorities changing.
 		assert_ok!(EcdsaAuthority::add_authority(Origin::root(), Default::default()));
@@ -230,7 +252,11 @@ fn sync_interval_and_max_pending_period() {
 			run_to_block(i);
 			assert_eq!(
 				EcdsaAuthority::new_message_root_to_sign(),
-				Some((message, Default::default()))
+				Some((
+					Commitment { block_number: 9, message_root: message_root_of(1), nonce: 0 },
+					message,
+					Default::default()
+				))
 			);
 		});
 	});
@@ -265,7 +291,7 @@ fn submit_authorities_change_signature() {
 		);
 		assert_eq!(
 			ecdsa_authority_events(),
-			vec![Event::CollectingAuthoritiesChangeSignatures(message)]
+			vec![Event::CollectingAuthoritiesChangeSignatures { message }]
 		);
 
 		// Case 2.
@@ -305,11 +331,11 @@ fn submit_authorities_change_signature() {
 		assert!(EcdsaAuthority::authorities_change_to_sign().is_none());
 		assert_eq!(
 			ecdsa_authority_events(),
-			vec![Event::CollectedEnoughAuthoritiesChangeSignatures((
+			vec![Event::CollectedEnoughAuthoritiesChangeSignatures {
 				operation,
 				message,
-				vec![(address_1, signature_1), (address_2, signature_2)]
-			))]
+				signatures: vec![(address_1, signature_1), (address_2, signature_2)]
+			}]
 		);
 	});
 }
@@ -336,10 +362,21 @@ fn submit_new_message_root_signature() {
 			133, 114, 57, 204, 144, 64, 169, 237, 233, 199, 174, 125, 64, 103, 84, 67, 66, 187, 19,
 			42, 56, 99, 189, 232, 211, 129, 3, 137, 223, 73, 240, 111,
 		];
-		assert_eq!(EcdsaAuthority::new_message_root_to_sign(), Some((message, Default::default())));
+		assert_eq!(
+			EcdsaAuthority::new_message_root_to_sign(),
+			Some((
+				Commitment {
+					block_number: System::block_number() as _,
+					message_root: Default::default(),
+					nonce: 0
+				},
+				message,
+				Default::default()
+			))
+		);
 		assert_eq!(
 			ecdsa_authority_events(),
-			vec![Event::CollectingNewMessageRootSignatures(message)]
+			vec![Event::CollectingNewMessageRootSignatures { message }]
 		);
 
 		// Case 2.
@@ -373,7 +410,15 @@ fn submit_new_message_root_signature() {
 		));
 		assert_eq!(
 			EcdsaAuthority::new_message_root_to_sign(),
-			Some((message, BoundedVec::try_from(vec![(address_1, signature_1.clone())]).unwrap()))
+			Some((
+				Commitment {
+					block_number: System::block_number() as _,
+					message_root: Default::default(),
+					nonce: 0
+				},
+				message,
+				BoundedVec::try_from(vec![(address_1, signature_1.clone())]).unwrap()
+			))
 		);
 
 		let signature_2 = sign(&secret_key_2, &message);
@@ -386,10 +431,15 @@ fn submit_new_message_root_signature() {
 		assert!(EcdsaAuthority::new_message_root_to_sign().is_none());
 		assert_eq!(
 			ecdsa_authority_events(),
-			vec![Event::CollectedEnoughNewMessageRootSignatures((
+			vec![Event::CollectedEnoughNewMessageRootSignatures {
+				commitment: Commitment {
+					block_number: System::block_number() as _,
+					message_root: Default::default(),
+					nonce: EcdsaAuthority::nonce()
+				},
 				message,
-				vec![(address_1, signature_1), (address_2, signature_2)]
-			))]
+				signatures: vec![(address_1, signature_1), (address_2, signature_2)]
+			}]
 		);
 	});
 }
@@ -452,12 +502,5 @@ fn tx_fee() {
 			),
 			EcdsaAuthorityError::AlreadySubmitted
 		);
-	});
-}
-
-#[test]
-fn on_runtime_upgrade() {
-	ExtBuilder::default().build().execute_with(|| {
-		assert_eq!(EcdsaAuthority::test_on_runtime_upgrade(), b"EcdsaAuthority");
 	});
 }
