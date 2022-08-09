@@ -19,13 +19,13 @@
 // --- std ---
 use std::{collections::BTreeMap, str::FromStr};
 // --- paritytech ---
+use fp_evm::GenesisAccount;
 use sc_service::{ChainType, GenericChainSpec};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::sr25519;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 // --- darwinia-network ---
 use super::*;
-use darwinia_evm::GenesisAccount;
 use template_runtime::*;
 
 pub type ChainSpec = GenericChainSpec<GenesisConfig>;
@@ -66,7 +66,9 @@ pub fn development_config() -> ChainSpec {
 						GenesisAccount {
 							balance: FromStr::from_str("0xffffffffffffffffffffffffffffffff")
 								.unwrap(),
-							..Default::default()
+							code: Default::default(),
+							nonce: Default::default(),
+							storage: Default::default(),
 						},
 					);
 					map

@@ -21,13 +21,13 @@ use std::{collections::BTreeMap, str::FromStr};
 // --- crates.io ---
 use rand::{seq::SliceRandom, Rng};
 // --- paritytech ---
+use fp_evm::GenesisAccount;
 use sc_chain_spec::{ChainType, GenericChainSpec, Properties};
 use sc_telemetry::TelemetryEndpoints;
 use sp_core::{crypto::UncheckedInto, sr25519};
 use sp_runtime::Perbill;
 // --- darwinia-network ---
 use super::*;
-use darwinia_evm::GenesisAccount;
 use drml_primitives::*;
 use pangoro_runtime::*;
 
@@ -94,7 +94,9 @@ pub fn genesis_config() -> ChainSpec {
 					array_bytes::hex_into_unchecked(account),
 					GenesisAccount {
 						balance: (MANY_COINS * (10 as Balance).pow(9)).into(),
-						..Default::default()
+						code: Default::default(),
+						nonce: Default::default(),
+						storage: Default::default(),
 					},
 				);
 			}
@@ -244,7 +246,9 @@ pub fn development_config() -> ChainSpec {
 					array_bytes::hex_into_unchecked(account),
 					GenesisAccount {
 						balance: (123_456_789_000_000_000_000_090 as Balance).into(),
-						..Default::default()
+						code: Default::default(),
+						nonce: Default::default(),
+						storage: Default::default(),
 					},
 				);
 			}

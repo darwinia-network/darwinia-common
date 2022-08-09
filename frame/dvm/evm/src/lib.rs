@@ -23,7 +23,7 @@
 
 pub mod runner;
 
-#[cfg(feature = "runtime-benchmarks")]
+#[cfg(any(test, feature = "runtime-benchmarks"))]
 mod benchmarking;
 #[cfg(test)]
 mod tests;
@@ -39,18 +39,16 @@ pub use fp_evm::{
 #[cfg(feature = "std")]
 use std::collections::BTreeMap;
 // --- crates.io ---
-#[cfg(feature = "std")]
-use codec::{Decode, Encode};
 use evm::{Config as EvmConfig, ExitError, ExitReason};
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 // --- paritytech ---
+use fp_evm::FeeCalculator;
+#[cfg(feature = "std")]
+use fp_evm::GenesisAccount;
 use frame_support::{
 	traits::FindAuthor,
 	weights::{PostDispatchInfo, Weight},
 };
 use frame_system::RawOrigin;
-use pallet_evm::FeeCalculator;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	traits::{BadOrigin, UniqueSaturatedInto},
@@ -217,6 +215,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
+			let is_transactional = true;
 			let info = T::Runner::call(
 				source,
 				target,
@@ -227,6 +226,7 @@ pub mod pallet {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list,
+				is_transactional,
 				T::config(),
 			)?;
 
@@ -263,6 +263,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
+			let is_transactional = true;
 			let info = T::Runner::create(
 				source,
 				init,
@@ -272,6 +273,7 @@ pub mod pallet {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list,
+				is_transactional,
 				T::config(),
 			)?;
 			match info {
@@ -309,6 +311,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
 
+			let is_transactional = true;
 			let info = T::Runner::create2(
 				source,
 				init,
@@ -319,6 +322,7 @@ pub mod pallet {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list,
+				is_transactional,
 				T::config(),
 			)?;
 			match info {
@@ -552,18 +556,4 @@ where
 			r => Err(OuterOrigin::from(r)),
 		})
 	}
-}
-
-/// Account used for genesis block construction.
-#[cfg(feature = "std")]
-#[derive(Clone, Debug, Default, Eq, PartialEq, Encode, Decode, Serialize, Deserialize)]
-pub struct GenesisAccount {
-	/// Account nonce.
-	pub nonce: U256,
-	/// Account balance.
-	pub balance: U256,
-	/// Full account storage.
-	pub storage: BTreeMap<H256, H256>,
-	/// Account code.
-	pub code: Vec<u8>,
 }

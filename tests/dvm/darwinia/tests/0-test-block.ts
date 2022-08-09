@@ -98,7 +98,7 @@ describe("Test Block RPC", function () {
 	});
 
 	it("should get transactions count by pending block", async function () {
-		expect(await web3.eth.getBlockTransactionCount("pending")).to.equal(null);
+		expect(await web3.eth.getBlockTransactionCount("pending")).to.equal(0);
 	});
 
 	it("should return null if the block doesnt exist", async function () {

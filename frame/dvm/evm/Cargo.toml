@@ -35,7 +35,6 @@ sp-runtime         = { default-features = false, git = "https://github.com/darwi
 sp-std             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 # frontier
 fp-evm     = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
-pallet-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
 
 [dev-dependencies]
 # darwinia-network
@@ -70,7 +69,6 @@ std = [
 	"sp-std/std",
 	# frontier
 	"fp-evm/std",
-	"pallet-evm/std",
 ]
 
 runtime-benchmarks = [
