@@ -25,9 +25,6 @@ mkdir -p $DATA_DIR
 
 EXECUTABLE=$REPO_PATH/target/release/drml
 
-echo "Build \`drml\`"
-cargo build --release
-
 index=100
 
 if [[ "$CHAIN" == "pangoro" ]] ; then
@@ -38,7 +35,10 @@ for validator in alice bob charlie dave
 do
   echo "Purge $validator's chain data"
   $EXECUTABLE purge-chain --chain $CHAIN-local -d $DATA_DIR/$validator -y
+done
 
+for validator in alice bob charlie dave
+do
   echo "Firing $CHAIN Node $validator"
   $EXECUTABLE \
     --rpc-port $((9933 + index)) \
