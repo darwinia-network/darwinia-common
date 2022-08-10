@@ -37,7 +37,7 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 	transaction_validity::{InvalidTransaction, TransactionValidity, TransactionValidityError},
-	AccountId32, Perbill,  RuntimeDebug,
+	AccountId32, Perbill, RuntimeDebug,
 };
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
@@ -246,11 +246,12 @@ impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
 }
 frame_support::parameter_types! {
 	// Shared configurations.
+	pub const CollateralPerOrder: Balance = 50;
 	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
 }
 impl Config<F1> for Test {
 	type AssignedRelayerSlashRatio = ();
-	type CollateralPerOrder = ();
+	type CollateralPerOrder = CollateralPerOrder;
 	type ConfirmRelayersRewardRatio = ();
 	type Currency = Ring;
 	type Event = Event;
