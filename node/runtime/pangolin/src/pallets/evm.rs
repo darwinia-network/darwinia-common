@@ -26,7 +26,7 @@ use darwinia_evm::{
 };
 use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 use darwinia_evm_precompile_dispatch::Dispatch;
-use darwinia_evm_precompile_kton::{ERC20Metadata, KtonERC20};
+use darwinia_evm_precompile_kton::{Erc20Metadata, KtonERC20};
 use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::{
@@ -123,7 +123,7 @@ where
 }
 
 pub struct KtonERC20MetaData;
-impl ERC20Metadata for KtonERC20MetaData {
+impl Erc20Metadata for KtonERC20MetaData {
 	fn name() -> &'static str {
 		"PKTON ERC20"
 	}
