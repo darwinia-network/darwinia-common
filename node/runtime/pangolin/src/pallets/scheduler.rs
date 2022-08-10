@@ -1,5 +1,5 @@
 // --- paritytech ---
-use frame_support::weights::Weight;
+use frame_support::{traits::EqualPrivilegeOnly, weights::Weight};
 use pallet_scheduler::Config;
 use sp_runtime::Perbill;
 // --- darwinia-network ---
@@ -17,6 +17,7 @@ impl Config for Runtime {
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type MaximumWeight = MaximumSchedulerWeight;
 	type Origin = Origin;
+	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type PalletsOrigin = OriginCaller;
 	type ScheduleOrigin = Root;
 	type WeightInfo = WeightInfo<Runtime>;

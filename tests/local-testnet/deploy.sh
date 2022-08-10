@@ -17,6 +17,12 @@ if [ -z $EXECUTION ]; then
   EXECUTION=wasm
 fi
 
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+echo "!!        Don't runtime thie script multiple times        !!"
+echo "!! Make sure the previous drml processes are fully exited !!"
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+echo
+
 LOG_DIR=$DIR/log
 mkdir -p $LOG_DIR
 
@@ -25,22 +31,21 @@ mkdir -p $DATA_DIR
 
 EXECUTABLE=$REPO_PATH/target/release/drml
 
-echo "Build \`drml\`"
-cargo build --release
-
 index=100
 
 if [[ "$CHAIN" == "pangoro" ]] ; then
   index=200
 fi
 
+echo "Purge validators' chain data"
 for validator in alice bob charlie dave
 do
-  echo "Purge $validator's \`db\`, \`network\`, \`dvm\`"
-  rm -rf $DATA_DIR/$validator/chains/$CHAIN/db
-  rm -rf $DATA_DIR/$validator/chains/$CHAIN/network
-  rm -rf $DATA_DIR/$validator/chains/$CHAIN/dvm
+  $EXECUTABLE purge-chain --chain $CHAIN-local -d $DATA_DIR/$validator -y
+done
 
+echo
+for validator in alice bob charlie dave
+do
   echo "Firing $CHAIN Node $validator"
   $EXECUTABLE \
     --rpc-port $((9933 + index)) \

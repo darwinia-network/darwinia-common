@@ -79,30 +79,30 @@ where
 	T: Config + darwinia_ethereum::Config,
 {
 	fn get() -> Option<H256> {
-		macro_rules! unwrap_or_exit {
+		macro_rules! unwrap_or_return {
 			($r:expr, $err_msg:expr) => {
 				if let Ok(r) = $r {
 					r
 				} else {
-					log::error!(target: LOG_TARGET, "{}", $err_msg);
+					log::warn!(target: LOG_TARGET, "{}", $err_msg);
 
 					return None;
 				}
 			};
 		}
 
-		let raw_message_root = unwrap_or_exit!(
+		let raw_message_root = unwrap_or_return!(
 			<darwinia_ethereum::Pallet<T>>::read_only_call(
 				<CommitmentContract<T>>::get(),
-				unwrap_or_exit!(beefy::commitment(), "Fail to encode `commitment` ABI, exit.")
+				unwrap_or_return!(beefy::commitment(), "Fail to encode `commitment` ABI, return.")
 			),
-			"Fail to read message root from DVM, exit."
+			"Fail to read message root from DVM, return."
 		);
 
 		if raw_message_root.len() != 32 {
-			log::error!(
+			log::warn!(
 				target: LOG_TARGET,
-				"Invalid raw message root: {:?}, exit.",
+				"Invalid raw message root: {:?}, return.",
 				raw_message_root
 			);
 

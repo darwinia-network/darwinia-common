@@ -504,7 +504,9 @@ pub mod pallet {
 		DuplicateIndex,
 		/// Slash record index out of bounds.
 		InvalidSlashIndex,
-		/// Can not bond with value less than minimum required.
+		/// Cannot have a validator or nominator role, with value less than the minimum defined by
+		/// governance (see `MinValidatorBond` and `MinNominatorBond`). If unbonding is the
+		/// intention, `chill` first to remove one's role as validator/nominator.
 		InsufficientBond,
 		/// Can not schedule more unlock chunks.
 		NoMoreChunks,
@@ -2142,42 +2144,47 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Remove all data structure concerning a staker/stash once its balance is at the minimum.
-		/// This is essentially equivalent to `withdraw_unbonded` except it can be called by anyone
-		/// and the target `stash` must have no funds left beyond the ED.
+		/// Remove all data structures concerning a staker/stash once it is at a state where it can
+		/// be considered `dust` in the staking system. The requirements are:
 		///
-		/// This can be called from any origin.
+		/// 1. the `total_balance` of the stash is below existential deposit.
+		/// 2. or, the `ledger.total` of the stash is below existential deposit.
 		///
-		/// - `stash`: The stash account to reap. Its balance must be zero.
+		/// The former can happen in cases like a slash; the latter when a fully unbonded account
+		/// is still receiving staking rewards in `RewardDestination::Staked`.
 		///
-		/// # <weight>
-		/// Complexity: O(S) where S is the number of slashing spans on the account.
-		/// DB Weight:
-		/// - Reads: Stash Account, Bonded, Slashing Spans, Locks
-		/// - Writes: Bonded, Slashing Spans (if S > 0), Ledger, Payee, Validators, Nominators,
-		///   Stash Account, Locks
-		/// - Writes Each: SpanSlash * S
-		/// # </weight>
+		/// It can be called by anyone, as long as `stash` meets the above requirements.
+		///
+		/// Refunds the transaction fees upon successful execution.
 		#[pallet::weight(T::WeightInfo::reap_stash(*num_slashing_spans))]
 		pub fn reap_stash(
-			_origin: OriginFor<T>,
+			origin: OriginFor<T>,
 			stash: AccountId<T>,
 			num_slashing_spans: u32,
-		) -> DispatchResult {
-			let total_ring = T::RingCurrency::total_balance(&stash);
-			let minimum_ring = T::RingCurrency::minimum_balance();
-			let total_kton = T::KtonCurrency::total_balance(&stash);
-			let minimum_kton = T::KtonCurrency::minimum_balance();
-			let at_minimum = (total_ring == minimum_ring && total_kton <= minimum_kton)
-				|| (total_kton == minimum_kton && total_ring <= minimum_ring);
+		) -> DispatchResultWithPostInfo {
+			ensure_signed(origin)?;
 
-			ensure!(at_minimum, <Error<T>>::FundedTarget);
+			let total_ring = T::RingCurrency::total_balance(&stash);
+			let total_kton = T::KtonCurrency::total_balance(&stash);
+			let ed_ring = T::RingCurrency::minimum_balance();
+			let ed_kton = T::KtonCurrency::minimum_balance();
+			let reapable = if let Some(ledger) =
+				Self::ledger(Self::bonded(stash.clone()).ok_or(Error::<T>::NotStash)?)
+			{
+				((total_ring.is_zero() || total_ring < ed_ring)
+					&& (total_kton.is_zero() || total_kton < ed_kton))
+					|| (ledger.active < ed_ring && ledger.active_kton < ed_kton)
+			} else {
+				true
+			};
+
+			ensure!(reapable, <Error<T>>::FundedTarget);
 
 			Self::kill_stash(&stash, num_slashing_spans)?;
 			T::RingCurrency::remove_lock(STAKING_ID, &stash);
 			T::KtonCurrency::remove_lock(STAKING_ID, &stash);
 
-			Ok(())
+			Ok(Pays::No.into())
 		}
 
 		/// Remove the given nominations from the calling validator.

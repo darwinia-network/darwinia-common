@@ -1,5 +1,5 @@
 // --- paritytech ---
-use frame_support::weights::Weight;
+use frame_support::{traits::EqualPrivilegeOnly, weights::Weight};
 use frame_system::EnsureRoot;
 use pallet_scheduler::Config;
 use sp_runtime::Perbill;
@@ -18,6 +18,7 @@ impl Config for Runtime {
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type MaximumWeight = MaximumSchedulerWeight;
 	type Origin = Origin;
+	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type PalletsOrigin = OriginCaller;
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = WeightInfo<Runtime>;

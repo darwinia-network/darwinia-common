@@ -29,12 +29,12 @@ pub use wasm::*;
 // --- crates.io ---
 use codec::{Decode, Encode};
 // --- paritytech ---
+use fp_evm::FeeCalculator;
 use frame_support::traits::KeyOwnerProofSystem;
 use frame_system::{
 	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
 	CheckWeight, EnsureRoot,
 };
-use pallet_evm::FeeCalculator;
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
 use pallet_transaction_payment::{ChargeTransactionPayment, FeeDetails, RuntimeDispatchInfo};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
@@ -341,6 +341,7 @@ sp_api::impl_runtime_apis! {
 				None
 			};
 
+			let is_transactional = false;
 			<Runtime as darwinia_evm::Config>::Runner::call(
 				from,
 				to,
@@ -351,6 +352,7 @@ sp_api::impl_runtime_apis! {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list.unwrap_or_default(),
+				is_transactional,
 				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}
@@ -374,6 +376,7 @@ sp_api::impl_runtime_apis! {
 				None
 			};
 
+			let is_transactional = false;
 			<Runtime as darwinia_evm::Config>::Runner::create(
 				from,
 				data,
@@ -383,6 +386,7 @@ sp_api::impl_runtime_apis! {
 				max_priority_fee_per_gas,
 				nonce,
 				access_list.unwrap_or_default(),
+				is_transactional,
 				config.as_ref().unwrap_or(<Runtime as darwinia_evm::Config>::config()),
 			).map_err(|err| err.into())
 		}

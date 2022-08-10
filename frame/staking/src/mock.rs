@@ -289,6 +289,7 @@ frame_support::construct_runtime! {
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Staking: darwinia_staking::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
+		Historical: pallet_session::historical::{Pallet, Storage},
 	}
 }
 
@@ -861,11 +862,12 @@ pub fn on_offence_in_era(
 	>],
 	slash_fraction: &[Perbill],
 	era: EraIndex,
+	disable_strategy: DisableStrategy,
 ) {
 	let bonded_eras = <BondedEras<Test>>::get();
 	for &(bonded_era, start_session) in bonded_eras.iter() {
 		if bonded_era == era {
-			let _ = Staking::on_offence(offenders, slash_fraction, start_session);
+			let _ = Staking::on_offence(offenders, slash_fraction, start_session, disable_strategy);
 			return;
 		} else if bonded_era > era {
 			break;
@@ -877,6 +879,7 @@ pub fn on_offence_in_era(
 			offenders,
 			slash_fraction,
 			Staking::eras_start_session_index(era).unwrap(),
+			disable_strategy,
 		);
 	} else {
 		panic!("cannot slash in era {}", era);
@@ -891,7 +894,7 @@ pub fn on_offence_now(
 	slash_fraction: &[Perbill],
 ) {
 	let now = active_era();
-	on_offence_in_era(offenders, slash_fraction, now)
+	on_offence_in_era(offenders, slash_fraction, now, DisableStrategy::WhenSlashed)
 }
 
 pub fn add_slash(who: &AccountId) {
