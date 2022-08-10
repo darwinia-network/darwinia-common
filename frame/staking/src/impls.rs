@@ -159,6 +159,10 @@ impl<T: Config> Pallet<T> {
 			.unwrap_or_default()
 	}
 
+	pub fn weight_of_fn() -> Box<dyn Fn(&T::AccountId) -> VoteWeight> {
+		Box::new(Self::weight_of)
+	}
+
 	pub fn weight_of(who: &AccountId<T>) -> VoteWeight {
 		Self::power_of(who) as _
 	}
@@ -928,6 +932,8 @@ impl<T: Config> Pallet<T> {
 		let mut nominators_taken = 0u32;
 		// track every nominator iterated over, but not necessarily added to `all_voters`
 		let mut nominators_seen = 0u32;
+		// cache the total-issuance once in this function
+		let weight_of = Self::weight_of_fn();
 		let mut nominators_iter = T::SortedListProvider::iter();
 
 		while nominators_taken < nominators_quota && nominators_seen < nominators_quota * 2 {
@@ -942,6 +948,12 @@ impl<T: Config> Pallet<T> {
 			if let Some(Nominations { submitted_in, mut targets, suppressed: _ }) =
 				<Nominators<T>>::get(&nominator)
 			{
+				log!(
+					trace,
+					"fetched nominator {:?} with weight {:?}",
+					nominator,
+					weight_of(&nominator)
+				);
 				targets.retain(|stash| {
 					slashing_spans
 						.get(stash)
@@ -949,11 +961,11 @@ impl<T: Config> Pallet<T> {
 				});
 
 				if !targets.len().is_zero() {
-					all_voters.push((nominator.clone(), Self::weight_of(&nominator), targets));
+					all_voters.push((nominator.clone(), weight_of(&nominator), targets));
 					nominators_taken.saturating_inc();
 				}
 			} else {
-				log!(error, "invalid item in `SortedListProvider`: {:?}", nominator)
+				log!(error, "DEFENSIVE: invalid item in `SortedListProvider`: {:?}", nominator)
 			}
 		}
 
@@ -1206,7 +1218,6 @@ impl<T: Config> ElectionDataProvider<AccountId<T>, BlockNumberFor<T>> for Pallet
 		targets: Vec<AccountId<T>>,
 		target_stake: Option<VoteWeight>,
 	) {
-		use sp_std::convert::TryFrom;
 		targets.into_iter().for_each(|v| {
 			let stake: BalanceOf<T> = target_stake
 				.and_then(|w| <BalanceOf<T>>::try_from(w).ok())
@@ -1348,6 +1359,7 @@ where
 		>],
 		slash_fraction: &[Perbill],
 		slash_session: SessionIndex,
+		disable_strategy: DisableStrategy,
 	) -> Weight {
 		let reward_proportion = <SlashRewardFraction<T>>::get();
 		let mut consumed_weight: Weight = 0;
@@ -1417,6 +1429,7 @@ where
 				window_start,
 				now: active_era,
 				reward_proportion,
+				disable_strategy,
 			});
 
 			if let Some(mut unapplied) = unapplied {

@@ -454,11 +454,7 @@ pub mod pallet {
 				return None;
 			}
 
-			let message_root = if let Some(message_root) = T::MessageRoot::get() {
-				message_root
-			} else {
-				return None;
-			};
+			let message_root = T::MessageRoot::get()?;
 
 			<PreviousMessageRoot<T>>::try_mutate(|maybe_previous_message_root| {
 				if let Some((recorded_at, previous_message_root)) = maybe_previous_message_root {

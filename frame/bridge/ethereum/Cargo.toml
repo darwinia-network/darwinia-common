@@ -26,11 +26,11 @@ darwinia-support          = { default-features = false, path = "../../support" }
 dp-relayer-game           = { default-features = false, path = "../../../primitives/relayer-game" }
 ethereum-primitives       = { default-features = false, features = ["full-codec", "full-rlp"], path = "../../../primitives/ethereum" }
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 
 [dev-dependencies]
 # crates.io
@@ -40,8 +40,8 @@ darwinia-balances   = { path = "../../balances" }
 darwinia-support    = { features = ["testing"], path = "../../support" }
 ethereum-primitives = { features = ["full-serde"], path = "../../../primitives/ethereum" }
 # paritytech
-sp-core = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-sp-io   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+sp-core = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-io   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 
 [features]
 default = ["std"]

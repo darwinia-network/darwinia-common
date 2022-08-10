@@ -41,6 +41,7 @@ pub trait Runner<T: Config> {
 		max_priority_fee_per_gas: Option<U256>,
 		nonce: Option<U256>,
 		access_list: Vec<(H160, Vec<H256>)>,
+		is_transactional: bool,
 		config: &evm::Config,
 	) -> Result<CallInfo, Self::Error>;
 
@@ -53,6 +54,7 @@ pub trait Runner<T: Config> {
 		max_priority_fee_per_gas: Option<U256>,
 		nonce: Option<U256>,
 		access_list: Vec<(H160, Vec<H256>)>,
+		is_transactional: bool,
 		config: &evm::Config,
 	) -> Result<CreateInfo, Self::Error>;
 
@@ -66,6 +68,7 @@ pub trait Runner<T: Config> {
 		max_priority_fee_per_gas: Option<U256>,
 		nonce: Option<U256>,
 		access_list: Vec<(H160, Vec<H256>)>,
+		is_transactional: bool,
 		config: &evm::Config,
 	) -> Result<CreateInfo, Self::Error>;
 }
