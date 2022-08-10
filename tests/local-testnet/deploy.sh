@@ -31,12 +31,13 @@ if [[ "$CHAIN" == "pangoro" ]] ; then
   index=200
 fi
 
+echo "Purge validators' chain data"
 for validator in alice bob charlie dave
 do
-  echo "Purge $validator's chain data"
   $EXECUTABLE purge-chain --chain $CHAIN-local -d $DATA_DIR/$validator -y
 done
 
+echo
 for validator in alice bob charlie dave
 do
   echo "Firing $CHAIN Node $validator"
