@@ -17,10 +17,10 @@ if [ -z $EXECUTION ]; then
   EXECUTION=wasm
 fi
 
-echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-echo "!!        Don't runtime thie script multiple times        !!"
-echo "!! Make sure the previous drml processes are fully exited !!"
-echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+echo "!!          Do not run this script multiple times          !!"
+echo "!! Make sure the previous drml processes were fully exited !!"
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 echo
 
 LOG_DIR=$DIR/log
