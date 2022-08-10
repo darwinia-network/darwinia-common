@@ -6,7 +6,7 @@ use frame_support::traits::InstanceFilter;
 use pallet_proxy::Config;
 use sp_runtime::RuntimeDebug;
 // --- darwinia-network ---
-use crate::*;
+use crate::{weights::pallet_proxy::WeightInfo, *};
 
 /// The type used to represent the kinds of proxying allowed.
 #[derive(
@@ -136,5 +136,5 @@ impl Config for Runtime {
 	type ProxyDepositBase = ProxyDepositBase;
 	type ProxyDepositFactor = ProxyDepositFactor;
 	type ProxyType = ProxyType;
-	type WeightInfo = ();
+	type WeightInfo = WeightInfo<Runtime>;
 }

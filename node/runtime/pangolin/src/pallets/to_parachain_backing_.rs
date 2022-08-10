@@ -3,7 +3,7 @@ use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{PalletId, RuntimeDebug};
 // --- darwinia-network ---
-use crate::{pangolin_parachain::*, *};
+use crate::{pangolin_parachain::*, weights::to_parachain_backing::WeightInfo, *};
 use bp_message_dispatch::CallOrigin;
 use bp_messages::LaneId;
 use bp_runtime::{messages::DispatchFeePayment, ChainId, PANGOLIN_PARACHAIN_CHAIN_ID};
@@ -71,5 +71,5 @@ impl Config for Runtime {
 	type OutboundPayloadCreator = ToPangolinParachainOutboundPayLoad;
 	type PalletId = S2sBackingPalletId;
 	type RingCurrency = Ring;
-	type WeightInfo = ();
+	type WeightInfo = WeightInfo<Runtime>;
 }

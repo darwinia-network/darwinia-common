@@ -2,7 +2,7 @@
 use pallet_collective::EnsureMember;
 use pallet_democracy::Config;
 // --- darwinia-network ---
-use crate::*;
+use crate::{weights::pallet_democracy::WeightInfo, *};
 
 frame_support::parameter_types! {
 	pub const LaunchPeriod: BlockNumber = 7 * DAYS;
@@ -56,5 +56,5 @@ impl Config for Runtime {
 	type VetoOrigin = EnsureMember<AccountId, TechnicalCollective>;
 	type VoteLockingPeriod = EnactmentPeriod;
 	type VotingPeriod = VotingPeriod;
-	type WeightInfo = ();
+	type WeightInfo = WeightInfo<Runtime>;
 }

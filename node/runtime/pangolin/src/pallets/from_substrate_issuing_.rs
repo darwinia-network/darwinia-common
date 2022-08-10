@@ -4,7 +4,7 @@ use codec::Decode;
 use frame_support::PalletId;
 use sp_runtime::AccountId32;
 // --- darwinia-network ---
-use crate::*;
+use crate::{weights::from_substrate_issuing::WeightInfo, *};
 use bp_message_dispatch::CallOrigin;
 use bp_messages::{LaneId, MessageNonce};
 use bp_runtime::{ChainId, PANGORO_CHAIN_ID};
@@ -45,5 +45,5 @@ impl Config for Runtime {
 	type OutboundMessenger = OutboundMessageDataInfo;
 	type PalletId = S2sIssuingPalletId;
 	type RingCurrency = Ring;
-	type WeightInfo = ();
+	type WeightInfo = WeightInfo<Runtime>;
 }

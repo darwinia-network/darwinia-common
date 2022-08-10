@@ -2,6 +2,10 @@ pub use pallet_bridge_grandpa::{Instance1 as WithPangoroGrandpa, Instance2 as Wi
 
 // --- paritytech ---
 use pallet_bridge_grandpa::Config;
+use weights::{
+	pallet_bridge_grandpa_bridge_pangoro_grandpa::WeightInfo as PangoroGrandpaWeightInfo,
+	pallet_bridge_grandpa_bridge_rococo_grandpa::WeightInfo as RococoGrandpaWeightInfo,
+};
 // --- darwinia-network ---
 use crate::*;
 
@@ -23,11 +27,11 @@ impl Config<WithPangoroGrandpa> for Runtime {
 	type BridgedChain = bp_pangoro::Pangoro;
 	type HeadersToKeep = PangoroHeadersToKeep;
 	type MaxRequests = MaxRequests;
-	type WeightInfo = ();
+	type WeightInfo = PangoroGrandpaWeightInfo<Runtime>;
 }
 impl Config<WithRococoGrandpa> for Runtime {
 	type BridgedChain = bp_rococo::Rococo;
 	type HeadersToKeep = RococoHeadersToKeep;
 	type MaxRequests = MaxRequests;
-	type WeightInfo = ();
+	type WeightInfo = RococoGrandpaWeightInfo<Runtime>;
 }

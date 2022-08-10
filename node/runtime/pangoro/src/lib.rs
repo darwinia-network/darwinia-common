@@ -6,6 +6,8 @@
 pub mod pallets;
 pub use pallets::*;
 
+pub mod weights;
+
 pub mod bridges_message;
 pub use bridges_message::*;
 
@@ -662,7 +664,22 @@ sp_api::impl_runtime_apis! {
 
 			list_benchmark!(list, extra, frame_benchmarking, BaselineBench::<Runtime>);
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, to_substrate_backing, Substrate2SubstrateBacking);
+			list_benchmark!(list, extra, pallet_babe, Babe);
+			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
+			// list_benchmark!(list, extra, darwinia_balances, Balances);
+			// list_benchmark!(list, extra, darwinia_balances, Kton);
+			list_benchmark!(list, extra, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
+			// TODO  https://github.com/paritytech/substrate/issues/11068
+			// list_benchmark!(list, extra, pallet_session, SessionBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_grandpa, Grandpa);
+			list_benchmark!(list, extra, pallet_im_online, ImOnline);
+			list_benchmark!(list, extra, pallet_treasury, Treasury);
+			list_benchmark!(list, extra, pallet_scheduler, Scheduler);
+			list_benchmark!(list, extra, pallet_bridge_grandpa, BridgePangolinGrandpa);
+			// TODO: https://github.com/darwinia-network/darwinia-parachain/issues/66
+			// list_benchmark!(list, extra, pallet_bridge_messages, BridgePangolinMessages);
+			list_benchmark!(list, extra, pallet_fee_market, PangolinFeeMarket);
+			// list_benchmark!(list, extra, module_transaction_pause, TransactionPause);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -686,7 +703,25 @@ sp_api::impl_runtime_apis! {
 
 			add_benchmark!(params, batches, frame_benchmarking, BaselineBench::<Runtime>);
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, to_substrate_backing, Substrate2SubstrateBacking);
+			// TODO https://github.com/paritytech/substrate/issues/11834
+			// add_benchmark!(params, batches, pallet_babe, Babe);
+			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
+			// add_benchmark!(params, batches, darwinia_balances, Balances);
+			// add_benchmark!(params, batches, darwinia_balances, Kton);
+			// FIXME https://github.com/darwinia-network/darwinia-common/issues/1359
+			// add_benchmark!(params, batches, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
+			// TODO https://github.com/paritytech/substrate/issues/11068
+			// add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
+			// TODO https://github.com/paritytech/substrate/issues/11835
+			// add_benchmark!(params, batches, pallet_grandpa, Grandpa);
+			add_benchmark!(params, batches, pallet_im_online, ImOnline);
+			add_benchmark!(params, batches, pallet_treasury, Treasury);
+			add_benchmark!(params, batches, pallet_scheduler, Scheduler);
+			add_benchmark!(params, batches, pallet_bridge_grandpa, BridgePangolinGrandpa);
+			// TODO: https://github.com/darwinia-network/darwinia-parachain/issues/66
+			// add_benchmark!(params, batches, pallet_bridge_messages, BridgePangolinMessages);
+			add_benchmark!(params, batches, pallet_fee_market, PangolinFeeMarket);
+			// add_benchmark!(params, batches, module_transaction_pause, TransactionPause);
 
 			Ok(batches)
 		}

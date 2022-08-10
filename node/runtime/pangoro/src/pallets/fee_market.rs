@@ -6,7 +6,7 @@ use core::cmp;
 use frame_support::traits::LockIdentifier;
 use sp_runtime::{Permill, SaturatedConversion};
 // --- darwinia ---
-use crate::*;
+use crate::{weights::pallet_fee_market::WeightInfo, *};
 use pallet_fee_market::{BalanceOf, Config, Slasher};
 
 pub struct FeeMarketSlasher;
@@ -53,5 +53,5 @@ impl Config<WithPangolinFeeMarket> for Runtime {
 	type Slasher = FeeMarketSlasher;
 	type Slot = Slot;
 	type TreasuryPalletId = TreasuryPalletId;
-	type WeightInfo = ();
+	type WeightInfo = WeightInfo<Runtime>;
 }

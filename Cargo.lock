@@ -5660,6 +5660,7 @@ name = "pallet-bounties"
 version = "4.0.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.4#69ac7634b33d8b68c5b7ca993c04f83e17ed2e7d"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -5698,6 +5699,7 @@ dependencies = [
  "bp-runtime",
  "bp-test-utils",
  "finality-grandpa",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -5720,6 +5722,7 @@ dependencies = [
  "bp-message-dispatch",
  "bp-messages",
  "bp-runtime",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -5791,11 +5794,13 @@ name = "pallet-election-provider-multi-phase"
 version = "4.0.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.4#69ac7634b33d8b68c5b7ca993c04f83e17ed2e7d"
 dependencies = [
+ "frame-benchmarking",
  "frame-election-provider-support",
  "frame-support",
  "frame-system",
  "log",
  "parity-scale-codec",
+ "rand 0.7.3",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -5804,6 +5809,8 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "static_assertions",
+ "strum",
+ "strum_macros",
 ]
 
 [[package]]
@@ -5811,6 +5818,7 @@ name = "pallet-elections-phragmen"
 version = "5.0.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.4#69ac7634b33d8b68c5b7ca993c04f83e17ed2e7d"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -5960,6 +5968,7 @@ name = "pallet-im-online"
 version = "4.0.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.4#69ac7634b33d8b68c5b7ca993c04f83e17ed2e7d"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -5996,6 +6005,7 @@ name = "pallet-multisig"
 version = "4.0.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.4#69ac7634b33d8b68c5b7ca993c04f83e17ed2e7d"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -6027,6 +6037,7 @@ name = "pallet-proxy"
 version = "4.0.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.4#69ac7634b33d8b68c5b7ca993c04f83e17ed2e7d"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -6127,6 +6138,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-inherents",
+ "sp-io",
  "sp-runtime",
  "sp-std",
  "sp-timestamp",
@@ -6137,6 +6149,7 @@ name = "pallet-tips"
 version = "4.0.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.4#69ac7634b33d8b68c5b7ca993c04f83e17ed2e7d"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -6200,6 +6213,7 @@ name = "pallet-treasury"
 version = "4.0.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.4#69ac7634b33d8b68c5b7ca993c04f83e17ed2e7d"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples",
@@ -6216,6 +6230,7 @@ name = "pallet-utility"
 version = "4.0.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.4#69ac7634b33d8b68c5b7ca993c04f83e17ed2e7d"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -6231,6 +6246,7 @@ name = "pallet-vesting"
 version = "4.0.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.4#69ac7634b33d8b68c5b7ca993c04f83e17ed2e7d"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -10410,7 +10426,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "rand 0.8.5",
  "static_assertions",
 ]

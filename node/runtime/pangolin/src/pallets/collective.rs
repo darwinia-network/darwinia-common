@@ -4,7 +4,13 @@ pub use pallet_collective::{Instance1 as CouncilCollective, Instance2 as Technic
 // --- paritytech ---
 use pallet_collective::{Config, PrimeDefaultVote};
 // --- darwinia-network ---
-use crate::*;
+use crate::{
+	weights::{
+		pallet_collective_council::WeightInfo as CouncilWeightInfo,
+		pallet_collective_technical_committee::WeightInfo as TechnicalWeightInfo,
+	},
+	*,
+};
 
 frame_support::parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 3 * DAYS;
@@ -26,7 +32,7 @@ impl Config<CouncilCollective> for Runtime {
 	type MotionDuration = CouncilMotionDuration;
 	type Origin = Origin;
 	type Proposal = Call;
-	type WeightInfo = ();
+	type WeightInfo = CouncilWeightInfo<Runtime>;
 }
 impl Config<TechnicalCollective> for Runtime {
 	type DefaultVote = PrimeDefaultVote;
@@ -36,5 +42,5 @@ impl Config<TechnicalCollective> for Runtime {
 	type MotionDuration = TechnicalMotionDuration;
 	type Origin = Origin;
 	type Proposal = Call;
-	type WeightInfo = ();
+	type WeightInfo = TechnicalWeightInfo<Runtime>;
 }

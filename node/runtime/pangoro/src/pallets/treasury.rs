@@ -2,7 +2,7 @@
 use frame_support::PalletId;
 use sp_runtime::Permill;
 // --- darwinia-network ---
-use crate::*;
+use crate::{weights::pallet_treasury::WeightInfo, *};
 use pallet_treasury::Config;
 
 frame_support::parameter_types! {
@@ -30,5 +30,5 @@ impl Config for Runtime {
 	type RejectOrigin = Root;
 	type SpendFunds = ();
 	type SpendPeriod = SpendPeriod;
-	type WeightInfo = ();
+	type WeightInfo = WeightInfo<Runtime>;
 }

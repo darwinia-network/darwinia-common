@@ -24,6 +24,8 @@
 pub mod pallets;
 pub use pallets::*;
 
+pub mod weights;
+
 pub mod bridges_message;
 pub use bridges_message::*;
 
@@ -752,10 +754,46 @@ sp_api::impl_runtime_apis! {
 
 			list_benchmark!(list, extra, frame_benchmarking, BaselineBench::<Runtime>);
 			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, darwinia_evm, EVM);
+			list_benchmark!(list, extra, pallet_babe, Babe);
+			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
+			// list_benchmark!(list, extra, darwinia_balances, Balances);
+			// list_benchmark!(list, extra, darwinia_balances, Kton);
+			list_benchmark!(list, extra, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
+			// TODO wait for https://github.com/paritytech/substrate/issues/11068
+			// list_benchmark!(list, extra, pallet_session, SessionBench::<Runtime>);
+			list_benchmark!(list, extra, pallet_grandpa, Grandpa);
+			list_benchmark!(list, extra, pallet_im_online, ImOnline);
+			// list_benchmark!(list, extra, darwinia_header_mmr, HeaderMMR);
+			list_benchmark!(list, extra, pallet_democracy, Democracy);
+			list_benchmark!(list, extra, pallet_collective, Council);
+			list_benchmark!(list, extra, pallet_collective, TechnicalCommittee);
+			list_benchmark!(list, extra, pallet_elections_phragmen, PhragmenElection);
+			list_benchmark!(list, extra, pallet_membership, TechnicalMembership);
+			list_benchmark!(list, extra, pallet_treasury, Treasury);
+			list_benchmark!(list, extra, pallet_treasury, KtonTreasury);
+			list_benchmark!(list, extra, pallet_tips, Tips);
+			list_benchmark!(list, extra, pallet_bounties, Bounties);
+			list_benchmark!(list, extra, pallet_vesting, Vesting);
+			list_benchmark!(list, extra, pallet_utility, Utility);
+			list_benchmark!(list, extra, pallet_identity, Identity);
+			list_benchmark!(list, extra, pallet_scheduler, Scheduler);
+			list_benchmark!(list, extra, pallet_proxy, Proxy);
+			list_benchmark!(list, extra, pallet_multisig, Multisig);
+			// list_benchmark!(list, extra, darwinia_bridge_ethereum, EthereumRelay);
+			// list_benchmark!(list, extra, to_ethereum_backing, EthereumBacking);
+			// list_benchmark!(list, extra, darwinia_relayer_game, EthereumRelayerGame);
+			// list_benchmark!(list, extra, darwinia_relay_authority, EcdsaRelayAuthority);
+			// list_benchmark!(list, extra, to_tron_backing, TronBacking);
+			list_benchmark!(list, extra, pallet_bridge_grandpa, BridgePangoroGrandpa);
+			list_benchmark!(list, extra, pallet_bridge_grandpa, BridgeRococoGrandpa);
+			// TODO: https://github.com/darwinia-network/darwinia-parachain/issues/66
+			// list_benchmark!(list, extra, pallet_bridge_messages, BridgePangoroMessages);
+			// list_benchmark!(list, extra, pallet_bridge_messages, BridgePangolinParachainMessages);
+			list_benchmark!(list, extra, pallet_fee_market, PangoroFeeMarket);
+			list_benchmark!(list, extra, pallet_fee_market, PangolinParachainFeeMarket);
+			// list_benchmark!(list, extra, module_transaction_pause, TransactionPause);
 			list_benchmark!(list, extra, from_substrate_issuing, Substrate2SubstrateIssuing);
 			list_benchmark!(list, extra, to_parachain_backing, ToPangolinParachainBacking);
-			list_benchmark!(list, extra, pallet_fee_market, PangoroFeeMarket);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -778,10 +816,50 @@ sp_api::impl_runtime_apis! {
 
 			add_benchmark!(params, batches, frame_benchmarking, BaselineBench::<Runtime>);
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, darwinia_evm, EVM);
+			// TODO https://github.com/darwinia-network/darwinia-common/issues/1356
+			// add_benchmark!(params, batches, pallet_babe, Babe);
+			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
+			// add_benchmark!(params, batches, darwinia_balances, Balances);
+			// add_benchmark!(params, batches, darwinia_balances, Kton);
+			// FIXME https://github.com/darwinia-network/darwinia-common/issues/1359
+			// add_benchmark!(params, batches, pallet_election_provider_multi_phase, ElectionProviderMultiPhase);
+			// TODO https://github.com/paritytech/substrate/issues/11068
+			// add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
+			// TODO https://github.com/darwinia-network/darwinia-common/issues/1356
+			// add_benchmark!(params, batches, pallet_grandpa, Grandpa);
+			add_benchmark!(params, batches, pallet_im_online, ImOnline);
+			// add_benchmark!(params, batches, darwinia_header_mmr, HeaderMMR);
+			add_benchmark!(params, batches, pallet_democracy, Democracy);
+			add_benchmark!(params, batches, pallet_collective, Council);
+			add_benchmark!(params, batches, pallet_collective, TechnicalCommittee);
+			add_benchmark!(params, batches, pallet_elections_phragmen, PhragmenElection);
+			add_benchmark!(params, batches, pallet_membership, TechnicalMembership);
+			add_benchmark!(params, batches, pallet_treasury, Treasury);
+			add_benchmark!(params, batches, pallet_treasury, KtonTreasury);
+			add_benchmark!(params, batches, pallet_tips, Tips);
+			// FIXME https://github.com/darwinia-network/darwinia-common/issues/1360
+			// add_benchmark!(params, batches, pallet_bounties, Bounties);
+			add_benchmark!(params, batches, pallet_vesting, Vesting);
+			add_benchmark!(params, batches, pallet_utility, Utility);
+			add_benchmark!(params, batches, pallet_identity, Identity);
+			add_benchmark!(params, batches, pallet_scheduler, Scheduler);
+			add_benchmark!(params, batches, pallet_proxy, Proxy);
+			add_benchmark!(params, batches, pallet_multisig, Multisig);
+			// add_benchmark!(params, batches, darwinia_bridge_ethereum, EthereumRelay);
+			// add_benchmark!(params, batches, to_ethereum_backing, EthereumBacking);
+			// add_benchmark!(params, batches, darwinia_relayer_game, EthereumRelayerGame);
+			// add_benchmark!(list, extra, darwinia_relay_authority, EcdsaRelayAuthority);
+			// add_benchmark!(params, batches, to_tron_backing, TronBacking);
+			add_benchmark!(params, batches, pallet_bridge_grandpa, BridgePangoroGrandpa);
+			add_benchmark!(params, batches, pallet_bridge_grandpa, BridgeRococoGrandpa);
+			// TODO: https://github.com/darwinia-network/darwinia-parachain/issues/66
+			// add_benchmark!(params, batches, pallet_bridge_messages, BridgePangoroMessages);
+			// add_benchmark!(params, batches, pallet_bridge_messages, BridgePangolinParachainMessages);
+			add_benchmark!(params, batches, pallet_fee_market, PangoroFeeMarket);
+			add_benchmark!(params, batches, pallet_fee_market, PangolinParachainFeeMarket);
+			// add_benchmark!(params, batches, module_transaction_pause, TransactionPause);
 			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
 			add_benchmark!(params, batches, to_parachain_backing, ToPangolinParachainBacking);
-			add_benchmark!(params, batches, pallet_fee_market, PangoroFeeMarket);
 
 			Ok(batches)
 		}

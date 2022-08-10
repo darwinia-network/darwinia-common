@@ -1,7 +1,7 @@
 // --- paritytech ---
 use pallet_identity::Config;
 // --- darwinia-network ---
-use crate::*;
+use crate::{weights::pallet_identity::WeightInfo, *};
 
 frame_support::parameter_types! {
 	// Minimum 100 bytes/PRING deposited (1 MILLI/byte)
@@ -25,5 +25,5 @@ impl Config for Runtime {
 	type RegistrarOrigin = RootOrMoreThanHalf<CouncilCollective>;
 	type Slashed = Treasury;
 	type SubAccountDeposit = SubAccountDeposit;
-	type WeightInfo = ();
+	type WeightInfo = WeightInfo<Runtime>;
 }
