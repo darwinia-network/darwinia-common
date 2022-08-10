@@ -36,10 +36,8 @@ fi
 
 for validator in alice bob charlie dave
 do
-  echo "Purge $validator's \`db\`, \`network\`, \`dvm\`"
-  rm -rf $DATA_DIR/$validator/chains/$CHAIN/db
-  rm -rf $DATA_DIR/$validator/chains/$CHAIN/network
-  rm -rf $DATA_DIR/$validator/chains/$CHAIN/dvm
+  echo "Purge $validator's chain data"
+  $EXECUTABLE purge-chain --chain $CHAIN-local -d $DATA_DIR/$validator -y
 
   echo "Firing $CHAIN Node $validator"
   $EXECUTABLE \
