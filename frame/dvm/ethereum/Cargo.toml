@@ -23,33 +23,32 @@ sha3           = { version = "0.9", default-features = false }
 darwinia-evm     = { default-features = false, path = "../evm" }
 darwinia-support = { default-features = false, path = "../../support" }
 # paritytech
-frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
-sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.3" }
+frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 # frontier
-fp-consensus      = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
-fp-evm            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
-fp-rpc            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
-fp-self-contained = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
-fp-storage        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
-pallet-evm        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
+fp-consensus      = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
+fp-evm            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
+fp-rpc            = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
+fp-self-contained = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
+fp-storage        = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
 
 [dev-dependencies]
 # crates.io
 array-bytes  = { version = "2.0" }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 # darwinia-network
-bp-message-dispatch    = { git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.3" }
-bp-runtime             = { git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.3" }
+bp-message-dispatch    = { git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.4" }
+bp-runtime             = { git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.4" }
 darwinia-balances      = { path = "../../balances" }
 darwinia-support       = { features = ["testing"], path = "../../support" }
-pallet-bridge-dispatch = { git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.3" }
+pallet-bridge-dispatch = { git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.4" }
 # frontier
-pallet-evm-precompile-simple = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.3" }
+pallet-evm-precompile-simple = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
 
 [features]
 default = ["std"]
@@ -81,7 +80,6 @@ std = [
 	"fp-rpc/std",
 	"fp-self-contained/std",
 	"fp-storage/std",
-	"pallet-evm/std",
 ]
 
 try-runtime = [

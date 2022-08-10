@@ -19,7 +19,7 @@
 //! the primitive types of contract encode and decode.
 
 use ethabi::{param_type::ParamType, token::Token, Error, Result as AbiResult};
-use sp_std::{convert::TryInto, prelude::*};
+use sp_std::prelude::*;
 
 pub fn abi_decode_bytes4(data: &[u8]) -> AbiResult<[u8; 4]> {
 	let tokens = ethabi::decode(&[ParamType::FixedBytes(4)], &data)?;

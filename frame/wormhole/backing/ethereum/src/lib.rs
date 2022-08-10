@@ -63,7 +63,7 @@ pub mod pallet {
 	use sp_runtime::traits::{AccountIdConversion, SaturatedConversion, Saturating, Zero};
 	#[cfg(not(feature = "std"))]
 	use sp_std::borrow::ToOwned;
-	use sp_std::{convert::TryFrom, prelude::*};
+	use sp_std::prelude::*;
 	// --- darwinia-network ---
 	use crate::weights::WeightInfo;
 	use darwinia_relay_authority::{EcdsaSigner, RelayAuthorityProtocol, Term};

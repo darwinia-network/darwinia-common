@@ -104,7 +104,7 @@ pub fn register_offchain_ext(ext: &mut TestExternalities) {
 	ext.register_extension(OffchainWorkerExt::new(offchain));
 }
 
-pub fn header_parent_mmr_log(hash: Hash) -> DigestItem<Hash> {
+pub fn header_parent_mmr_log(hash: Hash) -> DigestItem {
 	let mmr_root_log =
 		MerkleMountainRangeRootLog::<Hash> { prefix: LOG_PREFIX, parent_mmr_root: hash };
 

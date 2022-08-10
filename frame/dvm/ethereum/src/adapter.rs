@@ -21,7 +21,10 @@
 // --- crates.io ---
 use evm::ExitError;
 // --- paritytech ---
-use frame_support::{ensure, traits::Currency};
+use frame_support::{
+	ensure,
+	traits::{Currency, WithdrawReasons},
+};
 use sp_core::U256;
 use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
 // --- darwinia-network ---
@@ -153,6 +156,9 @@ where
 		if value == U256::zero() || source == target {
 			return Ok(());
 		}
+
+		Self::ensure_can_withdraw(source, value, WithdrawReasons::all())?;
+
 		let source_balance = Self::account_balance(source);
 		ensure!(source_balance >= value, ExitError::OutOfFund);
 		let new_source_balance = source_balance.saturating_sub(value);
@@ -216,5 +222,36 @@ where
 			},
 			_ => return,
 		}
+	}
+
+	/// Ensure that an account can withdraw from its free balance.
+	/// The account's decimal is the same as Ethereum.
+	fn ensure_can_withdraw(
+		who: &T::AccountId,
+		amount: U256,
+		reasons: WithdrawReasons,
+	) -> Result<(), ExitError> {
+		let old = Self::account_balance(who);
+		let old_remaining = old % U256::from(POW_9);
+
+		ensure!(old >= amount, ExitError::OutOfFund);
+
+		let (withdraw, withdraw_remaining) = amount.div_mod(U256::from(POW_9));
+		let mut withdraw = withdraw.low_u128();
+
+		if old_remaining < withdraw_remaining {
+			// Withdraw one more unit to cover the remaining part cost.
+			withdraw = withdraw.saturating_add(1);
+		}
+
+		let new = old.saturating_sub(amount) / POW_9;
+
+		C::ensure_can_withdraw(
+			who,
+			withdraw.unique_saturated_into(),
+			reasons,
+			new.low_u128().unique_saturated_into(),
+		)
+		.map_err(|_| ExitError::Other("Liquidity Restrictions".into()))
 	}
 }

@@ -25,7 +25,7 @@ describeWithFrontier("Frontier RPC (Balance)", (context) => {
 			{
 				from: GENESIS_ACCOUNT,
 				to: TEST_ACCOUNT,
-				value: "0x200",
+				value: "0x200", // Must be higher than ExistentialDeposit (500)
 				gasPrice: "0x3B9ACA00",
 				gas: "0x100000",
 			},

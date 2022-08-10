@@ -21,8 +21,8 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 // --- paritytech ---
 use fp_evm::{
-	CallOrCreateInfo, Context, ExitRevert, Precompile, PrecompileFailure, PrecompileResult,
-	PrecompileSet,
+	CallOrCreateInfo, Context, ExitRevert, FeeCalculator, Precompile, PrecompileFailure,
+	PrecompileResult, PrecompileSet,
 };
 use frame_support::{
 	pallet_prelude::Weight,
@@ -31,7 +31,6 @@ use frame_support::{
 	ConsensusEngineId, PalletId,
 };
 use frame_system::mocking::*;
-use pallet_evm::FeeCalculator;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
