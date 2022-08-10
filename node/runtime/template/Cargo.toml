@@ -24,11 +24,9 @@ dp-evm-tracer       = { optional = true, default-features = false, path = "../..
 drml-common-runtime = { default-features = false, path = "../common" }
 drml-primitives     = { default-features = false, path = "../../primitives" }
 # paritytech
-frame-benchmarking                         = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 frame-support                              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 frame-system                               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-frame-system-benchmarking                  = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 frame-system-rpc-runtime-api               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 pallet-aura                                = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 pallet-grandpa                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
@@ -80,11 +78,9 @@ std = [
 	"drml-primitives/std",
 	"drml-common-runtime/std",
 	# paritytech
-	"frame-benchmarking/std",
 	"frame-executive/std",
 	"frame-support/std",
 	"frame-system/std",
-	"frame-system-benchmarking?/std",
 	"frame-system-rpc-runtime-api/std",
 	"pallet-aura/std",
 	"pallet-grandpa/std",
@@ -114,17 +110,4 @@ std = [
 	"pallet-evm-precompile-modexp/std",
 	"pallet-evm-precompile-sha3fips/std",
 	"pallet-evm-precompile-simple/std",
-]
-
-runtime-benchmarks = [
-	# paritytech
-	"frame-benchmarking",
-	"frame-system-benchmarking",
-	"frame-system/runtime-benchmarks",
-	"frame-support/runtime-benchmarks",
-	"pallet-grandpa/runtime-benchmarks",
-	"pallet-timestamp/runtime-benchmarks",
-	# darwinia-network
-	"darwinia-ethereum/runtime-benchmarks",
-	"darwinia-evm/runtime-benchmarks",
 ]
