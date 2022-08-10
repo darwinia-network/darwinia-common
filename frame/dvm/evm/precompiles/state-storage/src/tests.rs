@@ -27,7 +27,7 @@ use darwinia_ethereum::{EthereumBlockHashMapping, RawOrigin};
 use fp_evm::{Context, FeeCalculator, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
 	pallet_prelude::Weight,
-	traits::{Everything, FindAuthor, GenesisBuild, LockIdentifier},
+	traits::{Everything, FindAuthor, GenesisBuild},
 	weights::GetDispatchInfo,
 	ConsensusEngineId, PalletId, StorageHasher, Twox128,
 };
@@ -37,7 +37,7 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 	transaction_validity::{InvalidTransaction, TransactionValidity, TransactionValidityError},
-	AccountId32, Perbill, Permill, RuntimeDebug,
+	AccountId32, Perbill, RuntimeDebug,
 };
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
@@ -240,32 +240,27 @@ impl darwinia_ethereum::Config for Test {
 
 pub struct FeeMarketSlasher;
 impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
-	fn slash(_: BalanceOf<T, I>, _: T::BlockNumber) -> BalanceOf<T, I> {
-		todo!("Not implemented for the test");
+	fn cal_slash_amount(_: BalanceOf<T, I>, _: T::BlockNumber) -> BalanceOf<T, I> {
+		unreachable!()
 	}
 }
 frame_support::parameter_types! {
 	// Shared configurations.
-	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
-	pub const MinimumRelayFee: Balance = 15;
 	pub const CollateralPerOrder: Balance = 50;
-	pub const Slot: u64 = 600;
-	pub const AssignedRelayersRewardRatio: Permill = Permill::from_percent(60);
-	pub const MessageRelayersRewardRatio: Permill = Permill::from_percent(80);
-	pub const ConfirmRelayersRewardRatio: Permill = Permill::from_percent(20);
-	pub const FeeMarketLockId: LockIdentifier = *b"da/feelf";
+	pub const TreasuryPalletId: PalletId = PalletId(*b"da/trsry");
 }
 impl Config<F1> for Test {
-	type AssignedRelayersRewardRatio = AssignedRelayersRewardRatio;
+	type AssignedRelayerSlashRatio = ();
 	type CollateralPerOrder = CollateralPerOrder;
-	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
+	type ConfirmRelayersRewardRatio = ();
 	type Currency = Ring;
 	type Event = Event;
-	type LockId = FeeMarketLockId;
-	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
-	type MinimumRelayFee = MinimumRelayFee;
+	type GuardRelayersRewardRatio = ();
+	type LockId = ();
+	type MessageRelayersRewardRatio = ();
+	type MinimumRelayFee = ();
 	type Slasher = FeeMarketSlasher;
-	type Slot = Slot;
+	type Slot = ();
 	type TreasuryPalletId = TreasuryPalletId;
 	type WeightInfo = ();
 }
