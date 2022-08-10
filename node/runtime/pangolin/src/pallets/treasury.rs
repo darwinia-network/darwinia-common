@@ -4,7 +4,7 @@ use sp_runtime::Permill;
 // --- darwinia-network ---
 use crate::{
 	weights::{
-		pallet_treasury_kton_treasury::WeightInfo as KtonWeightInfo,
+		pallet_treasury_kton_treasury::WeightInfo as KtonTreasuryWeightInfo,
 		pallet_treasury_treasury::WeightInfo,
 	},
 	*,
@@ -53,5 +53,5 @@ impl Config<KtonTreasuryInstance> for Runtime {
 	type RejectOrigin = RootOrMoreThanHalf<CouncilCollective>;
 	type SpendFunds = ();
 	type SpendPeriod = SpendPeriod;
-	type WeightInfo = KtonWeightInfo<Runtime>;
+	type WeightInfo = KtonTreasuryWeightInfo<Runtime>;
 }
