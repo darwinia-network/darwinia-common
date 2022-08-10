@@ -84,4 +84,7 @@ impl<T: frame_system::Config> pallet_utility::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	fn dispatch_as() -> Weight {
+		50_000_000
+	}
 }
