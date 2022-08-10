@@ -26,7 +26,7 @@ use darwinia_evm::{
 };
 use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 use darwinia_evm_precompile_dispatch::Dispatch;
-use darwinia_evm_precompile_kton::KtonERC20;
+use darwinia_evm_precompile_kton::{Erc20Metadata, KtonERC20};
 use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
 use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::{
@@ -121,10 +121,26 @@ where
 		]
 	}
 }
+
+pub struct KtonERC20MetaData;
+impl Erc20Metadata for KtonERC20MetaData {
+	fn name() -> &'static str {
+		"PKTON ERC20"
+	}
+
+	fn symbol() -> &'static str {
+		"PKTON"
+	}
+
+	fn decimals() -> u8 {
+		18
+	}
+}
+
 impl<R> PrecompileSet for PangolinPrecompiles<R>
 where
 	Dispatch<R>: Precompile,
-	KtonERC20<R>: Precompile,
+	KtonERC20<R, KtonERC20MetaData>: Precompile,
 	R: darwinia_ethereum::Config,
 	StateStorage<R, StorageFilter>: Precompile,
 	Sub2SubBridge<R, ToPangoroMessageSender, bm_pangoro::ToPangoroOutboundPayLoad>: Precompile,
@@ -177,8 +193,9 @@ where
 			)),
 			a if a == addr(1025) =>
 				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
-			a if a == addr(1026) =>
-				Some(<KtonERC20<R>>::execute(input, target_gas, context, is_static)),
+			a if a == addr(1026) => Some(<KtonERC20<R, KtonERC20MetaData>>::execute(
+				input, target_gas, context, is_static,
+			)),
 			_ => None,
 		}
 	}
