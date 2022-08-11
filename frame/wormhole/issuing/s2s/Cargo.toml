@@ -85,4 +85,6 @@ std = [
 	"fp-evm/std",
 ]
 
-runtime-benchmarks = ["frame-benchmarking"]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
+]

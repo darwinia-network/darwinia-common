@@ -256,6 +256,13 @@ std = [
 fast-runtime = ["drml-primitives/fast-runtime"]
 
 runtime-benchmarks = [
+	# darwinia-network
+	"darwinia-ethereum/runtime-benchmarks",
+	"darwinia-evm/runtime-benchmarks",
+	"from-substrate-issuing/runtime-benchmarks",
+	"pallet-fee-market/runtime-benchmarks",
+	"to-parachain-backing/runtime-benchmarks",
+	"drml-common-runtime/runtime-benchmarks",
 	# paritytech
 	"frame-benchmarking",
 	"frame-system-benchmarking",
@@ -282,13 +289,6 @@ runtime-benchmarks = [
 	"pallet-treasury/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
 	"pallet-vesting/runtime-benchmarks",
-	# darwinia-network
-	"darwinia-ethereum/runtime-benchmarks",
-	"darwinia-evm/runtime-benchmarks",
-	"from-substrate-issuing/runtime-benchmarks",
-	"pallet-fee-market/runtime-benchmarks",
-	"to-parachain-backing/runtime-benchmarks",
-	"drml-common-runtime/runtime-benchmarks",
 ]
 
 try-runtime = [
