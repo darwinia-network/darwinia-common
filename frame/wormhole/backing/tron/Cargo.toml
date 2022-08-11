@@ -14,9 +14,9 @@ version     = "2.8.19"
 codec      = { package = "parity-scale-codec", version = "2.3", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
 
 [features]
 default = ["std"]

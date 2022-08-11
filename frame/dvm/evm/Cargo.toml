@@ -25,16 +25,16 @@ sha3            = { version = "0.9", default-features = false }
 darwinia-balances = { default-features = false, path = "../../balances" }
 darwinia-support  = { default-features = false, path = "../../support" }
 # paritytech
-frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-frame-support      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-frame-system       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-pallet-timestamp   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-sp-core            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-sp-io              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-sp-runtime         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-sp-std             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+frame-benchmarking = { optional = true, default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
+frame-support      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
+frame-system       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
+pallet-timestamp   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
+sp-core            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
+sp-io              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
+sp-runtime         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
+sp-std             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
 # frontier
-fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
+fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "xavier/debug" }
 
 [dev-dependencies]
 # darwinia-network

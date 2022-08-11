@@ -16,11 +16,11 @@ num_enum = { version = "0.5.3", default-features = false }
 darwinia-evm                  = { default-features = false, path = "../.." }
 darwinia-evm-precompile-utils = { default-features = false, path = "../utils" }
 dp-contract                   = { default-features = false, path = "../../../../../primitives/contract" }
-pallet-fee-market             = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.4" }
+pallet-fee-market             = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "xavier/debug" }
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
 # frontier
-fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
+fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "xavier/debug" }
 
 [dev-dependencies]
 # crates.io
@@ -34,15 +34,15 @@ darwinia-ethereum             = { path = "../../../ethereum" }
 darwinia-evm-precompile-utils = { path = "../utils", features = ["testing"] }
 darwinia-support              = { features = ["testing"], path = "../../../../support" }
 # paritytech
-frame-system     = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-sp-core          = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-sp-io            = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-sp-runtime       = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-sp-std           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+frame-system     = { git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
+sp-core          = { git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
+sp-io            = { git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
+sp-runtime       = { git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
+sp-std           = { git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
 # frontier
-fp-evm            = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
-fp-self-contained = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
+fp-evm            = { git = "https://github.com/darwinia-network/frontier", branch = "xavier/debug" }
+fp-self-contained = { git = "https://github.com/darwinia-network/frontier", branch = "xavier/debug" }
 
 [features]
 default = ["std"]
