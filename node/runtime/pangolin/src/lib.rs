@@ -655,12 +655,12 @@ sp_api::impl_runtime_apis! {
 			#[cfg(feature = "evm-tracing")]
 			{
 				use dp_evm_tracer::tracer::EvmTracer;
-				use darwinia_ethereum::Call::transact;
+				use darwinia_ethereum::Call::{transact, message_transact};
 				// Apply the a subset of extrinsics: all the substrate-specific or ethereum
 				// transactions that preceded the requested transaction.
 				for ext in _extrinsics.into_iter() {
 					let _ = match &ext.0.function {
-						Call::Ethereum(transact { transaction }) => {
+						Call::Ethereum(transact { transaction }) | Call::Ethereum(message_transact { transaction}) => {
 							if transaction == _traced_transaction {
 								EvmTracer::new().trace(|| Executive::apply_extrinsic(ext));
 								return Ok(());
