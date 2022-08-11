@@ -55,6 +55,7 @@ fn deploy_mapping_token_factory<T: Config>() -> H160 {
 		None,
 		Some(nonce),
 		Vec::new(),
+		true,
 		T::config(),
 	);
 	assert_eq!(create_runner_results.is_ok(), true, "create() failed");
@@ -78,6 +79,7 @@ fn deploy_mapping_token_logic<T: Config>() -> H160 {
 		None,
 		Some(nonce),
 		Vec::new(),
+		true,
 		T::config(),
 	);
 	assert_eq!(create_runner_results.is_ok(), true, "create() failed");

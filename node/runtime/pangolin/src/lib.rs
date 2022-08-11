@@ -837,8 +837,7 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_treasury, Treasury);
 			add_benchmark!(params, batches, pallet_treasury, KtonTreasury);
 			add_benchmark!(params, batches, pallet_tips, Tips);
-			// FIXME https://github.com/darwinia-network/darwinia-common/issues/1360
-			// add_benchmark!(params, batches, pallet_bounties, Bounties);
+			add_benchmark!(params, batches, pallet_bounties, Bounties);
 			add_benchmark!(params, batches, pallet_vesting, Vesting);
 			add_benchmark!(params, batches, pallet_utility, Utility);
 			add_benchmark!(params, batches, pallet_identity, Identity);
