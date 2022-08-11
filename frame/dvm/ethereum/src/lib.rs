@@ -111,11 +111,6 @@ impl<O: Into<Result<RawOrigin, O>> + From<RawOrigin>> EnsureOrigin<O>
 			RawOrigin::EthereumTransaction(id) => Ok(id),
 		})
 	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn successful_origin() -> O {
-		O::from(RawOrigin::EthereumTransaction(Default::default()))
-	}
 }
 
 impl<T: Config> Call<T>
