@@ -25,7 +25,7 @@ use sp_runtime::{traits::Zero, SaturatedConversion};
 // --- darwinia-network ---
 use crate::{Pallet as ParachainBacking, *};
 
-const SPEC_VERSION: u32 = 2_8_19_0;
+const SPEC_VERSION: u32 = 2_9_00_0;
 
 benchmarks! {
 	lock_and_remote_issue {
