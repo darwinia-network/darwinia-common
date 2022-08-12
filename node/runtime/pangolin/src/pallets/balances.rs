@@ -8,7 +8,7 @@ use darwinia_balances::Config;
 // TODO: https://github.com/paritytech/substrate/blob/master/frame/balances/src/benchmarking.rs#L43
 #[cfg(feature = "runtime-benchmarks")]
 frame_support::parameter_types! {
-	pub const ExistentialDeposit: Balance = 1;
+	pub const ExistentialDeposit: Balance = COIN;
 }
 #[cfg(not(feature = "runtime-benchmarks"))]
 frame_support::parameter_types! {

@@ -68,4 +68,6 @@ std = [
 	"sp-std/std",
 ]
 
-runtime-benchmarks = ["frame-benchmarking"]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
+]

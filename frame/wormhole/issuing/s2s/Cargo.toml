@@ -85,4 +85,9 @@ std = [
 	"fp-evm/std",
 ]
 
-runtime-benchmarks = ["frame-benchmarking"]
+runtime-benchmarks = [
+	# darwinia-network
+	"darwinia-ethereum/runtime-benchmarks",
+	# paritytech
+	"frame-benchmarking/runtime-benchmarks",
+]
