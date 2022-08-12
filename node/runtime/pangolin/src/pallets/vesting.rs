@@ -5,7 +5,7 @@ use sp_runtime::traits::ConvertInto;
 use crate::{weights::pallet_vesting::WeightInfo, *};
 
 frame_support::parameter_types! {
-	pub const MinVestedTransfer: Balance = 100 * MILLI;
+	pub const MinVestedTransfer: Balance = COIN;
 }
 
 impl Config for Runtime {
