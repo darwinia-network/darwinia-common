@@ -18,11 +18,11 @@ serde      = { version = "1.0", optional = true }
 darwinia-header-mmr = { default-features = false, path = "../../../frame/header-mmr" }
 darwinia-support    = { default-features = false, path = "../../support" }
 # paritytech
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
-sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 
 [dev-dependencies]
 # crates.io
@@ -32,9 +32,9 @@ darwinia-balances   = { path = "../../balances" }
 darwinia-header-mmr = { features = ["easy-testing"], path = "../../header-mmr" }
 darwinia-support    = { features = ["testing"], path = "../../support" }
 # paritytech
-sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
-sp-io      = { git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
-sp-tracing = { git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
+sp-core    = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-io      = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-tracing = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 
 [features]
 default = ["std"]

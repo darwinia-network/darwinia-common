@@ -17,11 +17,11 @@ codec       = { package = "parity-scale-codec", version = "2.3", default-feature
 dp-asset    = { default-features = false, path = "../asset" }
 dp-contract = { default-features = false, path = "../contract" }
 # paritytech
-bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "xavier/debug" }
-bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "xavier/debug" }
-sp-core             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
-sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
-sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "xavier/debug" }
+bp-message-dispatch = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.4" }
+bp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.4" }
+sp-core             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-runtime          = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-std              = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 
 [dev-dependencies]
 dp-contract = { default-features = false, path = "../contract" }
