@@ -163,7 +163,7 @@ mod test {
 			CallOrigin::SourceRoot,
 			0,
 			0,
-			CallParams::S2sIssuingPalletRegisterFromRemote(mock_token.clone()),
+			CallParams::S2sIssuingPalletRegisterFromRemote(mock_token),
 			DispatchFeePayment::AtSourceChain,
 		)
 		.unwrap();

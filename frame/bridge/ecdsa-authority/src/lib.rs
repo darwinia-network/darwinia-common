@@ -308,7 +308,7 @@ pub mod pallet {
 				<AuthoritiesChangeToSign<T>>::get().ok_or(<Error<T>>::NoAuthoritiesChange)?;
 			let (_, message, collected) = &mut authorities_change_to_sign;
 
-			Self::ensure_not_submitted(&address, &collected)?;
+			Self::ensure_not_submitted(&address, collected)?;
 
 			ensure!(
 				Sign::verify_signature(&signature, message, &address),
@@ -351,7 +351,7 @@ pub mod pallet {
 				<NewMessageRootToSign<T>>::get().ok_or(<Error<T>>::NoNewMessageRoot)?;
 			let (_, message, collected) = &mut new_message_root_to_sign;
 
-			Self::ensure_not_submitted(&address, &collected)?;
+			Self::ensure_not_submitted(&address, collected)?;
 
 			ensure!(
 				Sign::verify_signature(&signature, message, &address),
@@ -407,18 +407,18 @@ pub mod pallet {
 			let authorities_changes = {
 				match operation {
 					Operation::AddMember { new } => ethabi::encode(&[
-						Token::Address(new.into()),
+						Token::Address(new),
 						Token::Uint((T::SignThreshold::get() * authorities_count).into()),
 					]),
 					Operation::RemoveMember { pre, old } => ethabi::encode(&[
-						Token::Address(pre.into()),
-						Token::Address(old.into()),
+						Token::Address(pre),
+						Token::Address(old),
 						Token::Uint((T::SignThreshold::get() * authorities_count).into()),
 					]),
 					Operation::SwapMembers { pre, old, new } => ethabi::encode(&[
-						Token::Address(pre.into()),
-						Token::Address(old.into()),
-						Token::Address(new.into()),
+						Token::Address(pre),
+						Token::Address(old),
+						Token::Address(new),
 					]),
 				}
 			};
@@ -466,7 +466,7 @@ pub mod pallet {
 						// Also update the recorded time.
 						if at.saturating_sub(*recorded_at) > T::MaxPendingPeriod::get() {
 							*recorded_at = at;
-							*previous_message_root = message_root.clone();
+							*previous_message_root = message_root;
 
 							return Ok(message_root);
 						}
@@ -474,7 +474,7 @@ pub mod pallet {
 				} else {
 					// If no previous message root is recorded, starting to relay the incoming
 					// messages.
-					*maybe_previous_message_root = Some((at, message_root.clone()));
+					*maybe_previous_message_root = Some((at, message_root));
 
 					return Ok(message_root);
 				}

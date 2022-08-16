@@ -57,8 +57,8 @@ pub mod s2s {
 	}
 
 	pub trait LatestMessageNoncer {
-		fn outbound_latest_generated_nonce(lane_id: LaneId) -> u64;
-		fn inbound_latest_received_nonce(lane_id: LaneId) -> u64;
+		fn outbound_latest_generated_nonce(lane_id: LaneId) -> MessageNonce;
+		fn inbound_latest_received_nonce(lane_id: LaneId) -> MessageNonce;
 	}
 
 	pub trait OutboundMessenger<AccountId> {
