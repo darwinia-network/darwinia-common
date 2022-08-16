@@ -40,8 +40,6 @@ impl Config for Runtime {
 	type LockId = EcdsaRelayAuthoritiesLockId;
 	type MaxMembers = MaxMembers;
 	type MaxSchedules = MaxSchedules;
-	type MessageRoot = MessageRoot;
-	type MessageRootT = Self::Hash;
 	type MmrRoot = MmrRoot;
 	type MmrRootT = Self::Hash;
 	type OpCodes = OpCodes;

@@ -69,8 +69,6 @@ pub mod pallet {
 		// Commitments.
 		type MmrRootT: Clone + Debug + PartialEq + Encode + Decode + TypeInfo;
 		type MmrRoot: Get<Option<Self::MmrRootT>>;
-		type MessageRootT: Clone + Debug + PartialEq + Encode + Decode + TypeInfo;
-		type MessageRoot: Get<Self::MessageRootT>;
 		type Sign: Sign;
 		// Constants.
 		#[pallet::constant]

@@ -156,8 +156,6 @@ impl Config for Test {
 	type LockId = LockId;
 	type MaxMembers = MaxMembers;
 	type MaxSchedules = MaxSchedules;
-	type MessageRoot = MessageRoot;
-	type MessageRootT = Self::Hash;
 	type MmrRoot = MmrRoot;
 	type MmrRootT = Self::Hash;
 	type OpCodes = ();
