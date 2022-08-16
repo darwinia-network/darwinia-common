@@ -162,7 +162,7 @@ fn compute_total_payout_should_work() {
 #[test]
 fn compute_kton_reward_should_work() {
 	const COIN: Balance = 1_000_000_000;
-	const PRECISION: f64 = 10_000.0000;
+	const PRECISION: f64 = 10_000.;
 
 	for (month, exp_kton_reward) in (1..=36).zip(
 		[
@@ -205,7 +205,7 @@ fn print_total_payout_error_rate() {
 		println!("year {:3}, inflation {:9}, rate {:3}", year, inflation, inflation_rate);
 
 		total_inflation += inflation;
-		total_left = total_left - inflation;
+		total_left -= inflation;
 	}
 
 	println!("total inflation: {}", total_inflation);

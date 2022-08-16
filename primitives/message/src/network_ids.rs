@@ -56,9 +56,7 @@ impl_network_ids![
 pub fn convert(name: &[u8]) -> NetworkId {
 	let mut ary = [0; 32];
 
-	for i in 0..name.len().min(32) {
-		ary[i] = name[i];
-	}
+	ary[..name.len().min(32)].clone_from_slice(name);
 
 	ary
 }
@@ -82,12 +80,12 @@ fn network_ascii_should_work() {
 		assert_eq!(&array_bytes::bytes2hex("0x", network_id), network_id_hex);
 	}
 
-	// dbg!(convert(b"Darwinia"));
-	// dbg!(array_bytes::bytes2hex("0x", Darwinia::ascii_id()));
-	// dbg!(convert(b"Crab"));
-	// dbg!(array_bytes::bytes2hex("0x", Crab::ascii_id()));
-	// dbg!(convert(b"Pangoro"));
-	// dbg!(array_bytes::bytes2hex("0x", Pangoro::ascii_id()));
-	// dbg!(convert(b"Pangolin"));
-	// dbg!(array_bytes::bytes2hex("0x", Pangolin::ascii_id()));
+	// dbg!(array_bytes::bytes2hex("0x", &convert(b"Darwinia")));
+	// dbg!(array_bytes::bytes2hex("0x", &Darwinia::ascii_id()));
+	// dbg!(array_bytes::bytes2hex("0x", &convert(b"Crab")));
+	// dbg!(array_bytes::bytes2hex("0x", &Crab::ascii_id()));
+	// dbg!(array_bytes::bytes2hex("0x", &convert(b"Pangoro")));
+	// dbg!(array_bytes::bytes2hex("0x", &Pangoro::ascii_id()));
+	// dbg!(array_bytes::bytes2hex("0x", &convert(b"Pangolin")));
+	// dbg!(array_bytes::bytes2hex("0x", &Pangolin::ascii_id()));
 }
