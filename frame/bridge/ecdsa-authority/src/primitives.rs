@@ -31,16 +31,16 @@ pub(crate) const COMMIT_TYPE_HASH: H256 = H256([
 pub(crate) enum Sign {}
 impl Sign {
 	fn hash(data: &[u8]) -> [u8; 32] {
-		hashing::keccak_256(data).into()
+		hashing::keccak_256(data)
 	}
 
 	pub(crate) fn eth_signable_message(chain_id: &[u8], spec_name: &[u8], data: &[u8]) -> Message {
-		// \x19\01 + keccack256(ChainIDSpecName::ecdsa-authority) + struct_hash
+		// \x19\x01 + keccack256(ChainIDSpecName::ecdsa-authority) + struct_hash
 		Self::hash(
 			&[
-				b"\x19\01".as_slice(),
+				b"\x19\x01".as_slice(),
 				&Self::hash(&[chain_id, spec_name, b"::ecdsa-authority"].concat()),
-				data,
+				&Self::hash(data),
 			]
 			.concat(),
 		)
@@ -51,7 +51,7 @@ impl Sign {
 		message: &Message,
 		address: &Address,
 	) -> bool {
-		if let Ok(public_key) = crypto::secp256k1_ecdsa_recover(signature.as_ref(), &message) {
+		if let Ok(public_key) = crypto::secp256k1_ecdsa_recover(signature.as_ref(), message) {
 			Self::hash(&public_key)[12..] == address[..]
 		} else {
 			false
@@ -92,7 +92,7 @@ pub struct Commitment {
 fn eth_signable_message() {
 	assert_eq!(
 		array_bytes::bytes2hex("0x", &Sign::eth_signable_message(b"46", b"Darwinia", &[0; 32])),
-		"0x8c2f82fe9a2be0813e57092c9dd86742130362f7d552992b9a17c96d64945cb1"
+		"0x2abcc6d89747121e6b6005700ccf065ec5c86359c7a2cae4d00b3c4f90f76e84"
 	);
 	assert_eq!(
 		array_bytes::bytes2hex("0x", &Sign::hash(b"46Darwinia::ecdsa-authority")),

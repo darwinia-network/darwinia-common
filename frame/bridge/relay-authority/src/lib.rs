@@ -524,7 +524,7 @@ pub mod pallet {
 				<MmrRootsToSign<T>>::get(block_number).ok_or(<Error<T>>::ScheduledSignNE)?;
 
 			// No-op if was already submitted
-			if to_sign.signatures.iter().position(|(signer, _)| signer == &authority).is_some() {
+			if to_sign.signatures.iter().any(|(signer, _)| signer == &authority) {
 				return Ok(());
 			}
 
@@ -605,7 +605,7 @@ pub mod pallet {
 				return Ok(());
 			};
 
-			if signatures.iter().position(|(authority_, _)| authority_ == &authority).is_some() {
+			if signatures.iter().any(|(authority_, _)| authority_ == &authority) {
 				return Ok(());
 			}
 
@@ -653,7 +653,7 @@ impl<T: Config> Pallet<T> {
 		F: Fn(),
 	{
 		Ok(<Candidates<T>>::try_mutate(|candidates| {
-			if let Some(position) = find_authority_position::<T>(&candidates, account_id) {
+			if let Some(position) = find_authority_position::<T>(candidates, account_id) {
 				f();
 
 				Ok(candidates.remove(position))
@@ -793,10 +793,9 @@ impl<T: Config> Pallet<T> {
 		let authorities = <Authorities<T>>::get();
 
 		for Authority { account_id, .. } in authorities {
-			if next_authorities
+			if !next_authorities
 				.iter()
-				.position(|Authority { account_id: account_id_, .. }| account_id_ == &account_id)
-				.is_none()
+				.any(|Authority { account_id: account_id_, .. }| account_id_ == &account_id)
 			{
 				T::Currency::remove_lock(T::LockId::get(), &account_id);
 			}
@@ -826,11 +825,7 @@ impl<T: Config> Pallet<T> {
 					let mut storage_changed = false;
 
 					for Authority { account_id, stake, .. } in authorities.as_mut().iter_mut() {
-						if signatures
-							.iter()
-							.position(|(authority, _)| authority == account_id)
-							.is_none()
-						{
+						if !signatures.iter().any(|(authority, _)| authority == account_id) {
 							Self::deposit_event(<Event<T>>::SlashOnMisbehavior(
 								account_id.to_owned(),
 								*stake,
@@ -981,11 +976,8 @@ fn find_signer<T>(
 where
 	T: Config,
 {
-	if let Some(position) =
-		authorities.iter().position(|relay_authority| relay_authority == account_id)
-	{
-		Some(authorities[position].signer.to_owned())
-	} else {
-		None
-	}
+	authorities
+		.iter()
+		.position(|relay_authority| relay_authority == account_id)
+		.map(|position| authorities[position].signer.to_owned())
 }

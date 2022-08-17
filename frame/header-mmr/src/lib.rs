@@ -123,7 +123,7 @@ pub mod pallet {
 					};
 					let mmr_item = DigestItem::Other(mmr_root_log.encode());
 
-					<frame_system::Pallet<T>>::deposit_log(mmr_item.into());
+					<frame_system::Pallet<T>>::deposit_log(mmr_item);
 				},
 				Err(e) => {
 					log::error!("Failed to finalize MMR due to {}", e);

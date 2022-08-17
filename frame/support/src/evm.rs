@@ -32,7 +32,7 @@ pub const INTERNAL_TX_GAS_LIMIT: u32 = 300_000_000;
 /// The action selector used in transfer pre-compile
 pub const SELECTOR: usize = 4;
 /// The transfer pre-compile address, also as the sender in the when KTON transfer to WKTON.
-pub const TRANSFER_ADDR: &'static str = "0x0000000000000000000000000000000000000015";
+pub const TRANSFER_ADDR: &str = "0x0000000000000000000000000000000000000015";
 /// The address prefix for dvm address
 const ADDR_PREFIX: &[u8] = b"dvm:";
 
@@ -53,7 +53,7 @@ pub fn is_derived_from_eth(account_id: impl AsRef<[u8; 32]>) -> bool {
 	account_id_prefix[0..4].copy_from_slice(ADDR_PREFIX);
 
 	// Return true if prefix and checksum valid
-	account_id[0..11] == account_id_prefix && account_id[31] == checksum_of(&account_id)
+	account_id[0..11] == account_id_prefix && account_id[31] == checksum_of(account_id)
 }
 
 impl DeriveEthereumAddress for PalletId {
