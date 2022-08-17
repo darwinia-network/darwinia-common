@@ -156,7 +156,7 @@ impl ThisChainWithMessages for Pangolin {
 	type Call = Call;
 
 	fn is_outbound_lane_enabled(lane: &LaneId) -> bool {
-		*lane == [0, 0, 0, 0] || *lane == [0, 0, 0, 1] || *lane == PANGORO_PANGOLIN_LANE
+		*lane == PANGORO_PANGOLIN_LANE
 	}
 
 	fn maximal_pending_messages_at_outbound_lane() -> MessageNonce {
