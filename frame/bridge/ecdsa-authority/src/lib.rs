@@ -188,9 +188,12 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
+			<NextAuthorities<T>>::kill();
+			<AuthoritiesChangeToSign<T>>::kill();
 			<NewMessageRootToSign<T>>::kill();
+			<PreviousMessageRoot<T>>::kill();
 
-			T::DbWeight::get().reads_writes(0, 1)
+			T::DbWeight::get().reads_writes(0, 4)
 		}
 
 		fn on_initialize(now: T::BlockNumber) -> Weight {
