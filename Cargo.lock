@@ -2074,7 +2074,6 @@ dependencies = [
  "beefy-primitives",
  "darwinia-bridge-ethereum",
  "darwinia-ethereum",
- "darwinia-evm",
  "dp-evm-trace-ext",
  "drml-primitives",
  "drml-rpc",
