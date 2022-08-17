@@ -91,6 +91,7 @@ pub mod pallet {
 		/// Collected enough authorities change signatures.
 		CollectedEnoughAuthoritiesChangeSignatures {
 			operation: Operation,
+			new_threshold: Option<u32>,
 			message: Message,
 			signatures: Vec<(Address, Signature)>,
 		},
@@ -148,7 +149,7 @@ pub mod pallet {
 	#[pallet::getter(fn authorities_change_to_sign)]
 	pub type AuthoritiesChangeToSign<T: Config> = StorageValue<
 		_,
-		(Operation, Message, BoundedVec<(Address, Signature), T::MaxAuthorities>),
+		(Operation, Option<u32>, Message, BoundedVec<(Address, Signature), T::MaxAuthorities>),
 		OptionQuery,
 	>;
 
@@ -306,7 +307,7 @@ pub mod pallet {
 			let authorities = Self::ensure_authority(&address)?;
 			let mut authorities_change_to_sign =
 				<AuthoritiesChangeToSign<T>>::get().ok_or(<Error<T>>::NoAuthoritiesChange)?;
-			let (_, message, collected) = &mut authorities_change_to_sign;
+			let (_, _, message, collected) = &mut authorities_change_to_sign;
 
 			Self::ensure_not_submitted(&address, collected)?;
 
@@ -320,10 +321,11 @@ pub mod pallet {
 			if Self::check_threshold(collected.len() as _, authorities.len() as _) {
 				Self::apply_next_authorities();
 
-				let (operation, message, collected) = authorities_change_to_sign;
+				let (operation, new_threshold, message, collected) = authorities_change_to_sign;
 
 				Self::deposit_event(Event::<T>::CollectedEnoughAuthoritiesChangeSignatures {
 					operation,
+					new_threshold,
 					message,
 					signatures: collected.to_vec(),
 				});
@@ -404,22 +406,39 @@ pub mod pallet {
 		}
 
 		fn on_authorities_change(operation: Operation, authorities_count: u32) {
-			let authorities_changes = {
+			let (authorities_changes, new_threshold) = {
 				match operation {
-					Operation::AddMember { new } => ethabi::encode(&[
-						Token::Address(new),
-						Token::Uint((T::SignThreshold::get() * authorities_count).into()),
-					]),
-					Operation::RemoveMember { pre, old } => ethabi::encode(&[
-						Token::Address(pre),
-						Token::Address(old),
-						Token::Uint((T::SignThreshold::get() * authorities_count).into()),
-					]),
-					Operation::SwapMembers { pre, old, new } => ethabi::encode(&[
-						Token::Address(pre),
-						Token::Address(old),
-						Token::Address(new),
-					]),
+					Operation::AddMember { new } => {
+						let new_threshold = T::SignThreshold::get() * authorities_count;
+
+						(
+							ethabi::encode(&[
+								Token::Address(new),
+								Token::Uint(new_threshold.into()),
+							]),
+							Some(new_threshold),
+						)
+					},
+					Operation::RemoveMember { pre, old } => {
+						let new_threshold = T::SignThreshold::get() * authorities_count;
+
+						(
+							ethabi::encode(&[
+								Token::Address(pre),
+								Token::Address(old),
+								Token::Uint((T::SignThreshold::get() * authorities_count).into()),
+							]),
+							Some(new_threshold),
+						)
+					},
+					Operation::SwapMembers { pre, old, new } => (
+						ethabi::encode(&[
+							Token::Address(pre),
+							Token::Address(old),
+							Token::Address(new),
+						]),
+						None,
+					),
 				}
 			};
 			let message = Sign::eth_signable_message(
@@ -433,7 +452,12 @@ pub mod pallet {
 				]),
 			);
 
-			<AuthoritiesChangeToSign<T>>::put((operation, message, BoundedVec::default()));
+			<AuthoritiesChangeToSign<T>>::put((
+				operation,
+				new_threshold,
+				message,
+				BoundedVec::default(),
+			));
 
 			Self::deposit_event(Event::<T>::CollectingAuthoritiesChangeSignatures { message });
 		}

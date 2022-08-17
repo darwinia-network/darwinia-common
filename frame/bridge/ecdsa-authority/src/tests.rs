@@ -16,12 +16,12 @@ fn add_authority() {
 		assert_eq!(EcdsaAuthority::next_authorities(), vec![address]);
 		assert_eq!(EcdsaAuthority::nonce(), 0);
 		let message = [
-			95, 104, 154, 117, 185, 44, 82, 85, 71, 213, 152, 243, 143, 82, 23, 37, 45, 55, 74,
-			243, 153, 158, 202, 214, 210, 40, 252, 113, 20, 63, 77, 71,
+			253, 199, 55, 205, 208, 211, 116, 43, 218, 121, 191, 51, 170, 159, 104, 147, 192, 220,
+			97, 121, 70, 58, 200, 138, 183, 250, 134, 118, 216, 173, 219, 39,
 		];
 		assert_eq!(
 			EcdsaAuthority::authorities_change_to_sign(),
-			Some((Operation::AddMember { new: address }, message, Default::default()))
+			Some((Operation::AddMember { new: address }, Some(1), message, Default::default()))
 		);
 		assert_eq!(
 			ecdsa_authority_events(),
@@ -88,13 +88,14 @@ fn remove_authority() {
 		assert_eq!(EcdsaAuthority::next_authorities(), vec![address_2]);
 		assert_eq!(EcdsaAuthority::nonce(), 0);
 		let message = [
-			44, 25, 30, 94, 69, 250, 185, 115, 202, 60, 67, 106, 30, 177, 187, 35, 107, 25, 207,
-			57, 209, 20, 165, 40, 174, 157, 168, 124, 111, 62, 83, 176,
+			86, 223, 138, 26, 202, 130, 29, 75, 114, 82, 178, 24, 234, 91, 187, 182, 32, 217, 100,
+			192, 205, 240, 176, 253, 46, 35, 6, 218, 197, 179, 67, 99,
 		];
 		assert_eq!(
 			EcdsaAuthority::authorities_change_to_sign(),
 			Some((
 				Operation::RemoveMember { pre: AUTHORITY_SENTINEL, old: address_1 },
+				Some(1),
 				message,
 				Default::default()
 			))
@@ -147,13 +148,14 @@ fn swap_authority() {
 		assert_eq!(EcdsaAuthority::next_authorities(), vec![address_2]);
 		assert_eq!(EcdsaAuthority::nonce(), 0);
 		let message = [
-			80, 165, 90, 130, 101, 89, 244, 106, 39, 22, 87, 235, 108, 75, 101, 52, 41, 12, 235, 9,
-			56, 188, 57, 212, 91, 99, 31, 109, 115, 68, 233, 183,
+			52, 74, 195, 111, 246, 207, 58, 128, 95, 206, 60, 134, 69, 203, 107, 189, 38, 224, 29,
+			150, 115, 197, 150, 52, 198, 253, 160, 93, 49, 20, 224, 85,
 		];
 		assert_eq!(
 			EcdsaAuthority::authorities_change_to_sign(),
 			Some((
 				Operation::SwapMembers { pre: AUTHORITY_SENTINEL, old: address_1, new: address_2 },
+				None,
 				message,
 				Default::default()
 			))
@@ -196,8 +198,8 @@ fn sync_interval_and_max_pending_period() {
 		});
 		run_to_block(SyncInterval::get());
 		let message = [
-			133, 114, 57, 204, 144, 64, 169, 237, 233, 199, 174, 125, 64, 103, 84, 67, 66, 187, 19,
-			42, 56, 99, 189, 232, 211, 129, 3, 137, 223, 73, 240, 111,
+			223, 6, 211, 81, 139, 144, 172, 157, 249, 98, 14, 173, 163, 61, 83, 234, 54, 98, 187,
+			17, 179, 149, 32, 23, 29, 27, 164, 134, 43, 164, 92, 217,
 		];
 		assert_eq!(
 			EcdsaAuthority::new_message_root_to_sign(),
@@ -232,8 +234,8 @@ fn sync_interval_and_max_pending_period() {
 		});
 		run_to_block(offset + MaxPendingPeriod::get());
 		let message = [
-			5, 54, 174, 35, 39, 215, 2, 70, 154, 16, 20, 142, 27, 189, 79, 180, 122, 215, 90, 44,
-			144, 133, 199, 254, 229, 113, 225, 236, 43, 255, 34, 238,
+			199, 126, 190, 172, 73, 166, 175, 214, 105, 223, 66, 180, 238, 107, 232, 35, 204, 226,
+			84, 100, 143, 210, 143, 214, 4, 159, 208, 201, 154, 176, 147, 60,
 		];
 		assert_eq!(
 			EcdsaAuthority::new_message_root_to_sign(),
@@ -282,12 +284,12 @@ fn submit_authorities_change_signature() {
 		assert_ok!(EcdsaAuthority::add_authority(Origin::root(), address_3));
 		let operation = Operation::AddMember { new: address_3 };
 		let message = [
-			207, 80, 241, 175, 3, 59, 89, 65, 13, 55, 249, 77, 110, 229, 85, 220, 109, 138, 196,
-			148, 202, 209, 242, 217, 244, 40, 240, 171, 115, 110, 17, 53,
+			112, 57, 157, 28, 219, 20, 143, 201, 115, 113, 237, 186, 82, 240, 118, 198, 103, 180,
+			173, 60, 173, 77, 5, 233, 245, 70, 176, 13, 143, 63, 89, 139,
 		];
 		assert_eq!(
 			EcdsaAuthority::authorities_change_to_sign(),
-			Some((operation.clone(), message, Default::default()))
+			Some((operation.clone(), Some(2), message, Default::default()))
 		);
 		assert_eq!(
 			ecdsa_authority_events(),
@@ -316,6 +318,7 @@ fn submit_authorities_change_signature() {
 			EcdsaAuthority::authorities_change_to_sign(),
 			Some((
 				operation.clone(),
+				Some(2),
 				message,
 				BoundedVec::try_from(vec![(address_1, signature_1.clone())]).unwrap()
 			))
@@ -333,6 +336,7 @@ fn submit_authorities_change_signature() {
 			ecdsa_authority_events(),
 			vec![Event::CollectedEnoughAuthoritiesChangeSignatures {
 				operation,
+				new_threshold: Some(2),
 				message,
 				signatures: vec![(address_1, signature_1), (address_2, signature_2)]
 			}]
@@ -359,8 +363,8 @@ fn submit_new_message_root_signature() {
 
 		run_to_block(SyncInterval::get());
 		let message = [
-			133, 114, 57, 204, 144, 64, 169, 237, 233, 199, 174, 125, 64, 103, 84, 67, 66, 187, 19,
-			42, 56, 99, 189, 232, 211, 129, 3, 137, 223, 73, 240, 111,
+			223, 6, 211, 81, 139, 144, 172, 157, 249, 98, 14, 173, 163, 61, 83, 234, 54, 98, 187,
+			17, 179, 149, 32, 23, 29, 27, 164, 134, 43, 164, 92, 217,
 		];
 		assert_eq!(
 			EcdsaAuthority::new_message_root_to_sign(),
@@ -450,11 +454,11 @@ fn tx_fee() {
 	let (_, address_2) = gen_pair(2);
 
 	ExtBuilder::default().authorities(vec![address_1, address_2]).build().execute_with(|| {
-		(2..SyncInterval::get()).for_each(|i| run_to_block(i));
+		(2..SyncInterval::get()).for_each(run_to_block);
 		run_to_block(SyncInterval::get());
 		let message = [
-			133, 114, 57, 204, 144, 64, 169, 237, 233, 199, 174, 125, 64, 103, 84, 67, 66, 187, 19,
-			42, 56, 99, 189, 232, 211, 129, 3, 137, 223, 73, 240, 111,
+			223, 6, 211, 81, 139, 144, 172, 157, 249, 98, 14, 173, 163, 61, 83, 234, 54, 98, 187,
+			17, 179, 149, 32, 23, 29, 27, 164, 134, 43, 164, 92, 217,
 		];
 
 		// Free for first-correct signature.
@@ -479,8 +483,8 @@ fn tx_fee() {
 
 		assert_ok!(EcdsaAuthority::remove_authority(Origin::root(), address_1));
 		let message = [
-			167, 201, 211, 207, 38, 190, 116, 179, 123, 66, 81, 106, 39, 89, 201, 78, 59, 3, 100,
-			51, 179, 121, 18, 192, 243, 120, 61, 167, 48, 135, 125, 32,
+			245, 109, 211, 141, 201, 116, 179, 17, 94, 167, 90, 141, 34, 86, 168, 98, 201, 211,
+			241, 38, 4, 224, 7, 164, 236, 31, 37, 118, 203, 93, 247, 70,
 		];
 
 		// Free for first-correct signature.
