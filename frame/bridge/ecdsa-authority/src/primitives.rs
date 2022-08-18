@@ -18,14 +18,14 @@ pub(crate) const AUTHORITY_SENTINEL: H160 =
 // keccak256("ChangeRelayer(bytes4 sig,bytes params,uint256 nonce)");
 // 0x30a82982a8d5050d1c83bbea574aea301a4d317840a8c4734a308ffaa6a63bc8
 pub(crate) const RELAY_TYPE_HASH: H256 = H256([
-	3, 36, 202, 12, 164, 213, 41, 224, 238, 252, 198, 209, 35, 189, 23, 236, 152, 36, 152, 207, 46,
-	115, 33, 96, 204, 71, 210, 80, 72, 37, 228, 178,
+	48, 168, 41, 130, 168, 213, 5, 13, 28, 131, 187, 234, 87, 74, 234, 48, 26, 77, 49, 120, 64,
+	168, 196, 115, 74, 48, 143, 250, 166, 166, 59, 200,
 ]);
-// keccak256("Commitment(uint32 block_number, bytes32 message_root, uint256 nonce)");
-// 0x1927575a20e860281e614acf70aa85920a1187ed2fb847ee50d71702e80e2b8f
+// keccak256("Commitment(uint32 block_number,bytes32 message_root,uint256 nonce)");
+// 0xaca824a0c4edb3b2c17f33fea9cb21b33c7ee16c8e634c36b3bf851c9de7a223
 pub(crate) const COMMIT_TYPE_HASH: H256 = H256([
-	9, 64, 53, 206, 220, 62, 70, 239, 84, 120, 16, 153, 130, 131, 113, 234, 48, 235, 223, 241, 173,
-	144, 226, 255, 196, 208, 61, 76, 80, 87, 251, 230,
+	172, 168, 36, 160, 196, 237, 179, 178, 193, 127, 51, 254, 169, 203, 33, 179, 60, 126, 225, 108,
+	142, 99, 76, 54, 179, 191, 133, 28, 157, 231, 162, 35,
 ]);
 
 pub(crate) enum Sign {}
@@ -97,5 +97,26 @@ fn eth_signable_message() {
 	assert_eq!(
 		array_bytes::bytes2hex("0x", &Sign::hash(b"46Darwinia::ecdsa-authority")),
 		"0xf8a76f5ceeff36d74ff99c4efc0077bcc334721f17d1d5f17cfca78455967e1e"
+	);
+
+	let data = array_bytes::hex2bytes("30a82982a8d5050d1c83bbea574aea301a4d317840a8c4734a308ffaa6a63bc8cb76085b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000100000000000000000000000068898db1012808808c903f390909c52d9f7067490000000000000000000000004cdc1dbbd754ea539f1ffaea91f1b6c4b8dd14bd").unwrap();
+	assert_eq!(
+		array_bytes::bytes2hex("0x", &Sign::eth_signable_message(b"45", b"Pangoro", &data)),
+		"0xc0cc97a3b7ce329120e03f03675fd4cc569f50bc9b792bbd40becd79c37badac"
+	);
+
+	println!(
+		"{:?}",
+		array_bytes::hex2bytes("aca824a0c4edb3b2c17f33fea9cb21b33c7ee16c8e634c36b3bf851c9de7a223")
+			.unwrap()
+	);
+	assert_eq!(
+		array_bytes::bytes2hex("0x", COMMIT_TYPE_HASH.as_ref().into()),
+		"0xaca824a0c4edb3b2c17f33fea9cb21b33c7ee16c8e634c36b3bf851c9de7a223"
+	);
+
+	assert_eq!(
+		array_bytes::bytes2hex("0x", RELAY_TYPE_HASH.as_ref().into()),
+		"0x30a82982a8d5050d1c83bbea574aea301a4d317840a8c4734a308ffaa6a63bc8"
 	);
 }
