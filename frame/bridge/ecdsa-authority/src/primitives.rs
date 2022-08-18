@@ -105,11 +105,6 @@ fn eth_signable_message() {
 		"0xc0cc97a3b7ce329120e03f03675fd4cc569f50bc9b792bbd40becd79c37badac"
 	);
 
-	println!(
-		"{:?}",
-		array_bytes::hex2bytes("aca824a0c4edb3b2c17f33fea9cb21b33c7ee16c8e634c36b3bf851c9de7a223")
-			.unwrap()
-	);
 	assert_eq!(
 		array_bytes::bytes2hex("0x", COMMIT_TYPE_HASH.as_ref().into()),
 		"0xaca824a0c4edb3b2c17f33fea9cb21b33c7ee16c8e634c36b3bf851c9de7a223"
@@ -118,5 +113,40 @@ fn eth_signable_message() {
 	assert_eq!(
 		array_bytes::bytes2hex("0x", RELAY_TYPE_HASH.as_ref().into()),
 		"0x30a82982a8d5050d1c83bbea574aea301a4d317840a8c4734a308ffaa6a63bc8"
+	);
+
+	let operation = Operation::SwapMembers {
+		pre: AUTHORITY_SENTINEL,
+		old: AUTHORITY_SENTINEL,
+		new: AUTHORITY_SENTINEL,
+	};
+	assert_eq!(array_bytes::bytes2hex("0x", &operation.id()), "0xcb76085b");
+
+	let encoded = &ethabi::encode(&[
+		ethabi::Token::FixedBytes(RELAY_TYPE_HASH.as_ref().into()),
+		ethabi::Token::FixedBytes(operation.id().into()),
+		ethabi::Token::Bytes(ethabi::encode(&[
+			ethabi::Token::Address(AUTHORITY_SENTINEL),
+			ethabi::Token::Address(AUTHORITY_SENTINEL),
+			ethabi::Token::Address(AUTHORITY_SENTINEL),
+		])),
+		ethabi::Token::Uint(0.into()),
+	]);
+	assert_eq!(
+		array_bytes::bytes2hex("0x", &Sign::eth_signable_message(b"45", b"Pangoro", &encoded)),
+		"0xe0048b398f49e08acbe5d5acc8beceecf2734c2cd4e73ec683302822ecc8811e"
+	);
+
+	assert_eq!(
+		array_bytes::bytes2hex("0x", &Operation::AddMember { new: AUTHORITY_SENTINEL }.id()),
+		"0xb7aafe32"
+	);
+
+	assert_eq!(
+		array_bytes::bytes2hex(
+			"0x",
+			&Operation::RemoveMember { pre: AUTHORITY_SENTINEL, old: AUTHORITY_SENTINEL }.id()
+		),
+		"0x8621d1fa"
 	);
 }
