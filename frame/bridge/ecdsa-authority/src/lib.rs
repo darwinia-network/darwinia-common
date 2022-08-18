@@ -192,9 +192,9 @@ pub mod pallet {
 				104, 137, 141, 177, 1, 40, 8, 128, 140, 144, 63, 57, 9, 9, 197, 45, 159, 112, 103,
 				73,
 			])]) {
-				<Authorities<T>>::put(v);
+				<Authorities<T>>::put(v.clone());
+				<NextAuthorities<T>>::put(v);
 			}
-			<NextAuthorities<T>>::kill();
 			<Nonce<T>>::kill();
 			<AuthoritiesChangeToSign<T>>::kill();
 			<NewMessageRootToSign<T>>::kill();
