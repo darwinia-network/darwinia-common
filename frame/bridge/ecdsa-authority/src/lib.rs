@@ -200,7 +200,7 @@ pub mod pallet {
 			<NewMessageRootToSign<T>>::kill();
 			<PreviousMessageRoot<T>>::kill();
 
-			T::DbWeight::get().reads_writes(0, 4)
+			T::DbWeight::get().reads_writes(0, 6)
 		}
 
 		fn on_initialize(now: T::BlockNumber) -> Weight {
