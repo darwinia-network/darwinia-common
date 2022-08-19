@@ -1,7 +1,7 @@
 // --- paritytech ---
 use frame_support::Blake2_128Concat;
 #[allow(unused)]
-use frame_support::{migration::storage_key_iter, traits::OnRuntimeUpgrade, weights::Weight};
+use frame_support::{migration, traits::OnRuntimeUpgrade, weights::Weight};
 // --- darwinia-network ---
 #[allow(unused)]
 use crate::*;
@@ -26,9 +26,10 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 }
 
 fn migrate() -> Weight {
+	use frame_support::migration::storage_key_iter;
+
 	let module: &[u8] = b"PangolinFeeMarket";
 	let item: &[u8] = b"Orders";
-
 	for ((lane_id, nonce), order) in storage_key_iter::<
 		(LaneId, MessageNonce),
 		Order<AccountId, BlockNumber, Balance>,
