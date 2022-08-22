@@ -121,20 +121,16 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Ethereum events from contracts.
-		Log(Log),
+		Log { log: Log },
 		/// A contract has been created at given \[address\].
-		Created(H160),
+		Created { address: H160 },
 		/// A \[contract\] was attempted to be created, but the execution failed.
-		CreatedFailed(H160),
+		CreatedFailed { address: H160 },
 		/// A \[contract\] has been executed successfully with states applied.
-		Executed(H160),
+		Executed { address: H160 },
 		/// A \[contract\] has been executed with errors. States are reverted with only gas fees
 		/// applied.
-		ExecutedFailed(H160),
-		/// A deposit has been made at a given address. \[sender, address, value\]
-		BalanceDeposit(T::AccountId, H160, U256),
-		/// A withdrawal has been made from a given address. \[sender, address, value\]
-		BalanceWithdraw(T::AccountId, H160, U256),
+		ExecutedFailed { address: H160 },
 	}
 
 	#[pallet::error]
@@ -232,10 +228,10 @@ pub mod pallet {
 
 			match info.exit_reason {
 				ExitReason::Succeed(_) => {
-					Pallet::<T>::deposit_event(Event::<T>::Executed(target));
+					Pallet::<T>::deposit_event(Event::<T>::Executed { address: target });
 				},
 				_ => {
-					Pallet::<T>::deposit_event(Event::<T>::ExecutedFailed(target));
+					Pallet::<T>::deposit_event(Event::<T>::ExecutedFailed { address: target });
 				},
 			};
 
@@ -280,10 +276,12 @@ pub mod pallet {
 				CreateInfo {
 					exit_reason: ExitReason::Succeed(_), value: create_address, ..
 				} => {
-					Pallet::<T>::deposit_event(Event::<T>::Created(create_address));
+					Pallet::<T>::deposit_event(Event::<T>::Created { address: create_address });
 				},
 				CreateInfo { exit_reason: _, value: create_address, .. } => {
-					Pallet::<T>::deposit_event(Event::<T>::CreatedFailed(create_address));
+					Pallet::<T>::deposit_event(Event::<T>::CreatedFailed {
+						address: create_address,
+					});
 				},
 			}
 
@@ -329,10 +327,12 @@ pub mod pallet {
 				CreateInfo {
 					exit_reason: ExitReason::Succeed(_), value: create_address, ..
 				} => {
-					Pallet::<T>::deposit_event(Event::<T>::Created(create_address));
+					Pallet::<T>::deposit_event(Event::<T>::Created { address: create_address });
 				},
 				CreateInfo { exit_reason: _, value: create_address, .. } => {
-					Pallet::<T>::deposit_event(Event::<T>::CreatedFailed(create_address));
+					Pallet::<T>::deposit_event(Event::<T>::CreatedFailed {
+						address: create_address,
+					});
 				},
 			}
 
