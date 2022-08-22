@@ -2,7 +2,7 @@
 authors = ["Acala Developers"]
 edition = "2021"
 name    = "module-transaction-pause"
-version = "2.9.0"
+version = "2.9.2"
 
 [dependencies]
 # crates.io
