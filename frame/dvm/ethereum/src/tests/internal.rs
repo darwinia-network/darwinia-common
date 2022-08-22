@@ -254,22 +254,26 @@ fn internal_transaction_should_works() {
 
 		// Call foo use internal transaction
 		assert_ok!(Ethereum::internal_transact(contract_address, foo.clone()));
-		System::assert_last_event(Event::Ethereum(crate::Event::Executed(
-			<Test as self::Config>::PalletId::get().derive_ethereum_address(),
-			contract_address,
-			H256::from_str("0xad9426a685cbd9077fc6945dfd294c1d42862950e0ac292ea2e9d34ecf7a9007")
-				.unwrap(),
-			ExitReason::Succeed(ExitSucceed::Returned),
-		)));
+		System::assert_last_event(Event::Ethereum(crate::Event::Executed {
+			from: <Test as self::Config>::PalletId::get().derive_ethereum_address(),
+			to: contract_address,
+			transaction_hash: H256::from_str(
+				"0xad9426a685cbd9077fc6945dfd294c1d42862950e0ac292ea2e9d34ecf7a9007",
+			)
+			.unwrap(),
+			exit_reason: ExitReason::Succeed(ExitSucceed::Returned),
+		}));
 
 		assert_ok!(Ethereum::internal_transact(contract_address, foo));
-		System::assert_last_event(Event::Ethereum(crate::Event::Executed(
-			<Test as self::Config>::PalletId::get().derive_ethereum_address(),
-			contract_address,
-			H256::from_str("0x85a0a4a2620d7adb3d15a4a295ec4e786b8b5ca115e76a2fe89bb90c876ab694")
-				.unwrap(),
-			ExitReason::Succeed(ExitSucceed::Returned),
-		)));
+		System::assert_last_event(Event::Ethereum(crate::Event::Executed {
+			from: <Test as self::Config>::PalletId::get().derive_ethereum_address(),
+			to: contract_address,
+			transaction_hash: H256::from_str(
+				"0x85a0a4a2620d7adb3d15a4a295ec4e786b8b5ca115e76a2fe89bb90c876ab694",
+			)
+			.unwrap(),
+			exit_reason: ExitReason::Succeed(ExitSucceed::Returned),
+		}));
 	});
 }
 
