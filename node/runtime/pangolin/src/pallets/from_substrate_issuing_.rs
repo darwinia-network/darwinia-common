@@ -15,7 +15,7 @@ use from_substrate_issuing::Config;
 pub struct OutboundMessageDataInfo;
 impl OutboundMessenger<AccountId32> for OutboundMessageDataInfo {
 	fn check_lane_id(lane_id: &LaneId) -> bool {
-		return *lane_id == PANGORO_PANGOLIN_LANE;
+		*lane_id == PANGORO_PANGOLIN_LANE
 	}
 
 	fn get_valid_message_sender(nonce: MessageNonce) -> Result<AccountId32, &'static str> {
@@ -25,7 +25,7 @@ impl OutboundMessenger<AccountId32> for OutboundMessageDataInfo {
 			.map_err(|_| "decode message payload failed")?;
 		match payload.origin {
 			CallOrigin::SourceAccount(account_id) => Ok(account_id),
-			_ => Err("Invalid Account Type".into()),
+			_ => Err("Invalid Account Type"),
 		}
 	}
 }

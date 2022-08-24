@@ -94,13 +94,7 @@ impl CreatePayload<bp_pangoro::AccountId, bp_pangoro::AccountPublic, bp_pangoro:
 		dispatch_fee_payment: DispatchFeePayment,
 	) -> Result<Self::Payload, &'static str> {
 		let call = Self::encode_call(PANGOLIN_S2S_ISSUING_PALLET_INDEX, call_params)?;
-		return Ok(ToPangolinMessagePayload {
-			spec_version,
-			weight,
-			origin,
-			call,
-			dispatch_fee_payment,
-		});
+		Ok(ToPangolinMessagePayload { spec_version, weight, origin, call, dispatch_fee_payment })
 	}
 }
 
@@ -136,10 +130,7 @@ impl MessageBridge for WithPangolinMessageBridge {
 	fn bridged_balance_to_this_balance(
 		bridged_balance: BalanceOf<Self::BridgedChain>,
 	) -> BalanceOf<Self::ThisChain> {
-		<BalanceOf<Self::ThisChain>>::try_from(
-			PangolinToPangoroConversionRate::get().saturating_mul_int(bridged_balance),
-		)
-		.unwrap_or(<BalanceOf<Self::ThisChain>>::MAX)
+		PangolinToPangoroConversionRate::get().saturating_mul_int(bridged_balance)
 	}
 }
 

@@ -208,7 +208,7 @@ where
 pub struct FixedGasPrice;
 impl FeeCalculator for FixedGasPrice {
 	fn min_gas_price() -> U256 {
-		U256::from(1 * GWEI)
+		U256::from(GWEI)
 	}
 }
 

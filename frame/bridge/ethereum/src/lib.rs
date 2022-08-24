@@ -706,7 +706,7 @@ impl<T: Config> Relayable for Module<T> {
 		let ethereum_partial = Self::ethash_params();
 
 		ensure!(
-			next.header.difficulty().to_owned()
+			*next.header.difficulty()
 				== ethereum_partial.calculate_difficulty(&next.header, &previous.header),
 			<Error<T>>::ContinuousInv
 		);
@@ -786,7 +786,7 @@ impl<T: Config> Relayable for Module<T> {
 				<Error<T>>::ContinuousInv
 			);
 			ensure!(
-				next.header.difficulty().to_owned()
+				*next.header.difficulty()
 					== ethereum_partial.calculate_difficulty(&next.header, &previous.header),
 				<Error<T>>::ContinuousInv
 			);
@@ -907,7 +907,7 @@ impl<T: Config> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 		// Verify receipt proof
 		let receipt = EthereumReceipt::verify_proof_and_generate(
 			ethereum_header.receipts_root(),
-			&ethereum_proof_record,
+			ethereum_proof_record,
 		)
 		.map_err(|_| <Error<T>>::ReceiptProofInv)?;
 
@@ -950,7 +950,7 @@ pub struct MMRProof {
 	pub proof: Vec<H256>,
 }
 
-#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]
+#[derive(Clone, PartialEq, Eq, Default, Encode, Decode, TypeInfo)]
 pub struct CheckEthereumRelayHeaderParcel<T: Config>(PhantomData<T>);
 impl<T: Config> CheckEthereumRelayHeaderParcel<T> {
 	pub fn new() -> Self {

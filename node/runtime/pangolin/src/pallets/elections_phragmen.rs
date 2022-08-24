@@ -14,7 +14,7 @@ frame_support::parameter_types! {
 }
 #[cfg(not(feature = "runtime-benchmarks"))]
 frame_support::parameter_types! {
-	pub const CandidacyBond: Balance = 1 * COIN;
+	pub const CandidacyBond: Balance = COIN;
 	// 1 storage item created, key size is 32 bytes, value size is 16+16.
 	pub const VotingBondBase: Balance = pangolin_deposit(1, 64);
 	// additional data per vote is 32 bytes (account id).
