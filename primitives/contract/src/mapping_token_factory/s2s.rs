@@ -125,7 +125,7 @@ impl S2sRemoteUnlockInfo {
 				ParamType::Bytes,
 				ParamType::Uint(256),
 			],
-			&data,
+			data,
 		)?;
 		match (
 			tokens[0].clone(),
@@ -172,7 +172,7 @@ impl S2sSendMessageParams {
 				ParamType::Bytes,
 				ParamType::Uint(256),
 			],
-			&data,
+			data,
 		)?;
 		match (tokens[0].clone(), tokens[1].clone(), tokens[2].clone(), tokens[3].clone()) {
 			(

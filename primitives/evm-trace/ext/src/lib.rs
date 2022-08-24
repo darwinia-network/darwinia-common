@@ -29,6 +29,7 @@ use sp_runtime_interface::runtime_interface;
 use sp_std::vec::Vec;
 
 #[runtime_interface]
+#[allow(clippy::unnecessary_mut_passed)]
 pub trait DvmExt {
 	fn raw_step(&mut self, _data: Vec<u8>) {}
 

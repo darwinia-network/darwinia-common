@@ -20,6 +20,7 @@
 
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::all)]
 
 pub mod runner;
 
@@ -442,7 +443,7 @@ where
 	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, Error<T>> {
 		let balance = T::RingBalanceAdapter::evm_balance(who);
 		let new_account_balance = balance.saturating_sub(fee);
-		T::RingBalanceAdapter::mutate_evm_balance(&who, new_account_balance);
+		T::RingBalanceAdapter::mutate_evm_balance(who, new_account_balance);
 		Ok(fee)
 	}
 
@@ -454,7 +455,7 @@ where
 		let balance = T::RingBalanceAdapter::evm_balance(who);
 		let refund = already_withdrawn.saturating_sub(corrected_fee);
 		let new_account_balance = balance.saturating_add(refund);
-		T::RingBalanceAdapter::mutate_evm_balance(&who, new_account_balance);
+		T::RingBalanceAdapter::mutate_evm_balance(who, new_account_balance);
 	}
 
 	fn pay_priority_fee(tip: U256) {

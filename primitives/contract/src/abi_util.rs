@@ -22,7 +22,7 @@ use ethabi::{param_type::ParamType, token::Token, Error, Result as AbiResult};
 use sp_std::prelude::*;
 
 pub fn abi_decode_bytes4(data: &[u8]) -> AbiResult<[u8; 4]> {
-	let tokens = ethabi::decode(&[ParamType::FixedBytes(4)], &data)?;
+	let tokens = ethabi::decode(&[ParamType::FixedBytes(4)], data)?;
 	if let Token::FixedBytes(decoded) = tokens[0].clone() {
 		let decoded: [u8; 4] = decoded.try_into().map_err(|_| Error::InvalidData)?;
 		return Ok(decoded);

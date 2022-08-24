@@ -575,7 +575,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 							if previous_maybe_extended_relay_affirmation_id.is_none() {
 								let relay_header_parcels = &round_relay_affirmations
-									.into_iter()
+									.iter()
 									.nth(index as usize)
 									.unwrap()
 									.relay_header_parcels;

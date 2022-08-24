@@ -68,6 +68,7 @@ impl IdentifyVariant for Box<dyn sc_service::ChainSpec> {
 
 /// Builds a new object suitable for chain operations.
 #[cfg(feature = "full-node")]
+#[allow(clippy::type_complexity)]
 pub fn new_chain_ops<Runtime, Dispatch>(
 	config: &mut sc_service::Configuration,
 ) -> ServiceResult<(
@@ -95,6 +96,7 @@ where
 }
 
 #[cfg(feature = "full-node")]
+#[allow(clippy::type_complexity)]
 fn new_full<RuntimeApi, Executor>(
 	mut config: sc_service::Configuration,
 	authority_discovery_disabled: bool,
@@ -426,6 +428,7 @@ where
 }
 
 #[cfg(feature = "full-node")]
+#[allow(clippy::type_complexity)]
 fn new_partial<RuntimeApi, Executor>(
 	config: &mut sc_service::Configuration,
 ) -> ServiceResult<

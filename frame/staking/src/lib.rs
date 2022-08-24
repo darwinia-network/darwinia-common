@@ -271,6 +271,7 @@
 //!   validators is stored in the Session pallet's `Validators` at the end of each era.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::all)]
 #![feature(drain_filter)]
 
 // syntactic sugar for logging.

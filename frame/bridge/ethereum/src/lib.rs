@@ -260,7 +260,7 @@ decl_storage! {
 			});
 
 			let dags_merkle_roots = if dags_merkle_roots_loader.dags_merkle_roots.is_empty() {
-				DagsMerkleRootsLoader::from_str(DAGS_MERKLE_ROOTS_STR).dags_merkle_roots.clone()
+				DagsMerkleRootsLoader::from_str(DAGS_MERKLE_ROOTS_STR).dags_merkle_roots
 			} else {
 				dags_merkle_roots_loader.dags_merkle_roots.clone()
 			};
@@ -591,7 +591,7 @@ impl<T: Config> Module<T> {
 
 		let merkle_root = Self::dag_merkle_root((header.number as usize / 30000) as u64);
 
-		if ethereum_partial.verify_seal_with_proof(&header, &ethash_proof, &merkle_root).is_err() {
+		if ethereum_partial.verify_seal_with_proof(header, ethash_proof, &merkle_root).is_err() {
 			return false;
 		};
 

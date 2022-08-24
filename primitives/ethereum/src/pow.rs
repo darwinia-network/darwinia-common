@@ -232,7 +232,7 @@ impl EthashPartial {
 				data[..32].reverse();
 				data[32..].reverse();
 
-				data.into()
+				data
 			},
 		);
 
