@@ -324,12 +324,11 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub fn deposit_event)]
 	/// Ethereum pallet events.
 	pub enum Event<T: Config> {
-		/// An ethereum transaction was successfully executed. \[from, to/contract_address,
-		/// transaction_hash, exit_reason\]
+		/// An ethereum transaction was successfully executed.
 		Executed { from: H160, to: H160, transaction_hash: H256, exit_reason: ExitReason },
-		/// DVM transfer. \[from, to, value\]
+		/// DVM transfer.
 		DVMTransfer { from: T::AccountId, to: T::AccountId, amount: U256 },
-		/// Kton transfer \[from, to, value\]
+		/// Kton transfer.
 		KtonDVMTransfer { from: T::AccountId, to: T::AccountId, amount: U256 },
 	}
 

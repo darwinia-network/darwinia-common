@@ -122,13 +122,13 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// Ethereum events from contracts.
 		Log { log: Log },
-		/// A contract has been created at given \[address\].
+		/// A contract has been created at given.
 		Created { address: H160 },
-		/// A \[contract\] was attempted to be created, but the execution failed.
+		/// A contract was attempted to be created, but the execution failed.
 		CreatedFailed { address: H160 },
-		/// A \[contract\] has been executed successfully with states applied.
+		/// A contract has been executed successfully with states applied.
 		Executed { address: H160 },
-		/// A \[contract\] has been executed with errors. States are reverted with only gas fees
+		/// A contract has been executed with errors. States are reverted with only gas fees
 		/// applied.
 		ExecutedFailed { address: H160 },
 	}
