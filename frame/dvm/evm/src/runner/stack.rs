@@ -190,11 +190,13 @@ impl<T: Config> Runner<T> {
 				substrate_log.data.len(),
 				substrate_log.data
 			);
-			Pallet::<T>::deposit_event(Event::<T>::Log(Log {
-				address: substrate_log.address,
-				topics: substrate_log.topics.clone(),
-				data: substrate_log.data.clone(),
-			}));
+			Pallet::<T>::deposit_event(Event::<T>::Log {
+				log: Log {
+					address: substrate_log.address,
+					topics: substrate_log.topics.clone(),
+					data: substrate_log.data.clone(),
+				},
+			});
 		}
 
 		Ok(ExecutionInfo { value: retv, exit_reason: reason, used_gas, logs: state.substate.logs })
