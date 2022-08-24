@@ -73,7 +73,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn load_spec(&self, id: &str) -> Result<Box<dyn ChainSpec>, String> {
-		let id = if id == "" {
+		let id = if id.is_empty() {
 			let n = get_exec_name().unwrap_or_default();
 			["template", "pangolin", "pangoro"]
 				.iter()

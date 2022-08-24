@@ -433,7 +433,7 @@ pub fn development_config() -> ChainSpec {
 			treasury: Default::default(),
 			kton_treasury: Default::default(),
 			vesting: Default::default(),
-			sudo: SudoConfig { key: root.clone() },
+			sudo: SudoConfig { key: root },
 			ethereum_relay: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
@@ -567,7 +567,6 @@ pub fn local_testnet_config() -> ChainSpec {
 			},
 			kton: KtonConfig {
 				balances: endowed_accounts
-					.clone()
 					.into_iter()
 					.map(|a| (a, A_FEW_COINS))
 					.collect()
@@ -627,7 +626,7 @@ pub fn local_testnet_config() -> ChainSpec {
 			treasury: Default::default(),
 			kton_treasury: Default::default(),
 			vesting: Default::default(),
-			sudo: SudoConfig { key: root.clone() },
+			sudo: SudoConfig { key: root },
 			ethereum_relay: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
