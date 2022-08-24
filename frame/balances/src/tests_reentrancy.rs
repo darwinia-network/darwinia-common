@@ -182,9 +182,13 @@ fn transfer_dust_removal_tst1_should_work() {
 		// Verify the events
 		assert_eq!(System::events().len(), 12);
 
-		System::assert_has_event(Event::Ring(crate::Event::Transfer(2, 3, 450)));
-		System::assert_has_event(Event::Ring(crate::Event::DustLost(2, 50)));
-		System::assert_has_event(Event::Ring(crate::Event::Deposit(1, 50)));
+		System::assert_has_event(Event::Ring(crate::Event::Transfer {
+			from: 2,
+			to: 3,
+			amount: 450,
+		}));
+		System::assert_has_event(Event::Ring(crate::Event::DustLost { account: 2, amount: 50 }));
+		System::assert_has_event(Event::Ring(crate::Event::Deposit { who: 1, amount: 50 }));
 	});
 }
 
@@ -210,9 +214,13 @@ fn transfer_dust_removal_tst2_should_work() {
 		// Verify the events
 		assert_eq!(System::events().len(), 10);
 
-		System::assert_has_event(Event::Ring(crate::Event::Transfer(2, 1, 450)));
-		System::assert_has_event(Event::Ring(crate::Event::DustLost(2, 50)));
-		System::assert_has_event(Event::Ring(crate::Event::Deposit(1, 50)));
+		System::assert_has_event(Event::Ring(crate::Event::Transfer {
+			from: 2,
+			to: 1,
+			amount: 450,
+		}));
+		System::assert_has_event(Event::Ring(crate::Event::DustLost { account: 2, amount: 50 }));
+		System::assert_has_event(Event::Ring(crate::Event::Deposit { who: 1, amount: 50 }));
 	});
 }
 
@@ -247,13 +255,13 @@ fn repatriating_reserved_balance_dust_removal_should_work() {
 		// Verify the events
 		assert_eq!(System::events().len(), 11);
 
-		System::assert_has_event(Event::Ring(crate::Event::ReserveRepatriated(
-			2,
-			1,
-			450,
-			BalanceStatus::Free,
-		)));
-		System::assert_has_event(Event::Ring(crate::Event::DustLost(2, 50)));
-		System::assert_last_event(Event::Ring(crate::Event::Deposit(1, 50)));
+		System::assert_has_event(Event::Ring(crate::Event::ReserveRepatriated {
+			from: 2,
+			to: 1,
+			amount: 450,
+			destination_status: BalanceStatus::Free,
+		}));
+		System::assert_has_event(Event::Ring(crate::Event::DustLost { account: 2, amount: 50 }));
+		System::assert_last_event(Event::Ring(crate::Event::Deposit { who: 1, amount: 50 }));
 	});
 }

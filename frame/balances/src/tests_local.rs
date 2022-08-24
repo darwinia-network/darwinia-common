@@ -206,8 +206,8 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 			events(),
 			[
 				Event::System(frame_system::Event::NewAccount(1)),
-				Event::Ring(crate::Event::Endowed(1, 100)),
-				Event::Ring(crate::Event::BalanceSet(1, 100, 0)),
+				Event::Ring(crate::Event::Endowed { account: 1, free_balance: 100 }),
+				Event::Ring(crate::Event::BalanceSet { who: 1, free: 100, reserved: 0 }),
 			]
 		);
 
@@ -215,7 +215,7 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 		assert_eq!(res, (NegativeImbalance::new(98), 0));
 
 		// no events
-		assert_eq!(events(), [Event::Ring(crate::Event::Slashed(1, 98))]);
+		assert_eq!(events(), [Event::Ring(crate::Event::Slashed { who: 1, amount: 98 })]);
 
 		let res = Ring::slash(&1, 1);
 		assert_eq!(res, (NegativeImbalance::new(1), 0));
@@ -224,8 +224,8 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 			events(),
 			[
 				Event::System(frame_system::Event::KilledAccount(1)),
-				Event::Ring(crate::Event::DustLost(1, 1)),
-				Event::Ring(crate::Event::Slashed(1, 1)),
+				Event::Ring(crate::Event::DustLost { account: 1, amount: 1 }),
+				Event::Ring(crate::Event::Slashed { who: 1, amount: 1 }),
 			]
 		);
 	});

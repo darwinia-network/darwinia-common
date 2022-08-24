@@ -251,7 +251,7 @@ pub mod pallet {
 					Ok(())
 				})?;
 				<TotalIssuance<T, I>>::mutate(|t| *t += amount);
-				Self::deposit_event(Event::Deposit(who.clone(), amount));
+				Self::deposit_event(Event::Deposit { who: who.clone(), amount });
 				Ok(())
 			}
 
@@ -273,7 +273,7 @@ pub mod pallet {
 					},
 				)?;
 				<TotalIssuance<T, I>>::mutate(|t| *t -= actual);
-				Self::deposit_event(Event::Withdraw(who.clone(), amount));
+				Self::deposit_event(Event::Withdraw { who: who.clone(), amount });
 				Ok(actual)
 			}
 		}
@@ -343,11 +343,11 @@ pub mod pallet {
 			fn set_balance(who: &T::AccountId, amount: Self::Balance) -> DispatchResult {
 				Self::mutate_account(who, |account| {
 					account.set_free(amount);
-					Self::deposit_event(Event::BalanceSet(
-						who.clone(),
-						account.free(),
-						account.reserved(),
-					));
+					Self::deposit_event(Event::BalanceSet {
+						who: who.clone(),
+						free: account.free(),
+						reserved: account.reserved(),
+					});
 				})?;
 				Ok(())
 			}
@@ -626,31 +626,33 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
-		/// An account was created with some free balance. \[account, free_balance\]
-		Endowed(T::AccountId, T::Balance),
+		/// An account was created with some free balance.
+		Endowed { account: T::AccountId, free_balance: T::Balance },
 		/// An account was removed whose balance was non-zero but below ExistentialDeposit,
-		/// resulting in an outright loss. \[account, balance\]
-		DustLost(T::AccountId, T::Balance),
-		/// Transfer succeeded. \[from, to, value\]
-		Transfer(T::AccountId, T::AccountId, T::Balance),
-		/// A balance was set by root. \[who, free, reserved\]
-		BalanceSet(T::AccountId, T::Balance, T::Balance),
-		/// Some balance was reserved (moved from free to reserved). \[who, value\]
-		Reserved(T::AccountId, T::Balance),
-		/// Some balance was unreserved (moved from reserved to free). \[who, value\]
-		Unreserved(T::AccountId, T::Balance),
+		/// resulting in an outright loss.
+		DustLost { account: T::AccountId, amount: T::Balance },
+		/// Transfer succeeded.
+		Transfer { from: T::AccountId, to: T::AccountId, amount: T::Balance },
+		/// A balance was set by root.
+		BalanceSet { who: T::AccountId, free: T::Balance, reserved: T::Balance },
+		/// Some balance was reserved (moved from free to reserved).
+		Reserved { who: T::AccountId, amount: T::Balance },
+		/// Some balance was unreserved (moved from reserved to free).
+		Unreserved { who: T::AccountId, amount: T::Balance },
 		/// Some balance was moved from the reserve of the first account to the second account.
 		/// Final argument indicates the destination balance type.
-		/// \[from, to, balance, destination_status\]
-		ReserveRepatriated(T::AccountId, T::AccountId, T::Balance, BalanceStatus),
-		/// Some amount was deposited into the account (e.g. for transaction fees). \[who,
-		/// deposit\]
-		Deposit(T::AccountId, T::Balance),
-		/// Some amount was withdrawn from the account (e.g. for transaction fees). \[who, value\]
-		Withdraw(T::AccountId, T::Balance),
-		/// Some amount was removed from the account (e.g. for misbehavior). \[who,
-		/// amount_slashed\]
-		Slashed(T::AccountId, T::Balance),
+		ReserveRepatriated {
+			from: T::AccountId,
+			to: T::AccountId,
+			amount: T::Balance,
+			destination_status: BalanceStatus,
+		},
+		/// Some amount was deposited into the account (e.g. for transaction fees).
+		Deposit { who: T::AccountId, amount: T::Balance },
+		/// Some amount was withdrawn from the account (e.g. for transaction fees).
+		Withdraw { who: T::AccountId, amount: T::Balance },
+		/// Some amount was removed from the account (e.g. for misbehavior).
+		Slashed { who: T::AccountId, amount: T::Balance },
 	}
 
 	#[pallet::error]
@@ -869,7 +871,7 @@ pub mod pallet {
 
 				(account.free(), account.reserved())
 			})?;
-			Self::deposit_event(Event::BalanceSet(who, free, reserved));
+			Self::deposit_event(Event::BalanceSet { who, free, reserved });
 			Ok(().into())
 		}
 
@@ -1179,7 +1181,10 @@ pub mod pallet {
 			});
 			result.map(|(maybe_endowed, maybe_dust, result)| {
 				if let Some(endowed) = maybe_endowed {
-					Self::deposit_event(Event::Endowed(who.clone(), endowed));
+					Self::deposit_event(Event::Endowed {
+						account: who.clone(),
+						free_balance: endowed,
+					});
 				}
 				let dust_cleaner = DustCleaner(maybe_dust.map(|dust| (who.clone(), dust)));
 				(result, dust_cleaner)
@@ -1287,12 +1292,12 @@ pub mod pallet {
 					},
 				)?;
 
-			Self::deposit_event(Event::ReserveRepatriated(
-				slashed.clone(),
-				beneficiary.clone(),
-				actual,
-				status,
-			));
+			Self::deposit_event(Event::ReserveRepatriated {
+				from: slashed.clone(),
+				to: beneficiary.clone(),
+				amount: actual,
+				destination_status: status,
+			});
 			Ok(actual)
 		}
 	}
@@ -1448,7 +1453,11 @@ pub mod pallet {
 			)?;
 
 			// Emit transfer event.
-			Self::deposit_event(Event::Transfer(transactor.clone(), dest.clone(), value));
+			Self::deposit_event(Event::Transfer {
+				from: transactor.clone(),
+				to: dest.clone(),
+				amount: value,
+			});
 
 			Ok(())
 		}
@@ -1516,10 +1525,10 @@ pub mod pallet {
 					},
 				) {
 					Ok((imbalance, not_slashed)) => {
-						Self::deposit_event(Event::Slashed(
-							who.clone(),
-							value.saturating_sub(not_slashed),
-						));
+						Self::deposit_event(Event::Slashed {
+							who: who.clone(),
+							amount: value.saturating_sub(not_slashed),
+						});
 						return (imbalance, not_slashed);
 					},
 					Err(_) => (),
@@ -1548,7 +1557,7 @@ pub mod pallet {
 					account.set_free(
 						account.free().checked_add(&value).ok_or(ArithmeticError::Overflow)?,
 					);
-					Self::deposit_event(Event::Deposit(who.clone(), value));
+					Self::deposit_event(Event::Deposit { who: who.clone(), amount: value });
 					Ok(PositiveImbalance::new(value))
 				},
 			)
@@ -1581,7 +1590,7 @@ pub mod pallet {
 						None => return Ok(Self::PositiveImbalance::zero()),
 					});
 
-					Self::deposit_event(Event::Deposit(who.clone(), value));
+					Self::deposit_event(Event::Deposit { who: who.clone(), amount: value });
 					Ok(PositiveImbalance::new(value))
 				},
 			)
@@ -1628,7 +1637,7 @@ pub mod pallet {
 
 					account.set_free(new_free_account);
 
-					Self::deposit_event(Event::Withdraw(who.clone(), value));
+					Self::deposit_event(Event::Withdraw { who: who.clone(), amount: value });
 					Ok(NegativeImbalance::new(value))
 				},
 			)
@@ -1664,11 +1673,11 @@ pub mod pallet {
 						SignedImbalance::Negative(NegativeImbalance::new(account.free() - value))
 					};
 					account.set_free(value);
-					Self::deposit_event(Event::BalanceSet(
-						who.clone(),
-						account.free(),
-						account.reserved(),
-					));
+					Self::deposit_event(Event::BalanceSet {
+						who: who.clone(),
+						free: account.free(),
+						reserved: account.reserved(),
+					});
 					Ok(imbalance)
 				},
 			)
@@ -1730,10 +1739,10 @@ pub mod pallet {
 					(NegativeImbalance::new(actual), value - actual)
 				}) {
 					Ok((imbalance, not_slashed)) => {
-						Self::deposit_event(Event::Slashed(
-							who.clone(),
-							value.saturating_sub(not_slashed),
-						));
+						Self::deposit_event(Event::Slashed {
+							who: who.clone(),
+							amount: value.saturating_sub(not_slashed),
+						});
 						return (imbalance, not_slashed);
 					},
 					Err(_) => (),
@@ -1773,7 +1782,7 @@ pub mod pallet {
 				)
 			})?;
 
-			Self::deposit_event(Event::Reserved(who.clone(), value));
+			Self::deposit_event(Event::Reserved { who: who.clone(), amount: value });
 			Ok(())
 		}
 
@@ -1806,7 +1815,7 @@ pub mod pallet {
 				},
 			};
 
-			Self::deposit_event(Event::Unreserved(who.clone(), actual.clone()));
+			Self::deposit_event(Event::Unreserved { who: who.clone(), amount: actual.clone() });
 			value - actual
 		}
 
@@ -2022,7 +2031,7 @@ pub mod pallet {
 						// `actual <= to_change` and `to_change <= amount`; qed;
 						reserves[index].amount -= actual;
 
-						Self::deposit_event(Event::Slashed(who.clone(), actual));
+						Self::deposit_event(Event::Slashed { who: who.clone(), amount: actual });
 						(imb, value - actual)
 					},
 					Err(_) => (NegativeImbalance::zero(), value),
@@ -2243,7 +2252,10 @@ pub mod pallet {
 	impl<T: Config<I>, I: 'static> Drop for DustCleaner<T, I> {
 		fn drop(&mut self) {
 			if let Some((who, dust)) = self.0.take() {
-				<Pallet<T, I>>::deposit_event(Event::DustLost(who, dust.peek()));
+				<Pallet<T, I>>::deposit_event(Event::DustLost {
+					account: who,
+					amount: dust.peek(),
+				});
 				T::DustRemoval::on_unbalanced(dust);
 			}
 		}
