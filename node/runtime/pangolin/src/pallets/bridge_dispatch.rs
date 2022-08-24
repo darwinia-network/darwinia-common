@@ -29,7 +29,7 @@ impl CallValidate<bp_pangolin::AccountId, Origin, Call> for CallValidator {
 					Transaction::Legacy(t) => {
 						ensure!(t.value.is_zero(), "Only non-payable transaction supported.");
 						ensure!(
-							t.gas_limit < <Runtime as darwinia_evm::Config>::BlockGasLimit::get(),
+							t.gas_limit <= <Runtime as darwinia_evm::Config>::BlockGasLimit::get(),
 							"Tx gas limit over block limit"
 						);
 

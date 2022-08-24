@@ -27,7 +27,7 @@ impl CallValidate<bp_pangoro::AccountId, Origin, Call> for CallValidator {
 					Transaction::Legacy(t) => {
 						ensure!(t.value.is_zero(), "Only non-payable transaction supported.");
 						ensure!(
-							t.gas_limit < <Runtime as darwinia_evm::Config>::BlockGasLimit::get(),
+							t.gas_limit <= <Runtime as darwinia_evm::Config>::BlockGasLimit::get(),
 							"Tx gas limit over block limit"
 						);
 
@@ -61,7 +61,6 @@ impl CallValidate<bp_pangoro::AccountId, Origin, Call> for CallValidator {
 				match origin.caller() {
 					OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => match tx {
 						Transaction::Legacy(t) => {
-							// Use fixed gas price now.
 							let gas_price =
 								<Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price();
 							let fee = t.gas_limit.saturating_mul(gas_price);
@@ -101,10 +100,6 @@ impl IntoDispatchOriginT<bp_pangoro::AccountId, Call, Origin> for IntoDispatchOr
 			_ => frame_system::RawOrigin::Signed(id.clone()).into(),
 		}
 	}
-}
-
-frame_support::parameter_types! {
-	pub const MaxUsableBalanceFromRelayer: Balance = 100 * COIN;
 }
 
 impl Config<WithPangolinDispatch> for Runtime {
