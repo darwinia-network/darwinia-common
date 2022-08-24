@@ -517,7 +517,7 @@ impl MerklePatriciaTrie {
 			.passing_keys
 			.borrow()
 			.iter()
-			.filter(|h| !self.gen_keys.borrow().contains(&h.to_vec()))
+			.filter(|h| !self.gen_keys.borrow().contains::<Vec<u8>>(h.as_ref()))
 			.map(|h| h.to_vec())
 			.collect();
 

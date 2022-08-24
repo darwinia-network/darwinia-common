@@ -19,6 +19,7 @@
 //! # Relayer Game Module
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::type_complexity)]
 
 pub mod migration {
 	pub fn migrate() {}
@@ -575,9 +576,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 							if previous_maybe_extended_relay_affirmation_id.is_none() {
 								let relay_header_parcels = &round_relay_affirmations
-									.iter()
-									.nth(index as usize)
-									.unwrap()
+									.get(index as usize)
+									.unwrap() // TODO: Remove this unwrap
 									.relay_header_parcels;
 
 								if relay_header_parcels.len() == 1 {

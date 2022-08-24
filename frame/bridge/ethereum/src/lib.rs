@@ -19,6 +19,7 @@
 //! # Darwinia Ethereum Relay Module
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::unused_unit)]
 
 pub mod migration {
 	pub fn migrate() {}
