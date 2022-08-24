@@ -626,35 +626,32 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config<I>, I: 'static = ()> {
-		/// An account was created with some free balance. \[account, free_balance\]
+		/// An account was created with some free balance.
 		Endowed { account: T::AccountId, free_balance: T::Balance },
 		/// An account was removed whose balance was non-zero but below ExistentialDeposit,
-		/// resulting in an outright loss. \[account, balance\]
+		/// resulting in an outright loss.
 		DustLost { account: T::AccountId, amount: T::Balance },
-		/// Transfer succeeded. \[from, to, value\]
+		/// Transfer succeeded.
 		Transfer { from: T::AccountId, to: T::AccountId, amount: T::Balance },
-		/// A balance was set by root. \[who, free, reserved\]
+		/// A balance was set by root.
 		BalanceSet { who: T::AccountId, free: T::Balance, reserved: T::Balance },
-		/// Some balance was reserved (moved from free to reserved). \[who, value\]
+		/// Some balance was reserved (moved from free to reserved).
 		Reserved { who: T::AccountId, amount: T::Balance },
-		/// Some balance was unreserved (moved from reserved to free). \[who, value\]
+		/// Some balance was unreserved (moved from reserved to free).
 		Unreserved { who: T::AccountId, amount: T::Balance },
 		/// Some balance was moved from the reserve of the first account to the second account.
 		/// Final argument indicates the destination balance type.
-		/// \[from, to, balance, destination_status\]
 		ReserveRepatriated {
 			from: T::AccountId,
 			to: T::AccountId,
 			amount: T::Balance,
 			destination_status: BalanceStatus,
 		},
-		/// Some amount was deposited into the account (e.g. for transaction fees). \[who,
-		/// deposit\]
+		/// Some amount was deposited into the account (e.g. for transaction fees).
 		Deposit { who: T::AccountId, amount: T::Balance },
-		/// Some amount was withdrawn from the account (e.g. for transaction fees). \[who, value\]
+		/// Some amount was withdrawn from the account (e.g. for transaction fees).
 		Withdraw { who: T::AccountId, amount: T::Balance },
-		/// Some amount was removed from the account (e.g. for misbehavior). \[who,
-		/// amount_slashed\]
+		/// Some amount was removed from the account (e.g. for misbehavior).
 		Slashed { who: T::AccountId, amount: T::Balance },
 	}
 
