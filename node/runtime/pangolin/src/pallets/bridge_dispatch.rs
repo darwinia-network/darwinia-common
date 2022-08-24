@@ -14,12 +14,8 @@ use bp_message_dispatch::{CallValidate, Everything, IntoDispatchOrigin as IntoDi
 use bp_messages::{LaneId, MessageNonce};
 use darwinia_ethereum::{RawOrigin, Transaction};
 use darwinia_evm::CurrencyAdapt;
-use darwinia_support::evm::{decimal_convert, DeriveEthereumAddress, DeriveSubstrateAddress};
+use darwinia_support::evm::{DeriveEthereumAddress, DeriveSubstrateAddress};
 use pallet_bridge_dispatch::Config;
-
-frame_support::parameter_types! {
-	pub const MaxUsableBalanceFromRelayer: Balance = 100 * COIN;
-}
 
 pub struct CallValidator;
 impl CallValidate<bp_pangolin::AccountId, Origin, Call> for CallValidator {
@@ -31,6 +27,12 @@ impl CallValidate<bp_pangolin::AccountId, Origin, Call> for CallValidator {
 			Call::Ethereum(darwinia_ethereum::Call::message_transact { transaction: tx }) =>
 				match tx {
 					Transaction::Legacy(t) => {
+						ensure!(t.value.is_zero(), "Only non-payable transaction supported.");
+						ensure!(
+							t.gas_limit < <Runtime as darwinia_evm::Config>::BlockGasLimit::get(),
+							"Tx gas limit over block limit"
+						);
+
 						let gas_price =
 							<Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price();
 						let fee = t.gas_limit.saturating_mul(gas_price);
@@ -39,7 +41,7 @@ impl CallValidate<bp_pangolin::AccountId, Origin, Call> for CallValidator {
 						// reject the call before dispatch.
 						Ok(<Runtime as darwinia_evm::Config>::RingBalanceAdapter::ensure_can_withdraw(
 							relayer_account,
-							fee.min(decimal_convert(MaxUsableBalanceFromRelayer::get(), None)),
+							fee,
 							WithdrawReasons::all(),
 						).map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?)
 					},
@@ -60,28 +62,14 @@ impl CallValidate<bp_pangolin::AccountId, Origin, Call> for CallValidator {
 				match origin.caller() {
 					OriginCaller::Ethereum(RawOrigin::EthereumTransaction(id)) => match tx {
 						Transaction::Legacy(t) => {
-							// Only non-payable call supported.
-							ensure!(
-								t.value.is_zero(),
-								TransactionValidityError::Invalid(InvalidTransaction::Payment,)
-							);
-
 							let gas_price =
 								<Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price();
 							let fee = t.gas_limit.saturating_mul(gas_price);
-
-							// MaxUsableBalanceFromRelayer is the cap limitation for fee in case
-							// gas_limit is too large for relayer
-							ensure!(
-								fee <= decimal_convert(MaxUsableBalanceFromRelayer::get(), None),
-								TransactionValidityError::Invalid(InvalidTransaction::Custom(2))
-							);
-
-							// Already done `evm_ensure_can_withdraw` in
-							// check_receiving_before_dispatch
 							let derived_substrate_address =
-								<Runtime as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(id);
+							<Runtime as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(id);
 
+							// The balance validation already has been done in the
+							// `check_receiving_before_dispatch`.
 							<Runtime as darwinia_evm::Config>::RingBalanceAdapter::evm_transfer(
 								&relayer_account,
 								&derived_substrate_address,
