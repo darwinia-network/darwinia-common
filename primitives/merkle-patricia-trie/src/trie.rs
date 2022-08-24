@@ -50,7 +50,7 @@ impl MerklePatriciaTrie {
 	pub fn new(db: Rc<MemoryDB>) -> Self {
 		Self {
 			root: Node::Empty,
-			root_hash: hasher_digest(&rlp::NULL_RLP.to_vec()),
+			root_hash: hasher_digest(rlp::NULL_RLP.as_ref()),
 
 			cache: RefCell::new(HashMap::new()),
 			passing_keys: RefCell::new(HashSet::new()),
@@ -61,7 +61,7 @@ impl MerklePatriciaTrie {
 	}
 
 	pub fn from(db: Rc<MemoryDB>, root: &[u8]) -> TrieResult<Self> {
-		match db.get(&root) {
+		match db.get(root) {
 			Some(data) => {
 				let mut trie = Self {
 					root: Node::Empty,
@@ -191,8 +191,7 @@ impl Trie for MerklePatriciaTrie {
 
 impl MerklePatriciaTrie {
 	pub fn iter(&self) -> TrieIterator {
-		let mut nodes = vec![];
-		nodes.push((self.root.clone()).into());
+		let nodes = vec![(self.root.clone()).into()];
 		TrieIterator { trie: self, nibble: Nibbles::from_raw(vec![], false), nodes }
 	}
 
@@ -222,7 +221,7 @@ impl MerklePatriciaTrie {
 				let extension = extension.borrow();
 
 				let prefix = &extension.prefix;
-				let match_len = partial.common_prefix(&prefix);
+				let match_len = partial.common_prefix(prefix);
 				if match_len == prefix.len() {
 					self.get_at(extension.node.clone(), &partial.offset(match_len))
 				} else {
@@ -288,7 +287,7 @@ impl MerklePatriciaTrie {
 
 				let prefix = &borrow_ext.prefix;
 				let sub_node = borrow_ext.node.clone();
-				let match_index = partial.common_prefix(&prefix);
+				let match_index = partial.common_prefix(prefix);
 
 				if match_index == 0 {
 					let mut branch = BranchNode { children: empty_children(), value: None };
@@ -733,10 +732,10 @@ impl<'a> Iterator for TrieIterator<'a> {
 
 					(TraceStatus::Doing, Node::Branch(ref branch)) => {
 						let value = branch.borrow().value.clone();
-						if value.is_none() {
-							continue;
+						if let Some(v) = value {
+							return Some((self.nibble.encode_raw().0, v));
 						} else {
-							return Some((self.nibble.encode_raw().0, value.unwrap()));
+							continue;
 						}
 					},
 
