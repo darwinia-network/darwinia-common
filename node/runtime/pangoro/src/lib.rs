@@ -3,6 +3,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "256"]
 #![allow(clippy::or_fun_call)]
+#![allow(clippy::inconsistent_digit_grouping)]
 
 pub mod pallets;
 pub use pallets::*;
@@ -94,7 +95,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangoro"),
 	impl_name: sp_runtime::create_runtime_str!("Pangoro"),
 	authoring_version: 0,
-	spec_version: 29_020,
+	spec_version: 2_9_02_0,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
