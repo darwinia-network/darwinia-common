@@ -408,17 +408,16 @@ decl_module! {
 
 							ayes.push(technical_member);
 						}
-					} else {
-						if nays.contains(&technical_member) {
-							Err(<Error<T>>::AlreadyVoteForNayDup)?;
-						} else {
+					} else if nays.contains(&technical_member) {
+						Err(<Error<T>>::AlreadyVoteForNayDup)?;
+					}	else {
 							if let Some(i) = ayes.iter().position(|aye| aye == &technical_member) {
 								ayes.remove(i);
 							}
 
 							nays.push(technical_member);
 						}
-					}
+
 
 					let approve = ayes.len() as u32;
 					let reject = nays.len() as u32;

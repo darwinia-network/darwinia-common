@@ -28,23 +28,21 @@ impl CallValidate<bp_pangolin::AccountId, Origin, Call> for CallValidator {
 		call: &Call,
 	) -> Result<(), &'static str> {
 		match call {
-			Call::Ethereum(darwinia_ethereum::Call::message_transact { transaction: tx }) =>
-				match tx {
-					Transaction::Legacy(t) => {
-						let gas_price =
-							<Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price();
-						let fee = t.gas_limit.saturating_mul(gas_price);
+			Call::Ethereum(darwinia_ethereum::Call::message_transact {
+				transaction: Transaction::Legacy(t),
+			}) => {
+				let gas_price = <Runtime as darwinia_evm::Config>::FeeCalculator::min_gas_price();
+				let fee = t.gas_limit.saturating_mul(gas_price);
 
-						// Ensure the relayer's account has enough balance to withdraw. If not,
-						// reject the call before dispatch.
-						Ok(<Runtime as darwinia_evm::Config>::RingBalanceAdapter::ensure_can_withdraw(
-							relayer_account,
-							fee.min(decimal_convert(MaxUsableBalanceFromRelayer::get(), None)),
-							WithdrawReasons::all(),
-						).map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?)
-					},
-					_ => Ok(()),
-				},
+				// Ensure the relayer's account has enough balance to withdraw. If not,
+				// reject the call before dispatch.
+				Ok(<Runtime as darwinia_evm::Config>::RingBalanceAdapter::ensure_can_withdraw(
+					relayer_account,
+					fee.min(decimal_convert(MaxUsableBalanceFromRelayer::get(), None)),
+					WithdrawReasons::all(),
+				)
+				.map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Payment))?)
+			},
 			_ => Ok(()),
 		}
 	}

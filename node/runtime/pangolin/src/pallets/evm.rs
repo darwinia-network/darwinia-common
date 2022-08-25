@@ -69,7 +69,7 @@ impl RelayMessageSender for ToPangoroMessageSender {
 				}
 				.into(),
 			_ => {
-				return Err("invalid pallet index".into());
+				return Err("invalid pallet index");
 			},
 		};
 		Ok(call.encode())
@@ -77,11 +77,11 @@ impl RelayMessageSender for ToPangoroMessageSender {
 }
 impl LatestMessageNoncer for ToPangoroMessageSender {
 	fn outbound_latest_generated_nonce(lane_id: LaneId) -> u64 {
-		BridgePangoroMessages::outbound_latest_generated_nonce(lane_id).into()
+		BridgePangoroMessages::outbound_latest_generated_nonce(lane_id)
 	}
 
 	fn inbound_latest_received_nonce(lane_id: LaneId) -> u64 {
-		BridgePangoroMessages::inbound_latest_received_nonce(lane_id).into()
+		BridgePangoroMessages::inbound_latest_received_nonce(lane_id)
 	}
 }
 
@@ -92,6 +92,7 @@ impl StorageFilterT for StorageFilter {
 	}
 }
 
+#[derive(Default)]
 pub struct PangolinPrecompiles<R>(PhantomData<R>);
 impl<R> PangolinPrecompiles<R>
 where
@@ -219,7 +220,7 @@ impl GasWeightMapping for FixedGasWeightMapping {
 	}
 
 	fn weight_to_gas(weight: Weight) -> u64 {
-		u64::try_from(weight.wrapping_div(WEIGHT_PER_GAS)).unwrap_or(u32::MAX as u64)
+		weight.wrapping_div(WEIGHT_PER_GAS)
 	}
 }
 

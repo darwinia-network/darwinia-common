@@ -20,7 +20,7 @@ impl OutboundMessenger<AccountId32> for OutboundMessageDataInfo {
 
 	fn get_valid_message_sender(nonce: MessageNonce) -> Result<AccountId32, &'static str> {
 		let data = BridgePangoroMessages::outbound_message_data(PANGORO_PANGOLIN_LANE, nonce)
-			.ok_or_else(|| "Invalid outbound message data")?;
+			.ok_or("Invalid outbound message data")?;
 		let payload = bm_pangoro::ToPangoroMessagePayload::decode(&mut &data.payload[..])
 			.map_err(|_| "decode message payload failed")?;
 		match payload.origin {

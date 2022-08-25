@@ -19,6 +19,7 @@
 //! The Darwinia Node Template runtime. This can be compiled with `#[no_std]`, ready for Wasm.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::or_fun_call)]
 #![recursion_limit = "256"]
 
 pub mod pallets;
@@ -37,11 +38,11 @@ pub mod wasm {
 	/// Wasm binary unwrapped. If built with `BUILD_DUMMY_WASM_BINARY`, the function panics.
 	#[cfg(feature = "std")]
 	pub fn wasm_binary_unwrap() -> &'static [u8] {
-		return WASM_BINARY.expect(
+		WASM_BINARY.expect(
 			"Development wasm binary is not available. This means the client is \
 			built with `SKIP_WASM_BUILD` flag and it is only usable for \
 			production chains. Please rebuild with the flag disabled.",
-		);
+		)
 	}
 }
 pub use wasm::*;
@@ -123,7 +124,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: sp_runtime::create_runtime_str!("Pangolin"),
 	impl_name: sp_runtime::create_runtime_str!("Pangolin"),
 	authoring_version: 0,
-	spec_version: 2_9_00_0,
+	spec_version: 29_000,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,

@@ -48,6 +48,7 @@ impl StorageFilterT for StorageFilter {
 	}
 }
 
+#[derive(Default)]
 pub struct PangoroPrecompiles<R>(PhantomData<R>);
 impl<R> PangoroPrecompiles<R>
 where
@@ -167,7 +168,7 @@ impl GasWeightMapping for FixedGasWeightMapping {
 	}
 
 	fn weight_to_gas(weight: Weight) -> u64 {
-		weight / WEIGHT_PER_GAS
+		weight.wrapping_div(WEIGHT_PER_GAS)
 	}
 }
 

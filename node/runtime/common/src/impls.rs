@@ -93,7 +93,7 @@ impl Get<Option<(usize, ExtendedBalance)>> for OffchainRandomBalancing {
 	fn get() -> Option<(usize, ExtendedBalance)> {
 		let iters = match MINER_MAX_ITERATIONS {
 			0 => 0,
-			max @ _ => {
+			max => {
 				let seed = offchain::random_seed();
 				let random = <u32>::decode(&mut TrailingZeroInput::new(&seed))
 					.expect("input is padded with zeroes; qed")
