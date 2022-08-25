@@ -136,10 +136,10 @@ where
 		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
 			client.clone(),
 			backend,
-			filter_pool.clone(),
-			500 as usize, // max stored filters
+			filter_pool,
+			500_usize, // max stored filters
 			max_past_logs,
-			block_data_cache.clone(),
+			block_data_cache,
 		)));
 	}
 
@@ -152,9 +152,9 @@ where
 
 	io.extend_with(Web3ApiServer::to_delegate(Web3Api::new(client.clone())));
 	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
-		pool.clone(),
+		pool,
 		client.clone(),
-		network.clone(),
+		network,
 		SubscriptionManager::<HexEncodedIdProvider>::with_id_provider(
 			HexEncodedIdProvider::default(),
 			Arc::new(subscription_task_executor),
