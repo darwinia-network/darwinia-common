@@ -325,13 +325,12 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub fn deposit_event)]
 	/// Ethereum pallet events.
 	pub enum Event<T: Config> {
-		/// An ethereum transaction was successfully executed. \[from, to/contract_address,
-		/// transaction_hash, exit_reason\]
-		Executed(H160, H160, H256, ExitReason),
-		/// DVM transfer. \[from, to, value\]
-		DVMTransfer(T::AccountId, T::AccountId, U256),
-		/// Kton transfer \[from, to, value\]
-		KtonDVMTransfer(T::AccountId, T::AccountId, U256),
+		/// An ethereum transaction was successfully executed.
+		Executed { from: H160, to: H160, transaction_hash: H256, exit_reason: ExitReason },
+		/// DVM transfer.
+		DVMTransfer { from: T::AccountId, to: T::AccountId, amount: U256 },
+		/// Kton transfer.
+		KtonDVMTransfer { from: T::AccountId, to: T::AccountId, amount: U256 },
 	}
 
 	#[pallet::error]
@@ -711,12 +710,12 @@ impl<T: Config> Pallet<T> {
 			}
 		};
 		Pending::<T>::append((advanced_transaction.transaction(), status, receipt));
-		Self::deposit_event(Event::Executed(
-			source,
-			dest.unwrap_or_default(),
+		Self::deposit_event(Event::Executed {
+			from: source,
+			to: dest.unwrap_or_default(),
 			transaction_hash,
-			reason.clone(),
-		));
+			exit_reason: reason.clone(),
+		});
 		Ok((reason, used_gas))
 	}
 

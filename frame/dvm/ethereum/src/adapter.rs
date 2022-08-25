@@ -82,7 +82,11 @@ impl<T: Config> RemainBalanceOp<T> for RingRemainBalance {
 
 	/// Deposit dvm transfer event
 	fn deposit_dvm_transfer_event(source: &T::AccountId, target: &T::AccountId, value: U256) {
-		Pallet::<T>::deposit_event(Event::DVMTransfer(source.clone(), target.clone(), value));
+		Pallet::<T>::deposit_event(Event::DVMTransfer {
+			from: source.clone(),
+			to: target.clone(),
+			amount: value,
+		});
 	}
 }
 
@@ -120,7 +124,11 @@ impl<T: Config> RemainBalanceOp<T> for KtonRemainBalance {
 
 	/// Deposit dvm transfer event
 	fn deposit_dvm_transfer_event(source: &T::AccountId, target: &T::AccountId, value: U256) {
-		Pallet::<T>::deposit_event(Event::KtonDVMTransfer(source.clone(), target.clone(), value));
+		Pallet::<T>::deposit_event(Event::KtonDVMTransfer {
+			from: source.clone(),
+			to: target.clone(),
+			amount: value,
+		});
 	}
 }
 
