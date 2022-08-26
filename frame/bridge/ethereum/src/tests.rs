@@ -78,7 +78,7 @@ fn verify_relay_proofs_should_work() {
 			serde_json::from_str(LAST_CONFIRM).unwrap();
 
 		EthereumRelay::confirm_relay_header_parcel_with_reason(
-			ethereum_relay_header_parcel_100.clone(),
+			ethereum_relay_header_parcel_100,
 			vec![],
 		);
 
