@@ -354,7 +354,7 @@ fn lock_should_work() {
 				Some(())
 			));
 
-			run_to_block(challenge_time() * 1 + 1);
+			run_to_block(challenge_time() + 1);
 
 			let mut stake = estimate_stake;
 
@@ -390,7 +390,7 @@ fn lock_should_work() {
 
 #[test]
 fn slash_and_reward_should_work() {
-	for estimate_stake in vec![1, 5, 10, 20, 50, 100] {
+	for estimate_stake in [1, 5, 10, 20, 50, 100] {
 		ExtBuilder::default().estimate_stake(estimate_stake).build().execute_with(|| {
 			let relayer_a = 10;
 			let relayer_b = 20;
@@ -416,7 +416,7 @@ fn slash_and_reward_should_work() {
 				Some(())
 			));
 
-			run_to_block(challenge_time() * 1 + 1);
+			run_to_block(challenge_time() + 1);
 
 			for i in 1..round_index {
 				assert_ok!(RelayerGame::extend_affirmation(
@@ -485,7 +485,7 @@ fn settle_with_challenge_should_work() {
 			Some(())
 		));
 
-		run_to_block(challenge_time() * 1 + 1);
+		run_to_block(challenge_time() + 1);
 
 		for i in 1..round_index {
 			assert_ok!(RelayerGame::extend_affirmation(
@@ -542,7 +542,7 @@ fn settle_abandon_should_work() {
 			Some(())
 		));
 
-		run_to_block(challenge_time() * 1 + 1);
+		run_to_block(challenge_time() + 1);
 
 		for i in 1..round_index {
 			assert_ok!(RelayerGame::extend_affirmation(
@@ -588,7 +588,7 @@ fn on_chain_arbitrate_should_work() {
 			Some(())
 		));
 
-		run_to_block(challenge_time() * 1 + 1);
+		run_to_block(challenge_time() + 1);
 
 		for i in 1..round_index {
 			assert_ok!(RelayerGame::extend_affirmation(
@@ -636,7 +636,7 @@ fn no_honesty_should_work() {
 			Some(())
 		));
 
-		run_to_block(challenge_time() * 1 + 1);
+		run_to_block(challenge_time() + 1);
 
 		for i in 1..round_index {
 			assert_ok!(RelayerGame::extend_affirmation(

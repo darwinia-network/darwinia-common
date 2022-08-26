@@ -820,8 +820,8 @@ mod tests {
 		let memdb = Rc::new(MemoryDB::new());
 		let mut trie = MerklePatriciaTrie::new(memdb);
 		trie.insert(b"test".to_vec(), b"test".to_vec()).unwrap();
-		assert_eq!(true, trie.contains(b"test").unwrap());
-		assert_eq!(false, trie.contains(b"test2").unwrap());
+		assert!(trie.contains(b"test").unwrap());
+		assert!(!trie.contains(b"test2").unwrap());
 	}
 
 	#[test]
@@ -830,7 +830,7 @@ mod tests {
 		let mut trie = MerklePatriciaTrie::new(memdb);
 		trie.insert(b"test".to_vec(), b"test".to_vec()).unwrap();
 		let removed = trie.remove(b"test").unwrap();
-		assert_eq!(true, removed)
+		assert!(removed)
 	}
 
 	#[test]
@@ -845,7 +845,7 @@ mod tests {
 			trie.insert(val.to_vec(), val.to_vec()).unwrap();
 
 			let removed = trie.remove(val).unwrap();
-			assert_eq!(true, removed);
+			assert!(removed);
 		}
 	}
 
@@ -909,11 +909,11 @@ mod tests {
 
 		let mut trie = MerklePatriciaTrie::from(Rc::clone(&memdb), &root).unwrap();
 		let removed = trie.remove(b"test44").unwrap();
-		assert_eq!(true, removed);
+		assert!(removed);
 		let removed = trie.remove(b"test33").unwrap();
-		assert_eq!(true, removed);
+		assert!(removed);
 		let removed = trie.remove(b"test23").unwrap();
-		assert_eq!(true, removed);
+		assert!(removed);
 	}
 
 	#[test]
@@ -947,7 +947,7 @@ mod tests {
 			trie1.root().unwrap();
 			let root = trie1.root().unwrap();
 			let mut trie2 = MerklePatriciaTrie::from(Rc::clone(&memdb), &root).unwrap();
-			trie2.remove(&k1.as_bytes().to_vec()).unwrap();
+			trie2.remove(k1.as_bytes()).unwrap();
 			trie2.root().unwrap()
 		};
 
@@ -1049,7 +1049,7 @@ mod tests {
 			kv_delete.insert(b"test14".to_vec());
 
 			kv_delete.iter().for_each(|k| {
-				trie.remove(&k).unwrap();
+				trie.remove(k).unwrap();
 			});
 
 			kv2.retain(|k, _| !kv_delete.contains(k));

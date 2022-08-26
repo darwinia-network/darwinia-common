@@ -58,7 +58,7 @@ fn test_total_supply() {
 		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::TotalSupply).build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(
@@ -74,13 +74,9 @@ fn test_token_name() {
 
 	ext.execute_with(|| {
 		let nonce = 0;
-		construct_tx_asserter(
-			nonce,
-			EvmDataWriter::new_with_selector(Action::Name).build(),
-			&alice,
-		)
-		.execute()
-		.assert_executed_value(&EvmDataWriter::new().write::<Bytes>(TOKEN_NAME.into()).build());
+		construct_tx_asserter(nonce, EvmDataWriter::new_with_selector(Action::Name).build(), alice)
+			.execute()
+			.assert_executed_value(&EvmDataWriter::new().write::<Bytes>(TOKEN_NAME.into()).build());
 	});
 }
 
@@ -94,7 +90,7 @@ fn test_token_symbol() {
 		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Symbol).build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write::<Bytes>(TOKEN_SYMBOL.into()).build());
@@ -111,7 +107,7 @@ fn test_token_decimals() {
 		construct_tx_asserter(
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Decimals).build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(TOKEN_DECIMAL).build());
@@ -130,7 +126,7 @@ fn test_balance_of_known_user() {
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(alice.address.into())
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(
@@ -153,7 +149,7 @@ fn test_balance_of_unknown_user() {
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(decimal_convert(0, None)).build());
@@ -174,9 +170,9 @@ fn test_approve() {
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Approve)
 				.write::<Address>(mock_address.into())
-				.write::<U256>(approve_value.into())
+				.write::<U256>(approve_value)
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(true).build())
@@ -204,9 +200,9 @@ fn test_approve_storage() {
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Approve)
 				.write::<Address>(mock_address.into())
-				.write::<U256>(approve_value.into())
+				.write::<U256>(approve_value)
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(true).build());
@@ -237,9 +233,9 @@ fn test_allowance_exist() {
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Approve)
 				.write::<Address>(mock_address.into())
-				.write::<U256>(approve_value.into())
+				.write::<U256>(approve_value)
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(true).build());
@@ -252,7 +248,7 @@ fn test_allowance_exist() {
 				.write::<Address>(alice.address.into())
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(approve_value).build());
@@ -275,7 +271,7 @@ fn test_allowance_not_exist() {
 				.write::<Address>(alice.address.into())
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(0u8).build());
@@ -297,9 +293,9 @@ fn test_transfer() {
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Transfer)
 				.write::<Address>(mock_address.into())
-				.write::<U256>(transfer_value.into())
+				.write::<U256>(transfer_value)
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(true).build());
@@ -311,7 +307,7 @@ fn test_transfer() {
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(alice.address.into())
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(
@@ -325,7 +321,7 @@ fn test_transfer() {
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(transfer_value).build());
@@ -347,9 +343,9 @@ fn test_transfer_not_enough_fund() {
 			nonce,
 			EvmDataWriter::new_with_selector(Action::Transfer)
 				.write::<Address>(mock_address.into())
-				.write::<U256>(transfer_value.into())
+				.write::<U256>(transfer_value)
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_revert(
@@ -363,7 +359,7 @@ fn test_transfer_not_enough_fund() {
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(alice.address.into())
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(
@@ -377,7 +373,7 @@ fn test_transfer_not_enough_fund() {
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(decimal_convert(0, None)).build());
@@ -402,9 +398,9 @@ fn test_transfer_from() {
 			alice_nonce,
 			EvmDataWriter::new_with_selector(Action::Approve)
 				.write::<Address>(bob.address.into())
-				.write::<U256>(approve_value.into())
+				.write::<U256>(approve_value)
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(true).build());
@@ -415,9 +411,9 @@ fn test_transfer_from() {
 			EvmDataWriter::new_with_selector(Action::TransferFrom)
 				.write::<Address>(alice.address.into())
 				.write::<Address>(mock_address.into())
-				.write::<U256>(transfer_value.into())
+				.write::<U256>(transfer_value)
 				.build(),
-			&bob,
+			bob,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(true).build());
@@ -429,7 +425,7 @@ fn test_transfer_from() {
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(alice.address.into())
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(
@@ -443,7 +439,7 @@ fn test_transfer_from() {
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(decimal_convert(400, None)).build());
@@ -456,7 +452,7 @@ fn test_transfer_from() {
 				.write::<Address>(alice.address.into())
 				.write::<Address>(bob.address.into())
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(decimal_convert(100, None)).build());
@@ -481,9 +477,9 @@ fn test_transfer_from_above_allowance() {
 			alice_nonce,
 			EvmDataWriter::new_with_selector(Action::Approve)
 				.write::<Address>(bob.address.into())
-				.write::<U256>(approve_value.into())
+				.write::<U256>(approve_value)
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(true).build());
@@ -494,9 +490,9 @@ fn test_transfer_from_above_allowance() {
 			EvmDataWriter::new_with_selector(Action::TransferFrom)
 				.write::<Address>(alice.address.into())
 				.write::<Address>(mock_address.into())
-				.write::<U256>(transfer_value.into())
+				.write::<U256>(transfer_value)
 				.build(),
-			&bob,
+			bob,
 		)
 		.execute()
 		.assert_revert(
@@ -512,7 +508,7 @@ fn test_transfer_from_above_allowance() {
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(alice.address.into())
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(
@@ -526,7 +522,7 @@ fn test_transfer_from_above_allowance() {
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(decimal_convert(0, None)).build());
@@ -539,7 +535,7 @@ fn test_transfer_from_above_allowance() {
 				.write::<Address>(alice.address.into())
 				.write::<Address>(bob.address.into())
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(approve_value).build());
@@ -562,9 +558,9 @@ fn test_transfer_from_self() {
 			EvmDataWriter::new_with_selector(Action::TransferFrom)
 				.write::<Address>(alice.address.into())
 				.write::<Address>(mock_address.into())
-				.write::<U256>(transfer_value.into())
+				.write::<U256>(transfer_value)
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(true).build());
@@ -576,7 +572,7 @@ fn test_transfer_from_self() {
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(alice.address.into())
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(
@@ -590,7 +586,7 @@ fn test_transfer_from_self() {
 			EvmDataWriter::new_with_selector(Action::BalanceOf)
 				.write::<Address>(mock_address.into())
 				.build(),
-			&alice,
+			alice,
 		)
 		.execute()
 		.assert_executed_value(&EvmDataWriter::new().write(decimal_convert(400, None)).build());

@@ -231,7 +231,7 @@ fn verify_redeem_ring() {
 
 			// shouldn't redeem twice
 			assert_err!(
-				EthereumBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Token, test_receipt_proof_thing),
+				EthereumBacking::redeem(Origin::signed(id1), RedeemFor::Token, test_receipt_proof_thing),
 				<Error<Test>>::AssetAR,
 			);
 		});
@@ -346,7 +346,7 @@ fn verify_redeem_kton() {
 
 			// shouldn't redeem twice
 			assert_err!(
-				EthereumBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Token, test_receipt_proof_thing),
+				EthereumBacking::redeem(Origin::signed(id1), RedeemFor::Token, test_receipt_proof_thing),
 				<Error<Test>>::AssetAR,
 			);
 		});
@@ -482,7 +482,7 @@ fn verify_redeem_deposit() {
 
 			// shouldn't redeem twice
 			assert_err!(
-				EthereumBacking::redeem(Origin::signed(id1.clone()), RedeemFor::Deposit, test_receipt_proof_thing),
+				EthereumBacking::redeem(Origin::signed(id1), RedeemFor::Deposit, test_receipt_proof_thing),
 				<Error<Test>>::AssetAR,
 			);
 		});
@@ -713,12 +713,7 @@ fn lock_limit_should_work() {
 			<Error<Test>>::RingLockLim
 		);
 		assert_err!(
-			EthereumBacking::lock(
-				Origin::signed(account.clone()),
-				0,
-				lock_balance,
-				Default::default()
-			),
+			EthereumBacking::lock(Origin::signed(account), 0, lock_balance, Default::default()),
 			<Error<Test>>::KtonLockLim
 		);
 	});

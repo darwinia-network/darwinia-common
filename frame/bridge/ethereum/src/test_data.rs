@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pub const LAST_CONFIRM: &'static str = r#"{
+pub const LAST_CONFIRM: &str = r#"{
 	"header": {
 		"difficulty": "0x42be722b6",
 		"extraData": "0x476574682f4c5649562f76312e302e302f6c696e75782f676f312e342e32",
@@ -42,7 +42,7 @@ pub const LAST_CONFIRM: &'static str = r#"{
 	"parent_mmr_root": "0x8050b4ab63982d7ab4b0486b50d69938c5a5f70b4cd6bb212bc5da5e212d3179"
 }"#;
 
-pub const HEADER_103: &'static str = r#"{
+pub const HEADER_103: &str = r#"{
 	"header": {
 		"difficulty": "0x42d77cb72",
 		"extraData": "0x476574682f76312e302e302f6c696e75782f676f312e342e32",
@@ -67,7 +67,7 @@ pub const HEADER_103: &'static str = r#"{
 	},
 	"parent_mmr_root": "0x34a80a8e0b6bfe253d1c960647cb4de34607a9caf86e99f7611304dbdf7fbde0"
 }"#;
-pub const PROOFS_103: &'static str = r#"{
+pub const PROOFS_103: &str = r#"{
 	"ethash_proof": [
 		{
 			"dag_nodes": [
@@ -2063,7 +2063,7 @@ pub const PROOFS_103: &'static str = r#"{
 	]
 }"#;
 
-pub const HEADER_102: &'static str = r#"{
+pub const HEADER_102: &str = r#"{
 	"header": {
 		"difficulty": "0x42cf22d2d",
 		"extraData": "0x476574682f76312e302e302f6c696e75782f676f312e342e32",
@@ -2088,7 +2088,7 @@ pub const HEADER_102: &'static str = r#"{
 	},
 	"parent_mmr_root": "0x34a80a8e0b6bfe253d1c960647cb4de34607a9caf86e99f7611304dbdf7fbde0"
 }"#;
-pub const PROOFS_102: &'static str = r#"{
+pub const PROOFS_102: &str = r#"{
 	"ethash_proof": [
 		{
 			"dag_nodes": [
@@ -4083,7 +4083,7 @@ pub const PROOFS_102: &'static str = r#"{
 	]
 }"#;
 
-pub const HEADER_101: &'static str = r#"{
+pub const HEADER_101: &str = r#"{
 	"header": {
 		"difficulty": "0x42c6c9f9a",
 		"extraData": "0x476574682f4c5649562f76312e302e302f6c696e75782f676f312e342e32",
@@ -4108,7 +4108,7 @@ pub const HEADER_101: &'static str = r#"{
 	},
 	"parent_mmr_root": "0x34a80a8e0b6bfe253d1c960647cb4de34607a9caf86e99f7611304dbdf7fbde0"
 }"#;
-pub const PROOFS_101: &'static str = r#"{
+pub const PROOFS_101: &str = r#"{
 	"ethash_proof": [
 		{
 			"dag_nodes": [

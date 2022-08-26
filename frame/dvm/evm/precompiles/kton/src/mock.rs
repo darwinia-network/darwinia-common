@@ -301,7 +301,7 @@ impl fp_self_contained::SelfContainedCall for Call {
 
 	fn validate_self_contained(&self, info: &Self::SignedInfo) -> Option<TransactionValidity> {
 		match self {
-			Call::Ethereum(ref call) => Some(validate_self_contained_inner(&self, &call, info)),
+			Call::Ethereum(ref call) => Some(validate_self_contained_inner(self, call, info)),
 			_ => None,
 		}
 	}
@@ -379,7 +379,7 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| System::set_block_number(1));
 
-	(pairs, ext.into())
+	(pairs, ext)
 }
 
 pub fn construct_tx_asserter(nonce: u64, input: Vec<u8>, account: &AccountInfo) -> Asserter {

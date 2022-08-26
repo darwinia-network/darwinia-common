@@ -189,8 +189,7 @@ pub fn new_test_ext() -> TestExternalities {
 
 	darwinia_balances::GenesisConfig::<Test, RingInstance> {
 		balances: (1..10)
-			.map(|i: AccountId| vec![(i, 100 * i as Balance), (10 * i, 1000 * i as Balance)])
-			.flatten()
+			.flat_map(|i: AccountId| vec![(i, 100 * i as Balance), (10 * i, 1000 * i as Balance)])
 			.collect(),
 	}
 	.assimilate_storage(&mut storage)

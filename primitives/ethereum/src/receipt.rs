@@ -223,8 +223,8 @@ mod tests {
 		log_entries: Vec<LogEntry>,
 	) -> LegacyReceipt {
 		LegacyReceipt::new(
-			if root.is_some() {
-				TransactionOutcome::StateRoot(root.unwrap())
+			if let Some(root) = root {
+				TransactionOutcome::StateRoot(root)
 			} else {
 				TransactionOutcome::StatusCode(status.unwrap())
 			},
@@ -281,9 +281,8 @@ mod tests {
 		}];
 		let receipts =
 			vec![LegacyReceipt::new(TransactionOutcome::StatusCode(1), 73705.into(), log_entries)];
-		let receipts_root = H256(triehash::ordered_trie_root::<KeccakHasher, _>(
-			receipts.iter().map(|x| ::rlp::encode(x)),
-		));
+		let receipts_root =
+			H256(triehash::ordered_trie_root::<KeccakHasher, _>(receipts.iter().map(rlp::encode)));
 
 		assert_eq!(receipts_root, expected_root);
 	}

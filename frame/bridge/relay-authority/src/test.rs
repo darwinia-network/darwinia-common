@@ -57,10 +57,7 @@ fn insufficient_stake_should_fail() {
 		assert_err!(request_authority(123), RelayAuthoritiesError::StakeIns);
 
 		for i in 1..=max_candidates {
-			assert!(RelayAuthorities::candidates()
-				.iter()
-				.position(|candidate| candidate == &i)
-				.is_some());
+			assert!(RelayAuthorities::candidates().iter().any(|candidate| candidate == &i));
 		}
 
 		// Increase the stake to run for the candidates seat
@@ -68,10 +65,7 @@ fn insufficient_stake_should_fail() {
 		assert_ok!(request_authority_with_stake(123, 11));
 
 		// The minimum stake was removed, since there's a max candidates limitation
-		assert!(RelayAuthorities::candidates()
-			.iter()
-			.position(|candidate| candidate == &1)
-			.is_none());
+		assert!(!RelayAuthorities::candidates().iter().any(|candidate| candidate == &1));
 	});
 }
 
@@ -88,10 +82,7 @@ fn cancel_request_should_work() {
 			assert_ok!(request_authority(i));
 		}
 		assert_ok!(RelayAuthorities::cancel_request(Origin::signed(3)));
-		assert!(RelayAuthorities::candidates()
-			.iter()
-			.position(|candidate| candidate == &3)
-			.is_none())
+		assert!(!RelayAuthorities::candidates().iter().any(|candidate| candidate == &3))
 	});
 }
 

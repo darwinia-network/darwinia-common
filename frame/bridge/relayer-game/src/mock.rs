@@ -180,10 +180,7 @@ pub mod mock_relay {
 			parent_hash: MockRelayHeaderHash,
 			valid: u8,
 		) -> Self {
-			let valid = match valid {
-				0 => false,
-				_ => true,
-			};
+			let valid = valid != 0;
 
 			Self { number, hash: rand::random(), parent_hash, valid }
 		}
@@ -384,13 +381,14 @@ impl ExtBuilder {
 
 		RingConfig {
 			balances: (1..10)
-				.map(|i: AccountId| vec![(i, 100 * i as Balance), (10 * i, 1000 * i as Balance)])
-				.flatten()
+				.flat_map(|i: AccountId| {
+					vec![(i, 100 * i as Balance), (10 * i, 1000 * i as Balance)]
+				})
 				.collect(),
 		}
 		.assimilate_storage(&mut storage)
 		.unwrap();
-		mock_relay::GenesisConfig { headers: self.headers.clone() }
+		mock_relay::GenesisConfig { headers: self.headers }
 			.assimilate_storage(&mut storage)
 			.unwrap();
 
