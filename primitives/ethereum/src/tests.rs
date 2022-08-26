@@ -16,55 +16,55 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(test)]
-mod tests {
-	use crate::{
-		storage::{EthereumStorage, EthereumStorageProof},
-		H160, H256,
-	};
-	use array_bytes::hex2bytes_unchecked;
-	use std::str::FromStr;
-	/**
-	 * the simple contract is
-	 * pragma solidity ^0.8.3;
-	 * contract Storage {
-	 *     uint public pos0;
-	 *     mapping(address => uint) public pos1;
-	 *     mapping(uint => mapping(uint => uint)) public pos2;
-	 *     bytes32 public pos3;
-	 *
-	 *     constructor() public {
-	 *         pos0 = 0x1234;
-	 *
-	 *         pos1[0x1F4E7Db8514Ec4E99467a8d2ee3a63094a904e7A] = 0x5678;
-	 *         pos1[0x1234567890123456789012345678901234567890] = 0x8765;
-	 *
-	 *         pos2[0x111][0x222] = 0x9101112;
-	 *         pos2[0x333][0x444] = 0x13141516;
-	 *
-	 *         pos3 = keccak256(abi.encode());
-	 *     }
-	 * }
-	 *
-	 * deployed at ropsten 0x2091125994a6836252118Ddae37d019F8E6CA455
-	 * get this storage proof from block
-	 * 0xdd8b448a3d1cbd4c4736b426159c582268e99bf0c457e522679f60ffd35ff79f
-	 *
-	 * request by
-	 * curl -X POST --data '{
-	 *     "jsonrpc":"2.0",
-	 *     "method":"eth_getProof",
-	 *     "params":[
-	 *         "0x2091125994a6836252118Ddae37d019F8E6CA455",
-	 *         ["0x0000000000000000000000000"],
-	 *         "0xdd8b448a3d1cbd4c4736b426159c582268e99bf0c457e522679f60ffd35ff79f"
-	 *      ],
-	 *      "id":1
-	 *  }' -H "Content-type:application/json" https://ropsten.infura.io/v3/<Key>
-	 */
-	#[test]
-	fn test_storage_proof() {
-		let storage_proof = EthereumStorageProof {
+// std
+use std::str::FromStr;
+// crates.io
+use array_bytes::hex2bytes_unchecked;
+// darwinia-network
+use crate::{
+	storage::{EthereumStorage, EthereumStorageProof},
+	H160, H256,
+};
+
+// the simple contract is
+// pragma solidity ^0.8.3;
+// contract Storage {
+//     uint public pos0;
+//     mapping(address => uint) public pos1;
+//     mapping(uint => mapping(uint => uint)) public pos2;
+//     bytes32 public pos3;
+//
+//     constructor() public {
+//         pos0 = 0x1234;
+//
+//         pos1[0x1F4E7Db8514Ec4E99467a8d2ee3a63094a904e7A] = 0x5678;
+//         pos1[0x1234567890123456789012345678901234567890] = 0x8765;
+//
+//         pos2[0x111][0x222] = 0x9101112;
+//         pos2[0x333][0x444] = 0x13141516;
+//
+//         pos3 = keccak256(abi.encode());
+//     }
+// }
+//
+// deployed at ropsten 0x2091125994a6836252118Ddae37d019F8E6CA455
+// get this storage proof from block
+// 0xdd8b448a3d1cbd4c4736b426159c582268e99bf0c457e522679f60ffd35ff79f
+//
+// request by
+// curl -X POST --data '{
+//     "jsonrpc":"2.0",
+//     "method":"eth_getProof",
+//     "params":[
+//         "0x2091125994a6836252118Ddae37d019F8E6CA455",
+//         ["0x0000000000000000000000000"],
+//         "0xdd8b448a3d1cbd4c4736b426159c582268e99bf0c457e522679f60ffd35ff79f"
+//      ],
+//      "id":1
+//  }' -H "Content-type:application/json" https://ropsten.infura.io/v3/<Key>
+#[test]
+fn test_storage_proof() {
+	let storage_proof = EthereumStorageProof {
         account_proof: vec![
             hex2bytes_unchecked("0xf90211a02b197aa094abdb8f1a71c8523b5fbced57c31a9b9baed2d41c180c7bbbaccee8a00b5bb0c2b428df4059129cba76d01c3547ea485bc4cad1fbb1c65f6f496ba09fa05b6635866f9c2600a293784bd3f0e3ccbc49e31bb49057ff4a163e9b40feb860a0414c4489b1c1157a559228cf3836a690098bf30ee49c7b20c63d069536db53f9a0c35ca7a85560b146fa40d95896b9e0f0efc246a72f3ed552182f4937741669bfa02fd583b6cbd2f094f1bd7187a59f30660f775af6f00861a02c12b01203b0807ba06601b9213fb3c1152886620f0aa6d76c598878e782eb7d5353aeaf20d7ffb9aba0e946ea8c488924c734454edd585bdf64929f861ad9c0a672c6cb11e5994d621ba02bd7fe141350cb43b56bcf202654810ab8eb6b527cc0f85a548a7a13be115ffda010226b47d92a228aa79752fcddd4f483236df7988786a1c014dc7467f8397179a0baa67930fb41c14b734d3ffc777fdabbbf2012ac8619586d9143c6e0d4fdb4eaa07df12c126be51db32da195b73351515059255867352d94976d9b73758ebec4d9a030a750d67de6c90565e2f6f13dc2ff042a27f8f5f5f4f2e421633f9aea26c478a0f0e15c129747041867f0f21a1e0eaad8d8be22835d9bdd6f9db7cb1d1d36a68aa00d8d917584c25fe09f31ed8af1578d45e4b7c5ec55d8e4e00b871b36481cff5ea0b9c4aada8c74d0773276dca8967b60a8c49074c05b7f7adae4ae3038ab38e5d480"),
             hex2bytes_unchecked("0xf90211a075573c7a6256004d0c8277fe4a25fe2b79a385fe718c223f80adfe12faf75131a08621c559e68942d42e3996c10b51b854f89d25f6393ac9d1c8a9dbf948ea8541a00e56b5561311bebc5818f941e259d9c732b2276895b9726d0316e5466a6fb807a0ee682e275a0fbfaaa61354e89bff6782fdbc3afaa7071fb3f888bb96485b741ba052d2e23bba6ff2dd5699d1a0a5e90582e25921d0fc156de563f97059667d320da0838c42f4b0a3dd62822a17f1fa17901fb7c681e8cc772e57b0a4ac078845dbb2a032248e368afdf9cab9ad5c209608a89dc1e59b9a001df78d09199dde7ee43184a0693844a68419c98b3366cad719b69f230a92203863b9b49aec000ff53f800843a07221eb547df126f2e5f66f8d331c35a663b407af16f312320ba77235d3377c74a07e0a761071eeb15e0582e9e61f8247dbfc7e0125ecfcbe3d3e6201ecde2cf1f2a06bf4053d9cac9e9bac37155a9a4ce2acd7e57131f71eac15627e5c2923da2b0aa04782d358da3d3202971989f8b2cd3f73c35f3bd22d0a85945febcc180572c5bfa035490fdb74d8115bfa4247592ba493f3dc8b5ff2510e5e6d8718bd568ea10fb5a07604858fa9f57e90dc12c334cc0cb2024db8dbdada47922253f358024663d9afa03785f9c1324ecc2cb7c68cfac77a13ce9bcc3dbb409d57902e39454e61571d82a0158dc7a21abfd0399ff6c58cf941609343f8e58e6912b598b433acf9f5cc995380"),
@@ -81,12 +81,11 @@ mod tests {
             hex2bytes_unchecked("0xf8d1a0dc7313472cd8065ddc532e619f3ef35a9ebfb84191c126f6569b8e774f176e2180a070ba5864d605be428532599eeb5598e3a59860e7d618d04c42b5bdf86d1e6865808080a0541b758702fdb0de028839b604b3e2275a66af6bf174ee824fcc10f65b5f922380808080a050e8102abba78167ad8fd8574a6ccc0eb5a41136f6ad9f091a324b2ceb7cb6ffa00d453ef130e3c18edb02bf0c586c2a4935ab62bb8b6d8f7db06747295b785e3e80a022c6150a0df9e33bf366d5c39a8f37955c3bc4daa01524986f72b737d29354518080"),
             hex2bytes_unchecked("0xe5a0390decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e56383821234")],
         };
-		let storage = EthereumStorage::<u128>::verify_storage_proof(
-			H256::from_str("0xb85b566e523eab932fb0a61d793849eb87db81c39b008d9146589423eee299f1")
-				.unwrap(),
-			&storage_proof,
-		)
-		.unwrap();
-		assert_eq!(storage.0, 0x1234);
-	}
+	let storage = EthereumStorage::<u128>::verify_storage_proof(
+		H256::from_str("0xb85b566e523eab932fb0a61d793849eb87db81c39b008d9146589423eee299f1")
+			.unwrap(),
+		&storage_proof,
+	)
+	.unwrap();
+	assert_eq!(storage.0, 0x1234);
 }

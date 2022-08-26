@@ -590,12 +590,12 @@ mod trie_tests {
 		// empty proof
 		let proof = vec![];
 		let value = MerklePatriciaTrie::verify_proof(root.clone(), b"doe", proof.into());
-		assert_eq!(value.is_err(), true);
+		assert!(value.is_err());
 
 		// bad proof
 		let proof = vec![b"aaa".to_vec(), b"ccc".to_vec()];
-		let value = MerklePatriciaTrie::verify_proof(root.clone(), b"doe", proof.into());
-		assert_eq!(value.is_err(), true);
+		let value = MerklePatriciaTrie::verify_proof(root, b"doe", proof.into());
+		assert!(value.is_err());
 	}
 
 	#[test]
@@ -644,7 +644,7 @@ mod trie_tests {
 		// remove key does not affect the verify process
 		trie.remove(b"k").unwrap();
 		let _root = trie.root().unwrap();
-		let value = MerklePatriciaTrie::verify_proof(root.clone(), b"k", proof.clone()).unwrap();
+		let value = MerklePatriciaTrie::verify_proof(root, b"k", proof).unwrap();
 		assert_eq!(value, Some(b"v".to_vec()));
 	}
 
@@ -659,7 +659,7 @@ mod trie_tests {
 
 		let proof: Proof = rlp::decode(&rlp_proof).unwrap();
 		let key = rlp::encode(&1usize);
-		let value = MerklePatriciaTrie::verify_proof(root.clone(), &key, proof.clone()).unwrap();
+		let value = MerklePatriciaTrie::verify_proof(root, &key, proof).unwrap();
 		assert!(value.is_some());
 		assert_eq!(value.unwrap(), expected);
 	}
@@ -687,7 +687,7 @@ mod trie_tests {
 		// check proof
 		let key = rlp::encode(&1usize);
 		let proof = trie.get_proof(&key).unwrap();
-		let value = MerklePatriciaTrie::verify_proof(r.clone(), &key, proof.clone()).unwrap();
+		let value = MerklePatriciaTrie::verify_proof(r, &key, proof).unwrap();
 
 		assert_eq!(value.unwrap(), data[1]);
 	}
