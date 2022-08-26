@@ -46,6 +46,7 @@ pub mod tracer {
 		}
 	}
 
+	#[derive(Default)]
 	pub struct EvmTracer {
 		step_event_filter: StepEventFilter,
 	}

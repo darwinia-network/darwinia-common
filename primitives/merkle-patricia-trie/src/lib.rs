@@ -47,14 +47,14 @@ use alloc::rc::Rc;
 /// use hex::FromHex;
 ///
 /// fn main() {
-/// 	let v = vec![
-/// 		("doe", "reindeer"),
-/// 		("dog", "puppy"),
-/// 		("dogglesworth", "cat"),
-/// 	];
+///     let v = vec![
+///         ("doe", "reindeer"),
+///         ("dog", "puppy"),
+///         ("dogglesworth", "cat"),
+///     ];
 ///
-/// 	let root:Vec<u8> = array_bytes::hex2bytes_unchecked("8aad789dff2f538bca5d8ea56e8abe10f4c7ba3a5dea95fea4cd6e7c3a1168d3");
-/// 	assert_eq!(build_trie(v).unwrap().root().unwrap(), root);
+///     let root:Vec<u8> = array_bytes::hex2bytes_unchecked("8aad789dff2f538bca5d8ea56e8abe10f4c7ba3a5dea95fea4cd6e7c3a1168d3");
+///     assert_eq!(build_trie(v).unwrap().root().unwrap(), root);
 /// }
 /// ```
 pub fn build_trie<I, A, B>(data: I) -> TrieResult<MerklePatriciaTrie>
@@ -64,7 +64,7 @@ where
 	B: AsRef<[u8]>,
 {
 	let memdb = Rc::new(MemoryDB::new());
-	let mut trie = MerklePatriciaTrie::new(memdb.clone());
+	let mut trie = MerklePatriciaTrie::new(memdb);
 	for (k, v) in data {
 		trie.insert(k.as_ref().to_vec(), v.as_ref().to_vec())?;
 	}
@@ -82,9 +82,9 @@ where
 /// use hex::FromHex;
 ///
 /// fn main() {
-/// 	let v = &["doe", "reindeer"];
-/// 	let root:Vec<u8> = array_bytes::hex2bytes_unchecked("e766d5d51b89dc39d981b41bda63248d7abce4f0225eefd023792a540bcffee3");
-/// 	assert_eq!(build_order_trie(v).unwrap().root().unwrap(), root);
+///     let v = &["doe", "reindeer"];
+///     let root:Vec<u8> = array_bytes::hex2bytes_unchecked("e766d5d51b89dc39d981b41bda63248d7abce4f0225eefd023792a540bcffee3");
+///     assert_eq!(build_order_trie(v).unwrap().root().unwrap(), root);
 /// }
 /// ```
 pub fn build_order_trie<I>(data: I) -> TrieResult<MerklePatriciaTrie>

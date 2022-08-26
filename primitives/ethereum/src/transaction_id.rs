@@ -27,12 +27,12 @@ pub enum TypedTxId {
 	Legacy = 0x00,
 }
 impl TypedTxId {
-	pub fn try_from_wire_byte(n: u8) -> Result<Self, ()> {
+	pub fn try_from_wire_byte(n: u8) -> Result<Self, &'static str> {
 		match n {
 			x if x == TypedTxId::EIP1559Transaction as u8 => Ok(TypedTxId::EIP1559Transaction),
 			x if x == TypedTxId::AccessList as u8 => Ok(TypedTxId::AccessList),
 			x if (x & 0x80) != 0x00 => Ok(TypedTxId::Legacy),
-			_ => Err(()),
+			_ => Err("Invalid Tx Id"),
 		}
 	}
 }

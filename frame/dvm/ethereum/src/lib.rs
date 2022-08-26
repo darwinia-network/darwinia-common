@@ -23,6 +23,7 @@
 
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::all)]
 
 pub mod adapter;
 
@@ -610,8 +611,7 @@ impl<T: Config> Pallet<T> {
 					used_gas.unique_saturated_into(),
 				)),
 				pays_fee: Pays::No,
-			}
-			.into())
+			})
 		})?
 	}
 
@@ -669,7 +669,7 @@ impl<T: Config> Pallet<T> {
 				ExitReason::Succeed(_) => 1,
 				_ => 0,
 			};
-			let logs_bloom = status.clone().logs_bloom;
+			let logs_bloom = status.logs_bloom;
 			let logs = status.clone().logs;
 			let cumulative_gas_used = if let Some((_, _, receipt)) = pending.last() {
 				match receipt {
@@ -877,8 +877,7 @@ impl<T: Config> Pallet<T> {
 		}
 
 		let ommers = Vec::<ethereum::Header>::new();
-		let receipts_root =
-			ethereum::util::ordered_trie_root(receipts.iter().map(|r| rlp::encode(r)));
+		let receipts_root = ethereum::util::ordered_trie_root(receipts.iter().map(rlp::encode));
 		let partial_header = ethereum::PartialHeader {
 			// Instead of using current_block(), obtain the parent block hash from BlockHash storage
 			// to avoid Block type upgrade failures See: https://github.com/paritytech/frontier/pull/570

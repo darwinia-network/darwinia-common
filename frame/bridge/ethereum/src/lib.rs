@@ -19,6 +19,7 @@
 //! # Darwinia Ethereum Relay Module
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::unused_unit)]
 
 pub mod migration {
 	pub fn migrate() {}
@@ -260,7 +261,7 @@ decl_storage! {
 			});
 
 			let dags_merkle_roots = if dags_merkle_roots_loader.dags_merkle_roots.is_empty() {
-				DagsMerkleRootsLoader::from_str(DAGS_MERKLE_ROOTS_STR).dags_merkle_roots.clone()
+				DagsMerkleRootsLoader::from_str(DAGS_MERKLE_ROOTS_STR).dags_merkle_roots
 			} else {
 				dags_merkle_roots_loader.dags_merkle_roots.clone()
 			};
@@ -407,17 +408,16 @@ decl_module! {
 
 							ayes.push(technical_member);
 						}
-					} else {
-						if nays.contains(&technical_member) {
-							Err(<Error<T>>::AlreadyVoteForNayDup)?;
-						} else {
+					} else if nays.contains(&technical_member) {
+						Err(<Error<T>>::AlreadyVoteForNayDup)?;
+					}	else {
 							if let Some(i) = ayes.iter().position(|aye| aye == &technical_member) {
 								ayes.remove(i);
 							}
 
 							nays.push(technical_member);
 						}
-					}
+
 
 					let approve = ayes.len() as u32;
 					let reject = nays.len() as u32;
@@ -591,7 +591,7 @@ impl<T: Config> Module<T> {
 
 		let merkle_root = Self::dag_merkle_root((header.number as usize / 30000) as u64);
 
-		if ethereum_partial.verify_seal_with_proof(&header, &ethash_proof, &merkle_root).is_err() {
+		if ethereum_partial.verify_seal_with_proof(header, ethash_proof, &merkle_root).is_err() {
 			return false;
 		};
 
@@ -705,7 +705,7 @@ impl<T: Config> Relayable for Module<T> {
 		let ethereum_partial = Self::ethash_params();
 
 		ensure!(
-			next.header.difficulty().to_owned()
+			*next.header.difficulty()
 				== ethereum_partial.calculate_difficulty(&next.header, &previous.header),
 			<Error<T>>::ContinuousInv
 		);
@@ -785,7 +785,7 @@ impl<T: Config> Relayable for Module<T> {
 				<Error<T>>::ContinuousInv
 			);
 			ensure!(
-				next.header.difficulty().to_owned()
+				*next.header.difficulty()
 					== ethereum_partial.calculate_difficulty(&next.header, &previous.header),
 				<Error<T>>::ContinuousInv
 			);
@@ -906,7 +906,7 @@ impl<T: Config> EthereumReceiptT<AccountId<T>, RingBalance<T>> for Module<T> {
 		// Verify receipt proof
 		let receipt = EthereumReceipt::verify_proof_and_generate(
 			ethereum_header.receipts_root(),
-			&ethereum_proof_record,
+			ethereum_proof_record,
 		)
 		.map_err(|_| <Error<T>>::ReceiptProofInv)?;
 
@@ -949,7 +949,7 @@ pub struct MMRProof {
 	pub proof: Vec<H256>,
 }
 
-#[derive(Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]
+#[derive(Clone, PartialEq, Eq, Default, Encode, Decode, TypeInfo)]
 pub struct CheckEthereumRelayHeaderParcel<T: Config>(PhantomData<T>);
 impl<T: Config> CheckEthereumRelayHeaderParcel<T> {
 	pub fn new() -> Self {

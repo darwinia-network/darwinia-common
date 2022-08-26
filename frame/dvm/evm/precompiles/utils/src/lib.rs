@@ -96,13 +96,13 @@ impl<'a, T: darwinia_evm::Config> PrecompileHelper<'a, T> {
 			<T as frame_system::Config>::DbWeight::get().read,
 		)
 		.checked_mul(reads)
-		.ok_or(revert("Cost Overflow"))?;
+		.ok_or_else(|| revert("Cost Overflow"))?;
 		let writes_cost = <T as darwinia_evm::Config>::GasWeightMapping::weight_to_gas(
 			<T as frame_system::Config>::DbWeight::get().write,
 		)
 		.checked_mul(writes)
-		.ok_or(revert("Cost Overflow"))?;
-		let cost = reads_cost.checked_add(writes_cost).ok_or(revert("Cost Overflow"))?;
+		.ok_or_else(|| revert("Cost Overflow"))?;
+		let cost = reads_cost.checked_add(writes_cost).ok_or_else(|| revert("Cost Overflow"))?;
 
 		self.used_gas = self
 			.used_gas

@@ -18,6 +18,8 @@
 
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
+#![allow(clippy::type_complexity)]
+
 // --- std ---
 use std::{cell::RefCell, sync::Arc};
 // --- darwinia-network ---
@@ -93,7 +95,7 @@ pub fn new_partial(
 	use sc_service::error::Error as ServiceError;
 
 	if config.keystore_remote.is_some() {
-		return Err(ServiceError::Other(format!("Remote Keystores are not supported.")));
+		return Err(ServiceError::Other("Remote Keystores are not supported.".to_string()));
 	}
 
 	let executor = <NativeElseWasmExecutor<Executor>>::new(
@@ -208,8 +210,8 @@ pub fn new_full(
 		let client = client.clone();
 		let pool = transaction_pool.clone();
 		let network = network.clone();
-		let filter_pool = filter_pool.clone();
-		let frontier_backend = frontier_backend.clone();
+		let filter_pool = filter_pool;
+		let frontier_backend = frontier_backend;
 
 		Box::new(move |deny_unsafe, _| {
 			let deps = FullDeps {
@@ -236,13 +238,13 @@ pub fn new_full(
 		})
 	};
 	let _ = sc_service::spawn_tasks(SpawnTasksParams {
-		network: network.clone(),
+		network,
 		client: client.clone(),
 		keystore: keystore_container.sync_keystore(),
 		task_manager: &mut task_manager,
 		transaction_pool: transaction_pool.clone(),
 		rpc_extensions_builder,
-		backend: backend.clone(),
+		backend,
 		system_rpc_tx,
 		config,
 		telemetry: None,
@@ -264,7 +266,7 @@ pub fn new_full(
 				block_import,
 				env,
 				client,
-				pool: transaction_pool.clone(),
+				pool: transaction_pool,
 				commands_stream,
 				select_chain,
 				consensus_data_provider: None,
@@ -284,8 +286,8 @@ pub fn new_full(
 			let authorship_future = manual_seal::run_instant_seal(InstantSealParams {
 				block_import,
 				env,
-				client: client.clone(),
-				pool: transaction_pool.clone(),
+				client,
+				pool: transaction_pool,
 				select_chain,
 				consensus_data_provider: None,
 				create_inherent_data_providers: move |_, ()| async move {

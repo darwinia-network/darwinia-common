@@ -188,7 +188,7 @@ pub fn genesis_config() -> ChainSpec {
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			treasury: Default::default(),
-			sudo: SudoConfig { key: root.clone() },
+			sudo: SudoConfig { key: root },
 			substrate_2_substrate_backing: Substrate2SubstrateBackingConfig {
 				secure_limited_period: DAYS,
 				secure_limited_ring_amount: 1_000_000 * COIN,
@@ -263,7 +263,7 @@ pub fn development_config() -> ChainSpec {
 				balances: endowed_accounts.clone().into_iter().map(|a| (a, MANY_COINS)).collect(),
 			},
 			kton: KtonConfig {
-				balances: endowed_accounts.clone().into_iter().map(|a| (a, A_FEW_COINS)).collect(),
+				balances: endowed_accounts.into_iter().map(|a| (a, A_FEW_COINS)).collect(),
 			},
 			staking: StakingConfig {
 				minimum_validator_count: 1,
@@ -295,7 +295,7 @@ pub fn development_config() -> ChainSpec {
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			treasury: Default::default(),
-			sudo: SudoConfig { key: root.clone() },
+			sudo: SudoConfig { key: root },
 			substrate_2_substrate_backing: Substrate2SubstrateBackingConfig {
 				secure_limited_period: DAYS,
 				secure_limited_ring_amount: 100_000 * COIN,

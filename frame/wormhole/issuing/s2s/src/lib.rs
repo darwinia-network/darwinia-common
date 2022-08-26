@@ -19,6 +19,7 @@
 //! Prototype module for s2s cross chain assets issuing.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::all)]
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
