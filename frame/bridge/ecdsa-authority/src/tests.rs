@@ -334,12 +334,20 @@ fn submit_authorities_change_signature() {
 		assert!(EcdsaAuthority::authorities_change_to_sign().is_none());
 		assert_eq!(
 			ecdsa_authority_events(),
-			vec![Event::CollectedEnoughAuthoritiesChangeSignatures {
-				operation,
-				new_threshold: Some(2),
-				message,
-				signatures: vec![(address_1, signature_1), (address_2, signature_2)]
-			}]
+			vec![
+				Event::CollectedEnoughAuthoritiesChangeSignatures {
+					operation,
+					new_threshold: Some(2),
+					message,
+					signatures: vec![(address_1, signature_1), (address_2, signature_2)]
+				},
+				Event::CollectingNewMessageRootSignatures {
+					message: [
+						154, 219, 45, 185, 181, 249, 194, 236, 54, 17, 201, 121, 48, 58, 30, 38,
+						23, 204, 118, 118, 94, 117, 242, 172, 64, 251, 245, 74, 235, 49, 46, 132
+					]
+				}
+			]
 		);
 	});
 }

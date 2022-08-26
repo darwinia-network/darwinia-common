@@ -190,7 +190,7 @@ pub mod pallet {
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(now: T::BlockNumber) -> Weight {
 			if (now % T::SyncInterval::get()).is_zero() {
-				if let Some(message_root) = Self::try_update_message_root(now) {
+				if let Some(message_root) = Self::try_update_message_root(now, false) {
 					Self::on_new_message_root(now, message_root);
 				}
 			}
@@ -324,6 +324,12 @@ pub mod pallet {
 					message,
 					signatures: collected.to_vec(),
 				});
+
+				let now = <frame_system::Pallet<T>>::block_number();
+
+				if let Some(message_root) = Self::try_update_message_root(now, true) {
+					Self::on_new_message_root(now, message_root);
+				}
 			} else {
 				<AuthoritiesChangeToSign<T>>::put(authorities_change_to_sign);
 			}
@@ -467,18 +473,23 @@ pub mod pallet {
 			<Nonce<T>>::mutate(|nonce| *nonce += 1);
 		}
 
-		fn try_update_message_root(at: T::BlockNumber) -> Option<Hash> {
+		fn try_update_message_root(at: T::BlockNumber, force: bool) -> Option<Hash> {
+			// Not allow to relay the messages if the new authorities set is not verified.
 			if Self::ensure_not_on_authorities_change().is_err() {
-				// Not allow to relay the messages if the new authorities set is not verified.
 				return None;
 			}
 
 			let message_root = T::MessageRoot::get()?;
 
 			<PreviousMessageRoot<T>>::try_mutate(|maybe_previous_message_root| {
-				if let Some((recorded_at, previous_message_root)) = maybe_previous_message_root {
-					// Only if the chain is still collecting signatures will enter this condition.
+				if force {
+					*maybe_previous_message_root = Some((at, message_root));
 
+					return Ok(message_root);
+				}
+
+				// Only if the chain is still collecting signatures will enter this condition.
+				if let Some((recorded_at, previous_message_root)) = maybe_previous_message_root {
 					// If this is a new root.
 					if &message_root != previous_message_root {
 						// Update the root with a new one if exceed the max pending period.
