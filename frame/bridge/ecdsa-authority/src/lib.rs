@@ -325,7 +325,6 @@ pub mod pallet {
 					signatures: collected.to_vec(),
 				});
 
-
 				let now = <frame_system::Pallet<T>>::block_number();
 
 				if let Some(message_root) = Self::try_update_message_root(now, true) {
