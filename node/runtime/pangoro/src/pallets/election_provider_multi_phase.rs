@@ -30,9 +30,9 @@ frame_support::parameter_types! {
 
 	// signed config
 	pub const SignedMaxSubmissions: u32 = 10;
-	pub const SignedRewardBase: Balance = 1 * MILLI;
-	pub const SignedDepositBase: Balance = 1 * MILLI;
-	pub const SignedDepositByte: Balance = 1 * MICRO;
+	pub const SignedRewardBase: Balance = MILLI;
+	pub const SignedDepositBase: Balance = MILLI;
+	pub const SignedDepositByte: Balance = MICRO;
 
 	pub SolutionImprovementThreshold: Perbill = Perbill::from_rational(5u32, 10_000);
 

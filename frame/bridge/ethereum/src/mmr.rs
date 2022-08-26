@@ -46,6 +46,6 @@ impl Merge for MMRMerge {
 		let mut data = vec![];
 		data.append(&mut lhs.to_vec());
 		data.append(&mut rhs.to_vec());
-		hash(&data.as_slice())
+		hash(data.as_slice())
 	}
 }

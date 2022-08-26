@@ -54,6 +54,7 @@
 //! https://eprint.iacr.org/2019/226.pdf
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::new_without_default)]
 
 #[cfg(test)]
 mod mock;

@@ -27,7 +27,7 @@ use sha3::{Digest, Keccak256};
 // --- paritytech ---
 use fp_evm::{Context, FeeCalculator, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
-	traits::{Currency, Everything, FindAuthor, GenesisBuild, OriginTrait, WithdrawReasons},
+	traits::{Everything, FindAuthor, GenesisBuild, OriginTrait, WithdrawReasons},
 	weights::GetDispatchInfo,
 	ConsensusEngineId, PalletId,
 };
@@ -39,16 +39,14 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
 	AccountId32, Perbill, RuntimeDebug,
 };
-use sp_std::{cmp, prelude::*};
+use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::{self as darwinia_ethereum, adapter::*, *};
 use bp_message_dispatch::{CallValidate, IntoDispatchOrigin as IntoDispatchOriginT};
 use darwinia_evm::{
 	runner::stack::Runner, CurrencyAdapt, EVMCurrencyAdapter, EnsureAddressTruncated,
 };
-use darwinia_support::evm::{
-	decimal_convert, DeriveEthereumAddress, DeriveSubstrateAddress, POW_9,
-};
+use darwinia_support::evm::{DeriveEthereumAddress, DeriveSubstrateAddress};
 
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
@@ -354,41 +352,6 @@ impl Verify for TestSignature {
 	fn verify<L: sp_runtime::traits::Lazy<[u8]>>(&self, _msg: L, signer: &AccountId32) -> bool {
 		self.0 == *signer
 	}
-}
-fn evm_ensure_can_withdraw(
-	who: &AccountId32,
-	amount: U256,
-	reasons: WithdrawReasons,
-) -> Result<(), TransactionValidityError> {
-	// Ensure the account's evm account has enough balance to withdraw.
-	let old_evm_balance = <Test as darwinia_evm::Config>::RingBalanceAdapter::account_balance(who);
-	let (_old_sub, old_remaining) = old_evm_balance.div_mod(U256::from(POW_9));
-	ensure!(
-		old_evm_balance > amount,
-		TransactionValidityError::Invalid(InvalidTransaction::Payment)
-	);
-
-	let (mut amount_sub, amount_remaining) = amount.div_mod(U256::from(POW_9));
-	if old_remaining < amount_remaining {
-		amount_sub = amount_sub.saturating_add(U256::from(1));
-	}
-
-	let new_evm_balance = old_evm_balance.saturating_sub(amount);
-	let (new_sub, _new_remaining) = new_evm_balance.div_mod(U256::from(POW_9));
-
-	// Ensure the account underlying substrate account has no liquidity restrictions.
-	ensure!(
-		Ring::ensure_can_withdraw(
-			who,
-			amount_sub.low_u128().unique_saturated_into(),
-			reasons,
-			new_sub.low_u128().unique_saturated_into(),
-		)
-		.is_ok(),
-		TransactionValidityError::Invalid(InvalidTransaction::Payment)
-	);
-
-	Ok(())
 }
 
 impl pallet_bridge_dispatch::Config for Test {

@@ -101,7 +101,7 @@ impl LegacyUnsignedTransaction {
 	fn signing_hash(&self, chain_id: u64) -> H256 {
 		let mut stream = RlpStream::new();
 		self.signing_rlp_append(&mut stream, chain_id);
-		H256::from_slice(&Keccak256::digest(&stream.out()).as_slice())
+		H256::from_slice(Keccak256::digest(&stream.out()).as_slice())
 	}
 
 	pub fn sign_with_chain_id(&self, key: &H256, chain_id: u64) -> Transaction {

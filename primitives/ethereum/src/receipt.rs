@@ -71,21 +71,21 @@ impl TypedReceipt {
 			// at least one byte needs to be present
 			return Err(DecoderError::RlpIncorrectListLen);
 		}
-		let id = TypedTxId::try_from_wire_byte(tx[0]);
-		if id.is_err() {
-			return Err(DecoderError::Custom("Unknown transaction"));
-		}
-		//other transaction types
-		match id.unwrap() {
-			TypedTxId::EIP1559Transaction => {
-				let rlp = Rlp::new(&tx[1..]);
-				Ok(Self::EIP1559Transaction(LegacyReceipt::decode(&rlp)?))
-			},
-			TypedTxId::AccessList => {
-				let rlp = Rlp::new(&tx[1..]);
-				Ok(Self::AccessList(LegacyReceipt::decode(&rlp)?))
-			},
-			TypedTxId::Legacy => Ok(Self::Legacy(LegacyReceipt::decode(&Rlp::new(tx))?)),
+
+		if let Ok(id) = TypedTxId::try_from_wire_byte(tx[0]) {
+			match id {
+				TypedTxId::EIP1559Transaction => {
+					let rlp = Rlp::new(&tx[1..]);
+					Ok(Self::EIP1559Transaction(LegacyReceipt::decode(&rlp)?))
+				},
+				TypedTxId::AccessList => {
+					let rlp = Rlp::new(&tx[1..]);
+					Ok(Self::AccessList(LegacyReceipt::decode(&rlp)?))
+				},
+				TypedTxId::Legacy => Ok(Self::Legacy(LegacyReceipt::decode(&Rlp::new(tx))?)),
+			}
+		} else {
+			Err(DecoderError::Custom("Unknown transaction"))
 		}
 	}
 

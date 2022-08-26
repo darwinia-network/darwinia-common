@@ -25,6 +25,7 @@ pub struct Proof {
 	pub nodes: Vec<Vec<u8>>,
 }
 
+#[allow(clippy::len_without_is_empty)]
 impl Proof {
 	pub fn to_rlp(&self) -> Vec<u8> {
 		rlp::encode(self).to_vec()

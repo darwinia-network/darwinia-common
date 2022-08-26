@@ -118,10 +118,7 @@ impl MessageBridge for WithPangolinParachainMessageBridge {
 	fn bridged_balance_to_this_balance(
 		bridged_balance: BalanceOf<Self::BridgedChain>,
 	) -> BalanceOf<Self::ThisChain> {
-		<BalanceOf<Self::ThisChain>>::try_from(
-			PangolinParachainToPangolinConversionRate::get().saturating_mul_int(bridged_balance),
-		)
-		.unwrap_or(<BalanceOf<Self::ThisChain>>::MAX)
+		PangolinParachainToPangolinConversionRate::get().saturating_mul_int(bridged_balance)
 	}
 }
 

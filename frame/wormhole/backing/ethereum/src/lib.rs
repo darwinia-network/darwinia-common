@@ -19,6 +19,7 @@
 //! Prototype module for cross chain assets backing.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::type_complexity)]
 #![recursion_limit = "128"]
 
 pub mod weights;
@@ -332,7 +333,7 @@ pub mod pallet {
 
 				let event = Event::LockRing(
 					user.clone(),
-					ethereum_account.clone(),
+					ethereum_account,
 					<RingTokenAddress<T>>::get(),
 					ring_to_lock,
 				);
@@ -533,7 +534,7 @@ pub mod pallet {
 
 			// TODO: remove fee?
 			let (darwinia_account, (is_ring, redeem_amount), fee) =
-				Self::parse_token_redeem_proof(&proof)?;
+				Self::parse_token_redeem_proof(proof)?;
 
 			if is_ring {
 				Self::redeem_token_cast::<T::RingCurrency>(
@@ -695,7 +696,7 @@ pub mod pallet {
 
 			// TODO: remove fee?
 			let (deposit_id, darwinia_account, redeemed_ring, start_at, months, _fee) =
-				Self::parse_deposit_redeem_proof(&proof)?;
+				Self::parse_deposit_redeem_proof(proof)?;
 
 			ensure!(Self::pot::<T::RingCurrency>() >= redeemed_ring, <Error<T>>::RingLockedNSBA);
 			// Checking redeemer have enough of balance to pay fee, make sure follow up fee

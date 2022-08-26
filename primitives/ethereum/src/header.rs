@@ -244,12 +244,11 @@ impl<'de> Deserialize<'de> for Header {
 					],
 					base_fee_per_gas: baseFeePerGas,
 					hash,
-					..Default::default()
 				})
 			}
 		}
 
-		const FIELDS: &'static [&'static str] = &[
+		const FIELDS: &[&str] = &[
 			"parent_hash",
 			"timestamp",
 			"number",

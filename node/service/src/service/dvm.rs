@@ -152,11 +152,11 @@ where
 			let (debug_task, debug_requester) =
 				if ethapi_debug_targets.iter().any(|target| target.as_str() == "debug") {
 					let (debug_task, debug_requester) = DebugHandler::task(
-						client.clone(),
-						substrate_backend.clone(),
-						dvm_backend.clone(),
-						permit_pool.clone(),
-						overrides.clone(),
+						client,
+						substrate_backend,
+						dvm_backend,
+						permit_pool,
+						overrides,
 					);
 
 					(Some(debug_task), Some(debug_requester))
@@ -208,6 +208,6 @@ pub fn open_backend(
 	use fc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
 
 	Ok(Arc::new(Backend::<Block>::new(&DatabaseSettings {
-		source: DatabaseSettingsSrc::RocksDb { path: db_path(&config), cache_size: 0 },
+		source: DatabaseSettingsSrc::RocksDb { path: db_path(config), cache_size: 0 },
 	})?))
 }

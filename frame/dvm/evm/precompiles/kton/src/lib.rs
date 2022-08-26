@@ -99,7 +99,7 @@ where
 		is_static: bool,
 	) -> EvmResult<PrecompileOutput> {
 		let mut helper = PrecompileHelper::<Runtime>::new(input, target_gas, context, is_static);
-		let action = helper.selector().unwrap_or_else(|_| Action::Name);
+		let action = helper.selector().unwrap_or(Action::Name);
 
 		match action {
 			Action::Transfer | Action::Allowance | Action::Approve | Action::TransferFrom =>
@@ -167,7 +167,7 @@ where
 
 		helper.record_db_gas(1, 0)?;
 
-		let amount: U256 = ApprovesStorage::get(owner, spender).into();
+		let amount: U256 = ApprovesStorage::get(owner, spender);
 
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,

@@ -22,7 +22,7 @@ use alloc::vec::Vec;
 
 use hashbrown::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct MemoryDB {
 	data: RefCell<HashMap<Vec<u8>, Vec<u8>>>,
 }
@@ -34,11 +34,7 @@ impl MemoryDB {
 
 	pub fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
 		let data = self.data.borrow();
-		if let Some(d) = data.get(key) {
-			Some(d.clone())
-		} else {
-			None
-		}
+		data.get(key).cloned()
 	}
 
 	pub fn insert(&self, key: Vec<u8>, value: Vec<u8>) -> Option<Vec<u8>> {

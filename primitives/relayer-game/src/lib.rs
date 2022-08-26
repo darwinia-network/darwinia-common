@@ -192,7 +192,7 @@ pub struct RelayAffirmationId<RelayHeaderId> {
 	pub index: u32,
 }
 
-#[derive(Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(Clone, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
 pub struct RelayAffirmation<RelayHeaderParcel, Relayer, Balance, RelayHeaderId> {
 	pub relayer: Relayer,
 	pub relay_header_parcels: Vec<RelayHeaderParcel>,

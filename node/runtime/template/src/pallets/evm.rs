@@ -16,6 +16,7 @@ use darwinia_evm::{
 };
 use darwinia_support::evm::ConcatConverter;
 
+#[derive(Default)]
 pub struct FrontierPrecompiles<R>(PhantomData<R>);
 impl<R> FrontierPrecompiles<R>
 where

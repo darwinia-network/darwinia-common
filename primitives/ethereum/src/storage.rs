@@ -66,7 +66,7 @@ impl Account {
 	) -> Result<Self, Error> {
 		let value = MerklePatriciaTrie::verify_proof(
 			state_root.0.to_vec(),
-			&account_hash.0.to_vec(),
+			account_hash.0.as_ref(),
 			account_proof,
 		)?
 		.ok_or(ProofError::TrieKeyNotExist)?;

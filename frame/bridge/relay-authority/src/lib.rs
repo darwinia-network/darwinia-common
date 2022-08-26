@@ -19,6 +19,7 @@
 //! # Relay Authorities Module
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::type_complexity)]
 
 pub mod migration;
 

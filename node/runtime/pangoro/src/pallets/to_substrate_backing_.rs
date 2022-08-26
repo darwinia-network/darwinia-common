@@ -12,11 +12,11 @@ use to_substrate_backing::Config;
 pub struct PangolinMessageNoncer;
 impl LatestMessageNoncer for PangolinMessageNoncer {
 	fn outbound_latest_generated_nonce(lane_id: LaneId) -> u64 {
-		BridgePangolinMessages::outbound_latest_generated_nonce(lane_id).into()
+		BridgePangolinMessages::outbound_latest_generated_nonce(lane_id)
 	}
 
 	fn inbound_latest_received_nonce(lane_id: LaneId) -> u64 {
-		BridgePangolinMessages::inbound_latest_received_nonce(lane_id).into()
+		BridgePangolinMessages::inbound_latest_received_nonce(lane_id)
 	}
 }
 

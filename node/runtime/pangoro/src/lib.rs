@@ -2,6 +2,8 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "256"]
+#![allow(clippy::or_fun_call)]
+#![allow(clippy::inconsistent_digit_grouping)]
 
 pub mod pallets;
 pub use pallets::*;
@@ -19,11 +21,11 @@ pub mod wasm {
 	/// Wasm binary unwrapped. If built with `BUILD_DUMMY_WASM_BINARY`, the function panics.
 	#[cfg(feature = "std")]
 	pub fn wasm_binary_unwrap() -> &'static [u8] {
-		return WASM_BINARY.expect(
+		WASM_BINARY.expect(
 			"Development wasm binary is not available. This means the client is \
 			built with `SKIP_WASM_BUILD` flag and it is only usable for \
 			production chains. Please rebuild with the flag disabled.",
-		);
+		)
 	}
 }
 pub use wasm::*;
