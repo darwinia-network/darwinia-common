@@ -4,6 +4,15 @@ use frame_support::{assert_noop, assert_ok, weights::PostDispatchInfo};
 use crate::{mock::*, Event, *};
 
 #[test]
+fn calculate_threshold() {
+	ExtBuilder::default().build().execute_with(|| {
+		for (expected, i) in [(1, 1), (2, 2), (2, 3), (3, 4), (3, 5), (4, 6)] {
+			assert_eq!(EcdsaAuthority::calculate_threshold(i), expected);
+		}
+	});
+}
+
+#[test]
 fn add_authority() {
 	let address = Address::repeat_byte(0);
 

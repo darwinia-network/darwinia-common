@@ -406,11 +406,15 @@ pub mod pallet {
 			Ok(())
 		}
 
+		pub(crate) fn calculate_threshold(x: u32) -> u32 {
+			T::SignThreshold::get().mul_ceil(x)
+		}
+
 		fn on_authorities_change(operation: Operation, authorities_count: u32) {
 			let (authorities_changes, new_threshold) = {
 				match operation {
 					Operation::AddMember { new } => {
-						let new_threshold = T::SignThreshold::get() * authorities_count;
+						let new_threshold = Self::calculate_threshold(authorities_count);
 
 						(
 							ethabi::encode(&[
@@ -421,13 +425,13 @@ pub mod pallet {
 						)
 					},
 					Operation::RemoveMember { pre, old } => {
-						let new_threshold = T::SignThreshold::get() * authorities_count;
+						let new_threshold = Self::calculate_threshold(authorities_count);
 
 						(
 							ethabi::encode(&[
 								Token::Address(pre),
 								Token::Address(old),
-								Token::Uint((T::SignThreshold::get() * authorities_count).into()),
+								Token::Uint(new_threshold.into()),
 							]),
 							Some(new_threshold),
 						)
