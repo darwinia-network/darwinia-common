@@ -23,26 +23,6 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 }
 
 fn migrate() -> Weight {
-	// --- paritytech ---
-	use frame_support::{migration::storage_key_iter, Blake2_128Concat};
-	// --- darwinia-network ---
-	use bp_messages::{LaneId, MessageNonce};
-	use pallet_fee_market::{types::Order, Orders};
-
-	let module: &[u8] = b"PangoroFeeMarket";
-	let item: &[u8] = b"Orders";
-	for ((lane_id, nonce), order) in storage_key_iter::<
-		(LaneId, MessageNonce),
-		Order<AccountId, BlockNumber, Balance>,
-		Blake2_128Concat,
-	>(module, item)
-	.drain()
-	{
-		if lane_id != [0, 0, 0, 0] || lane_id != [0, 0, 0, 1] {
-			Orders::<Runtime, WithPangoroFeeMarket>::insert((lane_id, nonce), order);
-		}
-	}
-
-	// 0
-	RuntimeBlockWeights::get().max_block
+	0
+	// RuntimeBlockWeights::get().max_block
 }
