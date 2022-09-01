@@ -159,7 +159,7 @@ where
 		Self(Default::default())
 	}
 
-	pub fn used_addresses() -> [H160; 6] {
+	pub fn used_addresses() -> [H160; 1] {
 		[addr(24)]
 	}
 }
