@@ -30,7 +30,6 @@ use frame_support::{
 	PalletId,
 };
 use frame_system::mocking::*;
-use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -46,7 +45,6 @@ use darwinia_ethereum::{
 };
 use darwinia_evm::{EVMCurrencyAdapter, EnsureAddressTruncated, SubstrateBlockHashMapping};
 use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
-use darwinia_evm_precompile_dispatch::Dispatch;
 use darwinia_evm_precompile_utils::test_helper::{address_build, AccountInfo};
 use darwinia_support::{
 	evm::DeriveSubstrateAddress,
@@ -162,13 +160,12 @@ where
 	}
 
 	pub fn used_addresses() -> [H160; 6] {
-		[addr(1), addr(2), addr(3), addr(4), addr(24), addr(25)]
+		[addr(24)]
 	}
 }
 impl<R> PrecompileSet for MockPrecompiles<R>
 where
 	Sub2SubBridge<R, MockS2sMessageSender, ()>: Precompile,
-	Dispatch<R>: Precompile,
 	R: darwinia_evm::Config,
 {
 	fn execute(
@@ -180,17 +177,10 @@ where
 		is_static: bool,
 	) -> Option<PrecompileResult> {
 		match address {
-			// Ethereum precompiles
-			a if a == addr(1) => Some(ECRecover::execute(input, target_gas, context, is_static)),
-			a if a == addr(2) => Some(Sha256::execute(input, target_gas, context, is_static)),
-			a if a == addr(3) => Some(Ripemd160::execute(input, target_gas, context, is_static)),
-			a if a == addr(4) => Some(Identity::execute(input, target_gas, context, is_static)),
 			// Darwinia precompiles
 			a if a == addr(24) => Some(<Sub2SubBridge<R, MockS2sMessageSender, ()>>::execute(
 				input, target_gas, context, is_static,
 			)),
-			a if a == addr(25) =>
-				Some(<Dispatch<R>>::execute(input, target_gas, context, is_static)),
 			_ => None,
 		}
 	}

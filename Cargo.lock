@@ -1603,7 +1603,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "num_enum",
- "pallet-evm",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -3001,7 +3000,6 @@ dependencies = [
  "darwinia-ethereum",
  "darwinia-evm",
  "darwinia-evm-precompile-bridge-s2s",
- "darwinia-evm-precompile-dispatch",
  "darwinia-evm-precompile-utils",
  "darwinia-support",
  "dp-asset",
@@ -3016,8 +3014,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "libsecp256k1 0.5.0",
- "pallet-evm",
- "pallet-evm-precompile-simple",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -5826,32 +5822,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-npos-elections",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-evm"
-version = "6.0.0-dev"
-source = "git+https://github.com/darwinia-network/frontier?branch=darwinia-v0.12.4#72bf8c397a5921c8bdac61aa4e42cb6fd98f5c7d"
-dependencies = [
- "evm",
- "fp-evm",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex",
- "log",
- "pallet-balances",
- "pallet-timestamp",
- "parity-scale-codec",
- "primitive-types",
- "rlp",
- "scale-info",
- "serde",
- "sha3 0.10.2",
- "sp-core",
- "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -8742,16 +8712,6 @@ dependencies = [
  "digest 0.9.0",
  "keccak",
  "opaque-debug 0.3.0",
-]
-
-[[package]]
-name = "sha3"
-version = "0.10.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a31480366ec990f395a61b7c08122d99bd40544fdb5abcfc1b06bb29994312c"
-dependencies = [
- "digest 0.10.3",
- "keccak",
 ]
 
 [[package]]

@@ -28,10 +28,7 @@ fn u256_repeat_byte(byte: u8) -> U256 {
 // When debugging it is useful to display data in chunks of 32 bytes.
 #[allow(dead_code)]
 fn display_bytes(bytes: &[u8]) {
-	bytes
-		.chunks_exact(32)
-		.map(H256::from_slice)
-		.for_each(|hash| println!("{:?}", hash));
+	bytes.chunks_exact(32).map(H256::from_slice).for_each(|hash| println!("{:?}", hash));
 }
 
 #[test]
@@ -533,10 +530,7 @@ fn write_vec_bytes() {
 	let writer_output =
 		EvmDataWriter::new().write(vec![Bytes::from(&data[..]), Bytes::from(&data[..])]).build();
 
-	writer_output
-		.chunks_exact(32)
-		.map(H256::from_slice)
-		.for_each(|hash| println!("{:?}", hash));
+	writer_output.chunks_exact(32).map(H256::from_slice).for_each(|hash| println!("{:?}", hash));
 
 	// We pad data to a multiple of 32 bytes.
 	let mut padded = data.to_vec();
@@ -585,10 +579,7 @@ fn read_vec_of_bytes() {
 	let writer_output =
 		EvmDataWriter::new().write(vec![Bytes::from(&data[..]), Bytes::from(&data[..])]).build();
 
-	writer_output
-		.chunks_exact(32)
-		.map(H256::from_slice)
-		.for_each(|hash| println!("{:?}", hash));
+	writer_output.chunks_exact(32).map(H256::from_slice).for_each(|hash| println!("{:?}", hash));
 
 	let mut reader = EvmDataReader::new(&writer_output);
 	let parsed: Vec<Bytes> = reader.read().expect("to correctly parse Vec<u8>");
