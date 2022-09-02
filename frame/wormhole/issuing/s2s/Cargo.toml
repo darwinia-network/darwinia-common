@@ -44,15 +44,12 @@ libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 # darwinia-network
 darwinia-balances                  = { path = "../../../balances" }
 darwinia-evm-precompile-bridge-s2s = { path = "../../../dvm/evm/precompiles/bridge/s2s" }
-darwinia-evm-precompile-dispatch   = { path = "../../../dvm/evm/precompiles/dispatch" }
 darwinia-evm-precompile-utils      = { features = ["testing"], path = "../../../dvm/evm/precompiles/utils" }
 darwinia-support                   = { features = ["testing"], path = "../../../support" }
 # paritytech
 pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 # frontier
 fp-self-contained            = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
-pallet-evm                   = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
-pallet-evm-precompile-simple = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
 
 [features]
 default = ["std"]
