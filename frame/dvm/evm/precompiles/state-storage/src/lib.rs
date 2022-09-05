@@ -84,7 +84,9 @@ where
 		Ok(PrecompileOutput {
 			exit_status: ExitSucceed::Returned,
 			cost: helper.used_gas(),
-			output: EvmDataWriter::new().write(output.unwrap_or_default()).build(),
+			output: EvmDataWriter::new()
+				.write::<Bytes>(output.unwrap_or_default().as_slice().into())
+				.build(),
 			logs: Default::default(),
 		})
 	}
