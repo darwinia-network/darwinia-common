@@ -22,6 +22,9 @@ dp-contract                   = { default-features = false, path = "../../../../
 # frontier
 fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
 
+[dev-dependencies]
+ethabi = { version = "15.0" }
+
 [features]
 default = ["std"]
 

@@ -60,6 +60,9 @@ where
 
 		let output = match action {
 			Action::FastAggregateVerify => {
+				let mut reader = helper.reader()?;
+				reader.expect_arguments(1)?;
+				
 				let params =
 					FastAggregateVerifyParams::decode(data).map_err(|_| revert("Invalid input"))?;
 
@@ -88,5 +91,27 @@ where
 			output: abi_encode_bool(output),
 			logs: Default::default(),
 		})
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use dp_contract::bls12381::FastAggregateVerifyParams;
+	use ethabi::{param_type::ParamType, token::Token, Error, Result as AbiResult};
+
+	#[test]
+	fn test_encode_decode() {
+		let encoded = ethabi::encode(&[
+			Token::Array(vec![
+				Token::Bytes(vec![1; 48]),
+				Token::Bytes(vec![2; 48]),
+				Token::Bytes(vec![3; 48]),
+			]),
+			Token::Bytes(vec![4; 10]),
+			Token::Bytes(vec![5; 96]),
+		]);
+
+		let result = FastAggregateVerifyParams::decode(&encoded).unwrap();
+		print!("the result is {:?}", result);
 	}
 }
