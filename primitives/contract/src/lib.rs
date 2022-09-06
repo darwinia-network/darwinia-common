@@ -20,7 +20,7 @@
 
 pub mod abi_util;
 pub mod beefy;
-pub mod bls12381;
+// pub mod bls12381;
 pub mod mapping_token_factory;
 
 #[cfg(test)]

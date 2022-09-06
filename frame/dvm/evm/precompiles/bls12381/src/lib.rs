@@ -24,7 +24,6 @@ use core::marker::PhantomData;
 use milagro_bls::{AggregatePublicKey, AggregateSignature, PublicKey, Signature};
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{prelude::*, revert, PrecompileHelper};
-use dp_contract::{abi_util::abi_encode_bool, bls12381::FastAggregateVerifyParams};
 // --- paritytech ---
 use fp_evm::{
 	Context, ExitRevert, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
@@ -36,9 +35,6 @@ use sp_std::vec::Vec;
 enum Action {
 	FastAggregateVerify = "fast_aggregate_verify(bytes[],bytes,bytes)",
 }
-
-const BLS_PUBKEY_LENGTH: usize = 48;
-const BLS_SIGNATURE_LENGTH: usize = 96;
 
 pub struct BLS12381<T>(PhantomData<T>);
 
@@ -93,39 +89,5 @@ where
 			output: EvmDataWriter::new().write(output).build(),
 			logs: Default::default(),
 		})
-	}
-}
-
-#[cfg(test)]
-mod test {
-	use darwinia_evm_precompile_utils::prelude::{Bytes, EvmDataReader};
-	use dp_contract::bls12381::FastAggregateVerifyParams;
-	use ethabi::{param_type::ParamType, token::Token, Error, Result as AbiResult};
-
-	#[test]
-	fn test_encode_decode() {
-		let mock_pubkey_1 = vec![1; 48];
-		let mock_pubkey_2 = vec![2; 48];
-		let mock_pubkey_3 = vec![2; 48];
-		let mock_message = vec![4; 10];
-		let mock_sinature = vec![5; 96];
-
-		let encoded = ethabi::encode(&[
-			Token::Array(vec![
-				Token::Bytes(mock_pubkey_1.clone()),
-				Token::Bytes(mock_pubkey_2.clone()),
-				Token::Bytes(mock_pubkey_3.clone()),
-			]),
-			Token::Bytes(mock_message.clone()),
-			Token::Bytes(mock_sinature.clone()),
-		]);
-
-		let mut reader = EvmDataReader::new(&encoded);
-		let pubkeys = reader.read::<Vec<Bytes>>().unwrap();
-		let message = reader.read::<Bytes>().unwrap();
-		let signature = reader.read::<Bytes>().unwrap();
-		assert_eq!(pubkeys, vec![Bytes(mock_pubkey_1), Bytes(mock_pubkey_2), Bytes(mock_pubkey_3)]);
-		assert_eq!(mock_message, message.0);
-		assert_eq!(mock_sinature, signature.0);
 	}
 }
