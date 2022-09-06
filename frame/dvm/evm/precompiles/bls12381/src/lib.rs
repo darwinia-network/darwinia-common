@@ -37,9 +37,10 @@ enum Action {
 	FastAggregateVerify = "fast_aggregate_verify(bytes[],bytes,bytes)",
 }
 
-pub struct BLS12381<T> {
-	_market: PhantomData<T>,
-}
+const BLS_PUBKEY_LENGTH: usize = 48;
+const BLS_SIGNATURE_LENGTH: usize = 96;
+
+pub struct BLS12381<T>(PhantomData<T>);
 
 impl<T> Precompile for BLS12381<T>
 where
@@ -52,7 +53,7 @@ where
 		is_static: bool,
 	) -> PrecompileResult {
 		let helper = PrecompileHelper::<T>::new(input, target_gas, context, is_static);
-		let (selector, data) = helper.split_input()?;
+		let (selector, _) = helper.split_input()?;
 		let action = Action::from_u32(selector)?;
 
 		// Check state modifiers
@@ -61,23 +62,24 @@ where
 		let output = match action {
 			Action::FastAggregateVerify => {
 				let mut reader = helper.reader()?;
-				reader.expect_arguments(1)?;
-				
-				let params =
-					FastAggregateVerifyParams::decode(data).map_err(|_| revert("Invalid input"))?;
+				reader.expect_arguments(3)?;
+				let pubkeys = reader.read::<Vec<Bytes>>()?;
+				let message = reader.read::<Bytes>()?;
+				let signature = reader.read::<Bytes>()?;
 
-				let sig = Signature::from_bytes(&params.signature)
+				let sig = Signature::from_bytes(signature.as_bytes())
 					.map_err(|_| revert("Invalid signature"))?;
 				let agg_sig = AggregateSignature::from_signature(&sig);
 
 				let public_keys_res: Result<Vec<PublicKey>, _> =
-					params.pubkeys.iter().map(|bytes| PublicKey::from_bytes(bytes)).collect();
+					pubkeys.iter().map(|bytes| PublicKey::from_bytes(bytes.as_bytes())).collect();
 
 				if let Ok(keys) = public_keys_res {
 					let agg_pub_key_res = AggregatePublicKey::into_aggregate(&keys)
 						.map_err(|_| revert("Invalid aggregate"))?;
 
-					agg_sig.fast_aggregate_verify_pre_aggregated(&params.message, &agg_pub_key_res)
+					agg_sig
+						.fast_aggregate_verify_pre_aggregated(message.as_bytes(), &agg_pub_key_res)
 				} else {
 					return Err(revert("Invalid pubkeys"));
 				}
@@ -88,7 +90,7 @@ where
 			exit_status: ExitSucceed::Returned,
 			// TODO: https://github.com/darwinia-network/darwinia-common/issues/1261
 			cost: helper.used_gas().saturating_add(100_000),
-			output: abi_encode_bool(output),
+			output: EvmDataWriter::new().write(output).build(),
 			logs: Default::default(),
 		})
 	}
@@ -96,22 +98,34 @@ where
 
 #[cfg(test)]
 mod test {
+	use darwinia_evm_precompile_utils::prelude::{Bytes, EvmDataReader};
 	use dp_contract::bls12381::FastAggregateVerifyParams;
 	use ethabi::{param_type::ParamType, token::Token, Error, Result as AbiResult};
 
 	#[test]
 	fn test_encode_decode() {
+		let mock_pubkey_1 = vec![1; 48];
+		let mock_pubkey_2 = vec![2; 48];
+		let mock_pubkey_3 = vec![2; 48];
+		let mock_message = vec![4; 10];
+		let mock_sinature = vec![5; 96];
+
 		let encoded = ethabi::encode(&[
 			Token::Array(vec![
-				Token::Bytes(vec![1; 48]),
-				Token::Bytes(vec![2; 48]),
-				Token::Bytes(vec![3; 48]),
+				Token::Bytes(mock_pubkey_1.clone()),
+				Token::Bytes(mock_pubkey_2.clone()),
+				Token::Bytes(mock_pubkey_3.clone()),
 			]),
-			Token::Bytes(vec![4; 10]),
-			Token::Bytes(vec![5; 96]),
+			Token::Bytes(mock_message.clone()),
+			Token::Bytes(mock_sinature.clone()),
 		]);
 
-		let result = FastAggregateVerifyParams::decode(&encoded).unwrap();
-		print!("the result is {:?}", result);
+		let mut reader = EvmDataReader::new(&encoded);
+		let pubkeys = reader.read::<Vec<Bytes>>().unwrap();
+		let message = reader.read::<Bytes>().unwrap();
+		let signature = reader.read::<Bytes>().unwrap();
+		assert_eq!(pubkeys, vec![Bytes(mock_pubkey_1), Bytes(mock_pubkey_2), Bytes(mock_pubkey_3)]);
+		assert_eq!(mock_message, message.0);
+		assert_eq!(mock_sinature, signature.0);
 	}
 }
