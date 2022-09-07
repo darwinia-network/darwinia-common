@@ -222,10 +222,7 @@ where
 		rpc_config: eth_rpc_config.clone(),
 		fee_history_cache: fee_history_cache.clone(),
 		overrides: overrides.clone(),
-		sync_from: match config.chain_spec.name() {
-			"Pangoro" => 729781,
-			_ => 0,
-		},
+		sync_from: 0,
 	}
 	.spawn_task();
 	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
