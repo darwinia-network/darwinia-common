@@ -24,7 +24,6 @@ use core::marker::PhantomData;
 use milagro_bls::{AggregatePublicKey, AggregateSignature, PublicKey, Signature};
 // --- darwinia-network ---
 use darwinia_evm_precompile_utils::{prelude::*, revert, PrecompileHelper};
-use dp_contract::{abi_util::abi_encode_bool, bls12381::FastAggregateVerifyParams};
 // --- paritytech ---
 use fp_evm::{
 	Context, ExitRevert, ExitSucceed, Precompile, PrecompileFailure, PrecompileOutput,
@@ -37,9 +36,7 @@ enum Action {
 	FastAggregateVerify = "fast_aggregate_verify(bytes[],bytes,bytes)",
 }
 
-pub struct BLS12381<T> {
-	_market: PhantomData<T>,
-}
+pub struct BLS12381<T>(PhantomData<T>);
 
 impl<T> Precompile for BLS12381<T>
 where
@@ -52,7 +49,7 @@ where
 		is_static: bool,
 	) -> PrecompileResult {
 		let helper = PrecompileHelper::<T>::new(input, target_gas, context, is_static);
-		let (selector, data) = helper.split_input()?;
+		let (selector, _) = helper.split_input()?;
 		let action = Action::from_u32(selector)?;
 
 		// Check state modifiers
@@ -60,21 +57,25 @@ where
 
 		let output = match action {
 			Action::FastAggregateVerify => {
-				let params =
-					FastAggregateVerifyParams::decode(data).map_err(|_| revert("Invalid input"))?;
+				let mut reader = helper.reader()?;
+				reader.expect_arguments(3)?;
+				let pubkeys = reader.read::<Vec<Bytes>>()?;
+				let message = reader.read::<Bytes>()?;
+				let signature = reader.read::<Bytes>()?;
 
-				let sig = Signature::from_bytes(&params.signature)
+				let sig = Signature::from_bytes(signature.as_bytes())
 					.map_err(|_| revert("Invalid signature"))?;
 				let agg_sig = AggregateSignature::from_signature(&sig);
 
 				let public_keys_res: Result<Vec<PublicKey>, _> =
-					params.pubkeys.iter().map(|bytes| PublicKey::from_bytes(bytes)).collect();
+					pubkeys.iter().map(|bytes| PublicKey::from_bytes(bytes.as_bytes())).collect();
 
 				if let Ok(keys) = public_keys_res {
 					let agg_pub_key_res = AggregatePublicKey::into_aggregate(&keys)
 						.map_err(|_| revert("Invalid aggregate"))?;
 
-					agg_sig.fast_aggregate_verify_pre_aggregated(&params.message, &agg_pub_key_res)
+					agg_sig
+						.fast_aggregate_verify_pre_aggregated(message.as_bytes(), &agg_pub_key_res)
 				} else {
 					return Err(revert("Invalid pubkeys"));
 				}
@@ -85,7 +86,7 @@ where
 			exit_status: ExitSucceed::Returned,
 			// TODO: https://github.com/darwinia-network/darwinia-common/issues/1261
 			cost: helper.used_gas().saturating_add(100_000),
-			output: abi_encode_bool(output),
+			output: EvmDataWriter::new().write(output).build(),
 			logs: Default::default(),
 		})
 	}
