@@ -541,6 +541,8 @@ pub mod pallet {
 		/// There are too many validators in the system. Governance needs to adjust the staking
 		/// settings to keep things safe for the runtime.
 		TooManyValidators,
+		/// Commission is too low. Must be at least `MinCommission`.
+		CommissionTooLow,
 		/// Payout - INSUFFICIENT
 		PayoutIns,
 	}
@@ -598,6 +600,12 @@ pub mod pallet {
 	/// The minimum active bond to become and maintain the role of a validator.
 	#[pallet::storage]
 	pub type MinValidatorBond<T: Config> = StorageValue<_, RingBalance<T>, ValueQuery>;
+
+	/// The minimum amount of commission that validators can set.
+	///
+	/// If set to `0`, no limit exists.
+	#[pallet::storage]
+	pub type MinCommission<T: Config> = StorageValue<_, Perbill, ValueQuery>;
 
 	/// Map from all (unlocked) "controller" accounts to the info regarding the staking.
 	#[pallet::storage]
@@ -888,6 +896,8 @@ pub mod pallet {
 		pub stakers: Vec<(AccountId<T>, AccountId<T>, RingBalance<T>, StakerStatus<AccountId<T>>)>,
 		pub min_nominator_bond: RingBalance<T>,
 		pub min_validator_bond: RingBalance<T>,
+		pub max_validator_count: Option<u32>,
+		pub max_nominator_count: Option<u32>,
 		pub payout_fraction: Perbill,
 	}
 	#[cfg(feature = "std")]
@@ -904,6 +914,8 @@ pub mod pallet {
 				stakers: Default::default(),
 				min_nominator_bond: Default::default(),
 				min_validator_bond: Default::default(),
+				max_validator_count: None,
+				max_nominator_count: None,
 				payout_fraction: Default::default(),
 			}
 		}
@@ -921,6 +933,12 @@ pub mod pallet {
 			<StorageVersion<T>>::put(Releases::V7_0_0);
 			<MinNominatorBond<T>>::put(self.min_nominator_bond);
 			<MinValidatorBond<T>>::put(self.min_validator_bond);
+			if let Some(x) = self.max_validator_count {
+				MaxValidatorsCount::<T>::put(x);
+			}
+			if let Some(x) = self.max_nominator_count {
+				MaxNominatorsCount::<T>::put(x);
+			}
 			<PayoutFraction<T>>::put(self.payout_fraction);
 
 			for (stash, controller, ring_to_be_bonded, status) in &self.stakers {
@@ -1599,6 +1617,9 @@ pub mod pallet {
 
 			let stash = &ledger.stash;
 
+			// ensure their commission is correct.
+			ensure!(prefs.commission >= <MinCommission<T>>::get(), <Error<T>>::CommissionTooLow);
+
 			// Only check limits if they are not already a validator.
 			if !<Validators<T>>::contains_key(stash) {
 				// If this error is reached, we need to adjust the `MinValidatorBond` and start
@@ -2227,7 +2248,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Update the various staking limits this pallet.
+		/// Update the various staking configurations.
 		///
 		/// * `min_nominator_bond`: The minimum active bond needed to be a nominator.
 		/// * `min_validator_bond`: The minimum active bond needed to be a validator.
@@ -2235,19 +2256,24 @@ pub mod pallet {
 		///   set to `None`, no limit is enforced.
 		/// * `max_validator_count`: The max number of users who can be a validator at once. When
 		///   set to `None`, no limit is enforced.
+		/// * `chill_threshold`: The ratio of `max_nominator_count` or `max_validator_count` which
+		///   should be filled in order for the `chill_other` transaction to work.
+		/// * `min_commission`: The minimum amount of commission that each validators must maintain.
+		///   This is checked only upon calling `validate`. Existing validators are not affected.
 		///
 		/// Origin must be Root to call this function.
 		///
 		/// NOTE: Existing nominators and validators will not be affected by this update.
 		/// to kick people under the new limits, `chill_other` should be called.
-		#[pallet::weight(T::WeightInfo::set_staking_limits())]
-		pub fn set_staking_limits(
+		#[pallet::weight(T::WeightInfo::set_staking_configs())]
+		pub fn set_staking_configs(
 			origin: OriginFor<T>,
 			min_nominator_bond: RingBalance<T>,
 			min_validator_bond: RingBalance<T>,
 			max_nominator_count: Option<u32>,
 			max_validator_count: Option<u32>,
-			threshold: Option<Percent>,
+			chill_threshold: Option<Percent>,
+			min_commission: Perbill,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -2255,7 +2281,8 @@ pub mod pallet {
 			<MinValidatorBond<T>>::set(min_validator_bond);
 			<MaxNominatorsCount<T>>::set(max_nominator_count);
 			<MaxValidatorsCount<T>>::set(max_validator_count);
-			<ChillThreshold<T>>::set(threshold);
+			ChillThreshold::<T>::set(chill_threshold);
+			<MinCommission<T>>::set(min_commission);
 
 			Ok(())
 		}
