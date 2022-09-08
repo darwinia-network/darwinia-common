@@ -76,7 +76,7 @@ impl frame_system::Config for Test {
 }
 
 frame_support::parameter_types! {
-	pub const ExistentialDeposit: u64 = 1;
+	pub const ExistentialDeposit: u64 = 0;
 }
 impl darwinia_balances::Config<RingInstance> for Test {
 	type AccountStore = System;
@@ -131,6 +131,37 @@ impl FindAuthor<H160> for FindAuthorTruncated {
 		Some(H160::from_str("1234500000000000000000000000000000000000").unwrap())
 	}
 }
+
+impl<T> OnChargeEVMTransaction<T> for ()
+where
+	T: Config,
+{
+	type LiquidityInfo = U256;
+
+	fn withdraw_fee(who: &H160, fee: U256) -> Result<Self::LiquidityInfo, Error<T>> {
+		EVMCurrencyAdapter::<()>::withdraw_fee(who, fee)
+	}
+
+	fn correct_and_deposit_fee(
+		who: &H160,
+		corrected_fee: U256,
+		already_withdrawn: Self::LiquidityInfo,
+	) {
+		<EVMCurrencyAdapter<()> as OnChargeEVMTransaction<T>>::correct_and_deposit_fee(
+			who,
+			corrected_fee,
+			already_withdrawn,
+		)
+	}
+
+	fn pay_priority_fee(tip: U256) {
+		let author = Pallet::<T>::find_author();
+		let account_balance = T::RingBalanceAdapter::evm_balance(&author);
+		let new_account_balance = account_balance.saturating_add(tip);
+		T::RingBalanceAdapter::mutate_evm_balance(&author, new_account_balance);
+	}
+}
+
 /// Ensure that the origin is root.
 pub struct EnsureAddressRoot<AccountId>(sp_std::marker::PhantomData<AccountId>);
 impl<OuterOrigin, AccountId> EnsureAddressOrigin<OuterOrigin> for EnsureAddressRoot<AccountId>
@@ -196,7 +227,7 @@ impl Config for Test {
 	type GasWeightMapping = ();
 	type IntoAccountId = ConcatConverter<Self::AccountId>;
 	type KtonBalanceAdapter = MockBalanceAdapter<Self>;
-	type OnChargeTransaction = EVMCurrencyAdapter<()>;
+	type OnChargeTransaction = ();
 	type PrecompilesType = ();
 	type PrecompilesValue = ();
 	type RingBalanceAdapter = MockBalanceAdapter<Self>;
@@ -338,7 +369,7 @@ fn find_author() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn author_should_get_tip() {
 	new_test_ext().execute_with(|| {
 		let author = EVM::find_author();
@@ -410,7 +441,6 @@ fn refunds_should_work() {
 }
 
 #[test]
-#[ignore]
 fn refunds_and_priority_should_work() {
 	new_test_ext().execute_with(|| {
 		let author = EVM::find_author();
