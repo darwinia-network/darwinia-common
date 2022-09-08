@@ -522,7 +522,7 @@ impl<T: Config> SortedListProvider<T::AccountId> for UseNominatorsMap<T> {
 	}
 
 	fn count() -> u32 {
-		<CounterForNominators<T>>::get()
+		<Nominators<T>>::count()
 	}
 
 	fn contains(id: &T::AccountId) -> bool {
@@ -542,7 +542,7 @@ impl<T: Config> SortedListProvider<T::AccountId> for UseNominatorsMap<T> {
 		// nothing to do on remove.
 	}
 
-	fn regenerate(
+	fn unsafe_regenerate(
 		_: impl IntoIterator<Item = T::AccountId>,
 		_: Box<dyn Fn(&T::AccountId) -> VoteWeight>,
 	) -> u32 {
@@ -554,13 +554,9 @@ impl<T: Config> SortedListProvider<T::AccountId> for UseNominatorsMap<T> {
 		Ok(())
 	}
 
-	fn clear(maybe_count: Option<u32>) -> u32 {
-		<Nominators<T>>::remove_all(maybe_count);
-		if let Some(count) = maybe_count {
-			<CounterForNominators<T>>::mutate(|noms| *noms - count);
-			count
-		} else {
-			<CounterForNominators<T>>::take()
-		}
+	fn unsafe_clear() {
+		// NOTE: Caller must ensure this doesn't lead to too many storage accesses. This is a
+		// condition of SortedListProvider::unsafe_clear.
+		<Nominators<T>>::remove_all();
 	}
 }
