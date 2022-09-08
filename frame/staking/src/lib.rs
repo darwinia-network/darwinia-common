@@ -351,16 +351,16 @@ pub mod pallet {
 
 		/// Something that provides the election functionality.
 		type ElectionProvider: ElectionProvider<
-			Self::AccountId,
-			Self::BlockNumber,
+			AccountId = Self::AccountId,
+			BlockNumber = Self::BlockNumber,
 			// we only accept an election provider that has staking as data provider.
 			DataProvider = Pallet<Self>,
 		>;
 
 		/// Something that provides the election functionality at genesis.
 		type GenesisElectionProvider: ElectionProvider<
-			Self::AccountId,
-			Self::BlockNumber,
+			AccountId = Self::AccountId,
+			BlockNumber = Self::BlockNumber,
 			DataProvider = Pallet<Self>,
 		>;
 

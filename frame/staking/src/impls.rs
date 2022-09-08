@@ -1087,7 +1087,10 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-impl<T: Config> ElectionDataProvider<AccountId<T>, BlockNumberFor<T>> for Pallet<T> {
+impl<T: Config> ElectionDataProvider for Pallet<T> {
+	type AccountId = AccountId<T>;
+	type BlockNumber = BlockNumberFor<T>;
+
 	const MAXIMUM_VOTES_PER_VOTER: u32 = T::MAX_NOMINATIONS;
 
 	fn desired_targets() -> data_provider::Result<u32> {
