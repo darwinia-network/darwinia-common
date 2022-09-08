@@ -60,8 +60,8 @@ use fp_evm::FeeCalculator;
 use frame_support::{log, traits::KeyOwnerProofSystem, weights::GetDispatchInfo};
 use frame_system::{
 	offchain::{AppCrypto, CreateSignedTransaction, SendTransactionTypes, SigningTypes},
-	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
-	CheckWeight, EnsureRoot,
+	ChainContext, CheckEra, CheckGenesis, CheckNonZeroSender, CheckNonce, CheckSpecVersion,
+	CheckTxVersion, CheckWeight, EnsureRoot,
 };
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
 use pallet_transaction_payment::ChargeTransactionPayment;
@@ -91,6 +91,7 @@ pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 pub type SignedBlock = generic::SignedBlock<Block>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
+	CheckNonZeroSender::<Runtime>,
 	CheckSpecVersion<Runtime>,
 	CheckTxVersion<Runtime>,
 	CheckGenesis<Runtime>,
@@ -271,6 +272,7 @@ where
 			.saturating_sub(1);
 		let tip = 0;
 		let extra: SignedExtra = (
+			CheckNonZeroSender::<Runtime>::new(),
 			CheckSpecVersion::<Runtime>::new(),
 			CheckTxVersion::<Runtime>::new(),
 			CheckGenesis::<Runtime>::new(),
