@@ -14,13 +14,13 @@ version     = "2.9.4"
 milagro_bls = { default-features = false, git = "https://github.com/darwinia-network/milagro_bls" }
 num_enum    = { default-features = false, version = "0.5.3" }
 # paritytech
-sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
 # darwinia-network
 darwinia-evm                  = { default-features = false, path = "../.." }
 darwinia-evm-precompile-utils = { default-features = false, path = "../utils" }
 dp-contract                   = { default-features = false, path = "../../../../../primitives/contract" }
 # frontier
-fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
+fp-evm = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.5" }
 
 [features]
 default = ["std"]
