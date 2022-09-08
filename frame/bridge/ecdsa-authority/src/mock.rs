@@ -21,7 +21,7 @@ use core::iter;
 // --- crates.io ---
 use libsecp256k1::{PublicKey, SecretKey};
 // --- paritytech ---
-use frame_support::traits::{Everything, GenesisBuild, OnInitialize};
+use frame_support::traits::{ConstU32, Everything, GenesisBuild, OnInitialize};
 use frame_system::mocking::*;
 use sp_io::{hashing, TestExternalities};
 use sp_runtime::{
@@ -73,7 +73,6 @@ impl frame_system::Config for Test {
 
 frame_support::parameter_types! {
 	pub const ChainId: &'static [u8] = b"46";
-	pub const MaxAuthorities: u32 = 3;
 	pub const MaxPendingPeriod: BlockNumber = 5;
 	pub const SignThreshold: Perbill = Perbill::from_percent(60);
 	pub const SyncInterval: BlockNumber = 3;
@@ -82,7 +81,7 @@ frame_support::parameter_types! {
 impl Config for Test {
 	type ChainId = ChainId;
 	type Event = Event;
-	type MaxAuthorities = MaxAuthorities;
+	type MaxAuthorities = ConstU32<3>;
 	type MaxPendingPeriod = MaxPendingPeriod;
 	type MessageRoot = MessageRoot;
 	type SignThreshold = SignThreshold;
