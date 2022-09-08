@@ -91,7 +91,7 @@ pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 pub type SignedBlock = generic::SignedBlock<Block>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
-	CheckNonZeroSender::<Runtime>,
+	CheckNonZeroSender<Runtime>,
 	CheckSpecVersion<Runtime>,
 	CheckTxVersion<Runtime>,
 	CheckGenesis<Runtime>,

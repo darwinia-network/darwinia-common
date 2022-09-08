@@ -34,8 +34,8 @@ use frame_support::{
 	assert_ok, parameter_types,
 	storage::IterableStorageMap,
 	traits::{
-		Currency, Everything, FindAuthor, GenesisBuild, Get, Imbalance, OnFinalize, OnInitialize,
-		OnUnbalanced, OneSessionHandler, UnixTime,
+		ConstU32, Currency, Everything, FindAuthor, GenesisBuild, Get, Imbalance, OnFinalize,
+		OnInitialize, OnUnbalanced, OneSessionHandler, UnixTime,
 	},
 	weights::constants::RocksDbWeight,
 	PalletId, StorageValue,
@@ -135,6 +135,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = AccountIndex;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();

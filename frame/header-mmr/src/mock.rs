@@ -23,7 +23,7 @@ use codec::Encode;
 // --- github.com ---
 use mmr::MMRStore;
 // --- paritytech ---
-use frame_support::traits::{Everything, OnFinalize, OnInitialize};
+use frame_support::traits::{ConstU32, Everything, OnFinalize, OnInitialize};
 use frame_system::mocking::*;
 use sp_core::{
 	offchain::{testing::TestOffchainExt, OffchainDbExt, OffchainWorkerExt},
@@ -60,6 +60,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();

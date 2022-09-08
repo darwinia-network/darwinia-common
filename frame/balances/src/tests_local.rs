@@ -24,8 +24,8 @@ use scale_info::TypeInfo;
 use frame_support::{
 	assert_err, assert_noop, assert_ok, assert_storage_noop, parameter_types,
 	traits::{
-		BalanceStatus, Currency, Everything, ExistenceRequirement, GenesisBuild, Imbalance,
-		LockIdentifier, LockableCurrency, NamedReservableCurrency, ReservableCurrency,
+		BalanceStatus, ConstU32, Currency, Everything, ExistenceRequirement, GenesisBuild,
+		Imbalance, LockIdentifier, LockableCurrency, NamedReservableCurrency, ReservableCurrency,
 		StorageMapShim, WithdrawReasons,
 	},
 	weights::{DispatchInfo, IdentityFee, Weight},
@@ -68,6 +68,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = Balance;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();

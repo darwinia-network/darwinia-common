@@ -22,7 +22,7 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 // --- paritytech ---
-use frame_support::traits::{Everything, GenesisBuild, OnFinalize, OnInitialize};
+use frame_support::traits::{ConstU32, Everything, GenesisBuild, OnFinalize, OnInitialize};
 use frame_system::{mocking::*, EnsureRoot};
 use sp_core::H256;
 use sp_io::{hashing, TestExternalities};
@@ -67,6 +67,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = Index;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();

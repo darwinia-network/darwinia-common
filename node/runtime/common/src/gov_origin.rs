@@ -1,6 +1,6 @@
 // --- paritytech ---
-use frame_system::EnsureRoot;
 use frame_support::traits::EnsureOneOf;
+use frame_system::EnsureRoot;
 use pallet_collective::{EnsureProportionAtLeast, EnsureProportionMoreThan};
 use sp_core::u32_trait::{_1, _2, _3, _5};
 // --- darwinia-network ---

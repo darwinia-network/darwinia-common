@@ -26,7 +26,10 @@ use scale_info::TypeInfo;
 use bp_messages::source_chain::SendMessageArtifacts;
 use bp_runtime::{derive_account_id, SourceAccount};
 use frame_support::{
-	assert_err, assert_ok, dispatch::PostDispatchInfo, traits::Everything, PalletId,
+	assert_err, assert_ok,
+	dispatch::PostDispatchInfo,
+	traits::{ConstU32, Everything},
+	PalletId,
 };
 use frame_system::{mocking::*, RawOrigin};
 use sp_runtime::{
@@ -90,6 +93,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();

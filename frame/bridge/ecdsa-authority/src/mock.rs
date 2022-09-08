@@ -61,6 +61,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = Index;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();
