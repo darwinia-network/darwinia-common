@@ -109,7 +109,7 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	ChainContext<Runtime>,
 	Runtime,
-	AllPallets,
+	AllPalletsWithSystem,
 	CustomOnRuntimeUpgrade,
 >;
 /// The payload being signed in transactions.

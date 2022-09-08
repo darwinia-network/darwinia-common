@@ -84,7 +84,7 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	ChainContext<Runtime>,
 	Runtime,
-	AllPallets,
+	AllPalletsWithSystem,
 	CustomOnRuntimeUpgrade,
 >;
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
