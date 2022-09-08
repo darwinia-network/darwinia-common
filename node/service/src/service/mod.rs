@@ -525,7 +525,7 @@ where
 		)?;
 	let justification_import = grandpa_block_import.clone();
 	let (babe_import, babe_link) = sc_consensus_babe::block_import(
-		BabeConfig::get_or_compute(&*client)?,
+		BabeConfig::get(&*client)?,
 		grandpa_block_import,
 		client.clone(),
 	)?;
