@@ -369,7 +369,6 @@ fn find_author() {
 }
 
 #[test]
-// #[ignore]
 fn author_should_get_tip() {
 	new_test_ext().execute_with(|| {
 		let author = EVM::find_author();
