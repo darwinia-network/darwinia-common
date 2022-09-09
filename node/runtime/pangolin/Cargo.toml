@@ -37,7 +37,6 @@ dp-asset                              = { default-features = false, path = "../.
 dp-contract                           = { default-features = false, path = "../../../primitives/contract" }
 dp-evm-tracer                         = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
 dp-relayer-game                       = { default-features = false, path = "../../../primitives/relayer-game" }
-dp-s2s                                = { default-features = false, path = "../../../primitives/s2s" }
 drml-common-runtime                   = { default-features = false, path = "../common" }
 drml-primitives                       = { default-features = false, path = "../../primitives" }
 ethereum-primitives                   = { default-features = false, path = "../../../primitives/ethereum" }
@@ -160,7 +159,6 @@ std = [
 	"dp-contract/std",
 	"dp-evm-tracer/std",
 	"dp-relayer-game/std",
-	"dp-s2s/std",
 	"drml-primitives/std",
 	"drml-common-runtime/std",
 	"ethereum-primitives/std",

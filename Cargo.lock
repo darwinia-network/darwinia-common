@@ -1983,21 +1983,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dp-s2s"
-version = "2.9.4"
-dependencies = [
- "array-bytes",
- "bp-message-dispatch",
- "bp-runtime",
- "dp-asset",
- "dp-contract",
- "parity-scale-codec",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "drml"
 version = "2.9.4"
 dependencies = [
@@ -6202,7 +6187,6 @@ dependencies = [
  "dp-contract",
  "dp-evm-tracer",
  "dp-relayer-game",
- "dp-s2s",
  "drml-common-runtime",
  "drml-primitives",
  "ethereum-primitives",
@@ -6310,7 +6294,6 @@ dependencies = [
  "darwinia-support",
  "dp-asset",
  "dp-evm-tracer",
- "dp-s2s",
  "drml-common-runtime",
  "drml-primitives",
  "fp-evm",

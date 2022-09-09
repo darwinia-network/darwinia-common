@@ -32,7 +32,6 @@ darwinia-staking                      = { default-features = false, path = "../.
 darwinia-support                      = { default-features = false, path = "../../../frame/support" }
 dp-asset                              = { default-features = false, path = "../../../primitives/asset" }
 dp-evm-tracer                         = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
-dp-s2s                                = { default-features = false, path = "../../../primitives/s2s" }
 drml-common-runtime                   = { default-features = false, path = "../common" }
 drml-primitives                       = { default-features = false, path = "../../primitives" }
 module-transaction-pause              = { default-features = false, path = "../../../frame/transaction-pause" }
@@ -133,7 +132,6 @@ std = [
 	"darwinia-support/std",
 	"dp-asset/std",
 	"dp-evm-tracer/std",
-	"dp-s2s/std",
 	"drml-primitives/std",
 	"drml-common-runtime/std",
 	"module-transaction-pause/std",

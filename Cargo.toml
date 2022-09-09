@@ -37,7 +37,6 @@ members = [
 	"primitives/merkle-patricia-trie",
 	"primitives/message",
 	"primitives/relayer-game",
-	"primitives/s2s",
 ]
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates
