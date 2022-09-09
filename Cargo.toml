@@ -29,7 +29,6 @@ members = [
 	"frame/wormhole/backing/ethereum",
 	"frame/wormhole/backing/parachain",
 	"frame/wormhole/backing/tron",
-	"primitives/contract",
 	"primitives/ethereum",
 	"primitives/evm-trace/ext",
 	"primitives/evm-trace/tracer",

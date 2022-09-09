@@ -33,7 +33,6 @@ darwinia-relay-authority              = { default-features = false, path = "../.
 darwinia-relayer-game                 = { default-features = false, path = "../../../frame/bridge/relayer-game" }
 darwinia-staking                      = { default-features = false, path = "../../../frame/staking" }
 darwinia-support                      = { default-features = false, path = "../../../frame/support" }
-dp-contract                           = { default-features = false, path = "../../../primitives/contract" }
 dp-evm-tracer                         = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
 dp-relayer-game                       = { default-features = false, path = "../../../primitives/relayer-game" }
 drml-common-runtime                   = { default-features = false, path = "../common" }
@@ -154,7 +153,6 @@ std = [
 	"darwinia-relayer-game/std",
 	"darwinia-staking/std",
 	"darwinia-support/std",
-	"dp-contract/std",
 	"dp-evm-tracer/std",
 	"dp-relayer-game/std",
 	"drml-primitives/std",

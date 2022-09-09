@@ -28,7 +28,6 @@ pub mod traits;
 pub mod balance {
 	pub use crate::structs::{StakingLock, Unbonding};
 }
-use sp_std::{vec, vec::Vec};
 
 // TODO: Should we move this to `s2s-primitives`?
 pub mod s2s {
@@ -44,40 +43,11 @@ pub mod s2s {
 		traits::{BadOrigin, Convert},
 		DispatchError,
 	};
-	use sp_std::{cmp::PartialEq, vec::Vec};
-
-	// RelayMessageSender send message to pallet-messages
-	pub trait RelayMessageSender {
-		fn encode_send_message(
-			message_pallet_index: u32,
-			lane_id: LaneId,
-			payload: Vec<u8>,
-			fee: u128,
-		) -> Result<Vec<u8>, &'static str>;
-	}
+	use sp_std::cmp::PartialEq;
 
 	pub trait LatestMessageNoncer {
 		fn outbound_latest_generated_nonce(lane_id: LaneId) -> MessageNonce;
 		fn inbound_latest_received_nonce(lane_id: LaneId) -> MessageNonce;
-	}
-
-	pub trait OutboundMessenger<AccountId> {
-		fn check_lane_id(lane_id: &LaneId) -> bool;
-		fn get_valid_message_sender(nonce: MessageNonce) -> Result<AccountId, &'static str>;
-	}
-
-	pub fn ensure_source_root<AccountId, Converter>(
-		chain_id: ChainId,
-		account: &AccountId,
-	) -> Result<(), DispatchError>
-	where
-		AccountId: PartialEq + Encode,
-		Converter: Convert<H256, AccountId>,
-	{
-		let hex_id = derive_account_id::<AccountId>(chain_id, SourceAccount::Root);
-		let target_id = Converter::convert(hex_id);
-		ensure!(&target_id == account, BadOrigin);
-		Ok(())
 	}
 
 	pub fn ensure_source_account<AccountId, Converter>(
@@ -96,22 +66,3 @@ pub mod s2s {
 		Ok(())
 	}
 }
-
-pub mod mapping_token {
-	use super::*;
-	pub fn mapping_token_name(original_name: Vec<u8>, backing_chain_name: Vec<u8>) -> Vec<u8> {
-		let mut mapping_name = original_name;
-		mapping_name.push(b'[');
-		mapping_name.extend(backing_chain_name);
-		mapping_name.push(b'>');
-		mapping_name
-	}
-
-	pub fn mapping_token_symbol(original_symbol: Vec<u8>) -> Vec<u8> {
-		let mut mapping_symbol = vec![b'x'];
-		mapping_symbol.extend(original_symbol);
-		mapping_symbol
-	}
-}
-
-pub type ChainName = Vec<u8>;

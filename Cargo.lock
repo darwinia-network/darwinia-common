@@ -1547,7 +1547,6 @@ version = "2.9.4"
 dependencies = [
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
- "dp-contract",
  "fp-evm",
  "milagro_bls",
  "num_enum",
@@ -1602,7 +1601,6 @@ dependencies = [
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
  "darwinia-support",
- "dp-contract",
  "ethereum",
  "fp-evm",
  "fp-self-contained",
@@ -1691,12 +1689,13 @@ version = "2.9.4"
 dependencies = [
  "array-bytes",
  "darwinia-ethereum",
- "dp-contract",
+ "ethabi",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
+ "sp-std",
 ]
 
 [[package]]
@@ -1911,18 +1910,6 @@ name = "downcast-rs"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
-
-[[package]]
-name = "dp-contract"
-version = "2.9.4"
-dependencies = [
- "array-bytes",
- "bp-messages",
- "ethabi",
- "ethereum-primitives",
- "ethereum-types",
- "sp-std",
-]
 
 [[package]]
 name = "dp-evm-trace-ext"
@@ -6172,7 +6159,6 @@ dependencies = [
  "darwinia-relayer-game",
  "darwinia-staking",
  "darwinia-support",
- "dp-contract",
  "dp-evm-tracer",
  "dp-relayer-game",
  "drml-common-runtime",
