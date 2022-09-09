@@ -1913,22 +1913,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 
 [[package]]
-name = "dp-asset"
-version = "2.9.4"
-dependencies = [
- "ethereum-types",
- "parity-scale-codec",
- "scale-info",
- "sha3 0.9.1",
-]
-
-[[package]]
 name = "dp-contract"
 version = "2.9.4"
 dependencies = [
  "array-bytes",
  "bp-messages",
- "dp-asset",
  "ethabi",
  "ethereum-primitives",
  "ethereum-types",
@@ -6183,7 +6172,6 @@ dependencies = [
  "darwinia-relayer-game",
  "darwinia-staking",
  "darwinia-support",
- "dp-asset",
  "dp-contract",
  "dp-evm-tracer",
  "dp-relayer-game",
@@ -6292,7 +6280,6 @@ dependencies = [
  "darwinia-message-gadget",
  "darwinia-staking",
  "darwinia-support",
- "dp-asset",
  "dp-evm-tracer",
  "drml-common-runtime",
  "drml-primitives",

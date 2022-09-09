@@ -30,7 +30,6 @@ darwinia-evm-precompile-transfer      = { default-features = false, path = "../.
 darwinia-message-gadget               = { default-features = false, path = "../../../frame/bridge/message-gadget" }
 darwinia-staking                      = { default-features = false, path = "../../../frame/staking" }
 darwinia-support                      = { default-features = false, path = "../../../frame/support" }
-dp-asset                              = { default-features = false, path = "../../../primitives/asset" }
 dp-evm-tracer                         = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
 drml-common-runtime                   = { default-features = false, path = "../common" }
 drml-primitives                       = { default-features = false, path = "../../primitives" }
@@ -130,7 +129,6 @@ std = [
 	"darwinia-message-gadget/std",
 	"darwinia-staking/std",
 	"darwinia-support/std",
-	"dp-asset/std",
 	"dp-evm-tracer/std",
 	"drml-primitives/std",
 	"drml-common-runtime/std",
