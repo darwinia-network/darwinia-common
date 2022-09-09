@@ -28,6 +28,7 @@ pub mod weight;
 pub use weight::WeightInfo;
 
 // --- crates.io ---
+use codec::Encode;
 use ethereum_types::H256;
 // --- paritytech ---
 use bp_message_dispatch::CallOrigin;
@@ -35,7 +36,7 @@ use bp_messages::{
 	source_chain::{MessagesBridge, OnDeliveryConfirmed},
 	BridgeMessageId, DeliveredMessages, LaneId, MessageNonce,
 };
-use bp_runtime::{messages::DispatchFeePayment, ChainId};
+use bp_runtime::{derive_account_id, messages::DispatchFeePayment, ChainId, SourceAccount};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -46,12 +47,10 @@ use frame_support::{
 };
 use frame_system::{ensure_signed, pallet_prelude::*, RawOrigin};
 use sp_runtime::{
-	traits::{AccountIdConversion, Convert, Saturating, Zero},
-	DispatchErrorWithPostInfo, MultiSignature, MultiSigner,
+	traits::{AccountIdConversion, BadOrigin, Convert, Saturating, Zero},
+	DispatchError, DispatchErrorWithPostInfo, MultiSignature, MultiSigner,
 };
-use sp_std::prelude::*;
-// --- darwinia-network ---
-use darwinia_support::s2s::{ensure_source_account, LatestMessageNoncer};
+use sp_std::{cmp::PartialEq, prelude::*};
 
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 pub type RingBalance<T> = <<T as Config>::RingCurrency as Currency<AccountId<T>>>::Balance;
@@ -416,4 +415,24 @@ pub mod pallet {
 			<T as frame_system::Config>::DbWeight::get().reads_writes(1, 1)
 		}
 	}
+}
+
+pub trait LatestMessageNoncer {
+	fn outbound_latest_generated_nonce(lane_id: LaneId) -> MessageNonce;
+	fn inbound_latest_received_nonce(lane_id: LaneId) -> MessageNonce;
+}
+
+pub fn ensure_source_account<AccountId, Converter>(
+	chain_id: ChainId,
+	source_account: AccountId,
+	derived_account: &AccountId,
+) -> Result<(), DispatchError>
+where
+	AccountId: PartialEq + Encode,
+	Converter: Convert<H256, AccountId>,
+{
+	let hex_id = derive_account_id::<AccountId>(chain_id, SourceAccount::Account(source_account));
+	let target_id = Converter::convert(hex_id);
+	ensure!(&target_id == derived_account, BadOrigin);
+	Ok(())
 }

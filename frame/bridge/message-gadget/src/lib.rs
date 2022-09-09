@@ -20,12 +20,13 @@
 
 // --- core ---
 use core::marker::PhantomData;
+// --- crates.io ---
+use sha3::{Digest, Keccak256};
 // --- darwinia-network ---
 use darwinia_ethereum::InternalTransactHandler;
 // --- paritytech ---
 use frame_support::{log, pallet_prelude::*, traits::Get};
 use frame_system::pallet_prelude::*;
-use sha3::{Digest, Keccak256};
 use sp_core::{H160, H256};
 
 #[frame_support::pallet]
