@@ -1687,13 +1687,13 @@ dependencies = [
 name = "darwinia-message-gadget"
 version = "2.9.4"
 dependencies = [
- "array-bytes",
  "darwinia-ethereum",
  "ethabi",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
  "scale-info",
+ "sha3 0.9.1",
  "sp-core",
  "sp-std",
 ]

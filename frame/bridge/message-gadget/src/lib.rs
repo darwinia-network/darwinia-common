@@ -18,8 +18,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod types;
-
 // --- core ---
 use core::marker::PhantomData;
 // --- darwinia-network ---
@@ -27,6 +25,7 @@ use darwinia_ethereum::InternalTransactHandler;
 // --- paritytech ---
 use frame_support::{log, pallet_prelude::*, traits::Get};
 use frame_system::pallet_prelude::*;
+use sha3::{Digest, Keccak256};
 use sp_core::{H160, H256};
 
 #[frame_support::pallet]
@@ -95,7 +94,7 @@ where
 		let raw_message_root = unwrap_or_return!(
 			<darwinia_ethereum::Pallet<T>>::read_only_call(
 				<CommitmentContract<T>>::get(),
-				unwrap_or_return!(types::commitment(), "Fail to encode `commitment` ABI, return.")
+				Keccak256::digest(b"commitment()")[0..4].to_vec()
 			),
 			"Fail to read message root from DVM, return."
 		);
