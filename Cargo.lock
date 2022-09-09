@@ -2989,41 +2989,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "from-substrate-issuing"
-version = "2.9.4"
-dependencies = [
- "array-bytes",
- "bp-message-dispatch",
- "bp-messages",
- "bp-runtime",
- "darwinia-balances",
- "darwinia-ethereum",
- "darwinia-evm",
- "darwinia-evm-precompile-bridge-s2s",
- "darwinia-evm-precompile-utils",
- "darwinia-support",
- "dp-asset",
- "dp-contract",
- "dp-s2s",
- "ethereum",
- "ethereum-primitives",
- "ethereum-types",
- "fp-evm",
- "fp-self-contained",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "libsecp256k1 0.5.0",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "sha3 0.9.1",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "fs-swap"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6274,7 +6239,6 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "from-substrate-issuing",
  "module-transaction-pause",
  "moonbeam-rpc-primitives-debug",
  "pallet-authority-discovery",
@@ -6431,7 +6395,6 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder",
- "to-substrate-backing",
 ]
 
 [[package]]
@@ -10042,34 +10005,6 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "to-substrate-backing"
-version = "2.9.4"
-dependencies = [
- "array-bytes",
- "bp-message-dispatch",
- "bp-messages",
- "bp-runtime",
- "darwinia-balances",
- "darwinia-support",
- "dp-asset",
- "dp-contract",
- "dp-s2s",
- "ethereum-primitives",
- "ethereum-types",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "serde_json",
- "sp-io",
  "sp-runtime",
  "sp-std",
 ]

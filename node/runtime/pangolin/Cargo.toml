@@ -42,7 +42,6 @@ dp-s2s                                = { default-features = false, path = "../.
 drml-common-runtime                   = { default-features = false, path = "../common" }
 drml-primitives                       = { default-features = false, path = "../../primitives" }
 ethereum-primitives                   = { default-features = false, path = "../../../primitives/ethereum" }
-from-substrate-issuing                = { default-features = false, path = "../../../frame/wormhole/issuing/s2s" }
 module-transaction-pause              = { default-features = false, path = "../../../frame/transaction-pause" }
 to-ethereum-backing                   = { default-features = false, path = "../../../frame/wormhole/backing/ethereum" }
 to-parachain-backing                  = { default-features = false, path = "../../../frame/wormhole/backing/parachain" }
@@ -167,7 +166,6 @@ std = [
 	"drml-primitives/std",
 	"drml-common-runtime/std",
 	"ethereum-primitives/std",
-	"from-substrate-issuing/std",
 	"module-transaction-pause/std",
 	"to-ethereum-backing/std",
 	"to-tron-backing/std",
@@ -259,7 +257,6 @@ runtime-benchmarks = [
 	# darwinia-network
 	"darwinia-ethereum/runtime-benchmarks",
 	"darwinia-evm/runtime-benchmarks",
-	"from-substrate-issuing/runtime-benchmarks",
 	"pallet-fee-market/runtime-benchmarks",
 	"to-parachain-backing/runtime-benchmarks",
 	"drml-common-runtime/runtime-benchmarks",

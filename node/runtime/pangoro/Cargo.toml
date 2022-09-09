@@ -36,7 +36,6 @@ dp-s2s                                = { default-features = false, path = "../.
 drml-common-runtime                   = { default-features = false, path = "../common" }
 drml-primitives                       = { default-features = false, path = "../../primitives" }
 module-transaction-pause              = { default-features = false, path = "../../../frame/transaction-pause" }
-to-substrate-backing                  = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 # messages
 bp-header-chain        = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.4" }
 bp-message-dispatch    = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.4" }
@@ -138,7 +137,6 @@ std = [
 	"drml-primitives/std",
 	"drml-common-runtime/std",
 	"module-transaction-pause/std",
-	"to-substrate-backing/std",
 	# messages
 	"bp-header-chain/std",
 	"bp-message-dispatch/std",

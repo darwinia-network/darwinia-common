@@ -20,12 +20,9 @@ The Darwinia Runtime Module Library (DRML) is a darwinia.network maintained coll
 	- Pallet that provides the staking-related features, nominating, validating etc.
 - [darwinia-support](./frame/support)
 	- Basic utility module.
-- [from-substrate-issuing](./frame/wormhole/issuing/s2s)
 	- Pallet of issuing assets on the Substrate base network.
 - [to-ethereum-backing](./frame/wormhole/backing/ethereum)
 	- Pallet of backing assets on the Ethereum network.
-- [to-substrate-backing](./frame/wormhole/backing/s2s)
-	- Pallet of backing assets on the Substrate base network.
 - [to-tron-backing](./frame/wormhole/backing/tron)
 	- Pallet of backing assets on the Tron network.
 
