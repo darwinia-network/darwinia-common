@@ -1555,27 +1555,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-evm-precompile-bridge-s2s"
-version = "2.9.4"
-dependencies = [
- "bp-message-dispatch",
- "bp-runtime",
- "darwinia-evm",
- "darwinia-evm-precompile-utils",
- "darwinia-support",
- "dp-contract",
- "dp-s2s",
- "fp-evm",
- "frame-support",
- "num_enum",
- "parity-scale-codec",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-evm-precompile-dispatch"
 version = "2.9.4"
 dependencies = [
@@ -6209,7 +6188,6 @@ dependencies = [
  "darwinia-ecdsa-authority",
  "darwinia-ethereum",
  "darwinia-evm",
- "darwinia-evm-precompile-bridge-s2s",
  "darwinia-evm-precompile-dispatch",
  "darwinia-evm-precompile-kton",
  "darwinia-evm-precompile-state-storage",

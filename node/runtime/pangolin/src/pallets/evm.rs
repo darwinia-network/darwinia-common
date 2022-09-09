@@ -24,7 +24,6 @@ use darwinia_ethereum::{
 use darwinia_evm::{
 	runner::stack::Runner, Config, EVMCurrencyAdapter, EnsureAddressTruncated, GasWeightMapping,
 };
-use darwinia_evm_precompile_bridge_s2s::Sub2SubBridge;
 use darwinia_evm_precompile_dispatch::Dispatch;
 use darwinia_evm_precompile_kton::{Erc20Metadata, KtonERC20};
 use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
@@ -144,7 +143,6 @@ where
 	KtonERC20<R, KtonERC20MetaData>: Precompile,
 	R: darwinia_ethereum::Config,
 	StateStorage<R, StorageFilter>: Precompile,
-	Sub2SubBridge<R, ToPangoroMessageSender, bm_pangoro::ToPangoroOutboundPayLoad>: Precompile,
 	Transfer<R>: Precompile,
 {
 	fn execute(
@@ -179,12 +177,6 @@ where
 			// FIXME: Change the transfer precompile address after https://github.com/darwinia-network/darwinia-common/issues/1259
 			a if a == addr(21) =>
 				Some(<Transfer<R>>::execute(input, target_gas, context, is_static)),
-			// TODO: Delete Sub2SubBridge precompiles in the futures.
-			a if a == addr(24) => Some(<Sub2SubBridge<
-				R,
-				ToPangoroMessageSender,
-				bm_pangoro::ToPangoroOutboundPayLoad,
-			>>::execute(input, target_gas, context, is_static)),
 			// There are two Dispatch precompile instance now, the 25-Dispatch reserved to
 			// keep the compatibility, which will be removed in the future.
 			a if a == addr(25) =>

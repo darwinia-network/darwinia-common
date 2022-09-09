@@ -17,7 +17,6 @@ members = [
 	"frame/dvm/ethereum",
 	"frame/dvm/evm",
 	"frame/dvm/evm/precompiles/bls12381",
-	"frame/dvm/evm/precompiles/bridge/s2s",
 	"frame/dvm/evm/precompiles/dispatch",
 	"frame/dvm/evm/precompiles/kton",
 	"frame/dvm/evm/precompiles/state-storage",

@@ -23,7 +23,6 @@ darwinia-bridge-ethereum              = { default-features = false, path = "../.
 darwinia-ecdsa-authority              = { default-features = false, path = "../../../frame/bridge/ecdsa-authority" }
 darwinia-ethereum                     = { default-features = false, path = "../../../frame/dvm/ethereum" }
 darwinia-evm                          = { default-features = false, path = "../../../frame/dvm/evm" }
-darwinia-evm-precompile-bridge-s2s    = { default-features = false, path = "../../../frame/dvm/evm/precompiles/bridge/s2s" }
 darwinia-evm-precompile-dispatch      = { default-features = false, path = "../../../frame/dvm/evm/precompiles/dispatch" }
 darwinia-evm-precompile-kton          = { default-features = false, path = "../../../frame/dvm/evm/precompiles/kton" }
 darwinia-evm-precompile-state-storage = { default-features = false, path = "../../../frame/dvm/evm/precompiles/state-storage" }
@@ -147,7 +146,6 @@ std = [
 	"darwinia-ecdsa-authority/std",
 	"darwinia-ethereum/std",
 	"darwinia-evm/std",
-	"darwinia-evm-precompile-bridge-s2s/std",
 	"darwinia-evm-precompile-dispatch/std",
 	"darwinia-evm-precompile-kton/std",
 	"darwinia-evm-precompile-state-storage/std",
