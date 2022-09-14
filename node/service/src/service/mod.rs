@@ -473,7 +473,7 @@ where
 	use sp_consensus::CanAuthorWithNativeVersion;
 
 	if config.keystore_remote.is_some() {
-		return Err(ServiceError::Other("Remote Keystores are not supported.".to_string()));
+		return Err(ServiceError::Other("Remote Keystores are not supported.".into()));
 	}
 
 	set_prometheus_registry(config)?;

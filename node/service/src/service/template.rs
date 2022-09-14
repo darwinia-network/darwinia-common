@@ -95,7 +95,7 @@ pub fn new_partial(
 	use sc_service::error::Error as ServiceError;
 
 	if config.keystore_remote.is_some() {
-		return Err(ServiceError::Other("Remote Keystores are not supported.".to_string()));
+		return Err(ServiceError::Other("Remote Keystores are not supported.".into()));
 	}
 
 	let executor = <NativeElseWasmExecutor<Executor>>::new(
