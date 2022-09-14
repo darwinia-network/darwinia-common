@@ -148,8 +148,15 @@ where
 	let name = config.network.node_name.clone();
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let auth_disc_publish_non_global_ips = config.network.allow_non_globals_in_dht;
+	let grandpa_protocol_name = sc_finality_grandpa::protocol_standard_name(
+		&client.block_hash(0).ok().flatten().expect("Genesis block exists; qed"),
+		&config.chain_spec,
+	);
 
-	config.network.extra_sets.push(sc_finality_grandpa::grandpa_peers_set_config());
+	config
+		.network
+		.extra_sets
+		.push(sc_finality_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
 	// config.network.extra_sets.push(beefy_gadget::beefy_peers_set_config());
 
 	let backoff_authoring_blocks =
@@ -403,6 +410,7 @@ where
 				keystore,
 				local_role: role,
 				telemetry: telemetry.as_ref().map(|x| x.handle()),
+				protocol_name: grandpa_protocol_name,
 			},
 			link: grandpa_link,
 			network,
