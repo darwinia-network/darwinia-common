@@ -1981,7 +1981,11 @@ fn switching_roles() {
 			0,
 		));
 		assert_ok!(Staking::validate(Origin::signed(6), ValidatorPrefs::default()));
-		assert_ok!(Session::set_keys(Origin::signed(6), SessionKeys { other: 6.into() }, Vec::new()));
+		assert_ok!(Session::set_keys(
+			Origin::signed(6),
+			SessionKeys { other: 6.into() },
+			Vec::new()
+		));
 
 		start_active_era(1);
 
@@ -1990,7 +1994,11 @@ fn switching_roles() {
 
 		// 2 decides to be a validator. Consequences:
 		assert_ok!(Staking::validate(Origin::signed(2), ValidatorPrefs::default()));
-		assert_ok!(Session::set_keys(Origin::signed(2), SessionKeys { other: 2.into() }, Vec::new()));
+		assert_ok!(Session::set_keys(
+			Origin::signed(2),
+			SessionKeys { other: 2.into() },
+			Vec::new()
+		));
 		// new stakes:
 		// 10: 1000 self vote
 		// 20: 1000 self vote + 250 vote
@@ -2915,7 +2923,10 @@ fn garbage_collection_on_window_pruning() {
 		let nominated_value = exposure.others.iter().find(|o| o.who == 101).unwrap().ring_balance;
 
 		on_offence_now(
-			&[OffenceDetails { offender: (11, Staking::eras_stakers(now, 11)), reporters: Vec::new() }],
+			&[OffenceDetails {
+				offender: (11, Staking::eras_stakers(now, 11)),
+				reporters: Vec::new(),
+			}],
 			&[Perbill::from_percent(10)],
 		);
 

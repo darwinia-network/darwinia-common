@@ -12,6 +12,7 @@ use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, Convert, Saturating, Zero},
 	Perbill, RuntimeDebug,
 };
+use sp_staking::EraIndex;
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 // --- darwinia-network ---
 use crate::*;
@@ -47,9 +48,10 @@ where
 	/// The portions of nominators stashes that are exposed.
 	pub others: Vec<IndividualExposure<AccountId, RingBalance, KtonBalance>>,
 }
-impl<AccountId, Balance> Default for Exposure<AccountId, Balance>
+impl<AccountId, RingBalance, KtonBalance> Default for Exposure<AccountId, RingBalance, KtonBalance>
 where
-	Balance: HasCompact + Zero,
+	RingBalance: HasCompact + Zero,
+	KtonBalance: HasCompact + Zero,
 {
 	fn default() -> Self {
 		Self {
@@ -91,6 +93,7 @@ pub struct ActiveEraInfo {
 }
 
 /// The ledger of a (bonded) stash.
+#[cfg_attr(test, derive(Default))]
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct StakingLedger<AccountId, RingBalance, KtonBalance, BlockNumber>
 where
@@ -129,9 +132,9 @@ where
 impl<AccountId, RingBalance, KtonBalance, BlockNumber>
 	StakingLedger<AccountId, RingBalance, KtonBalance, BlockNumber>
 where
-	RingBalance: Copy + AtLeast32BitUnsigned + Saturating + Zero,
-	KtonBalance: Copy + AtLeast32BitUnsigned + Saturating + Zero,
-	BlockNumber: Copy + PartialOrd,
+	RingBalance: Copy + Default + AtLeast32BitUnsigned + Saturating + Zero,
+	KtonBalance: Copy + Default + AtLeast32BitUnsigned + Saturating + Zero,
+	BlockNumber: Copy + Default + PartialOrd,
 	TsInMs: PartialOrd,
 {
 	/// Initializes the default object using the given `validator`.
@@ -142,8 +145,8 @@ where
 			active_deposit_ring: Zero::zero(),
 			active_kton: Zero::zero(),
 			deposit_items: Vec::new(),
-			ring_staking_lock: Vec::new(),
-			kton_staking_lock: Vec::new(),
+			ring_staking_lock: Default::default(),
+			kton_staking_lock: Default::default(),
 			claimed_rewards: Vec::new(),
 		}
 	}
@@ -419,8 +422,8 @@ impl<AccountId: Ord> Default for EraRewardPoints<AccountId> {
 }
 
 /// Mode of era-forcing.
-#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Clone, Serialize, Deserialize))]
+#[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Forcing {
 	/// Not forcing anything - just let whatever happen.
 	NotForcing,
@@ -454,9 +457,10 @@ pub struct UnappliedSlash<AccountId, RingBalance, KtonBalance> {
 	/// The amount of payout.
 	pub payout: slashing::RK<RingBalance, KtonBalance>,
 }
-impl<AccountId, Balance> UnappliedSlash<AccountId, Balance>
+impl<AccountId, RingBalance, KtonBalance> UnappliedSlash<AccountId, RingBalance, KtonBalance>
 where
-	Balance: HasCompact + Zero,
+	RingBalance: HasCompact + Zero,
+	KtonBalance: HasCompact + Zero,
 {
 	/// Initializes the default object using the given `validator`.
 	pub fn default_from(validator: AccountId) -> Self {

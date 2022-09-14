@@ -323,7 +323,7 @@ pub mod pallet {
 		traits::{CheckedSub, Saturating, StaticLookup, Zero},
 		Perbill, Percent, SaturatedConversion,
 	};
-	use sp_staking::SessionIndex;
+	use sp_staking::{EraIndex, SessionIndex};
 	use sp_std::prelude::*;
 	// --- darwinia-network ---
 	use crate::*;
@@ -1086,14 +1086,17 @@ pub mod pallet {
 			<Bonded<T>>::insert(&stash, &controller);
 			<Payee<T>>::insert(&stash, payee);
 
-			let ledger = StakingLedger {
-				stash: stash.clone(),
-				claimed_rewards: {
+			let ledger = {
+				let mut l = StakingLedger::default_from(stash.clone());
+
+				l.claimed_rewards = {
 					let current_era = <CurrentEra<T>>::get().unwrap_or(0);
 					let last_reward_era = current_era.saturating_sub(Self::history_depth());
+
 					(last_reward_era..current_era).collect()
-				},
-				..Default::default()
+				};
+
+				l
 			};
 
 			match value {

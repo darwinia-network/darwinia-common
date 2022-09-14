@@ -4,8 +4,6 @@ use frame_system::pallet_prelude::*;
 // --- darwinia-network ---
 use crate::*;
 
-/// Counter for the number of eras that have passed.
-pub type EraIndex = u32;
 /// Counter for the number of "reward" points earned by a given validator.
 pub type RewardPoint = u32;
 

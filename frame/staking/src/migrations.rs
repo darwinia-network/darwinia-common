@@ -1,6 +1,5 @@
 // --- paritytech ---
-use frame_support::{traits::Get, weights::Weight};
-use sp_runtime::traits::Zero;
+use frame_support::weights::Weight;
 // --- darwinia-network ---
 use crate::*;
 

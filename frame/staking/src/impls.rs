@@ -1495,17 +1495,24 @@ impl<T: Config> OnDepositRedeem<AccountId<T>, RingBalance<T>> for Pallet<T> {
 
 			<frame_system::Pallet<T>>::inc_consumers(&stash).map_err(|_| <Error<T>>::BadState)?;
 
-			let ledger = StakingLedger {
-				stash: stash.clone(),
-				active: amount,
-				active_deposit_ring: amount,
-				deposit_items: vec![TimeDepositItem { value: amount, start_time, expire_time }],
-				claimed_rewards: {
+			let ledger = {
+				let mut l = StakingLedger::default_from(stash.clone());
+
+				l.stash = stash.clone();
+				l.active = amount;
+				l.active_deposit_ring = amount;
+				l.active_kton = Zero::zero();
+				l.deposit_items = vec![TimeDepositItem { value: amount, start_time, expire_time }];
+				l.ring_staking_lock = Default::default();
+				l.kton_staking_lock = Default::default();
+				l.claimed_rewards = {
 					let current_era = <CurrentEra<T>>::get().unwrap_or(0);
 					let last_reward_era = current_era.saturating_sub(Self::history_depth());
+
 					(last_reward_era..current_era).collect()
-				},
-				..Default::default()
+				};
+
+				l
 			};
 
 			Self::update_ledger(controller, &ledger);
@@ -1538,6 +1545,7 @@ where
 			crate::log!(warn, "block author not set, this should never happen");
 		}
 	}
+}
 
 /// Means for interacting with a specialized version of the `session` trait.
 ///
