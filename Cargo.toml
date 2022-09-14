@@ -17,7 +17,6 @@ members = [
 	"frame/dvm/ethereum",
 	"frame/dvm/evm",
 	"frame/dvm/evm/precompiles/bls12381",
-	"frame/dvm/evm/precompiles/bridge/s2s",
 	"frame/dvm/evm/precompiles/dispatch",
 	"frame/dvm/evm/precompiles/kton",
 	"frame/dvm/evm/precompiles/state-storage",
@@ -29,18 +28,13 @@ members = [
 	"frame/transaction-pause",
 	"frame/wormhole/backing/ethereum",
 	"frame/wormhole/backing/parachain",
-	"frame/wormhole/backing/s2s",
 	"frame/wormhole/backing/tron",
-	"frame/wormhole/issuing/s2s",
-	"primitives/asset",
-	"primitives/contract",
 	"primitives/ethereum",
 	"primitives/evm-trace/ext",
 	"primitives/evm-trace/tracer",
 	"primitives/merkle-patricia-trie",
 	"primitives/message",
 	"primitives/relayer-game",
-	"primitives/s2s",
 ]
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates

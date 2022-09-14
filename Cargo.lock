@@ -1534,31 +1534,9 @@ version = "2.9.4"
 dependencies = [
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
- "dp-contract",
  "fp-evm",
  "milagro_bls",
  "num_enum",
- "sp-std",
-]
-
-[[package]]
-name = "darwinia-evm-precompile-bridge-s2s"
-version = "2.9.4"
-dependencies = [
- "bp-message-dispatch",
- "bp-runtime",
- "darwinia-evm",
- "darwinia-evm-precompile-utils",
- "darwinia-support",
- "dp-contract",
- "dp-s2s",
- "fp-evm",
- "frame-support",
- "num_enum",
- "parity-scale-codec",
- "sp-core",
- "sp-io",
- "sp-runtime",
  "sp-std",
 ]
 
@@ -1610,7 +1588,6 @@ dependencies = [
  "darwinia-evm",
  "darwinia-evm-precompile-utils",
  "darwinia-support",
- "dp-contract",
  "ethereum",
  "fp-evm",
  "fp-self-contained",
@@ -1697,13 +1674,12 @@ dependencies = [
 name = "darwinia-message-gadget"
 version = "2.9.4"
 dependencies = [
- "array-bytes",
  "darwinia-ethereum",
- "dp-contract",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
  "scale-info",
+ "sha3 0.9.1",
  "sp-core",
 ]
 
@@ -1921,29 +1897,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 
 [[package]]
-name = "dp-asset"
-version = "2.9.4"
-dependencies = [
- "ethereum-types",
- "parity-scale-codec",
- "scale-info",
- "sha3 0.9.1",
-]
-
-[[package]]
-name = "dp-contract"
-version = "2.9.4"
-dependencies = [
- "array-bytes",
- "bp-messages",
- "dp-asset",
- "ethabi",
- "ethereum-primitives",
- "ethereum-types",
- "sp-std",
-]
-
-[[package]]
 name = "dp-evm-trace-ext"
 version = "2.9.4"
 dependencies = [
@@ -1986,21 +1939,6 @@ dependencies = [
  "frame-support",
  "parity-scale-codec",
  "scale-info",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "dp-s2s"
-version = "2.9.4"
-dependencies = [
- "array-bytes",
- "bp-message-dispatch",
- "bp-runtime",
- "dp-asset",
- "dp-contract",
- "parity-scale-codec",
- "sp-core",
  "sp-runtime",
  "sp-std",
 ]
@@ -2972,41 +2910,6 @@ source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.1
 dependencies = [
  "frame-support",
  "sp-api",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "from-substrate-issuing"
-version = "2.9.4"
-dependencies = [
- "array-bytes",
- "bp-message-dispatch",
- "bp-messages",
- "bp-runtime",
- "darwinia-balances",
- "darwinia-ethereum",
- "darwinia-evm",
- "darwinia-evm-precompile-bridge-s2s",
- "darwinia-evm-precompile-utils",
- "darwinia-support",
- "dp-asset",
- "dp-contract",
- "dp-s2s",
- "ethereum",
- "ethereum-primitives",
- "ethereum-types",
- "fp-evm",
- "fp-self-contained",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "libsecp256k1 0.5.0",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "sha3 0.9.1",
- "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -6215,7 +6118,6 @@ dependencies = [
  "darwinia-ecdsa-authority",
  "darwinia-ethereum",
  "darwinia-evm",
- "darwinia-evm-precompile-bridge-s2s",
  "darwinia-evm-precompile-dispatch",
  "darwinia-evm-precompile-kton",
  "darwinia-evm-precompile-state-storage",
@@ -6226,11 +6128,8 @@ dependencies = [
  "darwinia-relayer-game",
  "darwinia-staking",
  "darwinia-support",
- "dp-asset",
- "dp-contract",
  "dp-evm-tracer",
  "dp-relayer-game",
- "dp-s2s",
  "drml-common-runtime",
  "drml-primitives",
  "ethereum-primitives",
@@ -6245,7 +6144,6 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "from-substrate-issuing",
  "module-transaction-pause",
  "moonbeam-rpc-primitives-debug",
  "pallet-authority-discovery",
@@ -6337,9 +6235,7 @@ dependencies = [
  "darwinia-message-gadget",
  "darwinia-staking",
  "darwinia-support",
- "dp-asset",
  "dp-evm-tracer",
- "dp-s2s",
  "drml-common-runtime",
  "drml-primitives",
  "fp-evm",
@@ -6402,7 +6298,6 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder",
- "to-substrate-backing",
 ]
 
 [[package]]
@@ -10039,34 +9934,6 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "to-substrate-backing"
-version = "2.9.4"
-dependencies = [
- "array-bytes",
- "bp-message-dispatch",
- "bp-messages",
- "bp-runtime",
- "darwinia-balances",
- "darwinia-support",
- "dp-asset",
- "dp-contract",
- "dp-s2s",
- "ethereum-primitives",
- "ethereum-types",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "serde_json",
- "sp-io",
  "sp-runtime",
  "sp-std",
 ]

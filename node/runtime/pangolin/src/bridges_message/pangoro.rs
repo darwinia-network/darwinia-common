@@ -30,9 +30,8 @@ use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{ops::RangeInclusive, prelude::*};
 // --- darwinia-network ---
 use crate::*;
-use bp_message_dispatch::CallOrigin;
 use bp_messages::{source_chain::*, target_chain::*, *};
-use bp_runtime::{messages::*, ChainId, *};
+use bp_runtime::{ChainId, *};
 use bridge_runtime_common::{
 	lanes::*,
 	messages::{
@@ -42,7 +41,6 @@ use bridge_runtime_common::{
 		BalanceOf, *,
 	},
 };
-use dp_s2s::{CallParams, CreatePayload};
 use drml_common_runtime::impls::FromThisChainMessageVerifier;
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
 
@@ -77,29 +75,6 @@ pub const INITIAL_PANGORO_TO_PANGOLIN_CONVERSION_RATE: FixedU128 =
 frame_support::parameter_types! {
 	/// Pangoro to Pangolin conversion rate. Initially we treat both tokens as equal.
 	pub storage PangoroToPangolinConversionRate: FixedU128 = INITIAL_PANGORO_TO_PANGOLIN_CONVERSION_RATE;
-}
-
-#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
-pub struct ToPangoroOutboundPayLoad;
-impl CreatePayload<bp_pangolin::AccountId, bp_pangolin::AccountPublic, bp_pangolin::Signature>
-	for ToPangoroOutboundPayLoad
-{
-	type Payload = ToPangoroMessagePayload;
-
-	fn create(
-		origin: CallOrigin<
-			bp_pangolin::AccountId,
-			bp_pangolin::AccountPublic,
-			bp_pangolin::Signature,
-		>,
-		spec_version: u32,
-		weight: u64,
-		call_params: CallParams,
-		dispatch_fee_payment: DispatchFeePayment,
-	) -> Result<Self::Payload, &'static str> {
-		let call = Self::encode_call(PANGORO_S2S_BACKING_PALLET_INDEX, call_params)?;
-		Ok(ToPangoroMessagePayload { spec_version, weight, origin, call, dispatch_fee_payment })
-	}
 }
 
 /// Pangolin -> Pangoro message lane pallet parameters.

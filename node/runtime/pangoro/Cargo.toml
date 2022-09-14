@@ -30,13 +30,10 @@ darwinia-evm-precompile-transfer      = { default-features = false, path = "../.
 darwinia-message-gadget               = { default-features = false, path = "../../../frame/bridge/message-gadget" }
 darwinia-staking                      = { default-features = false, path = "../../../frame/staking" }
 darwinia-support                      = { default-features = false, path = "../../../frame/support" }
-dp-asset                              = { default-features = false, path = "../../../primitives/asset" }
 dp-evm-tracer                         = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
-dp-s2s                                = { default-features = false, path = "../../../primitives/s2s" }
 drml-common-runtime                   = { default-features = false, path = "../common" }
 drml-primitives                       = { default-features = false, path = "../../primitives" }
 module-transaction-pause              = { default-features = false, path = "../../../frame/transaction-pause" }
-to-substrate-backing                  = { default-features = false, path = "../../../frame/wormhole/backing/s2s" }
 # messages
 bp-header-chain        = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bp-message-dispatch    = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
@@ -132,13 +129,10 @@ std = [
 	"darwinia-message-gadget/std",
 	"darwinia-staking/std",
 	"darwinia-support/std",
-	"dp-asset/std",
 	"dp-evm-tracer/std",
-	"dp-s2s/std",
 	"drml-primitives/std",
 	"drml-common-runtime/std",
 	"module-transaction-pause/std",
-	"to-substrate-backing/std",
 	# messages
 	"bp-header-chain/std",
 	"bp-message-dispatch/std",

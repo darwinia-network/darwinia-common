@@ -13,16 +13,13 @@ version     = "2.9.4"
 # crates.io
 codec      = { package = "parity-scale-codec", version = "2.3", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+sha3       = { version = "0.9", default-features = false }
 # darwinia-network
 darwinia-ethereum = { default-features = false, path = "../../dvm/ethereum" }
-dp-contract       = { default-features = false, path = "../../../primitives/contract" }
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
 sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
-
-[dev-dependencies]
-array-bytes = { version = "2.0" }
 
 [features]
 default = ["std"]
@@ -31,9 +28,9 @@ std = [
 	# crates.io
 	"codec/std",
 	"scale-info/std",
+	"sha3/std",
 	# darwinia-network
 	"darwinia-ethereum/std",
-	"dp-contract/std",
 	# paritytech
 	"frame-support/std",
 	"frame-system/std",

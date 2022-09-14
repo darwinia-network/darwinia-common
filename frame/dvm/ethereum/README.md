@@ -11,7 +11,6 @@ Those pallets are part of the DVM system:
 
 ## EVM Pallet Customized Precompiles
 
-- `darwinia-evm-precompile-bridge-s2s`: The encoder precompile for s2s bridge.
 - `darwinia-evm-precompile-bls12-381`: The BLS12381 precompile.
 - `darwinia-evm-precompile-state-storage`: The precompile to read state storage with filter.
 - `darwinia-evm-precompile-dispatch`: Enable interoperability between EVM contracts and other Substrate runtime components.

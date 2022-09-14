@@ -45,8 +45,7 @@ impl Config<WithPangoroMessages> for Runtime {
 	type MessageDeliveryAndDispatchPayment =
 		FeeMarketPayment<Self, WithPangoroFeeMarket, Ring, RootAccountForPayments>;
 	type MessageDispatch = bm_pangoro::FromPangoroMessageDispatch;
-	type OnDeliveryConfirmed =
-		(Substrate2SubstrateIssuing, FeeMarketMessageConfirmedHandler<Self, WithPangoroFeeMarket>);
+	type OnDeliveryConfirmed = FeeMarketMessageConfirmedHandler<Self, WithPangoroFeeMarket>;
 	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangoroFeeMarket>;
 	type OutboundMessageFee = bp_pangolin::Balance;
 	type OutboundPayload = bm_pangoro::ToPangoroMessagePayload;
@@ -71,7 +70,6 @@ impl Config<WithPangolinParachainMessages> for Runtime {
 		FeeMarketPayment<Self, WithPangolinParachainFeeMarket, Ring, RootAccountForPayments>;
 	type MessageDispatch = bm_pangolin_parachain::FromPangolinParachainMessageDispatch;
 	type OnDeliveryConfirmed = (
-		Substrate2SubstrateIssuing,
 		ToPangolinParachainBacking,
 		FeeMarketMessageConfirmedHandler<Self, WithPangolinParachainFeeMarket>,
 	);
