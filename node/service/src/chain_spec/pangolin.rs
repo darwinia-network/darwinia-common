@@ -51,14 +51,12 @@ const A_FEW_COINS: Balance = 1 << 44;
 const MANY_COINS: Balance = A_FEW_COINS << 6;
 const BUNCH_OF_COINS: Balance = MANY_COINS << 6;
 
-const S2S_RELAYER: &str = "ec7c1c10c73a2d90c6a4fc92a5212caaff849a65193db3a2b2aa1ffdadb99f06";
 const TOKEN_REDEEM_ADDRESS: &str = "0x49262B932E439271d05634c32978294C7Ea15d0C";
 const DEPOSIT_REDEEM_ADDRESS: &str = "0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e";
 const SET_AUTHORITIES_ADDRESS: &str = "0xD35Bb6F1bc1C84b53E0995c1830454AB7C4147f1";
 const RING_TOKEN_ADDRESS: &str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
 const KTON_TOKEN_ADDRESS: &str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
 const ECDSA_AUTHORITY: &str = "0x68898db1012808808c903f390909c52d9f706749";
-const MAPPING_FACTORY_ADDRESS: &str = "0xE1586e744b99bF8e4C981DfE4dD4369d6f8Ed88A";
 
 impl_authority_keys!();
 
@@ -91,7 +89,6 @@ pub fn genesis_config() -> ChainSpec {
 		let root = AccountId::from(array_bytes::hex2array_unchecked(
 			"0x72819fbc1b93196fa230243947c1726cbea7e33044c7eb6f736ff345561f9e4c",
 		));
-		let s2s_relayer = array_bytes::hex_into_unchecked(S2S_RELAYER);
 		let initial_authorities = AuthorityKeys::testnet_authorities();
 		let initial_nominators = <Vec<AccountId>>::new();
 		let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
@@ -145,7 +142,7 @@ pub fn genesis_config() -> ChainSpec {
 				.collect()
 			},
 			kton: KtonConfig {
-				balances: vec![(root.clone(), BUNCH_OF_COINS), (s2s_relayer, BUNCH_OF_COINS)]
+				balances: vec![(root.clone(), BUNCH_OF_COINS)]
 					.into_iter()
 					.chain(
 						initial_authorities
@@ -287,9 +284,6 @@ pub fn genesis_config() -> ChainSpec {
 			evm: EVMConfig { accounts: evm_accounts },
 			ethereum: Default::default(),
 			base_fee: Default::default(),
-			substrate_2_substrate_issuing: Substrate2SubstrateIssuingConfig {
-				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
-			},
 			to_pangolin_parachain_backing: ToPangolinParachainBackingConfig {
 				secure_limited_period: DAYS,
 				secure_limited_ring_amount: 1_000_000 * COIN,
@@ -325,14 +319,12 @@ pub fn genesis_config() -> ChainSpec {
 pub fn development_config() -> ChainSpec {
 	fn genesis() -> GenesisConfig {
 		let root = get_account_id_from_seed::<sr25519::Public>("Alice");
-		let s2s_relayer = array_bytes::hex_into_unchecked(S2S_RELAYER);
 		let initial_authorities = vec![get_authority_keys_from_seed("Alice")];
 		let endowed_accounts = vec![
 			root.clone(),
 			get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 			get_account_id_from_seed::<sr25519::Public>("Bob"),
 			get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-			s2s_relayer,
 		]
 		.into_iter()
 		.chain(TEAM_MEMBERS.iter().map(|m| array_bytes::hex_into_unchecked(m)))
@@ -482,9 +474,6 @@ pub fn development_config() -> ChainSpec {
 			evm: EVMConfig { accounts: evm_accounts },
 			ethereum: Default::default(),
 			base_fee: Default::default(),
-			substrate_2_substrate_issuing: Substrate2SubstrateIssuingConfig {
-				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
-			},
 			to_pangolin_parachain_backing: ToPangolinParachainBackingConfig {
 				secure_limited_period: DAYS,
 				secure_limited_ring_amount: 100_000 * COIN,
@@ -509,7 +498,6 @@ pub fn development_config() -> ChainSpec {
 pub fn local_testnet_config() -> ChainSpec {
 	fn genesis() -> GenesisConfig {
 		let root = get_account_id_from_seed::<sr25519::Public>("Alice");
-		let s2s_relayer = array_bytes::hex_into_unchecked(S2S_RELAYER);
 		let initial_authorities = vec![
 			get_authority_keys_from_seed("Alice"),
 			get_authority_keys_from_seed("Bob"),
@@ -525,7 +513,6 @@ pub fn local_testnet_config() -> ChainSpec {
 			get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
 			get_account_id_from_seed::<sr25519::Public>("Dave"),
 			get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-			s2s_relayer,
 		]
 		.into_iter()
 		.chain(TEAM_MEMBERS.iter().map(|m| array_bytes::hex_into_unchecked(m)))
@@ -675,9 +662,6 @@ pub fn local_testnet_config() -> ChainSpec {
 			evm: EVMConfig { accounts: evm_accounts },
 			ethereum: Default::default(),
 			base_fee: Default::default(),
-			substrate_2_substrate_issuing: Substrate2SubstrateIssuingConfig {
-				mapping_factory_address: array_bytes::hex_into_unchecked(MAPPING_FACTORY_ADDRESS),
-			},
 			to_pangolin_parachain_backing: ToPangolinParachainBackingConfig {
 				secure_limited_period: DAYS,
 				secure_limited_ring_amount: 1_000_000 * COIN,

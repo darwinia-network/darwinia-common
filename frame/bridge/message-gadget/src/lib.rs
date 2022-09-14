@@ -20,9 +20,10 @@
 
 // --- core ---
 use core::marker::PhantomData;
+// --- crates.io ---
+use sha3::{Digest, Keccak256};
 // --- darwinia-network ---
 use darwinia_ethereum::InternalTransactHandler;
-use dp_contract::beefy;
 // --- paritytech ---
 use frame_support::{log, pallet_prelude::*, traits::Get};
 use frame_system::pallet_prelude::*;
@@ -94,7 +95,7 @@ where
 		let raw_message_root = unwrap_or_return!(
 			<darwinia_ethereum::Pallet<T>>::read_only_call(
 				<CommitmentContract<T>>::get(),
-				unwrap_or_return!(beefy::commitment(), "Fail to encode `commitment` ABI, return.")
+				Keccak256::digest(b"commitment()")[0..4].to_vec()
 			),
 			"Fail to read message root from DVM, return."
 		);
