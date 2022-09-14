@@ -20,14 +20,13 @@
 
 // --- core ---
 use core::marker::PhantomData;
-// --- crates.io ---
-use sha3::{Digest, Keccak256};
 // --- darwinia-network ---
 use darwinia_ethereum::InternalTransactHandler;
 // --- paritytech ---
 use frame_support::{log, pallet_prelude::*, traits::Get};
 use frame_system::pallet_prelude::*;
 use sp_core::{H160, H256};
+use sp_io::hashing;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -80,25 +79,16 @@ where
 	T: Config + darwinia_ethereum::Config,
 {
 	fn get() -> Option<H256> {
-		macro_rules! unwrap_or_return {
-			($r:expr, $err_msg:expr) => {
-				if let Ok(r) = $r {
-					r
-				} else {
-					log::warn!(target: LOG_TARGET, "{}", $err_msg);
+		let raw_message_root = if let Ok(r) = <darwinia_ethereum::Pallet<T>>::read_only_call(
+			<CommitmentContract<T>>::get(),
+			hashing::keccak_256(b"commitment()")[..4].to_vec(),
+		) {
+			r
+		} else {
+			log::warn!(target: LOG_TARGET, "Fail to read message root from DVM, return.");
 
-					return None;
-				}
-			};
-		}
-
-		let raw_message_root = unwrap_or_return!(
-			<darwinia_ethereum::Pallet<T>>::read_only_call(
-				<CommitmentContract<T>>::get(),
-				Keccak256::digest(b"commitment()")[0..4].to_vec()
-			),
-			"Fail to read message root from DVM, return."
-		);
+			return None;
+		};
 
 		if raw_message_root.len() != 32 {
 			log::warn!(
