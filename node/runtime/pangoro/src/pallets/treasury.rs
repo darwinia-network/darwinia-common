@@ -27,6 +27,7 @@ impl Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = RingProposalBondMinimum;
+	type ProposalBondMaximum = ();
 	type RejectOrigin = Root;
 	type SpendFunds = ();
 	type SpendPeriod = SpendPeriod;

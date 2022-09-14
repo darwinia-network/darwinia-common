@@ -34,6 +34,7 @@ impl Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = RingProposalBondMinimum;
+	type ProposalBondMaximum = ();
 	type RejectOrigin = RootOrMoreThanHalf<CouncilCollective>;
 	type SpendFunds = Bounties;
 	type SpendPeriod = SpendPeriod;
@@ -50,6 +51,7 @@ impl Config<KtonTreasuryInstance> for Runtime {
 	type PalletId = TreasuryPalletId;
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = KtonProposalBondMinimum;
+	type ProposalBondMaximum = ();
 	type RejectOrigin = RootOrMoreThanHalf<CouncilCollective>;
 	type SpendFunds = ();
 	type SpendPeriod = SpendPeriod;
