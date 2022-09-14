@@ -192,7 +192,7 @@ pub struct RelayAffirmationId<RelayHeaderId> {
 	pub index: u32,
 }
 
-#[derive(Clone, Encode, Decode, Default, RuntimeDebug, TypeInfo)]
+#[derive(Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct RelayAffirmation<RelayHeaderParcel, Relayer, Balance, RelayHeaderId> {
 	pub relayer: Relayer,
 	pub relay_header_parcels: Vec<RelayHeaderParcel>,
@@ -203,13 +203,12 @@ pub struct RelayAffirmation<RelayHeaderParcel, Relayer, Balance, RelayHeaderId> 
 impl<RelayHeaderParcel, Relayer, Balance, RelayHeaderId>
 	RelayAffirmation<RelayHeaderParcel, Relayer, Balance, RelayHeaderId>
 where
-	Relayer: Default,
 	Balance: Zero,
 {
-	pub fn new() -> Self {
+	pub fn default_from(relayer: Relayer) -> Self {
 		Self {
-			relayer: Relayer::default(),
-			relay_header_parcels: vec![],
+			relayer,
+			relay_header_parcels: Vec::new(),
 			stake: Zero::zero(),
 			maybe_extended_relay_affirmation_id: None,
 			verified_on_chain: false,
