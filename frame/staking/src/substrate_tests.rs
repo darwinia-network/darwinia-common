@@ -114,7 +114,7 @@ fn basic_setup_works() {
 				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(vec![], None)
+					unbondings: WeakBoundedVec::force_from(Vec::new(), None)
 				},
 				..Default::default()
 			})
@@ -127,7 +127,7 @@ fn basic_setup_works() {
 				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(vec![], None)
+					unbondings: WeakBoundedVec::force_from(Vec::new(), None)
 				},
 				..Default::default()
 			})
@@ -152,7 +152,7 @@ fn basic_setup_works() {
 				active: 500,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(vec![], None)
+					unbondings: WeakBoundedVec::force_from(Vec::new(), None)
 				},
 				..Default::default()
 			})
@@ -261,6 +261,7 @@ fn rewards_should_work() {
 		let maximum_payout = maximum_payout_for_duration(reward_time_per_era());
 
 		start_session(1);
+		assert_eq_uvec!(Session::validators(), vec![11, 21]);
 
 		assert_eq!(Ring::free_balance(&10), init_balance_10);
 		assert_eq!(Ring::free_balance(&11), init_balance_11);
@@ -268,7 +269,6 @@ fn rewards_should_work() {
 		assert_eq!(Ring::free_balance(&21), init_balance_21);
 		assert_eq!(Ring::free_balance(&100), init_balance_100);
 		assert_eq!(Ring::free_balance(&101), init_balance_101);
-		assert_eq_uvec!(Session::validators(), vec![11, 21]);
 		assert_eq!(
 			Staking::eras_reward_points(active_era()),
 			EraRewardPoints {
@@ -426,7 +426,7 @@ fn staking_should_work() {
 				active: 1500,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(vec![], None)
+					unbondings: WeakBoundedVec::force_from(Vec::new(), None)
 				},
 				claimed_rewards: vec![0],
 				..Default::default()
@@ -712,7 +712,7 @@ fn nominators_also_get_slashed_pro_rata() {
 
 		// 11 goes offline
 		on_offence_now(
-			&[OffenceDetails { offender: (11, initial_exposure.clone()), reporters: vec![] }],
+			&[OffenceDetails { offender: (11, initial_exposure.clone()), reporters: Vec::new() }],
 			&[slash_percent],
 		);
 
@@ -1426,7 +1426,7 @@ fn rebond_works() {
 				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(vec![], None)
+					unbondings: WeakBoundedVec::force_from(Vec::new(), None)
 				},
 				..Default::default()
 			})
@@ -1468,7 +1468,7 @@ fn rebond_works() {
 				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(vec![], None)
+					unbondings: WeakBoundedVec::force_from(Vec::new(), None)
 				},
 				..Default::default()
 			})
@@ -1525,7 +1525,7 @@ fn rebond_works() {
 				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(vec![], None)
+					unbondings: WeakBoundedVec::force_from(Vec::new(), None)
 				},
 				..Default::default()
 			})
@@ -1613,7 +1613,7 @@ fn rebond_is_fifo() {
 				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(vec![], None)
+					unbondings: WeakBoundedVec::force_from(Vec::new(), None)
 				},
 				..Default::default()
 			})
@@ -1843,7 +1843,7 @@ fn reward_to_stake_works() {
 					own_kton_balance: 0,
 					total_power: ring_power(69),
 					own_power: ring_power(69),
-					others: vec![],
+					others: Vec::new(),
 				},
 			);
 
@@ -1981,6 +1981,7 @@ fn switching_roles() {
 			0,
 		));
 		assert_ok!(Staking::validate(Origin::signed(6), ValidatorPrefs::default()));
+		assert_ok!(Session::set_keys(Origin::signed(6), SessionKeys { other: 6.into() }, Vec::new()));
 
 		start_active_era(1);
 
@@ -1989,6 +1990,7 @@ fn switching_roles() {
 
 		// 2 decides to be a validator. Consequences:
 		assert_ok!(Staking::validate(Origin::signed(2), ValidatorPrefs::default()));
+		assert_ok!(Session::set_keys(Origin::signed(2), SessionKeys { other: 2.into() }, Vec::new()));
 		// new stakes:
 		// 10: 1000 self vote
 		// 20: 1000 self vote + 250 vote
@@ -2088,6 +2090,11 @@ fn bond_with_little_staked_value_bounded() {
 				0,
 			));
 			assert_ok!(Staking::validate(Origin::signed(2), ValidatorPrefs::default()));
+			assert_ok!(Session::set_keys(
+				Origin::signed(2),
+				SessionKeys { other: 2.into() },
+				Vec::new(),
+			));
 
 			// 1 era worth of reward. BUT, we set the timestamp after on_initialize, so outdated by
 			// one block.
@@ -2355,7 +2362,7 @@ fn reward_validator_slashing_validator_does_not_overflow() {
 			own_kton_balance: 0,
 			own_power: ring_power(stake),
 			total_power: ring_power(stake),
-			others: vec![],
+			others: Vec::new(),
 		};
 		let reward = EraRewardPoints::<AccountId> {
 			total: 1,
@@ -2407,7 +2414,7 @@ fn reward_validator_slashing_validator_does_not_overflow() {
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (11, Staking::eras_stakers(active_era(), 11)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(100)],
 		);
@@ -2422,7 +2429,7 @@ fn reward_from_authorship_event_handler_works() {
 	ExtBuilder::default().build_and_execute(|| {
 		use pallet_authorship::EventHandler;
 
-		assert_eq!(<pallet_authorship::Pallet<Test>>::author(), 11);
+		assert_eq!(<pallet_authorship::Pallet<Test>>::author(), Some(11));
 
 		Staking::note_author(11);
 		Staking::note_uncle(21, 1);
@@ -2514,7 +2521,7 @@ fn offence_forces_new_era() {
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (11, Staking::eras_stakers(active_era(), 11)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(5)],
 		);
@@ -2532,7 +2539,7 @@ fn offence_ensures_new_era_without_clobbering() {
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (11, Staking::eras_stakers(active_era(), 11)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(5)],
 		);
@@ -2550,7 +2557,7 @@ fn offence_deselects_validator_even_when_slash_is_zero() {
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (11, Staking::eras_stakers(active_era(), 11)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(0)],
 		);
@@ -2582,10 +2589,10 @@ fn slashing_performed_according_exposure() {
 						own_ring_balance: 500,
 						own_kton_balance: 0,
 						own_power: 0,
-						others: vec![],
+						others: Vec::new(),
 					},
 				),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(50)],
 		);
@@ -2606,7 +2613,7 @@ fn slash_in_old_span_does_not_deselect() {
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (11, Staking::eras_stakers(active_era(), 11)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(0)],
 		);
@@ -2629,7 +2636,7 @@ fn slash_in_old_span_does_not_deselect() {
 		on_offence_in_era(
 			&[OffenceDetails {
 				offender: (11, Staking::eras_stakers(active_era(), 11)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(0)],
 			1,
@@ -2645,7 +2652,7 @@ fn slash_in_old_span_does_not_deselect() {
 		on_offence_in_era(
 			&[OffenceDetails {
 				offender: (11, Staking::eras_stakers(active_era(), 11)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			// NOTE: A 100% slash here would clean up the account, causing de-registration.
 			&[Perbill::from_percent(95)],
@@ -2757,11 +2764,11 @@ fn invulnerables_are_not_slashed() {
 			&[
 				OffenceDetails {
 					offender: (11, Staking::eras_stakers(active_era(), 11)),
-					reporters: vec![],
+					reporters: Vec::new(),
 				},
 				OffenceDetails {
 					offender: (21, Staking::eras_stakers(active_era(), 21)),
-					reporters: vec![],
+					reporters: Vec::new(),
 				},
 			],
 			&[Perbill::from_percent(50), Perbill::from_percent(20)],
@@ -2792,7 +2799,7 @@ fn do_not_slash_if_fraction_is_zero() {
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (11, Staking::eras_stakers(active_era(), 11)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(0)],
 		);
@@ -2813,7 +2820,7 @@ fn only_slash_for_max_in_era() {
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (11, Staking::eras_stakers(active_era(), 11)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(50)],
 		);
@@ -2825,7 +2832,7 @@ fn only_slash_for_max_in_era() {
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (11, Staking::eras_stakers(active_era(), 11)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(25)],
 		);
@@ -2836,7 +2843,7 @@ fn only_slash_for_max_in_era() {
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (11, Staking::eras_stakers(active_era(), 11)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(60)],
 		);
@@ -2855,7 +2862,7 @@ fn garbage_collection_after_slashing() {
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (11, Staking::eras_stakers(active_era(), 11)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(10)],
 		);
@@ -2867,7 +2874,7 @@ fn garbage_collection_after_slashing() {
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (11, Staking::eras_stakers(active_era(), 11)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(100)],
 		);
@@ -2908,7 +2915,7 @@ fn garbage_collection_on_window_pruning() {
 		let nominated_value = exposure.others.iter().find(|o| o.who == 101).unwrap().ring_balance;
 
 		on_offence_now(
-			&[OffenceDetails { offender: (11, Staking::eras_stakers(now, 11)), reporters: vec![] }],
+			&[OffenceDetails { offender: (11, Staking::eras_stakers(now, 11)), reporters: Vec::new() }],
 			&[Perbill::from_percent(10)],
 		);
 
@@ -2953,7 +2960,7 @@ fn slashing_nominators_by_span_max() {
 		on_offence_in_era(
 			&[OffenceDetails {
 				offender: (11, Staking::eras_stakers(active_era(), 11)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(10)],
 			2,
@@ -2980,7 +2987,7 @@ fn slashing_nominators_by_span_max() {
 		on_offence_in_era(
 			&[OffenceDetails {
 				offender: (21, Staking::eras_stakers(active_era(), 21)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(30)],
 			3,
@@ -3002,7 +3009,7 @@ fn slashing_nominators_by_span_max() {
 		on_offence_in_era(
 			&[OffenceDetails {
 				offender: (11, Staking::eras_stakers(active_era(), 11)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(20)],
 			2,
@@ -3037,7 +3044,7 @@ fn slashes_are_summed_across_spans() {
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (21, Staking::eras_stakers(active_era(), 21)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(10)],
 		);
@@ -3060,7 +3067,7 @@ fn slashes_are_summed_across_spans() {
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (21, Staking::eras_stakers(active_era(), 21)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(10)],
 		);
@@ -3090,7 +3097,7 @@ fn deferred_slashes_are_deferred() {
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (11, Staking::eras_stakers(active_era(), 11)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(10)],
 		);
@@ -3129,7 +3136,7 @@ fn remove_deferred() {
 		let nominated_value = exposure.others.iter().find(|o| o.who == 101).unwrap().ring_balance;
 
 		on_offence_now(
-			&[OffenceDetails { offender: (11, exposure.clone()), reporters: vec![] }],
+			&[OffenceDetails { offender: (11, exposure.clone()), reporters: Vec::new() }],
 			&[Perbill::from_percent(10)],
 		);
 
@@ -3139,7 +3146,7 @@ fn remove_deferred() {
 		start_active_era(2);
 
 		on_offence_in_era(
-			&[OffenceDetails { offender: (11, exposure.clone()), reporters: vec![] }],
+			&[OffenceDetails { offender: (11, exposure.clone()), reporters: Vec::new() }],
 			&[Perbill::from_percent(15)],
 			1,
 			DisableStrategy::WhenSlashed,
@@ -3147,7 +3154,7 @@ fn remove_deferred() {
 
 		// fails if empty
 		assert_noop!(
-			Staking::cancel_deferred_slash(Origin::root(), 1, vec![]),
+			Staking::cancel_deferred_slash(Origin::root(), 1, Vec::new()),
 			StakingError::EmptyTargets
 		);
 
@@ -3195,30 +3202,30 @@ fn remove_multi_deferred() {
 		assert_eq!(Ring::free_balance(101), 2000);
 
 		on_offence_now(
-			&[OffenceDetails { offender: (11, exposure.clone()), reporters: vec![] }],
+			&[OffenceDetails { offender: (11, exposure.clone()), reporters: Vec::new() }],
 			&[Perbill::from_percent(10)],
 		);
 
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (21, Staking::eras_stakers(active_era(), 21)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(10)],
 		);
 
 		on_offence_now(
-			&[OffenceDetails { offender: (11, exposure.clone()), reporters: vec![] }],
+			&[OffenceDetails { offender: (11, exposure.clone()), reporters: Vec::new() }],
 			&[Perbill::from_percent(25)],
 		);
 
 		on_offence_now(
-			&[OffenceDetails { offender: (42, exposure.clone()), reporters: vec![] }],
+			&[OffenceDetails { offender: (42, exposure.clone()), reporters: Vec::new() }],
 			&[Perbill::from_percent(25)],
 		);
 
 		on_offence_now(
-			&[OffenceDetails { offender: (69, exposure.clone()), reporters: vec![] }],
+			&[OffenceDetails { offender: (69, exposure.clone()), reporters: Vec::new() }],
 			&[Perbill::from_percent(25)],
 		);
 
@@ -3267,7 +3274,7 @@ fn slash_kicks_validators_not_nominators_and_disables_nominator_for_kicked_valid
 		assert_eq_error_rate!(exposure_21.total_power, ring_power(1000 + 375), 1);
 
 		on_offence_now(
-			&[OffenceDetails { offender: (11, exposure_11.clone()), reporters: vec![] }],
+			&[OffenceDetails { offender: (11, exposure_11.clone()), reporters: Vec::new() }],
 			&[Perbill::from_percent(10)],
 		);
 
@@ -3319,13 +3326,13 @@ fn non_slashable_offence_doesnt_disable_validator() {
 
 		// offence with no slash associated
 		on_offence_now(
-			&[OffenceDetails { offender: (11, exposure_11.clone()), reporters: vec![] }],
+			&[OffenceDetails { offender: (11, exposure_11.clone()), reporters: Vec::new() }],
 			&[Perbill::zero()],
 		);
 
 		// offence that slashes 25% of the bond
 		on_offence_now(
-			&[OffenceDetails { offender: (21, exposure_21.clone()), reporters: vec![] }],
+			&[OffenceDetails { offender: (21, exposure_21.clone()), reporters: Vec::new() }],
 			&[Perbill::from_percent(25)],
 		);
 
@@ -3349,7 +3356,7 @@ fn slashing_independent_of_disabling_validator() {
 
 		// offence with no slash associated, BUT disabling
 		on_offence_in_era(
-			&[OffenceDetails { offender: (11, exposure_11.clone()), reporters: vec![] }],
+			&[OffenceDetails { offender: (11, exposure_11.clone()), reporters: Vec::new() }],
 			&[Perbill::zero()],
 			now,
 			DisableStrategy::Always,
@@ -3357,7 +3364,7 @@ fn slashing_independent_of_disabling_validator() {
 
 		// offence that slashes 25% of the bond, BUT not disabling
 		on_offence_in_era(
-			&[OffenceDetails { offender: (21, exposure_21.clone()), reporters: vec![] }],
+			&[OffenceDetails { offender: (21, exposure_21.clone()), reporters: Vec::new() }],
 			&[Perbill::from_percent(25)],
 			now,
 			DisableStrategy::Never,
@@ -3392,21 +3399,21 @@ fn offence_threshold_triggers_new_era() {
 			let exposure_31 = Staking::eras_stakers(Staking::active_era().unwrap().index, &31);
 
 			on_offence_now(
-				&[OffenceDetails { offender: (11, exposure_11.clone()), reporters: vec![] }],
+				&[OffenceDetails { offender: (11, exposure_11.clone()), reporters: Vec::new() }],
 				&[Perbill::zero()],
 			);
 
 			assert_eq!(ForceEra::<Test>::get(), Forcing::NotForcing);
 
 			on_offence_now(
-				&[OffenceDetails { offender: (21, exposure_21.clone()), reporters: vec![] }],
+				&[OffenceDetails { offender: (21, exposure_21.clone()), reporters: Vec::new() }],
 				&[Perbill::zero()],
 			);
 
 			assert_eq!(ForceEra::<Test>::get(), Forcing::NotForcing);
 
 			on_offence_now(
-				&[OffenceDetails { offender: (31, exposure_31.clone()), reporters: vec![] }],
+				&[OffenceDetails { offender: (31, exposure_31.clone()), reporters: Vec::new() }],
 				&[Perbill::zero()],
 			);
 
@@ -3428,12 +3435,12 @@ fn disabled_validators_are_kept_disabled_for_whole_era() {
 			let exposure_21 = Staking::eras_stakers(Staking::active_era().unwrap().index, &21);
 
 			on_offence_now(
-				&[OffenceDetails { offender: (11, exposure_11.clone()), reporters: vec![] }],
+				&[OffenceDetails { offender: (11, exposure_11.clone()), reporters: Vec::new() }],
 				&[Perbill::zero()],
 			);
 
 			on_offence_now(
-				&[OffenceDetails { offender: (21, exposure_21.clone()), reporters: vec![] }],
+				&[OffenceDetails { offender: (21, exposure_21.clone()), reporters: Vec::new() }],
 				&[Perbill::from_percent(25)],
 			);
 
@@ -3450,7 +3457,7 @@ fn disabled_validators_are_kept_disabled_for_whole_era() {
 
 			// validator 10 should now get disabled
 			on_offence_now(
-				&[OffenceDetails { offender: (11, exposure_11.clone()), reporters: vec![] }],
+				&[OffenceDetails { offender: (11, exposure_11.clone()), reporters: Vec::new() }],
 				&[Perbill::from_percent(25)],
 			);
 
@@ -3565,7 +3572,7 @@ fn zero_slash_keeps_nominators() {
 		assert_eq!(Ring::free_balance(101), 2000);
 
 		on_offence_now(
-			&[OffenceDetails { offender: (11, exposure.clone()), reporters: vec![] }],
+			&[OffenceDetails { offender: (11, exposure.clone()), reporters: Vec::new() }],
 			&[Perbill::from_percent(0)],
 		);
 
@@ -3748,7 +3755,7 @@ fn test_payout_stakers() {
 				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(vec![], None)
+					unbondings: WeakBoundedVec::force_from(Vec::new(), None)
 				},
 				claimed_rewards: vec![1],
 				..Default::default()
@@ -3773,7 +3780,7 @@ fn test_payout_stakers() {
 				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(vec![], None)
+					unbondings: WeakBoundedVec::force_from(Vec::new(), None)
 				},
 				claimed_rewards: (1..=14).collect(),
 				..Default::default()
@@ -3797,7 +3804,7 @@ fn test_payout_stakers() {
 				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(vec![], None)
+					unbondings: WeakBoundedVec::force_from(Vec::new(), None)
 				},
 				claimed_rewards: vec![15, 98],
 				..Default::default()
@@ -3815,7 +3822,7 @@ fn test_payout_stakers() {
 				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(vec![], None)
+					unbondings: WeakBoundedVec::force_from(Vec::new(), None)
 				},
 				claimed_rewards: vec![15, 23, 42, 69, 98],
 				..Default::default()
@@ -4028,7 +4035,7 @@ fn bond_during_era_correctly_populates_claimed_rewards() {
 				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(vec![], None)
+					unbondings: WeakBoundedVec::force_from(Vec::new(), None)
 				},
 				..Default::default()
 			})
@@ -4042,7 +4049,7 @@ fn bond_during_era_correctly_populates_claimed_rewards() {
 				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(vec![], None)
+					unbondings: WeakBoundedVec::force_from(Vec::new(), None)
 				},
 				claimed_rewards: (0..5).collect(),
 				..Default::default()
@@ -4057,7 +4064,7 @@ fn bond_during_era_correctly_populates_claimed_rewards() {
 				active: 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(vec![], None)
+					unbondings: WeakBoundedVec::force_from(Vec::new(), None)
 				},
 				claimed_rewards: (15..99).collect(),
 				..Default::default()
@@ -4092,7 +4099,7 @@ fn offences_weight_calculated_correctly() {
 					i,
 					Staking::eras_stakers(active_era(), i),
 				),
-				reporters: vec![],
+				reporters: Vec::new(),
 			})
 			.collect();
 		assert_eq!(
@@ -4286,7 +4293,7 @@ fn cannot_rebond_to_lower_than_ed() {
 				active: 10 * 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(vec![], None)
+					unbondings: WeakBoundedVec::force_from(Vec::new(), None)
 				},
 				..Default::default()
 			}
@@ -4330,7 +4337,7 @@ fn cannot_bond_extra_to_lower_than_ed() {
 				active: 10 * 1000,
 				ring_staking_lock: StakingLock {
 					staking_amount: 0,
-					unbondings: WeakBoundedVec::force_from(vec![], None)
+					unbondings: WeakBoundedVec::force_from(Vec::new(), None)
 				},
 				..Default::default()
 			}
@@ -4686,7 +4693,7 @@ mod election_data_provider {
 			<Nominators<Test>>::insert(
 				987654321,
 				Nominations {
-					targets: vec![],
+					targets: Vec::new(),
 					submitted_in: Default::default(),
 					suppressed: false,
 				},

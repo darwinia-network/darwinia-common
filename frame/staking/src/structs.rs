@@ -30,9 +30,7 @@ impl<T: Config> Convert<AccountId<T>, Option<ExposureT<T>>> for ExposureOf<T> {
 	}
 }
 /// A snapshot of the stake backing a single validator in the system.
-#[derive(
-	Clone, Default, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, RuntimeDebug, TypeInfo,
-)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct Exposure<AccountId, RingBalance, KtonBalance>
 where
 	RingBalance: HasCompact,
@@ -48,6 +46,20 @@ where
 	pub total_power: Power,
 	/// The portions of nominators stashes that are exposed.
 	pub others: Vec<IndividualExposure<AccountId, RingBalance, KtonBalance>>,
+}
+impl<AccountId, Balance> Default for Exposure<AccountId, Balance>
+where
+	Balance: HasCompact + Zero,
+{
+	fn default() -> Self {
+		Self {
+			own_ring_balance: Zero::zero(),
+			own_kton_balance: Zero::zero(),
+			own_power: 0,
+			total_power: 0,
+			others: Vec::new(),
+		}
+	}
 }
 /// The amount of exposure (to slashing) than an individual nominator has.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, RuntimeDebug, TypeInfo)]
@@ -79,7 +91,7 @@ pub struct ActiveEraInfo {
 }
 
 /// The ledger of a (bonded) stash.
-#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct StakingLedger<AccountId, RingBalance, KtonBalance, BlockNumber>
 where
 	RingBalance: HasCompact,
@@ -117,11 +129,25 @@ where
 impl<AccountId, RingBalance, KtonBalance, BlockNumber>
 	StakingLedger<AccountId, RingBalance, KtonBalance, BlockNumber>
 where
-	RingBalance: Copy + AtLeast32BitUnsigned + Saturating,
-	KtonBalance: Copy + AtLeast32BitUnsigned + Saturating,
+	RingBalance: Copy + AtLeast32BitUnsigned + Saturating + Zero,
+	KtonBalance: Copy + AtLeast32BitUnsigned + Saturating + Zero,
 	BlockNumber: Copy + PartialOrd,
 	TsInMs: PartialOrd,
 {
+	/// Initializes the default object using the given `validator`.
+	pub fn default_from(stash: AccountId) -> Self {
+		Self {
+			stash,
+			active: Zero::zero(),
+			active_deposit_ring: Zero::zero(),
+			active_kton: Zero::zero(),
+			deposit_items: Vec::new(),
+			ring_staking_lock: Vec::new(),
+			kton_staking_lock: Vec::new(),
+			claimed_rewards: Vec::new(),
+		}
+	}
+
 	pub fn consolidate_unbondings(&mut self, now: BlockNumber) {
 		self.ring_staking_lock.refresh(now);
 		self.kton_staking_lock.refresh(now);
@@ -379,17 +405,22 @@ pub struct Nominations<AccountId> {
 /// Reward points of an era. Used to split era total payout between validators.
 ///
 /// This points will be used to reward validators and their respective nominators.
-#[derive(Debug, Default, PartialEq, Encode, Decode, TypeInfo)]
+#[derive(Debug, PartialEq, Encode, Decode, TypeInfo)]
 pub struct EraRewardPoints<AccountId: Ord> {
 	/// Total number of points. Equals the sum of reward points for each validator.
 	pub total: RewardPoint,
 	/// The reward points earned by a given validator.
 	pub individual: BTreeMap<AccountId, RewardPoint>,
 }
+impl<AccountId: Ord> Default for EraRewardPoints<AccountId> {
+	fn default() -> Self {
+		EraRewardPoints { total: 0, individual: BTreeMap::new() }
+	}
+}
 
 /// Mode of era-forcing.
 #[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "std", derive(Clone, Serialize, Deserialize))]
 pub enum Forcing {
 	/// Not forcing anything - just let whatever happen.
 	NotForcing,
@@ -410,7 +441,7 @@ impl Default for Forcing {
 
 /// A pending slash record. The value of the slash has been computed but not applied yet,
 /// rather deferred for several eras.
-#[derive(Default, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct UnappliedSlash<AccountId, RingBalance, KtonBalance> {
 	/// The stash ID of the offending validator.
 	pub validator: AccountId,
@@ -422,6 +453,21 @@ pub struct UnappliedSlash<AccountId, RingBalance, KtonBalance> {
 	pub reporters: Vec<AccountId>,
 	/// The amount of payout.
 	pub payout: slashing::RK<RingBalance, KtonBalance>,
+}
+impl<AccountId, Balance> UnappliedSlash<AccountId, Balance>
+where
+	Balance: HasCompact + Zero,
+{
+	/// Initializes the default object using the given `validator`.
+	pub fn default_from(validator: AccountId) -> Self {
+		Self {
+			validator,
+			own: Zero::zero(),
+			others: Vec::new(),
+			reporters: Vec::new(),
+			payout: Zero::zero(),
+		}
+	}
 }
 
 // A value placed in storage that represents the current version of the Staking storage. This value
