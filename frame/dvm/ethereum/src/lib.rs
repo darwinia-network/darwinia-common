@@ -303,22 +303,6 @@ pub mod pallet {
 
 			Self::apply_validated_transaction(source, extracted_transaction)
 		}
-
-		/// Internal transaction only for root.
-		#[pallet::weight(10_000_000)]
-		pub fn root_transact(
-			origin: OriginFor<T>,
-			target: H160,
-			input: Vec<u8>,
-		) -> DispatchResultWithPostInfo {
-			ensure_root(origin)?;
-			// Disable transact functionality if PreLog exist.
-			ensure!(
-				fp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
-				Error::<T>::PreLogExists,
-			);
-			Self::internal_transact(target, input)
-		}
 	}
 
 	#[pallet::event]
@@ -929,35 +913,10 @@ impl<T: Config> Pallet<T> {
 
 /// The handler for interacting with The internal transaction.
 pub trait InternalTransactHandler {
-	/// Internal transaction call.
-	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo;
-	/// Read-only call to deployed evm contracts.
 	fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError>;
 }
 
 impl<T: Config> InternalTransactHandler for Pallet<T> {
-	/// Execute transaction from other pallets(internal transaction)
-	/// NOTE: The difference between the rpc transaction and the internal transaction is that
-	/// The internal transactions will catch and throw evm error comes from runner to caller.
-	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
-		let source = T::PalletId::get().derive_ethereum_address();
-		let nonce = darwinia_evm::Pallet::<T>::account_basic(&source).nonce;
-		let transaction = internal_transaction::<T>(nonce, target, input);
-
-		Self::raw_transact(source, transaction).map(|(reason, used_gas)| match reason {
-			// Only when exit_reason is successful, return Ok(...)
-			ExitReason::Succeed(_) => Ok(PostDispatchInfo {
-				actual_weight: Some(T::GasWeightMapping::gas_to_weight(
-					used_gas.unique_saturated_into(),
-				)),
-				pays_fee: Pays::No,
-			}),
-			ExitReason::Error(_) => Err(<Error<T>>::InternalTransactionExitError.into()),
-			ExitReason::Revert(_) => Err(<Error<T>>::InternalTransactionRevertError.into()),
-			ExitReason::Fatal(_) => Err(<Error<T>>::InternalTransactionFatalError.into()),
-		})?
-	}
-
 	/// Pure read-only call to contract, the sender is pallet dvm account.
 	/// NOTE: You should never use raw call for any non-read-only operation, be carefully.
 	fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
