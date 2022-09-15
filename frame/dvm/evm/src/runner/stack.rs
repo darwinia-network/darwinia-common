@@ -66,21 +66,19 @@ impl<T: Config> Runner<T> {
 			>,
 		) -> (ExitReason, R),
 	{
+		println!("bear: --- enter the stack runner execute...");
 		let base_fee = T::FeeCalculator::min_gas_price();
 		let max_fee_per_gas = match (max_fee_per_gas, is_transactional) {
 			(Some(max_fee_per_gas), _) => {
 				ensure!(max_fee_per_gas >= base_fee, Error::<T>::GasPriceTooLow);
 				max_fee_per_gas
 			},
-			// For the internal transaction, the gas_price is None and is_transactional is true
-			// which is legal in our chain. Note that non-internal transaction with gas_price None
-			// will be rejected before entering the runner.
-			// TODO: Delete this after s2s related pallets are removed later.
-			(None, true) => Default::default(),
 			// Gas price check is skipped for non-transactional calls that don't
 			// define a `max_fee_per_gas` input.
 			(None, false) => Default::default(),
+			_ => return Err(Error::<T>::GasPriceTooLow),
 		};
+		println!("bear: --- how you get here");
 
 		if let Some(max_priority_fee) = max_priority_fee_per_gas {
 			ensure!(max_fee_per_gas >= max_priority_fee, Error::<T>::GasPriceTooLow);

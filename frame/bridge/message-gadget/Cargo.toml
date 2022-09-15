@@ -21,6 +21,16 @@ frame-system  = { default-features = false, git = "https://github.com/darwinia-n
 sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 
+[dev-dependencies]
+fp-evm = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
+evm             = { version = "0.33.1", features = ["with-codec"] }
+sp-std         = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-runtime         = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+darwinia-balances = { path = "../../balances" }
+pallet-timestamp   = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+darwinia-support = { features = ["testing"], path = "../../support" }
+array-bytes  = { version = "2.0" }
+
 [features]
 default = ["std"]
 

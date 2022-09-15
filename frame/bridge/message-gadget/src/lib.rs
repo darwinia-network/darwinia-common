@@ -18,11 +18,11 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(test)]
+mod mock;
+
 // --- core ---
 use core::marker::PhantomData;
-use darwinia_evm::ExecutionInfo;
-// --- darwinia-network ---
-// use darwinia_ethereum::InternalTransactHandler;
 // --- paritytech ---
 use frame_support::{log, pallet_prelude::*, traits::Get};
 use frame_system::pallet_prelude::*;
@@ -80,49 +80,39 @@ where
 	T: Config + darwinia_evm::Config,
 {
 	fn get() -> Option<H256> {
-		// let raw_message_root = if let Ok(r) = <darwinia_ethereum::Pallet<T>>::read_only_call(
-		// 	<CommitmentContract<T>>::get(),
-		// 	hashing::keccak_256(b"commitment()")[..4].to_vec(),
-		// ) {
-		// 	r
-		// } else {
-		// 	log::warn!(target: LOG_TARGET, "Fail to read message root from DVM, return.");
+		use darwinia_evm::Runner;
+		use sp_core::U256;
+		use sp_std::str::FromStr;
+		let address = <CommitmentContract<T>>::get();
+		println!("the stored address: {:?}", address);
+		if let Ok(info) = <T as darwinia_evm::Config>::Runner::call(
+			H160::from_str("1000000000000000000000000000000000000001").unwrap(),
+			<CommitmentContract<T>>::get(),
+			hashing::keccak_256(b"commitment()")[..4].to_vec(),
+			U256::from(0),
+			10_000_000_000,
+			None,
+			None,
+			None,
+			vec![],
+			false,
+			<T as darwinia_evm::Config>::config(),
+		) {
+			println!("Info: {:?}", info);
+			let raw_message_root = info.value;
+			if raw_message_root.len() != 32 {
+				log::warn!(
+					target: LOG_TARGET,
+					"Invalid raw message root: {:?}, return.",
+					raw_message_root
+				);
 
-		// 	return None;
-		// };
-
-		// use darwinia_evm::Runner;
-		// use sp_core::U256;
-		// match <T as darwinia_evm::Config>::Runner::call(
-		// 	H160::from_low_u64_be(1),
-		// 	<CommitmentContract<T>>::get(),
-		// 	hashing::keccak_256(b"commitment()")[..4].to_vec(),
-		// 	U256::from(0),
-		// 	0,
-		// 	None,
-		// 	None,
-		// 	None,
-		// 	vec![],
-		// 	false,
-		// 	<T as darwinia_evm::Config>::config(),
-		// ) {
-		// 	Ok(ExecutionInfo()) => {},
-		// 	Err(_) => {},
-		// }
-
-		// Update this
-		let raw_message_root = vec![];
-
-		if raw_message_root.len() != 32 {
-			log::warn!(
-				target: LOG_TARGET,
-				"Invalid raw message root: {:?}, return.",
-				raw_message_root
-			);
-
-			return None;
+				return None;
+			}
+			return Some(H256::from_slice(&raw_message_root));
 		}
+		println!("Error happeneds...");
 
-		Some(H256::from_slice(&raw_message_root))
+		None
 	}
 }

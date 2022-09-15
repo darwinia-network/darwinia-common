@@ -1687,13 +1687,21 @@ dependencies = [
 name = "darwinia-message-gadget"
 version = "2.9.5"
 dependencies = [
+ "array-bytes",
+ "darwinia-balances",
  "darwinia-evm",
+ "darwinia-support",
+ "evm",
+ "fp-evm",
  "frame-support",
  "frame-system",
+ "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
