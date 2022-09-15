@@ -33,7 +33,6 @@ mod adapter;
 mod dispatch_transact;
 mod eip1559;
 mod eip2930;
-// mod internal;
 mod legacy;
 
 // This ERC-20 contract mints the maximum amount of tokens to the contract creator.

@@ -66,7 +66,6 @@ impl<T: Config> Runner<T> {
 			>,
 		) -> (ExitReason, R),
 	{
-		println!("bear: --- enter the stack runner execute...");
 		let base_fee = T::FeeCalculator::min_gas_price();
 		let max_fee_per_gas = match (max_fee_per_gas, is_transactional) {
 			(Some(max_fee_per_gas), _) => {
@@ -78,7 +77,6 @@ impl<T: Config> Runner<T> {
 			(None, false) => Default::default(),
 			_ => return Err(Error::<T>::GasPriceTooLow),
 		};
-		println!("bear: --- how you get here");
 
 		if let Some(max_priority_fee) = max_priority_fee_per_gas {
 			ensure!(max_fee_per_gas >= max_priority_fee, Error::<T>::GasPriceTooLow);
