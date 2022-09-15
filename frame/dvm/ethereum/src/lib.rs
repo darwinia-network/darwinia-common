@@ -56,6 +56,7 @@ use frame_support::{
 	traits::{EnsureOrigin, Get},
 	weights::{Pays, PostDispatchInfo, Weight},
 	PalletId,
+	log,
 };
 use frame_system::{pallet_prelude::OriginFor, WeightInfo};
 use scale_info::TypeInfo;
@@ -487,6 +488,7 @@ impl<T: Config> Pallet<T> {
 		log::error!("1.1---------------------------");
 
 		if let Some(chain_id) = transaction_data.chain_id {
+			log::error!("1.1---------------------------chain_id: {:?}", chain_id);
 			if chain_id != T::ChainId::get() {
 				return Err(InvalidTransaction::Custom(
 					TransactionValidationError::InvalidChainId as u8,
@@ -496,6 +498,7 @@ impl<T: Config> Pallet<T> {
 		}
 		log::error!("1.2---------------------------");
 
+		log::error!("1.2---------------------------gas_limit: {:?}", gas_limit);
 		if gas_limit >= T::BlockGasLimit::get() {
 			return Err(InvalidTransaction::Custom(
 				TransactionValidationError::InvalidGasLimit as u8,
@@ -533,6 +536,7 @@ impl<T: Config> Pallet<T> {
 		};
 		log::error!("1.4---------------------------");
 
+		log::error!("1.4---------------------------max_fee_per_gas: {:?}-base_fee: {:?}", max_fee_per_gas, base_fee );
 		if max_fee_per_gas < base_fee {
 			return Err(InvalidTransaction::Payment.into());
 		}
@@ -541,7 +545,9 @@ impl<T: Config> Pallet<T> {
 		let fee = max_fee_per_gas.saturating_mul(gas_limit);
 
 		let account_data = darwinia_evm::Pallet::<T>::account_basic(&origin);
+		log::error!("1.6---------------------------origin: {:?}, balance: {:?}", &origin, account_data.balance);
 		let total_payment = transaction_data.value.saturating_add(fee);
+		log::error!("1.7---------------------------total_payment: {:?}", total_payment);
 		if account_data.balance < total_payment {
 			return Err(InvalidTransaction::Payment.into());
 		}
