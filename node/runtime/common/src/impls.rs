@@ -124,6 +124,7 @@ impl Get<Option<(usize, ExtendedBalance)>> for OffchainRandomBalancing {
 pub struct FromThisChainMessageVerifier<B, R, I>(PhantomData<(B, R, I)>);
 impl<B, R, I>
 	LaneMessageVerifier<
+		OriginOf<ThisChain<B>>,
 		AccountIdOf<ThisChain<B>>,
 		FromThisChainMessagePayload<B>,
 		BalanceOf<ThisChain<B>>,
@@ -132,6 +133,9 @@ where
 	B: MessageBridge,
 	R: pallet_fee_market::Config<I>,
 	I: 'static,
+	// matches requirements from the `frame_system::Config::Origin`
+	OriginOf<ThisChain<B>>: Clone
+		+ Into<Result<frame_system::RawOrigin<AccountIdOf<ThisChain<B>>>, OriginOf<ThisChain<B>>>>,
 	AccountIdOf<ThisChain<B>>: Clone + PartialEq,
 	pallet_fee_market::BalanceOf<R, I>: From<BalanceOf<ThisChain<B>>>,
 {
@@ -139,15 +143,15 @@ where
 
 	#[cfg(not(feature = "runtime-benchmarks"))]
 	fn verify_message(
-		submitter: &Sender<AccountIdOf<ThisChain<B>>>,
+		submitter: &OriginOf<ThisChain<B>>,
 		delivery_and_dispatch_fee: &BalanceOf<ThisChain<B>>,
 		lane: &LaneId,
 		lane_outbound_data: &OutboundLaneData,
 		payload: &FromThisChainMessagePayload<B>,
 	) -> Result<(), Self::Error> {
 		// reject message if lane is blocked
-		if !ThisChain::<B>::is_outbound_lane_enabled(lane) {
-			return Err(OUTBOUND_LANE_DISABLED);
+		if !ThisChain::<B>::is_message_accepted(submitter, lane) {
+			return Err(MESSAGE_REJECTED_BY_OUTBOUND_LANE);
 		}
 
 		// reject message if there are too many pending messages at this lane
@@ -161,8 +165,21 @@ where
 
 		// Do the dispatch-specific check. We assume that the target chain uses
 		// `Dispatch`, so we verify the message accordingly.
-		pallet_bridge_dispatch::verify_message_origin(submitter, payload)
-			.map_err(|_| BAD_ORIGIN)?;
+		let raw_origin_or_err: Result<
+			frame_system::RawOrigin<AccountIdOf<ThisChain<B>>>,
+			OriginOf<ThisChain<B>>,
+		> = submitter.clone().into();
+		if let Ok(raw_origin) = raw_origin_or_err {
+			pallet_bridge_dispatch::verify_message_origin(&raw_origin, payload)
+				.map(drop)
+				.map_err(|_| BAD_ORIGIN)?
+		} else {
+			// so what it means that we've failed to convert origin to the
+			// `frame_system::RawOrigin`? now it means that the custom pallet origin has
+			// been used to send the message. Do we need to verify it? The answer is no,
+			// because pallet may craft any origin (e.g. root) && we can't verify whether it
+			// is valid, or not.
+		}
 
 		// Do the delivery_and_dispatch_fee. We assume that the delivery and dispatch fee always
 		// greater than the fee market provided fee.
@@ -185,7 +202,7 @@ where
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn verify_message(
-		_submitter: &Sender<AccountIdOf<ThisChain<B>>>,
+		_submitter: &OriginOf<ThisChain<B>>,
 		_delivery_and_dispatch_fee: &BalanceOf<ThisChain<B>>,
 		_lane: &LaneId,
 		_lane_outbound_data: &OutboundLaneData,
