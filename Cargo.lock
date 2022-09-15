@@ -1687,7 +1687,7 @@ dependencies = [
 name = "darwinia-message-gadget"
 version = "2.9.5"
 dependencies = [
- "darwinia-ethereum",
+ "darwinia-evm",
  "frame-support",
  "frame-system",
  "parity-scale-codec",

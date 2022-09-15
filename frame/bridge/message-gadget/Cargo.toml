@@ -14,7 +14,7 @@ version     = "2.9.5"
 codec      = { package = "parity-scale-codec", version = "2.3", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 # darwinia-network
-darwinia-ethereum = { default-features = false, path = "../../dvm/ethereum" }
+darwinia-evm = { default-features = false, path = "../../dvm/evm" }
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
@@ -29,7 +29,7 @@ std = [
 	"codec/std",
 	"scale-info/std",
 	# darwinia-network
-	"darwinia-ethereum/std",
+	"darwinia-evm/std",
 	# paritytech
 	"frame-support/std",
 	"frame-system/std",
