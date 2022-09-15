@@ -217,10 +217,15 @@ where
 }
 
 /// Info for keeping track of a proposal being voted on.
-#[derive(Default, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct RelayVotingState<TechnicalMember> {
 	/// The current set of technical members that approved it.
 	pub ayes: Vec<TechnicalMember>,
 	/// The current set of technical members that rejected it.
 	pub nays: Vec<TechnicalMember>,
+}
+impl<TechnicalMember> Default for RelayVotingState<TechnicalMember> {
+	fn default() -> Self {
+		Self { ayes: Vec::new(), nays: Vec::new() }
+	}
 }

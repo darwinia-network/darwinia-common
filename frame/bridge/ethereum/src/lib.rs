@@ -975,6 +975,16 @@ impl<T: Send + Sync + Config + TypeInfo> SignedExtension for CheckEthereumRelayH
 
 	const IDENTIFIER: &'static str = "CheckEthereumRelayHeaderParcel";
 
+	fn pre_dispatch(
+		self,
+		who: &Self::AccountId,
+		call: &Self::Call,
+		info: &DispatchInfoOf<Self::Call>,
+		len: usize,
+	) -> Result<Self::Pre, TransactionValidityError> {
+		Ok(self.validate(who, call, info, len).map(|_| ()))
+	}
+
 	fn additional_signed(&self) -> Result<Self::AdditionalSigned, TransactionValidityError> {
 		Ok(())
 	}
