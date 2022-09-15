@@ -484,6 +484,7 @@ impl<T: Config> Pallet<T> {
 			)
 			.into());
 		}
+		log::error!("1.1---------------------------");
 
 		if let Some(chain_id) = transaction_data.chain_id {
 			if chain_id != T::ChainId::get() {
@@ -493,6 +494,7 @@ impl<T: Config> Pallet<T> {
 				.into());
 			}
 		}
+		log::error!("1.2---------------------------");
 
 		if gas_limit >= T::BlockGasLimit::get() {
 			return Err(InvalidTransaction::Custom(
@@ -500,6 +502,7 @@ impl<T: Config> Pallet<T> {
 			)
 			.into());
 		}
+		log::error!("1.3---------------------------");
 
 		let base_fee = T::FeeCalculator::min_gas_price();
 		let mut priority = 0;
@@ -528,10 +531,12 @@ impl<T: Config> Pallet<T> {
 			},
 			_ => return Err(InvalidTransaction::Payment.into()),
 		};
+		log::error!("1.4---------------------------");
 
 		if max_fee_per_gas < base_fee {
 			return Err(InvalidTransaction::Payment.into());
 		}
+		log::error!("1.5---------------------------");
 
 		let fee = max_fee_per_gas.saturating_mul(gas_limit);
 
@@ -585,13 +590,17 @@ impl<T: Config> Pallet<T> {
 	) -> Result<(), TransactionValidityError> {
 		let transaction_data = Pallet::<T>::transaction_data(&transaction);
 		let transaction_nonce = transaction_data.nonce;
+		log::error!("1---------------------------");
 		let (account_nonce, _) = Self::validate_transaction_common(origin, &transaction_data)?;
 
+		log::error!("2---------------------------");
 		// In the context of the block, a transaction with a nonce that is
 		// too high should be considered invalid and make the whole block invalid.
 		if transaction_nonce > account_nonce {
+			log::error!("3---------------------------");
 			Err(TransactionValidityError::Invalid(InvalidTransaction::Future))
 		} else if transaction_nonce < account_nonce {
+			log::error!("4---------------------------");
 			Err(TransactionValidityError::Invalid(InvalidTransaction::Stale))
 		} else {
 			Ok(())
