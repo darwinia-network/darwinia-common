@@ -37,7 +37,7 @@ impl Config for Runtime {
 	type RejectOrigin = RootOrMoreThanHalf<CouncilCollective>;
 	type SpendFunds = Bounties;
 	type SpendPeriod = SpendPeriod;
-	type WeightInfo = WeightInfo<Runtime>;
+	type WeightInfo = WeightInfo<Self>;
 }
 impl Config<KtonTreasuryInstance> for Runtime {
 	type ApproveOrigin = RootOrAtLeastThreeFifth<CouncilCollective>;
@@ -53,5 +53,5 @@ impl Config<KtonTreasuryInstance> for Runtime {
 	type RejectOrigin = RootOrMoreThanHalf<CouncilCollective>;
 	type SpendFunds = ();
 	type SpendPeriod = SpendPeriod;
-	type WeightInfo = KtonTreasuryWeightInfo<Runtime>;
+	type WeightInfo = KtonTreasuryWeightInfo<Self>;
 }

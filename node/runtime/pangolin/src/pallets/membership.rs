@@ -37,5 +37,5 @@ impl Config<TechnicalMembershipInstance> for Runtime {
 	type RemoveOrigin = RootOrMoreThanHalf<CouncilCollective>;
 	type ResetOrigin = RootOrMoreThanHalf<CouncilCollective>;
 	type SwapOrigin = RootOrMoreThanHalf<CouncilCollective>;
-	type WeightInfo = WeightInfo<Runtime>;
+	type WeightInfo = WeightInfo<Self>;
 }

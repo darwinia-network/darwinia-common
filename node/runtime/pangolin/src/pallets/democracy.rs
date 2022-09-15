@@ -56,5 +56,5 @@ impl Config for Runtime {
 	type VetoOrigin = EnsureMember<AccountId, TechnicalCollective>;
 	type VoteLockingPeriod = EnactmentPeriod;
 	type VotingPeriod = VotingPeriod;
-	type WeightInfo = WeightInfo<Runtime>;
+	type WeightInfo = WeightInfo<Self>;
 }

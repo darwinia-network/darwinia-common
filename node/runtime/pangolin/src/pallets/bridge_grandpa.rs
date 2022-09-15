@@ -27,11 +27,11 @@ impl Config<WithPangoroGrandpa> for Runtime {
 	type BridgedChain = bp_pangoro::Pangoro;
 	type HeadersToKeep = PangoroHeadersToKeep;
 	type MaxRequests = MaxRequests;
-	type WeightInfo = PangoroGrandpaWeightInfo<Runtime>;
+	type WeightInfo = PangoroGrandpaWeightInfo<Self>;
 }
 impl Config<WithRococoGrandpa> for Runtime {
 	type BridgedChain = bp_rococo::Rococo;
 	type HeadersToKeep = RococoHeadersToKeep;
 	type MaxRequests = MaxRequests;
-	type WeightInfo = RococoGrandpaWeightInfo<Runtime>;
+	type WeightInfo = RococoGrandpaWeightInfo<Self>;
 }

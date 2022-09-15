@@ -32,7 +32,7 @@ impl Config<CouncilCollective> for Runtime {
 	type MotionDuration = CouncilMotionDuration;
 	type Origin = Origin;
 	type Proposal = Call;
-	type WeightInfo = CouncilWeightInfo<Runtime>;
+	type WeightInfo = CouncilWeightInfo<Self>;
 }
 impl Config<TechnicalCollective> for Runtime {
 	type DefaultVote = PrimeDefaultVote;
@@ -42,5 +42,5 @@ impl Config<TechnicalCollective> for Runtime {
 	type MotionDuration = TechnicalMotionDuration;
 	type Origin = Origin;
 	type Proposal = Call;
-	type WeightInfo = TechnicalWeightInfo<Runtime>;
+	type WeightInfo = TechnicalWeightInfo<Self>;
 }
