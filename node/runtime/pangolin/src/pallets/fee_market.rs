@@ -65,7 +65,7 @@ impl Config<WithPangoroFeeMarket> for Runtime {
 	type Slasher = FeeMarketSlasher;
 	type Slot = Slot;
 	type TreasuryPalletId = TreasuryPalletId;
-	type WeightInfo = PangoroWeightInfo<Runtime>;
+	type WeightInfo = PangoroWeightInfo<Self>;
 }
 impl Config<WithPangolinParachainFeeMarket> for Runtime {
 	type AssignedRelayerSlashRatio = AssignedRelayerSlashRatio;
@@ -80,5 +80,5 @@ impl Config<WithPangolinParachainFeeMarket> for Runtime {
 	type Slasher = FeeMarketSlasher;
 	type Slot = Slot;
 	type TreasuryPalletId = TreasuryPalletId;
-	type WeightInfo = PangolinParachainWeightInfo<Runtime>;
+	type WeightInfo = PangolinParachainWeightInfo<Self>;
 }

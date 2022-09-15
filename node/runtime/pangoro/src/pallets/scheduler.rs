@@ -21,5 +21,5 @@ impl Config for Runtime {
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type PalletsOrigin = OriginCaller;
 	type ScheduleOrigin = EnsureRoot<AccountId>;
-	type WeightInfo = WeightInfo<Runtime>;
+	type WeightInfo = WeightInfo<Self>;
 }

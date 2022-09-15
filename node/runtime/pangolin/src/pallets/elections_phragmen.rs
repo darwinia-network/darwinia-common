@@ -45,5 +45,5 @@ impl Config for Runtime {
 	type TermDuration = TermDuration;
 	type VotingBondBase = VotingBondBase;
 	type VotingBondFactor = VotingBondFactor;
-	type WeightInfo = WeightInfo<Runtime>;
+	type WeightInfo = WeightInfo<Self>;
 }

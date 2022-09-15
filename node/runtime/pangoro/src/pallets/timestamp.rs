@@ -11,5 +11,5 @@ impl Config for Runtime {
 	type MinimumPeriod = MinimumPeriod;
 	type Moment = Moment;
 	type OnTimestampSet = Babe;
-	type WeightInfo = WeightInfo<Runtime>;
+	type WeightInfo = WeightInfo<Self>;
 }

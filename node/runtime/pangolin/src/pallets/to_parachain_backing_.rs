@@ -70,5 +70,5 @@ impl Config for Runtime {
 	type OutboundPayloadCreator = ToPangolinParachainOutboundPayLoad;
 	type PalletId = S2sBackingPalletId;
 	type RingCurrency = Ring;
-	type WeightInfo = WeightInfo<Runtime>;
+	type WeightInfo = WeightInfo<Self>;
 }

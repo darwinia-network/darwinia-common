@@ -16,8 +16,6 @@ sp_npos_elections::generate_solution_type!(
 	>(16)
 );
 
-type Fallback = OnChainSequentialPhragmen<Runtime>;
-
 frame_support::parameter_types! {
 	// no signed phase for now, just unsigned.
 	pub const SignedPhase: u32 = 0;
@@ -48,7 +46,7 @@ impl Config for Runtime {
 	type DataProvider = Staking;
 	type EstimateCallFee = TransactionPayment;
 	type Event = Event;
-	type Fallback = Fallback;
+	type Fallback = GenesisElectionOf<Self>;
 	type ForceOrigin = Root;
 	type MinerMaxLength = OffchainSolutionLengthLimit;
 	type MinerMaxWeight = OffchainSolutionWeightLimit;

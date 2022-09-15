@@ -22,5 +22,5 @@ impl Config<WithPangolinGrandpa> for Runtime {
 	type BridgedChain = bp_pangolin::Pangolin;
 	type HeadersToKeep = HeadersToKeep;
 	type MaxRequests = MaxRequests;
-	type WeightInfo = WeightInfo<Runtime>;
+	type WeightInfo = WeightInfo<Self>;
 }

@@ -7,5 +7,5 @@ impl Config for Runtime {
 	type Call = Call;
 	type Event = Event;
 	type PalletsOrigin = OriginCaller;
-	type WeightInfo = WeightInfo<Runtime>;
+	type WeightInfo = WeightInfo<Self>;
 }

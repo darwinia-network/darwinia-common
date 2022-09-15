@@ -1,6 +1,4 @@
 // --- paritytech ---
-#[cfg(feature = "fast-runtime")]
-use frame_election_provider_support::onchain::OnChainSequentialPhragmen;
 use frame_election_provider_support::{onchain, SequentialPhragmen};
 use pallet_election_provider_multi_phase::{BenchmarkingConfig, Config, SolutionAccuracyOf};
 use sp_runtime::{transaction_validity::TransactionPriority, PerU16, Perbill};
@@ -15,8 +13,6 @@ sp_npos_elections::generate_solution_type!(
 		Accuracy = PerU16,
 	>(24)
 );
-
-type Fallback = OnChainSequentialPhragmen<Runtime>;
 
 frame_support::parameter_types! {
 	// no signed phase for now, just unsigned.
@@ -48,7 +44,7 @@ impl Config for Runtime {
 	type DataProvider = Staking;
 	type EstimateCallFee = TransactionPayment;
 	type Event = Event;
-	type Fallback = Fallback;
+	type Fallback = GenesisElectionOf<Self>;
 	type ForceOrigin = RootOrAtLeastHalf<CouncilCollective>;
 	type MinerMaxLength = OffchainSolutionLengthLimit;
 	type MinerMaxWeight = OffchainSolutionWeightLimit;

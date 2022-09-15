@@ -13,7 +13,7 @@ impl Config for Runtime {
 	type Currency = Ring;
 	type Event = Event;
 	type MinVestedTransfer = MinVestedTransfer;
-	type WeightInfo = WeightInfo<Runtime>;
+	type WeightInfo = WeightInfo<Self>;
 
 	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
