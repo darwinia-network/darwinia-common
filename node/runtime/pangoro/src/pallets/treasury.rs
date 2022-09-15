@@ -31,5 +31,5 @@ impl Config for Runtime {
 	type RejectOrigin = Root;
 	type SpendFunds = ();
 	type SpendPeriod = SpendPeriod;
-	type WeightInfo = WeightInfo<Runtime>;
+	type WeightInfo = WeightInfo<Self>;
 }

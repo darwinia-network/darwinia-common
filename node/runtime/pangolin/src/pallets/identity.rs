@@ -25,5 +25,5 @@ impl Config for Runtime {
 	type RegistrarOrigin = RootOrMoreThanHalf<CouncilCollective>;
 	type Slashed = Treasury;
 	type SubAccountDeposit = SubAccountDeposit;
-	type WeightInfo = WeightInfo<Runtime>;
+	type WeightInfo = WeightInfo<Self>;
 }

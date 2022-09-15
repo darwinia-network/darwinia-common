@@ -47,6 +47,6 @@ impl Config for Runtime {
 	type Origin = Origin;
 	type PalletInfo = PalletInfo;
 	type SS58Prefix = SS58Prefix;
-	type SystemWeightInfo = WeightInfo<Runtime>;
+	type SystemWeightInfo = WeightInfo<Self>;
 	type Version = Version;
 }
