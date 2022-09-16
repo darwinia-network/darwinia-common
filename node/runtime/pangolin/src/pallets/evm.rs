@@ -23,7 +23,6 @@ use darwinia_evm::{
 use darwinia_evm_precompile_dispatch::Dispatch;
 use darwinia_evm_precompile_kton::{Erc20Metadata, KtonERC20};
 use darwinia_evm_precompile_state_storage::{StateStorage, StorageFilterT};
-use darwinia_evm_precompile_transfer::Transfer;
 use darwinia_support::evm::ConcatConverter;
 
 pub struct EthereumFindAuthor<F>(PhantomData<F>);
@@ -96,7 +95,6 @@ where
 	KtonERC20<R, KtonERC20MetaData>: Precompile,
 	R: darwinia_ethereum::Config,
 	StateStorage<R, StorageFilter>: Precompile,
-	Transfer<R>: Precompile,
 {
 	fn execute(
 		&self,

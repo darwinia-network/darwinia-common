@@ -30,6 +30,7 @@ use frame_support::{pallet_prelude::*, traits::Get};
 use frame_system::pallet_prelude::*;
 use sp_core::{H160, H256};
 use sp_io::hashing;
+use sp_std::vec;
 
 #[frame_support::pallet]
 pub mod pallet {

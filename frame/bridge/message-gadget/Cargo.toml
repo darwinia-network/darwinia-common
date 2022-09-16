@@ -20,6 +20,7 @@ frame-support = { default-features = false, git = "https://github.com/darwinia-n
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 
 [dev-dependencies]
 # crates.io
@@ -32,7 +33,6 @@ darwinia-support  = { features = ["testing"], path = "../../support" }
 fp-evm           = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.4" }
 pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 sp-runtime       = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-sp-std           = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
 
 [features]
 default = ["std"]

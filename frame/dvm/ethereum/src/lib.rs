@@ -592,8 +592,6 @@ impl<T: Config> Pallet<T> {
 		let transaction_index = pending.len() as u32;
 
 		let (to, _, info) = Self::execute(source, &transaction, None)?;
-		// .expect("transaction is already validated; error indicates that the block is invalid");
-
 		let (reason, status, used_gas, dest) = match info {
 			CallOrCreateInfo::Call(info) => (
 				info.exit_reason,
@@ -881,33 +879,6 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 }
-
-// impl<T: Config> InternalTransactHandler for Pallet<T> {
-// 	/// Pure read-only call to contract, the sender is pallet dvm account.
-// 	/// NOTE: You should never use raw call for any non-read-only operation, be carefully.
-// 	fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
-// 		sp_io::storage::start_transaction();
-// 		let source = T::PalletId::get().derive_ethereum_address();
-// 		let nonce = darwinia_evm::Pallet::<T>::account_basic(&source).nonce;
-// 		let transaction = internal_transaction::<T>(nonce, contract, input);
-
-// 		let res = match Self::execute(source, &transaction, None) {
-// 			Ok((_, _, info)) => match info {
-// 				CallOrCreateInfo::Call(info) => match info.exit_reason {
-// 					ExitReason::Succeed(_) => Ok(info.value),
-// 					ExitReason::Error(_) => Err(<Error<T>>::InternalTransactionExitError.into()),
-// 					ExitReason::Revert(_) => Err(<Error<T>>::InternalTransactionRevertError.into()),
-// 					ExitReason::Fatal(_) => Err(<Error<T>>::InternalTransactionFatalError.into()),
-// 				},
-// 				_ => Err(<Error<T>>::ReadyOnlyCall.into()),
-// 			},
-// 			Err(e) => Err(e),
-// 		};
-// 		// Rollback the storage changes no matter success or failed
-// 		sp_io::storage::rollback_transaction();
-// 		res
-// 	}
-// }
 
 #[repr(u8)]
 enum TransactionValidationError {
