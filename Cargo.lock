@@ -1618,16 +1618,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-evm-precompile-transfer"
-version = "2.9.5"
-dependencies = [
- "darwinia-evm",
- "darwinia-evm-precompile-utils",
- "fp-evm",
- "num_enum",
-]
-
-[[package]]
 name = "darwinia-evm-precompile-utils"
 version = "2.9.5"
 dependencies = [
@@ -6158,7 +6148,6 @@ dependencies = [
  "darwinia-evm-precompile-dispatch",
  "darwinia-evm-precompile-kton",
  "darwinia-evm-precompile-state-storage",
- "darwinia-evm-precompile-transfer",
  "darwinia-header-mmr",
  "darwinia-message-gadget",
  "darwinia-relay-authority",
@@ -6268,7 +6257,6 @@ dependencies = [
  "darwinia-evm-precompile-dispatch",
  "darwinia-evm-precompile-kton",
  "darwinia-evm-precompile-state-storage",
- "darwinia-evm-precompile-transfer",
  "darwinia-message-gadget",
  "darwinia-staking",
  "darwinia-support",

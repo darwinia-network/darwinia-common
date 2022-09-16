@@ -26,7 +26,6 @@ darwinia-evm-precompile-bls12-381     = { default-features = false, path = "../.
 darwinia-evm-precompile-dispatch      = { default-features = false, path = "../../../frame/dvm/evm/precompiles/dispatch" }
 darwinia-evm-precompile-kton          = { default-features = false, path = "../../../frame/dvm/evm/precompiles/kton" }
 darwinia-evm-precompile-state-storage = { default-features = false, path = "../../../frame/dvm/evm/precompiles/state-storage" }
-darwinia-evm-precompile-transfer      = { default-features = false, path = "../../../frame/dvm/evm/precompiles/transfer" }
 darwinia-message-gadget               = { default-features = false, path = "../../../frame/bridge/message-gadget" }
 darwinia-staking                      = { default-features = false, path = "../../../frame/staking" }
 darwinia-support                      = { default-features = false, path = "../../../frame/support" }
@@ -125,7 +124,6 @@ std = [
 	"darwinia-evm-precompile-dispatch/std",
 	"darwinia-evm-precompile-kton/std",
 	"darwinia-evm-precompile-state-storage/std",
-	"darwinia-evm-precompile-transfer/std",
 	"darwinia-message-gadget/std",
 	"darwinia-staking/std",
 	"darwinia-support/std",
