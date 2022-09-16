@@ -19,14 +19,14 @@
 // --- crates.io ---
 use std::str::FromStr;
 // --- paritytech ---
-use frame_support::{assert_err, assert_noop, assert_ok, unsigned::TransactionValidityError};
+use frame_support::{assert_err, assert_ok, unsigned::TransactionValidityError};
 use sp_runtime::{
 	traits::Applyable,
 	transaction_validity::{InvalidTransaction, ValidTransactionBuilder},
 };
 // --- darwinia-network ---
 use crate::{
-	mock::*, CallOrCreateInfo, Error, RawOrigin, Transaction, TransactionAction, H160, H256, U256,
+	mock::*, CallOrCreateInfo, RawOrigin, Transaction, TransactionAction, H160, H256, U256,
 };
 
 mod adapter;

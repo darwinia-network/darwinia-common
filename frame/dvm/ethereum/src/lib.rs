@@ -70,7 +70,7 @@ use sp_runtime::{
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use darwinia_evm::{BlockHashMapping, GasWeightMapping, Runner};
-use darwinia_support::evm::{recover_signer, DeriveEthereumAddress, INTERNAL_TX_GAS_LIMIT};
+use darwinia_support::evm::recover_signer;
 
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum RawOrigin {
@@ -228,7 +228,9 @@ pub mod pallet {
 					Self::validate_transaction_in_block(source, &transaction).expect(
 						"pre-block transaction verification failed; the block cannot be built",
 					);
-					let r = Self::apply_validated_transaction(source, transaction);
+					let r = Self::apply_validated_transaction(source, transaction).expect(
+						"pre-block transaction execution failed; the block cannot be built",
+					);
 					weight = weight.saturating_add(r.actual_weight.unwrap_or(0 as Weight));
 				}
 			}
@@ -261,7 +263,7 @@ pub mod pallet {
 				Error::<T>::PreLogExists,
 			);
 
-			Ok(Self::apply_validated_transaction(source, transaction))
+			Self::apply_validated_transaction(source, transaction)
 		}
 
 		/// This is message transact only for substrate to substrate LCMP to call
@@ -299,7 +301,7 @@ pub mod pallet {
 				Error::<T>::MessageValidateError
 			);
 
-			Ok(Self::apply_validated_transaction(source, extracted_transaction))
+			Self::apply_validated_transaction(source, extracted_transaction)
 		}
 	}
 
@@ -581,15 +583,16 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Execute transaction from EthApi or PreLog Block
-	/// NOTE: For the rpc transaction, the execution will return ok(..) even when encounters error
-	/// 	  from evm runner
-	fn apply_validated_transaction(source: H160, transaction: Transaction) -> PostDispatchInfo {
+	fn apply_validated_transaction(
+		source: H160,
+		transaction: Transaction,
+	) -> DispatchResultWithPostInfo {
 		let pending = Pending::<T>::get();
 		let transaction_hash = transaction.hash();
 		let transaction_index = pending.len() as u32;
 
-		let (to, _, info) = Self::execute(source, &transaction, None)
-			.expect("transaction is already validated; error indicates that the block is invalid");
+		let (to, _, info) = Self::execute(source, &transaction, None)?;
+		// .expect("transaction is already validated; error indicates that the block is invalid");
 
 		let (reason, status, used_gas, dest) = match info {
 			CallOrCreateInfo::Call(info) => (
@@ -675,12 +678,12 @@ impl<T: Config> Pallet<T> {
 			exit_reason: reason.clone(),
 		});
 
-		PostDispatchInfo {
+		Ok(PostDispatchInfo {
 			actual_weight: Some(T::GasWeightMapping::gas_to_weight(
 				used_gas.unique_saturated_into(),
 			)),
 			pays_fee: Pays::No,
-		}
+		})
 	}
 
 	/// Get the transaction status with given index.
