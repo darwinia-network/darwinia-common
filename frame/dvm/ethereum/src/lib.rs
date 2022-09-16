@@ -32,6 +32,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+use array_bytes::hex2array_unchecked;
 #[doc(no_inline)]
 pub use ethereum::{
 	AccessListItem, BlockV2 as Block, LegacyTransactionMessage, Log, ReceiptV3 as Receipt,
@@ -82,6 +83,8 @@ pub fn ensure_ethereum_transaction<OuterOrigin>(o: OuterOrigin) -> Result<H160, 
 where
 	OuterOrigin: Into<Result<RawOrigin, OuterOrigin>>,
 {
+	
+	// Ok(H160::from_slice(&hex2array_unchecked("0x7c1093e061c55FEE085F2E91583F5f46fDFDD91F")))
 	match o.into() {
 		Ok(RawOrigin::EthereumTransaction(n)) => Ok(n),
 		_ => Err("bad origin: expected to be an Ethereum transaction"),
@@ -169,7 +172,9 @@ where
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
+	use core::str::FromStr;
+
+use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -276,7 +281,9 @@ pub mod pallet {
 			transaction: Transaction,
 		) -> DispatchResultWithPostInfo {
 			// Source address supposed to be derived address generate from message layer
-			let source = ensure_ethereum_transaction(origin)?;
+			// let source = ensure_ethereum_transaction(origin)?;
+			let source = H160::from_slice(&array_bytes::hex2array_unchecked::<20>("0x7c1093e061c55FEE085F2E91583F5f46fDFDD91F")); // ensure_ethereum_transaction(origin)?;
+			log::error!("=============source: {:?}", source);
 
 			// Disable transact functionality if PreLog exist.
 			ensure!(
@@ -284,6 +291,7 @@ pub mod pallet {
 				Error::<T>::PreLogExists,
 			);
 
+			log::error!("0.1---------------------------transaction: {:?}", transaction);
 			let extracted_transaction = match transaction {
 				Transaction::Legacy(t) => Ok(Transaction::Legacy(ethereum::LegacyTransaction {
 					nonce: darwinia_evm::Pallet::<T>::account_basic(&source).nonce, // auto set
@@ -297,11 +305,13 @@ pub mod pallet {
 				_ => Err(Error::<T>::MessageTransactionError),
 			}?;
 
+			log::error!("0.2---------------------------");
 			ensure!(
 				Self::validate_transaction_in_block(source, &extracted_transaction).is_ok(),
 				Error::<T>::MessageValidateError
 			);
 
+			log::error!("0.3---------------------------");
 			Self::apply_validated_transaction(source, extracted_transaction)
 		}
 
