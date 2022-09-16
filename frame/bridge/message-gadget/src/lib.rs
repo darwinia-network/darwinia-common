@@ -87,12 +87,12 @@ where
 			<CommitmentContract<T>>::get(),
 			hashing::keccak_256(b"commitment()")[..4].to_vec(),
 			0.into(),
-			1_000_000_000,
+			1_000_000_000_000,
 			None,
 			None,
 			None,
 			vec![],
-			false,
+			false, // is_transactional = false, use the default gas_price
 			<T as darwinia_evm::Config>::config(),
 		) {
 			let raw_message_root = info.value;
