@@ -23,6 +23,8 @@ mod mock;
 
 // --- core ---
 use core::marker::PhantomData;
+// --- darwinia-network ---
+use darwinia_evm::Runner;
 // --- paritytech ---
 use frame_support::{log, pallet_prelude::*, traits::Get};
 use frame_system::pallet_prelude::*;
@@ -80,17 +82,12 @@ where
 	T: Config + darwinia_evm::Config,
 {
 	fn get() -> Option<H256> {
-		use darwinia_evm::Runner;
-		use sp_core::U256;
-		use sp_std::str::FromStr;
-		let address = <CommitmentContract<T>>::get();
-		println!("the stored address: {:?}", address);
 		if let Ok(info) = <T as darwinia_evm::Config>::Runner::call(
-			H160::from_str("1000000000000000000000000000000000000001").unwrap(),
+			H160::default(),
 			<CommitmentContract<T>>::get(),
 			hashing::keccak_256(b"commitment()")[..4].to_vec(),
-			U256::from(0),
-			10_000_000_000,
+			0.into(),
+			1_000_000_000,
 			None,
 			None,
 			None,
@@ -98,7 +95,6 @@ where
 			false,
 			<T as darwinia_evm::Config>::config(),
 		) {
-			println!("Info: {:?}", info);
 			let raw_message_root = info.value;
 			if raw_message_root.len() != 32 {
 				log::warn!(
@@ -111,7 +107,6 @@ where
 			}
 			return Some(H256::from_slice(&raw_message_root));
 		}
-		println!("Error happeneds...");
 
 		None
 	}

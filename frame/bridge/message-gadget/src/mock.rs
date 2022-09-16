@@ -21,18 +21,15 @@ use std::{collections::BTreeMap, str::FromStr};
 // --- crates.io ---
 use array_bytes::hex2bytes;
 use codec::{Decode, Encode, MaxEncodedLen};
-use evm::{ExitError, ExitReason};
-use frame_support::traits::FindAuthor;
-use frame_system::RawOrigin;
+use evm::ExitError;
 use scale_info::TypeInfo;
 // --- paritytech ---
 use fp_evm::{FeeCalculator, GenesisAccount};
 use frame_support::{
-	assert_ok,
-	traits::{Everything, GenesisBuild, WithdrawReasons},
+	traits::{Everything, FindAuthor, GenesisBuild, WithdrawReasons},
 	ConsensusEngineId,
 };
-use frame_system::mocking::*;
+use frame_system::{mocking::*, RawOrigin};
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
@@ -228,10 +225,9 @@ frame_support::construct_runtime! {
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
-
 	let mut accounts = BTreeMap::new();
 	accounts.insert(
-		H160::default(), // root
+		H160::from_str("1000000000000000000000000000000000000001").unwrap(),
 		GenesisAccount {
 			nonce: U256::from(1),
 			balance: U256::max_value(),
@@ -248,37 +244,38 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	t.into()
 }
 
-#[test]
-fn test_call() {
-	new_test_ext().execute_with(|| {
-        // pragma solidity ^0.8.0;
-        // 
-        // contract MessageRootGetter {
-        //     function commitment() public returns (bool) {
-        //         return true;
-        //     }
-        // }
-        let  contract_code = "0x608060405234801561001057600080fd5b5060b88061001f6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c80631303a48414602d575b600080fd5b60336047565b604051603e9190605d565b60405180910390f35b60006001905090565b6057816076565b82525050565b6000602082019050607060008301846050565b92915050565b6000811515905091905056fea26469706673582212205edcbb73cc70f096b015d00b65ed893df280a01c9e90e964e8bb39957d6d3c9d64736f6c63430008070033";
+#[cfg(test)]
+mod tests {
+	use super::*;
 
-        let res = <Test as darwinia_evm::Config>::Runner::create(
-		H160::default(),
-		hex2bytes(contract_code).unwrap(),
-		U256::zero(),
-		U256::from(300_000_000).low_u64(),
-		Some(<Test as darwinia_evm::Config>::FeeCalculator::min_gas_price()),
-		None,
-		Some(U256::from(1)),
-		vec![],
-		true,
-		<Test as darwinia_evm::Config>::config(),
-	);
-	println!("res: {:?}", res);
-	let address = res.unwrap().value;
-        crate::CommitmentContract::<Test>::put(address);
-    assert_eq!(MessageGadget::commitment_contract(), address);
-    assert_eq!(MessageRootGetter::<Test>::get(), Some(H256::from_slice(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])));
+	#[test]
+	fn test_call() {
+		new_test_ext().execute_with(|| {
+			// pragma solidity ^0.8.0;
+			// 
+			// contract MessageRootGetter {
+			//     function commitment() public returns (bool) {
+			//         return true;
+			//     }
+			// }
+			const CONTRACT_CODE: &str = "0x608060405234801561001057600080fd5b5060b88061001f6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c80631303a48414602d575b600080fd5b60336047565b604051603e9190605d565b60405180910390f35b60006001905090565b6057816076565b82525050565b6000602082019050607060008301846050565b92915050565b6000811515905091905056fea26469706673582212205edcbb73cc70f096b015d00b65ed893df280a01c9e90e964e8bb39957d6d3c9d64736f6c63430008070033";
+			let res = <Test as darwinia_evm::Config>::Runner::create(
+				H160::from_str("1000000000000000000000000000000000000001").unwrap(),
+				hex2bytes(CONTRACT_CODE).unwrap(),
+				U256::zero(),
+				U256::from(300_000_000).low_u64(),
+				Some(<Test as darwinia_evm::Config>::FeeCalculator::min_gas_price()),
+				None,
+				Some(U256::from(1)),
+				vec![],
+				true,
+				<Test as darwinia_evm::Config>::config(),
+			);
+			let contract_address = res.unwrap().value;
+			CommitmentContract::<Test>::put(contract_address);
 
-    // println!("Evm code: {:?}", EVM::account_codes(address));
-
-	});
+			assert_eq!(MessageGadget::commitment_contract(), contract_address);
+			assert_eq!(MessageRootGetter::<Test>::get(), Some(H256::from_slice(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])));
+		});
+	}
 }
