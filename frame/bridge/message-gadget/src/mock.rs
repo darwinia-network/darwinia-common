@@ -248,7 +248,7 @@ mod tests {
 	use super::*;
 
 	#[test]
-	fn test_call() {
+	fn test_get_return_something() {
 		new_test_ext().execute_with(|| {
 			// pragma solidity ^0.8.0;
 			// 
@@ -275,6 +275,13 @@ mod tests {
 
 			assert_eq!(MessageGadget::commitment_contract(), contract_address);
 			assert_eq!(MessageRootGetter::<Test>::get(), Some(H256::from_slice(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])));
+		});
+	}
+
+	#[test]
+	fn test_get_return_none() {
+		new_test_ext().execute_with(|| {
+			assert_eq!(MessageRootGetter::<Test>::get(), None);
 		});
 	}
 }

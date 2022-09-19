@@ -26,7 +26,7 @@ use core::marker::PhantomData;
 // --- darwinia-network ---
 use darwinia_evm::Runner;
 // --- paritytech ---
-use frame_support::{pallet_prelude::*, traits::Get};
+use frame_support::{log, pallet_prelude::*, traits::Get};
 use frame_system::pallet_prelude::*;
 use sp_core::{H160, H256};
 use sp_io::hashing;
@@ -75,13 +75,15 @@ pub mod pallet {
 }
 pub use pallet::*;
 
+const LOG_TARGET: &str = "runtime::message-gadget";
+
 pub struct MessageRootGetter<T>(PhantomData<T>);
 impl<T> Get<Option<H256>> for MessageRootGetter<T>
 where
 	T: Config + darwinia_evm::Config,
 {
 	fn get() -> Option<H256> {
-		<T as darwinia_evm::Config>::Runner::call(
+		if let Ok(info) = <T as darwinia_evm::Config>::Runner::call(
 			H160::default(),
 			<CommitmentContract<T>>::get(),
 			hashing::keccak_256(b"commitment()")[..4].to_vec(),
@@ -93,8 +95,20 @@ where
 			vec![],
 			false, // is_transactional = false, use the default gas_price
 			<T as darwinia_evm::Config>::config(),
-		)
-		.ok()
-		.map(|info| H256::from_slice(&info.value))
+		) {
+			let raw_message_root = info.value;
+			if raw_message_root.len() != 32 {
+				log::warn!(
+					target: LOG_TARGET,
+					"Invalid raw message root: {:?}, return.",
+					raw_message_root
+				);
+
+				return None;
+			}
+			return Some(H256::from_slice(&raw_message_root));
+		}
+
+		None
 	}
 }
