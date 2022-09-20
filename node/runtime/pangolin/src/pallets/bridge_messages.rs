@@ -40,8 +40,7 @@ impl Config<WithPangoroMessages> for Runtime {
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
 	type MaxUnconfirmedMessagesAtInboundLane = PangoroMaxUnconfirmedMessagesAtInboundLane;
 	type MaxUnrewardedRelayerEntriesAtInboundLane = PangoroMaxUnrewardedRelayerEntriesAtInboundLane;
-	type MessageDeliveryAndDispatchPayment =
-		FeeMarketPayment<Self, WithPangoroFeeMarket, Ring>;
+	type MessageDeliveryAndDispatchPayment = FeeMarketPayment<Self, WithPangoroFeeMarket, Ring>;
 	type MessageDispatch = bm_pangoro::FromPangoroMessageDispatch;
 	type OnDeliveryConfirmed = FeeMarketMessageConfirmedHandler<Self, WithPangoroFeeMarket>;
 	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangoroFeeMarket>;

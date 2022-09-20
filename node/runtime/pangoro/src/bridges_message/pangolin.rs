@@ -252,3 +252,17 @@ impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for Pangolin {
 		)
 	}
 }
+
+impl SenderOrigin<crate::AccountId> for crate::Origin {
+	fn linked_account(&self) -> Option<crate::AccountId> {
+		match self.caller {
+			crate::OriginCaller::system(frame_system::RawOrigin::Signed(ref submitter)) =>
+				Some(submitter.clone()),
+			// TODO: Need more investment here
+			// crate::OriginCaller::system(frame_system::RawOrigin::Root)
+			// | crate::OriginCaller::system(frame_system::RawOrigin::None) =>
+			// 	crate::RootAccountForPayments::get(),
+			_ => None,
+		}
+	}
+}
