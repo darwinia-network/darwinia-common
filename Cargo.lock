@@ -5876,6 +5876,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-preimage"
+version = "4.0.0-dev"
+source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.5#19162e43be45817b44c7d48e50d03f074f60fbf4"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-proxy"
 version = "4.0.0-dev"
 source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.5#19162e43be45817b44c7d48e50d03f074f60fbf4"
@@ -6171,6 +6187,7 @@ dependencies = [
  "pallet-membership",
  "pallet-multisig",
  "pallet-offences",
+ "pallet-preimage",
  "pallet-proxy",
  "pallet-recovery",
  "pallet-scheduler",
@@ -6268,6 +6285,7 @@ dependencies = [
  "pallet-grandpa",
  "pallet-im-online",
  "pallet-offences",
+ "pallet-preimage",
  "pallet-scheduler",
  "pallet-session",
  "pallet-sudo",

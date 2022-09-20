@@ -211,6 +211,7 @@ frame_support::construct_runtime! {
 
 		// System scheduler.
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 30,
+		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 67,
 
 		// Proxy module. Late addition.
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 31,

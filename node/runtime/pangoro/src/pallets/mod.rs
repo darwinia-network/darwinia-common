@@ -67,6 +67,9 @@ pub use sudo::*;
 pub mod scheduler;
 pub use scheduler::*;
 
+pub mod preimage;
+pub use preimage::*;
+
 pub mod bridge_messages;
 pub use bridge_messages::*;
 

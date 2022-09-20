@@ -67,6 +67,7 @@ pallet-im-online                     = { default-features = false, git = "https:
 # pallet-mmr                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
 # pallet-mmr-primitives                      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
 pallet-offences                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
+pallet-preimage                            = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
 pallet-scheduler                           = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
 pallet-session                             = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
 pallet-sudo                                = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
@@ -166,6 +167,7 @@ std = [
 	# "pallet-mmr/std",
 	# "pallet-mmr-primitives/std",
 	"pallet-offences/std",
+	"pallet-preimage/std",
 	"pallet-scheduler/std",
 	"pallet-session/std",
 	"pallet-sudo/std",

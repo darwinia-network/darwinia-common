@@ -106,6 +106,9 @@ pub use recovery::*;
 pub mod scheduler;
 pub use scheduler::*;
 
+pub mod preimage;
+pub use preimage::*;
+
 pub mod proxy;
 pub use proxy::*;
 
