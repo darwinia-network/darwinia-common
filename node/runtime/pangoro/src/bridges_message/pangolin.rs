@@ -120,7 +120,7 @@ impl ChainWithMessages for Pangoro {
 }
 impl ThisChainWithMessages for Pangoro {
 	type Call = Call;
-	// type Origin = Origin;
+	type Origin = Origin;
 
 	fn is_message_accepted(_send_origin: &Self::Origin, lane: &LaneId) -> bool {
 		*lane == PANGORO_PANGOLIN_LANE
