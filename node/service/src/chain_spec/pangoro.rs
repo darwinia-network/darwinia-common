@@ -101,6 +101,23 @@ pub fn genesis_config() -> ChainSpec {
 				);
 			}
 
+			// This is the simplest bytecode to revert without returning any data.
+			// We will pre-deploy it under all of our precompiles to ensure they can be called from
+			// within contracts.
+			// (PUSH1 0x00 PUSH1 0x00 REVERT)
+			let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
+			for precompile in PangoroPrecompiles::<Runtime>::used_addresses() {
+				map.insert(
+					precompile,
+					GenesisAccount {
+						nonce: Default::default(),
+						balance: Default::default(),
+						storage: Default::default(),
+						code: revert_bytecode.clone(),
+					},
+				);
+			}
+
 			map
 		};
 
@@ -244,6 +261,23 @@ pub fn development_config() -> ChainSpec {
 						code: Default::default(),
 						nonce: Default::default(),
 						storage: Default::default(),
+					},
+				);
+			}
+
+			// This is the simplest bytecode to revert without returning any data.
+			// We will pre-deploy it under all of our precompiles to ensure they can be called from
+			// within contracts.
+			// (PUSH1 0x00 PUSH1 0x00 REVERT)
+			let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
+			for precompile in PangoroPrecompiles::<Runtime>::used_addresses() {
+				map.insert(
+					precompile,
+					GenesisAccount {
+						nonce: Default::default(),
+						balance: Default::default(),
+						storage: Default::default(),
+						code: revert_bytecode.clone(),
 					},
 				);
 			}
