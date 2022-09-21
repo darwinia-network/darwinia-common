@@ -99,7 +99,7 @@ where
 		is_static: bool,
 	) -> EvmResult<PrecompileOutput> {
 		let mut helper = PrecompileHelper::<Runtime>::new(input, target_gas, context, is_static);
-		let action = helper.selector().unwrap_or(Action::Name);
+		let action = helper.selector()?;
 
 		match action {
 			Action::Transfer | Action::Allowance | Action::Approve | Action::TransferFrom =>
