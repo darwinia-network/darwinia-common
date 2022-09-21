@@ -37,7 +37,7 @@ use bridge_runtime_common::{
 		self,
 		source::{self, *},
 		target::{self, *},
-		BalanceOf, *,
+		*,
 	},
 };
 use drml_common_runtime::impls::FromThisChainMessageVerifier;
