@@ -47,6 +47,12 @@ const EVM_ACCOUNTS: &[&str] = &[
 	// Subswap
 	"0xbB3E51d20CA651fBE19b1a1C2a6C8B1A4d950437",
 ];
+// This is the simplest bytecode to revert without returning any data.
+// We will pre-deploy it under all of our precompiles to ensure they can be called from
+// within contracts.
+// (PUSH1 0x00 PUSH1 0x00 REVERT)
+const REVERT_BYTECODE: [u8; 5] = [0x60, 0x00, 0x60, 0x00, 0xFD];
+
 const A_FEW_COINS: Balance = 1 << 44;
 const MANY_COINS: Balance = A_FEW_COINS << 6;
 const BUNCH_OF_COINS: Balance = MANY_COINS << 6;
@@ -107,11 +113,6 @@ pub fn genesis_config() -> ChainSpec {
 				);
 			}
 
-			// This is the simplest bytecode to revert without returning any data.
-			// We will pre-deploy it under all of our precompiles to ensure they can be called from
-			// within contracts.
-			// (PUSH1 0x00 PUSH1 0x00 REVERT)
-			let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
 			for precompile in PangolinPrecompiles::<Runtime>::used_addresses() {
 				map.insert(
 					precompile,
@@ -119,7 +120,7 @@ pub fn genesis_config() -> ChainSpec {
 						nonce: Default::default(),
 						balance: Default::default(),
 						storage: Default::default(),
-						code: revert_bytecode.clone(),
+						code: REVERT_BYTECODE.to_vec(),
 					},
 				);
 			}
@@ -362,11 +363,6 @@ pub fn development_config() -> ChainSpec {
 				);
 			}
 
-			// This is the simplest bytecode to revert without returning any data.
-			// We will pre-deploy it under all of our precompiles to ensure they can be called from
-			// within contracts.
-			// (PUSH1 0x00 PUSH1 0x00 REVERT)
-			let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
 			for precompile in PangolinPrecompiles::<Runtime>::used_addresses() {
 				map.insert(
 					precompile,
@@ -374,7 +370,7 @@ pub fn development_config() -> ChainSpec {
 						nonce: Default::default(),
 						balance: Default::default(),
 						storage: Default::default(),
-						code: revert_bytecode.clone(),
+						code: REVERT_BYTECODE.to_vec(),
 					},
 				);
 			}
@@ -567,11 +563,6 @@ pub fn local_testnet_config() -> ChainSpec {
 				);
 			}
 
-			// This is the simplest bytecode to revert without returning any data.
-			// We will pre-deploy it under all of our precompiles to ensure they can be called from
-			// within contracts.
-			// (PUSH1 0x00 PUSH1 0x00 REVERT)
-			let revert_bytecode = vec![0x60, 0x00, 0x60, 0x00, 0xFD];
 			for precompile in PangolinPrecompiles::<Runtime>::used_addresses() {
 				map.insert(
 					precompile,
@@ -579,7 +570,7 @@ pub fn local_testnet_config() -> ChainSpec {
 						nonce: Default::default(),
 						balance: Default::default(),
 						storage: Default::default(),
-						code: revert_bytecode.clone(),
+						code: REVERT_BYTECODE.to_vec(),
 					},
 				);
 			}
