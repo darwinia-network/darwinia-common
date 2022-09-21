@@ -23,10 +23,6 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 }
 
 fn migrate() -> Weight {
-	let module = b"Substrate2SubstrateIssuing";
-	migration::remove_storage_prefix(module, b"MappingFactoryAddress", &[]);
-	migration::remove_storage_prefix(module, b"RemoteBackingAccount", &[]);
-
 	// 0
 	RuntimeBlockWeights::get().max_block
 }
