@@ -13,11 +13,17 @@ use to_parachain_backing::{Config, IssueFromRemotePayload, IssuingCall, LatestMe
 pub struct PangolinParachainMessageNoncer;
 impl LatestMessageNoncer for PangolinParachainMessageNoncer {
 	fn outbound_latest_generated_nonce(lane_id: LaneId) -> u64 {
-		BridgePangolinParachainMessages::outbound_latest_generated_nonce(lane_id)
+		pallet_bridge_messages::OutboundLanes::<Runtime, WithPangolinParachainMessages>::get(
+			&lane_id,
+		)
+		.latest_generated_nonce
 	}
 
 	fn inbound_latest_received_nonce(lane_id: LaneId) -> u64 {
-		BridgePangolinParachainMessages::inbound_latest_received_nonce(lane_id)
+		pallet_bridge_messages::InboundLanes::<Runtime, WithPangolinParachainMessages>::get(
+			&lane_id,
+		)
+		.last_delivered_nonce()
 	}
 }
 
