@@ -299,7 +299,7 @@ pub mod pallet {
 
 			if let Err(err) = Self::validate_transaction_in_block(source, &extracted_transaction) {
 				Self::deposit_event(Event::MessageTransactValidateRejected { source, nonce, err });
-				return Err(Error::<T>::MessageValidateError.into());
+				return Err(Error::<T>::MessageValidateRejected.into());
 			}
 
 			Self::apply_validated_transaction(source, extracted_transaction)
@@ -349,10 +349,10 @@ pub mod pallet {
 		InternalTransactionFatalError,
 		/// The internal call failed.
 		ReadyOnlyCall,
-		/// Message transaction invalid
+		/// LCMP message only allows legacy ethereum.
 		InvalidTransactionType,
-		/// Message validate invalid
-		MessageValidateError,
+		/// LCMP message validate rejected, check the transaction info.
+		MessageValidateRejected,
 	}
 
 	/// Current building block's transactions and receipts.
