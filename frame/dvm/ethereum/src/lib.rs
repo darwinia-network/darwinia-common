@@ -248,7 +248,7 @@ pub mod pallet {
 	where
 		OriginFor<T>: Into<Result<RawOrigin, OriginFor<T>>>,
 	{
-		/// This the endpoint of RPC Ethereum transaction, consistent with frontier.
+		/// This the endpoint of RPC Ethereum transaction
 		#[pallet::weight(<T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(
 			Pallet::<T>::transaction_data(transaction).gas_limit.unique_saturated_into()
 		))]
@@ -266,7 +266,7 @@ pub mod pallet {
 			Self::apply_validated_transaction(source, transaction)
 		}
 
-		/// This is message transact only for substrate to substrate LCMP to call
+		/// This is the endpoint of the Substrate to Substrate LCMP protocol.
 		#[pallet::weight(<T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(
 		Pallet::<T>::transaction_data(transaction).gas_limit.unique_saturated_into()
 		))]
@@ -276,6 +276,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			// Source address supposed to be derived address generate from message layer
 			let source = ensure_ethereum_transaction(origin)?;
+			let nonce = darwinia_evm::Pallet::<T>::account_basic(&source).nonce;
 
 			// Disable transact functionality if PreLog exist.
 			ensure!(
@@ -285,21 +286,21 @@ pub mod pallet {
 
 			let extracted_transaction = match transaction {
 				Transaction::Legacy(t) => Ok(Transaction::Legacy(ethereum::LegacyTransaction {
-					nonce: darwinia_evm::Pallet::<T>::account_basic(&source).nonce, // auto set
-					gas_price: T::FeeCalculator::min_gas_price(),                   // auto set
+					nonce,                                        // auto set
+					gas_price: T::FeeCalculator::min_gas_price(), // auto set
 					gas_limit: t.gas_limit,
 					action: t.action,
 					value: t.value,
 					input: t.input,
 					signature: t.signature, // not used.
 				})),
-				_ => Err(Error::<T>::MessageTransactionError),
+				_ => Err(Error::<T>::InvalidTransactionType),
 			}?;
 
-			ensure!(
-				Self::validate_transaction_in_block(source, &extracted_transaction).is_ok(),
-				Error::<T>::MessageValidateError
-			);
+			if let Err(err) = Self::validate_transaction_in_block(source, &extracted_transaction) {
+				Self::deposit_event(Event::MessageTransactValidateRejected { source, nonce, err });
+				return Err(Error::<T>::MessageValidateError.into());
+			}
 
 			Self::apply_validated_transaction(source, extracted_transaction)
 		}
@@ -326,11 +327,30 @@ pub mod pallet {
 	/// Ethereum pallet events.
 	pub enum Event<T: Config> {
 		/// An ethereum transaction was successfully executed.
-		Executed { from: H160, to: H160, transaction_hash: H256, exit_reason: ExitReason },
+		Executed {
+			from: H160,
+			to: H160,
+			transaction_hash: H256,
+			exit_reason: ExitReason,
+		},
 		/// DVM transfer.
-		DVMTransfer { from: T::AccountId, to: T::AccountId, amount: U256 },
+		DVMTransfer {
+			from: T::AccountId,
+			to: T::AccountId,
+			amount: U256,
+		},
 		/// Kton transfer.
-		KtonDVMTransfer { from: T::AccountId, to: T::AccountId, amount: U256 },
+		KtonDVMTransfer {
+			from: T::AccountId,
+			to: T::AccountId,
+			amount: U256,
+		},
+		// TODO
+		MessageTransactValidateRejected {
+			source: H160,
+			nonce: U256,
+			err: TransactionValidityError,
+		},
 	}
 
 	#[pallet::error]
@@ -347,7 +367,7 @@ pub mod pallet {
 		/// The internal call failed.
 		ReadyOnlyCall,
 		/// Message transaction invalid
-		MessageTransactionError,
+		InvalidTransactionType,
 		/// Message validate invalid
 		MessageValidateError,
 	}
