@@ -324,12 +324,6 @@ pub mod pallet {
 		InvalidSignature,
 		/// Pre-log is present, therefore transact is not allowed.
 		PreLogExists,
-		/// The internal transaction failed.
-		InternalTransactionExitError,
-		InternalTransactionRevertError,
-		InternalTransactionFatalError,
-		/// The internal call failed.
-		ReadyOnlyCall,
 		/// Message transaction invalid
 		MessageTransactionError,
 		/// Message validate invalid
