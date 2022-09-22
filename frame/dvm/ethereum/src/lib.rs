@@ -55,7 +55,6 @@ use frame_support::{
 	ensure,
 	traits::{EnsureOrigin, Get},
 	weights::{Pays, PostDispatchInfo, Weight},
-	PalletId,
 };
 use frame_system::{pallet_prelude::OriginFor, WeightInfo};
 use scale_info::TypeInfo;
@@ -176,8 +175,6 @@ pub mod pallet {
 	pub trait Config:
 		frame_system::Config + pallet_timestamp::Config + darwinia_evm::Config
 	{
-		#[pallet::constant]
-		type PalletId: Get<PalletId>;
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// How Ethereum state root is calculated.
