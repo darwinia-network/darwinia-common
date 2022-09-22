@@ -496,6 +496,7 @@ impl Default for Releases {
 /// Indicates the initial status of the staker.
 #[derive(RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[cfg_attr(test, derive(Clone))]
 pub enum StakerStatus<AccountId> {
 	/// Chilling.
 	Idle,

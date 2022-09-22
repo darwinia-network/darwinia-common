@@ -219,7 +219,6 @@ pub(super) fn run_to_block_from_genesis(n: BlockNumber) -> Vec<Header> {
 			&block_number,
 			&headers[headers.len() - 1].hash(),
 			&Default::default(),
-			Default::default(),
 		);
 		<RelayAuthorities as OnInitialize<_>>::on_initialize(block_number);
 		<HeaderMmr as OnFinalize<_>>::on_finalize(block_number);

@@ -740,8 +740,8 @@ pub fn bond_validator(stash: AccountId, controller: AccountId, val: StakingBalan
 	bond(stash, controller, val);
 	assert_ok!(Staking::validate(Origin::signed(controller), ValidatorPrefs::default()));
 	assert_ok!(Session::set_keys(
-		Origin::signed(ctrl),
-		SessionKeys { other: ctrl.into() },
+		Origin::signed(controller),
+		SessionKeys { other: controller.into() },
 		Vec::new()
 	));
 }

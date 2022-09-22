@@ -133,7 +133,6 @@ pub fn new_block_with_parent_hash(parent_hash: Hash) -> Header {
 		&number,
 		&parent_hash,
 		&Default::default(),
-		Default::default(),
 	);
 	<HeaderMmr as OnInitialize<BlockNumber>>::on_initialize(number);
 	<HeaderMmr as OnFinalize<BlockNumber>>::on_finalize(number);
