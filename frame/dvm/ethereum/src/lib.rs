@@ -349,7 +349,7 @@ pub mod pallet {
 		InternalTransactionFatalError,
 		/// The internal call failed.
 		ReadyOnlyCall,
-		/// LCMP message only allows legacy ethereum.
+		/// LCMP message only allows legacy ethereum transaction.
 		InvalidTransactionType,
 		/// LCMP message validate rejected, check the transaction info.
 		MessageValidateRejected,
