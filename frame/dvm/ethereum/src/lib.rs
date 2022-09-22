@@ -324,10 +324,10 @@ pub mod pallet {
 		InvalidSignature,
 		/// Pre-log is present, therefore transact is not allowed.
 		PreLogExists,
-		/// Message transaction invalid
-		MessageTransactionError,
-		/// Message validate invalid
-		MessageValidateError,
+		/// LCMP Message only allow legacy ethereum transaction type.
+		InvalidTransactionType,
+		/// LCMP message validate rejected.
+		MessageValidateRejected,
 	}
 
 	/// Current building block's transactions and receipts.
