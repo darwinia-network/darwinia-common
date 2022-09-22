@@ -248,7 +248,7 @@ pub mod pallet {
 	where
 		OriginFor<T>: Into<Result<RawOrigin, OriginFor<T>>>,
 	{
-		/// This the endpoint of RPC Ethereum transaction
+		/// This is the endpoint of RPC Ethereum transaction
 		#[pallet::weight(<T as darwinia_evm::Config>::GasWeightMapping::gas_to_weight(
 			Pallet::<T>::transaction_data(transaction).gas_limit.unique_saturated_into()
 		))]
@@ -327,30 +327,13 @@ pub mod pallet {
 	/// Ethereum pallet events.
 	pub enum Event<T: Config> {
 		/// An ethereum transaction was successfully executed.
-		Executed {
-			from: H160,
-			to: H160,
-			transaction_hash: H256,
-			exit_reason: ExitReason,
-		},
-		/// DVM transfer.
-		DVMTransfer {
-			from: T::AccountId,
-			to: T::AccountId,
-			amount: U256,
-		},
-		/// Kton transfer.
-		KtonDVMTransfer {
-			from: T::AccountId,
-			to: T::AccountId,
-			amount: U256,
-		},
-		// TODO
-		MessageTransactValidateRejected {
-			source: H160,
-			nonce: U256,
-			err: TransactionValidityError,
-		},
+		Executed { from: H160, to: H160, transaction_hash: H256, exit_reason: ExitReason },
+		/// RING currency transfer.
+		DVMTransfer { from: T::AccountId, to: T::AccountId, amount: U256 },
+		/// Kton currency transfer.
+		KtonDVMTransfer { from: T::AccountId, to: T::AccountId, amount: U256 },
+		/// LCMP message validate rejected.
+		MessageTransactValidateRejected { source: H160, nonce: U256, err: TransactionValidityError },
 	}
 
 	#[pallet::error]
