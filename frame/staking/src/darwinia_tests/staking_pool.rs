@@ -63,6 +63,8 @@ fn pool_should_be_increased_and_decreased_correctly() {
 		Timestamp::set_timestamp(backup_ts);
 		assert_ok!(Staking::validate(Origin::signed(controller_1), ValidatorPrefs::default()));
 		assert_ok!(Staking::validate(Origin::signed(controller_2), ValidatorPrefs::default()));
+		assert_ok!(Session::set_keys(Origin::signed(controller_1), SessionKeys { other: controller_1.into() }, Vec::new()));
+		assert_ok!(Session::set_keys(Origin::signed(controller_2), SessionKeys { other: controller_2.into() }, Vec::new()));
 
 		start_active_era(1);
 
@@ -72,14 +74,14 @@ fn pool_should_be_increased_and_decreased_correctly() {
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (stash_1, Staking::eras_stakers(active_era(), stash_1)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(100)],
 		);
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (stash_2, Staking::eras_stakers(active_era(), stash_2)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(100)],
 		);

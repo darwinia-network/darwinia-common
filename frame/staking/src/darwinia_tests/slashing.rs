@@ -26,6 +26,8 @@ fn slash_ledger_should_work() {
 		));
 		assert_ok!(Staking::deposit_extra(Origin::signed(account_id), COIN * 80 / 100, 36));
 		assert_ok!(Staking::validate(Origin::signed(account_id), ValidatorPrefs::default()));
+		assert_ok!(Session::set_keys(Origin::signed(account_id), SessionKeys { other: account_id.into() }, Vec::new()));
+
 
 		start_active_era(1);
 
@@ -34,7 +36,7 @@ fn slash_ledger_should_work() {
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (account_id, Staking::eras_stakers(active_era(), account_id)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(90)],
 		);
@@ -93,6 +95,7 @@ fn slash_also_slash_unbondings() {
 			0,
 		));
 		assert_ok!(Staking::validate(Origin::signed(account_id), ValidatorPrefs::default()));
+		assert_ok!(Session::set_keys(Origin::signed(account_id), SessionKeys { other: account_id.into() }, Vec::new()));
 
 		let mut ring_staking_lock = Staking::ledger(account_id).unwrap().ring_staking_lock.clone();
 
@@ -108,13 +111,13 @@ fn slash_also_slash_unbondings() {
 		on_offence_now(
 			&[OffenceDetails {
 				offender: (account_id, Staking::eras_stakers(active_era(), account_id)),
-				reporters: vec![],
+				reporters: Vec::new(),
 			}],
 			&[Perbill::from_percent(100)],
 		);
 
 		ring_staking_lock.staking_amount = 0;
-		ring_staking_lock.unbondings = WeakBoundedVec::force_from(vec![], None);
+		ring_staking_lock.unbondings = WeakBoundedVec::force_from(Vec::new(), None);
 
 		assert_eq!(Staking::ledger(account_id).unwrap().ring_staking_lock, ring_staking_lock);
 	});
