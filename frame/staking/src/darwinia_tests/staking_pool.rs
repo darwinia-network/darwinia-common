@@ -63,8 +63,16 @@ fn pool_should_be_increased_and_decreased_correctly() {
 		Timestamp::set_timestamp(backup_ts);
 		assert_ok!(Staking::validate(Origin::signed(controller_1), ValidatorPrefs::default()));
 		assert_ok!(Staking::validate(Origin::signed(controller_2), ValidatorPrefs::default()));
-		assert_ok!(Session::set_keys(Origin::signed(controller_1), SessionKeys { other: controller_1.into() }, Vec::new()));
-		assert_ok!(Session::set_keys(Origin::signed(controller_2), SessionKeys { other: controller_2.into() }, Vec::new()));
+		assert_ok!(Session::set_keys(
+			Origin::signed(controller_1),
+			SessionKeys { other: controller_1.into() },
+			Vec::new()
+		));
+		assert_ok!(Session::set_keys(
+			Origin::signed(controller_2),
+			SessionKeys { other: controller_2.into() },
+			Vec::new()
+		));
 
 		start_active_era(1);
 

@@ -26,8 +26,11 @@ fn slash_ledger_should_work() {
 		));
 		assert_ok!(Staking::deposit_extra(Origin::signed(account_id), COIN * 80 / 100, 36));
 		assert_ok!(Staking::validate(Origin::signed(account_id), ValidatorPrefs::default()));
-		assert_ok!(Session::set_keys(Origin::signed(account_id), SessionKeys { other: account_id.into() }, Vec::new()));
-
+		assert_ok!(Session::set_keys(
+			Origin::signed(account_id),
+			SessionKeys { other: account_id.into() },
+			Vec::new()
+		));
 
 		start_active_era(1);
 
@@ -95,7 +98,11 @@ fn slash_also_slash_unbondings() {
 			0,
 		));
 		assert_ok!(Staking::validate(Origin::signed(account_id), ValidatorPrefs::default()));
-		assert_ok!(Session::set_keys(Origin::signed(account_id), SessionKeys { other: account_id.into() }, Vec::new()));
+		assert_ok!(Session::set_keys(
+			Origin::signed(account_id),
+			SessionKeys { other: account_id.into() },
+			Vec::new()
+		));
 
 		let mut ring_staking_lock = Staking::ledger(account_id).unwrap().ring_staking_lock.clone();
 

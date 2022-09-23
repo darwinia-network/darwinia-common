@@ -382,7 +382,11 @@ fn staking_should_work() {
 			0,
 		));
 		assert_ok!(Staking::validate(Origin::signed(4), ValidatorPrefs::default()));
-		assert_ok!(Session::set_keys(Origin::signed(4), SessionKeys { other: 4.into() }, Vec::new()));
+		assert_ok!(Session::set_keys(
+			Origin::signed(4),
+			SessionKeys { other: 4.into() },
+			Vec::new()
+		));
 
 		// No effects will be seen so far.
 		assert_eq_uvec!(validator_controllers(), vec![20, 10]);

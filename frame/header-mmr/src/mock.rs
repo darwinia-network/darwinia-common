@@ -129,11 +129,7 @@ where
 pub fn new_block_with_parent_hash(parent_hash: Hash) -> Header {
 	let number = <frame_system::Pallet<Test>>::block_number() + 1;
 
-	<frame_system::Pallet<Test>>::initialize(
-		&number,
-		&parent_hash,
-		&Default::default(),
-	);
+	<frame_system::Pallet<Test>>::initialize(&number, &parent_hash, &Default::default());
 	<HeaderMmr as OnInitialize<BlockNumber>>::on_initialize(number);
 	<HeaderMmr as OnFinalize<BlockNumber>>::on_finalize(number);
 	<frame_system::Pallet<Test>>::finalize()
