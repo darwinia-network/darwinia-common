@@ -29,7 +29,7 @@ use fp_evm::{Context, FeeCalculator, Precompile, PrecompileResult, PrecompileSet
 use frame_support::{
 	traits::{ConstU32, Everything, FindAuthor, GenesisBuild, OriginTrait, WithdrawReasons},
 	weights::GetDispatchInfo,
-	ConsensusEngineId, PalletId,
+	ConsensusEngineId,
 };
 use frame_system::mocking::*;
 use pallet_evm_precompile_simple::{ECRecover, Identity, Ripemd160, Sha256};
@@ -221,12 +221,8 @@ impl darwinia_evm::Config for Test {
 	type Runner = Runner<Self>;
 }
 
-frame_support::parameter_types! {
-	pub const MockPalletId: PalletId = PalletId(*b"dar/dvmp");
-}
 impl darwinia_ethereum::Config for Test {
 	type Event = Event;
-	type PalletId = MockPalletId;
 	type StateRoot = IntermediateStateRoot;
 }
 

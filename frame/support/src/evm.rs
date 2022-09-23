@@ -27,12 +27,6 @@ use sp_runtime::{traits::AccountIdConversion, AccountId32};
 use sp_std::marker::PhantomData;
 
 pub const POW_9: u32 = 1_000_000_000;
-/// The default gas limit for the internal transaction
-pub const INTERNAL_TX_GAS_LIMIT: u32 = 300_000_000;
-/// The action selector used in transfer pre-compile
-pub const SELECTOR: usize = 4;
-/// The transfer pre-compile address, also as the sender in the when KTON transfer to WKTON.
-pub const TRANSFER_ADDR: &str = "0x0000000000000000000000000000000000000015";
 /// The address prefix for dvm address
 const ADDR_PREFIX: &[u8] = b"dvm:";
 

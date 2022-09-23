@@ -14,12 +14,25 @@ version     = "2.9.5"
 codec      = { package = "parity-scale-codec", version = "2.3", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 # darwinia-network
-darwinia-ethereum = { default-features = false, path = "../../dvm/ethereum" }
+darwinia-evm = { default-features = false, path = "../../dvm/evm" }
 # paritytech
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
 sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
 sp-io         = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
+
+[dev-dependencies]
+# crates.io
+array-bytes = { version = "2.0" }
+evm         = { version = "0.33.1", features = ["with-codec"] }
+# darwinia-network
+darwinia-balances = { path = "../../balances" }
+darwinia-support  = { features = ["testing"], path = "../../support" }
+# paritytech
+fp-evm           = { git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.5" }
+pallet-timestamp = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
+sp-runtime       = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
 
 [features]
 default = ["std"]
@@ -29,7 +42,7 @@ std = [
 	"codec/std",
 	"scale-info/std",
 	# darwinia-network
-	"darwinia-ethereum/std",
+	"darwinia-evm/std",
 	# paritytech
 	"frame-support/std",
 	"frame-system/std",

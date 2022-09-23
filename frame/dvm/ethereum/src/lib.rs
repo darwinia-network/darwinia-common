@@ -55,7 +55,6 @@ use frame_support::{
 	ensure,
 	traits::{EnsureOrigin, Get},
 	weights::{Pays, PostDispatchInfo, Weight},
-	PalletId,
 };
 use frame_system::{pallet_prelude::OriginFor, WeightInfo};
 use scale_info::TypeInfo;
@@ -70,7 +69,7 @@ use sp_runtime::{
 use sp_std::{marker::PhantomData, prelude::*};
 // --- darwinia-network ---
 use darwinia_evm::{BlockHashMapping, GasWeightMapping, Runner};
-use darwinia_support::evm::{recover_signer, DeriveEthereumAddress, INTERNAL_TX_GAS_LIMIT};
+use darwinia_support::evm::recover_signer;
 
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum RawOrigin {
@@ -176,8 +175,6 @@ pub mod pallet {
 	pub trait Config:
 		frame_system::Config + pallet_timestamp::Config + darwinia_evm::Config
 	{
-		#[pallet::constant]
-		type PalletId: Get<PalletId>;
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// How Ethereum state root is calculated.
@@ -304,22 +301,6 @@ pub mod pallet {
 
 			Self::apply_validated_transaction(source, extracted_transaction)
 		}
-
-		/// Internal transaction only for root.
-		#[pallet::weight(10_000_000)]
-		pub fn root_transact(
-			origin: OriginFor<T>,
-			target: H160,
-			input: Vec<u8>,
-		) -> DispatchResultWithPostInfo {
-			ensure_root(origin)?;
-			// Disable transact functionality if PreLog exist.
-			ensure!(
-				fp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
-				Error::<T>::PreLogExists,
-			);
-			Self::internal_transact(target, input)
-		}
 	}
 
 	#[pallet::event]
@@ -341,12 +322,6 @@ pub mod pallet {
 		InvalidSignature,
 		/// Pre-log is present, therefore transact is not allowed.
 		PreLogExists,
-		/// The internal transaction failed.
-		InternalTransactionExitError,
-		InternalTransactionRevertError,
-		InternalTransactionFatalError,
-		/// The internal call failed.
-		ReadyOnlyCall,
 		/// Message transaction invalid
 		MessageTransactionError,
 		/// Message validate invalid
@@ -600,32 +575,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Execute transaction from EthApi or PreLog Block
-	/// NOTE: For the rpc transaction, the execution will return ok(..) even when encounters error
-	/// 	  from evm runner
 	fn apply_validated_transaction(
 		source: H160,
 		transaction: Transaction,
 	) -> DispatchResultWithPostInfo {
-		Self::raw_transact(source, transaction.into()).map(|(_, used_gas)| {
-			Ok(PostDispatchInfo {
-				actual_weight: Some(T::GasWeightMapping::gas_to_weight(
-					used_gas.unique_saturated_into(),
-				)),
-				pays_fee: Pays::No,
-			})
-		})?
-	}
-
-	// Execute Transaction in evm runner and save the execution info in Pending
-	fn raw_transact(
-		source: H160,
-		advanced_transaction: AdvancedTransaction,
-	) -> Result<(ExitReason, U256), DispatchError> {
 		let pending = Pending::<T>::get();
-		let transaction_hash = advanced_transaction.hash();
+		let transaction_hash = transaction.hash();
 		let transaction_index = pending.len() as u32;
 
-		let (to, _, info) = Self::execute(source, &advanced_transaction, None)?;
+		let (to, _, info) = Self::execute(source, &transaction, None)?;
 		let (reason, status, used_gas, dest) = match info {
 			CallOrCreateInfo::Call(info) => (
 				info.exit_reason,
@@ -670,7 +628,7 @@ impl<T: Config> Pallet<T> {
 				ExitReason::Succeed(_) => 1,
 				_ => 0,
 			};
-			let logs_bloom = status.logs_bloom;
+			let logs_bloom = status.clone().logs_bloom;
 			let logs = status.clone().logs;
 			let cumulative_gas_used = if let Some((_, _, receipt)) = pending.last() {
 				match receipt {
@@ -680,29 +638,20 @@ impl<T: Config> Pallet<T> {
 			} else {
 				used_gas
 			};
-
-			match advanced_transaction {
-				AdvancedTransaction::Ethereum(ref transaction) => match &transaction {
-					Transaction::Legacy(_) => Receipt::Legacy(ethereum::EIP658ReceiptData {
-						status_code,
-						used_gas: cumulative_gas_used,
-						logs_bloom,
-						logs,
-					}),
-					Transaction::EIP2930(_) => Receipt::EIP2930(ethereum::EIP2930ReceiptData {
-						status_code,
-						used_gas: cumulative_gas_used,
-						logs_bloom,
-						logs,
-					}),
-					Transaction::EIP1559(_) => Receipt::EIP1559(ethereum::EIP2930ReceiptData {
-						status_code,
-						used_gas: cumulative_gas_used,
-						logs_bloom,
-						logs,
-					}),
-				},
-				AdvancedTransaction::Internal(_) => Receipt::Legacy(ethereum::EIP658ReceiptData {
+			match &transaction {
+				Transaction::Legacy(_) => Receipt::Legacy(ethereum::EIP658ReceiptData {
+					status_code,
+					used_gas: cumulative_gas_used,
+					logs_bloom,
+					logs,
+				}),
+				Transaction::EIP2930(_) => Receipt::EIP2930(ethereum::EIP2930ReceiptData {
+					status_code,
+					used_gas: cumulative_gas_used,
+					logs_bloom,
+					logs,
+				}),
+				Transaction::EIP1559(_) => Receipt::EIP1559(ethereum::EIP2930ReceiptData {
 					status_code,
 					used_gas: cumulative_gas_used,
 					logs_bloom,
@@ -710,14 +659,21 @@ impl<T: Config> Pallet<T> {
 				}),
 			}
 		};
-		Pending::<T>::append((advanced_transaction.transaction(), status, receipt));
+
+		Pending::<T>::append((transaction, status, receipt));
 		Self::deposit_event(Event::Executed {
 			from: source,
 			to: dest.unwrap_or_default(),
 			transaction_hash,
 			exit_reason: reason.clone(),
 		});
-		Ok((reason, used_gas))
+
+		Ok(PostDispatchInfo {
+			actual_weight: Some(T::GasWeightMapping::gas_to_weight(
+				used_gas.unique_saturated_into(),
+			)),
+			pays_fee: Pays::No,
+		})
 	}
 
 	/// Get the transaction status with given index.
@@ -743,7 +699,7 @@ impl<T: Config> Pallet<T> {
 	/// Execute an Ethereum transaction
 	pub fn execute(
 		from: H160,
-		advanced_transaction: &AdvancedTransaction,
+		transaction: &Transaction,
 		config: Option<evm::Config>,
 	) -> Result<(Option<H160>, Option<H160>, CallOrCreateInfo), DispatchError> {
 		let (
@@ -755,12 +711,27 @@ impl<T: Config> Pallet<T> {
 			nonce,
 			action,
 			access_list,
-		) = match advanced_transaction {
-			AdvancedTransaction::Ethereum(transaction) => {
-				match transaction {
-					// max_fee_per_gas and max_priority_fee_per_gas in legacy and 2930 transactions
-					// is the provided gas_price.
-					Transaction::Legacy(t) => (
+		) = {
+			match transaction {
+				// max_fee_per_gas and max_priority_fee_per_gas in legacy and 2930 transactions is
+				// the provided gas_price.
+				Transaction::Legacy(t) => (
+					t.input.clone(),
+					t.value,
+					t.gas_limit,
+					Some(t.gas_price),
+					Some(t.gas_price),
+					Some(t.nonce),
+					t.action,
+					Vec::new(),
+				),
+				Transaction::EIP2930(t) => {
+					let access_list: Vec<(H160, Vec<H256>)> = t
+						.access_list
+						.iter()
+						.map(|item| (item.address, item.slots.clone()))
+						.collect();
+					(
 						t.input.clone(),
 						t.value,
 						t.gas_limit,
@@ -768,54 +739,27 @@ impl<T: Config> Pallet<T> {
 						Some(t.gas_price),
 						Some(t.nonce),
 						t.action,
-						Vec::new(),
-					),
-					Transaction::EIP2930(t) => {
-						let access_list: Vec<(H160, Vec<H256>)> = t
-							.access_list
-							.iter()
-							.map(|item| (item.address, item.slots.clone()))
-							.collect();
-						(
-							t.input.clone(),
-							t.value,
-							t.gas_limit,
-							Some(t.gas_price),
-							Some(t.gas_price),
-							Some(t.nonce),
-							t.action,
-							access_list,
-						)
-					},
-					Transaction::EIP1559(t) => {
-						let access_list: Vec<(H160, Vec<H256>)> = t
-							.access_list
-							.iter()
-							.map(|item| (item.address, item.slots.clone()))
-							.collect();
-						(
-							t.input.clone(),
-							t.value,
-							t.gas_limit,
-							Some(t.max_fee_per_gas),
-							Some(t.max_priority_fee_per_gas),
-							Some(t.nonce),
-							t.action,
-							access_list,
-						)
-					},
-				}
-			},
-			AdvancedTransaction::Internal(t) => (
-				t.input.clone(),
-				t.value,
-				t.gas_limit,
-				None,
-				None,
-				Some(t.nonce),
-				t.action,
-				Vec::new(),
-			),
+						access_list,
+					)
+				},
+				Transaction::EIP1559(t) => {
+					let access_list: Vec<(H160, Vec<H256>)> = t
+						.access_list
+						.iter()
+						.map(|item| (item.address, item.slots.clone()))
+						.collect();
+					(
+						t.input.clone(),
+						t.value,
+						t.gas_limit,
+						Some(t.max_fee_per_gas),
+						Some(t.max_priority_fee_per_gas),
+						Some(t.nonce),
+						t.action,
+						access_list,
+					)
+				},
+			}
 		};
 
 		let is_transactional = true;
@@ -928,63 +872,6 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-/// The handler for interacting with The internal transaction.
-pub trait InternalTransactHandler {
-	/// Internal transaction call.
-	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo;
-	/// Read-only call to deployed evm contracts.
-	fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError>;
-}
-
-impl<T: Config> InternalTransactHandler for Pallet<T> {
-	/// Execute transaction from other pallets(internal transaction)
-	/// NOTE: The difference between the rpc transaction and the internal transaction is that
-	/// The internal transactions will catch and throw evm error comes from runner to caller.
-	fn internal_transact(target: H160, input: Vec<u8>) -> DispatchResultWithPostInfo {
-		let source = T::PalletId::get().derive_ethereum_address();
-		let nonce = darwinia_evm::Pallet::<T>::account_basic(&source).nonce;
-		let transaction = internal_transaction::<T>(nonce, target, input);
-
-		Self::raw_transact(source, transaction).map(|(reason, used_gas)| match reason {
-			// Only when exit_reason is successful, return Ok(...)
-			ExitReason::Succeed(_) => Ok(PostDispatchInfo {
-				actual_weight: Some(T::GasWeightMapping::gas_to_weight(
-					used_gas.unique_saturated_into(),
-				)),
-				pays_fee: Pays::No,
-			}),
-			ExitReason::Error(_) => Err(<Error<T>>::InternalTransactionExitError.into()),
-			ExitReason::Revert(_) => Err(<Error<T>>::InternalTransactionRevertError.into()),
-			ExitReason::Fatal(_) => Err(<Error<T>>::InternalTransactionFatalError.into()),
-		})?
-	}
-
-	/// Pure read-only call to contract, the sender is pallet dvm account.
-	/// NOTE: You should never use raw call for any non-read-only operation, be carefully.
-	fn read_only_call(contract: H160, input: Vec<u8>) -> Result<Vec<u8>, DispatchError> {
-		sp_io::storage::start_transaction();
-		let source = T::PalletId::get().derive_ethereum_address();
-		let nonce = darwinia_evm::Pallet::<T>::account_basic(&source).nonce;
-		let transaction = internal_transaction::<T>(nonce, contract, input);
-
-		let res = match Self::execute(source, &transaction, None) {
-			Ok((_, _, info)) => match info {
-				CallOrCreateInfo::Call(info) => match info.exit_reason {
-					ExitReason::Succeed(_) => Ok(info.value),
-					ExitReason::Error(_) => Err(<Error<T>>::InternalTransactionExitError.into()),
-					ExitReason::Revert(_) => Err(<Error<T>>::InternalTransactionRevertError.into()),
-					ExitReason::Fatal(_) => Err(<Error<T>>::InternalTransactionFatalError.into()),
-				},
-				_ => Err(<Error<T>>::ReadyOnlyCall.into()),
-			},
-			Err(e) => Err(e),
-		};
-		// Rollback the storage changes no matter success or failed
-		sp_io::storage::rollback_transaction();
-		res
-	}
-}
-
 #[repr(u8)]
 enum TransactionValidationError {
 	#[allow(dead_code)]
@@ -1020,60 +907,4 @@ pub mod migration {
 	}
 
 	pub fn migrate() {}
-}
-
-pub enum AdvancedTransaction {
-	Ethereum(Transaction),
-	// The internal transaction is an special LegacyTransaction
-	Internal(ethereum::TransactionV0),
-}
-
-impl AdvancedTransaction {
-	fn hash(&self) -> H256 {
-		match self {
-			Self::Ethereum(t) => t.hash(),
-			Self::Internal(t) => t.hash(),
-		}
-	}
-
-	fn transaction(&self) -> Transaction {
-		match self {
-			Self::Ethereum(t) => t.clone(),
-			Self::Internal(t) => Transaction::Legacy(t.clone()),
-		}
-	}
-}
-
-impl From<Transaction> for AdvancedTransaction {
-	fn from(t: Transaction) -> Self {
-		Self::Ethereum(t)
-	}
-}
-
-pub fn internal_transaction<T: Config>(
-	nonce: U256,
-	target: H160,
-	input: Vec<u8>,
-) -> AdvancedTransaction {
-	let transaction = ethereum::TransactionV0 {
-		nonce,
-		// Not used, and will be overwritten by None later.
-		gas_price: U256::zero(),
-		gas_limit: U256::from(INTERNAL_TX_GAS_LIMIT),
-		action: ethereum::TransactionAction::Call(target),
-		value: U256::zero(),
-		input,
-		signature: ethereum::TransactionSignature::new(
-			// Reference https://github.com/ethereum/EIPs/issues/155
-			//
-			// The internal transaction is sent by specific pallets, no signature
-			// validation, just create a valid transaction signature is enough.
-			T::ChainId::get() * 2 + 36,
-			H256::from_slice(&[55u8; 32]),
-			H256::from_slice(&[55u8; 32]),
-		)
-		.unwrap(),
-	};
-
-	AdvancedTransaction::Internal(transaction)
 }

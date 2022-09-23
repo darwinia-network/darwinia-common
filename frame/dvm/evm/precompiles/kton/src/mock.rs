@@ -258,13 +258,8 @@ impl darwinia_evm::Config for Test {
 	type Runner = Runner<Self>;
 }
 
-frame_support::parameter_types! {
-	pub const MockPalletId: PalletId = PalletId(*b"dar/dvmp");
-}
-
 impl darwinia_ethereum::Config for Test {
 	type Event = Event;
-	type PalletId = MockPalletId;
 	type StateRoot = IntermediateStateRoot;
 }
 

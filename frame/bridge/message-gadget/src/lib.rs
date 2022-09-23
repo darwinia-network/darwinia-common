@@ -18,15 +18,19 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(test)]
+mod mock;
+
 // --- core ---
 use core::marker::PhantomData;
 // --- darwinia-network ---
-use darwinia_ethereum::InternalTransactHandler;
+use darwinia_evm::Runner;
 // --- paritytech ---
 use frame_support::{log, pallet_prelude::*, traits::Get};
 use frame_system::pallet_prelude::*;
 use sp_core::{H160, H256};
 use sp_io::hashing;
+use sp_std::vec;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -76,30 +80,35 @@ const LOG_TARGET: &str = "runtime::message-gadget";
 pub struct MessageRootGetter<T>(PhantomData<T>);
 impl<T> Get<Option<H256>> for MessageRootGetter<T>
 where
-	T: Config + darwinia_ethereum::Config,
+	T: Config + darwinia_evm::Config,
 {
 	fn get() -> Option<H256> {
-		let raw_message_root = if let Ok(r) = <darwinia_ethereum::Pallet<T>>::read_only_call(
+		if let Ok(info) = <T as darwinia_evm::Config>::Runner::call(
+			H160::default(),
 			<CommitmentContract<T>>::get(),
 			hashing::keccak_256(b"commitment()")[..4].to_vec(),
+			0.into(),
+			1_000_000_000_000,
+			None,
+			None,
+			None,
+			vec![],
+			false, // is_transactional = false, use the default gas_price
+			<T as darwinia_evm::Config>::config(),
 		) {
-			r
-		} else {
-			log::warn!(target: LOG_TARGET, "Fail to read message root from DVM, return.");
+			let raw_message_root = info.value;
+			if raw_message_root.len() != 32 {
+				log::warn!(
+					target: LOG_TARGET,
+					"Invalid raw message root: {:?}, return.",
+					raw_message_root
+				);
 
-			return None;
-		};
-
-		if raw_message_root.len() != 32 {
-			log::warn!(
-				target: LOG_TARGET,
-				"Invalid raw message root: {:?}, return.",
-				raw_message_root
-			);
-
-			return None;
+				return None;
+			}
+			return Some(H256::from_slice(&raw_message_root));
 		}
 
-		Some(H256::from_slice(&raw_message_root))
+		None
 	}
 }
