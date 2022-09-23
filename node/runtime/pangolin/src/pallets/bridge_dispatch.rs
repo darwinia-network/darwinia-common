@@ -65,7 +65,7 @@ impl CallValidate<bp_pangolin::AccountId, Origin, Call> for CallValidator {
 							let fee = t.gas_limit.saturating_mul(gas_price);
 							let derived_substrate_address =
 							<Runtime as darwinia_evm::Config>::IntoAccountId::derive_substrate_address(id);
-
+							log::error!("==============================gas_limit: {:?}, fee: {:?}, h160: {:?}, derived_substrate_address: {:?}, relayer: {:?}", gas_limit, fee, id, derived_substrate_address, relayer_account);
 							// The balance validation already has been done in the
 							// `check_receiving_before_dispatch`.
 							<Runtime as darwinia_evm::Config>::RingBalanceAdapter::evm_transfer(
