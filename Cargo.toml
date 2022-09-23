@@ -37,23 +37,6 @@ members = [
 	"primitives/relayer-game",
 ]
 
-
-[patch."https://github.com/darwinia-network/darwinia-messages-substrate"]
-pallet-bridge-dispatch = { path = "../darwinia-messages-substrate/modules/dispatch" }
-pallet-fee-market = { path = "../darwinia-messages-substrate/modules/fee-market" }
-pallet-bridge-grandpa = { path = "../darwinia-messages-substrate/modules/grandpa" }
-pallet-bridge-messages = { path = "../darwinia-messages-substrate/modules/messages" }
-pallet-bridge-parachains = { path = "../darwinia-messages-substrate/modules/parachains" }
-bp-runtime = { path = "../darwinia-messages-substrate/primitives/runtime" }
-bp-header-chain = { path = "../darwinia-messages-substrate/primitives/header-chain" }
-bp-pangolin = { path = "../darwinia-messages-substrate/primitives/chain-pangolin" }
-bp-rococo = { path = "../darwinia-messages-substrate/primitives/chain-rococo" }
-bp-pangoro = { path = "../darwinia-messages-substrate/primitives/chain-pangoro" }
-bp-pangolin-parachain = { path = "../darwinia-messages-substrate/primitives/chain-pangolin-parachain" }
-bp-messages = { path = "../darwinia-messages-substrate/primitives/messages" }
-bridge-runtime-common = { path = "../darwinia-messages-substrate/bin/runtime-common" }
-bp-message-dispatch = { path = "../darwinia-messages-substrate/primitives/message-dispatch" }
-
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates
 # that are suspected to be CPU-intensive, and that are unlikely to require debugging (as some of
 # their debug info might be missing) or to require to be frequently recompiled. We compile these
