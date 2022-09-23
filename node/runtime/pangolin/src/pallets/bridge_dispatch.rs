@@ -117,7 +117,7 @@ impl Config<WithPangolinParachainDispatch> for Runtime {
 	type AccountIdConverter = bp_pangolin::AccountIdConverter;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
-	type CallValidator = Everything;
+	type CallValidator = CallValidator;
 	type EncodedCall = bm_pangolin_parachain::FromPangolinParachainEncodedCall;
 	type Event = Event;
 	type IntoDispatchOrigin = IntoDispatchOrigin;
