@@ -55,7 +55,7 @@ pub fn development_config() -> ChainSpec {
 			grandpa: GrandpaConfig {
 				authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
 			},
-			sudo: SudoConfig { key: root_key },
+			sudo: SudoConfig { key: Some(root_key) },
 			evm: EVMConfig {
 				accounts: {
 					let mut map = BTreeMap::new();
