@@ -28,7 +28,7 @@ use frame_support::{
 	pallet_prelude::Weight,
 	traits::{ConstU32, Everything, FindAuthor, GenesisBuild},
 	weights::GetDispatchInfo,
-	ConsensusEngineId, PalletId,
+	ConsensusEngineId,
 };
 use frame_system::mocking::*;
 use sp_core::{H160, H256, U256};
