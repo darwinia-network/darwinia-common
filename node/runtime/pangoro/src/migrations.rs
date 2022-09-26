@@ -23,12 +23,10 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 }
 
 fn migrate() -> Weight {
-	let module = b"Substrate2SubstrateBacking";
-	migration::remove_storage_prefix(module, b"SecureLimitedPeriod", &[]);
-	migration::remove_storage_prefix(module, b"SecureLimitedRingAmount", &[]);
-	migration::remove_storage_prefix(module, b"TransactionInfos", &[]);
-	migration::remove_storage_prefix(module, b"RemoteMappingTokenFactoryAccount", &[]);
-
+	const REVERT_BYTECODE: [u8; 5] = [0x60, 0x00, 0x60, 0x00, 0xFD];
+	for precompile in PangoroPrecompiles::<Runtime>::used_addresses() {
+		EVM::create_account(&precompile, REVERT_BYTECODE.to_vec());
+	}
 	// 0
 	RuntimeBlockWeights::get().max_block
 }

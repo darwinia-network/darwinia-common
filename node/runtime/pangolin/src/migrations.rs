@@ -23,10 +23,10 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 }
 
 fn migrate() -> Weight {
-	let module = b"Substrate2SubstrateIssuing";
-	migration::remove_storage_prefix(module, b"MappingFactoryAddress", &[]);
-	migration::remove_storage_prefix(module, b"RemoteBackingAccount", &[]);
-
+	const REVERT_BYTECODE: [u8; 5] = [0x60, 0x00, 0x60, 0x00, 0xFD];
+	for precompile in PangolinPrecompiles::<Runtime>::used_addresses() {
+		EVM::create_account(&precompile, REVERT_BYTECODE.to_vec());
+	}
 	// 0
 	RuntimeBlockWeights::get().max_block
 }
