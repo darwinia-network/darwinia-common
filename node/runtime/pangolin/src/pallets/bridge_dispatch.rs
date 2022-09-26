@@ -10,7 +10,7 @@ use frame_support::{
 use sp_runtime::transaction_validity::{InvalidTransaction, TransactionValidityError};
 // --- darwinia-network ---
 use crate::*;
-use bp_message_dispatch::{CallValidate, Everything, IntoDispatchOrigin as IntoDispatchOriginT};
+use bp_message_dispatch::{CallValidate, IntoDispatchOrigin as IntoDispatchOriginT};
 use bp_messages::{LaneId, MessageNonce};
 use darwinia_ethereum::{RawOrigin, Transaction};
 use darwinia_evm::CurrencyAdapt;
@@ -117,7 +117,7 @@ impl Config<WithPangolinParachainDispatch> for Runtime {
 	type AccountIdConverter = bp_pangolin::AccountIdConverter;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
-	type CallValidator = Everything;
+	type CallValidator = CallValidator;
 	type EncodedCall = bm_pangolin_parachain::FromPangolinParachainEncodedCall;
 	type Event = Event;
 	type IntoDispatchOrigin = IntoDispatchOrigin;
