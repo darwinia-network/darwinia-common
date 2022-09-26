@@ -41,6 +41,7 @@ use bridge_runtime_common::{
 		*,
 	},
 };
+use darwinia_support::evm::{ConcatConverter, DeriveSubstrateAddress};
 use drml_common_runtime::impls::FromThisChainMessageVerifier;
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
 
@@ -258,10 +259,12 @@ impl SenderOrigin<crate::AccountId> for crate::Origin {
 		match self.caller {
 			crate::OriginCaller::system(frame_system::RawOrigin::Signed(ref submitter)) =>
 				Some(submitter.clone()),
-			// TODO: Need more investment here
-			// crate::OriginCaller::system(frame_system::RawOrigin::Root)
-			// | crate::OriginCaller::system(frame_system::RawOrigin::None) =>
-			// 	crate::RootAccountForPayments::get(),
+			crate::OriginCaller::system(frame_system::RawOrigin::Root) => {
+				// 0x726f6f7400000000000000000000000000000000, b"root"
+				Some(ConcatConverter::<_>::derive_substrate_address(&H160([
+					0x72, 0x6f, 0x6f, 0x74, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				])))
+			},
 			_ => None,
 		}
 	}
