@@ -28,16 +28,24 @@ use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::ops::RangeInclusive;
 // --- darwinia-network ---
 use crate::*;
-use bp_messages::{source_chain::*, target_chain::*, *};
+use bp_messages::{
+	source_chain::TargetHeaderChain,
+	target_chain::{ProvedMessages, SourceHeaderChain},
+	InboundLaneData, LaneId, Message, MessageNonce, Parameter,
+};
 use bp_rococo::parachains::ParaId;
-use bp_runtime::{ChainId, *};
+use bp_runtime::{Chain, ChainId, PANGOLIN_CHAIN_ID, PANGOLIN_PARACHAIN_CHAIN_ID};
 use bridge_runtime_common::{
-	lanes::*,
+	lanes::PANGOLIN_PANGOLIN_PARACHAIN_LANE,
 	messages::{
 		self,
-		source::{self, *},
-		target::{self, *},
-		BalanceOf, *,
+		source::{self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload},
+		target::{
+			self, FromBridgedChainEncodedMessageCall, FromBridgedChainMessageDispatch,
+			FromBridgedChainMessagePayload, FromBridgedChainMessagesProof,
+		},
+		BalanceOf, BridgedChainWithMessages, ChainWithMessages, MessageBridge, MessageTransaction,
+		ThisChainWithMessages,
 	},
 };
 use drml_common_runtime::impls::FromThisChainMessageVerifier;
