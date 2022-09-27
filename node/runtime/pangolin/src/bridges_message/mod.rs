@@ -20,4 +20,7 @@ pub mod pangoro;
 pub use pangoro as bm_pangoro;
 
 pub mod pangolin_parachain;
+pub mod pangolin_parachain_alpha;
+
 pub use pangolin_parachain as bm_pangolin_parachain;
+pub use pangolin_parachain_alpha as bm_pangolin_parachain_alpha;
