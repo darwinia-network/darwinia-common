@@ -12,6 +12,7 @@ use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, Convert, Saturating, Zero},
 	Perbill, RuntimeDebug,
 };
+use sp_staking::EraIndex;
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 // --- darwinia-network ---
 use crate::*;
@@ -30,9 +31,7 @@ impl<T: Config> Convert<AccountId<T>, Option<ExposureT<T>>> for ExposureOf<T> {
 	}
 }
 /// A snapshot of the stake backing a single validator in the system.
-#[derive(
-	Clone, Default, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, RuntimeDebug, TypeInfo,
-)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct Exposure<AccountId, RingBalance, KtonBalance>
 where
 	RingBalance: HasCompact,
@@ -48,6 +47,21 @@ where
 	pub total_power: Power,
 	/// The portions of nominators stashes that are exposed.
 	pub others: Vec<IndividualExposure<AccountId, RingBalance, KtonBalance>>,
+}
+impl<AccountId, RingBalance, KtonBalance> Default for Exposure<AccountId, RingBalance, KtonBalance>
+where
+	RingBalance: HasCompact + Zero,
+	KtonBalance: HasCompact + Zero,
+{
+	fn default() -> Self {
+		Self {
+			own_ring_balance: Zero::zero(),
+			own_kton_balance: Zero::zero(),
+			own_power: 0,
+			total_power: 0,
+			others: Vec::new(),
+		}
+	}
 }
 /// The amount of exposure (to slashing) than an individual nominator has.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, RuntimeDebug, TypeInfo)]
@@ -79,7 +93,8 @@ pub struct ActiveEraInfo {
 }
 
 /// The ledger of a (bonded) stash.
-#[derive(Clone, Default, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[cfg_attr(test, derive(Default))]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct StakingLedger<AccountId, RingBalance, KtonBalance, BlockNumber>
 where
 	RingBalance: HasCompact,
@@ -117,11 +132,25 @@ where
 impl<AccountId, RingBalance, KtonBalance, BlockNumber>
 	StakingLedger<AccountId, RingBalance, KtonBalance, BlockNumber>
 where
-	RingBalance: Copy + AtLeast32BitUnsigned + Saturating,
-	KtonBalance: Copy + AtLeast32BitUnsigned + Saturating,
-	BlockNumber: Copy + PartialOrd,
+	RingBalance: Copy + Default + AtLeast32BitUnsigned + Saturating + Zero,
+	KtonBalance: Copy + Default + AtLeast32BitUnsigned + Saturating + Zero,
+	BlockNumber: Copy + Default + PartialOrd,
 	TsInMs: PartialOrd,
 {
+	/// Initializes the default object using the given `validator`.
+	pub fn default_from(stash: AccountId) -> Self {
+		Self {
+			stash,
+			active: Zero::zero(),
+			active_deposit_ring: Zero::zero(),
+			active_kton: Zero::zero(),
+			deposit_items: Vec::new(),
+			ring_staking_lock: Default::default(),
+			kton_staking_lock: Default::default(),
+			claimed_rewards: Vec::new(),
+		}
+	}
+
 	pub fn consolidate_unbondings(&mut self, now: BlockNumber) {
 		self.ring_staking_lock.refresh(now);
 		self.kton_staking_lock.refresh(now);
@@ -379,16 +408,21 @@ pub struct Nominations<AccountId> {
 /// Reward points of an era. Used to split era total payout between validators.
 ///
 /// This points will be used to reward validators and their respective nominators.
-#[derive(Debug, Default, PartialEq, Encode, Decode, TypeInfo)]
+#[derive(Debug, PartialEq, Encode, Decode, TypeInfo)]
 pub struct EraRewardPoints<AccountId: Ord> {
 	/// Total number of points. Equals the sum of reward points for each validator.
 	pub total: RewardPoint,
 	/// The reward points earned by a given validator.
 	pub individual: BTreeMap<AccountId, RewardPoint>,
 }
+impl<AccountId: Ord> Default for EraRewardPoints<AccountId> {
+	fn default() -> Self {
+		EraRewardPoints { total: 0, individual: BTreeMap::new() }
+	}
+}
 
 /// Mode of era-forcing.
-#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Forcing {
 	/// Not forcing anything - just let whatever happen.
@@ -410,7 +444,7 @@ impl Default for Forcing {
 
 /// A pending slash record. The value of the slash has been computed but not applied yet,
 /// rather deferred for several eras.
-#[derive(Default, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct UnappliedSlash<AccountId, RingBalance, KtonBalance> {
 	/// The stash ID of the offending validator.
 	pub validator: AccountId,
@@ -422,6 +456,22 @@ pub struct UnappliedSlash<AccountId, RingBalance, KtonBalance> {
 	pub reporters: Vec<AccountId>,
 	/// The amount of payout.
 	pub payout: slashing::RK<RingBalance, KtonBalance>,
+}
+impl<AccountId, RingBalance, KtonBalance> UnappliedSlash<AccountId, RingBalance, KtonBalance>
+where
+	RingBalance: HasCompact + Zero,
+	KtonBalance: HasCompact + Zero,
+{
+	/// Initializes the default object using the given `validator`.
+	pub fn default_from(validator: AccountId) -> Self {
+		Self {
+			validator,
+			own: Zero::zero(),
+			others: Vec::new(),
+			reporters: Vec::new(),
+			payout: Zero::zero(),
+		}
+	}
 }
 
 // A value placed in storage that represents the current version of the Staking storage. This value
@@ -446,6 +496,7 @@ impl Default for Releases {
 /// Indicates the initial status of the staker.
 #[derive(RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[cfg_attr(test, derive(Clone))]
 pub enum StakerStatus<AccountId> {
 	/// Chilling.
 	Idle,
@@ -488,25 +539,6 @@ impl<T: Config> VoteWeightProvider<T::AccountId> for Pallet<T> {
 	fn vote_weight(who: &T::AccountId) -> VoteWeight {
 		Self::weight_of(who)
 	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn set_vote_weight_of(who: &T::AccountId, weight: VoteWeight) {
-		// this will clearly results in an inconsistent state, but it should not matter for a
-		// benchmark.
-		let active: BalanceOf<T> = weight.try_into().map_err(|_| ()).unwrap();
-		let mut ledger = Self::ledger(who).unwrap_or_default();
-		ledger.active = active;
-		<Ledger<T>>::insert(who, ledger);
-		<Bonded<T>>::insert(who, who);
-
-		// also, we play a trick to make sure that a issuance based-`CurrencyToVote` behaves well:
-		// This will make sure that total issuance is zero, thus the currency to vote will be a 1-1
-		// conversion.
-		let imbalance = T::Currency::burn(T::Currency::total_issuance());
-		// kinda ugly, but gets the job done. The fact that this works here is a HUGE exception.
-		// Don't try this pattern in other places.
-		sp_std::mem::forget(imbalance);
-	}
 }
 
 /// A simple voter list implementation that does not require any additional pallets. Note, this
@@ -522,7 +554,7 @@ impl<T: Config> SortedListProvider<T::AccountId> for UseNominatorsMap<T> {
 	}
 
 	fn count() -> u32 {
-		<CounterForNominators<T>>::get()
+		<Nominators<T>>::count()
 	}
 
 	fn contains(id: &T::AccountId) -> bool {
@@ -542,7 +574,7 @@ impl<T: Config> SortedListProvider<T::AccountId> for UseNominatorsMap<T> {
 		// nothing to do on remove.
 	}
 
-	fn regenerate(
+	fn unsafe_regenerate(
 		_: impl IntoIterator<Item = T::AccountId>,
 		_: Box<dyn Fn(&T::AccountId) -> VoteWeight>,
 	) -> u32 {
@@ -554,13 +586,9 @@ impl<T: Config> SortedListProvider<T::AccountId> for UseNominatorsMap<T> {
 		Ok(())
 	}
 
-	fn clear(maybe_count: Option<u32>) -> u32 {
-		<Nominators<T>>::remove_all(maybe_count);
-		if let Some(count) = maybe_count {
-			<CounterForNominators<T>>::mutate(|noms| *noms - count);
-			count
-		} else {
-			<CounterForNominators<T>>::take()
-		}
+	fn unsafe_clear() {
+		// NOTE: Caller must ensure this doesn't lead to too many storage accesses. This is a
+		// condition of SortedListProvider::unsafe_clear.
+		<Nominators<T>>::remove_all();
 	}
 }

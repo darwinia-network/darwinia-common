@@ -205,7 +205,7 @@ pub fn genesis_config() -> ChainSpec {
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			treasury: Default::default(),
-			sudo: SudoConfig { key: root },
+			sudo: SudoConfig { key: Some(root) },
 			evm: EVMConfig { accounts: evm_accounts },
 			ethereum: Default::default(),
 			base_fee: Default::default(),
@@ -231,6 +231,7 @@ pub fn genesis_config() -> ChainSpec {
 				.expect("Pangoro telemetry url is valid; qed"),
 		),
 		Some(DEFAULT_PROTOCOL_ID),
+		None,
 		Some(properties()),
 		Default::default(),
 	)
@@ -319,7 +320,7 @@ pub fn development_config() -> ChainSpec {
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			treasury: Default::default(),
-			sudo: SudoConfig { key: root },
+			sudo: SudoConfig { key: Some(root) },
 			evm: EVMConfig { accounts: evm_accounts },
 			ethereum: Default::default(),
 			base_fee: Default::default(),
@@ -334,6 +335,7 @@ pub fn development_config() -> ChainSpec {
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
+		None,
 		Some(properties()),
 		Default::default(),
 	)

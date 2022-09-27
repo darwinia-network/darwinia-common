@@ -6,7 +6,6 @@ pub use pallet_bridge_messages::{
 use crate::*;
 use bp_messages::MessageNonce;
 use bp_runtime::{ChainId, PANGOLIN_PARACHAIN_CHAIN_ID, PANGORO_CHAIN_ID};
-use darwinia_support::evm::{ConcatConverter, DeriveSubstrateAddress};
 use pallet_bridge_messages::Config;
 use pallet_fee_market::s2s::{
 	FeeMarketMessageAcceptedHandler, FeeMarketMessageConfirmedHandler, FeeMarketPayment,
@@ -15,8 +14,6 @@ use pallet_fee_market::s2s::{
 frame_support::parameter_types! {
 	// Shared configurations.
 	pub const MaxMessagesToPruneAtOnce: MessageNonce = 8;
-	// 0x726f6f7400000000000000000000000000000000, b"root"
-	pub RootAccountForPayments: Option<AccountId> = Some(ConcatConverter::<_>::derive_substrate_address(&H160([0x72, 0x6f, 0x6f, 0x74, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])));
 	// Pangoro configurations.
 	pub const PangoroChainId: ChainId = PANGORO_CHAIN_ID;
 	pub const PangoroMaxUnconfirmedMessagesAtInboundLane: MessageNonce =
@@ -42,8 +39,7 @@ impl Config<WithPangoroMessages> for Runtime {
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
 	type MaxUnconfirmedMessagesAtInboundLane = PangoroMaxUnconfirmedMessagesAtInboundLane;
 	type MaxUnrewardedRelayerEntriesAtInboundLane = PangoroMaxUnrewardedRelayerEntriesAtInboundLane;
-	type MessageDeliveryAndDispatchPayment =
-		FeeMarketPayment<Self, WithPangoroFeeMarket, Ring, RootAccountForPayments>;
+	type MessageDeliveryAndDispatchPayment = FeeMarketPayment<Self, WithPangoroFeeMarket, Ring>;
 	type MessageDispatch = bm_pangoro::FromPangoroMessageDispatch;
 	type OnDeliveryConfirmed = FeeMarketMessageConfirmedHandler<Self, WithPangoroFeeMarket>;
 	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangoroFeeMarket>;
@@ -67,7 +63,7 @@ impl Config<WithPangolinParachainMessages> for Runtime {
 	type MaxUnrewardedRelayerEntriesAtInboundLane =
 		PangolinParachainMaxUnrewardedRelayerEntriesAtInboundLane;
 	type MessageDeliveryAndDispatchPayment =
-		FeeMarketPayment<Self, WithPangolinParachainFeeMarket, Ring, RootAccountForPayments>;
+		FeeMarketPayment<Self, WithPangolinParachainFeeMarket, Ring>;
 	type MessageDispatch = bm_pangolin_parachain::FromPangolinParachainMessageDispatch;
 	type OnDeliveryConfirmed = (
 		ToPangolinParachainBacking,

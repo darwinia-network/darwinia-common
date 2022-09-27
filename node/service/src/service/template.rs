@@ -95,13 +95,14 @@ pub fn new_partial(
 	use sc_service::error::Error as ServiceError;
 
 	if config.keystore_remote.is_some() {
-		return Err(ServiceError::Other("Remote Keystores are not supported.".to_string()));
+		return Err(ServiceError::Other("Remote Keystores are not supported.".into()));
 	}
 
 	let executor = <NativeElseWasmExecutor<Executor>>::new(
 		config.wasm_method,
 		config.default_heap_pages,
 		config.max_runtime_instances,
+		config.runtime_cache_size,
 	);
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(config, None, executor)?;

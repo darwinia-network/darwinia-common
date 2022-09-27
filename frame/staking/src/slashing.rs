@@ -62,7 +62,7 @@ use sp_runtime::{
 	traits::{Saturating, Zero},
 	DispatchResult, Perbill, RuntimeDebug,
 };
-use sp_staking::offence::DisableStrategy;
+use sp_staking::{offence::DisableStrategy, EraIndex};
 use sp_std::{
 	ops::{Add, AddAssign, Sub},
 	prelude::*,

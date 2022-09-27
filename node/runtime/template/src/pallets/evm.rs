@@ -6,7 +6,7 @@ use frame_support::{traits::FindAuthor, ConsensusEngineId};
 use pallet_evm_precompile_modexp::Modexp;
 use pallet_evm_precompile_sha3fips::Sha3FIPS256;
 use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripemd160, Sha256};
-use sp_core::crypto::Public;
+use sp_core::crypto::ByteArray;
 // --- darwinia-network ---
 use crate::*;
 use darwinia_ethereum::adapter::{CurrencyAdapter, KtonRemainBalance, RingRemainBalance};

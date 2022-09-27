@@ -21,7 +21,7 @@ use core::iter;
 // --- crates.io ---
 use libsecp256k1::{PublicKey, SecretKey};
 // --- paritytech ---
-use frame_support::traits::{Everything, GenesisBuild, OnInitialize};
+use frame_support::traits::{ConstU32, Everything, GenesisBuild, OnInitialize};
 use frame_system::mocking::*;
 use sp_io::{hashing, TestExternalities};
 use sp_runtime::{
@@ -61,6 +61,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = Index;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();

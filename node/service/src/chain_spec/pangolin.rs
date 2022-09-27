@@ -252,7 +252,7 @@ pub fn genesis_config() -> ChainSpec {
 			treasury: Default::default(),
 			kton_treasury: Default::default(),
 			vesting: Default::default(),
-			sudo: SudoConfig { key: root },
+			sudo: SudoConfig { key: Some(root) },
 			ethereum_relay: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
@@ -329,6 +329,7 @@ pub fn genesis_config() -> ChainSpec {
 				.expect("Pangolin telemetry url is valid; qed"),
 		),
 		Some(DEFAULT_PROTOCOL_ID),
+		None,
 		Some(properties()),
 		Default::default(),
 	)
@@ -454,7 +455,7 @@ pub fn development_config() -> ChainSpec {
 			treasury: Default::default(),
 			kton_treasury: Default::default(),
 			vesting: Default::default(),
-			sudo: SudoConfig { key: root },
+			sudo: SudoConfig { key: Some(root) },
 			ethereum_relay: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
@@ -520,6 +521,7 @@ pub fn development_config() -> ChainSpec {
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
+		None,
 		Some(properties()),
 		Default::default(),
 	)
@@ -654,7 +656,7 @@ pub fn local_testnet_config() -> ChainSpec {
 			treasury: Default::default(),
 			kton_treasury: Default::default(),
 			vesting: Default::default(),
-			sudo: SudoConfig { key: root },
+			sudo: SudoConfig { key: Some(root) },
 			ethereum_relay: EthereumRelayConfig {
 				genesis_header_parcel: r#"{
 					"header": {
@@ -733,6 +735,7 @@ pub fn local_testnet_config() -> ChainSpec {
 		],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
+		None,
 		Some(properties()),
 		Default::default(),
 	)

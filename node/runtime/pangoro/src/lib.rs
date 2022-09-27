@@ -42,8 +42,8 @@ use fp_evm::FeeCalculator;
 use frame_support::{log, traits::KeyOwnerProofSystem, weights::GetDispatchInfo};
 use frame_system::{
 	offchain::{AppCrypto, CreateSignedTransaction, SendTransactionTypes, SigningTypes},
-	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
-	CheckWeight,
+	ChainContext, CheckEra, CheckGenesis, CheckNonZeroSender, CheckNonce, CheckSpecVersion,
+	CheckTxVersion, CheckWeight,
 };
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
 use pallet_transaction_payment::ChargeTransactionPayment;
@@ -69,6 +69,7 @@ use drml_primitives::*;
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 pub type SignedBlock = generic::SignedBlock<Block>;
 pub type SignedExtra = (
+	CheckNonZeroSender<Runtime>,
 	CheckSpecVersion<Runtime>,
 	CheckTxVersion<Runtime>,
 	CheckGenesis<Runtime>,
@@ -84,7 +85,7 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	ChainContext<Runtime>,
 	Runtime,
-	AllPallets,
+	AllPalletsWithSystem,
 	CustomOnRuntimeUpgrade,
 >;
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
@@ -99,6 +100,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
+	state_version: 0,
 };
 
 /// The BABE epoch configuration at genesis.
@@ -147,6 +149,7 @@ frame_support::construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 16,
 
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 21,
+		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 33,
 
 		BridgePangolinDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 18,
 		BridgePangolinGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 19,
@@ -184,6 +187,7 @@ where
 			.saturating_sub(1);
 		let tip = 0;
 		let extra: SignedExtra = (
+			CheckNonZeroSender::<Runtime>::new(),
 			CheckSpecVersion::<Runtime>::new(),
 			CheckTxVersion::<Runtime>::new(),
 			CheckGenesis::<Runtime>::new(),

@@ -31,7 +31,7 @@ use sp_std::{ops::RangeInclusive, prelude::*};
 // --- darwinia-network ---
 use crate::*;
 use bp_messages::{
-	source_chain::TargetHeaderChain,
+	source_chain::{SenderOrigin, TargetHeaderChain},
 	target_chain::{ProvedMessages, SourceHeaderChain},
 	InboundLaneData, LaneId, Message, MessageNonce, Parameter,
 };
@@ -45,10 +45,11 @@ use bridge_runtime_common::{
 			self, FromBridgedChainEncodedMessageCall, FromBridgedChainMessageDispatch,
 			FromBridgedChainMessagePayload, FromBridgedChainMessagesProof,
 		},
-		BalanceOf, BridgedChainWithMessages, ChainWithMessages, MessageBridge, MessageTransaction,
+		BridgedChainWithMessages, ChainWithMessages, MessageBridge, MessageTransaction,
 		ThisChainWithMessages,
 	},
 };
+use darwinia_support::evm::{ConcatConverter, DeriveSubstrateAddress};
 use drml_common_runtime::impls::FromThisChainMessageVerifier;
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
 
@@ -110,12 +111,6 @@ impl MessageBridge for WithPangolinMessageBridge {
 		bp_pangoro::WITH_PANGORO_MESSAGES_PALLET_NAME;
 	const RELAYER_FEE_PERCENT: u32 = 10;
 	const THIS_CHAIN_ID: ChainId = PANGORO_CHAIN_ID;
-
-	fn bridged_balance_to_this_balance(
-		bridged_balance: BalanceOf<Self::BridgedChain>,
-	) -> BalanceOf<Self::ThisChain> {
-		PangolinToPangoroConversionRate::get().saturating_mul_int(bridged_balance)
-	}
 }
 
 /// Pangoro chain from message lane point of view.
@@ -131,29 +126,14 @@ impl ChainWithMessages for Pangoro {
 }
 impl ThisChainWithMessages for Pangoro {
 	type Call = Call;
+	type Origin = Origin;
 
-	fn is_outbound_lane_enabled(lane: &LaneId) -> bool {
+	fn is_message_accepted(_send_origin: &Self::Origin, lane: &LaneId) -> bool {
 		*lane == PANGORO_PANGOLIN_LANE
 	}
 
 	fn maximal_pending_messages_at_outbound_lane() -> MessageNonce {
 		MessageNonce::MAX
-	}
-
-	fn estimate_delivery_confirmation_transaction() -> MessageTransaction<Weight> {
-		let inbound_data_size = InboundLaneData::<Self::AccountId>::encoded_size_hint(
-			bp_pangolin::MAXIMAL_ENCODED_ACCOUNT_ID_SIZE,
-			1,
-			1,
-		)
-		.unwrap_or(u32::MAX);
-
-		MessageTransaction {
-			dispatch_weight: bp_pangolin::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
-			size: inbound_data_size
-				.saturating_add(bp_pangolin::EXTRA_STORAGE_PROOF_SIZE)
-				.saturating_add(bp_pangolin::TX_EXTRA_BYTES),
-		}
 	}
 
 	fn transaction_payment(transaction: MessageTransaction<Weight>) -> Self::Balance {
@@ -276,5 +256,21 @@ impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for Pangolin {
 			proof,
 			messages_count,
 		)
+	}
+}
+
+impl SenderOrigin<crate::AccountId> for crate::Origin {
+	fn linked_account(&self) -> Option<crate::AccountId> {
+		match self.caller {
+			crate::OriginCaller::system(frame_system::RawOrigin::Signed(ref submitter)) =>
+				Some(submitter.clone()),
+			crate::OriginCaller::system(frame_system::RawOrigin::Root) => {
+				// 0x726f6f7400000000000000000000000000000000, b"root"
+				Some(ConcatConverter::<_>::derive_substrate_address(&H160([
+					0x72, 0x6f, 0x6f, 0x74, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				])))
+			},
+			_ => None,
+		}
 	}
 }

@@ -23,7 +23,7 @@ use codec::Encode;
 // --- github.com ---
 use mmr::MMRStore;
 // --- paritytech ---
-use frame_support::traits::{Everything, OnFinalize, OnInitialize};
+use frame_support::traits::{ConstU32, Everything, OnFinalize, OnInitialize};
 use frame_system::mocking::*;
 use sp_core::{
 	offchain::{testing::TestOffchainExt, OffchainDbExt, OffchainWorkerExt},
@@ -60,6 +60,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();
@@ -128,12 +129,7 @@ where
 pub fn new_block_with_parent_hash(parent_hash: Hash) -> Header {
 	let number = <frame_system::Pallet<Test>>::block_number() + 1;
 
-	<frame_system::Pallet<Test>>::initialize(
-		&number,
-		&parent_hash,
-		&Default::default(),
-		Default::default(),
-	);
+	<frame_system::Pallet<Test>>::initialize(&number, &parent_hash, &Default::default());
 	<HeaderMmr as OnInitialize<BlockNumber>>::on_initialize(number);
 	<HeaderMmr as OnFinalize<BlockNumber>>::on_finalize(number);
 	<frame_system::Pallet<Test>>::finalize()

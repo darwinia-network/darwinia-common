@@ -229,7 +229,7 @@ pub mod mock_relay {
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 // --- paritytech ---
-use frame_support::traits::{Everything, GenesisBuild, OnFinalize};
+use frame_support::traits::{ConstU32, Everything, GenesisBuild, OnFinalize};
 use frame_system::mocking::*;
 use sp_runtime::RuntimeDebug;
 // --- darwinia-network ---
@@ -264,6 +264,7 @@ impl frame_system::Config for Test {
 	type Header = sp_runtime::testing::Header;
 	type Index = u64;
 	type Lookup = sp_runtime::traits::IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();

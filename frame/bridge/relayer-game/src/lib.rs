@@ -817,9 +817,8 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		Self::update_stake_with(relayer, stake);
 
 		let relay_affirmation = {
-			let mut relay_affirmation = RelayAffirmation::new();
+			let mut relay_affirmation = RelayAffirmation::default_from(relayer.to_owned());
 
-			relay_affirmation.relayer = relayer.to_owned();
 			relay_affirmation.relay_header_parcels = proposed_relay_header_parcels;
 			relay_affirmation.stake = round_stake;
 
@@ -890,9 +889,8 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		Self::update_stake_with(relayer, stake);
 
 		let relay_affirmation = {
-			let mut relay_affirmation = RelayAffirmation::new();
+			let mut relay_affirmation = RelayAffirmation::default_from(relayer.to_owned());
 
-			relay_affirmation.relayer = relayer.to_owned();
 			relay_affirmation.relay_header_parcels = proposed_relay_header_parcels;
 			relay_affirmation.stake = round_stake;
 
@@ -1016,9 +1014,8 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		Self::update_stake_with(relayer, stake);
 
 		let relay_affirmation = {
-			let mut relay_affirmation = RelayAffirmation::new();
+			let mut relay_affirmation = RelayAffirmation::default_from(relayer.to_owned());
 
-			relay_affirmation.relayer = relayer.to_owned();
 			relay_affirmation.relay_header_parcels = game_sample_points;
 			relay_affirmation.stake = round_stake;
 			relay_affirmation.maybe_extended_relay_affirmation_id =

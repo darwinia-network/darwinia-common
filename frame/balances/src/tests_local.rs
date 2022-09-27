@@ -24,8 +24,8 @@ use scale_info::TypeInfo;
 use frame_support::{
 	assert_err, assert_noop, assert_ok, assert_storage_noop, parameter_types,
 	traits::{
-		BalanceStatus, Currency, Everything, ExistenceRequirement, GenesisBuild, Imbalance,
-		LockIdentifier, LockableCurrency, NamedReservableCurrency, ReservableCurrency,
+		BalanceStatus, ConstU32, Currency, Everything, ExistenceRequirement, GenesisBuild,
+		Imbalance, LockIdentifier, LockableCurrency, NamedReservableCurrency, ReservableCurrency,
 		StorageMapShim, WithdrawReasons,
 	},
 	weights::{DispatchInfo, IdentityFee, Weight},
@@ -68,6 +68,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = Balance;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();
@@ -205,7 +206,7 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 		assert_eq!(
 			events(),
 			[
-				Event::System(frame_system::Event::NewAccount(1)),
+				Event::System(frame_system::Event::NewAccount { account: 1 }),
 				Event::Ring(crate::Event::Endowed { account: 1, free_balance: 100 }),
 				Event::Ring(crate::Event::BalanceSet { who: 1, free: 100, reserved: 0 }),
 			]
@@ -223,7 +224,7 @@ fn emit_events_with_no_existential_deposit_suicide_with_dust() {
 		assert_eq!(
 			events(),
 			[
-				Event::System(frame_system::Event::KilledAccount(1)),
+				Event::System(frame_system::Event::KilledAccount { account: 1 }),
 				Event::Ring(crate::Event::DustLost { account: 1, amount: 1 }),
 				Event::Ring(crate::Event::Slashed { who: 1, amount: 1 }),
 			]

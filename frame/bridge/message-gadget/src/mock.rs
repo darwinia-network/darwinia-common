@@ -66,6 +66,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();
@@ -251,7 +252,7 @@ mod tests {
 	fn test_get_return_something() {
 		new_test_ext().execute_with(|| {
 			// pragma solidity ^0.8.0;
-			// 
+			//
 			// contract MessageRootGetter {
 			//     function commitment() public returns (bool) {
 			//         return true;

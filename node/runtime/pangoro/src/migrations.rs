@@ -9,11 +9,15 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
+		Scheduler::pre_migrate_to_v3()?;
+
 		Ok(())
 	}
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
+		Scheduler::post_migrate_to_v3()?;
+
 		Ok(())
 	}
 
@@ -23,10 +27,12 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 }
 
 fn migrate() -> Weight {
-	const REVERT_BYTECODE: [u8; 5] = [0x60, 0x00, 0x60, 0x00, 0xFD];
+	Scheduler::migrate_v2_to_v3();
+
 	for precompile in PangoroPrecompiles::<Runtime>::used_addresses() {
-		EVM::create_account(&precompile, REVERT_BYTECODE.to_vec());
+		EVM::create_account(&precompile, vec![0x60_u8, 0x00, 0x60, 0x00, 0xFD]);
 	}
+
 	// 0
 	RuntimeBlockWeights::get().max_block
 }

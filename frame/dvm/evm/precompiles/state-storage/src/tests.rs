@@ -31,7 +31,7 @@ use fp_evm::{
 use frame_support::{
 	assert_ok,
 	pallet_prelude::Weight,
-	traits::{Everything, FindAuthor, GenesisBuild},
+	traits::{ConstU32, Everything, FindAuthor, GenesisBuild},
 	weights::GetDispatchInfo,
 	Blake2_128Concat, ConsensusEngineId, PalletId, StorageHasher, Twox128,
 };
@@ -89,6 +89,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();

@@ -34,8 +34,8 @@ use frame_support::{
 	assert_ok, parameter_types,
 	storage::IterableStorageMap,
 	traits::{
-		Currency, Everything, FindAuthor, GenesisBuild, Get, Imbalance, OnFinalize, OnInitialize,
-		OnUnbalanced, OneSessionHandler, UnixTime,
+		ConstU32, Currency, Everything, FindAuthor, GenesisBuild, Get, Imbalance, OnFinalize,
+		OnInitialize, OnUnbalanced, OneSessionHandler, UnixTime,
 	},
 	weights::constants::RocksDbWeight,
 	PalletId, StorageValue,
@@ -135,6 +135,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = AccountIndex;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();
@@ -463,7 +464,7 @@ impl ExtBuilder {
 			.assimilate_storage(&mut storage);
 		}
 
-		let mut stakers = vec![];
+		let mut stakers = Vec::new();
 
 		if self.has_stakers {
 			stakers = vec![
@@ -506,7 +507,7 @@ impl ExtBuilder {
 		}
 		let _ = darwinia_staking::GenesisConfig::<Test> {
 			history_depth: 84,
-			stakers,
+			stakers: stakers.clone(),
 			validator_count: self.validator_count,
 			minimum_validator_count: self.minimum_validator_count,
 			invulnerables: self.invulnerables,
@@ -519,12 +520,15 @@ impl ExtBuilder {
 		.assimilate_storage(&mut storage);
 		let _ = pallet_session::GenesisConfig::<Test> {
 			keys: if self.has_stakers {
-				// genesis election will overwrite this, no worries.
-				Default::default()
+				// set the keys for the first session.
+				stakers
+					.into_iter()
+					.map(|(id, ..)| (id, id, SessionKeys { other: id.into() }))
+					.collect()
 			} else {
 				// set some dummy validators in genesis.
 				(0..self.validator_count as u64)
-					.map(|x| (x, x, SessionKeys { other: UintAuthorityId(x as u64) }))
+					.map(|id| (id, id, SessionKeys { other: id.into() }))
 					.collect()
 			},
 		}
@@ -558,7 +562,7 @@ impl Default for ExtBuilder {
 			nominate: true,
 			validator_count: 2,
 			minimum_validator_count: 0,
-			invulnerables: vec![],
+			invulnerables: Vec::new(),
 			has_stakers: true,
 			initialize_first_session: true,
 			min_nominator_bond: ExistentialDeposit::get(),
@@ -611,11 +615,14 @@ fn check_count() {
 	let nominator_count = <Nominators<Test>>::iter().count() as u32;
 	let validator_count = <Validators<Test>>::iter().count() as u32;
 
-	assert_eq!(nominator_count, <CounterForNominators<Test>>::get());
-	assert_eq!(validator_count, <CounterForValidators<Test>>::get());
+	assert_eq!(nominator_count, <Nominators<Test>>::count());
+	assert_eq!(validator_count, <Validators<Test>>::count());
 
 	// the voters that the `SortedListProvider` list is storing for us.
 	let external_voters = <Test as Config>::SortedListProvider::count();
+
+	dbg!(external_voters);
+	dbg!(nominator_count);
 
 	assert_eq!(external_voters, nominator_count);
 }
@@ -735,6 +742,11 @@ fn bond(stash: AccountId, controller: AccountId, val: StakingBalanceT<Test>) {
 pub fn bond_validator(stash: AccountId, controller: AccountId, val: StakingBalanceT<Test>) {
 	bond(stash, controller, val);
 	assert_ok!(Staking::validate(Origin::signed(controller), ValidatorPrefs::default()));
+	assert_ok!(Session::set_keys(
+		Origin::signed(controller),
+		SessionKeys { other: controller.into() },
+		Vec::new()
+	));
 }
 
 pub fn bond_nominator(
@@ -901,7 +913,7 @@ pub fn add_slash(who: &AccountId) {
 	on_offence_now(
 		&[OffenceDetails {
 			offender: (who.clone(), Staking::eras_stakers(active_era(), who.clone())),
-			reporters: vec![],
+			reporters: Vec::new(),
 		}],
 		&[Perbill::from_percent(10)],
 	);
