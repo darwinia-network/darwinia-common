@@ -30,15 +30,23 @@ use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
 use sp_std::{ops::RangeInclusive, prelude::*};
 // --- darwinia-network ---
 use crate::*;
-use bp_messages::{source_chain::*, target_chain::*, *};
-use bp_runtime::{ChainId, *};
+use bp_messages::{
+	source_chain::{SenderOrigin, TargetHeaderChain},
+	target_chain::{ProvedMessages, SourceHeaderChain},
+	InboundLaneData, LaneId, Message, MessageNonce, Parameter,
+};
+use bp_runtime::{Chain, ChainId, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use bridge_runtime_common::{
-	lanes::*,
+	lanes::PANGORO_PANGOLIN_LANE,
 	messages::{
 		self,
-		source::{self, *},
-		target::{self, *},
-		*,
+		source::{self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload},
+		target::{
+			self, FromBridgedChainEncodedMessageCall, FromBridgedChainMessageDispatch,
+			FromBridgedChainMessagePayload, FromBridgedChainMessagesProof,
+		},
+		BridgedChainWithMessages, ChainWithMessages, MessageBridge, MessageTransaction,
+		ThisChainWithMessages,
 	},
 };
 use darwinia_support::evm::{ConcatConverter, DeriveSubstrateAddress};
@@ -65,9 +73,6 @@ pub type FromPangoroEncodedCall = FromBridgedChainEncodedMessageCall<Call>;
 /// Call-dispatch based message dispatch for Pangoro -> Pangolin messages.
 pub type FromPangoroMessageDispatch =
 	FromBridgedChainMessageDispatch<WithPangoroMessageBridge, Runtime, Ring, WithPangoroDispatch>;
-
-/// The s2s backing pallet index in the pangoro chain runtime.
-pub const PANGORO_S2S_BACKING_PALLET_INDEX: u8 = 20;
 
 /// Initial value of `PangoroToPangolinConversionRate` parameter.
 pub const INITIAL_PANGORO_TO_PANGOLIN_CONVERSION_RATE: FixedU128 =
