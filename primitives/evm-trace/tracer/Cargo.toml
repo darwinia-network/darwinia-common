@@ -18,12 +18,12 @@ evm-runtime    = { version = "0.33", default-features = false }
 # darwinia-network
 dp-evm-trace-ext = { path = "../ext", default-features = false }
 # paritytech
-sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.4" }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
+sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
 # frontier or moonbeam
-evm-tracing-events = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.4", default-features = false, features = ["evm-tracing"] }
+evm-tracing-events = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.5", default-features = false, features = ["evm-tracing"] }
 
 [features]
 default = ["std"]

@@ -472,12 +472,15 @@ fn verify_redeem_deposit() {
 				stash: expect_account_id,
 				active: 1001000000001,
 				active_deposit_ring: 1001000000000,
+				active_kton: 0,
 				deposit_items: vec![TimeDepositItem {
 					value: 1001000000000,
 					start_time: 1599125470000,
 					expire_time: 1630229470000,
 				}],
-				..Default::default()
+				ring_staking_lock: Default::default(),
+				kton_staking_lock: Default::default(),
+				claimed_rewards: Default::default()
 			}));
 
 			// shouldn't redeem twice

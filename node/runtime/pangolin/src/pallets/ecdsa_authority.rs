@@ -7,7 +7,6 @@ use darwinia_message_gadget::MessageRootGetter;
 
 frame_support::parameter_types! {
 	pub const ChainId: &'static [u8] = b"43";
-	pub const MaxEcdsaAuthorities: u32 = 3;
 	pub const MaxPendingPeriod: BlockNumber = 100;
 	pub const SignThreshold: Perbill = Perbill::from_percent(60);
 	pub const SyncInterval: BlockNumber = 10;
@@ -17,7 +16,7 @@ static_assertions::const_assert!(SyncInterval::get() < MaxPendingPeriod::get());
 impl Config for Runtime {
 	type ChainId = ChainId;
 	type Event = Event;
-	type MaxAuthorities = MaxEcdsaAuthorities;
+	type MaxAuthorities = ConstU32<3>;
 	type MaxPendingPeriod = MaxPendingPeriod;
 	type MessageRoot = MessageRootGetter<Self>;
 	type SignThreshold = SignThreshold;

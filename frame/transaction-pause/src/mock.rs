@@ -21,7 +21,10 @@
 #![cfg(test)]
 
 use super::*;
-use frame_support::{construct_runtime, ord_parameter_types, parameter_types, traits::Everything};
+use frame_support::{
+	construct_runtime, ord_parameter_types, parameter_types,
+	traits::{ConstU32, Everything},
+};
 use frame_system::EnsureSignedBy;
 use scale_info::TypeInfo;
 use sp_core::H256;
@@ -57,6 +60,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = u64;
 	type Lookup = IdentityLookup<AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();

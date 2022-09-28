@@ -21,7 +21,7 @@
 // --- crates.io ---
 use codec::MaxEncodedLen;
 // --- paritytech ---
-use frame_support::traits::{Everything, OnInitialize};
+use frame_support::traits::{ConstU32, Everything, OnInitialize};
 use frame_system::{mocking::*, EnsureRoot};
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, RuntimeDebug};
@@ -53,6 +53,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();

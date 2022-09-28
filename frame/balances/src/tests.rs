@@ -813,7 +813,7 @@ macro_rules! decl_tests {
 					assert_eq!(
 						events(),
 						[
-							Event::System(frame_system::Event::NewAccount(1)),
+							Event::System(frame_system::Event::NewAccount { account: 1 }),
 							Event::Ring(crate::Event::Endowed{
 								account: 1,
 								free_balance: 100
@@ -832,7 +832,7 @@ macro_rules! decl_tests {
 					assert_eq!(
 						events(),
 						[
-							Event::System(frame_system::Event::KilledAccount(1)),
+							Event::System(frame_system::Event::KilledAccount { account: 1 }),
 							Event::Ring(crate::Event::DustLost{
 								account: 1,
 								amount: 99
@@ -857,7 +857,7 @@ macro_rules! decl_tests {
 					assert_eq!(
 						events(),
 						[
-							Event::System(frame_system::Event::NewAccount(1)),
+							Event::System(frame_system::Event::NewAccount { account: 1 }),
 							Event::Ring(crate::Event::Endowed{
 								account: 1,
 								free_balance: 100
@@ -876,7 +876,7 @@ macro_rules! decl_tests {
 					assert_eq!(
 						events(),
 						[
-							Event::System(frame_system::Event::KilledAccount(1)),
+							Event::System(frame_system::Event::KilledAccount { account: 1 }),
 							Event::Ring(crate::Event::Slashed{
 								who: 1,
 								amount: 100

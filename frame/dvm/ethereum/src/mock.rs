@@ -27,7 +27,7 @@ use sha3::{Digest, Keccak256};
 // --- paritytech ---
 use fp_evm::{Context, FeeCalculator, Precompile, PrecompileResult, PrecompileSet};
 use frame_support::{
-	traits::{Everything, FindAuthor, GenesisBuild, OriginTrait, WithdrawReasons},
+	traits::{ConstU32, Everything, FindAuthor, GenesisBuild, OriginTrait, WithdrawReasons},
 	weights::GetDispatchInfo,
 	ConsensusEngineId,
 };
@@ -80,6 +80,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();

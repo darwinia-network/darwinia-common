@@ -24,7 +24,7 @@ use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{
 	assert_ok,
-	traits::{Everything, GenesisBuild},
+	traits::{ConstU32, Everything, GenesisBuild},
 	ConsensusEngineId,
 };
 use frame_system::mocking::*;
@@ -65,6 +65,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();

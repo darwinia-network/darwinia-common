@@ -44,7 +44,7 @@ use bridge_runtime_common::{
 			self, FromBridgedChainEncodedMessageCall, FromBridgedChainMessageDispatch,
 			FromBridgedChainMessagePayload, FromBridgedChainMessagesProof,
 		},
-		BalanceOf, BridgedChainWithMessages, ChainWithMessages, MessageBridge, MessageTransaction,
+		BridgedChainWithMessages, ChainWithMessages, MessageBridge, MessageTransaction,
 		ThisChainWithMessages,
 	},
 };
@@ -122,12 +122,6 @@ impl MessageBridge for WithPangolinParachainMessageBridge {
 		bp_pangolin::WITH_PANGOLIN_MESSAGES_PALLET_NAME;
 	const RELAYER_FEE_PERCENT: u32 = 10;
 	const THIS_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
-
-	fn bridged_balance_to_this_balance(
-		bridged_balance: BalanceOf<Self::BridgedChain>,
-	) -> BalanceOf<Self::ThisChain> {
-		PangolinParachainToPangolinConversionRate::get().saturating_mul_int(bridged_balance)
-	}
 }
 
 /// Pangolin chain from message lane point of view.
@@ -143,29 +137,14 @@ impl ChainWithMessages for Pangolin {
 }
 impl ThisChainWithMessages for Pangolin {
 	type Call = Call;
+	type Origin = Origin;
 
-	fn is_outbound_lane_enabled(lane: &LaneId) -> bool {
+	fn is_message_accepted(_send_origin: &Self::Origin, lane: &LaneId) -> bool {
 		*lane == PANGOLIN_PANGOLIN_PARACHAIN_LANE
 	}
 
 	fn maximal_pending_messages_at_outbound_lane() -> MessageNonce {
 		MessageNonce::MAX
-	}
-
-	fn estimate_delivery_confirmation_transaction() -> MessageTransaction<Weight> {
-		let inbound_data_size = InboundLaneData::<Self::AccountId>::encoded_size_hint(
-			bp_pangolin::MAXIMAL_ENCODED_ACCOUNT_ID_SIZE,
-			1,
-			1,
-		)
-		.unwrap_or(u32::MAX);
-
-		MessageTransaction {
-			dispatch_weight: bp_pangolin::MAX_SINGLE_MESSAGE_DELIVERY_CONFIRMATION_TX_WEIGHT,
-			size: inbound_data_size
-				.saturating_add(bp_pangolin::EXTRA_STORAGE_PROOF_SIZE)
-				.saturating_add(bp_pangolin::TX_EXTRA_BYTES),
-		}
 	}
 
 	fn transaction_payment(transaction: MessageTransaction<Weight>) -> Self::Balance {
