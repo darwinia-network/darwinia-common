@@ -25,6 +25,7 @@ frame_support::parameter_types! {
 		bp_pangoro::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
 	// Pangolin Parachain configurations.
 	pub const PangolinParachainChainId: ChainId = PANGOLIN_PARACHAIN_CHAIN_ID;
+	pub const PangolinParachainAlphaChainId: ChainId = PANGOLIN_PARACHAIN_ALPHA_CHAIN_ID;
 	pub const PangolinParachainMaxUnconfirmedMessagesAtInboundLane: MessageNonce =
 		bp_pangolin_parachain::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
 	pub const PangolinParachainMaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =
