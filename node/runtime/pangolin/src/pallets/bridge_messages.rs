@@ -94,7 +94,7 @@ impl Config<WithPangolinParachainAlphaMessages> for Runtime {
 	type MaxUnrewardedRelayerEntriesAtInboundLane =
 		PangolinParachainMaxUnrewardedRelayerEntriesAtInboundLane;
 	type MessageDeliveryAndDispatchPayment =
-		FeeMarketPayment<Self, WithPangolinParachainAlphaFeeMarket, Ring, RootAccountForPayments>;
+		FeeMarketPayment<Self, WithPangolinParachainAlphaFeeMarket>;
 	type MessageDispatch = bm_pangolin_parachain_alpha::FromPangolinParachainAlphaMessageDispatch;
 	type OnDeliveryConfirmed = (
 		ToPangolinParachainBacking,

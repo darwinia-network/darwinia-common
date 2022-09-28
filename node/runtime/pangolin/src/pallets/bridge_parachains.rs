@@ -13,5 +13,4 @@ impl Config<WithRococoParachainsInstance> for Runtime {
 impl Config<WithMoonbaseRelayParachainsInstance> for Runtime {
 	type BridgesGrandpaPalletInstance = WithMoonbaseRelayGrandpa;
 	type HeadsToKeep = RococoHeadersToKeep;
-	type ParasPalletName = PangolinParasPalletName;
 }
