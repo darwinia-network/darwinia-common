@@ -1,5 +1,6 @@
 pub use pallet_bridge_dispatch::{
-	Instance1 as WithPangoroDispatch, Instance2 as WithPangolinParachainDispatch, Instance3 as WithPangolinParachainAlphaDispatch
+	Instance1 as WithPangoroDispatch, Instance2 as WithPangolinParachainDispatch,
+	Instance3 as WithPangolinParachainAlphaDispatch,
 };
 
 // --- paritytech ---

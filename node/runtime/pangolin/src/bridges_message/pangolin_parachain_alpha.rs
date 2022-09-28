@@ -34,10 +34,8 @@ use bp_messages::{
 	InboundLaneData, LaneId, Message, MessageNonce, Parameter,
 };
 use bp_rococo::parachains::ParaId;
-// Modified 1
 use bp_runtime::{Chain, ChainId, PANGOLIN_CHAIN_ID, PANGOLIN_PARACHAIN_ALPHA_CHAIN_ID};
 use bridge_runtime_common::{
-	// Modified 2
 	lanes::PANGOLIN_PANGOLIN_PARACHAIN_ALPHA_LANE,
 	messages::{
 		self,
@@ -146,7 +144,6 @@ impl ChainWithMessages for Pangolin {
 impl ThisChainWithMessages for Pangolin {
 	type Call = Call;
 
-	// Modified 3
 	fn is_outbound_lane_enabled(lane: &LaneId) -> bool {
 		*lane == PANGOLIN_PANGOLIN_PARACHAIN_ALPHA_LANE
 	}
@@ -243,8 +240,11 @@ impl BridgedChainWithMessages for PangolinParachainAlpha {
 		)
 	}
 }
-impl TargetHeaderChain<ToPangolinParachainAlphaMessagePayload, <Self as ChainWithMessages>::AccountId>
-	for PangolinParachainAlpha
+impl
+	TargetHeaderChain<
+		ToPangolinParachainAlphaMessagePayload,
+		<Self as ChainWithMessages>::AccountId,
+	> for PangolinParachainAlpha
 {
 	type Error = &'static str;
 	type MessagesDeliveryProof = ToPangolinParachainAlphaMessagesDeliveryProof;

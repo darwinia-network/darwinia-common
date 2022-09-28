@@ -1,4 +1,7 @@
-pub use pallet_bridge_grandpa::{Instance1 as WithPangoroGrandpa, Instance2 as WithRococoGrandpa, Instance3 as WithMoonbaseRelayGrandpa};
+pub use pallet_bridge_grandpa::{
+	Instance1 as WithPangoroGrandpa, Instance2 as WithRococoGrandpa,
+	Instance3 as WithMoonbaseRelayGrandpa,
+};
 
 // --- paritytech ---
 use pallet_bridge_grandpa::Config;

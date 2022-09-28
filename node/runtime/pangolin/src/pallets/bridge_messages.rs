@@ -1,11 +1,14 @@
 pub use pallet_bridge_messages::{
-	Instance1 as WithPangoroMessages, Instance2 as WithPangolinParachainMessages, Instance3 as WithPangolinParachainAlphaMessages
+	Instance1 as WithPangoroMessages, Instance2 as WithPangolinParachainMessages,
+	Instance3 as WithPangolinParachainAlphaMessages,
 };
 
 // --- darwinia-network ---
 use crate::*;
 use bp_messages::MessageNonce;
-use bp_runtime::{ChainId, PANGOLIN_PARACHAIN_CHAIN_ID, PANGOLIN_PARACHAIN_ALPHA_CHAIN_ID, PANGORO_CHAIN_ID};
+use bp_runtime::{
+	ChainId, PANGOLIN_PARACHAIN_ALPHA_CHAIN_ID, PANGOLIN_PARACHAIN_CHAIN_ID, PANGORO_CHAIN_ID,
+};
 use darwinia_support::evm::{ConcatConverter, DeriveSubstrateAddress};
 use pallet_bridge_messages::Config;
 use pallet_fee_market::s2s::{
@@ -93,15 +96,16 @@ impl Config<WithPangolinParachainAlphaMessages> for Runtime {
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
 	type MaxUnconfirmedMessagesAtInboundLane = PangolinParachainMaxUnconfirmedMessagesAtInboundLane;
 	type MaxUnrewardedRelayerEntriesAtInboundLane =
-	PangolinParachainMaxUnrewardedRelayerEntriesAtInboundLane;
+		PangolinParachainMaxUnrewardedRelayerEntriesAtInboundLane;
 	type MessageDeliveryAndDispatchPayment =
-	FeeMarketPayment<Self, WithPangolinParachainAlphaFeeMarket, Ring, RootAccountForPayments>;
+		FeeMarketPayment<Self, WithPangolinParachainAlphaFeeMarket, Ring, RootAccountForPayments>;
 	type MessageDispatch = bm_pangolin_parachain_alpha::FromPangolinParachainAlphaMessageDispatch;
 	type OnDeliveryConfirmed = (
 		ToPangolinParachainBacking,
 		FeeMarketMessageConfirmedHandler<Self, WithPangolinParachainAlphaFeeMarket>,
 	);
-	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangolinParachainAlphaFeeMarket>;
+	type OnMessageAccepted =
+		FeeMarketMessageAcceptedHandler<Self, WithPangolinParachainAlphaFeeMarket>;
 	type OutboundMessageFee = bp_pangolin::Balance;
 	type OutboundPayload = bm_pangolin_parachain_alpha::ToPangolinParachainAlphaMessagePayload;
 	type Parameter = bm_pangolin_parachain_alpha::PangolinToPangolinParachainAlphaParameter;

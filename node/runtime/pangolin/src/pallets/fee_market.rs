@@ -1,5 +1,6 @@
 pub use pallet_fee_market::{
-	Instance1 as WithPangoroFeeMarket, Instance2 as WithPangolinParachainFeeMarket, Instance3 as WithPangolinParachainAlphaFeeMarket
+	Instance1 as WithPangoroFeeMarket, Instance2 as WithPangolinParachainFeeMarket,
+	Instance3 as WithPangolinParachainAlphaFeeMarket,
 };
 
 // --- core ---

@@ -1,4 +1,6 @@
-pub use pallet_bridge_parachains::{Instance1 as WithRococoParachainsInstance, Instance2 as WithMoonbaseRelayParachainsInstance};
+pub use pallet_bridge_parachains::{
+	Instance1 as WithRococoParachainsInstance, Instance2 as WithMoonbaseRelayParachainsInstance,
+};
 
 // --- darwinia-network ---
 use crate::*;
