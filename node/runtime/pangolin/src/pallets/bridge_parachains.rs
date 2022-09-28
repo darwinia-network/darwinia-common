@@ -1,4 +1,4 @@
-pub use pallet_bridge_parachains::Instance1 as WithRococoParachainsInstance;
+pub use pallet_bridge_parachains::{Instance1 as WithRococoParachainsInstance, Instance2 as WithMoonbaseRelayParachainsInstance};
 
 // --- darwinia-network ---
 use crate::*;
@@ -10,6 +10,11 @@ frame_support::parameter_types! {
 
 impl Config<WithRococoParachainsInstance> for Runtime {
 	type BridgesGrandpaPalletInstance = WithRococoGrandpa;
+	type HeadsToKeep = RococoHeadersToKeep;
+	type ParasPalletName = PangolinParasPalletName;
+}
+impl Config<WithMoonbaseRelayParachainsInstance> for Runtime {
+	type BridgesGrandpaPalletInstance = WithMoonbaseRelayGrandpa;
 	type HeadsToKeep = RococoHeadersToKeep;
 	type ParasPalletName = PangolinParasPalletName;
 }

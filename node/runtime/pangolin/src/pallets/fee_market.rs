@@ -1,5 +1,5 @@
 pub use pallet_fee_market::{
-	Instance1 as WithPangoroFeeMarket, Instance2 as WithPangolinParachainFeeMarket,
+	Instance1 as WithPangoroFeeMarket, Instance2 as WithPangolinParachainFeeMarket, Instance3 as WithPangolinParachainAlphaFeeMarket
 };
 
 // --- core ---
@@ -50,6 +50,8 @@ frame_support::parameter_types! {
 	pub const PangoroFeeMarketLockId: LockIdentifier = *b"da/feelf";
 	// Pangolin Parachain configurations.
 	pub const PangolinParachainFeeMarketLockId: LockIdentifier = *b"da/feepa";
+	// Pangolin Parachain Alpha configurations.
+	pub const PangolinParachainAlphaFeeMarketLockId: LockIdentifier = *b"da/feeph";
 }
 
 impl Config<WithPangoroFeeMarket> for Runtime {
@@ -75,6 +77,21 @@ impl Config<WithPangolinParachainFeeMarket> for Runtime {
 	type Event = Event;
 	type GuardRelayersRewardRatio = GuardRelayersRewardRatio;
 	type LockId = PangolinParachainFeeMarketLockId;
+	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
+	type MinimumRelayFee = MinimumRelayFee;
+	type Slasher = FeeMarketSlasher;
+	type Slot = Slot;
+	type TreasuryPalletId = TreasuryPalletId;
+	type WeightInfo = PangolinParachainWeightInfo<Self>;
+}
+impl Config<WithPangolinParachainAlphaFeeMarket> for Runtime {
+	type AssignedRelayerSlashRatio = AssignedRelayerSlashRatio;
+	type CollateralPerOrder = CollateralPerOrder;
+	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
+	type Currency = Ring;
+	type Event = Event;
+	type GuardRelayersRewardRatio = GuardRelayersRewardRatio;
+	type LockId = PangolinParachainAlphaFeeMarketLockId;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
 	type MinimumRelayFee = MinimumRelayFee;
 	type Slasher = FeeMarketSlasher;

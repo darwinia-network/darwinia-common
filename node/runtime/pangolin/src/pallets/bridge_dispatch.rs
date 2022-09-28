@@ -1,5 +1,5 @@
 pub use pallet_bridge_dispatch::{
-	Instance1 as WithPangoroDispatch, Instance2 as WithPangolinParachainDispatch,
+	Instance1 as WithPangoroDispatch, Instance2 as WithPangolinParachainDispatch, Instance3 as WithPangolinParachainAlphaDispatch
 };
 
 // --- paritytech ---
@@ -119,6 +119,18 @@ impl Config<WithPangolinParachainDispatch> for Runtime {
 	type Call = Call;
 	type CallValidator = CallValidator;
 	type EncodedCall = bm_pangolin_parachain::FromPangolinParachainEncodedCall;
+	type Event = Event;
+	type IntoDispatchOrigin = IntoDispatchOrigin;
+	type SourceChainAccountId = bp_pangolin_parachain::AccountId;
+	type TargetChainAccountPublic = bp_pangolin::AccountPublic;
+	type TargetChainSignature = bp_pangolin::Signature;
+}
+impl Config<WithPangolinParachainAlphaDispatch> for Runtime {
+	type AccountIdConverter = bp_pangolin::AccountIdConverter;
+	type BridgeMessageId = (LaneId, MessageNonce);
+	type Call = Call;
+	type CallValidator = CallValidator;
+	type EncodedCall = bm_pangolin_parachain_alpha::FromPangolinParachainAlphaEncodedCall;
 	type Event = Event;
 	type IntoDispatchOrigin = IntoDispatchOrigin;
 	type SourceChainAccountId = bp_pangolin_parachain::AccountId;
