@@ -39,7 +39,10 @@ use bridge_runtime_common::{
 	lanes::PANGOLIN_PANGOLIN_PARACHAIN_LANE,
 	messages::{
 		self,
-		source::{self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload},
+		source::{
+			self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload,
+			FromThisChainMessageVerifier,
+		},
 		target::{
 			self, FromBridgedChainEncodedMessageCall, FromBridgedChainMessageDispatch,
 			FromBridgedChainMessagePayload, FromBridgedChainMessagesProof,
@@ -48,7 +51,6 @@ use bridge_runtime_common::{
 		ThisChainWithMessages,
 	},
 };
-use drml_common_runtime::impls::FromThisChainMessageVerifier;
 use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
 
 /// Message delivery proof for Pangolin -> PangolinParachain messages.
