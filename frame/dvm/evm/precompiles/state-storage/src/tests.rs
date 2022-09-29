@@ -257,7 +257,7 @@ impl Config<F1> for Test {
 	type ConfirmRelayersRewardRatio = ();
 	type Currency = Ring;
 	type Event = Event;
-	type GuardRelayersRewardRatio = ();
+	type DutyRelayersRewardRatio = ();
 	type LockId = ();
 	type MessageRelayersRewardRatio = ();
 	type MinimumRelayFee = ();
