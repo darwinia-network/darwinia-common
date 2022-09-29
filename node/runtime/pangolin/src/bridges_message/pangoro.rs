@@ -22,11 +22,8 @@
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 // --- paritytech ---
-use frame_support::{
-	weights::{DispatchClass, Weight},
-	RuntimeDebug,
-};
-use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
+use frame_support::{weights::Weight, RuntimeDebug};
+use sp_runtime::{FixedPointNumber, FixedU128};
 use sp_std::{ops::RangeInclusive, prelude::*};
 // --- darwinia-network ---
 use crate::*;
@@ -39,7 +36,6 @@ use bp_runtime::{Chain, ChainId, PANGOLIN_CHAIN_ID, PANGORO_CHAIN_ID};
 use bridge_runtime_common::{
 	lanes::PANGORO_PANGOLIN_LANE,
 	messages::{
-		self,
 		source::{
 			self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload,
 			FromThisChainMessageVerifier,
@@ -48,12 +44,10 @@ use bridge_runtime_common::{
 			self, FromBridgedChainEncodedMessageCall, FromBridgedChainMessageDispatch,
 			FromBridgedChainMessagePayload, FromBridgedChainMessagesProof,
 		},
-		BridgedChainWithMessages, ChainWithMessages, MessageBridge, MessageTransaction,
-		ThisChainWithMessages,
+		BridgedChainWithMessages, ChainWithMessages, MessageBridge, ThisChainWithMessages,
 	},
 };
 use darwinia_support::evm::{ConcatConverter, DeriveSubstrateAddress};
-use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
 
 /// Messages delivery proof for Pangolin -> Pangoro messages.
 type ToPangoroMessagesDeliveryProof = FromBridgedChainMessagesDeliveryProof<bp_pangoro::Hash>;
@@ -137,17 +131,6 @@ impl ThisChainWithMessages for Pangolin {
 	fn maximal_pending_messages_at_outbound_lane() -> MessageNonce {
 		MessageNonce::MAX
 	}
-
-	fn transaction_payment(transaction: MessageTransaction<Weight>) -> Self::Balance {
-		// in our testnets, both per-byte fee and weight-to-fee are 1:1
-		messages::transaction_payment(
-			RuntimeBlockWeights::get().get(DispatchClass::Normal).base_extrinsic,
-			1,
-			FixedU128::zero(),
-			|weight| weight as _,
-			transaction,
-		)
-	}
 }
 
 /// Pangoro chain from message lane point of view.
@@ -179,42 +162,6 @@ impl BridgedChainWithMessages for Pangoro {
 		// assumptions about minimal dispatch weight here
 
 		0..=upper_limit
-	}
-
-	fn estimate_delivery_transaction(
-		message_payload: &[u8],
-		include_pay_dispatch_fee_cost: bool,
-		message_dispatch_weight: Weight,
-	) -> MessageTransaction<Weight> {
-		let message_payload_len = u32::try_from(message_payload.len()).unwrap_or(u32::MAX);
-		let extra_bytes_in_payload = Weight::from(message_payload_len)
-			.saturating_sub(EXPECTED_DEFAULT_MESSAGE_LENGTH.into());
-
-		MessageTransaction {
-			dispatch_weight: extra_bytes_in_payload
-				.saturating_mul(bp_pangolin::ADDITIONAL_MESSAGE_BYTE_DELIVERY_WEIGHT)
-				.saturating_add(bp_pangolin::DEFAULT_MESSAGE_DELIVERY_TX_WEIGHT)
-				.saturating_add(message_dispatch_weight)
-				.saturating_sub(if include_pay_dispatch_fee_cost {
-					0
-				} else {
-					bp_pangolin::PAY_INBOUND_DISPATCH_FEE_WEIGHT
-				}),
-			size: message_payload_len
-				.saturating_add(bp_pangolin::EXTRA_STORAGE_PROOF_SIZE)
-				.saturating_add(bp_pangolin::TX_EXTRA_BYTES),
-		}
-	}
-
-	fn transaction_payment(transaction: MessageTransaction<Weight>) -> Self::Balance {
-		// in our testnets, both per-byte fee and weight-to-fee are 1:1
-		messages::transaction_payment(
-			bp_pangoro::RuntimeBlockWeights::get().get(DispatchClass::Normal).base_extrinsic,
-			1,
-			FixedU128::zero(),
-			|weight| weight as _,
-			transaction,
-		)
 	}
 }
 impl TargetHeaderChain<ToPangoroMessagePayload, <Self as ChainWithMessages>::AccountId>

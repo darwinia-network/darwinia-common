@@ -57,8 +57,8 @@ impl Config<WithPangoroFeeMarket> for Runtime {
 	type CollateralPerOrder = CollateralPerOrder;
 	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
 	type Currency = Ring;
-	type Event = Event;
 	type DutyRelayersRewardRatio = DutyRelayersRewardRatio;
+	type Event = Event;
 	type LockId = PangoroFeeMarketLockId;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
 	type MinimumRelayFee = MinimumRelayFee;
@@ -72,8 +72,8 @@ impl Config<WithPangolinParachainFeeMarket> for Runtime {
 	type CollateralPerOrder = CollateralPerOrder;
 	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
 	type Currency = Ring;
-	type Event = Event;
 	type DutyRelayersRewardRatio = DutyRelayersRewardRatio;
+	type Event = Event;
 	type LockId = PangolinParachainFeeMarketLockId;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
 	type MinimumRelayFee = MinimumRelayFee;

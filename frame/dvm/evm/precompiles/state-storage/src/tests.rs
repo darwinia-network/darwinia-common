@@ -256,8 +256,8 @@ impl Config<F1> for Test {
 	type CollateralPerOrder = CollateralPerOrder;
 	type ConfirmRelayersRewardRatio = ();
 	type Currency = Ring;
-	type Event = Event;
 	type DutyRelayersRewardRatio = ();
+	type Event = Event;
 	type LockId = ();
 	type MessageRelayersRewardRatio = ();
 	type MinimumRelayFee = ();
