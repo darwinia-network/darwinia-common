@@ -1966,8 +1966,6 @@ dependencies = [
 name = "drml-common-runtime"
 version = "2.9.5"
 dependencies = [
- "bp-messages",
- "bridge-runtime-common",
  "darwinia-balances",
  "darwinia-support",
  "drml-primitives",
@@ -1975,9 +1973,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-authorship",
- "pallet-bridge-dispatch",
  "pallet-collective",
- "pallet-fee-market",
  "pallet-transaction-payment",
  "pallet-treasury",
  "parity-scale-codec",
