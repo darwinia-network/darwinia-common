@@ -90,8 +90,8 @@ impl Config<WithPangolinParachainAlphaFeeMarket> for Runtime {
 	type CollateralPerOrder = CollateralPerOrder;
 	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
 	type Currency = Ring;
+	type DutyRelayersRewardRatio = DutyRelayersRewardRatio;
 	type Event = Event;
-	type GuardRelayersRewardRatio = GuardRelayersRewardRatio;
 	type LockId = PangolinParachainAlphaFeeMarketLockId;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
 	type MinimumRelayFee = MinimumRelayFee;

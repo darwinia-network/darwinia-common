@@ -20,11 +20,8 @@
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 // --- paritytech ---
-use frame_support::{
-	weights::{DispatchClass, Weight},
-	RuntimeDebug,
-};
-use sp_runtime::{traits::Zero, FixedPointNumber, FixedU128};
+use frame_support::{weights::Weight, RuntimeDebug};
+use sp_runtime::{FixedPointNumber, FixedU128};
 use sp_std::ops::RangeInclusive;
 // --- darwinia-network ---
 use crate::*;
@@ -38,18 +35,17 @@ use bp_runtime::{Chain, ChainId, PANGOLIN_CHAIN_ID, PANGOLIN_PARACHAIN_ALPHA_CHA
 use bridge_runtime_common::{
 	lanes::PANGOLIN_PANGOLIN_PARACHAIN_ALPHA_LANE,
 	messages::{
-		self,
-		source::{self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload},
+		source::{
+			self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload,
+			FromThisChainMessageVerifier,
+		},
 		target::{
 			self, FromBridgedChainEncodedMessageCall, FromBridgedChainMessageDispatch,
 			FromBridgedChainMessagePayload, FromBridgedChainMessagesProof,
 		},
-		BridgedChainWithMessages, ChainWithMessages, MessageBridge, MessageTransaction,
-		ThisChainWithMessages,
+		BridgedChainWithMessages, ChainWithMessages, MessageBridge, ThisChainWithMessages,
 	},
 };
-use drml_common_runtime::impls::FromThisChainMessageVerifier;
-use pallet_bridge_messages::EXPECTED_DEFAULT_MESSAGE_LENGTH;
 
 /// Message delivery proof for Pangolin -> PangolinParachainAlpha messages.
 type ToPangolinParachainAlphaMessagesDeliveryProof =
@@ -145,17 +141,6 @@ impl ThisChainWithMessages for Pangolin {
 
 	fn maximal_pending_messages_at_outbound_lane() -> MessageNonce {
 		MessageNonce::MAX
-	}
-
-	fn transaction_payment(transaction: MessageTransaction<Weight>) -> Self::Balance {
-		// in our testnets, both per-byte fee and weight-to-fee are 1:1
-		messages::transaction_payment(
-			RuntimeBlockWeights::get().get(DispatchClass::Normal).base_extrinsic,
-			1,
-			FixedU128::zero(),
-			|weight| weight as _,
-			transaction,
-		)
 	}
 }
 
