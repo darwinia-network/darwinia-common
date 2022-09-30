@@ -30,14 +30,6 @@ use sp_npos_elections::ExtendedBalance;
 use sp_runtime::{traits::TrailingZeroInput, RuntimeDebug};
 // --- darwinia-network ---
 use crate::*;
-use bp_messages::{source_chain::LaneMessageVerifier, LaneId, OutboundLaneData};
-use bridge_runtime_common::messages::{
-	source::{
-		FromThisChainMessagePayload, BAD_ORIGIN, MESSAGE_REJECTED_BY_OUTBOUND_LANE, TOO_LOW_FEE,
-		TOO_MANY_PENDING_MESSAGES,
-	},
-	AccountIdOf, BalanceOf, MessageBridge, OriginOf, ThisChain, ThisChainWithMessages,
-};
 use drml_primitives::AccountId;
 
 darwinia_support::impl_account_data! {
@@ -109,112 +101,6 @@ impl Get<Option<(usize, ExtendedBalance)>> for OffchainRandomBalancing {
 		};
 
 		Some((iters, 0))
-	}
-}
-
-/// Message verifier that is doing all basic checks.
-///
-/// This verifier assumes following:
-///
-/// - all message lanes are equivalent, so all checks are the same;
-/// - messages are being dispatched using `pallet-bridge-dispatch` pallet on the target chain.
-///
-/// Following checks are made:
-///
-/// - message is rejected if its lane is currently blocked;
-/// - message is rejected if there are too many pending (undelivered) messages at the outbound lane;
-/// - check that the sender has rights to dispatch the call on target chain using provided dispatch
-///   origin;
-/// - check that the sender has paid enough funds for both message delivery and dispatch.
-#[derive(RuntimeDebug)]
-pub struct FromThisChainMessageVerifier<B, R, I>(PhantomData<(B, R, I)>);
-impl<B, R, I>
-	LaneMessageVerifier<
-		OriginOf<ThisChain<B>>,
-		AccountIdOf<ThisChain<B>>,
-		FromThisChainMessagePayload<B>,
-		BalanceOf<ThisChain<B>>,
-	> for FromThisChainMessageVerifier<B, R, I>
-where
-	B: MessageBridge,
-	R: pallet_fee_market::Config<I>,
-	I: 'static,
-	// matches requirements from the `frame_system::Config::Origin`
-	OriginOf<ThisChain<B>>: Clone
-		+ Into<Result<frame_system::RawOrigin<AccountIdOf<ThisChain<B>>>, OriginOf<ThisChain<B>>>>,
-	AccountIdOf<ThisChain<B>>: Clone + PartialEq,
-	pallet_fee_market::BalanceOf<R, I>: From<BalanceOf<ThisChain<B>>>,
-{
-	type Error = &'static str;
-
-	#[cfg(not(feature = "runtime-benchmarks"))]
-	fn verify_message(
-		submitter: &OriginOf<ThisChain<B>>,
-		delivery_and_dispatch_fee: &BalanceOf<ThisChain<B>>,
-		lane: &LaneId,
-		lane_outbound_data: &OutboundLaneData,
-		payload: &FromThisChainMessagePayload<B>,
-	) -> Result<(), Self::Error> {
-		// reject message if lane is blocked
-		if !ThisChain::<B>::is_message_accepted(submitter, lane) {
-			return Err(MESSAGE_REJECTED_BY_OUTBOUND_LANE);
-		}
-
-		// reject message if there are too many pending messages at this lane
-		let max_pending_messages = ThisChain::<B>::maximal_pending_messages_at_outbound_lane();
-		let pending_messages = lane_outbound_data
-			.latest_generated_nonce
-			.saturating_sub(lane_outbound_data.latest_received_nonce);
-		if pending_messages > max_pending_messages {
-			return Err(TOO_MANY_PENDING_MESSAGES);
-		}
-
-		// Do the dispatch-specific check. We assume that the target chain uses
-		// `Dispatch`, so we verify the message accordingly.
-		let raw_origin_or_err: Result<
-			frame_system::RawOrigin<AccountIdOf<ThisChain<B>>>,
-			OriginOf<ThisChain<B>>,
-		> = submitter.clone().into();
-		if let Ok(raw_origin) = raw_origin_or_err {
-			pallet_bridge_dispatch::verify_message_origin(&raw_origin, payload)
-				.map(drop)
-				.map_err(|_| BAD_ORIGIN)?
-		} else {
-			// so what it means that we've failed to convert origin to the
-			// `frame_system::RawOrigin`? now it means that the custom pallet origin has
-			// been used to send the message. Do we need to verify it? The answer is no,
-			// because pallet may craft any origin (e.g. root) && we can't verify whether it
-			// is valid, or not.
-		}
-
-		// Do the delivery_and_dispatch_fee. We assume that the delivery and dispatch fee always
-		// greater than the fee market provided fee.
-		if let Some(market_fee) = pallet_fee_market::Pallet::<R, I>::market_fee() {
-			let message_fee: pallet_fee_market::BalanceOf<R, I> =
-				(*delivery_and_dispatch_fee).into();
-
-			// compare with actual fee paid
-			if message_fee < market_fee {
-				return Err(TOO_LOW_FEE);
-			}
-		} else {
-			const NO_MARKET_FEE: &str = "The fee market are not ready for accepting messages.";
-
-			return Err(NO_MARKET_FEE);
-		}
-
-		Ok(())
-	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn verify_message(
-		_submitter: &OriginOf<ThisChain<B>>,
-		_delivery_and_dispatch_fee: &BalanceOf<ThisChain<B>>,
-		_lane: &LaneId,
-		_lane_outbound_data: &OutboundLaneData,
-		_payload: &FromThisChainMessagePayload<B>,
-	) -> Result<(), Self::Error> {
-		Ok(())
 	}
 }
 
