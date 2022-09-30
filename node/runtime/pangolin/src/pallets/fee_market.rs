@@ -43,7 +43,7 @@ frame_support::parameter_types! {
 	pub const MinimumRelayFee: Balance = 15 * COIN;
 	pub const CollateralPerOrder: Balance = 50 * COIN;
 	pub const Slot: BlockNumber = 300;
-	pub const GuardRelayersRewardRatio: Permill = Permill::from_percent(20);
+	pub const DutyRelayersRewardRatio: Permill = Permill::from_percent(20);
 	pub const MessageRelayersRewardRatio: Permill = Permill::from_percent(80);
 	pub const ConfirmRelayersRewardRatio: Permill = Permill::from_percent(20);
 	pub const AssignedRelayerSlashRatio: Permill = Permill::from_percent(20);
@@ -60,8 +60,8 @@ impl Config<WithPangoroFeeMarket> for Runtime {
 	type CollateralPerOrder = CollateralPerOrder;
 	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
 	type Currency = Ring;
+	type DutyRelayersRewardRatio = DutyRelayersRewardRatio;
 	type Event = Event;
-	type GuardRelayersRewardRatio = GuardRelayersRewardRatio;
 	type LockId = PangoroFeeMarketLockId;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
 	type MinimumRelayFee = MinimumRelayFee;
@@ -75,8 +75,8 @@ impl Config<WithPangolinParachainFeeMarket> for Runtime {
 	type CollateralPerOrder = CollateralPerOrder;
 	type ConfirmRelayersRewardRatio = ConfirmRelayersRewardRatio;
 	type Currency = Ring;
+	type DutyRelayersRewardRatio = DutyRelayersRewardRatio;
 	type Event = Event;
-	type GuardRelayersRewardRatio = GuardRelayersRewardRatio;
 	type LockId = PangolinParachainFeeMarketLockId;
 	type MessageRelayersRewardRatio = MessageRelayersRewardRatio;
 	type MinimumRelayFee = MinimumRelayFee;
