@@ -19,7 +19,6 @@ smallvec          = { version = "1.9" }
 static_assertions = { version = "1.1" }
 # darwinia-network
 darwinia-balances                     = { default-features = false, path = "../../../frame/balances" }
-darwinia-bridge-ethereum              = { default-features = false, path = "../../../frame/bridge/ethereum" }
 darwinia-ecdsa-authority              = { default-features = false, path = "../../../frame/bridge/ecdsa-authority" }
 darwinia-ethereum                     = { default-features = false, path = "../../../frame/dvm/ethereum" }
 darwinia-evm                          = { default-features = false, path = "../../../frame/dvm/evm" }
@@ -28,17 +27,13 @@ darwinia-evm-precompile-kton          = { default-features = false, path = "../.
 darwinia-evm-precompile-state-storage = { default-features = false, path = "../../../frame/dvm/evm/precompiles/state-storage" }
 darwinia-header-mmr                   = { default-features = false, path = "../../../frame/header-mmr" }
 darwinia-message-gadget               = { default-features = false, path = "../../../frame/bridge/message-gadget" }
-darwinia-relay-authority              = { default-features = false, path = "../../../frame/bridge/relay-authority" }
-darwinia-relayer-game                 = { default-features = false, path = "../../../frame/bridge/relayer-game" }
 darwinia-staking                      = { default-features = false, path = "../../../frame/staking" }
 darwinia-support                      = { default-features = false, path = "../../../frame/support" }
 dp-evm-tracer                         = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
-dp-relayer-game                       = { default-features = false, path = "../../../primitives/relayer-game" }
 drml-common-runtime                   = { default-features = false, path = "../common" }
 drml-primitives                       = { default-features = false, path = "../../primitives" }
 ethereum-primitives                   = { default-features = false, path = "../../../primitives/ethereum" }
 module-transaction-pause              = { default-features = false, path = "../../../frame/transaction-pause" }
-to-ethereum-backing                   = { default-features = false, path = "../../../frame/wormhole/backing/ethereum" }
 to-parachain-backing                  = { default-features = false, path = "../../../frame/wormhole/backing/parachain" }
 to-tron-backing                       = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
 # messages
@@ -139,7 +134,6 @@ std = [
 	"serde",
 	# darwinia-network
 	"darwinia-balances/std",
-	"darwinia-bridge-ethereum/std",
 	"darwinia-ecdsa-authority/std",
 	"darwinia-ethereum/std",
 	"darwinia-evm/std",
@@ -148,17 +142,13 @@ std = [
 	"darwinia-evm-precompile-state-storage/std",
 	"darwinia-header-mmr/std",
 	"darwinia-message-gadget/std",
-	"darwinia-relay-authority/std",
-	"darwinia-relayer-game/std",
 	"darwinia-staking/std",
 	"darwinia-support/std",
 	"dp-evm-tracer/std",
-	"dp-relayer-game/std",
 	"drml-primitives/std",
 	"drml-common-runtime/std",
 	"ethereum-primitives/std",
 	"module-transaction-pause/std",
-	"to-ethereum-backing/std",
 	"to-tron-backing/std",
 	"to-parachain-backing/std",
 	# messages
@@ -289,7 +279,6 @@ try-runtime = [
 	"darwinia-ethereum/try-runtime",
 	"darwinia-header-mmr/try-runtime",
 	"darwinia-staking/try-runtime",
-	"to-ethereum-backing/try-runtime",
 ]
 
 # A feature that should be enabled when the runtime should be build for on-chain

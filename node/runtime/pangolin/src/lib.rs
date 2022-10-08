@@ -81,7 +81,6 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
-use darwinia_bridge_ethereum::CheckEthereumRelayHeaderParcel;
 use drml_common_runtime::*;
 use drml_primitives::*;
 
@@ -99,7 +98,6 @@ pub type SignedExtra = (
 	CheckNonce<Runtime>,
 	CheckWeight<Runtime>,
 	ChargeTransactionPayment<Runtime>,
-	CheckEthereumRelayHeaderParcel<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =
@@ -152,7 +150,6 @@ frame_support::construct_runtime! {
 		NodeBlock = OpaqueBlock,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		// Basic stuff; balances is uncallable initially.
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 0,
 
 		// Must be before session.
@@ -163,7 +160,7 @@ frame_support::construct_runtime! {
 		Kton: darwinia_balances::<Instance2>::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 6,
 
-		// Consensus support.
+		// Consensus things.
 		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent} = 7,
 		ElectionProviderMultiPhase: pallet_election_provider_multi_phase::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 8,
 		Staking: darwinia_staking::{Pallet, Call, Storage, Config<T>, Event<T>} = 9,
@@ -173,15 +170,12 @@ frame_support::construct_runtime! {
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 13,
 		Beefy: pallet_beefy::{Pallet, Storage, Config<T>} = 55,
 		MessageGadget: darwinia_message_gadget::{Pallet, Call, Storage, Config} = 58,
-		EcdsaRelayAuthority: darwinia_relay_authority::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
 		EcdsaAuthority: darwinia_ecdsa_authority::{Pallet, Call, Storage, Config, Event<T>} = 66,
-		// Mmr: pallet_mmr::{Pallet, Storage} = 56,
-		// MmrLeaf: pallet_beefy_mmr::{Pallet, Storage} = 57,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
 		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Config} = 15,
 		HeaderMmr: darwinia_header_mmr::{Pallet, Storage} = 16,
 
-		// Governance stuff; uncallable initially.
+		// Governance things.
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 17,
 		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 18,
 		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 19,
@@ -194,44 +188,28 @@ frame_support::construct_runtime! {
 
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 23,
 
-		// Vesting. Usable initially, but removed once all vesting is finished.
 		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 25,
 
-		// Utility module.
 		Utility: pallet_utility::{Pallet, Call, Event} = 26,
 
-		// Less simple identity module.
 		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 27,
 
-		// Society module.
 		Society: pallet_society::{Pallet, Call, Storage, Event<T>} = 28,
 
-		// Social recovery module.
 		Recovery: pallet_recovery::{Pallet, Call, Storage, Event<T>} = 29,
 
-		// System scheduler.
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 30,
 		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 67,
 
-		// Proxy module. Late addition.
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 31,
 
-		// Multisig module. Late addition.
 		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 32,
-
-		// CrabIssuing: darwinia_crab_issuing::{Pallet, Call, Storage, Config} = 33,
-		// CrabBacking: darwinia_crab_backing::{Pallet, Storage, Config<T>} = 34,
-
-		EthereumRelay: darwinia_bridge_ethereum::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
-		EthereumBacking: to_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
-		EthereumRelayerGame: darwinia_relayer_game::<Instance1>::{Pallet, Storage} = 37,
 
 		TronBacking: to_tron_backing::{Pallet, Config<T>} = 39,
 
 		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
 		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event<T>, Origin} = 41,
 		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 59,
-		// DynamicFee: dvm_dynamic_fee::{Pallet, Call, Storage, Inherent} = 47,
 
 		BridgePangoroDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 44,
 		BridgePangoroGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 45,
@@ -254,7 +232,6 @@ frame_support::construct_runtime! {
 		BridgePangolinParachainAlphaMessages: pallet_bridge_messages::<Instance3>::{Pallet, Call, Storage, Event<T>} = 71,
 		PangolinParachainAlphaFeeMarket: pallet_fee_market::<Instance3>::{Pallet, Call, Storage, Event<T>} = 72,
 
-		// Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 		ToPangolinParachainBacking: to_parachain_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 65,
 	}
 }
@@ -289,7 +266,6 @@ where
 			CheckNonce::<Runtime>::from(nonce),
 			CheckWeight::<Runtime>::new(),
 			ChargeTransactionPayment::<Runtime>::from(tip),
-			CheckEthereumRelayHeaderParcel::<Runtime>::new(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|e| {

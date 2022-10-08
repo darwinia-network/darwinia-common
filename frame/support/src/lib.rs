@@ -23,7 +23,6 @@ pub mod macros;
 pub mod structs;
 #[cfg(feature = "testing")]
 pub mod testing;
-pub mod traits;
 
 pub mod balance {
 	pub use crate::structs::{StakingLock, Unbonding};
