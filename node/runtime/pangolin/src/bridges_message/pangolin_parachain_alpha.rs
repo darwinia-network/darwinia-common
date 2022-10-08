@@ -31,9 +31,9 @@ use bp_messages::{
 	InboundLaneData, LaneId, Message, MessageNonce, Parameter,
 };
 use bp_rococo::parachains::ParaId;
-use bp_runtime::{Chain, ChainId, PANGOLIN_CHAIN_ID, PANGOLIN_PARACHAIN_CHAIN_ID};
+use bp_runtime::{Chain, ChainId, PANGOLIN_CHAIN_ID, PANGOLIN_PARACHAIN_ALPHA_CHAIN_ID};
 use bridge_runtime_common::{
-	lanes::PANGOLIN_PANGOLIN_PARACHAIN_LANE,
+	lanes::PANGOLIN_PANGOLIN_PARACHAIN_ALPHA_LANE,
 	messages::{
 		source::{
 			self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload,
@@ -47,73 +47,73 @@ use bridge_runtime_common::{
 	},
 };
 
-/// Message delivery proof for Pangolin -> PangolinParachain messages.
-type ToPangolinParachainMessagesDeliveryProof =
+/// Message delivery proof for Pangolin -> PangolinParachainAlpha messages.
+type ToPangolinParachainAlphaMessagesDeliveryProof =
 	FromBridgedChainMessagesDeliveryProof<bp_pangolin_parachain::Hash>;
-/// Message proof for PangolinParachain -> Pangolin  messages.
-type FromPangolinParachainMessagesProof =
+/// Message proof for PangolinParachainAlpha -> Pangolin  messages.
+type FromPangolinParachainAlphaMessagesProof =
 	FromBridgedChainMessagesProof<bp_pangolin_parachain::Hash>;
 
-/// Message payload for Pangolin -> PangolinParachain messages.
-pub type ToPangolinParachainMessagePayload =
-	FromThisChainMessagePayload<WithPangolinParachainMessageBridge>;
-/// Message payload for PangolinParachain -> Pangolin messages.
-pub type FromPangolinParachainMessagePayload =
-	FromBridgedChainMessagePayload<WithPangolinParachainMessageBridge>;
+/// Message payload for Pangolin -> PangolinParachainAlpha messages.
+pub type ToPangolinParachainAlphaMessagePayload =
+	FromThisChainMessagePayload<WithPangolinParachainAlphaMessageBridge>;
+/// Message payload for PangolinParachainAlpha -> Pangolin messages.
+pub type FromPangolinParachainAlphaMessagePayload =
+	FromBridgedChainMessagePayload<WithPangolinParachainAlphaMessageBridge>;
 
 /// Message verifier for Pangolin -> PangolinParachain messages.
-pub type ToPangolinParachainMessageVerifier = FromThisChainMessageVerifier<
-	WithPangolinParachainMessageBridge,
+pub type ToPangolinParachainAlphaMessageVerifier = FromThisChainMessageVerifier<
+	WithPangolinParachainAlphaMessageBridge,
 	Runtime,
-	WithPangolinParachainFeeMarket,
+	WithPangolinParachainAlphaFeeMarket,
 >;
 
-/// Encoded Pangolin Call as it comes from PangolinParachain
-pub type FromPangolinParachainEncodedCall = FromBridgedChainEncodedMessageCall<Call>;
+/// Encoded Pangolin Call as it comes from PangolinParachainAlpha
+pub type FromPangolinParachainAlphaEncodedCall = FromBridgedChainEncodedMessageCall<Call>;
 
-/// Call-dispatch based message dispatch for PangolinParachain -> Pangolin messages.
-pub type FromPangolinParachainMessageDispatch = FromBridgedChainMessageDispatch<
-	WithPangolinParachainMessageBridge,
+/// Call-dispatch based message dispatch for PangolinParachainAlpha -> Pangolin messages.
+pub type FromPangolinParachainAlphaMessageDispatch = FromBridgedChainMessageDispatch<
+	WithPangolinParachainAlphaMessageBridge,
 	Runtime,
 	Ring,
-	WithPangolinParachainDispatch,
+	WithPangolinParachainAlphaDispatch,
 >;
 
-/// Identifier of PangolinParachain registered in the rococo relay chain.
-pub const PANGOLIN_PARACHAIN_ID: u32 = 2105;
+/// Identifier of PangolinParachainAlpha registered in the moonbase relay chain.
+pub const PANGOLIN_PARACHAIN_ALPHA_ID: u32 = 2105;
 
-pub const INITIAL_PANGOLIN_PARACHAIN_TO_PANGOLIN_CONVERSION_RATE: FixedU128 =
+pub const INITIAL_PANGOLIN_PARACHAIN_ALPHA_TO_PANGOLIN_CONVERSION_RATE: FixedU128 =
 	FixedU128::from_inner(FixedU128::DIV);
 
 frame_support::parameter_types! {
-	/// PangolinParachain to Pangolin conversion rate. Initially we trate both tokens as equal.
-	pub storage PangolinParachainToPangolinConversionRate: FixedU128 = INITIAL_PANGOLIN_PARACHAIN_TO_PANGOLIN_CONVERSION_RATE;
+	/// PangolinParachainAlpha to Pangolin conversion rate. Initially we trate both tokens as equal.
+	pub storage PangolinParachainAlphaToPangolinConversionRate: FixedU128 = INITIAL_PANGOLIN_PARACHAIN_ALPHA_TO_PANGOLIN_CONVERSION_RATE;
 }
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
-pub enum PangolinToPangolinParachainParameter {
-	/// The conversion formula we use is: `PangolinTokens = PangolinParachainTokens *
+pub enum PangolinToPangolinParachainAlphaParameter {
+	/// The conversion formula we use is: `PangolinTokens = PangolinParachainAlphaTokens *
 	/// conversion_rate`.
-	PangolinParachainToPangolinConversionRate(FixedU128),
+	PangolinParachainAlphaToPangolinConversionRate(FixedU128),
 }
-impl Parameter for PangolinToPangolinParachainParameter {
+impl Parameter for PangolinToPangolinParachainAlphaParameter {
 	fn save(&self) {
 		match *self {
-			PangolinToPangolinParachainParameter::PangolinParachainToPangolinConversionRate(
+			PangolinToPangolinParachainAlphaParameter::PangolinParachainAlphaToPangolinConversionRate(
 				ref conversion_rate,
-			) => PangolinParachainToPangolinConversionRate::set(conversion_rate),
+			) => PangolinParachainAlphaToPangolinConversionRate::set(conversion_rate),
 		}
 	}
 }
 
-/// Pangolin <-> PangolinParachain message bridge.
+/// Pangolin <-> PangolinParachainAlpha message bridge.
 #[derive(Clone, Copy, RuntimeDebug)]
-pub struct WithPangolinParachainMessageBridge;
-impl MessageBridge for WithPangolinParachainMessageBridge {
-	type BridgedChain = PangolinParachain;
+pub struct WithPangolinParachainAlphaMessageBridge;
+impl MessageBridge for WithPangolinParachainAlphaMessageBridge {
+	type BridgedChain = PangolinParachainAlpha;
 	type ThisChain = Pangolin;
 
-	const BRIDGED_CHAIN_ID: ChainId = PANGOLIN_PARACHAIN_CHAIN_ID;
+	const BRIDGED_CHAIN_ID: ChainId = PANGOLIN_PARACHAIN_ALPHA_CHAIN_ID;
 	const BRIDGED_MESSAGES_PALLET_NAME: &'static str =
 		bp_pangolin::WITH_PANGOLIN_MESSAGES_PALLET_NAME;
 	const RELAYER_FEE_PERCENT: u32 = 10;
@@ -136,7 +136,7 @@ impl ThisChainWithMessages for Pangolin {
 	type Origin = Origin;
 
 	fn is_message_accepted(_send_origin: &Self::Origin, lane: &LaneId) -> bool {
-		*lane == PANGOLIN_PANGOLIN_PARACHAIN_LANE
+		*lane == PANGOLIN_PANGOLIN_PARACHAIN_ALPHA_LANE
 	}
 
 	fn maximal_pending_messages_at_outbound_lane() -> MessageNonce {
@@ -145,8 +145,8 @@ impl ThisChainWithMessages for Pangolin {
 }
 
 #[derive(Clone, Copy, RuntimeDebug)]
-pub struct PangolinParachain;
-impl ChainWithMessages for PangolinParachain {
+pub struct PangolinParachainAlpha;
+impl ChainWithMessages for PangolinParachainAlpha {
 	type AccountId = bp_pangolin_parachain::AccountId;
 	type Balance = bp_pangolin_parachain::Balance;
 	type Hash = bp_pangolin_parachain::Hash;
@@ -154,7 +154,7 @@ impl ChainWithMessages for PangolinParachain {
 	type Signer = bp_pangolin_parachain::AccountPublic;
 	type Weight = Weight;
 }
-impl BridgedChainWithMessages for PangolinParachain {
+impl BridgedChainWithMessages for PangolinParachainAlpha {
 	fn maximal_extrinsic_size() -> u32 {
 		bp_pangolin_parachain::PangolinParachain::max_extrinsic_size()
 	}
@@ -166,40 +166,43 @@ impl BridgedChainWithMessages for PangolinParachain {
 		0..=upper_limit
 	}
 }
-impl TargetHeaderChain<ToPangolinParachainMessagePayload, <Self as ChainWithMessages>::AccountId>
-	for PangolinParachain
+impl
+	TargetHeaderChain<
+		ToPangolinParachainAlphaMessagePayload,
+		<Self as ChainWithMessages>::AccountId,
+	> for PangolinParachainAlpha
 {
 	type Error = &'static str;
-	type MessagesDeliveryProof = ToPangolinParachainMessagesDeliveryProof;
+	type MessagesDeliveryProof = ToPangolinParachainAlphaMessagesDeliveryProof;
 
-	fn verify_message(payload: &ToPangolinParachainMessagePayload) -> Result<(), Self::Error> {
-		source::verify_chain_message::<WithPangolinParachainMessageBridge>(payload)
+	fn verify_message(payload: &ToPangolinParachainAlphaMessagePayload) -> Result<(), Self::Error> {
+		source::verify_chain_message::<WithPangolinParachainAlphaMessageBridge>(payload)
 	}
 
 	fn verify_messages_delivery_proof(
 		proof: Self::MessagesDeliveryProof,
 	) -> Result<(LaneId, InboundLaneData<bp_pangolin::AccountId>), Self::Error> {
 		source::verify_messages_delivery_proof_from_parachain::<
-			WithPangolinParachainMessageBridge,
+			WithPangolinParachainAlphaMessageBridge,
 			bp_pangolin_parachain::Header,
 			Runtime,
 			WithRococoParachainsInstance,
-		>(ParaId(PANGOLIN_PARACHAIN_ID), proof)
+		>(ParaId(PANGOLIN_PARACHAIN_ALPHA_ID), proof)
 	}
 }
-impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for PangolinParachain {
+impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for PangolinParachainAlpha {
 	type Error = &'static str;
-	type MessagesProof = FromPangolinParachainMessagesProof;
+	type MessagesProof = FromPangolinParachainAlphaMessagesProof;
 
 	fn verify_messages_proof(
 		proof: Self::MessagesProof,
 		messages_count: u32,
 	) -> Result<ProvedMessages<Message<<Self as ChainWithMessages>::Balance>>, Self::Error> {
 		target::verify_messages_proof_from_parachain::<
-			WithPangolinParachainMessageBridge,
+			WithPangolinParachainAlphaMessageBridge,
 			bp_pangolin_parachain::Header,
 			Runtime,
 			WithRococoParachainsInstance,
-		>(ParaId(PANGOLIN_PARACHAIN_ID), proof, messages_count)
+		>(ParaId(PANGOLIN_PARACHAIN_ALPHA_ID), proof, messages_count)
 	}
 }

@@ -778,14 +778,12 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
-	#[pallet::generate_storage_info]
 	pub struct Pallet<T, I = ()>(PhantomData<(T, I)>);
 	#[pallet::call]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		/// Transfer some liquid free balance to another account.
 		///
 		/// `transfer` will set the `FreeBalance` of the sender and receiver.
-		/// It will decrease the total issuance of the system by the `TransferFee`.
 		/// If the sender's account is below the existential deposit as a result
 		/// of the transfer, the account will be reaped.
 		///
@@ -827,7 +825,7 @@ pub mod pallet {
 		/// Set the balances of a given account.
 		///
 		/// This will alter `FreeBalance` and `ReservedBalance` in storage. it will
-		/// also decrease the total issuance of the system (`TotalIssuance`).
+		/// also alter the total issuance of the system (`TotalIssuance`) appropriately.
 		/// If the new free or reserved balance is below the existential deposit,
 		/// it will reset the account nonce (`frame_system::AccountNonce`).
 		///
@@ -1218,7 +1216,7 @@ pub mod pallet {
 			} else {
 				Locks::<T, I>::insert(who, bounded_locks);
 				if !existed {
-					if <frame_system::Pallet<T>>::inc_consumers(who).is_err() {
+					if <frame_system::Pallet<T>>::inc_consumers_without_limit(who).is_err() {
 						// No providers for the locks. This is impossible under normal circumstances
 						// since the funds that are under the lock will themselves be stored in the
 						// account and therefore will need a reference.

@@ -33,6 +33,7 @@ impl Config for Runtime {
 	type OnSlash = Treasury;
 	type PalletId = TreasuryPalletId;
 	type ProposalBond = ProposalBond;
+	type ProposalBondMaximum = ();
 	type ProposalBondMinimum = RingProposalBondMinimum;
 	type RejectOrigin = RootOrMoreThanHalf<CouncilCollective>;
 	type SpendFunds = Bounties;
@@ -49,6 +50,7 @@ impl Config<KtonTreasuryInstance> for Runtime {
 	type OnSlash = KtonTreasury;
 	type PalletId = TreasuryPalletId;
 	type ProposalBond = ProposalBond;
+	type ProposalBondMaximum = ();
 	type ProposalBondMinimum = KtonProposalBondMinimum;
 	type RejectOrigin = RootOrMoreThanHalf<CouncilCollective>;
 	type SpendFunds = ();

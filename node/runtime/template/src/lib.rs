@@ -66,8 +66,13 @@ pub type SignedExtra = (
 );
 pub type UncheckedExtrinsic =
 	fp_self_contained::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
-pub type Executive =
-	frame_executive::Executive<Runtime, Block, ChainContext<Runtime>, Runtime, AllPallets>;
+pub type Executive = frame_executive::Executive<
+	Runtime,
+	Block,
+	ChainContext<Runtime>,
+	Runtime,
+	AllPalletsWithSystem,
+>;
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
 pub type Ring = Balances;
@@ -82,6 +87,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
+	state_version: 0,
 };
 
 #[cfg(feature = "std")]

@@ -123,6 +123,7 @@ pub mod pallet {
 
 		/// The message bridge instance to send message
 		type MessagesBridge: MessagesBridge<
+			Self::Origin,
 			Self::AccountId,
 			RingBalance<Self>,
 			<<Self as Config>::OutboundPayloadCreator as IssueFromRemotePayload<
@@ -158,6 +159,8 @@ pub mod pallet {
 		RingDailyLimited,
 		/// Message nonce duplicated.
 		NonceDuplicated,
+		// Remote mapping token factory account not set.
+		RemoteMappingTokenFactoryAccountNotSet,
 	}
 
 	/// Period between security limitation. Zero means there is no period limitation.
@@ -186,13 +189,13 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn remote_mapping_token_factory_account)]
 	pub type RemoteMappingTokenFactoryAccount<T: Config> =
-		StorageValue<_, AccountId<T>, ValueQuery>;
+		StorageValue<_, AccountId<T>, OptionQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub secure_limited_period: BlockNumberFor<T>,
 		pub secure_limited_ring_amount: RingBalance<T>,
-		pub remote_mapping_token_factory_account: AccountId<T>,
+		pub remote_mapping_token_factory_account: Option<AccountId<T>>,
 	}
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
@@ -200,7 +203,7 @@ pub mod pallet {
 			Self {
 				secure_limited_period: Zero::zero(),
 				secure_limited_ring_amount: Zero::zero(),
-				remote_mapping_token_factory_account: Default::default(),
+				remote_mapping_token_factory_account: None,
 			}
 		}
 	}
@@ -212,9 +215,9 @@ pub mod pallet {
 				<RingBalance<T>>::zero(),
 				self.secure_limited_ring_amount,
 			));
-			<RemoteMappingTokenFactoryAccount<T>>::put(
-				self.remote_mapping_token_factory_account.clone(),
-			);
+			if let Some(a) = self.remote_mapping_token_factory_account.clone() {
+				<RemoteMappingTokenFactoryAccount<T>>::put(a);
+			}
 		}
 	}
 
@@ -277,7 +280,7 @@ pub mod pallet {
 				DispatchFeePayment::AtSourceChain,
 			)?;
 			T::MessagesBridge::send_message(
-				RawOrigin::Signed(Self::pallet_account_id()),
+				RawOrigin::Signed(Self::pallet_account_id()).into(),
 				T::MessageLaneId::get(),
 				payload,
 				fee,
@@ -309,7 +312,8 @@ pub mod pallet {
 			// Check call origin
 			ensure_source_account::<T::AccountId, T::BridgedAccountIdConverter>(
 				T::BridgedChainId::get(),
-				<RemoteMappingTokenFactoryAccount<T>>::get(),
+				<RemoteMappingTokenFactoryAccount<T>>::get()
+					.ok_or(<Error<T>>::RemoteMappingTokenFactoryAccountNotSet)?,
 				&user,
 			)?;
 

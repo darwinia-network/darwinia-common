@@ -47,6 +47,11 @@ const EVM_ACCOUNTS: &[&str] = &[
 	// Subswap
 	"0xbB3E51d20CA651fBE19b1a1C2a6C8B1A4d950437",
 ];
+// This is the simplest bytecode to revert without returning any data.
+// We will pre-deploy it under all of our precompiles to ensure they can be called from
+// within contracts.
+// (PUSH1 0x00 PUSH1 0x00 REVERT)
+const REVERT_BYTECODE: [u8; 5] = [0x60, 0x00, 0x60, 0x00, 0xFD];
 
 const A_FEW_COINS: Balance = 1 << 44;
 const MANY_COINS: Balance = A_FEW_COINS << 6;
@@ -97,6 +102,18 @@ pub fn genesis_config() -> ChainSpec {
 						code: Default::default(),
 						nonce: Default::default(),
 						storage: Default::default(),
+					},
+				);
+			}
+
+			for precompile in PangoroPrecompiles::<Runtime>::used_addresses() {
+				map.insert(
+					precompile,
+					GenesisAccount {
+						nonce: Default::default(),
+						balance: Default::default(),
+						storage: Default::default(),
+						code: REVERT_BYTECODE.to_vec(),
 					},
 				);
 			}
@@ -188,7 +205,7 @@ pub fn genesis_config() -> ChainSpec {
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			treasury: Default::default(),
-			sudo: SudoConfig { key: root },
+			sudo: SudoConfig { key: Some(root) },
 			evm: EVMConfig { accounts: evm_accounts },
 			ethereum: Default::default(),
 			base_fee: Default::default(),
@@ -214,6 +231,7 @@ pub fn genesis_config() -> ChainSpec {
 				.expect("Pangoro telemetry url is valid; qed"),
 		),
 		Some(DEFAULT_PROTOCOL_ID),
+		None,
 		Some(properties()),
 		Default::default(),
 	)
@@ -244,6 +262,18 @@ pub fn development_config() -> ChainSpec {
 						code: Default::default(),
 						nonce: Default::default(),
 						storage: Default::default(),
+					},
+				);
+			}
+
+			for precompile in PangoroPrecompiles::<Runtime>::used_addresses() {
+				map.insert(
+					precompile,
+					GenesisAccount {
+						nonce: Default::default(),
+						balance: Default::default(),
+						storage: Default::default(),
+						code: REVERT_BYTECODE.to_vec(),
 					},
 				);
 			}
@@ -290,7 +320,7 @@ pub fn development_config() -> ChainSpec {
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
 			treasury: Default::default(),
-			sudo: SudoConfig { key: root },
+			sudo: SudoConfig { key: Some(root) },
 			evm: EVMConfig { accounts: evm_accounts },
 			ethereum: Default::default(),
 			base_fee: Default::default(),
@@ -305,6 +335,7 @@ pub fn development_config() -> ChainSpec {
 		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
+		None,
 		Some(properties()),
 		Default::default(),
 	)

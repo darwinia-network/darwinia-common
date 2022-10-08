@@ -24,7 +24,7 @@ use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_election_provider_support::onchain;
 use frame_support::{
-	traits::{Everything, GenesisBuild, SortedMembers},
+	traits::{ConstU32, Everything, GenesisBuild, SortedMembers},
 	PalletId,
 };
 use frame_system::{mocking::*, EnsureRoot};
@@ -76,6 +76,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();

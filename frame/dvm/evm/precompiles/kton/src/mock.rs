@@ -26,9 +26,9 @@ use fp_evm::{
 };
 use frame_support::{
 	pallet_prelude::Weight,
-	traits::{Everything, FindAuthor, GenesisBuild},
+	traits::{ConstU32, Everything, FindAuthor, GenesisBuild},
 	weights::GetDispatchInfo,
-	ConsensusEngineId, PalletId,
+	ConsensusEngineId,
 };
 use frame_system::mocking::*;
 use sp_core::{H160, H256, U256};
@@ -84,6 +84,7 @@ impl frame_system::Config for Test {
 	type Header = Header;
 	type Index = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
+	type MaxConsumers = ConstU32<16>;
 	type OnKilledAccount = ();
 	type OnNewAccount = ();
 	type OnSetCode = ();

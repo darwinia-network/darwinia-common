@@ -907,8 +907,8 @@ impl<T: Config> Pallet<T> {
 		maybe_max_len: Option<usize>,
 	) -> Vec<(AccountId<T>, VoteWeight, Vec<AccountId<T>>)> {
 		let max_allowed_len = {
-			let nominator_count = <CounterForNominators<T>>::get() as usize;
-			let validator_count = <CounterForValidators<T>>::get() as usize;
+			let nominator_count = <Nominators<T>>::count() as usize;
+			let validator_count = <Validators<T>>::count() as usize;
 			let all_voter_count = validator_count.saturating_add(nominator_count);
 
 			maybe_max_len.unwrap_or(all_voter_count).min(all_voter_count)
@@ -1008,18 +1008,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// This function will add a nominator to the `Nominators` storage map,
-	/// [`SortedListProvider`] and keep track of the `CounterForNominators`.
+	/// and [`SortedListProvider`].
 	///
 	/// If the nominator already exists, their nominations will be updated.
 	///
 	/// NOTE: you must ALWAYS use this function to add nominator or update their targets. Any access
-	/// to `Nominators`, its counter, or `VoterList` outside of this function is almost certainly
+	/// to `Nominators` or `VoterList` outside of this function is almost certainly
 	/// wrong.
 	pub fn do_add_nominator(who: &T::AccountId, nominations: Nominations<T::AccountId>) {
 		if !<Nominators<T>>::contains_key(who) {
-			// maybe update the counter.
-			<CounterForNominators<T>>::mutate(|x| x.saturating_inc());
-
 			// maybe update sorted list. Error checking is defensive-only - this should never fail.
 			if T::SortedListProvider::on_insert(who.clone(), Self::weight_of(who)).is_err() {
 				log!(warn, "attempt to insert duplicate nominator ({:#?})", who);
@@ -1033,53 +1030,46 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// This function will remove a nominator from the `Nominators` storage map,
-	/// [`SortedListProvider`] and keep track of the `CounterForNominators`.
+	/// and [`SortedListProvider`].
 	///
 	/// Returns true if `who` was removed from `Nominators`, otherwise false.
 	///
 	/// NOTE: you must ALWAYS use this function to remove a nominator from the system. Any access to
-	/// `Nominators`, its counter, or `VoterList` outside of this function is almost certainly
+	/// `Nominators` or `VoterList` outside of this function is almost certainly
 	/// wrong.
 	pub fn do_remove_nominator(who: &T::AccountId) -> bool {
 		if <Nominators<T>>::contains_key(who) {
 			<Nominators<T>>::remove(who);
-			<CounterForNominators<T>>::mutate(|x| x.saturating_dec());
 			T::SortedListProvider::on_remove(who);
 			debug_assert_eq!(T::SortedListProvider::sanity_check(), Ok(()));
-			debug_assert_eq!(<CounterForNominators<T>>::get(), T::SortedListProvider::count());
+			debug_assert_eq!(<Nominators<T>>::count(), T::SortedListProvider::count());
 			true
 		} else {
 			false
 		}
 	}
 
-	/// This function will add a validator to the `Validators` storage map, and keep track of the
-	/// `CounterForValidators`.
+	/// This function will add a validator to the `Validators` storage map.
 	///
 	/// If the validator already exists, their preferences will be updated.
 	///
 	/// NOTE: you must ALWAYS use this function to add a validator to the system. Any access to
-	/// `Validators`, its counter, or `VoterList` outside of this function is almost certainly
+	/// `Validators` or `VoterList` outside of this function is almost certainly
 	/// wrong.
 	pub fn do_add_validator(who: &T::AccountId, prefs: ValidatorPrefs) {
-		if !<Validators<T>>::contains_key(who) {
-			<CounterForValidators<T>>::mutate(|x| x.saturating_inc())
-		}
 		<Validators<T>>::insert(who, prefs);
 	}
 
-	/// This function will remove a validator from the `Validators` storage map,
-	/// and keep track of the `CounterForValidators`.
+	/// This function will remove a validator from the `Validators` storage map.
 	///
 	/// Returns true if `who` was removed from `Validators`, otherwise false.
 	///
 	/// NOTE: you must ALWAYS use this function to remove a validator from the system. Any access to
-	/// `Validators`, its counter, or `VoterList` outside of this function is almost certainly
+	/// `Validators` or `VoterList` outside of this function is almost certainly
 	/// wrong.
 	pub fn do_remove_validator(who: &T::AccountId) -> bool {
 		if <Validators<T>>::contains_key(who) {
 			<Validators<T>>::remove(who);
-			<CounterForValidators<T>>::mutate(|x| x.saturating_dec());
 			true
 		} else {
 			false
@@ -1097,7 +1087,10 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-impl<T: Config> ElectionDataProvider<AccountId<T>, BlockNumberFor<T>> for Pallet<T> {
+impl<T: Config> ElectionDataProvider for Pallet<T> {
+	type AccountId = AccountId<T>;
+	type BlockNumber = BlockNumberFor<T>;
+
 	const MAXIMUM_VOTES_PER_VOTER: u32 = T::MAX_NOMINATIONS;
 
 	fn desired_targets() -> data_provider::Result<u32> {
@@ -1109,14 +1102,6 @@ impl<T: Config> ElectionDataProvider<AccountId<T>, BlockNumberFor<T>> for Pallet
 	fn voters(
 		maybe_max_len: Option<usize>,
 	) -> data_provider::Result<Vec<(AccountId<T>, VoteWeight, Vec<AccountId<T>>)>> {
-		debug_assert!(<Nominators<T>>::iter().count() as u32 == <CounterForNominators<T>>::get());
-		debug_assert!(<Validators<T>>::iter().count() as u32 == <CounterForValidators<T>>::get());
-		debug_assert_eq!(
-			<CounterForNominators<T>>::get(),
-			T::SortedListProvider::count(),
-			"voter_count must be accurate",
-		);
-
 		// This can never fail -- if `maybe_max_len` is `Some(_)` we handle it.
 		let voters = Self::get_npos_voters(maybe_max_len);
 		debug_assert!(maybe_max_len.map_or(true, |max| voters.len() <= max));
@@ -1125,7 +1110,7 @@ impl<T: Config> ElectionDataProvider<AccountId<T>, BlockNumberFor<T>> for Pallet
 	}
 
 	fn targets(maybe_max_len: Option<usize>) -> data_provider::Result<Vec<T::AccountId>> {
-		let target_count = <CounterForValidators<T>>::get();
+		let target_count = <Validators<T>>::count();
 
 		// We can't handle this case yet -- return an error.
 		if maybe_max_len.map_or(false, |max_len| target_count > max_len as u32) {
@@ -1205,11 +1190,10 @@ impl<T: Config> ElectionDataProvider<AccountId<T>, BlockNumberFor<T>> for Pallet
 	fn clear() {
 		<Bonded<T>>::remove_all(None);
 		<Ledger<T>>::remove_all(None);
-		<Validators<T>>::remove_all(None);
-		<Nominators<T>>::remove_all(None);
-		<CounterForNominators<T>>::kill();
-		<CounterForValidators<T>>::kill();
-		let _ = T::SortedListProvider::clear(None);
+		<Validators<T>>::remove_all();
+		<Nominators<T>>::remove_all();
+
+		T::SortedListProvider::unsafe_clear();
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
@@ -1511,17 +1495,24 @@ impl<T: Config> OnDepositRedeem<AccountId<T>, RingBalance<T>> for Pallet<T> {
 
 			<frame_system::Pallet<T>>::inc_consumers(&stash).map_err(|_| <Error<T>>::BadState)?;
 
-			let ledger = StakingLedger {
-				stash: stash.clone(),
-				active: amount,
-				active_deposit_ring: amount,
-				deposit_items: vec![TimeDepositItem { value: amount, start_time, expire_time }],
-				claimed_rewards: {
+			let ledger = {
+				let mut l = StakingLedger::default_from(stash.clone());
+
+				l.stash = stash.clone();
+				l.active = amount;
+				l.active_deposit_ring = amount;
+				l.active_kton = Zero::zero();
+				l.deposit_items = vec![TimeDepositItem { value: amount, start_time, expire_time }];
+				l.ring_staking_lock = Default::default();
+				l.kton_staking_lock = Default::default();
+				l.claimed_rewards = {
 					let current_era = <CurrentEra<T>>::get().unwrap_or(0);
 					let last_reward_era = current_era.saturating_sub(Self::history_depth());
+
 					(last_reward_era..current_era).collect()
-				},
-				..Default::default()
+				};
+
+				l
 			};
 
 			Self::update_ledger(controller, &ledger);
@@ -1546,8 +1537,13 @@ where
 		Self::reward_by_ids(vec![(author, 20)]);
 	}
 
-	fn note_uncle(author: AccountId<T>, _age: BlockNumberFor<T>) {
-		Self::reward_by_ids(vec![(<pallet_authorship::Pallet<T>>::author(), 2), (author, 1)]);
+	fn note_uncle(uncle_author: T::AccountId, _age: T::BlockNumber) {
+		// defensive-only: block author must exist.
+		if let Some(block_author) = <pallet_authorship::Pallet<T>>::author() {
+			Self::reward_by_ids(vec![(block_author, 2), (uncle_author, 1)])
+		} else {
+			crate::log!(warn, "block author not set, this should never happen");
+		}
 	}
 }
 

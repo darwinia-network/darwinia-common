@@ -60,8 +60,8 @@ use fp_evm::FeeCalculator;
 use frame_support::{log, traits::KeyOwnerProofSystem, weights::GetDispatchInfo};
 use frame_system::{
 	offchain::{AppCrypto, CreateSignedTransaction, SendTransactionTypes, SigningTypes},
-	ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion,
-	CheckWeight, EnsureRoot,
+	ChainContext, CheckEra, CheckGenesis, CheckNonZeroSender, CheckNonce, CheckSpecVersion,
+	CheckTxVersion, CheckWeight, EnsureRoot,
 };
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
 use pallet_transaction_payment::ChargeTransactionPayment;
@@ -91,6 +91,7 @@ pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 pub type SignedBlock = generic::SignedBlock<Block>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
+	CheckNonZeroSender<Runtime>,
 	CheckSpecVersion<Runtime>,
 	CheckTxVersion<Runtime>,
 	CheckGenesis<Runtime>,
@@ -109,7 +110,7 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	ChainContext<Runtime>,
 	Runtime,
-	AllPallets,
+	AllPalletsWithSystem,
 	CustomOnRuntimeUpgrade,
 >;
 /// The payload being signed in transactions.
@@ -129,6 +130,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 0,
+	state_version: 0,
 };
 
 /// The BABE epoch configuration at genesis.
@@ -209,6 +211,7 @@ frame_support::construct_runtime! {
 
 		// System scheduler.
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 30,
+		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 67,
 
 		// Proxy module. Late addition.
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 31,
@@ -244,6 +247,13 @@ frame_support::construct_runtime! {
 		PangolinParachainFeeMarket: pallet_fee_market::<Instance2>::{Pallet, Call, Storage, Event<T>} = 64,
 		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 54,
 
+		// pangolin <> pangolin parachain alpha bridge
+		BridgeMoonbaseRelayGrandpa: pallet_bridge_grandpa::<Instance3>::{Pallet, Call, Storage} = 68,
+		BridgeMoonbaseRelayParachains: pallet_bridge_parachains::<Instance2>::{Pallet, Call, Storage} = 69,
+		BridgePangolinParachainAlphaDispatch: pallet_bridge_dispatch::<Instance3>::{Pallet, Event<T>} = 70,
+		BridgePangolinParachainAlphaMessages: pallet_bridge_messages::<Instance3>::{Pallet, Call, Storage, Event<T>} = 71,
+		PangolinParachainAlphaFeeMarket: pallet_fee_market::<Instance3>::{Pallet, Call, Storage, Event<T>} = 72,
+
 		// Substrate2SubstrateIssuing: from_substrate_issuing::{Pallet, Call, Storage, Config, Event<T>} = 49,
 		ToPangolinParachainBacking: to_parachain_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 65,
 	}
@@ -271,6 +281,7 @@ where
 			.saturating_sub(1);
 		let tip = 0;
 		let extra: SignedExtra = (
+			CheckNonZeroSender::<Runtime>::new(),
 			CheckSpecVersion::<Runtime>::new(),
 			CheckTxVersion::<Runtime>::new(),
 			CheckGenesis::<Runtime>::new(),
