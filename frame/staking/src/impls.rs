@@ -21,7 +21,7 @@ use sp_staking::{offence::*, *};
 use sp_std::{borrow::ToOwned, collections::btree_map::BTreeMap, prelude::*};
 // --- darwinia-network ---
 use crate::*;
-use darwinia_support::{balance::StakingLock, traits::OnDepositRedeem};
+use darwinia_support::balance::StakingLock;
 
 impl<T: Config> Pallet<T> {
 	pub fn account_id() -> AccountId<T> {
@@ -1450,78 +1450,6 @@ where
 		}
 
 		consumed_weight
-	}
-}
-
-impl<T: Config> OnDepositRedeem<AccountId<T>, RingBalance<T>> for Pallet<T> {
-	fn on_deposit_redeem(
-		backing: &AccountId<T>,
-		stash: &AccountId<T>,
-		amount: RingBalance<T>,
-		start_time: TsInMs,
-		months: u8,
-	) -> DispatchResult {
-		// The timestamp unit is different between Ethereum and Darwinia
-		// Converting from seconds to milliseconds
-		let start_time = start_time * 1000;
-		let promise_month = months.min(36);
-		let expire_time = start_time + promise_month as TsInMs * MONTH_IN_MILLISECONDS;
-
-		if let Some(controller) = Self::bonded(&stash) {
-			let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
-			let origin_active = ledger.active.clone();
-
-			T::RingCurrency::transfer(&backing, &stash, amount, ExistenceRequirement::KeepAlive)?;
-
-			let StakingLedger { active, active_deposit_ring, deposit_items, .. } = &mut ledger;
-
-			*active = active.saturating_add(amount);
-			*active_deposit_ring = active_deposit_ring.saturating_add(amount);
-			deposit_items.push(TimeDepositItem { value: amount, start_time, expire_time });
-
-			Self::update_ledger(&controller, &ledger);
-			Self::update_staking_pool(ledger.active, origin_active, Zero::zero(), Zero::zero());
-		} else {
-			ensure!(!<Bonded<T>>::contains_key(&stash), <Error<T>>::AlreadyBonded);
-
-			let controller = stash;
-
-			ensure!(!<Ledger<T>>::contains_key(controller), <Error<T>>::AlreadyPaired);
-
-			T::RingCurrency::transfer(&backing, &stash, amount, ExistenceRequirement::KeepAlive)?;
-
-			<Bonded<T>>::insert(&stash, controller);
-			<Payee<T>>::insert(&stash, RewardDestination::Stash);
-
-			<frame_system::Pallet<T>>::inc_consumers(&stash).map_err(|_| <Error<T>>::BadState)?;
-
-			let ledger = {
-				let mut l = StakingLedger::default_from(stash.clone());
-
-				l.stash = stash.clone();
-				l.active = amount;
-				l.active_deposit_ring = amount;
-				l.active_kton = Zero::zero();
-				l.deposit_items = vec![TimeDepositItem { value: amount, start_time, expire_time }];
-				l.ring_staking_lock = Default::default();
-				l.kton_staking_lock = Default::default();
-				l.claimed_rewards = {
-					let current_era = <CurrentEra<T>>::get().unwrap_or(0);
-					let last_reward_era = current_era.saturating_sub(Self::history_depth());
-
-					(last_reward_era..current_era).collect()
-				};
-
-				l
-			};
-
-			Self::update_ledger(controller, &ledger);
-			Self::update_staking_pool(ledger.active, Zero::zero(), Zero::zero(), Zero::zero());
-		};
-
-		Self::deposit_event(Event::RingBonded(stash.to_owned(), amount, start_time, expire_time));
-
-		Ok(())
 	}
 }
 

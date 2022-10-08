@@ -28,7 +28,6 @@ use sp_core::{crypto::UncheckedInto, sr25519};
 use sp_runtime::Perbill;
 // --- darwinia-network ---
 use super::*;
-use darwinia_bridge_ethereum::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
 use drml_primitives::*;
 use pangolin_runtime::*;
 
@@ -57,11 +56,6 @@ const A_FEW_COINS: Balance = 1 << 44;
 const MANY_COINS: Balance = A_FEW_COINS << 6;
 const BUNCH_OF_COINS: Balance = MANY_COINS << 6;
 
-const TOKEN_REDEEM_ADDRESS: &str = "0x49262B932E439271d05634c32978294C7Ea15d0C";
-const DEPOSIT_REDEEM_ADDRESS: &str = "0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e";
-const SET_AUTHORITIES_ADDRESS: &str = "0xD35Bb6F1bc1C84b53E0995c1830454AB7C4147f1";
-const RING_TOKEN_ADDRESS: &str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
-const KTON_TOKEN_ADDRESS: &str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
 const ECDSA_AUTHORITY: &str = "0x68898db1012808808c903f390909c52d9f706749";
 
 impl_authority_keys!();
@@ -129,13 +123,8 @@ pub fn genesis_config() -> ChainSpec {
 		};
 
 		GenesisConfig {
-			system: SystemConfig {
-				code: wasm_binary_unwrap().to_vec(),
-			},
-			babe: BabeConfig {
-				authorities: vec![],
-				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG)
-			},
+			system: SystemConfig { code: wasm_binary_unwrap().to_vec() },
+			babe: BabeConfig { authorities: vec![], epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG) },
 			balances: BalancesConfig {
 				balances: vec![
 					(root.clone(), BUNCH_OF_COINS),
@@ -147,49 +136,41 @@ pub fn genesis_config() -> ChainSpec {
 						.iter()
 						.map(|AuthorityKeys { stash_key, .. }| (stash_key.to_owned(), A_FEW_COINS)),
 				)
+				.chain(initial_nominators.iter().map(|n| (n.to_owned(), A_FEW_COINS)))
 				.chain(
-					initial_nominators
-						.iter()
-						.map(|n| (n.to_owned(), A_FEW_COINS))
+					TEAM_MEMBERS.iter().map(|m| (array_bytes::hex_into_unchecked(m), MANY_COINS)),
 				)
-				.chain(
-					TEAM_MEMBERS
-						.iter()
-						.map(|m| (array_bytes::hex_into_unchecked(m), MANY_COINS)),
-				)
-				.collect()
+				.collect(),
 			},
 			kton: KtonConfig {
 				balances: vec![(root.clone(), BUNCH_OF_COINS)]
 					.into_iter()
 					.chain(
-						initial_authorities
-							.iter()
-							.map(|AuthorityKeys { stash_key, .. }| (stash_key.to_owned(), A_FEW_COINS)),
+						initial_authorities.iter().map(|AuthorityKeys { stash_key, .. }| {
+							(stash_key.to_owned(), A_FEW_COINS)
+						}),
 					)
-					.chain(
-						initial_nominators
-							.iter()
-							.map(|n| (n.to_owned(), A_FEW_COINS))
-					)
+					.chain(initial_nominators.iter().map(|n| (n.to_owned(), A_FEW_COINS)))
 					.chain(
 						TEAM_MEMBERS
 							.iter()
 							.map(|m| (array_bytes::hex_into_unchecked(m), A_FEW_COINS)),
 					)
-					.collect()
+					.collect(),
 			},
 			staking: StakingConfig {
 				minimum_validator_count: 2,
 				validator_count: 4,
 				stakers: initial_authorities
 					.iter()
-					.map(|AuthorityKeys { stash_key, .. }| (
-						stash_key.to_owned(),
-						stash_key.to_owned(),
-						A_FEW_COINS,
-						StakerStatus::Validator
-					))
+					.map(|AuthorityKeys { stash_key, .. }| {
+						(
+							stash_key.to_owned(),
+							stash_key.to_owned(),
+							A_FEW_COINS,
+							StakerStatus::Validator,
+						)
+					})
 					.chain(initial_nominators.iter().map(|n| {
 						let mut rng = rand::thread_rng();
 						let limit = (MAX_NOMINATIONS as usize).min(initial_authorities.len());
@@ -211,27 +192,16 @@ pub fn genesis_config() -> ChainSpec {
 			session: SessionConfig {
 				keys: initial_authorities
 					.iter()
-					.map(|AuthorityKeys { stash_key, session_keys }| (
-						stash_key.to_owned(),
-						stash_key.to_owned(),
-						session_keys.to_owned()
-					))
+					.map(|AuthorityKeys { stash_key, session_keys }| {
+						(stash_key.to_owned(), stash_key.to_owned(), session_keys.to_owned())
+					})
 					.collect(),
 			},
 			grandpa: Default::default(),
 			beefy: Default::default(),
 			message_gadget: Default::default(),
-			ecdsa_relay_authority: EcdsaRelayAuthorityConfig {
-				authorities: vec![(
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					array_bytes::hex_into_unchecked(ECDSA_AUTHORITY),
-					1
-				)]
-			},
 			ecdsa_authority: EcdsaAuthorityConfig {
-				authorities: vec![
-					array_bytes::hex_into_unchecked(ECDSA_AUTHORITY),
-				]
+				authorities: vec![array_bytes::hex_into_unchecked(ECDSA_AUTHORITY)],
 			},
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
@@ -239,11 +209,7 @@ pub fn genesis_config() -> ChainSpec {
 			council: Default::default(),
 			technical_committee: Default::default(),
 			phragmen_election: PhragmenElectionConfig {
-				members: collective_members
-					.iter()
-					.cloned()
-					.map(|a| (a, A_FEW_COINS))
-					.collect(),
+				members: collective_members.iter().cloned().map(|a| (a, A_FEW_COINS)).collect(),
 			},
 			technical_membership: TechnicalMembershipConfig {
 				phantom: PhantomData::<TechnicalMembershipInstance>,
@@ -253,48 +219,6 @@ pub fn genesis_config() -> ChainSpec {
 			kton_treasury: Default::default(),
 			vesting: Default::default(),
 			sudo: SudoConfig { key: Some(root) },
-			ethereum_relay: EthereumRelayConfig {
-				genesis_header_parcel: r#"{
-					"header": {
-						"baseFeePerGas": "0xeb",
-						"difficulty": "0x4186f54e",
-						"extraData": "0xd883010a06846765746888676f312e31352e36856c696e7578",
-						"gasLimit": "0x7a1200",
-						"gasUsed": "0x5e949",
-						"hash": "0x9db735cdbe337477d38b70d96998decb9d8ea1d796cdc6c97546132978db668c",
-						"logsBloom": "0x00200000000000000000000080000000000000004000001000010000000000000000000000000000000000000000000000000000000000000000000008000000040000000020400000004008000020200000010000000000004000008000000000000400020000800100000000000800080000000000400000000010000000000000000000000000004000000080000000000081010000080000004000200000000080000020000000000000000000000000200000080000000000000000000000000006000000000000000000000000000000200000001000002000000020000000000000000000000a00000000200000002000000000400000000000000000",
-						"miner": "0xfbb61b8b98a59fbc4bd79c23212addbefaeb289f",
-						"mixHash": "0xbb166a439393a562d5c71973a7e3f1b87bc6bb65b1b2524e846b021c6c170a16",
-						"nonce": "0xee2e3a941040cee1",
-						"number": "0xa367a4",
-						"parentHash": "0xcaf94fe7cc38a012316dba0cc1296fa2ab3fb401aacef819c39aac934c29ef34",
-						"receiptsRoot": "0x27f5405108f65bd36455ddddf2ce32fe2b87851be97fce3e5eff48636ee52f1e",
-						"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-						"size": "0x794",
-						"stateRoot": "0xfcd5f2e0b1a728dbb2112c21c375cdfe425568493dde3bb71d036509c404a236",
-						"timestamp": "0x60fe2f75",
-						"totalDifficulty": "0x79b2e0d1c5829f",
-						"transactions": [],
-						"transactionsRoot": "0x2169e889c51cc5605d055a54a3fb095a90a33db18fbcf28e86073fd33288fbb4",
-						"uncles": []
-					},
-					"parent_mmr_root": "0x1183acf36ada5ca93e31e618e7632c3ed23eddf3cebf077eb868873d6212179a"
-				}"#.into(),
-				dags_merkle_roots_loader: DagsMerkleRootsLoaderR::from_file(
-					"bin/res/ethereum/dags-merkle-roots.json",
-					"DAG_MERKLE_ROOTS_PATH",
-				),
-				..Default::default()
-			},
-			ethereum_backing: EthereumBackingConfig {
-				token_redeem_address: array_bytes::hex_into_unchecked(TOKEN_REDEEM_ADDRESS),
-				deposit_redeem_address: array_bytes::hex_into_unchecked(DEPOSIT_REDEEM_ADDRESS),
-				set_authorities_address: array_bytes::hex_into_unchecked(SET_AUTHORITIES_ADDRESS),
-				ring_token_address: array_bytes::hex_into_unchecked(RING_TOKEN_ADDRESS),
-				kton_token_address: array_bytes::hex_into_unchecked(KTON_TOKEN_ADDRESS),
-				backed_ring: BUNCH_OF_COINS,
-				backed_kton: BUNCH_OF_COINS,
-			},
 			tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
@@ -380,25 +304,13 @@ pub fn development_config() -> ChainSpec {
 		};
 
 		GenesisConfig {
-			system: SystemConfig {
-				code: wasm_binary_unwrap().to_vec(),
-			},
-			babe: BabeConfig {
-				authorities: vec![],
-				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG)
-			},
+			system: SystemConfig { code: wasm_binary_unwrap().to_vec() },
+			babe: BabeConfig { authorities: vec![], epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG) },
 			balances: BalancesConfig {
-				balances: endowed_accounts
-					.clone()
-					.into_iter()
-					.map(|a| (a, MANY_COINS))
-					.collect()
+				balances: endowed_accounts.clone().into_iter().map(|a| (a, MANY_COINS)).collect(),
 			},
 			kton: KtonConfig {
-				balances: endowed_accounts
-					.into_iter()
-					.map(|a| (a, A_FEW_COINS))
-					.collect()
+				balances: endowed_accounts.into_iter().map(|a| (a, A_FEW_COINS)).collect(),
 			},
 			staking: StakingConfig {
 				minimum_validator_count: 1,
@@ -424,17 +336,8 @@ pub fn development_config() -> ChainSpec {
 			grandpa: Default::default(),
 			beefy: Default::default(),
 			message_gadget: Default::default(),
-			ecdsa_relay_authority: EcdsaRelayAuthorityConfig {
-				authorities: vec![(
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					array_bytes::hex_into_unchecked(ECDSA_AUTHORITY),
-					1
-				)]
-			},
 			ecdsa_authority: EcdsaAuthorityConfig {
-				authorities: vec![
-					array_bytes::hex_into_unchecked(ECDSA_AUTHORITY),
-				]
+				authorities: vec![array_bytes::hex_into_unchecked(ECDSA_AUTHORITY)],
 			},
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
@@ -442,11 +345,7 @@ pub fn development_config() -> ChainSpec {
 			council: Default::default(),
 			technical_committee: Default::default(),
 			phragmen_election: PhragmenElectionConfig {
-				members: collective_members
-					.iter()
-					.cloned()
-					.map(|a| (a, A_FEW_COINS))
-					.collect(),
+				members: collective_members.iter().cloned().map(|a| (a, A_FEW_COINS)).collect(),
 			},
 			technical_membership: TechnicalMembershipConfig {
 				phantom: PhantomData::<TechnicalMembershipInstance>,
@@ -456,48 +355,6 @@ pub fn development_config() -> ChainSpec {
 			kton_treasury: Default::default(),
 			vesting: Default::default(),
 			sudo: SudoConfig { key: Some(root) },
-			ethereum_relay: EthereumRelayConfig {
-				genesis_header_parcel: r#"{
-					"header": {
-						"baseFeePerGas": "0xeb",
-						"difficulty": "0x4186f54e",
-						"extraData": "0xd883010a06846765746888676f312e31352e36856c696e7578",
-						"gasLimit": "0x7a1200",
-						"gasUsed": "0x5e949",
-						"hash": "0x9db735cdbe337477d38b70d96998decb9d8ea1d796cdc6c97546132978db668c",
-						"logsBloom": "0x00200000000000000000000080000000000000004000001000010000000000000000000000000000000000000000000000000000000000000000000008000000040000000020400000004008000020200000010000000000004000008000000000000400020000800100000000000800080000000000400000000010000000000000000000000000004000000080000000000081010000080000004000200000000080000020000000000000000000000000200000080000000000000000000000000006000000000000000000000000000000200000001000002000000020000000000000000000000a00000000200000002000000000400000000000000000",
-						"miner": "0xfbb61b8b98a59fbc4bd79c23212addbefaeb289f",
-						"mixHash": "0xbb166a439393a562d5c71973a7e3f1b87bc6bb65b1b2524e846b021c6c170a16",
-						"nonce": "0xee2e3a941040cee1",
-						"number": "0xa367a4",
-						"parentHash": "0xcaf94fe7cc38a012316dba0cc1296fa2ab3fb401aacef819c39aac934c29ef34",
-						"receiptsRoot": "0x27f5405108f65bd36455ddddf2ce32fe2b87851be97fce3e5eff48636ee52f1e",
-						"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-						"size": "0x794",
-						"stateRoot": "0xfcd5f2e0b1a728dbb2112c21c375cdfe425568493dde3bb71d036509c404a236",
-						"timestamp": "0x60fe2f75",
-						"totalDifficulty": "0x79b2e0d1c5829f",
-						"transactions": [],
-						"transactionsRoot": "0x2169e889c51cc5605d055a54a3fb095a90a33db18fbcf28e86073fd33288fbb4",
-						"uncles": []
-					},
-					"parent_mmr_root": "0x1183acf36ada5ca93e31e618e7632c3ed23eddf3cebf077eb868873d6212179a"
-				}"#.into(),
-				dags_merkle_roots_loader: DagsMerkleRootsLoaderR::from_file(
-					"bin/res/ethereum/dags-merkle-roots.json",
-					"DAG_MERKLE_ROOTS_PATH",
-				),
-				..Default::default()
-			},
-			ethereum_backing: EthereumBackingConfig {
-				token_redeem_address: array_bytes::hex_into_unchecked(TOKEN_REDEEM_ADDRESS),
-				deposit_redeem_address: array_bytes::hex_into_unchecked(DEPOSIT_REDEEM_ADDRESS),
-				set_authorities_address: array_bytes::hex_into_unchecked(SET_AUTHORITIES_ADDRESS),
-				ring_token_address: array_bytes::hex_into_unchecked(RING_TOKEN_ADDRESS),
-				kton_token_address: array_bytes::hex_into_unchecked(KTON_TOKEN_ADDRESS),
-				backed_ring: BUNCH_OF_COINS,
-				backed_kton: BUNCH_OF_COINS,
-			},
 			tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,
@@ -581,25 +438,13 @@ pub fn local_testnet_config() -> ChainSpec {
 		};
 
 		GenesisConfig {
-			system: SystemConfig {
-				code: wasm_binary_unwrap().to_vec(),
-			},
-			babe: BabeConfig {
-				authorities: vec![],
-				epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG)
-			},
+			system: SystemConfig { code: wasm_binary_unwrap().to_vec() },
+			babe: BabeConfig { authorities: vec![], epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG) },
 			balances: BalancesConfig {
-				balances: endowed_accounts
-					.clone()
-					.into_iter()
-					.map(|a| (a, MANY_COINS))
-					.collect()
+				balances: endowed_accounts.clone().into_iter().map(|a| (a, MANY_COINS)).collect(),
 			},
 			kton: KtonConfig {
-				balances: endowed_accounts
-					.into_iter()
-					.map(|a| (a, A_FEW_COINS))
-					.collect()
+				balances: endowed_accounts.into_iter().map(|a| (a, A_FEW_COINS)).collect(),
 			},
 			staking: StakingConfig {
 				minimum_validator_count: 2,
@@ -625,17 +470,8 @@ pub fn local_testnet_config() -> ChainSpec {
 			grandpa: Default::default(),
 			beefy: Default::default(),
 			message_gadget: Default::default(),
-			ecdsa_relay_authority: EcdsaRelayAuthorityConfig {
-				authorities: vec![(
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					array_bytes::hex_into_unchecked(ECDSA_AUTHORITY),
-					1
-				)]
-			},
 			ecdsa_authority: EcdsaAuthorityConfig {
-				authorities: vec![
-					array_bytes::hex_into_unchecked(ECDSA_AUTHORITY),
-				]
+				authorities: vec![array_bytes::hex_into_unchecked(ECDSA_AUTHORITY)],
 			},
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
@@ -643,11 +479,7 @@ pub fn local_testnet_config() -> ChainSpec {
 			council: Default::default(),
 			technical_committee: Default::default(),
 			phragmen_election: PhragmenElectionConfig {
-				members: collective_members
-					.iter()
-					.cloned()
-					.map(|a| (a, A_FEW_COINS))
-					.collect(),
+				members: collective_members.iter().cloned().map(|a| (a, A_FEW_COINS)).collect(),
 			},
 			technical_membership: TechnicalMembershipConfig {
 				phantom: PhantomData::<TechnicalMembershipInstance>,
@@ -657,48 +489,6 @@ pub fn local_testnet_config() -> ChainSpec {
 			kton_treasury: Default::default(),
 			vesting: Default::default(),
 			sudo: SudoConfig { key: Some(root) },
-			ethereum_relay: EthereumRelayConfig {
-				genesis_header_parcel: r#"{
-					"header": {
-						"baseFeePerGas": "0xeb",
-						"difficulty": "0x4186f54e",
-						"extraData": "0xd883010a06846765746888676f312e31352e36856c696e7578",
-						"gasLimit": "0x7a1200",
-						"gasUsed": "0x5e949",
-						"hash": "0x9db735cdbe337477d38b70d96998decb9d8ea1d796cdc6c97546132978db668c",
-						"logsBloom": "0x00200000000000000000000080000000000000004000001000010000000000000000000000000000000000000000000000000000000000000000000008000000040000000020400000004008000020200000010000000000004000008000000000000400020000800100000000000800080000000000400000000010000000000000000000000000004000000080000000000081010000080000004000200000000080000020000000000000000000000000200000080000000000000000000000000006000000000000000000000000000000200000001000002000000020000000000000000000000a00000000200000002000000000400000000000000000",
-						"miner": "0xfbb61b8b98a59fbc4bd79c23212addbefaeb289f",
-						"mixHash": "0xbb166a439393a562d5c71973a7e3f1b87bc6bb65b1b2524e846b021c6c170a16",
-						"nonce": "0xee2e3a941040cee1",
-						"number": "0xa367a4",
-						"parentHash": "0xcaf94fe7cc38a012316dba0cc1296fa2ab3fb401aacef819c39aac934c29ef34",
-						"receiptsRoot": "0x27f5405108f65bd36455ddddf2ce32fe2b87851be97fce3e5eff48636ee52f1e",
-						"sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-						"size": "0x794",
-						"stateRoot": "0xfcd5f2e0b1a728dbb2112c21c375cdfe425568493dde3bb71d036509c404a236",
-						"timestamp": "0x60fe2f75",
-						"totalDifficulty": "0x79b2e0d1c5829f",
-						"transactions": [],
-						"transactionsRoot": "0x2169e889c51cc5605d055a54a3fb095a90a33db18fbcf28e86073fd33288fbb4",
-						"uncles": []
-					},
-					"parent_mmr_root": "0x1183acf36ada5ca93e31e618e7632c3ed23eddf3cebf077eb868873d6212179a"
-				}"#.into(),
-				dags_merkle_roots_loader: DagsMerkleRootsLoaderR::from_file(
-					"bin/res/ethereum/dags-merkle-roots.json",
-					"DAG_MERKLE_ROOTS_PATH",
-				),
-				..Default::default()
-			},
-			ethereum_backing: EthereumBackingConfig {
-				token_redeem_address: array_bytes::hex_into_unchecked(TOKEN_REDEEM_ADDRESS),
-				deposit_redeem_address: array_bytes::hex_into_unchecked(DEPOSIT_REDEEM_ADDRESS),
-				set_authorities_address: array_bytes::hex_into_unchecked(SET_AUTHORITIES_ADDRESS),
-				ring_token_address: array_bytes::hex_into_unchecked(RING_TOKEN_ADDRESS),
-				kton_token_address: array_bytes::hex_into_unchecked(KTON_TOKEN_ADDRESS),
-				backed_ring: BUNCH_OF_COINS,
-				backed_kton: BUNCH_OF_COINS,
-			},
 			tron_backing: TronBackingConfig {
 				backed_ring: BUNCH_OF_COINS,
 				backed_kton: BUNCH_OF_COINS,

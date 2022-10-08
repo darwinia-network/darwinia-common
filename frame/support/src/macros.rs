@@ -80,37 +80,3 @@ macro_rules! impl_account_data {
 		}
 	};
 }
-
-#[macro_export]
-macro_rules! impl_genesis {
-	(
-		$(#[$attr:meta])*
-		$(pub)? struct $sname:ident {
-			$($(pub)? $fname:ident: $ftype:ty),+
-		}
-	) => {
-		$(#[$attr])*
-		#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-		pub struct $sname {
-			$(pub $fname: $ftype),+
-		}
-
-		impl $sname {
-			pub fn from_file(path: &str, env_name: &str) -> Self {
-				if !::std::path::Path::new(path).is_file() && ::std::env::var(env_name).is_err() {
-					Default::default()
-				} else {
-					serde_json::from_reader(
-						::std::fs::File::open(std::env::var(env_name).unwrap_or(path.to_owned()))
-							.unwrap(),
-					)
-					.unwrap()
-				}
-			}
-
-			pub fn from_str(data: &str) -> Self {
-				serde_json::from_str(data).unwrap()
-			}
-		}
-	};
-}

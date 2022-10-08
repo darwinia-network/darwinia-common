@@ -10,10 +10,7 @@ members = [
 	"node/service",
 	"frame/balances",
 	"frame/bridge/ecdsa-authority",
-	"frame/bridge/ethereum",
 	"frame/bridge/message-gadget",
-	"frame/bridge/relayer-game",
-	"frame/bridge/relay-authority",
 	"frame/dvm/ethereum",
 	"frame/dvm/evm",
 	"frame/dvm/evm/precompiles/bls12381",
@@ -25,7 +22,6 @@ members = [
 	"frame/staking",
 	"frame/support",
 	"frame/transaction-pause",
-	"frame/wormhole/backing/ethereum",
 	"frame/wormhole/backing/parachain",
 	"frame/wormhole/backing/tron",
 	"primitives/ethereum",
@@ -33,7 +29,6 @@ members = [
 	"primitives/evm-trace/tracer",
 	"primitives/merkle-patricia-trie",
 	"primitives/message",
-	"primitives/relayer-game",
 ]
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates
