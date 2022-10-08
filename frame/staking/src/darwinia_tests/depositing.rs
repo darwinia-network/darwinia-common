@@ -3,7 +3,7 @@ use frame_support::{assert_ok, traits::Currency, WeakBoundedVec};
 // --- darwinia-network ---
 use crate::{mock::*, Event, *};
 use darwinia_balances::{BalanceLock, Reasons};
-use darwinia_support::{balance::*, traits::OnDepositRedeem};
+use darwinia_support::balance::*;
 
 #[test]
 fn deposit_zero_should_do_nothing() {
@@ -200,101 +200,5 @@ fn claim_deposits_with_punish_should_work() {
 
 		assert_eq!(Staking::ledger(controller).unwrap(), ledger);
 		assert_eq!(Kton::free_balance(&stash), free_kton - slashed * 3);
-	});
-}
-
-#[test]
-fn on_deposit_redeem_should_work() {
-	ExtBuilder::default().build().execute_with(|| {
-		let deposit_amount = 1;
-		let deposit_start_at = 1;
-		let deposit_months = 3;
-		let backing_account = 1;
-		let deposit_item = TimeDepositItem {
-			value: deposit_amount,
-			start_time: deposit_start_at * 1000,
-			expire_time: deposit_start_at * 1000 + deposit_months as TsInMs * MONTH_IN_MILLISECONDS,
-		};
-
-		// Not bond yet
-		{
-			let unbonded_account = 123;
-			let ring_pool = Staking::ring_pool();
-
-			assert_eq!(Ring::free_balance(unbonded_account), 0);
-			assert!(Ring::locks(unbonded_account).is_empty());
-			assert!(Staking::bonded(unbonded_account).is_none());
-			assert_eq!(Staking::payee(unbonded_account), RewardDestination::default(),);
-			assert!(Staking::ledger(unbonded_account).is_none());
-			assert!(System::account(unbonded_account).providers == 0);
-
-			assert_ok!(Staking::on_deposit_redeem(
-				&backing_account,
-				&unbonded_account,
-				deposit_amount,
-				deposit_start_at,
-				deposit_months,
-			));
-
-			assert_eq!(Ring::free_balance(unbonded_account), deposit_amount);
-			assert_eq!(
-				Ring::locks(unbonded_account),
-				vec![BalanceLock { id: STAKING_ID, amount: deposit_amount, reasons: Reasons::All }]
-			);
-			assert_eq!(Staking::bonded(unbonded_account).unwrap(), unbonded_account);
-			assert_eq!(Staking::payee(unbonded_account), RewardDestination::Stash);
-			assert_eq!(
-				Staking::ledger(unbonded_account).unwrap(),
-				StakingLedger {
-					stash: unbonded_account,
-					active: deposit_amount,
-					active_deposit_ring: deposit_amount,
-					deposit_items: vec![deposit_item.clone()],
-					ring_staking_lock: StakingLock {
-						staking_amount: 0,
-						unbondings: WeakBoundedVec::force_from(vec![], None)
-					},
-					..Default::default()
-				}
-			);
-			assert_eq!(Staking::ring_pool(), ring_pool + deposit_amount);
-			assert!(System::account(unbonded_account).providers != 0);
-		}
-
-		// Already bonded
-		{
-			gen_paired_account!(bonded_account(456), bonded_account(456), 0);
-
-			let ring_pool = Staking::ring_pool();
-			let mut ledger = Staking::ledger(bonded_account).unwrap();
-
-			assert_eq!(Ring::free_balance(bonded_account), 101 * COIN);
-			assert_eq!(Ring::locks(bonded_account).len(), 1);
-			assert_eq!(Staking::bonded(bonded_account).unwrap(), bonded_account);
-
-			assert_ok!(Staking::on_deposit_redeem(
-				&backing_account,
-				&bonded_account,
-				deposit_amount,
-				deposit_start_at,
-				deposit_months,
-			));
-
-			ledger.active += deposit_amount;
-			ledger.active_deposit_ring += deposit_amount;
-			ledger.deposit_items.push(deposit_item);
-
-			assert_eq!(Ring::free_balance(bonded_account), 101 * COIN + deposit_amount);
-			assert_eq!(
-				Ring::locks(bonded_account),
-				vec![BalanceLock {
-					id: STAKING_ID,
-					amount: 50 * COIN + deposit_amount,
-					reasons: Reasons::All,
-				}]
-			);
-			assert_eq!(Staking::ledger(bonded_account).unwrap(), ledger);
-			assert_eq!(Staking::ring_pool(), ring_pool + deposit_amount);
-		}
 	});
 }

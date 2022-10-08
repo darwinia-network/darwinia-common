@@ -1426,32 +1426,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-bridge-ethereum"
-version = "2.9.5"
-dependencies = [
- "array-bytes",
- "blake2-rfc",
- "ckb-merkle-mountain-range",
- "darwinia-balances",
- "darwinia-relayer-game",
- "darwinia-support",
- "dp-relayer-game",
- "ethereum-primitives",
- "ethereum-types",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "rlp",
- "scale-info",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-ecdsa-authority"
 version = "2.9.5"
 dependencies = [
@@ -1685,46 +1659,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darwinia-relay-authority"
-version = "2.9.5"
-dependencies = [
- "array-bytes",
- "darwinia-balances",
- "darwinia-header-mmr",
- "darwinia-support",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "sp-tracing",
-]
-
-[[package]]
-name = "darwinia-relayer-game"
-version = "2.9.5"
-dependencies = [
- "darwinia-balances",
- "darwinia-support",
- "dp-relayer-game",
- "env_logger",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "rand 0.8.5",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "darwinia-staking"
 version = "2.9.5"
 dependencies = [
@@ -1934,17 +1868,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dp-relayer-game"
-version = "2.9.5"
-dependencies = [
- "frame-support",
- "parity-scale-codec",
- "scale-info",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "drml"
 version = "2.9.5"
 dependencies = [
@@ -1993,7 +1916,6 @@ dependencies = [
  "array-bytes",
  "async-trait",
  "beefy-primitives",
- "darwinia-bridge-ethereum",
  "darwinia-ethereum",
  "dp-evm-trace-ext",
  "drml-primitives",
@@ -6127,7 +6049,6 @@ dependencies = [
  "bp-runtime",
  "bridge-runtime-common",
  "darwinia-balances",
- "darwinia-bridge-ethereum",
  "darwinia-ecdsa-authority",
  "darwinia-ethereum",
  "darwinia-evm",
@@ -6136,12 +6057,9 @@ dependencies = [
  "darwinia-evm-precompile-state-storage",
  "darwinia-header-mmr",
  "darwinia-message-gadget",
- "darwinia-relay-authority",
- "darwinia-relayer-game",
  "darwinia-staking",
  "darwinia-support",
  "dp-evm-tracer",
- "dp-relayer-game",
  "drml-common-runtime",
  "drml-primitives",
  "ethereum-primitives",
@@ -6218,7 +6136,6 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder",
- "to-ethereum-backing",
  "to-parachain-backing",
  "to-tron-backing",
 ]
@@ -9900,37 +9817,6 @@ name = "tinyvec_macros"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
-
-[[package]]
-name = "to-ethereum-backing"
-version = "2.9.5"
-dependencies = [
- "array-bytes",
- "darwinia-balances",
- "darwinia-bridge-ethereum",
- "darwinia-relay-authority",
- "darwinia-relayer-game",
- "darwinia-staking",
- "darwinia-support",
- "dp-relayer-game",
- "ethabi",
- "ethereum-primitives",
- "frame-election-provider-support",
- "frame-support",
- "frame-system",
- "pallet-session",
- "pallet-timestamp",
- "parity-scale-codec",
- "rlp",
- "scale-info",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-staking",
- "sp-std",
-]
 
 [[package]]
 name = "to-parachain-backing"
