@@ -1,4 +1,7 @@
-pub use pallet_bridge_grandpa::{Instance1 as WithPangoroGrandpa, Instance2 as WithRococoGrandpa};
+pub use pallet_bridge_grandpa::{
+	Instance1 as WithPangoroGrandpa, Instance2 as WithRococoGrandpa,
+	Instance3 as WithMoonbaseRelayGrandpa,
+};
 
 // --- paritytech ---
 use pallet_bridge_grandpa::Config;
@@ -30,6 +33,12 @@ impl Config<WithPangoroGrandpa> for Runtime {
 	type WeightInfo = PangoroGrandpaWeightInfo<Self>;
 }
 impl Config<WithRococoGrandpa> for Runtime {
+	type BridgedChain = bp_rococo::Rococo;
+	type HeadersToKeep = RococoHeadersToKeep;
+	type MaxRequests = MaxRequests;
+	type WeightInfo = RococoGrandpaWeightInfo<Self>;
+}
+impl Config<WithMoonbaseRelayGrandpa> for Runtime {
 	type BridgedChain = bp_rococo::Rococo;
 	type HeadersToKeep = RococoHeadersToKeep;
 	type MaxRequests = MaxRequests;
