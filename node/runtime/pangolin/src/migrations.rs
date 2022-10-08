@@ -33,6 +33,65 @@ fn migrate() -> Weight {
 		EVM::create_account(&precompile, vec![0x60_u8, 0x00, 0x60, 0x00, 0xFD]);
 	}
 
+	let storages: &[(&[u8], &[&[u8]])] = &[
+		(
+			b"EcdsaRelayAuthority",
+			&[
+				b"Candidates",
+				b"Authorities",
+				b"NextAuthorities",
+				b"NextTerm",
+				b"AuthoritiesToSign",
+				b"MmrRootsToSignKeys",
+				b"MmrRootsToSign",
+				b"SubmitDuration",
+			],
+		),
+		(
+			// FrameV1 name.
+			b"DarwiniaEthereumRelay",
+			&[
+				b"ConfirmedHeaderParcels",
+				b"ConfirmedBlockNumbers",
+				b"BestConfirmedBlockNumber",
+				b"ConfirmedDepth",
+				b"DagsMerkleRoots",
+				b"ReceiptVerifyFee",
+				b"PendingRelayHeaderParcels",
+			],
+		),
+		(
+			// FrameV1 name.
+			b"Instance1DarwiniaRelayerGame",
+			&[
+				b"RelayHeaderParcelToResolve",
+				b"Affirmations",
+				b"BestConfirmedHeaderId",
+				b"RoundCounts",
+				b"AffirmTime",
+				b"GamesToUpdate",
+				b"Stakes",
+				b"GameSamplePoints",
+			],
+		),
+		(
+			b"EthereumBacking",
+			&[
+				b"TokenRedeemAddress",
+				b"DepositRedeemAddress",
+				b"SetAuthoritiesAddress",
+				b"RingTokenAddress",
+				b"KtonTokenAddress",
+				b"RedeemStatus",
+				b"LockAssetEvents",
+			],
+		),
+	];
+	storages.iter().for_each(|(module, items)| {
+		items.iter().for_each(|item| migration::remove_storage_prefix(module, item, &[]))
+	});
+
+
 	// 0
 	RuntimeBlockWeights::get().max_block
 }
