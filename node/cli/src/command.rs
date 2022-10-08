@@ -92,6 +92,7 @@ impl SubstrateCli for Cli {
 			"pangoro" => Box::new(pangoro_chain_spec::config()?),
 			"pangoro-genesis" => Box::new(pangoro_chain_spec::genesis_config()),
 			"pangoro-dev" => Box::new(pangoro_chain_spec::development_config()),
+			"pangoro-local" => Box::new(pangoro_chain_spec::local_testnet_config()),
 			#[cfg(feature = "template")]
 			"template" | "template-dev" => Box::new(template_chain_spec::development_config()),
 			_ => {
