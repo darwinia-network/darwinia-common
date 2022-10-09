@@ -509,20 +509,7 @@ pub fn local_testnet_config() -> ChainSpec {
 		"pangolin_dev",
 		ChainType::Development,
 		genesis,
-		vec![
-			"/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp"
-				.parse()
-				.unwrap(),
-			"/ip4/127.0.0.1/tcp/30334/p2p/12D3KooWHdiAxVd8uMQR1hGWXccidmfCwLqcMpGwR6QcTP6QRMuD"
-				.parse()
-				.unwrap(),
-			"/ip4/127.0.0.1/tcp/30335/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9x"
-				.parse()
-				.unwrap(),
-			"/ip4/127.0.0.1/tcp/30336/p2p/12D3KooWSsChzF81YDUKpe9Uk5AHV5oqAaXAcWNSPYgoLauUk4st"
-				.parse()
-				.unwrap(),
-		],
+		vec![],
 		None,
 		Some(DEFAULT_PROTOCOL_ID),
 		None,

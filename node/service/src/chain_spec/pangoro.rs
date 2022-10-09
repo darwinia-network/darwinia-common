@@ -340,3 +340,115 @@ pub fn development_config() -> ChainSpec {
 		Default::default(),
 	)
 }
+
+pub fn local_testnet_config() -> ChainSpec {
+	fn genesis() -> GenesisConfig {
+		let root = get_account_id_from_seed::<sr25519::Public>("Alice");
+		let initial_authorities = vec![
+			get_authority_keys_from_seed("Alice"),
+			get_authority_keys_from_seed("Bob"),
+			get_authority_keys_from_seed("Charlie"),
+			get_authority_keys_from_seed("Dave"),
+		];
+		let endowed_accounts = vec![
+			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Bob"),
+			get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Charlie"),
+			get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Dave"),
+			get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+		]
+		.into_iter()
+		.chain(TEAM_MEMBERS.iter().map(|m| array_bytes::hex_into_unchecked(m)))
+		.collect::<Vec<_>>();
+		let evm_accounts = {
+			let mut map = BTreeMap::new();
+
+			for account in EVM_ACCOUNTS.iter() {
+				map.insert(
+					array_bytes::hex_into_unchecked(account),
+					GenesisAccount {
+						balance: (123_456_789_000_000_000_000_090 as Balance).into(),
+						code: Default::default(),
+						nonce: Default::default(),
+						storage: Default::default(),
+					},
+				);
+			}
+
+			for precompile in PangoroPrecompiles::<Runtime>::used_addresses() {
+				map.insert(
+					precompile,
+					GenesisAccount {
+						nonce: Default::default(),
+						balance: Default::default(),
+						storage: Default::default(),
+						code: REVERT_BYTECODE.to_vec(),
+					},
+				);
+			}
+
+			map
+		};
+
+		GenesisConfig {
+			system: SystemConfig { code: wasm_binary_unwrap().to_vec() },
+			babe: BabeConfig { authorities: vec![], epoch_config: Some(BABE_GENESIS_EPOCH_CONFIG) },
+			balances: BalancesConfig {
+				balances: endowed_accounts.clone().into_iter().map(|a| (a, MANY_COINS)).collect(),
+			},
+			kton: KtonConfig {
+				balances: endowed_accounts.into_iter().map(|a| (a, A_FEW_COINS)).collect(),
+			},
+			staking: StakingConfig {
+				minimum_validator_count: 2,
+				validator_count: 4,
+				stakers: initial_authorities
+					.iter()
+					.cloned()
+					.map(|x| (x.0, x.1, A_FEW_COINS, StakerStatus::Validator))
+					.collect(),
+				invulnerables: initial_authorities.iter().cloned().map(|x| x.0).collect(),
+				force_era: Forcing::ForceNew,
+				slash_reward_fraction: Perbill::from_percent(10),
+				payout_fraction: Perbill::from_percent(50),
+				..Default::default()
+			},
+			session: SessionConfig {
+				keys: initial_authorities
+					.iter()
+					.cloned()
+					.map(|x| (x.0.clone(), x.0, session_keys(x.2, x.3, x.4, x.5, x.6)))
+					.collect(),
+			},
+			grandpa: Default::default(),
+			beefy: Default::default(),
+			message_gadget: Default::default(),
+			ecdsa_authority: EcdsaAuthorityConfig {
+				authorities: vec![array_bytes::hex_into_unchecked(ECDSA_AUTHORITY)],
+			},
+			im_online: Default::default(),
+			authority_discovery: Default::default(),
+			treasury: Default::default(),
+			sudo: SudoConfig { key: Some(root) },
+			evm: EVMConfig { accounts: evm_accounts },
+			ethereum: Default::default(),
+			base_fee: Default::default(),
+		}
+	}
+
+	ChainSpec::from_genesis(
+		"Pangoro Local Testnet",
+		"pangoro_dev",
+		ChainType::Development,
+		genesis,
+		vec![],
+		None,
+		Some(DEFAULT_PROTOCOL_ID),
+		None,
+		Some(properties()),
+		Default::default(),
+	)
+}
