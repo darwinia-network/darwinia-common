@@ -27,12 +27,6 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 }
 
 fn migrate() -> Weight {
-	Scheduler::migrate_v2_to_v3();
-
-	for precompile in PangoroPrecompiles::<Runtime>::used_addresses() {
-		EVM::create_account(&precompile, vec![0x60_u8, 0x00, 0x60, 0x00, 0xFD]);
-	}
-
-	// 0
-	RuntimeBlockWeights::get().max_block
+	0
+	// RuntimeBlockWeights::get().max_block
 }
