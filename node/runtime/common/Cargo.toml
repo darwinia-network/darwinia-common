@@ -6,7 +6,7 @@ homepage    = "https://darwinia.network"
 license     = "GPL-3.0"
 name        = "drml-common-runtime"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.10.0"
+version     = "2.10.1"
 
 [dependencies]
 # crates.io
