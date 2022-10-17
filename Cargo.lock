@@ -116,9 +116,6 @@ name = "array-bytes"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "30725d201df311b571b927e5a175a394e3763e11451c2e6415a84dc6e891fb6d"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "arrayref"
@@ -1695,7 +1692,6 @@ dependencies = [
  "bp-messages",
  "bp-runtime",
  "ethereum",
- "ethereum-primitives",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -2179,17 +2175,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ethash"
-version = "0.4.2"
-source = "git+https://github.com/darwinia-network/rust-ethash?tag=v0.4.2#ee07a503226adfb889e2ead5ac38656a7698c728"
-dependencies = [
- "byteorder",
- "ethereum-types",
- "rlp",
- "sha3 0.9.1",
-]
-
-[[package]]
 name = "ethbloom"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2220,28 +2205,6 @@ dependencies = [
  "scale-info",
  "serde",
  "sha3 0.9.1",
- "triehash",
-]
-
-[[package]]
-name = "ethereum-primitives"
-version = "2.10.1"
-dependencies = [
- "array-bytes",
- "ethash",
- "ethbloom",
- "ethereum-types",
- "keccak-hash",
- "keccak-hasher",
- "merkle-patricia-trie",
- "parity-scale-codec",
- "rlp",
- "rlp-derive",
- "scale-info",
- "serde",
- "serde_json",
- "sp-debug-derive 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "subhasher",
  "triehash",
 ]
 
@@ -2616,7 +2579,7 @@ dependencies = [
  "parity-util-mem",
  "scale-info",
  "serde",
- "sp-debug-derive 4.0.0 (git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.5)",
+ "sp-debug-derive",
  "sp-io",
  "sp-runtime",
 ]
@@ -3772,17 +3735,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce2bd4c29270e724d3eaadf7bdc8700af4221fc0ed771b855eadcd1b98d52851"
 dependencies = [
  "primitive-types",
- "tiny-keccak",
-]
-
-[[package]]
-name = "keccak-hasher"
-version = "0.15.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "711adba9940a039f4374fc5724c0a5eaca84a2d558cce62256bfe26f0dbef05e"
-dependencies = [
- "hash-db",
- "hash256-std-hasher",
  "tiny-keccak",
 ]
 
@@ -6062,7 +6014,6 @@ dependencies = [
  "dp-evm-tracer",
  "drml-common-runtime",
  "drml-primitives",
- "ethereum-primitives",
  "fp-evm",
  "fp-rpc",
  "fp-self-contained",
@@ -8701,7 +8652,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-debug-derive 4.0.0 (git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.5)",
+ "sp-debug-derive",
  "sp-std",
  "static_assertions",
 ]
@@ -8878,7 +8829,7 @@ dependencies = [
  "serde",
  "sha2 0.10.5",
  "sp-core-hashing",
- "sp-debug-derive 4.0.0 (git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.5)",
+ "sp-debug-derive",
  "sp-externalities",
  "sp-runtime-interface",
  "sp-std",
@@ -8924,17 +8875,6 @@ source = "git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.1
 dependencies = [
  "kvdb",
  "parking_lot 0.11.2",
-]
-
-[[package]]
-name = "sp-debug-derive"
-version = "4.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d676664972e22a0796176e81e7bec41df461d1edf52090955cdab55f2c956ff2"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -9228,7 +9168,7 @@ dependencies = [
  "parity-scale-codec",
  "ref-cast",
  "serde",
- "sp-debug-derive 4.0.0 (git+https://github.com/darwinia-network/substrate?branch=darwinia-v0.12.5)",
+ "sp-debug-derive",
  "sp-std",
 ]
 
@@ -9462,19 +9402,6 @@ dependencies = [
  "quote",
  "rustversion",
  "syn",
-]
-
-[[package]]
-name = "subhasher"
-version = "0.1.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1816f6fc9e7aaab0531fd5a876a1ae96228369b692439478f6ff97913da7b391"
-dependencies = [
- "blake2-rfc",
- "byteorder",
- "sha2 0.9.9",
- "tiny-keccak",
- "twox-hash",
 ]
 
 [[package]]

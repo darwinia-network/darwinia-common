@@ -19,10 +19,9 @@
 // --- crates.io ---
 use ethereum::TransactionV2 as Transaction;
 use sha3::{Digest, Keccak256};
-// --- darwinia-network ---
-use ethereum_primitives::{H160, H256, U256};
 // --- paritytech ---
 use frame_support::PalletId;
+use sp_core::{H160, H256, U256};
 use sp_runtime::{traits::AccountIdConversion, AccountId32};
 use sp_std::marker::PhantomData;
 

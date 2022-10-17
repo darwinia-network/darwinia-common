@@ -32,7 +32,6 @@ darwinia-support                      = { default-features = false, path = "../.
 dp-evm-tracer                         = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
 drml-common-runtime                   = { default-features = false, path = "../common" }
 drml-primitives                       = { default-features = false, path = "../../primitives" }
-ethereum-primitives                   = { default-features = false, path = "../../../primitives/ethereum" }
 module-transaction-pause              = { default-features = false, path = "../../../frame/transaction-pause" }
 to-parachain-backing                  = { default-features = false, path = "../../../frame/wormhole/backing/parachain" }
 to-tron-backing                       = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
@@ -147,7 +146,6 @@ std = [
 	"dp-evm-tracer/std",
 	"drml-primitives/std",
 	"drml-common-runtime/std",
-	"ethereum-primitives/std",
 	"module-transaction-pause/std",
 	"to-tron-backing/std",
 	"to-parachain-backing/std",
