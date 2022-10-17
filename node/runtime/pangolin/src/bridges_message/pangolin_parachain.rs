@@ -183,7 +183,7 @@ impl TargetHeaderChain<ToPangolinParachainMessagePayload, <Self as ChainWithMess
 			WithPangolinParachainMessageBridge,
 			bp_pangolin_parachain::Header,
 			Runtime,
-			WithRococoParachainsInstance,
+			WithRococoParachainInstance,
 		>(ParaId(PANGOLIN_PARACHAIN_ID), proof)
 	}
 }
@@ -199,7 +199,7 @@ impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for PangolinParacha
 			WithPangolinParachainMessageBridge,
 			bp_pangolin_parachain::Header,
 			Runtime,
-			WithRococoParachainsInstance,
+			WithRococoParachainInstance,
 		>(ParaId(PANGOLIN_PARACHAIN_ID), proof, messages_count)
 	}
 }

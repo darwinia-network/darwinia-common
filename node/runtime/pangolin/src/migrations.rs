@@ -27,6 +27,9 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 }
 
 fn migrate() -> Weight {
-	0
-	// RuntimeBlockWeights::get().max_block
+	migration::move_pallet(b"BridgeRococoParachains", b"BridgeRococoParachain");
+	migration::move_pallet(b"BridgeMoonbaseRelayParachains", b"BridgeMoonbaseRelayParachain");
+
+	// 0
+	RuntimeBlockWeights::get().max_block
 }

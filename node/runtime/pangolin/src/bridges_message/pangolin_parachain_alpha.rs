@@ -186,7 +186,7 @@ impl
 			WithPangolinParachainAlphaMessageBridge,
 			bp_pangolin_parachain::Header,
 			Runtime,
-			WithMoonbaseRelayParachainsInstance,
+			WithMoonbaseRelayParachainInstance,
 		>(ParaId(PANGOLIN_PARACHAIN_ALPHA_ID), proof)
 	}
 }
@@ -202,7 +202,7 @@ impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for PangolinParacha
 			WithPangolinParachainAlphaMessageBridge,
 			bp_pangolin_parachain::Header,
 			Runtime,
-			WithMoonbaseRelayParachainsInstance,
+			WithMoonbaseRelayParachainInstance,
 		>(ParaId(PANGOLIN_PARACHAIN_ALPHA_ID), proof, messages_count)
 	}
 }
