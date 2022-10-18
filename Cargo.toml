@@ -24,7 +24,6 @@ members = [
 	"frame/transaction-pause",
 	"frame/wormhole/backing/parachain",
 	"frame/wormhole/backing/tron",
-	"primitives/ethereum",
 	"primitives/evm-trace/ext",
 	"primitives/evm-trace/tracer",
 	"primitives/merkle-patricia-trie",

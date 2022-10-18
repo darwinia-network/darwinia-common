@@ -19,10 +19,9 @@
 // --- crates.io ---
 use ethereum::TransactionV2 as Transaction;
 use sha3::{Digest, Keccak256};
-// --- darwinia-network ---
-use ethereum_primitives::{H160, H256, U256};
 // --- paritytech ---
 use frame_support::PalletId;
+use sp_core::{H160, H256, U256};
 use sp_runtime::{traits::AccountIdConversion, AccountId32};
 use sp_std::marker::PhantomData;
 
@@ -139,7 +138,7 @@ pub fn decimal_convert(main_balance: u128, remaining_balance: Option<u128>) -> U
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use ethereum_primitives::H160;
+	use sp_core::H160;
 	use std::str::FromStr;
 
 	#[test]
