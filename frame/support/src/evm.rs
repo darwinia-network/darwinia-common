@@ -138,7 +138,7 @@ pub fn decimal_convert(main_balance: u128, remaining_balance: Option<u128>) -> U
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use ethereum_primitives::H160;
+	use sp_core::H160;
 	use std::str::FromStr;
 
 	#[test]
