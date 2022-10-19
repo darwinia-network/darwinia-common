@@ -1389,7 +1389,7 @@ pub mod pallet {
 				},
 			}
 
-			Self::update_ledger(&controller, &ledger);
+			Self::update_ledger(&controller, &mut ledger);
 			Self::update_staking_pool(
 				ledger.active,
 				origin_active,
@@ -1458,7 +1458,7 @@ pub mod pallet {
 				None
 			} else {
 				// This was the consequence of a partial unbond. just update the ledger and move on.
-				Self::update_ledger(&controller, &ledger);
+				Self::update_ledger(&controller, &mut ledger);
 
 				// This is only an update, so we use less overall weight.
 				Some(T::WeightInfo::withdraw_unbonded_update(num_slashing_spans))
@@ -2033,10 +2033,9 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let controller = ensure_signed(origin)?;
 			let mut ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
-			let StakingLedger { active, active_kton, ring_staking_lock, kton_staking_lock, .. } =
-				&mut ledger;
-			let origin_active = active.clone();
-			let origin_active_kton = active_kton.clone();
+			let StakingLedger { ring_staking_lock, kton_staking_lock, .. } = &ledger;
+			let origin_active = ledger.active.clone();
+			let origin_active_kton = ledger.active_kton.clone();
 
 			ensure!(
 				!ring_staking_lock.unbondings.is_empty()
@@ -2048,23 +2047,15 @@ pub mod pallet {
 				+ kton_staking_lock.unbondings.len() as u32;
 			let (rebonded_ring, rebonded_kton) =
 				ledger.rebond(plan_to_rebond_ring, plan_to_rebond_kton);
-			let StakingLedger {
-				stash,
-				active,
-				active_kton,
-				ring_staking_lock,
-				kton_staking_lock,
-				..
-			} = &ledger;
 
 			// Last check: the new active amount of ledger must be more than ED.
 			ensure!(
-				*active >= T::RingCurrency::minimum_balance()
-					|| *active_kton >= T::KtonCurrency::minimum_balance(),
+				ledger.active >= T::RingCurrency::minimum_balance()
+					|| ledger.active_kton >= T::KtonCurrency::minimum_balance(),
 				<Error<T>>::InsufficientBond
 			);
 
-			Self::update_ledger(&controller, &ledger);
+			Self::update_ledger(&controller, &mut ledger);
 			Self::update_staking_pool(
 				ledger.active,
 				origin_active,
@@ -2072,6 +2063,7 @@ pub mod pallet {
 				origin_active_kton,
 			);
 
+			let StakingLedger { stash, ring_staking_lock, kton_staking_lock, .. } = &ledger;
 			let ring_rebonded = !rebonded_ring.is_zero();
 			let kton_rebonded = !rebonded_kton.is_zero();
 
