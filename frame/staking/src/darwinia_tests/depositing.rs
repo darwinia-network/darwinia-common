@@ -1,8 +1,7 @@
 // --- paritytech ---
-use frame_support::{assert_ok, traits::Currency, WeakBoundedVec};
+use frame_support::{assert_ok, traits::Currency};
 // --- darwinia-network ---
 use crate::{mock::*, Event, *};
-use darwinia_balances::{BalanceLock, Reasons};
 use darwinia_support::balance::*;
 
 #[test]
