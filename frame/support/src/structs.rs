@@ -47,7 +47,6 @@ where
 	}
 
 	#[inline]
-	#[deprecated = "If you know what you are doing now."]
 	pub fn total_unbond(&self) -> Balance {
 		self.unbondings
 			.iter()
