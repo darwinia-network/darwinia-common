@@ -65,7 +65,7 @@ impl<T: Config> Pallet<T> {
 			deposit_items.push(TimeDepositItem { value, start_time, expire_time });
 		}
 
-		Self::update_ledger(&controller, &ledger);
+		Self::update_ledger(&controller, &mut ledger);
 		Self::update_staking_pool(ledger.active, origin_active, Zero::zero(), Zero::zero());
 
 		Ok((start_time, expire_time))
@@ -89,7 +89,7 @@ impl<T: Config> Pallet<T> {
 			<Error<T>>::InsufficientBond
 		);
 
-		Self::update_ledger(&controller, &ledger);
+		Self::update_ledger(&controller, &mut ledger);
 		Self::update_staking_pool(
 			Zero::zero(),
 			Zero::zero(),
@@ -308,13 +308,13 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Update the ledger for a controller.
-	///
-	/// BE CAREFUL:
-	/// 	This will also update the stash lock.
-	/// 	DO NOT modify the locks' staking amount outside this function.
-	pub fn update_ledger(controller: &AccountId<T>, ledger: &StakingLedgerT<T>) {
-		fn update_lock<A, B, C, BN>(stash: &A, active: B, staking_lock: &StakingLock<B, BN>, at: BN)
-		where
+	pub fn update_ledger(controller: &AccountId<T>, ledger: &mut StakingLedgerT<T>) {
+		fn update_lock<A, B, C, BN>(
+			stash: &A,
+			active: B,
+			staking_lock: &mut StakingLock<B, BN>,
+			at: BN,
+		) where
 			B: Copy + AtLeast32BitUnsigned + Zero,
 			C: LockableCurrency<A, Balance = B>,
 			BN: Copy + PartialOrd,
@@ -322,10 +322,12 @@ impl<T: Config> Pallet<T> {
 			if active.is_zero() && staking_lock.unbondings.is_empty() {
 				C::remove_lock(STAKING_ID, stash);
 			} else {
+				staking_lock.refresh(at);
+
 				C::set_lock(
 					STAKING_ID,
 					stash,
-					active.saturating_add(staking_lock.total_unbond_at(at)),
+					active.saturating_add(staking_lock.total_unbond()),
 					WithdrawReasons::all(),
 				);
 			}
@@ -336,8 +338,8 @@ impl<T: Config> Pallet<T> {
 		} = ledger;
 		let now = <frame_system::Pallet<T>>::block_number();
 
-		update_lock::<_, _, T::RingCurrency, _>(&stash, *active, ring_staking_lock, now);
-		update_lock::<_, _, T::KtonCurrency, _>(&stash, *active_kton, kton_staking_lock, now);
+		update_lock::<_, _, T::RingCurrency, _>(stash, *active, ring_staking_lock, now);
+		update_lock::<_, _, T::KtonCurrency, _>(stash, *active_kton, kton_staking_lock, now);
 
 		<Ledger<T>>::insert(controller, ledger);
 	}
@@ -400,7 +402,7 @@ impl<T: Config> Pallet<T> {
 						let origin_active = l.active.clone();
 						l.active += amount;
 
-						Self::update_ledger(&c, &l);
+						Self::update_ledger(&c, &mut l);
 						Self::update_staking_pool(
 							l.active,
 							origin_active,

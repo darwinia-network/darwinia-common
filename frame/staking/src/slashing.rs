@@ -741,7 +741,7 @@ pub fn do_slash<T: Config>(
 	}
 
 	if slashed {
-		<Pallet<T>>::update_ledger(&controller, &ledger);
+		<Pallet<T>>::update_ledger(&controller, &mut ledger);
 		<Pallet<T>>::update_staking_pool(
 			ledger.active,
 			origin_active,
