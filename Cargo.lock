@@ -621,7 +621,6 @@ dependencies = [
 [[package]]
 name = "bp-header-chain"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
 dependencies = [
  "bp-runtime",
  "finality-grandpa",
@@ -638,7 +637,6 @@ dependencies = [
 [[package]]
 name = "bp-message-dispatch"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
 dependencies = [
  "bp-runtime",
  "frame-support",
@@ -651,7 +649,6 @@ dependencies = [
 [[package]]
 name = "bp-messages"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
 dependencies = [
  "bitvec",
  "bp-runtime",
@@ -711,6 +708,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "bp-parachains"
+version = "0.1.0"
+dependencies = [
+ "bp-polkadot-core 0.1.0",
+ "bp-runtime",
+ "frame-support",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+]
+
+[[package]]
+name = "bp-polkadot-core"
+version = "0.1.0"
+dependencies = [
+ "bp-messages",
+ "bp-runtime",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "parity-util-mem",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "sp-version",
+]
+
+[[package]]
 name = "bp-polkadot-core"
 version = "0.1.0"
 source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
@@ -736,7 +764,7 @@ version = "0.1.0"
 source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
 dependencies = [
  "bp-messages",
- "bp-polkadot-core",
+ "bp-polkadot-core 0.1.0 (git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5)",
  "bp-runtime",
  "frame-support",
  "parity-scale-codec",
@@ -750,25 +778,26 @@ dependencies = [
 [[package]]
 name = "bp-runtime"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
 dependencies = [
  "frame-support",
+ "frame-system",
  "hash-db",
  "num-traits",
  "parity-scale-codec",
  "scale-info",
+ "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-state-machine",
  "sp-std",
  "sp-trie",
+ "trie-db 0.24.0",
 ]
 
 [[package]]
 name = "bp-test-utils"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
 dependencies = [
  "bp-header-chain",
  "ed25519-dalek",
@@ -783,15 +812,15 @@ dependencies = [
 [[package]]
 name = "bridge-runtime-common"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
 dependencies = [
  "bp-message-dispatch",
  "bp-messages",
- "bp-polkadot-core",
+ "bp-polkadot-core 0.1.0",
  "bp-runtime",
  "frame-support",
  "frame-system",
  "hash-db",
+ "num-traits",
  "pallet-bridge-dispatch",
  "pallet-bridge-grandpa",
  "pallet-bridge-messages",
@@ -802,6 +831,7 @@ dependencies = [
  "scale-info",
  "sp-api",
  "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-state-machine",
  "sp-std",
@@ -5310,7 +5340,6 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-dispatch"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
 dependencies = [
  "bp-message-dispatch",
  "bp-runtime",
@@ -5327,7 +5356,6 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-grandpa"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
 dependencies = [
  "bp-header-chain",
  "bp-runtime",
@@ -5350,12 +5378,12 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-messages"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
 dependencies = [
  "bitvec",
  "bp-message-dispatch",
  "bp-messages",
  "bp-runtime",
+ "bp-test-utils",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -5372,9 +5400,9 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-parachains"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
 dependencies = [
- "bp-polkadot-core",
+ "bp-parachains",
+ "bp-polkadot-core 0.1.0",
  "bp-runtime",
  "frame-support",
  "frame-system",
@@ -5382,7 +5410,6 @@ dependencies = [
  "pallet-bridge-grandpa",
  "parity-scale-codec",
  "scale-info",
- "serde",
  "sp-core",
  "sp-runtime",
  "sp-std",
@@ -5513,7 +5540,6 @@ dependencies = [
 [[package]]
 name = "pallet-fee-market"
 version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
 dependencies = [
  "bitvec",
  "bp-messages",
@@ -5521,7 +5547,6 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "pallet-bridge-messages",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -9005,7 +9030,7 @@ dependencies = [
  "sp-trie",
  "thiserror",
  "tracing",
- "trie-db",
+ "trie-db 0.23.1",
  "trie-root",
 ]
 
@@ -9104,7 +9129,7 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-std",
- "trie-db",
+ "trie-db 0.23.1",
  "trie-root",
 ]
 
@@ -9809,6 +9834,19 @@ name = "trie-db"
 version = "0.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d32d034c0d3db64b43c31de38e945f15b40cd4ca6d2dcfc26d4798ce8de4ab83"
+dependencies = [
+ "hash-db",
+ "hashbrown 0.12.3",
+ "log",
+ "rustc-hex",
+ "smallvec",
+]
+
+[[package]]
+name = "trie-db"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "004e1e8f92535694b4cb1444dc5a8073ecf0815e3357f729638b9f8fc4062908"
 dependencies = [
  "hash-db",
  "hashbrown 0.12.3",
