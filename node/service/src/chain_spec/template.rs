@@ -60,7 +60,7 @@ pub fn development_config() -> ChainSpec {
 				accounts: {
 					let mut map = BTreeMap::new();
 					map.insert(
-						array_bytes::hex_into_unchecked(
+						array_bytes::hex_n_into_unchecked(
 							"0x6be02d1d3665660d22ff9624b7be0551ee1ac91b",
 						),
 						GenesisAccount {

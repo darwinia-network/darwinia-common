@@ -801,17 +801,17 @@ sp_api::impl_runtime_apis! {
 
 			let whitelist: Vec<TrackedStorageKey> = vec![
 				// Block Number
-				array_bytes::hex2bytes_unchecked("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").into(),
+				array_bytes::hex_into_unchecked("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac"),
 				// Total Issuance
-				array_bytes::hex2bytes_unchecked("0xc2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80").into(),
+				array_bytes::hex_into_unchecked("0xc2261276cc9d1f8598ea4b6a74b15c2f57c875e4cff74148e4628f264b974c80"),
 				// Execution Phase
-				array_bytes::hex2bytes_unchecked("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a").into(),
+				array_bytes::hex_into_unchecked("26aa394eea5630e07c48ae0c9558cef7ff553b5a9862a516939d82b3d3d8661a"),
 				// Event Count
-				array_bytes::hex2bytes_unchecked("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850").into(),
+				array_bytes::hex_into_unchecked("26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850"),
 				// System Events
-				array_bytes::hex2bytes_unchecked("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7").into(),
+				array_bytes::hex_into_unchecked("26aa394eea5630e07c48ae0c9558cef780d41e5e16056765bc8461851072c9d7"),
 				// Treasury Account
-				array_bytes::hex2bytes_unchecked("26aa394eea5630e07c48ae0c9558cef7b99d880ec681799c0cf30e8886371da9d53c977f01e06f5b4be2d2a8ab85ede86d6f646c64612f74727372790000000000000000000000000000000000000000").into(),
+				array_bytes::hex_into_unchecked("26aa394eea5630e07c48ae0c9558cef7b99d880ec681799c0cf30e8886371da9d53c977f01e06f5b4be2d2a8ab85ede86d6f646c64612f74727372790000000000000000000000000000000000000000"),
 			];
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
