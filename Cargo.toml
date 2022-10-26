@@ -110,5 +110,7 @@ pallet-bridge-parachains = { path = "../darwinia-messages-substrate/modules/para
 bp-runtime = { path = "../darwinia-messages-substrate/primitives/runtime" }
 bp-header-chain = { path = "../darwinia-messages-substrate/primitives/header-chain" }
 bp-messages = { path = "../darwinia-messages-substrate/primitives/messages" }
+bp-polkadot-core = { path = "../darwinia-messages-substrate/primitives/polkadot-core" }
+bp-darwinia-core = { path = "../darwinia-messages-substrate/primitives/darwinia-core" }
 bridge-runtime-common = { path = "../darwinia-messages-substrate/runtime-common" }
 bp-message-dispatch = { path = "../darwinia-messages-substrate/primitives/message-dispatch" }

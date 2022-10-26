@@ -603,22 +603,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bp-darwinia-core"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
-dependencies = [
- "bp-messages",
- "bp-runtime",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "bp-header-chain"
 version = "0.1.0"
 dependencies = [
@@ -663,55 +647,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "bp-pangolin"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
-dependencies = [
- "bp-darwinia-core",
- "bp-messages",
- "bp-runtime",
- "frame-support",
- "sp-api",
- "sp-runtime",
- "sp-std",
- "sp-version",
-]
-
-[[package]]
-name = "bp-pangolin-parachain"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
-dependencies = [
- "bp-darwinia-core",
- "bp-messages",
- "bp-runtime",
- "frame-support",
- "sp-api",
- "sp-runtime",
- "sp-std",
- "sp-version",
-]
-
-[[package]]
-name = "bp-pangoro"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
-dependencies = [
- "bp-darwinia-core",
- "bp-messages",
- "bp-runtime",
- "frame-support",
- "sp-api",
- "sp-runtime",
- "sp-std",
- "sp-version",
-]
-
-[[package]]
 name = "bp-parachains"
 version = "0.1.0"
 dependencies = [
- "bp-polkadot-core 0.1.0",
+ "bp-polkadot-core",
  "bp-runtime",
  "frame-support",
  "parity-scale-codec",
@@ -733,43 +672,6 @@ dependencies = [
  "serde",
  "sp-api",
  "sp-core",
- "sp-runtime",
- "sp-std",
- "sp-version",
-]
-
-[[package]]
-name = "bp-polkadot-core"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
-dependencies = [
- "bp-messages",
- "bp-runtime",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "parity-util-mem",
- "scale-info",
- "serde",
- "sp-api",
- "sp-core",
- "sp-runtime",
- "sp-std",
- "sp-version",
-]
-
-[[package]]
-name = "bp-rococo"
-version = "0.1.0"
-source = "git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5#d6b3f0f92a9e35c83d85484c4ffe318b115afabc"
-dependencies = [
- "bp-messages",
- "bp-polkadot-core 0.1.0 (git+https://github.com/darwinia-network/darwinia-messages-substrate?branch=darwinia-v0.12.5)",
- "bp-runtime",
- "frame-support",
- "parity-scale-codec",
- "smallvec",
- "sp-api",
  "sp-runtime",
  "sp-std",
  "sp-version",
@@ -815,7 +717,7 @@ version = "0.1.0"
 dependencies = [
  "bp-message-dispatch",
  "bp-messages",
- "bp-polkadot-core 0.1.0",
+ "bp-polkadot-core",
  "bp-runtime",
  "frame-support",
  "frame-system",
@@ -5402,7 +5304,7 @@ name = "pallet-bridge-parachains"
 version = "0.1.0"
 dependencies = [
  "bp-parachains",
- "bp-polkadot-core 0.1.0",
+ "bp-polkadot-core",
  "bp-runtime",
  "frame-support",
  "frame-system",
@@ -5912,10 +5814,6 @@ dependencies = [
  "beefy-primitives",
  "bp-message-dispatch",
  "bp-messages",
- "bp-pangolin",
- "bp-pangolin-parachain",
- "bp-pangoro",
- "bp-rococo",
  "bp-runtime",
  "bridge-runtime-common",
  "darwinia-balances",
@@ -6018,8 +5916,6 @@ dependencies = [
  "bp-header-chain",
  "bp-message-dispatch",
  "bp-messages",
- "bp-pangolin",
- "bp-pangoro",
  "bp-runtime",
  "bridge-runtime-common",
  "darwinia-balances",
@@ -10724,3 +10620,7 @@ dependencies = [
  "cc",
  "libc",
 ]
+
+[[patch.unused]]
+name = "bp-darwinia-core"
+version = "0.1.0"
