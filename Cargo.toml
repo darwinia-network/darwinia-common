@@ -26,7 +26,6 @@ members = [
 	"frame/wormhole/backing/tron",
 	"primitives/evm-trace/ext",
 	"primitives/evm-trace/tracer",
-	"primitives/merkle-patricia-trie",
 	"primitives/message",
 ]
 

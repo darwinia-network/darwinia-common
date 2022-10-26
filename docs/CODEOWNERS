@@ -42,6 +42,5 @@
 /primitives/contract/ @AsceticBear @AurevoirXavier @xiaoch05
 /primitives/ethereum/ @AsceticBear
 /primitives/evm-trace/ @AsceticBear
-/primitives/merkle-patricia-trie/ @AurevoirXavier
 /primitives/relayer-game/ @AurevoirXavier
 /primitives/s2s/ @AsceticBear @xiaoch05

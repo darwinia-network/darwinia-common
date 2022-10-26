@@ -96,7 +96,7 @@ pub fn genesis_config() -> ChainSpec {
 
 			for account in EVM_ACCOUNTS.iter() {
 				map.insert(
-					array_bytes::hex_into_unchecked(account),
+					array_bytes::hex_n_into_unchecked(account),
 					GenesisAccount {
 						balance: (MANY_COINS * (10 as Balance).pow(9)).into(),
 						code: Default::default(),
@@ -137,7 +137,7 @@ pub fn genesis_config() -> ChainSpec {
 				)
 				.chain(initial_nominators.iter().map(|n| (n.to_owned(), A_FEW_COINS)))
 				.chain(
-					TEAM_MEMBERS.iter().map(|m| (array_bytes::hex_into_unchecked(m), MANY_COINS)),
+					TEAM_MEMBERS.iter().map(|m| (array_bytes::hex_n_into_unchecked(m), MANY_COINS)),
 				)
 				.collect(),
 			},
@@ -153,7 +153,7 @@ pub fn genesis_config() -> ChainSpec {
 					.chain(
 						TEAM_MEMBERS
 							.iter()
-							.map(|m| (array_bytes::hex_into_unchecked(m), A_FEW_COINS)),
+							.map(|m| (array_bytes::hex_n_into_unchecked(m), A_FEW_COINS)),
 					)
 					.collect(),
 			},
@@ -200,7 +200,7 @@ pub fn genesis_config() -> ChainSpec {
 			beefy: Default::default(),
 			message_gadget: Default::default(),
 			ecdsa_authority: EcdsaAuthorityConfig {
-				authorities: vec![array_bytes::hex_into_unchecked(ECDSA_AUTHORITY)],
+				authorities: vec![array_bytes::hex_n_into_unchecked(ECDSA_AUTHORITY)],
 			},
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
@@ -248,7 +248,7 @@ pub fn development_config() -> ChainSpec {
 			get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
 		]
 		.into_iter()
-		.chain(TEAM_MEMBERS.iter().map(|m| array_bytes::hex_into_unchecked(m)))
+		.chain(TEAM_MEMBERS.iter().map(|m| array_bytes::hex_n_into_unchecked(m)))
 		.collect::<Vec<_>>();
 
 		let evm_accounts = {
@@ -256,7 +256,7 @@ pub fn development_config() -> ChainSpec {
 
 			for account in EVM_ACCOUNTS.iter() {
 				map.insert(
-					array_bytes::hex_into_unchecked(account),
+					array_bytes::hex_n_into_unchecked(account),
 					GenesisAccount {
 						balance: (123_456_789_000_000_000_000_090 as Balance).into(),
 						code: Default::default(),
@@ -315,7 +315,7 @@ pub fn development_config() -> ChainSpec {
 			beefy: Default::default(),
 			message_gadget: Default::default(),
 			ecdsa_authority: EcdsaAuthorityConfig {
-				authorities: vec![array_bytes::hex_into_unchecked(ECDSA_AUTHORITY)],
+				authorities: vec![array_bytes::hex_n_into_unchecked(ECDSA_AUTHORITY)],
 			},
 			im_online: Default::default(),
 			authority_discovery: Default::default(),
@@ -361,14 +361,14 @@ pub fn local_testnet_config() -> ChainSpec {
 			get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
 		]
 		.into_iter()
-		.chain(TEAM_MEMBERS.iter().map(|m| array_bytes::hex_into_unchecked(m)))
+		.chain(TEAM_MEMBERS.iter().map(|m| array_bytes::hex_n_into_unchecked(m)))
 		.collect::<Vec<_>>();
 		let evm_accounts = {
 			let mut map = BTreeMap::new();
 
 			for account in EVM_ACCOUNTS.iter() {
 				map.insert(
-					array_bytes::hex_into_unchecked(account),
+					array_bytes::hex_n_into_unchecked(account),
 					GenesisAccount {
 						balance: (123_456_789_000_000_000_000_090 as Balance).into(),
 						code: Default::default(),
@@ -427,7 +427,7 @@ pub fn local_testnet_config() -> ChainSpec {
 			beefy: Default::default(),
 			message_gadget: Default::default(),
 			ecdsa_authority: EcdsaAuthorityConfig {
-				authorities: vec![array_bytes::hex_into_unchecked(ECDSA_AUTHORITY)],
+				authorities: vec![array_bytes::hex_n_into_unchecked(ECDSA_AUTHORITY)],
 			},
 			im_online: Default::default(),
 			authority_discovery: Default::default(),

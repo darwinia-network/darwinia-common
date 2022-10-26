@@ -39,7 +39,7 @@ fp-storage        = { default-features = false, git = "https://github.com/darwin
 
 [dev-dependencies]
 # crates.io
-array-bytes  = { version = "2.0" }
+array-bytes  = { version = "4.1" }
 libsecp256k1 = { version = "0.5", features = ["static-context", "hmac"] }
 # darwinia-network
 bp-message-dispatch    = { git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
