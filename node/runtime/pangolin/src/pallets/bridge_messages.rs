@@ -5,6 +5,10 @@ pub use pallet_bridge_messages::{
 
 // --- darwinia-network ---
 use crate::*;
+use bp_darwinia_core::{
+	AccountId, AccountIdConverter, Balance, MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX,
+	MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX,
+};
 use bp_messages::MessageNonce;
 use bp_runtime::{
 	ChainId, PANGOLIN_PARACHAIN_ALPHA_CHAIN_ID, PANGOLIN_PARACHAIN_CHAIN_ID, PANGORO_CHAIN_ID,
@@ -20,25 +24,25 @@ frame_support::parameter_types! {
 	// Pangoro configurations.
 	pub const PangoroChainId: ChainId = PANGORO_CHAIN_ID;
 	pub const PangoroMaxUnconfirmedMessagesAtInboundLane: MessageNonce =
-		bp_darwinia_core::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
+		MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
 	pub const PangoroMaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =
-		bp_darwinia_core::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
+		MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
 	// Pangolin Parachain configurations.
 	pub const PangolinParachainChainId: ChainId = PANGOLIN_PARACHAIN_CHAIN_ID;
 	pub const PangolinParachainAlphaChainId: ChainId = PANGOLIN_PARACHAIN_ALPHA_CHAIN_ID;
 	pub const PangolinParachainMaxUnconfirmedMessagesAtInboundLane: MessageNonce =
-		bp_darwinia_core::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
+		MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
 	pub const PangolinParachainMaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =
-		bp_darwinia_core::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
+		MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
 }
 
 impl Config<WithPangoroMessages> for Runtime {
-	type AccountIdConverter = bp_darwinia_core::AccountIdConverter;
+	type AccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangoroChainId;
 	type Event = Event;
-	type InboundMessageFee = bp_darwinia_core::Balance;
+	type InboundMessageFee = Balance;
 	type InboundPayload = bm_pangoro::FromPangoroMessagePayload;
-	type InboundRelayer = bp_darwinia_core::AccountId;
+	type InboundRelayer = AccountId;
 	type LaneMessageVerifier = bm_pangoro::ToPangoroMessageVerifier;
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
 	type MaxUnconfirmedMessagesAtInboundLane = PangoroMaxUnconfirmedMessagesAtInboundLane;
@@ -49,7 +53,7 @@ impl Config<WithPangoroMessages> for Runtime {
 	type MessageDispatch = bm_pangoro::FromPangoroMessageDispatch;
 	type OnDeliveryConfirmed = FeeMarketMessageConfirmedHandler<Self, WithPangoroFeeMarket>;
 	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangoroFeeMarket>;
-	type OutboundMessageFee = bp_darwinia_core::Balance;
+	type OutboundMessageFee = Balance;
 	type OutboundPayload = bm_pangoro::ToPangoroMessagePayload;
 	type Parameter = bm_pangoro::PangolinToPangoroMessagesParameter;
 	type SourceHeaderChain = bm_pangoro::Pangoro;
@@ -57,12 +61,12 @@ impl Config<WithPangoroMessages> for Runtime {
 	type WeightInfo = ();
 }
 impl Config<WithPangolinParachainMessages> for Runtime {
-	type AccountIdConverter = bp_darwinia_core::AccountIdConverter;
+	type AccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangolinParachainChainId;
 	type Event = Event;
-	type InboundMessageFee = bp_darwinia_core::Balance;
+	type InboundMessageFee = Balance;
 	type InboundPayload = bm_pangolin_parachain::FromPangolinParachainMessagePayload;
-	type InboundRelayer = bp_darwinia_core::AccountId;
+	type InboundRelayer = AccountId;
 	type LaneMessageVerifier = bm_pangolin_parachain::ToPangolinParachainMessageVerifier;
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
 	type MaxUnconfirmedMessagesAtInboundLane = PangolinParachainMaxUnconfirmedMessagesAtInboundLane;
@@ -78,7 +82,7 @@ impl Config<WithPangolinParachainMessages> for Runtime {
 		FeeMarketMessageConfirmedHandler<Self, WithPangolinParachainFeeMarket>,
 	);
 	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangolinParachainFeeMarket>;
-	type OutboundMessageFee = bp_darwinia_core::Balance;
+	type OutboundMessageFee = Balance;
 	type OutboundPayload = bm_pangolin_parachain::ToPangolinParachainMessagePayload;
 	type Parameter = bm_pangolin_parachain::PangolinToPangolinParachainParameter;
 	type SourceHeaderChain = bm_pangolin_parachain::PangolinParachain;
@@ -86,12 +90,12 @@ impl Config<WithPangolinParachainMessages> for Runtime {
 	type WeightInfo = ();
 }
 impl Config<WithPangolinParachainAlphaMessages> for Runtime {
-	type AccountIdConverter = bp_darwinia_core::AccountIdConverter;
+	type AccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangolinParachainAlphaChainId;
 	type Event = Event;
-	type InboundMessageFee = bp_darwinia_core::Balance;
+	type InboundMessageFee = Balance;
 	type InboundPayload = bm_pangolin_parachain_alpha::FromPangolinParachainAlphaMessagePayload;
-	type InboundRelayer = bp_darwinia_core::AccountId;
+	type InboundRelayer = AccountId;
 	type LaneMessageVerifier = bm_pangolin_parachain_alpha::ToPangolinParachainAlphaMessageVerifier;
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
 	type MaxUnconfirmedMessagesAtInboundLane = PangolinParachainMaxUnconfirmedMessagesAtInboundLane;
@@ -108,7 +112,7 @@ impl Config<WithPangolinParachainAlphaMessages> for Runtime {
 	);
 	type OnMessageAccepted =
 		FeeMarketMessageAcceptedHandler<Self, WithPangolinParachainAlphaFeeMarket>;
-	type OutboundMessageFee = bp_darwinia_core::Balance;
+	type OutboundMessageFee = Balance;
 	type OutboundPayload = bm_pangolin_parachain_alpha::ToPangolinParachainAlphaMessagePayload;
 	type Parameter = bm_pangolin_parachain_alpha::PangolinToPangolinParachainAlphaParameter;
 	type SourceHeaderChain = bm_pangolin_parachain_alpha::PangolinParachainAlpha;

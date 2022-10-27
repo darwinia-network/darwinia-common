@@ -4,6 +4,7 @@ use scale_info::TypeInfo;
 use frame_support::{PalletId, RuntimeDebug};
 // --- darwinia-network ---
 use crate::{pangolin_parachain::*, weights::to_parachain_backing::WeightInfo, *};
+use bp_darwinia_core::{AccountId, AccountIdConverter, AccountPublic, Balance, Signature};
 use bp_message_dispatch::CallOrigin;
 use bp_messages::LaneId;
 use bp_runtime::{messages::DispatchFeePayment, ChainId, PANGOLIN_PARACHAIN_CHAIN_ID};
@@ -29,22 +30,13 @@ impl LatestMessageNoncer for PangolinParachainMessageNoncer {
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ToPangolinParachainOutboundPayLoad;
-impl
-	IssueFromRemotePayload<
-		bp_darwinia_core::AccountId,
-		bp_darwinia_core::AccountPublic,
-		bp_darwinia_core::Signature,
-		Runtime,
-	> for ToPangolinParachainOutboundPayLoad
+impl IssueFromRemotePayload<AccountId, AccountPublic, Signature, Runtime>
+	for ToPangolinParachainOutboundPayLoad
 {
 	type Payload = ToPangolinParachainMessagePayload;
 
 	fn create(
-		origin: CallOrigin<
-			bp_darwinia_core::AccountId,
-			bp_darwinia_core::AccountPublic,
-			bp_darwinia_core::Signature,
-		>,
+		origin: CallOrigin<AccountId, AccountPublic, Signature>,
 		spec_version: u32,
 		weight: u64,
 		call_params: IssuingCall<Runtime>,
@@ -66,7 +58,7 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	type BridgedAccountIdConverter = bp_darwinia_core::AccountIdConverter;
+	type BridgedAccountIdConverter = AccountIdConverter;
 	type BridgedChainId = PangolinParachainChainId;
 	type Event = Event;
 	type MaxLockRingAmountPerTx = MaxLockRingAmountPerTx;

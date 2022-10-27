@@ -11,6 +11,7 @@ use frame_support::{
 use sp_runtime::transaction_validity::{InvalidTransaction, TransactionValidityError};
 // --- darwinia-network ---
 use crate::*;
+use bp_darwinia_core::{AccountId, AccountIdConverter, AccountPublic, Signature};
 use bp_message_dispatch::{CallValidate, IntoDispatchOrigin as IntoDispatchOriginT};
 use bp_messages::{LaneId, MessageNonce};
 use darwinia_ethereum::{RawOrigin, Transaction};
@@ -19,9 +20,9 @@ use darwinia_support::evm::{DeriveEthereumAddress, DeriveSubstrateAddress};
 use pallet_bridge_dispatch::Config;
 
 pub struct CallValidator;
-impl CallValidate<bp_darwinia_core::AccountId, Origin, Call> for CallValidator {
+impl CallValidate<AccountId, Origin, Call> for CallValidator {
 	fn check_receiving_before_dispatch(
-		relayer_account: &bp_darwinia_core::AccountId,
+		relayer_account: &AccountId,
 		call: &Call,
 	) -> Result<(), &'static str> {
 		match call {
@@ -51,7 +52,7 @@ impl CallValidate<bp_darwinia_core::AccountId, Origin, Call> for CallValidator {
 	}
 
 	fn call_validate(
-		relayer_account: &bp_darwinia_core::AccountId,
+		relayer_account: &AccountId,
 		origin: &Origin,
 		call: &Call,
 	) -> Result<(), TransactionValidityError> {
@@ -89,8 +90,8 @@ impl CallValidate<bp_darwinia_core::AccountId, Origin, Call> for CallValidator {
 }
 
 pub struct IntoDispatchOrigin;
-impl IntoDispatchOriginT<bp_darwinia_core::AccountId, Call, Origin> for IntoDispatchOrigin {
-	fn into_dispatch_origin(id: &bp_darwinia_core::AccountId, call: &Call) -> Origin {
+impl IntoDispatchOriginT<AccountId, Call, Origin> for IntoDispatchOrigin {
+	fn into_dispatch_origin(id: &AccountId, call: &Call) -> Origin {
 		match call {
 			Call::Ethereum(darwinia_ethereum::Call::message_transact { .. }) => {
 				let derive_eth_address = id.derive_ethereum_address();
@@ -103,38 +104,38 @@ impl IntoDispatchOriginT<bp_darwinia_core::AccountId, Call, Origin> for IntoDisp
 }
 
 impl Config<WithPangoroDispatch> for Runtime {
-	type AccountIdConverter = bp_darwinia_core::AccountIdConverter;
+	type AccountIdConverter = AccountIdConverter;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
 	type CallValidator = CallValidator;
 	type EncodedCall = bm_pangoro::FromPangoroEncodedCall;
 	type Event = Event;
 	type IntoDispatchOrigin = IntoDispatchOrigin;
-	type SourceChainAccountId = bp_darwinia_core::AccountId;
-	type TargetChainAccountPublic = bp_darwinia_core::AccountPublic;
-	type TargetChainSignature = bp_darwinia_core::Signature;
+	type SourceChainAccountId = AccountId;
+	type TargetChainAccountPublic = AccountPublic;
+	type TargetChainSignature = Signature;
 }
 impl Config<WithPangolinParachainDispatch> for Runtime {
-	type AccountIdConverter = bp_darwinia_core::AccountIdConverter;
+	type AccountIdConverter = AccountIdConverter;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
 	type CallValidator = CallValidator;
 	type EncodedCall = bm_pangolin_parachain::FromPangolinParachainEncodedCall;
 	type Event = Event;
 	type IntoDispatchOrigin = IntoDispatchOrigin;
-	type SourceChainAccountId = bp_darwinia_core::AccountId;
-	type TargetChainAccountPublic = bp_darwinia_core::AccountPublic;
-	type TargetChainSignature = bp_darwinia_core::Signature;
+	type SourceChainAccountId = AccountId;
+	type TargetChainAccountPublic = AccountPublic;
+	type TargetChainSignature = Signature;
 }
 impl Config<WithPangolinParachainAlphaDispatch> for Runtime {
-	type AccountIdConverter = bp_darwinia_core::AccountIdConverter;
+	type AccountIdConverter = AccountIdConverter;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
 	type CallValidator = CallValidator;
 	type EncodedCall = bm_pangolin_parachain_alpha::FromPangolinParachainAlphaEncodedCall;
 	type Event = Event;
 	type IntoDispatchOrigin = IntoDispatchOrigin;
-	type SourceChainAccountId = bp_darwinia_core::AccountId;
-	type TargetChainAccountPublic = bp_darwinia_core::AccountPublic;
-	type TargetChainSignature = bp_darwinia_core::Signature;
+	type SourceChainAccountId = AccountId;
+	type TargetChainAccountPublic = AccountPublic;
+	type TargetChainSignature = Signature;
 }

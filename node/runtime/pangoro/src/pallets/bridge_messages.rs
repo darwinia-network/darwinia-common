@@ -2,6 +2,10 @@ pub use pallet_bridge_messages::Instance1 as WithPangolinMessages;
 
 // --- darwinia-network ---
 use crate::*;
+use bp_darwinia_core::{
+	AccountId, AccountIdConverter, Balance, MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX,
+	MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX,
+};
 use bp_messages::MessageNonce;
 use bp_runtime::{ChainId, PANGOLIN_CHAIN_ID};
 use pallet_bridge_messages::Config;
@@ -13,18 +17,18 @@ frame_support::parameter_types! {
 	pub const BridgedChainId: ChainId = PANGOLIN_CHAIN_ID;
 	pub const MaxMessagesToPruneAtOnce: MessageNonce = 8;
 	pub const MaxUnconfirmedMessagesAtInboundLane: MessageNonce =
-		bp_darwinia_core::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
+		MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
 	pub const MaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =
-	bp_darwinia_core::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
+	MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
 }
 
 impl Config<WithPangolinMessages> for Runtime {
-	type AccountIdConverter = bp_darwinia_core::AccountIdConverter;
+	type AccountIdConverter = AccountIdConverter;
 	type BridgedChainId = BridgedChainId;
 	type Event = Event;
-	type InboundMessageFee = bp_darwinia_core::Balance;
+	type InboundMessageFee = Balance;
 	type InboundPayload = bm_pangolin::FromPangolinMessagePayload;
-	type InboundRelayer = bp_darwinia_core::AccountId;
+	type InboundRelayer = AccountId;
 	type LaneMessageVerifier = bm_pangolin::ToPangolinMessageVerifier;
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
 	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
@@ -35,7 +39,7 @@ impl Config<WithPangolinMessages> for Runtime {
 	type MessageDispatch = bm_pangolin::FromPangolinMessageDispatch;
 	type OnDeliveryConfirmed = FeeMarketMessageConfirmedHandler<Self, WithPangolinFeeMarket>;
 	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangolinFeeMarket>;
-	type OutboundMessageFee = bp_darwinia_core::Balance;
+	type OutboundMessageFee = Balance;
 	type OutboundPayload = bm_pangolin::ToPangolinMessagePayload;
 	type Parameter = bm_pangolin::PangoroToPangolinMessagesParameter;
 	type SourceHeaderChain = bm_pangolin::Pangolin;
