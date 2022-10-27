@@ -30,7 +30,7 @@ use bp_messages::{
 	target_chain::{ProvedMessages, SourceHeaderChain},
 	InboundLaneData, LaneId, Message, MessageNonce, Parameter,
 };
-use bp_rococo::parachains::ParaId;
+use bp_polkadot_core::parachains::ParaId;
 use bp_runtime::{Chain, ChainId, PANGOLIN_CHAIN_ID, PANGOLIN_PARACHAIN_CHAIN_ID};
 use bridge_runtime_common::{
 	lanes::PANGOLIN_PANGOLIN_PARACHAIN_LANE,
@@ -49,10 +49,9 @@ use bridge_runtime_common::{
 
 /// Message delivery proof for Pangolin -> PangolinParachain messages.
 type ToPangolinParachainMessagesDeliveryProof =
-	FromBridgedChainMessagesDeliveryProof<bp_pangolin_parachain::Hash>;
+	FromBridgedChainMessagesDeliveryProof<bp_darwinia_core::Hash>;
 /// Message proof for PangolinParachain -> Pangolin  messages.
-type FromPangolinParachainMessagesProof =
-	FromBridgedChainMessagesProof<bp_pangolin_parachain::Hash>;
+type FromPangolinParachainMessagesProof = FromBridgedChainMessagesProof<bp_darwinia_core::Hash>;
 
 /// Message payload for Pangolin -> PangolinParachain messages.
 pub type ToPangolinParachainMessagePayload =
@@ -115,7 +114,7 @@ impl MessageBridge for WithPangolinParachainMessageBridge {
 
 	const BRIDGED_CHAIN_ID: ChainId = PANGOLIN_PARACHAIN_CHAIN_ID;
 	const BRIDGED_MESSAGES_PALLET_NAME: &'static str =
-		bp_pangolin::WITH_PANGOLIN_MESSAGES_PALLET_NAME;
+		bridge_runtime_common::pallets::WITH_PANGOLIN_MESSAGES_PALLET_NAME;
 	const RELAYER_FEE_PERCENT: u32 = 10;
 	const THIS_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
 }
@@ -124,11 +123,11 @@ impl MessageBridge for WithPangolinParachainMessageBridge {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct Pangolin;
 impl ChainWithMessages for Pangolin {
-	type AccountId = bp_pangolin::AccountId;
-	type Balance = bp_pangolin::Balance;
-	type Hash = bp_pangolin::Hash;
-	type Signature = bp_pangolin::Signature;
-	type Signer = bp_pangolin::AccountPublic;
+	type AccountId = bp_darwinia_core::AccountId;
+	type Balance = bp_darwinia_core::Balance;
+	type Hash = bp_darwinia_core::Hash;
+	type Signature = bp_darwinia_core::Signature;
+	type Signer = bp_darwinia_core::AccountPublic;
 	type Weight = Weight;
 }
 impl ThisChainWithMessages for Pangolin {
@@ -147,21 +146,21 @@ impl ThisChainWithMessages for Pangolin {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct PangolinParachain;
 impl ChainWithMessages for PangolinParachain {
-	type AccountId = bp_pangolin_parachain::AccountId;
-	type Balance = bp_pangolin_parachain::Balance;
-	type Hash = bp_pangolin_parachain::Hash;
-	type Signature = bp_pangolin_parachain::Signature;
-	type Signer = bp_pangolin_parachain::AccountPublic;
+	type AccountId = bp_darwinia_core::AccountId;
+	type Balance = bp_darwinia_core::Balance;
+	type Hash = bp_darwinia_core::Hash;
+	type Signature = bp_darwinia_core::Signature;
+	type Signer = bp_darwinia_core::AccountPublic;
 	type Weight = Weight;
 }
 impl BridgedChainWithMessages for PangolinParachain {
 	fn maximal_extrinsic_size() -> u32 {
-		bp_pangolin_parachain::PangolinParachain::max_extrinsic_size()
+		bp_darwinia_core::DarwiniaLike::max_extrinsic_size()
 	}
 
 	fn message_weight_limits(_message_payload: &[u8]) -> RangeInclusive<Self::Weight> {
 		let upper_limit = target::maximal_incoming_message_dispatch_weight(
-			bp_pangolin_parachain::PangolinParachain::max_extrinsic_weight(),
+			bp_darwinia_core::DarwiniaLike::max_extrinsic_weight(),
 		);
 		0..=upper_limit
 	}
@@ -178,10 +177,10 @@ impl TargetHeaderChain<ToPangolinParachainMessagePayload, <Self as ChainWithMess
 
 	fn verify_messages_delivery_proof(
 		proof: Self::MessagesDeliveryProof,
-	) -> Result<(LaneId, InboundLaneData<bp_pangolin::AccountId>), Self::Error> {
+	) -> Result<(LaneId, InboundLaneData<bp_darwinia_core::AccountId>), Self::Error> {
 		source::verify_messages_delivery_proof_from_parachain::<
 			WithPangolinParachainMessageBridge,
-			bp_pangolin_parachain::Header,
+			bp_darwinia_core::Header,
 			Runtime,
 			WithRococoParachainInstance,
 		>(ParaId(PANGOLIN_PARACHAIN_ID), proof)
@@ -197,7 +196,7 @@ impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for PangolinParacha
 	) -> Result<ProvedMessages<Message<<Self as ChainWithMessages>::Balance>>, Self::Error> {
 		target::verify_messages_proof_from_parachain::<
 			WithPangolinParachainMessageBridge,
-			bp_pangolin_parachain::Header,
+			bp_darwinia_core::Header,
 			Runtime,
 			WithRococoParachainInstance,
 		>(ParaId(PANGOLIN_PARACHAIN_ID), proof, messages_count)

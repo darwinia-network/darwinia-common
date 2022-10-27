@@ -603,6 +603,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "bp-darwinia-core"
+version = "0.1.0"
+dependencies = [
+ "bp-messages",
+ "bp-runtime",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "bp-header-chain"
 version = "0.1.0"
 dependencies = [
@@ -5812,8 +5827,10 @@ version = "2.10.1"
 dependencies = [
  "array-bytes",
  "beefy-primitives",
+ "bp-darwinia-core",
  "bp-message-dispatch",
  "bp-messages",
+ "bp-polkadot-core",
  "bp-runtime",
  "bridge-runtime-common",
  "darwinia-balances",
@@ -5913,6 +5930,7 @@ version = "2.10.1"
 dependencies = [
  "array-bytes",
  "beefy-primitives",
+ "bp-darwinia-core",
  "bp-header-chain",
  "bp-message-dispatch",
  "bp-messages",
@@ -10620,7 +10638,3 @@ dependencies = [
  "cc",
  "libc",
 ]
-
-[[patch.unused]]
-name = "bp-darwinia-core"
-version = "0.1.0"

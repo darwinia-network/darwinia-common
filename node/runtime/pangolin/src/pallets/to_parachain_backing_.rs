@@ -31,9 +31,9 @@ impl LatestMessageNoncer for PangolinParachainMessageNoncer {
 pub struct ToPangolinParachainOutboundPayLoad;
 impl
 	IssueFromRemotePayload<
-		bp_pangolin::AccountId,
-		bp_pangolin::AccountPublic,
-		bp_pangolin::Signature,
+		bp_darwinia_core::AccountId,
+		bp_darwinia_core::AccountPublic,
+		bp_darwinia_core::Signature,
 		Runtime,
 	> for ToPangolinParachainOutboundPayLoad
 {
@@ -41,9 +41,9 @@ impl
 
 	fn create(
 		origin: CallOrigin<
-			bp_pangolin::AccountId,
-			bp_pangolin::AccountPublic,
-			bp_pangolin::Signature,
+			bp_darwinia_core::AccountId,
+			bp_darwinia_core::AccountPublic,
+			bp_darwinia_core::Signature,
 		>,
 		spec_version: u32,
 		weight: u64,
@@ -66,7 +66,7 @@ frame_support::parameter_types! {
 }
 
 impl Config for Runtime {
-	type BridgedAccountIdConverter = bp_pangolin_parachain::AccountIdConverter;
+	type BridgedAccountIdConverter = bp_darwinia_core::AccountIdConverter;
 	type BridgedChainId = PangolinParachainChainId;
 	type Event = Event;
 	type MaxLockRingAmountPerTx = MaxLockRingAmountPerTx;

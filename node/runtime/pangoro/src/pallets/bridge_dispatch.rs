@@ -16,9 +16,9 @@ use darwinia_support::evm::{DeriveEthereumAddress, DeriveSubstrateAddress};
 use pallet_bridge_dispatch::Config;
 
 pub struct CallValidator;
-impl CallValidate<bp_pangoro::AccountId, Origin, Call> for CallValidator {
+impl CallValidate<bp_darwinia_core::AccountId, Origin, Call> for CallValidator {
 	fn check_receiving_before_dispatch(
-		relayer_account: &bp_pangoro::AccountId,
+		relayer_account: &bp_darwinia_core::AccountId,
 		call: &Call,
 	) -> Result<(), &'static str> {
 		match call {
@@ -49,7 +49,7 @@ impl CallValidate<bp_pangoro::AccountId, Origin, Call> for CallValidator {
 	}
 
 	fn call_validate(
-		relayer_account: &bp_pangoro::AccountId,
+		relayer_account: &bp_darwinia_core::AccountId,
 		origin: &Origin,
 		call: &Call,
 	) -> Result<(), TransactionValidityError> {
@@ -87,8 +87,8 @@ impl CallValidate<bp_pangoro::AccountId, Origin, Call> for CallValidator {
 }
 
 pub struct IntoDispatchOrigin;
-impl IntoDispatchOriginT<bp_pangoro::AccountId, Call, Origin> for IntoDispatchOrigin {
-	fn into_dispatch_origin(id: &bp_pangoro::AccountId, call: &Call) -> Origin {
+impl IntoDispatchOriginT<bp_darwinia_core::AccountId, Call, Origin> for IntoDispatchOrigin {
+	fn into_dispatch_origin(id: &bp_darwinia_core::AccountId, call: &Call) -> Origin {
 		match call {
 			Call::Ethereum(darwinia_ethereum::Call::message_transact { .. }) => {
 				let derive_eth_address = id.derive_ethereum_address();
@@ -101,14 +101,14 @@ impl IntoDispatchOriginT<bp_pangoro::AccountId, Call, Origin> for IntoDispatchOr
 }
 
 impl Config<WithPangolinDispatch> for Runtime {
-	type AccountIdConverter = bp_pangoro::AccountIdConverter;
+	type AccountIdConverter = bp_darwinia_core::AccountIdConverter;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
 	type CallValidator = CallValidator;
 	type EncodedCall = bm_pangolin::FromPangolinEncodedCall;
 	type Event = Event;
 	type IntoDispatchOrigin = IntoDispatchOrigin;
-	type SourceChainAccountId = bp_pangolin::AccountId;
-	type TargetChainAccountPublic = bp_pangoro::AccountPublic;
-	type TargetChainSignature = bp_pangoro::Signature;
+	type SourceChainAccountId = bp_darwinia_core::AccountId;
+	type TargetChainAccountPublic = bp_darwinia_core::AccountPublic;
+	type TargetChainSignature = bp_darwinia_core::Signature;
 }

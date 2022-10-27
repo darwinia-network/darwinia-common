@@ -37,7 +37,7 @@ module-transaction-pause              = { default-features = false, path = "../.
 bp-header-chain        = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bp-message-dispatch    = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bp-messages            = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
-# bp-pangolin            = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
+bp-darwinia-core            = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 # bp-pangoro             = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bp-runtime             = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bridge-runtime-common  = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
@@ -136,7 +136,7 @@ std = [
 	"bp-header-chain/std",
 	"bp-message-dispatch/std",
 	"bp-messages/std",
-	# "bp-pangolin/std",
+	"bp-darwinia-core/std",
 	# "bp-pangoro/std",
 	"bp-runtime/std",
 	"bridge-runtime-common/std",

@@ -13,18 +13,18 @@ frame_support::parameter_types! {
 	pub const BridgedChainId: ChainId = PANGOLIN_CHAIN_ID;
 	pub const MaxMessagesToPruneAtOnce: MessageNonce = 8;
 	pub const MaxUnconfirmedMessagesAtInboundLane: MessageNonce =
-		bp_pangolin::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
+		bp_darwinia_core::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX;
 	pub const MaxUnrewardedRelayerEntriesAtInboundLane: MessageNonce =
-		bp_pangolin::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
+	bp_darwinia_core::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX;
 }
 
 impl Config<WithPangolinMessages> for Runtime {
-	type AccountIdConverter = bp_pangoro::AccountIdConverter;
+	type AccountIdConverter = bp_darwinia_core::AccountIdConverter;
 	type BridgedChainId = BridgedChainId;
 	type Event = Event;
-	type InboundMessageFee = bp_pangolin::Balance;
+	type InboundMessageFee = bp_darwinia_core::Balance;
 	type InboundPayload = bm_pangolin::FromPangolinMessagePayload;
-	type InboundRelayer = bp_pangolin::AccountId;
+	type InboundRelayer = bp_darwinia_core::AccountId;
 	type LaneMessageVerifier = bm_pangolin::ToPangolinMessageVerifier;
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
 	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
@@ -33,7 +33,7 @@ impl Config<WithPangolinMessages> for Runtime {
 	type MessageDispatch = bm_pangolin::FromPangolinMessageDispatch;
 	type OnDeliveryConfirmed = FeeMarketMessageConfirmedHandler<Self, WithPangolinFeeMarket>;
 	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangolinFeeMarket>;
-	type OutboundMessageFee = bp_pangoro::Balance;
+	type OutboundMessageFee = bp_darwinia_core::Balance;
 	type OutboundPayload = bm_pangolin::ToPangolinMessagePayload;
 	type Parameter = bm_pangolin::PangoroToPangolinMessagesParameter;
 	type SourceHeaderChain = bm_pangolin::Pangolin;

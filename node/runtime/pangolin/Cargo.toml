@@ -38,10 +38,10 @@ to-tron-backing                       = { default-features = false, path = "../.
 # messages
 bp-message-dispatch      = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bp-messages              = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
-# bp-pangolin              = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
-# bp-pangolin-parachain    = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
+bp-darwinia-core              = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
+# bp-darwinia_core-parachain    = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 # bp-pangoro               = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
-# bp-rococo                = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
+bp-polkadot-core                = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bp-runtime               = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bridge-runtime-common    = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 pallet-bridge-dispatch   = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
@@ -152,10 +152,10 @@ std = [
 	# messages
 	"bp-messages/std",
 	"bp-message-dispatch/std",
-	# "bp-pangolin/std",
-	# "bp-pangolin-parachain/std",
+	"bp-darwinia-core/std",
+	# "bp-darwinia_core-parachain/std",
 	# "bp-pangoro/std",
-	# "bp-rococo/std",
+	"bp-polkadot-core/std",
 	"bp-runtime/std",
 	"bridge-runtime-common/std",
 	"pallet-bridge-dispatch/std",
