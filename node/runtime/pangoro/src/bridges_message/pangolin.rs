@@ -105,7 +105,7 @@ impl MessageBridge for WithPangolinMessageBridge {
 
 	const BRIDGED_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
 	const BRIDGED_MESSAGES_PALLET_NAME: &'static str =
-		bridge_runtime_common::WITH_PANGORO_MESSAGES_PALLET_NAME;
+		bridge_runtime_common::pallets::WITH_PANGORO_MESSAGES_PALLET_NAME;
 	const RELAYER_FEE_PERCENT: u32 = 10;
 	const THIS_CHAIN_ID: ChainId = PANGORO_CHAIN_ID;
 }
@@ -150,19 +150,22 @@ impl BridgedChainWithMessages for Pangolin {
 		bp_darwinia_core::DarwiniaLike::max_extrinsic_size()
 	}
 
-	fn message_weight_limits(_message_payload: &[u8]) -> RangeInclusive<Weight> {
-		// we don't want to relay too large messages + keep reserve for future upgrades
-		let upper_limit = target::maximal_incoming_message_dispatch_weight(
-			bp_darwinia_core::DarwiniaLike::max_extrinsic_weight(),
-		);
+	// fn message_weight_limits(_message_payload: &[u8]) -> RangeInclusive<Weight> {
+	// 	// we don't want to relay too large messages + keep reserve for future upgrades
+	// 	let upper_limit = target::maximal_incoming_message_dispatch_weight(
+	// 		bp_darwinia_core::DarwiniaLike::max_extrinsic_weight(),
+	// 	);
 
-		// we're charging for payload bytes in `WithPangolinMessageBridge::transaction_payment`
-		// function
-		//
-		// this bridge may be used to deliver all kind of messages, so we're not making any
-		// assumptions about minimal dispatch weight here
+	// 	// we're charging for payload bytes in `WithPangolinMessageBridge::transaction_payment`
+	// 	// function
+	// 	//
+	// 	// this bridge may be used to deliver all kind of messages, so we're not making any
+	// 	// assumptions about minimal dispatch weight here
 
-		0..=upper_limit
+	// 	0..=upper_limit
+	// }
+	fn verify_dispatch_weight(_message_payload: &[u8], _payload_weight: &Weight) -> bool {
+		true
 	}
 }
 impl TargetHeaderChain<ToPangolinMessagePayload, <Self as ChainWithMessages>::AccountId>

@@ -216,7 +216,7 @@ frame_support::construct_runtime! {
 		BridgePangoroMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
 
 		BridgeRococoGrandpa: pallet_bridge_grandpa::<Instance2>::{Pallet, Call, Storage} = 60,
-		BridgeRococoParachain: pallet_bridge_parachains::<Instance1>::{Pallet, Call, Storage} = 61,
+		BridgeRococoParachain: pallet_bridge_parachains::<Instance1>::{Pallet, Call, Storage, Event<T>} = 61,
 
 		BridgePangolinParachainDispatch: pallet_bridge_dispatch::<Instance2>::{Pallet, Event<T>} = 62,
 		BridgePangolinParachainMessages: pallet_bridge_messages::<Instance2>::{Pallet, Call, Storage, Event<T>} = 63,
@@ -227,7 +227,7 @@ frame_support::construct_runtime! {
 
 		// pangolin <> pangolin parachain alpha bridge
 		BridgeMoonbaseRelayGrandpa: pallet_bridge_grandpa::<Instance3>::{Pallet, Call, Storage} = 68,
-		BridgeMoonbaseRelayParachain: pallet_bridge_parachains::<Instance2>::{Pallet, Call, Storage} = 69,
+		BridgeMoonbaseRelayParachain: pallet_bridge_parachains::<Instance2>::{Pallet, Call, Storage, Event<T>} = 69,
 		BridgePangolinParachainAlphaDispatch: pallet_bridge_dispatch::<Instance3>::{Pallet, Event<T>} = 70,
 		BridgePangolinParachainAlphaMessages: pallet_bridge_messages::<Instance3>::{Pallet, Call, Storage, Event<T>} = 71,
 		PangolinParachainAlphaFeeMarket: pallet_fee_market::<Instance3>::{Pallet, Call, Storage, Event<T>} = 72,

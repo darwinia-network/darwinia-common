@@ -43,6 +43,8 @@ impl Config<WithPangoroMessages> for Runtime {
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
 	type MaxUnconfirmedMessagesAtInboundLane = PangoroMaxUnconfirmedMessagesAtInboundLane;
 	type MaxUnrewardedRelayerEntriesAtInboundLane = PangoroMaxUnrewardedRelayerEntriesAtInboundLane;
+	// TODO: update this?
+	type MaximalOutboundPayloadSize = frame_support::traits::ConstU32<1024>;
 	type MessageDeliveryAndDispatchPayment = FeeMarketPayment<Self, WithPangoroFeeMarket, Ring>;
 	type MessageDispatch = bm_pangoro::FromPangoroMessageDispatch;
 	type OnDeliveryConfirmed = FeeMarketMessageConfirmedHandler<Self, WithPangoroFeeMarket>;
@@ -66,6 +68,8 @@ impl Config<WithPangolinParachainMessages> for Runtime {
 	type MaxUnconfirmedMessagesAtInboundLane = PangolinParachainMaxUnconfirmedMessagesAtInboundLane;
 	type MaxUnrewardedRelayerEntriesAtInboundLane =
 		PangolinParachainMaxUnrewardedRelayerEntriesAtInboundLane;
+	// TODO: update this?
+	type MaximalOutboundPayloadSize = frame_support::traits::ConstU32<1024>;
 	type MessageDeliveryAndDispatchPayment =
 		FeeMarketPayment<Self, WithPangolinParachainFeeMarket, Ring>;
 	type MessageDispatch = bm_pangolin_parachain::FromPangolinParachainMessageDispatch;
@@ -93,6 +97,8 @@ impl Config<WithPangolinParachainAlphaMessages> for Runtime {
 	type MaxUnconfirmedMessagesAtInboundLane = PangolinParachainMaxUnconfirmedMessagesAtInboundLane;
 	type MaxUnrewardedRelayerEntriesAtInboundLane =
 		PangolinParachainMaxUnrewardedRelayerEntriesAtInboundLane;
+	// TODO: update this?
+	type MaximalOutboundPayloadSize = frame_support::traits::ConstU32<1024>;
 	type MessageDeliveryAndDispatchPayment =
 		FeeMarketPayment<Self, WithPangolinParachainAlphaFeeMarket, Ring>;
 	type MessageDispatch = bm_pangolin_parachain_alpha::FromPangolinParachainAlphaMessageDispatch;

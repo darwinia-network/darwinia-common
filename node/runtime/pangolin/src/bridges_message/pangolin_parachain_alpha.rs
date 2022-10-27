@@ -159,11 +159,14 @@ impl BridgedChainWithMessages for PangolinParachainAlpha {
 		bp_darwinia_core::DarwiniaLike::max_extrinsic_size()
 	}
 
-	fn message_weight_limits(_message_payload: &[u8]) -> RangeInclusive<Self::Weight> {
-		let upper_limit = target::maximal_incoming_message_dispatch_weight(
-			bp_darwinia_core::DarwiniaLike::max_extrinsic_weight(),
-		);
-		0..=upper_limit
+	// fn message_weight_limits(_message_payload: &[u8]) -> RangeInclusive<Self::Weight> {
+	// 	let upper_limit = target::maximal_incoming_message_dispatch_weight(
+	// 		bp_darwinia_core::DarwiniaLike::max_extrinsic_weight(),
+	// 	);
+	// 	0..=upper_limit
+	// }
+	fn verify_dispatch_weight(_message_payload: &[u8], _payload_weight: &Weight) -> bool {
+		true
 	}
 }
 impl
