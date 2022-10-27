@@ -34,11 +34,10 @@ drml-common-runtime                   = { default-features = false, path = "../c
 drml-primitives                       = { default-features = false, path = "../../primitives" }
 module-transaction-pause              = { default-features = false, path = "../../../frame/transaction-pause" }
 # messages
+bp-darwinia-core       = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bp-header-chain        = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bp-message-dispatch    = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bp-messages            = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
-bp-darwinia-core            = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
-# bp-pangoro             = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bp-runtime             = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bridge-runtime-common  = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 pallet-bridge-dispatch = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
@@ -133,11 +132,10 @@ std = [
 	"drml-common-runtime/std",
 	"module-transaction-pause/std",
 	# messages
+	"bp-darwinia-core/std",
 	"bp-header-chain/std",
 	"bp-message-dispatch/std",
 	"bp-messages/std",
-	"bp-darwinia-core/std",
-	# "bp-pangoro/std",
 	"bp-runtime/std",
 	"bridge-runtime-common/std",
 	"pallet-bridge-dispatch/std",
