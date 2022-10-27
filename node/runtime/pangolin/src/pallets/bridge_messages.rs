@@ -43,8 +43,7 @@ impl Config<WithPangoroMessages> for Runtime {
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
 	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
 	type MaxUnrewardedRelayerEntriesAtInboundLane = MaxUnrewardedRelayerEntriesAtInboundLane;
-	// TODO: update this?
-	type MaximalOutboundPayloadSize = frame_support::traits::ConstU32<1024>;
+	type MaximalOutboundPayloadSize = bm_pangoro::ToPangoroMaximalOutboundPayloadSize;
 	type MessageDeliveryAndDispatchPayment = FeeMarketPayment<Self, WithPangoroFeeMarket, Ring>;
 	type MessageDispatch = bm_pangoro::FromPangoroMessageDispatch;
 	type OnDeliveryConfirmed = FeeMarketMessageConfirmedHandler<Self, WithPangoroFeeMarket>;
@@ -67,8 +66,8 @@ impl Config<WithPangolinParachainMessages> for Runtime {
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
 	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
 	type MaxUnrewardedRelayerEntriesAtInboundLane = MaxUnrewardedRelayerEntriesAtInboundLane;
-	// TODO: update this?
-	type MaximalOutboundPayloadSize = frame_support::traits::ConstU32<1024>;
+	type MaximalOutboundPayloadSize =
+		bm_pangolin_parachain::ToPangolinParachainMaximalOutboundPayloadSize;
 	type MessageDeliveryAndDispatchPayment =
 		FeeMarketPayment<Self, WithPangolinParachainFeeMarket, Ring>;
 	type MessageDispatch = bm_pangolin_parachain::FromPangolinParachainMessageDispatch;
@@ -95,8 +94,8 @@ impl Config<WithPangolinParachainAlphaMessages> for Runtime {
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
 	type MaxUnconfirmedMessagesAtInboundLane = MaxUnconfirmedMessagesAtInboundLane;
 	type MaxUnrewardedRelayerEntriesAtInboundLane = MaxUnrewardedRelayerEntriesAtInboundLane;
-	// TODO: update this?
-	type MaximalOutboundPayloadSize = frame_support::traits::ConstU32<1024>;
+	type MaximalOutboundPayloadSize =
+		bm_pangolin_parachain_alpha::ToPangoroParachainAlphaMaximalOutboundPayloadSize;
 	type MessageDeliveryAndDispatchPayment =
 		FeeMarketPayment<Self, WithPangolinParachainAlphaFeeMarket, Ring>;
 	type MessageDispatch = bm_pangolin_parachain_alpha::FromPangolinParachainAlphaMessageDispatch;

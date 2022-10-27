@@ -38,8 +38,8 @@ use bridge_runtime_common::{
 	lanes::PANGORO_PANGOLIN_LANE,
 	messages::{
 		source::{
-			self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload,
-			FromThisChainMessageVerifier,
+			self, FromBridgedChainMessagesDeliveryProof, FromThisChainMaximalOutboundPayloadSize,
+			FromThisChainMessagePayload, FromThisChainMessageVerifier,
 		},
 		target::{
 			self, FromBridgedChainEncodedMessageCall, FromBridgedChainMessageDispatch,
@@ -47,6 +47,7 @@ use bridge_runtime_common::{
 		},
 		BridgedChainWithMessages, ChainWithMessages, MessageBridge, ThisChainWithMessages,
 	},
+	pallets::WITH_PANGORO_MESSAGES_PALLET_NAME,
 };
 use darwinia_support::evm::{ConcatConverter, DeriveSubstrateAddress};
 
@@ -54,6 +55,9 @@ use darwinia_support::evm::{ConcatConverter, DeriveSubstrateAddress};
 type ToPangolinMessagesDeliveryProof = FromBridgedChainMessagesDeliveryProof<Hash>;
 /// Messages proof for Pangolin -> Pangoro messages.
 type FromPangolinMessagesProof = FromBridgedChainMessagesProof<Hash>;
+
+pub type ToPangolinMaximalOutboundPayloadSize =
+	FromThisChainMaximalOutboundPayloadSize<WithPangolinMessageBridge>;
 
 /// Message payload for Pangoro -> Pangolin messages.
 pub type ToPangolinMessagePayload = FromThisChainMessagePayload<WithPangolinMessageBridge>;
@@ -104,8 +108,7 @@ impl MessageBridge for WithPangolinMessageBridge {
 	type ThisChain = Pangoro;
 
 	const BRIDGED_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
-	const BRIDGED_MESSAGES_PALLET_NAME: &'static str =
-		bridge_runtime_common::pallets::WITH_PANGORO_MESSAGES_PALLET_NAME;
+	const BRIDGED_MESSAGES_PALLET_NAME: &'static str = WITH_PANGORO_MESSAGES_PALLET_NAME;
 	const RELAYER_FEE_PERCENT: u32 = 10;
 	const THIS_CHAIN_ID: ChainId = PANGORO_CHAIN_ID;
 }

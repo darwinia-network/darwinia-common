@@ -38,8 +38,8 @@ use bridge_runtime_common::{
 	lanes::PANGORO_PANGOLIN_LANE,
 	messages::{
 		source::{
-			self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload,
-			FromThisChainMessageVerifier,
+			self, FromBridgedChainMessagesDeliveryProof, FromThisChainMaximalOutboundPayloadSize,
+			FromThisChainMessagePayload, FromThisChainMessageVerifier,
 		},
 		target::{
 			self, FromBridgedChainEncodedMessageCall, FromBridgedChainMessageDispatch,
@@ -55,6 +55,9 @@ use darwinia_support::evm::{ConcatConverter, DeriveSubstrateAddress};
 type ToPangoroMessagesDeliveryProof = FromBridgedChainMessagesDeliveryProof<Hash>;
 /// Messages proof for Pangoro -> Pangolin messages.
 type FromPangoroMessagesProof = FromBridgedChainMessagesProof<Hash>;
+
+pub type ToPangoroMaximalOutboundPayloadSize =
+	FromThisChainMaximalOutboundPayloadSize<WithPangoroMessageBridge>;
 
 /// Message payload for Pangolin -> Pangoro messages.
 pub type ToPangoroMessagePayload = FromThisChainMessagePayload<WithPangoroMessageBridge>;

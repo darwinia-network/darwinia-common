@@ -30,8 +30,7 @@ impl Config<WithPangolinMessages> for Runtime {
 		ConstU64<MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX>;
 	type MaxUnrewardedRelayerEntriesAtInboundLane =
 		ConstU64<MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX>;
-	// TODO: update this?
-	type MaximalOutboundPayloadSize = frame_support::traits::ConstU32<1024>;
+	type MaximalOutboundPayloadSize = bm_pangolin::ToPangolinMaximalOutboundPayloadSize;
 	type MessageDeliveryAndDispatchPayment = FeeMarketPayment<Self, WithPangolinFeeMarket, Ring>;
 	type MessageDispatch = bm_pangolin::FromPangolinMessageDispatch;
 	type OnDeliveryConfirmed = FeeMarketMessageConfirmedHandler<Self, WithPangolinFeeMarket>;

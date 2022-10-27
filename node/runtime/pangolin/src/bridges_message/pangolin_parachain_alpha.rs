@@ -36,8 +36,8 @@ use bridge_runtime_common::{
 	lanes::PANGOLIN_PANGOLIN_PARACHAIN_ALPHA_LANE,
 	messages::{
 		source::{
-			self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload,
-			FromThisChainMessageVerifier,
+			self, FromBridgedChainMessagesDeliveryProof, FromThisChainMaximalOutboundPayloadSize,
+			FromThisChainMessagePayload, FromThisChainMessageVerifier,
 		},
 		target::{
 			self, FromBridgedChainEncodedMessageCall, FromBridgedChainMessageDispatch,
@@ -52,6 +52,9 @@ use bridge_runtime_common::{
 type ToPangolinParachainAlphaMessagesDeliveryProof = FromBridgedChainMessagesDeliveryProof<Hash>;
 /// Message proof for PangolinParachainAlpha -> Pangolin  messages.
 type FromPangolinParachainAlphaMessagesProof = FromBridgedChainMessagesProof<Hash>;
+
+pub type ToPangoroParachainAlphaMaximalOutboundPayloadSize =
+	FromThisChainMaximalOutboundPayloadSize<WithPangolinParachainAlphaMessageBridge>;
 
 /// Message payload for Pangolin -> PangolinParachainAlpha messages.
 pub type ToPangolinParachainAlphaMessagePayload =
