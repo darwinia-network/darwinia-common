@@ -46,6 +46,7 @@ use bridge_runtime_common::{
 		},
 		BridgedChainWithMessages, ChainWithMessages, MessageBridge, ThisChainWithMessages,
 	},
+	pallets::WITH_PANGOLIN_MESSAGES_PALLET_NAME,
 };
 use darwinia_support::evm::{ConcatConverter, DeriveSubstrateAddress};
 
@@ -103,8 +104,7 @@ impl MessageBridge for WithPangoroMessageBridge {
 	type ThisChain = Pangolin;
 
 	const BRIDGED_CHAIN_ID: ChainId = PANGORO_CHAIN_ID;
-	const BRIDGED_MESSAGES_PALLET_NAME: &'static str =
-		bridge_runtime_common::pallets::WITH_PANGOLIN_MESSAGES_PALLET_NAME;
+	const BRIDGED_MESSAGES_PALLET_NAME: &'static str = WITH_PANGOLIN_MESSAGES_PALLET_NAME;
 	const RELAYER_FEE_PERCENT: u32 = 10;
 	const THIS_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
 }
