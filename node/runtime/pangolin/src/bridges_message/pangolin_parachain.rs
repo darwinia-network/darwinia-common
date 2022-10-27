@@ -22,7 +22,6 @@ use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{weights::Weight, RuntimeDebug};
 use sp_runtime::{FixedPointNumber, FixedU128};
-use sp_std::ops::RangeInclusive;
 // --- darwinia-network ---
 use crate::*;
 use bp_messages::{
@@ -158,14 +157,12 @@ impl BridgedChainWithMessages for PangolinParachain {
 		bp_darwinia_core::DarwiniaLike::max_extrinsic_size()
 	}
 
-	// fn message_weight_limits(_message_payload: &[u8]) -> RangeInclusive<Self::Weight> {
-	// 	let upper_limit = target::maximal_incoming_message_dispatch_weight(
-	// 		bp_darwinia_core::DarwiniaLike::max_extrinsic_weight(),
-	// 	);
-	// 	0..=upper_limit
-	// }
-	fn verify_dispatch_weight(_message_payload: &[u8], _payload_weight: &Weight) -> bool {
-		true
+	fn verify_dispatch_weight(_message_payload: &[u8], payload_weight: &Weight) -> bool {
+		let upper_limit = target::maximal_incoming_message_dispatch_weight(
+			bp_darwinia_core::DarwiniaLike::max_extrinsic_weight(),
+		);
+
+		*payload_weight <= upper_limit
 	}
 }
 impl TargetHeaderChain<ToPangolinParachainMessagePayload, <Self as ChainWithMessages>::AccountId>

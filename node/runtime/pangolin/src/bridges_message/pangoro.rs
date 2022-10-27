@@ -24,7 +24,7 @@ use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{weights::Weight, RuntimeDebug};
 use sp_runtime::{FixedPointNumber, FixedU128};
-use sp_std::{ops::RangeInclusive, prelude::*};
+use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::*;
 use bp_messages::{
@@ -149,22 +149,12 @@ impl BridgedChainWithMessages for Pangoro {
 		bp_darwinia_core::DarwiniaLike::max_extrinsic_size()
 	}
 
-	// fn message_weight_limits(_message_payload: &[u8]) -> RangeInclusive<Weight> {
-	// 	// we don't want to relay too large messages + keep reserve for future upgrades
-	// 	let upper_limit = target::maximal_incoming_message_dispatch_weight(
-	// 		bp_darwinia_core::DarwiniaLike::max_extrinsic_weight(),
-	// 	);
+	fn verify_dispatch_weight(_message_payload: &[u8], payload_weight: &Weight) -> bool {
+		let upper_limit = target::maximal_incoming_message_dispatch_weight(
+			bp_darwinia_core::DarwiniaLike::max_extrinsic_weight(),
+		);
 
-	// 	// we're charging for payload bytes in `WithPangoroMessageBridge::transaction_payment`
-	// 	// function
-	// 	//
-	// 	// this bridge may be used to deliver all kind of messages, so we're not making any
-	// 	// assumptions about minimal dispatch weight here
-
-	// 	0..=upper_limit
-	// }
-	fn verify_dispatch_weight(_message_payload: &[u8], _payload_weight: &Weight) -> bool {
-		true
+		*payload_weight <= upper_limit
 	}
 }
 impl TargetHeaderChain<ToPangoroMessagePayload, <Self as ChainWithMessages>::AccountId>

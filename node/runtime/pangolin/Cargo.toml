@@ -36,12 +36,10 @@ module-transaction-pause              = { default-features = false, path = "../.
 to-parachain-backing                  = { default-features = false, path = "../../../frame/wormhole/backing/parachain" }
 to-tron-backing                       = { default-features = false, path = "../../../frame/wormhole/backing/tron" }
 # messages
+bp-darwinia-core         = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bp-message-dispatch      = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bp-messages              = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
-bp-darwinia-core              = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
-# bp-darwinia_core-parachain    = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
-# bp-pangoro               = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
-bp-polkadot-core                = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
+bp-polkadot-core         = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bp-runtime               = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bridge-runtime-common    = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 pallet-bridge-dispatch   = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
@@ -150,11 +148,9 @@ std = [
 	"to-tron-backing/std",
 	"to-parachain-backing/std",
 	# messages
+	"bp-darwinia-core/std",
 	"bp-messages/std",
 	"bp-message-dispatch/std",
-	"bp-darwinia-core/std",
-	# "bp-darwinia_core-parachain/std",
-	# "bp-pangoro/std",
 	"bp-polkadot-core/std",
 	"bp-runtime/std",
 	"bridge-runtime-common/std",
