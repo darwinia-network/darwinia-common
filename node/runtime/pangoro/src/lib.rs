@@ -77,6 +77,7 @@ pub type SignedExtra = (
 	CheckNonce<Runtime>,
 	CheckWeight<Runtime>,
 	ChargeTransactionPayment<Runtime>,
+	BridgeRejectObsoleteHeadersAndMessages,
 );
 pub type UncheckedExtrinsic =
 	fp_self_contained::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
@@ -195,6 +196,7 @@ where
 			CheckNonce::<Runtime>::from(nonce),
 			CheckWeight::<Runtime>::new(),
 			ChargeTransactionPayment::<Runtime>::from(tip),
+			BridgeRejectObsoleteHeadersAndMessages,
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|e| {
@@ -220,6 +222,14 @@ where
 }
 
 drml_common_runtime::impl_self_contained_call!();
+
+bridge_runtime_common::generate_bridge_reject_obsolete_headers_and_messages! {
+	Call, AccountId,
+	// Grandpa
+	BridgePangolinGrandpa,
+	// Messages
+	BridgePangolinMessages
+}
 
 sp_api::impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
