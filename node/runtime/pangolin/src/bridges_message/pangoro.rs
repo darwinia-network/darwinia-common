@@ -55,7 +55,7 @@ use darwinia_support::evm::{ConcatConverter, DeriveSubstrateAddress};
 type ToPangoroMessagesDeliveryProof = FromBridgedChainMessagesDeliveryProof<Hash>;
 /// Messages proof for Pangoro -> Pangolin messages.
 type FromPangoroMessagesProof = FromBridgedChainMessagesProof<Hash>;
-
+/// Payload limit for Pangolin -> Pangoro messages.
 pub type ToPangoroMaximalOutboundPayloadSize =
 	FromThisChainMaximalOutboundPayloadSize<WithPangoroMessageBridge>;
 

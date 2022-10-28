@@ -52,7 +52,7 @@ use bridge_runtime_common::{
 type ToPangolinParachainAlphaMessagesDeliveryProof = FromBridgedChainMessagesDeliveryProof<Hash>;
 /// Message proof for PangolinParachainAlpha -> Pangolin  messages.
 type FromPangolinParachainAlphaMessagesProof = FromBridgedChainMessagesProof<Hash>;
-
+/// Payload limit for Pangolin -> PangoroParachainAlpha messages.
 pub type ToPangoroParachainAlphaMaximalOutboundPayloadSize =
 	FromThisChainMaximalOutboundPayloadSize<WithPangolinParachainAlphaMessageBridge>;
 
