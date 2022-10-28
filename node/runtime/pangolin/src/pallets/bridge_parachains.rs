@@ -9,6 +9,8 @@ use frame_support::traits::IsInVec;
 use pallet_bridge_parachains::Config;
 
 frame_support::parameter_types! {
+	pub const ParasPalletName: &'static str = PARAS_PALLET_NAME;
+	// TODO: Use this or Everything
 	pub GetTenFirstParachains: Vec<ParaId> = (0..10).map(ParaId).collect();
 }
 
@@ -17,7 +19,7 @@ impl Config<WithRococoParachainInstance> for Runtime {
 	type Event = Event;
 	type HeadsToKeep = RococoHeadersToKeep;
 	type ParasPalletName = ParasPalletName;
-	type TrackedParachains = IsInVec<GetTenFirstParachains>;
+	type TrackedParachains = frame_support::traits::Everything;
 	type WeightInfo = ();
 }
 impl Config<WithMoonbaseRelayParachainInstance> for Runtime {
@@ -25,6 +27,6 @@ impl Config<WithMoonbaseRelayParachainInstance> for Runtime {
 	type Event = Event;
 	type HeadsToKeep = RococoHeadersToKeep;
 	type ParasPalletName = ParasPalletName;
-	type TrackedParachains = IsInVec<GetTenFirstParachains>;
+	type TrackedParachains = frame_support::traits::Everything;
 	type WeightInfo = ();
 }
