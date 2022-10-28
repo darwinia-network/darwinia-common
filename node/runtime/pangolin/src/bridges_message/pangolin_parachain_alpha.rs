@@ -207,3 +207,28 @@ impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for PangolinParacha
 		>(ParaId(PANGOLIN_PARACHAIN_ALPHA_ID), proof, messages_count)
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use bp_polkadot_core::PolkadotLike;
+	use bridge_runtime_common::{
+		assert_complete_bridge_types,
+		integrity::{
+			assert_complete_bridge_constants, AssertBridgeMessagesPalletConstants,
+			AssertBridgePalletNames, AssertChainConstants, AssertCompleteBridgeConstants,
+		},
+	};
+
+	#[test]
+	fn ensure_bridge_integrity() {
+		assert_complete_bridge_types!(
+			runtime: Runtime,
+			with_bridged_chain_grandpa_instance: WithMoonbaseRelayGrandpa,
+			with_bridged_chain_messages_instance: WithPangolinParachainAlphaMessages,
+			bridge: WithPangolinParachainAlphaMessageBridge,
+			this_chain: DarwiniaLike,
+			bridged_chain: PolkadotLike,
+		);
+	}
+}

@@ -219,3 +219,28 @@ impl SenderOrigin<crate::AccountId> for crate::Origin {
 		}
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use bridge_runtime_common::{
+		assert_complete_bridge_types,
+		integrity::{
+			assert_complete_bridge_constants, AssertBridgeMessagesPalletConstants,
+			AssertBridgePalletNames, AssertChainConstants, AssertCompleteBridgeConstants,
+		},
+	};
+
+	#[test]
+	fn ensure_bridge_integrity() {
+		assert_complete_bridge_types!(
+			runtime: Runtime,
+			with_bridged_chain_grandpa_instance: WithPangolinGrandpa,
+			with_bridged_chain_messages_instance: WithPangolinMessages,
+			bridge: WithPangolinMessageBridge,
+			this_chain: DarwiniaLike,
+			bridged_chain: DarwiniaLike,
+		);
+	}
+}
+

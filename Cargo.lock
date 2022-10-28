@@ -753,6 +753,7 @@ dependencies = [
  "sp-state-machine",
  "sp-std",
  "sp-trie",
+ "static_assertions",
 ]
 
 [[package]]
