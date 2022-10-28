@@ -4,15 +4,11 @@ pub use pallet_bridge_parachains::{
 
 // --- darwinia-network ---
 use crate::*;
-use bp_polkadot_core::parachains::ParaId;
+use bp_polkadot_core::parachains::{ParaId, PARAS_PALLET_NAME};
 use frame_support::traits::IsInVec;
 use pallet_bridge_parachains::Config;
 
-pub const PARAS_PALLET_NAME: &str = "Paras";
-
 frame_support::parameter_types! {
-	// TODO: update these two config
-	pub const ParasPalletName: &'static str = PARAS_PALLET_NAME;
 	pub GetTenFirstParachains: Vec<ParaId> = (0..10).map(ParaId).collect();
 }
 
