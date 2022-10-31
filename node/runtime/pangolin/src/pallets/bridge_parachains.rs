@@ -5,7 +5,6 @@ pub use pallet_bridge_parachains::{
 // --- darwinia-network ---
 use crate::*;
 use bp_polkadot_core::parachains::{ParaId, PARAS_PALLET_NAME};
-use frame_support::traits::IsInVec;
 use pallet_bridge_parachains::Config;
 
 frame_support::parameter_types! {

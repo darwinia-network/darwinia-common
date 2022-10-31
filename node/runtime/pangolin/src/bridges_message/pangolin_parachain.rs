@@ -208,12 +208,20 @@ impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for PangolinParacha
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use bp_darwinia_core::{
+		RuntimeBlockLength, RuntimeBlockWeights, MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX,
+		MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX,
+	};
 	use bp_polkadot_core::PolkadotLike;
 	use bridge_runtime_common::{
 		assert_complete_bridge_types,
 		integrity::{
 			assert_complete_bridge_constants, AssertBridgeMessagesPalletConstants,
 			AssertBridgePalletNames, AssertChainConstants, AssertCompleteBridgeConstants,
+		},
+		pallets::{
+			WITH_PANGOLIN_MESSAGES_PALLET_NAME, WITH_PANGOLIN_PARACHAIN_GRANDPA_PALLET_NAME,
+			WITH_PANGOLIN_PARACHAIN_MESSAGES_PALLET_NAME,
 		},
 	};
 
@@ -227,5 +235,31 @@ mod tests {
 			this_chain: DarwiniaLike,
 			bridged_chain: PolkadotLike,
 		);
+
+		assert_complete_bridge_constants::<
+			Runtime,
+			WithRococoGrandpa,
+			WithPangolinParachainMessages,
+			WithPangolinParachainMessageBridge,
+			DarwiniaLike,
+		>(AssertCompleteBridgeConstants {
+			this_chain_constants: AssertChainConstants {
+				block_length: RuntimeBlockLength::get(),
+				block_weights: RuntimeBlockWeights::get(),
+			},
+			messages_pallet_constants: AssertBridgeMessagesPalletConstants {
+				max_unrewarded_relayers_in_bridged_confirmation_tx:
+					MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX,
+				max_unconfirmed_messages_in_bridged_confirmation_tx:
+					MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX,
+				bridged_chain_id: bp_runtime::PANGOLIN_PARACHAIN_CHAIN_ID,
+			},
+			pallet_names: AssertBridgePalletNames {
+				with_this_chain_messages_pallet_name: WITH_PANGOLIN_MESSAGES_PALLET_NAME,
+				with_bridged_chain_grandpa_pallet_name: WITH_PANGOLIN_PARACHAIN_GRANDPA_PALLET_NAME,
+				with_bridged_chain_messages_pallet_name:
+					WITH_PANGOLIN_PARACHAIN_MESSAGES_PALLET_NAME,
+			},
+		});
 	}
 }
