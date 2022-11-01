@@ -4,13 +4,11 @@ pub use pallet_bridge_parachains::{
 
 // --- darwinia-network ---
 use crate::*;
-use bp_polkadot_core::parachains::{ParaId, PARAS_PALLET_NAME};
+use bp_polkadot_core::parachains::PARAS_PALLET_NAME;
 use pallet_bridge_parachains::Config;
 
 frame_support::parameter_types! {
 	pub const ParasPalletName: &'static str = PARAS_PALLET_NAME;
-	// TODO: Is it okay to use Everything here
-	pub GetTenFirstParachains: Vec<ParaId> = (0..10).map(ParaId).collect();
 }
 
 impl Config<WithRococoParachainInstance> for Runtime {
