@@ -14,11 +14,11 @@ version     = "2.10.1"
 codec          = { package = "parity-scale-codec", version = "2.3", default-features = false }
 ethereum-types = { version = "0.12.0", default-features = false }
 # paritytech
-sp-externalities     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
-sp-runtime-interface = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
-sp-std               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
+sp-externalities     = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.13.0" }
+sp-runtime-interface = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.13.0" }
+sp-std               = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.13.0" }
 # frontier or moonbeam
-evm-tracing-events = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.12.5", default-features = false }
+evm-tracing-events = { git = "https://github.com/darwinia-network/moonbeam", branch = "darwinia-v0.13.0", default-features = false }
 
 [features]
 default = ["std"]
