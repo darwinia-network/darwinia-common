@@ -22,24 +22,24 @@ frame_support::parameter_types! {
 	//
 	// Assuming the worst case of every header being finalized, we will keep headers for at least a
 	// week.
-	pub const PangoroHeadersToKeep: u32 = 7 * bp_darwinia_core::DAYS as u32;
-	pub const RococoHeadersToKeep: u32 = 7 * bp_polkadot_core::DAYS as u32;
+	pub const PangoroHeadersToKeep: u32 = 7 * bp_pangoro::DAYS as u32;
+	pub const RococoHeadersToKeep: u32 = 7 * bp_rococo::DAYS as u32;
 }
 
 impl Config<WithPangoroGrandpa> for Runtime {
-	type BridgedChain = bp_darwinia_core::DarwiniaLike;
+	type BridgedChain = drml_common_runtime::Pangoro;
 	type HeadersToKeep = PangoroHeadersToKeep;
 	type MaxRequests = MaxRequests;
 	type WeightInfo = PangoroGrandpaWeightInfo<Self>;
 }
 impl Config<WithRococoGrandpa> for Runtime {
-	type BridgedChain = bp_polkadot_core::PolkadotLike;
+	type BridgedChain = drml_common_runtime::Rococo;
 	type HeadersToKeep = RococoHeadersToKeep;
 	type MaxRequests = MaxRequests;
 	type WeightInfo = RococoGrandpaWeightInfo<Self>;
 }
 impl Config<WithMoonbaseRelayGrandpa> for Runtime {
-	type BridgedChain = bp_polkadot_core::PolkadotLike;
+	type BridgedChain = drml_common_runtime::MoonbaseRelay;
 	type HeadersToKeep = RococoHeadersToKeep;
 	type MaxRequests = MaxRequests;
 	type WeightInfo = RococoGrandpaWeightInfo<Self>;

@@ -159,12 +159,12 @@ impl ChainWithMessages for PangolinParachainAlpha {
 }
 impl BridgedChainWithMessages for PangolinParachainAlpha {
 	fn maximal_extrinsic_size() -> u32 {
-		bp_pangolin_parachain::DarwiniaLike::max_extrinsic_size()
+		PangolinParaChain::max_extrinsic_size()
 	}
 
 	fn verify_dispatch_weight(_message_payload: &[u8], payload_weight: &Weight) -> bool {
 		let upper_limit = target::maximal_incoming_message_dispatch_weight(
-			bp_pangolin_parachain::DarwiniaLike::max_extrinsic_weight(),
+			PangolinParaChain::max_extrinsic_weight(),
 		);
 
 		*payload_weight <= upper_limit
@@ -214,11 +214,6 @@ impl SourceHeaderChain<<Self as ChainWithMessages>::Balance> for PangolinParacha
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use bp_darwinia_core::{
-		RuntimeBlockLength, RuntimeBlockWeights, MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX,
-		MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX,
-	};
-	use bp_polkadot_core::PolkadotLike;
 	use bridge_runtime_common::{
 		assert_complete_bridge_types,
 		integrity::{
@@ -238,8 +233,8 @@ mod tests {
 			with_bridged_chain_grandpa_instance: WithMoonbaseRelayGrandpa,
 			with_bridged_chain_messages_instance: WithPangolinParachainAlphaMessages,
 			bridge: WithPangolinParachainAlphaMessageBridge,
-			this_chain: DarwiniaLike,
-			bridged_chain: PolkadotLike,
+			this_chain: Pangolin,
+			bridged_chain: MoonbaseRelay,
 		);
 
 		assert_complete_bridge_constants::<
@@ -247,17 +242,17 @@ mod tests {
 			WithMoonbaseRelayGrandpa,
 			WithPangolinParachainAlphaMessages,
 			WithPangolinParachainAlphaMessageBridge,
-			DarwiniaLike,
+			Pangolin,
 		>(AssertCompleteBridgeConstants {
 			this_chain_constants: AssertChainConstants {
-				block_length: RuntimeBlockLength::get(),
-				block_weights: RuntimeBlockWeights::get(),
+				block_length: bp_pangolin::RuntimeBlockLength::get(),
+				block_weights: bp_pangolin::RuntimeBlockWeights::get(),
 			},
 			messages_pallet_constants: AssertBridgeMessagesPalletConstants {
 				max_unrewarded_relayers_in_bridged_confirmation_tx:
-					MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX,
+					bp_pangolin_parachain::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX,
 				max_unconfirmed_messages_in_bridged_confirmation_tx:
-					MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX,
+					bp_pangolin_parachain::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX,
 				bridged_chain_id: bp_runtime::PANGOLIN_PARACHAIN_ALPHA_CHAIN_ID,
 			},
 			pallet_names: AssertBridgePalletNames {

@@ -13,7 +13,6 @@ use bp_messages::{LaneId, MessageNonce};
 use darwinia_ethereum::{RawOrigin, Transaction};
 use darwinia_evm::CurrencyAdapt;
 use darwinia_support::evm::{DeriveEthereumAddress, DeriveSubstrateAddress};
-use drml_common_runtime::bp_pangolin;
 use pallet_bridge_dispatch::Config;
 
 pub struct CallValidator;
