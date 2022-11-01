@@ -23,6 +23,6 @@ impl Config for Runtime {
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type PalletsOrigin = OriginCaller;
 	type PreimageProvider = Preimage;
-	type ScheduleOrigin = EnsureRoot<AccountId>;
+	type ScheduleOrigin = Root;
 	type WeightInfo = ();
 }

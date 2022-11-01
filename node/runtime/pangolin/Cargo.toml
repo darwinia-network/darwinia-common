@@ -116,9 +116,6 @@ pallet-evm-precompile-bn128   = { default-features = false, git = "https://githu
 pallet-evm-precompile-modexp  = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.5" }
 pallet-evm-precompile-simple  = { default-features = false, git = "https://github.com/darwinia-network/frontier", branch = "darwinia-v0.12.5" }
 
-[dev-dependencies]
-sp-io = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
-
 [build-dependencies]
 # paritytech
 substrate-wasm-builder = { git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.12.5" }
