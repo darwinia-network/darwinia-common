@@ -54,7 +54,7 @@ type ToPangolinParachainMessagesDeliveryProof =
 /// Message proof for PangolinParachain -> Pangolin  messages.
 type FromPangolinParachainMessagesProof =
 	FromBridgedChainMessagesProof<bp_pangolin_parachain::Hash>;
-/// Payload limit for Pangolin -> PangolinParachain messages.
+/// Outbound payload size limit for Pangolin -> PangolinParachain messages.
 pub type ToPangolinParachainMaximalOutboundPayloadSize =
 	FromThisChainMaximalOutboundPayloadSize<WithPangolinParachainMessageBridge>;
 

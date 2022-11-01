@@ -55,7 +55,7 @@ use drml_common_runtime::{bp_pangolin, bp_pangoro};
 type ToPangoroMessagesDeliveryProof = FromBridgedChainMessagesDeliveryProof<bp_pangoro::Hash>;
 /// Messages proof for Pangoro -> Pangolin messages.
 type FromPangoroMessagesProof = FromBridgedChainMessagesProof<bp_pangoro::Hash>;
-/// Payload limit for Pangolin -> Pangoro messages.
+/// Outbound payload size limit for Pangolin -> Pangoro messages.
 pub type ToPangoroMaximalOutboundPayloadSize =
 	FromThisChainMaximalOutboundPayloadSize<WithPangoroMessageBridge>;
 
