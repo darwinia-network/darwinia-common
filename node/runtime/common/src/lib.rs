@@ -27,9 +27,15 @@ pub use gov_origin::*;
 pub mod impls;
 pub use impls::*;
 
+pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
 pub use frame_support::weights::constants::{ExtrinsicBaseWeight, RocksDbWeight};
 
-pub use darwinia_balances::{Instance1 as RingInstance, Instance2 as KtonInstance};
+/// Primitives of the Pangolin chain
+pub use bp_darwinia_core as bp_pangolin;
+/// Primitives of the Pangolin-parachain and Pangolin-parachain-alpha chain
+pub use bp_darwinia_core as bp_pangolin_parachain;
+/// Primitives of the Pangoro chain
+pub use bp_darwinia_core as bp_pangoro;
 
 // --- crates.io ---
 use static_assertions::const_assert;

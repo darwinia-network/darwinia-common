@@ -27,7 +27,6 @@ use sp_runtime::{FixedPointNumber, FixedU128};
 use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::*;
-use bp_darwinia_core::{AccountId, AccountPublic, Balance, DarwiniaLike, Hash, Signature};
 use bp_messages::{
 	source_chain::{SenderOrigin, TargetHeaderChain},
 	target_chain::{ProvedMessages, SourceHeaderChain},
@@ -50,11 +49,12 @@ use bridge_runtime_common::{
 	pallets::WITH_PANGOLIN_MESSAGES_PALLET_NAME,
 };
 use darwinia_support::evm::{ConcatConverter, DeriveSubstrateAddress};
+use drml_common_runtime::{bp_pangolin, bp_pangoro};
 
 /// Messages delivery proof for Pangolin -> Pangoro messages.
-type ToPangoroMessagesDeliveryProof = FromBridgedChainMessagesDeliveryProof<Hash>;
+type ToPangoroMessagesDeliveryProof = FromBridgedChainMessagesDeliveryProof<bp_pangoro::Hash>;
 /// Messages proof for Pangoro -> Pangolin messages.
-type FromPangoroMessagesProof = FromBridgedChainMessagesProof<Hash>;
+type FromPangoroMessagesProof = FromBridgedChainMessagesProof<bp_pangoro::Hash>;
 /// Payload limit for Pangolin -> Pangoro messages.
 pub type ToPangoroMaximalOutboundPayloadSize =
 	FromThisChainMaximalOutboundPayloadSize<WithPangoroMessageBridge>;
@@ -117,11 +117,11 @@ impl MessageBridge for WithPangoroMessageBridge {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct Pangolin;
 impl ChainWithMessages for Pangolin {
-	type AccountId = AccountId;
-	type Balance = Balance;
-	type Hash = Hash;
-	type Signature = Signature;
-	type Signer = AccountPublic;
+	type AccountId = bp_pangolin::AccountId;
+	type Balance = bp_pangolin::Balance;
+	type Hash = bp_pangolin::Hash;
+	type Signature = bp_pangolin::Signature;
+	type Signer = bp_pangolin::AccountPublic;
 	type Weight = Weight;
 }
 impl ThisChainWithMessages for Pangolin {
@@ -141,21 +141,22 @@ impl ThisChainWithMessages for Pangolin {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct Pangoro;
 impl ChainWithMessages for Pangoro {
-	type AccountId = AccountId;
-	type Balance = Balance;
-	type Hash = Hash;
-	type Signature = Signature;
-	type Signer = AccountPublic;
+	type AccountId = bp_pangoro::AccountId;
+	type Balance = bp_pangoro::Balance;
+	type Hash = bp_pangoro::Hash;
+	type Signature = bp_pangoro::Signature;
+	type Signer = bp_pangoro::AccountPublic;
 	type Weight = Weight;
 }
 impl BridgedChainWithMessages for Pangoro {
 	fn maximal_extrinsic_size() -> u32 {
-		DarwiniaLike::max_extrinsic_size()
+		bp_pangoro::DarwiniaLike::max_extrinsic_size()
 	}
 
 	fn verify_dispatch_weight(_message_payload: &[u8], payload_weight: &Weight) -> bool {
-		let upper_limit =
-			target::maximal_incoming_message_dispatch_weight(DarwiniaLike::max_extrinsic_weight());
+		let upper_limit = target::maximal_incoming_message_dispatch_weight(
+			bp_pangoro::DarwiniaLike::max_extrinsic_weight(),
+		);
 
 		*payload_weight <= upper_limit
 	}
@@ -176,7 +177,7 @@ impl TargetHeaderChain<ToPangoroMessagePayload, <Self as ChainWithMessages>::Acc
 
 	fn verify_messages_delivery_proof(
 		proof: Self::MessagesDeliveryProof,
-	) -> Result<(LaneId, InboundLaneData<AccountId>), Self::Error> {
+	) -> Result<(LaneId, InboundLaneData<bp_pangolin::AccountId>), Self::Error> {
 		source::verify_messages_delivery_proof::<
 			WithPangoroMessageBridge,
 			Runtime,

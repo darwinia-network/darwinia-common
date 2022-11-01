@@ -17,6 +17,8 @@ static_assertions = { version = "1.1" }
 darwinia-balances = { default-features = false, path = "../../../frame/balances" }
 darwinia-support  = { default-features = false, path = "../../../frame/support" }
 drml-primitives   = { default-features = false, path = "../../primitives" }
+# darwinia-messages-substrate
+bp-darwinia-core = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.13.0" }
 # paritytech
 frame-election-provider-support = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.13.0" }
 frame-support                   = { default-features = false, git = "https://github.com/darwinia-network/substrate", branch = "darwinia-v0.13.0" }
@@ -43,6 +45,8 @@ std = [
 	"darwinia-balances/std",
 	"darwinia-support/std",
 	"drml-primitives/std",
+	# darwinia-messages-substrate
+	"bp-darwinia-core/std",
 	# paritytech
 	"frame-election-provider-support/std",
 	"frame-support/std",

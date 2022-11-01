@@ -11,18 +11,18 @@ use frame_support::{
 use sp_runtime::transaction_validity::{InvalidTransaction, TransactionValidityError};
 // --- darwinia-network ---
 use crate::*;
-use bp_darwinia_core::{AccountId, AccountIdConverter, AccountPublic, Signature};
 use bp_message_dispatch::{CallValidate, IntoDispatchOrigin as IntoDispatchOriginT};
 use bp_messages::{LaneId, MessageNonce};
 use darwinia_ethereum::{RawOrigin, Transaction};
 use darwinia_evm::CurrencyAdapt;
 use darwinia_support::evm::{DeriveEthereumAddress, DeriveSubstrateAddress};
+use drml_common_runtime::{bp_pangolin, bp_pangolin_parachain, bp_pangoro};
 use pallet_bridge_dispatch::Config;
 
 pub struct CallValidator;
-impl CallValidate<AccountId, Origin, Call> for CallValidator {
+impl CallValidate<bp_pangolin::AccountId, Origin, Call> for CallValidator {
 	fn check_receiving_before_dispatch(
-		relayer_account: &AccountId,
+		relayer_account: &bp_pangolin::AccountId,
 		call: &Call,
 	) -> Result<(), &'static str> {
 		match call {
@@ -52,7 +52,7 @@ impl CallValidate<AccountId, Origin, Call> for CallValidator {
 	}
 
 	fn call_validate(
-		relayer_account: &AccountId,
+		relayer_account: &bp_pangolin::AccountId,
 		origin: &Origin,
 		call: &Call,
 	) -> Result<(), TransactionValidityError> {
@@ -104,38 +104,38 @@ impl IntoDispatchOriginT<AccountId, Call, Origin> for IntoDispatchOrigin {
 }
 
 impl Config<WithPangoroDispatch> for Runtime {
-	type AccountIdConverter = AccountIdConverter;
+	type AccountIdConverter = bp_pangolin::AccountIdConverter;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
 	type CallValidator = CallValidator;
 	type EncodedCall = bm_pangoro::FromPangoroEncodedCall;
 	type Event = Event;
 	type IntoDispatchOrigin = IntoDispatchOrigin;
-	type SourceChainAccountId = AccountId;
-	type TargetChainAccountPublic = AccountPublic;
-	type TargetChainSignature = Signature;
+	type SourceChainAccountId = bp_pangoro::AccountId;
+	type TargetChainAccountPublic = bp_pangolin::AccountPublic;
+	type TargetChainSignature = bp_pangolin::Signature;
 }
 impl Config<WithPangolinParachainDispatch> for Runtime {
-	type AccountIdConverter = AccountIdConverter;
+	type AccountIdConverter = bp_pangolin::AccountIdConverter;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
 	type CallValidator = CallValidator;
 	type EncodedCall = bm_pangolin_parachain::FromPangolinParachainEncodedCall;
 	type Event = Event;
 	type IntoDispatchOrigin = IntoDispatchOrigin;
-	type SourceChainAccountId = AccountId;
-	type TargetChainAccountPublic = AccountPublic;
-	type TargetChainSignature = Signature;
+	type SourceChainAccountId = bp_pangolin_parachain::AccountId;
+	type TargetChainAccountPublic = bp_pangolin::AccountPublic;
+	type TargetChainSignature = bp_pangolin::Signature;
 }
 impl Config<WithPangolinParachainAlphaDispatch> for Runtime {
-	type AccountIdConverter = AccountIdConverter;
+	type AccountIdConverter = bp_pangolin::AccountIdConverter;
 	type BridgeMessageId = (LaneId, MessageNonce);
 	type Call = Call;
 	type CallValidator = CallValidator;
 	type EncodedCall = bm_pangolin_parachain_alpha::FromPangolinParachainAlphaEncodedCall;
 	type Event = Event;
 	type IntoDispatchOrigin = IntoDispatchOrigin;
-	type SourceChainAccountId = AccountId;
-	type TargetChainAccountPublic = AccountPublic;
-	type TargetChainSignature = Signature;
+	type SourceChainAccountId = bp_pangolin_parachain::AccountId;
+	type TargetChainAccountPublic = bp_pangolin::AccountPublic;
+	type TargetChainSignature = bp_pangolin::Signature;
 }

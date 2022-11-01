@@ -1776,6 +1776,7 @@ dependencies = [
 name = "drml-common-runtime"
 version = "2.10.1"
 dependencies = [
+ "bp-darwinia-core",
  "darwinia-balances",
  "darwinia-support",
  "drml-primitives",
