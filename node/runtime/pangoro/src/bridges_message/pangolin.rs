@@ -51,9 +51,9 @@ use bridge_runtime_common::{
 use darwinia_support::evm::{ConcatConverter, DeriveSubstrateAddress};
 
 /// Messages delivery proof for Pangoro -> Pangolin messages.
-type ToPangolinMessagesDeliveryProof = FromBridgedChainMessagesDeliveryProof<Hash>;
+type ToPangolinMessagesDeliveryProof = FromBridgedChainMessagesDeliveryProof<bp_pangolin::Hash>;
 /// Messages proof for Pangolin -> Pangoro messages.
-type FromPangolinMessagesProof = FromBridgedChainMessagesProof<Hash>;
+type FromPangolinMessagesProof = FromBridgedChainMessagesProof<bp_pangolin::Hash>;
 /// Payload limit for Pangolin -> Pangoro messages.
 pub type ToPangolinMaximalOutboundPayloadSize =
 	FromThisChainMaximalOutboundPayloadSize<WithPangolinMessageBridge>;
@@ -116,11 +116,11 @@ impl MessageBridge for WithPangolinMessageBridge {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct Pangoro;
 impl ChainWithMessages for Pangoro {
-	type AccountId = AccountId;
-	type Balance = Balance;
-	type Hash = Hash;
-	type Signature = Signature;
-	type Signer = AccountPublic;
+	type AccountId = bp_pangoro::AccountId;
+	type Balance = bp_pangoro::Balance;
+	type Hash = bp_pangoro::Hash;
+	type Signature = bp_pangoro::Signature;
+	type Signer = bp_pangoro::AccountPublic;
 	type Weight = Weight;
 }
 impl ThisChainWithMessages for Pangoro {
@@ -140,11 +140,11 @@ impl ThisChainWithMessages for Pangoro {
 #[derive(Clone, Copy, RuntimeDebug)]
 pub struct Pangolin;
 impl ChainWithMessages for Pangolin {
-	type AccountId = AccountId;
-	type Balance = Balance;
-	type Hash = Hash;
-	type Signature = Signature;
-	type Signer = AccountPublic;
+	type AccountId = bp_pangolin::AccountId;
+	type Balance = bp_pangolin::Balance;
+	type Hash = bp_pangolin::Hash;
+	type Signature = bp_pangolin::Signature;
+	type Signer = bp_pangolin::AccountPublic;
 	type Weight = Weight;
 }
 impl BridgedChainWithMessages for Pangolin {
@@ -176,7 +176,7 @@ impl TargetHeaderChain<ToPangolinMessagePayload, <Self as ChainWithMessages>::Ac
 
 	fn verify_messages_delivery_proof(
 		proof: Self::MessagesDeliveryProof,
-	) -> Result<(LaneId, InboundLaneData<AccountId>), Self::Error> {
+	) -> Result<(LaneId, InboundLaneData<bp_pangoro::AccountId>), Self::Error> {
 		source::verify_messages_delivery_proof::<
 			WithPangolinMessageBridge,
 			Runtime,
