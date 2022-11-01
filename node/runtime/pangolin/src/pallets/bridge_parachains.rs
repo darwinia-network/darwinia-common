@@ -9,7 +9,7 @@ use pallet_bridge_parachains::Config;
 
 frame_support::parameter_types! {
 	pub const ParasPalletName: &'static str = PARAS_PALLET_NAME;
-	// TODO: Use this or Everything
+	// TODO: Is it okay to use Everything here
 	pub GetTenFirstParachains: Vec<ParaId> = (0..10).map(ParaId).collect();
 }
 

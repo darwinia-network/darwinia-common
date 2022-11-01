@@ -235,7 +235,6 @@ runtime-benchmarks = [
 	"darwinia-ethereum/runtime-benchmarks",
 	"darwinia-evm/runtime-benchmarks",
 	"pallet-fee-market/runtime-benchmarks",
-	# "to-parachain-backing/runtime-benchmarks",
 	"drml-common-runtime/runtime-benchmarks",
 	# paritytech
 	"frame-benchmarking",

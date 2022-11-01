@@ -793,8 +793,6 @@ sp_api::impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_fee_market, PangoroFeeMarket);
 			list_benchmark!(list, extra, pallet_fee_market, PangolinParachainFeeMarket);
 			// list_benchmark!(list, extra, module_transaction_pause, TransactionPause);
-			// list_benchmark!(list, extra, from_substrate_issuing, Substrate2SubstrateIssuing);
-			// list_benchmark!(list, extra, to_parachain_backing, ToPangolinParachainBacking);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -871,8 +869,6 @@ sp_api::impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_fee_market, PangoroFeeMarket);
 			add_benchmark!(params, batches, pallet_fee_market, PangolinParachainFeeMarket);
 			// add_benchmark!(params, batches, module_transaction_pause, TransactionPause);
-			// add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
-			// add_benchmark!(params, batches, to_parachain_backing, ToPangolinParachainBacking);
 
 			Ok(batches)
 		}
