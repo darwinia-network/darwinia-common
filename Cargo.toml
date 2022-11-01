@@ -100,17 +100,3 @@ lto      = true
 evm           = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.13.0" }
 evm-gasometer = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.13.0" }
 evm-runtime   = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.13.0" }
-
-[patch."https://github.com/darwinia-network/darwinia-messages-substrate"]
-pallet-bridge-dispatch = { path = "../darwinia-messages-substrate/modules/dispatch" }
-pallet-fee-market = { path = "../darwinia-messages-substrate/modules/fee-market" }
-pallet-bridge-grandpa = { path = "../darwinia-messages-substrate/modules/grandpa" }
-pallet-bridge-messages = { path = "../darwinia-messages-substrate/modules/messages" }
-pallet-bridge-parachains = { path = "../darwinia-messages-substrate/modules/parachains" }
-bp-runtime = { path = "../darwinia-messages-substrate/primitives/runtime" }
-bp-header-chain = { path = "../darwinia-messages-substrate/primitives/header-chain" }
-bp-messages = { path = "../darwinia-messages-substrate/primitives/messages" }
-bp-polkadot-core = { path = "../darwinia-messages-substrate/primitives/polkadot-core" }
-bp-darwinia-core = { path = "../darwinia-messages-substrate/primitives/darwinia-core" }
-bridge-runtime-common = { path = "../darwinia-messages-substrate/runtime-common" }
-bp-message-dispatch = { path = "../darwinia-messages-substrate/primitives/message-dispatch" }
