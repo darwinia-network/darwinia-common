@@ -69,10 +69,8 @@ impl Config<WithPangolinParachainMessages> for Runtime {
 	type MessageDeliveryAndDispatchPayment =
 		FeeMarketPayment<Self, WithPangolinParachainFeeMarket, Ring>;
 	type MessageDispatch = bm_pangolin_parachain::FromPangolinParachainMessageDispatch;
-	type OnDeliveryConfirmed = (
-		ToPangolinParachainBacking,
-		FeeMarketMessageConfirmedHandler<Self, WithPangolinParachainFeeMarket>,
-	);
+	type OnDeliveryConfirmed =
+		FeeMarketMessageConfirmedHandler<Self, WithPangolinParachainFeeMarket>;
 	type OnMessageAccepted = FeeMarketMessageAcceptedHandler<Self, WithPangolinParachainFeeMarket>;
 	type OutboundMessageFee = bp_pangolin::Balance;
 	type OutboundPayload = bm_pangolin_parachain::ToPangolinParachainMessagePayload;
@@ -96,10 +94,8 @@ impl Config<WithPangolinParachainAlphaMessages> for Runtime {
 	type MessageDeliveryAndDispatchPayment =
 		FeeMarketPayment<Self, WithPangolinParachainAlphaFeeMarket, Ring>;
 	type MessageDispatch = bm_pangolin_parachain_alpha::FromPangolinParachainAlphaMessageDispatch;
-	type OnDeliveryConfirmed = (
-		ToPangolinParachainBacking,
-		FeeMarketMessageConfirmedHandler<Self, WithPangolinParachainAlphaFeeMarket>,
-	);
+	type OnDeliveryConfirmed =
+		FeeMarketMessageConfirmedHandler<Self, WithPangolinParachainAlphaFeeMarket>;
 	type OnMessageAccepted =
 		FeeMarketMessageAcceptedHandler<Self, WithPangolinParachainAlphaFeeMarket>;
 	type OutboundMessageFee = bp_pangolin::Balance;

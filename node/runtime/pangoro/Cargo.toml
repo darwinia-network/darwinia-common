@@ -32,7 +32,6 @@ darwinia-support                      = { default-features = false, path = "../.
 dp-evm-tracer                         = { optional = true, default-features = false, path = "../../../primitives/evm-trace/tracer" }
 drml-common-runtime                   = { default-features = false, path = "../common" }
 drml-primitives                       = { default-features = false, path = "../../primitives" }
-module-transaction-pause              = { default-features = false, path = "../../../frame/transaction-pause" }
 # messages
 bp-header-chain        = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
 bp-message-dispatch    = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.12.5" }
@@ -131,7 +130,6 @@ std = [
 	"dp-evm-tracer/std",
 	"drml-primitives/std",
 	"drml-common-runtime/std",
-	"module-transaction-pause/std",
 	# messages
 	"bp-header-chain/std",
 	"bp-message-dispatch/std",

@@ -151,18 +151,15 @@ frame_support::construct_runtime!(
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 21,
 		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 33,
 
+		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 25,
+		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event<T>, Origin} = 26,
+		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 31,
+
 		BridgePangolinDispatch: pallet_bridge_dispatch::<Instance1>::{Pallet, Event<T>} = 18,
 		BridgePangolinGrandpa: pallet_bridge_grandpa::<Instance1>::{Pallet, Call, Storage} = 19,
 		BridgePangolinMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 17,
 
 		PangolinFeeMarket: pallet_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 22,
-		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 23,
-
-		// Substrate2SubstrateBacking: to_substrate_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
-
-		EVM: darwinia_evm::{Pallet, Call, Storage, Config, Event<T>} = 25,
-		Ethereum: darwinia_ethereum::{Pallet, Call, Storage, Config, Event<T>, Origin} = 26,
-		BaseFee: pallet_base_fee::{Pallet, Call, Storage, Config<T>, Event} = 31,
 	}
 );
 
@@ -685,7 +682,6 @@ sp_api::impl_runtime_apis! {
 			// TODO: https://github.com/darwinia-network/darwinia-parachain/issues/66
 			// list_benchmark!(list, extra, pallet_bridge_messages, BridgePangolinMessages);
 			list_benchmark!(list, extra, pallet_fee_market, PangolinFeeMarket);
-			// list_benchmark!(list, extra, module_transaction_pause, TransactionPause);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -739,7 +735,6 @@ sp_api::impl_runtime_apis! {
 			// TODO: https://github.com/darwinia-network/darwinia-parachain/issues/66
 			// add_benchmark!(params, batches, pallet_bridge_messages, BridgePangolinMessages);
 			add_benchmark!(params, batches, pallet_fee_market, PangolinFeeMarket);
-			// add_benchmark!(params, batches, module_transaction_pause, TransactionPause);
 
 			Ok(batches)
 		}

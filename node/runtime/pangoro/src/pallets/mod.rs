@@ -70,6 +70,15 @@ pub use scheduler::*;
 pub mod preimage;
 pub use preimage::*;
 
+pub mod evm;
+pub use evm::*;
+
+pub mod ethereum;
+pub use ethereum::*;
+
+pub mod base_fee;
+pub use base_fee::*;
+
 pub mod bridge_messages;
 pub use bridge_messages::*;
 
@@ -81,15 +90,3 @@ pub use bridge_grandpa::*;
 
 pub mod fee_market;
 pub use fee_market::*;
-
-pub mod transaction_pause;
-pub use transaction_pause::*;
-
-pub mod evm;
-pub use evm::*;
-
-pub mod ethereum;
-pub use ethereum::*;
-
-pub mod base_fee;
-pub use base_fee::*;

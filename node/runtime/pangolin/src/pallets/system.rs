@@ -4,17 +4,10 @@ use frame_system::Config;
 use sp_version::RuntimeVersion;
 // --- darwinia-network ---
 use crate::{weights::frame_system::WeightInfo, *};
-use module_transaction_pause::PausedTransactionFilter;
 
 pub struct BaseFilter;
 impl Contains<Call> for BaseFilter {
-	fn contains(call: &Call) -> bool {
-		let is_paused = PausedTransactionFilter::<Runtime>::contains(call);
-
-		if is_paused {
-			return false;
-		}
-
+	fn contains(_call: &Call) -> bool {
 		true
 	}
 }
