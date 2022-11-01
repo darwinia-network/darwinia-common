@@ -37,7 +37,7 @@ impl Config<WithPangoroMessages> for Runtime {
 	type AccountIdConverter = bp_pangolin::AccountIdConverter;
 	type BridgedChainId = PangoroChainId;
 	type Event = Event;
-	type InboundMessageFee = Balance;
+	type InboundMessageFee = bp_pangoro::Balance;
 	type InboundPayload = bm_pangoro::FromPangoroMessagePayload;
 	type InboundRelayer = bp_pangoro::AccountId;
 	type LaneMessageVerifier = bm_pangoro::ToPangoroMessageVerifier;

@@ -90,8 +90,8 @@ impl CallValidate<bp_pangolin::AccountId, Origin, Call> for CallValidator {
 }
 
 pub struct IntoDispatchOrigin;
-impl IntoDispatchOriginT<AccountId, Call, Origin> for IntoDispatchOrigin {
-	fn into_dispatch_origin(id: &AccountId, call: &Call) -> Origin {
+impl IntoDispatchOriginT<bp_pangoro::AccountId, Call, Origin> for IntoDispatchOrigin {
+	fn into_dispatch_origin(id: &bp_pangoro::AccountId, call: &Call) -> Origin {
 		match call {
 			Call::Ethereum(darwinia_ethereum::Call::message_transact { .. }) => {
 				let derive_eth_address = id.derive_ethereum_address();

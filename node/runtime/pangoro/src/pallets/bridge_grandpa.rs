@@ -4,7 +4,7 @@ pub use pallet_bridge_grandpa::Instance1 as WithPangolinGrandpa;
 use pallet_bridge_grandpa::Config;
 // --- darwinia-network ---
 use crate::{weights::pallet_bridge_grandpa::WeightInfo, *};
-use drml_common_runtime::bp_pangolin;
+use bp_pangolin::DarwiniaLike as Pangolin;
 
 frame_support::parameter_types! {
 	// This is a pretty unscientific cap.
@@ -20,7 +20,7 @@ frame_support::parameter_types! {
 }
 
 impl Config<WithPangolinGrandpa> for Runtime {
-	type BridgedChain = bp_pangolin::DarwiniaLike;
+	type BridgedChain = Pangolin;
 	type HeadersToKeep = HeadersToKeep;
 	type MaxRequests = MaxRequests;
 	type WeightInfo = WeightInfo<Self>;

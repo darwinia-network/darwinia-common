@@ -8,7 +8,7 @@ use bp_message_dispatch::CallOrigin;
 use bp_messages::LaneId;
 use bp_runtime::{messages::DispatchFeePayment, ChainId, PANGOLIN_PARACHAIN_CHAIN_ID};
 use bridge_runtime_common::lanes::PANGOLIN_PANGOLIN_PARACHAIN_LANE;
-use drml_common_runtime::{bp_pangolin, bp_pangolin_parachain};
+// use drml_common_runtime::{bp_pangolin, bp_pangolin_parachain};
 use to_parachain_backing::{Config, IssueFromRemotePayload, IssuingCall, LatestMessageNoncer};
 
 pub struct PangolinParachainMessageNoncer;
