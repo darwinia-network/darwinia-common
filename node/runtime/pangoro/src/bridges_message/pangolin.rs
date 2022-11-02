@@ -24,7 +24,7 @@ use scale_info::TypeInfo;
 // --- paritytech ---
 use frame_support::{weights::Weight, RuntimeDebug};
 use sp_runtime::{FixedPointNumber, FixedU128};
-use sp_std::{ops::RangeInclusive, prelude::*};
+use sp_std::prelude::*;
 // --- darwinia-network ---
 use crate::*;
 use bp_messages::{
@@ -37,8 +37,8 @@ use bridge_runtime_common::{
 	lanes::PANGORO_PANGOLIN_LANE,
 	messages::{
 		source::{
-			self, FromBridgedChainMessagesDeliveryProof, FromThisChainMessagePayload,
-			FromThisChainMessageVerifier,
+			self, FromBridgedChainMessagesDeliveryProof, FromThisChainMaximalOutboundPayloadSize,
+			FromThisChainMessagePayload, FromThisChainMessageVerifier,
 		},
 		target::{
 			self, FromBridgedChainEncodedMessageCall, FromBridgedChainMessageDispatch,
@@ -46,6 +46,7 @@ use bridge_runtime_common::{
 		},
 		BridgedChainWithMessages, ChainWithMessages, MessageBridge, ThisChainWithMessages,
 	},
+	pallets::WITH_PANGORO_MESSAGES_PALLET_NAME,
 };
 use darwinia_support::evm::{ConcatConverter, DeriveSubstrateAddress};
 
@@ -53,6 +54,9 @@ use darwinia_support::evm::{ConcatConverter, DeriveSubstrateAddress};
 type ToPangolinMessagesDeliveryProof = FromBridgedChainMessagesDeliveryProof<bp_pangolin::Hash>;
 /// Messages proof for Pangolin -> Pangoro messages.
 type FromPangolinMessagesProof = FromBridgedChainMessagesProof<bp_pangolin::Hash>;
+/// Outbound payload size limit for Pangolin -> Pangoro messages.
+pub type ToPangolinMaximalOutboundPayloadSize =
+	FromThisChainMaximalOutboundPayloadSize<WithPangolinMessageBridge>;
 
 /// Message payload for Pangoro -> Pangolin messages.
 pub type ToPangolinMessagePayload = FromThisChainMessagePayload<WithPangolinMessageBridge>;
@@ -103,8 +107,7 @@ impl MessageBridge for WithPangolinMessageBridge {
 	type ThisChain = Pangoro;
 
 	const BRIDGED_CHAIN_ID: ChainId = PANGOLIN_CHAIN_ID;
-	const BRIDGED_MESSAGES_PALLET_NAME: &'static str =
-		bp_pangoro::WITH_PANGORO_MESSAGES_PALLET_NAME;
+	const BRIDGED_MESSAGES_PALLET_NAME: &'static str = WITH_PANGORO_MESSAGES_PALLET_NAME;
 	const RELAYER_FEE_PERCENT: u32 = 10;
 	const THIS_CHAIN_ID: ChainId = PANGORO_CHAIN_ID;
 }
@@ -146,22 +149,15 @@ impl ChainWithMessages for Pangolin {
 }
 impl BridgedChainWithMessages for Pangolin {
 	fn maximal_extrinsic_size() -> u32 {
-		bp_pangolin::Pangolin::max_extrinsic_size()
+		drml_common_runtime::Pangolin::max_extrinsic_size()
 	}
 
-	fn message_weight_limits(_message_payload: &[u8]) -> RangeInclusive<Weight> {
-		// we don't want to relay too large messages + keep reserve for future upgrades
+	fn verify_dispatch_weight(_message_payload: &[u8], payload_weight: &Weight) -> bool {
 		let upper_limit = target::maximal_incoming_message_dispatch_weight(
-			bp_pangolin::Pangolin::max_extrinsic_weight(),
+			drml_common_runtime::Pangolin::max_extrinsic_weight(),
 		);
 
-		// we're charging for payload bytes in `WithPangolinMessageBridge::transaction_payment`
-		// function
-		//
-		// this bridge may be used to deliver all kind of messages, so we're not making any
-		// assumptions about minimal dispatch weight here
-
-		0..=upper_limit
+		*payload_weight <= upper_limit
 	}
 }
 impl TargetHeaderChain<ToPangolinMessagePayload, <Self as ChainWithMessages>::AccountId>
@@ -221,5 +217,55 @@ impl SenderOrigin<crate::AccountId> for crate::Origin {
 			},
 			_ => None,
 		}
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use bridge_runtime_common::{
+		self, assert_complete_bridge_types,
+		integrity::{
+			assert_complete_bridge_constants, AssertBridgeMessagesPalletConstants,
+			AssertBridgePalletNames, AssertChainConstants, AssertCompleteBridgeConstants,
+		},
+		pallets::{WITH_PANGOLIN_GRANDPA_PALLET_NAME, WITH_PANGOLIN_MESSAGES_PALLET_NAME},
+	};
+
+	#[test]
+	fn ensure_bridge_integrity() {
+		assert_complete_bridge_types!(
+			runtime: Runtime,
+			with_bridged_chain_grandpa_instance: WithPangolinGrandpa,
+			with_bridged_chain_messages_instance: WithPangolinMessages,
+			bridge: WithPangolinMessageBridge,
+			this_chain: Pangoro,
+			bridged_chain: Pangolin,
+		);
+
+		assert_complete_bridge_constants::<
+			Runtime,
+			WithPangolinGrandpa,
+			WithPangolinMessages,
+			WithPangolinMessageBridge,
+			Pangoro,
+		>(AssertCompleteBridgeConstants {
+			this_chain_constants: AssertChainConstants {
+				block_length: bp_pangoro::RuntimeBlockLength::get(),
+				block_weights: bp_pangoro::RuntimeBlockWeights::get(),
+			},
+			messages_pallet_constants: AssertBridgeMessagesPalletConstants {
+				max_unrewarded_relayers_in_bridged_confirmation_tx:
+					bp_pangolin::MAX_UNREWARDED_RELAYERS_IN_CONFIRMATION_TX,
+				max_unconfirmed_messages_in_bridged_confirmation_tx:
+					bp_pangolin::MAX_UNCONFIRMED_MESSAGES_IN_CONFIRMATION_TX,
+				bridged_chain_id: bp_runtime::PANGOLIN_CHAIN_ID,
+			},
+			pallet_names: AssertBridgePalletNames {
+				with_this_chain_messages_pallet_name: WITH_PANGORO_MESSAGES_PALLET_NAME,
+				with_bridged_chain_grandpa_pallet_name: WITH_PANGOLIN_GRANDPA_PALLET_NAME,
+				with_bridged_chain_messages_pallet_name: WITH_PANGOLIN_MESSAGES_PALLET_NAME,
+			},
+		});
 	}
 }

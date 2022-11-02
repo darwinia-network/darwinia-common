@@ -27,19 +27,19 @@ frame_support::parameter_types! {
 }
 
 impl Config<WithPangoroGrandpa> for Runtime {
-	type BridgedChain = bp_pangoro::Pangoro;
+	type BridgedChain = drml_common_runtime::Pangoro;
 	type HeadersToKeep = PangoroHeadersToKeep;
 	type MaxRequests = MaxRequests;
 	type WeightInfo = PangoroGrandpaWeightInfo<Self>;
 }
 impl Config<WithRococoGrandpa> for Runtime {
-	type BridgedChain = bp_rococo::Rococo;
+	type BridgedChain = drml_common_runtime::Rococo;
 	type HeadersToKeep = RococoHeadersToKeep;
 	type MaxRequests = MaxRequests;
 	type WeightInfo = RococoGrandpaWeightInfo<Self>;
 }
 impl Config<WithMoonbaseRelayGrandpa> for Runtime {
-	type BridgedChain = bp_rococo::Rococo;
+	type BridgedChain = drml_common_runtime::MoonbaseRelay;
 	type HeadersToKeep = RococoHeadersToKeep;
 	type MaxRequests = MaxRequests;
 	type WeightInfo = RococoGrandpaWeightInfo<Self>;
