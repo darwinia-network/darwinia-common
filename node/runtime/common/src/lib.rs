@@ -38,7 +38,7 @@ pub use bp_darwinia_core as bp_pangolin_parachain;
 pub use bp_darwinia_core as bp_pangoro;
 /// Re-export DarwiniaLike as different chain type.
 pub use bp_darwinia_core::{
-	DarwiniaLike as Pangolin, DarwiniaLike as Pangoro, DarwiniaLike as PangolinParaChain,
+	DarwiniaLike as Pangolin, DarwiniaLike as Pangoro, DarwiniaLike as PangolinParachain,
 };
 
 /// Primitives of the Rococo chain.

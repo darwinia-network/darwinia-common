@@ -159,12 +159,12 @@ impl ChainWithMessages for PangolinParachain {
 }
 impl BridgedChainWithMessages for PangolinParachain {
 	fn maximal_extrinsic_size() -> u32 {
-		drml_common_runtime::PangolinParaChain::max_extrinsic_size()
+		drml_common_runtime::PangolinParachain::max_extrinsic_size()
 	}
 
 	fn verify_dispatch_weight(_message_payload: &[u8], payload_weight: &Weight) -> bool {
 		let upper_limit = target::maximal_incoming_message_dispatch_weight(
-			drml_common_runtime::PangolinParaChain::max_extrinsic_weight(),
+			drml_common_runtime::PangolinParachain::max_extrinsic_weight(),
 		);
 
 		*payload_weight <= upper_limit
