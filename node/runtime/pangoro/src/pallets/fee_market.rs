@@ -15,7 +15,7 @@ where
 	T: Config<I>,
 	I: 'static,
 {
-	fn cal_slash_amount(
+	fn calc_amount(
 		collateral_per_order: BalanceOf<T, I>,
 		timeout: T::BlockNumber,
 	) -> BalanceOf<T, I> {

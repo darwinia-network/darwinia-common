@@ -90,6 +90,6 @@ inherits = "release"
 lto      = true
 
 [patch.crates-io]
-evm           = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.12.5" }
-evm-gasometer = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.12.5" }
-evm-runtime   = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.12.5" }
+evm           = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.13.0" }
+evm-gasometer = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.13.0" }
+evm-runtime   = { git = "https://github.com/darwinia-network/evm", branch = "darwinia-v0.13.0" }

@@ -19,7 +19,7 @@ frame_support::parameter_types! {
 }
 
 impl Config<WithPangolinGrandpa> for Runtime {
-	type BridgedChain = bp_pangolin::Pangolin;
+	type BridgedChain = drml_common_runtime::Pangolin;
 	type HeadersToKeep = HeadersToKeep;
 	type MaxRequests = MaxRequests;
 	type WeightInfo = WeightInfo<Self>;

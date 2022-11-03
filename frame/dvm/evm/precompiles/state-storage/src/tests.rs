@@ -242,7 +242,7 @@ impl darwinia_ethereum::Config for Test {
 
 pub struct FeeMarketSlasher;
 impl<T: Config<I>, I: 'static> Slasher<T, I> for FeeMarketSlasher {
-	fn cal_slash_amount(_: BalanceOf<T, I>, _: T::BlockNumber) -> BalanceOf<T, I> {
+	fn calc_amount(_: BalanceOf<T, I>, _: T::BlockNumber) -> BalanceOf<T, I> {
 		unreachable!()
 	}
 }

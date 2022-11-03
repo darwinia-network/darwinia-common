@@ -98,6 +98,7 @@ pub type SignedExtra = (
 	CheckNonce<Runtime>,
 	CheckWeight<Runtime>,
 	ChargeTransactionPayment<Runtime>,
+	BridgeRejectObsoleteHeadersAndMessages,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =
@@ -214,7 +215,7 @@ frame_support::construct_runtime! {
 		BridgePangoroMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 43,
 
 		BridgeRococoGrandpa: pallet_bridge_grandpa::<Instance2>::{Pallet, Call, Storage} = 60,
-		BridgeRococoParachain: pallet_bridge_parachains::<Instance1>::{Pallet, Call, Storage} = 61,
+		BridgeRococoParachain: pallet_bridge_parachains::<Instance1>::{Pallet, Call, Storage, Event<T>} = 61,
 
 		BridgePangolinParachainDispatch: pallet_bridge_dispatch::<Instance2>::{Pallet, Event<T>} = 62,
 		BridgePangolinParachainMessages: pallet_bridge_messages::<Instance2>::{Pallet, Call, Storage, Event<T>} = 63,
@@ -224,7 +225,7 @@ frame_support::construct_runtime! {
 
 		// pangolin <> pangolin parachain alpha bridge
 		BridgeMoonbaseRelayGrandpa: pallet_bridge_grandpa::<Instance3>::{Pallet, Call, Storage} = 68,
-		BridgeMoonbaseRelayParachain: pallet_bridge_parachains::<Instance2>::{Pallet, Call, Storage} = 69,
+		BridgeMoonbaseRelayParachain: pallet_bridge_parachains::<Instance2>::{Pallet, Call, Storage, Event<T>} = 69,
 		BridgePangolinParachainAlphaDispatch: pallet_bridge_dispatch::<Instance3>::{Pallet, Event<T>} = 70,
 		BridgePangolinParachainAlphaMessages: pallet_bridge_messages::<Instance3>::{Pallet, Call, Storage, Event<T>} = 71,
 		PangolinParachainAlphaFeeMarket: pallet_fee_market::<Instance3>::{Pallet, Call, Storage, Event<T>} = 72,
@@ -261,6 +262,7 @@ where
 			CheckNonce::<Runtime>::from(nonce),
 			CheckWeight::<Runtime>::new(),
 			ChargeTransactionPayment::<Runtime>::from(tip),
+			BridgeRejectObsoleteHeadersAndMessages,
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|e| {
@@ -286,6 +288,16 @@ where
 }
 
 drml_common_runtime::impl_self_contained_call!();
+
+bridge_runtime_common::generate_bridge_reject_obsolete_headers_and_messages! {
+	Call, AccountId,
+	// Grandpa
+	BridgePangoroGrandpa, BridgeRococoGrandpa, BridgeMoonbaseRelayGrandpa,
+	// Messages
+	BridgePangoroMessages, BridgePangolinParachainMessages, BridgePangolinParachainAlphaMessages,
+	// Parachain
+	BridgeRococoParachain, BridgeMoonbaseRelayParachain
+}
 
 sp_api::impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
@@ -775,8 +787,6 @@ sp_api::impl_runtime_apis! {
 			// list_benchmark!(list, extra, pallet_bridge_messages, BridgePangolinParachainMessages);
 			list_benchmark!(list, extra, pallet_fee_market, PangoroFeeMarket);
 			list_benchmark!(list, extra, pallet_fee_market, PangolinParachainFeeMarket);
-			list_benchmark!(list, extra, from_substrate_issuing, Substrate2SubstrateIssuing);
-			list_benchmark!(list, extra, to_parachain_backing, ToPangolinParachainBacking);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -852,7 +862,6 @@ sp_api::impl_runtime_apis! {
 			// add_benchmark!(params, batches, pallet_bridge_messages, BridgePangolinParachainMessages);
 			add_benchmark!(params, batches, pallet_fee_market, PangoroFeeMarket);
 			add_benchmark!(params, batches, pallet_fee_market, PangolinParachainFeeMarket);
-			add_benchmark!(params, batches, from_substrate_issuing, Substrate2SubstrateIssuing);
 
 			Ok(batches)
 		}
