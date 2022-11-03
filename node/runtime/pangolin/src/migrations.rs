@@ -39,12 +39,23 @@ fn migrate() -> Weight {
 		items.iter().for_each(|item| migration::remove_storage_prefix(module, item, hash));
 	});
 
-	use bridge_runtime_common::migrate_pallet_operation_mode;
+	use bridge_runtime_common::{
+		migrate_message_pallet_operation_mode, migrate_pallet_operation_mode,
+	};
 	let grandpa_modules =
 		vec![b"BridgePangoroGrandpa", b"BridgeRococoGrandpa", b"BridgeMoonbaseRelayGrandpa"];
 	for module in grandpa_modules {
 		migrate_pallet_operation_mode(module);
 		// TODO, migrate BestFinalized
+	}
+
+	let message_modules = vec![
+		b"BridgePangoroMessages",
+		b"BridgePangolinParachainMessages",
+		b"BridgePangolinParachainAlphaMessages",
+	];
+	for module in message_modules {
+		migrate_message_pallet_operation_mode(module);
 	}
 
 	// 0
