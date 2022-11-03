@@ -4591,22 +4591,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "module-transaction-pause"
-version = "2.10.1"
-dependencies = [
- "darwinia-balances",
- "darwinia-support",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "moonbeam-client-evm-tracing"
 version = "0.1.0"
 source = "git+https://github.com/darwinia-network/moonbeam?branch=darwinia-v0.13.0#36680ef00ca3d99223e7225c93585d46ac94136e"
@@ -5871,7 +5855,6 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "module-transaction-pause",
  "moonbeam-rpc-primitives-debug",
  "pallet-authority-discovery",
  "pallet-authorship",
@@ -5933,7 +5916,6 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder",
- "to-parachain-backing",
  "to-tron-backing",
 ]
 
@@ -5974,7 +5956,6 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "module-transaction-pause",
  "moonbeam-rpc-primitives-debug",
  "pallet-authority-discovery",
  "pallet-authorship",
@@ -9541,25 +9522,6 @@ name = "tinyvec_macros"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
-
-[[package]]
-name = "to-parachain-backing"
-version = "2.10.1"
-dependencies = [
- "array-bytes",
- "bp-message-dispatch",
- "bp-messages",
- "bp-runtime",
- "darwinia-support",
- "ethereum-types",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-runtime",
- "sp-std",
-]
 
 [[package]]
 name = "to-tron-backing"

@@ -1,6 +1,5 @@
 // --- paritytech ---
 use frame_support::{traits::EqualPrivilegeOnly, weights::Weight};
-use frame_system::EnsureRoot;
 use pallet_scheduler::Config;
 use sp_runtime::Perbill;
 // --- darwinia-network ---
@@ -24,6 +23,6 @@ impl Config for Runtime {
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type PalletsOrigin = OriginCaller;
 	type PreimageProvider = Preimage;
-	type ScheduleOrigin = EnsureRoot<AccountId>;
+	type ScheduleOrigin = Root;
 	type WeightInfo = ();
 }

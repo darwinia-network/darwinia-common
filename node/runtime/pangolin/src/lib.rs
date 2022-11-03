@@ -61,7 +61,7 @@ use frame_support::{log, traits::KeyOwnerProofSystem, weights::GetDispatchInfo};
 use frame_system::{
 	offchain::{AppCrypto, CreateSignedTransaction, SendTransactionTypes, SigningTypes},
 	ChainContext, CheckEra, CheckGenesis, CheckNonZeroSender, CheckNonce, CheckSpecVersion,
-	CheckTxVersion, CheckWeight, EnsureRoot,
+	CheckTxVersion, CheckWeight,
 };
 use pallet_grandpa::{fg_primitives, AuthorityList as GrandpaAuthorityList};
 use pallet_transaction_payment::ChargeTransactionPayment;
@@ -114,8 +114,6 @@ pub type Executive = frame_executive::Executive<
 >;
 /// The payload being signed in transactions.
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
-
-pub type RootOrigin = EnsureRoot<AccountId>;
 
 type Ring = Balances;
 
@@ -224,7 +222,6 @@ frame_support::construct_runtime! {
 
 		PangoroFeeMarket: pallet_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 53,
 		PangolinParachainFeeMarket: pallet_fee_market::<Instance2>::{Pallet, Call, Storage, Event<T>} = 64,
-		TransactionPause: module_transaction_pause::{Pallet, Call, Storage, Event<T>} = 54,
 
 		// pangolin <> pangolin parachain alpha bridge
 		BridgeMoonbaseRelayGrandpa: pallet_bridge_grandpa::<Instance3>::{Pallet, Call, Storage} = 68,
@@ -232,8 +229,6 @@ frame_support::construct_runtime! {
 		BridgePangolinParachainAlphaDispatch: pallet_bridge_dispatch::<Instance3>::{Pallet, Event<T>} = 70,
 		BridgePangolinParachainAlphaMessages: pallet_bridge_messages::<Instance3>::{Pallet, Call, Storage, Event<T>} = 71,
 		PangolinParachainAlphaFeeMarket: pallet_fee_market::<Instance3>::{Pallet, Call, Storage, Event<T>} = 72,
-
-		ToPangolinParachainBacking: to_parachain_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 65,
 	}
 }
 
@@ -792,7 +787,6 @@ sp_api::impl_runtime_apis! {
 			// list_benchmark!(list, extra, pallet_bridge_messages, BridgePangolinParachainMessages);
 			list_benchmark!(list, extra, pallet_fee_market, PangoroFeeMarket);
 			list_benchmark!(list, extra, pallet_fee_market, PangolinParachainFeeMarket);
-			// list_benchmark!(list, extra, module_transaction_pause, TransactionPause);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -868,7 +862,6 @@ sp_api::impl_runtime_apis! {
 			// add_benchmark!(params, batches, pallet_bridge_messages, BridgePangolinParachainMessages);
 			add_benchmark!(params, batches, pallet_fee_market, PangoroFeeMarket);
 			add_benchmark!(params, batches, pallet_fee_market, PangolinParachainFeeMarket);
-			// add_benchmark!(params, batches, module_transaction_pause, TransactionPause);
 
 			Ok(batches)
 		}
