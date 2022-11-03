@@ -26,6 +26,7 @@ fn migrate() -> Weight {
 	// paritytech
 	use codec::Decode;
 	use frame_support::{storage::migration::storage_key_iter, Blake2_128Concat, StorageHasher};
+	use sp_api::HeaderT;
 	// darwinia-network
 	use bp_parachains::{BestParaHeadHash, ParaInfo};
 	use bp_polkadot_core::parachains::{ParaHash, ParaId};
@@ -35,7 +36,6 @@ fn migrate() -> Weight {
 		put_pallet_operation_mode,
 	};
 	use pallet_bridge_parachains::RelayBlockNumber;
-	use sp_api::HeaderT;
 
 	migration::move_pallet(b"BridgeRococoParachains", b"BridgeRococoParachain");
 	migration::move_pallet(b"BridgeMoonbaseRelayParachains", b"BridgeMoonbaseRelayParachain");

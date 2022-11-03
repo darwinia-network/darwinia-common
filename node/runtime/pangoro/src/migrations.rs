@@ -24,12 +24,12 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 
 fn migrate() -> Weight {
 	// paritytech
+	use frame_support::StorageHasher;
 	use sp_api::HeaderT;
 	// darwinia-network
 	use bridge_runtime_common::{
 		migrate_message_pallet_operation_mode, migrate_pallet_operation_mode,
 	};
-	use frame_support::StorageHasher;
 
 	// Removed pallets
 	migration::remove_storage_prefix(b"TransactionPause", b"PausedTransactions", &[]);
