@@ -23,6 +23,8 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 }
 
 fn migrate() -> Weight {
-	0
-	// RuntimeBlockWeights::get().max_block
+	migration::remove_storage_prefix(b"TransactionPause", b"PausedTransactions", &[]);
+
+	// 0
+	RuntimeBlockWeights::get().max_block
 }
