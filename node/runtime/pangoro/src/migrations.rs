@@ -9,15 +9,11 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		Scheduler::pre_migrate_to_v3()?;
-
 		Ok(())
 	}
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
-		Scheduler::post_migrate_to_v3()?;
-
 		Ok(())
 	}
 
