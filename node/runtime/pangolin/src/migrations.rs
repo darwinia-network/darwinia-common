@@ -54,12 +54,12 @@ fn migrate() -> Weight {
 		items.iter().for_each(|item| migration::remove_storage_prefix(module, item, hash));
 	});
 
-	// Grandpa pallets
+	// Grandpa
 	let grandpa_modules: Vec<&[u8]> =
 		vec![b"BridgePangoroGrandpa", b"BridgeRococoGrandpa", b"BridgeMoonbaseRelayGrandpa"];
-	for module in grandpa_modules {
-		let item = b"BestFinalized";
-		let hash = &[];
+	let item = b"BestFinalized";
+	let hash = &[];
+	grandpa_modules.iter().for_each(|module| {
 		if let Some(block_hash) = migration::take_storage_value::<Hash>(module, item, hash) {
 			let imported_header_item = b"ImportedHeaders";
 			let imported_header_hash = frame_support::Identity::hash(&block_hash.encode());
@@ -73,7 +73,7 @@ fn migrate() -> Weight {
 		}
 
 		migrate_pallet_operation_mode(module);
-	}
+	});
 
 	//  Message pallets
 	let message_modules: Vec<&[u8]> = vec![
@@ -81,11 +81,11 @@ fn migrate() -> Weight {
 		b"BridgePangolinParachainMessages",
 		b"BridgePangolinParachainAlphaMessages",
 	];
-	for module in message_modules {
+	message_modules.iter().for_each(|module| {
 		migrate_message_pallet_operation_mode(module);
-	}
+	});
 
-	// Parachains pallets
+	// Parachains
 	#[derive(Encode, Decode)]
 	pub struct BestParaHead {
 		pub at_relay_block_number: RelayBlockNumber,
@@ -97,7 +97,7 @@ fn migrate() -> Weight {
 
 	let parachains_modules: Vec<&[u8]> =
 		vec![b"BridgeRococoParachain", b"BridgeMoonbaseRelayParachain"];
-	for module in parachains_modules {
+	parachains_modules.iter().for_each(|module| {
 		for (para_id, best_para_head) in
 			storage_key_iter::<ParaId, BestParaHead, Blake2_128Concat>(module, old_item).drain()
 		{
@@ -118,7 +118,7 @@ fn migrate() -> Weight {
 		}
 
 		put_pallet_operation_mode(module, BasicOperatingMode::Normal);
-	}
+	});
 
 	// 0
 	RuntimeBlockWeights::get().max_block
