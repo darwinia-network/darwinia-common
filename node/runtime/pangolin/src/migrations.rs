@@ -40,6 +40,7 @@ fn migrate() -> Weight {
 	migration::move_pallet(b"BridgeRococoParachains", b"BridgeRococoParachain");
 	migration::move_pallet(b"BridgeMoonbaseRelayParachains", b"BridgeMoonbaseRelayParachain");
 
+	// Removed pallets
 	let removed_items: &[(&[u8], &[&[u8]])] = &[
 		(
 			b"ToPangolinParachainBacking",
