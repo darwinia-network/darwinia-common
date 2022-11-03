@@ -31,7 +31,7 @@ fn migrate() -> Weight {
 			b"ToPangolinParachainBacking",
 			&[b"SecureLimitedPeriod", b"TransactionInfos", b"RemoteMappingTokenFactoryAccount"],
 		),
-		(b"TransactionPause" & [b"PausedTransactions"]),
+		(b"TransactionPause", &[b"PausedTransactions"]),
 	];
 	let hash = &[];
 
