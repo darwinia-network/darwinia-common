@@ -37,6 +37,7 @@ to-tron-backing                       = { default-features = false, path = "../.
 bp-darwinia-core         = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.13.0" }
 bp-message-dispatch      = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.13.0" }
 bp-messages              = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.13.0" }
+bp-parachains            = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.13.0" }
 bp-polkadot-core         = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.13.0" }
 bp-runtime               = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.13.0" }
 bridge-runtime-common    = { default-features = false, git = "https://github.com/darwinia-network/darwinia-messages-substrate", branch = "darwinia-v0.13.0" }
@@ -148,6 +149,7 @@ std = [
 	"bp-darwinia-core/std",
 	"bp-messages/std",
 	"bp-message-dispatch/std",
+	"bp-parachains/std",
 	"bp-polkadot-core/std",
 	"bp-runtime/std",
 	"bridge-runtime-common/std",

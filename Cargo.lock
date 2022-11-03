@@ -5827,6 +5827,7 @@ dependencies = [
  "bp-darwinia-core",
  "bp-message-dispatch",
  "bp-messages",
+ "bp-parachains",
  "bp-polkadot-core",
  "bp-runtime",
  "bridge-runtime-common",
