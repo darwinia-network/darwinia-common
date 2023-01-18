@@ -90,33 +90,33 @@ jobs:
         with:
           files: artifacts/*
 
-  rustdoc:
-    name: Rustdoc
-    runs-on: ubuntu-latest
-    steps:
-      - name: Fetch latest code
-        uses: actions/checkout@v3
-      - name: Install Rust nightly-2021-02-25 toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly-2021-02-25
-          target: wasm32-unknown-unknown
-          default: true
-      - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: doc
-          args: --release --locked --all --no-deps
-      - name: Install Node ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v2
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: Install Vercel
-        run: npm i -g vercel
-      - name: Deploy Rustdoc
-        run: |
-          mv vercel.json target/doc
-          mv target/doc target/${GITHUB_REPOSITORY#*/}
-          cd target/${GITHUB_REPOSITORY#*/}
-          vercel --token ${{ secrets.VERCEL_TOKEN }} --scope itering link --confirm
-          vercel --token ${{ secrets.VERCEL_TOKEN }} --scope itering deploy --prod
+  # rustdoc:
+  #   name: Rustdoc
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Fetch latest code
+  #       uses: actions/checkout@v3
+  #     - name: Install Rust nightly-2021-02-25 toolchain
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: nightly-2021-02-25
+  #         target: wasm32-unknown-unknown
+  #         default: true
+  #     - name: Build
+  #       uses: actions-rs/cargo@v1
+  #       with:
+  #         command: doc
+  #         args: --release --locked --all --no-deps
+  #     - name: Install Node ${{ env.NODE_VERSION }}
+  #       uses: actions/setup-node@v2
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #     - name: Install Vercel
+  #       run: npm i -g vercel
+  #     - name: Deploy Rustdoc
+  #       run: |
+  #         mv vercel.json target/doc
+  #         mv target/doc target/${GITHUB_REPOSITORY#*/}
+  #         cd target/${GITHUB_REPOSITORY#*/}
+  #         vercel --token ${{ secrets.VERCEL_TOKEN }} --scope itering link --confirm
+  #         vercel --token ${{ secrets.VERCEL_TOKEN }} --scope itering deploy --prod

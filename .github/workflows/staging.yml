@@ -34,20 +34,20 @@ jobs:
       - name: Hash
         run: sha256sum drml.tar.zst drml *.wasm | tee SHA256
 
-  rustdoc:
-    name: Rustdoc
-    runs-on: ubuntu-latest
-    steps:
-      - name: Fetch latest code
-        uses: actions/checkout@v3
-      - name: Install Rust nightly-2021-02-25 toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly-2021-02-25
-          target: wasm32-unknown-unknown
-          default: true
-      - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: doc
-          args: --release --locked --all --no-deps
+  # rustdoc:
+  #   name: Rustdoc
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Fetch latest code
+  #       uses: actions/checkout@v3
+  #     - name: Install Rust nightly-2021-02-25 toolchain
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: nightly-2021-02-25
+  #         target: wasm32-unknown-unknown
+  #         default: true
+  #     - name: Build
+  #       uses: actions-rs/cargo@v1
+  #       with:
+  #         command: doc
+  #         args: --release --locked --all --no-deps
