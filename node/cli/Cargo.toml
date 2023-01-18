@@ -8,7 +8,7 @@ license     = "GPL-3.0"
 name        = "drml"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.10.1"
+version     = "3.0.0"
 
 # TODO: Consider rename this repo to darwinia-runtime-module-library
 [[bin]]
