@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "darwinia-ecdsa-authority"
 readme      = "README.md"
 repository  = "https://github.com/darwinia-network/darwinia-common"
-version     = "2.10.1"
+version     = "3.0.0"
 
 [dependencies]
 # crates.io

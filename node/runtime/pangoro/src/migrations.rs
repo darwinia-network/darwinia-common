@@ -23,29 +23,61 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 }
 
 fn migrate() -> Weight {
-	migration::remove_storage_prefix(b"TransactionPause", b"PausedTransactions", &[]);
+	panic!(
+		r#"
+                                               ,,,
+                                 ,            *,,,,,,            ,,.
+                               ,,,        ,,,,,,,,,       ,,,,,,,,,,
+                            .,,,,,    (,,,,,,,,,,,,.,,,,,,,,,,,,,,,
+                           ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+                          ,,,,,,,,,,,,,,,,,            ,,,,,,,,,,,
+                    ,,,,,,,,,,,,,,,,,,,,.                .,,,,,,,
+                .,     .,,,,,,,,,,,,,,,                    ,,,,,
+     ,         ,       ,,,,,,,,,,,,,,,,                    ,,,,
+    , ,,      ,       ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,        ,,,,,,,,,,,,,
+   ,   .,     ,  ,,  ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,    .,,,,,,,,,,,,
+  ,     .,    ,  ,,,,,,,,,,,,,,,,,,,,  ,,,,,,,,,,,,,,,,  ,,,,,,,,,,,,,
+ ,,      ,     , ,,,,,,,,,,,,,,,,       ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+ ,       ,       ,,,,,,,,,,,         .,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+ ,       ,          ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+  ,      ,    ,,     ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+  ,,    ,    ,.        ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+   ,,  ,       ,,,,,,,,,,,,,,,,,,.      .,,,,,,,,,,,,,,,,,,,*
+   ,,,,,,,*.    ,,,,,,,,,,,,        ,.  ,,,,,,,,,,,,,,,,,,
+ ,   .,     .,,,,,,,,,,,,,,  ,. ,,,     .,,,,,,,,,,,,,,,
+,,,,.             ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+                     ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+                           ,,,,,,,,,,,,,,,,,,
 
-	let grandpa = b"BridgePangolinGrandpa";
 
-	bridge_runtime_common::migrate_pallet_operation_mode(grandpa);
+  8888888b.                                                     d888
+  888   Y88b                                                   d8888
+  888    888                                                     888
+  888   d88P 8888b.  88888b.   .d88b.   .d88b.  888d888 .d88b.   888
+  8888888P"     "88b 888 "88b d88P"88b d88""88b 888P"  d88""88b  888
+  888       .d888888 888  888 888  888 888  888 888    888  888  888
+  888       888  888 888  888 Y88b 888 Y88..88P 888    Y88..88P  888
+  888       "Y888888 888  888  "Y88888  "Y88P"  888     "Y88P" 8888888
+                                   888
+                              Y8b d88P
+                               "Y88P"
+      .d8888b.  888                                            888
+     d88P  Y88b 888                                            888
+     Y88b.      888                                            888
+      "Y888b.   888888 .d88b.  88888b.  88888b.   .d88b.   .d88888
+         "Y88b. 888   d88""88b 888 "88b 888 "88b d8P  Y8b d88" 888
+           "888 888   888  888 888  888 888  888 88888888 888  888
+     Y88b  d88P Y88b. Y88..88P 888 d88P 888 d88P Y8b.     Y88b 888
+      "Y8888P"   "Y888 "Y88P"  88888P"  88888P"   "Y8888   "Y88888
+                               888      888
+                               888      888
+                               888      888
 
-	if let Some(hash) = migration::take_storage_value::<<Pangolin as bp_runtime::Chain>::Hash>(
-		grandpa,
-		b"BestFinalized",
-		&[],
-	) {
-		if let Some(header) =
-			<pallet_bridge_grandpa::ImportedHeaders<Runtime, WithPangolinGrandpa>>::get(hash)
-		{
-			<pallet_bridge_grandpa::BestFinalized<Runtime, WithPangolinGrandpa>>::put((
-				header.number,
-				hash,
-			));
-		}
-	}
-
-	bridge_runtime_common::migrate_message_pallet_operation_mode(b"BridgePangolinMessages");
+       Pangoro1 and Pangoro Parachain1 are merged into Pangoro2.
+          Check: https://github.com/darwinia-network/darwinia
+"#
+	);
 
 	// 0
-	RuntimeBlockWeights::get().max_block
+	// RuntimeBlockWeights::get().max_block
 }
