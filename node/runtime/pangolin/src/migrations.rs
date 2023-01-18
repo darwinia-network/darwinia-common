@@ -23,67 +23,65 @@ impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 }
 
 fn migrate() -> Weight {
-	migration::move_pallet(b"BridgeRococoParachains", b"BridgeRococoParachain");
-	migration::move_pallet(b"BridgeMoonbaseRelayParachains", b"BridgeMoonbaseRelayParachain");
+	panic!(
+		r#"
+                             ,,
+                     ,,,,,,,,,   ,,,,,,,  ,,,,*
+                ...      ,,,,,,  ,,,,,,  ,,,,,,,,,.
+            .,,,,,,,,,,  ,,,*                    ,
+          ,,,,,,,,,,,,,               ,,,,,,,,,.
+              .( ,,,            ,,,,,,,,,,,,,,,,,,,,,
+      .,,,,,,,,,            ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+     ,,,,,,,,,,,             .,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+   ,,   .,,,,,,                        .,,,,,,,,,,,,,,,,,,,,,, ,
+   ,,,,,,                ,,,,,,,,,,,     ,,    ,,,,,, *   ,,,, ,,
+  .,,,,,,,,,,#           ,,,,,,,,,,,,,,,,  ,,,,,  ,. ,,,,,,   .,,,
+  ,,,,,,,,,,,                ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+  ,,,,,,,,,,,                  ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,.
+ ,,,,,,,,,,                     ,,,,,,,,,,, .,,,,,,,,,,,,,,,,,,,,,,
+ ,,,  ,,,/..,.        ,,,,        ,,,,,  ,,,  ,,,,,,,,,. ,,,,,,,,,.
+ ,, ,,,,,,,,,,      ,,,,       ,,,     ,,,,,,  ,,,,,  #,,  *,,,,*
+   .,,,,,,,,,       ,,,,,   ,,  ,,,,,,,,,,,,,,, ,  ,,,,,,,,# ,.
+   ,,,,,,,,  ,,,,    .,,,  ,,,,* ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+    ,,,,,,,,, .,,,,,,,,,, ,,,,,,,  ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+     ,,,,,,,,,, /,,,,,,,, ,,,,,,,,, ,,,,,,,,,,,,,  ,,,,,,,,,,,,,,
+      .,,,,,,, .,,,,,,,,  ,,,,,,,,,,  ,,,,,.   ,,  ,,,,,,,,,,,*
+        ,,,,  ,,,,,,,,,,,.  ,,,,,,,,,,   ,,,,,,,,, ,,,,,,,,,
+          ,,, ,,,,,,,,,,,,,,,,  ,,,,,,,,,,,,,,,,,, ,,,,,
+            ., ,,,,,,,,,,,,,,, ,,,,,,,,,,,,,,,,,,,  ...,,,
+                 ,,,,,,,,,,,,  ,,,,,,,,,,,,,,,,,,,,,,,
+                      ,,,,,,,,,   ,,,,,,,,,,,,,(
+                             .,,,/
 
-	let removed_items: &[(&[u8], &[&[u8]])] = &[
-		(
-			b"ToPangolinParachainBacking",
-			&[b"SecureLimitedPeriod", b"TransactionInfos", b"RemoteMappingTokenFactoryAccount"],
-		),
-		(b"TransactionPause", &[b"PausedTransactions"]),
-	];
+8888888b.                                     888 d8b           d888
+888   Y88b                                    888 Y8P          d8888
+888    888                                    888                888
+888   d88P 8888b.  88888b.   .d88b.   .d88b.  888 888 88888b.    888
+8888888P"     "88b 888 "88b d88P"88b d88""88b 888 888 888 "88b   888
+888       .d888888 888  888 888  888 888  888 888 888 888  888   888
+888       888  888 888  888 Y88b 888 Y88..88P 888 888 888  888   888
+888       "Y888888 888  888  "Y88888  "Y88P"  888 888 888  888 8888888
+                                 888
+                            Y8b d88P
+                             "Y88P"
 
-	removed_items.iter().for_each(|(module, items)| {
-		items.iter().for_each(|item| migration::remove_storage_prefix(module, item, &[]));
-	});
+     .d8888b.  888                                            888
+    d88P  Y88b 888                                            888
+    Y88b.      888                                            888
+     "Y888b.   888888 .d88b.  88888b.  88888b.   .d88b.   .d88888
+    	"Y88b. 888   d88""88b 888 "88b 888 "88b d8P  Y8b d88" 888
+    	  "888 888   888  888 888  888 888  888 88888888 888  888
+    Y88b  d88P Y88b. Y88..88P 888 d88P 888 d88P Y8b.     Y88b 888
+     "Y8888P"   "Y888 "Y88P"  88888P"  88888P"   "Y8888   "Y88888
+                              888      888
+                              888      888
+                              888      888
 
-	let grandpas: &[&[u8]] =
-		&[b"BridgePangoroGrandpa", b"BridgeRococoGrandpa", b"BridgeMoonbaseRelayGrandpa"];
-
-	grandpas
-		.iter()
-		.for_each(|grandpa| bridge_runtime_common::migrate_pallet_operation_mode(grandpa));
-
-	macro_rules! migrate_best_finalized {
-		($c:ty, $i:ty, $n:expr) => {
-			if let Some(hash) = migration::take_storage_value::<<$c as bp_runtime::Chain>::Hash>(
-				$n,
-				b"BestFinalized",
-				&[],
-			) {
-				if let Some(header) =
-					<pallet_bridge_grandpa::ImportedHeaders<Runtime, $i>>::get(hash)
-				{
-					<pallet_bridge_grandpa::BestFinalized<Runtime, $i>>::put((header.number, hash));
-				}
-			}
-		};
-	}
-
-	migrate_best_finalized!(Pangoro, WithPangoroGrandpa, b"BridgePangoroGrandpa");
-	migrate_best_finalized!(Rococo, WithRococoGrandpa, b"BridgeRococoGrandpa");
-	migrate_best_finalized!(MoonbaseRelay, WithMoonbaseRelayGrandpa, b"BridgeMoonbaseRelayGrandpa");
-
-	let messages: &[&[u8]] = &[
-		b"BridgePangoroMessages",
-		b"BridgePangolinParachainMessages",
-		b"BridgePangolinParachainAlphaMessages",
-	];
-
-	messages
-		.iter()
-		.for_each(|message| bridge_runtime_common::migrate_message_pallet_operation_mode(message));
-
-	let parachains_modules: &[&[u8]] = &[b"BridgeRococoParachain", b"BridgeMoonbaseRelayParachain"];
-
-	parachains_modules.iter().for_each(|module| {
-		bridge_runtime_common::put_pallet_operation_mode(
-			module,
-			bp_runtime::BasicOperatingMode::Normal,
-		);
-	});
+     Pangolin1 and Pangolin Parachain1 are merged into Pangolin2.
+         Check: https://github.com/darwinia-network/darwinia
+"#
+	);
 
 	// 0
-	RuntimeBlockWeights::get().max_block
+	// RuntimeBlockWeights::get().max_block
 }
