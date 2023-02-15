@@ -161,6 +161,9 @@ frame_support::construct_runtime!(
 		BridgePangolinMessages: pallet_bridge_messages::<Instance1>::{Pallet, Call, Storage, Event<T>} = 17,
 
 		PangolinFeeMarket: pallet_fee_market::<Instance1>::{Pallet, Call, Storage, Event<T>} = 22,
+
+		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 40,
+		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 41,
 	}
 );
 

@@ -90,3 +90,8 @@ pub use bridge_grandpa::*;
 
 pub mod fee_market;
 pub use fee_market::*;
+
+pub mod identity;
+pub use identity::*;
+pub mod multisig;
+pub use multisig::*;
